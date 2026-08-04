@@ -6,6 +6,7 @@ import (
 	"github.com/moby/moby/api/types/volume"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
@@ -39,11 +40,7 @@ func (r *RefClusterObjects) AddRefClusterObjects(refObjects *RefClusterObjects) 
 		r.RefVolumes = make(map[string]*volume.Volume, len(refObjects.RefVolumes))
 	}
 	for _, refVolume := range refObjects.RefVolumes {
-		volID := refVolume.Name
-		if refVolume.ClusterVolume != nil {
-			volID = refVolume.ClusterVolume.ID
-		}
-		r.RefVolumes[volID] = refVolume
+		r.RefVolumes[dockerhelper.GetVolumeID(refVolume)] = refVolume
 	}
 
 	if r.RefNetworks == nil {

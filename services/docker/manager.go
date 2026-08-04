@@ -151,6 +151,7 @@ type Manager interface {
 		*swarm.Service, error)
 	ServiceWaitUntilRunning(ctx context.Context, serviceID string, requireAllReplicas bool,
 		requireRunningDuration time.Duration, checkInterval time.Duration) (bool, error)
+	ServiceWaitUntilStopped(ctx context.Context, serviceID string, checkInterval time.Duration) (bool, error)
 
 	// Swarm
 	SwarmInspect(ctx context.Context, options ...SwarmInspectOption) (

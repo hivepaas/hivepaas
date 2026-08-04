@@ -1,6 +1,10 @@
 package dockerhelper
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/moby/moby/api/types/volume"
+)
 
 func WrapNodeID(id string) string {
 	if strings.HasPrefix(id, "dkr:") {
@@ -35,4 +39,14 @@ func ParseID(wrapID string) string {
 	default:
 		return wrapID
 	}
+}
+
+func GetVolumeID(vol *volume.Volume) string {
+	if vol == nil {
+		return ""
+	}
+	if vol.ClusterVolume == nil {
+		return vol.Name
+	}
+	return vol.ClusterVolume.ID
 }

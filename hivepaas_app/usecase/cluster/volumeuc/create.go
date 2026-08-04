@@ -43,11 +43,7 @@ func (uc *UC) CreateVolume(
 				return apperrors.Wrap(err)
 			}
 			vol := &createResp.Volume
-			volID := vol.Name
-			if vol.ClusterVolume != nil {
-				volID = vol.ClusterVolume.ID
-			}
-
+			volID := dockerhelper.GetVolumeID(vol)
 			pData.Setting.ID = dockerhelper.WrapVolumeID(volID)
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = vol.Driver

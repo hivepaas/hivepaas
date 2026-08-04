@@ -32,9 +32,9 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.POST("/:appID/photo-detect", appHandler.DetectAppPhoto)
 	}
 
-	{ // Copy
-		appGroup.GET("/:appID/copy/prepare", appHandler.PrepareAppCopy)
-		appGroup.POST("/:appID/copy", appHandler.CopyApp)
+	{ // Clone app
+		appGroup.GET("/:appID/clone/prepare", appHandler.PrepareAppClone)
+		appGroup.POST("/:appID/clone", appHandler.CloneApp)
 	}
 
 	{ // Tags
@@ -70,6 +70,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.PUT("/:appID/feature-settings", appSettingsHandler.UpdateAppFeatureSettings)
 		appGroup.GET("/:appID/container-settings", appSettingsHandler.GetAppContainerSettings)
 		appGroup.PUT("/:appID/container-settings", appSettingsHandler.UpdateAppContainerSettings)
+		appGroup.GET("/:appID/clone-settings", appSettingsHandler.GetAppCloneSettings)
+		appGroup.PUT("/:appID/clone-settings", appSettingsHandler.UpdateAppCloneSettings)
 	}
 
 	{ // Service tasks

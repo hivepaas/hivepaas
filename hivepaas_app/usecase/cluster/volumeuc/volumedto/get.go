@@ -114,9 +114,6 @@ func TransformVolume(
 	resp.Scope = docker.VolumeScope(vol.Scope)
 	resp.Labels = vol.Labels
 	resp.CreatedAt = transformVolumeCreatedAt(vol.CreatedAt)
-	if vol.ClusterVolume != nil {
-		resp.ID = vol.ClusterVolume.ID
-	}
 	if vol.UsageData != nil {
 		resp.RefCount = vol.UsageData.RefCount
 		resp.Size = vol.UsageData.Size

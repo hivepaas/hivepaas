@@ -204,7 +204,7 @@ func (s *Setting) Migrate() (hasChange bool, err error) {
 	return hasChange, nil
 }
 
-func (s *Setting) Copy(genID bool) (*Setting, error) {
+func (s *Setting) Clone(genID bool) (*Setting, error) {
 	cp := new(*s)
 	cp.parsedData = nil
 	if genID {

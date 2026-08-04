@@ -15,7 +15,7 @@ func (s *service) applyAppHttpSettings(
 	ctx context.Context,
 	data *appCloneData,
 ) error {
-	app := data.TargetApp
+	app := data.DestApp
 	httpSetting := app.GetSettingByType(base.SettingTypeAppHttp)
 	if httpSetting == nil {
 		return nil

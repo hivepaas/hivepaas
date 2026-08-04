@@ -2,7 +2,6 @@ package appserviceimpl
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -34,7 +33,7 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 
 	// Remove service for the app in docker swarm
 	err := s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+	if err != nil {
 		return apperrors.Wrap(err)
 	}
 

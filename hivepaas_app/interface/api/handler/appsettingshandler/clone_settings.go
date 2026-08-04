@@ -1,4 +1,4 @@
-package apphandler
+package appsettingshandler
 
 import (
 	"net/http"
@@ -7,30 +7,30 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
-// PrepareAppCopy Prepares for app copying
-// @Summary Prepares for app copying
-// @Description Prepares for app copying
-// @Tags    apps
+// GetAppCloneSettings Gets app clone settings
+// @Summary Gets app clone settings
+// @Description Gets app clone settings
+// @Tags    app_settings
 // @Produce json
-// @Id      prepareAppCopy
+// @Id      getAppCloneSettings
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
-// @Success 200 {object} appdto.PrepareAppCopyResp
+// @Success 200 {object} appsettingsdto.GetAppCloneSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/copy/prepare [get]
-func (h *Handler) PrepareAppCopy(ctx *gin.Context) {
-	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/clone-settings [get]
+func (h *Handler) GetAppCloneSettings(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := appdto.NewPrepareAppCopyReq()
+	req := appsettingsdto.NewGetAppCloneSettingsReq()
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
@@ -39,7 +39,7 @@ func (h *Handler) PrepareAppCopy(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.appUC.PrepareAppCopy(h.RequestCtx(ctx), auth, req)
+	resp, err := h.appSettingsUC.GetAppCloneSettings(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -48,28 +48,28 @@ func (h *Handler) PrepareAppCopy(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// CopyApp Copies an app
-// @Summary Copies an app
-// @Description Copies an app
-// @Tags    apps
+// UpdateAppCloneSettings Updates app clone settings
+// @Summary Updates app clone settings
+// @Description Updates app clone settings
+// @Tags    app_settings
 // @Produce json
-// @Id      copyApp
+// @Id      updateAppCloneSettings
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
-// @Param   body body appdto.CopyAppReq true "request data"
-// @Success 201 {object} appdto.CopyAppResp
+// @Param   body body appsettingsdto.UpdateAppCloneSettingsReq true "request data"
+// @Success 200 {object} appsettingsdto.UpdateAppCloneSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/copy [post]
-func (h *Handler) CopyApp(ctx *gin.Context) {
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/clone-settings [put]
+func (h *Handler) UpdateAppCloneSettings(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := appdto.NewCopyAppReq()
+	req := &appsettingsdto.UpdateAppCloneSettingsReq{}
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
@@ -78,11 +78,11 @@ func (h *Handler) CopyApp(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.appUC.CopyApp(h.RequestCtx(ctx), auth, req)
+	resp, err := h.appSettingsUC.UpdateAppCloneSettings(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, resp)
+	ctx.JSON(http.StatusOK, resp)
 }

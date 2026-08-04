@@ -13,7 +13,7 @@ func (s *service) applySchedJobSettings(
 	db database.Tx,
 	data *appCloneData,
 ) error {
-	app := data.TargetApp
+	app := data.DestApp
 	jobSettings := app.GetSettingsByType(base.SettingTypeSchedJob)
 
 	err := s.taskQueue.ScheduleTasksForSchedJobs(ctx, db, jobSettings, false)

@@ -8,7 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 )
 
-type CopyAppReq struct {
+type CloneAppReq struct {
 	ProjectID    string `json:"-"`
 	ProjectEnvID string `json:"-"`
 	AppID        string `json:"-"`
@@ -20,59 +20,59 @@ type CopyAppReq struct {
 	SourceStatus base.AppStatus `json:"sourceStatus"`
 	TargetStatus base.AppStatus `json:"targetStatus"`
 
-	CopyConfigFiles        CopyConfigFilesReq        `json:"copyConfigFiles"`
-	CopyDeploymentSettings CopyDeploymentSettingsReq `json:"copyDeploymentSettings"`
-	CopyEnvVars            CopyEnvVarsReq            `json:"copyEnvVars"`
-	CopyHealthChecks       CopyHealthChecksReq       `json:"copyHealthChecks"`
-	CopyHttpSettings       CopyHttpSettingsReq       `json:"copyHttpSettings"`
-	CopySchedJobs          CopySchedJobsReq          `json:"copySchedJobs"`
-	CopySecrets            CopySecretsReq            `json:"copySecrets"`
+	CloneConfigFiles        CloneConfigFilesReq        `json:"copyConfigFiles"`
+	CloneDeploymentSettings CloneDeploymentSettingsReq `json:"copyDeploymentSettings"`
+	CloneEnvVars            CloneEnvVarsReq            `json:"copyEnvVars"`
+	CloneHealthChecks       CloneHealthChecksReq       `json:"copyHealthChecks"`
+	CloneHttpSettings       CloneHttpSettingsReq       `json:"copyHttpSettings"`
+	CloneSchedJobs          CloneSchedJobsReq          `json:"copySchedJobs"`
+	CloneSecrets            CloneSecretsReq            `json:"copySecrets"`
 
 	UpdateVer int `json:"updateVer"`
 }
 
-type CopyConfigFilesReq struct {
-	Copy bool `json:"copy"`
+type CloneConfigFilesReq struct {
+	Clone bool `json:"copy"`
 }
 
-type CopyDeploymentSettingsReq struct {
-	Copy bool `json:"copy"`
+type CloneDeploymentSettingsReq struct {
+	Clone bool `json:"copy"`
 }
 
-type CopyEnvVarsReq struct {
-	Copy bool `json:"copy"`
+type CloneEnvVarsReq struct {
+	Clone bool `json:"copy"`
 }
 
-type CopyHealthChecksReq struct {
-	Copy bool `json:"copy"`
+type CloneHealthChecksReq struct {
+	Clone bool `json:"copy"`
 }
 
-type CopyHttpSettingsReq struct {
-	Copy               bool                         `json:"copy"`
-	CopyDomainSettings []*CopyHttpDomainSettingsReq `json:"copyDomainSettings"`
+type CloneHttpSettingsReq struct {
+	Clone               bool                          `json:"copy"`
+	CloneDomainSettings []*CloneHttpDomainSettingsReq `json:"copyDomainSettings"`
 }
 
-type CopyHttpDomainSettingsReq struct {
+type CloneHttpDomainSettingsReq struct {
 	SourceDomain  string              `json:"sourceDomain"`
 	TargetDomain  string              `json:"targetDomain"`
 	SourceSSLCert basedto.ObjectIDReq `json:"sourceSslCert"`
 	TargetSSLCert basedto.ObjectIDReq `json:"targetSslCert"`
 }
 
-type CopySchedJobsReq struct {
-	Copy bool `json:"copy"`
+type CloneSchedJobsReq struct {
+	Clone bool `json:"copy"`
 }
 
-type CopySecretsReq struct {
-	Copy bool `json:"copy"`
+type CloneSecretsReq struct {
+	Clone bool `json:"copy"`
 }
 
-func NewCopyAppReq() *CopyAppReq {
-	return &CopyAppReq{}
+func NewCloneAppReq() *CloneAppReq {
+	return &CloneAppReq{}
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *CopyAppReq) Validate() apperrors.ValidationErrors {
+func (req *CloneAppReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
@@ -81,7 +81,7 @@ func (req *CopyAppReq) Validate() apperrors.ValidationErrors {
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type CopyAppResp struct {
+type CloneAppResp struct {
 	Meta *basedto.Meta         `json:"meta"`
 	Data *basedto.ObjectIDResp `json:"data"`
 }

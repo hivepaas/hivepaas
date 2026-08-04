@@ -31,6 +31,9 @@ type Service interface {
 	RestartHpUpdaterSwarmService(ctx context.Context) error
 	ShutdownHpUpdaterSwarmService(ctx context.Context) error
 
+	GetHpAgentSwarmService(ctx context.Context) (*swarm.Service, error)
+	RestartHpAgentSwarmService(ctx context.Context) error
+
 	GetHpDbSwarmService(ctx context.Context) (*swarm.Service, error)
 	RestartHpDbSwarmService(ctx context.Context) error
 

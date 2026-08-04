@@ -68,7 +68,6 @@ type StorageTmpfsSettingsResp struct {
 }
 
 type StorageSettingsTransformInput struct {
-	Project *entity.Project
 	App     *entity.App
 	Setting *entity.Setting
 	Volumes []*volume.Volume
@@ -84,8 +83,8 @@ func TransformStorageSettings(
 
 	if resp.BindSettings != nil {
 		// Compute subpath required for scope app
-		if input.Project != nil && input.App != nil {
-			resp.BindSettings.SubpathRequired = apphelper.CalcMountSubpath(input.Project, input.App,
+		if input.App != nil {
+			resp.BindSettings.SubpathRequired = apphelper.CalcMountSubpath(input.App,
 				resp.BindSettings.SubpathTemplate)
 		}
 	}
@@ -97,8 +96,8 @@ func TransformStorageSettings(
 		}
 
 		// Compute subpath required for scope app
-		if input.Project != nil && input.App != nil {
-			resp.VolumeSettings.SubpathRequired = apphelper.CalcMountSubpath(input.Project, input.App,
+		if input.App != nil {
+			resp.VolumeSettings.SubpathRequired = apphelper.CalcMountSubpath(input.App,
 				resp.VolumeSettings.SubpathTemplate)
 		}
 	}
@@ -117,8 +116,8 @@ func TransformStorageSettings(
 		}
 
 		// Compute subpath required for scope app
-		if input.Project != nil && input.App != nil {
-			resp.ClusterVolumeSettings.SubpathRequired = apphelper.CalcMountSubpath(input.Project, input.App,
+		if input.App != nil {
+			resp.ClusterVolumeSettings.SubpathRequired = apphelper.CalcMountSubpath(input.App,
 				resp.ClusterVolumeSettings.SubpathTemplate)
 		}
 	}

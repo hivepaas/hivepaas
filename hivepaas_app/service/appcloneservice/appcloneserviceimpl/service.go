@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -27,6 +28,7 @@ type service struct {
 	settingService settingservice.Service
 	sslService     sslservice.Service
 	traefikService traefikservice.Service
+	volumeService  volumeservice.Service
 
 	dockerManager docker.Manager
 }
@@ -44,6 +46,7 @@ func New(
 	settingService settingservice.Service,
 	sslService sslservice.Service,
 	traefikService traefikservice.Service,
+	volumeService volumeservice.Service,
 
 	dockerManager docker.Manager,
 ) appcloneservice.Service {
@@ -60,6 +63,7 @@ func New(
 		settingService: settingService,
 		sslService:     sslService,
 		traefikService: traefikService,
+		volumeService:  volumeService,
 
 		dockerManager: dockerManager,
 	}

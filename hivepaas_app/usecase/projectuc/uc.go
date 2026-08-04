@@ -7,6 +7,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type UC struct {
@@ -19,7 +21,9 @@ type UC struct {
 	appService     appservice.Service
 	projectService projectservice.Service
 	userService    userservice.Service
+	volumeService  volumeservice.Service
 
+	dockerManager     docker.Manager
 	permissionManager permission.Manager
 }
 
@@ -33,7 +37,9 @@ func New(
 	appService appservice.Service,
 	projectService projectservice.Service,
 	userService userservice.Service,
+	volumeService volumeservice.Service,
 
+	dockerManager docker.Manager,
 	permissionManager permission.Manager,
 ) *UC {
 	return &UC{
@@ -46,7 +52,9 @@ func New(
 		appService:     appService,
 		projectService: projectService,
 		userService:    userService,
+		volumeService:  volumeService,
 
+		dockerManager:     dockerManager,
 		permissionManager: permissionManager,
 	}
 }

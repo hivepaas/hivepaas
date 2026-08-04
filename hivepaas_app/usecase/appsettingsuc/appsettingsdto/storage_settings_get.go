@@ -114,7 +114,6 @@ func TransformStorageSettings(
 
 	resp.Settings, err = storagesettingsdto.TransformStorageSettings(
 		&storagesettingsdto.StorageSettingsTransformInput{
-			Project: input.Project,
 			App:     input.App,
 			Setting: input.Setting,
 			Volumes: input.Volumes,

@@ -2,7 +2,6 @@ package projectserviceimpl
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 
@@ -36,7 +35,13 @@ func (s *service) DeleteProjectEnv(ctx context.Context, db database.IDB, project
 
 	// Remove all project env local networks
 	err := s.networkService.RemoveAllProjectEnvNetworks(ctx, db, projectEnv)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	// Remove all project env local volumes
+	err = s.volumeService.RemoveAllProjectEnvVolumes(ctx, db, projectEnv, false)
+	if err != nil {
 		return apperrors.Wrap(err)
 	}
 

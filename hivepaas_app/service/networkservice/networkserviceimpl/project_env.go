@@ -160,7 +160,9 @@ func (s *service) RemoveAllProjectEnvNetworks(
 			continue
 		}
 		_, e := s.dockerManager.NetworkRemove(ctx, net.ID)
-		err = errors.Join(err, e)
+		if e != nil && !errors.Is(e, apperrors.ErrNotFound) {
+			err = errors.Join(err, e)
+		}
 	}
 	if err != nil {
 		return apperrors.Wrap(err)

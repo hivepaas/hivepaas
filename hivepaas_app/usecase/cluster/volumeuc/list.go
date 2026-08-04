@@ -73,11 +73,7 @@ func (uc *UC) listVolumesInDocker(
 
 	for i := range currVols {
 		vol := &currVols[i]
-		volID := vol.Name
-		if vol.ClusterVolume != nil {
-			volID = vol.ClusterVolume.ID
-		}
-		refClusterObjects.RefVolumes[volID] = vol
+		refClusterObjects.RefVolumes[dockerhelper.GetVolumeID(vol)] = vol
 	}
 	return nil
 }

@@ -6,17 +6,11 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 )
@@ -24,13 +18,13 @@ import (
 type appCloneData struct {
 	*appcloneservice.AppCloneReq
 
-	TargetApp     *entity.App
-	SrcService    *swarm.Service
-	TargetService *swarm.Service
-	TargetSecrets []*entity.SwarmSecretRef
-	TargetConfig  []*entity.SwarmConfigRef
+	DestApp     *entity.App
+	SrcService  *swarm.Service
+	DestService *swarm.Service
+	DestSecrets []*entity.SwarmSecretRef
+	DestConfig  []*entity.SwarmConfigRef
 
-	CopiedSettings []*entity.Setting
+	ClonedSettings []*entity.Setting
 	RefObjects     *entity.RefObjects
 
 	TimeNow time.Time
@@ -46,6 +40,9 @@ func (s *service) CloneApp(
 		AppCloneReq: req,
 		TimeNow:     timeutil.NowUTC(),
 	}
+	if req.CloneSettings == nil {
+		req.CloneSettings = &entity.AppCloneSettings{}
+	}
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -53,6 +50,8 @@ func (s *service) CloneApp(
 		}
 		_ = s.cleanupOnFail(ctx, data, err)
 	}()
+
+	// Cloning steps
 
 	err = s.cloneApp(ctx, db, data)
 	if err != nil {
@@ -69,7 +68,7 @@ func (s *service) CloneApp(
 		return nil, apperrors.Wrap(err)
 	}
 
-	err = s.createSwarmService(ctx, data)
+	err = s.cloneVolumes(ctx, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -78,6 +77,8 @@ func (s *service) CloneApp(
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
+
+	// Post cloning steps
 
 	err = s.applyEnvVars(ctx, db, data)
 	if err != nil {
@@ -109,123 +110,17 @@ func (s *service) CloneApp(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp.TargetApp = data.TargetApp
-	resp.TargetService = data.TargetService
+	err = s.runCommands(ctx, db, data)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	resp.TargetApp = data.DestApp
+	resp.TargetService = data.DestService
 	resp.OnCleanup = func(e error) error {
 		return s.cleanupOnFail(ctx, data, e)
 	}
 	return resp, nil
-}
-
-func (s *service) cloneApp(
-	ctx context.Context,
-	db database.IDB,
-	data *appCloneData,
-) (err error) {
-	timeNow := timeutil.NowUTC()
-	targetApp := &entity.App{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		ProjectID: data.TargetProject.ID,
-		Project:   data.TargetProject,
-		Status:    base.AppStatusActive,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
-	}
-	data.TargetApp = targetApp
-
-	err = data.OnCloneApp(targetApp, data.SrcApp)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	targetEnv := targetApp.ProjectEnv.Name
-	targetApp.Key = slugify.SlugifyAsKey(targetApp.Name)
-	if targetApp.ParentApp != nil {
-		targetApp.Key = targetApp.ParentApp.Key + "_" + targetApp.Key
-	}
-	targetApp.GlobalKey = projecthelper.CalcAppGlobalKey(data.TargetProject.Key, targetApp.Key, targetEnv)
-
-	// App keys must be unique globally
-	conflictApp, err := s.appRepo.GetByGlobalKey(ctx, db, "", targetApp.GlobalKey, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
-	}
-	if conflictApp != nil {
-		return apperrors.NewAlreadyExist("App").
-			WithMsgLog("app unique key '%s' already exists", targetApp.GlobalKey)
-	}
-
-	// Create local network for the app to attach
-	_, _, err = s.networkService.GetOrCreateProjectNetwork(ctx, db, data.TargetProject, targetEnv)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	return nil
-}
-
-func (s *service) cloneAppSettings(
-	ctx context.Context,
-	db database.IDB,
-	data *appCloneData,
-) (err error) {
-	appSettings, _, err := s.settingRepo.List(ctx, db, nil, nil,
-		bunex.SelectWhere("setting.scope = ?", base.ObjectScopeApp),
-		bunex.SelectWhere("setting.object_id = ?", data.SrcApp.ID),
-	)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	targetApp := data.TargetApp
-	for _, setting := range appSettings {
-		cpSetting, err := setting.Copy(true)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		cpSetting.ObjectID = targetApp.ID
-		cpSetting.CreatedAt = data.TimeNow
-		cpSetting.UpdatedAt = data.TimeNow
-		cpSetting.UpdateVer = 0
-		st, err := data.OnCloneSetting(targetApp, cpSetting)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		if st != nil {
-			data.CopiedSettings = append(data.CopiedSettings, st)
-		}
-	}
-
-	targetApp.Settings = data.CopiedSettings
-
-	// Update ref app for every sched job
-	for _, jobSetting := range targetApp.GetSettingsByType(base.SettingTypeSchedJob) {
-		schedJob := jobSetting.MustAsSchedJob()
-		schedJob.App.ID = targetApp.ID
-		jobSetting.MustSetData(schedJob)
-	}
-
-	// Validation
-
-	// Active domains of the app need to validate
-	newHttpSetting := targetApp.GetSettingByType(base.SettingTypeAppHttp)
-	if newHttpSetting != nil {
-		activeDomains := newHttpSetting.MustAsAppHttpSettings().GetActiveDomainNames()
-
-		// Verify domains are allowed in project
-		err = s.domainService.VerifyProjectDomains(ctx, db, targetApp.ProjectID, activeDomains)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-
-		// Make sure all domains used by the app are not hold by any other app
-		err = s.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{targetApp.ID})
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-	}
-
-	return nil
 }
 
 func (s *service) persistAppData(
@@ -233,22 +128,22 @@ func (s *service) persistAppData(
 	db database.IDB,
 	data *appCloneData,
 ) (err error) {
-	app := data.TargetApp
-	err = s.appRepo.Upsert(ctx, db, app,
+	destApp := data.DestApp
+	err = s.appRepo.Upsert(ctx, db, destApp,
 		entity.AppUpsertingConflictCols, entity.AppUpsertingUpdateCols)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	err = s.settingRepo.UpsertMulti(ctx, db, data.CopiedSettings,
+	err = s.settingRepo.UpsertMulti(ctx, db, data.ClonedSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Loads all ref objects of the settings
-	data.RefObjects, err = s.settingService.LoadReferenceObjects(ctx, db, app.GetObjectScope(),
-		true, true, app.Settings...)
+	data.RefObjects, err = s.settingService.LoadReferenceObjects(ctx, db, destApp.GetObjectScope(),
+		true, true, destApp.Settings...)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -265,18 +160,18 @@ func (s *service) cleanupOnFail(
 		return nil
 	}
 	// Remove all created objects in docker
-	if data.TargetService != nil && data.TargetService.ID != "" {
-		_ = s.clusterService.ServiceRemove(ctx, data.TargetService.ID, clusterservice.ItemRemovalRetryMax, 0)
+	if data.DestService != nil && data.DestService.ID != "" {
+		_ = s.clusterService.ServiceRemove(ctx, data.DestService.ID, clusterservice.ItemRemovalRetryMax, 0)
 	}
 
 	var secretIDs []string
-	for _, secret := range data.TargetSecrets {
+	for _, secret := range data.DestSecrets {
 		secretIDs = append(secretIDs, secret.SecretID)
 	}
 	_ = s.clusterService.SecretsRemove(ctx, secretIDs, clusterservice.ItemRemovalRetryMax, 0)
 
 	var configIDs []string
-	for _, cfg := range data.TargetConfig {
+	for _, cfg := range data.DestConfig {
 		configIDs = append(configIDs, cfg.ConfigID)
 	}
 	_ = s.clusterService.ConfigsRemove(ctx, configIDs, clusterservice.ItemRemovalRetryMax, 0)

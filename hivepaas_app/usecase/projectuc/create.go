@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -13,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -31,15 +33,24 @@ func (uc *UC) CreateProject(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *projectdto.CreateProjectReq,
-) (*projectdto.CreateProjectResp, error) {
+) (_ *projectdto.CreateProjectResp, err error) {
 	projectData := &createProjectData{}
-	err := uc.loadProjectData(ctx, uc.db, auth, req, projectData)
+	err = uc.loadProjectData(ctx, uc.db, auth, req, projectData)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
 	persistingData := &persistingProjectData{}
-	uc.preparePersistingProject(req, projectData, persistingData)
+	err = uc.preparePersistingProject(ctx, req, projectData, persistingData)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	defer func() {
+		if err != nil || recover() != nil {
+			_ = uc.cleanupOnFail(ctx, projectData)
+		}
+	}()
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		err = uc.persistData(ctx, db, persistingData)
@@ -59,6 +70,8 @@ func (uc *UC) CreateProject(
 
 type createProjectData struct {
 	ProjectKey string
+
+	CreatedVolume *client.VolumeCreateResult
 }
 
 func (uc *UC) loadProjectData(
@@ -107,10 +120,11 @@ func (uc *UC) loadProjectData(
 }
 
 func (uc *UC) preparePersistingProject(
+	ctx context.Context,
 	req *projectdto.CreateProjectReq,
 	data *createProjectData,
 	persistingData *persistingProjectData,
-) {
+) (err error) {
 	timeNow := timeutil.NowUTC()
 	// Upserting project
 	project := &entity.Project{
@@ -124,6 +138,11 @@ func (uc *UC) preparePersistingProject(
 	uc.preparePersistingProjectTags(project, req.Tags, 0, persistingData)
 	uc.preparePersistingProjectWebhook(project, timeNow, persistingData)
 	uc.preparePersistingProjectNotificationDefault(project, timeNow, persistingData)
+	err = uc.preparePersistingProjectDefaultVolume(ctx, project, data, persistingData)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
 }
 
 func (uc *UC) preparePersistingProjectBase(
@@ -226,4 +245,33 @@ func (uc *UC) preparePersistingProjectNotificationDefault(
 	}
 	setting.MustSetData(entity.NewNotificationDefaultForScope(entity.NewObjectScopeProject(project.ID)))
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
+}
+
+func (uc *UC) preparePersistingProjectDefaultVolume(
+	ctx context.Context,
+	project *entity.Project,
+	data *createProjectData,
+	persistingData *persistingProjectData,
+) error {
+	setting, createRes, err := uc.volumeService.CreateProjectDefaultVolume(ctx, project)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	data.CreatedVolume = createRes
+	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
+	return nil
+}
+
+func (uc *UC) cleanupOnFail(
+	ctx context.Context,
+	data *createProjectData,
+) (err error) {
+	if data.CreatedVolume != nil {
+		volID := dockerhelper.GetVolumeID(&data.CreatedVolume.Volume)
+		_, e := uc.dockerManager.VolumeRemove(ctx, volID, true)
+		if e != nil {
+			err = errors.Join(err, e)
+		}
+	}
+	return err
 }

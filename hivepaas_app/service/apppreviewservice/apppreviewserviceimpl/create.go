@@ -22,7 +22,6 @@ import (
 type createPreviewData struct {
 	*apppreviewservice.CreatePreviewReq
 
-	Project       *entity.Project
 	App           *entity.App
 	CalcRepoRef   string // normalized repo ref
 	PullNumber    uint64
@@ -49,19 +48,25 @@ func (s *service) CreatePreview(
 		return nil, apperrors.Wrap(err)
 	}
 
-	copyResp, err := s.appCloneService.CloneApp(ctx, db, &appcloneservice.AppCloneReq{
-		SrcProject:    data.Project,
-		SrcApp:        data.App,
-		TargetProject: data.Project,
+	var cloneResp *appcloneservice.AppCloneResp
+	defer func() {
+		if cloneResp != nil && cloneResp.OnCleanup != nil { // Run the cleanup function
+			_ = cloneResp.OnCleanup(err)
+			cloneResp.OnCleanup = nil
+		}
+	}()
+
+	cloneResp, err = s.appCloneService.CloneApp(ctx, db, &appcloneservice.AppCloneReq{
+		SrcApp: data.App,
 		OnCloneApp: func(targetApp, srcApp *entity.App) error {
 			data.PreviewApp = targetApp
-			return s.onCopyApp(targetApp, srcApp, data)
+			return s.onCloneApp(targetApp, srcApp, data)
 		},
-		OnCloneSetting: func(targetApp *entity.App, setting *entity.Setting) (*entity.Setting, error) {
-			return s.onCopyAppSetting(ctx, db, setting, data)
+		OnCloneSetting: func(targetApp, srcApp *entity.App, setting *entity.Setting) (*entity.Setting, error) {
+			return s.onCloneAppSetting(ctx, db, setting, data)
 		},
-		OnCloneService: func(targetSvc, srcSvc *swarm.Service) error {
-			return s.onCopyAppService(targetSvc, srcSvc, data)
+		OnCloneService: func(targetApp, srcApp *entity.App, targetSvc, srcSvc *swarm.Service) error {
+			return s.onCloneAppService(targetSvc, srcSvc, data)
 		},
 	})
 	if err != nil {
@@ -82,8 +87,8 @@ func (s *service) CreatePreview(
 		PreviewApp:     data.PreviewApp,
 		Deployment:     data.Deployment,
 		DeploymentTask: data.DeploymentTask,
-		OnCleanup:      copyResp.OnCleanup,
-	}, nil
+		OnCleanup:      cloneResp.OnCleanup,
+	}, apperrors.Wrap(err)
 }
 
 func (s *service) loadAppDataForCreatingPreview(
@@ -118,9 +123,7 @@ func (s *service) loadAppDataForCreatingPreview(
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo || deploymentSettings.RepoSource == nil {
 		return apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
 	}
-
 	data.App = app
-	data.Project = app.Project
 
 	data.CalcRepoRef, data.PullNumber, err = githelper.NormalizePullRef(data.RepoRef)
 	if err != nil {
@@ -152,7 +155,7 @@ func (s *service) loadAppDataForCreatingPreview(
 	return nil
 }
 
-func (s *service) onCopyApp(
+func (s *service) onCloneApp(
 	targetApp, srcApp *entity.App,
 	data *createPreviewData,
 ) error {
@@ -165,7 +168,7 @@ func (s *service) onCopyApp(
 	return nil
 }
 
-func (s *service) onCopyAppSetting(
+func (s *service) onCloneAppSetting(
 	ctx context.Context,
 	db database.IDB,
 	setting *entity.Setting,
@@ -175,11 +178,11 @@ func (s *service) onCopyAppSetting(
 	case base.SettingTypeApp:
 		return nil, nil
 	case base.SettingTypeAppDeployment:
-		return s.onCopyDeploymentSetting(setting, data)
+		return s.onCloneDeploymentSetting(setting, data)
 	case base.SettingTypeAppFeatures:
 		return nil, nil
 	case base.SettingTypeAppHttp:
-		return s.onCopyHttpSetting(ctx, db, setting, data)
+		return s.onCloneHttpSetting(ctx, db, setting, data)
 	case base.SettingTypeConfigFile:
 		return nil, nil
 	case base.SettingTypeEnvVar:
@@ -195,7 +198,7 @@ func (s *service) onCopyAppSetting(
 	}
 }
 
-func (s *service) onCopyDeploymentSetting(
+func (s *service) onCloneDeploymentSetting(
 	setting *entity.Setting,
 	data *createPreviewData,
 ) (*entity.Setting, error) {
@@ -208,7 +211,7 @@ func (s *service) onCopyDeploymentSetting(
 	return setting, nil
 }
 
-func (s *service) onCopyHttpSetting(
+func (s *service) onCloneHttpSetting(
 	ctx context.Context,
 	db database.IDB,
 	setting *entity.Setting,
@@ -240,7 +243,7 @@ func (s *service) onCopyHttpSetting(
 	return setting, nil
 }
 
-func (s *service) onCopyAppService(
+func (s *service) onCloneAppService(
 	targetSvc, _ *swarm.Service,
 	data *createPreviewData,
 ) error {

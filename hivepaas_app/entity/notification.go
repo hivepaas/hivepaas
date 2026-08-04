@@ -9,6 +9,9 @@ type BaseEventNotification struct {
 
 func (s *BaseEventNotification) GetRefObjectIDs() *RefObjectIDs {
 	refIDs := &RefObjectIDs{}
+	if s == nil {
+		return refIDs
+	}
 	if s.Success.ID != "" {
 		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Success.ID)
 	}

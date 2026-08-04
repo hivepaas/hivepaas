@@ -70,6 +70,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice/taskserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice/traefikserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice/userserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice/volumeserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/initializer"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue/queueimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskappdeploy"
@@ -271,6 +272,7 @@ var Provides = []any{
 	userserviceimpl.New,
 	projectserviceimpl.New,
 	networkserviceimpl.New,
+	volumeserviceimpl.New,
 	settingserviceimpl.New,
 	envvarserviceimpl.New,
 	traefikserviceimpl.New,

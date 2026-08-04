@@ -11,11 +11,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
 
-func (uc *UC) PrepareAppCopy(
+func (uc *UC) PrepareAppClone(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *appdto.PrepareAppCopyReq,
-) (*appdto.PrepareAppCopyResp, error) {
+	req *appdto.PrepareAppCloneReq,
+) (*appdto.PrepareAppCloneResp, error) {
 	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
@@ -36,12 +36,12 @@ func (uc *UC) PrepareAppCopy(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp, err := appdto.TransformAppCopyPreparationData(app, refObjects)
+	resp, err := appdto.TransformAppClonePreparationData(app, refObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &appdto.PrepareAppCopyResp{
+	return &appdto.PrepareAppCloneResp{
 		Data: resp,
 	}, nil
 }

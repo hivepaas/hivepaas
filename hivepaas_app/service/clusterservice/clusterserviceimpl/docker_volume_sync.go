@@ -44,10 +44,7 @@ func (s *service) SyncVolumes(
 	var updatingSettings []*entity.Setting
 	for i := range volList.Items {
 		vol := &volList.Items[i]
-		volID := vol.Name
-		if vol.ClusterVolume != nil {
-			volID = vol.ClusterVolume.ID
-		}
+		volID := dockerhelper.GetVolumeID(vol)
 		setting := existingVols[volID]
 
 		if setting == nil {

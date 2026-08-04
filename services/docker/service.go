@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -9,6 +10,11 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+)
+
+const (
+	retry2Times       = 2
+	defaultRetryDelay = time.Second * 2
 )
 
 type ServiceListOption func(options *client.ServiceListOptions)
@@ -256,7 +262,7 @@ func (m *manager) ServiceUpdateWait(
 
 		inspectResp, err := gofn.ExecRetryCtx2(ctx, func() (*client.ServiceInspectResult, error) {
 			return m.ServiceInspect(ctx, serviceID)
-		}, 2, time.Second*3) //nolint:mnd
+		}, retry2Times, defaultRetryDelay)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -289,7 +295,7 @@ func (m *manager) ServiceWaitUntilRunning(
 
 	inspectResp, err := gofn.ExecRetry2(func() (*client.ServiceInspectResult, error) {
 		return m.ServiceInspect(ctx, serviceID)
-	}, 2, time.Second*3) //nolint:mnd
+	}, retry2Times, defaultRetryDelay)
 	if err != nil {
 		return false, apperrors.Wrap(err)
 	}
@@ -311,7 +317,7 @@ func (m *manager) ServiceWaitUntilRunning(
 
 		taskListResp, err := gofn.ExecRetry2(func() (*client.TaskListResult, error) {
 			return m.ServiceTaskList(ctx, serviceID, []swarm.TaskState{swarm.TaskStateRunning})
-		}, 2, time.Second*3) //nolint:mnd
+		}, retry2Times, defaultRetryDelay)
 		if err != nil {
 			return false, apperrors.Wrap(err)
 		}
@@ -334,5 +340,64 @@ func (m *manager) ServiceWaitUntilRunning(
 			continue
 		}
 		return true, nil
+	}
+}
+
+func (m *manager) ServiceWaitUntilStopped(
+	ctx context.Context,
+	serviceID string,
+	checkInterval time.Duration,
+) (bool, error) {
+	if checkInterval <= 0 {
+		checkInterval = time.Second * 2 //nolint:mnd
+	}
+
+	for {
+		// Check context cancellation
+		if err := ctx.Err(); err != nil {
+			return false, apperrors.NewInfra(err)
+		}
+
+		taskListResp, err := gofn.ExecRetry2(func() (*client.TaskListResult, error) {
+			return m.ServiceTaskList(ctx, serviceID, nil)
+		}, retry2Times, defaultRetryDelay)
+		if err != nil {
+			if errors.Is(err, apperrors.ErrNotFound) {
+				return true, nil
+			}
+			return false, apperrors.Wrap(err)
+		}
+
+		activeTasks := 0
+		for i := range taskListResp.Items {
+			state := taskListResp.Items[i].Status.State
+			if !isTaskTerminalState(state) {
+				activeTasks++
+			}
+		}
+
+		if activeTasks == 0 {
+			return true, nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return false, apperrors.Wrap(ctx.Err())
+		case <-time.After(checkInterval):
+		}
+	}
+}
+
+func isTaskTerminalState(state swarm.TaskState) bool {
+	switch state { //nolint:exhaustive
+	case swarm.TaskStateComplete,
+		swarm.TaskStateFailed,
+		swarm.TaskStateShutdown,
+		swarm.TaskStateRejected,
+		swarm.TaskStateRemove,
+		swarm.TaskStateOrphaned:
+		return true
+	default:
+		return false
 	}
 }

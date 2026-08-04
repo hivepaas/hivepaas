@@ -7,6 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -26,6 +27,7 @@ func New(
 
 	appService appservice.Service,
 	networkService networkservice.Service,
+	volumeService volumeservice.Service,
 
 	dockerManager docker.Manager,
 	permissionManager permission.Manager,
@@ -46,6 +48,7 @@ func New(
 
 		appService:     appService,
 		networkService: networkService,
+		volumeService:  volumeService,
 
 		dockerManager:     dockerManager,
 		permissionManager: permissionManager,
@@ -68,6 +71,7 @@ type service struct {
 
 	appService     appservice.Service
 	networkService networkservice.Service
+	volumeService  volumeservice.Service
 
 	dockerManager     docker.Manager
 	permissionManager permission.Manager

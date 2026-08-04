@@ -9,12 +9,16 @@ import type {
     ProjectApps_DeleteOne_Res,
     ProjectApps_Deploy_Req,
     ProjectApps_Deploy_Res,
+    ProjectApps_DetectPhoto_Req,
+    ProjectApps_DetectPhoto_Res,
     ProjectApps_Restart_Req,
     ProjectApps_Restart_Res,
     ProjectApps_SetRunning_Req,
     ProjectApps_SetRunning_Res,
     ProjectApps_UpdateOne_Req,
     ProjectApps_UpdateOne_Res,
+    ProjectApps_UpdatePhoto_Req,
+    ProjectApps_UpdatePhoto_Res,
     ProjectApps_UpdateStatus_Req,
     ProjectApps_UpdateStatus_Res,
 } from "~/projects/api/services";
@@ -240,6 +244,52 @@ function useSetRunning({ onSuccess, ...options }: SetRunningOptions = {}) {
     });
 }
 
+/**
+ * Update a project app photo command
+ */
+type UpdatePhotoReq = ProjectApps_UpdatePhoto_Req["data"];
+type UpdatePhotoRes = ProjectApps_UpdatePhoto_Res;
+type UpdatePhotoOptions = Omit<UseMutationOptions<UpdatePhotoRes, Error, UpdatePhotoReq>, "mutationFn">;
+
+function useUpdatePhoto({ onSuccess, ...options }: UpdatePhotoOptions = {}) {
+    const { mutations } = useProjectAppsApi();
+
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.updatePhoto,
+        onSuccess: (response, request, ...rest) => {
+            invalidateSingleAppSummaryQueries(queryClient, { projectID: request.projectID, appID: request.appID });
+
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
+/**
+ * Detect a project app photo command
+ */
+type DetectPhotoReq = ProjectApps_DetectPhoto_Req["data"];
+type DetectPhotoRes = ProjectApps_DetectPhoto_Res;
+type DetectPhotoOptions = Omit<UseMutationOptions<DetectPhotoRes, Error, DetectPhotoReq>, "mutationFn">;
+
+function useDetectPhoto({ onSuccess, ...options }: DetectPhotoOptions = {}) {
+    const { mutations } = useProjectAppsApi();
+
+    return useMutation({
+        mutationFn: mutations.detectPhoto,
+        onSuccess: (response, request, ...rest) => {
+            if (onSuccess) {
+                onSuccess(response, request, ...rest);
+            }
+        },
+        ...options,
+    });
+}
+
 export const ProjectAppsCommands = Object.freeze({
     useCreateOne,
     useCopy,
@@ -249,4 +299,6 @@ export const ProjectAppsCommands = Object.freeze({
     useDeploy,
     useRestart,
     useSetRunning,
+    useUpdatePhoto,
+    useDetectPhoto,
 });

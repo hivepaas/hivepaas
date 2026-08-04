@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -50,16 +50,14 @@ export function AppConfigGeneralRoute() {
         APP_CONFIGURATION_QUERY_OPTIONS,
     );
 
-    const { mutate: update, isPending } = ProjectAppsCommands.useUpdateOne({
-        onSuccess: () => {
-            toast.success("App information updated");
-        },
+    const { mutate: update, isPending: isUpdating } = ProjectAppsCommands.useUpdateOne({
         onError: err => {
             if (isValidationException(err)) {
                 formRef.current?.onError(ValidationException.fromHttp(err));
             }
         },
     });
+    const { mutate: updatePhoto, isPending: isUpdatingPhoto } = ProjectAppsCommands.useUpdatePhoto({});
 
     function handleSubmit(values: AppConfigGeneralFormSchemaOutput) {
         if (!canWrite) {
@@ -71,15 +69,59 @@ export function AppConfigGeneralRoute() {
         invariant(appId, "appId must be defined");
         invariant(data, "data must be defined");
 
-        update({
-            projectID: projectId,
-            env,
-            appID: appId,
-            ...values,
-            updateVer: data.data.updateVer,
-            status: data.data.status,
-        });
+        const { photoUpload, name, tags, note } = values;
+
+        update(
+            {
+                projectID: projectId,
+                env,
+                appID: appId,
+                name,
+                tags,
+                note,
+                updateVer: data.data.updateVer,
+                status: data.data.status,
+            },
+            {
+                onSuccess: () => {
+                    if (!photoUpload) {
+                        toast.success("App information updated");
+                        return;
+                    }
+
+                    updatePhoto(
+                        {
+                            projectID: projectId,
+                            env,
+                            appID: appId,
+                            photo: photoUpload,
+                        },
+                        {
+                            onSuccess: () => {
+                                toast.success("App information updated");
+                            },
+                        },
+                    );
+                },
+            },
+        );
     }
+
+    useEffect(() => {
+        const app = data?.data;
+
+        if (!app) {
+            return;
+        }
+
+        formRef.current?.setValues({
+            photo: app.photo === "" ? null : app.photo,
+            photoUpload: null,
+            name: app.name,
+            tags: app.tags,
+            note: app.note,
+        });
+    }, [data?.data]);
 
     if (isLoading || isProjectLoading) {
         return <AppLoader />;
@@ -111,11 +153,14 @@ export function AppConfigGeneralRoute() {
             ref={formRef}
             defaultValues={app}
             envs={envs}
+            projectID={projectId}
+            env={env}
+            appID={appId}
             onSubmit={handleSubmit}
             readOnly={!canWrite}
         >
             <FormActionBar>
-                <ProjectPermissionSubmitButton isPending={isPending} />
+                <ProjectPermissionSubmitButton isPending={isUpdating || isUpdatingPhoto} />
             </FormActionBar>
         </AppConfigGeneralForm>
     );

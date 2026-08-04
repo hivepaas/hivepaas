@@ -1,6 +1,7 @@
 import { memo } from "react";
 
 import { Button } from "@components/ui";
+import { Avatar } from "@components/ui/avatar";
 import { Power, RefreshCw } from "lucide-react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -167,6 +168,11 @@ function View({ projectId, env, appId }: Props) {
             <div className="flex items-center gap-4 mt-4 pb-4">
                 <BackButton />
                 <div className="flex items-center gap-4">
+                    <Avatar
+                        name={appData.name}
+                        src={appData.photo}
+                        className="size-10 text-base"
+                    />
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2">
                             <h2 className="text-[20px] font-semibold text-foreground">{appData.name}</h2>

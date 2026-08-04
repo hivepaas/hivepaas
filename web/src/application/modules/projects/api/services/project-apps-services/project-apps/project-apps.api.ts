@@ -10,6 +10,8 @@ import type {
     ProjectApps_DeleteOne_Res,
     ProjectApps_Deploy_Req,
     ProjectApps_Deploy_Res,
+    ProjectApps_DetectPhoto_Req,
+    ProjectApps_DetectPhoto_Res,
     ProjectApps_FindManyPaginated_Req,
     ProjectApps_FindManyPaginated_Res,
     ProjectApps_FindOneById_Req,
@@ -22,6 +24,8 @@ import type {
     ProjectApps_SetRunning_Res,
     ProjectApps_UpdateOne_Req,
     ProjectApps_UpdateOne_Res,
+    ProjectApps_UpdatePhoto_Req,
+    ProjectApps_UpdatePhoto_Res,
     ProjectApps_UpdateStatus_Req,
     ProjectApps_UpdateStatus_Res,
 } from "~/projects/api/services";
@@ -272,6 +276,74 @@ export class ProjectAppsApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/running-status`, { running })).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Update a project app photo
+     */
+    async updatePhoto(
+        request: ProjectApps_UpdatePhoto_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectApps_UpdatePhoto_Res, Error>> {
+        const { projectID, env, appID, photo } = request.data;
+
+        const json =
+            "delete" in photo
+                ? {
+                      delete: true,
+                  }
+                : "isPresetIcon" in photo
+                  ? {
+                        fileName: JsonTransformer.string({
+                            data: photo.fileName,
+                        }),
+                        isPresetIcon: true,
+                    }
+                  : {
+                        fileName: JsonTransformer.string({
+                            data: photo.fileName,
+                        }),
+                        dataBase64: JsonTransformer.string({
+                            data: photo.dataBase64,
+                        }),
+                    };
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/projects/${projectID}/${env}/apps/${appID}/photo`, json, {
+                    signal,
+                }),
+            ).pipe(
+                map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Detect a project app photo from container image or app name
+     */
+    async detectPhoto(
+        request: ProjectApps_DetectPhoto_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectApps_DetectPhoto_Res, Error>> {
+        const { projectID, env, appID } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post(
+                    `/projects/${projectID}/${env}/apps/${appID}/photo-detect`,
+                    {},
+                    {
+                        signal,
+                    },
+                ),
+            ).pipe(
+                map(this.validator.detectPhoto),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

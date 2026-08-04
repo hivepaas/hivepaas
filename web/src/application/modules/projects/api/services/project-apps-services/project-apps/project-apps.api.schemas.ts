@@ -29,6 +29,7 @@ export const ProjectAppParentSchema = z
 export const ProjectAppSchema = z.object({
     id: z.string(),
     name: z.string(),
+    photo: z.string(),
     status: z.nativeEnum(EProjectAppStatus),
     env: OptionalStringSchema,
     note: z.string(),

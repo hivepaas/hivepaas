@@ -3,6 +3,7 @@ import type { EProjectAppStatus } from "~/projects/module-shared/enums";
 export interface ProjectAppBase {
     id: string;
     name: string;
+    photo: string;
     status: EProjectAppStatus;
     env: string;
     note: string;

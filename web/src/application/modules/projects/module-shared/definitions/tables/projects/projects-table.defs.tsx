@@ -1,3 +1,4 @@
+import { Avatar } from "@components/ui/avatar";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import type { ProjectBaseEntity } from "~/projects/domain";
@@ -22,6 +23,15 @@ const columns: ColumnDef<ProjectBaseEntity>[] = [
     {
         accessorKey: "name",
         header: "Name",
+        cell: ({ row: { original } }) => (
+            <div className="flex items-center gap-2">
+                <Avatar
+                    name={original.name}
+                    src={original.photo}
+                />
+                <span>{original.name}</span>
+            </div>
+        ),
     },
     {
         accessorKey: "key",

@@ -41,6 +41,10 @@ import {
     useUpdateAppScheduledJobStatusDialogState,
 } from "~/projects/dialogs/update-app-scheduled-job-status";
 import {
+    UpdateProjectCommandPipeStatusDialog,
+    useUpdateProjectCommandPipeStatusDialogState,
+} from "~/projects/dialogs/update-project-command-pipe-status";
+import {
     UpdateProjectCommandTemplateStatusDialog,
     useUpdateProjectCommandTemplateStatusDialogState,
 } from "~/projects/dialogs/update-project-command-template-status";
@@ -105,6 +109,7 @@ function View() {
     const importProjectSettingsDialog = useImportProjectSettingsDialogState();
     const updateNetworkStatusDialog = useUpdateNetworkStatusDialogState();
     const updateVolumeStatusDialog = useUpdateVolumeStatusDialogState();
+    const updateProjectCommandPipeStatusDialog = useUpdateProjectCommandPipeStatusDialogState();
     const updateProjectCommandTemplateStatusDialog = useUpdateProjectCommandTemplateStatusDialogState();
 
     useUpdateEffect(() => {
@@ -136,6 +141,7 @@ function View() {
         importProjectSettingsDialog.destroy();
         updateNetworkStatusDialog.destroy();
         updateVolumeStatusDialog.destroy();
+        updateProjectCommandPipeStatusDialog.destroy();
         updateProjectCommandTemplateStatusDialog.destroy();
     }, [location]);
 
@@ -169,6 +175,7 @@ function View() {
             <ImportProjectSettingsDialog />
             <UpdateNetworkStatusDialog />
             <UpdateVolumeStatusDialog />
+            <UpdateProjectCommandPipeStatusDialog />
             <UpdateProjectCommandTemplateStatusDialog />
             {/* TODO: Add other dialogs here */}
         </>

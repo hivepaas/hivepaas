@@ -23,6 +23,8 @@ import type { HivePaaSGeneralFormRef } from "../types";
 type UpdatePayload = HivePaaSServiceSettings_UpdateOne_Req["data"]["payload"];
 
 function mapFormValuesToPayload(values: HivePaaSGeneralFormOutput, updateVer: number): UpdatePayload {
+    const proxyProvider = values.proxySettings.proxyProvider.trim();
+
     return {
         updateVer,
         appSettings: {
@@ -41,8 +43,8 @@ function mapFormValuesToPayload(values: HivePaaSGeneralFormOutput, updateVer: nu
             baseInterval: values.periodicSettings.baseInterval,
         },
         proxySettings: {
-            proxyProvider: values.proxySettings.proxyProvider,
-            trustedIPs: splitTrustedIPsText(values.proxySettings.trustedIPsText),
+            proxyProvider,
+            trustedIPs: proxyProvider ? splitTrustedIPsText(values.proxySettings.trustedIPsText) : [],
         },
     };
 }

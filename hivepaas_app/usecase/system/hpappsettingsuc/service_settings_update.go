@@ -280,26 +280,37 @@ func (uc *UC) applyTrustedIPsToTraefik(
 	epWebsecure := "--entrypoints.websecure.forwardedheaders.trustedips="
 	hasEpWebTrustedIPs := false
 	hasEpWebsecureTrustedIPs := false
+	hasChanges := false
 
 	existingArgs := traefikSvc.Spec.TaskTemplate.ContainerSpec.Args
 	newArgs := make([]string, 0, len(existingArgs)+2) //nolint:mnd
 	for _, arg := range existingArgs {
-		key, _, valid := traefikhelper.ParseCommandArg(arg)
+		key, val, valid := traefikhelper.ParseCommandArg(arg)
 		if !valid {
 			newArgs = append(newArgs, arg)
 			continue
 		}
 		if strings.HasPrefix(key, epWeb) {
 			hasEpWebTrustedIPs = true
+			if val == trustedIPsStr {
+				newArgs = append(newArgs, arg)
+				continue
+			}
 			if trustedIPsStr != "" {
 				newArgs = append(newArgs, epWeb+trustedIPsStr)
+				hasChanges = true
 			}
 			continue
 		}
 		if strings.HasPrefix(key, epWebsecure) {
 			hasEpWebsecureTrustedIPs = true
+			if val == trustedIPsStr {
+				newArgs = append(newArgs, arg)
+				continue
+			}
 			if trustedIPsStr != "" {
 				newArgs = append(newArgs, epWebsecure+trustedIPsStr)
+				hasChanges = true
 			}
 			continue
 		}
@@ -308,9 +319,14 @@ func (uc *UC) applyTrustedIPsToTraefik(
 
 	if !hasEpWebTrustedIPs && trustedIPsStr != "" {
 		newArgs = append(newArgs, epWeb+trustedIPsStr)
+		hasChanges = true
 	}
 	if !hasEpWebsecureTrustedIPs && trustedIPsStr != "" {
 		newArgs = append(newArgs, epWebsecure+trustedIPsStr)
+		hasChanges = true
+	}
+	if !hasChanges {
+		return nil
 	}
 
 	traefikSvc.Spec.TaskTemplate.ContainerSpec.Args = newArgs

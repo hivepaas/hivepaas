@@ -43,6 +43,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice/apppreviewserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice/clustersecretserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice/clusterserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice/containerexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dbservice/dbserviceimpl"
@@ -271,6 +272,7 @@ var Provides = []any{
 
 	// Service
 	clusterserviceimpl.New,
+	clustersecretserviceimpl.New,
 	userserviceimpl.New,
 	projectserviceimpl.New,
 	networkserviceimpl.New,

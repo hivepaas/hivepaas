@@ -5,6 +5,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
@@ -19,13 +20,14 @@ type BaseUC struct {
 	SharedSettingRepo repository.SharedSettingRepo
 	SettingRepo       repository.SettingRepo
 
-	AppService        appservice.Service
-	ClusterService    clusterservice.Service
-	FileService       fileservice.Service
-	ProjectService    projectservice.Service
-	SettingService    settingservice.Service
-	UserService       userservice.Service
-	PermissionManager permission.Manager
+	AppService           appservice.Service
+	ClusterSecretService clustersecretservice.Service
+	ClusterService       clusterservice.Service
+	FileService          fileservice.Service
+	ProjectService       projectservice.Service
+	SettingService       settingservice.Service
+	UserService          userservice.Service
+	PermissionManager    permission.Manager
 }
 
 func New(
@@ -36,6 +38,7 @@ func New(
 	settingRepo repository.SettingRepo,
 
 	appService appservice.Service,
+	clusterSecretService clustersecretservice.Service,
 	clusterService clusterservice.Service,
 	fileService fileservice.Service,
 	projectService projectservice.Service,
@@ -50,12 +53,13 @@ func New(
 		SharedSettingRepo: sharedSettingRepo,
 		SettingRepo:       settingRepo,
 
-		AppService:        appService,
-		ClusterService:    clusterService,
-		FileService:       fileService,
-		ProjectService:    projectService,
-		SettingService:    settingService,
-		UserService:       userService,
-		PermissionManager: permissionManager,
+		AppService:           appService,
+		ClusterSecretService: clusterSecretService,
+		ClusterService:       clusterService,
+		FileService:          fileService,
+		ProjectService:       projectService,
+		SettingService:       settingService,
+		UserService:          userService,
+		PermissionManager:    permissionManager,
 	}
 }

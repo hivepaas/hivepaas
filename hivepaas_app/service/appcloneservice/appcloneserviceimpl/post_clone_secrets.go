@@ -23,7 +23,7 @@ func (s *service) applySwarmSecrets(
 	for _, secretItem := range secretSettings {
 		secretItems = append(secretItems, secretItem.MustAsSecret())
 	}
-	data.DestSecrets, err = s.clusterService.CreateSecretsForApp(ctx, db, app, secretItems)
+	data.DestSecrets, err = s.clusterSecretService.CreateSecretsForApp(ctx, db, app, secretItems)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

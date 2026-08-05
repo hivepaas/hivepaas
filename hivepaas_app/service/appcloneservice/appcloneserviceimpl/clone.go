@@ -216,12 +216,12 @@ func (s *service) cleanupOnFail(
 	for _, secret := range data.DestSecrets {
 		secretIDs = append(secretIDs, secret.SecretID)
 	}
-	_ = s.clusterService.SecretsRemove(ctx, secretIDs, clusterservice.ItemRemovalRetryMax, 0)
+	_ = s.clusterSecretService.SecretsRemove(ctx, secretIDs, clusterservice.ItemRemovalRetryMax, 0)
 
 	var configIDs []string
 	for _, cfg := range data.DestConfig {
 		configIDs = append(configIDs, cfg.ConfigID)
 	}
-	_ = s.clusterService.ConfigsRemove(ctx, configIDs, clusterservice.ItemRemovalRetryMax, 0)
+	_ = s.clusterSecretService.ConfigsRemove(ctx, configIDs, clusterservice.ItemRemovalRetryMax, 0)
 	return nil
 }

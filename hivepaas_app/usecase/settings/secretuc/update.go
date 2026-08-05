@@ -65,7 +65,7 @@ func (uc *UC) UpdateSecret(
 				}
 			}
 			if req.Scope.IsAppScope() {
-				err = uc.ClusterService.UpdateSecretForApp(ctx, db, req.Scope.App, oldSecret, updatedSecret)
+				err = uc.ClusterSecretService.UpdateSecretForApp(ctx, db, req.Scope.App, oldSecret, updatedSecret)
 				if err != nil {
 					return apperrors.Wrap(err)
 				}

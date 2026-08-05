@@ -1,4 +1,4 @@
-package clusterserviceimpl
+package clustersecretserviceimpl
 
 import (
 	"context"
@@ -18,83 +18,93 @@ import (
 )
 
 const (
-	configDefaultFileUID  = "0"
-	configDefaultFileGID  = "0"
-	configDefaultFileMode = 444
+	secretDefaultFileUID  = "0"
+	secretDefaultFileGID  = "0"
+	secretDefaultFileMode = 444
 )
 
-func (s *service) CreateConfigsForApp(
+const (
+	itemRemovalRetryDelay = 3 * time.Second
+	itemRemovalRetryIncr  = 3 * time.Second
+)
+
+func (s *service) CreateSecretsForApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-	configs []*entity.ConfigFile,
-) (refs []*entity.SwarmConfigRef, err error) {
-	refs = make([]*entity.SwarmConfigRef, 0, len(configs))
-	for _, cfg := range configs {
-		ref, err := s.createSwarmConfig(ctx, db, app, cfg)
+	secrets []*entity.Secret,
+) (refs []*entity.SwarmSecretRef, err error) {
+	refs = make([]*entity.SwarmSecretRef, 0, len(secrets))
+	for _, secret := range secrets {
+		ref, err := s.createSwarmSecret(ctx, db, app, secret)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
 		refs = append(refs, ref)
 	}
-	return refs, s.addSwarmConfigsToService(ctx, db, app, refs)
+	return refs, s.addSwarmSecretsToService(ctx, db, app, refs)
 }
 
-func (s *service) CreateConfigForApp(
+func (s *service) CreateSecretForApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-	config *entity.ConfigFile,
-) (*entity.SwarmConfigRef, error) {
-	refs, err := s.CreateConfigsForApp(ctx, db, app, []*entity.ConfigFile{config})
+	secret *entity.Secret,
+) (*entity.SwarmSecretRef, error) {
+	refs, err := s.CreateSecretsForApp(ctx, db, app, []*entity.Secret{secret})
 	ref, _ := gofn.First(refs)
 	return ref, apperrors.Wrap(err)
 }
 
-func (s *service) createSwarmConfig(
+func (s *service) createSwarmSecret(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-	config *entity.ConfigFile,
-) (ref *entity.SwarmConfigRef, err error) {
-	swarmRef := config.SwarmRef
+	secret *entity.Secret,
+) (ref *entity.SwarmSecretRef, err error) {
+	swarmRef := secret.SwarmRef
 	// Only create an item in docker if it is configured to mount to file system
 	if swarmRef == nil || swarmRef.File == nil || swarmRef.File.Name == "" {
 		return nil, nil
 	}
 
-	swarmRef.File.Name = gofn.Coalesce(swarmRef.File.Name, strings.ToLower(config.Name))
-	swarmRef.File.UID = gofn.Coalesce(swarmRef.File.UID, configDefaultFileUID)
-	swarmRef.File.GID = gofn.Coalesce(swarmRef.File.GID, configDefaultFileGID)
-	swarmRef.File.Mode = gofn.Coalesce(swarmRef.File.Mode, configDefaultFileMode)
+	swarmRef.File.Name = gofn.Coalesce(swarmRef.File.Name, strings.ToLower(secret.Key))
+	swarmRef.File.UID = gofn.Coalesce(swarmRef.File.UID, secretDefaultFileUID)
+	swarmRef.File.GID = gofn.Coalesce(swarmRef.File.GID, secretDefaultFileGID)
+	swarmRef.File.Mode = gofn.Coalesce(swarmRef.File.Mode, secretDefaultFileMode)
 
-	// Create the config in docker swarm
-	configName := app.GlobalKey + "_" + strings.ToLower(config.Name)
-	configResp, err := s.dockerManager.ConfigCreate(ctx, configName, config.ContentAsBytes(),
-		func(opts *client.ConfigCreateOptions) {
+	// Create the secret in docker swarm
+	secretName := app.GlobalKey + "_" + strings.ToLower(secret.Key)
+	secretBytes, err := secret.ValueAsBytes()
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	secretResp, err := s.dockerManager.SecretCreate(ctx, secretName, secretBytes,
+		func(opts *client.SecretCreateOptions) {
 			opts.Spec.Labels = map[string]string{
 				docker.StackLabelNamespace: app.Project.Key,
 			}
 		})
 	if err != nil {
 		if errors.Is(err, apperrors.ErrInfraConflict) || errors.Is(err, apperrors.ErrInfraAlreadyExists) {
-			// Delete the orphan config, then retry this action
-			if err := s.deleteOrphanSwarmConfig(ctx, db, app, configName); err == nil {
-				return s.createSwarmConfig(ctx, db, app, config)
+			// Delete the orphan secret, then retry this action
+			if err := s.deleteOrphanSwarmSecret(ctx, db, app, secretName); err == nil {
+				return s.createSwarmSecret(ctx, db, app, secret)
 			}
 		}
 		return nil, apperrors.Wrap(err)
 	}
-	swarmRef.ConfigID = configResp.ID
-	swarmRef.ConfigName = configName
+	swarmRef.SecretID = secretResp.ID
+	swarmRef.SecretName = secretName
 	return swarmRef, nil
 }
 
-func (s *service) addSwarmConfigsToService(
+func (s *service) addSwarmSecretsToService(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-	refs []*entity.SwarmConfigRef,
+	refs []*entity.SwarmSecretRef,
 ) (err error) {
 	if app.ServiceID == "" || len(refs) == 0 {
 		return nil
@@ -108,25 +118,25 @@ func (s *service) addSwarmConfigsToService(
 	containerSpec := swarmSvc.Spec.TaskTemplate.ContainerSpec
 
 	for _, swarmRef := range refs {
-		if swarmRef == nil || swarmRef.ConfigID == "" {
+		if swarmRef == nil || swarmRef.SecretID == "" {
 			continue
 		}
-		// Only add the config to the swarm service when the target file name is not used by another config
-		_, inUse := gofn.Find(containerSpec.Configs, func(cfg *swarm.ConfigReference) bool {
-			return cfg.File != nil && cfg.File.Name == swarmRef.File.Name
+		// Only add the secret to the swarm service when the target file name is not used by another secret
+		_, inUse := gofn.Find(containerSpec.Secrets, func(sec *swarm.SecretReference) bool {
+			return sec.File != nil && sec.File.Name == swarmRef.File.Name
 		})
 		if inUse {
 			continue
 		}
-		containerSpec.Configs = append(containerSpec.Configs, &swarm.ConfigReference{
-			File: &swarm.ConfigReferenceFileTarget{
+		containerSpec.Secrets = append(containerSpec.Secrets, &swarm.SecretReference{
+			File: &swarm.SecretReferenceFileTarget{
 				Name: swarmRef.File.Name,
 				UID:  swarmRef.File.UID,
 				GID:  swarmRef.File.GID,
 				Mode: swarmRef.File.Mode.ToFileMode(),
 			},
-			ConfigID:   swarmRef.ConfigID,
-			ConfigName: swarmRef.ConfigName,
+			SecretID:   swarmRef.SecretID,
+			SecretName: swarmRef.SecretName,
 		})
 	}
 
@@ -144,7 +154,7 @@ func (s *service) addSwarmConfigsToService(
 			return apperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
-			err = s.addSwarmConfigsToService(ctx, db, childApp, refs)
+			err = s.addSwarmSecretsToService(ctx, db, childApp, refs)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -154,23 +164,23 @@ func (s *service) addSwarmConfigsToService(
 	return nil
 }
 
-func (s *service) DeleteConfigForApp(
+func (s *service) DeleteSecretForApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-	config *entity.ConfigFile,
+	secret *entity.Secret,
 ) (err error) {
-	if config.SwarmRef == nil || config.SwarmRef.ConfigID == "" {
+	if secret.SwarmRef == nil || secret.SwarmRef.SecretID == "" {
 		return nil
 	}
 
-	// Remove the config from the swarm service of the app
-	err = s.removeSwarmConfigFromService(ctx, app.ServiceID, config.SwarmRef)
+	// Remove the secret from the swarm service of the app
+	err = s.removeSwarmSecretFromService(ctx, app.ServiceID, secret.SwarmRef)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	// If this app is parent of some other apps, also remove the config from the child apps
+	// If this app is parent of some other apps, also remove the secret from the child apps
 	if !app.IsChildApp() { //nolint:nestif
 		childApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
@@ -179,38 +189,38 @@ func (s *service) DeleteConfigForApp(
 			return apperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
-			err = s.removeSwarmConfigFromService(ctx, childApp.ServiceID, config.SwarmRef)
+			err = s.removeSwarmSecretFromService(ctx, childApp.ServiceID, secret.SwarmRef)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
 		}
 	}
 
-	// Now delete the config
-	_, err = s.dockerManager.ConfigRemove(ctx, config.SwarmRef.ConfigID)
+	// Now delete the secret
+	_, err = s.dockerManager.SecretRemove(ctx, secret.SwarmRef.SecretID)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
-	config.SwarmRef.ConfigID = ""
-	config.SwarmRef.ConfigName = ""
+	secret.SwarmRef.SecretID = ""
+	secret.SwarmRef.SecretName = ""
 
 	return nil
 }
 
-func (s *service) UpdateConfigForApp(
+func (s *service) UpdateSecretForApp(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-	oldConfig, newConfig *entity.ConfigFile,
+	oldSecret, newSecret *entity.Secret,
 ) (err error) {
-	// Remove the old config from services then delete it from the swarm
-	err = s.DeleteConfigForApp(ctx, db, app, oldConfig)
+	// Remove the old secret from services then delete it from the swarm
+	err = s.DeleteSecretForApp(ctx, db, app, oldSecret)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	// Create a config in the swarm then add it to the services
-	_, err = s.CreateConfigForApp(ctx, db, app, newConfig)
+	// Create a secret in the swarm then add it to the services
+	_, err = s.CreateSecretForApp(ctx, db, app, newSecret)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -218,12 +228,12 @@ func (s *service) UpdateConfigForApp(
 	return nil
 }
 
-func (s *service) removeSwarmConfigFromService(
+func (s *service) removeSwarmSecretFromService(
 	ctx context.Context,
 	serviceID string,
-	swarmRef *entity.SwarmConfigRef,
+	swarmRef *entity.SwarmSecretRef,
 ) (err error) {
-	if serviceID == "" || swarmRef == nil || swarmRef.ConfigID == "" {
+	if serviceID == "" || swarmRef == nil || swarmRef.SecretID == "" {
 		return nil
 	}
 
@@ -234,19 +244,19 @@ func (s *service) removeSwarmConfigFromService(
 	swarmSvc := &inspect.Service
 
 	hasChanges := false
-	updateConfigs := make([]*swarm.ConfigReference, 0, len(swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs))
-	for _, cfg := range swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs {
-		if swarmRef.ConfigID == cfg.ConfigID {
+	updateSecrets := make([]*swarm.SecretReference, 0, len(swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets))
+	for _, sec := range swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets {
+		if swarmRef.SecretID == sec.SecretID {
 			hasChanges = true
 			continue
 		}
-		updateConfigs = append(updateConfigs, cfg)
+		updateSecrets = append(updateSecrets, sec)
 	}
 	if !hasChanges {
 		return nil
 	}
 
-	swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs = updateConfigs
+	swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets = updateSecrets
 	_, err = s.dockerManager.ServiceUpdate(ctx, serviceID, &swarmSvc.Version, &swarmSvc.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -254,38 +264,38 @@ func (s *service) removeSwarmConfigFromService(
 	return nil
 }
 
-func (s *service) deleteOrphanSwarmConfig(
+func (s *service) deleteOrphanSwarmSecret(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-	configNameOrID string,
+	secretNameOrID string,
 ) (err error) {
-	if configNameOrID == "" {
+	if secretNameOrID == "" {
 		return nil
 	}
 
-	inspect, err := s.dockerManager.ConfigInspect(ctx, configNameOrID)
+	inspect, err := s.dockerManager.SecretInspect(ctx, secretNameOrID)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) {
 			return nil
 		}
 		return apperrors.Wrap(err)
 	}
-	orphanSwarmConfig := &inspect.Config
+	orphanSwarmSec := &inspect.Secret
 
-	orphanSwarmRef := &entity.SwarmConfigRef{
+	orphanSwarmRef := &entity.SwarmSecretRef{
 		File:       &entity.SwarmRefFileTarget{},
-		ConfigID:   orphanSwarmConfig.ID,
-		ConfigName: orphanSwarmConfig.Spec.Name,
+		SecretID:   orphanSwarmSec.ID,
+		SecretName: orphanSwarmSec.Spec.Name,
 	}
 
-	// Remove the config from the swarm service of the app
-	err = s.removeSwarmConfigFromService(ctx, app.ServiceID, orphanSwarmRef)
+	// Remove the secret from the swarm service of the app
+	err = s.removeSwarmSecretFromService(ctx, app.ServiceID, orphanSwarmRef)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	// If this app is parent of some other apps, also remove the config from the child apps
+	// If this app is parent of some other apps, also remove the secret from the child apps
 	if !app.IsChildApp() {
 		childApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
@@ -294,15 +304,15 @@ func (s *service) deleteOrphanSwarmConfig(
 			return apperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
-			err = s.removeSwarmConfigFromService(ctx, childApp.ServiceID, orphanSwarmRef)
+			err = s.removeSwarmSecretFromService(ctx, childApp.ServiceID, orphanSwarmRef)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
 		}
 	}
 
-	// Now delete the config
-	_, err = s.dockerManager.ConfigRemove(ctx, orphanSwarmConfig.ID)
+	// Now delete the secret
+	_, err = s.dockerManager.SecretRemove(ctx, orphanSwarmSec.ID)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
@@ -310,17 +320,17 @@ func (s *service) deleteOrphanSwarmConfig(
 	return nil
 }
 
-func (s *service) ConfigRemove(
+func (s *service) SecretRemove(
 	ctx context.Context,
-	configID string,
+	secretID string, // secret id in docker
 	retryMax int,
 	retryDelay time.Duration,
 ) (err error) {
-	if configID == "" {
+	if secretID == "" {
 		return nil
 	}
 	fn := func() error {
-		_, err := s.dockerManager.ConfigRemove(ctx, configID)
+		_, err := s.dockerManager.SecretRemove(ctx, secretID)
 		if err != nil {
 			if errors.Is(err, apperrors.ErrNotFound) {
 				return nil
@@ -344,22 +354,22 @@ func (s *service) ConfigRemove(
 	return nil
 }
 
-func (s *service) ConfigsRemove(
+func (s *service) SecretsRemove(
 	ctx context.Context,
-	configIDs []string,
+	secretIDs []string, // secret ids in docker
 	retryMax int,
 	retryDelay time.Duration,
 ) (err error) {
-	if len(configIDs) == 0 {
+	if len(secretIDs) == 0 {
 		return nil
 	}
-	if len(configIDs) == 1 {
-		return s.ConfigRemove(ctx, configIDs[0], retryMax, retryDelay)
+	if len(secretIDs) == 1 {
+		return s.SecretRemove(ctx, secretIDs[0], retryMax, retryDelay)
 	}
 	errMap := gofn.ExecTaskFuncEx(ctx, 10, false, //nolint:mnd
 		func(ctx context.Context, itemID string) error {
-			return s.ConfigRemove(ctx, itemID, retryMax, retryDelay)
-		}, configIDs...)
+			return s.SecretRemove(ctx, itemID, retryMax, retryDelay)
+		}, secretIDs...)
 	for _, e := range errMap {
 		err = errors.Join(err, e)
 	}

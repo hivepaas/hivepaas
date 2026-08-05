@@ -23,7 +23,7 @@ func (s *service) applySwarmConfigFiles(
 	for _, configItem := range configSettings {
 		configItems = append(configItems, configItem.MustAsConfigFile())
 	}
-	data.DestConfig, err = s.clusterService.CreateConfigsForApp(ctx, db, app, configItems)
+	data.DestConfig, err = s.clusterSecretService.CreateConfigsForApp(ctx, db, app, configItems)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -36,10 +36,10 @@ func (uc *UC) UpdateSecretStatus(
 				secret := pData.Setting.MustAsSecret()
 				if pData.Setting.IsActive() {
 					// Create a secret in the cluster for the app
-					_, err = uc.ClusterService.CreateSecretForApp(ctx, db, req.Scope.App, secret)
+					_, err = uc.ClusterSecretService.CreateSecretForApp(ctx, db, req.Scope.App, secret)
 				} else {
 					// Delete the related secret in the cluster
-					err = uc.ClusterService.DeleteSecretForApp(ctx, db, req.Scope.App, secret)
+					err = uc.ClusterSecretService.DeleteSecretForApp(ctx, db, req.Scope.App, secret)
 				}
 				if err != nil {
 					return apperrors.Wrap(err)

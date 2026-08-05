@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc/appfeaturesettingsdto"
 )
@@ -24,8 +27,11 @@ func (uc *UC) UpdateAppFeatureSettings(
 			data *settings.UpdateUniqueSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
-			err := pData.Setting.SetData(req.ToEntity())
-			if err != nil {
+			featureSettings := req.ToEntity()
+			if err := uc.validateAppsToClone(ctx, db, req.Scope, featureSettings); err != nil {
+				return apperrors.Wrap(err)
+			}
+			if err := pData.Setting.SetData(featureSettings); err != nil {
 				return apperrors.Wrap(err)
 			}
 			return nil
@@ -36,4 +42,55 @@ func (uc *UC) UpdateAppFeatureSettings(
 	}
 
 	return &appfeaturesettingsdto.UpdateAppFeatureSettingsResp{}, nil
+}
+
+func (uc *UC) validateAppsToClone(
+	ctx context.Context,
+	db database.IDB,
+	scope *entity.ObjectScope,
+	featureSettings *entity.AppFeatureSettings,
+) error {
+	if featureSettings.PreviewSettings == nil {
+		return nil
+	}
+	appsToValidate := featureSettings.PreviewSettings.AppsToClone.ToIDStringSlice()
+	if len(appsToValidate) == 0 {
+		return nil
+	}
+
+	currApp := scope.App
+	for _, appToValidate := range appsToValidate {
+		if appToValidate == currApp.ID {
+			return apperrors.Wrap(apperrors.ErrAppIsCurrent)
+		}
+	}
+
+	// TODO (high): User must have WRITE on the current env?
+
+	apps, err := uc.AppService.LoadApps(ctx, db, currApp.ProjectID, appsToValidate, true, true,
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
+		bunex.SelectRelation("Settings",
+			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppClone),
+			bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+		),
+	)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	for _, app := range apps {
+		if app.ProjectEnvID != currApp.ProjectEnvID {
+			return apperrors.Wrap(apperrors.ErrAppsNotInSameProjectEnv).WithMsgLog("app '%v'", app.ProjectEnvID)
+		}
+		cloneSettings := app.GetSettingByType(base.SettingTypeAppClone)
+		if cloneSettings == nil {
+			return apperrors.Wrap(apperrors.ErrAppCloneSettingsRequired).WithParam("Name", app.Name)
+		}
+	}
+
+	return nil
 }

@@ -5,11 +5,11 @@ import (
 )
 
 type CreatePreviewReq struct {
-	ProjectID       string
-	AppID           string
+	App             *entity.App
 	RepoRef         string
 	CustomSubdomain string
 	NoStart         bool
+	CloneDBApps     []*entity.App
 
 	OnInitDeployment func(*entity.Deployment) error
 	OnDeploymentTask func(*entity.Task) error

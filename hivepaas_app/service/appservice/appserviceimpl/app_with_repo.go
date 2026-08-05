@@ -53,6 +53,9 @@ func (s *service) FindAppsMatchingRepository(
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 			bunex.SelectWhere("project.status = ?", base.ProjectStatusActive),
 		),
+		bunex.SelectRelation("ProjectEnv",
+			bunex.SelectWhere("project_env.status = ?", base.ProjectStatusActive),
+		),
 		bunex.SelectRelation("Settings",
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
 			bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
@@ -71,6 +74,9 @@ func (s *service) FindAppsMatchingRepository(
 	matchingApps := make([]*entity.App, 0, len(apps))
 	for _, app := range apps {
 		if app.Project == nil || app.Project.Status != base.ProjectStatusActive {
+			continue
+		}
+		if app.ProjectEnv == nil || app.ProjectEnv.Status != base.ProjectStatusActive {
 			continue
 		}
 		deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)

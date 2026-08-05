@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/gitsight/go-vcsurl"
 
@@ -21,13 +20,11 @@ const (
 	previewCmdDeploy             = "deploy"
 	previewCmdDeployArgNoStart   = "nostart"
 	previewCmdDeployArgNoWait    = "nowait"
+	previewCmdDeployArgCloneDb   = "clonedb"
+	previewCmdDeployArgNoCloneDb = "noclonedb"
 	previewCmdDeployArgSubdomain = "subdomain"
 
 	previewCmdCancel = "cancel"
-)
-
-const (
-	deployDelayDefault = 30 * time.Second
 )
 
 type repoPRCommentEventData struct {
@@ -40,6 +37,8 @@ type repoPRCommentEventData struct {
 	previewCmd             string
 	previewDeployNoStart   bool
 	previewDeployNoWait    bool
+	previewDeployCloneDB   bool
+	previewDeployNoCloneDB bool
 	previewDeploySubdomain string
 }
 
@@ -101,9 +100,10 @@ func (uc *UC) processWebhookEventPRComment(
 	return nil
 }
 
+//nolint:gocognit,gocyclo
 func (uc *UC) parsePRCommentCommand(
 	commentEvent *repoPRCommentEventData,
-) (bool, error) {
+) (success bool, err error) {
 	var firstValidLine string
 	for _, line := range strings.Split(commentEvent.CommentBody, "\n") {
 		line = strings.TrimSpace(line)
@@ -148,10 +148,37 @@ func (uc *UC) parsePRCommentCommand(
 				return false, apperrors.Wrap(err)
 			}
 			commentEvent.previewDeployNoWait = boolVal
+		case (k == previewCmdDeployArgCloneDb || k == "clone-db") && commentEvent.previewCmd == previewCmdDeploy:
+			if v == "" {
+				commentEvent.previewDeployCloneDB = true
+				continue // continue for-loop
+			}
+			boolVal, err := strconv.ParseBool(v)
+			if err != nil {
+				return false, apperrors.Wrap(err)
+			}
+			commentEvent.previewDeployCloneDB = boolVal
+		case (k == previewCmdDeployArgNoCloneDb || k == "no-clone-db") && commentEvent.previewCmd == previewCmdDeploy:
+			if v == "" {
+				commentEvent.previewDeployNoCloneDB = true
+				continue // continue for-loop
+			}
+			boolVal, err := strconv.ParseBool(v)
+			if err != nil {
+				return false, apperrors.Wrap(err)
+			}
+			commentEvent.previewDeployNoCloneDB = boolVal
 		case k == previewCmdDeployArgSubdomain && commentEvent.previewCmd == previewCmdDeploy:
 			commentEvent.previewDeploySubdomain = v
 		}
 	}
 
-	return commentEvent.previewCmd != "", nil
+	success = commentEvent.previewCmd != ""
+	if !success {
+		return false, nil
+	}
+
+	// TODO (med): send a comment to the PR to notify user about the error
+
+	return true, nil
 }

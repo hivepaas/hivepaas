@@ -104,6 +104,10 @@ ERR_PROJECT_ENV_REMOVAL_UNALLOWED = "Project env '{{.Name}}' cannot be removed v
 # App errors
 ERR_APP_NOT_FOUND = "App '{{.Name}}' is not found"
 ERR_APP_INACTIVE = "App '{{.Name}}' is inactive"
+ERR_APP_IS_CURRENT = "Input app must not be the current app"
+ERR_APPS_NOT_IN_SAME_PROJECT = "Apps must be in the same project"
+ERR_APPS_NOT_IN_SAME_PROJECT_ENV = "Apps must be in the same project environment"
+ERR_APP_CLONE_SETTING_REQUIRED = "Clone settings are required to configured in app '{{.Name}}'"
 ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES = "Multi-node cluster reuquires an accessible registry for the built images"
 ERR_DEPLOYMENT_METHOD_REPO_REQUIRED = "App is required to be deployed from a repo source"
 ERR_FEATURE_DISABLED = "Feature '{{.Name}}' is disabled"

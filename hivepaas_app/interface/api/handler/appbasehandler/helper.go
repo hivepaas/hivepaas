@@ -64,7 +64,8 @@ func (h *Handler) GetAuthInProject(
 func (h *Handler) GetAuthInEnv(
 	ctx *gin.Context,
 	action base.ActionType,
-) (auth *basedto.Auth, projectID, projectEnvID string, err error) {
+	getAppID bool,
+) (auth *basedto.Auth, projectID, projectEnvID, appID string, err error) {
 	projectID, err = h.ParseStringParam(ctx, "projectID")
 	if err != nil {
 		return
@@ -74,6 +75,12 @@ func (h *Handler) GetAuthInEnv(
 		return
 	}
 	projectEnvID = projecthelper.CalcProjectEnvID(projectID, projectEnv)
+	if getAppID {
+		appID, err = h.ParseStringParam(ctx, "appID")
+		if err != nil {
+			return
+		}
+	}
 	accessCheck := &permission.ProjectAccessCheck{
 		BaseAccessCheck: permission.BaseAccessCheck{Action: action},
 		ProjectID:       projectID,

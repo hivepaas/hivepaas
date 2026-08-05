@@ -62,7 +62,7 @@ func (uc *UC) ListGitCredential(
 		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 
-	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, uc.DB, req.Scope, true,
+	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, uc.DB, req.Scope, false,
 		false, settings...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

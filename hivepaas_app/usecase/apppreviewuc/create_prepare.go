@@ -16,7 +16,8 @@ func (uc *UC) PrepareCreatePreview(
 	auth *basedto.Auth,
 	req *apppreviewdto.PrepareCreatePreviewReq,
 ) (_ *apppreviewdto.PrepareCreatePreviewResp, err error) {
-	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, true,
+	app, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID, req.AppID,
+		true, true,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
@@ -28,6 +29,23 @@ func (uc *UC) PrepareCreatePreview(
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
+	}
+
+	resp := &apppreviewdto.PrepareCreatePreviewResp{
+		Data: &apppreviewdto.PrepareCreatePreviewDataResp{Enabled: true},
+	}
+	previewSettings := featureSettings.PreviewSettings
+	if previewSettings != nil {
+		if !previewSettings.Enabled {
+			resp.Data.Enabled = false
+			return resp, nil
+		}
+		hasAppsToClone := len(previewSettings.AppsToClone) > 0
+		if hasAppsToClone && previewSettings.AutoCloneApps {
+			resp.Data.CanSkipCloningDBApps = true
+		} else if hasAppsToClone && !previewSettings.AutoCloneApps {
+			resp.Data.CanCloneDBApps = true
+		}
 	}
 
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)

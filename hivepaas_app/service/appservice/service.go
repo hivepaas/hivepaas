@@ -22,6 +22,8 @@ type Service interface {
 	LoadAppWithFeatureSettings(ctx context.Context, db database.IDB, projectID, appID string,
 		requireProjectActive, requireAppActive bool, extraOpts ...bunex.SelectQueryOption) (
 		*entity.App, *entity.AppFeatureSettings, error)
+	EnsureAppActive(ctx context.Context, db database.Tx, app *entity.App,
+		checkUpdateVer bool, lockApp bool) error
 
 	FindAppsMatchingRepository(ctx context.Context, db database.IDB, repoID, repoRef string,
 		extraAppOpts ...bunex.SelectQueryOption) ([]*entity.App, error)

@@ -130,3 +130,25 @@ func (s *service) LoadAppWithFeatureSettings(
 	}
 	return app, featureSettings, nil
 }
+
+func (s *service) EnsureAppActive(
+	ctx context.Context,
+	db database.Tx,
+	app *entity.App,
+	checkUpdateVer bool,
+	lockApp bool,
+) error {
+	_, err := s.LoadApp(ctx, db, app.ProjectID, app.ID, true, true,
+		bunex.SelectColumns("id"),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
+		bunex.SelectForIf(lockApp, "UPDATE OF app"),
+		bunex.SelectWhereIf(checkUpdateVer, "app.update_ver = ?", app.UpdateVer),
+	)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}

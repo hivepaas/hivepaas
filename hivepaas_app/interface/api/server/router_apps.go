@@ -32,11 +32,6 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.POST("/:appID/photo-detect", appHandler.DetectAppPhoto)
 	}
 
-	{ // Clone app
-		appGroup.GET("/:appID/clone/prepare", appHandler.PrepareAppClone)
-		appGroup.POST("/:appID/clone", appHandler.CloneApp)
-	}
-
 	{ // Tags
 		tagGroup := appGroup.Group("/:appID/tags")
 		tagGroup.POST("", appSettingsHandler.CreateAppTag)

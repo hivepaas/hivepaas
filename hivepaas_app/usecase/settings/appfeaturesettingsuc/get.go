@@ -46,8 +46,16 @@ func (uc *UC) GetAppFeatureSettings(
 		resp.Data.MustSetData(featureSettings)
 	}
 
+	setting := resp.Data
+	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, uc.DB, req.Scope,
+		false, false, setting)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
 	input := &appfeaturesettingsdto.AppFeatureSettingsTransformInput{
-		Setting: resp.Data,
+		Setting:    setting,
+		RefObjects: refObjects,
 	}
 
 	respData, err := appfeaturesettingsdto.TransformAppFeatureSettings(input)

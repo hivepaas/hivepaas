@@ -100,7 +100,7 @@ func (uc *BaseUC) ListSetting(
 
 	var refObjects *entity.RefObjects
 	if !data.SkipLoadingRefObjects {
-		refObjects, err = uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, true,
+		refObjects, err = uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope, false,
 			false, settings...)
 		if err != nil {
 			return nil, apperrors.Wrap(err)

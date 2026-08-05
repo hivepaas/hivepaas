@@ -170,6 +170,10 @@ var (
 var (
 	ErrAppNotFound                              = NewErr(ErrNotFound, "ERR_APP_NOT_FOUND")
 	ErrAppInactive                              = NewErr(ErrInactive, "ERR_APP_INACTIVE")
+	ErrAppIsCurrent                             = NewErr(ErrInactive, "ERR_APP_IS_CURRENT")
+	ErrAppsNotInSameProject                     = NewErr(ErrNotAllowed, "ERR_APPS_NOT_IN_SAME_PROJECT")
+	ErrAppsNotInSameProjectEnv                  = NewErr(ErrNotAllowed, "ERR_APPS_NOT_IN_SAME_PROJECT_ENV")
+	ErrAppCloneSettingsRequired                 = NewErr(ErrPreconditionRequired, "ERR_APP_CLONE_SETTING_REQUIRED")
 	ErrMultiNodeClusterRequireRegistryForImages = NewErr(ErrPreconditionRequired, "ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES") //nolint:lll
 	ErrDeploymentMethodRepoRequired             = NewErr(ErrUnconfigured, "ERR_DEPLOYMENT_METHOD_REPO_REQUIRED")
 	ErrFeatureDisabled                          = NewErr(ErrInactive, "ERR_FEATURE_DISABLED")

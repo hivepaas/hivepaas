@@ -96,7 +96,7 @@ func (s *service) loadAppDataForCreatingPreview(
 	db database.IDB,
 	data *createPreviewData,
 ) (err error) {
-	app, err := s.appService.LoadApp(ctx, db, data.ProjectID, data.AppID, true, true,
+	app, err := s.appService.LoadApp(ctx, db, data.App.ProjectID, data.App.ID, true, true,
 		bunex.SelectFor("UPDATE OF app"),
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",

@@ -31,8 +31,11 @@ type PrepareCreatePreviewResp struct {
 }
 
 type PrepareCreatePreviewDataResp struct {
-	RepoURL             string                `json:"repoURL"`
-	RepoCredentials     *basedto.ObjectIDResp `json:"repoCredentials"`
-	CanListBranches     bool                  `json:"canListBranches"`
-	CanListPullRequests bool                  `json:"canListPullRequests"`
+	Enabled              bool                  `json:"enabled"`
+	RepoURL              string                `json:"repoURL"`
+	RepoCredentials      *basedto.ObjectIDResp `json:"repoCredentials"`
+	CanListBranches      bool                  `json:"canListBranches"`
+	CanListPullRequests  bool                  `json:"canListPullRequests"`
+	CanCloneDBApps       bool                  `json:"canCloneDbApps"`
+	CanSkipCloningDBApps bool                  `json:"canSkipCloningDbApps"`
 }

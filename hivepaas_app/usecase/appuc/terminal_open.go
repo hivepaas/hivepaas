@@ -36,7 +36,7 @@ func (uc *UC) OpenTerminal(
 			WithMsgLog("service not exist for app")
 	}
 	if featureSettings.TerminalSettings != nil && !featureSettings.TerminalSettings.Enabled {
-		return nil, apperrors.NewUnavailable("App terminal")
+		return nil, apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app terminal")
 	}
 
 	execResp, err := uc.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{

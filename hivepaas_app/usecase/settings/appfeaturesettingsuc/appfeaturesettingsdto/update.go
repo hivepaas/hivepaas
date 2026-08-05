@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -18,6 +19,7 @@ type AppFeatureSettingsBaseReq struct {
 	LoggingSettings  *AppFeatureLoggingSettingsReq  `json:"loggingSettings"`
 	SchedJobSettings *AppFeatureSchedJobSettingsReq `json:"schedJobSettings"`
 	TerminalSettings *AppFeatureTerminalSettingsReq `json:"terminalSettings"`
+	PreviewSettings  *AppFeaturePreviewSettingsReq  `json:"previewSettings"`
 }
 
 func (req *AppFeatureSettingsBaseReq) ToEntity() *entity.AppFeatureSettings {
@@ -28,6 +30,7 @@ func (req *AppFeatureSettingsBaseReq) ToEntity() *entity.AppFeatureSettings {
 		LoggingSettings:  req.LoggingSettings.ToEntity(),
 		SchedJobSettings: req.SchedJobSettings.ToEntity(),
 		TerminalSettings: req.TerminalSettings.ToEntity(),
+		PreviewSettings:  req.PreviewSettings.ToEntity(),
 	}
 }
 
@@ -41,6 +44,7 @@ func (req *AppFeatureSettingsBaseReq) validate(field string) (res []vld.Validato
 	res = append(res, req.TerminalSettings.validate(field+"terminalSettings")...)
 	res = append(res, req.LoggingSettings.validate(field+"loggingSettings")...)
 	res = append(res, req.SchedJobSettings.validate(field+"schedJobSettings")...)
+	res = append(res, req.PreviewSettings.validate(field+"previewSettings")...)
 	return res
 }
 
@@ -92,6 +96,36 @@ func (req *AppFeatureSchedJobSettingsReq) ToEntity() *entity.AppFeatureSchedJobS
 }
 
 func (req *AppFeatureSchedJobSettingsReq) validate(_ string) (res []vld.Validator) {
+	return res
+}
+
+type AppFeaturePreviewSettingsReq struct {
+	Enabled       bool                     `json:"enabled"`
+	CreationDelay timeutil.Duration        `json:"creationDelay"`
+	AppsToClone   basedto.ObjectIDSliceReq `json:"appsToClone"`
+	AutoCloneApps bool                     `json:"autoCloneApps"`
+}
+
+func (req *AppFeaturePreviewSettingsReq) ToEntity() *entity.AppFeaturePreviewSettings {
+	if req == nil {
+		return nil
+	}
+	return &entity.AppFeaturePreviewSettings{
+		Enabled:       req.Enabled,
+		CreationDelay: req.CreationDelay,
+		AppsToClone:   req.AppsToClone.ToEntity(),
+		AutoCloneApps: req.AutoCloneApps,
+	}
+}
+
+func (req *AppFeaturePreviewSettingsReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return res
+	}
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateObjectIDSliceReq(req.AppsToClone, true, 0, field+"appsToClone")...)
 	return res
 }
 

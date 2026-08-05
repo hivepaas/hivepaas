@@ -22,7 +22,7 @@ func (uc *UC) createAppDeployment(
 ) error {
 	persistingData := &appservice.PersistingAppData{}
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		err := uc.ensureAppActive(ctx, db, app, false, true)
+		err := uc.appService.EnsureAppActive(ctx, db, app, false, true)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -128,26 +128,4 @@ func (uc *UC) hasAppDeploymentByChangeID(
 		return false, apperrors.Wrap(err)
 	}
 	return deployment != nil, nil
-}
-
-func (uc *UC) ensureAppActive(
-	ctx context.Context,
-	db database.Tx,
-	app *entity.App,
-	checkUpdateVer bool,
-	lockApp bool,
-) error {
-	_, err := uc.appService.LoadApp(ctx, db, app.ProjectID, app.ID, true, true,
-		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		bunex.SelectRelation("Project",
-			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		),
-		bunex.SelectRelation("ProjectEnv"),
-		bunex.SelectForIf(lockApp, "UPDATE OF app"),
-		bunex.SelectWhereIf(checkUpdateVer, "app.update_ver = ?", app.UpdateVer),
-	)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	return nil
 }

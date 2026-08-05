@@ -20,6 +20,19 @@ func (uc *UC) ListApp(
 	auth *basedto.Auth,
 	req *appdto.ListAppReq,
 ) (*appdto.ListAppResp, error) {
+	// When parent ID is passed, user wants to list preview apps of an app.
+	// We need to verify the app preview feature is enabled.
+	if req.ParentID != "" {
+		_, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID,
+			req.ParentID, false, false)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		if featureSettings.PreviewSettings != nil && !featureSettings.PreviewSettings.Enabled {
+			return nil, apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
+		}
+	}
+
 	listOpts := []bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",

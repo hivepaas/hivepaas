@@ -23,7 +23,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps [post]
 func (h *Handler) CreateApp(ctx *gin.Context) {
-	auth, projectID, projectEnvID, err := h.GetAuthInEnv(ctx, base.ActionTypeWrite)
+	auth, projectID, projectEnvID, _, err := h.GetAuthInEnv(ctx, base.ActionTypeWrite, false)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

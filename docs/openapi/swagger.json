@@ -13005,83 +13005,6 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/{projectEnv}/apps/{appID}/clone" : {
-      "post" : {
-        "description" : "Clones an app",
-        "operationId" : "cloneApp",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "project env",
-          "in" : "path",
-          "name" : "projectEnv",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "app ID",
-          "in" : "path",
-          "name" : "appID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneAppReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "201" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneAppResp"
-                }
-              }
-            },
-            "description" : "Created"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Clones an app",
-        "tags" : [ "apps" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/clone-execute" : {
       "post" : {
         "description" : "Clones app",
@@ -13297,71 +13220,6 @@
         "summary" : "Updates app clone settings",
         "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/projects/{projectID}/{projectEnv}/apps/{appID}/clone/prepare" : {
-      "get" : {
-        "description" : "Prepares for app cloning",
-        "operationId" : "prepareAppClone",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "project env",
-          "in" : "path",
-          "name" : "projectEnv",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "app ID",
-          "in" : "path",
-          "name" : "appID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.PrepareAppCloneResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Prepares for app cloning",
-        "tags" : [ "apps" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/config-files" : {
@@ -35817,7 +35675,7 @@
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -35835,7 +35693,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -36197,6 +36055,9 @@
           "canListPullRequests" : {
             "type" : "boolean"
           },
+          "enabled" : {
+            "type" : "boolean"
+          },
           "repoCredentials" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.ObjectIDResp"
           },
@@ -36204,7 +36065,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "canListBranches", "canListPullRequests", "repoCredentials", "repoURL" ],
+        "required" : [ "canListBranches", "canListPullRequests", "enabled", "repoCredentials", "repoURL" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_apppreviewuc_apppreviewdto.PrepareCreatePreviewReq" : {
@@ -38712,240 +38573,6 @@
         "required" : [ "completedTasks", "desiredTasks", "runningTasks" ],
         "type" : "object"
       },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneAppReq" : {
-        "properties" : {
-          "copyConfigFiles" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneConfigFilesReq"
-          },
-          "copyDeploymentSettings" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneDeploymentSettingsReq"
-          },
-          "copyEnvVars" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneEnvVarsReq"
-          },
-          "copyHealthChecks" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHealthChecksReq"
-          },
-          "copyHttpSettings" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHttpSettingsReq"
-          },
-          "copySchedJobs" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneSchedJobsReq"
-          },
-          "copySecrets" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneSecretsReq"
-          },
-          "sourceEnv" : {
-            "type" : "string"
-          },
-          "sourceName" : {
-            "type" : "string"
-          },
-          "sourceStatus" : {
-            "type" : "string"
-          },
-          "targetEnv" : {
-            "type" : "string"
-          },
-          "targetName" : {
-            "type" : "string"
-          },
-          "targetStatus" : {
-            "type" : "string"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "copyConfigFiles", "copyDeploymentSettings", "copyEnvVars", "copyHealthChecks", "copyHttpSettings", "copySchedJobs", "copySecrets", "sourceEnv", "sourceName", "sourceStatus", "targetEnv", "targetName", "targetStatus", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneAppResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.ObjectIDResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneConfigFilesReq" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneConfigFilesResp" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneDeploymentSettingsReq" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneDeploymentSettingsResp" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneEnvVarsReq" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneEnvVarsResp" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHealthChecksReq" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHealthChecksResp" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHttpDomainSettingsReq" : {
-        "properties" : {
-          "sourceDomain" : {
-            "type" : "string"
-          },
-          "sourceSslCert" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.ObjectIDReq"
-          },
-          "targetDomain" : {
-            "type" : "string"
-          },
-          "targetSslCert" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.ObjectIDReq"
-          }
-        },
-        "required" : [ "sourceDomain", "sourceSslCert", "targetDomain", "targetSslCert" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHttpDomainSettingsResp" : {
-        "properties" : {
-          "sourceDomain" : {
-            "type" : "string"
-          },
-          "sourceSslCert" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings.BaseSettingResp"
-          },
-          "targetDomain" : {
-            "type" : "string"
-          },
-          "targetSslCert" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings.BaseSettingResp"
-          }
-        },
-        "required" : [ "sourceDomain", "sourceSslCert", "targetDomain", "targetSslCert" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHttpSettingsReq" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          },
-          "copyDomainSettings" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHttpDomainSettingsReq"
-            },
-            "type" : "array"
-          }
-        },
-        "required" : [ "copy", "copyDomainSettings" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHttpSettingsResp" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          },
-          "copyDomainSettings" : {
-            "items" : {
-              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHttpDomainSettingsResp"
-            },
-            "type" : "array"
-          }
-        },
-        "required" : [ "copy", "copyDomainSettings" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneSchedJobsReq" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneSchedJobsResp" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneSecretsReq" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneSecretsResp" : {
-        "properties" : {
-          "copy" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "copy" ],
-        "type" : "object"
-      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CreateAppReq" : {
         "properties" : {
           "name" : {
@@ -39100,66 +38727,6 @@
           }
         },
         "required" : [ "meta" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.PrepareAppCloneDataResp" : {
-        "properties" : {
-          "copyConfigFiles" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneConfigFilesResp"
-          },
-          "copyDeploymentSettings" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneDeploymentSettingsResp"
-          },
-          "copyEnvVars" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneEnvVarsResp"
-          },
-          "copyHealthChecks" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHealthChecksResp"
-          },
-          "copyHttpSettings" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneHttpSettingsResp"
-          },
-          "copySchedJobs" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneSchedJobsResp"
-          },
-          "copySecrets" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.CloneSecretsResp"
-          },
-          "sourceEnv" : {
-            "type" : "string"
-          },
-          "sourceName" : {
-            "type" : "string"
-          },
-          "sourceStatus" : {
-            "type" : "string"
-          },
-          "targetEnv" : {
-            "type" : "string"
-          },
-          "targetName" : {
-            "type" : "string"
-          },
-          "targetStatus" : {
-            "type" : "string"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "copyConfigFiles", "copyDeploymentSettings", "copyEnvVars", "copyHealthChecks", "copyHttpSettings", "copySchedJobs", "copySecrets", "sourceEnv", "sourceName", "sourceStatus", "targetEnv", "targetName", "targetStatus", "updateVer" ],
-        "type" : "object"
-      },
-      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.PrepareAppCloneResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.PrepareAppCloneDataResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.TaskLogsInfoResp" : {
@@ -42720,6 +42287,48 @@
         "required" : [ "enabled" ],
         "type" : "object"
       },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeaturePreviewSettingsReq" : {
+        "properties" : {
+          "appsToClone" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_basedto.ObjectIDReq"
+            },
+            "type" : "array"
+          },
+          "autoCloneApps" : {
+            "type" : "boolean"
+          },
+          "creationDelay" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "appsToClone", "autoCloneApps", "creationDelay", "enabled" ],
+        "type" : "object"
+      },
+      "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeaturePreviewSettingsResp" : {
+        "properties" : {
+          "appsToClone" : {
+            "items" : {
+              "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.AppBaseResp"
+            },
+            "type" : "array"
+          },
+          "autoCloneApps" : {
+            "type" : "boolean"
+          },
+          "creationDelay" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "appsToClone", "autoCloneApps", "creationDelay", "enabled" ],
+        "type" : "object"
+      },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeatureSchedJobSettingsReq" : {
         "properties" : {
           "enabled" : {
@@ -42767,6 +42376,9 @@
           "name" : {
             "type" : "string"
           },
+          "previewSettings" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeaturePreviewSettingsResp"
+          },
           "schedJobSettings" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeatureSchedJobSettingsResp"
           },
@@ -42789,7 +42401,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "loggingSettings", "name", "schedJobSettings", "size", "status", "terminalSettings", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "loggingSettings", "name", "previewSettings", "schedJobSettings", "size", "status", "terminalSettings", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeatureTerminalSettingsReq" : {
@@ -42833,6 +42445,9 @@
           "loggingSettings" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeatureLoggingSettingsReq"
           },
+          "previewSettings" : {
+            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeaturePreviewSettingsReq"
+          },
           "schedJobSettings" : {
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.AppFeatureSchedJobSettingsReq"
           },
@@ -42843,7 +42458,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "loggingSettings", "schedJobSettings", "terminalSettings", "updateVer" ],
+        "required" : [ "availableInProjects", "default", "loggingSettings", "previewSettings", "schedJobSettings", "terminalSettings", "updateVer" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_appfeaturesettingsuc_appfeaturesettingsdto.UpdateAppFeatureSettingsResp" : {
@@ -52071,9 +51686,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

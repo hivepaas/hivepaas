@@ -29,7 +29,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/base [get]
 func (h *Handler) ListAppBaseInEnv(ctx *gin.Context) {
-	auth, projectID, projectEnvID, err := h.GetAuthInEnv(ctx, base.ActionTypeRead)
+	auth, projectID, projectEnvID, _, err := h.GetAuthInEnv(ctx, base.ActionTypeRead, false)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -70,7 +70,7 @@ func (h *Handler) ListAppBaseInEnv(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps [get]
 func (h *Handler) ListAppInEnv(ctx *gin.Context) {
-	auth, projectID, projectEnvID, err := h.GetAuthInEnv(ctx, base.ActionTypeRead)
+	auth, projectID, projectEnvID, _, err := h.GetAuthInEnv(ctx, base.ActionTypeRead, false)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

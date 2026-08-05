@@ -63,7 +63,8 @@ func (h *Handler) GetAppCloneSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/clone-settings [put]
 func (h *Handler) UpdateAppCloneSettings(ctx *gin.Context) {
-	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
+	// NOTE: clone an app means creating a new one, so need WRITE on the current env
+	auth, projectID, projectEnvID, appID, err := h.GetAuthInEnv(ctx, base.ActionTypeWrite, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -102,7 +103,8 @@ func (h *Handler) UpdateAppCloneSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/clone-execute [post]
 func (h *Handler) ExecuteAppClone(ctx *gin.Context) {
-	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
+	// NOTE: clone an app means creating a new one, so need WRITE on the current env
+	auth, projectID, projectEnvID, appID, err := h.GetAuthInEnv(ctx, base.ActionTypeWrite, true)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

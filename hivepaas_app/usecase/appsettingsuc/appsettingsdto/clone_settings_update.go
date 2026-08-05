@@ -48,6 +48,10 @@ type UpdateAppCloneSettingsReq struct {
 	Notification *basedto.BaseEventNotificationReq `json:"notification"`
 }
 
+func NewUpdateAppCloneSettingsReq() *UpdateAppCloneSettingsReq {
+	return &UpdateAppCloneSettingsReq{}
+}
+
 func (req *UpdateAppCloneSettingsReq) ModifyRequest() error {
 	req.TargetName = strings.TrimSpace(req.TargetName)
 	req.TargetEnv = strings.TrimSpace(req.TargetEnv)

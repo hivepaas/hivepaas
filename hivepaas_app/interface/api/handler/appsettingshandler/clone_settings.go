@@ -69,7 +69,7 @@ func (h *Handler) UpdateAppCloneSettings(ctx *gin.Context) {
 		return
 	}
 
-	req := &appsettingsdto.UpdateAppCloneSettingsReq{}
+	req := appsettingsdto.NewUpdateAppCloneSettingsReq()
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
@@ -79,6 +79,45 @@ func (h *Handler) UpdateAppCloneSettings(ctx *gin.Context) {
 	}
 
 	resp, err := h.appSettingsUC.UpdateAppCloneSettings(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}
+
+// ExecuteAppClone Clones app
+// @Summary Clones app
+// @Description Clones app
+// @Tags    app_settings
+// @Produce json
+// @Id      executeAppClone
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   body body appsettingsdto.ExecuteAppCloneReq true "request data"
+// @Success 200 {object} appsettingsdto.ExecuteAppCloneResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/clone-execute [post]
+func (h *Handler) ExecuteAppClone(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appsettingsdto.NewExecuteAppCloneReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appSettingsUC.ExecuteAppClone(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

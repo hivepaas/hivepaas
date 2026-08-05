@@ -72,6 +72,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.PUT("/:appID/container-settings", appSettingsHandler.UpdateAppContainerSettings)
 		appGroup.GET("/:appID/clone-settings", appSettingsHandler.GetAppCloneSettings)
 		appGroup.PUT("/:appID/clone-settings", appSettingsHandler.UpdateAppCloneSettings)
+		appGroup.POST("/:appID/clone-execute", appSettingsHandler.ExecuteAppClone)
 	}
 
 	{ // Service tasks

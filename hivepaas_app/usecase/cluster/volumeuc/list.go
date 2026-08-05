@@ -20,7 +20,7 @@ func (uc *UC) ListVolume(
 ) (_ *volumedto.ListVolumeResp, err error) {
 	var currVols []volume.Volume
 	if req.Scope.IsGlobalScope() {
-		currVols, err = uc.clusterService.SyncVolumes(ctx, uc.DB)
+		currVols, err = uc.volumeService.SyncVolumes(ctx, uc.DB)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

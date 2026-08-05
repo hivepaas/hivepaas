@@ -13,7 +13,7 @@ func (uc *UC) SyncNetwork(
 	auth *basedto.Auth,
 	_ *networkdto.SyncNetworkReq,
 ) (*networkdto.SyncNetworkResp, error) {
-	_, err := uc.clusterService.SyncNetworks(ctx, uc.DB)
+	_, err := uc.networkService.SyncNetworks(ctx, uc.DB)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

@@ -1,4 +1,4 @@
-package clusterserviceimpl
+package networkserviceimpl
 
 import (
 	"context"

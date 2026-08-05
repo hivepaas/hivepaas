@@ -26,4 +26,7 @@ type Service interface {
 	ListProjectEnvNetworks(ctx context.Context, db database.IDB, projectEnv *entity.ProjectEnv) (
 		[]*entity.Setting, map[string]*network.Summary, error)
 	RemoveAllProjectEnvNetworks(ctx context.Context, db database.IDB, projectEnv *entity.ProjectEnv) error
+
+	// Sync networks from Docker to app DB
+	SyncNetworks(ctx context.Context, db database.IDB) ([]network.Summary, error)
 }

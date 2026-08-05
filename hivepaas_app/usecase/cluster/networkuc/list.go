@@ -20,7 +20,7 @@ func (uc *UC) ListNetwork(
 ) (_ *networkdto.ListNetworkResp, err error) {
 	var currNets []network.Summary
 	if req.Scope.IsGlobalScope() {
-		currNets, err = uc.clusterService.SyncNetworks(ctx, uc.DB)
+		currNets, err = uc.networkService.SyncNetworks(ctx, uc.DB)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

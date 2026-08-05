@@ -13,7 +13,7 @@ func (uc *UC) SyncVolume(
 	auth *basedto.Auth,
 	_ *volumedto.SyncVolumeReq,
 ) (*volumedto.SyncVolumeResp, error) {
-	_, err := uc.clusterService.SyncNetworks(ctx, uc.DB)
+	_, err := uc.volumeService.SyncVolumes(ctx, uc.DB)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

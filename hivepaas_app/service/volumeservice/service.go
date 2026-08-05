@@ -13,11 +13,7 @@ import (
 )
 
 type Service interface {
-	Rsync(
-		ctx context.Context,
-		source, target *mount.Mount,
-		options ...RsyncOption,
-	) error
+	Rsync(ctx context.Context, source, target *mount.Mount, options ...RsyncOption) error
 
 	CreateProjectDefaultVolume(ctx context.Context, project *entity.Project) (
 		*entity.Setting, *client.VolumeCreateResult, error)
@@ -30,4 +26,7 @@ type Service interface {
 		extraOpts ...bunex.SelectQueryOption) ([]*entity.Setting, map[string]*volume.Volume, error)
 	RemoveAllProjectEnvVolumes(ctx context.Context, db database.IDB, projectEnv *entity.ProjectEnv,
 		force bool) error
+
+	// Sync volumes from Docker to app DB
+	SyncVolumes(ctx context.Context, db database.IDB) ([]volume.Volume, error)
 }

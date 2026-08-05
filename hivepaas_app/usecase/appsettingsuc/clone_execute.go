@@ -2,6 +2,9 @@ package appsettingsuc
 
 import (
 	"context"
+	"errors"
+
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -9,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
@@ -18,14 +22,21 @@ func (uc *UC) ExecuteAppClone(
 	auth *basedto.Auth,
 	req *appsettingsdto.ExecuteAppCloneReq,
 ) (*appsettingsdto.ExecuteAppCloneResp, error) {
+	var data *executeAppCloneData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data := &executeAppCloneData{}
+		data = &executeAppCloneData{}
 		err := uc.loadAppCloneSettingsForExecute(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		// TODO: execute the clone by creating a task
+		persistingData := &persistingAppData{}
+		persistingData.UpsertingTasks = append(persistingData.UpsertingTasks, data.AppCloneTask)
+
+		err = uc.persistData(ctx, db, persistingData)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
 
 		return nil
 	})
@@ -33,14 +44,18 @@ func (uc *UC) ExecuteAppClone(
 		return nil, apperrors.Wrap(err)
 	}
 
+	if data != nil && data.AppCloneTask != nil {
+		if err = uc.taskQueue.ScheduleTask(ctx, data.AppCloneTask); err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+	}
+
 	return &appsettingsdto.ExecuteAppCloneResp{}, nil
 }
 
 type executeAppCloneData struct {
-	App              *entity.App
-	AppCloneSetting  *entity.Setting
-	AppCloneSettings *entity.AppCloneSettings
-	RefObjects       *entity.RefObjects
+	App          *entity.App
+	AppCloneTask *entity.Task
 }
 
 func (uc *UC) loadAppCloneSettingsForExecute(
@@ -69,10 +84,28 @@ func (uc *UC) loadAppCloneSettingsForExecute(
 	if cloneSetting == nil {
 		return apperrors.NewNotFound("App clone settings")
 	}
-	data.AppCloneSetting = cloneSetting
-	data.AppCloneSettings = cloneSetting.MustAsAppCloneSettings()
+	cloneSettings := cloneSetting.MustAsAppCloneSettings()
 
-	// TODO: Validate new app's name
+	// Validate target app's name to be available
+	appKey := projecthelper.CalcAppKey(cloneSettings.TargetName)
+	targetEnv := gofn.Coalesce(cloneSettings.TargetEnv, app.ProjectEnv.Key)
+	appGlobalKey := projecthelper.CalcAppGlobalKey(app.Project.Key, appKey, targetEnv)
+	// App keys must be unique globally
+	conflictApp, err := uc.appRepo.GetByGlobalKey(ctx, db, "", appGlobalKey, bunex.SelectColumns("id"))
+	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
+		return apperrors.Wrap(err)
+	}
+	if conflictApp != nil {
+		return apperrors.NewAlreadyExist("App").
+			WithMsgLog("app unique key '%s' already exists", appGlobalKey)
+	}
+
+	// Create a task for cloning the app
+	cloneTask, err := uc.appCloneService.CreateAppCloneTask(data.App)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	data.AppCloneTask = cloneTask
 
 	return nil
 }

@@ -16,7 +16,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -114,7 +113,7 @@ func (uc *UC) loadAppData(
 
 	data.Project = project
 	data.ProjectEnv = projectEnv
-	data.AppKey = slugify.SlugifyAsKey(req.Name)
+	data.AppKey = projecthelper.CalcAppKey(req.Name)
 	data.AppGlobalKey = projecthelper.CalcAppGlobalKey(project.Key, data.AppKey, projectEnv.Key)
 
 	// App keys must be unique globally

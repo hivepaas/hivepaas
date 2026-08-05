@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
@@ -24,6 +25,7 @@ type UC struct {
 	appRepo     repository.AppRepo
 	settingRepo repository.SettingRepo
 
+	appCloneService      appcloneservice.Service
 	appDeploymentService appdeploymentservice.Service
 	appService           appservice.Service
 	clusterService       clusterservice.Service
@@ -45,6 +47,7 @@ func New(
 	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
 
+	appCloneService appcloneservice.Service,
 	appDeploymentService appdeploymentservice.Service,
 	appService appservice.Service,
 	clusterService clusterservice.Service,
@@ -65,6 +68,7 @@ func New(
 		appRepo:     appRepo,
 		settingRepo: settingRepo,
 
+		appCloneService:      appCloneService,
 		appDeploymentService: appDeploymentService,
 		appService:           appService,
 		clusterService:       clusterService,

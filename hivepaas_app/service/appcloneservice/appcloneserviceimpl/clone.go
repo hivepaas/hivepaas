@@ -8,8 +8,10 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
@@ -18,14 +20,12 @@ import (
 type appCloneData struct {
 	*appcloneservice.AppCloneReq
 
-	DestApp     *entity.App
-	SrcService  *swarm.Service
-	DestService *swarm.Service
-	DestSecrets []*entity.SwarmSecretRef
-	DestConfig  []*entity.SwarmConfigRef
-
+	DestApp        *entity.App
+	SrcService     *swarm.Service
+	DestService    *swarm.Service
+	DestSecrets    []*entity.SwarmSecretRef
+	DestConfig     []*entity.SwarmConfigRef
 	ClonedSettings []*entity.Setting
-	RefObjects     *entity.RefObjects
 
 	TimeNow time.Time
 }
@@ -40,8 +40,9 @@ func (s *service) CloneApp(
 		AppCloneReq: req,
 		TimeNow:     timeutil.NowUTC(),
 	}
-	if req.CloneSettings == nil {
-		req.CloneSettings = &entity.AppCloneSettings{}
+	err = s.loadAppCloneData(ctx, db, data)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
 	}
 
 	defer func() {
@@ -123,6 +124,52 @@ func (s *service) CloneApp(
 	return resp, nil
 }
 
+func (s *service) loadAppCloneData(
+	ctx context.Context,
+	db database.IDB,
+	data *appCloneData,
+) (err error) {
+	if data.SrcApp != nil && data.ClonedSettings != nil {
+		return nil
+	}
+
+	taskArgs, err := data.Task.ArgsAsAppClone()
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	app, err := s.appService.LoadApp(ctx, db, "", taskArgs.SrcApp.ID, true, true,
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("Project.ProjectEnvs"),
+		bunex.SelectRelation("ProjectEnv"),
+		bunex.SelectRelation("Settings",
+			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppClone),
+		),
+	)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	data.SrcApp = app
+
+	cloneSetting := app.GetSettingByType(base.SettingTypeAppClone)
+	if cloneSetting == nil {
+		return apperrors.NewNotFound("App clone settings")
+	}
+	cloneSettings := cloneSetting.MustAsAppCloneSettings()
+	data.CloneSettings = cloneSettings
+
+	// Loads all ref objects of the settings
+	data.RefObjects, err = s.settingService.LoadReferenceObjects(ctx, db, app.GetObjectScope(),
+		true, true, cloneSetting)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	return nil
+}
+
 func (s *service) persistAppData(
 	ctx context.Context,
 	db database.IDB,
@@ -142,8 +189,9 @@ func (s *service) persistAppData(
 	}
 
 	// Loads all ref objects of the settings
+	// TODO: review usage of requireActive=false && errorIfUnavail=false
 	data.RefObjects, err = s.settingService.LoadReferenceObjects(ctx, db, destApp.GetObjectScope(),
-		true, true, destApp.Settings...)
+		false, false, destApp.Settings...)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

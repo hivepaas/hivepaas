@@ -184,6 +184,7 @@ func (q *taskQueue) loadTask(
 	switch task.Type {
 	case base.TaskTypeAppDeploy:
 		shouldCancelTask = task.TargetDeployment == nil
+	case base.TaskTypeAppClone:
 	case base.TaskTypeSchedJobExec:
 		shouldCancelTask = task.TargetJob == nil || !task.TargetJob.IsActive()
 	case base.TaskTypePeriodicExec:

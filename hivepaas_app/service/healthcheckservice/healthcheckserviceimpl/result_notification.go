@@ -103,10 +103,10 @@ func (s *service) buildNotificationMsgData(
 	}
 	switch {
 	case data.App != nil:
-		msgData.DashboardLink = config.Current.DashboardAppHealthcheckDetailsURL(data.App.ID, data.App.ProjectID,
-			data.PeriodicSetting.ID, data.Task.ID)
+		msgData.DashboardLink = config.Current.DashboardAppPeriodicTaskDetailsURL(data.App.ID,
+			data.App.ProjectEnv.Key, data.App.ProjectID, data.PeriodicSetting.ID, data.Task.ID)
 	case data.Project != nil:
-		msgData.DashboardLink = config.Current.DashboardProjectHealthcheckDetailsURL(data.Project.ID,
+		msgData.DashboardLink = config.Current.DashboardProjectPeriodicTaskDetailsURL(data.Project.ID,
 			data.PeriodicSetting.ID, data.Task.ID)
 	}
 

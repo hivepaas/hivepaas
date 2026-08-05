@@ -13,7 +13,6 @@ import (
 )
 
 type ContainerExecReq struct {
-	Project                *entity.Project
 	App                    *entity.App
 	ExecOptions            docker.ExecCreateOption
 	TerminalMode           bool

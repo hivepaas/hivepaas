@@ -24,12 +24,7 @@ func (s *service) initOutputWriterToApp(
 	if targetApp.Status != base.AppStatusActive {
 		return nil, apperrors.Wrap(apperrors.ErrAppInactive)
 	}
-
-	targetProject := data.Project
-	if targetApp.ProjectID != targetProject.ID {
-		targetProject = targetApp.Project
-	}
-	if targetProject.Status != base.ProjectStatusActive {
+	if targetApp.Project.Status != base.ProjectStatusActive {
 		return nil, apperrors.Wrap(apperrors.ErrProjectInactive)
 	}
 
@@ -42,7 +37,6 @@ func (s *service) initOutputWriterToApp(
 
 		var calcErr error
 		_, execErr := s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
-			Project:                targetProject,
 			App:                    targetApp,
 			TaskMinRunningDuration: data.TaskMinRunningDuration,
 			TaskFindRetryMax:       data.TaskFindRetryMax,

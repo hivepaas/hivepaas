@@ -40,7 +40,6 @@ func (uc *UC) OpenTerminal(
 	}
 
 	execResp, err := uc.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
-		Project:      app.Project,
 		App:          app,
 		TerminalMode: true,
 		ExecOptions: func(opts *client.ExecCreateOptions) {

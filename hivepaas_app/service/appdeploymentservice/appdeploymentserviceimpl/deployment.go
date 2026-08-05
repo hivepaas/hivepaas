@@ -26,7 +26,6 @@ const (
 
 type appDeploymentData struct {
 	*appdeploymentservice.AppDeploymentReq
-	Project            *entity.Project
 	App                *entity.App
 	Deployment         *entity.Deployment
 	DeploymentOutput   *entity.AppDeploymentOutput
@@ -135,7 +134,6 @@ func (s *service) loadDeploymentData(
 	}
 
 	data.App = deployment.App
-	data.Project = data.App.Project
 	data.Deployment = deployment
 
 	// Reference setting IDs to load

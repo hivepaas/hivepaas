@@ -54,16 +54,17 @@ func (s *service) buildDeploymentNotifMsgData(
 	isSucceeded := deployment.IsDone()
 	msgData := &notificationservice.TemplateDataAppDeployment{
 		BaseTemplateData: notificationservice.BaseTemplateData{
-			Title: s.notificationService.BuildTitlePrefix(data.Project, data.App, nil) +
+			Title: s.notificationService.BuildTitlePrefix(data.App.Project, data.App, nil) +
 				gofn.If(isSucceeded, " Deployment succeeded", " Deployment failed"),
 		},
-		ProjectName:   data.Project.Name,
-		AppName:       data.App.Name,
-		Succeeded:     isSucceeded,
-		Method:        deployment.Settings.ActiveMethod,
-		StartedAt:     deployment.StartedAt.Truncate(time.Second),
-		Duration:      deployment.GetDuration().Truncate(time.Millisecond),
-		DashboardLink: config.Current.DashboardAppDeploymentDetailsURL(data.App.ID, data.Project.ID, deployment.ID),
+		ProjectName: data.App.Project.Name,
+		AppName:     data.App.Name,
+		Succeeded:   isSucceeded,
+		Method:      deployment.Settings.ActiveMethod,
+		StartedAt:   deployment.StartedAt.Truncate(time.Second),
+		Duration:    deployment.GetDuration().Truncate(time.Millisecond),
+		DashboardLink: config.Current.DashboardAppDeploymentDetailsURL(data.App.ID,
+			data.App.ProjectEnv.Key, data.App.ProjectID, deployment.ID),
 	}
 	data.NotifMsgData = msgData
 

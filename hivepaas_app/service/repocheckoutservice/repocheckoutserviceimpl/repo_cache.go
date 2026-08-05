@@ -60,7 +60,7 @@ func (s *service) loadRepoCache(
 			bunex.SelectFor("SHARE OF file"),
 			bunex.SelectWhere("file.type = ?", base.FileTypeRepoCache),
 			bunex.SelectWhere("file.status = ?", base.FileStatusActive),
-			bunex.SelectWhere("file.object_id = ?", data.Project.ID),
+			bunex.SelectWhere("file.object_id = ?", data.App.ProjectID),
 		)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 			return apperrors.Wrap(err)
@@ -123,7 +123,7 @@ func (s *service) saveRepoCache(
 		newCacheFile = &entity.File{
 			ID:          gofn.Must(ulid.NewStringULID()),
 			Scope:       base.ObjectScopeProject,
-			ObjectID:    data.Project.ID,
+			ObjectID:    data.App.ProjectID,
 			Type:        base.FileTypeRepoCache,
 			Status:      base.FileStatusActive,
 			Key:         data.RepoSource.RepoID,
@@ -178,7 +178,7 @@ func (s *service) saveRepoCache(
 			bunex.SelectFor("UPDATE OF file"),
 			bunex.SelectWhere("file.type = ?", base.FileTypeRepoCache),
 			bunex.SelectWhere("file.status = ?", base.FileStatusActive),
-			bunex.SelectWhere("file.object_id = ?", data.Project.ID),
+			bunex.SelectWhere("file.object_id = ?", data.App.ProjectID),
 		)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 			return apperrors.Wrap(err)

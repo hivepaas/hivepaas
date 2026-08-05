@@ -35,8 +35,8 @@ func (cfg *Config) DashboardPasswordResetURL(userID, token string) string {
 
 // App deployments
 
-func (cfg *Config) DashboardAppDeploymentDetailsURL(appID, projectID, deploymentID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "apps", appID,
+func (cfg *Config) DashboardAppDeploymentDetailsURL(appID, projectEnv, projectID, deploymentID string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, projectEnv, "apps", appID,
 		"deployments", deploymentID))
 }
 
@@ -44,7 +44,7 @@ func (cfg *Config) DashboardAppDeploymentDetailsURL(appID, projectID, deployment
 
 func (cfg *Config) DashboardGlobalSchedTaskDetailsURL(schedJobID, taskID string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL, "settings", "sched-jobs", schedJobID,
-		"tasks", taskID)) // TODO (high): update this
+		"tasks", taskID))
 }
 
 func (cfg *Config) DashboardAppSchedTaskDetailsURL(projectID, appID, schedJobID, taskID string) string {
@@ -54,7 +54,7 @@ func (cfg *Config) DashboardAppSchedTaskDetailsURL(projectID, appID, schedJobID,
 
 func (cfg *Config) DashboardProjectSchedTaskDetailsURL(projectID, schedJobID, taskID string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "sched-jobs", schedJobID,
-		"tasks", taskID)) // TODO (high): update this
+		"tasks", taskID))
 }
 
 // Github Apps
@@ -69,20 +69,21 @@ func (cfg *Config) DashboardProjectGithubAppsURL(projectID string) string {
 
 // Health checks
 
-func (cfg *Config) DashboardAppHealthcheckDetailsURL(appID, projectID, healthcheckID, taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "apps", appID,
-		"healthcheck", healthcheckID, "tasks", taskID)) // TODO (high): update this
+func (cfg *Config) DashboardAppPeriodicTaskDetailsURL(appID, projectEnv, projectID,
+	periodicJobID, taskID string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, projectEnv, "apps", appID,
+		"periodic-jobs", periodicJobID, "tasks", taskID))
 }
 
-func (cfg *Config) DashboardProjectHealthcheckDetailsURL(projectID, healthcheckID, taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "healthcheck", healthcheckID,
-		"tasks", taskID)) // TODO (high): update this
+func (cfg *Config) DashboardProjectPeriodicTaskDetailsURL(projectID, periodicJobID, taskID string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "periodic-jobs", periodicJobID,
+		"tasks", taskID))
 }
 
 // Tasks
 
 func (cfg *Config) DashboardTaskDetailsURL(taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "tasks", taskID)) // TODO (high): update this
+	return gofn.Must(url.JoinPath(cfg.BaseURL, "tasks", taskID))
 }
 
 /// BACK-END

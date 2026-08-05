@@ -62,7 +62,6 @@ func (s *service) SchedJobExec(
 	defer s.cleanup(err, data)
 
 	_, err = s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
-		Project:                req.Project,
 		App:                    req.App,
 		TaskMinRunningDuration: req.TaskMinRunningDuration,
 		TaskFindRetryMax:       req.TaskFindRetryMax,

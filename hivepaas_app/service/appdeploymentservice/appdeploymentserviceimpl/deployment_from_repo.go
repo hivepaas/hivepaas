@@ -116,7 +116,6 @@ func (s *service) repoDeployStepSourceCheckout(
 	repoSource := deployment.Settings.RepoSource
 
 	checkoutReq := &repocheckoutservice.RepoCheckoutReq{
-		Project:     data.Project,
 		App:         data.App,
 		RepoSource:  repoSource,
 		CredSetting: data.RefObjects.RefSettings[repoSource.Credentials.ID],
@@ -152,7 +151,6 @@ func (s *service) repoDeployStepImageBuild(
 	deployment := data.Deployment
 
 	buildReq := &imagebuildservice.ImageBuildReq{
-		Project:            data.Project,
 		App:                data.App,
 		RepoSource:         deployment.Settings.RepoSource,
 		ImageBuildSettings: data.ImageBuildSettings,

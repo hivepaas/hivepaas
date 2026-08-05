@@ -6,7 +6,6 @@ import (
 )
 
 type ImageBuildReq struct {
-	Project            *entity.Project
 	App                *entity.App
 	RepoSource         *entity.DeploymentRepoSource
 	ImageBuildSettings *entity.ImageBuildSettings

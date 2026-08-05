@@ -6,7 +6,6 @@ import (
 )
 
 type RepoCheckoutReq struct {
-	Project     *entity.Project
 	App         *entity.App
 	RepoSource  *entity.DeploymentRepoSource
 	NoCache     bool

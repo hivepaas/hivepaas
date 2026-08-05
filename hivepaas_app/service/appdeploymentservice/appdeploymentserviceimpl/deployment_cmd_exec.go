@@ -70,7 +70,6 @@ func (s *service) deployStepExecCmd(
 	}
 
 	_, err = s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
-		Project:                data.Project,
 		App:                    data.App,
 		TaskMinRunningDuration: taskMinRunningDuration,
 		TaskFindRetryMax:       taskFindRetryMax,

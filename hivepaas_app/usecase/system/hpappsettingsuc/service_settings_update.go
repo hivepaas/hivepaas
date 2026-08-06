@@ -3,6 +3,7 @@ package hpappsettingsuc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -276,8 +277,8 @@ func (uc *UC) applyTrustedIPsToTraefik(
 
 	sort.Strings(trustedIPs)
 	trustedIPsStr := strings.Join(trustedIPs, ",")
-	epWeb := "--entrypoints.web.forwardedheaders.trustedips="
-	epWebsecure := "--entrypoints.websecure.forwardedheaders.trustedips="
+	epWeb := "entrypoints.web.forwardedheaders.trustedips"
+	epWebsecure := "entrypoints.websecure.forwardedheaders.trustedips"
 	hasEpWebTrustedIPs := false
 	hasEpWebsecureTrustedIPs := false
 	hasChanges := false
@@ -290,39 +291,31 @@ func (uc *UC) applyTrustedIPsToTraefik(
 			newArgs = append(newArgs, arg)
 			continue
 		}
-		if strings.HasPrefix(key, epWeb) {
+		if key == epWeb {
 			hasEpWebTrustedIPs = true
-			if val == trustedIPsStr {
-				newArgs = append(newArgs, arg)
+			if val != trustedIPsStr && trustedIPsStr != "" {
+				newArgs = append(newArgs, fmt.Sprintf("--%s=%s", epWeb, trustedIPsStr))
+				hasChanges = true
 				continue
 			}
-			if trustedIPsStr != "" {
-				newArgs = append(newArgs, epWeb+trustedIPsStr)
-				hasChanges = true
-			}
-			continue
 		}
-		if strings.HasPrefix(key, epWebsecure) {
+		if key == epWebsecure {
 			hasEpWebsecureTrustedIPs = true
-			if val == trustedIPsStr {
-				newArgs = append(newArgs, arg)
+			if val != trustedIPsStr && trustedIPsStr != "" {
+				newArgs = append(newArgs, fmt.Sprintf("--%s=%s", epWebsecure, trustedIPsStr))
+				hasChanges = true
 				continue
 			}
-			if trustedIPsStr != "" {
-				newArgs = append(newArgs, epWebsecure+trustedIPsStr)
-				hasChanges = true
-			}
-			continue
 		}
 		newArgs = append(newArgs, arg) // keeps other args
 	}
 
 	if !hasEpWebTrustedIPs && trustedIPsStr != "" {
-		newArgs = append(newArgs, epWeb+trustedIPsStr)
+		newArgs = append(newArgs, fmt.Sprintf("--%s=%s", epWeb, trustedIPsStr))
 		hasChanges = true
 	}
 	if !hasEpWebsecureTrustedIPs && trustedIPsStr != "" {
-		newArgs = append(newArgs, epWebsecure+trustedIPsStr)
+		newArgs = append(newArgs, fmt.Sprintf("--%s=%s", epWebsecure, trustedIPsStr))
 		hasChanges = true
 	}
 	if !hasChanges {

@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	taskFindRetryMax           = 3
-	taskFindRetryDelay         = time.Second * 5
+	taskFindRetryMax           = 5
+	taskFindRetryDelay         = time.Second * 3
 	taskFindMinRunningDuration = time.Second * 10
 
 	containerExecRetryMax = 1

@@ -10,5 +10,5 @@ import (
 type Service interface {
 	CreateAppCloneTask(app *entity.App) (*entity.Task, error)
 
-	CloneApp(ctx context.Context, db database.Tx, req *AppCloneReq) (*AppCloneResp, error)
+	CloneApp(ctx context.Context, db database.IDB, req *AppCloneReq) (*AppCloneResp, error)
 }

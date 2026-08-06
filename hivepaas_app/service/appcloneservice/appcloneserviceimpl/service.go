@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandpipeexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
@@ -23,16 +24,17 @@ type service struct {
 	appRepo     repository.AppRepo
 	settingRepo repository.SettingRepo
 
-	appService           appservice.Service
-	clusterSecretService clustersecretservice.Service
-	clusterService       clusterservice.Service
-	domainService        domainservice.Service
-	envVarService        envvarservice.Service
-	networkService       networkservice.Service
-	settingService       settingservice.Service
-	sslService           sslservice.Service
-	traefikService       traefikservice.Service
-	volumeService        volumeservice.Service
+	appService             appservice.Service
+	clusterSecretService   clustersecretservice.Service
+	clusterService         clusterservice.Service
+	commandPipeExecService commandpipeexecservice.Service
+	domainService          domainservice.Service
+	envVarService          envvarservice.Service
+	networkService         networkservice.Service
+	settingService         settingservice.Service
+	sslService             sslservice.Service
+	traefikService         traefikservice.Service
+	volumeService          volumeservice.Service
 
 	dockerManager docker.Manager
 }
@@ -46,6 +48,7 @@ func New(
 	appService appservice.Service,
 	clusterSecretService clustersecretservice.Service,
 	clusterService clusterservice.Service,
+	commandPipeExecService commandpipeexecservice.Service,
 	domainService domainservice.Service,
 	envVarService envvarservice.Service,
 	networkService networkservice.Service,
@@ -62,16 +65,17 @@ func New(
 		appRepo:     appRepo,
 		settingRepo: settingRepo,
 
-		appService:           appService,
-		clusterSecretService: clusterSecretService,
-		clusterService:       clusterService,
-		domainService:        domainService,
-		envVarService:        envVarService,
-		networkService:       networkService,
-		settingService:       settingService,
-		sslService:           sslService,
-		traefikService:       traefikService,
-		volumeService:        volumeService,
+		appService:             appService,
+		clusterSecretService:   clusterSecretService,
+		clusterService:         clusterService,
+		commandPipeExecService: commandPipeExecService,
+		domainService:          domainService,
+		envVarService:          envVarService,
+		networkService:         networkService,
+		settingService:         settingService,
+		sslService:             sslService,
+		traefikService:         traefikService,
+		volumeService:          volumeService,
 
 		dockerManager: dockerManager,
 	}

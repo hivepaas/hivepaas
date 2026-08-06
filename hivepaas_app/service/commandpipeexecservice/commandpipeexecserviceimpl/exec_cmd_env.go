@@ -1,4 +1,4 @@
-package schedjobexecserviceimpl
+package commandpipeexecserviceimpl
 
 import (
 	"context"
@@ -6,16 +6,18 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
 func (s *service) calcCommandEnv(
 	ctx context.Context,
-	db database.Tx,
+	db database.IDB,
+	app *entity.App,
+	command *entity.CommandTemplate,
 	data *execData,
 ) (env []string, err error) {
-	schedJob := data.SchedJobSetting.MustAsSchedJob()
-	envVars, err := s.commandService.BuildCommandEnvVars(ctx, db, data.App, schedJob.Command)
+	envVars, err := s.commandService.BuildCommandEnvVars(ctx, db, app, command)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

@@ -10,13 +10,18 @@ import (
 
 func (s *service) applySchedJobSettings(
 	ctx context.Context,
-	db database.Tx,
+	db database.IDB,
 	data *appCloneData,
 ) error {
 	app := data.DestApp
 	jobSettings := app.GetSettingsByType(base.SettingTypeSchedJob)
 
-	err := s.taskQueue.ScheduleTasksForSchedJobs(ctx, db, jobSettings, false)
+	tx, ok := db.(database.Tx)
+	if !ok {
+		return apperrors.Wrap(apperrors.ErrInternal).WithMsgLog("db is not transaction")
+	}
+
+	err := s.taskQueue.ScheduleTasksForSchedJobs(ctx, tx, jobSettings, false)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

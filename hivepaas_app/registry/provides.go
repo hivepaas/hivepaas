@@ -45,6 +45,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice/clustersecretserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice/clusterserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandpipeexecservice/commandpipeexecserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandservice/commandserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice/containerexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dbservice/dbserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice/domainserviceimpl"
@@ -305,6 +307,8 @@ var Provides = []any{
 	appcloneserviceimpl.New,
 	apppreviewserviceimpl.New,
 	schedjobexecserviceimpl.New,
+	commandserviceimpl.New,
+	commandpipeexecserviceimpl.New,
 
 	// Repo: User
 	repository.NewUserRepo,

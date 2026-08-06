@@ -32,7 +32,7 @@ type appCloneData struct {
 
 func (s *service) CloneApp(
 	ctx context.Context,
-	db database.Tx,
+	db database.IDB,
 	req *appcloneservice.AppCloneReq,
 ) (resp *appcloneservice.AppCloneResp, err error) {
 	resp = &appcloneservice.AppCloneResp{}

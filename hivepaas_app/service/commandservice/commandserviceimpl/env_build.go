@@ -1,4 +1,4 @@
-package schedjobserviceimpl
+package commandserviceimpl
 
 import (
 	"context"
@@ -17,11 +17,11 @@ func (s *service) BuildCommandEnvVars(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-	schedJob *entity.SchedJob,
+	commandTpl *entity.CommandTemplate,
 ) (_ []*envvarservice.EnvVar, err error) {
-	envVars := schedJob.Command.EnvVars
+	envVars := commandTpl.EnvVars
 
-	for _, argGroup := range schedJob.Command.ArgGroups {
+	for _, argGroup := range commandTpl.ArgGroups {
 		if env := s.buildEnvVarForArgs(argGroup); env != nil {
 			envVars = append(envVars, env)
 		}

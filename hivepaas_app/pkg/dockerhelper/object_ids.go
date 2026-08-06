@@ -13,6 +13,10 @@ func WrapNodeID(id string) string {
 	return "dkr:node:" + id
 }
 
+func IsWrappedNodeID(id string) bool {
+	return strings.HasPrefix(id, "dkr:node:")
+}
+
 func WrapNetworkID(id string) string {
 	if strings.HasPrefix(id, "dkr:") {
 		return id
@@ -20,11 +24,19 @@ func WrapNetworkID(id string) string {
 	return "dkr:net:" + id
 }
 
+func IsWrappedNetworkID(id string) bool {
+	return strings.HasPrefix(id, "dkr:net:")
+}
+
 func WrapVolumeID(id string) string {
 	if strings.HasPrefix(id, "dkr:") {
 		return id
 	}
 	return "dkr:vol:" + id
+}
+
+func IsWrappedVolumeID(id string) bool {
+	return strings.HasPrefix(id, "dkr:vol:")
 }
 
 func ParseID(wrapID string) string {

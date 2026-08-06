@@ -35675,25 +35675,15 @@
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
-          "ModeAppend" : "a: append-only",
-          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
-          "ModeDevice" : "D: device file",
-          "ModeDir" : "d: is a directory",
-          "ModeExclusive" : "l: exclusive use",
-          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
-          "ModeNamedPipe" : "p: named pipe (FIFO)",
           "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
-          "ModeSocket" : "S: Unix domain socket",
-          "ModeSticky" : "t: sticky",
-          "ModeSymlink" : "L: symbolic link",
-          "ModeTemporary" : "T: temporary file; Plan 9 only"
+          "ModeSticky" : "t: sticky"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -36022,6 +36012,9 @@
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_apppreviewuc_apppreviewdto.CreatePreviewReq" : {
         "properties" : {
+          "cloneDbApps" : {
+            "type" : "boolean"
+          },
           "customSubdomain" : {
             "type" : "string"
           },
@@ -36030,9 +36023,12 @@
           },
           "repoRef" : {
             "type" : "string"
+          },
+          "skipCloningDBApps" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "customSubdomain", "noStart", "repoRef" ],
+        "required" : [ "cloneDbApps", "customSubdomain", "noStart", "repoRef", "skipCloningDBApps" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_apppreviewuc_apppreviewdto.CreatePreviewResp" : {
@@ -36049,10 +36045,16 @@
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_apppreviewuc_apppreviewdto.PrepareCreatePreviewDataResp" : {
         "properties" : {
+          "canCloneDbApps" : {
+            "type" : "boolean"
+          },
           "canListBranches" : {
             "type" : "boolean"
           },
           "canListPullRequests" : {
+            "type" : "boolean"
+          },
+          "canSkipCloningDbApps" : {
             "type" : "boolean"
           },
           "enabled" : {
@@ -36065,7 +36067,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "canListBranches", "canListPullRequests", "enabled", "repoCredentials", "repoURL" ],
+        "required" : [ "canCloneDbApps", "canListBranches", "canListPullRequests", "canSkipCloningDbApps", "enabled", "repoCredentials", "repoURL" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_apppreviewuc_apppreviewdto.PrepareCreatePreviewReq" : {
@@ -36208,9 +36210,6 @@
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.BindOptions" : {
         "properties" : {
-          "baseDir" : {
-            "type" : "string"
-          },
           "createMountpoint" : {
             "type" : "boolean"
           },
@@ -36225,15 +36224,9 @@
           },
           "readOnlyNonRecursive" : {
             "type" : "boolean"
-          },
-          "subpath" : {
-            "type" : "string"
-          },
-          "subpathRequired" : {
-            "type" : "string"
           }
         },
-        "required" : [ "baseDir", "createMountpoint", "nonRecursive", "propagation", "readOnlyForceRecursive", "readOnlyNonRecursive", "subpath", "subpathRequired" ],
+        "required" : [ "createMountpoint", "nonRecursive", "propagation", "readOnlyForceRecursive", "readOnlyNonRecursive" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.Capabilities" : {
@@ -36321,15 +36314,9 @@
           },
           "subpath" : {
             "type" : "string"
-          },
-          "subpathRequired" : {
-            "type" : "string"
-          },
-          "volume" : {
-            "type" : "string"
           }
         },
-        "required" : [ "driverConfig", "labels", "noCopy", "subpath", "subpathRequired", "volume" ],
+        "required" : [ "driverConfig", "labels", "noCopy", "subpath" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.ComputeAppEnvVarsReq" : {
@@ -37583,8 +37570,14 @@
           "consistency" : {
             "$ref" : "#/components/schemas/mount.Consistency"
           },
+          "key" : {
+            "type" : "string"
+          },
           "readOnly" : {
             "type" : "boolean"
+          },
+          "source" : {
+            "type" : "string"
           },
           "target" : {
             "type" : "string"
@@ -37599,7 +37592,7 @@
             "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.VolumeOptions"
           }
         },
-        "required" : [ "bindOptions", "clusterOptions", "consistency", "readOnly", "target", "tmpfsOptions", "type", "volumeOptions" ],
+        "required" : [ "bindOptions", "clusterOptions", "consistency", "key", "readOnly", "source", "target", "tmpfsOptions", "type", "volumeOptions" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.NetworkAttachment" : {
@@ -37918,14 +37911,11 @@
             },
             "type" : "array"
           },
-          "settings" : {
-            "$ref" : "#/components/schemas/github_com_hivepaas_hivepaas_hivepaas_app_usecase_settings_storagesettingsuc_storagesettingsdto.StorageSettingsResp"
-          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "mounts", "settings", "updateVer" ],
+        "required" : [ "mounts", "updateVer" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appsettingsuc_appsettingsdto.TmpfsOptions" : {
@@ -38429,15 +38419,9 @@
           },
           "subpath" : {
             "type" : "string"
-          },
-          "subpathRequired" : {
-            "type" : "string"
-          },
-          "volume" : {
-            "type" : "string"
           }
         },
-        "required" : [ "driverConfig", "labels", "noCopy", "subpath", "subpathRequired", "volume" ],
+        "required" : [ "driverConfig", "labels", "noCopy", "subpath" ],
         "type" : "object"
       },
       "github_com_hivepaas_hivepaas_hivepaas_app_usecase_appuc_appdto.AppBaseResp" : {
@@ -51686,9 +51670,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute" ]
       },
       "uploadFiles_request" : {
         "properties" : {

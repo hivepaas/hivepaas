@@ -2,12 +2,12 @@ package appsettingsuc
 
 import (
 	"context"
-	"errors"
+	"crypto/sha256"
+	"fmt"
 
-	"github.com/tiendc/gofn"
+	"github.com/moby/moby/api/types/mount"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -30,43 +30,15 @@ func (uc *UC) GetAppStorageSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	input := &appsettingsdto.StorageSettingsTransformInput{
-		App:     app,
-		Project: app.Project,
-	}
-
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, true)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	input.Service = service
 
-	// Filter out unsupported mount types
-	for _, mnt := range service.Spec.TaskTemplate.ContainerSpec.Mounts {
-		if gofn.Contain(supportedMountTypes, mnt.Type) {
-			input.ReturningMounts = append(input.ReturningMounts, &mnt)
-		}
-	}
-
-	// Load project storage settings to make sure these app settings comply with
-	storageSetting, err := uc.settingRepo.GetSingle(ctx, uc.db, entity.NewObjectScopeProject(app.ProjectID),
-		base.SettingTypeStorageSettings, true)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
-	}
-	input.Setting = storageSetting
-
-	// Load reference cluster volumes as their IDs are different from their names
-	if storageSetting != nil {
-		storageSettings := storageSetting.MustAsStorageSettings()
-		volResp, err := uc.dockerManager.VolumeListByIDs(ctx,
-			storageSettings.ClusterVolumeSettings.Volumes.ToIDStringSlice())
-		if err != nil {
-			return nil, apperrors.Wrap(err)
-		}
-		for i := range volResp.Items {
-			input.Volumes = append(input.Volumes, &volResp.Items[i])
-		}
+	input := &appsettingsdto.StorageSettingsTransformInput{
+		App:                app,
+		Service:            service,
+		MountKeyCalculator: uc.calcMountKey,
 	}
 
 	resp, err := appsettingsdto.TransformStorageSettings(input)
@@ -77,4 +49,9 @@ func (uc *UC) GetAppStorageSettings(
 	return &appsettingsdto.GetAppStorageSettingsResp{
 		Data: resp,
 	}, nil
+}
+
+func (uc *UC) calcMountKey(mnt *mount.Mount) string {
+	key := fmt.Sprintf("type:%v:src:%v:target:%v", mnt.Type, mnt.Source, mnt.Target)
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(key)))
 }

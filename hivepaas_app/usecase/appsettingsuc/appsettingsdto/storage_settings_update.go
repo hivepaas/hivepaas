@@ -12,9 +12,8 @@ type UpdateAppStorageSettingsReq struct {
 	ProjectEnvID string `json:"-"`
 	AppID        string `json:"-"`
 
-	Mounts []*Mount `json:"mounts"`
-
-	UpdateVer int `json:"updateVer"`
+	Mounts    []*Mount `json:"mounts"`
+	UpdateVer int      `json:"updateVer"`
 }
 
 func NewUpdateAppStorageSettingsReq() *UpdateAppStorageSettingsReq {

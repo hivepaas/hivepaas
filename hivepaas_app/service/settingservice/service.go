@@ -10,10 +10,10 @@ import (
 type Service interface {
 	PersistSettingData(ctx context.Context, db database.IDB, data *PersistingSettingData) error
 
-	LoadReferenceObjects(ctx context.Context, db database.IDB, scope *entity.ObjectScope, requireActive bool,
-		errorIfUnavail bool, inSettings ...*entity.Setting) (*entity.RefObjects, error)
-	LoadReferenceObjectsByIDs(ctx context.Context, db database.IDB, scope *entity.ObjectScope, requireActive bool,
-		errorIfUnavail bool, refIDs *entity.RefObjectIDs) (*entity.RefObjects, error)
+	LoadRefObjects(ctx context.Context, db database.IDB, refObjects **entity.RefObjects,
+		scope *entity.ObjectScope, requireActive bool, errorIfUnavail bool, inSettings ...*entity.Setting) error
+	LoadRefObjectsByIDs(ctx context.Context, db database.IDB, refObjects **entity.RefObjects,
+		scope *entity.ObjectScope, requireActive bool, errorIfUnavail bool, refIDs *entity.RefObjectIDs) error
 	LoadScopeObject(ctx context.Context, db database.IDB, scope *entity.ObjectScope) error
 
 	// Default settings

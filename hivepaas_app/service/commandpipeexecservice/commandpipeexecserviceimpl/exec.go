@@ -56,16 +56,10 @@ func (s *service) loadCommandPipeData(
 	db database.IDB,
 	data *execData,
 ) (err error) {
-	refObjects, err := s.settingService.LoadReferenceObjects(ctx, db, nil, true, true,
-		data.CommandPipes...)
+	err = s.settingService.LoadRefObjects(ctx, db, &data.RefObjects, nil,
+		true, true, data.CommandPipes...)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	if data.RefObjects != nil {
-		data.RefObjects.AddRefObjects(refObjects)
-	} else {
-		data.RefObjects = refObjects
-	}
-
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
@@ -55,7 +56,8 @@ func (uc *UC) UpdateSSLCert(
 			}
 
 			if reObtainCert {
-				refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope,
+				refObjects := entity.NewRefObjects()
+				err = uc.SettingService.LoadRefObjects(ctx, db, &refObjects, req.Scope,
 					true, true, pData.Setting)
 				if err != nil {
 					return apperrors.Wrap(err)

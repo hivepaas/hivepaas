@@ -86,7 +86,7 @@ func (uc *UC) loadAppCloneSettingsForUpdate(
 	newAppCloneSettings := req.ToEntity()
 	data.NewAppCloneSettings = newAppCloneSettings
 
-	data.RefObjects, err = uc.settingService.LoadReferenceObjectsByIDs(ctx, db, app.GetObjectScope(),
+	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, app.GetObjectScope(),
 		true, true, newAppCloneSettings.GetRefObjectIDs())
 	if err != nil {
 		return apperrors.Wrap(err)

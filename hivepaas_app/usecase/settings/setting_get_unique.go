@@ -51,7 +51,8 @@ func (uc *BaseUC) GetUniqueSetting(
 		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 
-	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope,
+	refObjects := entity.NewRefObjects()
+	err = uc.SettingService.LoadRefObjects(ctx, db, &refObjects, req.Scope,
 		false, false, setting)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

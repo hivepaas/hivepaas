@@ -140,12 +140,11 @@ func (s *service) loadDeploymentData(
 	refObjectIDs := data.Deployment.Settings.GetRefObjectIDs()
 
 	// Load reference objects
-	refObjects, err := s.settingService.LoadReferenceObjectsByIDs(ctx, db, data.App.GetObjectScope(),
+	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, data.App.GetObjectScope(),
 		true, true, refObjectIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	data.AddRefObjects(refObjects)
 
 	return nil
 }

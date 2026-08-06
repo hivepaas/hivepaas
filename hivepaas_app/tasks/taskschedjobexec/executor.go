@@ -203,11 +203,11 @@ func (e *Executor) loadSchedJobData(
 	}
 
 	// Load reference objects
-	refObjects, err := e.settingService.LoadReferenceObjects(ctx, db, scope, true, false, data.SchedJob)
+	err = e.settingService.LoadRefObjects(ctx, db, &data.RefObjects, scope,
+		true, false, data.SchedJob)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	data.AddRefObjects(refObjects)
 
 	return nil
 }

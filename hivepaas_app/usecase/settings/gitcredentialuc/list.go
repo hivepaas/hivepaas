@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/gitcredentialuc/gitcredentialdto"
 )
@@ -62,7 +63,8 @@ func (uc *UC) ListGitCredential(
 		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 
-	refObjects, err := uc.SettingService.LoadReferenceObjects(ctx, uc.DB, req.Scope, false,
+	refObjects := entity.NewRefObjects()
+	err = uc.SettingService.LoadRefObjects(ctx, uc.DB, &refObjects, req.Scope, false,
 		false, settings...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

@@ -75,15 +75,17 @@ func (uc *UC) loadAppDeploymentSettingsRefData(
 		refIDs = input.DeploymentSettings.MustAsAppDeploymentSettings().GetRefObjectIDs()
 	}
 
-	refObjects, err := uc.settingService.LoadReferenceObjectsByIDs(ctx, db, app.GetObjectScope(),
+	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &input.RefObjects, app.GetObjectScope(),
 		true, false, refIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	for _, setting := range refObjects.RefSettings {
-		setting.CurrentObjectID = app.ID
+	for _, settingID := range refIDs.RefSettingIDs {
+		setting := input.RefObjects.RefSettings[settingID]
+		if setting != nil {
+			setting.CurrentObjectID = app.ID
+		}
 	}
-	input.RefObjects = refObjects
 
 	return nil
 }

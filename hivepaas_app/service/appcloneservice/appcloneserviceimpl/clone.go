@@ -161,7 +161,7 @@ func (s *service) loadAppCloneData(
 	data.CloneSettings = cloneSettings
 
 	// Loads all ref objects of the settings
-	data.RefObjects, err = s.settingService.LoadReferenceObjects(ctx, db, app.GetObjectScope(),
+	err = s.settingService.LoadRefObjects(ctx, db, &data.RefObjects, app.GetObjectScope(),
 		true, true, cloneSetting)
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -190,7 +190,7 @@ func (s *service) persistAppData(
 
 	// Loads all ref objects of the settings
 	// TODO: review usage of requireActive=false && errorIfUnavail=false
-	data.RefObjects, err = s.settingService.LoadReferenceObjects(ctx, db, destApp.GetObjectScope(),
+	err = s.settingService.LoadRefObjects(ctx, db, &data.RefObjects, destApp.GetObjectScope(),
 		false, false, destApp.Settings...)
 	if err != nil {
 		return apperrors.Wrap(err)

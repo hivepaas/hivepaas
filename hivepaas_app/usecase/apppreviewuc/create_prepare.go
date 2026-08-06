@@ -58,7 +58,8 @@ func (uc *UC) PrepareCreatePreview(
 		return nil, apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
 	}
 
-	refObjects, err := uc.settingService.LoadReferenceObjects(ctx, uc.db, app.GetObjectScope(),
+	refObjects := entity.NewRefObjects()
+	err = uc.settingService.LoadRefObjects(ctx, uc.db, &refObjects, app.GetObjectScope(),
 		true, true, app.Settings...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

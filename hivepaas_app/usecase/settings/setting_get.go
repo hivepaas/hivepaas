@@ -65,7 +65,7 @@ func (uc *BaseUC) GetSetting(
 
 	var refObjects *entity.RefObjects
 	if !data.SkipLoadingRefObjects {
-		refObjects, err = uc.SettingService.LoadReferenceObjects(ctx, db, req.Scope,
+		err = uc.SettingService.LoadRefObjects(ctx, db, &refObjects, req.Scope,
 			false, false, setting)
 		if err != nil {
 			return nil, apperrors.Wrap(err)

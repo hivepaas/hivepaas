@@ -97,7 +97,7 @@ func (uc *UC) loadHttpSettingsForUpdate(
 	data.NewHttpSettings = newHttpSettings
 
 	// Make sure all reference settings used in these settings exist actively
-	data.RefObjects, err = uc.settingService.LoadReferenceObjectsByIDs(ctx, db, app.GetObjectScope(),
+	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, app.GetObjectScope(),
 		true, true, newHttpSettings.GetRefObjectIDs())
 	if err != nil {
 		return apperrors.Wrap(err)

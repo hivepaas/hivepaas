@@ -57,12 +57,11 @@ func (s *service) GetNotificationForEvent(
 	}
 
 	// Load ref objects of the setting (otherwise we will have error of missing ref objects)
-	refs, err := s.settingService.LoadReferenceObjects(ctx, db, scope, true,
+	err = s.settingService.LoadRefObjects(ctx, db, &refObjects, scope, true,
 		false, setting)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	refObjects.AddRefObjects(refs)
 	refObjects.RefSettings[setting.ID] = setting
 
 	return setting.MustAsNotification(), nil
@@ -87,14 +86,10 @@ func (s *service) GetDefaultNotification(
 
 	if refObjects != nil {
 		// Load ref objects of the setting (otherwise we will have error of missing ref objects)
-		refs, err := s.settingService.LoadReferenceObjects(ctx, db, scope, true,
+		err = s.settingService.LoadRefObjects(ctx, db, &refObjects, scope, true,
 			errorIfRefObjectsUnavail, setting)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
-		}
-		refObjects.AddRefObjects(refs)
-		if refObjects.RefSettings == nil {
-			refObjects.RefSettings = make(map[string]*entity.Setting)
 		}
 		refObjects.RefSettings[setting.ID] = setting
 	}

@@ -1,0 +1,744 @@
+import React, { type PropsWithChildren, type ReactNode, useImperativeHandle, useMemo, useState } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { ArrowRight, Plus, RefreshCw, Trash2 } from "lucide-react";
+import {
+    type FieldPath,
+    FormProvider,
+    type FieldError as HookFormFieldError,
+    useController,
+    useFieldArray,
+    useForm,
+    useFormContext,
+    useWatch,
+} from "react-hook-form";
+import { useUpdateEffect } from "react-use";
+import { ProjectCommandPipeQueries, ProjectSslCertQueries } from "~/projects/data";
+import type { AppCloneSettings } from "~/projects/domain";
+import type { ProjectEnvEntity } from "~/projects/domain";
+import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
+import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
+import { EProjectAppStatus } from "~/projects/module-shared/enums";
+
+import { Combobox, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+
+import type { ValidationException } from "@infrastructure/exceptions/validation";
+
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldError, FieldGroup } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+
+import { AppCloneNotificationFields } from "../building-blocks";
+import {
+    type AppCloneSettingsFormSchemaInput,
+    type AppCloneSettingsFormSchemaOutput,
+    createAppCloneSettingsFormSchema,
+    emptyAppCloneSettingsFormDefaults,
+} from "../schemas";
+import type { AppCloneSettingsFormRef } from "../types";
+
+import { mapAppCloneSettingsToFormInput } from "./app-clone-settings.form-mappers";
+
+type SchemaInput = AppCloneSettingsFormSchemaInput;
+type SchemaOutput = AppCloneSettingsFormSchemaOutput;
+
+const FALLBACK_ENV_COLOR = "#64748b";
+
+function ReadOnlyValue({ children }: { children: ReactNode }) {
+    return (
+        <div className="flex min-h-9 min-w-0 items-center rounded-md border border-transparent px-0 py-2 text-sm">
+            <div className="min-w-0 truncate">{children}</div>
+        </div>
+    );
+}
+
+function MappingRow({
+    label,
+    source,
+    error,
+    children,
+}: {
+    label: string;
+    source: ReactNode;
+    error?: HookFormFieldError;
+    children: ReactNode;
+}) {
+    return (
+        <InfoBlock
+            // titleWidth={200}
+            title={<LabelWithInfo label={label} />}
+        >
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1.25fr)] items-start gap-3">
+                <ReadOnlyValue>{source}</ReadOnlyValue>
+                <div className="flex h-9 items-center justify-center text-muted-foreground">
+                    <ArrowRight className="size-4" />
+                </div>
+                <FieldGroup>
+                    <Field>
+                        {children}
+                        {error ? <FieldError errors={[error]} /> : null}
+                    </Field>
+                </FieldGroup>
+            </div>
+        </InfoBlock>
+    );
+}
+
+function SectionEnabledField({ name }: { name: FieldPath<SchemaInput> }) {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { field } = useController({ control, name });
+
+    return (
+        <InfoBlock title="Enabled">
+            <Checkbox
+                checked={field.value === true}
+                onCheckedChange={value => {
+                    field.onChange(value === true);
+                }}
+            />
+        </InfoBlock>
+    );
+}
+
+function BooleanFlagField({ name, label }: { name: FieldPath<SchemaInput>; label: string }) {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { field } = useController({ control, name });
+
+    return (
+        <InfoBlock title={label}>
+            <Checkbox
+                checked={field.value === true}
+                onCheckedChange={value => {
+                    field.onChange(value === true);
+                }}
+            />
+        </InfoBlock>
+    );
+}
+
+function TargetEnvSelect({
+    envs,
+    readOnly,
+    error,
+}: {
+    envs: ProjectEnvEntity[];
+    readOnly: boolean;
+    error?: HookFormFieldError;
+}) {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { field } = useController({ control, name: "targetEnv" });
+    const targetEnv = field.value.trim();
+    const envOptions = useMemo(() => {
+        const nonEmptyEnvs = envs.filter(env => env.name.trim() !== "");
+
+        if (!targetEnv || nonEmptyEnvs.some(env => env.name === targetEnv)) {
+            return nonEmptyEnvs;
+        }
+
+        return [{ name: targetEnv, color: FALLBACK_ENV_COLOR }, ...nonEmptyEnvs];
+    }, [envs, targetEnv]);
+    const selectedEnv = targetEnv ? envOptions.find(env => env.name === targetEnv) : null;
+
+    return (
+        <InfoBlock title="Target Environment">
+            <Select
+                value={targetEnv}
+                disabled={readOnly || envOptions.length === 0}
+                onValueChange={field.onChange}
+            >
+                <SelectTrigger
+                    aria-invalid={Boolean(error)}
+                    className={cn(PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS, "px-2")}
+                >
+                    {selectedEnv ? (
+                        <ProjectEnvBadge
+                            name={selectedEnv.name}
+                            color={selectedEnv.color}
+                        />
+                    ) : (
+                        <span className="text-muted-foreground">
+                            {envOptions.length === 0 ? "No environments" : "Select environment"}
+                        </span>
+                    )}
+                </SelectTrigger>
+                <SelectContent>
+                    {envOptions.map(env => (
+                        <SelectItem
+                            key={env.name}
+                            value={env.name}
+                        >
+                            <ProjectEnvBadge
+                                name={env.name}
+                                color={env.color}
+                            />
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            {error ? <FieldError errors={[error]} /> : null}
+        </InfoBlock>
+    );
+}
+
+function TargetStatusSelect({ readOnly, error }: { readOnly: boolean; error?: HookFormFieldError }) {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { field } = useController({ control, name: "targetStatus" });
+
+    return (
+        <InfoBlock title="Target Status">
+            <Select
+                value={field.value}
+                disabled={readOnly}
+                onValueChange={field.onChange}
+            >
+                <SelectTrigger
+                    aria-invalid={Boolean(error)}
+                    className={cn(PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS, "px-2")}
+                >
+                    <ProjectAppStatusBadge status={field.value} />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value={EProjectAppStatus.Active}>
+                        <ProjectAppStatusBadge status={EProjectAppStatus.Active} />
+                    </SelectItem>
+                    <SelectItem value={EProjectAppStatus.Disabled}>
+                        <ProjectAppStatusBadge status={EProjectAppStatus.Disabled} />
+                    </SelectItem>
+                </SelectContent>
+            </Select>
+            {error ? <FieldError errors={[error]} /> : null}
+        </InfoBlock>
+    );
+}
+
+function HttpDomainFields({ projectId, readOnly }: { projectId: string; readOnly: boolean }) {
+    const { control, formState } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { fields } = useFieldArray({ control, name: "cloneHttpDomains" });
+
+    return (
+        <div className="flex flex-col gap-4">
+            {fields.map((field, index) => (
+                <HttpDomainRow
+                    key={field.id}
+                    projectId={projectId}
+                    index={index}
+                    readOnly={readOnly}
+                    domainError={formState.errors.cloneHttpDomains?.[index]?.targetDomain}
+                />
+            ))}
+        </div>
+    );
+}
+
+function HttpDomainRow({
+    projectId,
+    index,
+    readOnly,
+    domainError,
+}: {
+    projectId: string;
+    index: number;
+    readOnly: boolean;
+    domainError?: HookFormFieldError;
+}) {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const sourceDomain = useWatch({ control, name: `cloneHttpDomains.${index}.sourceDomain` });
+    const sourceSslCert = useWatch({ control, name: `cloneHttpDomains.${index}.sourceSslCert` });
+    const targetDomain = useWatch({ control, name: `cloneHttpDomains.${index}.targetDomain` });
+    const { field: targetDomainField } = useController({ control, name: `cloneHttpDomains.${index}.targetDomain` });
+    const { field: targetSslCertField } = useController({ control, name: `cloneHttpDomains.${index}.targetSslCert` });
+
+    const [searchQuery, setSearchQuery] = useState("");
+    const normalizedTargetDomain = typeof targetDomain === "string" ? targetDomain.trim() : "";
+    const hasTargetDomain = normalizedTargetDomain !== "";
+
+    const {
+        data: { data: sslCerts } = DEFAULT_PAGINATED_DATA,
+        isFetching,
+        refetch,
+        isRefetching,
+    } = ProjectSslCertQueries.useFindManyPaginated(
+        {
+            projectID: projectId,
+            search: searchQuery,
+            domain: normalizedTargetDomain,
+        },
+        {
+            enabled: Boolean(projectId) && hasTargetDomain,
+        },
+    );
+
+    const comboboxOptions = useMemo(() => {
+        if (!hasTargetDomain) {
+            return [];
+        }
+
+        const options = sslCerts.map(cert => ({
+            value: { id: cert.id, name: cert.name, domain: cert.domain },
+            label: cert.name,
+        }));
+
+        if (targetSslCertField.value?.id && !options.some(option => option.value.id === targetSslCertField.value?.id)) {
+            return [
+                {
+                    value: {
+                        id: targetSslCertField.value.id,
+                        name: targetSslCertField.value.name,
+                        domain: "",
+                    },
+                    label: targetSslCertField.value.name,
+                },
+                ...options,
+            ];
+        }
+
+        return options;
+    }, [hasTargetDomain, sslCerts, targetSslCertField.value]);
+
+    return (
+        <div className="flex flex-col gap-4">
+            <MappingRow
+                label="Domain"
+                source={sourceDomain}
+                error={domainError}
+            >
+                <Input
+                    {...targetDomainField}
+                    disabled={readOnly}
+                    aria-invalid={Boolean(domainError)}
+                />
+            </MappingRow>
+            <MappingRow
+                label="SSL Cert"
+                source={sourceSslCert?.name ?? <span className="text-muted-foreground">-</span>}
+            >
+                <Combobox
+                    options={comboboxOptions}
+                    value={hasTargetDomain ? (targetSslCertField.value?.id ?? null) : null}
+                    onChange={(_, option) => {
+                        if (readOnly || !hasTargetDomain) {
+                            return;
+                        }
+
+                        targetSslCertField.onChange(option ? { id: option.id, name: option.name } : null);
+                    }}
+                    onSearch={setSearchQuery}
+                    placeholder="Select SSL certificate"
+                    searchable
+                    closeOnSelect
+                    emptyText="No SSL certificates available"
+                    valueKey="id"
+                    loading={isFetching}
+                    onRefresh={hasTargetDomain ? () => void refetch() : undefined}
+                    isRefreshing={isRefetching}
+                    allowClear
+                    disabled={readOnly || !hasTargetDomain}
+                />
+            </MappingRow>
+        </div>
+    );
+}
+
+function CommandPipesSection({ projectId, readOnly }: { projectId: string; readOnly: boolean }) {
+    const { control, setValue } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const commandPipes = useWatch({ control, name: "commandPipes" });
+    const enabled = commandPipes.length > 0;
+    const [selectedCommandId, setSelectedCommandId] = useState<string | null>(null);
+
+    const {
+        data: { data: commandPipesList } = DEFAULT_PAGINATED_DATA,
+        isFetching,
+        refetch,
+        isRefetching,
+    } = ProjectCommandPipeQueries.useFindManyPaginated({
+        projectID: projectId,
+    });
+
+    const availableOptions = useMemo(() => {
+        const selectedIds = new Set(commandPipes.map(pipe => pipe.id));
+
+        return commandPipesList
+            .filter(pipe => !selectedIds.has(pipe.id))
+            .map(pipe => ({
+                value: pipe.id,
+                label: pipe.name,
+            }));
+    }, [commandPipes, commandPipesList]);
+
+    function handleEnabledChange(checked: boolean) {
+        if (!checked) {
+            setValue("commandPipes", [], { shouldDirty: true });
+            setSelectedCommandId(null);
+        }
+    }
+
+    function handleAddCommand() {
+        if (!selectedCommandId || readOnly) {
+            return;
+        }
+
+        const selected = commandPipesList.find(pipe => pipe.id === selectedCommandId);
+        if (!selected || commandPipes.some(pipe => pipe.id === selected.id)) {
+            return;
+        }
+
+        setValue("commandPipes", [...commandPipes, { id: selected.id, name: selected.name }], { shouldDirty: true });
+        setSelectedCommandId(null);
+    }
+
+    function handleRemoveCommand(id: string) {
+        if (readOnly) {
+            return;
+        }
+
+        setValue(
+            "commandPipes",
+            commandPipes.filter(pipe => pipe.id !== id),
+            { shouldDirty: true },
+        );
+    }
+
+    return (
+        <>
+            <InfoBlock title="Enabled">
+                <Checkbox
+                    checked={enabled}
+                    disabled={readOnly}
+                    onCheckedChange={value => {
+                        handleEnabledChange(value === true);
+                    }}
+                />
+            </InfoBlock>
+
+            {enabled ? (
+                <>
+                    <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                        <p>
+                            <span className="font-semibold">Note:</span>{" "}
+                            <span className="font-semibold">Post-Clone Commands</span> offer higher data consistency
+                            compared to raw Volume Cloning. For instance, you can use{" "}
+                            <code className="rounded bg-muted px-1 py-0.5 text-xs">pg_dump</code> on the source app
+                            paired with <code className="rounded bg-muted px-1 py-0.5 text-xs">pg_restore</code> on the
+                            target app to clone a PostgreSQL database without stopping the source app.
+                        </p>
+                        <p className="mt-2 italic">
+                            If you choose this approach, you should uncheck{" "}
+                            <span className="text-orange-500">Clone Volume Data</span> while enabling{" "}
+                            <span className="text-orange-500">Clone Volumes</span> (to ensure empty volumes are created
+                            for the new app).
+                        </p>
+                    </div>
+
+                    <InfoBlock title="Command Pipes">
+                        <div className="flex flex-col gap-3">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Select
+                                    value={selectedCommandId ?? ""}
+                                    disabled={readOnly || availableOptions.length === 0}
+                                    onValueChange={value => {
+                                        setSelectedCommandId(value);
+                                    }}
+                                >
+                                    <SelectTrigger className="min-w-[220px]">
+                                        <span className="truncate">
+                                            {selectedCommandId
+                                                ? availableOptions.find(option => option.value === selectedCommandId)
+                                                      ?.label
+                                                : "Select command to add"}
+                                        </span>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {availableOptions.map(option => (
+                                            <SelectItem
+                                                key={option.value}
+                                                value={option.value}
+                                            >
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    disabled={readOnly || isFetching}
+                                    onClick={() => void refetch()}
+                                >
+                                    <RefreshCw className={cn("size-4", isRefetching && "animate-spin")} />
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    disabled={readOnly || !selectedCommandId}
+                                    onClick={handleAddCommand}
+                                >
+                                    <Plus className="mr-2 size-4" />
+                                    Add
+                                </Button>
+                            </div>
+
+                            {commandPipes.length > 0 ? (
+                                <ul className="flex flex-col gap-2">
+                                    {commandPipes.map(pipe => (
+                                        <li
+                                            key={pipe.id}
+                                            className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                                        >
+                                            <span className="truncate">{pipe.name}</span>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="size-8 shrink-0"
+                                                disabled={readOnly}
+                                                onClick={() => {
+                                                    handleRemoveCommand(pipe.id);
+                                                }}
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : null}
+                        </div>
+                    </InfoBlock>
+                </>
+            ) : null}
+        </>
+    );
+}
+
+function ConditionalSection({ enabled, children }: PropsWithChildren<{ enabled: boolean }>) {
+    if (!enabled) {
+        return null;
+    }
+
+    return children;
+}
+
+export function AppCloneSettingsForm({
+    ref,
+    projectId,
+    envs,
+    defaultValues,
+    onSubmit,
+    readOnly = false,
+    children,
+}: Props) {
+    const envNames = useMemo(() => envs.map(env => env.name).filter(name => name.trim() !== ""), [envs]);
+    const schema = useMemo(() => createAppCloneSettingsFormSchema(envNames), [envNames]);
+
+    const methods = useForm<SchemaInput, unknown, SchemaOutput>({
+        defaultValues: defaultValues
+            ? mapAppCloneSettingsToFormInput(defaultValues)
+            : emptyAppCloneSettingsFormDefaults,
+        resolver: zodResolver(schema),
+        mode: "onSubmit",
+    });
+
+    const cloneDeploymentSettings = useWatch({ control: methods.control, name: "cloneDeploymentSettings" });
+    const cloneHttpSettings = useWatch({ control: methods.control, name: "cloneHttpSettings" });
+    const cloneVolumes = useWatch({ control: methods.control, name: "cloneVolumes" });
+
+    useUpdateEffect(() => {
+        methods.reset(
+            defaultValues ? mapAppCloneSettingsToFormInput(defaultValues) : emptyAppCloneSettingsFormDefaults,
+        );
+    }, [defaultValues]);
+
+    useImperativeHandle(
+        ref,
+        () => ({
+            submit: () => {
+                void methods.handleSubmit(onSubmit)();
+            },
+            setValues: (values: Partial<SchemaInput>) => {
+                methods.reset({
+                    ...methods.getValues(),
+                    ...values,
+                } as SchemaInput);
+            },
+            onError(error: ValidationException) {
+                if (error.errors.length === 0) {
+                    return;
+                }
+
+                error.errors.forEach(({ path, message }, index) => {
+                    methods.setError(
+                        path as FieldPath<SchemaInput>,
+                        { message, type: "manual" },
+                        {
+                            shouldFocus: index === 0,
+                        },
+                    );
+                });
+            },
+        }),
+        [methods, onSubmit],
+    );
+
+    return (
+        <div className="pt-2">
+            <FormProvider {...methods}>
+                <form
+                    onSubmit={event => {
+                        event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+
+                        void methods.handleSubmit(onSubmit)(event);
+                    }}
+                    className="flex flex-col gap-6"
+                >
+                    <fieldset
+                        disabled={readOnly}
+                        className="contents"
+                    >
+                        <ContentBlock label="General">
+                            <div className="flex flex-col gap-6">
+                                <InfoBlock title="Target Name">
+                                    <Input
+                                        {...methods.register("targetName")}
+                                        className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                        aria-invalid={Boolean(methods.formState.errors.targetName)}
+                                    />
+                                    {methods.formState.errors.targetName ? (
+                                        <FieldError errors={[methods.formState.errors.targetName]} />
+                                    ) : null}
+                                </InfoBlock>
+
+                                <TargetEnvSelect
+                                    envs={envs}
+                                    readOnly={readOnly}
+                                    error={methods.formState.errors.targetEnv}
+                                />
+
+                                <TargetStatusSelect
+                                    readOnly={readOnly}
+                                    error={methods.formState.errors.targetStatus}
+                                />
+
+                                <BooleanFlagField
+                                    name="cloneEnvVars"
+                                    label="Clone Env Variables"
+                                />
+                                <BooleanFlagField
+                                    name="cloneSecrets"
+                                    label="Clone Secrets"
+                                />
+                                <BooleanFlagField
+                                    name="cloneConfigFiles"
+                                    label="Clone Config Files"
+                                />
+                                <BooleanFlagField
+                                    name="clonePeriodicJobs"
+                                    label="Clone Periodic Jobs"
+                                />
+                                <BooleanFlagField
+                                    name="cloneSchedJobs"
+                                    label="Clone Scheduled Jobs"
+                                />
+                            </div>
+                        </ContentBlock>
+
+                        <ContentBlock label="Clone Deployment Settings">
+                            <div className="flex flex-col gap-6">
+                                <SectionEnabledField name="cloneDeploymentSettings" />
+                                <ConditionalSection enabled={cloneDeploymentSettings}>
+                                    <InfoBlock title="Target Replicas">
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <Input
+                                                type="number"
+                                                {...methods.register("targetReplicas")}
+                                                className="w-24"
+                                                aria-invalid={Boolean(methods.formState.errors.targetReplicas)}
+                                            />
+                                            <span className="text-sm text-muted-foreground">
+                                                (-1: inherit from source app)
+                                            </span>
+                                        </div>
+                                        {methods.formState.errors.targetReplicas ? (
+                                            <FieldError errors={[methods.formState.errors.targetReplicas]} />
+                                        ) : null}
+                                    </InfoBlock>
+                                </ConditionalSection>
+                            </div>
+                        </ContentBlock>
+
+                        <ContentBlock label="Clone HTTP Settings">
+                            <div className="flex flex-col gap-6">
+                                <SectionEnabledField name="cloneHttpSettings" />
+                                <ConditionalSection enabled={cloneHttpSettings}>
+                                    <HttpDomainFields
+                                        projectId={projectId}
+                                        readOnly={readOnly}
+                                    />
+                                </ConditionalSection>
+                            </div>
+                        </ContentBlock>
+
+                        <ContentBlock label="Clone Volumes">
+                            <div className="flex flex-col gap-6">
+                                <SectionEnabledField name="cloneVolumes" />
+                                <ConditionalSection enabled={cloneVolumes}>
+                                    <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                                        <p>
+                                            <span className="font-semibold">Warning:</span> Raw volume cloning is not
+                                            recommended for database-type applications (e.g., PostgreSQL, MySQL, Redis,
+                                            MongoDB) while actively running with continuous read/write operations and
+                                            active memory buffering. Direct file-level copying during active I/O can
+                                            easily result in database corruption or inconsistent data states.
+                                        </p>
+                                        <p className="mt-2 italic">
+                                            Recommendation: Use dedicated database dump/restore utilities (e.g.,
+                                            pg_dump, mysqldump) via Post-Clone Commands, or stop the source application
+                                            before cloning volumes.
+                                        </p>
+                                    </div>
+                                    <BooleanFlagField
+                                        name="cloneVolumeData"
+                                        label="Clone Volume Data"
+                                    />
+                                    <BooleanFlagField
+                                        name="stopSourceAppBeforeClone"
+                                        label="Stop Source App Before Clone"
+                                    />
+                                </ConditionalSection>
+                            </div>
+                        </ContentBlock>
+
+                        <ContentBlock label="Post-Clone Commands">
+                            <CommandPipesSection
+                                projectId={projectId}
+                                readOnly={readOnly}
+                            />
+                        </ContentBlock>
+
+                        <ContentBlock label="Notification Configuration">
+                            <AppCloneNotificationFields readOnly={readOnly} />
+                        </ContentBlock>
+
+                        {children}
+                    </fieldset>
+                </form>
+            </FormProvider>
+        </div>
+    );
+}
+
+type Props = PropsWithChildren<{
+    ref?: React.Ref<AppCloneSettingsFormRef>;
+    projectId: string;
+    envs: ProjectEnvEntity[];
+    defaultValues?: AppCloneSettings;
+    onSubmit: (values: SchemaOutput) => void;
+    readOnly?: boolean;
+}>;

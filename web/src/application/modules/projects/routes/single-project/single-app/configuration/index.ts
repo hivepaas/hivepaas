@@ -5,6 +5,7 @@ export * from "./http-settings";
 export * from "./periodic-jobs";
 export * from "./scheduled-jobs";
 export * from "./env-variables";
+export * from "./app-clone";
 export * from "./feature-settings";
 export * from "./secrets";
 export * from "./config-files";

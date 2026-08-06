@@ -19,7 +19,6 @@ import {
     ConfirmProjectDangerActionDialog,
     useConfirmProjectDangerActionDialogState,
 } from "~/projects/dialogs/confirm-project-danger-action";
-import { CopyProjectAppDialog, useCopyProjectAppDialogState } from "~/projects/dialogs/copy-project-app";
 import { CreateProjectDialog, useCreateProjectDialogState } from "~/projects/dialogs/create-project";
 import { CreateProjectAppDialog, useCreateProjectAppDialogState } from "~/projects/dialogs/create-project-app";
 import {
@@ -83,7 +82,6 @@ function View() {
     const location = useLocation();
     const createProjectDialog = useCreateProjectDialogState();
     const createProjectAppDialog = useCreateProjectAppDialogState();
-    const copyProjectAppDialog = useCopyProjectAppDialogState();
     const updateAppHealthCheckStatusDialog = useUpdateAppHealthCheckStatusDialogState();
     const updateAppScheduledJobStatusDialog = useUpdateAppScheduledJobStatusDialogState();
     const runNowTaskCreatedDialog = useRunNowTaskCreatedDialogState();
@@ -115,7 +113,6 @@ function View() {
     useUpdateEffect(() => {
         createProjectDialog.destroy();
         createProjectAppDialog.destroy();
-        copyProjectAppDialog.destroy();
         updateAppHealthCheckStatusDialog.destroy();
         updateAppScheduledJobStatusDialog.destroy();
         runNowTaskCreatedDialog.destroy();
@@ -149,7 +146,6 @@ function View() {
         <>
             <CreateProjectDialog />
             <CreateProjectAppDialog />
-            <CopyProjectAppDialog />
             <UpdateAppHealthCheckStatusDialog />
             <UpdateAppScheduledJobStatusDialog />
             <RunNowTaskCreatedDialog />

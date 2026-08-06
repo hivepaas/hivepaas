@@ -5,6 +5,13 @@ import type { ApiRequestBase, ApiResponseBase } from "@infrastructure/api";
 export type AppFeatureSettings_FindOne_Req = ApiRequestBase<{ projectID: string; env: string; appID: string }>;
 export type AppFeatureSettings_FindOne_Res = ApiResponseBase<AppFeatureSettings>;
 
+export type AppFeaturePreviewSettingsUpdatePayload = {
+    enabled: boolean;
+    creationDelay: string;
+    appsToClone: { id: string }[];
+    autoCloneApps: boolean;
+};
+
 export type AppFeatureSettings_UpdatePayload = {
     availableInProjects: boolean;
     default: boolean;
@@ -12,6 +19,7 @@ export type AppFeatureSettings_UpdatePayload = {
     loggingSettings: AppFeatureToggleSettings;
     schedJobSettings: AppFeatureToggleSettings;
     terminalSettings: AppFeatureToggleSettings;
+    previewSettings: AppFeaturePreviewSettingsUpdatePayload;
 };
 
 export type AppFeatureSettings_UpdateOne_Req = ApiRequestBase<{

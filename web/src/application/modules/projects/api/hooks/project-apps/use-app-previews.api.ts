@@ -8,7 +8,7 @@ import type {
     AppPreviews_PrepareCreate_Req,
 } from "~/projects/api/services";
 
-import { useApiErrorNotifications } from "@infrastructure/api";
+import { isFeatureDisabledException, useApiErrorNotifications } from "@infrastructure/api";
 
 function createHook() {
     return function useAppPreviewsApi() {
@@ -23,7 +23,9 @@ function createHook() {
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {
-                            notifyError({ message: "Failed to get app previews", error });
+                            if (!isFeatureDisabledException(error)) {
+                                notifyError({ message: "Failed to get app previews", error });
+                            }
                             throw error;
                         },
                     });

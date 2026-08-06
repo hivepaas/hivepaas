@@ -8,6 +8,7 @@ export * from "./app-data-files.commands";
 export * from "./app-container-settings.commands";
 export * from "./app-deployment-settings.commands";
 export * from "./app-feature-settings.commands";
+export * from "./app-clone-settings.commands";
 export * from "./app-network-settings.commands";
 export * from "./app-service-settings.commands";
 export * from "./app-resource-settings.commands";

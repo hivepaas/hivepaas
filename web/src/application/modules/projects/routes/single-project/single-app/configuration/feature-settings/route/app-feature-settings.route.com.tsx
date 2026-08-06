@@ -19,13 +19,15 @@ import { isValidationException } from "@infrastructure/api";
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
 import { AppFeatureSettingsForm } from "../form";
-import type { AppFeatureSettingsFormSchemaOutput } from "../schemas";
+import { type AppFeatureSettingsFormSchemaOutput, DEFAULT_PREVIEW_CREATION_DELAY } from "../schemas";
 import type { AppFeatureSettingsFormRef } from "../types";
 
 function mapFormValuesToPayload(
     values: AppFeatureSettingsFormSchemaOutput,
     server: AppFeatureSettings,
 ): AppFeatureSettings_UpdatePayload {
+    const creationDelay = values.previewSettings.creationDelay.trim() || DEFAULT_PREVIEW_CREATION_DELAY;
+
     return {
         availableInProjects: server.availableInProjects ?? false,
         default: server.default ?? false,
@@ -33,6 +35,12 @@ function mapFormValuesToPayload(
         loggingSettings: values.loggingSettings,
         schedJobSettings: values.schedJobSettings,
         terminalSettings: values.terminalSettings,
+        previewSettings: {
+            enabled: values.previewSettings.enabled,
+            creationDelay,
+            appsToClone: values.previewSettings.appsToClone.map(app => ({ id: app.id })),
+            autoCloneApps: values.previewSettings.autoCloneApps,
+        },
     };
 }
 
@@ -105,6 +113,9 @@ export function AppFeatureSettingsRoute() {
     return (
         <AppFeatureSettingsForm
             ref={formRef}
+            projectID={projectId}
+            env={env}
+            appID={appId}
             defaultValues={data.data}
             onSubmit={handleSubmit}
             readOnly={!canWrite}

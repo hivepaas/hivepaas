@@ -1,8 +1,6 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useProjectAppsApi } from "~/projects/api/hooks";
 import type {
-    ProjectApps_Copy_Req,
-    ProjectApps_Copy_Res,
     ProjectApps_CreateOne_Req,
     ProjectApps_CreateOne_Res,
     ProjectApps_DeleteOne_Req,
@@ -47,36 +45,6 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
 
             if (onSuccess) {
                 onSuccess(response, ...rest);
-            }
-        },
-        ...options,
-    });
-}
-
-/**
- * Copy a project app command
- */
-type CopyReq = ProjectApps_Copy_Req["data"];
-type CopyRes = ProjectApps_Copy_Res;
-type CopyOptions = Omit<UseMutationOptions<CopyRes, Error, CopyReq>, "mutationFn">;
-
-function useCopy({ onSuccess, ...options }: CopyOptions = {}) {
-    const { mutations } = useProjectAppsApi();
-
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: mutations.copy,
-        onSuccess: (response, request, ...rest) => {
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.apps.$.find-many-paginated"]],
-            });
-            void queryClient.invalidateQueries({
-                queryKey: [QK["projects.$.find-one-by-id"], { projectID: request.projectID }],
-            });
-
-            if (onSuccess) {
-                onSuccess(response, request, ...rest);
             }
         },
         ...options,
@@ -292,7 +260,6 @@ function useDetectPhoto({ onSuccess, ...options }: DetectPhotoOptions = {}) {
 
 export const ProjectAppsCommands = Object.freeze({
     useCreateOne,
-    useCopy,
     useDeleteOne,
     useUpdateOne,
     useUpdateStatus,

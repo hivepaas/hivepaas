@@ -1435,6 +1435,14 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.appClone.$pattern,
+                            lazy: async () => {
+                                const { AppCloneSettingsRoute } = await getLazyComponents();
+
+                                return { Component: AppCloneSettingsRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.featureSettings.$pattern,
                             lazy: async () => {
                                 const { AppFeatureSettingsRoute } = await getLazyComponents();

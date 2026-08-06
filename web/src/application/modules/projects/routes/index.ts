@@ -84,6 +84,7 @@ export {
     AppScheduledJobCreateRoute,
     AppScheduledJobEditRoute,
     AppFeatureSettingsRoute,
+    AppCloneSettingsRoute,
     AppConfigEnvVariablesRoute,
     AppConfigSecretsRoute,
     AppConfigSecretCreateRoute,

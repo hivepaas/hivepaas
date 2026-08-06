@@ -83,6 +83,10 @@ function View({ children }: PropsWithChildren) {
             route: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId),
         },
         {
+            label: "App Clone",
+            route: ROUTE.projects.single.apps.single.configuration.appClone.$route(projectId, env, appId),
+        },
+        {
             label: "Feature Settings",
             route: ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectId, env, appId),
         },

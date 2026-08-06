@@ -8,11 +8,13 @@ import invariant from "tiny-invariant";
 import { AppPreviewsCommands, AppPreviewsQueries, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
 import type { ProjectEnvEntity } from "~/projects/domain";
 
-import { AppLoader, TableActions } from "@application/shared/components";
+import { AppLink, AppLoader, TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction } from "@application/shared/permissions";
+
+import { isFeatureDisabledException } from "@infrastructure/api";
 
 import { Button, DataTable } from "@/components/ui";
 
@@ -36,21 +38,25 @@ export function AppPreviewDeploymentsRoute() {
     });
     const isChildApp = Boolean(appData?.data.parentApp);
     const canLoadPreviews = Boolean(appData) && !isChildApp;
-    const { data: { data: previews, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
-        AppPreviewsQueries.useFindManyPaginated(
-            {
-                projectID: projectId,
-                env,
-                appID: appId,
-                pagination,
-                sorting,
-                search,
-                getStats: true,
-            },
-            {
-                enabled: canLoadPreviews,
-            },
-        );
+    const {
+        data: { data: previews, meta } = DEFAULT_PAGINATED_DATA,
+        isFetching,
+        error,
+    } = AppPreviewsQueries.useFindManyPaginated(
+        {
+            projectID: projectId,
+            env,
+            appID: appId,
+            pagination,
+            sorting,
+            search,
+            getStats: true,
+        },
+        {
+            enabled: canLoadPreviews,
+        },
+    );
+    const isFeatureDisabled = error instanceof Error && isFeatureDisabledException(error);
     const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
     const projectEnvs = projectData?.data.envs ?? EMPTY_PROJECT_ENVS;
     const columns = useMemo(
@@ -85,6 +91,22 @@ export function AppPreviewDeploymentsRoute() {
     return (
         <section className={cn(listBox)}>
             <div className="flex flex-col gap-4">
+                {isFeatureDisabled && (
+                    <p className="text-base">
+                        App preview feature is disabled, enable it in{" "}
+                        <AppLink.Basic
+                            to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(
+                                projectId,
+                                env,
+                                appId,
+                            )}
+                            className="text-primary underline-offset-4 hover:underline"
+                        >
+                            Feature Settings
+                        </AppLink.Basic>
+                    </p>
+                )}
+
                 <TableActions
                     search={{ value: search, onChange: setSearch }}
                     renderActions={

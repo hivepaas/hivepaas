@@ -103,6 +103,9 @@ func (s *service) loadDeploymentData(
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			bunex.SelectWhere("app.status = ?", base.AppStatusActive),
 		),
+		bunex.SelectRelation("App.ProjectEnv",
+			bunex.SelectWhere("app__project_env.status = ?", base.ProjectStatusActive),
+		),
 		bunex.SelectRelation("App.Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 			bunex.SelectWhere("app__project.status = ?", base.ProjectStatusActive),
@@ -112,7 +115,8 @@ func (s *service) loadDeploymentData(
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
-	if deployment == nil || deployment.App == nil || deployment.App.Project == nil { // no active deployment, return
+	if deployment == nil || deployment.App == nil ||
+		deployment.App.Project == nil || deployment.App.ProjectEnv == nil { // no active deployment, return
 		return nil
 	}
 

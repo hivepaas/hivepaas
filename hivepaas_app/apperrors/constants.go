@@ -112,6 +112,7 @@ var (
 
 // Errors for user
 var (
+	ErrUserNotFound                = NewErr(ErrNotFound, "ERR_USER_NOT_FOUND")
 	ErrUserUnavailable             = NewErr(ErrUnauthorized, "ERR_USER_UNAVAILABLE")
 	ErrUsernameUnavailable         = NewErr(ErrUnavailable, "ERR_USERNAME_UNAVAILABLE")
 	ErrUserDemoUnauthorized        = NewErr(ErrUnauthorized, "ERR_USER_DEMO_UNAUTHORIZED")

@@ -58,7 +58,7 @@ func (uc *UC) UpdateSSLCert(
 			if reObtainCert {
 				refObjects := entity.NewRefObjects()
 				err = uc.SettingService.LoadRefObjects(ctx, db, &refObjects, req.Scope,
-					true, true, pData.Setting)
+					true, pData.Setting)
 				if err != nil {
 					return apperrors.Wrap(err)
 				}

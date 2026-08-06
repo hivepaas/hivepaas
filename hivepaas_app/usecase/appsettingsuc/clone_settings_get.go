@@ -108,8 +108,8 @@ func (uc *UC) initDefaultAppCloneSettings(
 	httpSettings := httpSetting.MustAsAppHttpSettings()
 
 	refObjects := entity.NewRefObjects()
-	err = uc.settingService.LoadRefObjects(ctx, db, &refObjects, app.GetObjectScope(),
-		true, false, httpSetting)
+	err = uc.settingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, app.GetObjectScope(),
+		true, httpSetting)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -153,8 +153,8 @@ func (uc *UC) loadAppCloneSettingsRefData(
 
 	app := input.App
 	refIDs := input.AppCloneSettings.GetRefObjectIDs()
-	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &input.RefObjects, app.GetObjectScope(),
-		true, false, refIDs)
+	err = uc.settingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &input.RefObjects, app.GetObjectScope(),
+		true, refIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

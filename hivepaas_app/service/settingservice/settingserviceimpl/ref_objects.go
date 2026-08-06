@@ -3,6 +3,8 @@ package settingserviceimpl
 import (
 	"context"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -16,14 +18,28 @@ func (s *service) LoadRefObjects(
 	refObjects **entity.RefObjects,
 	scope *entity.ObjectScope,
 	requireActive bool,
-	errorIfUnavail bool,
+	inSettings ...*entity.Setting,
+) error {
+	allRefIDs := &entity.RefObjectIDs{}
+	for _, setting := range inSettings {
+		allRefIDs.AddRefIDs(setting.MustGetRefObjectIDs())
+	}
+	return s.loadRefObjectsByIDs(ctx, db, refObjects, scope, true, requireActive, allRefIDs)
+}
+
+func (s *service) LoadRefObjectsSkipMissing(
+	ctx context.Context,
+	db database.IDB,
+	refObjects **entity.RefObjects,
+	scope *entity.ObjectScope,
+	requireActive bool,
 	inSettings ...*entity.Setting,
 ) (err error) {
 	allRefIDs := &entity.RefObjectIDs{}
 	for _, setting := range inSettings {
 		allRefIDs.AddRefIDs(setting.MustGetRefObjectIDs())
 	}
-	return s.LoadRefObjectsByIDs(ctx, db, refObjects, scope, requireActive, errorIfUnavail, allRefIDs)
+	return s.loadRefObjectsByIDs(ctx, db, refObjects, scope, false, requireActive, allRefIDs)
 }
 
 func (s *service) LoadRefObjectsByIDs(
@@ -32,7 +48,29 @@ func (s *service) LoadRefObjectsByIDs(
 	pRefObjects **entity.RefObjects,
 	scope *entity.ObjectScope,
 	requireActive bool,
-	errorIfUnavail bool,
+	refIDs *entity.RefObjectIDs,
+) error {
+	return s.loadRefObjectsByIDs(ctx, db, pRefObjects, scope, true, requireActive, refIDs)
+}
+
+func (s *service) LoadRefObjectsByIDsSkipMissing(
+	ctx context.Context,
+	db database.IDB,
+	pRefObjects **entity.RefObjects,
+	scope *entity.ObjectScope,
+	requireActive bool,
+	refIDs *entity.RefObjectIDs,
+) error {
+	return s.loadRefObjectsByIDs(ctx, db, pRefObjects, scope, false, requireActive, refIDs)
+}
+
+func (s *service) loadRefObjectsByIDs(
+	ctx context.Context,
+	db database.IDB,
+	pRefObjects **entity.RefObjects,
+	scope *entity.ObjectScope,
+	requireExistence bool,
+	requireActive bool,
 	refIDs *entity.RefObjectIDs,
 ) (err error) {
 	if pRefObjects == nil {
@@ -49,7 +87,7 @@ func (s *service) LoadRefObjectsByIDs(
 
 	// Load ref users
 	if len(refIDs.RefUserIDs) > 0 {
-		err = s.loadReferenceUsers(ctx, db, pRefObjects, errorIfUnavail, refIDs.RefUserIDs)
+		err = s.loadReferenceUsers(ctx, db, pRefObjects, requireExistence, requireActive, refIDs.RefUserIDs)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -57,7 +95,7 @@ func (s *service) LoadRefObjectsByIDs(
 
 	// Load ref apps
 	if len(refIDs.RefAppIDs) > 0 {
-		err = s.loadReferenceApps(ctx, db, pRefObjects, requireActive, errorIfUnavail, refIDs.RefAppIDs)
+		err = s.loadReferenceApps(ctx, db, pRefObjects, requireExistence, requireActive, refIDs.RefAppIDs)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -65,7 +103,7 @@ func (s *service) LoadRefObjectsByIDs(
 
 	// Load ref projects
 	if len(refIDs.RefProjectIDs) > 0 {
-		err = s.loadReferenceProjects(ctx, db, pRefObjects, requireActive, errorIfUnavail, refIDs.RefProjectIDs)
+		err = s.loadReferenceProjects(ctx, db, pRefObjects, requireExistence, requireActive, refIDs.RefProjectIDs)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -73,7 +111,7 @@ func (s *service) LoadRefObjectsByIDs(
 
 	// Load ref project envs
 	if len(refIDs.RefProjectEnvIDs) > 0 {
-		err = s.loadReferenceProjectEnvs(ctx, db, pRefObjects, requireActive, errorIfUnavail, refIDs.RefProjectEnvIDs)
+		err = s.loadReferenceProjectEnvs(ctx, db, pRefObjects, requireExistence, requireActive, refIDs.RefProjectEnvIDs)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -81,7 +119,7 @@ func (s *service) LoadRefObjectsByIDs(
 
 	// Load ref settings
 	if len(refIDs.RefSettingIDs) > 0 {
-		err = s.loadReferenceSettings(ctx, db, pRefObjects, scope, requireActive, errorIfUnavail, refIDs.RefSettingIDs)
+		err = s.loadReferenceSettings(ctx, db, pRefObjects, scope, requireExistence, requireActive, refIDs.RefSettingIDs)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -93,7 +131,7 @@ func (s *service) LoadRefObjectsByIDs(
 		return nil
 	}
 
-	err = s.LoadRefObjectsByIDs(ctx, db, pRefObjects, scope, requireActive, errorIfUnavail, newRecursiveRefIDs)
+	err = s.loadRefObjectsByIDs(ctx, db, pRefObjects, scope, requireExistence, requireActive, newRecursiveRefIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -106,8 +144,8 @@ func (s *service) loadReferenceSettings(
 	db database.IDB,
 	pRefObjects **entity.RefObjects,
 	scope *entity.ObjectScope,
+	requireExistence bool,
 	requireActive bool,
-	errorIfUnavail bool,
 	settingIDs []string,
 ) (err error) {
 	refObjects := *pRefObjects
@@ -138,13 +176,13 @@ func (s *service) loadReferenceSettings(
 		refObjects.RefSettings[setting.ID] = setting
 	}
 
-	// Check setting availability
-	if errorIfUnavail {
-		for _, id := range loadSettingIDs {
-			if _, exists := refObjects.RefSettings[id]; !exists {
-				return apperrors.Wrap(apperrors.ErrSettingNotFound).WithParam("Name", id).
-					WithMsgLog("setting %s not found or expired", id)
+	for _, id := range loadSettingIDs {
+		setting := refObjects.RefSettings[id]
+		if setting == nil {
+			if requireExistence {
+				return apperrors.Wrap(apperrors.ErrSettingNotFound).WithParam("Name", id)
 			}
+			continue
 		}
 	}
 
@@ -155,8 +193,8 @@ func (s *service) loadReferenceApps(
 	ctx context.Context,
 	db database.IDB,
 	pRefObjects **entity.RefObjects,
+	requireExistence bool,
 	requireActive bool,
-	errorIfUnavail bool,
 	appIDs []string,
 ) (err error) {
 	refObjects := *pRefObjects
@@ -193,27 +231,22 @@ func (s *service) loadReferenceApps(
 
 	for _, id := range loadAppIDs {
 		app := refObjects.RefApps[id]
-		if (requireActive || errorIfUnavail) && app == nil {
-			return apperrors.Wrap(apperrors.ErrAppNotFound).WithParam("Name", id)
-		}
 		if app == nil {
+			if requireExistence {
+				return apperrors.Wrap(apperrors.ErrAppNotFound).WithParam("Name", id)
+			}
 			continue
 		}
-		if errorIfUnavail && app.Project == nil {
-			return apperrors.Wrap(apperrors.ErrProjectNotFound).
-				WithParam("Name", app.ProjectID)
-		}
-		if errorIfUnavail && app.ProjectEnv == nil {
-			return apperrors.Wrap(apperrors.ErrProjectEnvNotFound).
-				WithParam("Name", app.ProjectEnvID)
-		}
-		if requireActive && (app.Project == nil || app.Project.Status != base.ProjectStatusActive) {
-			return apperrors.Wrap(apperrors.ErrProjectInactive).
-				WithParam("Name", app.ProjectID)
-		}
-		if requireActive && app.ProjectEnv != nil && app.ProjectEnv.Status != base.ProjectStatusActive {
-			return apperrors.Wrap(apperrors.ErrProjectEnvInactive).
-				WithParam("Name", app.ProjectEnvID)
+		if requireActive {
+			if app.Status != base.AppStatusActive {
+				return apperrors.Wrap(apperrors.ErrAppInactive).WithParam("Name", app.Name)
+			}
+			if app.Project == nil || app.Project.Status != base.ProjectStatusActive {
+				return apperrors.Wrap(apperrors.ErrProjectInactive).WithParam("Name", app.ProjectID)
+			}
+			if app.ProjectEnv == nil || app.ProjectEnv.Status != base.ProjectStatusActive {
+				return apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithParam("Name", app.ProjectEnvID)
+			}
 		}
 	}
 
@@ -224,8 +257,8 @@ func (s *service) loadReferenceProjects(
 	ctx context.Context,
 	db database.IDB,
 	pRefObjects **entity.RefObjects,
+	requireExistence bool,
 	requireActive bool,
-	errorIfUnavail bool,
 	projectIDs []string,
 ) (err error) {
 	refObjects := *pRefObjects
@@ -258,11 +291,10 @@ func (s *service) loadReferenceProjects(
 
 	for _, id := range loadProjectIDs {
 		project := refObjects.RefProjects[id]
-		if (requireActive || errorIfUnavail) && project == nil {
+		if project == nil && requireExistence {
 			return apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", id)
 		}
 	}
-
 	return nil
 }
 
@@ -270,8 +302,8 @@ func (s *service) loadReferenceProjectEnvs(
 	ctx context.Context,
 	db database.IDB,
 	pRefObjects **entity.RefObjects,
+	requireExistence bool,
 	requireActive bool,
-	errorIfUnavail bool,
 	projectEnvIDs []string,
 ) (err error) {
 	refObjects := *pRefObjects
@@ -306,22 +338,21 @@ func (s *service) loadReferenceProjectEnvs(
 
 	for _, id := range loadProjectEnvIDs {
 		projectEnv := refObjects.RefProjectEnvs[id]
-		if (requireActive || errorIfUnavail) && projectEnv == nil {
-			return apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", id)
-		}
 		if projectEnv == nil {
+			if requireExistence {
+				return apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", id)
+			}
 			continue
 		}
-		if errorIfUnavail && projectEnv.Project == nil {
-			return apperrors.Wrap(apperrors.ErrProjectNotFound).
-				WithParam("Name", projectEnv.ProjectID)
-		}
-		if requireActive && (projectEnv.Project == nil || projectEnv.Project.Status != base.ProjectStatusActive) {
-			return apperrors.Wrap(apperrors.ErrProjectInactive).
-				WithParam("Name", projectEnv.ProjectID)
+		if requireActive {
+			if projectEnv.Status != base.ProjectStatusActive {
+				return apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithParam("Name", projectEnv.Name)
+			}
+			if projectEnv.Project == nil || projectEnv.Project.Status != base.ProjectStatusActive {
+				return apperrors.Wrap(apperrors.ErrProjectInactive).WithParam("Name", projectEnv.ProjectID)
+			}
 		}
 	}
-
 	return nil
 }
 
@@ -329,7 +360,8 @@ func (s *service) loadReferenceUsers(
 	ctx context.Context,
 	db database.IDB,
 	pRefObjects **entity.RefObjects,
-	errorIfUnavail bool,
+	requireExistence bool,
+	errorIfUnavailable bool,
 	userIDs []string,
 ) (err error) {
 	refObjects := *pRefObjects
@@ -345,7 +377,8 @@ func (s *service) loadReferenceUsers(
 		return nil
 	}
 
-	userMap, err := s.userService.LoadUsers(ctx, db, loadUserIDs, errorIfUnavail)
+	loadUsersFunc := gofn.If(requireExistence, s.userService.LoadUsers, s.userService.LoadUsersSkipMissing)
+	userMap, err := loadUsersFunc(ctx, db, loadUserIDs, errorIfUnavailable)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

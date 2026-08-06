@@ -102,7 +102,7 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	// Make sure all reference settings used in this settings exist actively
 	refObjects := entity.NewRefObjects()
 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &refObjects, app.GetObjectScope(),
-		true, true, newDeploymentSettings.GetRefObjectIDs())
+		true, newDeploymentSettings.GetRefObjectIDs())
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

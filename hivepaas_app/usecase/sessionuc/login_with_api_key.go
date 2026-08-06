@@ -29,7 +29,7 @@ func (uc *UC) LoginWithAPIKey(
 	}
 	actingUserID := apiKeySetting.ObjectID
 
-	dbUser, err := uc.userService.LoadUser(ctx, uc.db, actingUserID)
+	dbUser, err := uc.userService.LoadUser(ctx, uc.db, actingUserID, true)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

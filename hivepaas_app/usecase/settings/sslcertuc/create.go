@@ -45,8 +45,7 @@ func (uc *UC) CreateSSLCert(
 			}
 
 			refObjects := entity.NewRefObjects()
-			err = uc.SettingService.LoadRefObjects(ctx, db, &refObjects, req.Scope,
-				true, true, pData.Setting)
+			err = uc.SettingService.LoadRefObjects(ctx, db, &refObjects, req.Scope, true, pData.Setting)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}

@@ -13,15 +13,13 @@ import (
 type Service interface {
 	InitAdminUser(ctx context.Context, db database.IDB) (err error)
 
-	LoadUser(ctx context.Context, db database.IDB, userID string) (*entity.User, error)
-	LoadUserEx(ctx context.Context, db database.IDB, userID string, errorIfUnavail bool) (*entity.User, error)
-	LoadUsers(ctx context.Context, db database.IDB, userIDs []string, errorIfUnavail bool) (
+	LoadUser(ctx context.Context, db database.IDB, userID string, errorIfUnavailable bool) (*entity.User, error)
+	LoadUsers(ctx context.Context, db database.IDB, userIDs []string, errorIfUnavailable bool) (
 		userMap map[string]*entity.User, err error)
-	LoadUsersEx(ctx context.Context, db database.IDB, errorIfUnavail bool,
+	LoadUsersSkipMissing(ctx context.Context, db database.IDB, userIDs []string, errorIfUnavailable bool) (
+		userMap map[string]*entity.User, err error)
+	LoadUsersCustomConds(ctx context.Context, db database.IDB, errorIfUnavailable bool,
 		loadOpts ...bunex.SelectQueryOption) (map[string]*entity.User, error)
-	LoadUserByEmail(ctx context.Context, db database.IDB, email string) (*entity.User, error)
-	LoadUsersByEmails(ctx context.Context, db database.IDB, emails []string, errorIfUnavail bool) (
-		userMap map[string]*entity.User, err error)
 
 	PersistUserData(ctx context.Context, db database.IDB, persistingData *PersistingUserData) error
 	DeleteUser(ctx context.Context, db database.IDB, user *entity.User) error

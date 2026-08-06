@@ -13,6 +13,9 @@ type Service interface {
 	LoadApps(ctx context.Context, db database.IDB, projectID string, appIDs []string,
 		requireProjectActive, requireAppsActive bool, extraOpts ...bunex.SelectQueryOption) (
 		[]*entity.App, error)
+	LoadAppsSkipMissing(ctx context.Context, db database.IDB, projectID string, appIDs []string,
+		requireProjectActive, requireAppsActive bool, extraOpts ...bunex.SelectQueryOption) (
+		[]*entity.App, error)
 	LoadApp(ctx context.Context, db database.IDB, projectID, appID string,
 		requireProjectActive, requireAppActive bool, extraOpts ...bunex.SelectQueryOption) (
 		*entity.App, error)

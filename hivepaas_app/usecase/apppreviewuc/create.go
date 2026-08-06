@@ -116,7 +116,7 @@ func (uc *UC) loadAppForCreatePreview(
 		cloningAppIDs = previewSettings.AppsToClone.ToIDStringSlice()
 	}
 
-	cloningApps, err := uc.appService.LoadApps(ctx, db, app.Project.ID, cloningAppIDs, true, false,
+	cloningApps, err := uc.appService.LoadAppsSkipMissing(ctx, db, app.Project.ID, cloningAppIDs, true, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),

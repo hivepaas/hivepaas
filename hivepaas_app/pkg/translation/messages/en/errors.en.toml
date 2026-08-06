@@ -53,6 +53,7 @@ ERR_TOO_MANY_PASSCODE_ATTEMPTS = "You made too many passcode attempts. Please st
 ERR_OAUTH_USER_EMAIL_NOT_RETURNED = "Email is not returned from provider. Please set correct OAuth scopes."
 
 # User errors
+ERR_USER_NOT_FOUND = "User '{{.Name}}' is not found"
 ERR_USER_UNAVAILABLE = "User is unavailable. Please contact administrator."
 ERR_USERNAME_UNAVAILABLE = "Username is unavailable"
 ERR_USER_DEMO_UNAUTHORIZED = "Demo user is unauthorized to perform the action"

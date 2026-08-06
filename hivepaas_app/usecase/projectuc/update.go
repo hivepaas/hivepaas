@@ -102,7 +102,7 @@ func (uc *UC) loadProjectDataForUpdate(
 
 	// Validate project owner
 	if req.Owner.ID != "" && req.Owner.ID != project.OwnerID {
-		_, err = uc.userService.LoadUser(ctx, db, req.Owner.ID)
+		_, err = uc.userService.LoadUser(ctx, db, req.Owner.ID, true)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

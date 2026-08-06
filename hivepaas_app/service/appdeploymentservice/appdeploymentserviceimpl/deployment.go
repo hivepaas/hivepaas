@@ -145,7 +145,7 @@ func (s *service) loadDeploymentData(
 
 	// Load reference objects
 	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, data.App.GetObjectScope(),
-		true, true, refObjectIDs)
+		true, refObjectIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -52,8 +52,7 @@ func (uc *BaseUC) GetUniqueSetting(
 	}
 
 	refObjects := entity.NewRefObjects()
-	err = uc.SettingService.LoadRefObjects(ctx, db, &refObjects, req.Scope,
-		false, false, setting)
+	err = uc.SettingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, req.Scope, false, setting)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

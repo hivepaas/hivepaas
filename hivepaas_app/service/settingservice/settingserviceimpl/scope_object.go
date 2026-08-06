@@ -62,7 +62,7 @@ func (s *service) LoadScopeObject(
 		scope.ParentAppID = scope.App.ParentID
 
 	case base.ObjectScopeUser:
-		scope.User, err = s.userService.LoadUserEx(ctx, db, scope.UserID, requireActive)
+		scope.User, err = s.userService.LoadUser(ctx, db, scope.UserID, requireActive)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

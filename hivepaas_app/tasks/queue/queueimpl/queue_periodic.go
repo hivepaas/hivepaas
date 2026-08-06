@@ -225,8 +225,7 @@ func (q *taskQueue) loadPeriodicJobDataFromDB(
 
 	// Load reference objects
 	refObjects := entity.NewRefObjects()
-	err = q.settingService.LoadRefObjects(ctx, db, &refObjects, nil,
-		true, false, validSettings...)
+	err = q.settingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, nil, true, validSettings...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

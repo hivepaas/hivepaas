@@ -11,9 +11,13 @@ type Service interface {
 	PersistSettingData(ctx context.Context, db database.IDB, data *PersistingSettingData) error
 
 	LoadRefObjects(ctx context.Context, db database.IDB, refObjects **entity.RefObjects,
-		scope *entity.ObjectScope, requireActive bool, errorIfUnavail bool, inSettings ...*entity.Setting) error
+		scope *entity.ObjectScope, requireActive bool, inSettings ...*entity.Setting) error
+	LoadRefObjectsSkipMissing(ctx context.Context, db database.IDB, refObjects **entity.RefObjects,
+		scope *entity.ObjectScope, requireActive bool, inSettings ...*entity.Setting) error
 	LoadRefObjectsByIDs(ctx context.Context, db database.IDB, refObjects **entity.RefObjects,
-		scope *entity.ObjectScope, requireActive bool, errorIfUnavail bool, refIDs *entity.RefObjectIDs) error
+		scope *entity.ObjectScope, requireActive bool, refIDs *entity.RefObjectIDs) error
+	LoadRefObjectsByIDsSkipMissing(ctx context.Context, db database.IDB, refObjects **entity.RefObjects,
+		scope *entity.ObjectScope, requireActive bool, refIDs *entity.RefObjectIDs) error
 	LoadScopeObject(ctx context.Context, db database.IDB, scope *entity.ObjectScope) error
 
 	// Default settings

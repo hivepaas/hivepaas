@@ -55,7 +55,7 @@ func (uc *UC) GetCurrentUserByAPIKey(ctx context.Context, keyID, secret string) 
 	}
 	actingUserID := apiKeySetting.ObjectID
 
-	user, err := uc.userService.LoadUser(ctx, uc.db, actingUserID)
+	user, err := uc.userService.LoadUser(ctx, uc.db, actingUserID, true)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

@@ -64,8 +64,7 @@ func (uc *UC) ListGitCredential(
 	}
 
 	refObjects := entity.NewRefObjects()
-	err = uc.SettingService.LoadRefObjects(ctx, uc.DB, &refObjects, req.Scope, false,
-		false, settings...)
+	err = uc.SettingService.LoadRefObjectsSkipMissing(ctx, uc.DB, &refObjects, req.Scope, false, settings...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

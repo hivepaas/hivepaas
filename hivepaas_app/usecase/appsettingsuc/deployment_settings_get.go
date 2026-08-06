@@ -75,8 +75,8 @@ func (uc *UC) loadAppDeploymentSettingsRefData(
 		refIDs = input.DeploymentSettings.MustAsAppDeploymentSettings().GetRefObjectIDs()
 	}
 
-	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &input.RefObjects, app.GetObjectScope(),
-		true, false, refIDs)
+	err = uc.settingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &input.RefObjects, app.GetObjectScope(),
+		true, refIDs)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

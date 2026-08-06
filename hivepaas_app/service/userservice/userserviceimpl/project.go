@@ -37,7 +37,7 @@ func (s *service) LoadNotificationUsers(
 		userIDs = append(userIDs, project.OwnerID)
 	}
 
-	userMap, err := s.LoadUsersEx(ctx, db, false,
+	userMap, err := s.LoadUsersCustomConds(ctx, db, false,
 		bunex.SelectWhere("\"user\".id IN (?)", bunex.List(userIDs)),
 		bunex.SelectWhereOrIf(loadAdmins, "\"user\".role = ?", base.UserRoleAdmin),
 	)

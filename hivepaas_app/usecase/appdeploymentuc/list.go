@@ -106,7 +106,7 @@ func (uc *UC) loadDeploymentTriggerUsers(
 			userIDs = append(userIDs, deployment.Trigger.SourceID)
 		}
 	}
-	userMap, err := uc.userService.LoadUsers(ctx, db, userIDs, false)
+	userMap, err := uc.userService.LoadUsersSkipMissing(ctx, db, userIDs, false)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

@@ -12,8 +12,7 @@ type Service interface {
 		eventSetting *entity.BaseEventNotification, eventSuccess bool, refObjects *entity.RefObjects) (
 		*entity.Notification, error)
 	GetDefaultNotification(ctx context.Context, db database.IDB, scope *entity.ObjectScope,
-		refObjects *entity.RefObjects, errorIfRefObjectsUnavail bool) (
-		*entity.Notification, error)
+		refObjects *entity.RefObjects, skipMissing bool) (*entity.Notification, error)
 	BuildTitlePrefix(project *entity.Project, app *entity.App, user *entity.User) string
 
 	NotifyForTaskResult(ctx context.Context, db database.IDB, data *TaskResultNotificationReq) (

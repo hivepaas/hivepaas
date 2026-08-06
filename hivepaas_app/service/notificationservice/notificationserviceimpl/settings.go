@@ -57,8 +57,7 @@ func (s *service) GetNotificationForEvent(
 	}
 
 	// Load ref objects of the setting (otherwise we will have error of missing ref objects)
-	err = s.settingService.LoadRefObjects(ctx, db, &refObjects, scope, true,
-		false, setting)
+	err = s.settingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, scope, true, setting)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -72,7 +71,7 @@ func (s *service) GetDefaultNotification(
 	db database.IDB,
 	scope *entity.ObjectScope,
 	refObjects *entity.RefObjects,
-	errorIfRefObjectsUnavail bool,
+	skipMissing bool,
 ) (*entity.Notification, error) {
 	setting, err := s.settingRepo.GetSingle(ctx, db, scope, base.SettingTypeNotification, true,
 		bunex.SelectWhere("setting.is_default = TRUE"),
@@ -86,8 +85,8 @@ func (s *service) GetDefaultNotification(
 
 	if refObjects != nil {
 		// Load ref objects of the setting (otherwise we will have error of missing ref objects)
-		err = s.settingService.LoadRefObjects(ctx, db, &refObjects, scope, true,
-			errorIfRefObjectsUnavail, setting)
+		loadFunc := gofn.If(skipMissing, s.settingService.LoadRefObjectsSkipMissing, s.settingService.LoadRefObjects)
+		err = loadFunc(ctx, db, &refObjects, scope, true, setting)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

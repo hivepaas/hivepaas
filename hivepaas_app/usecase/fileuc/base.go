@@ -66,7 +66,7 @@ func (uc *UC) loadScopeData(
 		}
 
 	case base.ObjectScopeUser:
-		data.ScopeUser, err = uc.userService.LoadUserEx(ctx, db, scope.UserID, requireActive)
+		data.ScopeUser, err = uc.userService.LoadUser(ctx, db, scope.UserID, requireActive)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

@@ -203,8 +203,7 @@ func (e *Executor) loadSchedJobData(
 	}
 
 	// Load reference objects
-	err = e.settingService.LoadRefObjects(ctx, db, &data.RefObjects, scope,
-		true, false, data.SchedJob)
+	err = e.settingService.LoadRefObjectsSkipMissing(ctx, db, &data.RefObjects, scope, true, data.SchedJob)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

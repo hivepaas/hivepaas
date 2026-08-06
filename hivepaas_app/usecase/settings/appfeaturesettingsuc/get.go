@@ -48,8 +48,7 @@ func (uc *UC) GetAppFeatureSettings(
 
 	setting := resp.Data
 	refObjects := entity.NewRefObjects()
-	err = uc.SettingService.LoadRefObjects(ctx, uc.DB, &refObjects, req.Scope,
-		false, false, setting)
+	err = uc.SettingService.LoadRefObjectsSkipMissing(ctx, uc.DB, &refObjects, req.Scope, false, setting)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

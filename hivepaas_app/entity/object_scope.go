@@ -69,6 +69,9 @@ func (s *ObjectScope) CalcProjectEnvKey() string {
 }
 
 func (s *ObjectScope) IsValid() bool {
+	if s.ScopeType == base.ObjectScopeGlobal {
+		return s.ScopeObjectID() == ""
+	}
 	return s.ScopeObjectID() != ""
 }
 

@@ -39,9 +39,12 @@ func (req *CommandPipeBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
-	res = append(res, basedto.ValidateObjectIDReq(&req.SourceCommand, true, field+"sourceCommand")...)
-	res = append(res, basedto.ValidateObjectIDReq(&req.TargetCommand, true, field+"targetCommand")...)
+	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen,
+		field+"name")...)
+	res = append(res, basedto.ValidateObjectIDReq(&req.SourceCommand, req.TargetCommand.ID == "",
+		field+"sourceCommand")...)
+	res = append(res, basedto.ValidateObjectIDReq(&req.TargetCommand, req.SourceCommand.ID == "",
+		field+"targetCommand")...)
 	return res
 }
 

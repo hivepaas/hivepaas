@@ -3,14 +3,12 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
-    ProjectApps_Copy_Req,
     ProjectApps_CreateOne_Req,
     ProjectApps_DeleteOne_Req,
     ProjectApps_Deploy_Req,
     ProjectApps_DetectPhoto_Req,
     ProjectApps_FindManyPaginated_Req,
     ProjectApps_FindOneById_Req,
-    ProjectApps_PrepareCopy_Req,
     ProjectApps_Restart_Req,
     ProjectApps_SetRunning_Req,
     ProjectApps_UpdateOne_Req,
@@ -74,26 +72,6 @@ function createHook() {
                         },
                     });
                 },
-                prepareCopy: async (data: ProjectApps_PrepareCopy_Req["data"], signal?: AbortSignal) => {
-                    const result = await api.projects.apps.$.prepareCopy(
-                        {
-                            data,
-                        },
-                        signal,
-                    );
-
-                    return match(result, {
-                        Ok: _ => _,
-                        Err: error => {
-                            notifyError({
-                                message: "Failed to prepare project app copy",
-                                error,
-                            });
-
-                            throw error;
-                        },
-                    });
-                },
             }),
             [api, notifyError],
         );
@@ -113,23 +91,6 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to create project app",
-                                error,
-                            });
-
-                            throw error;
-                        },
-                    });
-                },
-                copy: async (data: ProjectApps_Copy_Req["data"]) => {
-                    const result = await api.projects.apps.$.copy({
-                        data,
-                    });
-
-                    return match(result, {
-                        Ok: _ => _,
-                        Err: error => {
-                            notifyError({
-                                message: "Failed to copy project app",
                                 error,
                             });
 

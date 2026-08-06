@@ -1,6 +1,8 @@
 import { createContext } from "react";
 
 import {
+    AppCloneSettingsApi,
+    AppCloneSettingsApiValidator,
     AppConfigFilesApi,
     AppConfigFilesApiValidator,
     AppContainerSettingsApi,
@@ -142,6 +144,7 @@ function createApi() {
     const appPreviewsApiValidator = new AppPreviewsApiValidator();
     const appDeploymentSettingsApiValidator = new AppDeploymentSettingsApiValidator();
     const appFeatureSettingsApiValidator = new AppFeatureSettingsApiValidator();
+    const appCloneSettingsApiValidator = new AppCloneSettingsApiValidator();
     const appHealthChecksApiValidator = new AppHealthChecksApiValidator();
     const appScheduledJobsApiValidator = new AppScheduledJobsApiValidator();
     const appScheduledJobsApi = new AppScheduledJobsApi(appScheduledJobsApiValidator);
@@ -216,6 +219,9 @@ function createApi() {
                 },
                 featureSettings: {
                     $: new AppFeatureSettingsApi(appFeatureSettingsApiValidator),
+                },
+                cloneSettings: {
+                    $: new AppCloneSettingsApi(appCloneSettingsApiValidator),
                 },
                 periodicJobs: {
                     $: new AppHealthChecksApi(appHealthChecksApiValidator),

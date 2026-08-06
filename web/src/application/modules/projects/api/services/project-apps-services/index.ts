@@ -5,6 +5,7 @@ export * from "./deployments";
 export * from "./deployment-settings";
 export * from "./env-vars";
 export * from "./feature-settings";
+export * from "./clone-settings";
 export * from "./previews";
 export * from "./secrets";
 export * from "./project-apps";

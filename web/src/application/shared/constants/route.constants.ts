@@ -630,6 +630,12 @@ export const ROUTE = {
                                 `/projects/${id}/${env}/apps/${appId}/feature-settings/`,
                         },
 
+                        appClone: {
+                            $pattern: "projects/:id/:env/apps/:appId/app-clone",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/app-clone/`,
+                        },
+
                         dangerZone: {
                             $pattern: "projects/:id/:env/apps/:appId/danger-zone",
                             $route: (id: string, env: string, appId: string) =>

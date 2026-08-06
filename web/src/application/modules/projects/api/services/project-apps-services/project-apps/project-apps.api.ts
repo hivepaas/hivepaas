@@ -2,8 +2,6 @@ import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import type {
     ProjectAppsApiValidator,
-    ProjectApps_Copy_Req,
-    ProjectApps_Copy_Res,
     ProjectApps_CreateOne_Req,
     ProjectApps_CreateOne_Res,
     ProjectApps_DeleteOne_Req,
@@ -16,8 +14,6 @@ import type {
     ProjectApps_FindManyPaginated_Res,
     ProjectApps_FindOneById_Req,
     ProjectApps_FindOneById_Res,
-    ProjectApps_PrepareCopy_Req,
-    ProjectApps_PrepareCopy_Res,
     ProjectApps_Restart_Req,
     ProjectApps_Restart_Res,
     ProjectApps_SetRunning_Req,
@@ -87,41 +83,6 @@ export class ProjectAppsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.findOneById),
-                map(res => Ok(res)),
-                catchError(error => of(Err(parseApiError(error)))),
-            ),
-        );
-    }
-
-    async prepareCopy(
-        request: ProjectApps_PrepareCopy_Req,
-        signal?: AbortSignal,
-    ): Promise<Result<ProjectApps_PrepareCopy_Res, Error>> {
-        const { projectID, env, appID } = request.data;
-
-        return lastValueFrom(
-            from(
-                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/copy/prepare`, {
-                    signal,
-                }),
-            ).pipe(
-                map(this.validator.prepareCopy),
-                map(res => Ok(res)),
-                catchError(error => of(Err(parseApiError(error)))),
-            ),
-        );
-    }
-
-    async copy(request: ProjectApps_Copy_Req, signal?: AbortSignal): Promise<Result<ProjectApps_Copy_Res, Error>> {
-        const { projectID, env, appID, ...json } = request.data;
-
-        return lastValueFrom(
-            from(
-                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/copy`, json, {
-                    signal,
-                }),
-            ).pipe(
-                map(this.validator.copy),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

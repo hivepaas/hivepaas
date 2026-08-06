@@ -116,6 +116,7 @@ function View({ projectId, env, appId }: Props) {
         ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.periodicJobs.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.appClone.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.featureSettings.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.dangerZone.$route(projectId, env, appId),
     ];

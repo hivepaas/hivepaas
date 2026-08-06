@@ -3,22 +3,22 @@ import React, { useState } from "react";
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { Copy, MoreVertical } from "lucide-react";
-import { useCopyProjectAppDialog } from "~/projects/dialogs/copy-project-app";
 
-import { MODULE_IDS } from "@application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useConditionalModule } from "@application/shared/permissions";
 
 function View({ projectId, appId, appEnv }: Props) {
     const [open, setOpen] = useState(false);
-    const copyProjectAppDialog = useCopyProjectAppDialog();
+    const { navigate } = useAppNavigate();
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
-    function handleCopyApp() {
+    function handleCloneApp() {
         if (!canWrite) {
             return;
         }
 
-        copyProjectAppDialog.actions.open(projectId, appId, appEnv);
+        navigate.modules(ROUTE.projects.single.apps.single.configuration.appClone.$route(projectId, appEnv, appId));
         setOpen(false);
     }
 
@@ -43,10 +43,10 @@ function View({ projectId, appId, appEnv }: Props) {
                         className="justify-start py-1.5"
                         variant="ghost"
                         disabled={!canWrite}
-                        onClick={handleCopyApp}
+                        onClick={handleCloneApp}
                     >
                         <Copy className="mr-2 size-4" />
-                        Copy App
+                        Clone App
                     </Button>
                 </div>
             </DropdownMenuContent>

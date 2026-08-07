@@ -18,6 +18,19 @@ func (s *service) notifyForDeployment(
 	db database.IDB,
 	data *appDeploymentData,
 ) (err error) {
+	if data == nil || data.App == nil || data.App.ID == "" {
+		return nil
+	}
+	if data.Deployment == nil || data.Deployment.Settings == nil {
+		return nil
+	}
+
+	// Reload app to verify it hasn't been soft-deleted or removed during deployment
+	err = s.reloadApp(ctx, db, true, true, data)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	notifConfig := data.Deployment.Settings.Notification
 	if notifConfig == nil {
 		return nil

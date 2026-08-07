@@ -87,8 +87,9 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 		return apperrors.Wrap(err)
 	}
 
-	// TODO: remove an app while a task/deployment is in-progress will lead to wait
-	// We may skip locked tasks/deployments and delete them later in the daily cleanup job
+	// Delete tasks and deployments with SKIP LOCKED to avoid blocking when an app is deleted
+	// while a deployment is in-progress.
+	// Any locked tasks/deployments will be cleaned up later by the daily cleanup cron job.
 
 	// Tasks (must delete tasks before deployments)
 	err = s.taskRepo.DeleteAllByApps(ctx, db, appIDs)

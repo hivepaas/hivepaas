@@ -105,37 +105,82 @@ func (s *service) sysCleanupDB(
 
 	timeNow := timeutil.NowUTC()
 
+	// Soft delete all orphaned tasks and deployments belonging to deleted apps
+	e := s.sysCleanupDBDeleteOrphanedTasksAndDeployments(ctx, db)
+	if e != nil {
+		err = errors.Join(err, e)
+	}
+
 	// Hard delete all old deleted objects from the DB
-	err = s.sysCleanupDBOldDeletedObjects(ctx, db, retentionSetting, timeNow)
-	if err != nil {
-		return apperrors.Wrap(err)
+	e = s.sysCleanupDBOldDeletedObjects(ctx, db, retentionSetting, timeNow)
+	if e != nil {
+		err = errors.Join(err, e)
 	}
 
 	// Hard delete all old tasks and their logs from the DB
-	err = s.sysCleanupDBOldTasks(ctx, db, retentionSetting, timeNow)
-	if err != nil {
-		return apperrors.Wrap(err)
+	e = s.sysCleanupDBOldTasks(ctx, db, retentionSetting, timeNow)
+	if e != nil {
+		err = errors.Join(err, e)
 	}
 
 	// Hard delete all old deployments from the DB
-	err = s.sysCleanupDBOldDeployments(ctx, db, retentionSetting, timeNow)
-	if err != nil {
-		return apperrors.Wrap(err)
+	e = s.sysCleanupDBOldDeployments(ctx, db, retentionSetting, timeNow)
+	if e != nil {
+		err = errors.Join(err, e)
 	}
 
 	// Hard delete all old sys-errors from the DB
-	err = s.sysCleanupDBOldSysErrors(ctx, db, retentionSetting, timeNow)
-	if err != nil {
-		return apperrors.Wrap(err)
+	e = s.sysCleanupDBOldSysErrors(ctx, db, retentionSetting, timeNow)
+	if e != nil {
+		err = errors.Join(err, e)
 	}
 
 	// Hard delete all old locks from the DB
-	err = s.sysCleanupDBOldLocks(ctx, db, timeNow)
-	if err != nil {
-		return apperrors.Wrap(err)
+	e = s.sysCleanupDBOldLocks(ctx, db, timeNow)
+	if e != nil {
+		err = errors.Join(err, e)
 	}
 
 	return nil
+}
+
+func (s *service) sysCleanupDBDeleteOrphanedTasksAndDeployments(
+	ctx context.Context,
+	db database.IDB,
+) (err error) {
+	// Soft delete tasks belonging to deleted apps (skipping currently locked ones)
+	orphanedTasks, _, e := s.taskRepo.List(ctx, db, "", nil,
+		bunex.SelectColumns("id"),
+		bunex.SelectWhere("EXISTS(SELECT 1 FROM apps "+
+			"WHERE apps.id = task.target_id AND apps.deleted_at IS NOT NULL) OR "+
+			"EXISTS(SELECT 1 FROM deployments JOIN apps ON apps.id = deployments.app_id "+
+			"WHERE deployments.id = task.target_id AND apps.deleted_at IS NOT NULL)"),
+		bunex.SelectFor("UPDATE SKIP LOCKED"),
+	)
+	if e != nil {
+		err = errors.Join(err, e)
+	}
+	e = s.taskRepo.DeleteByIDs(ctx, db, entityutil.ExtractIDs(orphanedTasks))
+	if e != nil {
+		err = errors.Join(err, e)
+	}
+
+	// Soft delete deployments belonging to deleted apps (skipping currently locked ones)
+	orphanedDeployments, _, e := s.deploymentRepo.List(ctx, db, "", nil,
+		bunex.SelectColumns("id"),
+		bunex.SelectWhere("EXISTS(SELECT 1 FROM apps "+
+			"WHERE apps.id = deployment.app_id AND apps.deleted_at IS NOT NULL)"),
+		bunex.SelectFor("UPDATE SKIP LOCKED"),
+	)
+	if e != nil {
+		err = errors.Join(err, e)
+	}
+	e = s.deploymentRepo.DeleteByIDs(ctx, db, entityutil.ExtractIDs(orphanedDeployments))
+	if e != nil {
+		err = errors.Join(err, e)
+	}
+
+	return apperrors.Wrap(err)
 }
 
 func (s *service) sysCleanupDBOldDeletedObjects(

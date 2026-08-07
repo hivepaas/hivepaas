@@ -29,6 +29,7 @@ type DeploymentRepo interface {
 	Update(ctx context.Context, db database.IDB, deployment *entity.Deployment,
 		opts ...bunex.UpdateQueryOption) error
 
+	DeleteByIDs(ctx context.Context, db database.IDB, ids []string, opts ...bunex.DeleteQueryOption) error
 	DeleteAllByApps(ctx context.Context, db database.IDB, appIDs []string, opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
@@ -142,13 +143,34 @@ func (repo *deploymentRepo) Update(ctx context.Context, db database.IDB, deploym
 	return nil
 }
 
+func (repo *deploymentRepo) DeleteByIDs(ctx context.Context, db database.IDB, ids []string,
+	opts ...bunex.DeleteQueryOption) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	query := db.NewDelete().Model((*entity.Deployment)(nil)).
+		Where("deployment.id IN (?)", bun.List(ids))
+	query = bunex.ApplyDelete(query, opts...)
+
+	_, err := query.Exec(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (repo *deploymentRepo) DeleteAllByApps(ctx context.Context, db database.IDB, appIDs []string,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(appIDs) == 0 {
 		return nil
 	}
+	subQuery := db.NewSelect().Model((*entity.Deployment)(nil)).
+		Column("deployment.id").
+		Where("deployment.app_id IN (?)", bun.List(appIDs)).
+		For("UPDATE SKIP LOCKED")
+
 	query := db.NewDelete().Model((*entity.Deployment)(nil)).
-		Where("app_id IN (?)", bun.List(appIDs))
+		Where("deployment.id IN (?)", subQuery)
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

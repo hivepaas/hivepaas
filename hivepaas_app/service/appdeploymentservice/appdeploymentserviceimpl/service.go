@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
@@ -25,6 +26,7 @@ type service struct {
 	settingRepo         repository.SettingRepo
 	taskLogRepo         repository.TaskLogRepo
 
+	appService           appservice.Service
 	containerExecService containerexecservice.Service
 	imageBuildService    imagebuildservice.Service
 	notificationService  notificationservice.Service
@@ -44,6 +46,7 @@ func New(
 	settingRepo repository.SettingRepo,
 	taskLogRepo repository.TaskLogRepo,
 
+	appService appservice.Service,
 	containerExecService containerexecservice.Service,
 	imageBuildService imagebuildservice.Service,
 	notificationService notificationservice.Service,
@@ -62,6 +65,7 @@ func New(
 		settingRepo:         settingRepo,
 		taskLogRepo:         taskLogRepo,
 
+		appService:           appService,
 		containerExecService: containerExecService,
 		imageBuildService:    imageBuildService,
 		notificationService:  notificationService,

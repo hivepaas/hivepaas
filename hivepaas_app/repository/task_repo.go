@@ -34,6 +34,8 @@ type TaskRepo interface {
 	Update(ctx context.Context, db database.IDB, task *entity.Task,
 		opts ...bunex.UpdateQueryOption) error
 
+	DeleteByIDs(ctx context.Context, db database.IDB, ids []string,
+		opts ...bunex.DeleteQueryOption) error
 	DeleteAllByApps(ctx context.Context, db database.IDB, appIDs []string,
 		opts ...bunex.DeleteQueryOption) error
 	DeleteAllByProjects(ctx context.Context, db database.IDB, projectIDs []string,
@@ -185,14 +187,35 @@ func (repo *taskRepo) UpdateMulti(ctx context.Context, db database.IDB, tasks []
 	return nil
 }
 
+func (repo *taskRepo) DeleteByIDs(ctx context.Context, db database.IDB, ids []string,
+	opts ...bunex.DeleteQueryOption) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	query := db.NewDelete().Model((*entity.Task)(nil)).
+		Where("task.id IN (?)", bun.List(ids))
+	query = bunex.ApplyDelete(query, opts...)
+
+	_, err := query.Exec(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (repo *taskRepo) DeleteAllByApps(ctx context.Context, db database.IDB, appIDs []string,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(appIDs) == 0 {
 		return nil
 	}
-	query := db.NewDelete().Model((*entity.Task)(nil)).
+	subQuery := db.NewSelect().Model((*entity.Task)(nil)).
+		Column("task.id").
 		Where("(task.target_id IN (?) OR EXISTS(SELECT 1 FROM deployments WHERE "+
-			"deployments.id = task.target_id AND deployments.app_id IN (?)))", bun.List(appIDs), bun.List(appIDs))
+			"deployments.id = task.target_id AND deployments.app_id IN (?)))", bun.List(appIDs), bun.List(appIDs)).
+		For("UPDATE SKIP LOCKED")
+
+	query := db.NewDelete().Model((*entity.Task)(nil)).
+		Where("task.id IN (?)", subQuery)
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)

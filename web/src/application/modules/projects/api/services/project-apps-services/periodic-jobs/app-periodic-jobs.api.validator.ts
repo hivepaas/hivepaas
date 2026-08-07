@@ -62,29 +62,43 @@ const NotificationSchema = z
     .nullish()
     .transform(value => value ?? null);
 
-const AppHealthCheckSchema = z.object({
-    id: z.string(),
-    type: z.nativeEnum(ESettingType),
-    name: z.string(),
-    kind: z.string().optional(),
-    status: z.nativeEnum(ESettingStatus),
-    inherited: z.boolean().optional().default(false),
-    availableInProjects: z.boolean().optional().default(false),
-    default: z.boolean().optional().default(false),
-    updateVer: z.number(),
-    createdAt: z.coerce.date(),
-    updatedAt: z.coerce.date(),
-    expireAt: z.coerce.date().nullable().optional().default(null),
+const HealthcheckNestedSchema = z.object({
     healthcheckType: z.nativeEnum(EAppHealthCheckType),
-    interval: z.string(),
-    maxRetry: z.number().optional().default(0),
-    retryDelay: z.string().optional().default(""),
-    timeout: z.string().optional().default(""),
-    saveResultTasks: z.boolean(),
     rest: RestSchema.nullish().transform(value => value ?? null),
     grpc: GrpcSchema.nullish().transform(value => value ?? null),
-    notification: NotificationSchema,
 });
+
+const AppHealthCheckSchema = z
+    .object({
+        id: z.string(),
+        type: z.nativeEnum(ESettingType),
+        name: z.string(),
+        kind: z.string().optional(),
+        status: z.nativeEnum(ESettingStatus),
+        inherited: z.boolean().optional().default(false),
+        availableInProjects: z.boolean().optional().default(false),
+        default: z.boolean().optional().default(false),
+        updateVer: z.number(),
+        createdAt: z.coerce.date(),
+        updatedAt: z.coerce.date(),
+        expireAt: z.coerce.date().nullable().optional().default(null),
+        interval: z.string(),
+        maxRetry: z.number().optional().default(0),
+        retryDelay: z.string().optional().default(""),
+        timeout: z.string().optional().default(""),
+        healthcheck: HealthcheckNestedSchema.nullish(),
+        notification: NotificationSchema,
+    })
+    .transform(data => {
+        const { healthcheck, ...rest } = data;
+
+        return {
+            ...rest,
+            healthcheckType: healthcheck?.healthcheckType ?? EAppHealthCheckType.REST,
+            rest: healthcheck?.rest ?? null,
+            grpc: healthcheck?.grpc ?? null,
+        };
+    });
 
 const FindManyPaginatedSchema = z.object({
     data: z.array(AppHealthCheckSchema),

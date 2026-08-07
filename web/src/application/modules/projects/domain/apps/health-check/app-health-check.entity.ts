@@ -67,7 +67,6 @@ export interface AppHealthCheck {
     maxRetry: number;
     retryDelay: string;
     timeout: string;
-    saveResultTasks: boolean;
     rest: AppHealthCheckREST | null;
     grpc: AppHealthCheckGRPC | null;
     notification: AppHealthCheckNotification | null;

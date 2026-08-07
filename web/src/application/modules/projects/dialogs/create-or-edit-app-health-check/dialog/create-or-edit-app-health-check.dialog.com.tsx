@@ -60,14 +60,16 @@ function mapFormValuesToPayload(values: CreateOrEditAppHealthCheckFormOutput): A
         availableInProjects: false,
         default: false,
         name: values.name,
-        healthcheckType: values.healthcheckType,
+        kind: "healthcheck",
         interval: values.interval,
-        ...(values.maxRetry !== undefined && Number.isFinite(values.maxRetry) ? { maxRetry: values.maxRetry } : {}),
-        ...(hasText(values.retryDelay) ? { retryDelay: values.retryDelay } : {}),
-        ...(hasText(values.timeout) ? { timeout: values.timeout } : {}),
-        saveResultTasks: true,
-        rest: getRestPayload(values),
-        grpc: values.healthcheckType === EAppHealthCheckType.GRPC ? values.grpc : null,
+        maxRetry: values.maxRetry !== undefined && Number.isFinite(values.maxRetry) ? values.maxRetry : 0,
+        retryDelay: values.retryDelay,
+        timeout: values.timeout,
+        healthcheck: {
+            healthcheckType: values.healthcheckType,
+            rest: getRestPayload(values),
+            grpc: values.healthcheckType === EAppHealthCheckType.GRPC ? values.grpc : null,
+        },
         notification: {
             successUseDefault: values.notification.successUseDefault,
             ...(!values.notification.successUseDefault && values.notification.success
@@ -140,7 +142,6 @@ export function CreateOrEditAppHealthCheckDialog() {
                 payload: {
                     ...payload,
                     default: state.healthCheck.default,
-                    saveResultTasks: state.healthCheck.saveResultTasks,
                     updateVer: state.healthCheck.updateVer,
                 },
             });

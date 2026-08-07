@@ -32,10 +32,12 @@ type SchemaOutput = AppConfigHttpSettingsFormSchemaOutput;
 function ConditionalDomainDetailSections({
     activeDomainIndex,
     setActiveDomainIndex,
+    suppressDomainAutoSelectRef,
     readOnly,
 }: {
     activeDomainIndex: number;
     setActiveDomainIndex: React.Dispatch<React.SetStateAction<number>>;
+    suppressDomainAutoSelectRef: React.RefObject<boolean>;
     readOnly: boolean;
 }) {
     const domains = useWatch<SchemaInput, "domains">({ name: "domains" });
@@ -48,18 +50,33 @@ function ConditionalDomainDetailSections({
     useEffect(() => {
         const len = domains.length;
         if (len === 0) {
+            // Pending first append: index 0 targets the slot before useWatch reflects it.
+            if (activeDomainIndex === 0) {
+                return;
+            }
             if (activeDomainIndex !== -1) {
                 setActiveDomainIndex(-1);
             }
             return;
         }
 
-        // Do not auto-select when index is -1: delete flow unmounts detail controllers
-        // before splice, then restores the active index explicitly.
-        if (activeDomainIndex >= len) {
+        // Delete flow briefly sets -1 with suppressDomainAutoSelectRef to unmount detail controllers.
+        if (activeDomainIndex === -1) {
+            if (!suppressDomainAutoSelectRef.current) {
+                setActiveDomainIndex(len - 1);
+            }
+            return;
+        }
+
+        // Pending append: index targets the new slot before useWatch reflects the added domain.
+        if (activeDomainIndex === len) {
+            return;
+        }
+
+        if (activeDomainIndex > len) {
             setActiveDomainIndex(len - 1);
         }
-    }, [activeDomainIndex, domains.length, setActiveDomainIndex]);
+    }, [activeDomainIndex, domains.length, setActiveDomainIndex, suppressDomainAutoSelectRef]);
 
     if (!hasDomains || !hasActiveDomain) {
         return null;
@@ -102,6 +119,10 @@ function ConditionalDomainDetailSections({
 
 export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
     const [activeDomainIndex, setActiveDomainIndex] = useState(0);
+    const suppressDomainAutoSelectRef = useRef(false);
+    const setSuppressDomainAutoSelect = (value: boolean) => {
+        suppressDomainAutoSelectRef.current = value;
+    };
 
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: defaultValues
@@ -188,6 +209,7 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOn
                                 activeDomainIndex={activeDomainIndex}
                                 setActiveDomainIndex={setActiveDomainIndex}
                                 domainSuggestion={defaultValues?.domainSuggestion ?? ""}
+                                setSuppressDomainAutoSelect={setSuppressDomainAutoSelect}
                                 readOnly={readOnly}
                             />
                         </div>
@@ -196,6 +218,7 @@ export function AppConfigHttpSettingsForm({ ref, defaultValues, onSubmit, readOn
                             <ConditionalDomainDetailSections
                                 activeDomainIndex={activeDomainIndex}
                                 setActiveDomainIndex={setActiveDomainIndex}
+                                suppressDomainAutoSelectRef={suppressDomainAutoSelectRef}
                                 readOnly={readOnly}
                             />
                         )}

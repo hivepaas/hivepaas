@@ -105,13 +105,17 @@ func (uc *UC) initDefaultAppCloneSettings(
 	}
 
 	httpSetting := app.GetSettingByType(base.SettingTypeAppHttp)
-	httpSettings := httpSetting.MustAsAppHttpSettings()
-
 	refObjects := entity.NewRefObjects()
-	err = uc.settingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, app.GetObjectScope(),
-		true, httpSetting)
-	if err != nil {
-		return apperrors.Wrap(err)
+	var httpSettings *entity.AppHttpSettings
+	if httpSetting != nil {
+		httpSettings = httpSetting.MustAsAppHttpSettings()
+		err = uc.settingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, app.GetObjectScope(),
+			true, httpSetting)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+	} else {
+		httpSettings = &entity.AppHttpSettings{}
 	}
 
 	currDomainSettings := cloneSettings.CloneHttpDomains

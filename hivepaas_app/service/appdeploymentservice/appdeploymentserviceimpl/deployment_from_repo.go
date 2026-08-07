@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/moby/moby/client"
 
@@ -22,6 +23,8 @@ const (
 	stepRepoCheckout = "repo-checkout"
 	stepImageBuild   = "image-build"
 	stepServiceApply = "service-apply"
+
+	dockerServiceApplyRetryMax = 2
 )
 
 type repoDeploymentData struct {
@@ -194,21 +197,43 @@ func (s *service) repoDeployStepServiceApply(
 		}
 	}
 
-	inspect, err := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	service := &inspect.Service
-	spec := &service.Spec
-	contSpec := spec.TaskTemplate.ContainerSpec
-	contSpec.Image = data.DeploymentOutput.ImageTags[0]
-	contSpec.Dir = deployment.Settings.WorkingDir
-	dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
+	queryRegistry := false
+	for i := range dockerServiceApplyRetryMax + 1 {
+		if i > 0 {
+			queryRegistry = true
+			select {
+			case <-ctx.Done():
+				err = apperrors.Wrap(ctx.Err())
+				break
+			case <-time.After(time.Duration(1+i) * time.Second):
+			}
+		}
 
-	_, err = s.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
-		func(options *client.ServiceUpdateOptions) {
-			options.EncodedRegistryAuth = regAuthHeader
-		})
+		inspect, e := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
+		if e != nil { // error, need to retry
+			err = apperrors.Wrap(e)
+			continue
+		}
+		service := &inspect.Service
+		spec := &service.Spec
+		contSpec := spec.TaskTemplate.ContainerSpec
+		contSpec.Image = data.DeploymentOutput.ImageTags[0]
+		contSpec.Dir = deployment.Settings.WorkingDir
+		dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
+
+		_, e = s.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
+			func(options *client.ServiceUpdateOptions) {
+				options.EncodedRegistryAuth = regAuthHeader
+				options.QueryRegistry = queryRegistry
+			})
+		if e != nil { // error, need to retry
+			err = apperrors.Wrap(e)
+			continue
+		}
+		// successful, no need to retry
+		err = nil
+		break
+	}
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

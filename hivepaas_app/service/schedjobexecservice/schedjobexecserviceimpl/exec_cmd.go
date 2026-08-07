@@ -17,16 +17,25 @@ func (s *service) calcCommandHelper(
 	ctx context.Context,
 	command *entity.CommandTemplate,
 	taskID string,
-	logStore *tasklog.Store,
+	data *execData,
 ) (cmd []string, err error) {
-	if command == nil || (command.Command == "" && command.Script == "") { // can't continue if this happens
-		_ = logStore.Add(ctx, tasklog.NewErrFrame(
+	if command == nil || (command.Command == "" && !command.Script.IsValid()) { // can't continue if this happens
+		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(
 			"Execution command/script is empty, aborted", tasklog.TsNow))
 		return nil, apperrors.Wrap(apperrors.ErrInternal).WithMsgLog("schedule job command/script is empty")
 	}
 
-	if command.Script != "" {
-		encodedScript := base64.StdEncoding.EncodeToString(reflectutil.UnsafeStrToBytes(command.Script))
+	if command.Script.IsValid() { //nolint:nestif
+		script := command.Script.Value
+		if script == "" && command.Script.ID != "" {
+			scriptSetting := data.RefObjects.RefSettings[command.Script.ID]
+			if scriptSetting == nil {
+				return nil, apperrors.NewNotFound("Script object")
+			}
+			script = scriptSetting.MustAsScript().Data
+		}
+
+		encodedScript := base64.StdEncoding.EncodeToString(reflectutil.UnsafeStrToBytes(script))
 		tmpFilePath := fmt.Sprintf("/tmp/hivepaas_job_%s.sh", taskID)
 
 		// Sample command format constructed below:
@@ -60,7 +69,7 @@ func (s *service) calcCommand(
 	ctx context.Context,
 	data *execData,
 ) (cmd []string, err error) {
-	cmd, err = s.calcCommandHelper(ctx, data.SchedJob.Command, data.Task.ID, data.LogStore)
+	cmd, err = s.calcCommandHelper(ctx, data.SchedJob.Command, data.Task.ID, data)
 	if err != nil {
 		data.TaskNonRetryable = true
 		return nil, apperrors.Wrap(err)

@@ -21,7 +21,7 @@ func (s *commandTemplateParser) New() SettingData {
 
 type CommandTemplate struct {
 	Command     string                     `json:"command"`
-	Script      string                     `json:"script,omitempty"`
+	Script      ObjectValue                `json:"script,omitempty"`
 	WorkingDir  string                     `json:"workingDir,omitempty"`
 	EnvVars     []*EnvVar                  `json:"envVars,omitempty"`
 	ArgGroups   []*CommandTemplateArgGroup `json:"argGroups,omitempty"`
@@ -52,7 +52,11 @@ func (s *CommandTemplate) GetType() base.SettingType {
 }
 
 func (s *CommandTemplate) GetRefObjectIDs() *RefObjectIDs {
-	return &RefObjectIDs{}
+	refIDs := &RefObjectIDs{}
+	if s.Script.ID != "" {
+		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Script.ID)
+	}
+	return refIDs
 }
 
 func (s *CommandTemplate) GetResourceLinks(setting *Setting) []*ResLink {

@@ -52,7 +52,8 @@ type UpdateSettingData struct {
 }
 
 type PersistingSettingData struct {
-	Setting *entity.Setting
+	Setting           *entity.Setting
+	UpsertingSettings []*entity.Setting
 }
 
 func (uc *BaseUC) UpdateSetting(
@@ -194,7 +195,10 @@ func (uc *BaseUC) persistSettingUpdate(
 	data *UpdateSettingData,
 	persistingData *PersistingSettingData,
 ) error {
-	err := uc.SettingRepo.Update(ctx, db, persistingData.Setting)
+	upsertingSettings := append([]*entity.Setting{}, persistingData.UpsertingSettings...)
+	upsertingSettings = append(upsertingSettings, persistingData.Setting)
+	err := uc.SettingRepo.UpsertMulti(ctx, db, upsertingSettings,
+		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

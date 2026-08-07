@@ -37,10 +37,11 @@ type ListCommandTemplateResp struct {
 func TransformCommandTemplates(
 	settings []*entity.Setting,
 	refObjects *entity.RefObjects,
+	isListAPI bool,
 ) (resp []*CommandTemplateResp, err error) {
 	resp = make([]*CommandTemplateResp, 0, len(settings))
 	for _, setting := range settings {
-		item, err := TransformCommandTemplate(setting, refObjects)
+		item, err := TransformCommandTemplate(setting, refObjects, isListAPI)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

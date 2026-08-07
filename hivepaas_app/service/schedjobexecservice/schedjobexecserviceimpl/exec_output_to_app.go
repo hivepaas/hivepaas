@@ -47,7 +47,7 @@ func (s *service) initOutputWriterToApp(
 				opts.AttachStdin = true
 				opts.AttachStdout = true
 				opts.AttachStderr = true
-				cmd, err := s.calcCommandHelper(ctx, pipeToApp.Command, data.Task.ID, data.LogStore)
+				cmd, err := s.calcCommandHelper(ctx, pipeToApp.Command, data.Task.ID, data)
 				if err != nil {
 					calcErr = err
 					return

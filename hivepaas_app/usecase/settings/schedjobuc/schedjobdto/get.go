@@ -120,6 +120,11 @@ func TransformSchedJob(
 		resp.App = nil
 	}
 
+	// Transform the script part of command template if presents
+	if job.Command != nil && !isListAPI {
+		commandtemplatedto.TransformScript(&job.Command.Script, refObjects, resp.Command)
+	}
+
 	if job.CommandOutput != nil { //nolint:nestif
 		cmdOutput := job.CommandOutput
 		cmdOutputResp := resp.CommandOutput
@@ -142,6 +147,11 @@ func TransformSchedJob(
 			cmdOutputResp.PipeToApp.TargetApp, err = appdto.TransformApp(targetApp, nil)
 			if err != nil {
 				return nil, apperrors.Wrap(err)
+			}
+			// Transform the script part of command template if presents
+			if cmdOutput.PipeToApp.Command != nil && !isListAPI {
+				commandtemplatedto.TransformScript(&cmdOutput.PipeToApp.Command.Script, refObjects,
+					cmdOutputResp.PipeToApp.Command)
 			}
 		} else {
 			cmdOutputResp.PipeToApp = nil

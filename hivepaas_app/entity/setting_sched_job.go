@@ -256,16 +256,26 @@ func (s *SchedJob) GetRefObjectIDs() *RefObjectIDs {
 	if s.TargetSetting.ID != "" {
 		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.TargetSetting.ID)
 	}
-	if s.Notification != nil {
-		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
+	if s.Command != nil {
+		if s.Command.Script.ID != "" {
+			refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.Command.Script.ID)
+		}
 	}
-	if s.CommandOutput != nil {
-		if s.CommandOutput.SaveToFile != nil && s.CommandOutput.SaveToFile.Storage.ID != "" {
+	if s.CommandOutput != nil && s.CommandOutput.SaveToFile != nil {
+		if s.CommandOutput.SaveToFile.Storage.ID != "" {
 			refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.CommandOutput.SaveToFile.Storage.ID)
 		}
-		if s.CommandOutput.PipeToApp != nil && s.CommandOutput.PipeToApp.TargetApp.ID != "" {
+	}
+	if s.CommandOutput != nil && s.CommandOutput.PipeToApp != nil {
+		if s.CommandOutput.PipeToApp.TargetApp.ID != "" {
 			refIDs.RefAppIDs = append(refIDs.RefAppIDs, s.CommandOutput.PipeToApp.TargetApp.ID)
 		}
+		if s.CommandOutput.PipeToApp.Command != nil && s.CommandOutput.PipeToApp.Command.Script.ID != "" {
+			refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, s.CommandOutput.PipeToApp.Command.Script.ID)
+		}
+	}
+	if s.Notification != nil {
+		refIDs.AddRefIDs(s.Notification.GetRefObjectIDs())
 	}
 	return refIDs
 }

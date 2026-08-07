@@ -32,7 +32,7 @@ type GetCommandTemplateResp struct {
 type CommandTemplateResp struct {
 	*settings.BaseSettingResp
 	Command     string                          `json:"command"`
-	Script      string                          `json:"script"`
+	Script      string                          `json:"script" copy:"-"` // use manual copy
 	WorkingDir  string                          `json:"workingDir,omitempty"`
 	EnvVars     []*basedto.EnvVarResp           `json:"envVars,omitempty"`
 	ArgGroups   []*CommandTemplateArgGroupResp  `json:"argGroups,omitempty"`
@@ -60,7 +60,8 @@ type CommandTemplateConsoleSizeResp struct {
 
 func TransformCommandTemplate(
 	setting *entity.Setting,
-	_ *entity.RefObjects,
+	refObjects *entity.RefObjects,
+	isListAPI bool,
 ) (resp *CommandTemplateResp, err error) {
 	config := setting.MustAsCommandTemplate()
 	if err = copier.Copy(&resp, config); err != nil {
@@ -72,5 +73,27 @@ func TransformCommandTemplate(
 		return nil, apperrors.Wrap(err)
 	}
 
+	if resp.Command == "" && !isListAPI {
+		TransformScript(&config.Script, refObjects, resp)
+	}
+
 	return resp, nil
+}
+
+func TransformScript(
+	script *entity.ObjectValue,
+	refObjects *entity.RefObjects,
+	resp *CommandTemplateResp,
+) {
+	if script == nil {
+		return
+	}
+	if script.Value != "" {
+		resp.Script = script.Value
+	} else if script.ID != "" && refObjects != nil {
+		scriptSetting := refObjects.RefSettings[script.ID]
+		if scriptSetting != nil {
+			resp.Script = scriptSetting.MustAsScript().Data
+		}
+	}
 }

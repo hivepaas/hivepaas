@@ -34,6 +34,7 @@ const (
 	SettingTypeProject            SettingType = "project"
 	SettingTypeRegistryAuth       SettingType = "registry-auth"
 	SettingTypeRepoWebhook        SettingType = "repo-webhook"
+	SettingTypeScript             SettingType = "script"
 	SettingTypeSSHKey             SettingType = "ssh-key"
 	SettingTypeSSLCert            SettingType = "ssl-cert"
 	SettingTypeSSLProvider        SettingType = "ssl-provider"

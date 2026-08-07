@@ -20,7 +20,7 @@ func (uc *UC) ListCommandTemplate(
 		return nil, apperrors.Wrap(err)
 	}
 
-	respData, err := commandtemplatedto.TransformCommandTemplates(resp.Data, resp.RefObjects)
+	respData, err := commandtemplatedto.TransformCommandTemplates(resp.Data, resp.RefObjects, true)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

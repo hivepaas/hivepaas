@@ -32,7 +32,7 @@ func (uc *UC) ListSchedJob(
 		return nil, apperrors.Wrap(err)
 	}
 
-	respData, err := schedjobdto.TransformSchedJobs(resp.Data, resp.RefObjects)
+	respData, err := schedjobdto.TransformSchedJobs(resp.Data, resp.RefObjects, true)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

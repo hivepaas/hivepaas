@@ -38,10 +38,11 @@ type ListSchedJobResp struct {
 func TransformSchedJobs(
 	settings []*entity.Setting,
 	refObjects *entity.RefObjects,
+	isListAPI bool,
 ) ([]*SchedJobResp, error) {
 	resp := make([]*SchedJobResp, 0, len(settings))
 	for _, setting := range settings {
-		item, err := TransformSchedJob(setting, refObjects, true)
+		item, err := TransformSchedJob(setting, refObjects, isListAPI)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

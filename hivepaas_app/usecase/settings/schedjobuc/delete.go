@@ -31,9 +31,17 @@ func (uc *UC) DeleteSchedJob(
 			ctx context.Context,
 			db database.Tx,
 			data *settings.DeleteSettingData,
-			_ *settings.PersistingSettingDeletionData,
+			pData *settings.PersistingSettingDeletionData,
 		) error {
-			err := uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, data.Setting, true)
+			currJob, err := data.Setting.AsSchedJob()
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
+			// Calculate deleting script objects if there is any
+			upsertingScripts := uc.calcUpsertingScriptSettings(data.Setting, nil, currJob)
+			pData.UpsertingSettings = append(pData.UpsertingSettings, upsertingScripts...)
+
+			err = uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, data.Setting, true)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}

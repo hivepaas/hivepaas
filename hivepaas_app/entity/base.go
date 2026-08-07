@@ -23,3 +23,12 @@ func (o ObjectIDSlice) ToIDStringSlice() []string {
 	}
 	return res
 }
+
+type ObjectValue struct {
+	ID    string `json:"id,omitempty"`
+	Value string `json:"value,omitempty"`
+}
+
+func (o ObjectValue) IsValid() bool {
+	return o.ID != "" || o.Value != ""
+}

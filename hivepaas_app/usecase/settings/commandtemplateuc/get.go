@@ -21,7 +21,7 @@ func (uc *UC) GetCommandTemplate(
 	}
 
 	setting := resp.Data
-	respData, err := commandtemplatedto.TransformCommandTemplate(setting, resp.RefObjects)
+	respData, err := commandtemplatedto.TransformCommandTemplate(setting, resp.RefObjects, false)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

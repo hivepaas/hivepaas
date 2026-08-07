@@ -43,8 +43,9 @@ type DeleteSettingData struct {
 }
 
 type PersistingSettingDeletionData struct {
-	Setting       *entity.Setting
-	SharedSetting *entity.SharedSetting
+	Setting           *entity.Setting
+	UpsertingSettings []*entity.Setting
+	SharedSetting     *entity.SharedSetting
 }
 
 func (uc *BaseUC) DeleteSetting(
@@ -168,6 +169,12 @@ func (uc *BaseUC) persistSettingDeletion(
 	err = uc.SettingRepo.Update(ctx, db, persistingData.Setting,
 		bunex.UpdateColumns("deleted_at"),
 	)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	err = uc.SettingRepo.UpsertMulti(ctx, db, persistingData.UpsertingSettings,
+		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

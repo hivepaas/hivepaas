@@ -18,14 +18,23 @@ func (s *service) calcCommand(
 	command *entity.CommandTemplate,
 	data *execData,
 ) (cmd []string, err error) {
-	if command == nil || (command.Command == "" && command.Script == "") {
+	if command == nil || (command.Command == "" && !command.Script.IsValid()) {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(
 			"Execution command/script is empty, aborted", tasklog.TsNow))
 		return nil, apperrors.Wrap(apperrors.ErrInternal).WithMsgLog("command/script is empty")
 	}
 
-	if command.Script != "" {
-		encodedScript := base64.StdEncoding.EncodeToString(reflectutil.UnsafeStrToBytes(command.Script))
+	if command.Script.IsValid() { //nolint:nestif
+		script := command.Script.Value
+		if script == "" && command.Script.ID != "" {
+			scriptSetting := data.RefObjects.RefSettings[command.Script.ID]
+			if scriptSetting == nil {
+				return nil, apperrors.NewNotFound("Script object")
+			}
+			script = scriptSetting.MustAsScript().Data
+		}
+
+		encodedScript := base64.StdEncoding.EncodeToString(reflectutil.UnsafeStrToBytes(script))
 		tmpFilePath := fmt.Sprintf("/tmp/hivepaas_pipe_%s.sh", data.Task.ID)
 
 		var sb strings.Builder

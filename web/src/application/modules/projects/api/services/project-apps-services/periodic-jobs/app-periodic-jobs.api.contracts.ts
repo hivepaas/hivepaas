@@ -29,18 +29,22 @@ export type AppHealthChecks_Notification_Payload = Omit<
     minSendInterval?: string;
 };
 
+export type AppHealthChecks_Healthcheck_Payload = {
+    healthcheckType: EAppHealthCheckType;
+    rest: AppHealthChecks_REST_Payload | null;
+    grpc: AppHealthChecks_GRPC_Payload | null;
+};
+
 export type AppHealthChecks_Upsert_Payload = {
     availableInProjects: boolean;
     default: boolean;
     name: string;
-    healthcheckType: EAppHealthCheckType;
+    kind: "healthcheck";
     interval: string;
-    maxRetry?: number;
-    retryDelay?: string;
-    timeout?: string;
-    saveResultTasks: boolean;
-    rest: AppHealthChecks_REST_Payload | null;
-    grpc: AppHealthChecks_GRPC_Payload | null;
+    maxRetry: number;
+    retryDelay: string;
+    timeout: string;
+    healthcheck: AppHealthChecks_Healthcheck_Payload;
     notification: AppHealthChecks_Notification_Payload;
 };
 

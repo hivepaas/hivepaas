@@ -40,6 +40,7 @@ export const ESettingType = {
     DomainSettings: "domain-settings",
     StorageSettings: "storage-settings",
     ClusterVolume: "cluster-volume",
+    PeriodicJob: "periodic-job",
 } as const;
 
 export type ESettingType = (typeof ESettingType)[keyof typeof ESettingType];

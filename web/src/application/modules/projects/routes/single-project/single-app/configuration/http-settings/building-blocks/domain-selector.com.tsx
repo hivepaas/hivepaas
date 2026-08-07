@@ -95,6 +95,7 @@ interface DomainSelectorProps {
     activeDomainIndex: number;
     setActiveDomainIndex: (index: number) => void;
     domainSuggestion: string;
+    setSuppressDomainAutoSelect: (value: boolean) => void;
     readOnly?: boolean;
 }
 
@@ -106,6 +107,7 @@ export function DomainSelector({
     activeDomainIndex,
     setActiveDomainIndex,
     domainSuggestion,
+    setSuppressDomainAutoSelect,
     readOnly = false,
 }: DomainSelectorProps) {
     const { control, clearErrors, getValues, reset } = useFormContext<
@@ -157,11 +159,13 @@ export function DomainSelector({
 
         // Unmount domain detail controllers before reset so RHF does not leave null/phantom holes.
         flushSync(() => {
+            setSuppressDomainAutoSelect(true);
             setActiveDomainIndex(-1);
         });
         reset({ ...values, domains: nextDomains }, { keepDefaultValues: true, keepDirty: true, keepTouched: true });
         clearErrors();
         setActiveDomainIndex(nextActive);
+        setSuppressDomainAutoSelect(false);
     }
 
     function handleConfirmAdd() {
@@ -349,6 +353,8 @@ export function DomainSelector({
                                     className="h-8 w-8"
                                     title="Add domain"
                                     onClick={() => {
+                                        setNewDomainDraft(suggestedDomain);
+                                        setDomainInputError(null);
                                         setIsAdding(true);
                                     }}
                                 >

@@ -54,6 +54,7 @@ func (s *service) Deploy(
 	resp.Deployment = data.Deployment
 
 	defer func() {
+		ctx = context.WithoutCancel(ctx) // the outer context can be canceled at this point
 		if r := recover(); r != nil {
 			err = errors.Join(err, apperrors.NewPanic(r))
 		}
@@ -115,7 +116,7 @@ func (s *service) loadDeploymentData(
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}
-	if deployment == nil || deployment.App == nil ||
+	if deployment == nil || deployment.Status == base.DeploymentStatusCanceled || deployment.App == nil ||
 		deployment.App.Project == nil || deployment.App.ProjectEnv == nil { // no active deployment, return
 		return nil
 	}

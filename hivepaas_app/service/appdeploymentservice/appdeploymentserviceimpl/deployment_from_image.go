@@ -30,11 +30,16 @@ func (s *service) deployFromImage(
 	ctx context.Context,
 	db database.Tx,
 	deplData *appDeploymentData,
-) error {
+) (err error) {
 	data := &imageDeploymentData{appDeploymentData: deplData}
+	defer func() {
+		if data.IsTaskCanceled() || errors.Is(err, context.Canceled) {
+			err = nil
+		}
+	}()
 
 	// 1. Pull image from the registry
-	err := s.imageDeployStepImagePull(ctx, data)
+	err = s.imageDeployStepImagePull(ctx, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -147,6 +152,10 @@ func (s *service) imageDeployStepServiceApply(
 
 		inspect, e := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
 		if e != nil { // error, need to retry
+			if errors.Is(e, apperrors.ErrNotFound) {
+				err = apperrors.Wrap(e)
+				break
+			}
 			err = apperrors.Wrap(e)
 			continue
 		}

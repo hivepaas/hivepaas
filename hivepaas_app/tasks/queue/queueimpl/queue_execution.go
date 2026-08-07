@@ -139,6 +139,8 @@ func (q *taskQueue) executeTask(
 			if taskData.OnEndTransactionFunc != nil {
 				taskData.OnEndTransactionFunc()
 			}
+			// Remove canceled status from context
+			ctx = context.WithoutCancel(ctx)
 			// Delete data in cache
 			_ = q.taskInfoRepo.Del(ctx, task.ID)
 			// Save tasks in DB

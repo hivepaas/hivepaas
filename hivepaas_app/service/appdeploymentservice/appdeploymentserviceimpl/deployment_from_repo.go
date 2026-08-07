@@ -2,6 +2,7 @@ package appdeploymentserviceimpl
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"time"
@@ -39,15 +40,20 @@ func (s *service) deployFromRepo(
 	ctx context.Context,
 	db database.Tx,
 	deplData *appDeploymentData,
-) error {
+) (err error) {
 	data := &repoDeploymentData{appDeploymentData: deplData}
 	data.OnCommand(func(cmd base.TaskCommand, args ...any) {
 		s.repoDeployOnCommand(ctx, data, cmd, args...)
 	})
 	defer s.repoDeployStepCleanup(data) //nolint:errcheck
+	defer func() {
+		if data.IsTaskCanceled() || errors.Is(err, context.Canceled) {
+			err = nil
+		}
+	}()
 
 	// 0. Prepare
-	err := s.repoDeployStepPrepare(ctx, db, data)
+	err = s.repoDeployStepPrepare(ctx, db, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -211,6 +217,10 @@ func (s *service) repoDeployStepServiceApply(
 
 		inspect, e := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
 		if e != nil { // error, need to retry
+			if errors.Is(e, apperrors.ErrNotFound) {
+				err = apperrors.Wrap(e)
+				break
+			}
 			err = apperrors.Wrap(e)
 			continue
 		}

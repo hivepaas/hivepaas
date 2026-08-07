@@ -62,6 +62,7 @@ type DeploymentTriggerResp struct {
 }
 
 type DeploymentOutputResp struct {
+	Error           string   `json:"error,omitempty"`
 	CommitHash      string   `json:"commitHash,omitempty"`
 	CommitHashShort string   `json:"commitHashShort,omitempty"`
 	CommitURL       string   `json:"commitURL,omitempty"`

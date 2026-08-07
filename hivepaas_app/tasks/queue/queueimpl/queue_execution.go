@@ -170,7 +170,6 @@ func (q *taskQueue) loadTask(
 		bunex.SelectWhereIn("task.status IN (?)", base.TaskStatusNotStarted, base.TaskStatusFailed),
 		bunex.SelectFor("UPDATE OF task SKIP LOCKED"),
 		bunex.SelectRelation("TargetJob"),
-		bunex.SelectRelation("TargetDeployment"),
 	)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrNotFound) { // task not found, it's not error
@@ -181,16 +180,8 @@ func (q *taskQueue) loadTask(
 
 	// Task's target object must be active
 	shouldCancelTask := false
-	switch task.Type {
-	case base.TaskTypeAppDeploy:
-		shouldCancelTask = task.TargetDeployment == nil
-	case base.TaskTypeAppClone:
-	case base.TaskTypeSchedJobExec:
+	if task.Type == base.TaskTypeSchedJobExec {
 		shouldCancelTask = task.TargetJob == nil || !task.TargetJob.IsActive()
-	case base.TaskTypePeriodicExec:
-	case base.TaskTypeWorkflow:
-	case base.TaskTypeSystemUpdate:
-	case base.TaskTypeDummy:
 	}
 	if shouldCancelTask {
 		task.Status = base.TaskStatusCanceled

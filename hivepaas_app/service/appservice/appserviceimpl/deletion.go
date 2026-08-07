@@ -15,7 +15,7 @@ import (
 func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.App) error {
 	// Delete all child apps and their resources
 	if !app.IsChildApp() {
-		childApps, _, err := s.appRepo.List(ctx, db, "", nil,
+		childApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
@@ -24,15 +24,32 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 		}
 		for _, childApp := range childApps {
 			if err := s.DeleteApp(ctx, db, childApp); err != nil {
-				return apperrors.Wrap(err)
+				return apperrors.Wrap(err).WithMsgLog("failed to delete child app %s", childApp.ID)
 			}
+		}
+	}
+
+	// Query all logical-child-apps to delete (a preview app can have logical-child-apps linked via res_links)
+	logicalChildApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectJoin("JOIN res_links AS res_link ON res_link.dst_id = app.id"),
+		bunex.SelectWhere("res_link.src_type = ?", base.ResourceTypeApp),
+		bunex.SelectWhere("res_link.src_id = ?", app.ID),
+		bunex.SelectWhere("res_link.dst_type = ?", base.ResourceTypeLogicalChildApp),
+	)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	for _, childApp := range logicalChildApps {
+		if err := s.DeleteApp(ctx, db, childApp); err != nil {
+			return apperrors.Wrap(err).WithMsgLog("failed to delete logical child app %s", childApp.ID)
 		}
 	}
 
 	// TODO (high): remove secrets, config in docker
 
 	// Remove service for the app in docker swarm
-	err := s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
+	err = s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -69,6 +86,9 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
+
+	// TODO: remove an app while a task/deployment is in-progress will lead to wait
+	// We may skip locked tasks/deployments and delete them later in the daily cleanup job
 
 	// Tasks (must delete tasks before deployments)
 	err = s.taskRepo.DeleteAllByApps(ctx, db, appIDs)

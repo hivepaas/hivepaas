@@ -29,7 +29,7 @@ type Service interface {
 		[]*EnvVar, error)
 
 	BuildEnvVarsForAllAppsInScope(ctx context.Context, db database.IDB, scope *entity.ObjectScope,
-		buildPhase bool, transaction bool, concurrency bool) (
+		buildPhase bool, onlyApps []string, transaction bool, concurrency bool) (
 		appEnvVarData []*AppEnvVarData, err error)
 	ApplyEnvVarsForApps(ctx context.Context, db database.IDB, appEnvData []*AppEnvVarData,
 		transaction bool, concurrency bool) map[int]error

@@ -40,6 +40,7 @@ const (
 	ResourceTypeImageBuildSettings ResourceType = "image-build-settings"
 	ResourceTypeIMService          ResourceType = "im-service"
 	ResourceTypeHivePaaSService    ResourceType = "hivepaas-service"
+	ResourceTypeLogicalChildApp    ResourceType = "logical-child-app"
 	ResourceTypeModule             ResourceType = "module"
 	ResourceTypeNetwork            ResourceType = "network"
 	ResourceTypeNode               ResourceType = "node"

@@ -2,6 +2,7 @@ package apppreviewservice
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
 type CreatePreviewReq struct {
@@ -13,6 +14,9 @@ type CreatePreviewReq struct {
 
 	OnInitDeployment func(*entity.Deployment) error
 	OnDeploymentTask func(*entity.Task) error
+
+	RefObjects *entity.RefObjects
+	LogStore   *tasklog.Store
 }
 
 type CreatePreviewResp struct {

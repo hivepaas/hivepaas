@@ -5,15 +5,15 @@ import (
 )
 
 const (
-	projectKeyMaxLen = 100
+	objectKeyMaxLen = 100
 )
 
 func CalcProjectKey(projectName string) string {
-	return slugify.SlugifyEx(projectName, []string{"-", "_"}, projectKeyMaxLen)
+	return slugify.SlugifyEx(projectName, []string{"-", "_"}, objectKeyMaxLen)
 }
 
 func CalcAppKey(appName string) string {
-	return slugify.SlugifyEx(appName, []string{"-", "_"}, projectKeyMaxLen)
+	return slugify.SlugifyEx(appName, []string{"-", "_"}, objectKeyMaxLen)
 }
 
 func CalcAppGlobalKey(projectKey, appKey, env string) string {

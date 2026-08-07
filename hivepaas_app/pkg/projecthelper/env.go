@@ -26,7 +26,7 @@ func CalcProjectEnvKey(env string) string {
 	case "test", "testing":
 		return "test"
 	default:
-		return slugify.SlugifyEx(env, []string{"-", "_"}, projectKeyMaxLen)
+		return slugify.SlugifyEx(env, []string{"-", "_"}, objectKeyMaxLen)
 	}
 }
 

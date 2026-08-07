@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
@@ -22,16 +23,19 @@ import (
 type createPreviewData struct {
 	*apppreviewservice.CreatePreviewReq
 
-	App           *entity.App
 	CalcRepoRef   string // normalized repo ref
 	PullNumber    uint64
 	CalcSubdomain string
 	CalcAppName   string
+	RandSuffix    string
 
 	PreviewApp         *entity.App
 	Deployment         *entity.Deployment
 	DeploymentTask     *entity.Task
 	DeploymentSettings *entity.AppDeploymentSettings
+
+	CloneDBAppsData           map[string]*cloneDBAppData
+	CloneDBAppsEnvRefReplacer *strings.Replacer
 }
 
 func (s *service) CreatePreview(
@@ -50,11 +54,20 @@ func (s *service) CreatePreview(
 
 	var cloneResp *appcloneservice.AppCloneResp
 	defer func() {
+		if rev := recover(); rev != nil {
+			err = errors.Join(err, apperrors.ErrPanic)
+		}
 		if cloneResp != nil && cloneResp.OnCleanup != nil { // Run the cleanup function
 			_ = cloneResp.OnCleanup(err)
 			cloneResp.OnCleanup = nil
 		}
 	}()
+
+	// When related DB apps are configured to clone for the previews
+	err = s.cloneDBApps(ctx, db, data)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
 
 	cloneResp, err = s.appCloneService.CloneApp(ctx, db, &appcloneservice.AppCloneReq{
 		SrcApp: data.App,
@@ -125,6 +138,7 @@ func (s *service) loadAppDataForCreatingPreview(
 	}
 	data.App = app
 
+	data.RandSuffix = gofn.RandTokenAsHex(4) //nolint:mnd
 	data.CalcRepoRef, data.PullNumber, err = githelper.NormalizePullRef(data.RepoRef)
 	if err != nil {
 		data.CalcRepoRef = string(githelper.NormalizeRepoRef(data.RepoRef))
@@ -135,7 +149,7 @@ func (s *service) loadAppDataForCreatingPreview(
 		data.CalcSubdomain = fmt.Sprintf("pr-%v", data.PullNumber)
 	}
 	if data.CalcSubdomain == "" {
-		data.CalcSubdomain = gofn.RandTokenAsHex(4) //nolint:mnd
+		data.CalcSubdomain = data.RandSuffix
 	}
 	if data.PullNumber > 0 {
 		data.CalcAppName = fmt.Sprintf("pr-%v", data.PullNumber)
@@ -152,113 +166,6 @@ func (s *service) loadAppDataForCreatingPreview(
 		return apperrors.NewAlreadyExist("Preview app")
 	}
 
-	return nil
-}
-
-func (s *service) onCloneApp(
-	targetApp, srcApp *entity.App,
-	data *createPreviewData,
-) error {
-	targetApp.Name = data.CalcAppName
-	targetApp.ProjectEnvID = data.App.ProjectEnvID
-	targetApp.ProjectEnv = data.App.ProjectEnv
-	targetApp.Status = base.AppStatusActive
-	targetApp.ParentID = data.App.ID // Preview app must be a child app of the current
-	targetApp.ParentApp = srcApp
-	return nil
-}
-
-func (s *service) onCloneAppSetting(
-	ctx context.Context,
-	db database.IDB,
-	setting *entity.Setting,
-	data *createPreviewData,
-) (*entity.Setting, error) {
-	switch setting.Type { //nolint:exhaustive
-	case base.SettingTypeApp:
-		return nil, nil
-	case base.SettingTypeAppDeployment:
-		return s.onCloneDeploymentSetting(setting, data)
-	case base.SettingTypeAppFeatures:
-		return nil, nil
-	case base.SettingTypeAppHttp:
-		return s.onCloneHttpSetting(ctx, db, setting, data)
-	case base.SettingTypeConfigFile:
-		return nil, nil
-	case base.SettingTypeEnvVar:
-		return nil, nil
-	case base.SettingTypePeriodicJob:
-		return nil, nil
-	case base.SettingTypeSchedJob:
-		return nil, nil
-	case base.SettingTypeSecret:
-		return nil, nil
-	default:
-		return nil, nil
-	}
-}
-
-func (s *service) onCloneDeploymentSetting(
-	setting *entity.Setting,
-	data *createPreviewData,
-) (*entity.Setting, error) {
-	deploymentSettings := setting.MustAsAppDeploymentSettings()
-	deploymentSettings.RepoSource.RepoRef = data.CalcRepoRef
-	deploymentSettings.RepoSource.CommitHash = "" // unset target commit
-	data.DeploymentSettings = deploymentSettings
-
-	setting.MustSetData(deploymentSettings)
-	return setting, nil
-}
-
-func (s *service) onCloneHttpSetting(
-	ctx context.Context,
-	db database.IDB,
-	setting *entity.Setting,
-	data *createPreviewData,
-) (*entity.Setting, error) {
-	httpSettings := setting.MustAsAppHttpSettings()
-
-	var activeDomains []string
-	currDomains := httpSettings.Domains
-	httpSettings.Domains = nil
-	for _, domain := range currDomains {
-		if !domain.Enabled {
-			continue
-		}
-		subdomain := strings.TrimSuffix(data.CalcSubdomain, "."+domain.Domain)
-		domain.Domain = fmt.Sprintf("%v.%v", subdomain, domain.Domain)
-		// TODO: handle SSL cert
-		httpSettings.Domains = append(httpSettings.Domains, domain)
-		activeDomains = append(activeDomains, domain.Domain)
-	}
-
-	// Make sure all domains used by the app are not hold by any other app
-	err := s.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{data.PreviewApp.ID})
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	setting.MustSetData(httpSettings)
-	return setting, nil
-}
-
-func (s *service) onCloneAppService(
-	targetSvc, _ *swarm.Service,
-	data *createPreviewData,
-) error {
-	targetSvcSpec := &targetSvc.Spec
-	if targetSvcSpec.Mode.Replicated != nil {
-		targetSvcSpec.Mode.Replicated.Replicas = new(uint64(1))
-	}
-	if data.NoStart { // If noStart, use replicated service mode with replicas = 0
-		if targetSvcSpec.Mode.Replicated == nil {
-			targetSvcSpec.Mode = swarm.ServiceMode{
-				Replicated: &swarm.ReplicatedService{},
-			}
-		}
-		targetSvcSpec.Mode.Replicated.Replicas = new(uint64(0))
-	}
 	return nil
 }
 
@@ -302,6 +209,25 @@ func (s *service) persistAppPreviewData(
 
 	err = s.taskRepo.Upsert(ctx, db, data.DeploymentTask,
 		entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	// If there are cloned db apps, we will add some res-links for them as logical-child-apps
+	resLinks := make([]*entity.ResLink, 0, len(data.CloneDBAppsData))
+	timeNow := time.Now()
+	for _, appData := range data.CloneDBAppsData {
+		resLinks = append(resLinks, &entity.ResLink{
+			SrcType:   base.ResourceTypeApp,
+			SrcID:     data.PreviewApp.ID,
+			DstType:   base.ResourceTypeLogicalChildApp,
+			DstID:     appData.CloneResp.TargetApp.ID,
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		})
+	}
+	err = s.resLinkRepo.UpsertMulti(ctx, db, resLinks,
+		entity.ResLinkUpsertingConflictCols, entity.ResLinkUpsertingUpdateCols)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

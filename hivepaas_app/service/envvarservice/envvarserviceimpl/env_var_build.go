@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -16,6 +18,7 @@ func (s *service) BuildEnvVarsForAllAppsInScope(
 	db database.IDB,
 	scope *entity.ObjectScope,
 	buildPhase bool,
+	onlyApps []string,
 	transaction bool,
 	concurrency bool,
 ) (appEnvVarData []*envvarservice.AppEnvVarData, err error) {
@@ -30,7 +33,7 @@ func (s *service) BuildEnvVarsForAllAppsInScope(
 				BuildOptions: envvarservice.EnvBuildOptions{
 					BuildPhaseOnly: buildPhase,
 				},
-			}, transaction, concurrency)
+			}, onlyApps, transaction, concurrency)
 	case base.ObjectScopeProjectEnv:
 		appEnvVarData, err = s.BuildEnvVarsForAllAppsInProjectEnv(ctx, db,
 			&envvarservice.BuildEnvVarsInProjectEnvReq{
@@ -41,7 +44,7 @@ func (s *service) BuildEnvVarsForAllAppsInScope(
 				BuildOptions: envvarservice.EnvBuildOptions{
 					BuildPhaseOnly: buildPhase,
 				},
-			}, transaction, concurrency)
+			}, onlyApps, transaction, concurrency)
 	case base.ObjectScopeProject:
 		appEnvVarData, err = s.BuildEnvVarsForAllAppsInProject(ctx, db,
 			&envvarservice.BuildEnvVarsInProjectReq{
@@ -52,7 +55,7 @@ func (s *service) BuildEnvVarsForAllAppsInScope(
 				BuildOptions: envvarservice.EnvBuildOptions{
 					BuildPhaseOnly: buildPhase,
 				},
-			}, transaction, concurrency)
+			}, onlyApps, transaction, concurrency)
 	case base.ObjectScopeUser, base.ObjectScopeGlobal:
 		// Do nothing
 	}
@@ -76,6 +79,7 @@ func (s *service) BuildEnvVarsForAllAppsInProject(
 	ctx context.Context,
 	db database.IDB,
 	req *envvarservice.BuildEnvVarsInProjectReq,
+	onlyApps []string,
 	transaction bool,
 	concurrency bool,
 ) (result []*envvarservice.AppEnvVarData, err error) {
@@ -95,7 +99,7 @@ func (s *service) BuildEnvVarsForAllAppsInProject(
 		}
 
 		execFunc := func(ctx context.Context, db database.IDB) error {
-			resp, err := s.BuildEnvVarsForAllAppsInProjectEnv(ctx, db, envReq, transaction, concurrency)
+			resp, err := s.BuildEnvVarsForAllAppsInProjectEnv(ctx, db, envReq, onlyApps, transaction, concurrency)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -121,6 +125,7 @@ func (s *service) BuildEnvVarsForAllAppsInProjectEnv(
 	ctx context.Context,
 	db database.IDB,
 	req *envvarservice.BuildEnvVarsInProjectEnvReq,
+	onlyApps []string,
 	transaction bool,
 	concurrency bool,
 ) (result []*envvarservice.AppEnvVarData, err error) {
@@ -130,6 +135,9 @@ func (s *service) BuildEnvVarsForAllAppsInProjectEnv(
 	}
 
 	for _, app := range req.ProjectEnv.Apps {
+		if len(onlyApps) > 0 && !gofn.Contain(onlyApps, app.ID) {
+			continue
+		}
 		// If the app is a child of another app, ignore it, only process direct apps
 		if app.IsChildApp() {
 			continue
@@ -145,7 +153,7 @@ func (s *service) BuildEnvVarsForAllAppsInProjectEnv(
 		}
 
 		execFunc := func(ctx context.Context, db database.IDB) error {
-			resp, err := s.BuildEnvVarsForAllAppsInApp(ctx, db, appReq, transaction, concurrency)
+			resp, err := s.BuildEnvVarsForAllAppsInApp(ctx, db, appReq, onlyApps, transaction, concurrency)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -171,6 +179,7 @@ func (s *service) BuildEnvVarsForAllAppsInApp(
 	ctx context.Context,
 	db database.IDB,
 	req *envvarservice.BuildEnvVarsInAppReq,
+	onlyApps []string,
 	transaction bool,
 	concurrency bool,
 ) (result []*envvarservice.AppEnvVarData, err error) {
@@ -191,6 +200,9 @@ func (s *service) BuildEnvVarsForAllAppsInApp(
 	}
 
 	for _, childApp := range app.ProjectEnv.GetChildAppsOfApp(app.ID) {
+		if len(onlyApps) > 0 && !gofn.Contain(onlyApps, childApp.ID) {
+			continue
+		}
 		childApp.ProjectEnv = app.ProjectEnv
 		childApp.Project = app.Project
 		childAppReq := &envvarservice.BuildEnvVarsInAppReq{

@@ -37,7 +37,7 @@ func (s *service) buildAppEnvVars(
 	concurrency := !inTx // When in Tx, concurrency may cause runtime crash
 
 	appEnvVarData, err = s.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope,
-		false, transaction, concurrency)
+		false, nil, transaction, concurrency)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

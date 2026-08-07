@@ -54,6 +54,13 @@ func (s *service) CloneApp(
 
 	// Cloning steps
 
+	if data.OnCloneStart != nil {
+		err = data.OnCloneStart(req)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+	}
+
 	err = s.cloneApp(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

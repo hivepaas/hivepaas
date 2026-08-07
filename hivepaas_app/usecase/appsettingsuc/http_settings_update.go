@@ -251,7 +251,7 @@ func (uc *UC) applyAppEnvVars(
 	projectEnv.Apps = apps
 
 	affectingAppEnvData, err := uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db,
-		projectEnv.GetObjectScope(), false, transaction, concurrency)
+		projectEnv.GetObjectScope(), false, nil, transaction, concurrency)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -179,7 +179,7 @@ func (uc *UC) buildProjectEnvEnvVars(
 	concurrency := !inTx // When in Tx, concurrency may cause runtime crash
 
 	if data.RuntimeVarsChange {
-		appEnvVarData, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, false,
+		appEnvVarData, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, false, nil,
 			transaction, concurrency)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
@@ -187,7 +187,7 @@ func (uc *UC) buildProjectEnvEnvVars(
 	}
 	if data.BuildVarsChange {
 		// For build phase env vars, just validate them
-		_, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, true,
+		_, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, true, nil,
 			transaction, concurrency)
 		if err != nil {
 			return nil, apperrors.Wrap(err)

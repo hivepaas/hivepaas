@@ -12,7 +12,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 )
@@ -52,7 +51,7 @@ func (s *service) cloneApp(
 		destApp.ProjectEnv = srcApp.ProjectEnv
 	}
 	destEnv := destApp.ProjectEnv.Name
-	destApp.Key = slugify.SlugifyAsKey(destApp.Name)
+	destApp.Key = projecthelper.CalcAppKey(destApp.Name)
 	if destApp.ParentApp != nil {
 		destApp.Key = destApp.ParentApp.Key + "_" + destApp.Key
 	}

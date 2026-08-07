@@ -15,7 +15,9 @@ type AppCloneReq struct {
 
 	// CloneSettings settings to clone an app, can be nil if passing the custom callbacks
 	CloneSettings *entity.AppCloneSettings
+
 	// Custom callbacks to override settings
+	OnCloneStart   func(req *AppCloneReq) error
 	OnCloneApp     func(destApp, srcApp *entity.App) error
 	OnCloneSetting func(destApp, srcApp *entity.App, s *entity.Setting) (*entity.Setting, error)
 	OnCloneService func(destApp, srcApp *entity.App, destSvc, srcSvc *swarm.Service) error

@@ -166,6 +166,8 @@ func (s *service) createSwarmService(
 	createSpec.Mode = swarm.ServiceMode{
 		Replicated: &swarm.ReplicatedService{Replicas: new(uint64(0))},
 	}
+	// Need to clone ContainerSpec before assigning temp values
+	createSpec.TaskTemplate.ContainerSpec = new(*createSpec.TaskTemplate.ContainerSpec)
 	createSpec.TaskTemplate.ContainerSpec.Image = "busybox:latest"
 	createSpec.TaskTemplate.ContainerSpec.Command = nil
 	createSpec.TaskTemplate.ContainerSpec.Args = []string{"sleep", "infinity"}
@@ -195,16 +197,14 @@ func (s *service) applyFinalContainerSettings(
 		return apperrors.Wrap(err)
 	}
 	destService := &inspect.Service
+	updatingSpec := &destService.Spec
 
-	destContainerSpec := data.DestService.Spec.TaskTemplate.ContainerSpec
-	containerSpec := destService.Spec.TaskTemplate.ContainerSpec
-	containerSpec.Image = destContainerSpec.Image
-	containerSpec.Command = destContainerSpec.Command
-	containerSpec.Args = destContainerSpec.Args
-	containerSpec.Dir = destContainerSpec.Dir
-	containerSpec.Init = destContainerSpec.Init
+	// Restore service mode
+	updatingSpec.Mode = data.DestService.Spec.Mode
+	// Restore container spec
+	updatingSpec.TaskTemplate.ContainerSpec = data.DestService.Spec.TaskTemplate.ContainerSpec
 
-	_, err = s.dockerManager.ServiceUpdate(ctx, destService.ID, &destService.Version, &destService.Spec)
+	_, err = s.dockerManager.ServiceUpdate(ctx, destService.ID, &destService.Version, updatingSpec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

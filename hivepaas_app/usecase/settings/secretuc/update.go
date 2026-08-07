@@ -119,7 +119,7 @@ func (uc *UC) buildAppEnvVarsForScope(
 
 	// For build phase env vars, just validate them
 	_, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, true,
-		transaction, concurrency)
+		nil, transaction, concurrency)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -127,7 +127,7 @@ func (uc *UC) buildAppEnvVarsForScope(
 	// Runtime env vars
 	if scope.IsProjectScope() || scope.IsProjectEnvScope() {
 		appEnvVarData, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, false,
-			transaction, concurrency)
+			nil, transaction, concurrency)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -151,7 +151,7 @@ func (uc *UC) buildAppEnvVarsForScope(
 		projectEnv.Apps = apps
 
 		appEnvVarData, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db,
-			projectEnv.GetObjectScope(), false, transaction, concurrency)
+			projectEnv.GetObjectScope(), false, nil, transaction, concurrency)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}

@@ -368,6 +368,12 @@ export function DeploymentSummaryCard({
                         <span className="break-words">{output.imageTags.join(", ")}</span>
                     </InfoRow>
                 )}
+
+                {shouldShowDetailsContent && output?.error.trim() ? (
+                    <InfoRow label="Error">
+                        <div className={cn(dashedBorderBox, "break-words whitespace-pre-wrap")}>{output.error}</div>
+                    </InfoRow>
+                ) : null}
             </dl>
 
             {children && <div className="mt-5 min-w-0">{children}</div>}

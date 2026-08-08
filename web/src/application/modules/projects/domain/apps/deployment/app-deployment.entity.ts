@@ -27,6 +27,7 @@ export interface AppDeploymentOutput {
     commitTitle: string;
     commitMessage: string;
     commitAuthor: string;
+    error: string;
     imageTags: string[];
 }
 

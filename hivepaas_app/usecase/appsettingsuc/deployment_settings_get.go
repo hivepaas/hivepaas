@@ -3,14 +3,13 @@ package appsettingsuc
 import (
 	"context"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -41,7 +40,7 @@ func (uc *UC) GetAppDeploymentSettings(
 
 	input := &appsettingsdto.AppDeploymentSettingsTransformInput{
 		App:                app,
-		DeploymentSettings: gofn.FirstOr(settings, nil),
+		DeploymentSettings: entityutil.GetSettingByType(settings, base.SettingTypeAppDeployment),
 	}
 	err = uc.loadAppDeploymentSettingsRefData(ctx, uc.db, input)
 	if err != nil {

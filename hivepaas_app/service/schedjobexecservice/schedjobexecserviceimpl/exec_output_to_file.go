@@ -152,7 +152,7 @@ func (s *service) initOutputFile(
 	data.File = &entity.File{
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeApp,
-		ObjectID:    data.App.ID,
+		ObjectID:    data.DestApp.ID,
 		Type:        base.FileTypeSchedJobOutput,
 		Kind:        string(cmdOutput.FileKind),
 		Status:      base.FileStatusActive,

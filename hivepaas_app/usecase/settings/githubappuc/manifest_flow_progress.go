@@ -117,13 +117,7 @@ func (uc *UC) handleGithubAppManifestFlowOnInstallation(
 
 	_ = uc.cacheAppManifestRepo.Del(ctx, req.SettingID)
 
-	var redirectURL string
-	if appSetting.ObjectID == "" {
-		redirectURL = config.Current.DashboardGlobalGithubAppsURL()
-	} else {
-		redirectURL = config.Current.DashboardProjectGithubAppsURL(appSetting.ObjectID)
-	}
-
+	redirectURL := config.Current.DashboardGithubAppsURL(manifestCache.Scope.GetBaseURLPath())
 	return &githubappdto.HandleGithubAppManifestFlowProgressResp{
 		Data: &githubappdto.HandleGithubAppManifestFlowProgressDataResp{
 			RedirectURL: redirectURL,

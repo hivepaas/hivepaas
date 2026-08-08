@@ -85,22 +85,14 @@ func (s *service) buildNotificationMsgData(
 		Retries:         data.Task.Config.Retry,
 	}
 
-	project := data.Scope.GetProject()
-	app := data.Scope.GetApp()
-	if project != nil {
+	if project := data.Scope.GetProject(); project != nil {
 		msgData.ProjectName = project.Name
 	}
-	if app != nil {
+	if app := data.Scope.GetApp(); app != nil {
 		msgData.AppName = app.Name
 	}
-	switch {
-	case app != nil:
-		msgData.DashboardLink = config.Current.DashboardAppPeriodicTaskDetailsURL(app.ID,
-			app.ProjectEnv.Key, app.ProjectID, data.PeriodicSetting.ID, data.Task.ID)
-	case project != nil:
-		msgData.DashboardLink = config.Current.DashboardProjectPeriodicTaskDetailsURL(project.ID,
-			data.PeriodicSetting.ID, data.Task.ID)
-	}
+	msgData.DashboardLink = config.Current.DashboardPeriodicTaskDetailsURL(data.Scope.GetBaseURLPath(),
+		data.PeriodicSetting.ID, data.Task.ID)
 
 	taskOutput, _ := data.Task.OutputAsPeriodicJob()
 	output := taskOutput.Healthcheck

@@ -10,4 +10,5 @@ type GithubAppManifest struct {
 	State       string              `json:"state"`
 	Reprovision bool                `json:"reprovision"`
 	GithubApp   *entity.Setting     `json:"githubApp"`
+	Scope       *entity.ObjectScope `json:"scope"`
 }

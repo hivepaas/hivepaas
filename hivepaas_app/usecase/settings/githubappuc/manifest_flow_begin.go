@@ -50,6 +50,12 @@ func (uc *UC) BeginGithubAppManifestFlow(
 	auth *basedto.Auth,
 	req *githubappdto.BeginGithubAppManifestFlowReq,
 ) (*githubappdto.BeginGithubAppManifestFlowResp, error) {
+	// Loads and validates object scope data
+	err := uc.SettingService.LoadObjectScopeData(ctx, uc.DB, req.Scope)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
 	cfg := config.Current
 	isLocalEnv := cfg.IsDevEnv() && cfg.Platform == config.PlatformLocal
 	timeNow := timeutil.NowUTC()
@@ -98,13 +104,9 @@ func (uc *UC) BeginGithubAppManifestFlow(
 
 	var beginFlowURL string
 	switch req.Scope.ScopeType {
-	case base.ObjectScopeGlobal:
-		beginFlowURL = cfg.GlobalGithubAppManifestFlowBeginURL(appSetting.ID, state)
-		manifest.RedirectURL = cfg.GlobalGithubAppManifestFlowProgressURL(appSetting.ID)
-		manifest.SetupURL = manifest.RedirectURL
-	case base.ObjectScopeProject, base.ObjectScopeProjectEnv:
-		beginFlowURL = cfg.ProjectGithubAppManifestFlowBeginURL(req.Scope.ProjectID, appSetting.ID, state)
-		manifest.RedirectURL = cfg.ProjectGithubAppManifestFlowProgressURL(req.Scope.ProjectID, appSetting.ID)
+	case base.ObjectScopeGlobal, base.ObjectScopeProject, base.ObjectScopeProjectEnv:
+		beginFlowURL = cfg.GithubAppManifestFlowBeginURL(req.Scope.GetBaseURLPath(), appSetting.ID, state)
+		manifest.RedirectURL = cfg.GithubAppManifestFlowProgressURL(req.Scope.GetBaseURLPath(), appSetting.ID)
 		manifest.SetupURL = manifest.RedirectURL
 	case base.ObjectScopeApp, base.ObjectScopeUser:
 		fallthrough
@@ -117,9 +119,10 @@ func (uc *UC) BeginGithubAppManifestFlow(
 		Manifest:  manifest,
 		State:     state,
 		GithubApp: appSetting,
+		Scope:     req.Scope,
 	}
 
-	err := uc.cacheAppManifestRepo.Set(ctx, appSetting.ID, manifestCache, appManifestCacheExp)
+	err = uc.cacheAppManifestRepo.Set(ctx, appSetting.ID, manifestCache, appManifestCacheExp)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

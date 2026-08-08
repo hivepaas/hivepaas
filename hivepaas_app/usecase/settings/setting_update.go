@@ -123,7 +123,7 @@ func (uc *BaseUC) loadSettingForUpdate(
 	req *UpdateSettingReq,
 	data *UpdateSettingData,
 ) (err error) {
-	if err = uc.SettingService.LoadScopeObject(ctx, db, req.Scope); err != nil {
+	if err = uc.SettingService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
 		return apperrors.Wrap(err)
 	}
 

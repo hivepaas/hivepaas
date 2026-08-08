@@ -13,7 +13,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -82,8 +81,7 @@ func NewExecutor(
 type taskData struct {
 	*queue.TaskExecData
 	SchedJob *entity.Setting
-	Project  *entity.Project
-	App      *entity.App
+	Scope    *entity.ObjectScope
 
 	SkipResultNotification bool
 	NotifMsgData           *notificationservice.TemplateDataSchedTask
@@ -117,8 +115,7 @@ func (e *Executor) execute(
 		resp, err := e.schedJobExecService.SchedJobExec(ctx, db, &schedjobexecservice.SchedJobExecReq{
 			TaskExecData:    data.TaskExecData,
 			SchedJobSetting: data.SchedJob,
-			Project:         data.Project,
-			App:             data.App,
+			DestApp:         data.RefObjects.RefApps[schedJob.App.ID],
 		})
 		if err != nil {
 			return apperrors.Wrap(err)
@@ -179,28 +176,16 @@ func (e *Executor) loadSchedJobData(
 	db database.IDB,
 	data *taskData,
 ) (err error) {
-	schedJob := data.SchedJob.MustAsSchedJob()
-
-	targetApp := data.App
-	if targetApp == nil && schedJob.App.ID != "" {
-		targetApp, err = e.appService.LoadApp(ctx, db, "", schedJob.App.ID, true, true,
-			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-			bunex.SelectRelation("Project",
-				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-			),
-			bunex.SelectRelation("ProjectEnv"),
-		)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		data.App = targetApp
-		data.Project = targetApp.Project
+	scope, err := e.settingService.LoadObjectScope(ctx, db, data.SchedJob.Scope, data.SchedJob.ObjectID, true)
+	if err != nil {
+		return apperrors.Wrap(err)
 	}
+	data.Scope = scope
 
-	var scope *entity.ObjectScope
-	if targetApp != nil {
-		scope = targetApp.GetObjectScope()
+	if data.RefObjects == nil {
+		data.RefObjects = entity.NewRefObjects()
 	}
+	data.RefObjects.AddObjectScope(scope)
 
 	// Load reference objects
 	err = e.settingService.LoadRefObjectsSkipMissing(ctx, db, &data.RefObjects, scope, true, data.SchedJob)

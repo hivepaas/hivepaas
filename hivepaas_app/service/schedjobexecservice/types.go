@@ -10,8 +10,7 @@ import (
 type SchedJobExecReq struct {
 	*queue.TaskExecData
 	SchedJobSetting        *entity.Setting
-	Project                *entity.Project
-	App                    *entity.App
+	DestApp                *entity.App
 	TaskMinRunningDuration time.Duration
 	TaskFindRetryMax       int
 	TaskFindRetryDelay     time.Duration

@@ -48,6 +48,27 @@ func (r *RefObjects) AddRefObjects(refObjects *RefObjects) {
 	}
 }
 
+func (r *RefObjects) AddObjectScope(scope *ObjectScope) {
+	if scope == nil {
+		return
+	}
+	if scope.App != nil {
+		r.RefApps[scope.App.ID] = scope.App
+	}
+	if scope.ParentApp != nil {
+		r.RefApps[scope.ParentApp.ID] = scope.ParentApp
+	}
+	if scope.Project != nil {
+		r.RefProjects[scope.Project.ID] = scope.Project
+	}
+	if scope.ProjectEnv != nil {
+		r.RefProjectEnvs[scope.ProjectEnv.ID] = scope.ProjectEnv
+	}
+	if scope.User != nil {
+		r.RefUsers[scope.User.ID] = scope.User
+	}
+}
+
 //nolint:gocognit
 func (r *RefObjects) GetObjectScope(
 	scope base.ObjectScopeType,

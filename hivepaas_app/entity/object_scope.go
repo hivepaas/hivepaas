@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"fmt"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 )
@@ -121,6 +123,23 @@ func (s *ObjectScope) GetProjectEnv() *ProjectEnv {
 		return s.App.ProjectEnv
 	}
 	return nil
+}
+
+func (s *ObjectScope) GetBaseURLPath() string {
+	switch s.ScopeType {
+	case base.ObjectScopeGlobal:
+		return ""
+	case base.ObjectScopeApp:
+		return fmt.Sprintf("projects/%v/%v/apps/%v", s.App.ProjectID, s.App.ProjectEnv.Name, s.App.ID)
+	case base.ObjectScopeProjectEnv:
+		return fmt.Sprintf("projects/%v/%v", s.ProjectEnv.ProjectID, s.ProjectEnv.Name)
+	case base.ObjectScopeProject:
+		return fmt.Sprintf("projects/%v", s.Project.ID)
+	case base.ObjectScopeUser:
+		return fmt.Sprintf("users/%v", s.User.ID)
+	default:
+		return ""
+	}
 }
 
 func NewObjectScopeGlobal() *ObjectScope {

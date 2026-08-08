@@ -47,7 +47,7 @@ func (e *Executor) execute(
 	data := &taskData{
 		PeriodicExecData: execData,
 	}
-	defer funcutil.EnsureNoPanic(&err) // Make sure we catch panic before the above defer
+	defer funcutil.EnsureNoPanic(&err)
 
 	switch base.PeriodicKind(data.PeriodicSetting.Kind) {
 	case base.PeriodicKindHealthCheck:
@@ -59,7 +59,6 @@ func (e *Executor) execute(
 			return apperrors.Wrap(err)
 		}
 	default:
-		// Do nothing
 	}
 
 	return nil

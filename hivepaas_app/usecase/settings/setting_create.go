@@ -118,7 +118,7 @@ func (uc *BaseUC) loadSettingForCreation(
 	req *CreateSettingReq,
 	data *CreateSettingData,
 ) (err error) {
-	if err = uc.SettingService.LoadScopeObject(ctx, db, req.Scope); err != nil {
+	if err = uc.SettingService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
 		return apperrors.Wrap(err)
 	}
 

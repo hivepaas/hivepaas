@@ -11,6 +11,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 )
 
+const (
+	basePathSettings = "settings"
+)
+
 func (cfg *Config) BaseAPIURL() string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL, cfg.HTTPServer.BasePath))
 }
@@ -35,49 +39,32 @@ func (cfg *Config) DashboardPasswordResetURL(userID, token string) string {
 
 // App deployments
 
-func (cfg *Config) DashboardAppDeploymentDetailsURL(appID, projectEnv, projectID, deploymentID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, projectEnv, "apps", appID,
-		"deployments", deploymentID))
+func (cfg *Config) DashboardAppDeploymentDetailsURL(basePath, deploymentID string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseURL, basePath, "deployments", deploymentID))
 }
 
 // Scheduled jobs
 
-func (cfg *Config) DashboardGlobalSchedTaskDetailsURL(schedJobID, taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "settings", "sched-jobs", schedJobID,
-		"tasks", taskID))
-}
-
-func (cfg *Config) DashboardAppSchedTaskDetailsURL(projectID, appID, schedJobID, taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "apps", appID,
-		"sched-jobs", schedJobID, "tasks", taskID))
-}
-
-func (cfg *Config) DashboardProjectSchedTaskDetailsURL(projectID, schedJobID, taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "sched-jobs", schedJobID,
-		"tasks", taskID))
+func (cfg *Config) DashboardSchedTaskDetailsURL(basePath, schedJobID, taskID string) string {
+	if basePath == "" {
+		basePath = basePathSettings // global scope
+	}
+	return gofn.Must(url.JoinPath(cfg.BaseURL, basePath, "sched-jobs", schedJobID, "tasks", taskID))
 }
 
 // Github Apps
 
-func (cfg *Config) DashboardGlobalGithubAppsURL() string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "sources/github-apps"))
+func (cfg *Config) DashboardGithubAppsURL(basePath string) string {
+	return gofn.Must(url.JoinPath(cfg.BaseURL, basePath, "sources/github-apps"))
 }
 
-func (cfg *Config) DashboardProjectGithubAppsURL(projectID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "provider-settings/github-apps"))
-}
+// Periodic Jobs
 
-// Health checks
-
-func (cfg *Config) DashboardAppPeriodicTaskDetailsURL(appID, projectEnv, projectID,
-	periodicJobID, taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, projectEnv, "apps", appID,
-		"periodic-jobs", periodicJobID, "tasks", taskID))
-}
-
-func (cfg *Config) DashboardProjectPeriodicTaskDetailsURL(projectID, periodicJobID, taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "projects", projectID, "periodic-jobs", periodicJobID,
-		"tasks", taskID))
+func (cfg *Config) DashboardPeriodicTaskDetailsURL(basePath, periodicJobID, taskID string) string {
+	if basePath == "" {
+		basePath = basePathSettings // global scope
+	}
+	return gofn.Must(url.JoinPath(cfg.BaseURL, basePath, "periodic-jobs", periodicJobID, "tasks", taskID))
 }
 
 // Tasks
@@ -100,24 +87,20 @@ func (cfg *Config) RepoWebhookURL(webhookID string) string {
 	return gofn.Must(url.JoinPath(cfg.BaseAPIURL(), "webhooks", webhookID))
 }
 
-func (cfg *Config) GlobalGithubAppManifestFlowBeginURL(settingID, state string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseAPIURL(), "settings/github-apps", settingID,
+func (cfg *Config) GithubAppManifestFlowBeginURL(basePath, settingID, state string) string {
+	if basePath == "" {
+		basePath = basePathSettings // global scope
+	}
+	return gofn.Must(url.JoinPath(cfg.BaseAPIURL(), basePath, "github-apps", settingID,
 		"manifest-flow/begin")) + "?state=" + state
 }
 
-func (cfg *Config) GlobalGithubAppManifestFlowProgressURL(settingID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseAPIURL(), "settings/github-apps", settingID,
+func (cfg *Config) GithubAppManifestFlowProgressURL(basePath, settingID string) string {
+	if basePath == "" {
+		basePath = basePathSettings // global scope
+	}
+	return gofn.Must(url.JoinPath(cfg.BaseAPIURL(), basePath, "github-apps", settingID,
 		"manifest-flow/progress"))
-}
-
-func (cfg *Config) ProjectGithubAppManifestFlowBeginURL(projectID, settingID, state string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseAPIURL(), "projects", projectID,
-		"github-apps", settingID, "manifest-flow/begin")) + "?state=" + state
-}
-
-func (cfg *Config) ProjectGithubAppManifestFlowProgressURL(projectID, settingID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseAPIURL(), "projects", projectID,
-		"github-apps", settingID, "manifest-flow/progress"))
 }
 
 /// LOCAL PATH

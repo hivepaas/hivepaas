@@ -10,7 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
 
-func (s *service) LoadScopeObject(
+func (s *service) LoadObjectScopeData(
 	ctx context.Context,
 	db database.IDB,
 	scope *entity.ObjectScope,
@@ -68,4 +68,34 @@ func (s *service) LoadScopeObject(
 		}
 	}
 	return nil
+}
+
+func (s *service) LoadObjectScope(
+	ctx context.Context,
+	db database.IDB,
+	scopeType base.ObjectScopeType,
+	objectID string,
+	requireActive bool,
+) (*entity.ObjectScope, error) {
+	var scope *entity.ObjectScope
+	switch scopeType {
+	case base.ObjectScopeGlobal:
+		scope = entity.NewObjectScopeGlobal()
+	case base.ObjectScopeProject:
+		scope = entity.NewObjectScopeProject(objectID)
+	case base.ObjectScopeProjectEnv:
+		scope = entity.NewObjectScopeProjectEnv("", objectID)
+	case base.ObjectScopeApp:
+		scope = entity.NewObjectScopeApp(objectID, "", "", "")
+	case base.ObjectScopeUser:
+		scope = entity.NewObjectScopeUser(objectID)
+	}
+	scope.NotRequireActive = !requireActive
+
+	err := s.LoadObjectScopeData(ctx, db, scope)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	return scope, nil
 }

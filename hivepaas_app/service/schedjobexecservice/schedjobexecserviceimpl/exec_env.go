@@ -15,7 +15,7 @@ func (s *service) calcCommandEnv(
 	data *execData,
 ) (env []string, err error) {
 	schedJob := data.SchedJobSetting.MustAsSchedJob()
-	envVars, err := s.commandService.BuildCommandEnvVars(ctx, db, data.App, schedJob.Command)
+	envVars, err := s.commandService.BuildCommandEnvVars(ctx, db, data.DestApp, schedJob.Command)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

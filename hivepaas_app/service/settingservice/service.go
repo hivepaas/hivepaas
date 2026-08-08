@@ -3,6 +3,7 @@ package settingservice
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
@@ -18,7 +19,10 @@ type Service interface {
 		scope *entity.ObjectScope, requireActive bool, refIDs *entity.RefObjectIDs) error
 	LoadRefObjectsByIDsSkipMissing(ctx context.Context, db database.IDB, refObjects **entity.RefObjects,
 		scope *entity.ObjectScope, requireActive bool, refIDs *entity.RefObjectIDs) error
-	LoadScopeObject(ctx context.Context, db database.IDB, scope *entity.ObjectScope) error
+
+	LoadObjectScope(ctx context.Context, db database.IDB, scopeType base.ObjectScopeType,
+		objectID string, requireActive bool) (*entity.ObjectScope, error)
+	LoadObjectScopeData(ctx context.Context, db database.IDB, scope *entity.ObjectScope) error
 
 	// Default settings
 	InitDefaults(ctx context.Context, db database.IDB) error

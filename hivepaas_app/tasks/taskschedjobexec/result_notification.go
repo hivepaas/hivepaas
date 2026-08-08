@@ -9,7 +9,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 )
@@ -25,19 +24,9 @@ func (e *Executor) sendNotification(
 		return nil
 	}
 
-	var scope *entity.ObjectScope
-	switch {
-	case data.App != nil:
-		scope = data.App.GetObjectScope()
-	case data.Project != nil:
-		scope = data.Project.GetObjectScope()
-	default:
-		scope = entity.NewObjectScopeGlobal()
-	}
-
 	isSucceeded := data.Task.IsDone()
 	notification, err := e.notificationService.GetNotificationForEvent(ctx, db,
-		scope, notifConfig, isSucceeded, data.RefObjects)
+		data.Scope, notifConfig, isSucceeded, data.RefObjects)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -48,7 +37,7 @@ func (e *Executor) sendNotification(
 	e.buildNotificationMsgData(data)
 	_, err = e.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: isSucceeded,
-		Scope:           scope,
+		Scope:           data.Scope,
 		RefObjects:      data.RefObjects,
 		Notification:    notification,
 		TemplateName:    notificationservice.TemplateSchedTaskNotification,
@@ -67,7 +56,7 @@ func (e *Executor) buildNotificationMsgData(
 	isSucceeded := data.Task.IsDone()
 	msgData := &notificationservice.TemplateDataSchedTask{
 		BaseTemplateData: notificationservice.BaseTemplateData{
-			Title: e.notificationService.BuildTitlePrefix(data.Project, data.App, nil) +
+			Title: e.notificationService.BuildTitlePrefixForScope(data.Scope) +
 				gofn.If(isSucceeded, " Scheduled task succeeded", " Scheduled task failed"),
 		},
 		Succeeded:    isSucceeded,
@@ -81,22 +70,14 @@ func (e *Executor) buildNotificationMsgData(
 	} else {
 		msgData.Schedule = fmt.Sprintf("cron expression %v", schedJob.Schedule.CronExpr)
 	}
-	if data.Project != nil {
-		msgData.ProjectName = data.Project.Name
+	if project := data.Scope.GetProject(); project != nil {
+		msgData.ProjectName = project.Name
 	}
-	if data.App != nil {
-		msgData.AppName = data.App.Name
+	if app := data.Scope.GetApp(); app != nil {
+		msgData.AppName = app.Name
 	}
-	switch {
-	case data.App != nil:
-		msgData.DashboardLink = config.Current.DashboardAppSchedTaskDetailsURL(data.App.ProjectID, data.App.ID,
-			data.SchedJob.ID, data.Task.ID)
-	case data.Project != nil:
-		msgData.DashboardLink = config.Current.DashboardProjectSchedTaskDetailsURL(data.Project.ID,
-			data.SchedJob.ID, data.Task.ID)
-	default:
-		msgData.DashboardLink = config.Current.DashboardGlobalSchedTaskDetailsURL(
-			data.SchedJob.ID, data.Task.ID)
-	}
+	msgData.DashboardLink = config.Current.DashboardSchedTaskDetailsURL(data.Scope.GetBaseURLPath(),
+		data.SchedJob.ID, data.Task.ID)
+
 	data.NotifMsgData = msgData
 }

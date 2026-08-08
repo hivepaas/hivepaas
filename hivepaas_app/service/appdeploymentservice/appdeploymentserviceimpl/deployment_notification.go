@@ -63,6 +63,7 @@ func (s *service) notifyForDeployment(
 func (s *service) buildDeploymentNotifMsgData(
 	data *appDeploymentData,
 ) {
+	scope := data.App.GetObjectScope()
 	deployment := data.Deployment
 	isSucceeded := deployment.IsDone()
 	msgData := &notificationservice.TemplateDataAppDeployment{
@@ -70,14 +71,13 @@ func (s *service) buildDeploymentNotifMsgData(
 			Title: s.notificationService.BuildTitlePrefix(data.App.Project, data.App, nil) +
 				gofn.If(isSucceeded, " Deployment succeeded", " Deployment failed"),
 		},
-		ProjectName: data.App.Project.Name,
-		AppName:     data.App.Name,
-		Succeeded:   isSucceeded,
-		Method:      deployment.Settings.ActiveMethod,
-		StartedAt:   deployment.StartedAt.Truncate(time.Second),
-		Duration:    deployment.GetDuration().Truncate(time.Millisecond),
-		DashboardLink: config.Current.DashboardAppDeploymentDetailsURL(data.App.ID,
-			data.App.ProjectEnv.Key, data.App.ProjectID, deployment.ID),
+		ProjectName:   data.App.Project.Name,
+		AppName:       data.App.Name,
+		Succeeded:     isSucceeded,
+		Method:        deployment.Settings.ActiveMethod,
+		StartedAt:     deployment.StartedAt.Truncate(time.Second),
+		Duration:      deployment.GetDuration().Truncate(time.Millisecond),
+		DashboardLink: config.Current.DashboardAppDeploymentDetailsURL(scope.GetBaseURLPath(), deployment.ID),
 	}
 	data.NotifMsgData = msgData
 

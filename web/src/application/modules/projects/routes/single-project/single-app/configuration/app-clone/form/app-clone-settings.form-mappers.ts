@@ -26,6 +26,11 @@ function buildNotificationPayload(
 }
 
 export function mapAppCloneSettingsToFormInput(data: AppCloneSettings): AppCloneSettingsFormSchemaInput {
+    const commandPipes = data.commandPipes.map(pipe => ({
+        id: pipe.id,
+        name: pipe.name,
+    }));
+
     return {
         targetName: data.targetName,
         targetEnv: data.targetEnv,
@@ -47,10 +52,8 @@ export function mapAppCloneSettingsToFormInput(data: AppCloneSettings): AppClone
         cloneConfigFiles: data.cloneConfigFiles,
         clonePeriodicJobs: data.clonePeriodicJobs,
         cloneSchedJobs: data.cloneSchedJobs,
-        commandPipes: data.commandPipes.map(pipe => ({
-            id: pipe.id,
-            name: pipe.name,
-        })),
+        postCloneCommandsEnabled: commandPipes.length > 0,
+        commandPipes,
         includedVolumes: data.includedVolumes,
         excludedVolumes: data.excludedVolumes,
         notification: {
@@ -93,7 +96,7 @@ export function mapFormToUpdatePayload(
         cloneConfigFiles: values.cloneConfigFiles,
         clonePeriodicJobs: values.clonePeriodicJobs,
         cloneSchedJobs: values.cloneSchedJobs,
-        commandPipes: values.commandPipes.map(pipe => ({ id: pipe.id })),
+        commandPipes: values.postCloneCommandsEnabled ? values.commandPipes.map(pipe => ({ id: pipe.id })) : [],
         notification: buildNotificationPayload(values.notification),
     };
 }

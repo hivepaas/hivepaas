@@ -3,7 +3,7 @@ import React, { type PropsWithChildren, type ReactNode, useImperativeHandle, use
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { ArrowRight, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { ArrowRight, Plus, Trash2 } from "lucide-react";
 import {
     type FieldPath,
     FormProvider,
@@ -347,8 +347,9 @@ function HttpDomainRow({
 function CommandPipesSection({ projectId, readOnly }: { projectId: string; readOnly: boolean }) {
     const { control, setValue } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const commandPipes = useWatch({ control, name: "commandPipes" });
-    const enabled = commandPipes.length > 0;
-    const [selectedCommandId, setSelectedCommandId] = useState<string | null>(null);
+    const { field: enabledField } = useController({ control, name: "postCloneCommandsEnabled" });
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedCommand, setSelectedCommand] = useState<{ id: string; name: string } | null>(null);
 
     const {
         data: { data: commandPipesList } = DEFAULT_PAGINATED_DATA,
@@ -357,6 +358,7 @@ function CommandPipesSection({ projectId, readOnly }: { projectId: string; readO
         isRefetching,
     } = ProjectCommandPipeQueries.useFindManyPaginated({
         projectID: projectId,
+        search: searchQuery,
     });
 
     const availableOptions = useMemo(() => {
@@ -365,30 +367,33 @@ function CommandPipesSection({ projectId, readOnly }: { projectId: string; readO
         return commandPipesList
             .filter(pipe => !selectedIds.has(pipe.id))
             .map(pipe => ({
-                value: pipe.id,
+                value: { id: pipe.id, name: pipe.name },
                 label: pipe.name,
             }));
     }, [commandPipes, commandPipesList]);
 
     function handleEnabledChange(checked: boolean) {
+        enabledField.onChange(checked);
+
         if (!checked) {
             setValue("commandPipes", [], { shouldDirty: true });
-            setSelectedCommandId(null);
+            setSelectedCommand(null);
+            setSearchQuery("");
         }
     }
 
     function handleAddCommand() {
-        if (!selectedCommandId || readOnly) {
+        if (!selectedCommand || readOnly) {
             return;
         }
 
-        const selected = commandPipesList.find(pipe => pipe.id === selectedCommandId);
-        if (!selected || commandPipes.some(pipe => pipe.id === selected.id)) {
+        if (commandPipes.some(pipe => pipe.id === selectedCommand.id)) {
             return;
         }
 
-        setValue("commandPipes", [...commandPipes, { id: selected.id, name: selected.name }], { shouldDirty: true });
-        setSelectedCommandId(null);
+        setValue("commandPipes", [...commandPipes, selectedCommand], { shouldDirty: true });
+        setSelectedCommand(null);
+        setSearchQuery("");
     }
 
     function handleRemoveCommand(id: string) {
@@ -407,7 +412,7 @@ function CommandPipesSection({ projectId, readOnly }: { projectId: string; readO
         <>
             <InfoBlock title="Enabled">
                 <Checkbox
-                    checked={enabled}
+                    checked={enabledField.value}
                     disabled={readOnly}
                     onCheckedChange={value => {
                         handleEnabledChange(value === true);
@@ -415,19 +420,19 @@ function CommandPipesSection({ projectId, readOnly }: { projectId: string; readO
                 />
             </InfoBlock>
 
-            {enabled ? (
+            {enabledField.value ? (
                 <>
-                    <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                    <div className={cn(dashedBorderBox, "leading-6 mb-6")}>
                         <p>
-                            <span className="font-semibold">Note:</span>{" "}
+                            <span className="text-orange-500">Note:</span>{" "}
                             <span className="font-semibold">Post-Clone Commands</span> offer higher data consistency
                             compared to raw Volume Cloning. For instance, you can use{" "}
-                            <code className="rounded bg-muted px-1 py-0.5 text-xs">pg_dump</code> on the source app
-                            paired with <code className="rounded bg-muted px-1 py-0.5 text-xs">pg_restore</code> on the
-                            target app to clone a PostgreSQL database without stopping the source app.
+                            <code className="text-orange-500">pg_dump</code> on the source app paired with{" "}
+                            <code className="text-orange-500">pg_restore</code> on the target app to clone a PostgreSQL
+                            database without stopping the source app.
                         </p>
                         <p className="mt-2 italic">
-                            If you choose this approach, you should uncheck{" "}
+                            💡 If you choose this approach, you should uncheck{" "}
                             <span className="text-orange-500">Clone Volume Data</span> while enabling{" "}
                             <span className="text-orange-500">Clone Volumes</span> (to ensure empty volumes are created
                             for the new app).
@@ -435,47 +440,30 @@ function CommandPipesSection({ projectId, readOnly }: { projectId: string; readO
                     </div>
 
                     <InfoBlock title="Command Pipes">
-                        <div className="flex flex-col gap-3">
-                            <div className="flex flex-wrap items-center gap-2">
-                                <Select
-                                    value={selectedCommandId ?? ""}
-                                    disabled={readOnly || availableOptions.length === 0}
-                                    onValueChange={value => {
-                                        setSelectedCommandId(value);
+                        <div className="flex flex-col gap-3 max-w-[600px]">
+                            <div className="flex items-center gap-2">
+                                <Combobox<{ id: string; name: string }>
+                                    options={availableOptions}
+                                    value={selectedCommand?.id ?? null}
+                                    onChange={(_, option) => {
+                                        setSelectedCommand(option);
                                     }}
-                                >
-                                    <SelectTrigger className="min-w-[220px]">
-                                        <span className="truncate">
-                                            {selectedCommandId
-                                                ? availableOptions.find(option => option.value === selectedCommandId)
-                                                      ?.label
-                                                : "Select command to add"}
-                                        </span>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {availableOptions.map(option => (
-                                            <SelectItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                    onSearch={setSearchQuery}
+                                    placeholder="Select command to add"
+                                    searchable
+                                    closeOnSelect
+                                    emptyText="No command pipes available"
+                                    valueKey="id"
+                                    loading={isFetching}
+                                    onRefresh={() => void refetch()}
+                                    isRefreshing={isRefetching}
+                                    disabled={readOnly}
+                                    className="min-w-[220px]"
+                                />
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    size="icon"
-                                    disabled={readOnly || isFetching}
-                                    onClick={() => void refetch()}
-                                >
-                                    <RefreshCw className={cn("size-4", isRefetching && "animate-spin")} />
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    disabled={readOnly || !selectedCommandId}
+                                    disabled={readOnly || !selectedCommand}
                                     onClick={handleAddCommand}
                                 >
                                     <Plus className="mr-2 size-4" />
@@ -691,14 +679,15 @@ export function AppCloneSettingsForm({
                                 <ConditionalSection enabled={cloneVolumes}>
                                     <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                                         <p>
-                                            <span className="font-semibold">Warning:</span> Raw volume cloning is not
-                                            recommended for database-type applications (e.g., PostgreSQL, MySQL, Redis,
-                                            MongoDB) while actively running with continuous read/write operations and
-                                            active memory buffering. Direct file-level copying during active I/O can
-                                            easily result in database corruption or inconsistent data states.
+                                            <span className="text-orange-500">Warning:</span>{" "}
+                                            <span className="font-semibold">Raw volume cloning</span> is not recommended
+                                            for database-type applications (e.g., PostgreSQL, MySQL, Redis, MongoDB)
+                                            while actively running with continuous read/write operations and active
+                                            memory buffering. Direct file-level copying during active I/O can easily
+                                            result in database corruption or inconsistent data states.
                                         </p>
                                         <p className="mt-2 italic">
-                                            Recommendation: Use dedicated database dump/restore utilities (e.g.,
+                                            💡 Recommendation: Use dedicated database dump/restore utilities (e.g.,
                                             pg_dump, mysqldump) via Post-Clone Commands, or stop the source application
                                             before cloning volumes.
                                         </p>

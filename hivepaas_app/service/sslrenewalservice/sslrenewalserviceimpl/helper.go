@@ -11,6 +11,7 @@ import (
 func (s *service) sslGetNotification(
 	ctx context.Context,
 	db database.IDB,
+	scope *entity.ObjectScope,
 	sslSetting *entity.Setting,
 	eventIsSuccess bool,
 	data *sslRenewalData,
@@ -22,16 +23,6 @@ func (s *service) sslGetNotification(
 
 	data.Mu.Lock()
 	defer data.Mu.Unlock()
-
-	var scope *entity.ObjectScope
-	switch {
-	case sslSetting.BelongToApp != nil:
-		scope = sslSetting.BelongToApp.GetObjectScope()
-	case sslSetting.BelongToProject != nil:
-		scope = sslSetting.BelongToProject.GetObjectScope()
-	default:
-		scope = entity.NewObjectScopeGlobal()
-	}
 
 	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,
 		scope, sslCert.Notification, eventIsSuccess, data.RefObjects)

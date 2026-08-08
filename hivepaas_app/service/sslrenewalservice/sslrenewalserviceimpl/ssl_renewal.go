@@ -35,6 +35,7 @@ type sslRenewalData struct {
 
 type sslRenewalDataItem struct {
 	Setting              *entity.Setting
+	Scope                *entity.ObjectScope
 	Renewal              bool
 	ExpiringNotifyOnly   bool
 	RenewalError         error
@@ -160,15 +161,6 @@ func (s *service) loadSSLCerts(
 				bunex.SelectWhere("(setting.data->>'notifyFrom')::TIMESTAMPTZ < ?", timeNow),
 			),
 		),
-		bunex.SelectRelation("BelongToProject",
-			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		),
-		bunex.SelectRelation("BelongToApp",
-			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		),
-		bunex.SelectRelation("BelongToApp.Project",
-			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		),
 	}
 	if len(renewalArgs.TargetSSLs) > 0 {
 		listOpts = append(listOpts,
@@ -185,21 +177,24 @@ func (s *service) loadSSLCerts(
 		return nil, nil
 	}
 
+	refIDs := &entity.RefObjectIDs{}
+	refIDs.AddScopeObjectIDOfSettings(sslCertSettings...)
+	// Load reference scope objects
+	refObjects := entity.NewRefObjects()
+	err = s.settingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &refObjects, nil, true, refIDs)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
 	taskItems := make([]*sslRenewalDataItem, 0, len(sslCertSettings))
 	for _, setting := range sslCertSettings {
-		if setting.BelongToApp != nil {
-			setting.BelongToProject = setting.BelongToApp.Project
-		}
-		project := setting.BelongToProject
-		app := setting.BelongToApp
-		if app != nil && app.Status != base.AppStatusActive {
-			continue
-		}
-		if project != nil && project.Status != base.ProjectStatusActive {
+		scope, _ := refObjects.GetObjectScope(setting.Scope, setting.ObjectID, true)
+		if scope == nil {
 			continue
 		}
 		taskItems = append(taskItems, &sslRenewalDataItem{
 			Setting: setting,
+			Scope:   scope,
 		})
 	}
 	return taskItems, nil

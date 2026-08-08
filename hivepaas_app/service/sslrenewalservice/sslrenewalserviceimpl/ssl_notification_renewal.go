@@ -20,7 +20,7 @@ func (s *service) sslNotifyForRenewal(
 	data *sslRenewalData,
 ) (err error) {
 	isSucceeded := item.RenewalError == nil
-	notification, err := s.sslGetNotification(ctx, db, item.Setting, isSucceeded, data)
+	notification, err := s.sslGetNotification(ctx, db, item.Scope, item.Setting, isSucceeded, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -31,7 +31,7 @@ func (s *service) sslNotifyForRenewal(
 	s.sslBuildRenewalNotificationMsgData(item, data)
 	_, err = s.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: isSucceeded,
-		Scope:           item.Setting.GetObjectScope(),
+		Scope:           item.Scope,
 		RefObjects:      data.RefObjects,
 		Notification:    notification,
 		TemplateName:    notificationservice.TemplateSSLRenewalNotification,
@@ -48,14 +48,14 @@ func (s *service) sslBuildRenewalNotificationMsgData(
 	data *sslRenewalData,
 ) {
 	sslCert := item.Setting.MustAsSSLCert()
-	project := item.Setting.BelongToProject
-	app := item.Setting.BelongToApp
+	project := item.Scope.GetProject()
+	app := item.Scope.GetApp()
 	timeNow := timeutil.NowUTC()
 	isSucceeded := item.RenewalError == nil
 
 	msgData := &notificationservice.TemplateDataSSLRenewal{
 		BaseTemplateData: notificationservice.BaseTemplateData{
-			Title: s.notificationService.BuildTitlePrefix(project, app, nil) +
+			Title: s.notificationService.BuildTitlePrefixForScope(item.Scope) +
 				gofn.If(isSucceeded, " SSL renewal succeeded", " SSL renewal failed"),
 		},
 		Succeeded: isSucceeded,

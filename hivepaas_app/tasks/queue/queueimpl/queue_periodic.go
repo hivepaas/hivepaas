@@ -54,9 +54,13 @@ func (q *taskQueue) doPeriodicJob(
 
 	for _, jobSetting := range jobSettings {
 		periodicJob := jobSetting.MustAsPeriodicJob()
+		scope, err := baseData.RefObjects.GetObjectScope(jobSetting.Scope, jobSetting.ObjectID, false)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
 		periodicData := &queue.PeriodicExecData{
 			PeriodicSetting: jobSetting,
-			Scope:           getObjectScope(jobSetting, baseData.RefObjects),
+			Scope:           scope,
 			Task: &entity.Task{
 				ID:       gofn.Must(ulid.NewStringULID()),
 				Scope:    jobSetting.Scope,
@@ -219,17 +223,7 @@ func (q *taskQueue) loadPeriodicJobDataFromDB(
 
 	refIDs := &entity.RefObjectIDs{}
 	for _, setting := range dbSettings {
-		switch setting.Scope {
-		case base.ObjectScopeGlobal:
-		case base.ObjectScopeApp:
-			refIDs.RefAppIDs = append(refIDs.RefAppIDs, setting.ObjectID)
-		case base.ObjectScopeProject:
-			refIDs.RefProjectIDs = append(refIDs.RefProjectIDs, setting.ObjectID)
-		case base.ObjectScopeProjectEnv:
-			refIDs.RefProjectEnvIDs = append(refIDs.RefProjectEnvIDs, setting.ObjectID)
-		case base.ObjectScopeUser:
-			refIDs.RefUserIDs = append(refIDs.RefUserIDs, setting.ObjectID)
-		}
+		refIDs.AddScopeObjectIDOfSettings(setting)
 		rIDs, err := setting.GetRefObjectIDs()
 		if err != nil {
 			return nil, apperrors.Wrap(err)
@@ -247,7 +241,7 @@ func (q *taskQueue) loadPeriodicJobDataFromDB(
 	settingsMap := make(map[string]*entity.Setting, len(dbSettings))
 	timeNowSecs := timeutil.NowUTC().Unix()
 	for _, setting := range dbSettings {
-		scope := getObjectScope(setting, refObjects)
+		scope, _ := refObjects.GetObjectScope(setting.Scope, setting.ObjectID, true)
 		if scope != nil {
 			settingsMap[setting.ID] = setting
 			periodic := setting.MustAsPeriodicJob()
@@ -266,41 +260,6 @@ func (q *taskQueue) loadPeriodicJobDataFromDB(
 		refObjects:  refObjects,
 		lastLoaded:  time.Now(),
 	}, nil
-}
-
-func getObjectScope(setting *entity.Setting, refObjects *entity.RefObjects) *entity.ObjectScope {
-	switch setting.Scope {
-	case base.ObjectScopeApp:
-		app := refObjects.RefApps[setting.ObjectID]
-		if (app == nil || app.Status != base.AppStatusActive) ||
-			(app.ProjectEnv == nil || app.ProjectEnv.Status != base.ProjectStatusActive) ||
-			(app.Project == nil || app.Project.Status != base.ProjectStatusActive) {
-			return nil
-		}
-		return app.GetObjectScope()
-	case base.ObjectScopeProject:
-		project := refObjects.RefProjects[setting.ObjectID]
-		if project == nil || project.Status != base.ProjectStatusActive {
-			return nil
-		}
-		return project.GetObjectScope()
-	case base.ObjectScopeProjectEnv:
-		projectEnv := refObjects.RefProjectEnvs[setting.ObjectID]
-		if (projectEnv == nil || projectEnv.Status != base.ProjectStatusActive) ||
-			(projectEnv.Project == nil || projectEnv.Project.Status != base.ProjectStatusActive) {
-			return nil
-		}
-		return projectEnv.GetObjectScope()
-	case base.ObjectScopeUser:
-		user := refObjects.RefUsers[setting.ObjectID]
-		if user == nil || user.Status != base.UserStatusActive || user.IsAccessExpired() {
-			return nil
-		}
-		return user.GetObjectScope()
-	case base.ObjectScopeGlobal:
-		return entity.NewObjectScopeGlobal()
-	}
-	return nil
 }
 
 // stringHash computes a deterministic 64-bit FNV-1a hash of a string for even time slot distribution.

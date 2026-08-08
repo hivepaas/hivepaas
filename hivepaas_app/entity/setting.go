@@ -54,14 +54,9 @@ type Setting struct {
 	ExpireAt  time.Time `bun:",nullzero" json:"expireAt,omitempty"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	BelongToUser         *User            `bun:"rel:belongs-to,join:object_id=id" json:"belongToUser,omitempty"`
-	BelongToProject      *Project         `bun:"rel:belongs-to,join:object_id=id" json:"belongToProject,omitempty"`
-	BelongToProjectEnv   *ProjectEnv      `bun:"rel:belongs-to,join:object_id=id" json:"belongToProjectEnv,omitempty"`
-	BelongToApp          *App             `bun:"rel:belongs-to,join:object_id=id" json:"belongToApp,omitempty"`
-	AccessibleByProjects []*SharedSetting `bun:"rel:has-many,join:id=setting_id" json:"accessibleByProjects,omitempty"` //nolint:lll
-	Tasks                []*Task          `bun:"rel:has-many,join:id=target_id" json:"tasks,omitempty"`
-	SrcResLinks          []*ResLink       `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
-	DstResLinks          []*ResLink       `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
+	Tasks       []*Task    `bun:"rel:has-many,join:id=target_id" json:"tasks,omitempty"`
+	SrcResLinks []*ResLink `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
+	DstResLinks []*ResLink `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
 
 	// NOTE: temporary fields
 	parsedData      SettingData
@@ -215,32 +210,4 @@ func (s *Setting) Clone(genID bool) (*Setting, error) {
 		return nil, apperrors.Wrap(err)
 	}
 	return cp, nil
-}
-
-func (s *Setting) GetObjectScope() *ObjectScope {
-	switch s.Scope {
-	case base.ObjectScopeApp:
-		if s.BelongToApp != nil {
-			return s.BelongToApp.GetObjectScope()
-		}
-		return nil
-	case base.ObjectScopeProject:
-		if s.BelongToProject != nil {
-			return s.BelongToProject.GetObjectScope()
-		}
-		return nil
-	case base.ObjectScopeProjectEnv:
-		if s.BelongToProjectEnv != nil {
-			return s.BelongToProjectEnv.GetObjectScope()
-		}
-		return nil
-	case base.ObjectScopeUser:
-		if s.BelongToUser != nil {
-			return s.BelongToUser.GetObjectScope()
-		}
-		return nil
-	case base.ObjectScopeGlobal:
-		return NewObjectScopeGlobal()
-	}
-	return nil
 }

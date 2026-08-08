@@ -19,7 +19,7 @@ func (s *service) sslNotifyForExpiration(
 	data *sslRenewalData,
 ) (err error) {
 	isSucceeded := false
-	notification, err := s.sslGetNotification(ctx, db, item.Setting, isSucceeded, data)
+	notification, err := s.sslGetNotification(ctx, db, item.Scope, item.Setting, isSucceeded, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -30,7 +30,7 @@ func (s *service) sslNotifyForExpiration(
 	s.sslBuildExpiringNotificationMsgData(item, data)
 	_, err = s.notificationService.NotifyForTaskResult(ctx, db, &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: isSucceeded,
-		Scope:           item.Setting.GetObjectScope(),
+		Scope:           item.Scope,
 		RefObjects:      data.RefObjects,
 		Notification:    notification,
 		TemplateName:    notificationservice.TemplateSSLExpiringNotification,
@@ -47,11 +47,11 @@ func (s *service) sslBuildExpiringNotificationMsgData(
 	data *sslRenewalData,
 ) {
 	sslCert := item.Setting.MustAsSSLCert()
-	project := item.Setting.BelongToProject
-	app := item.Setting.BelongToApp
+	project := item.Scope.GetProject()
+	app := item.Scope.GetApp()
 	msgData := &notificationservice.TemplateDataSSLExpiring{
 		BaseTemplateData: notificationservice.BaseTemplateData{
-			Title: s.notificationService.BuildTitlePrefix(project, app, nil) +
+			Title: s.notificationService.BuildTitlePrefixForScope(item.Scope) +
 				fmt.Sprintf(" Your SSL expiring in %v", item.ExpiringNotifMsgData.ExpireIn),
 		},
 		SSLName:   item.Setting.Name,

@@ -3,6 +3,7 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
@@ -47,6 +48,95 @@ func (r *RefObjects) AddRefObjects(refObjects *RefObjects) {
 	}
 }
 
+//nolint:gocognit
+func (r *RefObjects) GetObjectScope(
+	scope base.ObjectScopeType,
+	objectID string,
+	requireActive bool,
+) (*ObjectScope, error) {
+	switch scope {
+	case base.ObjectScopeGlobal:
+		return NewObjectScopeGlobal(), nil
+
+	case base.ObjectScopeApp:
+		app := r.RefApps[objectID]
+		if app == nil {
+			return nil, apperrors.Wrap(apperrors.ErrAppNotFound).WithParam("Name", objectID)
+		}
+		if app.ProjectEnv == nil {
+			app.ProjectEnv = r.RefProjectEnvs[app.ProjectEnvID]
+		}
+		if app.Project == nil {
+			app.Project = r.RefProjects[app.ProjectID]
+		}
+		if requireActive { //nolint:nestif
+			if app.Status != base.AppStatusActive {
+				return nil, apperrors.Wrap(apperrors.ErrAppInactive).WithParam("Name", app.Name)
+			}
+			if app.ProjectEnv == nil {
+				return nil, apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", app.ProjectEnvID)
+			}
+			if app.ProjectEnv.Status != base.ProjectStatusActive {
+				return nil, apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithParam("Name", app.ProjectEnv.Name)
+			}
+			if app.Project == nil {
+				return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", app.ProjectID)
+			}
+			if app.Project.Status != base.ProjectStatusActive {
+				return nil, apperrors.Wrap(apperrors.ErrProjectInactive).WithParam("Name", app.Project.Name)
+			}
+		}
+		return app.GetObjectScope(), nil
+
+	case base.ObjectScopeProject:
+		project := r.RefProjects[objectID]
+		if project == nil {
+			return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", objectID)
+		}
+		if requireActive {
+			if project.Status != base.ProjectStatusActive {
+				return nil, apperrors.Wrap(apperrors.ErrProjectInactive).WithParam("Name", project.Name)
+			}
+		}
+		return project.GetObjectScope(), nil
+
+	case base.ObjectScopeProjectEnv:
+		projectEnv := r.RefProjectEnvs[objectID]
+		if projectEnv == nil {
+			return nil, apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", objectID)
+		}
+		if projectEnv.Project == nil {
+			projectEnv.Project = r.RefProjects[projectEnv.ProjectID]
+		}
+		if requireActive {
+			if projectEnv.Status != base.ProjectStatusActive {
+				return nil, apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithParam("Name", projectEnv.Name)
+			}
+			if projectEnv.Project == nil {
+				return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", projectEnv.ProjectID)
+			}
+			if projectEnv.Project.Status != base.ProjectStatusActive {
+				return nil, apperrors.Wrap(apperrors.ErrProjectInactive).WithParam("Name", projectEnv.Project.Name)
+			}
+		}
+		return projectEnv.GetObjectScope(), nil
+
+	case base.ObjectScopeUser:
+		user := r.RefUsers[objectID]
+		if user == nil {
+			return nil, apperrors.Wrap(apperrors.ErrUserNotFound).WithParam("Name", objectID)
+		}
+		if requireActive {
+			if user.Status != base.UserStatusActive || user.IsAccessExpired() {
+				return nil, apperrors.Wrap(apperrors.ErrUserUnavailable).
+					WithParam("Name", gofn.Coalesce(user.FullName, user.Username))
+			}
+		}
+		return user.GetObjectScope(), nil
+	}
+	return nil, nil
+}
+
 type RefObjectIDs struct {
 	RefSettingIDs    []string `json:"settingIds"`
 	RefAppIDs        []string `json:"appIds"`
@@ -69,6 +159,25 @@ func (r *RefObjectIDs) AddRefIDs(refIDs *RefObjectIDs) {
 	r.RefProjectIDs = append(r.RefProjectIDs, refIDs.RefProjectIDs...)
 	r.RefProjectEnvIDs = append(r.RefProjectEnvIDs, refIDs.RefProjectEnvIDs...)
 	r.RefUserIDs = append(r.RefUserIDs, refIDs.RefUserIDs...)
+}
+
+func (r *RefObjectIDs) AddScopeObjectIDOfSettings(settings ...*Setting) {
+	for _, s := range settings {
+		if s.ObjectID == "" {
+			continue
+		}
+		switch s.Scope {
+		case base.ObjectScopeApp:
+			r.RefAppIDs = append(r.RefAppIDs, s.ObjectID)
+		case base.ObjectScopeProject:
+			r.RefProjectIDs = append(r.RefProjectIDs, s.ObjectID)
+		case base.ObjectScopeProjectEnv:
+			r.RefProjectEnvIDs = append(r.RefProjectEnvIDs, s.ObjectID)
+		case base.ObjectScopeUser:
+			r.RefUserIDs = append(r.RefUserIDs, s.ObjectID)
+		case base.ObjectScopeGlobal:
+		}
+	}
 }
 
 func (r *RefObjectIDs) GetRecursiveRefObjectIDs(refObjects *RefObjects) *RefObjectIDs {

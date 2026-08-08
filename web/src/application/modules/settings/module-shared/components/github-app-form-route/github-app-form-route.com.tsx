@@ -214,7 +214,7 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
     const isPending = isCreatingSettings || isUpdatingSettings || isCreatingProject || isUpdatingProject;
     const isReprovisioning = isReprovisioningSettings || isReprovisioningProject;
     const showAvailableInProjects = scope.type === "settings";
-    const showTestConnection = scope.type === "settings";
+    const showTestConnection = true;
     const initialValues =
         githubApp && isEditMode
             ? {

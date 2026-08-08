@@ -1,40 +1,33 @@
-import { useState } from "react";
-
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { toast } from "sonner";
-import invariant from "tiny-invariant";
 import { AppStorageSettingsCommands, AppStorageSettingsQueries } from "~/projects/data";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { StorageMountForm } from "~/projects/dialogs/storage-mount/form";
-import { formValuesToMount } from "~/projects/dialogs/storage-mount/form/storage-mount.form-mappers";
+import { formValuesToMount, mountToFormInput } from "~/projects/dialogs/storage-mount/form/storage-mount.form-mappers";
 import type { StorageMountFormOutput } from "~/projects/dialogs/storage-mount/schemas";
 import type { AppStorageMount } from "~/projects/domain";
 
-import { RouteFormHeader } from "@application/shared/components";
+import { AppLoader, RouteFormHeader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useConditionalModule } from "@application/shared/permissions";
 
-import { useStorageMounts } from "../context";
-
 type StorageMountWithId = AppStorageMount & { _id: string };
-type StorageMountFormRouteMode = "create" | "edit";
 
-function mountWithoutId(mount: StorageMountWithId): AppStorageMount {
-    const { _id: _unused, ...rest } = mount;
-    return rest;
+function buildMountsWithIds(mounts: AppStorageMount[]): StorageMountWithId[] {
+    return mounts.map((mount, index) => ({
+        ...mount,
+        _id: mount.key ?? `mount-${index}`,
+    }));
 }
 
-export function StorageMountFormRoute({ mode, projectId, appId, env, mountId }: Props) {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const { mounts, addMount, updateMount } = useStorageMounts();
+export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: Props) {
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
     const { navigate } = useAppNavigate();
     const isEditMode = mode === "edit";
-    const targetMount = isEditMode && mountId ? mounts.find(mount => mount._id === mountId) : undefined;
 
-    const { data: appData } = AppStorageSettingsQueries.useFindOne(
+    const { data: appData, isLoading } = AppStorageSettingsQueries.useFindOne(
         {
             projectID: projectId,
             env,
@@ -42,35 +35,16 @@ export function StorageMountFormRoute({ mode, projectId, appId, env, mountId }: 
         },
         APP_CONFIGURATION_QUERY_OPTIONS,
     );
-    const { mutateAsync: update } = AppStorageSettingsCommands.useUpdateOne();
-    const updateVer = appData?.data.updateVer ?? 0;
+
+    const { mutateAsync: update, isPending } = AppStorageSettingsCommands.useUpdateOne();
+
+    const mountsWithIds = buildMountsWithIds(appData?.data.mounts ?? []);
+    const mount = isEditMode ? mountsWithIds.find(item => item._id === mountId) : undefined;
 
     function navigateToList() {
-        navigate.modules(
-            ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId),
-            {
-                ignorePrevPath: true,
-            },
-        );
-    }
-
-    async function persistMounts(nextMounts: StorageMountWithId[], successMessage: string) {
-        if (!canWrite) {
-            return;
-        }
-
-        const mountsWithoutIds = nextMounts.map(({ _id, ...mount }) => mount);
-
-        await update({
-            projectID: projectId,
-            env,
-            appID: appId,
-            payload: {
-                mounts: mountsWithoutIds,
-                updateVer,
-            },
+        navigate.modules(ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId), {
+            ignorePrevPath: true,
         });
-        toast.success(successMessage);
     }
 
     async function handleSubmit(values: StorageMountFormOutput) {
@@ -78,67 +52,83 @@ export function StorageMountFormRoute({ mode, projectId, appId, env, mountId }: 
             return;
         }
 
-        const nextMount = formValuesToMount(values);
+        const existingMounts = appData?.data.mounts ?? [];
+        const updateVer = appData?.data.updateVer ?? 0;
 
         try {
-            setIsSubmitting(true);
-
             if (isEditMode) {
-                invariant(targetMount, "targetMount must be defined");
+                if (!mountId) {
+                    return;
+                }
 
-                const nextMounts = mounts.map(existing =>
-                    existing._id === targetMount._id ? { ...nextMount, _id: targetMount._id } : existing,
-                );
-                await persistMounts(nextMounts, "Storage mount updated");
-                updateMount(targetMount._id, nextMount);
-                navigateToList();
-                return;
+                const remainingMounts = mountsWithIds
+                    .filter(item => item._id !== mountId)
+                    .map(({ _id, ...item }) => item);
+
+                await update({
+                    projectID: projectId,
+                    env,
+                    appID: appId,
+                    payload: {
+                        mounts: [...remainingMounts, formValuesToMount(values)],
+                        updateVer,
+                    },
+                });
+                toast.success("Storage mount updated");
+            } else {
+                await update({
+                    projectID: projectId,
+                    env,
+                    appID: appId,
+                    payload: {
+                        mounts: [...existingMounts, formValuesToMount(values)],
+                        updateVer,
+                    },
+                });
+                toast.success("Storage mount added");
             }
 
-            const mountWithId: StorageMountWithId = {
-                ...nextMount,
-                _id: `mount-${Date.now()}-${Math.random()}`,
-            };
-            await persistMounts([...mounts, mountWithId], "Storage mount created");
-            addMount(nextMount);
             navigateToList();
-        } finally {
-            setIsSubmitting(false);
+        } catch {
+            toast.error(isEditMode ? "Failed to update storage mount" : "Failed to add storage mount");
         }
     }
 
-    const shouldRenderForm = !isEditMode || Boolean(targetMount);
+    if (isLoading) {
+        return <AppLoader />;
+    }
+
+    if (isEditMode && !mount) {
+        return <div className="py-10 text-center text-sm text-muted-foreground">Storage mount not found</div>;
+    }
 
     return (
         <div className="flex w-full flex-col">
             <RouteFormHeader title={isEditMode ? "Edit Storage" : "Add a new storage to the app"} />
 
-            {shouldRenderForm ? (
-                <StorageMountForm
-                    isPending={isSubmitting}
-                    onSubmit={values => void handleSubmit(values)}
-                    defaultValues={targetMount ? mountWithoutId(targetMount) : undefined}
-                    readOnly={!canWrite}
-                    stickyActions
-                    onClose={navigateToList}
-                >
-                    <div className={cn(dashedBorderBox, "text-center")}>
-                        <span className="font-bold text-orange-500">Important:</span> If your cluster consists of more
-                        than 1 node, you need to ensure that the directories or volumes are accessible from all nodes.
-                        Otherwise, your apps may not function properly.
-                    </div>
-                </StorageMountForm>
-            ) : (
-                <div className="py-10 text-center text-sm text-muted-foreground">Storage mount not found</div>
-            )}
+            <StorageMountForm
+                projectId={projectId}
+                isPending={isPending}
+                isEditMode={isEditMode}
+                defaultValues={mount ? mountToFormInput(mount) : undefined}
+                onSubmit={values => void handleSubmit(values)}
+                readOnly={!canWrite}
+                onClose={navigateToList}
+            >
+                <div className={cn(dashedBorderBox, "mb-4 text-center")}>
+                    <span className="font-bold text-orange-500">Important:</span> If your cluster consists of more
+                    than 1 node, you need to ensure that the directories or volumes are accessible from all nodes.
+                    Otherwise, your apps may not function properly.
+                </div>
+            </StorageMountForm>
         </div>
     );
 }
 
-interface Props {
-    mode: StorageMountFormRouteMode;
+type Props = {
+    mode: "create" | "edit";
     projectId: string;
     env: string;
     appId: string;
     mountId?: string;
-}
+};

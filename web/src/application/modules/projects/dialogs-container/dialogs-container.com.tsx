@@ -173,7 +173,6 @@ function View() {
             <UpdateVolumeStatusDialog />
             <UpdateProjectCommandPipeStatusDialog />
             <UpdateProjectCommandTemplateStatusDialog />
-            {/* TODO: Add other dialogs here */}
         </>
     );
 }

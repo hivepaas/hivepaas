@@ -1,4 +1,4 @@
-import { Outlet, useParams } from "react-router";
+import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppStorageSettingsCommands, AppStorageSettingsQueries } from "~/projects/data";
@@ -26,11 +26,15 @@ function AppConfigStorageContent() {
     invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
+    const resolvedProjectId = projectId;
+    const resolvedEnv = env;
+    const resolvedAppId = appId;
+
     const { data: appData, isLoading: appLoading } = AppStorageSettingsQueries.useFindOne(
         {
-            projectID: projectId,
-            env,
-            appID: appId,
+            projectID: resolvedProjectId,
+            env: resolvedEnv,
+            appID: resolvedAppId,
         },
         APP_CONFIGURATION_QUERY_OPTIONS,
     );
@@ -44,27 +48,18 @@ function AppConfigStorageContent() {
             return;
         }
 
-        invariant(projectId, "projectId must be defined");
-        invariant(env, "env must be defined");
-        invariant(appId, "appId must be defined");
-
         const mountsWithoutIds = nextMounts.map(({ _id, ...mount }) => mount);
 
-        try {
-            await update({
-                projectID: projectId,
-                env,
-                appID: appId,
-                payload: {
-                    mounts: mountsWithoutIds,
-                    updateVer,
-                },
-            });
-            toast.success(successMessage);
-        } catch {
-            // toast.error("Failed to update storage settings");
-            throw new Error("Failed to update storage settings");
-        }
+        await update({
+            projectID: resolvedProjectId,
+            env: resolvedEnv,
+            appID: resolvedAppId,
+            payload: {
+                mounts: mountsWithoutIds,
+                updateVer,
+            },
+        });
+        toast.success(successMessage);
     }
 
     const handleAddMount = () => {
@@ -73,16 +68,20 @@ function AppConfigStorageContent() {
         }
 
         navigate.modules(
-            ROUTE.projects.single.apps.single.configuration.presistentStorage.create.$route(projectId, env, appId),
+            ROUTE.projects.single.apps.single.configuration.presistentStorage.create.$route(
+                resolvedProjectId,
+                resolvedEnv,
+                resolvedAppId,
+            ),
         );
     };
 
     const handleEditMount = (mount: StorageMountWithId) => {
         navigate.modules(
             ROUTE.projects.single.apps.single.configuration.presistentStorage.edit.$route(
-                projectId,
-                env,
-                appId,
+                resolvedProjectId,
+                resolvedEnv,
+                resolvedAppId,
                 mount._id,
             ),
         );
@@ -127,10 +126,6 @@ function AppConfigStorageContent() {
     );
 }
 
-export function AppConfigStorageListRoute() {
-    return <AppConfigStorageContent />;
-}
-
 export function AppConfigStorageRoute() {
     const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
 
@@ -162,7 +157,7 @@ export function AppConfigStorageRoute() {
 
     return (
         <StorageMountsProvider initialMounts={data?.data.mounts ?? []}>
-            <Outlet />
+            <AppConfigStorageContent />
         </StorageMountsProvider>
     );
 }

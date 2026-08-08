@@ -7,9 +7,7 @@ type StorageMountWithId = AppStorageMount & { _id: string };
 interface StorageMountsContextValue {
     mounts: StorageMountWithId[];
     addMount: (mount: AppStorageMount) => void;
-    updateMount: (id: string, mount: AppStorageMount) => void;
     removeMount: (id: string) => void;
-    getMountById: (id: string) => StorageMountWithId | undefined;
 }
 
 const StorageMountsContext = createContext<StorageMountsContextValue | undefined>(undefined);
@@ -28,54 +26,44 @@ interface StorageMountsProviderProps {
     children: React.ReactNode;
 }
 
+function buildMountsWithIds(initialMounts: AppStorageMount[]): StorageMountWithId[] {
+    return initialMounts.map((mount, index) => ({
+        ...mount,
+        _id: mount.key ?? `mount-${index}`,
+    }));
+}
+
 export function StorageMountsProvider({ initialMounts = [], children }: StorageMountsProviderProps) {
-    const buildMountsWithIds = useCallback(
-        () =>
-            initialMounts.map((mount, index) => ({
-                ...mount,
-                _id: `mount-${index}`,
-            })),
+    const buildMountsWithIdsCallback = useCallback(
+        () => buildMountsWithIds(initialMounts),
         [initialMounts],
     );
 
-    const [mounts, setMounts] = useState<StorageMountWithId[]>(buildMountsWithIds);
+    const [mounts, setMounts] = useState<StorageMountWithId[]>(buildMountsWithIdsCallback);
 
     useEffect(() => {
-        setMounts(buildMountsWithIds());
-    }, [buildMountsWithIds]);
+        setMounts(buildMountsWithIdsCallback());
+    }, [buildMountsWithIdsCallback]);
 
     const addMount = useCallback((mount: AppStorageMount) => {
         const newMount: StorageMountWithId = {
             ...mount,
-            _id: `mount-${Date.now()}-${Math.random()}`,
+            _id: mount.key ?? `mount-${Date.now()}-${Math.random()}`,
         };
         setMounts(prev => [...prev, newMount]);
-    }, []);
-
-    const updateMount = useCallback((id: string, mount: AppStorageMount) => {
-        setMounts(prev => prev.map(m => (m._id === id ? { ...mount, _id: id } : m)));
     }, []);
 
     const removeMount = useCallback((id: string) => {
         setMounts(prev => prev.filter(m => m._id !== id));
     }, []);
 
-    const getMountById = useCallback(
-        (id: string) => {
-            return mounts.find(m => m._id === id);
-        },
-        [mounts],
-    );
-
     const value = useMemo(
         () => ({
             mounts,
             addMount,
-            updateMount,
             removeMount,
-            getMountById,
         }),
-        [mounts, addMount, updateMount, removeMount, getMountById],
+        [mounts, addMount, removeMount],
     );
 
     return <StorageMountsContext.Provider value={value}>{children}</StorageMountsContext.Provider>;

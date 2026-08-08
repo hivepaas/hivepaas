@@ -1537,32 +1537,22 @@ export const projectsRouter: RouteObject = {
 
                                 return { Component: AppConfigStorageRoute };
                             },
-                            children: [
-                                {
-                                    index: true,
-                                    lazy: async () => {
-                                        const { AppConfigStorageListRoute } = await getLazyComponents();
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.presistentStorage.create.$pattern,
+                            lazy: async () => {
+                                const { StorageMountCreateRoute } = await getLazyComponents();
 
-                                        return { Component: AppConfigStorageListRoute };
-                                    },
-                                },
-                                {
-                                    path: "create",
-                                    lazy: async () => {
-                                        const { StorageMountCreateRoute } = await getLazyComponents();
+                                return { Component: StorageMountCreateRoute };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.apps.single.configuration.presistentStorage.edit.$pattern,
+                            lazy: async () => {
+                                const { StorageMountEditRoute } = await getLazyComponents();
 
-                                        return { Component: StorageMountCreateRoute };
-                                    },
-                                },
-                                {
-                                    path: ":mountId/edit",
-                                    lazy: async () => {
-                                        const { StorageMountEditRoute } = await getLazyComponents();
-
-                                        return { Component: StorageMountEditRoute };
-                                    },
-                                },
-                            ],
+                                return { Component: StorageMountEditRoute };
+                            },
                         },
                         {
                             path: ROUTE.projects.single.apps.single.configuration.networks.$pattern,

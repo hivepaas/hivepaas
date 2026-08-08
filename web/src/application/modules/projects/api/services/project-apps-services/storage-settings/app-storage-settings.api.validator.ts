@@ -2,8 +2,6 @@ import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { EMountConsistency, EMountPropagation, EMountType } from "~/projects/module-shared/enums";
 
-import { StorageSettingsEntitySchema } from "@application/modules/settings/module-shared/schemas";
-
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import { type AppStorageSettings_FindOne_Res } from "./app-storage-settings.api.contracts";
@@ -14,9 +12,6 @@ const VolumeDriverSchema = z.object({
 });
 
 const BindOptionsSchema = z.object({
-    baseDir: z.string().optional(),
-    subpath: z.string().optional(),
-    subpathRequired: z.string().optional(),
     propagation: z.nativeEnum(EMountPropagation).optional(),
     nonRecursive: z.boolean().optional(),
     createMountpoint: z.boolean().optional(),
@@ -25,9 +20,7 @@ const BindOptionsSchema = z.object({
 });
 
 const VolumeOptionsSchema = z.object({
-    volume: z.string().optional(),
     subpath: z.string().optional(),
-    subpathRequired: z.string().optional(),
     noCopy: z.boolean().optional(),
     labels: z
         .record(z.string())
@@ -43,9 +36,7 @@ const TmpfsOptionsSchema = z.object({
 });
 
 const ClusterOptionsSchema = z.object({
-    volume: z.string().optional(),
     subpath: z.string().optional(),
-    subpathRequired: z.string().optional(),
     noCopy: z.boolean().optional(),
     labels: z
         .record(z.string())
@@ -55,7 +46,9 @@ const ClusterOptionsSchema = z.object({
 });
 
 const MountSchema = z.object({
+    key: z.string().optional(),
     type: z.nativeEnum(EMountType).optional(),
+    source: z.string().optional(),
     target: z.string().optional(),
     readOnly: z.boolean().optional(),
     consistency: z.nativeEnum(EMountConsistency).optional(),
@@ -67,7 +60,6 @@ const MountSchema = z.object({
 
 const AppStorageSettingsSchema = z.object({
     mounts: z.array(MountSchema).nullish(),
-    settings: StorageSettingsEntitySchema,
     updateVer: z.number(),
 });
 
@@ -83,7 +75,9 @@ export class AppStorageSettingsApiValidator {
             data: {
                 mounts:
                     data.mounts?.map(item => ({
+                        key: item.key,
                         type: item.type,
+                        source: item.source,
                         target: item.target,
                         readOnly: item.readOnly,
                         consistency: item.consistency,
@@ -92,7 +86,6 @@ export class AppStorageSettingsApiValidator {
                         tmpfsOptions: item.tmpfsOptions,
                         clusterOptions: item.clusterOptions,
                     })) ?? [],
-                settings: data.settings,
                 updateVer: data.updateVer,
             },
             meta,

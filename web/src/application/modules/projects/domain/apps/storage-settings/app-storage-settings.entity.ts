@@ -1,14 +1,14 @@
 import type { EMountConsistency, EMountPropagation, EMountType } from "~/projects/module-shared/enums";
-import type { SettingStorageSettings } from "~/settings/domain";
 
 export type AppStorageSettings = {
     mounts: AppStorageMount[];
-    settings: SettingStorageSettings;
     updateVer: number;
 };
 
 export type AppStorageMount = {
+    key?: string;
     type?: EMountType;
+    source?: string;
     target?: string;
     readOnly?: boolean;
     consistency?: EMountConsistency;
@@ -19,9 +19,6 @@ export type AppStorageMount = {
 };
 
 export type BindOptions = {
-    baseDir?: string;
-    subpath?: string;
-    subpathRequired?: string;
     propagation?: EMountPropagation;
     nonRecursive?: boolean;
     createMountpoint?: boolean;
@@ -30,9 +27,7 @@ export type BindOptions = {
 };
 
 export type VolumeOptions = {
-    volume?: string;
     subpath?: string;
-    subpathRequired?: string;
     noCopy?: boolean;
     labels?: Record<string, string>;
     driverConfig?: VolumeDriver | null;
@@ -50,9 +45,7 @@ export type TmpfsOptions = {
 };
 
 export type ClusterOptions = {
-    volume?: string;
     subpath?: string;
-    subpathRequired?: string;
     noCopy?: boolean;
     labels?: Record<string, string>;
     driverConfig?: VolumeDriver | null;

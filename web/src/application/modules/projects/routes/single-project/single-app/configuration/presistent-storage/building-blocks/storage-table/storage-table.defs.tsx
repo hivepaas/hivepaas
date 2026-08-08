@@ -1,13 +1,11 @@
 import React, { type ReactNode } from "react";
 
-import { cn } from "@/lib/utils";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { type ColumnDef } from "@tanstack/react-table";
 import { EyeIcon, MoreVertical, Trash2Icon } from "lucide-react";
 import type { AppStorageMount } from "~/projects/domain";
-import { EMountType } from "~/projects/module-shared/enums";
 
 import { PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -15,65 +13,35 @@ import { PermissionTooltipAction } from "@application/shared/permissions";
 
 type StorageMountWithId = AppStorageMount & { _id: string };
 
-const mountTypeColorMap: Record<EMountType, string> = {
-    [EMountType.Bind]: "bg-cyan-500 text-white hover:bg-cyan-500/90",
-    [EMountType.Volume]: "bg-purple-400 text-white hover:bg-purple-400/90",
-    [EMountType.Cluster]: "bg-indigo-400 text-white hover:bg-indigo-400/90",
-    [EMountType.Tmpfs]: "bg-rose-400 text-white hover:bg-rose-400/90",
-    [EMountType.Npipe]: "bg-muted text-foreground hover:bg-muted",
-    [EMountType.Image]: "bg-muted text-foreground hover:bg-muted",
-};
+const MOUNT_TYPE_BADGE_CLASS = "bg-cyan-500 text-white";
 
 function getSourceDisplay(mount: AppStorageMount): ReactNode {
-    switch (mount.type) {
-        case EMountType.Bind:
-            if (mount.bindOptions?.baseDir && mount.bindOptions.subpath) {
-                return `${mount.bindOptions.baseDir}/${mount.bindOptions.subpath}`;
-            }
-            return mount.bindOptions?.baseDir ?? "";
-        case EMountType.Volume:
-            if (mount.volumeOptions?.volume && mount.volumeOptions.subpath) {
-                return `${mount.volumeOptions.volume}:${mount.volumeOptions.subpath}`;
-            }
-            return mount.volumeOptions?.volume ?? "";
-        case EMountType.Cluster:
-            if (mount.clusterOptions?.volume && mount.clusterOptions.subpath) {
-                return `${mount.clusterOptions.volume}:${mount.clusterOptions.subpath}`;
-            }
-            return mount.clusterOptions?.volume ?? "";
-        case EMountType.Tmpfs:
-            return "-";
-        default:
-            return "";
-    }
+    return mount.source ?? "-";
 }
 
 function getOptionsDisplay(mount: AppStorageMount): string {
     const options: string[] = [];
+    const volumeOpts = mount.volumeOptions ?? mount.clusterOptions;
 
-    switch (mount.type) {
-        case EMountType.Bind: {
-            if (mount.bindOptions?.subpath) {
-                options.push(`Subpath: ${mount.bindOptions.subpath}`);
-            }
-            break;
+    if (volumeOpts?.subpath) {
+        options.push(`Subpath: ${volumeOpts.subpath}`);
+    }
+
+    if (volumeOpts?.noCopy) {
+        options.push("No Copy");
+    }
+
+    if (mount.readOnly) {
+        options.push("Read-only");
+    }
+
+    if (mount.type === "tmpfs") {
+        if (mount.tmpfsOptions?.size) {
+            options.push(`Size: ${mount.tmpfsOptions.size}`);
         }
-        case EMountType.Volume:
-        case EMountType.Cluster: {
-            const opts = mount.type === EMountType.Volume ? mount.volumeOptions : (mount.clusterOptions ?? {});
-            if (opts?.subpath) {
-                options.push(`Subpath: ${opts.subpath}`);
-            }
-            break;
+        if (mount.tmpfsOptions?.mode) {
+            options.push(`Mode: ${mount.tmpfsOptions.mode}`);
         }
-        case EMountType.Tmpfs:
-            if (mount.tmpfsOptions?.size) {
-                options.push(`Size: ${mount.tmpfsOptions.size}`);
-            }
-            if (mount.tmpfsOptions?.mode) {
-                options.push(`Mode: ${mount.tmpfsOptions.mode}`);
-            }
-            break;
     }
 
     return options.join("\n") || "-";
@@ -117,7 +85,7 @@ export function createStorageTableColumns(
                 const { type } = row.original;
                 if (!type) return <div className="font-medium">-</div>;
 
-                return <Badge className={cn(mountTypeColorMap[type])}>{type}</Badge>;
+                return <Badge className={MOUNT_TYPE_BADGE_CLASS}>{type}</Badge>;
             },
             meta: {
                 align: "left",

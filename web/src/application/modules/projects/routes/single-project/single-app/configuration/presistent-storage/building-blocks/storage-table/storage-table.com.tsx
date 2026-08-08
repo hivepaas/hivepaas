@@ -31,10 +31,12 @@ function View({ onAddMount, onEditMount, onDeleteMount, canWrite }: StorageTable
     );
 
     const filteredMounts = useMemo(() => {
+        const query = internalSearch.toLowerCase();
         return mounts.filter(
             mount =>
-                (mount.type?.toLowerCase().includes(internalSearch.toLowerCase()) ?? false) ||
-                (mount.target?.toLowerCase().includes(internalSearch.toLowerCase()) ?? false),
+                (mount.type?.toLowerCase().includes(query) ?? false) ||
+                (mount.target?.toLowerCase().includes(query) ?? false) ||
+                (mount.source?.toLowerCase().includes(query) ?? false),
         );
     }, [mounts, internalSearch]);
 
@@ -68,7 +70,7 @@ function View({ onAddMount, onEditMount, onDeleteMount, canWrite }: StorageTable
                             disabled={isDenied}
                         >
                             <Plus className="size-4" />
-                            New Storage
+                            New Storage Mount
                         </Button>
                     )}
                 </PermissionTooltipAction>

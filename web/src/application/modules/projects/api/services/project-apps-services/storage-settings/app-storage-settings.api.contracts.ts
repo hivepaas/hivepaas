@@ -9,6 +9,6 @@ export type AppStorageSettings_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
     env: string;
     appID: string;
-    payload: Omit<AppStorageSettings, "settings">;
+    payload: AppStorageSettings;
 }>;
 export type AppStorageSettings_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;

@@ -88,25 +88,29 @@ export function AppPreviewDeploymentsRoute() {
         );
     }
 
+    if (isFeatureDisabled) {
+        return (
+            <section className={cn(listBox)}>
+                <p className="text-base">
+                    App preview feature is disabled, enable it in{" "}
+                    <AppLink.Basic
+                        to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(
+                            projectId,
+                            env,
+                            appId,
+                        )}
+                        className="text-primary underline-offset-4 hover:underline"
+                    >
+                        Feature Settings
+                    </AppLink.Basic>
+                </p>
+            </section>
+        );
+    }
+
     return (
         <section className={cn(listBox)}>
             <div className="flex flex-col gap-4">
-                {isFeatureDisabled && (
-                    <p className="text-base">
-                        App preview feature is disabled, enable it in{" "}
-                        <AppLink.Basic
-                            to={ROUTE.projects.single.apps.single.configuration.featureSettings.$route(
-                                projectId,
-                                env,
-                                appId,
-                            )}
-                            className="text-primary underline-offset-4 hover:underline"
-                        >
-                            Feature Settings
-                        </AppLink.Basic>
-                    </p>
-                )}
-
                 <TableActions
                     search={{ value: search, onChange: setSearch }}
                     renderActions={

@@ -9,7 +9,12 @@ export function StorageMountEditRoute() {
         env,
         appId,
         mountId,
-    } = useParams<{ id: string; env: string; appId: string; mountId: string }>();
+    } = useParams<{
+        id: string;
+        env: string;
+        appId: string;
+        mountId: string;
+    }>();
 
     invariant(projectId, "projectId must be defined");
     invariant(env, "env must be defined");

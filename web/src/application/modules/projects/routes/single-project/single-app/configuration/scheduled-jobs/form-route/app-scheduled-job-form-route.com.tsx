@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { toast } from "sonner";
 import type { AppScheduledJobs_Upsert_Payload } from "~/projects/api/services";
-import { AppScheduledJobsCommands, AppScheduledJobsQueries } from "~/projects/data";
+import { APP_CONFIGURATION_QUERY_OPTIONS, AppScheduledJobsCommands, AppScheduledJobsQueries } from "~/projects/data";
 import { CreateOrEditAppScheduledJobForm } from "~/projects/dialogs/create-or-edit-app-scheduled-job/form";
 import {
     APP_SCHEDULED_JOB_COMMAND_MODE,
@@ -153,6 +153,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, env, schedule
         },
         {
             enabled: isEditMode && Boolean(scheduledJobId),
+            ...APP_CONFIGURATION_QUERY_OPTIONS,
         },
     );
     const scheduledJob = detailData?.data;

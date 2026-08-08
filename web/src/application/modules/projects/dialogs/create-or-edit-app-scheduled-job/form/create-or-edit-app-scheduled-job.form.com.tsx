@@ -69,6 +69,10 @@ export function CreateOrEditAppScheduledJobForm({
     const { isDirty } = useFormState({ control });
 
     useUpdateEffect(() => {
+        methods.reset(defaultValues);
+    }, [defaultValues]);
+
+    useUpdateEffect(() => {
         onHasChanges?.(readOnly ? false : isDirty);
     }, [isDirty, readOnly]);
 

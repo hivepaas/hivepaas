@@ -46,6 +46,7 @@ const DeploymentOutputSchema = z
         commitTitle: z.string().optional().default(""),
         commitMessage: z.string().optional().default(""),
         commitAuthor: z.string().optional().default(""),
+        error: z.string().optional().default(""),
         imageTags: z
             .array(z.string())
             .nullish()

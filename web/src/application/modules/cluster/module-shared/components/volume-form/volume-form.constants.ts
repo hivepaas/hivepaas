@@ -12,7 +12,7 @@ export const DEFAULT_VOLUME_FORM_VALUES: CreateOrEditVolumeFormInput = {
     customDriverName: "",
     localType: EClusterVolumeLocalType.Bind,
     bindOptions: {
-        directory: "auto",
+        directory: "",
         propagation: EClusterVolumePropagation.Default,
         readonly: false,
         extraOptions: "",

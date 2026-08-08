@@ -31,7 +31,7 @@ type Project struct {
 
 	PhotoData   *BinObject       `bun:"rel:has-one,join:photo=id" json:"photoData,omitempty"`
 	Owner       *User            `bun:"rel:has-one,join:owner_id=id" json:"owner,omitempty"`
-	ProjectEnvs []*ProjectEnv    `bun:"rel:has-many,join:id=project_id" json:"projectEnvs"`
+	ProjectEnvs []*ProjectEnv    `bun:"rel:has-many,join:id=project_id" json:"projectEnvs,omitempty"`
 	Settings    []*Setting       `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
 	Apps        []*App           `bun:"rel:has-many,join:id=project_id" json:"apps,omitempty"`
 	Tags        []*Tag           `bun:"rel:has-many,join:id=object_id" json:"tags,omitempty"`

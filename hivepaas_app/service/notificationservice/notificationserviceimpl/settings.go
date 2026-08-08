@@ -112,3 +112,21 @@ func (s *service) BuildTitlePrefix(
 		return "[System]"
 	}
 }
+
+func (s *service) BuildTitlePrefixForScope(
+	scope *entity.ObjectScope,
+) string {
+	switch scope.ScopeType {
+	case base.ObjectScopeApp:
+		return fmt.Sprintf("[%s][%s]", scope.GetProject().Name, scope.App.Name)
+	case base.ObjectScopeProject:
+		return fmt.Sprintf("[%s]", scope.Project.Name)
+	case base.ObjectScopeProjectEnv:
+		return fmt.Sprintf("[%s][%s]", scope.GetProject().Name, scope.ProjectEnv.Name)
+	case base.ObjectScopeUser:
+		return fmt.Sprintf("[User][%s]", gofn.Coalesce(scope.User.FullName, scope.User.Username))
+	case base.ObjectScopeGlobal:
+		return "[System]"
+	}
+	return ""
+}

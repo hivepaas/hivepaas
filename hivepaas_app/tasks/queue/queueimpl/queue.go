@@ -2,6 +2,7 @@ package queueimpl
 
 import (
 	"context"
+	"sync"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -40,6 +41,11 @@ type taskQueue struct {
 	taskExecutorMap  map[base.TaskType]gocronqueue.TaskExecFunc
 	rawExecutors     map[base.TaskType]queue.TaskExecFunc
 	periodicExecutor queue.PeriodicExecFunc
+
+	periodicCacheMu    sync.RWMutex
+	periodicCache      *periodicCache
+	periodicReloadChan <-chan struct{}
+	periodicBatchSize  int
 }
 
 func New(
@@ -86,8 +92,21 @@ func (q *taskQueue) Start() (err error) {
 	}
 
 	// Initialize task queue worker if configured
-	if runWorker {
+	if runWorker { //nolint:nestif
 		q.logger.Infof("starting task queue worker...")
+
+		q.periodicBatchSize = lpSettings.PeriodicSettings.BatchSize
+		if q.periodicBatchSize <= 0 {
+			q.periodicBatchSize = defaultPeriodicBatchSize
+		}
+
+		reloadChan, _, err := q.periodicSettingsRepo.SubscribeReload(ctx)
+		if err != nil {
+			q.logger.Warnf("failed to subscribe to periodic reload channel: %v", err)
+		} else {
+			q.periodicReloadChan = reloadChan
+		}
+
 		q.server, err = gocronqueue.NewServer(&gocronqueue.Config{
 			TaskMap:              q.taskExecutorMap,
 			RedisClient:          q.redisClient,

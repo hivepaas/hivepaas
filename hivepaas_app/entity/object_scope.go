@@ -93,6 +93,36 @@ func (s *ObjectScope) IsObjectLoaded() bool {
 	}
 }
 
+func (s *ObjectScope) GetApp() *App {
+	if s.ScopeType == base.ObjectScopeApp {
+		return s.App
+	}
+	return nil
+}
+
+func (s *ObjectScope) GetProject() *Project {
+	if s.ScopeType == base.ObjectScopeProject && s.Project != nil {
+		return s.Project
+	}
+	if s.ScopeType == base.ObjectScopeProjectEnv && s.ProjectEnv != nil && s.ProjectEnv.Project != nil {
+		return s.ProjectEnv.Project
+	}
+	if s.ScopeType == base.ObjectScopeApp && s.App != nil && s.App.Project != nil {
+		return s.App.Project
+	}
+	return nil
+}
+
+func (s *ObjectScope) GetProjectEnv() *ProjectEnv {
+	if s.ScopeType == base.ObjectScopeProjectEnv && s.ProjectEnv != nil {
+		return s.ProjectEnv
+	}
+	if s.ScopeType == base.ObjectScopeApp && s.App != nil && s.App.ProjectEnv != nil {
+		return s.App.ProjectEnv
+	}
+	return nil
+}
+
 func NewObjectScopeGlobal() *ObjectScope {
 	return &ObjectScope{ScopeType: base.ObjectScopeGlobal}
 }

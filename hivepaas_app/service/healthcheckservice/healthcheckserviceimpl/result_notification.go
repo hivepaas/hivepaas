@@ -11,7 +11,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
@@ -29,18 +28,8 @@ func (s *service) sendNotification(
 		return nil
 	}
 
-	var scope *entity.ObjectScope
-	switch {
-	case data.App != nil:
-		scope = data.App.GetObjectScope()
-	case data.Project != nil:
-		scope = data.Project.GetObjectScope()
-	default:
-		scope = entity.NewObjectScopeGlobal()
-	}
-
 	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,
-		scope, notifConfig.BaseEventNotification, data.Task.IsDone(), data.RefObjects)
+		data.Scope, notifConfig.BaseEventNotification, data.Task.IsDone(), data.RefObjects)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -54,7 +43,7 @@ func (s *service) sendNotification(
 	s.buildNotificationMsgData(data)
 	req := &notificationservice.TaskResultNotificationReq{
 		ActionSucceeded: data.Task.IsDone(),
-		Scope:           scope,
+		Scope:           data.Scope,
 		RefObjects:      data.RefObjects,
 
 		Notification: notification,
@@ -85,7 +74,7 @@ func (s *service) buildNotificationMsgData(
 	isSucceeded := data.Task.IsDone()
 	msgData := &notificationservice.TemplateDataHealthcheck{
 		BaseTemplateData: notificationservice.BaseTemplateData{
-			Title: s.notificationService.BuildTitlePrefix(data.Project, data.App, nil) +
+			Title: s.notificationService.BuildTitlePrefixForScope(data.Scope) +
 				gofn.If(isSucceeded, " Healthcheck succeeded", " Healthcheck failed"),
 		},
 		Succeeded:       isSucceeded,
@@ -95,18 +84,21 @@ func (s *service) buildNotificationMsgData(
 		Duration:        data.Task.GetDuration().Truncate(time.Millisecond),
 		Retries:         data.Task.Config.Retry,
 	}
-	if data.Project != nil {
-		msgData.ProjectName = data.Project.Name
+
+	project := data.Scope.GetProject()
+	app := data.Scope.GetApp()
+	if project != nil {
+		msgData.ProjectName = project.Name
 	}
-	if data.App != nil {
-		msgData.AppName = data.App.Name
+	if app != nil {
+		msgData.AppName = app.Name
 	}
 	switch {
-	case data.App != nil:
-		msgData.DashboardLink = config.Current.DashboardAppPeriodicTaskDetailsURL(data.App.ID,
-			data.App.ProjectEnv.Key, data.App.ProjectID, data.PeriodicSetting.ID, data.Task.ID)
-	case data.Project != nil:
-		msgData.DashboardLink = config.Current.DashboardProjectPeriodicTaskDetailsURL(data.Project.ID,
+	case app != nil:
+		msgData.DashboardLink = config.Current.DashboardAppPeriodicTaskDetailsURL(app.ID,
+			app.ProjectEnv.Key, app.ProjectID, data.PeriodicSetting.ID, data.Task.ID)
+	case project != nil:
+		msgData.DashboardLink = config.Current.DashboardProjectPeriodicTaskDetailsURL(project.ID,
 			data.PeriodicSetting.ID, data.Task.ID)
 	}
 

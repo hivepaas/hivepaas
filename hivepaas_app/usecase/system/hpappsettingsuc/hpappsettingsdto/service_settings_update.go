@@ -29,6 +29,9 @@ const (
 
 	healthcheckBaseIntervalMin = timeutil.Duration(5 * time.Second)
 	healthcheckBaseIntervalMax = timeutil.Duration(24 * time.Hour)
+
+	periodicBatchSizeMin = 1
+	periodicBatchSizeMax = 10000
 )
 
 type UpdateServiceSettingsReq struct {
@@ -148,11 +151,13 @@ func (req *HivePaaSTaskSettingsReq) validate(field string) (res []vld.Validator)
 
 type HivePaaSPeriodicSettingsReq struct {
 	BaseInterval timeutil.Duration `json:"baseInterval"`
+	BatchSize    int               `json:"batchSize"`
 }
 
 func (req *HivePaaSPeriodicSettingsReq) ToEntity() *entity.HivePaaSPeriodicSettings {
 	return &entity.HivePaaSPeriodicSettings{
 		BaseInterval: req.BaseInterval,
+		BatchSize:    req.BatchSize,
 	}
 }
 
@@ -162,6 +167,8 @@ func (req *HivePaaSPeriodicSettingsReq) validate(field string) (res []vld.Valida
 	}
 	res = append(res, basedto.ValidateDuration(&req.BaseInterval, true, healthcheckBaseIntervalMin,
 		healthcheckBaseIntervalMax, field+"baseInterval")...)
+	res = append(res, basedto.ValidateNumber(&req.BatchSize, true, periodicBatchSizeMin,
+		periodicBatchSizeMax, field+"batchSize")...)
 	return res
 }
 

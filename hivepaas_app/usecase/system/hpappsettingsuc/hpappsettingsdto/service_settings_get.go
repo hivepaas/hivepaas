@@ -53,6 +53,7 @@ type HivePaaSTaskSettingsResp struct {
 
 type HivePaaSPeriodicSettingsResp struct {
 	BaseInterval timeutil.Duration `json:"baseInterval"`
+	BatchSize    int               `json:"batchSize"`
 }
 
 type HivePaaSProxySettingsResp struct {

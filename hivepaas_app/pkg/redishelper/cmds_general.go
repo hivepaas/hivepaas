@@ -202,3 +202,16 @@ func ExpireXX(
 	}
 	return nil
 }
+
+func Publish(
+	ctx context.Context,
+	cmder Cmdable,
+	channel string,
+	message any,
+) (err error) {
+	_, err = cmder.Publish(ctx, channel, message).Result()
+	if err != nil {
+		return apperrors.Wrap(err).WithMsgLog("failed to publish message to redis channel")
+	}
+	return nil
+}

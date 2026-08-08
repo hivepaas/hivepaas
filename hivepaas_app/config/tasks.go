@@ -15,4 +15,5 @@ type TaskQueue struct {
 
 type Periodic struct {
 	BaseInterval time.Duration `toml:"base_interval" env:"HP_TASKS_PERIODIC_BASE_INTERVAL" default:"15s"`
+	BatchSize    int           `toml:"batch_size" env:"HP_TASKS_PERIODIC_BATCH_SIZE" default:"100"`
 }

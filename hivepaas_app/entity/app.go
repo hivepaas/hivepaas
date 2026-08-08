@@ -35,8 +35,8 @@ type App struct {
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
 	PhotoData   *BinObject  `bun:"rel:has-one,join:photo=id" json:"photoData,omitempty"`
-	Project     *Project    `bun:"rel:has-one,join:project_id=id" json:"project"`
-	ProjectEnv  *ProjectEnv `bun:"rel:has-one,join:project_env_id=id" json:"projectEnv"`
+	Project     *Project    `bun:"rel:has-one,join:project_id=id" json:"project,omitempty"`
+	ProjectEnv  *ProjectEnv `bun:"rel:has-one,join:project_env_id=id" json:"projectEnv,omitempty"`
 	ParentApp   *App        `bun:"rel:has-one,join:parent_id=id" json:"parentApp,omitempty"`
 	Settings    []*Setting  `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
 	Tags        []*Tag      `bun:"rel:has-many,join:id=object_id" json:"tags,omitempty"`

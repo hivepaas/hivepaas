@@ -2,7 +2,6 @@ package queueimpl
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -12,7 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -23,6 +21,7 @@ import (
 const (
 	taskPeriodicLockKey      = "task:periodic:%v:lock"
 	cachePeriodicSettingsExp = 5 * time.Minute
+	defaultPeriodicBatchSize = 100
 )
 
 func (q *taskQueue) RegisterPeriodicExecutor(execFunc queue.PeriodicExecFunc) {
@@ -57,8 +56,7 @@ func (q *taskQueue) doPeriodicJob(
 		periodicJob := jobSetting.MustAsPeriodicJob()
 		periodicData := &queue.PeriodicExecData{
 			PeriodicSetting: jobSetting,
-			Project:         jobSetting.BelongToProject,
-			App:             jobSetting.BelongToApp,
+			Scope:           getObjectScope(jobSetting, baseData.RefObjects),
 			Task: &entity.Task{
 				ID:       gofn.Must(ulid.NewStringULID()),
 				Scope:    jobSetting.Scope,
@@ -123,52 +121,86 @@ func (q *taskQueue) doPeriodicTask(
 	return apperrors.Wrap(err)
 }
 
+type periodicCache struct {
+	settingsMap map[string]*entity.Setting
+	refObjects  *entity.RefObjects
+	lastLoaded  time.Time
+}
+
 func (q *taskQueue) loadPeriodicJobData(
 	ctx context.Context,
 	db database.IDB,
 	taskData *queue.PeriodicExecData,
 ) ([]*entity.Setting, error) {
-	// Query items from cache first
-	queryDB := false
-	periodicSettings, err := q.periodicSettingsRepo.Get(ctx)
-	if err != nil {
-		if errors.Is(err, apperrors.ErrNotFound) {
-			queryDB = true
-		} else {
-			return nil, apperrors.Wrap(err)
+	// Check if reload is needed
+	needReload := false
+	q.periodicCacheMu.RLock()
+	cache := q.periodicCache
+	q.periodicCacheMu.RUnlock()
+
+	if cache == nil || time.Since(cache.lastLoaded) > cachePeriodicSettingsExp {
+		needReload = true
+	} else if q.periodicReloadChan != nil {
+		select {
+		case <-q.periodicReloadChan:
+			needReload = true
+		default:
 		}
 	}
 
-	if queryDB {
-		periodicSettings, err = q.loadPeriodicJobDataFromDB(ctx, db)
+	if needReload {
+		var err error
+		cache, err = q.loadPeriodicJobDataFromDB(ctx, db)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
+		q.periodicCacheMu.Lock()
+		q.periodicCache = cache
+		q.periodicCacheMu.Unlock()
 	}
-	if periodicSettings == nil {
+
+	if cache == nil || len(cache.settingsMap) == 0 {
 		return nil, nil
 	}
 
-	timeNowSecs := uint64(timeutil.NowUTC().Unix()) //nolint:gosec
-	validJobSettings := make([]*entity.Setting, 0, len(periodicSettings.Settings))
-	for _, jobSetting := range periodicSettings.Settings {
-		periodic := jobSetting.MustAsPeriodicJob()
-		interval := uint64(periodic.Interval.ToDuration().Seconds())
-		if interval == 0 {
+	timeNowSecs := timeutil.NowUTC().Unix()
+	batchSize := q.periodicBatchSize
+	if batchSize <= 0 {
+		batchSize = defaultPeriodicBatchSize
+	}
+	dueJobIDs, err := q.periodicSettingsRepo.GetDueJobIDs(ctx, timeNowSecs, int64(batchSize))
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	if len(dueJobIDs) == 0 {
+		return nil, nil
+	}
+
+	validJobSettings := make([]*entity.Setting, 0, len(dueJobIDs))
+	for _, dueJobID := range dueJobIDs {
+		jobSetting, exists := cache.settingsMap[dueJobID]
+		if !exists {
+			_ = q.periodicSettingsRepo.RemoveJob(ctx, dueJobID)
 			continue
 		}
-		// Time-Bucket Jitter: Distribute execution slots evenly across the interval window
-		// based on the deterministic hash of the setting ID to prevent thundering herd spikes.
-		slot := stringHash(jobSetting.ID) % interval
-		if timeNowSecs%interval == slot {
-			validJobSettings = append(validJobSettings, jobSetting)
+		periodic := jobSetting.MustAsPeriodicJob()
+		interval := int64(periodic.Interval.ToDuration().Seconds())
+		if interval <= 0 {
+			_ = q.periodicSettingsRepo.RemoveJob(ctx, dueJobID)
+			continue
 		}
+
+		// Reschedule next run time in ZSET
+		nextRun := timeNowSecs + interval
+		_ = q.periodicSettingsRepo.ScheduleJob(ctx, dueJobID, nextRun)
+
+		validJobSettings = append(validJobSettings, jobSetting)
 	}
 	if len(validJobSettings) == 0 {
 		return nil, nil
 	}
 
-	taskData.RefObjects = periodicSettings.RefObjects
+	taskData.RefObjects = cache.refObjects
 
 	return validJobSettings, nil
 }
@@ -176,72 +208,99 @@ func (q *taskQueue) loadPeriodicJobData(
 func (q *taskQueue) loadPeriodicJobDataFromDB(
 	ctx context.Context,
 	db database.IDB,
-) (*cacheentity.PeriodicSettings, error) {
+) (*periodicCache, error) {
 	dbSettings, _, err := q.settingRepo.List(ctx, db, nil, nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypePeriodicJob),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-		bunex.SelectRelation("BelongToProject",
-			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		),
-		bunex.SelectRelation("BelongToProjectEnv"),
-		bunex.SelectRelation("BelongToProjectEnv.Project"),
-		bunex.SelectRelation("BelongToApp",
-			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		),
-		bunex.SelectRelation("BelongToApp.ProjectEnv"),
-		bunex.SelectRelation("BelongToApp.Project",
-			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	var validSettings []*entity.Setting
+	refIDs := &entity.RefObjectIDs{}
 	for _, setting := range dbSettings {
-		if setting.BelongToApp != nil {
-			setting.BelongToProject = setting.BelongToApp.Project
-			setting.BelongToApp.Project = nil // NOTE: we do this only because the app may be stored in redis
-			setting.BelongToProjectEnv = setting.BelongToApp.ProjectEnv
-			setting.BelongToApp.ProjectEnv = nil
-		} else if setting.BelongToProjectEnv != nil {
-			setting.BelongToProject = setting.BelongToProjectEnv.Project
-			setting.BelongToProjectEnv.Project = nil
+		switch setting.Scope {
+		case base.ObjectScopeGlobal:
+		case base.ObjectScopeApp:
+			refIDs.RefAppIDs = append(refIDs.RefAppIDs, setting.ObjectID)
+		case base.ObjectScopeProject:
+			refIDs.RefProjectIDs = append(refIDs.RefProjectIDs, setting.ObjectID)
+		case base.ObjectScopeProjectEnv:
+			refIDs.RefProjectEnvIDs = append(refIDs.RefProjectEnvIDs, setting.ObjectID)
+		case base.ObjectScopeUser:
+			refIDs.RefUserIDs = append(refIDs.RefUserIDs, setting.ObjectID)
 		}
-		project := setting.BelongToProject
-		projectEnv := setting.BelongToProjectEnv
-		app := setting.BelongToApp
-		if app != nil && app.Status != base.AppStatusActive {
-			continue
+		rIDs, err := setting.GetRefObjectIDs()
+		if err != nil {
+			return nil, apperrors.Wrap(err)
 		}
-		if projectEnv != nil && projectEnv.Status != base.ProjectStatusActive {
-			continue
-		}
-		if project != nil && project.Status != base.ProjectStatusActive {
-			continue
-		}
-		validSettings = append(validSettings, setting)
+		refIDs.AddRefIDs(rIDs)
 	}
 
 	// Load reference objects
 	refObjects := entity.NewRefObjects()
-	err = q.settingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, nil, true, validSettings...)
+	err = q.settingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &refObjects, nil, true, refIDs)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	periodicSettings := &cacheentity.PeriodicSettings{
-		Settings:   validSettings,
-		RefObjects: refObjects,
+	settingsMap := make(map[string]*entity.Setting, len(dbSettings))
+	timeNowSecs := timeutil.NowUTC().Unix()
+	for _, setting := range dbSettings {
+		scope := getObjectScope(setting, refObjects)
+		if scope != nil {
+			settingsMap[setting.ID] = setting
+			periodic := setting.MustAsPeriodicJob()
+			interval := int64(periodic.Interval.ToDuration().Seconds())
+			if interval <= 0 {
+				continue
+			}
+			slot := int64(stringHash(setting.ID) % uint64(interval)) //nolint:gosec
+			initialRun := timeNowSecs + slot
+			_ = q.periodicSettingsRepo.ScheduleJob(ctx, setting.ID, initialRun)
+		}
 	}
 
-	// Put data in cache
-	err = q.periodicSettingsRepo.Set(ctx, periodicSettings, cachePeriodicSettingsExp)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
+	return &periodicCache{
+		settingsMap: settingsMap,
+		refObjects:  refObjects,
+		lastLoaded:  time.Now(),
+	}, nil
+}
 
-	return periodicSettings, nil
+func getObjectScope(setting *entity.Setting, refObjects *entity.RefObjects) *entity.ObjectScope {
+	switch setting.Scope {
+	case base.ObjectScopeApp:
+		app := refObjects.RefApps[setting.ObjectID]
+		if (app == nil || app.Status != base.AppStatusActive) ||
+			(app.ProjectEnv == nil || app.ProjectEnv.Status != base.ProjectStatusActive) ||
+			(app.Project == nil || app.Project.Status != base.ProjectStatusActive) {
+			return nil
+		}
+		return app.GetObjectScope()
+	case base.ObjectScopeProject:
+		project := refObjects.RefProjects[setting.ObjectID]
+		if project == nil || project.Status != base.ProjectStatusActive {
+			return nil
+		}
+		return project.GetObjectScope()
+	case base.ObjectScopeProjectEnv:
+		projectEnv := refObjects.RefProjectEnvs[setting.ObjectID]
+		if (projectEnv == nil || projectEnv.Status != base.ProjectStatusActive) ||
+			(projectEnv.Project == nil || projectEnv.Project.Status != base.ProjectStatusActive) {
+			return nil
+		}
+		return projectEnv.GetObjectScope()
+	case base.ObjectScopeUser:
+		user := refObjects.RefUsers[setting.ObjectID]
+		if user == nil || user.Status != base.UserStatusActive || user.IsAccessExpired() {
+			return nil
+		}
+		return user.GetObjectScope()
+	case base.ObjectScopeGlobal:
+		return entity.NewObjectScopeGlobal()
+	}
+	return nil
 }
 
 // stringHash computes a deterministic 64-bit FNV-1a hash of a string for even time slot distribution.

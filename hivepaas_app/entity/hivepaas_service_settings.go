@@ -45,6 +45,7 @@ type HivePaaSTaskSettings struct {
 
 type HivePaaSPeriodicSettings struct {
 	BaseInterval timeutil.Duration `json:"baseInterval"`
+	BatchSize    int               `json:"batchSize,omitempty"`
 }
 
 type HivePaaSProxySettings struct {

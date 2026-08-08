@@ -85,10 +85,9 @@ type TaskExecFunc func(context.Context, database.Tx, *TaskExecData) error
 type PeriodicExecData struct {
 	PeriodicSetting *entity.Setting
 	Task            *entity.Task
-	Project         *entity.Project
-	App             *entity.App
+	Scope           *entity.ObjectScope
 
-	// RefObjects can be used as a cache to store objects
+	// RefObjects can be used as a store of objects
 	RefObjects *entity.RefObjects
 
 	// SaveTask save task to DB if true, the executor should set this value

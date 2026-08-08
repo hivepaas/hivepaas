@@ -60,6 +60,7 @@ func (s *service) initRootProjectMainApp(
 		},
 		PeriodicSettings: entity.HivePaaSPeriodicSettings{
 			BaseInterval: timeutil.Duration(cfg.Tasks.Periodic.BaseInterval),
+			BatchSize:    cfg.Tasks.Periodic.BatchSize,
 		},
 	}
 	dbServiceSetting.MustSetData(serviceSetting)

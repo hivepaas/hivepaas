@@ -14,9 +14,9 @@ func (s *service) OnUpdateStatus(
 	db database.IDB,
 	event *settingservice.UpdateEvent,
 ) (err error) {
-	// Remove periodic jobs cache as the update may relate
+	// Reload periodic jobs in workers as the update may relate
 	if event.Setting.IsTypeIn(base.SettingTypePeriodicJob, base.SettingTypeIMService, base.SettingTypeEmail) {
-		err = s.periodicSettingsRepo.Del(ctx)
+		err = s.periodicSettingsRepo.PublishReload(ctx)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

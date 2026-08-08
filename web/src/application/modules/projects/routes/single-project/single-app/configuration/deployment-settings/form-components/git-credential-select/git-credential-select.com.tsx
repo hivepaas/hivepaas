@@ -82,13 +82,32 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
                     />
                     <FieldError errors={[credentialsError]} />
                     <div className="text-xs">
+                        Configure{" "}
+                        <AppLink.Basic
+                            to={ROUTE.projects.single.sources.githubApps.$route(projectId)}
+                            className="text-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            Github Apps
+                        </AppLink.Basic>
+                        ,{" "}
                         <AppLink.Basic
                             to={ROUTE.projects.single.providerConfiguration.accessTokens.$route(projectId)}
                             className="text-link"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            Configure Git Credentials
+                            Access Tokens
+                        </AppLink.Basic>
+                        ,{" "}
+                        <AppLink.Basic
+                            to={ROUTE.projects.single.providerConfiguration.sshKeys.$route(projectId)}
+                            className="text-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            SSH Keys
                         </AppLink.Basic>
                     </div>
                 </Field>

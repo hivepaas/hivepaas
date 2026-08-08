@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -14,7 +13,6 @@ import (
 
 func (uc *UC) LockTask(
 	ctx context.Context,
-	auth *basedto.Auth,
 	req *devhelperdto.LockTaskReq,
 ) (*devhelperdto.LockTaskResp, error) {
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {

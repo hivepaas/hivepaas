@@ -138,15 +138,13 @@ func (s *HTTPServer) registerRoutes() {
 	s.engine.Use(StaticServeRedirect("/"))
 
 	// INTERNAL ROUTES
-	basicAuthMdlw := gin.BasicAuth(gin.Accounts{
-		s.config.Session.BasicAuthUsername: s.config.Session.BasicAuthPassword,
-	})
-	v1BasicAuth := s.engine.Group(s.config.HTTPServer.BasePath + "/internal")
-	v1BasicAuth.Use(basicAuthMdlw)
-
-	// Dev mode
 	if s.config.IsDevEnv() {
-		v1BasicAuth.POST("/auth/dev-mode-login", s.handlerRegistry.sessionHandler.DevModeLogin)
+		basicAuthMdlw := gin.BasicAuth(gin.Accounts{
+			s.config.Session.BasicAuthUsername: s.config.Session.BasicAuthPassword,
+		})
+		v1BasicAuth := s.engine.Group(s.config.HTTPServer.BasePath + "/internal")
+		v1BasicAuth.Use(basicAuthMdlw)
+		s.registerDevRoutes(v1BasicAuth)
 	}
 
 	// PUBLIC ROUTES
@@ -162,7 +160,6 @@ func (s *HTTPServer) registerRoutes() {
 	s.registerFileRoutes(apiGroup)
 	s.registerImageRoutes(apiGroup)
 	s.registerSupportRoutes(apiGroup)
-	s.registerDevRoutes(apiGroup)
 }
 
 func routePing(c *gin.Context) {

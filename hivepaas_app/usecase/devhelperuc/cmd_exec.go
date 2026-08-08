@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/devhelperuc/devhelperdto"
@@ -14,7 +13,6 @@ import (
 
 func (uc *UC) ExecuteCmd(
 	ctx context.Context,
-	auth *basedto.Auth,
 	req *devhelperdto.ExecuteCmdReq,
 ) (_ *devhelperdto.ExecuteCmdResp, err error) {
 	cmdArray := req.CmdArray

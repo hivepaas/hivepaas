@@ -62,8 +62,7 @@ func (req *PeriodicJobBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStrIn(&req.Kind, true, base.AllPeriodicKinds,
-		field+"periodicKind")...)
+	res = append(res, basedto.ValidateStrIn(&req.Kind, true, base.AllPeriodicKinds, field+"kind")...)
 	switch req.Kind {
 	case base.PeriodicKindHealthCheck:
 		res = append(res, basedto.ValidateCond(req.Healthcheck != nil, field+"healthcheck")...)

@@ -100,7 +100,7 @@ func (dur *Duration) UnmarshalJSON(in []byte) error {
 	// Remove double quotes covering the str
 	if len(in) > 1 && in[0] == '"' {
 		in = in[1 : len(in)-1]
-		d, err := ParseDuration(reflectutil.UnsafeBytesToStr(in))
+		d, err := ParseDurationWithEmptyIsZero(reflectutil.UnsafeBytesToStr(in))
 		if err != nil {
 			return tracerr.Wrap(err)
 		}

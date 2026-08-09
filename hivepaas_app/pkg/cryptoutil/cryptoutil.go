@@ -4,6 +4,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/subtle"
 	"encoding/base64"
 	"io"
 	"strings"
@@ -127,4 +128,14 @@ func UnpackSecret(secretText string) (secret string, salt string) {
 		return secretText, ""
 	}
 	return parts[1], strings.TrimPrefix(parts[0], base.EncryptionSaltPrefix)
+}
+
+// SecureCompare compares two strings in constant time (O(N)) to prevent timing attacks.
+func SecureCompare(a, b string) bool {
+	return subtle.ConstantTimeCompare([]byte(a), []byte(b)) == 1
+}
+
+// SecureCompareBytes compares two byte slices in constant time (O(N)) to prevent timing attacks.
+func SecureCompareBytes(a, b []byte) bool {
+	return subtle.ConstantTimeCompare(a, b) == 1
 }

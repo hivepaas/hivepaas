@@ -121,6 +121,9 @@ ERR_VOLUME_DRIVER_UNSUPPORTED = "Volume driver '{{.Driver}}' is not supported"
 ERR_SERVICE_MODE_REPLICATED_REQUIRED = "Service is required to be in 'replicated' mode"
 
 # File errors
+ERR_FILE_NOT_EXIST = "File '{{.Name}}' does not exist"
+ERR_DIR_NOT_EXIST = "Directory '{{.Name}}' does not exist"
+ERR_DIR_NOT_CREATED = "Directory '{{.Name}}' could not be created"
 ERR_FILE_SCOPE_UNSUPPORTED = "File scope '{{.Scope}}' is not supported"
 ERR_FILE_SIZE_TOO_BIG = "File size must be less than {{.MaxSize}}"
 ERR_FILE_TYPE_NOT_SUPPORTED = "File type must be one of {{.SupportedTypes}}"

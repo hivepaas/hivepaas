@@ -191,6 +191,9 @@ var (
 
 // Errors for files
 var (
+	ErrFileNotExist                = NewErr(ErrNotFound, "ERR_FILE_NOT_EXIST")
+	ErrDirNotExist                 = NewErr(ErrNotFound, "ERR_DIR_NOT_EXIST")
+	ErrDirNotCreated               = NewErr(ErrActionFailed, "ERR_DIR_NOT_CREATED")
 	ErrFileScopeUnsupported        = NewErr(ErrUnsupported, "ERR_FILE_SCOPE_UNSUPPORTED")
 	ErrFileSizeTooBig              = NewErr(ErrArgumentInvalid, "ERR_FILE_SIZE_TOO_BIG")
 	ErrFileTypeNotSupported        = NewErr(ErrUnsupported, "ERR_FILE_TYPE_NOT_SUPPORTED")

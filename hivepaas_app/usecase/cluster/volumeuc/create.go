@@ -4,13 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
+	"path/filepath"
 
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -38,7 +40,7 @@ func (uc *UC) CreateVolume(
 			if req.Scope.IsProjectScope() {
 				req.Name = req.Scope.Project.Key + "_" + req.Name
 			}
-			createResp, err := uc.createVolumeInDocker(ctx, req.VolumeBaseReq)
+			createResp, err := uc.createVolumeInDocker(ctx, req)
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -62,9 +64,10 @@ func (uc *UC) CreateVolume(
 	}, nil
 }
 
+//nolint:gocognit
 func (uc *UC) createVolumeInDocker(
 	ctx context.Context,
-	req *volumedto.VolumeBaseReq,
+	req *volumedto.CreateVolumeReq,
 ) (*client.VolumeCreateResult, error) {
 	_, err := uc.dockerManager.VolumeInspect(ctx, req.Name)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
@@ -78,8 +81,12 @@ func (uc *UC) createVolumeInDocker(
 	if req.Driver == docker.VolumeDriverLocal { //nolint:nestif
 		switch {
 		case req.BindOptions != nil:
+			directory, err := uc.calcBindDirectory(ctx, req, req.BindOptions.Directory)
+			if err != nil {
+				return nil, apperrors.Wrap(err)
+			}
 			driverOpts["type"] = "none"
-			driverOpts["device"] = req.BindOptions.Directory
+			driverOpts["device"] = directory
 			o := fmt.Sprintf("bind,%s", gofn.If(req.BindOptions.Readonly, "ro", "rw"))
 			if req.BindOptions.Propagation != "" {
 				o += "," + string(req.BindOptions.Propagation)
@@ -116,14 +123,16 @@ func (uc *UC) createVolumeInDocker(
 				o += fmt.Sprintf(",gid=%v", req.TmpfsOptions.GID)
 			}
 			driverOpts["o"] = o
-
-		case req.BtrfsOptions != nil:
-			driverOpts["type"] = "btrfs"
-			driverOpts["device"] = req.BtrfsOptions.Device
 		}
 	}
+
 	// Overwrite the driver opts with the extra values from the client
-	maps.Copy(driverOpts, req.Options)
+	for k, v := range req.Options {
+		if _, ok := driverOpts[k]; ok && (k == "type" || k == "device") {
+			continue
+		}
+		driverOpts[k] = v
+	}
 
 	createResp, err := uc.dockerManager.VolumeCreate(ctx, func(opts *client.VolumeCreateOptions) {
 		opts.Driver = string(req.Driver)
@@ -135,4 +144,44 @@ func (uc *UC) createVolumeInDocker(
 		return nil, apperrors.Wrap(err)
 	}
 	return createResp, nil
+}
+
+func (uc *UC) calcBindDirectory(
+	ctx context.Context,
+	req *volumedto.CreateVolumeReq,
+	directory string,
+) (string, error) {
+	subpath := ""
+	if directory == "" {
+		storageInHost := config.Current.Storage.BindSource
+		if storageInHost == "" {
+			return "", apperrors.Wrap(apperrors.ErrUnconfigured).
+				WithParam("Name", "HP_STORAGE_BIND_SOURCE")
+		}
+		directory = storageInHost
+		subpath = "project_data"
+		switch req.Scope.ScopeType {
+		case base.ObjectScopeGlobal:
+		case base.ObjectScopeProject:
+			subpath = filepath.Join(subpath, req.Scope.Project.Key)
+		case base.ObjectScopeProjectEnv:
+			projectEnv := req.Scope.ProjectEnv
+			subpath = filepath.Join(subpath, projectEnv.Project.Key, projectEnv.Key)
+		case base.ObjectScopeApp:
+			app := req.Scope.App
+			subpath = filepath.Join(subpath, app.Project.Key, app.ProjectEnv.Key, app.Key)
+		case base.ObjectScopeUser:
+			fallthrough
+		default:
+			return "", apperrors.Wrap(apperrors.ErrObjectScopeInvalid)
+		}
+	}
+
+	err := uc.volumeService.MakeSubDirInHost(ctx, directory, subpath, false)
+	if err != nil {
+		return "", apperrors.Wrap(err)
+	}
+
+	directory = filepath.Join(directory, subpath)
+	return directory, nil
 }

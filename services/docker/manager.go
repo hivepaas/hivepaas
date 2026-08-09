@@ -41,6 +41,14 @@ type Manager interface {
 		*client.SecretRemoveResult, error)
 
 	// Containers
+	ContainerCreate(ctx context.Context, options ...ContainerCreateOption) (
+		*client.ContainerCreateResult, error)
+	ContainerStart(ctx context.Context, containerID string, options ...ContainerStartOption) (
+		*client.ContainerStartResult, error)
+	ContainerWait(ctx context.Context, containerID string, options ...ContainerWaitOption) (
+		_ *client.ContainerWaitResult)
+	ContainerRemove(ctx context.Context, containerID string, options ...ContainerRemoveOption) (
+		*client.ContainerRemoveResult, error)
 	ContainerList(ctx context.Context, options ...ContainerListOption) (
 		*client.ContainerListResult, error)
 	ServiceContainerList(ctx context.Context, serviceID string, options ...ContainerListOption) (
@@ -71,6 +79,8 @@ type Manager interface {
 		*client.ExecResizeResult, error)
 	ContainerExecInspect(ctx context.Context, execID string, options ...ExecInspectOption) (
 		*client.ExecInspectResult, error)
+	ContainerCreateToExec(ctx context.Context, image string, cmd []string, options ...ContainerCreateOption) (
+		*client.ContainerCreateResult, int64 /*status code*/, error)
 
 	// Images
 	ImageList(ctx context.Context, options ...ImageListOption) (
@@ -152,6 +162,9 @@ type Manager interface {
 	ServiceWaitUntilRunning(ctx context.Context, serviceID string, requireAllReplicas bool,
 		requireRunningDuration time.Duration, checkInterval time.Duration) (bool, error)
 	ServiceWaitUntilStopped(ctx context.Context, serviceID string, checkInterval time.Duration) (bool, error)
+	ServiceCreateToExec(ctx context.Context, image string, cmd []string, timeout time.Duration,
+		checkInterval time.Duration, options ...ServiceCreateOption) (
+		*client.ServiceCreateResult, int64, error)
 
 	// Swarm
 	SwarmInspect(ctx context.Context, options ...SwarmInspectOption) (

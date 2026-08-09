@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
+	"github.com/moby/moby/api/types/volume"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -18,6 +20,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 func (uc *UC) UpdateAppStorageSettings(
@@ -32,7 +35,7 @@ func (uc *UC) UpdateAppStorageSettings(
 			return apperrors.Wrap(err)
 		}
 
-		uc.prepareUpdatingAppStorageSettings(data)
+		uc.prepareUpdatingAppStorageSettings(ctx, data)
 
 		err = uc.applyAppStorageSettings(ctx, data)
 		if err != nil {
@@ -48,11 +51,12 @@ func (uc *UC) UpdateAppStorageSettings(
 }
 
 type updateAppStorageSettingsData struct {
-	App         *entity.App
-	Service     *swarm.Service
-	DBVolumes   map[string]*entity.Setting
-	FinalMounts []mount.Mount
-	NewMounts   []*appsettingsdto.Mount
+	App           *entity.App
+	Service       *swarm.Service
+	DBVolumes     map[string]*entity.Setting
+	DockerVolumes map[string]*volume.Volume
+	FinalMounts   []mount.Mount
+	NewMountReqs  []*appsettingsdto.Mount
 }
 
 func (uc *UC) loadAppStorageSettingsForUpdate(
@@ -93,6 +97,7 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	}
 
 	var newDBVolIDs []string
+	var newDockerVolIDs []string
 	for _, reqMnt := range req.Mounts {
 		if existingMount, exists := mapCurrMountByKey[reqMnt.Key]; reqMnt.Key != "" && exists {
 			data.FinalMounts = append(data.FinalMounts, *existingMount) // unchanged mount
@@ -108,8 +113,9 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		if !dockerhelper.IsWrappedVolumeID(dbVolID) {
 			return apperrors.Wrap(apperrors.ErrArgumentInvalid).WithParam("Name", dbVolID)
 		}
-		data.NewMounts = append(data.NewMounts, reqMnt)
+		data.NewMountReqs = append(data.NewMountReqs, reqMnt)
 		newDBVolIDs = append(newDBVolIDs, dbVolID)
+		newDockerVolIDs = append(newDockerVolIDs, dockerhelper.ParseID(dbVolID))
 	}
 
 	// Validate volumes can be used by the project
@@ -127,85 +133,187 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	}
 	data.DBVolumes = dbVolMap
 
+	// Loads docker volumes
+	listRes, err := uc.dockerManager.VolumeListByIDs(ctx, newDockerVolIDs)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	data.DockerVolumes = make(map[string]*volume.Volume, len(dbVolMap))
+	for i := range listRes.Items {
+		dockerVol := &listRes.Items[i]
+		data.DockerVolumes[dockerhelper.GetVolumeID(dockerVol)] = dockerVol
+	}
+
 	return nil
 }
 
 func (uc *UC) prepareUpdatingAppStorageSettings(
+	ctx context.Context,
+	data *updateAppStorageSettingsData,
+) {
+	for _, reqMnt := range data.NewMountReqs {
+		dbVolID := reqMnt.Source // db vol id is like dkr:vol:docker-vol-id
+		dockerVolID := dockerhelper.ParseID(dbVolID)
+		dockerMnt := &mount.Mount{
+			Type:        reqMnt.Type,
+			Source:      dockerVolID,
+			Target:      reqMnt.Target,
+			ReadOnly:    reqMnt.ReadOnly,
+			Consistency: reqMnt.Consistency,
+		}
+		dbVol := data.DBVolumes[dbVolID]
+		dockerVol := data.DockerVolumes[dockerVolID]
+
+		uc.buildDockerMount(ctx, dockerMnt, reqMnt, dockerVol, dbVol, data)
+
+		// Ensure full permissions (0777) on all mounted volume subpaths before starting/updating the service
+		if dockerMnt.Type == mount.TypeVolume || dockerMnt.Type == mount.TypeCluster {
+			subpath := ""
+			if dockerMnt.VolumeOptions != nil {
+				subpath = dockerMnt.VolumeOptions.Subpath
+			}
+			_ = uc.volumeService.EnsureVolumePermissions(ctx, dockerMnt, subpath)
+		}
+
+		data.FinalMounts = append(data.FinalMounts, *dockerMnt)
+	}
+}
+
+func (uc *UC) buildDockerMount(
+	ctx context.Context,
+	dockerMnt *mount.Mount,
+	reqMnt *appsettingsdto.Mount,
+	dockerVol *volume.Volume,
+	dbVol *entity.Setting,
 	data *updateAppStorageSettingsData,
 ) {
 	app := data.App
+	subpath := calcMountSubpath(app, reqMnt, dbVol)
+	uc.useBindMountIfAppropriate(ctx, dockerMnt, dockerVol, subpath)
 
-	// Calculate subpath for new mounts
-	for _, reqMnt := range data.NewMounts {
-		dbVolID := reqMnt.Source // db vol id is like dkr:vol:docker-vol-id
-		dockerMnt := mount.Mount{
-			Type:          reqMnt.Type,
-			Source:        dockerhelper.ParseID(dbVolID),
-			Target:        reqMnt.Target,
-			ReadOnly:      reqMnt.ReadOnly,
-			Consistency:   reqMnt.Consistency,
-			VolumeOptions: &mount.VolumeOptions{},
-		}
-
-		var subpath string
-		dbVol := data.DBVolumes[dbVolID]
-		switch dbVol.Scope {
-		case base.ObjectScopeGlobal:
-			subpath = fmt.Sprintf("project_data/%v/%v/%v", app.Project.Key, app.ProjectEnv.Key, app.Key)
-		case base.ObjectScopeProject:
-			subpath = fmt.Sprintf("%v/%v", app.ProjectEnv.Key, app.Key)
-		case base.ObjectScopeProjectEnv, base.ObjectScopeUser, base.ObjectScopeApp:
-			subpath = app.Key
-		}
-
-		switch reqMnt.Type {
-		case mount.TypeVolume:
-			if reqMnt.VolumeOptions != nil {
-				if reqMnt.VolumeOptions.Subpath != "" {
-					subpath = filepath.Join(subpath, reqMnt.VolumeOptions.Subpath)
-				}
-				dockerMnt.VolumeOptions.Subpath = subpath
-				dockerMnt.VolumeOptions.NoCopy = reqMnt.VolumeOptions.NoCopy
-				dockerMnt.VolumeOptions.Labels = reqMnt.VolumeOptions.Labels
-				if reqMnt.VolumeOptions.DriverConfig != nil {
-					dockerMnt.VolumeOptions.DriverConfig = &mount.Driver{
-						Name:    reqMnt.VolumeOptions.DriverConfig.Name,
-						Options: reqMnt.VolumeOptions.DriverConfig.Options,
-					}
+	switch dockerMnt.Type {
+	case mount.TypeVolume:
+		if reqMnt.VolumeOptions != nil {
+			dockerMnt.VolumeOptions = &mount.VolumeOptions{
+				Subpath: subpath,
+				NoCopy:  reqMnt.VolumeOptions.NoCopy,
+				Labels:  reqMnt.VolumeOptions.Labels,
+			}
+			if reqMnt.VolumeOptions.DriverConfig != nil {
+				dockerMnt.VolumeOptions.DriverConfig = &mount.Driver{
+					Name:    reqMnt.VolumeOptions.DriverConfig.Name,
+					Options: reqMnt.VolumeOptions.DriverConfig.Options,
 				}
 			}
-		case mount.TypeCluster:
-			if reqMnt.ClusterOptions != nil {
-				if reqMnt.ClusterOptions.Subpath != "" {
-					subpath = filepath.Join(subpath, reqMnt.ClusterOptions.Subpath)
-				}
-				dockerMnt.VolumeOptions.Subpath = subpath
-				dockerMnt.VolumeOptions.NoCopy = reqMnt.ClusterOptions.NoCopy
-				dockerMnt.VolumeOptions.Labels = reqMnt.ClusterOptions.Labels
-				if reqMnt.ClusterOptions.DriverConfig != nil {
-					dockerMnt.VolumeOptions.DriverConfig = &mount.Driver{
-						Name:    reqMnt.ClusterOptions.DriverConfig.Name,
-						Options: reqMnt.ClusterOptions.DriverConfig.Options,
-					}
+		}
+	case mount.TypeCluster:
+		if reqMnt.ClusterOptions != nil {
+			dockerMnt.VolumeOptions = &mount.VolumeOptions{
+				Subpath: subpath,
+				NoCopy:  reqMnt.ClusterOptions.NoCopy,
+				Labels:  reqMnt.ClusterOptions.Labels,
+			}
+			if reqMnt.ClusterOptions.DriverConfig != nil {
+				dockerMnt.VolumeOptions.DriverConfig = &mount.Driver{
+					Name:    reqMnt.ClusterOptions.DriverConfig.Name,
+					Options: reqMnt.ClusterOptions.DriverConfig.Options,
 				}
 			}
-		case mount.TypeBind, mount.TypeImage, mount.TypeTmpfs, mount.TypeNamedPipe:
 		}
-		data.FinalMounts = append(data.FinalMounts, dockerMnt)
+	case mount.TypeBind, mount.TypeImage, mount.TypeTmpfs, mount.TypeNamedPipe:
 	}
-	data.Service.Spec.TaskTemplate.ContainerSpec.Mounts = data.FinalMounts
+}
+
+func (uc *UC) useBindMountIfAppropriate(
+	ctx context.Context,
+	dockerMnt *mount.Mount,
+	dockerVol *volume.Volume,
+	subpath string,
+) {
+	if dockerVol.Driver != string(docker.VolumeDriverLocal) { // not a driver local
+		return
+	}
+	directory := dockerVol.Options["device"]
+	if dockerVol.Options["type"] != "none" || directory == "" {
+		return
+	}
+
+	err := uc.volumeService.MakeSubDirInHost(ctx, directory, subpath, true)
+	if err != nil {
+		return
+	}
+
+	dockerMnt.Type = mount.TypeBind
+	dockerMnt.Source = filepath.Join(directory, subpath)
+	dockerMnt.BindOptions = &mount.BindOptions{
+		CreateMountpoint: true,
+	}
+	if propagation := getConfiguredPropagation(dockerVol.Options["o"]); propagation != "" {
+		dockerMnt.BindOptions.Propagation = propagation
+	}
+	// Reset all other kind of options
+	dockerMnt.VolumeOptions = nil
+	dockerMnt.ClusterOptions = nil
+	dockerMnt.TmpfsOptions = nil
+	dockerMnt.ImageOptions = nil
 }
 
 func (uc *UC) applyAppStorageSettings(
 	ctx context.Context,
 	data *updateAppStorageSettingsData,
 ) error {
-	service := data.Service
+	inspect, err := uc.dockerManager.ServiceInspect(ctx, data.Service.ID)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	service := &inspect.Service
+	service.Spec.TaskTemplate.ContainerSpec.Mounts = data.FinalMounts
 
-	_, err := uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
+	_, err = uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	return nil
+}
+
+func calcMountSubpath(
+	app *entity.App,
+	reqMnt *appsettingsdto.Mount,
+	dbVol *entity.Setting,
+) string {
+	var subpath string
+	switch dbVol.Scope {
+	case base.ObjectScopeGlobal:
+		subpath = fmt.Sprintf("%v/%v/%v", app.Project.Key, app.ProjectEnv.Key, app.Key)
+	case base.ObjectScopeProject:
+		subpath = fmt.Sprintf("%v/%v", app.ProjectEnv.Key, app.Key)
+	case base.ObjectScopeProjectEnv, base.ObjectScopeUser, base.ObjectScopeApp:
+		subpath = app.Key
+	}
+
+	if reqMnt.Type == mount.TypeVolume && reqMnt.VolumeOptions != nil {
+		subpath = filepath.Join(subpath, reqMnt.VolumeOptions.Subpath)
+	}
+	if reqMnt.Type == mount.TypeCluster && reqMnt.ClusterOptions != nil {
+		subpath = filepath.Join(subpath, reqMnt.ClusterOptions.Subpath)
+	}
+
+	return subpath
+}
+
+func getConfiguredPropagation(o string) mount.Propagation {
+	parts := strings.Split(o, ",")
+	for _, part := range parts {
+		switch mount.Propagation(part) {
+		case mount.PropagationRPrivate:
+		case mount.PropagationPrivate:
+		case mount.PropagationRSlave:
+		case mount.PropagationSlave:
+		case mount.PropagationRShared:
+		case mount.PropagationShared:
+			return mount.Propagation(part)
+		}
+	}
+	return "" // to use default one
 }

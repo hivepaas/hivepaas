@@ -10,10 +10,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -31,10 +33,12 @@ type UC struct {
 	clusterService       clusterservice.Service
 	domainService        domainservice.Service
 	envVarService        envvarservice.Service
+	hpAppService         hpappservice.Service
 	networkService       networkservice.Service
 	settingService       settingservice.Service
 	sslService           sslservice.Service
 	traefikService       traefikservice.Service
+	volumeService        volumeservice.Service
 
 	permissionManager permission.Manager
 	dockerManager     docker.Manager
@@ -53,10 +57,12 @@ func New(
 	clusterService clusterservice.Service,
 	domainService domainservice.Service,
 	envVarService envvarservice.Service,
+	hpAppService hpappservice.Service,
 	networkService networkservice.Service,
 	settingService settingservice.Service,
 	sslService sslservice.Service,
 	traefikService traefikservice.Service,
+	volumeService volumeservice.Service,
 
 	permissionManager permission.Manager,
 	dockerManager docker.Manager,
@@ -74,10 +80,12 @@ func New(
 		clusterService:       clusterService,
 		domainService:        domainService,
 		envVarService:        envVarService,
+		hpAppService:         hpAppService,
 		networkService:       networkService,
 		settingService:       settingService,
 		sslService:           sslService,
 		traefikService:       traefikService,
+		volumeService:        volumeService,
 
 		permissionManager: permissionManager,
 		dockerManager:     dockerManager,

@@ -8,6 +8,9 @@ import (
 )
 
 func FileExists(filename string, isFile bool) (bool, error) {
+	if filename == "" {
+		return false, nil
+	}
 	fileInfo, err := os.Stat(filename)
 	if err == nil {
 		return fileInfo.IsDir() == !isFile, nil
@@ -18,4 +21,8 @@ func FileExists(filename string, isFile bool) (bool, error) {
 	}
 
 	return false, tracerr.Wrap(err)
+}
+
+func DirExists(dirPath string) (bool, error) {
+	return FileExists(dirPath, false)
 }

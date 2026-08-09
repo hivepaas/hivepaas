@@ -14,6 +14,9 @@ import (
 
 type Service interface {
 	Rsync(ctx context.Context, source, target *mount.Mount, options ...RsyncOption) error
+	EnsureVolumePermissions(ctx context.Context, volMount *mount.Mount, subpaths ...string) error
+
+	MakeSubDirInHost(ctx context.Context, baseDirInHost string, subpath string, requireBaseDirExist bool) error
 
 	CreateProjectDefaultVolume(ctx context.Context, project *entity.Project) (
 		*entity.Setting, *client.VolumeCreateResult, error)

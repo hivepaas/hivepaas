@@ -75,8 +75,15 @@ func (s *service) onCloneVolumesDefault(
 			if settings.CloneVolumeData {
 				mountsToCopyData = append(mountsToCopyData, []*mount.Mount{&destMount, &srcMount})
 			}
-		case mount.TypeBind: // Bind mounts are skipped as host paths cannot be automatically cloned
-			continue
+		case mount.TypeBind:
+			destMount := srcMount
+			if !s.calcBindMountPath(ctx, &destMount, &srcMount, data) {
+				continue
+			}
+			destMounts = append(destMounts, destMount)
+			if settings.CloneVolumeData {
+				mountsToCopyData = append(mountsToCopyData, []*mount.Mount{&destMount, &srcMount})
+			}
 		case mount.TypeTmpfs, mount.TypeNamedPipe, mount.TypeImage: // Keep it as is
 			destMounts = append(destMounts, srcMount)
 		}
@@ -222,5 +229,39 @@ func (s *service) calcVolumeMountSubpath(
 		return false
 	}
 	destMount.VolumeOptions.Subpath = subpath
+	return true
+}
+
+func (s *service) calcBindMountPath(
+	ctx context.Context,
+	destMount, srcMount *mount.Mount,
+	data *appCloneData,
+) bool {
+	if srcMount.Source == "" {
+		return false
+	}
+
+	srcApp, destApp := data.SrcApp, data.DestApp
+	srcDir := srcMount.Source
+	if !strings.HasSuffix(srcDir, "/") {
+		srcDir += "/"
+	}
+
+	srcPathBase := fmt.Sprintf("%s/%s/%s/", srcApp.Project.Key, srcApp.ProjectEnv.Key, srcApp.Key)
+	destPathBase := fmt.Sprintf("%s/%s/%s/", destApp.Project.Key, destApp.ProjectEnv.Key, destApp.Key)
+	pathBase, subpath, found := strings.Cut(srcDir, srcPathBase)
+	if !found {
+		return false
+	}
+
+	destSubpath := filepath.Join(destPathBase, subpath)
+	err := s.volumeService.MakeSubDirInHost(ctx, pathBase, destSubpath, true)
+	if err != nil {
+		return false
+	}
+
+	destDir := filepath.Join(pathBase, destSubpath)
+	destMount.Source = destDir
+
 	return true
 }

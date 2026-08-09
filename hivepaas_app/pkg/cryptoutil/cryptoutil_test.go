@@ -56,3 +56,14 @@ func TestEncryptBase64NoSalt(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, plaintext, got)
 }
+
+func TestSecureCompare(t *testing.T) {
+	assert.True(t, SecureCompare("my_secret_token_123", "my_secret_token_123"))
+	assert.False(t, SecureCompare("my_secret_token_123", "wrong_token"))
+	assert.False(t, SecureCompare("my_secret_token_123", "my_secret_token_124"))
+	assert.False(t, SecureCompare("", "non_empty"))
+	assert.True(t, SecureCompare("", ""))
+
+	assert.True(t, SecureCompareBytes([]byte("token_bytes"), []byte("token_bytes")))
+	assert.False(t, SecureCompareBytes([]byte("token_bytes"), []byte("wrong_bytes")))
+}

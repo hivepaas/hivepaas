@@ -177,12 +177,14 @@ services:
       local_net:
     environment:
       HP_CONFIG_FILE: config/config.development.toml
+      HP_STORAGE_BIND_SOURCE: ${PWD}/hivepaas
       HP_USER_ADMIN_USERNAME: admin
       HP_USER_ADMIN_EMAIL: admin@domain.name
       HP_USER_ADMIN_PASSWORD: abc123
       VITE_API_URL: http://localhost:10000
     volumes:
-      - ./hivepaas:/var/lib/hivepaas
+      - ${PWD}/hivepaas:/var/lib/hivepaas
+      - ${PWD}/hivepaas:/host${PWD}/hivepaas
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       labels:
@@ -223,7 +225,8 @@ services:
       HP_CONFIG_FILE: config/config.development.toml
       HP_RUN_MODE: worker
     volumes:
-      - ./hivepaas:/var/lib/hivepaas
+      - ${PWD}/hivepaas:/var/lib/hivepaas
+      - ${PWD}/hivepaas:/host${PWD}/hivepaas
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       labels:
@@ -249,7 +252,8 @@ services:
       HP_CONFIG_FILE: config/config.development.toml
       HP_RUN_MODE: updater
     volumes:
-      - ./hivepaas:/var/lib/hivepaas
+      - ${PWD}/hivepaas:/var/lib/hivepaas
+      - ${PWD}/hivepaas:/host${PWD}/hivepaas
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       labels:

@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"crypto/subtle"
 	"net"
 	"os"
 	"strconv"
@@ -141,7 +142,7 @@ func validateAuthToken(ctx context.Context) error {
 		return status.Errorf(codes.Unauthenticated, "missing authorization token")
 	}
 
-	if tokens[0] != secretToken {
+	if subtle.ConstantTimeCompare([]byte(tokens[0]), []byte(secretToken)) != 1 {
 		return status.Errorf(codes.Unauthenticated, "invalid authorization token")
 	}
 

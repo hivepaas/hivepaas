@@ -3,6 +3,8 @@ package docker
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -399,5 +401,108 @@ func isTaskTerminalState(state swarm.TaskState) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+//nolint:gocognit
+func (m *manager) ServiceCreateToExec(
+	ctx context.Context,
+	image string,
+	cmd []string,
+	timeout time.Duration,
+	checkInterval time.Duration,
+	options ...ServiceCreateOption,
+) (createResp *client.ServiceCreateResult, statusCode int64, err error) {
+	createOpts := client.ServiceCreateOptions{
+		Spec: swarm.ServiceSpec{
+			Annotations: swarm.Annotations{
+				Name: "hivepaas-svc-" + gofn.RandString(5), //nolint:mnd
+			},
+			TaskTemplate: swarm.TaskSpec{
+				ContainerSpec: &swarm.ContainerSpec{
+					Image:   image,
+					Command: cmd,
+				},
+				RestartPolicy: &swarm.RestartPolicy{
+					Condition: swarm.RestartPolicyConditionNone,
+				},
+			},
+		},
+	}
+	for _, option := range options {
+		option(&createOpts)
+	}
+
+	// Try to resolve pinned RepoDigest to bypass remote registry network lookups and start in ~400ms
+	if containerSpec := createOpts.Spec.TaskTemplate.ContainerSpec; containerSpec != nil &&
+		containerSpec.Image != "" &&
+		!strings.Contains(containerSpec.Image, "@sha256:") {
+		inspectRes, inspectErr := m.ImageInspect(ctx, containerSpec.Image)
+		if inspectErr == nil && len(inspectRes.RepoDigests) > 0 {
+			containerSpec.Image = inspectRes.RepoDigests[0]
+		}
+	}
+
+	if createOpts.Spec.TaskTemplate.RestartPolicy == nil {
+		createOpts.Spec.TaskTemplate.RestartPolicy = &swarm.RestartPolicy{}
+	}
+	createOpts.Spec.TaskTemplate.RestartPolicy.Condition = swarm.RestartPolicyConditionNone
+
+	createRes, err := m.ServiceCreate(ctx, &createOpts.Spec)
+	if err != nil {
+		return nil, 0, apperrors.Wrap(err)
+	}
+	svcID := createRes.ID
+
+	defer func() { //nolint:contextcheck
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second) //nolint:mnd
+		defer cancel()
+		_, _ = m.ServiceRemove(cleanupCtx, svcID)
+	}()
+
+	if timeout <= 0 {
+		timeout = 60 * time.Second //nolint:mnd
+	}
+	timeoutCtx, cancelTimeout := context.WithTimeout(ctx, timeout)
+	defer cancelTimeout()
+
+	if checkInterval <= 0 {
+		checkInterval = 500 * time.Millisecond //nolint:mnd
+	}
+	ticker := time.NewTicker(checkInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-timeoutCtx.Done():
+			return createRes, 0, apperrors.Wrap(timeoutCtx.Err())
+		case <-ticker.C:
+			tasksRes, err := m.ServiceTaskList(timeoutCtx, svcID, nil)
+			if err != nil || len(tasksRes.Items) == 0 {
+				continue
+			}
+
+			task := &tasksRes.Items[0]
+			state := task.Status.State
+
+			var taskExitCode int64
+			if task.Status.ContainerStatus != nil {
+				taskExitCode = int64(task.Status.ContainerStatus.ExitCode)
+			}
+
+			if state == swarm.TaskStateComplete {
+				return createRes, taskExitCode, nil
+			}
+			if isTaskTerminalState(state) {
+				errMsg := task.Status.Err
+				if errMsg == "" && taskExitCode != 0 {
+					errMsg = fmt.Sprintf("task exited with status code %d", taskExitCode)
+				}
+				if errMsg == "" {
+					errMsg = fmt.Sprintf("task finished with state %s", state)
+				}
+				return createRes, taskExitCode, apperrors.Wrap(errors.New(errMsg)) //nolint:err113
+			}
+		}
 	}
 }

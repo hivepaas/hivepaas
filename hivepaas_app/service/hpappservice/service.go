@@ -33,6 +33,7 @@ type Service interface {
 
 	GetHpAgentSwarmService(ctx context.Context) (*swarm.Service, error)
 	RestartHpAgentSwarmService(ctx context.Context) error
+	GetHpAgentImage(ctx context.Context) string
 
 	GetHpDbSwarmService(ctx context.Context) (*swarm.Service, error)
 	RestartHpDbSwarmService(ctx context.Context) error

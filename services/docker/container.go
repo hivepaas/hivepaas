@@ -10,6 +10,74 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
+type ContainerCreateOption func(*client.ContainerCreateOptions)
+
+func (m *manager) ContainerCreate(
+	ctx context.Context,
+	options ...ContainerCreateOption,
+) (*client.ContainerCreateResult, error) {
+	opts := client.ContainerCreateOptions{}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	resp, err := m.client.ContainerCreate(ctx, opts)
+	if err != nil {
+		return nil, apperrors.NewInfra(err)
+	}
+	return &resp, nil
+}
+
+type ContainerStartOption func(*client.ContainerStartOptions)
+
+func (m *manager) ContainerStart(
+	ctx context.Context,
+	containerID string,
+	options ...ContainerStartOption,
+) (*client.ContainerStartResult, error) {
+	opts := client.ContainerStartOptions{}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	resp, err := m.client.ContainerStart(ctx, containerID, opts)
+	if err != nil {
+		return nil, apperrors.NewInfra(err)
+	}
+	return &resp, nil
+}
+
+type ContainerWaitOption func(*client.ContainerWaitOptions)
+
+func (m *manager) ContainerWait(
+	ctx context.Context,
+	containerID string,
+	options ...ContainerWaitOption,
+) *client.ContainerWaitResult {
+	opts := client.ContainerWaitOptions{}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	resp := m.client.ContainerWait(ctx, containerID, opts)
+	return &resp
+}
+
+type ContainerRemoveOption func(*client.ContainerRemoveOptions)
+
+func (m *manager) ContainerRemove(
+	ctx context.Context,
+	containerID string,
+	options ...ContainerRemoveOption,
+) (*client.ContainerRemoveResult, error) {
+	opts := client.ContainerRemoveOptions{}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	resp, err := m.client.ContainerRemove(ctx, containerID, opts)
+	if err != nil {
+		return nil, apperrors.NewInfra(err)
+	}
+	return &resp, nil
+}
+
 type ContainerListOption func(*client.ContainerListOptions)
 
 func (m *manager) ContainerList(

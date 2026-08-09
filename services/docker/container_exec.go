@@ -3,8 +3,11 @@ package docker
 import (
 	"context"
 	"io"
+	"time"
 
+	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -124,4 +127,67 @@ func (m *manager) ContainerExecInspect(
 		return nil, apperrors.NewInfra(err)
 	}
 	return &resp, nil
+}
+
+func (m *manager) ContainerCreateToExec(
+	ctx context.Context,
+	image string,
+	cmd []string,
+	options ...ContainerCreateOption,
+) (createResp *client.ContainerCreateResult, statusCode int64, err error) {
+	createOpts := client.ContainerCreateOptions{
+		Config: &container.Config{
+			Image: image,
+			Cmd:   cmd,
+		},
+		HostConfig: &container.HostConfig{
+			AutoRemove: true,
+		},
+		Name: "hivepaas-cont-" + gofn.RandString(5), //nolint:mnd
+	}
+	for _, opt := range options {
+		opt(&createOpts)
+	}
+
+	if createOpts.HostConfig == nil {
+		createOpts.HostConfig = &container.HostConfig{}
+	}
+	createOpts.HostConfig.AutoRemove = true
+
+	createResp, err = m.ContainerCreate(ctx, func(opts *client.ContainerCreateOptions) {
+		*opts = createOpts
+	})
+	if err != nil {
+		return nil, 0, apperrors.Wrap(err)
+	}
+
+	defer func() { //nolint:contextcheck
+		if err != nil && createResp != nil && createResp.ID != "" {
+			cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //nolint:mnd
+			defer cancel()
+			_, _ = m.ContainerRemove(cleanupCtx, createResp.ID, func(opts *client.ContainerRemoveOptions) {
+				opts.Force = true
+			})
+		}
+	}()
+
+	_, err = m.ContainerStart(ctx, createResp.ID)
+	if err != nil {
+		return createResp, 0, apperrors.Wrap(err)
+	}
+
+	waitRes := m.ContainerWait(ctx, createResp.ID, func(opts *client.ContainerWaitOptions) {
+		opts.Condition = container.WaitConditionNotRunning
+	})
+	select {
+	case waitErr := <-waitRes.Error:
+		if waitErr != nil && apperrors.IsInfraNotFound(waitErr) {
+			waitErr = nil
+		}
+		return createResp, 0, apperrors.Wrap(waitErr)
+	case waitResp := <-waitRes.Result:
+		return createResp, waitResp.StatusCode, nil
+	case <-ctx.Done():
+		return createResp, 0, apperrors.Wrap(ctx.Err())
+	}
 }

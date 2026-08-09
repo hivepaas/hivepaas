@@ -3,7 +3,6 @@ package volumeserviceimpl
 import (
 	"context"
 	"errors"
-	"os"
 	"path/filepath"
 
 	"github.com/moby/moby/api/types/volume"
@@ -29,18 +28,22 @@ func (s *service) CreateProjectDefaultVolume(
 	ctx context.Context,
 	project *entity.Project,
 ) (_ *entity.Setting, _ *client.VolumeCreateResult, err error) {
-	projectDir := filepath.Join(config.Current.AppPath, "project_data", project.Key)
-	if err = os.RemoveAll(projectDir); err != nil {
-		return nil, nil, apperrors.Wrap(err)
+	storagePathInHost := config.Current.Storage.BindSource
+	if storagePathInHost == "" {
+		return nil, nil, apperrors.Wrap(apperrors.ErrUnconfigured).
+			WithParam("Name", "HP_STORAGE_BIND_SOURCE")
 	}
-	if err = os.MkdirAll(projectDir, fullFileMode); err != nil {
+
+	subpath := filepath.Join("project_data", project.Key)
+	err = s.MakeSubDirInHost(ctx, storagePathInHost, subpath, true)
+	if err != nil {
 		return nil, nil, apperrors.Wrap(err)
 	}
 
 	driver := docker.VolumeDriverLocal
 	driverOpts := map[string]string{
 		"type":   "none",
-		"device": projectDir,
+		"device": filepath.Join(storagePathInHost, subpath),
 		"o":      "bind,rw",
 	}
 	createResp, err := s.dockerManager.VolumeCreate(ctx, func(opts *client.VolumeCreateOptions) {

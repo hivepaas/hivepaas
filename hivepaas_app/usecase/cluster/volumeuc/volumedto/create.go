@@ -33,7 +33,6 @@ type VolumeBaseReq struct {
 	BindOptions  *VolumeBindOptionsReq  `json:"bindOptions"`
 	NfsOptions   *VolumeNfsOptionsReq   `json:"nfsOptions"`
 	TmpfsOptions *VolumeTmpfsOptionsReq `json:"tmpfsOptions"`
-	BtrfsOptions *VolumeBtrfsOptionsReq `json:"btrfsOptions"`
 
 	Options map[string]string `json:"options"`
 	Labels  map[string]string `json:"labels"`
@@ -50,7 +49,6 @@ func (req *VolumeBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, req.BindOptions.validate(field+"bindOptions")...)
 	res = append(res, req.NfsOptions.validate(field+"nfsOptions")...)
 	res = append(res, req.TmpfsOptions.validate(field+"tmpfsOptions")...)
-	res = append(res, req.BtrfsOptions.validate(field+"btrfsOptions")...)
 	return res
 }
 
@@ -115,22 +113,6 @@ func (req *VolumeTmpfsOptionsReq) validate(field string) (res []vld.Validator) {
 	}
 	res = append(res, basedto.ValidateNumber(&req.Size, true, unit.MB, math.MaxInt64, field+"size")...)
 	res = append(res, basedto.ValidateStr(&req.Device, false, 1, volumeDeviceMaxLen, field+"device")...)
-	return res
-}
-
-type VolumeBtrfsOptionsReq struct {
-	Device       string `json:"device"`
-	ExtraOptions string `json:"extraOptions"`
-}
-
-func (req *VolumeBtrfsOptionsReq) validate(field string) (res []vld.Validator) {
-	if req == nil {
-		return res
-	}
-	if field != "" {
-		field += "."
-	}
-	res = append(res, basedto.ValidateStr(&req.Device, true, 1, volumeDeviceMaxLen, field+"device")...)
 	return res
 }
 

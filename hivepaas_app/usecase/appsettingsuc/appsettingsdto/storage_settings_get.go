@@ -1,6 +1,9 @@
 package appsettingsdto
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
 	vld "github.com/tiendc/go-validator"
@@ -111,7 +114,7 @@ func TransformStorageMounts(
 	mounts := input.Service.Spec.TaskTemplate.ContainerSpec.Mounts
 	resp := make([]*Mount, 0, len(mounts))
 	for i := range mounts {
-		itemResp, err := TransformStorageMount(&mounts[i], input.MountKeyCalculator)
+		itemResp, err := TransformStorageMount(&mounts[i], input)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -122,12 +125,18 @@ func TransformStorageMounts(
 
 func TransformStorageMount(
 	mnt *mount.Mount,
-	mountKeyCalculator func(*mount.Mount) string,
+	input *StorageSettingsTransformInput,
 ) (resp *Mount, err error) {
 	if err = copier.Copy(&resp, mnt); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	resp.Key = mountKeyCalculator(mnt)
+	resp.Key = input.MountKeyCalculator(mnt)
+
+	app := input.App
+	trimSubpathPrefixes := []string{
+		fmt.Sprintf("%v/%v/%v", app.Project.Key, app.ProjectEnv.Key, app.Key),
+		fmt.Sprintf("%v/%v", app.ProjectEnv.Key, app.Key),
+	}
 
 	switch mnt.Type {
 	case mount.TypeVolume:
@@ -135,18 +144,27 @@ func TransformStorageMount(
 			resp.VolumeOptions = &VolumeOptions{}
 		}
 		if mnt.VolumeOptions != nil {
-			resp.VolumeOptions.Subpath = mnt.VolumeOptions.Subpath
+			resp.VolumeOptions.Subpath = removeAutoPrefixFromSubpath(mnt.VolumeOptions.Subpath, trimSubpathPrefixes)
 		}
 	case mount.TypeCluster:
 		if resp.ClusterOptions == nil {
 			resp.ClusterOptions = &ClusterOptions{}
 		}
 		if mnt.VolumeOptions != nil {
-			resp.ClusterOptions.Subpath = mnt.VolumeOptions.Subpath
+			resp.ClusterOptions.Subpath = removeAutoPrefixFromSubpath(mnt.VolumeOptions.Subpath, trimSubpathPrefixes)
 		}
 	case mount.TypeBind, mount.TypeTmpfs, mount.TypeNamedPipe, mount.TypeImage:
 		// Do nothing
 	}
 
 	return resp, nil
+}
+
+func removeAutoPrefixFromSubpath(subpath string, trimPrefixes []string) string {
+	subpath = strings.TrimPrefix(subpath, "/")
+	for _, prefix := range trimPrefixes {
+		subpath = strings.TrimPrefix(subpath, prefix)
+	}
+	subpath = strings.TrimPrefix(subpath, "/")
+	return subpath
 }

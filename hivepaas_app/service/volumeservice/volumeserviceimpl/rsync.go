@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/moby/moby/api/types/mount"
-	"github.com/moby/moby/api/types/swarm"
+	"github.com/moby/moby/client"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -23,6 +23,7 @@ const (
 	rsyncWaitPollInterval    = 2 * time.Second
 	rsyncWaitTimeoutDuration = 30 * time.Minute
 	fileModeFull             = 0777
+	hostPathPrefix           = "/host"
 )
 
 func (s *service) Rsync(
@@ -96,13 +97,15 @@ func (s *service) getDirectHostPath(ctx context.Context, mnt *mount.Mount, subpa
 		hostPath = filepath.Join(hostPath, subpath)
 	}
 
+	hostPath = filepath.Join(hostPathPrefix, hostPath)
+
 	// 4. Check if hostPath exists on Host OS
 	fileInfo, err := os.Stat(hostPath)
 	if err != nil || !fileInfo.IsDir() {
 		return "", false
 	}
 
-	// 5. Verify read/write permissions for HivePaaS Agent
+	// 5. Verify read/write permissions
 	if !isWritableDir(hostPath) {
 		return "", false
 	}
@@ -179,20 +182,13 @@ func (s *service) execDirectHostRsync(
 }
 
 // execContainerRsync executes rsync via a temporary helper Swarm Task using hivepaas_agent image (Fallback-Path)
-//
-//nolint:gocognit,funlen
 func (s *service) execContainerRsync(
 	ctx context.Context,
 	source, dest *mount.Mount,
 	opts *volumeservice.RsyncOptions,
 ) error {
 	// Determine helper container image (use hivepaas_agent image if available)
-	image := opts.Image
-	if agentSvc, err := s.hpAppService.GetHpAgentSwarmService(ctx); err == nil && agentSvc != nil {
-		if agentSvc.Spec.TaskTemplate.ContainerSpec != nil && agentSvc.Spec.TaskTemplate.ContainerSpec.Image != "" {
-			image = agentSvc.Spec.TaskTemplate.ContainerSpec.Image
-		}
-	}
+	image := gofn.Coalesce(s.hpAppService.GetHpAgentImage(ctx), opts.Image)
 
 	// 1. Prepare mount specs for temporary helper container
 	srcMnt := *source
@@ -220,9 +216,11 @@ func (s *service) execContainerRsync(
 		destPath += "/"
 	}
 
-	// 2. Build rsync command (hivepaas_agent image already contains rsync)
+	// 2. Build rsync command with strict safety checks:
+	// - Must verify that the source path exists before creating destination or syncing.
+	// - If the source path does not exist, exit immediately with error code 1 without touching destination!
 	var cmdBuilder strings.Builder
-	_, _ = fmt.Fprintf(&cmdBuilder, "mkdir -p %s && ", destPath)
+	_, _ = fmt.Fprintf(&cmdBuilder, "test -d %s && mkdir -p %s && ", srcPath, destPath)
 	cmdBuilder.WriteString("rsync -aHAX --info=progress2 ")
 	if opts.Delete {
 		cmdBuilder.WriteString("--delete ")
@@ -234,7 +232,7 @@ func (s *service) execContainerRsync(
 	}
 	_, _ = fmt.Fprintf(&cmdBuilder, "%s %s", srcPath, destPath)
 
-	rsyncCmd := cmdBuilder.String()
+	rsyncCmd := []string{"sh", "-c", cmdBuilder.String()}
 
 	if opts.LogStore != nil {
 		_ = opts.LogStore.Add(ctx, tasklog.NewOutFrame(
@@ -244,78 +242,63 @@ func (s *service) execContainerRsync(
 		))
 	}
 
-	// 3. Create a temporary Swarm Service for the rsync job
-	serviceName := fmt.Sprintf("hivepaas-vol-rsync-%s", uuid.NewString()[:8])
-	spec := &swarm.ServiceSpec{
-		Annotations: swarm.Annotations{
-			Name: serviceName,
-		},
-		TaskTemplate: swarm.TaskSpec{
-			ContainerSpec: &swarm.ContainerSpec{
-				Image:   image,
-				Command: []string{"sh", "-c", rsyncCmd},
-				Mounts:  []mount.Mount{srcMnt, destMnt},
+	// 3. Fast-Path Container-Based Exec (~100-300ms)
+	// Check if volumes exist on local Docker daemon before attempting local Container execution
+	if s.isVolumeAccessibleLocally(ctx, source) && s.isVolumeAccessibleLocally(ctx, dest) {
+		_, statusCode, err := s.dockerManager.ContainerCreateToExec(ctx, image, rsyncCmd,
+			func(cOpts *client.ContainerCreateOptions) {
+				cOpts.HostConfig.Mounts = []mount.Mount{srcMnt, destMnt}
 			},
-			RestartPolicy: &swarm.RestartPolicy{
-				Condition: swarm.RestartPolicyConditionNone,
-			},
-		},
+		)
+		if err == nil && statusCode == 0 {
+			if opts.LogStore != nil {
+				_ = opts.LogStore.Add(ctx, tasklog.NewOutFrame("Volume rsync completed successfully.", tasklog.TsNow))
+			}
+			return nil
+		}
 	}
 
-	svcRes, err := s.dockerManager.ServiceCreate(ctx, spec)
+	// 4. Swarm Service Fallback (for multi-node remote cluster volumes)
+	_, statusCode, err := s.dockerManager.ServiceCreateToExec(ctx, image, rsyncCmd,
+		rsyncWaitTimeoutDuration, rsyncWaitPollInterval,
+		func(sOpts *client.ServiceCreateOptions) {
+			sOpts.Spec.TaskTemplate.ContainerSpec.Mounts = []mount.Mount{srcMnt, destMnt}
+		},
+	)
 	if err != nil {
+		if opts.LogStore != nil {
+			_ = opts.LogStore.Add(ctx, tasklog.NewErrFrame(err.Error(), tasklog.TsNow))
+		}
 		return apperrors.Wrap(err)
 	}
-	svcID := svcRes.ID
-
-	// Ensure cleanup of the temporary Swarm service
-	defer func() { //nolint:contextcheck
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second) //nolint:mnd
-		defer cancel()
-		_, _ = s.dockerManager.ServiceRemove(cleanupCtx, svcID)
-	}()
-
-	// 4. Poll for task completion
-	timeoutCtx, cancelTimeout := context.WithTimeout(ctx, rsyncWaitTimeoutDuration)
-	defer cancelTimeout()
-
-	ticker := time.NewTicker(rsyncWaitPollInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-timeoutCtx.Done():
-			return apperrors.Wrap(timeoutCtx.Err())
-		case <-ticker.C:
-			tasksRes, err := s.dockerManager.ServiceTaskList(timeoutCtx, svcID, nil)
-			if err != nil || len(tasksRes.Items) == 0 {
-				continue
-			}
-
-			// Get the latest task
-			task := &tasksRes.Items[0]
-			state := task.Status.State
-
-			if state == swarm.TaskStateComplete {
-				if opts.LogStore != nil {
-					_ = opts.LogStore.Add(ctx, tasklog.NewOutFrame(
-						"Volume rsync completed successfully.",
-						tasklog.TsNow,
-					))
-				}
-				return nil
-			}
-
-			if state == swarm.TaskStateFailed || state == swarm.TaskStateRejected {
-				errMsg := task.Status.Err
-				if errMsg == "" {
-					errMsg = fmt.Sprintf("rsync task failed with state: %s", state)
-				}
-				if opts.LogStore != nil {
-					_ = opts.LogStore.Add(ctx, tasklog.NewErrFrame(errMsg, tasklog.TsNow))
-				}
-				return apperrors.Wrap(apperrors.ErrInternal).WithParam("Reason", errMsg)
-			}
+	if statusCode != 0 {
+		errMsg := fmt.Sprintf("rsync swarm task exited with status code %d", statusCode)
+		if opts.LogStore != nil {
+			_ = opts.LogStore.Add(ctx, tasklog.NewErrFrame(errMsg, tasklog.TsNow))
 		}
+		return apperrors.Wrap(apperrors.ErrInternal).WithParam("Reason", errMsg)
+	}
+
+	if opts.LogStore != nil {
+		_ = opts.LogStore.Add(ctx, tasklog.NewOutFrame("Volume rsync completed successfully.", tasklog.TsNow))
+	}
+	return nil
+}
+
+func (s *service) isVolumeAccessibleLocally(ctx context.Context, mnt *mount.Mount) bool {
+	if mnt == nil {
+		return false
+	}
+	switch mnt.Type {
+	case mount.TypeBind:
+		fileInfo, err := os.Stat(filepath.Join(hostPathPrefix, mnt.Source))
+		return err == nil && fileInfo.IsDir()
+	case mount.TypeVolume, mount.TypeCluster:
+		vol, err := s.dockerManager.VolumeInspect(ctx, mnt.Source)
+		return err == nil && vol != nil
+	case mount.TypeTmpfs, mount.TypeImage, mount.TypeNamedPipe:
+		fallthrough
+	default:
+		return false
 	}
 }

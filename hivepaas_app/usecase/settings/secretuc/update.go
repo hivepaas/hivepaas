@@ -108,7 +108,7 @@ func (uc *UC) buildAppEnvVarsForScope(
 ) (appEnvVarData []*envvarservice.AppEnvVarData, err error) {
 	switch scope.ScopeType {
 	case base.ObjectScopeApp, base.ObjectScopeProject, base.ObjectScopeProjectEnv:
-	case base.ObjectScopeUser, base.ObjectScopeGlobal:
+	case base.ObjectScopeUser, base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		fallthrough
 	default:
 		return nil, nil

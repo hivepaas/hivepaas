@@ -72,7 +72,7 @@ func (uc *UC) BeginReprovisionGithubApp(
 		beginFlowURL = cfg.GithubAppManifestFlowBeginURL(req.Scope.GetBaseURLPath(), appSetting.ID, state)
 		manifest.RedirectURL = cfg.GithubAppManifestFlowProgressURL(req.Scope.GetBaseURLPath(), appSetting.ID)
 		manifest.SetupURL = manifest.RedirectURL
-	case base.ObjectScopeApp, base.ObjectScopeUser:
+	case base.ObjectScopeApp, base.ObjectScopeUser, base.ObjectScopeHivepaas:
 		fallthrough
 	default:
 		return nil, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).

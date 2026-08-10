@@ -161,7 +161,6 @@ func (uc *UC) calcBindDirectory(
 		directory = storageInHost
 		subpath = "project_data"
 		switch req.Scope.ScopeType {
-		case base.ObjectScopeGlobal:
 		case base.ObjectScopeProject:
 			subpath = filepath.Join(subpath, req.Scope.Project.Key)
 		case base.ObjectScopeProjectEnv:
@@ -170,6 +169,7 @@ func (uc *UC) calcBindDirectory(
 		case base.ObjectScopeApp:
 			app := req.Scope.App
 			subpath = filepath.Join(subpath, app.Project.Key, app.ProjectEnv.Key, app.Key)
+		case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		case base.ObjectScopeUser:
 			fallthrough
 		default:

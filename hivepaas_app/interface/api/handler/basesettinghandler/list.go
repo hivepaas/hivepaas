@@ -64,8 +64,6 @@ func (h *Handler) ListSetting(
 
 	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
-	case base.ObjectScopeGlobal:
-		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeRead, "")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "")
 	case base.ObjectScopeProjectEnv:
@@ -74,6 +72,8 @@ func (h *Handler) ListSetting(
 		auth, scope.ProjectID, scope.ProjectEnvID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeRead, "")
 	case base.ObjectScopeUser:
 		auth, scope.UserID, _, err = h.GetAuthUserSettings(ctx, base.ActionTypeRead, "")
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeRead, "")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
 	}

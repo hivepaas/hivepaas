@@ -288,8 +288,9 @@ func calcMountSubpath(
 		subpath = fmt.Sprintf("%v/%v/%v", app.Project.Key, app.ProjectEnv.Key, app.Key)
 	case base.ObjectScopeProject:
 		subpath = fmt.Sprintf("%v/%v", app.ProjectEnv.Key, app.Key)
-	case base.ObjectScopeProjectEnv, base.ObjectScopeUser, base.ObjectScopeApp:
+	case base.ObjectScopeProjectEnv, base.ObjectScopeApp:
 		subpath = app.Key
+	case base.ObjectScopeUser, base.ObjectScopeHivepaas:
 	}
 
 	if reqMnt.Type == mount.TypeVolume && reqMnt.VolumeOptions != nil {

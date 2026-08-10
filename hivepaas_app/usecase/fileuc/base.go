@@ -25,9 +25,6 @@ func (uc *UC) loadScopeData(
 ) (err error) {
 	requireActive := !scope.NotRequireActive
 	switch scope.ScopeType {
-	case base.ObjectScopeGlobal:
-		return nil
-
 	case base.ObjectScopeApp:
 		data.ScopeApp, err = uc.appService.LoadApp(ctx, db, scope.ProjectID, scope.AppID,
 			requireActive, requireActive,
@@ -70,6 +67,9 @@ func (uc *UC) loadScopeData(
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
+
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		return nil
 	}
 
 	return nil

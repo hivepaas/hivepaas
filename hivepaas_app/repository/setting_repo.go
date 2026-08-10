@@ -113,6 +113,8 @@ func (repo *settingRepo) get(ctx context.Context, db database.IDB, scope *entity
 			theOpts = repo.applyDirectUserFilter(theOpts, scope)
 		case base.ObjectScopeGlobal:
 			theOpts = repo.applyGlobalFilter(theOpts)
+		case base.ObjectScopeHivepaas:
+			theOpts = repo.applyHivepaasFilter(theOpts)
 		}
 	}
 
@@ -139,9 +141,13 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 	typ base.SettingType, requireActive bool, opts ...bunex.SelectQueryOption) (*entity.Setting, error) {
 	opts = repo.applyFilter(opts, typ, "", requireActive)
 
-	// Global scope is the special case
-	if scope != nil && scope.IsGlobalScope() {
-		opts = repo.applyGlobalFilter(opts)
+	// Global/Hivepaas scope is the special case
+	if scope != nil && (scope.IsGlobalScope() || scope.IsHivepaasScope()) {
+		if scope.IsGlobalScope() {
+			opts = repo.applyGlobalFilter(opts)
+		} else {
+			opts = repo.applyHivepaasFilter(opts)
+		}
 		setting, err := repo.get(ctx, db, scope, opts...)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
@@ -194,10 +200,10 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 				return setting, nil
 			}
 		case base.ObjectScopeUser:
-			if setting.ObjectID == scope.UserID { // // user's direct setting has the highest priority
+			if setting.ObjectID == scope.UserID { // user's direct setting has the highest priority
 				return setting, nil
 			}
-		case base.ObjectScopeGlobal:
+		case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 			return setting, nil
 		}
 
@@ -231,6 +237,8 @@ func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *entit
 			theOpts = repo.applyDirectUserFilter(theOpts, scope)
 		case base.ObjectScopeGlobal:
 			theOpts = repo.applyGlobalFilter(theOpts)
+		case base.ObjectScopeHivepaas:
+			theOpts = repo.applyHivepaasFilter(theOpts)
 		}
 	}
 
@@ -378,7 +386,13 @@ func (repo *settingRepo) applyDirectUserFilter(opts []bunex.SelectQueryOption,
 
 // applyGlobalFilter filters settings belong to global scope
 func (repo *settingRepo) applyGlobalFilter(opts []bunex.SelectQueryOption) []bunex.SelectQueryOption {
-	opts = append(opts, bunex.SelectWhere("setting.object_id IS NULL"))
+	opts = append(opts, bunex.SelectWhere("(setting.scope = '' AND setting.object_id IS NULL)"))
+	return opts
+}
+
+// applyHivepaasFilter filters settings belong to Hivepaas scope
+func (repo *settingRepo) applyHivepaasFilter(opts []bunex.SelectQueryOption) []bunex.SelectQueryOption {
+	opts = append(opts, bunex.SelectWhere("setting.scope = ?", base.ObjectScopeHivepaas))
 	return opts
 }
 

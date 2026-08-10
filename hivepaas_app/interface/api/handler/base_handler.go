@@ -501,6 +501,8 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 		req.Scope = entity.NewObjectScopeUser(userID)
 	case base.ObjectScopeGlobal, "global":
 		req.Scope = entity.NewObjectScopeGlobal()
+	case base.ObjectScopeHivepaas:
+		req.Scope = entity.NewObjectScopeHivepaas()
 	default:
 		return apperrors.Wrap(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scope)
 	}

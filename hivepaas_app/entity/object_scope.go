@@ -29,6 +29,10 @@ func (s *ObjectScope) IsGlobalScope() bool {
 	return s.ScopeType == base.ObjectScopeGlobal
 }
 
+func (s *ObjectScope) IsHivepaasScope() bool {
+	return s.ScopeType == base.ObjectScopeHivepaas
+}
+
 func (s *ObjectScope) IsAppScope() bool {
 	return s.ScopeType == base.ObjectScopeApp
 }
@@ -47,8 +51,6 @@ func (s *ObjectScope) IsUserScope() bool {
 
 func (s *ObjectScope) ScopeObjectID() string {
 	switch s.ScopeType {
-	case base.ObjectScopeGlobal:
-		return ""
 	case base.ObjectScopeApp:
 		return s.AppID
 	case base.ObjectScopeProjectEnv:
@@ -57,6 +59,8 @@ func (s *ObjectScope) ScopeObjectID() string {
 		return s.ProjectID
 	case base.ObjectScopeUser:
 		return s.UserID
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		return ""
 	default:
 		return ""
 	}
@@ -79,8 +83,6 @@ func (s *ObjectScope) IsValid() bool {
 
 func (s *ObjectScope) IsObjectLoaded() bool {
 	switch s.ScopeType {
-	case base.ObjectScopeGlobal:
-		return true
 	case base.ObjectScopeApp:
 		return s.App != nil && s.ProjectEnv != nil && s.Project != nil &&
 			(s.ParentAppID == "" || s.ParentApp != nil)
@@ -90,6 +92,8 @@ func (s *ObjectScope) IsObjectLoaded() bool {
 		return s.Project != nil
 	case base.ObjectScopeUser:
 		return s.User != nil
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		return true
 	default:
 		return false
 	}
@@ -127,8 +131,6 @@ func (s *ObjectScope) GetProjectEnv() *ProjectEnv {
 
 func (s *ObjectScope) GetBaseURLPath() string {
 	switch s.ScopeType {
-	case base.ObjectScopeGlobal:
-		return ""
 	case base.ObjectScopeApp:
 		return fmt.Sprintf("projects/%v/%v/apps/%v", s.App.ProjectID, s.App.ProjectEnv.Name, s.App.ID)
 	case base.ObjectScopeProjectEnv:
@@ -137,6 +139,8 @@ func (s *ObjectScope) GetBaseURLPath() string {
 		return fmt.Sprintf("projects/%v", s.Project.ID)
 	case base.ObjectScopeUser:
 		return fmt.Sprintf("users/%v", s.User.ID)
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		return ""
 	default:
 		return ""
 	}
@@ -144,6 +148,10 @@ func (s *ObjectScope) GetBaseURLPath() string {
 
 func NewObjectScopeGlobal() *ObjectScope {
 	return &ObjectScope{ScopeType: base.ObjectScopeGlobal}
+}
+
+func NewObjectScopeHivepaas() *ObjectScope {
+	return &ObjectScope{ScopeType: base.ObjectScopeHivepaas}
 }
 
 func NewObjectScopeApp(appID, parentAppID, projectID, env string) *ObjectScope {

@@ -23,12 +23,12 @@ func (h *Handler) GithubAppManifestFlowBegin(ctx *gin.Context, scopeType base.Ob
 
 	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
-	case base.ObjectScopeGlobal:
-		auth, _, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeGithubApp, base.ActionTypeWrite, "")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "")
 	case base.ObjectScopeProjectEnv:
 		auth, scope.ProjectID, scope.ProjectEnvID, _, err = h.GetAuthProjectEnvSettings(ctx, base.ActionTypeWrite, "")
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		auth, _, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeGithubApp, base.ActionTypeWrite, "")
 	case base.ObjectScopeApp, base.ObjectScopeUser:
 		fallthrough
 	default:
@@ -130,14 +130,14 @@ func (h *Handler) GithubAppBeginReprovision(ctx *gin.Context, scopeType base.Obj
 
 	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
-	case base.ObjectScopeGlobal:
-		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeGithubApp, base.ActionTypeWrite, "itemID")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "itemID")
 	case base.ObjectScopeProjectEnv:
 		auth, scope.ProjectID, scope.ProjectEnvID, itemID, err = h.GetAuthProjectEnvSettings(ctx,
 			base.ActionTypeWrite, "itemID")
-	case base.ObjectScopeApp, base.ObjectScopeUser:
+	case base.ObjectScopeGlobal:
+		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeGithubApp, base.ActionTypeWrite, "itemID")
+	case base.ObjectScopeApp, base.ObjectScopeUser, base.ObjectScopeHivepaas:
 		fallthrough
 	default:
 		h.RenderError(ctx, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))

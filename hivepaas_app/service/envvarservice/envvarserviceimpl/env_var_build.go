@@ -56,7 +56,7 @@ func (s *service) BuildEnvVarsForAllAppsInScope(
 					BuildPhaseOnly: buildPhase,
 				},
 			}, onlyApps, transaction, concurrency)
-	case base.ObjectScopeUser, base.ObjectScopeGlobal:
+	case base.ObjectScopeUser, base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		// Do nothing
 	}
 	if err != nil {

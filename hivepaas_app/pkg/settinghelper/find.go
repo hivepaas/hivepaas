@@ -45,6 +45,7 @@ func FindSettingsByScope(
 		case base.ObjectScopeProject:
 		case base.ObjectScopeUser:
 		case base.ObjectScopeGlobal:
+		case base.ObjectScopeHivepaas:
 		}
 	}
 	res = append(res, settingsInParentApp...)

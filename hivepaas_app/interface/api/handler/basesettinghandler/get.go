@@ -65,8 +65,6 @@ func (h *Handler) GetSetting(
 
 	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
-	case base.ObjectScopeGlobal:
-		auth, itemID, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeRead, "itemID")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "itemID")
 	case base.ObjectScopeProjectEnv:
@@ -77,6 +75,8 @@ func (h *Handler) GetSetting(
 			base.ActionTypeRead, "itemID")
 	case base.ObjectScopeUser:
 		auth, scope.UserID, itemID, err = h.GetAuthUserSettings(ctx, base.ActionTypeRead, "itemID")
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		auth, itemID, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeRead, "itemID")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
 	}

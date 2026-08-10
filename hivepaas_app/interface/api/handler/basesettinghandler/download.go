@@ -44,14 +44,14 @@ func (h *Handler) Download(
 
 	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
-	case base.ObjectScopeGlobal:
-		itemID, err = h.GetParamGlobalSettings(ctx, "itemID")
 	case base.ObjectScopeProject, base.ObjectScopeProjectEnv:
 		scope.ProjectID, itemID, err = h.GetParamProjectSettings(ctx, "itemID")
 	case base.ObjectScopeApp:
 		scope.ProjectID, scope.AppID, itemID, err = h.GetParamAppSettings(ctx, "itemID")
 	case base.ObjectScopeUser:
 		itemID, err = h.GetParamUserSettings(ctx, "itemID")
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		itemID, err = h.GetParamGlobalSettings(ctx, "itemID")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
 	}

@@ -17,9 +17,6 @@ func (s *service) LoadObjectScopeData(
 ) (err error) {
 	requireActive := !scope.NotRequireActive
 	switch scope.ScopeType {
-	case base.ObjectScopeGlobal:
-		return nil
-
 	case base.ObjectScopeProject:
 		scope.Project, err = s.projectService.LoadProject(ctx, db, scope.ProjectID, requireActive,
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
@@ -66,6 +63,9 @@ func (s *service) LoadObjectScopeData(
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
+
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		return nil
 	}
 	return nil
 }
@@ -79,8 +79,6 @@ func (s *service) LoadObjectScope(
 ) (*entity.ObjectScope, error) {
 	var scope *entity.ObjectScope
 	switch scopeType {
-	case base.ObjectScopeGlobal:
-		scope = entity.NewObjectScopeGlobal()
 	case base.ObjectScopeProject:
 		scope = entity.NewObjectScopeProject(objectID)
 	case base.ObjectScopeProjectEnv:
@@ -89,6 +87,10 @@ func (s *service) LoadObjectScope(
 		scope = entity.NewObjectScopeApp(objectID, "", "", "")
 	case base.ObjectScopeUser:
 		scope = entity.NewObjectScopeUser(objectID)
+	case base.ObjectScopeGlobal:
+		scope = entity.NewObjectScopeGlobal()
+	case base.ObjectScopeHivepaas:
+		scope = entity.NewObjectScopeHivepaas()
 	}
 	scope.NotRequireActive = !requireActive
 

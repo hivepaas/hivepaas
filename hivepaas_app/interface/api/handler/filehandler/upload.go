@@ -74,7 +74,7 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 				ProjectID:       req.Scope.ProjectID,
 				ProjectEnv:      new(req.Scope.CalcProjectEnvKey()),
 			}
-		case base.ObjectScopeGlobal, base.ObjectScopeUser:
+		case base.ObjectScopeUser, base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 			fallthrough
 		default:
 			return nil, apperrors.Wrap(apperrors.ErrUnsupported).WithParam("Name", "Scope")

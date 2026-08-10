@@ -127,6 +127,8 @@ func (s *service) BuildTitlePrefixForScope(
 		return fmt.Sprintf("[User][%s]", gofn.Coalesce(scope.User.FullName, scope.User.Username))
 	case base.ObjectScopeGlobal:
 		return "[System]"
+	case base.ObjectScopeHivepaas:
+		return "[HivePaaS]"
 	}
 	return ""
 }

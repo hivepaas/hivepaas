@@ -63,8 +63,6 @@ func (h *Handler) CreateSetting(
 
 	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
-	case base.ObjectScopeGlobal:
-		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeWrite, "")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, _, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "")
 	case base.ObjectScopeProjectEnv:
@@ -73,6 +71,8 @@ func (h *Handler) CreateSetting(
 		auth, scope.ProjectID, scope.ProjectEnvID, scope.AppID, _, err = h.GetAuthAppSettings(ctx, base.ActionTypeWrite, "")
 	case base.ObjectScopeUser:
 		auth, scope.UserID, _, err = h.GetAuthUserSettings(ctx, base.ActionTypeWrite, "")
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeWrite, "")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
 	}

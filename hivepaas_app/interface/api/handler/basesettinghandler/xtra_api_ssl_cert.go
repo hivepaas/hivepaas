@@ -19,8 +19,6 @@ func (h *Handler) SSLCertRenew(ctx *gin.Context, scopeType base.ObjectScopeType)
 
 	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
-	case base.ObjectScopeGlobal:
-		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeSSLCert, base.ActionTypeWrite, "itemID")
 	case base.ObjectScopeProject:
 		auth, scope.ProjectID, itemID, err = h.GetAuthProjectSettings(ctx, base.ActionTypeWrite, "itemID")
 	case base.ObjectScopeProjectEnv:
@@ -31,6 +29,8 @@ func (h *Handler) SSLCertRenew(ctx *gin.Context, scopeType base.ObjectScopeType)
 			base.ActionTypeWrite, "itemID")
 	case base.ObjectScopeUser:
 		auth, scope.UserID, itemID, err = h.GetAuthUserSettings(ctx, base.ActionTypeWrite, "itemID")
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeSSLCert, base.ActionTypeWrite, "itemID")
 	default:
 		err = apperrors.NewUnsupported("Setting scope 'none'")
 	}

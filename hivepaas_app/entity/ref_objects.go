@@ -76,9 +76,6 @@ func (r *RefObjects) GetObjectScope(
 	requireActive bool,
 ) (*ObjectScope, error) {
 	switch scope {
-	case base.ObjectScopeGlobal:
-		return NewObjectScopeGlobal(), nil
-
 	case base.ObjectScopeApp:
 		app := r.RefApps[objectID]
 		if app == nil {
@@ -154,6 +151,12 @@ func (r *RefObjects) GetObjectScope(
 			}
 		}
 		return user.GetObjectScope(), nil
+
+	case base.ObjectScopeGlobal:
+		return NewObjectScopeGlobal(), nil
+
+	case base.ObjectScopeHivepaas:
+		return NewObjectScopeHivepaas(), nil
 	}
 	return nil, nil
 }
@@ -196,7 +199,7 @@ func (r *RefObjectIDs) AddScopeObjectIDOfSettings(settings ...*Setting) {
 			r.RefProjectEnvIDs = append(r.RefProjectEnvIDs, s.ObjectID)
 		case base.ObjectScopeUser:
 			r.RefUserIDs = append(r.RefUserIDs, s.ObjectID)
-		case base.ObjectScopeGlobal:
+		case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		}
 	}
 }

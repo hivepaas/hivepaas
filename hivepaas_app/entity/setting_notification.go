@@ -164,7 +164,7 @@ func NewNotificationDefaultForScope(scope *ObjectScope) *Notification {
 		notif.ViaEmail.ToProjectMembers = true
 	case base.ObjectScopeUser:
 		// Do nothing
-	case base.ObjectScopeGlobal:
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		notif.ViaEmail.ToAllAdmins = true
 	}
 	return notif

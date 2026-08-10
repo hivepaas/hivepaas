@@ -3,14 +3,13 @@ package imagebuildserviceimpl
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/moby/moby/api/types/registry"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
@@ -18,28 +17,44 @@ func (s *service) calcBuildImageTags(
 	imageTags []string,
 	data *imageBuildData,
 ) ([]string, error) {
+	// If `pushToRegistry` is set in the settings, need to prepend the registry domain and
+	// username to the tags.
+	// E.g. `app_name:latest` will likely become `docker.io/username/app_name:latest`
+	var regAuth *entity.RegistryAuth
+	if data.PushToRegistry.ID != "" {
+		regAuthSetting := data.RefObjects.RefSettings[data.PushToRegistry.ID]
+		if regAuthSetting == nil {
+			return nil, apperrors.NewMissing("Registry auth to push image")
+		}
+		regAuth = regAuthSetting.MustAsRegistryAuth()
+	}
+
 	if len(imageTags) > 0 {
+		if regAuth == nil {
+			return imageTags, nil
+		}
+		for i, imageTag := range imageTags {
+			_, _, found := strings.Cut(imageTag, "/")
+			if found {
+				continue
+			}
+			imageTags[i] = regAuth.Address + "/" + regAuth.Username + "/" + imageTag
+		}
 		return imageTags, nil
 	}
 
-	imageName := data.RepoSource.ImageName
+	imageName := data.ImageName
 	if imageName == "" || imageName == "auto" {
 		imageName = data.App.GetAutoImageName()
 	}
 
-	commitHashPortion := data.RepoSource.CommitHash[:7]
+	commitHashPortion := data.CommitHash[:7]
 	tagCurrent := fmt.Sprintf("%s:%s", imageName, commitHashPortion)
 
 	// If `pushToRegistry` is set in the settings, need to prepend the registry domain and
 	// username to the tags.
 	// E.g. `app_name:latest` will likely become `docker.io/username/app_name:latest`
-	repoSource := data.RepoSource
-	if repoSource.PushToRegistry.ID != "" {
-		regAuthSetting := data.RefObjects.RefSettings[repoSource.PushToRegistry.ID]
-		if regAuthSetting == nil {
-			return nil, apperrors.NewMissing("Registry auth to push image")
-		}
-		regAuth := regAuthSetting.MustAsRegistryAuth()
+	if regAuth != nil {
 		tagCurrentWithReg := regAuth.Address + "/" + regAuth.Username + "/" + tagCurrent
 		imageTags = append(imageTags, tagCurrentWithReg)
 	}
@@ -83,39 +98,6 @@ func (s *service) calcBuildEnvVars(
 	result := make(map[string]*string, len(envResp.EnvVars))
 	for _, envVar := range envResp.EnvVars {
 		result[envVar.Key] = &envVar.Value
-	}
-
-	return result, nil
-}
-
-func (s *service) calcBuildRegistryAuths(
-	ctx context.Context,
-	db database.IDB,
-	data *imageBuildData,
-) (map[string]registry.AuthConfig, error) {
-	settings, _, err := s.settingRepo.List(ctx, db, data.App.Project.GetObjectScope(), nil,
-		bunex.SelectWhere("setting.type = ?", base.SettingTypeRegistryAuth),
-		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-	)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	result := make(map[string]registry.AuthConfig, len(settings))
-	for _, setting := range settings {
-		regAuth, err := setting.AsRegistryAuth()
-		if err != nil {
-			return nil, apperrors.Wrap(err)
-		}
-		password, err := regAuth.Password.GetPlain()
-		if err != nil {
-			return nil, apperrors.Wrap(err)
-		}
-		result[regAuth.Address] = registry.AuthConfig{
-			Username:      regAuth.Username,
-			Password:      password,
-			ServerAddress: regAuth.Address,
-		}
 	}
 
 	return result, nil

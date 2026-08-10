@@ -26,17 +26,20 @@ RUN go build -o hivepaas-agent ./hivepaas_app/cmd/agent/...
 FROM alpine:3.23
 WORKDIR /hivepaas
 
+ARG TARGETARCH
+
 RUN apk update && \
-    apk add --no-cache ca-certificates make openssl postgresql-client git git-lfs openssh-client rsync zstd lz4 docker-cli acl && \
+    apk add --no-cache ca-certificates curl make openssl postgresql-client git git-lfs openssh-client rsync zstd lz4 docker-cli docker-cli-buildx acl && \
+    ARCH="$(case "${TARGETARCH}" in "arm64") echo "arm64" ;; *) echo "x86_64" ;; esac)" && \
+    curl -sSL "https://github.com/railwayapp/railpack/releases/download/v0.35.0/railpack-v0.35.0-${ARCH}-unknown-linux-musl.tar.gz" | tar -xz -C /usr/local/bin && \
+    chmod +x /usr/local/bin/railpack && \
     git lfs install --system && \
+    apk del curl && \
     rm -rf /var/cache/apk/*
 
 # Copy compiled agent binary and base configurations
 COPY --from=builder /build/hivepaas-agent .
 COPY --from=builder /build/config ./config
-
-# Copy railpack binary
-COPY --from=ghcr.io/railwayapp/railpack:latest /usr/local/bin/railpack /usr/local/bin/railpack
 
 # Command to run
 CMD ["./hivepaas-agent"]

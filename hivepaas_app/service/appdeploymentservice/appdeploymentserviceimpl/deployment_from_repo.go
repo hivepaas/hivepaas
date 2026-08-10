@@ -158,15 +158,19 @@ func (s *service) repoDeployStepImageBuild(
 ) (err error) {
 	data.Step = stepImageBuild
 	deployment := data.Deployment
+	repoSource := deployment.Settings.RepoSource
 
 	buildReq := &imagebuildservice.ImageBuildReq{
 		App:                data.App,
-		RepoSource:         deployment.Settings.RepoSource,
+		BuildTool:          repoSource.BuildTool,
+		CommitHash:         repoSource.CommitHash,
+		DockerfilePath:     repoSource.DockerfilePath,
+		ImageName:          repoSource.ImageName,
+		PushToRegistry:     repoSource.PushToRegistry,
 		ImageBuildSettings: data.ImageBuildSettings,
 		BuildID:            data.Task.ID,
 		RefObjects:         data.RefObjects,
 		LogStore:           data.LogStore,
-		TempDir:            data.TempDir,
 		CheckoutDir:        data.CheckoutDir,
 	}
 	if deployment.Settings.NoCache || (data.ImageBuildSettings != nil && data.ImageBuildSettings.NoCache) {

@@ -35,5 +35,8 @@ RUN apk update && \
 COPY --from=builder /build/hivepaas-agent .
 COPY --from=builder /build/config ./config
 
+# Copy railpack binary
+COPY --from=ghcr.io/railwayapp/railpack:latest /usr/local/bin/railpack /usr/local/bin/railpack
+
 # Command to run
 CMD ["./hivepaas-agent"]

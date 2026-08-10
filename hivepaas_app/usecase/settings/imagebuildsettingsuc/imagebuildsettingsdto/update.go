@@ -16,6 +16,7 @@ type UpdateImageBuildSettingsReq struct {
 }
 
 type ImageBuildSettingsBaseReq struct {
+	Workers   *ImageBuildWorkerSettingsReq   `json:"workers"`
 	Resources *ImageBuildResourceSettingsReq `json:"resources"`
 	Sources   *ImageBuildSourceSettingsReq   `json:"sources"`
 	NoCache   bool                           `json:"noCache"`
@@ -24,6 +25,7 @@ type ImageBuildSettingsBaseReq struct {
 
 func (req *ImageBuildSettingsBaseReq) ToEntity() *entity.ImageBuildSettings {
 	return &entity.ImageBuildSettings{
+		Workers:   req.Workers.ToEntity(),
 		Resources: req.Resources.ToEntity(),
 		Sources:   req.Sources.ToEntity(),
 		NoCache:   req.NoCache,
@@ -35,8 +37,33 @@ func (req *ImageBuildSettingsBaseReq) validate(field string) (res []vld.Validato
 	if field != "" {
 		field += "."
 	}
+	res = append(res, req.Workers.validate(field+"workers")...)
 	res = append(res, req.Resources.validate(field+"resources")...)
 	res = append(res, req.Sources.validate(field+"sources")...)
+	return res
+}
+
+type ImageBuildWorkerSettingsReq struct {
+	NodeIDs    []string `json:"nodeIds"`
+	NodeLabels []string `json:"nodeLabels"`
+}
+
+func (req *ImageBuildWorkerSettingsReq) ToEntity() entity.ImageBuildWorkerSettings {
+	if req == nil {
+		return entity.ImageBuildWorkerSettings{}
+	}
+	return entity.ImageBuildWorkerSettings{
+		NodeIDs:    req.NodeIDs,
+		NodeLabels: req.NodeLabels,
+	}
+}
+
+// nolint
+func (req *ImageBuildWorkerSettingsReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	// TODO: add validation
 	return res
 }
 

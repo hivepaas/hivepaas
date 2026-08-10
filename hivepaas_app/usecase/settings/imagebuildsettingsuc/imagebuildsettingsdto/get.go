@@ -32,10 +32,16 @@ type GetImageBuildSettingsResp struct {
 
 type ImageBuildSettingsResp struct {
 	*settings.BaseSettingResp
+	Workers   *ImageBuildWorkerSettingsResp   `json:"workers"`
 	Resources *ImageBuildResourceSettingsResp `json:"resources"`
 	Sources   *ImageBuildSourceSettingsResp   `json:"sources"`
 	NoCache   bool                            `json:"noCache"`
 	NoVerbose bool                            `json:"noVerbose"`
+}
+
+type ImageBuildWorkerSettingsResp struct {
+	NodeIDs    []string `json:"nodeIds,omitempty"`
+	NodeLabels []string `json:"nodeLabels,omitempty"`
 }
 
 type ImageBuildResourceSettingsResp struct {

@@ -23,6 +23,7 @@ func (s *imageBuildSettingsParser) New() SettingData {
 }
 
 type ImageBuildSettings struct {
+	Workers   ImageBuildWorkerSettings   `json:"workers"`
 	Resources ImageBuildResourceSettings `json:"resources"`
 	Sources   ImageBuildSourceSettings   `json:"sources"`
 	NoCache   bool                       `json:"noCache,omitempty"`
@@ -34,6 +35,11 @@ type ImageBuildResourceSettings struct {
 	Mem     unit.DataSize `json:"mem"`
 	MemSwap unit.DataSize `json:"memSwap,omitempty"`
 	ShmSize unit.DataSize `json:"shmSize,omitempty"`
+}
+
+type ImageBuildWorkerSettings struct {
+	NodeIDs    []string `json:"nodeIds"`
+	NodeLabels []string `json:"nodeLabels"`
 }
 
 type ImageBuildSourceSettings struct {

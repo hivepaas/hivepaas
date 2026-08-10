@@ -19,6 +19,8 @@ type ClusterCleanupOutput struct {
 	VolumesPruneError     string `json:"volumesPruneError,omitempty"`
 	ContainersDeleted     int    `json:"containersDeleted"`
 	ContainersPruneError  string `json:"containersPruneError,omitempty"`
+	TempContainersDeleted int    `json:"tempContainersDeleted"`
+	TempServicesDeleted   int    `json:"tempServicesDeleted"`
 	NetworksDeleted       int    `json:"networksDeleted"`
 	NetworksPruneError    string `json:"networksPruneError,omitempty"`
 	BuildCachesDeleted    int    `json:"buildCachesDeleted"`

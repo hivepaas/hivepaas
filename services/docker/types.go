@@ -22,3 +22,12 @@ const (
 	HealthcheckModeCmd      = HealthcheckMode("CMD")
 	HealthcheckModeCmdShell = HealthcheckMode("CMD-SHELL")
 )
+
+const (
+	LabelTempResource    = "hivepaas.system.temp"
+	LabelTempResourceVal = "true"
+	LabelTempCreatedAt   = "hivepaas.system.created_at"
+
+	TempContainerPrefix = "hivepaas-cont-"
+	TempServicePrefix   = "hivepaas-svc-"
+)

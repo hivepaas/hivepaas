@@ -416,7 +416,7 @@ func (m *manager) ServiceCreateToExec(
 	createOpts := client.ServiceCreateOptions{
 		Spec: swarm.ServiceSpec{
 			Annotations: swarm.Annotations{
-				Name: "hivepaas-svc-" + gofn.RandString(5), //nolint:mnd
+				Name: TempServicePrefix + gofn.RandString(5), //nolint:mnd
 			},
 			TaskTemplate: swarm.TaskSpec{
 				ContainerSpec: &swarm.ContainerSpec{
@@ -441,6 +441,20 @@ func (m *manager) ServiceCreateToExec(
 		if inspectErr == nil && len(inspectRes.RepoDigests) > 0 {
 			containerSpec.Image = inspectRes.RepoDigests[0]
 		}
+	}
+
+	if createOpts.Spec.Labels == nil {
+		createOpts.Spec.Labels = make(map[string]string)
+	}
+	createOpts.Spec.Labels[LabelTempResource] = LabelTempResourceVal
+	createOpts.Spec.Labels[LabelTempCreatedAt] = time.Now().UTC().Format(time.RFC3339)
+
+	if createOpts.Spec.TaskTemplate.ContainerSpec != nil {
+		if createOpts.Spec.TaskTemplate.ContainerSpec.Labels == nil {
+			createOpts.Spec.TaskTemplate.ContainerSpec.Labels = make(map[string]string)
+		}
+		createOpts.Spec.TaskTemplate.ContainerSpec.Labels[LabelTempResource] = LabelTempResourceVal
+		createOpts.Spec.TaskTemplate.ContainerSpec.Labels[LabelTempCreatedAt] = time.Now().UTC().Format(time.RFC3339)
 	}
 
 	if createOpts.Spec.TaskTemplate.RestartPolicy == nil {

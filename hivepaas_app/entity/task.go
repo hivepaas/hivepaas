@@ -177,9 +177,10 @@ func (t *Task) NextRetryDelay() time.Duration {
 }
 
 type TaskRun struct {
-	StartedAt time.Time `json:"startedAt"`
-	EndedAt   time.Time `json:"endedAt"`
-	Error     string    `json:"error,omitempty"`
+	StartedAt  time.Time `json:"startedAt"`
+	EndedAt    time.Time `json:"endedAt"`
+	Error      string    `json:"error,omitempty"`
+	StackTrace string    `json:"stackTrace,omitempty"`
 }
 
 func (t *Task) parseArgs(structPtr any) error {

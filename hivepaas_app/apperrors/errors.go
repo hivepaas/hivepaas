@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	goerrors "github.com/go-errors/errors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -53,6 +54,13 @@ func GetErrorDetail(err error, lang translation.Lang) string {
 		return err.Error()
 	}
 	return errInfo.Code + "\n" + errInfo.Detail
+}
+
+func GetErrorStackTrace(err error) string {
+	if errWithStack, ok := errors.AsType[*goerrors.Error](err); ok {
+		return errWithStack.ErrorStack()
+	}
+	return ""
 }
 
 // NewInternal return AppError for error Internal

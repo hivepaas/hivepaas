@@ -128,9 +128,10 @@ func (q *taskQueue) executeTask(
 					task.RetryAt = time.Time{}
 				}
 				_ = task.AddRun(&entity.TaskRun{
-					StartedAt: task.StartedAt,
-					EndedAt:   task.EndedAt,
-					Error:     apperrors.GetErrorDetail(execErr, ""),
+					StartedAt:  task.StartedAt,
+					EndedAt:    task.EndedAt,
+					Error:      apperrors.GetErrorDetail(execErr, ""),
+					StackTrace: apperrors.GetErrorStackTrace(execErr),
 				})
 			} else {
 				task.Status = gofn.If(taskData.TaskCanceled, base.TaskStatusCanceled, base.TaskStatusDone)
@@ -146,7 +147,7 @@ func (q *taskQueue) executeTask(
 			// Save tasks in DB
 			err = q.taskRepo.Update(ctx, db, task)
 		}()
-		defer funcutil.EnsureNoPanic(&err) // Make sure we catch panic before the above defer
+		defer funcutil.EnsureNoPanic(&execErr) // Make sure we catch panic before the above defer
 
 		execErr = executorFunc(ctx, db, taskData)
 		return err //nolint:wrapcheck

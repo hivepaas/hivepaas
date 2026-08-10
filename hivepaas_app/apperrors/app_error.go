@@ -258,11 +258,7 @@ func (e *appError) Unwrap() error {
 }
 
 func (e *appError) StackTrace() string {
-	if errWithStack, ok := errors.AsType[*goerrors.Error](e.err); ok {
-		return errWithStack.ErrorStack()
-	}
-
-	return ""
+	return GetErrorStackTrace(e.err)
 }
 
 func (e *appError) getMappingStatus() int {

@@ -143,7 +143,7 @@ func (m *manager) ContainerCreateToExec(
 		HostConfig: &container.HostConfig{
 			AutoRemove: true,
 		},
-		Name: "hivepaas-cont-" + gofn.RandString(5), //nolint:mnd
+		Name: TempContainerPrefix + gofn.RandString(5), //nolint:mnd
 	}
 	for _, opt := range options {
 		opt(&createOpts)
@@ -153,6 +153,15 @@ func (m *manager) ContainerCreateToExec(
 		createOpts.HostConfig = &container.HostConfig{}
 	}
 	createOpts.HostConfig.AutoRemove = true
+
+	if createOpts.Config == nil {
+		createOpts.Config = &container.Config{}
+	}
+	if createOpts.Config.Labels == nil {
+		createOpts.Config.Labels = make(map[string]string)
+	}
+	createOpts.Config.Labels[LabelTempResource] = LabelTempResourceVal
+	createOpts.Config.Labels[LabelTempCreatedAt] = time.Now().UTC().Format(time.RFC3339)
 
 	createResp, err = m.ContainerCreate(ctx, func(opts *client.ContainerCreateOptions) {
 		*opts = createOpts

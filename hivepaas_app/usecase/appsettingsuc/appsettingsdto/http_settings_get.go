@@ -165,21 +165,33 @@ func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSett
 	for _, domain := range resp.Domains {
 		if domain.SSLCert != nil && domain.SSLCert.ID != "" {
 			setting := input.RefSettingMap[domain.SSLCert.ID]
-			domain.SSLCert, _ = sslcertdto.TransformSSLCertBasic(setting, &entity.RefObjects{})
+			certResp, _ := sslcertdto.TransformSSLCertBasic(setting, &entity.RefObjects{})
+			if certResp == nil {
+				certResp = &sslcertdto.SSLCertResp{
+					BaseSettingResp: settings.NewMissingSetting(domain.SSLCert.ID, base.SettingTypeSSLCert),
+				}
+			}
+			domain.SSLCert = certResp
 		} else {
 			domain.SSLCert = nil
 		}
 		if domain.BasicAuth != nil && domain.BasicAuth.ID != "" {
-			setting := input.RefSettingMap[domain.BasicAuth.ID]
-			domain.BasicAuth.BaseSettingResp, _ = settings.TransformSettingBase(setting)
+			itemResp, _ := settings.TransformSettingBase(input.RefSettingMap[domain.BasicAuth.ID])
+			if itemResp == nil {
+				itemResp = settings.NewMissingSetting(domain.BasicAuth.ID, base.SettingTypeBasicAuth)
+			}
+			domain.BasicAuth.BaseSettingResp = itemResp
 		} else {
 			domain.BasicAuth = nil
 		}
 
 		for _, pathConfig := range domain.Paths {
-			setting := input.RefSettingMap[pathConfig.BasicAuth.ID]
 			if pathConfig.BasicAuth != nil && pathConfig.BasicAuth.ID != "" {
-				pathConfig.BasicAuth.BaseSettingResp, _ = settings.TransformSettingBase(setting)
+				itemResp, _ := settings.TransformSettingBase(input.RefSettingMap[pathConfig.BasicAuth.ID])
+				if itemResp == nil {
+					itemResp = settings.NewMissingSetting(pathConfig.BasicAuth.ID, base.SettingTypeBasicAuth)
+				}
+				pathConfig.BasicAuth.BaseSettingResp = itemResp
 			} else {
 				pathConfig.BasicAuth = nil
 			}

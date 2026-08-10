@@ -77,20 +77,22 @@ func TransformSSLCert(
 
 	if config.Provider.ID != "" {
 		providerSetting := refObjects.RefSettings[config.Provider.ID]
-		resp.Provider, err = settings.TransformSettingBase(providerSetting)
-		if err != nil {
-			return nil, apperrors.Wrap(err)
+		providerResp, _ := settings.TransformSettingBase(providerSetting)
+		if providerResp == nil {
+			providerResp = settings.NewMissingSetting(config.Provider.ID, base.SettingTypeSSLProvider)
 		}
+		resp.Provider = providerResp
 	} else {
 		resp.Provider = nil
 	}
 
 	if config.AcmeProvider.ID != "" {
 		providerSetting := refObjects.RefSettings[config.AcmeProvider.ID]
-		resp.AcmeProvider, err = settings.TransformSettingBase(providerSetting)
-		if err != nil {
-			return nil, apperrors.Wrap(err)
+		acmeProviderResp, _ := settings.TransformSettingBase(providerSetting)
+		if acmeProviderResp == nil {
+			acmeProviderResp = settings.NewMissingSetting(config.AcmeProvider.ID, base.SettingTypeAcmeDnsProvider)
 		}
+		resp.AcmeProvider = acmeProviderResp
 	} else {
 		resp.AcmeProvider = nil
 	}
@@ -109,6 +111,9 @@ func TransformSSLCertBasic(
 	setting *entity.Setting,
 	refObjects *entity.RefObjects,
 ) (*SSLCertResp, error) {
+	if setting == nil {
+		return nil, nil
+	}
 	resp, err := TransformSSLCert(setting, refObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

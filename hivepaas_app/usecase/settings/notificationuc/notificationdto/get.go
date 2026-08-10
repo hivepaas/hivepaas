@@ -4,6 +4,7 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
@@ -81,21 +82,44 @@ func TransformNotification(
 		return nil, apperrors.Wrap(err)
 	}
 
-	if resp.ViaEmail != nil && resp.ViaEmail.Sender != nil {
-		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.ViaEmail.Sender.ID])
-		resp.ViaEmail.Sender = itemResp
+	if refObjects == nil {
+		refObjects = &entity.RefObjects{}
 	}
-	if resp.ViaSlack != nil && resp.ViaSlack.Webhook != nil {
-		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.ViaSlack.Webhook.ID])
-		resp.ViaSlack.Webhook = itemResp
+
+	viaEmail := resp.ViaEmail
+	if viaEmail != nil && viaEmail.Sender != nil && viaEmail.Sender.ID != "" {
+		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[viaEmail.Sender.ID])
+		if itemResp == nil {
+			itemResp = settings.NewMissingSetting(viaEmail.Sender.ID, base.SettingTypeEmail)
+		}
+		viaEmail.Sender = itemResp
 	}
-	if resp.ViaDiscord != nil && resp.ViaDiscord.Webhook != nil {
-		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.ViaDiscord.Webhook.ID])
-		resp.ViaDiscord.Webhook = itemResp
+
+	viaSlack := resp.ViaSlack
+	if viaSlack != nil && viaSlack.Webhook != nil && viaSlack.Webhook.ID != "" {
+		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[viaSlack.Webhook.ID])
+		if itemResp == nil {
+			itemResp = settings.NewMissingSetting(viaSlack.Webhook.ID, base.SettingTypeIMService)
+		}
+		viaSlack.Webhook = itemResp
 	}
-	if resp.ViaTelegram != nil && resp.ViaTelegram.Setting != nil {
-		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.ViaTelegram.Setting.ID])
-		resp.ViaTelegram.Setting = itemResp
+
+	viaDiscord := resp.ViaDiscord
+	if viaDiscord != nil && viaDiscord.Webhook != nil && viaDiscord.Webhook.ID != "" {
+		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[viaDiscord.Webhook.ID])
+		if itemResp == nil {
+			itemResp = settings.NewMissingSetting(viaDiscord.Webhook.ID, base.SettingTypeIMService)
+		}
+		viaDiscord.Webhook = itemResp
+	}
+
+	viaTelegram := resp.ViaTelegram
+	if viaTelegram != nil && viaTelegram.Setting != nil && viaTelegram.Setting.ID != "" {
+		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[viaTelegram.Setting.ID])
+		if itemResp == nil {
+			itemResp = settings.NewMissingSetting(viaTelegram.Setting.ID, base.SettingTypeIMService)
+		}
+		viaTelegram.Setting = itemResp
 	}
 
 	return resp, nil

@@ -82,8 +82,12 @@ func TransformAppCloneSettings(input *AppCloneSettingsTransformInput) (*AppClone
 	}
 
 	appCloneSettings := input.AppCloneSettings
+	if input.RefObjects == nil {
+		input.RefObjects = &entity.RefObjects{}
+	}
 	refObjects := input.RefObjects
-	if appCloneSettings != nil {
+
+	if appCloneSettings != nil { //nolint:nestif
 		if err := copier.Copy(&resp, &appCloneSettings); err != nil {
 			return nil, apperrors.Wrap(err)
 		}
@@ -94,16 +98,29 @@ func TransformAppCloneSettings(input *AppCloneSettingsTransformInput) (*AppClone
 				SourceDomain: domain.SourceDomain,
 				TargetDomain: domain.TargetDomain,
 			}
-			domainResp.SourceSSLCert, _ = settings.TransformSettingBase(refObjects.RefSettings[domain.SourceSSLCert.ID])
-			domainResp.TargetSSLCert, _ = settings.TransformSettingBase(refObjects.RefSettings[domain.TargetSSLCert.ID])
+			if domain.SourceSSLCert.ID != "" {
+				certResp, _ := settings.TransformSettingBase(refObjects.RefSettings[domain.SourceSSLCert.ID])
+				if certResp == nil {
+					certResp = settings.NewMissingSetting(domain.SourceSSLCert.ID, base.SettingTypeSSLCert)
+				}
+				domainResp.SourceSSLCert = certResp
+			}
+			if domain.TargetSSLCert.ID != "" {
+				certResp, _ := settings.TransformSettingBase(refObjects.RefSettings[domain.TargetSSLCert.ID])
+				if certResp == nil {
+					certResp = settings.NewMissingSetting(domain.TargetSSLCert.ID, base.SettingTypeSSLCert)
+				}
+				domainResp.TargetSSLCert = certResp
+			}
 			resp.CloneHttpDomains = append(resp.CloneHttpDomains, domainResp)
 		}
 
 		for _, pipe := range appCloneSettings.CommandPipes {
 			pipeResp, _ := settings.TransformSettingBase(refObjects.RefSettings[pipe.ID])
-			if pipeResp != nil {
-				resp.CommandPipes = append(resp.CommandPipes, pipeResp)
+			if pipeResp == nil {
+				pipeResp = settings.NewMissingSetting(pipe.ID, base.SettingTypeCommandPipe)
 			}
+			resp.CommandPipes = append(resp.CommandPipes, pipeResp)
 		}
 
 		resp.Notification = basedto.TransformBaseEventNotification(appCloneSettings.Notification, refObjects)

@@ -54,7 +54,6 @@ type VolumeResp struct {
 	BindOptions  *VolumeBindOptionsResp  `json:"bindOptions,omitempty"`
 	NfsOptions   *VolumeNfsOptionsResp   `json:"nfsOptions,omitempty"`
 	TmpfsOptions *VolumeTmpfsOptionsResp `json:"tmpfsOptions,omitempty"`
-	BtrfsOptions *VolumeBtrfsOptionsResp `json:"btrfsOptions,omitempty"`
 }
 
 type VolumeBindOptionsResp struct {
@@ -79,11 +78,6 @@ type VolumeTmpfsOptionsResp struct {
 	GID          int               `json:"gid"`
 	Device       string            `json:"device"`
 	ExtraOptions string            `json:"extraOptions"`
-}
-
-type VolumeBtrfsOptionsResp struct {
-	Device       string `json:"device"`
-	ExtraOptions string `json:"extraOptions"`
 }
 
 type ClusterVolumeSpecResp struct {
@@ -128,9 +122,6 @@ func TransformVolume(
 			resp.Options = nil
 		case "tmpfs":
 			resp.TmpfsOptions = transformVolumeTypeTmpfs(vol)
-			resp.Options = nil
-		case "btrfs":
-			resp.BtrfsOptions = transformVolumeTypeBtrfs(vol)
 			resp.Options = nil
 		}
 	}
@@ -245,11 +236,4 @@ func transformVolumeTypeTmpfs(vol *volume.Volume) *VolumeTmpfsOptionsResp {
 		}
 	}
 	return resp
-}
-
-func transformVolumeTypeBtrfs(vol *volume.Volume) *VolumeBtrfsOptionsResp {
-	return &VolumeBtrfsOptionsResp{
-		Device:       vol.Options["device"],
-		ExtraOptions: vol.Options["o"],
-	}
 }

@@ -92,7 +92,7 @@ type CommandOutputFileStorageResp struct {
 }
 
 type CommandOutputPipeToAppResp struct {
-	TargetApp *appdto.AppResp                         `json:"targetApp"`
+	TargetApp *appdto.AppBaseResp                     `json:"targetApp"`
 	Command   *commandtemplatedto.CommandTemplateResp `json:"command"`
 }
 
@@ -134,20 +134,23 @@ func TransformSchedJob(
 			cmdOutputResp.SaveToFile.Storage = &CommandOutputFileStorageResp{
 				Bucket: cmdOutput.SaveToFile.Storage.Bucket,
 			}
-			cmdOutputResp.SaveToFile.Storage.BaseSettingResp, err = settings.TransformSettingBase(targetStorage)
-			if err != nil {
-				return nil, apperrors.Wrap(err)
+			storageResp, _ := settings.TransformSettingBase(targetStorage)
+			if storageResp == nil {
+				storageResp = settings.NewMissingSetting(cmdOutput.SaveToFile.Storage.ID, base.SettingTypeCloudStorage)
 			}
+			cmdOutputResp.SaveToFile.Storage.BaseSettingResp = storageResp
 		} else {
 			cmdOutputResp.SaveToFile = nil
 		}
 
 		if cmdOutput.PipeToApp != nil && cmdOutput.PipeToApp.TargetApp.ID != "" {
 			targetApp := refObjects.RefApps[cmdOutput.PipeToApp.TargetApp.ID]
-			cmdOutputResp.PipeToApp.TargetApp, err = appdto.TransformApp(targetApp, nil)
-			if err != nil {
-				return nil, apperrors.Wrap(err)
+			targetAppResp := appdto.TransformAppBase(targetApp)
+			if targetAppResp == nil {
+				targetAppResp = appdto.NewMissingApp(cmdOutput.PipeToApp.TargetApp.ID)
 			}
+			cmdOutputResp.PipeToApp.TargetApp = targetAppResp
+
 			// Transform the script part of command template if presents
 			if cmdOutput.PipeToApp.Command != nil && !isListAPI {
 				commandtemplatedto.TransformScript(&cmdOutput.PipeToApp.Command.Script, refObjects,

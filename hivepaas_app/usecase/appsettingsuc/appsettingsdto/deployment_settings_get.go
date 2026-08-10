@@ -83,7 +83,10 @@ type AppDeploymentSettingsTransformInput struct {
 	RefObjects         *entity.RefObjects
 }
 
-func TransformDeploymentSettings(input *AppDeploymentSettingsTransformInput) (resp *DeploymentSettingsResp, err error) {
+//nolint:gocognit
+func TransformDeploymentSettings(
+	input *AppDeploymentSettingsTransformInput,
+) (resp *DeploymentSettingsResp, err error) {
 	resp = &DeploymentSettingsResp{}
 	refObjects := input.RefObjects
 
@@ -107,6 +110,9 @@ func TransformDeploymentSettings(input *AppDeploymentSettingsTransformInput) (re
 	if resp.ImageSource != nil { //nolint:nestif
 		if resp.ImageSource.RegistryAuth != nil && resp.ImageSource.RegistryAuth.ID != "" {
 			itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.ImageSource.RegistryAuth.ID])
+			if itemResp == nil {
+				itemResp = settings.NewMissingSetting(resp.ImageSource.RegistryAuth.ID, base.SettingTypeRegistryAuth)
+			}
 			resp.ImageSource.RegistryAuth = itemResp
 		} else {
 			resp.ImageSource.RegistryAuth = nil
@@ -115,12 +121,18 @@ func TransformDeploymentSettings(input *AppDeploymentSettingsTransformInput) (re
 	if resp.RepoSource != nil { //nolint:nestif
 		if resp.RepoSource.Credentials != nil && resp.RepoSource.Credentials.ID != "" {
 			itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.RepoSource.Credentials.ID])
+			if itemResp == nil {
+				itemResp = settings.NewMissingSetting(resp.RepoSource.Credentials.ID, base.SettingTypeAccessToken)
+			}
 			resp.RepoSource.Credentials = itemResp
 		} else {
 			resp.RepoSource.Credentials = nil
 		}
 		if resp.RepoSource.PushToRegistry != nil && resp.RepoSource.PushToRegistry.ID != "" {
 			itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.RepoSource.PushToRegistry.ID])
+			if itemResp == nil {
+				itemResp = settings.NewMissingSetting(resp.RepoSource.PushToRegistry.ID, base.SettingTypeRegistryAuth)
+			}
 			resp.RepoSource.PushToRegistry = itemResp
 		} else {
 			resp.RepoSource.PushToRegistry = nil

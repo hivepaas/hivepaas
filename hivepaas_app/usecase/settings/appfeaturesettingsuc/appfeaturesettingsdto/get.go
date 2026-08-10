@@ -76,13 +76,18 @@ func TransformAppFeatureSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
+	if input.RefObjects == nil {
+		input.RefObjects = &entity.RefObjects{}
+	}
+
 	if resp.PreviewSettings != nil && config.PreviewSettings != nil {
 		resp.PreviewSettings.AppsToClone = nil
 		for _, appID := range config.PreviewSettings.AppsToClone {
 			appResp := appdto.TransformAppBase(input.RefObjects.RefApps[appID.ID])
-			if appResp != nil {
-				resp.PreviewSettings.AppsToClone = append(resp.PreviewSettings.AppsToClone, appResp)
+			if appResp == nil {
+				appResp = appdto.NewMissingApp(appID.ID)
 			}
+			resp.PreviewSettings.AppsToClone = append(resp.PreviewSettings.AppsToClone, appResp)
 		}
 	}
 

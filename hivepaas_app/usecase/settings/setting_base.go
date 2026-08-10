@@ -194,3 +194,12 @@ func TransformSettingBase(setting *entity.Setting) (resp *BaseSettingResp, err e
 	}
 	return resp, nil
 }
+
+func NewMissingSetting(id string, typ base.SettingType) *BaseSettingResp {
+	return &BaseSettingResp{
+		ID:     id,
+		Type:   typ,
+		Status: base.SettingStatusMissing,
+		Name:   "missing",
+	}
+}

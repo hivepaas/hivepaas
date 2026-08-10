@@ -94,9 +94,16 @@ func TransformSystemBackup(
 		return nil, apperrors.Wrap(err)
 	}
 
+	if refObjects == nil {
+		refObjects = &entity.RefObjects{}
+	}
+
 	if config.CloudStorage.ID != "" {
-		setting := refObjects.RefSettings[config.CloudStorage.ID]
-		resp.CloudStorage.BaseSettingResp, _ = settings.TransformSettingBase(setting)
+		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[config.CloudStorage.ID])
+		if itemResp == nil {
+			itemResp = settings.NewMissingSetting(config.CloudStorage.ID, base.SettingTypeCloudStorage)
+		}
+		resp.CloudStorage.BaseSettingResp = itemResp
 	} else {
 		resp.CloudStorage = nil
 	}

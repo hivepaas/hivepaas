@@ -62,6 +62,7 @@ const (
 	SettingStatusPending  SettingStatus = "pending"
 	SettingStatusDisabled SettingStatus = "disabled"
 	SettingStatusExpired  SettingStatus = "expired"
+	SettingStatusMissing  SettingStatus = "missing" // this is not used in DB
 )
 
 var (

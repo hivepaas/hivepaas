@@ -4,6 +4,7 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
@@ -49,20 +50,26 @@ func TransformCommandPipe(
 		return nil, apperrors.Wrap(err)
 	}
 
-	if config.SourceCommand.ID != "" && refObjects != nil {
-		sourceSetting := refObjects.RefSettings[config.SourceCommand.ID]
-		resp.SourceCommand, err = settings.TransformSettingBase(sourceSetting)
-		if err != nil {
-			return nil, apperrors.Wrap(err)
-		}
+	if refObjects == nil {
+		refObjects = &entity.RefObjects{}
 	}
 
-	if config.TargetCommand.ID != "" && refObjects != nil {
-		targetSetting := refObjects.RefSettings[config.TargetCommand.ID]
-		resp.TargetCommand, err = settings.TransformSettingBase(targetSetting)
-		if err != nil {
-			return nil, apperrors.Wrap(err)
+	if config.SourceCommand.ID != "" {
+		sourceSetting := refObjects.RefSettings[config.SourceCommand.ID]
+		cmdResp, _ := settings.TransformSettingBase(sourceSetting)
+		if cmdResp == nil {
+			cmdResp = settings.NewMissingSetting(config.SourceCommand.ID, base.SettingTypeCommandTemplate)
 		}
+		resp.SourceCommand = cmdResp
+	}
+
+	if config.TargetCommand.ID != "" {
+		targetSetting := refObjects.RefSettings[config.TargetCommand.ID]
+		cmdResp, _ := settings.TransformSettingBase(targetSetting)
+		if cmdResp == nil {
+			cmdResp = settings.NewMissingSetting(config.TargetCommand.ID, base.SettingTypeCommandTemplate)
+		}
+		resp.TargetCommand = cmdResp
 	}
 
 	return resp, nil

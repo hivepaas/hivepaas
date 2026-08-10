@@ -17,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -58,10 +59,9 @@ func (s *service) CreateProjectDefaultVolume(
 		return nil, nil, apperrors.Wrap(err)
 	}
 
-	volID := dockerhelper.GetVolumeID(&createResp.Volume)
 	timeNow := timeutil.NowUTC()
 	setting := &entity.Setting{
-		ID:              dockerhelper.WrapVolumeID(volID),
+		ID:              gofn.Must(ulid.NewStringULID()),
 		Scope:           base.ObjectScopeProject,
 		ObjectID:        project.ID,
 		Type:            base.SettingTypeClusterVolume,
@@ -77,7 +77,7 @@ func (s *service) CreateProjectDefaultVolume(
 	}
 
 	clusterVolume := &entity.ClusterVolume{
-		Driver: driver,
+		RefID: dockerhelper.GetVolumeID(&createResp.Volume),
 	}
 	setting.MustSetData(clusterVolume)
 
@@ -103,7 +103,7 @@ func (s *service) ListProjectVolumes(
 
 	volIDs := make([]string, 0, len(settings))
 	for _, setting := range settings {
-		volIDs = append(volIDs, dockerhelper.ParseID(setting.ID))
+		volIDs = append(volIDs, setting.MustAsClusterVolume().RefID)
 	}
 
 	volList, err := s.dockerManager.VolumeListByIDs(ctx, volIDs)
@@ -139,7 +139,7 @@ func (s *service) RemoveAllProjectVolumes(
 		if setting.ObjectID != project.ID { // imported/inherited volume, skip it
 			continue
 		}
-		vol := volumes[dockerhelper.ParseID(setting.ID)]
+		vol := volumes[setting.MustAsClusterVolume().RefID]
 		if vol == nil {
 			continue
 		}

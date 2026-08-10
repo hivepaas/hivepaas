@@ -14,7 +14,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -106,7 +105,7 @@ func TransformVolume(
 		return nil, apperrors.Wrap(err)
 	}
 
-	vol := refClusterObjects.RefVolumes[dockerhelper.ParseID(setting.ID)]
+	vol := refClusterObjects.RefVolumes[volEnt.RefID]
 
 	resp.Driver = docker.VolumeDriver(vol.Driver)
 	resp.Mountpoint = vol.Mountpoint

@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/network"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 )
 
 func (s *service) SyncNetworks(
@@ -37,7 +38,7 @@ func (s *service) SyncNetworks(
 
 	existingNets := make(map[string]*entity.Setting, len(dbSettings))
 	for _, s := range dbSettings {
-		existingNets[dockerhelper.ParseID(s.ID)] = s
+		existingNets[s.MustAsClusterNetwork().RefID] = s // map docker-net-id -> *Setting
 	}
 
 	// 3. For each docker network, if not exists in DB, create new setting
@@ -48,7 +49,7 @@ func (s *service) SyncNetworks(
 
 		if setting == nil {
 			setting = &entity.Setting{
-				ID:      dockerhelper.WrapNetworkID(net.ID),
+				ID:      gofn.Must(ulid.NewStringULID()),
 				Scope:   base.ObjectScopeGlobal,
 				Type:    currentSettingType,
 				Kind:    net.Driver,
@@ -56,7 +57,9 @@ func (s *service) SyncNetworks(
 				Name:    net.Name,
 				Version: currentSettingVersion,
 			}
-			volEntity := &entity.ClusterNetwork{}
+			volEntity := &entity.ClusterNetwork{
+				RefID: net.ID,
+			}
 			if err := setting.SetData(volEntity); err != nil {
 				return nil, apperrors.Wrap(err)
 			}

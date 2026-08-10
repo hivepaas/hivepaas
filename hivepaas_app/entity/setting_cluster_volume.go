@@ -4,7 +4,6 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 const (
@@ -21,7 +20,7 @@ func (s *clusterVolumeParser) New() SettingData {
 }
 
 type ClusterVolume struct {
-	Driver docker.VolumeDriver `json:"driver"`
+	RefID string `json:"refId"`
 }
 
 func (s *ClusterVolume) GetType() base.SettingType {

@@ -12,7 +12,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 )
 
 func (s *service) ListProjectNetworks(
@@ -33,7 +32,7 @@ func (s *service) ListProjectNetworks(
 
 	netIDs := make([]string, 0, len(settings))
 	for _, setting := range settings {
-		netIDs = append(netIDs, dockerhelper.ParseID(setting.ID))
+		netIDs = append(netIDs, setting.MustAsClusterNetwork().RefID)
 	}
 
 	netList, err := s.dockerManager.NetworkListByIDs(ctx, netIDs)
@@ -68,7 +67,7 @@ func (s *service) RemoveAllProjectNetworks(
 		if setting.ObjectID != project.ID { // imported/inherited network, skip it
 			continue
 		}
-		net := networks[dockerhelper.ParseID(setting.ID)]
+		net := networks[setting.MustAsClusterNetwork().RefID]
 		if net == nil {
 			continue
 		}

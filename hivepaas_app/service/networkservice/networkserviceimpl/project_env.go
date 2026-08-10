@@ -14,8 +14,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -69,7 +69,7 @@ func (s *service) GetOrCreateProjectNetwork(
 		hasChange = true
 		timeNow := time.Now()
 		setting = &entity.Setting{
-			ID:        dockerhelper.WrapNetworkID(inspect.Network.ID),
+			ID:        gofn.Must(ulid.NewStringULID()),
 			Scope:     base.ObjectScopeProject,
 			ObjectID:  project.ID,
 			Type:      base.SettingTypeClusterNetwork,
@@ -87,7 +87,10 @@ func (s *service) GetOrCreateProjectNetwork(
 		hasChange = true
 		setting.Name = inspect.Network.Name
 	}
-	if err = setting.SetData(&entity.ClusterNetwork{}); err != nil {
+	netEntity := &entity.ClusterNetwork{
+		RefID: inspect.Network.ID,
+	}
+	if err = setting.SetData(netEntity); err != nil {
 		return nil, nil, apperrors.Wrap(err)
 	}
 
@@ -120,7 +123,7 @@ func (s *service) ListProjectEnvNetworks(
 
 	netIDs := make([]string, 0, len(settings))
 	for _, setting := range settings {
-		netIDs = append(netIDs, dockerhelper.ParseID(setting.ID))
+		netIDs = append(netIDs, setting.MustAsClusterNetwork().RefID)
 	}
 
 	netList, err := s.dockerManager.NetworkListByIDs(ctx, netIDs)
@@ -155,7 +158,7 @@ func (s *service) RemoveAllProjectEnvNetworks(
 		if setting.ObjectID != projectEnv.ID { // imported/inherited network, skip it
 			continue
 		}
-		net := networks[dockerhelper.ParseID(setting.ID)]
+		net := networks[setting.MustAsClusterNetwork().RefID]
 		if net == nil {
 			continue
 		}

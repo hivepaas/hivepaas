@@ -110,12 +110,8 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 				WithParam("Name", fmt.Sprintf("Mount type '%v'", reqMnt.Type))
 		}
 		dbVolID := reqMnt.Source
-		if !dockerhelper.IsWrappedVolumeID(dbVolID) {
-			return apperrors.Wrap(apperrors.ErrArgumentInvalid).WithParam("Name", dbVolID)
-		}
 		data.NewMountReqs = append(data.NewMountReqs, reqMnt)
 		newDBVolIDs = append(newDBVolIDs, dbVolID)
-		newDockerVolIDs = append(newDockerVolIDs, dockerhelper.ParseID(dbVolID))
 	}
 
 	// Validate volumes can be used by the project
@@ -127,9 +123,11 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	}
 	dbVolMap := entityutil.SliceToIDMap(dbVols)
 	for _, dbVolID := range newDBVolIDs {
-		if _, ok := dbVolMap[dbVolID]; !ok {
+		dbVol, ok := dbVolMap[dbVolID]
+		if !ok {
 			return apperrors.NewNotFound("Volume").WithMsgLog("volume %v not found", dbVolID)
 		}
+		newDockerVolIDs = append(newDockerVolIDs, dbVol.MustAsClusterVolume().RefID)
 	}
 	data.DBVolumes = dbVolMap
 
@@ -152,17 +150,15 @@ func (uc *UC) prepareUpdatingAppStorageSettings(
 	data *updateAppStorageSettingsData,
 ) {
 	for _, reqMnt := range data.NewMountReqs {
-		dbVolID := reqMnt.Source // db vol id is like dkr:vol:docker-vol-id
-		dockerVolID := dockerhelper.ParseID(dbVolID)
+		dbVol := data.DBVolumes[reqMnt.Source]
+		dockerVol := data.DockerVolumes[dbVol.MustAsClusterVolume().RefID]
 		dockerMnt := &mount.Mount{
 			Type:        reqMnt.Type,
-			Source:      dockerVolID,
+			Source:      dockerhelper.GetVolumeID(dockerVol),
 			Target:      reqMnt.Target,
 			ReadOnly:    reqMnt.ReadOnly,
 			Consistency: reqMnt.Consistency,
 		}
-		dbVol := data.DBVolumes[dbVolID]
-		dockerVol := data.DockerVolumes[dockerVolID]
 
 		uc.buildDockerMount(ctx, dockerMnt, reqMnt, dockerVol, dbVol, data)
 

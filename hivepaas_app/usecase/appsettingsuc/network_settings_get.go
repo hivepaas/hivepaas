@@ -3,8 +3,6 @@ package appsettingsuc
 import (
 	"context"
 
-	"github.com/moby/moby/api/types/network"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -33,20 +31,19 @@ func (uc *UC) GetAppNetworkSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	// TODO: query only networks used in the service
-	listResp, err := uc.dockerManager.NetworkList(ctx)
+	// List all networks in project env (app has no network scope)
+	dbNets, dockerNets, err := uc.networkService.ListProjectEnvNetworks(ctx, uc.db, app.ProjectEnv)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	networks := listResp.Items
-	refObjects := &appsettingsdto.InfraRefObjects{
-		Networks: make(map[string]*network.Summary, len(networks)),
-	}
-	for i := range networks { // faster than looping over structs?
-		refObjects.Networks[networks[i].ID] = &networks[i]
+
+	input := &appsettingsdto.NetworkTransformationInput{
+		Service:        service,
+		DBNetworks:     dbNets,
+		DockerNetworks: dockerNets,
 	}
 
-	resp, err := appsettingsdto.TransformNetworkSettings(service, refObjects)
+	resp, err := appsettingsdto.TransformNetworkSettings(input)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

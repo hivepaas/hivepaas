@@ -8,7 +8,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -58,7 +57,7 @@ func (uc *UC) listNetworksInDocker(
 	if currNets == nil {
 		networks := make([]string, 0, len(settings))
 		for _, setting := range settings {
-			networks = append(networks, dockerhelper.ParseID(setting.ID))
+			networks = append(networks, setting.MustAsClusterNetwork().RefID)
 		}
 		if len(networks) == 0 {
 			return nil

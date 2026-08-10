@@ -9,7 +9,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -41,8 +40,8 @@ func (uc *UC) CreateNetwork(
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
+			netEntity.RefID = createResp.ID
 
-			pData.Setting.ID = dockerhelper.WrapNetworkID(createResp.ID)
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = req.Driver
 			if err := pData.Setting.SetData(netEntity); err != nil {

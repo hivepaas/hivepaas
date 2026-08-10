@@ -15,7 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
@@ -58,9 +58,11 @@ func (uc *UC) UpdateAppNetworkSettings(
 }
 
 type updateAppNetworkSettingsData struct {
-	App          *entity.App
-	Service      *swarm.Service
-	LocalNetwork *network.Inspect
+	App            *entity.App
+	Service        *swarm.Service
+	LocalNetwork   *network.Inspect
+	FinalNetworks  []swarm.NetworkAttachmentConfig
+	NewNetworkReqs []*appsettingsdto.NetworkAttachment
 }
 
 func (uc *UC) loadAppNetworkSettingsForUpdate(
@@ -99,15 +101,37 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 	}
 
 	// Setting networks must be available in the project
-	_, projectNets, err := uc.networkService.ListProjectNetworks(ctx, db, app.Project)
+	dbProjectNets, _, err := uc.networkService.ListProjectNetworks(ctx, db, app.Project)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	for _, newNet := range req.NetworkAttachments {
-		if _, ok := projectNets[dockerhelper.ParseID(newNet.ID)]; !ok {
-			return apperrors.Wrap(apperrors.ErrProjectNetworkUnavailable).
-				WithParam("Name", gofn.Coalesce(newNet.Name, newNet.ID))
+	mapDbProjectNets := entityutil.SliceToIDMap(dbProjectNets)
+
+	// Calculate current networks to distinguish new changes
+	currNetworks := service.Spec.TaskTemplate.Networks
+	mapCurrNetworkByID := make(map[string]*swarm.NetworkAttachmentConfig, len(currNetworks))
+	for i := range currNetworks {
+		net := &currNetworks[i]
+		mapCurrNetworkByID[net.Target] = net
+	}
+
+	for _, netReq := range req.NetworkAttachments {
+		// Network config has docker net ID (this can happen when admin configure networks not via HivePaaS)
+		if existingNet := mapCurrNetworkByID[netReq.ID]; existingNet != nil {
+			existingNet.Aliases = netReq.Aliases
+			data.FinalNetworks = append(data.FinalNetworks, *existingNet)
+			continue
 		}
+		// Regular network config using DB network ID
+		dbNet := mapDbProjectNets[netReq.ID]
+		if dbNet == nil {
+			return apperrors.Wrap(apperrors.ErrProjectNetworkUnavailable).
+				WithParam("Name", gofn.Coalesce(netReq.Name, netReq.ID))
+		}
+		data.FinalNetworks = append(data.FinalNetworks, swarm.NetworkAttachmentConfig{
+			Target:  dbNet.MustAsClusterNetwork().RefID,
+			Aliases: netReq.Aliases,
+		})
 	}
 
 	return nil
@@ -117,7 +141,7 @@ func (uc *UC) prepareUpdatingAppNetworkSettings(
 	req *appsettingsdto.UpdateAppNetworkSettingsReq,
 	data *updateAppNetworkSettingsData,
 ) error {
-	uc.prepareUpdatingAppNetworkAttachments(req, data)
+	uc.prepareUpdatingAppNetworkAttachments(data)
 	uc.prepareUpdatingAppHostsFileEntries(req, data)
 	if err := uc.prepareUpdatingAppDNSConfig(req, data); err != nil {
 		return apperrors.Wrap(err)
@@ -127,45 +151,21 @@ func (uc *UC) prepareUpdatingAppNetworkSettings(
 }
 
 func (uc *UC) prepareUpdatingAppNetworkAttachments(
-	req *appsettingsdto.UpdateAppNetworkSettingsReq,
 	data *updateAppNetworkSettingsData,
 ) {
-	service := data.Service
 	localNetwork := data.LocalNetwork
-	taskSpec := &service.Spec.TaskTemplate
-
-	currNetworks := make(map[string]*swarm.NetworkAttachmentConfig, len(service.Spec.TaskTemplate.Networks))
-	for i := range service.Spec.TaskTemplate.Networks {
-		netAttachment := &service.Spec.TaskTemplate.Networks[i]
-		currNetworks[netAttachment.Target] = netAttachment
-	}
-
-	taskSpec.Networks = make([]swarm.NetworkAttachmentConfig, 0, len(req.NetworkAttachments))
-	for _, reqNet := range req.NetworkAttachments {
-		reqNetID := dockerhelper.ParseID(reqNet.ID)
-		// Skip if the net is already in the list
-		if _, found := gofn.FindPtr(taskSpec.Networks, func(net *swarm.NetworkAttachmentConfig) bool {
-			return net.Target == reqNetID
-		}); found {
-			continue
-		}
-
-		attachment := currNetworks[reqNetID]
-		if attachment == nil {
-			attachment = &swarm.NetworkAttachmentConfig{
-				Target: reqNetID,
-			}
-		}
-		attachment.Aliases = reqNet.Aliases
+	for i := range data.FinalNetworks {
+		netAttach := &data.FinalNetworks[i]
 		// Special case: the network is the default project one
-		if localNetwork != nil && (reqNetID == localNetwork.ID || reqNetID == localNetwork.Name) {
+		if localNetwork != nil && (netAttach.Target == localNetwork.ID || netAttach.Target == localNetwork.Name) {
 			defaultAlias := slugify.SlugifyAsKey(data.App.Name)
-			if !gofn.Contain(attachment.Aliases, defaultAlias) {
-				attachment.Aliases = append([]string{defaultAlias}, attachment.Aliases...)
+			if !gofn.Contain(netAttach.Aliases, defaultAlias) {
+				netAttach.Aliases = append([]string{defaultAlias}, netAttach.Aliases...)
 			}
 		}
-		taskSpec.Networks = append(taskSpec.Networks, *attachment)
 	}
+
+	data.Service.Spec.TaskTemplate.Networks = data.FinalNetworks
 }
 
 func (uc *UC) prepareUpdatingAppHostsFileEntries(

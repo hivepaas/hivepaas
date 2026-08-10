@@ -8,7 +8,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -58,7 +57,7 @@ func (uc *UC) listNodesInDocker(
 	if currNodes == nil {
 		nodes := make([]string, 0, len(settings))
 		for _, setting := range settings {
-			nodes = append(nodes, dockerhelper.ParseID(setting.ID))
+			nodes = append(nodes, setting.MustAsClusterNode().RefID)
 		}
 		if len(nodes) == 0 {
 			return nil

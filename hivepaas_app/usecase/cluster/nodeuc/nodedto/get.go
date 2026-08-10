@@ -9,7 +9,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -41,6 +40,7 @@ type GetNodeResp struct {
 type NodeResp struct {
 	*settings.BaseSettingResp
 
+	RefID        string                  `json:"refId"`
 	Labels       map[string]string       `json:"labels"`
 	Hostname     string                  `json:"hostname"`
 	Addr         string                  `json:"addr"`
@@ -55,6 +55,7 @@ type NodeResp struct {
 
 type NodeBaseResp struct {
 	ID           string                  `json:"id"`
+	RefID        string                  `json:"refId"`
 	Name         string                  `json:"name"`
 	Hostname     string                  `json:"hostname"`
 	Addr         string                  `json:"addr"`
@@ -102,8 +103,9 @@ func TransformNode(
 		return nil, apperrors.Wrap(err)
 	}
 
-	node := refClusterObjects.RefNodes[dockerhelper.ParseID(setting.ID)]
+	node := refClusterObjects.RefNodes[nodeEnt.RefID]
 
+	resp.RefID = node.ID
 	resp.Name = gofn.Coalesce(node.Spec.Name, "<unset>")
 	resp.State = docker.NodeState(node.Status.State)
 	resp.Availability = docker.NodeAvailability(node.Spec.Availability)
@@ -146,7 +148,7 @@ func TransformNodeBase(node *swarm.Node) *NodeBaseResp {
 	}
 	isManager := node.Spec.Role == swarm.NodeRoleManager
 	return &NodeBaseResp{
-		ID:           dockerhelper.WrapNodeID(node.ID),
+		RefID:        node.ID,
 		Name:         node.Spec.Name,
 		State:        docker.NodeState(node.Status.State),
 		Availability: docker.NodeAvailability(node.Spec.Availability),

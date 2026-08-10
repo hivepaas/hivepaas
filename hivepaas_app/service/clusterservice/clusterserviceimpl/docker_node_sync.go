@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 )
 
 func (s *service) SyncNodes(
@@ -37,7 +38,7 @@ func (s *service) SyncNodes(
 
 	existingNodes := make(map[string]*entity.Setting, len(dbSettings))
 	for _, s := range dbSettings {
-		existingNodes[dockerhelper.ParseID(s.ID)] = s
+		existingNodes[s.MustAsClusterNode().RefID] = s // map docker-node-id -> *Setting
 	}
 
 	// 3. For each docker node, if not exists in DB, create new setting
@@ -48,7 +49,7 @@ func (s *service) SyncNodes(
 
 		if setting == nil {
 			setting = &entity.Setting{
-				ID:      dockerhelper.WrapNodeID(node.ID),
+				ID:      gofn.Must(ulid.NewStringULID()),
 				Scope:   base.ObjectScopeGlobal,
 				Type:    currentSettingType,
 				Kind:    string(node.Spec.Role),
@@ -56,7 +57,9 @@ func (s *service) SyncNodes(
 				Name:    node.Spec.Name,
 				Version: currentSettingVersion,
 			}
-			nodeEntity := &entity.ClusterNode{}
+			nodeEntity := &entity.ClusterNode{
+				RefID: node.ID,
+			}
 			if err := setting.SetData(nodeEntity); err != nil {
 				return nil, apperrors.Wrap(err)
 			}

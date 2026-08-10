@@ -8,8 +8,10 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 )
 
@@ -18,6 +20,15 @@ func (uc *UC) SetManagerNodes(
 	auth *basedto.Auth,
 	req *nodedto.SetManagerNodesReq,
 ) (*nodedto.SetManagerNodesResp, error) {
+	dbNodeSettings, _, err := uc.SettingRepo.List(ctx, uc.DB, nil, nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterNode),
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+	)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	dbNodeMap := entityutil.SliceToIDMap(dbNodeSettings)
+
 	listResp, err := uc.dockerManager.NodeList(ctx)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -31,11 +42,15 @@ func (uc *UC) SetManagerNodes(
 
 	targetManagerIDs := make(map[string]bool)
 	for _, nodeReq := range req.Nodes {
-		nodeID := dockerhelper.ParseID(nodeReq.ID)
-		if _, ok := existingNodes[nodeID]; !ok {
+		dbNode := dbNodeMap[nodeReq.ID]
+		var dockerNode *swarm.Node
+		if dbNode != nil {
+			dockerNode = existingNodes[dbNode.MustAsClusterNode().RefID]
+		}
+		if dockerNode == nil {
 			return nil, apperrors.NewNotFound(fmt.Sprintf("Node %v", nodeReq.ID))
 		}
-		targetManagerIDs[nodeID] = true
+		targetManagerIDs[dockerNode.ID] = true
 	}
 
 	var promoteNodes []*swarm.Node

@@ -45,8 +45,7 @@ func (uc *UC) CreateVolume(
 				return apperrors.Wrap(err)
 			}
 			vol := &createResp.Volume
-			volID := dockerhelper.GetVolumeID(vol)
-			pData.Setting.ID = dockerhelper.WrapVolumeID(volID)
+			volEntity.RefID = dockerhelper.GetVolumeID(vol)
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = vol.Driver
 			if err := pData.Setting.SetData(volEntity); err != nil {

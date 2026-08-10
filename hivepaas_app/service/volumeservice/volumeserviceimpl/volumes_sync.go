@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/volume"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -12,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 )
 
 func (s *service) SyncVolumes(
@@ -35,9 +37,9 @@ func (s *service) SyncVolumes(
 		return nil, apperrors.Wrap(err)
 	}
 
-	existingVols := make(map[string]*entity.Setting, len(dbSettings))
+	existingVols := make(map[string]*entity.Setting, len(dbSettings)) // map docker-id -> *Setting
 	for _, s := range dbSettings {
-		existingVols[dockerhelper.ParseID(s.ID)] = s
+		existingVols[s.MustAsClusterVolume().RefID] = s
 	}
 
 	// 3. For each docker volume, if not exists in DB, create new setting
@@ -49,7 +51,7 @@ func (s *service) SyncVolumes(
 
 		if setting == nil {
 			setting = &entity.Setting{
-				ID:      dockerhelper.WrapVolumeID(volID),
+				ID:      gofn.Must(ulid.NewStringULID()),
 				Scope:   base.ObjectScopeGlobal,
 				Type:    currentSettingType,
 				Kind:    vol.Driver,
@@ -57,7 +59,9 @@ func (s *service) SyncVolumes(
 				Name:    vol.Name,
 				Version: currentSettingVersion,
 			}
-			volEntity := &entity.ClusterVolume{}
+			volEntity := &entity.ClusterVolume{
+				RefID: volID,
+			}
 			if err := setting.SetData(volEntity); err != nil {
 				return nil, apperrors.Wrap(err)
 			}

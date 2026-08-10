@@ -35471,7 +35471,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -35489,7 +35489,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -39106,6 +39106,9 @@
           "name" : {
             "type" : "string"
           },
+          "refId" : {
+            "type" : "string"
+          },
           "role" : {
             "$ref" : "#/components/schemas/services_docker.NodeRole"
           },
@@ -39113,7 +39116,7 @@
             "$ref" : "#/components/schemas/services_docker.NodeState"
           }
         },
-        "required" : [ "addr", "availability", "hostname", "id", "isLeader", "name", "role", "state" ],
+        "required" : [ "addr", "availability", "hostname", "id", "isLeader", "name", "refId", "role", "state" ],
         "type" : "object"
       },
       "cluster_nodedto.NodeEngineDescResp" : {
@@ -39226,6 +39229,9 @@
           "platform" : {
             "$ref" : "#/components/schemas/cluster_nodedto.NodePlatformResp"
           },
+          "refId" : {
+            "type" : "string"
+          },
           "resources" : {
             "$ref" : "#/components/schemas/cluster_nodedto.NodeResources"
           },
@@ -39251,7 +39257,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "addr", "availability", "availableInProjects", "createdAt", "default", "engineDesc", "expireAt", "hostname", "id", "inherited", "isLeader", "kind", "labels", "name", "platform", "resources", "role", "size", "state", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "addr", "availability", "availableInProjects", "createdAt", "default", "engineDesc", "expireAt", "hostname", "id", "inherited", "isLeader", "kind", "labels", "name", "platform", "refId", "resources", "role", "size", "state", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "cluster_nodedto.SetManagerNodesReq" : {
@@ -39329,9 +39335,6 @@
             "description" : "For `local` driver only",
             "type" : "object"
           },
-          "btrfsOptions" : {
-            "$ref" : "#/components/schemas/cluster_volumedto.VolumeBtrfsOptionsReq"
-          },
           "default" : {
             "type" : "boolean"
           },
@@ -39360,7 +39363,7 @@
             "$ref" : "#/components/schemas/cluster_volumedto.VolumeTmpfsOptionsReq"
           }
         },
-        "required" : [ "availableInProjects", "bindOptions", "btrfsOptions", "default", "driver", "labels", "name", "nfsOptions", "options", "tmpfsOptions" ],
+        "required" : [ "availableInProjects", "bindOptions", "default", "driver", "labels", "name", "nfsOptions", "options", "tmpfsOptions" ],
         "type" : "object"
       },
       "cluster_volumedto.CreateVolumeResp" : {
@@ -39511,18 +39514,6 @@
           }
         },
         "required" : [ "directory", "extraOptions", "propagation", "readonly" ],
-        "type" : "object"
-      },
-      "cluster_volumedto.VolumeBtrfsOptionsReq" : {
-        "properties" : {
-          "device" : {
-            "type" : "string"
-          },
-          "extraOptions" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "device", "extraOptions" ],
         "type" : "object"
       },
       "cluster_volumedto.VolumeBtrfsOptionsResp" : {
@@ -51363,9 +51354,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

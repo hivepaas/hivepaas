@@ -26,7 +26,7 @@ func (uc *UC) UpdateNode(
 			data *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
-			nodeID := dockerhelper.ParseID(data.Setting.ID)
+			nodeID := data.Setting.MustAsClusterNode().RefID
 			inspect, err := uc.dockerManager.NodeInspect(ctx, nodeID)
 			if err != nil {
 				return apperrors.Wrap(err)

@@ -20,6 +20,7 @@ func (s *clusterNetworkParser) New() SettingData {
 }
 
 type ClusterNetwork struct {
+	RefID string `json:"refId"`
 }
 
 func (s *ClusterNetwork) GetType() base.SettingType {

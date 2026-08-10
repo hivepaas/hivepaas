@@ -58,7 +58,8 @@ func (uc *UC) listVolumesInDocker(
 	if currVols == nil {
 		volumes := make([]string, 0, len(settings))
 		for _, setting := range settings {
-			volumes = append(volumes, dockerhelper.ParseID(setting.ID))
+			volEnt := setting.MustAsClusterVolume()
+			volumes = append(volumes, volEnt.RefID)
 		}
 		if len(volumes) == 0 {
 			return nil

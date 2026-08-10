@@ -7,7 +7,9 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
 type GetAppNetworkSettingsReq struct {
@@ -71,19 +73,21 @@ type PortConfig struct {
 	PublishMode swarm.PortConfigPublishMode `json:"publishMode,omitempty"`
 }
 
+type NetworkTransformationInput struct {
+	Service        *swarm.Service
+	DBNetworks     []*entity.Setting
+	DockerNetworks map[string]*network.Summary
+}
+
 func TransformNetworkSettings(
-	service *swarm.Service,
-	refObjects *InfraRefObjects,
+	input *NetworkTransformationInput,
 ) (resp *NetworkSettingsResp, err error) {
-	spec := &service.Spec
-	if refObjects == nil {
-		refObjects = &InfraRefObjects{}
-	}
+	spec := &input.Service.Spec
 	resp = &NetworkSettingsResp{
-		UpdateVer: int(service.Version.Index), //nolint:gosec
+		UpdateVer: int(input.Service.Version.Index), //nolint:gosec
 	}
 
-	resp.NetworkAttachments, err = TransformNetworkAttachments(spec.TaskTemplate.Networks, refObjects)
+	resp.NetworkAttachments, err = TransformNetworkAttachments(spec.TaskTemplate.Networks, input)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -96,15 +100,23 @@ func TransformNetworkSettings(
 
 func TransformNetworkAttachments(
 	netAttachments []swarm.NetworkAttachmentConfig,
-	refObjects *InfraRefObjects,
+	input *NetworkTransformationInput,
 ) (resp []*NetworkAttachment, err error) {
 	resp = make([]*NetworkAttachment, 0, len(netAttachments))
-	for _, netAttachment := range netAttachments {
+	for _, netAttach := range netAttachments {
+		dbNetwork, _ := gofn.Find(input.DBNetworks, func(s *entity.Setting) bool {
+			return s.Type == base.SettingTypeClusterNetwork && s.MustAsClusterNetwork().RefID == netAttach.Target
+		})
 		itemResp := &NetworkAttachment{
-			ID:      netAttachment.Target,
-			Aliases: netAttachment.Aliases,
+			ID:      netAttach.Target,
+			Aliases: netAttach.Aliases,
+			Name:    "unrecognized network",
 		}
-		if net := refObjects.Networks[itemResp.ID]; net != nil {
+		if dbNetwork != nil { // use DB network ID instead of docker ID if possible
+			itemResp.ID = dbNetwork.ID
+			itemResp.Name = dbNetwork.Name
+		}
+		if net := input.DockerNetworks[itemResp.ID]; net != nil {
 			itemResp.Name = net.Name
 		}
 		resp = append(resp, itemResp)

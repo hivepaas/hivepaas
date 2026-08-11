@@ -4,11 +4,11 @@ type BuildTool string
 
 const (
 	BuildToolDocker   BuildTool = "docker"
-	BuildToolRailPack BuildTool = "railpack"
+	BuildToolRailpack BuildTool = "railpack"
 )
 
 var (
-	AllBuildTools = []BuildTool{BuildToolDocker, BuildToolRailPack}
+	AllBuildTools = []BuildTool{BuildToolDocker, BuildToolRailpack}
 )
 
 type DeploymentMethod string

@@ -112,20 +112,26 @@ func (req *DBObjectRetentionReq) validate(field string) (res []vld.Validator) {
 }
 
 type SystemClusterCleanupReq struct {
-	Enabled         bool `json:"enabled"`
-	PruneImages     bool `json:"pruneImages"`
-	PruneVolumes    bool `json:"pruneVolumes"`
-	PruneNetworks   bool `json:"pruneNetworks"`
-	PruneContainers bool `json:"pruneContainers"`
+	Enabled             bool              `json:"enabled"`
+	GeneralRetention    timeutil.Duration `json:"generalRetention"`
+	BuildCacheRetention timeutil.Duration `json:"buildCacheRetention"`
+	PruneImages         bool              `json:"pruneImages"`
+	PruneVolumes        bool              `json:"pruneVolumes"`
+	PruneNetworks       bool              `json:"pruneNetworks"`
+	PruneContainers     bool              `json:"pruneContainers"`
+	PruneBuildCache     bool              `json:"pruneBuildCache"`
 }
 
 func (req *SystemClusterCleanupReq) ToEntity() entity.SystemClusterCleanup {
 	return entity.SystemClusterCleanup{
-		Enabled:         req.Enabled,
-		PruneImages:     req.PruneImages,
-		PruneVolumes:    req.PruneVolumes,
-		PruneNetworks:   req.PruneNetworks,
-		PruneContainers: req.PruneContainers,
+		Enabled:             req.Enabled,
+		GeneralRetention:    req.GeneralRetention,
+		BuildCacheRetention: req.BuildCacheRetention,
+		PruneImages:         req.PruneImages,
+		PruneVolumes:        req.PruneVolumes,
+		PruneNetworks:       req.PruneNetworks,
+		PruneContainers:     req.PruneContainers,
+		PruneBuildCache:     req.PruneBuildCache,
 	}
 }
 

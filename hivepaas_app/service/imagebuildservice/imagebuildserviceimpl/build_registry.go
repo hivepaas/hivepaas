@@ -104,5 +104,17 @@ func (s *service) prepareDockerConfigDir(
 		return "", func() {}, apperrors.Wrap(err)
 	}
 
+	// Symlink host docker directories into temporary configDir so plugins,
+	// buildx instances, contexts, and sockets remain available.
+	if homeDir, err := os.UserHomeDir(); err == nil {
+		dirsToLink := []string{"cli-plugins", "buildx", "contexts", "run"}
+		for _, dirName := range dirsToLink {
+			hostDir := filepath.Join(homeDir, ".docker", dirName)
+			if info, err := os.Stat(hostDir); err == nil && info.IsDir() {
+				_ = os.Symlink(hostDir, filepath.Join(configDir, dirName))
+			}
+		}
+	}
+
 	return configDir, cleanup, nil
 }

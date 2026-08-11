@@ -103,15 +103,15 @@ type ImagePruneOption func(options *client.ImagePruneOptions)
 func (m *manager) ImagePrune(
 	ctx context.Context,
 	danglingOnly bool,
-	onlyObjectsOlderThan time.Duration,
+	generalRetention time.Duration,
 	options ...ImagePruneOption,
 ) (*client.ImagePruneResult, error) {
 	opts := client.ImagePruneOptions{}
 	if danglingOnly {
 		FilterAdd(&opts.Filters, "dangling", "true")
 	}
-	if onlyObjectsOlderThan > 0 {
-		FilterAdd(&opts.Filters, "until", onlyObjectsOlderThan.String())
+	if generalRetention > 0 {
+		FilterAdd(&opts.Filters, "until", generalRetention.String())
 	}
 	for _, opt := range options {
 		opt(&opts)

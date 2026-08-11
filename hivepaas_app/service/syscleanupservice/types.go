@@ -36,7 +36,7 @@ func (req *SysCleanupReq) SetCleanupFlagsDefault() {
 	req.CleanupClusterImages = CleanupFlagTrue
 	req.CleanupClusterVolumes = CleanupFlagTrue
 	req.CleanupClusterNetworks = CleanupFlagTrue
-	req.CleanupClusterBuildCache = CleanupFlagFalse
+	req.CleanupClusterBuildCache = CleanupFlagTrue
 
 	req.CleanupBackupInLocal = CleanupFlagTrue
 	req.CleanupBackupInCloud = CleanupFlagTrue

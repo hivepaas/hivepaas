@@ -3,12 +3,17 @@ package syscleanupserviceimpl
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -17,6 +22,7 @@ const (
 	tempResourceGracePeriod = 1 * time.Hour
 )
 
+//nolint:gocognit
 func (s *service) sysCleanupCluster(
 	ctx context.Context,
 	data *sysCleanupData,
@@ -26,10 +32,10 @@ func (s *service) sysCleanupCluster(
 		return nil
 	}
 
-	objectsOlderThan := clusterCleanup.OnlyObjectsOlderThan.ToDuration()
+	objectRetention := clusterCleanup.GeneralRetention.ToDuration()
 
 	if data.CleanupClusterContainers != syscleanupservice.CleanupFlagFalse && clusterCleanup.PruneContainers {
-		resp, e := s.dockerManager.ContainerPrune(ctx, objectsOlderThan)
+		resp, e := s.dockerManager.ContainerPrune(ctx, objectRetention)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.ContainersPruneError = e.Error()
 			err = errors.Join(err, e)
@@ -51,7 +57,7 @@ func (s *service) sysCleanupCluster(
 	}
 
 	if data.CleanupClusterImages != syscleanupservice.CleanupFlagFalse && clusterCleanup.PruneImages {
-		resp, e := s.dockerManager.ImagePrune(ctx, false, objectsOlderThan)
+		resp, e := s.dockerManager.ImagePrune(ctx, false, objectRetention)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.ImagesPruneError = e.Error()
 			err = errors.Join(err, e)
@@ -75,7 +81,7 @@ func (s *service) sysCleanupCluster(
 	}
 
 	if data.CleanupClusterNetworks != syscleanupservice.CleanupFlagFalse && clusterCleanup.PruneNetworks {
-		resp, e := s.dockerManager.NetworkPrune(ctx, objectsOlderThan)
+		resp, e := s.dockerManager.NetworkPrune(ctx, objectRetention)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.NetworksPruneError = e.Error()
 			err = errors.Join(err, e)
@@ -85,16 +91,54 @@ func (s *service) sysCleanupCluster(
 		}
 	}
 
-	// TODO: clean build cache in all nodes
-	if data.CleanupClusterBuildCache == syscleanupservice.CleanupFlagForce {
-		resp, e := s.dockerManager.BuildCachePrune(ctx)
+	// Clean build cache
+	isForce := data.CleanupClusterBuildCache == syscleanupservice.CleanupFlagForce
+	isScheduled := data.CleanupClusterBuildCache != syscleanupservice.CleanupFlagFalse && clusterCleanup.PruneBuildCache
+
+	if isForce || isScheduled { //nolint:nestif
+		buildCacheRetention := clusterCleanup.BuildCacheRetention.ToDuration()
+		if buildCacheRetention == 0 {
+			buildCacheRetention = objectRetention
+		}
+
+		// 1. Prune Docker daemon build cache
+		var dockerPruneOpts []docker.BuildCachePruneOption
+		if isForce {
+			dockerPruneOpts = append(dockerPruneOpts, func(o *client.BuildCachePruneOptions) {
+				o.All = true
+			})
+		} else if buildCacheRetention > 0 {
+			dockerPruneOpts = append(dockerPruneOpts, func(o *client.BuildCachePruneOptions) {
+				docker.FilterAdd(&o.Filters, "until", buildCacheRetention.String())
+			})
+		}
+
+		resp, e := s.dockerManager.BuildCachePrune(ctx, dockerPruneOpts...)
 		if e != nil {
 			data.TaskOutput.ClusterCleanup.BuildCachesPruneError = e.Error()
 			err = errors.Join(err, e)
-		} else {
+		} else if resp != nil {
 			report := &resp.Report
 			data.TaskOutput.ClusterCleanup.BuildCachesDeleted = len(report.CachesDeleted)
 			data.TaskOutput.ClusterCleanup.SpaceReclaimed += report.SpaceReclaimed
+		}
+
+		// 2. Prune Custom Builder
+		pruneArgs := []string{"buildx", "prune", "--builder", base.HivepaasGlobalBuilder, "--force"}
+		if isForce {
+			pruneArgs = append(pruneArgs, "--all")
+		} else if buildCacheRetention > 0 {
+			hours := int(buildCacheRetention.Hours())
+			pruneArgs = append(pruneArgs, "--filter", fmt.Sprintf("unused-for=%dh", hours))
+		}
+
+		pruneCmd := exec.CommandContext(ctx, "docker", pruneArgs...)
+		if out, pruneErr := pruneCmd.CombinedOutput(); pruneErr != nil {
+			outStr := reflectutil.UnsafeBytesToStr(out)
+			if !strings.Contains(outStr, "no builder") && !strings.Contains(outStr, "not found") {
+				data.TaskOutput.ClusterCleanup.BuildCachesPruneError = outStr
+				err = errors.Join(err, apperrors.Wrap(pruneErr).WithMsgLog("%s", outStr))
+			}
 		}
 	}
 

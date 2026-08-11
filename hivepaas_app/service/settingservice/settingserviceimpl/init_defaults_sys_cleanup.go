@@ -30,6 +30,9 @@ const (
 	dbObjectRetentionOfDeletedObjects = timeutil.Duration(timeutil.Day * 90)
 
 	sysCleanupRepoCacheRetention = timeutil.Duration(timeutil.Day * 10)
+
+	sysCleanupClusterObjectRetention = timeutil.Duration(timeutil.Day * 3)
+	sysCleanupBuildCacheRetention    = timeutil.Duration(timeutil.Day * 30)
 )
 
 func (s *service) initDefaultSystemCleanup(
@@ -61,11 +64,14 @@ func (s *service) initDefaultSystemCleanup(
 			DeletedObjects: dbObjectRetentionOfDeletedObjects,
 		},
 		ClusterCleanup: entity.SystemClusterCleanup{
-			Enabled:         true,
-			PruneImages:     true,
-			PruneVolumes:    true,
-			PruneNetworks:   true,
-			PruneContainers: true,
+			Enabled:             true,
+			GeneralRetention:    sysCleanupClusterObjectRetention,
+			BuildCacheRetention: sysCleanupBuildCacheRetention,
+			PruneImages:         true,
+			PruneVolumes:        true,
+			PruneNetworks:       true,
+			PruneContainers:     true,
+			PruneBuildCache:     true,
 		},
 		BackupCleanup: entity.SystemBackupCleanup{
 			Enabled:              true,

@@ -5,13 +5,14 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"sync"
 
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -28,13 +29,29 @@ func (s *service) buildImageWithDocker(
 	s.addStepStartLog(ctx, data, "Start building image with Docker BuildKit...")
 	defer s.addStepEndLog(ctx, data, timeutil.NowUTC(), err)
 
+	builderName := base.HivepaasGlobalBuilder
+	var res *entity.ImageBuildResourceSettings
+	if buildSetting != nil {
+		res = &buildSetting.Resources
+	}
+
+	if err := s.ensureCustomBuilder(ctx, builderName, res); err != nil {
+		return apperrors.Wrap(err)
+	}
+
 	dockerConfigDir, cleanup, err := s.prepareDockerConfigDir(data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	defer cleanup()
 
-	args := []string{"build", "--progress=plain", "-f", dockerfile}
+	args := []string{
+		"buildx", "build",
+		"--builder", builderName,
+		"--load",
+		"--progress=plain",
+		"-f", dockerfile,
+	}
 
 	for _, tag := range data.ImageTags {
 		args = append(args, "-t", tag)
@@ -53,8 +70,7 @@ func (s *service) buildImageWithDocker(
 		if buildSetting.NoVerbose {
 			args = append(args, "--quiet")
 		}
-		res := buildSetting.Resources
-		if res.ShmSize > 0 {
+		if res != nil && res.ShmSize > 0 {
 			args = append(args, "--shm-size", fmt.Sprintf("%d", res.ShmSize.Bytes()))
 		}
 	}
@@ -64,10 +80,11 @@ func (s *service) buildImageWithDocker(
 
 	cmd := exec.CommandContext(ctx, "docker", args...)
 	cmd.Dir = data.CheckoutDir
-	cmd.Env = append(os.Environ(), "DOCKER_BUILDKIT=1")
+	envs := append(s.calcSafeEnvVars(), "DOCKER_BUILDKIT=1")
 	if dockerConfigDir != "" {
-		cmd.Env = append(cmd.Env, "DOCKER_CONFIG="+dockerConfigDir)
+		envs = append(envs, "DOCKER_CONFIG="+dockerConfigDir)
 	}
+	cmd.Env = envs
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

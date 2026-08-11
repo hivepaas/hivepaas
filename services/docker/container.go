@@ -282,12 +282,12 @@ type ContainerPruneOption func(options *client.ContainerPruneOptions)
 
 func (m *manager) ContainerPrune(
 	ctx context.Context,
-	onlyObjectsOlderThan time.Duration,
+	generalRetention time.Duration,
 	options ...ContainerPruneOption,
 ) (*client.ContainerPruneResult, error) {
 	opts := client.ContainerPruneOptions{}
-	if onlyObjectsOlderThan > 0 {
-		FilterAdd(&opts.Filters, "until", onlyObjectsOlderThan.String())
+	if generalRetention > 0 {
+		FilterAdd(&opts.Filters, "until", generalRetention.String())
 	}
 	for _, opt := range options {
 		opt(&opts)

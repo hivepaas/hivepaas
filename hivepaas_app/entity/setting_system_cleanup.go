@@ -39,12 +39,14 @@ type DBObjectRetention struct {
 }
 
 type SystemClusterCleanup struct {
-	Enabled              bool              `json:"enabled"`
-	OnlyObjectsOlderThan timeutil.Duration `json:"onlyObjectsOlderThan"`
-	PruneImages          bool              `json:"pruneImages"`
-	PruneVolumes         bool              `json:"pruneVolumes"`
-	PruneNetworks        bool              `json:"pruneNetworks"`
-	PruneContainers      bool              `json:"pruneContainers"`
+	Enabled             bool              `json:"enabled"`
+	GeneralRetention    timeutil.Duration `json:"generalRetention"`
+	BuildCacheRetention timeutil.Duration `json:"buildCacheRetention"`
+	PruneImages         bool              `json:"pruneImages"`
+	PruneVolumes        bool              `json:"pruneVolumes"`
+	PruneNetworks       bool              `json:"pruneNetworks"`
+	PruneContainers     bool              `json:"pruneContainers"`
+	PruneBuildCache     bool              `json:"pruneBuildCache"`
 }
 
 type SystemBackupCleanup struct {

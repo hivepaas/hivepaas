@@ -36,7 +36,7 @@ func (s *service) imageBuild(
 	switch data.BuildTool {
 	case base.BuildToolDocker:
 		return s.buildImageWithDocker(ctx, db, data)
-	case base.BuildToolRailPack:
+	case base.BuildToolRailpack:
 		return s.buildImageWithRailpack(ctx, db, data)
 	}
 

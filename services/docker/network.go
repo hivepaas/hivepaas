@@ -138,12 +138,12 @@ type NetworkPruneOption func(*client.NetworkPruneOptions)
 
 func (m *manager) NetworkPrune(
 	ctx context.Context,
-	onlyObjectsOlderThan time.Duration,
+	generalRetention time.Duration,
 	options ...NetworkPruneOption,
 ) (*client.NetworkPruneResult, error) {
 	opts := client.NetworkPruneOptions{}
-	if onlyObjectsOlderThan > 0 {
-		FilterAdd(&opts.Filters, "until", onlyObjectsOlderThan.String())
+	if generalRetention > 0 {
+		FilterAdd(&opts.Filters, "until", generalRetention.String())
 	}
 	for _, opt := range options {
 		opt(&opts)

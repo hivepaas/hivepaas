@@ -68,7 +68,7 @@ type Manager interface {
 		*client.ContainerKillResult, error)
 	ContainerKillMulti(ctx context.Context, containerIDs []string, signal string, options ...ContainerKillOption) (
 		_ map[string]error)
-	ContainerPrune(ctx context.Context, onlyObjectsOlderThan time.Duration, options ...ContainerPruneOption) (
+	ContainerPrune(ctx context.Context, generalRetention time.Duration, options ...ContainerPruneOption) (
 		*client.ContainerPruneResult, error)
 
 	ContainerExec(ctx context.Context, containerID string, options ...ExecCreateOption) (
@@ -93,7 +93,7 @@ type Manager interface {
 		*client.ImageRemoveResult, error)
 	ImageInspect(ctx context.Context, imageID string, options ...ImageInspectOption) (
 		*client.ImageInspectResult, error)
-	ImagePrune(ctx context.Context, danglingOnly bool, onlyObjectsOlderThan time.Duration, options ...ImagePruneOption) (
+	ImagePrune(ctx context.Context, danglingOnly bool, generalRetention time.Duration, options ...ImagePruneOption) (
 		*client.ImagePruneResult, error)
 
 	ImageBuild(ctx context.Context, buildContext io.Reader, options ...ImageBuildOption) (
@@ -115,7 +115,7 @@ type Manager interface {
 	NetworkInspect(ctx context.Context, name string, options ...NetworkInspectOption) (
 		*client.NetworkInspectResult, error)
 	NetworkExists(ctx context.Context, name string) bool
-	NetworkPrune(ctx context.Context, onlyObjectsOlderThan time.Duration, options ...NetworkPruneOption) (
+	NetworkPrune(ctx context.Context, generalRetention time.Duration, options ...NetworkPruneOption) (
 		*client.NetworkPruneResult, error)
 
 	// Nodes

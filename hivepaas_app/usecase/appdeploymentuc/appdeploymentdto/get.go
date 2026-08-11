@@ -1,6 +1,7 @@
 package appdeploymentdto
 
 import (
+	"strings"
 	"time"
 
 	vld "github.com/tiendc/go-validator"
@@ -94,11 +95,12 @@ func TransformDeployment(
 		if triggerUser != nil {
 			resp.Trigger.SourceUser = basedto.TransformUserBase(triggerUser)
 		} else {
-			resp.Trigger.SourceUser = basedto.NewMissingUserResp(deployment.Trigger.SourceID)
+			resp.Trigger.SourceUser = basedto.NewMissingUser(deployment.Trigger.SourceID)
 		}
 	}
 
 	if resp.Output != nil {
+		resp.Output.Error = strings.Join(deployment.Output.Errors, "\n")
 		resp.Output.CommitHashShort = resp.Output.CommitHash
 		if len(resp.Output.CommitHashShort) > commitHashShortLen { // shorten to some characters if possible
 			resp.Output.CommitHashShort = resp.Output.CommitHashShort[:commitHashShortLen]

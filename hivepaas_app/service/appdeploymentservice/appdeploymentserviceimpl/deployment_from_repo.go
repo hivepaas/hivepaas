@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice"
@@ -31,6 +32,7 @@ const (
 type repoDeploymentData struct {
 	*appDeploymentData
 	ImageBuildSettings *entity.ImageBuildSettings
+	IsMultiNode        bool
 
 	TempDir     string
 	CheckoutDir string
@@ -143,10 +145,10 @@ func (s *service) repoDeployStepSourceCheckout(
 	}
 
 	repoSource.CommitHash = checkoutResp.CommitHash
-	data.DeploymentOutput.CommitHash = checkoutResp.CommitHash
-	data.DeploymentOutput.CommitMessage = checkoutResp.CommitMessage
-	data.DeploymentOutput.CommitTitle = checkoutResp.CommitTitle
-	data.DeploymentOutput.CommitAuthor = checkoutResp.CommitAuthor
+	data.Deployment.Output.CommitHash = checkoutResp.CommitHash
+	data.Deployment.Output.CommitMessage = checkoutResp.CommitMessage
+	data.Deployment.Output.CommitTitle = checkoutResp.CommitTitle
+	data.Deployment.Output.CommitAuthor = checkoutResp.CommitAuthor
 
 	return nil
 }
@@ -182,7 +184,7 @@ func (s *service) repoDeployStepImageBuild(
 		return apperrors.Wrap(err)
 	}
 
-	data.DeploymentOutput.ImageTags = buildResp.ImageTags
+	data.Deployment.Output.ImageTags = buildResp.ImageTags
 
 	return nil
 }
@@ -231,7 +233,7 @@ func (s *service) repoDeployStepServiceApply(
 		service := &inspect.Service
 		spec := &service.Spec
 		contSpec := spec.TaskTemplate.ContainerSpec
-		contSpec.Image = data.DeploymentOutput.ImageTags[0]
+		contSpec.Image = data.Deployment.Output.ImageTags[0]
 		contSpec.Dir = deployment.Settings.WorkingDir
 		dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
 
@@ -260,6 +262,8 @@ func (s *service) repoDeployStepPrepare(
 	db database.IDB,
 	data *repoDeploymentData,
 ) (err error) {
+	deployment := data.Deployment
+
 	// Creates temp dir and checkout dir
 	data.TempDir, err = fileutil.CreateTempDir(base.BaseTempDirDefault, "*", 0)
 	if err != nil {
@@ -272,6 +276,18 @@ func (s *service) repoDeployStepPrepare(
 	err = s.loadImageBuildSettings(ctx, db, data)
 	if err != nil {
 		return apperrors.Wrap(err)
+	}
+
+	// Validate settings
+	data.IsMultiNode, err = s.clusterService.IsMultiNode(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	if data.IsMultiNode && deployment.Settings.RepoSource.PushToRegistry.ID == "" {
+		warn := "[WARN] The cluster is multi-node, but no target registry is configured to push the built image. " +
+			"The image will not be accessible from other nodes in the cluster."
+		deployment.Output.Errors = append(deployment.Output.Errors, warn)
+		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(warn, tasklog.TsNow))
 	}
 
 	return nil

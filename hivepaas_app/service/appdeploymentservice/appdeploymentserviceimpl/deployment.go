@@ -28,7 +28,6 @@ type appDeploymentData struct {
 	*appdeploymentservice.AppDeploymentReq
 	App                *entity.App
 	Deployment         *entity.Deployment
-	DeploymentOutput   *entity.AppDeploymentOutput
 	DeploymentCanceled bool
 	Step               string
 	NotifMsgData       *notificationservice.TemplateDataAppDeployment
@@ -42,7 +41,6 @@ func (s *service) Deploy(
 	resp = &appdeploymentservice.AppDeploymentResp{}
 	data := &appDeploymentData{
 		AppDeploymentReq: req,
-		DeploymentOutput: &entity.AppDeploymentOutput{},
 	}
 	data.OnPostTransaction(func() { s.onPostTransaction(context.Background(), data) }) //nolint:contextcheck
 	s.initLogStore(data)
@@ -65,9 +63,8 @@ func (s *service) Deploy(
 			data.Deployment.Status = base.DeploymentStatusCanceled
 		default:
 			data.Deployment.Status = gofn.If(err != nil, base.DeploymentStatusFailed, base.DeploymentStatusDone)
-			data.Deployment.Output = data.DeploymentOutput
 			if err != nil {
-				data.Deployment.Output.Error = err.Error()
+				data.Deployment.Output.Errors = append(data.Deployment.Output.Errors, err.Error())
 			}
 		}
 		err = s.deploymentRepo.Update(ctx, db, data.Deployment)
@@ -140,6 +137,7 @@ func (s *service) loadDeploymentData(
 
 	data.App = deployment.App
 	data.Deployment = deployment
+	data.Deployment.Output = &entity.AppDeploymentOutput{} // to avoid panic when add data to the field
 
 	// Reference setting IDs to load
 	refObjectIDs := data.Deployment.Settings.GetRefObjectIDs()

@@ -185,7 +185,7 @@ func (s *service) imageDeployStepServiceApply(
 	}
 
 	// Save the used image in the output
-	data.DeploymentOutput.ImageTags = append(data.DeploymentOutput.ImageTags, imageSource.Image)
+	data.Deployment.Output.ImageTags = append(data.Deployment.Output.ImageTags, imageSource.Image)
 
 	return nil
 }

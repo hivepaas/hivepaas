@@ -35,7 +35,7 @@ func TransformUsersBase(users []*entity.User) []*UserBaseResp {
 	return resp
 }
 
-func NewMissingUserResp(id string) *UserBaseResp {
+func NewMissingUser(id string) *UserBaseResp {
 	//nolint:goconst
 	return &UserBaseResp{
 		ID:       id,

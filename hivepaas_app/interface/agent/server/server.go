@@ -6,25 +6,28 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server/containerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
 )
 
-// AgentServer implements agentproto.AgentServiceServer and agentproto.ContainerServiceServer
 type AgentServer struct {
 	agentproto.UnimplementedAgentServiceServer
 	agentproto.UnimplementedContainerServiceServer
-	logger           logging.Logger
-	containerAgentUC *containeragentuc.UC
+	agentproto.UnimplementedNodeCleanupServiceServer
+	logger             logging.Logger
+	containerAgentUC   *containeragentuc.UC
+	nodeCleanupAgentUC *nodecleanupagentuc.UC
 }
 
 func NewAgentServer(
 	logger logging.Logger,
 	containerAgentUC *containeragentuc.UC,
+	nodeCleanupAgentUC *nodecleanupagentuc.UC,
 ) *AgentServer {
 	return &AgentServer{
-		logger:           logger,
-		containerAgentUC: containerAgentUC,
+		logger:             logger,
+		containerAgentUC:   containerAgentUC,
+		nodeCleanupAgentUC: nodeCleanupAgentUC,
 	}
 }
 
@@ -36,10 +39,4 @@ func (s *AgentServer) Ping(
 	return &agentproto.PingResp{
 		Message: fmt.Sprintf("Pong: %s", req.GetMessage()),
 	}, nil
-}
-
-/// CONTAINER SERVICE
-
-func (s *AgentServer) ContainerExec(req agentproto.ContainerService_ContainerExecServer) error {
-	return containerservice.ContainerExec(s.containerAgentUC, req) //nolint:wrapcheck
 }

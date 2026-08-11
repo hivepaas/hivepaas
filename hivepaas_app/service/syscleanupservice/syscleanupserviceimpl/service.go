@@ -2,6 +2,7 @@ package syscleanupserviceimpl
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -16,6 +17,7 @@ type service struct {
 	taskRepo       repository.TaskRepo
 
 	clusterCleanupService clustercleanupservice.Service
+	agentService          agentservice.Service
 
 	dockerManager docker.Manager
 }
@@ -29,6 +31,7 @@ func New(
 	taskRepo repository.TaskRepo,
 
 	clusterCleanupService clustercleanupservice.Service,
+	agentService agentservice.Service,
 
 	dockerManager docker.Manager,
 ) syscleanupservice.Service {
@@ -41,6 +44,7 @@ func New(
 		taskRepo:       taskRepo,
 
 		clusterCleanupService: clusterCleanupService,
+		agentService:          agentService,
 
 		dockerManager: dockerManager,
 	}

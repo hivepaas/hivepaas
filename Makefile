@@ -35,6 +35,12 @@ gen: gen-go gen-swag
 gen-go:
 	$(DEVTOOLS_CMD) env GOCACHE=/tmp/go-cache go generate ./...
 
+gen-proto:
+	# may need to install protobuf (mac os: brew install protobuf)
+    # go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+    # go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	go generate ./hivepaas_app/interface/agent/proto/...
+
 gen-swag:
 	@./tools/swag/swag.sh
 

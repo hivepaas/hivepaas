@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+service NodeCleanupService {
+  rpc NodeCleanup(NodeCleanupReq) returns (NodeCleanupResp);
+}
+
+message NodeCleanupReq {
+  string task_id = 1;
+  ClusterCleanupSettings cleanup_settings = 2;
+  int32 cleanup_containers = 3;
+  int32 cleanup_images = 4;
+  int32 cleanup_volumes = 5;
+  int32 cleanup_networks = 6;
+  int32 cleanup_build_cache = 7;
+}
+
+message ClusterCleanupSettings {
+  bool enabled = 1;
+  int64 general_retention = 2;
+  int64 build_cache_retention = 3;
+  bool prune_images = 4;
+  bool prune_volumes = 5;
+  bool prune_networks = 6;
+  bool prune_containers = 7;
+  bool prune_build_cache = 8;
+}
+
+message NodeCleanupResp {
+  string node_id = 1;
+  string node_name = 2;
+  int32 images_deleted = 3;
+  string images_prune_error = 4;
+  int32 volumes_deleted = 5;
+  string volumes_prune_error = 6;
+  int32 containers_deleted = 7;
+  string containers_prune_error = 8;
+  int32 temp_containers_deleted = 9;
+  int32 temp_services_deleted = 10;
+  int32 networks_deleted = 11;
+  string networks_prune_error = 12;
+  int32 build_caches_deleted = 13;
+  string build_caches_prune_error = 14;
+  uint64 space_reclaimed = 15;
+}

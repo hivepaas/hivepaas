@@ -45,8 +45,8 @@ func (uc *UC) ClearBuildCache(
 			resp.TaskOutput.ClusterCleanup = &entity.ClusterCleanupOutput{}
 		}
 		for _, nodeReport := range resp.TaskOutput.ClusterCleanup.Nodes {
-			cachesDeleted = nodeReport.BuildCachesDeleted
-			spaceReclaimed = nodeReport.SpaceReclaimed
+			cachesDeleted += nodeReport.BuildCachesDeleted
+			spaceReclaimed += nodeReport.SpaceReclaimed
 		}
 		return nil
 	})

@@ -143,6 +143,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -359,4 +360,5 @@ var Provides = []any{
 
 	// Use case of Agent
 	containeragentuc.New,
+	nodecleanupagentuc.New,
 }

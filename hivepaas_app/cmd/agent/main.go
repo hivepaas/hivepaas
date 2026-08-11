@@ -24,6 +24,7 @@ func main() {
 			return func(s *grpc.Server) {
 				agentproto.RegisterAgentServiceServer(s, agentSrv)
 				agentproto.RegisterContainerServiceServer(s, agentSrv)
+				agentproto.RegisterNodeCleanupServiceServer(s, agentSrv)
 			}
 		},
 	}

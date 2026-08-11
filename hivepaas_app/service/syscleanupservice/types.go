@@ -1,49 +1,42 @@
 package syscleanupservice
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
-)
-
-type CleanupFlag int8
-
-const (
-	CleanupFlagFalse = iota
-	CleanupFlagTrue
-	CleanupFlagForce
 )
 
 type SysCleanupReq struct {
 	*queue.TaskExecData
 	SysCleanupSettings *entity.SystemCleanup
 
-	CleanupClusterContainers CleanupFlag
-	CleanupClusterImages     CleanupFlag
-	CleanupClusterVolumes    CleanupFlag
-	CleanupClusterNetworks   CleanupFlag
-	CleanupClusterBuildCache CleanupFlag
+	CleanupClusterContainers base.CleanupFlag
+	CleanupClusterImages     base.CleanupFlag
+	CleanupClusterVolumes    base.CleanupFlag
+	CleanupClusterNetworks   base.CleanupFlag
+	CleanupClusterBuildCache base.CleanupFlag
 
-	CleanupBackupInLocal CleanupFlag
-	CleanupBackupInCloud CleanupFlag
+	CleanupBackupInLocal base.CleanupFlag
+	CleanupBackupInCloud base.CleanupFlag
 
-	CleanupCacheRepo CleanupFlag
+	CleanupCacheRepo base.CleanupFlag
 
-	CleanupFilesTemp CleanupFlag
+	CleanupFilesTemp base.CleanupFlag
 }
 
 func (req *SysCleanupReq) SetCleanupFlagsDefault() {
-	req.CleanupClusterContainers = CleanupFlagTrue
-	req.CleanupClusterImages = CleanupFlagTrue
-	req.CleanupClusterVolumes = CleanupFlagTrue
-	req.CleanupClusterNetworks = CleanupFlagTrue
-	req.CleanupClusterBuildCache = CleanupFlagTrue
+	req.CleanupClusterContainers = base.CleanupFlagTrue
+	req.CleanupClusterImages = base.CleanupFlagTrue
+	req.CleanupClusterVolumes = base.CleanupFlagTrue
+	req.CleanupClusterNetworks = base.CleanupFlagTrue
+	req.CleanupClusterBuildCache = base.CleanupFlagTrue
 
-	req.CleanupBackupInLocal = CleanupFlagTrue
-	req.CleanupBackupInCloud = CleanupFlagTrue
+	req.CleanupBackupInLocal = base.CleanupFlagTrue
+	req.CleanupBackupInCloud = base.CleanupFlagTrue
 
-	req.CleanupCacheRepo = CleanupFlagTrue
+	req.CleanupCacheRepo = base.CleanupFlagTrue
 
-	req.CleanupFilesTemp = CleanupFlagTrue
+	req.CleanupFilesTemp = base.CleanupFlagTrue
 }
 
 type SysCleanupResp struct {

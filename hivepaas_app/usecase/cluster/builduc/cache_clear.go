@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -20,14 +21,17 @@ func (uc *UC) ClearBuildCache(
 ) (*builddto.ClearBuildCacheResp, error) {
 	cleanupReq := &syscleanupservice.SysCleanupReq{
 		TaskExecData: &queue.TaskExecData{
-			Task: &entity.Task{},
+			Task: &entity.Task{
+				ID: "fake-task-id",
+			},
 		},
 		SysCleanupSettings: &entity.SystemCleanup{
 			ClusterCleanup: entity.SystemClusterCleanup{
-				Enabled: true,
+				Enabled:         true,
+				PruneBuildCache: true,
 			},
 		},
-		CleanupClusterBuildCache: syscleanupservice.CleanupFlagForce,
+		CleanupClusterBuildCache: base.CleanupFlagForce,
 	}
 
 	cachesDeleted := 0
@@ -37,8 +41,13 @@ func (uc *UC) ClearBuildCache(
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-		cachesDeleted = resp.TaskOutput.ClusterCleanup.BuildCachesDeleted
-		spaceReclaimed = resp.TaskOutput.ClusterCleanup.SpaceReclaimed
+		if resp.TaskOutput.ClusterCleanup == nil {
+			resp.TaskOutput.ClusterCleanup = &entity.ClusterCleanupOutput{}
+		}
+		for _, nodeReport := range resp.TaskOutput.ClusterCleanup.Nodes {
+			cachesDeleted = nodeReport.BuildCachesDeleted
+			spaceReclaimed = nodeReport.SpaceReclaimed
+		}
 		return nil
 	})
 	if err != nil {

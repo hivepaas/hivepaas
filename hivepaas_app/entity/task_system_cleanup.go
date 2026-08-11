@@ -13,6 +13,13 @@ type DBCleanupOutput struct {
 }
 
 type ClusterCleanupOutput struct {
+	Nodes []*ClusterNodeCleanupOutput `json:"nodes"`
+}
+
+type ClusterNodeCleanupOutput struct {
+	NodeID   string `json:"nodeId"`
+	NodeName string `json:"nodeName"`
+
 	ImagesDeleted         int    `json:"imagesDeleted"`
 	ImagesPruneError      string `json:"imagesPruneError,omitempty"`
 	VolumesDeleted        int    `json:"volumesDeleted"`

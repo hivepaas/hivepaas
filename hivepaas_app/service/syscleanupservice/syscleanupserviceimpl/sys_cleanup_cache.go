@@ -16,7 +16,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
 )
 
 const (
@@ -51,13 +50,13 @@ func (s *service) sysCleanupCacheRepoSource(
 	db database.IDB,
 	data *sysCleanupData,
 ) (err error) {
-	if data.CleanupCacheRepo == syscleanupservice.CleanupFlagFalse {
+	if data.CleanupCacheRepo == base.CleanupFlagFalse {
 		return nil
 	}
 	timeNow := timeutil.NowUTC()
 	retention := gofn.Coalesce(data.SysCleanupSettings.CacheCleanup.RepoCacheRetention.ToDuration(),
 		repoCacheRetentionDefault)
-	if data.CleanupCacheRepo == syscleanupservice.CleanupFlagForce {
+	if data.CleanupCacheRepo == base.CleanupFlagForce {
 		retention = 0
 	}
 

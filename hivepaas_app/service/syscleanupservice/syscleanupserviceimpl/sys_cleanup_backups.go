@@ -14,7 +14,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
 	"github.com/hivepaas/hivepaas/services/aws/s3"
 )
 
@@ -49,13 +48,13 @@ func (s *service) sysCleanupLocalBackupFiles(
 	db database.IDB,
 	data *sysCleanupData,
 ) (err error) {
-	if data.CleanupBackupInLocal == syscleanupservice.CleanupFlagFalse {
+	if data.CleanupBackupInLocal == base.CleanupFlagFalse {
 		return nil
 	}
 
 	timeNow := timeutil.NowUTC()
 	retention := data.SysCleanupSettings.BackupCleanup.LocalBackupRetention.ToDuration()
-	if data.CleanupBackupInLocal == syscleanupservice.CleanupFlagForce {
+	if data.CleanupBackupInLocal == base.CleanupFlagForce {
 		retention = 0
 	}
 	if retention < 0 { // No cleanup
@@ -103,13 +102,13 @@ func (s *service) sysCleanupCloudBackupFiles(
 	db database.IDB,
 	data *sysCleanupData,
 ) (err error) {
-	if data.CleanupBackupInCloud == syscleanupservice.CleanupFlagFalse {
+	if data.CleanupBackupInCloud == base.CleanupFlagFalse {
 		return nil
 	}
 
 	timeNow := timeutil.NowUTC()
 	retention := data.SysCleanupSettings.BackupCleanup.CloudBackupRetention.ToDuration()
-	if data.CleanupBackupInCloud == syscleanupservice.CleanupFlagForce {
+	if data.CleanupBackupInCloud == base.CleanupFlagForce {
 		retention = 0
 	}
 	if retention < 0 { // No cleanup

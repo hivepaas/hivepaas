@@ -10,7 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
 )
 
 func (s *service) sysCleanupFiles(
@@ -38,13 +37,13 @@ func (s *service) sysCleanupFiles(
 func (s *service) sysCleanupTempFiles(
 	data *sysCleanupData,
 ) (err error) {
-	if data.CleanupFilesTemp == syscleanupservice.CleanupFlagFalse {
+	if data.CleanupFilesTemp == base.CleanupFlagFalse {
 		return nil
 	}
 
 	baseDirs := []string{base.BaseTempDirDefault, filepath.Join(config.Current.AppPath, "tmp")}
 	threshold := time.Now().AddDate(0, 0, -3) //nolint:mnd
-	if data.CleanupFilesTemp == syscleanupservice.CleanupFlagForce {
+	if data.CleanupFilesTemp == base.CleanupFlagForce {
 		threshold = time.Now()
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -20,14 +21,16 @@ func (uc *UC) ClearRepoCache(
 ) (*imagebuildsettingsdto.ClearRepoCacheResp, error) {
 	cleanupReq := &syscleanupservice.SysCleanupReq{
 		TaskExecData: &queue.TaskExecData{
-			Task: &entity.Task{},
+			Task: &entity.Task{
+				ID: "fake-task-id",
+			},
 		},
 		SysCleanupSettings: &entity.SystemCleanup{
 			CacheCleanup: entity.SystemCacheCleanup{
 				Enabled: true,
 			},
 		},
-		CleanupCacheRepo: syscleanupservice.CleanupFlagForce,
+		CleanupCacheRepo: base.CleanupFlagForce,
 	}
 
 	filesDeleted := 0

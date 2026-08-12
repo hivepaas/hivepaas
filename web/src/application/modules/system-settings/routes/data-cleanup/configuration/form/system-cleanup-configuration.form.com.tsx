@@ -76,7 +76,7 @@ function NextRunsField({ nextRuns }: { nextRuns: Date[] }) {
                 onOpenChange={setOpen}
                 className="max-w-[400px]"
             >
-                <div className={cn(dashedBorderBox, "text-sm leading-6 p-2")}>
+                <div className={cn(dashedBorderBox, "text-sm text-center leading-6 p-2")}>
                     <CollapsibleTrigger asChild>
                         <button
                             type="button"

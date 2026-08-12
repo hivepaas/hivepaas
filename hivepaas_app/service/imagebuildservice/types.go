@@ -1,7 +1,6 @@
 package imagebuildservice
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
@@ -9,9 +8,8 @@ import (
 type ImageBuildReq struct {
 	App *entity.App
 
-	BuildTool      base.BuildTool
 	CommitHash     string
-	DockerfilePath string
+	Dockerfile     entity.DeploymentDockerfile
 	ImageName      string
 	PushToRegistry entity.ObjectID
 

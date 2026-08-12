@@ -40,15 +40,15 @@ type DeploymentImageSource struct {
 }
 
 type DeploymentRepoSource struct {
-	BuildTool      base.BuildTool        `json:"buildTool"`
 	RepoType       base.RepoType         `json:"repoType"`
 	RepoID         string                `json:"repoId"`
 	RepoURL        string                `json:"repoURL"`
 	RepoRef        string                `json:"repoRef"` // can be branch name, tag...
 	CommitHash     string                `json:"commitHash,omitempty"`
 	RepoOptions    DeploymentRepoOptions `json:"repoOptions"`
-	Credentials    RepoCredentials       `json:"credentials,omitzero"`     // id of github app/git token/ssh key setting
-	DockerfilePath string                `json:"dockerfilePath,omitempty"` // for BuildToolDockerfile only
+	Credentials    RepoCredentials       `json:"credentials,omitzero"` // id of github app/git token/ssh key setting
+	Dockerfile     DeploymentDockerfile  `json:"dockerfile"`
+	DockerfilePath string                `json:"dockerfilePath,omitempty"`
 	ImageName      string                `json:"imageName,omitempty"`
 	ImageTags      []string              `json:"imageTags,omitempty"`
 	PushToRegistry ObjectID              `json:"pushToRegistry,omitzero"`
@@ -57,6 +57,13 @@ type DeploymentRepoSource struct {
 type DeploymentRepoOptions struct {
 	GitSubmodulesEnabled bool `json:"gitSubmodulesEnabled,omitempty"`
 	GitLFSEnabled        bool `json:"gitLfsEnabled,omitempty"`
+}
+
+type DeploymentDockerfile struct {
+	Source   base.DockerfileSource `json:"source"`
+	Path     string                `json:"path"`
+	Content  string                `json:"content,omitempty"`
+	ScanPath string                `json:"scanPath,omitempty"`
 }
 
 type RepoCredentials struct {

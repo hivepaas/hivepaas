@@ -57,7 +57,6 @@ type DeploymentImageSourceResp struct {
 }
 
 type DeploymentRepoSourceResp struct {
-	BuildTool      base.BuildTool             `json:"buildTool"`
 	RepoType       base.RepoType              `json:"repoType"`
 	RepoID         string                     `json:"repoId"`
 	RepoURL        string                     `json:"repoURL"`
@@ -65,7 +64,8 @@ type DeploymentRepoSourceResp struct {
 	CommitHash     string                     `json:"commitHash"`
 	RepoOptions    *DeploymentRepoOptionsResp `json:"repoOptions"`
 	Credentials    *settings.BaseSettingResp  `json:"credentials"`
-	DockerfilePath string                     `json:"dockerfilePath"` // for BuildToolDockerfile only
+	Dockerfile     *DeploymentDockerfileResp  `json:"dockerfile"`
+	DockerfilePath string                     `json:"dockerfilePath"`
 	ImageName      string                     `json:"imageName"`
 	ImageTags      []string                   `json:"imageTags"`
 	PushToRegistry *settings.BaseSettingResp  `json:"pushToRegistry"`
@@ -74,6 +74,13 @@ type DeploymentRepoSourceResp struct {
 type DeploymentRepoOptionsResp struct {
 	GitSubmodulesEnabled bool `json:"gitSubmodulesEnabled"`
 	GitLFSEnabled        bool `json:"gitLfsEnabled"`
+}
+
+type DeploymentDockerfileResp struct {
+	Source   base.DockerfileSource `json:"source"`
+	Path     string                `json:"path"`
+	Content  string                `json:"content,omitempty"`
+	ScanPath string                `json:"scanPath,omitempty"`
 }
 
 type AppDeploymentSettingsTransformInput struct {

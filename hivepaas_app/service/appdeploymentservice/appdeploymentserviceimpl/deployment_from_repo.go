@@ -164,9 +164,8 @@ func (s *service) repoDeployStepImageBuild(
 
 	buildReq := &imagebuildservice.ImageBuildReq{
 		App:                data.App,
-		BuildTool:          repoSource.BuildTool,
 		CommitHash:         repoSource.CommitHash,
-		DockerfilePath:     repoSource.DockerfilePath,
+		Dockerfile:         repoSource.Dockerfile,
 		ImageName:          repoSource.ImageName,
 		PushToRegistry:     repoSource.PushToRegistry,
 		ImageBuildSettings: data.ImageBuildSettings,

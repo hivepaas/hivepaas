@@ -1,6 +1,8 @@
 package appsettingsdto
 
 import (
+	"strings"
+
 	"github.com/gitsight/go-vcsurl"
 	vld "github.com/tiendc/go-validator"
 
@@ -12,8 +14,10 @@ import (
 )
 
 const (
-	imageNameMaxLen = 200
-	repoRefMaxLen   = 200
+	imageNameMaxLen         = 200
+	repoRefMaxLen           = 200
+	dockerfilePathMaxLen    = 200
+	dockerfileContentMaxLen = 16 * 1024
 )
 
 type UpdateAppDeploymentSettingsReq struct {
@@ -87,14 +91,14 @@ func (req *DeploymentImageSourceReq) validate(field string) (res []vld.Validator
 
 type DeploymentRepoSourceReq struct {
 	Enabled        bool                     `json:"enabled"`
-	BuildTool      base.BuildTool           `json:"buildTool"`
 	RepoType       base.RepoType            `json:"repoType"`
 	RepoURL        string                   `json:"repoURL"`
 	RepoRef        string                   `json:"repoRef"` // can be branch name, tag...
 	CommitHash     string                   `json:"commitHash"`
 	RepoOptions    DeploymentRepoOptionsReq `json:"repoOptions"`
 	Credentials    basedto.ObjectIDReq      `json:"credentials"`
-	DockerfilePath string                   `json:"dockerfilePath"` // for BuildToolDockerfile only
+	Dockerfile     DeploymentDockerfileReq  `json:"dockerfile"`
+	DockerfilePath string                   `json:"dockerfilePath"`
 	ImageName      string                   `json:"imageName"`
 	ImageTags      []string                 `json:"imageTags"`
 	PushToRegistry basedto.ObjectIDReq      `json:"pushToRegistry"`
@@ -116,7 +120,6 @@ func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, er
 	repoID := parsedRepoURL.ID
 
 	return &entity.DeploymentRepoSource{
-		BuildTool:      req.BuildTool,
 		RepoType:       req.RepoType,
 		RepoID:         repoID,
 		RepoURL:        req.RepoURL,
@@ -124,6 +127,7 @@ func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, er
 		CommitHash:     req.CommitHash,
 		RepoOptions:    req.RepoOptions.ToEntity(),
 		Credentials:    entity.RepoCredentials{ID: req.Credentials.ID},
+		Dockerfile:     req.Dockerfile.ToEntity(),
 		DockerfilePath: req.DockerfilePath,
 		ImageName:      req.ImageName,
 		ImageTags:      req.ImageTags,
@@ -138,12 +142,12 @@ func (req *DeploymentRepoSourceReq) validate(field string) (res []vld.Validator)
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStrIn(&req.BuildTool, true, base.AllBuildTools, field+"buildTool")...)
 	res = append(res, basedto.ValidateStrIn(&req.RepoType, true, base.AllRepoTypes, field+"repoType")...)
 	res = append(res, basedto.ValidateGitRepoURL(&req.RepoURL, true, field+"repoURL")...)
 	res = append(res, basedto.ValidateStr(&req.RepoRef, false, 1, repoRefMaxLen, field+"repoRef")...)
 	res = append(res, basedto.ValidateGitCommitHash(&req.CommitHash, false, field+"commitHash")...)
 	res = append(res, basedto.ValidateObjectIDReq(&req.Credentials, false, field+"credentials")...)
+	res = append(res, req.Dockerfile.validate(field+"dockerfile")...)
 	res = append(res, basedto.ValidateStr(&req.ImageName, false, 1, base.ImageNameMaxLen, field+"imageName")...)
 	res = append(res, basedto.ValidateObjectIDReq(&req.PushToRegistry, false, field+"pushToRegistry")...)
 	return res
@@ -159,6 +163,40 @@ func (req *DeploymentRepoOptionsReq) ToEntity() entity.DeploymentRepoOptions {
 		GitSubmodulesEnabled: req.GitSubmodulesEnabled,
 		GitLFSEnabled:        req.GitLFSEnabled,
 	}
+}
+
+type DeploymentDockerfileReq struct {
+	Source   base.DockerfileSource `json:"source"`
+	Path     string                `json:"path"`
+	Content  string                `json:"content,omitempty"`
+	ScanPath string                `json:"scanPath,omitempty"`
+}
+
+func (req *DeploymentDockerfileReq) ToEntity() entity.DeploymentDockerfile {
+	return entity.DeploymentDockerfile{
+		Source:   req.Source,
+		Path:     strings.TrimPrefix(req.Path, "/"),
+		Content:  req.Content,
+		ScanPath: strings.TrimPrefix(req.ScanPath, "/"),
+	}
+}
+
+func (req *DeploymentDockerfileReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return
+	}
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateStrIn(&req.Source, true, base.AllDockerfileSources,
+		field+"source")...)
+	res = append(res, basedto.ValidateStr(&req.Path, false, 1, dockerfilePathMaxLen,
+		field+"path")...)
+	res = append(res, basedto.ValidateStr(&req.Content, false, 1, dockerfileContentMaxLen,
+		field+"content")...)
+	res = append(res, basedto.ValidateStr(&req.ScanPath, false, 1, dockerfilePathMaxLen,
+		field+"scanPath")...)
+	return res
 }
 
 func NewUpdateAppDeploymentSettingsReq() *UpdateAppDeploymentSettingsReq {

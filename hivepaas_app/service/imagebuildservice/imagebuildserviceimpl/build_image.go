@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -33,12 +32,10 @@ func (s *service) imageBuild(
 		return apperrors.Wrap(err)
 	}
 
-	switch data.BuildTool {
-	case base.BuildToolDocker:
-		return s.buildImageWithDocker(ctx, db, data)
-	case base.BuildToolRailpack:
-		return s.buildImageWithRailpack(ctx, db, data)
+	err = s.prepareDockerfile(ctx, data)
+	if err != nil {
+		return apperrors.Wrap(err)
 	}
 
-	return nil
+	return s.buildImageWithDocker(ctx, db, data)
 }

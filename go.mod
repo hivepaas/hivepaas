@@ -16,8 +16,10 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.106.2
 	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
 	github.com/bwmarrin/discordgo v0.29.0
+	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/containerd/errdefs v1.0.0
 	github.com/darkrockmountain/gomail v0.6.1
+	github.com/docker/go-units v0.5.0
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-contrib/logger v1.2.7
 	github.com/gin-gonic/gin v1.12.0
@@ -33,6 +35,7 @@ require (
 	github.com/google/go-github/v85 v85.0.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/go-multierror v1.1.1
+	github.com/hivepaas/dockerfile-generator v0.0.0-00010101000000-000000000000
 	github.com/itchyny/timefmt-go v0.1.8
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/jaevor/go-nanoid v1.4.0
@@ -41,7 +44,6 @@ require (
 	github.com/klauspost/compress v1.19.1
 	github.com/markbates/goth v1.82.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/moby/go-archive v0.3.0
 	github.com/moby/moby/api v1.55.0
 	github.com/moby/moby/client v0.5.1
 	github.com/mozillazg/go-slugify v0.2.0
@@ -90,6 +92,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcegraph/armresourcegraph v0.10.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.7.2 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
+	github.com/Masterminds/semver/v3 v3.3.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
@@ -119,17 +122,14 @@ require (
 	github.com/bytedance/sonic v1.15.0 // indirect
 	github.com/bytedance/sonic/loader v0.5.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
-	github.com/containerd/log v0.1.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/davidmz/go-pageant v1.0.2 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/go-connections v0.7.0 // indirect
-	github.com/docker/go-units v0.5.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
@@ -196,10 +196,6 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/miekg/dns v1.1.72 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
-	github.com/moby/patternmatcher v0.6.1 // indirect
-	github.com/moby/sys/sequential v0.7.0 // indirect
-	github.com/moby/sys/user v0.4.1 // indirect
-	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/mozillazg/go-unidecode v0.2.0 // indirect
@@ -208,6 +204,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/openshift/gssapi v0.0.0-20161010215902-5fb4217df13b // indirect
+	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pjbgf/sha1cd v0.6.0 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
@@ -217,7 +214,6 @@ require (
 	github.com/quic-go/quic-go v0.59.0 // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
-	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/swaggo/swag v1.8.12 // indirect
@@ -256,3 +252,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.3 // indirect
 )
+
+replace github.com/hivepaas/dockerfile-generator => ../dockerfile-generator

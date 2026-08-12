@@ -81,10 +81,14 @@ type Manager interface {
 		*client.ExecInspectResult, error)
 	ContainerCreateToExec(ctx context.Context, image string, cmd []string, options ...ContainerCreateOption) (
 		*client.ContainerCreateResult, int64 /*status code*/, error)
+	ContainerUpdate(ctx context.Context, containerID string, options ...ContainerUpdateOption) (
+		*client.ContainerUpdateResult, error)
 
 	// Images
 	ImageList(ctx context.Context, options ...ImageListOption) (
 		*client.ImageListResult, error)
+	ImageTag(ctx context.Context, source, target string, options ...ImageTagOption) (
+		*client.ImageTagResult, error)
 	ImagePull(ctx context.Context, name string, options ...ImagePullOption) (
 		client.ImagePullResponse, error)
 	ImagePush(ctx context.Context, name string, options ...ImagePushOption) (

@@ -79,7 +79,7 @@ func (req *DeploymentImageSourceReq) validate(field string) (res []vld.Validator
 type DeploymentRepoSourceReq struct {
 	RepoRef        string   `json:"repoRef"`
 	CommitHash     *string  `json:"commitHash"`
-	DockerfilePath string   `json:"dockerfilePath"` // for BuildToolDockerfile only
+	DockerfilePath string   `json:"dockerfilePath"`
 	ImageTags      []string `json:"imageTags"`
 }
 

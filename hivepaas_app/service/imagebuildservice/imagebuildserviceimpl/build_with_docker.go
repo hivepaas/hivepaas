@@ -8,8 +8,6 @@ import (
 	"os/exec"
 	"sync"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -24,7 +22,6 @@ func (s *service) buildImageWithDocker(
 	data *imageBuildData,
 ) (err error) {
 	buildSetting := data.ImageBuildSettings
-	dockerfile := gofn.Coalesce(data.DockerfilePath, "Dockerfile")
 
 	s.addStepStartLog(ctx, data, "Start building image with Docker BuildKit...")
 	defer s.addStepEndLog(ctx, data, timeutil.NowUTC(), err)
@@ -50,7 +47,7 @@ func (s *service) buildImageWithDocker(
 		"--builder", builderName,
 		"--load",
 		"--progress=plain",
-		"-f", dockerfile,
+		"-f", data.Dockerfile.Path,
 	}
 
 	for _, tag := range data.ImageTags {

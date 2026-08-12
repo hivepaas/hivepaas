@@ -1,16 +1,5 @@
 package base
 
-type BuildTool string
-
-const (
-	BuildToolDocker   BuildTool = "docker"
-	BuildToolRailpack BuildTool = "railpack"
-)
-
-var (
-	AllBuildTools = []BuildTool{BuildToolDocker, BuildToolRailpack}
-)
-
 type DeploymentMethod string
 
 const (

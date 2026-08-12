@@ -298,3 +298,21 @@ func (m *manager) ContainerPrune(
 	}
 	return &resp, nil
 }
+
+type ContainerUpdateOption func(*client.ContainerUpdateOptions)
+
+func (m *manager) ContainerUpdate(
+	ctx context.Context,
+	containerID string,
+	options ...ContainerUpdateOption,
+) (*client.ContainerUpdateResult, error) {
+	opts := client.ContainerUpdateOptions{}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	resp, err := m.client.ContainerUpdate(ctx, containerID, opts)
+	if err != nil {
+		return nil, apperrors.NewInfra(err)
+	}
+	return &resp, nil
+}

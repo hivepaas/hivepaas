@@ -29,12 +29,8 @@ WORKDIR /hivepaas
 ARG TARGETARCH
 
 RUN apk update && \
-    apk add --no-cache ca-certificates curl make openssl postgresql-client git git-lfs openssh-client rsync zstd lz4 docker-cli docker-cli-buildx acl && \
-    ARCH="$(case "${TARGETARCH}" in "arm64") echo "arm64" ;; *) echo "x86_64" ;; esac)" && \
-    curl -sSL "https://github.com/railwayapp/railpack/releases/download/v0.35.0/railpack-v0.35.0-${ARCH}-unknown-linux-musl.tar.gz" | tar -xz -C /usr/local/bin && \
-    chmod +x /usr/local/bin/railpack && \
+    apk add --no-cache ca-certificates make openssl postgresql-client git git-lfs openssh-client rsync zstd lz4 docker-cli docker-cli-buildx && \
     git lfs install --system && \
-    apk del curl && \
     rm -rf /var/cache/apk/*
 
 # Copy compiled agent binary and base configurations

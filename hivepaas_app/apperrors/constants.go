@@ -214,6 +214,11 @@ var (
 	ErrGitAuthMethodUnsupported = NewErr(ErrUnsupported, "ERR_GIT_AUTH_METHOD_UNSUPPORTED")
 )
 
+// Errors for build
+var (
+	ErrDockerfileNotFound = NewErr(ErrNotFound, "ERR_DOCKERFILE_NOT_FOUND")
+)
+
 // nolint Errors from infrastructure
 var (
 	ErrInfra                   = NewErr(ErrInternal, "ERR_INFRA")

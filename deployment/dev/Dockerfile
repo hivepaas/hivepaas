@@ -46,9 +46,10 @@ RUN go install github.com/rubenv/sql-migrate/...@latest && \
 ############################################################
 # Build a small image
 FROM alpine:3.23
-WORKDIR /hivepaas
+ARG TARGETARCH
+
 RUN apk update && \
-    apk add --no-cache ca-certificates make openssl postgresql-client git git-lfs openssh-client zstd lz4 docker-cli docker-cli-buildx acl && \
+    apk add --no-cache ca-certificates make openssl postgresql-client git git-lfs openssh-client zstd lz4 docker-cli docker-cli-buildx && \
     git lfs install --system && \
     rm -rf /var/cache/apk/*
 

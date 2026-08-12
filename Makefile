@@ -10,7 +10,7 @@ build-devtools:
 
 GO_MOD_ENV=GOPRIVATE=github.com/hivepaas/*
 mod:
-	@$(GO_MOD_ENV) go mod tidy && go mod vendor
+	@$(GO_MOD_ENV) go mod tidy && go mod verify && go mod vendor
 
 lint:
 	$(DEVTOOLS_CMD) golangci-lint --timeout=3m run -v ./...

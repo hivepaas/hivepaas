@@ -122,3 +122,25 @@ func (m *manager) ImagePrune(
 	}
 	return &resp, nil
 }
+
+type ImageTagOption func(*client.ImageTagOptions)
+
+func (m *manager) ImageTag(
+	ctx context.Context,
+	source string,
+	target string,
+	options ...ImageTagOption,
+) (*client.ImageTagResult, error) {
+	opts := client.ImageTagOptions{
+		Source: source,
+		Target: target,
+	}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	resp, err := m.client.ImageTag(ctx, opts)
+	if err != nil {
+		return nil, apperrors.NewInfra(err)
+	}
+	return &resp, nil
+}

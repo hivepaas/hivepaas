@@ -35,7 +35,7 @@ require (
 	github.com/google/go-github/v85 v85.0.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hivepaas/dockerfile-generator v0.0.0-20260812082711-d36200f8b95b
+	github.com/hivepaas/dockerfile-generator v0.0.0-20260812151645-c99ac997ccc3
 	github.com/itchyny/timefmt-go v0.1.8
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/jaevor/go-nanoid v1.4.0

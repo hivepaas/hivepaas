@@ -335,8 +335,8 @@ github.com/hashicorp/go-uuid v1.0.3 h1:2gKiV6YVmrJ1i2CKKa9obLvRieoRGviZFL26PcT/C
 github.com/hashicorp/go-uuid v1.0.3/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/hashicorp/go-version v1.9.0 h1:CeOIz6k+LoN3qX9Z0tyQrPtiB1DFYRPfCIBtaXPSCnA=
 github.com/hashicorp/go-version v1.9.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09ZGVZPK5anwXA=
-github.com/hivepaas/dockerfile-generator v0.0.0-20260812082711-d36200f8b95b h1:mW/z4Yx5JPcVHcCyzswHQAEpmEdAeSUW3kcTIn5rENQ=
-github.com/hivepaas/dockerfile-generator v0.0.0-20260812082711-d36200f8b95b/go.mod h1:gybYLIkzib8mwMEnahuW57Yk3y+MmDxajtHJMGroWwc=
+github.com/hivepaas/dockerfile-generator v0.0.0-20260812151645-c99ac997ccc3 h1:OqkWMqCE6m8IgIMt5lw7TxTFsHGltHNIqXXY+Td3L78=
+github.com/hivepaas/dockerfile-generator v0.0.0-20260812151645-c99ac997ccc3/go.mod h1:gybYLIkzib8mwMEnahuW57Yk3y+MmDxajtHJMGroWwc=
 github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.205 h1:YnI2+56S5oxByz8BYChRrsmqTUmCp1Ww2KIzZtF4XOU=
 github.com/huaweicloud/huaweicloud-sdk-go-v3 v0.1.205/go.mod h1:M+yna96Fx9o5GbIUnF3OvVvQGjgfVSyeJbV9Yb1z/wI=
 github.com/iancoleman/strcase v0.3.0 h1:nTXanmYxhfFAMjZL34Ov6gkzEsSJZ5DbhxWjvSASxEI=

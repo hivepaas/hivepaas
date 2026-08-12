@@ -122,7 +122,7 @@ func (s *service) streamLogOutput(
 	}
 	scanner := bufio.NewScanner(r)
 	const maxLineLength = 1024 * 1024
-	const bufferSize = 64 * 1024
+	const bufferSize = 32 * 1024
 	buf := make([]byte, bufferSize)
 	scanner.Buffer(buf, maxLineLength)
 
@@ -131,6 +131,6 @@ func (s *service) streamLogOutput(
 		if line == "" {
 			continue
 		}
-		_ = logStore.AddRedacted(ctx, tasklog.NewOutFrame(line, tasklog.TsNow))
+		_ = logStore.AddRedacted(ctx, tasklog.NewDebugFrame(line, tasklog.TsNow))
 	}
 }

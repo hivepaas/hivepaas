@@ -33,6 +33,9 @@ func (s *service) ImageBuild(
 		ImageBuildReq: req,
 		Resp:          resp,
 	}
+	if data.LogStore == nil {
+		data.LogStore = tasklog.NewNullStore()
+	}
 
 	defer func() {
 		if r := recover(); r != nil {

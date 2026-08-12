@@ -30,7 +30,7 @@ func (s *service) calcBuildEnvVars(
 		return nil, apperrors.Wrap(err)
 	}
 
-	if data.LogStore != nil && len(envResp.EnvVars) > 0 {
+	if len(envResp.EnvVars) > 0 {
 		secrets := make(map[string]struct{}, 10) //nolint:mnd
 		for _, env := range envResp.EnvVars {
 			for secret := range env.RefSecrets {

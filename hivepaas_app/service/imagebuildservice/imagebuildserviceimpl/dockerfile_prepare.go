@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
 func (s *service) prepareDockerfile(
@@ -35,10 +36,7 @@ func (s *service) prepareDockerfileManual(
 	_ context.Context,
 	data *imageBuildData,
 ) error {
-	targetPath := data.Dockerfile.Path
-	if !filepath.IsAbs(targetPath) {
-		targetPath = filepath.Join(data.CheckoutDir, targetPath)
-	}
+	targetPath := filepath.Join(data.CheckoutDir, data.Dockerfile.Path)
 
 	if data.Dockerfile.Content != "" {
 		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil { //nolint:mnd
@@ -63,25 +61,26 @@ func (s *service) prepareDockerfileManual(
 func (s *service) prepareDockerfileAuto(
 	ctx context.Context,
 	data *imageBuildData,
-) error {
+) (err error) {
 	scanDir := data.CheckoutDir
 	if data.Dockerfile.ScanPath != "" {
 		scanDir = filepath.Join(scanDir, data.Dockerfile.ScanPath)
 	}
 
+	s.addStepStartLog(ctx, data, "Start auto-generating Dockerfile from source...")
+	defer s.addStepEndLog(ctx, data, timeutil.NowUTC(), err)
+
 	df := dockerfile.New()
 	contents, r, err := df.Generate(scanDir)
 	if err != nil {
+		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to auto-generate Dockerfile with error: "+
+			err.Error(), tasklog.TsNow))
 		return apperrors.Wrap(err)
 	}
 
 	data.Dockerfile.Content = reflectutil.UnsafeBytesToStr(contents)
 
-	targetPath := data.Dockerfile.Path
-	if !filepath.IsAbs(targetPath) {
-		targetPath = filepath.Join(data.CheckoutDir, targetPath)
-	}
-
+	targetPath := filepath.Join(data.CheckoutDir, data.Dockerfile.Path)
 	if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil { //nolint:mnd
 		return apperrors.Wrap(err)
 	}
@@ -89,12 +88,16 @@ func (s *service) prepareDockerfileAuto(
 		return apperrors.Wrap(err)
 	}
 
-	if data.LogStore != nil && r != nil {
-		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
-			fmt.Sprintf("Auto-generated Dockerfile for project using %s", r.Name()),
-			tasklog.TsNow,
-		))
-	}
+	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
+		fmt.Sprintf("Auto-generated Dockerfile for project using '%s'", r.Name()),
+		tasklog.TsNow,
+	))
+	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
+		"NOTE: The Dockerfile content may contain environment variables for customization. "+
+			"To customize, configure them in the app's build environment variables.",
+		tasklog.TsNow,
+	))
+	_ = data.LogStore.Add(ctx, tasklog.NewDebugFrame(data.Dockerfile.Content, tasklog.TsNow))
 
 	return nil
 }

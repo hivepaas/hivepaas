@@ -86,3 +86,42 @@ func (h *Handler) UpdateAppDeploymentSettings(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// GetBuildDockerfileTemplate Gets Dockerfile template for a given type
+// @Summary Gets Dockerfile template for a given type
+// @Description Gets Dockerfile template for a given type
+// @Tags    app_settings
+// @Produce json
+// @Id      getAppBuildDockerfileTemplate
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   type query string true "template type: e.g. go, java, java/maven..."
+// @Success 200 {object} appsettingsdto.GetDockerfileTemplateResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployment-settings/dockerfile-template [get]
+func (h *Handler) GetBuildDockerfileTemplate(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appsettingsdto.NewGetDockerfileTemplateReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appSettingsUC.GetDockerfileTemplate(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

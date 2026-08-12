@@ -51,6 +51,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	{ // Settings
 		appGroup.GET("/:appID/deployment-settings", appSettingsHandler.GetAppDeploymentSettings)
 		appGroup.PUT("/:appID/deployment-settings", appSettingsHandler.UpdateAppDeploymentSettings)
+		appGroup.GET("/:appID/deployment-settings/dockerfile-template",
+			appSettingsHandler.GetBuildDockerfileTemplate)
 		appGroup.GET("/:appID/http-settings", appSettingsHandler.GetAppHttpSettings)
 		appGroup.PUT("/:appID/http-settings", appSettingsHandler.UpdateAppHttpSettings)
 		appGroup.GET("/:appID/service-settings", appSettingsHandler.GetAppServiceSettings)

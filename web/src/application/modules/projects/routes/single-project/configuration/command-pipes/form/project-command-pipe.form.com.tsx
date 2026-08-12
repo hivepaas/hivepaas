@@ -1,6 +1,8 @@
 import { useEffect, useMemo } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
 import type { ProjectCommandPipe } from "~/projects/domain";
 import {
@@ -130,6 +132,13 @@ export function ProjectCommandPipeForm({
                                     <FieldError errors={[errors.name]} />
                                 </Field>
                             </InfoBlock>
+
+                            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                                <span className="text-orange-500">Note:</span> If either the{" "}
+                                <span className="text-orange-500">Source Command</span> or{" "}
+                                <span className="text-orange-500">Target Command</span> is missing, the remaining
+                                command will still be executed on its corresponding app.
+                            </div>
 
                             <CommandTemplateSelectField
                                 projectId={projectId}

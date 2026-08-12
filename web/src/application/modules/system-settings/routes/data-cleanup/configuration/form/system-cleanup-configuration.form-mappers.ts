@@ -20,10 +20,13 @@ export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigura
     },
     clusterCleanup: {
         enabled: true,
+        generalRetention: "180d",
+        buildCacheRetention: "180d",
         pruneImages: true,
         pruneVolumes: true,
         pruneNetworks: true,
         pruneContainers: true,
+        pruneBuildCache: true,
     },
     backupCleanup: {
         enabled: true,
@@ -63,10 +66,13 @@ export function mapSystemCleanupSettingsToFormInput(
         },
         clusterCleanup: {
             enabled: settings.clusterCleanup.enabled,
+            generalRetention: settings.clusterCleanup.generalRetention,
+            buildCacheRetention: settings.clusterCleanup.buildCacheRetention,
             pruneImages: settings.clusterCleanup.pruneImages,
             pruneVolumes: settings.clusterCleanup.pruneVolumes,
             pruneNetworks: settings.clusterCleanup.pruneNetworks,
             pruneContainers: settings.clusterCleanup.pruneContainers,
+            pruneBuildCache: settings.clusterCleanup.pruneBuildCache,
         },
         backupCleanup: {
             enabled: settings.backupCleanup.enabled,

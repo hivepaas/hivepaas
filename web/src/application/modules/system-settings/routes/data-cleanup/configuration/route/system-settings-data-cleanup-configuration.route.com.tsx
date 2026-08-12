@@ -33,10 +33,13 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
         },
         clusterCleanup: {
             enabled: values.clusterCleanup.enabled,
+            generalRetention: values.clusterCleanup.generalRetention,
+            buildCacheRetention: values.clusterCleanup.buildCacheRetention,
             pruneImages: values.clusterCleanup.pruneImages,
             pruneVolumes: values.clusterCleanup.pruneVolumes,
             pruneNetworks: values.clusterCleanup.pruneNetworks,
             pruneContainers: values.clusterCleanup.pruneContainers,
+            pruneBuildCache: values.clusterCleanup.pruneBuildCache,
         },
         backupCleanup: {
             enabled: values.backupCleanup.enabled,

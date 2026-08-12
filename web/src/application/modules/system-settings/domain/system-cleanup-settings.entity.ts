@@ -18,10 +18,13 @@ export interface SystemCleanupDBObjectRetention {
 
 export interface SystemCleanupClusterCleanup {
     enabled: boolean;
+    generalRetention: string;
+    buildCacheRetention: string;
     pruneImages: boolean;
     pruneVolumes: boolean;
     pruneNetworks: boolean;
     pruneContainers: boolean;
+    pruneBuildCache: boolean;
 }
 
 export interface SystemCleanupBackupCleanup {

@@ -13,10 +13,13 @@ const SystemCleanupDBObjectRetentionSchema = z.object({
 
 const SystemCleanupClusterCleanupSchema = z.object({
     enabled: z.boolean(),
+    generalRetention: z.string(),
+    buildCacheRetention: z.string(),
     pruneImages: z.boolean(),
     pruneVolumes: z.boolean(),
     pruneNetworks: z.boolean(),
     pruneContainers: z.boolean(),
+    pruneBuildCache: z.boolean(),
 });
 
 const SystemCleanupBackupCleanupSchema = z.object({

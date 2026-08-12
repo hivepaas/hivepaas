@@ -19,7 +19,7 @@ export function NextRunsField({ nextRuns }: Props) {
                 onOpenChange={setOpen}
                 className="max-w-[400px]"
             >
-                <div className={cn(dashedBorderBox, "text-center text-sm leading-6 p-2")}>
+                <div className={cn(dashedBorderBox, "text-sm leading-6 p-2")}>
                     <CollapsibleTrigger asChild>
                         <button
                             type="button"

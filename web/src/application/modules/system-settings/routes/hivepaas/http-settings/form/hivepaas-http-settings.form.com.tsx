@@ -27,7 +27,7 @@ type SchemaInput = HivePaaSHttpSettingsFormInput;
 type SchemaOutput = HivePaaSHttpSettingsFormOutput;
 
 function NoteBox({ children }: PropsWithChildren) {
-    return <div className={cn(dashedBorderBox, "text-sm leading-6 text-center")}>{children}</div>;
+    return <div className={cn(dashedBorderBox, "text-sm leading-6")}>{children}</div>;
 }
 
 function ConditionalDomainDetailSections({

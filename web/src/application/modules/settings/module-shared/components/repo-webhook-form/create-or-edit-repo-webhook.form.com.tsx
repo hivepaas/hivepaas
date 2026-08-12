@@ -158,7 +158,7 @@ export function CreateOrEditRepoWebhookForm({
                     className={cn(
                         dashedBorderBox,
                         SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
-                        "text-center leading-6 ",
+                        "leading-6 ",
                     )}
                 >
                     <p>
@@ -275,7 +275,7 @@ export function CreateOrEditRepoWebhookForm({
                                 className={cn(
                                     dashedBorderBox,
                                     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
-                                    "flex min-h-12 items-center justify-center gap-3 break-all text-center text-sm",
+                                    "flex min-h-12 items-center justify-center gap-3 break-all text-sm",
                                 )}
                             >
                                 <span>{webhookURL}</span>
@@ -295,7 +295,7 @@ export function CreateOrEditRepoWebhookForm({
                                 className={cn(
                                     dashedBorderBox,
                                     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
-                                    "text-center text-sm p-2",
+                                    "text-sm p-2",
                                 )}
                             >
                                 please create a webhook first

@@ -479,7 +479,7 @@ export function CreateOrEditSslCertForm({
 
                             {providerKind !== undefined && (
                                 <>
-                                    <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                                    <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                                         <span className="text-orange-500">Note:</span> SSL provider is required if you
                                         select <span className="text-orange-500">Zero SSL</span> or{" "}
                                         <span className="text-orange-500">Google Trust Services</span> as the
@@ -585,7 +585,7 @@ export function CreateOrEditSslCertForm({
 
                             {isAcme && (
                                 <>
-                                    <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                                    <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                                         <span className="text-orange-500">Note:</span> ACME DNS provider is required if
                                         your domain is a wildcard domain.
                                     </div>

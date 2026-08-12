@@ -58,7 +58,7 @@ export function RunNowTaskCreatedDialog() {
                 </DialogHeader>
 
                 <DialogBody>
-                    <div className={cn(dashedBorderBox, "text-center text-base leading-7")}>
+                    <div className={cn(dashedBorderBox, "text-base leading-7")}>
                         <p>The task has been added to the execution queue.</p>
                         <p>
                             You can view the execution details via the job&apos;s{" "}

@@ -143,14 +143,14 @@ function View({ file }: Props) {
                     </DialogHeader>
                     <DialogBody className="flex flex-col gap-4">
                         {isLocalFile ? (
-                            <div className={cn(dashedBorderBox, "text-center")}>
+                            <div className={cn(dashedBorderBox)}>
                                 <span className="font-medium text-orange-500">Warning:</span> This will delete the
                                 database record and permanently erase the physical file from the storage system. Once
                                 deleted, this file cannot be retrieved or restored.
                             </div>
                         ) : (
                             <>
-                                <p className={cn(dashedBorderBox, "text-center")}>
+                                <p className={cn(dashedBorderBox)}>
                                     If you select{" "}
                                     <span className="font-medium text-orange-500">Delete Physical File</span>, the file
                                     will be permanently deleted and cannot be recovered. Otherwise, only the file record

@@ -317,7 +317,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                             </div>
 
                             <div
-                                className={cn(dashedBorderBox, "text-center text-sm")}
+                                className={cn(dashedBorderBox, "text-sm")}
                                 style={{ marginLeft: CONTENT_COLUMN_OFFSET }}
                             >
                                 <div className="break-all">

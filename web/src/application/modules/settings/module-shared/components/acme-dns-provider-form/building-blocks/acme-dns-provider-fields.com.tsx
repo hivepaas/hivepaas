@@ -102,7 +102,7 @@ export function AcmeDnsProviderFields({ control, errors, kind }: Props) {
         case EAcmeDnsProviderKind.Cloudflare:
             return (
                 <>
-                    <div className={cn(dashedBorderBox, "text-center text-sm py-2")}>
+                    <div className={cn(dashedBorderBox, "text-sm py-2")}>
                         Permissions <span className="text-orange-500">Zone:Read</span> and{" "}
                         <span className="text-orange-500">DNS:Edit</span> are required
                     </div>

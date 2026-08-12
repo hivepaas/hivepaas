@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { Play } from "lucide-react";
+import { useProjectCommandTemplateApi } from "~/projects/api/hooks";
 import { ProjectCommandTemplateQueries } from "~/projects/data/queries";
 import type { ProjectCommandTemplate } from "~/projects/domain";
 import { SelectorSearch } from "~/projects/module-shared/components/selector-dialog";
@@ -32,6 +33,8 @@ export function CommandTemplatePicker({ open, projectId, onClose, onSelect }: Pr
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [rows, setRows] = useState<ProjectCommandTemplate[]>([]);
+    const [selectingId, setSelectingId] = useState<string | null>(null);
+    const { queries } = useProjectCommandTemplateApi();
 
     const query = ProjectCommandTemplateQueries.useFindManyPaginated(
         {
@@ -53,6 +56,7 @@ export function CommandTemplatePicker({ open, projectId, onClose, onSelect }: Pr
         setSearch("");
         setPage(1);
         setRows([]);
+        setSelectingId(null);
     }, [open, projectId]);
 
     useEffect(() => {
@@ -71,6 +75,29 @@ export function CommandTemplatePicker({ open, projectId, onClose, onSelect }: Pr
     }, [page, query.dataUpdatedAt, query.data?.data]);
 
     const canLoadMore = (query.data?.data.length ?? 0) >= GIT_SELECTOR_PAGE_SIZE;
+    const isSelecting = selectingId !== null;
+
+    async function handleSelect(row: ProjectCommandTemplate) {
+        if (isSelecting) {
+            return;
+        }
+
+        setSelectingId(row.id);
+
+        try {
+            const { data } = await queries.findOneById({
+                projectID: projectId,
+                id: row.id,
+            });
+
+            onSelect(data);
+            onClose();
+        } catch {
+            // Error toast is handled by useProjectCommandTemplateApi.
+        } finally {
+            setSelectingId(null);
+        }
+    }
 
     return (
         <Dialog
@@ -122,9 +149,10 @@ export function CommandTemplatePicker({ open, projectId, onClose, onSelect }: Pr
                                                     type="button"
                                                     variant="outline"
                                                     size="sm"
+                                                    disabled={isSelecting}
+                                                    isLoading={selectingId === row.id}
                                                     onClick={() => {
-                                                        onSelect(row);
-                                                        onClose();
+                                                        void handleSelect(row);
                                                     }}
                                                 >
                                                     <Play className="size-4" /> Select
@@ -150,7 +178,7 @@ export function CommandTemplatePicker({ open, projectId, onClose, onSelect }: Pr
                             <Button
                                 type="button"
                                 variant="outline"
-                                disabled={query.isFetching}
+                                disabled={query.isFetching || isSelecting}
                                 onClick={() => {
                                     setPage(current => current + 1);
                                 }}

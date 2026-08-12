@@ -102,16 +102,16 @@ export function StorageMountForm({
                     {children}
 
                     <FieldGroup>
-                        <Field>
-                            <InfoBlock
-                                title={
-                                    <LabelWithInfo
-                                        label="Volume"
-                                        isRequired
-                                    />
-                                }
-                                titleWidth={180}
-                            >
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Volume"
+                                    isRequired
+                                />
+                            }
+                            titleWidth={180}
+                        >
+                            <Field>
                                 <Combobox
                                     options={volumeOptions}
                                     value={sourceField.value || null}
@@ -132,7 +132,7 @@ export function StorageMountForm({
                                     disabled={readOnly}
                                 />
                                 <FieldError errors={[sourceError]} />
-                                <div className="text-xs">
+                                <div className="text-xs ">
                                     Need to add new volumes?{" "}
                                     <AppLink.Basic
                                         to={ROUTE.projects.single.clusterResources.volumes.$route(projectId)}
@@ -143,8 +143,8 @@ export function StorageMountForm({
                                         Click here
                                     </AppLink.Basic>
                                 </div>
-                            </InfoBlock>
-                        </Field>
+                            </Field>
+                        </InfoBlock>
 
                         <Field>
                             <InfoBlock
@@ -249,6 +249,7 @@ export function StorageMountForm({
                             </Button>
                             <Button
                                 type="submit"
+                                className="min-w-[100px]"
                                 isLoading={isPending}
                             >
                                 {isEditMode ? "Update" : "Save"}

@@ -21,6 +21,7 @@ export type HivePaaSServiceSettings_UpdateOne_Payload = {
     };
     periodicSettings: {
         baseInterval: string;
+        batchSize: number;
     };
     proxySettings: {
         proxyProvider: string;

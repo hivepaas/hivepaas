@@ -19,6 +19,7 @@ export function mapHivePaaSServiceSettingsToFormInput(settings: HivePaaSServiceS
         },
         periodicSettings: {
             baseInterval: settings.periodicSettings.baseInterval,
+            batchSize: settings.periodicSettings.batchSize,
         },
         proxySettings: {
             proxyProvider: settings.proxySettings.proxyProvider,

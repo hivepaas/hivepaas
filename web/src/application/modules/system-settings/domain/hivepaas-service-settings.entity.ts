@@ -19,6 +19,7 @@ export interface HivePaaSTaskSettings {
 
 export interface HivePaaSPeriodicSettings {
     baseInterval: string;
+    batchSize: number;
 }
 
 export interface HivePaaSProxySettings {

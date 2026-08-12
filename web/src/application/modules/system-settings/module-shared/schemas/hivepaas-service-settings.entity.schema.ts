@@ -20,6 +20,7 @@ const HivePaaSTaskSettingsSchema = z.object({
 
 const HivePaaSPeriodicSettingsSchema = z.object({
     baseInterval: z.string(),
+    batchSize: z.number(),
 });
 
 const HivePaaSProxySettingsSchema = z.object({

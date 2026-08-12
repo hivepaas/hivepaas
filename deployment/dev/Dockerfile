@@ -53,6 +53,8 @@ RUN apk update && \
     git lfs install --system && \
     rm -rf /var/cache/apk/*
 
+WORKDIR /hivepaas
+
 # For running app
 COPY --from=builder /build/hivepaas .
 COPY --from=builder /build/hivepaas_app/db ./hivepaas_app/db

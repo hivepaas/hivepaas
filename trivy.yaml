@@ -1,0 +1,7 @@
+scan:
+  skip-dirs:
+    - "vendor"
+    - ".temp"
+    - "tmp"
+    - "temp"
+

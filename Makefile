@@ -10,7 +10,7 @@ build-devtools:
 
 GO_MOD_ENV=GOPRIVATE=github.com/hivepaas/*
 mod:
-	@$(GO_MOD_ENV) go mod tidy && go mod verify && go mod vendor
+	@$(GO_MOD_ENV) go mod tidy && go mod vendor && go mod verify
 
 lint:
 	$(DEVTOOLS_CMD) golangci-lint --timeout=3m run -v ./...
@@ -22,6 +22,16 @@ lint-local:
 
 test:
 	@./scripts/test.sh
+
+vuln:
+	@go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+trivy:
+	@if command -v trivy >/dev/null 2>&1; then \
+		trivy fs --skip-dirs "vendor,.temp,tmp,temp,.appdata" --severity CRITICAL,HIGH .; \
+	else \
+		docker run --rm -v "$(PWD)":/app -w /app aquasec/trivy:latest fs --skip-dirs "vendor,.temp,tmp,temp" --severity CRITICAL,HIGH .; \
+	fi
 
 build:
 	@go build -o hivepaas ./hivepaas_app/cmd/app/...

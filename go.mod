@@ -35,13 +35,13 @@ require (
 	github.com/google/go-github/v85 v85.0.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hivepaas/dockerfile-generator v0.0.0-00010101000000-000000000000
+	github.com/hivepaas/dockerfile-generator v0.0.0-20260812082711-d36200f8b95b
 	github.com/itchyny/timefmt-go v0.1.8
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/jinzhu/configor v1.2.2
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
-	github.com/klauspost/compress v1.19.1
+	github.com/klauspost/compress v1.19.2
 	github.com/markbates/goth v1.82.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/moby/moby/api v1.55.0
@@ -211,7 +211,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
-	github.com/quic-go/quic-go v0.59.0 // indirect
+	github.com/quic-go/quic-go v0.59.1 // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
@@ -252,5 +252,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.3 // indirect
 )
-
-replace github.com/hivepaas/dockerfile-generator => ../dockerfile-generator

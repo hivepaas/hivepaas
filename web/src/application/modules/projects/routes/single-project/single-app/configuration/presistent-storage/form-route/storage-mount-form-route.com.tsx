@@ -115,7 +115,7 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
                 readOnly={!canWrite}
                 onClose={navigateToList}
             >
-                <div className={cn(dashedBorderBox, "mb-4 text-center")}>
+                <div className={cn(dashedBorderBox, "mb-4")}>
                     <span className="font-bold text-orange-500">Important:</span> If your cluster consists of more
                     than 1 node, you need to ensure that the directories or volumes are accessible from all nodes.
                     Otherwise, your apps may not function properly.

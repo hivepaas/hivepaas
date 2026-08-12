@@ -154,7 +154,7 @@ export function CreateOrEditGithubAppForm({
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
                 {onReprovision && !isReadOnly && (
-                    <div className={cn(dashedBorderBox, "flex flex-col gap-4 text-center text-sm leading-6")}>
+                    <div className={cn(dashedBorderBox, "flex flex-col gap-4 text-sm leading-6")}>
                         <div>
                             <span className="text-orange-500">Important:</span> It is recommended that you do not
                             manually modify the information below unless you are certain it is correct. You can use the

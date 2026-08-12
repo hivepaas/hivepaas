@@ -5,7 +5,7 @@ import type { AppHealthCheck } from "~/projects/domain";
 import { EAppHealthCheckType } from "~/projects/module-shared/enums";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 
-import { EditCell, MenuCell, ViewTasksCell } from "./building-blocks";
+import { EditCell, MenuCell } from "./building-blocks";
 
 function HealthCheckTypeBadge({ type }: { type: AppHealthCheck["healthcheckType"] }) {
     if (type === EAppHealthCheckType.REST) {
@@ -37,20 +37,6 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
                 titleAlign: "center",
             },
         },
-        {
-            id: "tasks",
-            header: "",
-            enableSorting: false,
-            enableHiding: false,
-            minSize: 120,
-            size: 120,
-            cell: () => <ViewTasksCell />,
-            meta: {
-                align: "left",
-                titleAlign: "left",
-            },
-        },
-
         {
             accessorKey: "name",
             header: "Name",

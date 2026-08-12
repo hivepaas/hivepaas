@@ -77,7 +77,7 @@ export function CreateNetworkForm({
             >
                 <div>
                     {showProjectNamePrefixNote ? (
-                        <div className={cn(dashedBorderBox, "mb-6 text-center text-sm leading-6")}>
+                        <div className={cn(dashedBorderBox, "mb-6 text-sm leading-6")}>
                             <span className="text-orange-500">Note:</span> The name of the network in the project will
                             be prefixed with the name of the project.
                         </div>

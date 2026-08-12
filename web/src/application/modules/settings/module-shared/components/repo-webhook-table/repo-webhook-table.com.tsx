@@ -53,7 +53,7 @@ function RepoWebhookTableView({ scope }: Props) {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                 <span className="text-orange-500">Note:</span> If you are using a GitHub App, webhook events have been
                 automatically configured, and you don&apos;t need to set them up here.
             </div>

@@ -192,7 +192,7 @@ export function SetManagerNodesDialog() {
                     <DialogTitle>Set Manager Nodes</DialogTitle>
                 </DialogHeader>
                 <DialogBody className="flex min-h-0 flex-col gap-5">
-                    <div className={cn(dashedBorderBox, "text-sm leading-6 text-center")}>
+                    <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                         <span className="text-orange-500">Note:</span> Docker Swarm uses the Raft consensus algorithm.
                         It is highly recommended to configure an odd number of managers (e.g., 1, 3 or 5) to optimize
                         fault tolerance and avoid split-brain scenarios. Configuring an even number of managers (e.g.,

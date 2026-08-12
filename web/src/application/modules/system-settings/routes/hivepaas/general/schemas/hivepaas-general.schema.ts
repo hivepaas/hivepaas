@@ -3,6 +3,7 @@ import { z } from "zod";
 const appReplicasSchema = z.number().int().min(1).max(100);
 const workerReplicasSchema = z.number().int().min(0).max(100);
 const workerConcurrencySchema = z.number().int().min(1).max(100);
+const periodicBatchSizeSchema = z.number().int().min(1).max(10000);
 const durationSchema = z.string().trim().min(1);
 
 export const HivePaaSGeneralFormSchema = z
@@ -21,6 +22,7 @@ export const HivePaaSGeneralFormSchema = z
         }),
         periodicSettings: z.object({
             baseInterval: durationSchema,
+            batchSize: periodicBatchSizeSchema,
         }),
         proxySettings: z.object({
             proxyProvider: z.string(),
@@ -55,6 +57,7 @@ export const emptyHivePaaSGeneralFormDefaults: HivePaaSGeneralFormInput = {
     },
     periodicSettings: {
         baseInterval: "15s",
+        batchSize: 100,
     },
     proxySettings: {
         proxyProvider: "",

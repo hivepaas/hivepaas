@@ -22,8 +22,8 @@ import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
-import { Combobox, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { AppLink, Combobox, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
 
@@ -469,6 +469,17 @@ function CommandPipesSection({ projectId, readOnly }: { projectId: string; readO
                                     <Plus className="mr-2 size-4" />
                                     Add
                                 </Button>
+                            </div>
+
+                            <div className="text-xs">
+                                <AppLink.Basic
+                                    to={ROUTE.projects.single.providerConfiguration.commandPipes.$route(projectId)}
+                                    className="text-link"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Configure Command Pipes
+                                </AppLink.Basic>
                             </div>
 
                             {commandPipes.length > 0 ? (

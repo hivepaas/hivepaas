@@ -76,7 +76,7 @@ function NextRunsField({ nextRuns }: { nextRuns: Date[] }) {
                 onOpenChange={setOpen}
                 className="max-w-[400px]"
             >
-                <div className={cn(dashedBorderBox, "text-center text-sm leading-6 p-2")}>
+                <div className={cn(dashedBorderBox, "text-sm text-center leading-6 p-2")}>
                     <CollapsibleTrigger asChild>
                         <button
                             type="button"
@@ -133,7 +133,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
         <>
             <SectionHeader>General</SectionHeader>
             <div className="flex flex-col gap-6 px-3">
-                <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                     <span className="text-orange-500">Note:</span>{" "}
                     <span>
                         We encourage you to run this task during low server load periods (e.g., midnight). Additionally,
@@ -309,10 +309,19 @@ function DBCleanupOptionsFields() {
 function DockerSwarmCleanupOptionsFields() {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const { field: enabled } = useController({ control, name: "clusterCleanup.enabled" });
+    const {
+        field: generalRetention,
+        fieldState: { error: generalRetentionError, invalid: isGeneralRetentionInvalid },
+    } = useController({ control, name: "clusterCleanup.generalRetention" });
     const { field: pruneImages } = useController({ control, name: "clusterCleanup.pruneImages" });
     const { field: pruneVolumes } = useController({ control, name: "clusterCleanup.pruneVolumes" });
     const { field: pruneNetworks } = useController({ control, name: "clusterCleanup.pruneNetworks" });
     const { field: pruneContainers } = useController({ control, name: "clusterCleanup.pruneContainers" });
+    const { field: pruneBuildCache } = useController({ control, name: "clusterCleanup.pruneBuildCache" });
+    const {
+        field: buildCacheRetention,
+        fieldState: { error: buildCacheRetentionError, invalid: isBuildCacheRetentionInvalid },
+    } = useController({ control, name: "clusterCleanup.buildCacheRetention" });
 
     return (
         <>
@@ -353,6 +362,41 @@ function DockerSwarmCleanupOptionsFields() {
                                 checked={pruneContainers.value}
                                 onCheckedChange={pruneContainers.onChange}
                             />
+                        </InfoBlock>
+
+                        <InfoBlock title="Object Retention">
+                            <FieldGroup>
+                                <Field>
+                                    <Input
+                                        {...generalRetention}
+                                        placeholder="180d"
+                                        className="max-w-[400px]"
+                                        aria-invalid={isGeneralRetentionInvalid}
+                                    />
+                                    <FieldError errors={[generalRetentionError]} />
+                                </Field>
+                            </FieldGroup>
+                        </InfoBlock>
+
+                        <InfoBlock title="Prune Build Cache">
+                            <Checkbox
+                                checked={pruneBuildCache.value}
+                                onCheckedChange={pruneBuildCache.onChange}
+                            />
+                        </InfoBlock>
+
+                        <InfoBlock title="Build Cache Retention">
+                            <FieldGroup>
+                                <Field>
+                                    <Input
+                                        {...buildCacheRetention}
+                                        placeholder="180d"
+                                        className="max-w-[400px]"
+                                        aria-invalid={isBuildCacheRetentionInvalid}
+                                    />
+                                    <FieldError errors={[buildCacheRetentionError]} />
+                                </Field>
+                            </FieldGroup>
                         </InfoBlock>
                     </>
                 )}

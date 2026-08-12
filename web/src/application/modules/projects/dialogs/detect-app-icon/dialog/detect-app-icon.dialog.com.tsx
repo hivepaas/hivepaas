@@ -54,7 +54,7 @@ export function DetectAppIconDialog({
                             />
                         </div>
                     ) : (
-                        <div className={cn(dashedBorderBox, "text-center text-base leading-7")}>
+                        <div className={cn(dashedBorderBox, "text-base leading-7")}>
                             <p className="text-destructive">
                                 We couldn&apos;t find a matching icon for your app name or Docker image.
                             </p>

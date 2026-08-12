@@ -30,10 +30,13 @@ export type SystemCleanup_UpdateOne_Payload = {
     };
     clusterCleanup: {
         enabled: boolean;
+        generalRetention: string;
+        buildCacheRetention: string;
         pruneImages: boolean;
         pruneVolumes: boolean;
         pruneNetworks: boolean;
         pruneContainers: boolean;
+        pruneBuildCache: boolean;
     };
     backupCleanup: {
         enabled: boolean;

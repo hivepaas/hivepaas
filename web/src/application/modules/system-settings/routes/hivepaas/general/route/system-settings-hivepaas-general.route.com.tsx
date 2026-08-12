@@ -41,6 +41,7 @@ function mapFormValuesToPayload(values: HivePaaSGeneralFormOutput, updateVer: nu
         },
         periodicSettings: {
             baseInterval: values.periodicSettings.baseInterval,
+            batchSize: values.periodicSettings.batchSize,
         },
         proxySettings: {
             proxyProvider,

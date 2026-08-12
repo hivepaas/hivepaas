@@ -23,7 +23,7 @@ import type { ProjectStorageSettingsFormRef } from "../types";
 
 function NoteBox({ children }: { children: React.ReactNode }) {
     return (
-        <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
             <span className="text-orange-500">Note: </span>
             {children}
         </div>

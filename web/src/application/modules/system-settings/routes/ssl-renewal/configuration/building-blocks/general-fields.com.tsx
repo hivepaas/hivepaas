@@ -11,7 +11,7 @@ export function GeneralFields({ nextRuns }: Props) {
         <>
             <SectionHeader>General</SectionHeader>
             <div className="flex flex-col gap-6 px-3">
-                <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                     <span className="text-orange-500">Note:</span>{" "}
                     <span>
                         We encourage you to run this task during low server load periods (e.g., midnight). Additionally,

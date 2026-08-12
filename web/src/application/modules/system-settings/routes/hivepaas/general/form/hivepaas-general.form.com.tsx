@@ -38,7 +38,7 @@ function SectionHeader({ children }: PropsWithChildren) {
 
 function NoteBox({ children }: PropsWithChildren) {
     return (
-        <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
             <span className="text-orange-500">Note: </span>
             {children}
         </div>
@@ -353,6 +353,13 @@ export function HivePaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = f
                             content="Base interval for HivePaaS periodic jobs."
                             placeholder="15s"
                         />
+                        <NumberField
+                            name="periodicSettings.batchSize"
+                            label="Batch Size"
+                            content="Maximum number of due periodic jobs to fetch and process in a single tick (per second)"
+                            min={1}
+                            max={10000}
+                        />
                     </div>
 
                     <ProxyConfigurationSection readOnly={readOnly} />
@@ -366,7 +373,7 @@ export function HivePaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = f
 
 type NumberFieldPath = Extract<
     FieldPath<SchemaInput>,
-    "appSettings.replicas" | "workerSettings.replicas" | "workerSettings.concurrency"
+    "appSettings.replicas" | "workerSettings.replicas" | "workerSettings.concurrency" | "periodicSettings.batchSize"
 >;
 
 type DurationFieldPath = Extract<

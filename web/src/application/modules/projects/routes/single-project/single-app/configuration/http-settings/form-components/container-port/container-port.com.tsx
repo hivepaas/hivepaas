@@ -137,7 +137,7 @@ function View({ domainIndex, readOnly = false }: ContainerPortProps) {
                                 </div>
 
                                 {!result.open && (
-                                    <div className={cn(dashedBorderBox, "text-center")}>
+                                    <div className={cn(dashedBorderBox)}>
                                         <span className="text-orange-500">Important:</span> You might need to save your
                                         settings before performing this action
                                     </div>

@@ -248,7 +248,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                         disabled={readOnly}
                         className="contents"
                     >
-                        <div className={cn(dashedBorderBox, "text-center text-sm leading-6")}>
+                        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                             <p>
                                 <span className="text-orange-500">Note:</span> From an env var, you can reference
                                 another env var or secret, for example:{" "}

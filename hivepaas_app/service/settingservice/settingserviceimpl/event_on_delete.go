@@ -3,7 +3,6 @@ package settingserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
@@ -19,10 +18,7 @@ func (s *service) OnDelete(
 		if event.Setting.Type == base.SettingTypePeriodicJob {
 			_ = s.periodicSettingsRepo.RemoveJob(ctx, event.Setting.ID)
 		}
-		err = s.periodicSettingsRepo.PublishReload(ctx)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
+		_ = s.systemEventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
 	}
 
 	return nil

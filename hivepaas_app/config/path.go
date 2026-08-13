@@ -16,7 +16,7 @@ const (
 )
 
 func (cfg *Config) BaseAPIURL() string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, cfg.HTTPServer.BasePath))
+	return gofn.Must(url.JoinPath(cfg.BaseURL(), cfg.HTTPServer.BasePath))
 }
 
 /// FRONT-END DASHBOARD
@@ -24,23 +24,23 @@ func (cfg *Config) BaseAPIURL() string {
 // Users
 
 func (cfg *Config) DashboardSsoSuccessURL() string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "auth/sso/success"))
+	return gofn.Must(url.JoinPath(cfg.BaseURL(), "auth/sso/success"))
 }
 
 func (cfg *Config) DashboardUserSignupURL(token string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "auth/sign-up")) +
+	return gofn.Must(url.JoinPath(cfg.BaseURL(), "auth/sign-up")) +
 		fmt.Sprintf("?token=%s", token)
 }
 
 func (cfg *Config) DashboardPasswordResetURL(userID, token string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "auth/reset-password")) +
+	return gofn.Must(url.JoinPath(cfg.BaseURL(), "auth/reset-password")) +
 		fmt.Sprintf("?userID=%s&token=%s", userID, token)
 }
 
 // App deployments
 
 func (cfg *Config) DashboardAppDeploymentDetailsURL(basePath, deploymentID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, basePath, "deployments", deploymentID))
+	return gofn.Must(url.JoinPath(cfg.BaseURL(), basePath, "deployments", deploymentID))
 }
 
 // Scheduled jobs
@@ -49,13 +49,13 @@ func (cfg *Config) DashboardSchedTaskDetailsURL(basePath, schedJobID, taskID str
 	if basePath == "" {
 		basePath = basePathSettings // global scope
 	}
-	return gofn.Must(url.JoinPath(cfg.BaseURL, basePath, "sched-jobs", schedJobID, "tasks", taskID))
+	return gofn.Must(url.JoinPath(cfg.BaseURL(), basePath, "sched-jobs", schedJobID, "tasks", taskID))
 }
 
 // Github Apps
 
 func (cfg *Config) DashboardGithubAppsURL(basePath string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, basePath, "sources/github-apps"))
+	return gofn.Must(url.JoinPath(cfg.BaseURL(), basePath, "sources/github-apps"))
 }
 
 // Periodic Jobs
@@ -64,13 +64,13 @@ func (cfg *Config) DashboardPeriodicTaskDetailsURL(basePath, periodicJobID, task
 	if basePath == "" {
 		basePath = basePathSettings // global scope
 	}
-	return gofn.Must(url.JoinPath(cfg.BaseURL, basePath, "periodic-jobs", periodicJobID, "tasks", taskID))
+	return gofn.Must(url.JoinPath(cfg.BaseURL(), basePath, "periodic-jobs", periodicJobID, "tasks", taskID))
 }
 
 // Tasks
 
 func (cfg *Config) DashboardTaskDetailsURL(taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL, "tasks", taskID))
+	return gofn.Must(url.JoinPath(cfg.BaseURL(), "tasks", taskID))
 }
 
 /// BACK-END

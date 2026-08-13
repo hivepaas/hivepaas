@@ -3,7 +3,6 @@ platform = "remote"
 run_mode = "app+worker"
 root_domain = "hivepaas.com"
 app_domain = "app.dev.hivepaas.com"
-base_url = "https://app.dev.hivepaas.com" # dashboard base URL
 secret = "abc123"
 app_path = "/var/lib/hivepaas"
 

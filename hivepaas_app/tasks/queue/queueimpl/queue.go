@@ -7,6 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/gocronqueue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
@@ -16,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/startupservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemeventbusservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
@@ -36,6 +38,7 @@ type taskQueue struct {
 	schedJobService schedjobservice.Service
 	settingService  settingservice.Service
 	startupService  startupservice.Service
+	systemEventBus  systemeventbusservice.Service
 	taskService     taskservice.Service
 
 	taskExecutorMap  map[base.TaskType]gocronqueue.TaskExecFunc
@@ -44,7 +47,7 @@ type taskQueue struct {
 
 	periodicCacheMu    sync.RWMutex
 	periodicCache      *periodicCache
-	periodicReloadChan <-chan struct{}
+	periodicReloadChan <-chan *entity.SystemEvent
 	periodicBatchSize  int
 }
 
@@ -53,28 +56,34 @@ func New(
 	config *config.Config,
 	logger logging.Logger,
 	redisClient rediscache.Client,
+
 	settingRepo repository.SettingRepo,
 	taskRepo repository.TaskRepo,
 	cacheTaskInfoRepo cacherepository.TaskInfoRepo,
 	periodicSettingsRepo cacherepository.PeriodicSettingsRepo,
+
 	schedJobService schedjobservice.Service,
-	taskService taskservice.Service,
 	settingService settingservice.Service,
 	startupService startupservice.Service,
+	systemEventBus systemeventbusservice.Service,
+	taskService taskservice.Service,
 ) queue.TaskQueue {
 	return &taskQueue{
-		db:                   db,
-		config:               config,
-		logger:               logger,
-		redisClient:          redisClient,
+		db:          db,
+		config:      config,
+		logger:      logger,
+		redisClient: redisClient,
+
 		settingRepo:          settingRepo,
 		taskRepo:             taskRepo,
 		taskInfoRepo:         cacheTaskInfoRepo,
 		periodicSettingsRepo: periodicSettingsRepo,
-		schedJobService:      schedJobService,
-		taskService:          taskService,
-		settingService:       settingService,
-		startupService:       startupService,
+
+		schedJobService: schedJobService,
+		settingService:  settingService,
+		startupService:  startupService,
+		systemEventBus:  systemEventBus,
+		taskService:     taskService,
 	}
 }
 
@@ -99,13 +108,7 @@ func (q *taskQueue) Start() (err error) {
 		if q.periodicBatchSize <= 0 {
 			q.periodicBatchSize = defaultPeriodicBatchSize
 		}
-
-		reloadChan, _, err := q.periodicSettingsRepo.SubscribeReload(ctx)
-		if err != nil {
-			q.logger.Warnf("failed to subscribe to periodic reload channel: %v", err)
-		} else {
-			q.periodicReloadChan = reloadChan
-		}
+		q.periodicReloadChan, _ = q.systemEventBus.Subscribe(base.SystemEventPeriodicSettingsReload)
 
 		q.server, err = gocronqueue.NewServer(&gocronqueue.Config{
 			TaskMap:              q.taskExecutorMap,

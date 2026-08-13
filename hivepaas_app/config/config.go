@@ -50,7 +50,6 @@ type Config struct {
 
 	RootDomain string `toml:"root_domain" env:"HP_ROOT_DOMAIN"`
 	AppDomain  string `toml:"app_domain" env:"HP_APP_DOMAIN"`
-	BaseURL    string `toml:"base_url" env:"HP_APP_BASE_URL"`
 	Secret     string `toml:"secret" env:"HP_APP_SECRET" default:"abc123"`
 	AppPath    string `toml:"app_path" env:"HP_APP_PATH" default:"/var/lib/hivepaas"`
 
@@ -67,7 +66,7 @@ type Config struct {
 
 	DevMode DevMode `toml:"dev_mode"`
 
-	// Readonly
+	// Readonly and internal data
 	SystemInfo SystemInfo `toml:"-"`
 }
 
@@ -75,6 +74,13 @@ func (cfg *Config) IsDevEnv() bool   { return cfg.Env == EnvDev }
 func (cfg *Config) IsLocalEnv() bool { return cfg.Platform == PlatformLocal }
 func (cfg *Config) IsBetaEnv() bool  { return cfg.Env == EnvBeta }
 func (cfg *Config) IsProdEnv() bool  { return cfg.Env == EnvProd }
+
+func (cfg *Config) BaseURL() string {
+	if cfg.Platform == PlatformLocal {
+		return fmt.Sprintf("http://%s:%v", cfg.loadAppDomain(), cfg.HTTPServer.Port)
+	}
+	return "https://" + cfg.loadAppDomain()
+}
 
 /// LOAD CONFIG
 

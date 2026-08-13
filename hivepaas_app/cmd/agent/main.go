@@ -38,8 +38,9 @@ func main() {
 		fx.Invoke(internal.InitConfig),
 		fx.Invoke(internal.InitDBConnection),
 		fx.Invoke(internal.InitCache),
-		fx.Invoke(internal.InitSystemEventBus),
 		fx.Invoke(internal.InitDockerManager),
+		fx.Invoke(internal.InitSystemSettings),
+		fx.Invoke(internal.InitSystemEventBus),
 		fx.Invoke(internal.InitGrpcServer),
 	)
 

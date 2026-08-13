@@ -70,6 +70,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/startupservice/startupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemeventbusservice/systemeventbusserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysupdateservice/sysupdateserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice/taskserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice/traefikserviceimpl"
@@ -313,6 +314,7 @@ var Provides = []any{
 	schedjobexecserviceimpl.New,
 	commandserviceimpl.New,
 	commandpipeexecserviceimpl.New,
+	systemeventbusserviceimpl.New,
 
 	// Repo: User
 	repository.NewUserRepo,
@@ -346,7 +348,6 @@ var Provides = []any{
 	repository.NewBinObjectRepo,
 
 	// Cache Repo
-	cacherepository.NewSystemEventBus,
 	cacherepository.NewUserTokenRepo,
 	cacherepository.NewMFAPasscodeRepo,
 	cacherepository.NewTaskInfoRepo,

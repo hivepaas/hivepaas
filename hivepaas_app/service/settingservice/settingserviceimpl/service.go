@@ -8,20 +8,22 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemeventbusservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 func New(
 	appRepo repository.AppRepo,
-	periodicSettingsRepo cacherepository.PeriodicSettingsRepo,
 	projectEnvRepo repository.ProjectEnvRepo,
 	projectRepo repository.ProjectRepo,
 	settingRepo repository.SettingRepo,
+	periodicSettingsRepo cacherepository.PeriodicSettingsRepo,
 
 	appService appservice.Service,
 	projectService projectservice.Service,
 	sslService sslservice.Service,
+	systemEventBus systemeventbusservice.Service,
 	userService userservice.Service,
 
 	dockerManager docker.Manager,
@@ -29,14 +31,15 @@ func New(
 ) settingservice.Service {
 	return &service{
 		appRepo:              appRepo,
-		periodicSettingsRepo: periodicSettingsRepo,
 		projectEnvRepo:       projectEnvRepo,
 		projectRepo:          projectRepo,
 		settingRepo:          settingRepo,
+		periodicSettingsRepo: periodicSettingsRepo,
 
 		appService:     appService,
 		projectService: projectService,
 		sslService:     sslService,
+		systemEventBus: systemEventBus,
 		userService:    userService,
 
 		dockerManager:     dockerManager,
@@ -46,14 +49,15 @@ func New(
 
 type service struct {
 	appRepo              repository.AppRepo
-	periodicSettingsRepo cacherepository.PeriodicSettingsRepo
 	projectEnvRepo       repository.ProjectEnvRepo
 	projectRepo          repository.ProjectRepo
 	settingRepo          repository.SettingRepo
+	periodicSettingsRepo cacherepository.PeriodicSettingsRepo
 
 	appService     appservice.Service
 	projectService projectservice.Service
 	sslService     sslservice.Service
+	systemEventBus systemeventbusservice.Service
 	userService    userservice.Service
 
 	dockerManager     docker.Manager

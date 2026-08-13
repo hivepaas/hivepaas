@@ -22,7 +22,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
 )
 
-func CompleteInstallation(
+func SystemInstallation(
 	lc fx.Lifecycle,
 	cfg *config.Config,
 	db *database.DB,
@@ -46,7 +46,7 @@ func CompleteInstallation(
 			config.Current.SystemInfo.NextStep = sysStatus.NextStep
 
 			if sysStatus.NextStep == base.InstallationStepInitData {
-				err = installationInitData(ctx, db, sysStatusRepo, projectRepo, userService,
+				err = sysInstallationInitData(ctx, db, sysStatusRepo, projectRepo, userService,
 					settingService, projectService, logger)
 				if err != nil {
 					return fmt.Errorf("failed to initialize system data: %w", err)
@@ -61,7 +61,7 @@ func CompleteInstallation(
 	})
 }
 
-func installationInitData(
+func sysInstallationInitData(
 	ctx context.Context,
 	db *database.DB,
 	sysStatusRepo repository.SystemStatusRepo,
@@ -97,7 +97,7 @@ func installationInitData(
 			return fmt.Errorf("failed to initialize root project: %w", err)
 		}
 
-		if err = installationInitDevProjects(ctx, db, projectRepo, projectService, logger); err != nil {
+		if err = sysInstallationInitDevProjects(ctx, db, projectRepo, projectService, logger); err != nil {
 			return fmt.Errorf("failed to initialize dev projects: %w", err)
 		}
 
@@ -126,7 +126,7 @@ func installationInitData(
 	return err
 }
 
-func installationInitDevProjects(
+func sysInstallationInitDevProjects(
 	ctx context.Context,
 	db database.IDB,
 	projectRepo repository.ProjectRepo,

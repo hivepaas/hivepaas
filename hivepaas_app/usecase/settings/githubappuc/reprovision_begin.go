@@ -54,7 +54,7 @@ func (uc *UC) BeginReprovisionGithubApp(
 	state := gofn.RandTokenAsHex(appManifestStateLen)
 	manifest := &github.AppManifest{
 		Name:         appSetting.Name,
-		URL:          cfg.BaseURL,
+		URL:          cfg.BaseURL(),
 		CallbackURLs: []string{cfg.SsoCallbackURL(appSetting.ID)},
 		Hook: &github.AppManifestHook{
 			URL:    githubApp.WebhookURL,

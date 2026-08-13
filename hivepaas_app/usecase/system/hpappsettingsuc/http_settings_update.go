@@ -25,8 +25,9 @@ func (uc *UC) UpdateHttpSettings(
 	auth *basedto.Auth,
 	req *hpappsettingsdto.UpdateHttpSettingsReq,
 ) (*hpappsettingsdto.UpdateHttpSettingsResp, error) {
+	var data *updateHttpSettingsData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data := &updateHttpSettingsData{}
+		data = &updateHttpSettingsData{}
 		err := uc.loadHttpSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
@@ -50,6 +51,11 @@ func (uc *UC) UpdateHttpSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
+	if data != nil && data.DomainChanged {
+		// Publish a message to reload config in other instances
+		_ = uc.systemEventBus.Publish(ctx, base.SystemEventHivepaasDomainReload)
+	}
+
 	return &hpappsettingsdto.UpdateHttpSettingsResp{}, nil
 }
 
@@ -58,6 +64,7 @@ type updateHttpSettingsData struct {
 	HttpSetting     *entity.Setting
 	NewHttpSettings *entity.AppHttpSettings
 	RefObjects      *entity.RefObjects
+	DomainChanged   bool
 }
 
 type persistingAppData struct {
@@ -90,21 +97,26 @@ func (uc *UC) loadHttpSettingsForUpdate(
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
-	newHttpSettings := data.HttpSetting.MustAsAppHttpSettings()
-	if err := req.ApplyTo(newHttpSettings); err != nil {
+	httpSettings := data.HttpSetting.MustAsAppHttpSettings()
+	var currDomain string
+	if domains := httpSettings.GetActiveDomainNames(); len(domains) > 0 {
+		currDomain = domains[0]
+	}
+
+	if err := req.ApplyTo(httpSettings); err != nil {
 		return apperrors.Wrap(err)
 	}
-	data.NewHttpSettings = newHttpSettings
+	data.NewHttpSettings = httpSettings
 
 	// Make sure all reference settings used in these settings exist actively
 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, app.GetObjectScope(),
-		true, newHttpSettings.GetRefObjectIDs())
+		true, httpSettings.GetRefObjectIDs())
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Active domains of the app need to validate
-	activeDomains := newHttpSettings.GetActiveDomainNames()
+	activeDomains := httpSettings.GetActiveDomainNames()
 
 	// Verify domains are allowed in project
 	err = uc.domainService.VerifyProjectDomains(ctx, db, app.ProjectID, activeDomains)
@@ -116,6 +128,10 @@ func (uc *UC) loadHttpSettingsForUpdate(
 	err = uc.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{app.ID})
 	if err != nil {
 		return apperrors.Wrap(err)
+	}
+
+	if len(activeDomains) > 0 && activeDomains[0] != currDomain {
+		data.DomainChanged = true
 	}
 
 	return nil

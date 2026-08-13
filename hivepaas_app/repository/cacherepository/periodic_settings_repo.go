@@ -7,7 +7,6 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
 )
@@ -21,23 +20,17 @@ type PeriodicSettingsRepo interface {
 	ScheduleJob(ctx context.Context, jobID string, nextRunSecs int64) error
 	RemoveJob(ctx context.Context, jobID string) error
 	ResetSchedule(ctx context.Context) error
-
-	PublishReload(ctx context.Context) error
-	SubscribeReload(ctx context.Context) (<-chan struct{}, func() error, error)
 }
 
 type periodicSettingsRepo struct {
-	client   rediscache.Client
-	eventBus SystemEventBus
+	client rediscache.Client
 }
 
 func NewPeriodicSettingsRepo(
 	client rediscache.Client,
-	eventBus SystemEventBus,
 ) PeriodicSettingsRepo {
 	return &periodicSettingsRepo{
-		client:   client,
-		eventBus: eventBus,
+		client: client,
 	}
 }
 
@@ -92,40 +85,4 @@ func (repo *periodicSettingsRepo) ResetSchedule(
 		return apperrors.Wrap(err)
 	}
 	return nil
-}
-
-func (repo *periodicSettingsRepo) PublishReload(
-	ctx context.Context,
-) error {
-	err := repo.eventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	return nil
-}
-
-func (repo *periodicSettingsRepo) SubscribeReload(
-	ctx context.Context,
-) (<-chan struct{}, func() error, error) {
-	eventChan, unsub := repo.eventBus.Subscribe(base.SystemEventPeriodicSettingsReload)
-	notifyChan := make(chan struct{}, 1)
-
-	go func() {
-		defer func() {
-			_ = recover()
-		}()
-		for range eventChan {
-			select {
-			case notifyChan <- struct{}{}:
-			default:
-			}
-		}
-	}()
-
-	closeFunc := func() error {
-		unsub()
-		return nil
-	}
-
-	return notifyChan, closeFunc, nil
 }

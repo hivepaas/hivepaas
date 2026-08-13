@@ -31,6 +31,7 @@ type Store struct {
 	frames            []*LogFrame
 	totalSize         int64
 	maxSize           int64
+	onForward         func(context.Context, []*LogFrame) error
 	onFlush           func(ctx context.Context, frames []*LogFrame) error
 }
 
@@ -66,7 +67,17 @@ func (s *Store) SetOnFlush(maxSize int64, onFlush func(context.Context, []*LogFr
 	s.mu.Unlock()
 }
 
+func (s *Store) SetOnForward(onForward func(context.Context, []*LogFrame) error) {
+	s.mu.Lock()
+	s.onForward = onForward
+	s.mu.Unlock()
+}
+
 func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
+	if len(frames) == 0 {
+		return nil
+	}
+
 	var framesSize int64
 	for _, f := range frames {
 		framesSize += int64(len(f.Data))
@@ -77,6 +88,7 @@ func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
 		s.frames = append(s.frames, frames...)
 	}
 	s.totalSize += framesSize
+	onForward := s.onForward
 	s.mu.Unlock()
 
 	if s.storeRemote {
@@ -97,6 +109,12 @@ func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
 		}
 	}
 
+	if onForward != nil {
+		if err := onForward(ctx, frames); err != nil {
+			return err
+		}
+	}
+
 	s.mu.Lock()
 	shouldFlush := s.onFlush != nil && s.maxSize > 0 && s.totalSize >= s.maxSize
 	var framesToFlush []*LogFrame
@@ -105,13 +123,14 @@ func (s *Store) Add(ctx context.Context, frames ...*LogFrame) error {
 		s.frames = make([]*LogFrame, 0, 100) //nolint:mnd
 		s.totalSize = 0
 	}
+	onFlush := s.onFlush
 	s.mu.Unlock()
 
-	if shouldFlush && len(framesToFlush) > 0 {
+	if shouldFlush && len(framesToFlush) > 0 && onFlush != nil {
 		if s.storeRemote {
 			_ = redishelper.Del(ctx, s.redisClient, s.Key)
 		}
-		if err := s.onFlush(ctx, framesToFlush); err != nil {
+		if err := onFlush(ctx, framesToFlush); err != nil {
 			return err
 		}
 	}
@@ -199,12 +218,14 @@ func newStore(
 	storeLocal bool,
 	storeRemote bool,
 	redisClient redis.UniversalClient,
+	forwardFunc func(context.Context, []*LogFrame) error,
 ) *Store {
 	s := &Store{
 		redisClient: redisClient,
 		Key:         key,
 		storeLocal:  storeLocal,
 		storeRemote: storeRemote,
+		onForward:   forwardFunc,
 	}
 	if storeLocal {
 		s.frames = make([]*LogFrame, 0, 100) //nolint:mnd
@@ -216,13 +237,20 @@ func NewRemoteStore(
 	key string,
 	redisClient redis.UniversalClient,
 ) *Store {
-	return newStore(key, true, true, redisClient)
+	return newStore(key, true, true, redisClient, nil)
 }
 
 func NewLocalStore(
 	key string,
 ) *Store {
-	return newStore(key, true, false, nil)
+	return newStore(key, true, false, nil, nil)
+}
+
+func NewForwardStore(
+	key string,
+	forwardFunc func(context.Context, []*LogFrame) error,
+) *Store {
+	return newStore(key, true, false, nil, forwardFunc)
 }
 
 func NewNullStore() *Store {

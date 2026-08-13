@@ -40,8 +40,9 @@ func ImageBuild(
 		}
 		if bs.GetWorkers() != nil {
 			buildSettings.Workers = entity.ImageBuildWorkerSettings{
-				NodeIDs:    bs.GetWorkers().GetNodeIds(),
-				NodeLabels: bs.GetWorkers().GetNodeLabels(),
+				NodeIDs:        bs.GetWorkers().GetNodeIds(),
+				NodeLabels:     bs.GetWorkers().GetNodeLabels(),
+				MaxParallelism: int(bs.GetWorkers().GetMaxParallelism()),
 			}
 		}
 		if bs.GetResources() != nil {

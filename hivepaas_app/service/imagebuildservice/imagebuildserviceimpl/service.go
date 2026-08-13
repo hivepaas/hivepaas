@@ -1,6 +1,7 @@
 package imagebuildserviceimpl
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
@@ -9,28 +10,31 @@ import (
 )
 
 type service struct {
+	redisClient   rediscache.Client
+	dockerManager docker.Manager
+
 	settingRepo repository.SettingRepo
 
 	envVarService  envvarservice.Service
 	settingService settingservice.Service
-
-	dockerManager docker.Manager
 }
 
 func New(
+	redisClient rediscache.Client,
+	dockerManager docker.Manager,
+
 	settingRepo repository.SettingRepo,
 
 	envVarService envvarservice.Service,
 	settingService settingservice.Service,
-
-	dockerManager docker.Manager,
 ) imagebuildservice.Service {
 	return &service{
+		redisClient:   redisClient,
+		dockerManager: dockerManager,
+
 		settingRepo: settingRepo,
 
 		envVarService:  envVarService,
 		settingService: settingService,
-
-		dockerManager: dockerManager,
 	}
 }

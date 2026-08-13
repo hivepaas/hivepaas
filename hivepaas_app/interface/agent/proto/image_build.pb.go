@@ -290,11 +290,12 @@ func (x *ImageBuildSettings) GetNoVerbose() bool {
 }
 
 type ImageBuildWorkerSettings struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeIds       []string               `protobuf:"bytes,1,rep,name=node_ids,json=nodeIds,proto3" json:"node_ids,omitempty"`
-	NodeLabels    []string               `protobuf:"bytes,2,rep,name=node_labels,json=nodeLabels,proto3" json:"node_labels,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	NodeIds        []string               `protobuf:"bytes,1,rep,name=node_ids,json=nodeIds,proto3" json:"node_ids,omitempty"`
+	NodeLabels     []string               `protobuf:"bytes,2,rep,name=node_labels,json=nodeLabels,proto3" json:"node_labels,omitempty"`
+	MaxParallelism uint32                 `protobuf:"varint,3,opt,name=max_parallelism,json=maxParallelism,proto3" json:"max_parallelism,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ImageBuildWorkerSettings) Reset() {
@@ -339,6 +340,13 @@ func (x *ImageBuildWorkerSettings) GetNodeLabels() []string {
 		return x.NodeLabels
 	}
 	return nil
+}
+
+func (x *ImageBuildWorkerSettings) GetMaxParallelism() uint32 {
+	if x != nil {
+		return x.MaxParallelism
+	}
+	return 0
 }
 
 type ImageBuildResourceSettings struct {
@@ -672,11 +680,12 @@ const file_image_build_proto_rawDesc = "" +
 	"\asources\x18\x03 \x01(\v2\x1f.agent.ImageBuildSourceSettingsR\asources\x12\x19\n" +
 	"\bno_cache\x18\x04 \x01(\bR\anoCache\x12\x1d\n" +
 	"\n" +
-	"no_verbose\x18\x05 \x01(\bR\tnoVerbose\"V\n" +
+	"no_verbose\x18\x05 \x01(\bR\tnoVerbose\"\x7f\n" +
 	"\x18ImageBuildWorkerSettings\x12\x19\n" +
 	"\bnode_ids\x18\x01 \x03(\tR\anodeIds\x12\x1f\n" +
 	"\vnode_labels\x18\x02 \x03(\tR\n" +
-	"nodeLabels\"x\n" +
+	"nodeLabels\x12'\n" +
+	"\x0fmax_parallelism\x18\x03 \x01(\rR\x0emaxParallelism\"x\n" +
 	"\x1aImageBuildResourceSettings\x12\x12\n" +
 	"\x04cpus\x18\x01 \x01(\rR\x04cpus\x12\x10\n" +
 	"\x03mem\x18\x02 \x01(\x04R\x03mem\x12\x19\n" +

@@ -70,8 +70,9 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
 			NoCache:   req.ImageBuildSettings.NoCache,
 			NoVerbose: req.ImageBuildSettings.NoVerbose,
 			Workers: &agentproto.ImageBuildWorkerSettings{
-				NodeIds:    req.ImageBuildSettings.Workers.NodeIDs,
-				NodeLabels: req.ImageBuildSettings.Workers.NodeLabels,
+				NodeIds:        req.ImageBuildSettings.Workers.NodeIDs,
+				NodeLabels:     req.ImageBuildSettings.Workers.NodeLabels,
+				MaxParallelism: uint32(req.ImageBuildSettings.Workers.MaxParallelism),
 			},
 			Resources: &agentproto.ImageBuildResourceSettings{
 				Cpus:    uint32(req.ImageBuildSettings.Resources.CPUs),

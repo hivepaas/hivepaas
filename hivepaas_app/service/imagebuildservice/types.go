@@ -1,6 +1,8 @@
 package imagebuildservice
 
 import (
+	"github.com/moby/moby/api/types/swarm"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
@@ -24,4 +26,17 @@ type ImageBuildReq struct {
 
 type ImageBuildResp struct {
 	ImageTags []string
+}
+
+type BuildNodeResp struct {
+	Node            *swarm.Node
+	CurrentNodeID   string
+	ReleaseNodeFunc func()
+}
+
+func (resp *BuildNodeResp) ReleaseNode() {
+	if resp.ReleaseNodeFunc != nil {
+		resp.ReleaseNodeFunc()
+		resp.ReleaseNodeFunc = nil
+	}
 }

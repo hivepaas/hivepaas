@@ -38,8 +38,9 @@ type ImageBuildResourceSettings struct {
 }
 
 type ImageBuildWorkerSettings struct {
-	NodeIDs    []string `json:"nodeIds"`
-	NodeLabels []string `json:"nodeLabels"`
+	NodeIDs        []string `json:"nodeIds,omitempty"`
+	NodeLabels     []string `json:"nodeLabels,omitempty"`
+	MaxParallelism int      `json:"maxParallelism,omitempty"`
 }
 
 type ImageBuildSourceSettings struct {

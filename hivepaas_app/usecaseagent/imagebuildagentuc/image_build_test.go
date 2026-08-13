@@ -6,7 +6,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -36,8 +35,8 @@ func (m *mockImageBuildService) ImageBuild(
 func (m *mockImageBuildService) SelectBuildWorkerNode(
 	ctx context.Context,
 	buildSetting *entity.ImageBuildSettings,
-) (*swarm.Node, error) {
-	return nil, nil
+) (imagebuildservice.BuildNodeResp, error) {
+	return imagebuildservice.BuildNodeResp{}, nil
 }
 
 func TestImageBuild_Success_SendLog(t *testing.T) {

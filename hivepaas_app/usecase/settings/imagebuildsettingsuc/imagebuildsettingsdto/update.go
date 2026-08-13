@@ -44,8 +44,9 @@ func (req *ImageBuildSettingsBaseReq) validate(field string) (res []vld.Validato
 }
 
 type ImageBuildWorkerSettingsReq struct {
-	NodeIDs    []string `json:"nodeIds"`
-	NodeLabels []string `json:"nodeLabels"`
+	NodeIDs        []string `json:"nodeIds"`
+	NodeLabels     []string `json:"nodeLabels"`
+	MaxParallelism int      `json:"maxParallelism"`
 }
 
 func (req *ImageBuildWorkerSettingsReq) ToEntity() entity.ImageBuildWorkerSettings {
@@ -53,8 +54,9 @@ func (req *ImageBuildWorkerSettingsReq) ToEntity() entity.ImageBuildWorkerSettin
 		return entity.ImageBuildWorkerSettings{}
 	}
 	return entity.ImageBuildWorkerSettings{
-		NodeIDs:    req.NodeIDs,
-		NodeLabels: req.NodeLabels,
+		NodeIDs:        req.NodeIDs,
+		NodeLabels:     req.NodeLabels,
+		MaxParallelism: req.MaxParallelism,
 	}
 }
 

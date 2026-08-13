@@ -40,8 +40,9 @@ type ImageBuildSettingsResp struct {
 }
 
 type ImageBuildWorkerSettingsResp struct {
-	NodeIDs    []string `json:"nodeIds,omitempty"`
-	NodeLabels []string `json:"nodeLabels,omitempty"`
+	NodeIDs        []string `json:"nodeIds,omitempty"`
+	NodeLabels     []string `json:"nodeLabels,omitempty"`
+	MaxParallelism int      `json:"maxParallelism,omitempty"`
 }
 
 type ImageBuildResourceSettingsResp struct {

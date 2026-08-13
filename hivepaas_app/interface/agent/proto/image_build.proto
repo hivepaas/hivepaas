@@ -40,6 +40,7 @@ message ImageBuildSettings {
 message ImageBuildWorkerSettings {
   repeated string node_ids = 1;
   repeated string node_labels = 2;
+  uint32 max_parallelism = 3;
 }
 
 message ImageBuildResourceSettings {

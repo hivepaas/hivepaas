@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
@@ -34,6 +33,9 @@ const (
 	stepServiceApply = "service-apply"
 
 	dockerServiceApplyRetryMax = 2
+
+	buildWorkerNodeWaitTimeout  = 10 * time.Minute
+	buildWorkerNodePollInterval = 3 * time.Second
 )
 
 type repoDeploymentData struct {
@@ -191,29 +193,24 @@ func (s *service) repoDeployStepImageBuild(
 		buildReq.NoCache = true
 	}
 
-	var buildWorkerNode *swarm.Node
-	if data.ImageBuildSettings != nil {
-		buildWorkerNode, err = s.imageBuildService.SelectBuildWorkerNode(ctx, data.ImageBuildSettings)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-	}
-
-	currNodeID, err := s.dockerManager.NodeCurrentID(ctx)
+	buildNode, err := s.repoDeployStepGetBuildNode(ctx, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
+	defer func() {
+		buildNode.ReleaseNode()
+	}()
 
-	isRemote := buildWorkerNode != nil && buildWorkerNode.ID != "" && buildWorkerNode.ID != currNodeID
+	isRemote := buildNode.Node != nil && buildNode.Node.ID != "" && buildNode.Node.ID != buildNode.CurrentNodeID
 	if config.Current.DevMode.Enabled && config.Current.DevMode.ForceAgentLocal {
 		isRemote = true
 	}
 
 	for isRemote { // loop at most 1 time
-		nodeID, nodeName := currNodeID, "<current>"
-		if buildWorkerNode != nil {
-			nodeID = buildWorkerNode.ID
-			nodeName = gofn.Coalesce(buildWorkerNode.Spec.Name, buildWorkerNode.Description.Hostname)
+		nodeID, nodeName := buildNode.CurrentNodeID, "<current>"
+		if buildNode.Node != nil {
+			nodeID = buildNode.Node.ID
+			nodeName = gofn.Coalesce(buildNode.Node.Spec.Name, buildNode.Node.Description.Hostname)
 		}
 		agentAddr, err := s.agentService.GetAgentAddrForNode(ctx, nodeID)
 		if err != nil {
@@ -221,6 +218,7 @@ func (s *service) repoDeployStepImageBuild(
 				fmt.Sprintf("Failed to get agent address for node '%s' (id '%s'): %v. "+
 					"Falling back to current node.", nodeName, nodeID, err),
 				tasklog.TsNow))
+			buildNode.ReleaseNode()
 			break
 		}
 
@@ -230,6 +228,7 @@ func (s *service) repoDeployStepImageBuild(
 				fmt.Sprintf("Failed to connect to agent on node '%s' (id '%s'): %v. "+
 					"Falling back to current node.", nodeName, nodeID, err),
 				tasklog.TsNow))
+			buildNode.ReleaseNode()
 			break
 		}
 		defer agentClient.Close()
@@ -257,6 +256,7 @@ func (s *service) repoDeployStepImageBuild(
 					fmt.Sprintf("Failed to build image via agent on node '%s' (id '%s'): %v. "+
 						"Falling back to current node.", nodeName, nodeID, err),
 					tasklog.TsNow))
+				buildNode.ReleaseNode()
 				break
 			}
 			return apperrors.Wrap(err)
@@ -274,6 +274,71 @@ func (s *service) repoDeployStepImageBuild(
 	data.Deployment.Output.ImageTags = buildResp.ImageTags
 
 	return nil
+}
+
+func (s *service) repoDeployStepGetBuildNode(
+	ctx context.Context,
+	data *repoDeploymentData,
+) (buildNode imagebuildservice.BuildNodeResp, err error) {
+	buildNode, err = s.imageBuildService.SelectBuildWorkerNode(ctx, data.ImageBuildSettings)
+	if err != nil {
+		return buildNode, apperrors.Wrap(err)
+	}
+	defer func() {
+		if err != nil {
+			buildNode.ReleaseNode()
+		}
+	}()
+
+	// There is a node available, return
+	if buildNode.Node != nil {
+		return buildNode, nil
+	}
+
+	// Wait for a node to be available
+
+	_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
+		fmt.Sprintf("All build nodes are currently at maximum capacity. "+
+			"Waiting for an available build slot (timeout: %s)...", buildWorkerNodeWaitTimeout),
+		tasklog.TsNow))
+
+	waitTimer := time.NewTimer(buildWorkerNodeWaitTimeout)
+	defer waitTimer.Stop()
+
+	pollTicker := time.NewTicker(buildWorkerNodePollInterval)
+	defer pollTicker.Stop()
+
+	startTime := time.Now()
+	lastLogTime := startTime
+
+	for {
+		select {
+		case <-ctx.Done():
+			return buildNode, apperrors.Wrap(ctx.Err())
+
+		case <-waitTimer.C:
+			return buildNode, apperrors.NewUnavailable("Build worker node (timed out waiting for available slot)")
+
+		case <-pollTicker.C:
+			buildNode, err = s.imageBuildService.SelectBuildWorkerNode(ctx, data.ImageBuildSettings)
+			if err != nil {
+				return buildNode, apperrors.Wrap(err)
+			}
+			if buildNode.Node != nil {
+				_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
+					fmt.Sprintf("Build slot acquired after %s. Continuing build...",
+						time.Since(startTime).Truncate(time.Second)), tasklog.TsNow))
+				return buildNode, nil
+			}
+
+			if time.Since(lastLogTime) >= 30*time.Second { //nolint:mnd
+				lastLogTime = time.Now()
+				_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
+					fmt.Sprintf("Still waiting for an available build slot (elapsed: %s)...",
+						time.Since(startTime).Truncate(time.Second)), tasklog.TsNow))
+			}
+		}
+	}
 }
 
 func (s *service) repoDeployStepServiceApply(

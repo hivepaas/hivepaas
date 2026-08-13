@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
+import { EAppDeploymentMethod, EDockerfileSource } from "~/projects/module-shared/enums";
 
 import { ESettingType } from "@application/shared/enums";
 
@@ -26,6 +26,13 @@ const BaseDeploymentSettingsSchema = z.object({
     notification: NotificationSchema.optional(),
 });
 
+const DockerfileSchema = z.object({
+    source: z.enum([EDockerfileSource.Manual, EDockerfileSource.Auto]),
+    path: z.string().optional(),
+    content: z.string().optional(),
+    scanPath: z.string().optional(),
+});
+
 const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
     activeMethod: z.literal(EAppDeploymentMethod.Repo),
     repoSource: z.object({
@@ -39,7 +46,7 @@ const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
             gitLfsEnabled: z.boolean(),
         }),
         credentials: OptionalSettingsRefSchema,
-        dockerfilePath: z.string().optional(),
+        dockerfile: DockerfileSchema,
         imageName: z.string().optional(),
         imageTags: z.string().optional(),
         pushToRegistry: OptionalSettingsRefSchema,

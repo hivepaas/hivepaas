@@ -1,4 +1,4 @@
-import { type EAppDeploymentMethod, type EBuildTool, type ERepoType } from "~/projects/module-shared/enums";
+import { type EAppDeploymentMethod, type EBuildTool, type EDockerfileSource, type ERepoType } from "~/projects/module-shared/enums";
 
 import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 
@@ -49,7 +49,12 @@ type AppDeploymentSettings_UpdateRepoPayload = AppDeploymentSettings_UpdateBaseP
         credentials: {
             id: string;
         };
-        dockerfilePath?: string;
+        dockerfile: {
+            source: EDockerfileSource;
+            path: string;
+            content?: string;
+            scanPath?: string;
+        };
         imageName: string;
         imageTags?: string;
         pushToRegistry: {
@@ -66,3 +71,11 @@ export type AppDeploymentSettings_UpdateOne_Req = ApiRequestBase<{
     payload: AppDeploymentSettings_UpdateImagePayload | AppDeploymentSettings_UpdateRepoPayload;
 }>;
 export type AppDeploymentSettings_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type AppDeploymentSettings_GetDockerfileTemplate_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    type: string;
+}>;
+export type AppDeploymentSettings_GetDockerfileTemplate_Res = ApiResponseBase<{ template: string }>;

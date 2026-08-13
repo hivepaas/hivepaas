@@ -10,6 +10,7 @@ import { ContentBlock } from "@application/shared/components";
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
 import {
+    BuildConfigurationFields,
     DockerImageFields,
     GitSourceFields,
     MethodSelector,
@@ -65,7 +66,12 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
                           type: data.repoSource.credentials.type,
                       }
                     : undefined,
-                dockerfilePath: data.repoSource.dockerfilePath,
+                dockerfile: {
+                    source: data.repoSource.dockerfile.source,
+                    path: data.repoSource.dockerfile.path,
+                    content: data.repoSource.dockerfile.content,
+                    scanPath: data.repoSource.dockerfile.scanPath,
+                },
                 imageName: data.repoSource.imageName,
                 imageTags: data.repoSource.imageTags,
                 pushToRegistry: data.repoSource.pushToRegistry
@@ -175,6 +181,14 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
                                 {activeMethod === EAppDeploymentMethod.Repo && <GitSourceFields readOnly={readOnly} />}
                             </div>
                         </ContentBlock>
+
+                        {activeMethod === EAppDeploymentMethod.Repo && (
+                            <ContentBlock label="Build Configuration">
+                                <div className="flex flex-col gap-6">
+                                    <BuildConfigurationFields readOnly={readOnly} />
+                                </div>
+                            </ContentBlock>
+                        )}
 
                         <ContentBlock label="Run Configuration">
                             <div className="flex flex-col gap-6">

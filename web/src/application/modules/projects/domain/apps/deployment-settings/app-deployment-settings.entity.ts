@@ -1,5 +1,12 @@
-import { type EAppDeploymentMethod, type EBuildTool, type ERepoType } from "~/projects/module-shared/enums";
+import { type EAppDeploymentMethod, type EBuildTool, type EDockerfileSource, type ERepoType } from "~/projects/module-shared/enums";
 import { type SettingsBaseEntity } from "~/settings/domain";
+
+export type DeploymentDockerfile = {
+    source: EDockerfileSource;
+    path: string;
+    content: string;
+    scanPath: string;
+};
 
 export type RepoMethod = BaseDeploymentSettings & {
     activeMethod: typeof EAppDeploymentMethod.Repo;
@@ -11,7 +18,7 @@ export type RepoMethod = BaseDeploymentSettings & {
         commitHash: string;
         repoOptions: DeploymentRepoOptions;
         credentials: SettingsBaseEntity | null;
-        dockerfilePath: string;
+        dockerfile: DeploymentDockerfile;
         imageName: string;
         imageTags: string;
         pushToRegistry: SettingsBaseEntity | null;

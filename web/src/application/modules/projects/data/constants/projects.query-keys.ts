@@ -64,6 +64,7 @@ export const QK = {
      * Project App Deployment Settings
      */
     "projects.apps.deployment-settings.$.find-one": "projects.apps.deployment-settings.$.find-one",
+    "projects.apps.deployment-settings.$.dockerfile-template": "projects.apps.deployment-settings.$.dockerfile-template",
     /*
      * Project App Feature Settings
      */

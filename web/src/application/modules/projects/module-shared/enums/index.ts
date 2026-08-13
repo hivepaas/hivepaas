@@ -33,3 +33,4 @@ export * from "./e.seccomp-mode";
 export * from "./e.service-mode";
 export * from "./e.app-service-placement";
 export * from "./e.deployment-repo-option";
+export * from "./e.dockerfile-source";

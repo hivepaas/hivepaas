@@ -69,7 +69,12 @@ function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOut
                     gitLfsEnabled: values.repoSource.repoOptions.gitLfsEnabled,
                 },
                 credentials: { id: values.repoSource.credentials?.id ?? "" },
-                dockerfilePath: values.repoSource.dockerfilePath ?? "",
+                dockerfile: {
+                    source: values.repoSource.dockerfile.source,
+                    path: values.repoSource.dockerfile.path ?? "",
+                    content: values.repoSource.dockerfile.content ?? "",
+                    scanPath: values.repoSource.dockerfile.scanPath ?? "",
+                },
                 imageName: values.repoSource.imageName ?? "",
                 imageTags: values.repoSource.imageTags ?? "",
                 pushToRegistry: { id: values.repoSource.pushToRegistry?.id ?? "" },

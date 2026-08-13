@@ -12,7 +12,7 @@ import { canUseGitCredentialSelectors, parseGitRepository } from "~/projects/mod
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESettingType } from "@application/shared/enums";
 
-import { GitCredentialSelect, GitRepositoryInput, PushToRegistrySelect } from "../form-components";
+import { GitCredentialSelect, GitRepositoryInput } from "../form-components";
 import {
     type AppConfigDeploymentSettingsFormSchemaInput,
     type AppConfigDeploymentSettingsFormSchemaOutput,
@@ -62,16 +62,6 @@ export function GitSourceFields({ readOnly = false }: Props) {
         name: `repoSource.repoOptions.${EDeploymentRepoOption.GitLfsEnabled}`,
         defaultValue: true,
     });
-
-    const {
-        field: dockerfilePath,
-        fieldState: { invalid: isDockerfilePathInvalid, error: dockerfilePathError },
-    } = useController({ control, name: "repoSource.dockerfilePath" });
-
-    const {
-        field: imageName,
-        fieldState: { invalid: isImageNameInvalid, error: imageNameError },
-    } = useController({ control, name: "repoSource.imageName" });
 
     return (
         <>
@@ -163,68 +153,6 @@ export function GitSourceFields({ readOnly = false }: Props) {
                     </div>
                 </div>
             </InfoBlock>
-
-            <InfoBlock title="Dockerfile Path">
-                <Input
-                    {...dockerfilePath}
-                    value={dockerfilePath.value ?? ""}
-                    onChange={dockerfilePath.onChange}
-                    placeholder="path/to/Dockerfile"
-                    aria-invalid={isDockerfilePathInvalid}
-                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                    disabled={readOnly}
-                />
-                <FieldError errors={[dockerfilePathError]} />
-            </InfoBlock>
-
-            <PushToRegistrySelect readOnly={readOnly} />
-
-            <InfoBlock title="Image Repository Name">
-                <Input
-                    {...imageName}
-                    value={imageName.value ?? ""}
-                    onChange={imageName.onChange}
-                    placeholder="auto"
-                    aria-invalid={isImageNameInvalid}
-                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                    disabled={readOnly}
-                />
-                <FieldError errors={[imageNameError]} />
-            </InfoBlock>
-
-            {/* <InfoBlock title="Build Tool">
-                <Combobox
-                    options={BUILD_TOOL_OPTIONS}
-                    value={buildTool.value}
-                    onChange={value => {
-                        buildTool.onChange(value);
-                    }}
-                    placeholder="Select build tool"
-                    searchable={false}
-                    closeOnSelect
-                    className="max-w-[600px]"
-                    valueKey="id"
-                    aria-invalid={isBuildToolInvalid}
-                />
-                <FieldError errors={[buildToolError]} />
-            </InfoBlock>
-
-            <InfoBlock title="Repository Type">
-                <Combobox
-                    options={REPO_TYPE_OPTIONS}
-                    value={repoType.value}
-                    onChange={value => {
-                        repoType.onChange(value);
-                    }}
-                    placeholder="Select repo type"
-                    searchable={false}
-                    closeOnSelect
-                    className="max-w-[600px]"
-                    valueKey="id"
-                    aria-invalid={isRepoTypeInvalid}
-                />
-                <FieldError errors={[repoTypeError]} />
-            </InfoBlock> */}
 
             {canShowBranchesButton && credentialId && repository && (
                 <BranchesDialog

@@ -65,7 +65,6 @@ type DeploymentRepoSourceResp struct {
 	RepoOptions    *DeploymentRepoOptionsResp `json:"repoOptions"`
 	Credentials    *settings.BaseSettingResp  `json:"credentials"`
 	Dockerfile     *DeploymentDockerfileResp  `json:"dockerfile"`
-	DockerfilePath string                     `json:"dockerfilePath"`
 	ImageName      string                     `json:"imageName"`
 	ImageTags      []string                   `json:"imageTags"`
 	PushToRegistry *settings.BaseSettingResp  `json:"pushToRegistry"`

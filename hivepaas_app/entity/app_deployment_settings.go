@@ -48,7 +48,6 @@ type DeploymentRepoSource struct {
 	RepoOptions    DeploymentRepoOptions `json:"repoOptions"`
 	Credentials    RepoCredentials       `json:"credentials,omitzero"` // id of github app/git token/ssh key setting
 	Dockerfile     DeploymentDockerfile  `json:"dockerfile"`
-	DockerfilePath string                `json:"dockerfilePath,omitempty"`
 	ImageName      string                `json:"imageName,omitempty"`
 	ImageTags      []string              `json:"imageTags,omitempty"`
 	PushToRegistry ObjectID              `json:"pushToRegistry,omitzero"`

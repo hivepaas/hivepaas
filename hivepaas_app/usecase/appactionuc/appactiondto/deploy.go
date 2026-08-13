@@ -77,10 +77,9 @@ func (req *DeploymentImageSourceReq) validate(field string) (res []vld.Validator
 }
 
 type DeploymentRepoSourceReq struct {
-	RepoRef        string   `json:"repoRef"`
-	CommitHash     *string  `json:"commitHash"`
-	DockerfilePath string   `json:"dockerfilePath"`
-	ImageTags      []string `json:"imageTags"`
+	RepoRef    string   `json:"repoRef"`
+	CommitHash *string  `json:"commitHash"`
+	ImageTags  []string `json:"imageTags"`
 }
 
 func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource) error {
@@ -97,7 +96,6 @@ func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource
 		if req.CommitHash != nil {
 			setting.CommitHash = *req.CommitHash
 		}
-		setting.DockerfilePath = gofn.Coalesce(req.DockerfilePath, setting.DockerfilePath)
 		if req.ImageTags != nil {
 			setting.ImageTags = req.ImageTags
 		}

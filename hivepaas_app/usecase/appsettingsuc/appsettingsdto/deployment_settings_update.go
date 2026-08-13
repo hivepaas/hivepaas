@@ -98,7 +98,6 @@ type DeploymentRepoSourceReq struct {
 	RepoOptions    DeploymentRepoOptionsReq `json:"repoOptions"`
 	Credentials    basedto.ObjectIDReq      `json:"credentials"`
 	Dockerfile     DeploymentDockerfileReq  `json:"dockerfile"`
-	DockerfilePath string                   `json:"dockerfilePath"`
 	ImageName      string                   `json:"imageName"`
 	ImageTags      []string                 `json:"imageTags"`
 	PushToRegistry basedto.ObjectIDReq      `json:"pushToRegistry"`
@@ -128,7 +127,6 @@ func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, er
 		RepoOptions:    req.RepoOptions.ToEntity(),
 		Credentials:    entity.RepoCredentials{ID: req.Credentials.ID},
 		Dockerfile:     req.Dockerfile.ToEntity(),
-		DockerfilePath: req.DockerfilePath,
 		ImageName:      req.ImageName,
 		ImageTags:      req.ImageTags,
 		PushToRegistry: entity.ObjectID{ID: req.PushToRegistry.ID},

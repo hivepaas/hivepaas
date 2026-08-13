@@ -10,6 +10,7 @@ function View({ status }: Props) {
         [EProjectStatus.Locked]: "Locked",
         [EProjectStatus.Disabled]: "Disabled",
         [EProjectStatus.Deleting]: "Deleting",
+        [EProjectStatus.Missing]: "Missing",
     };
 
     const statusColorMap: Record<EProjectStatus, string> = {
@@ -17,6 +18,7 @@ function View({ status }: Props) {
         [EProjectStatus.Locked]: "bg-orange-500 text-white",
         [EProjectStatus.Disabled]: "bg-red-500 text-white",
         [EProjectStatus.Deleting]: "bg-purple-500 text-white",
+        [EProjectStatus.Missing]: "bg-red-500 text-white",
     };
 
     return (

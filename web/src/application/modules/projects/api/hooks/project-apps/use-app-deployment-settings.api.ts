@@ -24,6 +24,21 @@ function createHook() {
                         },
                     });
                 },
+                getDockerfileTemplate: async (
+                    request: { projectID: string; env: string; appID: string; type: string },
+                    signal?: AbortSignal,
+                ) => {
+                    const result = await api.projects.apps.deploymentSettings.$.getDockerfileTemplate(
+                        { data: request },
+                        signal,
+                    );
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
             }),
             [api],
         );

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { EProfileApiKeyStatus } from "@application/shared/enums";
 
 export const UpdateApiKeyStatusFormSchema = z.object({
-    status: z.nativeEnum(EProfileApiKeyStatus),
+    status: z.enum([EProfileApiKeyStatus.Active, EProfileApiKeyStatus.Disabled, EProfileApiKeyStatus.Expired]),
     expireAt: z
         .date()
         .refine(

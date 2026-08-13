@@ -7,6 +7,8 @@ import { BaseApi, parseApiError } from "@infrastructure/api";
 import {
     type AppDeploymentSettings_FindOne_Req,
     type AppDeploymentSettings_FindOne_Res,
+    type AppDeploymentSettings_GetDockerfileTemplate_Req,
+    type AppDeploymentSettings_GetDockerfileTemplate_Res,
     type AppDeploymentSettings_UpdateOne_Req,
     type AppDeploymentSettings_UpdateOne_Res,
 } from "./app-deployment-settings.api.contracts";
@@ -67,7 +69,16 @@ export class AppDeploymentSettingsApi extends BaseApi {
                           commitHash: payload.repoSource.commitHash,
                           repoOptions: payload.repoSource.repoOptions,
                           credentials: payload.repoSource.credentials,
-                          dockerfilePath: payload.repoSource.dockerfilePath ?? "",
+                          dockerfile: {
+                              source: payload.repoSource.dockerfile.source,
+                              path: payload.repoSource.dockerfile.path,
+                              ...(payload.repoSource.dockerfile.content
+                                  ? { content: payload.repoSource.dockerfile.content }
+                                  : {}),
+                              ...(payload.repoSource.dockerfile.scanPath
+                                  ? { scanPath: payload.repoSource.dockerfile.scanPath }
+                                  : {}),
+                          },
                           imageName: payload.repoSource.imageName,
                           imageTags: splitImageTags(payload.repoSource.imageTags),
                           pushToRegistry: payload.repoSource.pushToRegistry,
@@ -82,6 +93,29 @@ export class AppDeploymentSettingsApi extends BaseApi {
                 }),
             ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getDockerfileTemplate(
+        req: AppDeploymentSettings_GetDockerfileTemplate_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppDeploymentSettings_GetDockerfileTemplate_Res, Error>> {
+        const { projectID, env, appID, type } = req.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(
+                    `/projects/${projectID}/${env}/apps/${appID}/deployment-settings/dockerfile-template`,
+                    {
+                        params: { type },
+                        signal,
+                    },
+                ),
+            ).pipe(
+                map(this.validator.getDockerfileTemplate),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

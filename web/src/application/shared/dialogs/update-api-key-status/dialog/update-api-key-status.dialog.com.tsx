@@ -5,6 +5,7 @@ import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 
 import { ProfileCommands } from "@application/shared/data/commands";
+import { EProfileApiKeyStatus } from "@application/shared/enums";
 
 import { UpdateApiKeyStatusForm } from "../form";
 import { useUpdateApiKeyStatusDialogState } from "../hooks";
@@ -52,7 +53,10 @@ export function UpdateApiKeyStatusDialog() {
     const initialValues =
         state.mode === "open"
             ? {
-                  status: state.apiKey.status,
+                  status:
+                      state.apiKey.status === EProfileApiKeyStatus.Disabled
+                          ? EProfileApiKeyStatus.Disabled
+                          : EProfileApiKeyStatus.Active,
                   expireAt: state.apiKey.expireAt ? new Date(state.apiKey.expireAt) : undefined,
               }
             : undefined;

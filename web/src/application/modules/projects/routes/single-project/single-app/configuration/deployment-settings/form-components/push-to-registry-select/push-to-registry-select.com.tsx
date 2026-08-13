@@ -15,6 +15,11 @@ import {
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../../schemas";
 
+const NONE_REGISTRY_OPTION = {
+    value: { id: "", name: "None" },
+    label: "none None",
+};
+
 export function PushToRegistrySelect({ readOnly = false }: Props) {
     const { id: projectId } = useParams<{ id: string }>();
     invariant(projectId, "projectId must be defined");
@@ -43,12 +48,14 @@ export function PushToRegistrySelect({ readOnly = false }: Props) {
     } = useController({ control, name: "repoSource.pushToRegistry" });
 
     const comboboxOptions = useMemo(() => {
-        return registryAuths.map(auth => {
+        const registryOptions = registryAuths.map(auth => {
             return {
                 value: { id: auth.id, name: auth.name },
                 label: `${auth.kind} ${auth.name}`,
             };
         });
+
+        return [NONE_REGISTRY_OPTION, ...registryOptions];
     }, [registryAuths]);
 
     return (
@@ -56,13 +63,18 @@ export function PushToRegistrySelect({ readOnly = false }: Props) {
             <Field>
                 <Combobox
                     options={comboboxOptions}
-                    value={pushToRegistry.value?.id ?? null}
+                    value={pushToRegistry.value?.id ?? ""}
                     onChange={(_, option) => {
                         if (readOnly) {
                             return;
                         }
 
-                        pushToRegistry.onChange(option ?? undefined);
+                        if (!option || option.id === "") {
+                            pushToRegistry.onChange(undefined);
+                            return;
+                        }
+
+                        pushToRegistry.onChange(option);
                     }}
                     onSearch={setSearchQuery}
                     placeholder="Select registry to push image to"
@@ -87,7 +99,7 @@ export function PushToRegistrySelect({ readOnly = false }: Props) {
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        Configure Registry Credentials
+                        Manage Image Registry Credentials
                     </AppLink.Basic>
                 </div>
             </Field>

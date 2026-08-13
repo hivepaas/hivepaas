@@ -1,11 +1,14 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
-import { EAppDeploymentMethod, EBuildTool, ERepoType } from "~/projects/module-shared/enums";
+import { EAppDeploymentMethod, EBuildTool, EDockerfileSource, ERepoType } from "~/projects/module-shared/enums";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import type { AppDeploymentSettings_FindOne_Res } from "./app-deployment-settings.api.contracts";
+import type {
+    AppDeploymentSettings_FindOne_Res,
+    AppDeploymentSettings_GetDockerfileTemplate_Res,
+} from "./app-deployment-settings.api.contracts";
 
 const OptionalStringSchema = z
     .string()
@@ -48,6 +51,21 @@ const BaseDeploymentSettingsSchema = z.object({
     updateVer: z.number().optional().default(0),
 });
 
+const DockerfileSchema = z
+    .object({
+        source: z.enum([EDockerfileSource.Manual, EDockerfileSource.Auto]).optional(),
+        path: OptionalStringSchema,
+        content: OptionalStringSchema,
+        scanPath: OptionalStringSchema,
+    })
+    .nullish()
+    .transform(value => ({
+        source: value?.source ?? EDockerfileSource.Manual,
+        path: value?.path ?? "",
+        content: value?.content ?? "",
+        scanPath: value?.scanPath ?? "",
+    }));
+
 const RepoSourceSchema = z.preprocess(
     value => {
         if (!value || typeof value !== "object") {
@@ -75,7 +93,7 @@ const RepoSourceSchema = z.preprocess(
             .nullish()
             .transform(val => val ?? { gitSubmodulesEnabled: true, gitLfsEnabled: true }),
         credentials: SettingsRefSchema,
-        dockerfilePath: OptionalStringSchema,
+        dockerfile: DockerfileSchema,
         imageName: OptionalStringSchema,
         imageTags: ImageTagsSchema,
         pushToRegistry: SettingsRefSchema,
@@ -140,8 +158,19 @@ const FindOneSchema = z.object({
     meta: BaseMetaApiSchema.nullable(),
 });
 
+const GetDockerfileTemplateSchema = z.object({
+    data: z.object({
+        template: OptionalStringSchema,
+    }),
+    meta: BaseMetaApiSchema.nullable(),
+});
+
 export class AppDeploymentSettingsApiValidator {
     findOne = (response: AxiosResponse): AppDeploymentSettings_FindOne_Res => {
         return parseApiResponse({ response, schema: FindOneSchema });
+    };
+
+    getDockerfileTemplate = (response: AxiosResponse): AppDeploymentSettings_GetDockerfileTemplate_Res => {
+        return parseApiResponse({ response, schema: GetDockerfileTemplateSchema });
     };
 }

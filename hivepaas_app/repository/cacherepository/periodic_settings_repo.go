@@ -7,13 +7,13 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
 )
 
 const (
-	periodicScheduleKey   = "queue:periodic:schedule"
-	periodicPubSubChannel = "channel:periodic:reload"
+	periodicScheduleKey = "queue:periodic:schedule"
 )
 
 type PeriodicSettingsRepo interface {
@@ -27,11 +27,18 @@ type PeriodicSettingsRepo interface {
 }
 
 type periodicSettingsRepo struct {
-	client rediscache.Client
+	client   rediscache.Client
+	eventBus SystemEventBus
 }
 
-func NewPeriodicSettingsRepo(client rediscache.Client) PeriodicSettingsRepo {
-	return &periodicSettingsRepo{client: client}
+func NewPeriodicSettingsRepo(
+	client rediscache.Client,
+	eventBus SystemEventBus,
+) PeriodicSettingsRepo {
+	return &periodicSettingsRepo{
+		client:   client,
+		eventBus: eventBus,
+	}
 }
 
 func (repo *periodicSettingsRepo) GetDueJobIDs(
@@ -90,7 +97,7 @@ func (repo *periodicSettingsRepo) ResetSchedule(
 func (repo *periodicSettingsRepo) PublishReload(
 	ctx context.Context,
 ) error {
-	err := redishelper.Publish(ctx, repo.client, periodicPubSubChannel, "reload")
+	err := repo.eventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -100,15 +107,14 @@ func (repo *periodicSettingsRepo) PublishReload(
 func (repo *periodicSettingsRepo) SubscribeReload(
 	ctx context.Context,
 ) (<-chan struct{}, func() error, error) {
-	pubSub := repo.client.Subscribe(ctx, periodicPubSubChannel)
+	eventChan, unsub := repo.eventBus.Subscribe(base.SystemEventPeriodicSettingsReload)
 	notifyChan := make(chan struct{}, 1)
 
 	go func() {
 		defer func() {
 			_ = recover()
 		}()
-		ch := pubSub.Channel()
-		for range ch {
+		for range eventChan {
 			select {
 			case notifyChan <- struct{}{}:
 			default:
@@ -117,7 +123,8 @@ func (repo *periodicSettingsRepo) SubscribeReload(
 	}()
 
 	closeFunc := func() error {
-		return pubSub.Close()
+		unsub()
+		return nil
 	}
 
 	return notifyChan, closeFunc, nil

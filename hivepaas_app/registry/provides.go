@@ -346,6 +346,7 @@ var Provides = []any{
 	repository.NewBinObjectRepo,
 
 	// Cache Repo
+	cacherepository.NewSystemEventBus,
 	cacherepository.NewUserTokenRepo,
 	cacherepository.NewMFAPasscodeRepo,
 	cacherepository.NewTaskInfoRepo,

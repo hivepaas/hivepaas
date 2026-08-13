@@ -27,11 +27,10 @@ const (
 	taskCreateIntervalMin = timeutil.Duration(30 * time.Second)
 	taskCreateIntervalMax = timeutil.Duration(24 * time.Hour)
 
-	healthcheckBaseIntervalMin = timeutil.Duration(5 * time.Second)
-	healthcheckBaseIntervalMax = timeutil.Duration(24 * time.Hour)
-
-	periodicBatchSizeMin = 1
-	periodicBatchSizeMax = 10000
+	periodicBaseIntervalMin = timeutil.Duration(1 * time.Second)
+	periodicBaseIntervalMax = timeutil.Duration(24 * time.Hour)
+	periodicBatchSizeMin    = 1
+	periodicBatchSizeMax    = 10000
 )
 
 type UpdateServiceSettingsReq struct {
@@ -165,8 +164,8 @@ func (req *HivePaaSPeriodicSettingsReq) validate(field string) (res []vld.Valida
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateDuration(&req.BaseInterval, true, healthcheckBaseIntervalMin,
-		healthcheckBaseIntervalMax, field+"baseInterval")...)
+	res = append(res, basedto.ValidateDuration(&req.BaseInterval, true, periodicBaseIntervalMin,
+		periodicBaseIntervalMax, field+"baseInterval")...)
 	res = append(res, basedto.ValidateNumber(&req.BatchSize, true, periodicBatchSizeMin,
 		periodicBatchSizeMax, field+"batchSize")...)
 	return res

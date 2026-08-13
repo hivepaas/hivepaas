@@ -49,7 +49,7 @@ app_path = ".appdata/hivepaas"
     socks5_proxy = ""
 
 [tasks.queue]
-    concurrency = 5
+    concurrency = 10
     task_check_interval = "10m"
     task_create_interval = "10m"
 

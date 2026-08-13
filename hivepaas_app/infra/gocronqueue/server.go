@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	defaultConcurrency        = 5
+	defaultConcurrency        = 10
 	defaultPeriodicInterval   = 1 * time.Second
 	taskHighPriorityLookAhead = 1 * time.Second
 	taskLowPriorityDelay      = 500 * time.Millisecond

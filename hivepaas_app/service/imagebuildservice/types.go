@@ -2,10 +2,11 @@ package imagebuildservice
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
 type ImageBuildReq struct {
+	*queue.TaskExecData
 	App *entity.App
 
 	CommitHash     string
@@ -15,10 +16,8 @@ type ImageBuildReq struct {
 
 	ImageBuildSettings *entity.ImageBuildSettings
 	NoCache            bool
+	BuildID            string
 
-	BuildID     string
-	RefObjects  *entity.RefObjects
-	LogStore    *tasklog.Store
 	CheckoutDir string
 	TempDir     string // can be empty
 }

@@ -3,14 +3,13 @@ package imagebuildserviceimpl
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/moby/moby/api/types/registry"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 )
 
@@ -43,6 +42,11 @@ func (s *service) ImageBuild(
 		}
 	}()
 
+	err = s.loadBuildData(ctx, db, data)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
 	err = s.imageBuild(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -61,28 +65,20 @@ func (s *service) ImageBuild(
 	return resp, err
 }
 
-func (s *service) addStepStartLog(
+func (s *service) loadBuildData(
 	ctx context.Context,
+	db database.IDB,
 	data *imageBuildData,
-	msg string,
-) {
-	_ = data.LogStore.Add(ctx,
-		tasklog.NewOutFrame("---------------------------------", tasklog.TsNow),
-		tasklog.NewOutFrame(msg, tasklog.TsNow))
-}
-
-func (s *service) addStepEndLog(
-	ctx context.Context,
-	data *imageBuildData,
-	start time.Time,
-	err error,
-) {
-	duration := timeutil.NowUTC().Sub(start).Truncate(time.Millisecond)
-	if err != nil {
-		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Task finished in "+duration.String()+
-			" with error: "+err.Error(), tasklog.TsNow))
-	} else {
-		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Task finished in "+duration.String(),
-			tasklog.TsNow))
+) error {
+	refIDs := &entity.RefObjectIDs{}
+	if data.PushToRegistry.ID != "" {
+		refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, data.PushToRegistry.ID)
 	}
+
+	err := s.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, data.App.GetObjectScope(),
+		true, refIDs)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
 }

@@ -13,7 +13,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
 func (s *service) buildImageWithDocker(
@@ -23,8 +22,8 @@ func (s *service) buildImageWithDocker(
 ) (err error) {
 	buildSetting := data.ImageBuildSettings
 
-	s.addStepStartLog(ctx, data, "Start building image with Docker BuildKit...")
-	defer s.addStepEndLog(ctx, data, timeutil.NowUTC(), err)
+	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Start building image with Docker BuildKit...",
+		tasklog.TsNow))
 
 	builderName := base.HivepaasGlobalBuilder
 	var res *entity.ImageBuildResourceSettings

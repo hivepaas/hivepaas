@@ -25,6 +25,7 @@ func main() {
 				agentproto.RegisterAgentServiceServer(s, agentSrv)
 				agentproto.RegisterContainerServiceServer(s, agentSrv)
 				agentproto.RegisterNodeCleanupServiceServer(s, agentSrv)
+				agentproto.RegisterImageBuildServiceServer(s, agentSrv)
 			}
 		},
 	}

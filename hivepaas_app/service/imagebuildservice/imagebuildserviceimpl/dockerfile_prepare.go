@@ -13,7 +13,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
 func (s *service) prepareDockerfile(
@@ -67,8 +66,8 @@ func (s *service) prepareDockerfileAuto(
 		scanDir = filepath.Join(scanDir, data.Dockerfile.ScanPath)
 	}
 
-	s.addStepStartLog(ctx, data, "Start auto-generating Dockerfile from source...")
-	defer s.addStepEndLog(ctx, data, timeutil.NowUTC(), err)
+	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Start auto-generating Dockerfile from source...",
+		tasklog.TsNow))
 
 	df := dockerfile.New()
 	contents, r, err := df.Generate(scanDir)

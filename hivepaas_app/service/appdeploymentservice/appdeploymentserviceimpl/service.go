@@ -5,6 +5,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
@@ -27,6 +28,7 @@ type service struct {
 	settingRepo         repository.SettingRepo
 	taskLogRepo         repository.TaskLogRepo
 
+	agentService         agentservice.Service
 	appService           appservice.Service
 	clusterService       clusterservice.Service
 	containerExecService containerexecservice.Service
@@ -48,6 +50,7 @@ func New(
 	settingRepo repository.SettingRepo,
 	taskLogRepo repository.TaskLogRepo,
 
+	agentService agentservice.Service,
 	appService appservice.Service,
 	clusterService clusterservice.Service,
 	containerExecService containerexecservice.Service,
@@ -68,6 +71,7 @@ func New(
 		settingRepo:         settingRepo,
 		taskLogRepo:         taskLogRepo,
 
+		agentService:         agentService,
 		appService:           appService,
 		clusterService:       clusterService,
 		containerExecService: containerExecService,

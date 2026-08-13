@@ -10,7 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -22,8 +21,8 @@ func (s *service) imagePush(
 		return nil
 	}
 
-	s.addStepStartLog(ctx, data, "Start pushing image to registry...")
-	defer s.addStepEndLog(ctx, data, timeutil.NowUTC(), err)
+	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Start pushing image to registry...",
+		tasklog.TsNow))
 
 	regAuth := data.RefObjects.RefSettings[data.PushToRegistry.ID]
 	if regAuth == nil {

@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+service ImageBuildService {
+  rpc ImageBuild(ImageBuildReq) returns (stream ImageBuildResp);
+}
+
+message ImageBuildReq {
+  string task_id = 1;
+  string app_id = 2;
+  string commit_hash = 3;
+  DeploymentDockerfile dockerfile = 4;
+  string image_name = 5;
+  string push_to_registry_id = 6;
+  ImageBuildSettings image_build_settings = 7;
+  bool no_cache = 8;
+  string build_id = 9;
+  string checkout_dir = 10;
+  string temp_dir = 11;
+}
+
+message DeploymentDockerfile {
+  string source = 1;
+  string path = 2;
+  string content = 3;
+  string scan_path = 4;
+}
+
+message ImageBuildSettings {
+  ImageBuildWorkerSettings workers = 1;
+  ImageBuildResourceSettings resources = 2;
+  ImageBuildSourceSettings sources = 3;
+  bool no_cache = 4;
+  bool no_verbose = 5;
+}
+
+message ImageBuildWorkerSettings {
+  repeated string node_ids = 1;
+  repeated string node_labels = 2;
+}
+
+message ImageBuildResourceSettings {
+  uint32 cpus = 1;
+  uint64 mem = 2;
+  uint64 mem_swap = 3;
+  uint64 shm_size = 4;
+}
+
+message ImageBuildSourceSettings {
+  bool repo_cache = 1;
+}
+
+message ImageBuildResp {
+  oneof value {
+    LogFrame log = 1;
+    ImageBuildResult result = 2;
+  }
+}
+
+message LogFrame {
+  string type = 1;
+  string data = 2;
+  int64 ts = 3;
+}
+
+message ImageBuildResult {
+  repeated string image_tags = 1;
+}

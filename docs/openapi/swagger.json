@@ -14407,6 +14407,79 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/deployment-settings/dockerfile-template" : {
+      "get" : {
+        "description" : "Gets Dockerfile template for a given type",
+        "operationId" : "getAppBuildDockerfileTemplate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "template type: e.g. go, java, java/maven...",
+          "in" : "query",
+          "name" : "type",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.GetDockerfileTemplateResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets Dockerfile template for a given type",
+        "tags" : [ "app_settings" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/deployments" : {
       "get" : {
         "description" : "Lists app deployments",
@@ -35323,6 +35396,24 @@
         "required" : [ "failure", "failureUseDefault", "success", "successUseDefault" ],
         "type" : "object"
       },
+      "entity.DeploymentDockerfile" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "scanPath" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "content", "path", "scanPath", "source" ],
+        "type" : "object"
+      },
       "entity.DeploymentImageSource" : {
         "properties" : {
           "image" : {
@@ -35349,9 +35440,6 @@
       },
       "entity.DeploymentRepoSource" : {
         "properties" : {
-          "buildTool" : {
-            "type" : "string"
-          },
           "commitHash" : {
             "type" : "string"
           },
@@ -35362,8 +35450,10 @@
             "description" : "id of github app/git token/ssh key setting",
             "type" : "object"
           },
+          "dockerfile" : {
+            "$ref" : "#/components/schemas/entity.DeploymentDockerfile"
+          },
           "dockerfilePath" : {
-            "description" : "for BuildToolDockerfile only",
             "type" : "string"
           },
           "imageName" : {
@@ -35395,7 +35485,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "buildTool", "commitHash", "credentials", "dockerfilePath", "imageName", "imageTags", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "commitHash", "credentials", "dockerfile", "dockerfilePath", "imageName", "imageTags", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "entity.EmailHTTPFieldMapping" : {
@@ -35471,7 +35561,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -35489,7 +35579,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -35596,7 +35686,6 @@
             "type" : "string"
           },
           "dockerfilePath" : {
-            "description" : "for BuildToolDockerfile only",
             "type" : "string"
           },
           "imageTags" : {
@@ -36311,6 +36400,42 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "appsettingsdto.DeploymentDockerfileReq" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "scanPath" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "content", "path", "scanPath", "source" ],
+        "type" : "object"
+      },
+      "appsettingsdto.DeploymentDockerfileResp" : {
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "scanPath" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "content", "path", "scanPath", "source" ],
+        "type" : "object"
+      },
       "appsettingsdto.DeploymentImageSourceReq" : {
         "properties" : {
           "enabled" : {
@@ -36364,17 +36489,16 @@
       },
       "appsettingsdto.DeploymentRepoSourceReq" : {
         "properties" : {
-          "buildTool" : {
-            "type" : "string"
-          },
           "commitHash" : {
             "type" : "string"
           },
           "credentials" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           },
+          "dockerfile" : {
+            "$ref" : "#/components/schemas/appsettingsdto.DeploymentDockerfileReq"
+          },
           "dockerfilePath" : {
-            "description" : "for BuildToolDockerfile only",
             "type" : "string"
           },
           "enabled" : {
@@ -36406,22 +36530,21 @@
             "type" : "string"
           }
         },
-        "required" : [ "buildTool", "commitHash", "credentials", "dockerfilePath", "enabled", "imageName", "imageTags", "pushToRegistry", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "commitHash", "credentials", "dockerfile", "dockerfilePath", "enabled", "imageName", "imageTags", "pushToRegistry", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "appsettingsdto.DeploymentRepoSourceResp" : {
         "properties" : {
-          "buildTool" : {
-            "type" : "string"
-          },
           "commitHash" : {
             "type" : "string"
           },
           "credentials" : {
             "$ref" : "#/components/schemas/settings.BaseSettingResp"
           },
+          "dockerfile" : {
+            "$ref" : "#/components/schemas/appsettingsdto.DeploymentDockerfileResp"
+          },
           "dockerfilePath" : {
-            "description" : "for BuildToolDockerfile only",
             "type" : "string"
           },
           "imageName" : {
@@ -36453,7 +36576,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "buildTool", "commitHash", "credentials", "dockerfilePath", "imageName", "imageTags", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "commitHash", "credentials", "dockerfile", "dockerfilePath", "imageName", "imageTags", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "appsettingsdto.DeploymentSettingsResp" : {
@@ -36487,6 +36610,15 @@
           }
         },
         "required" : [ "activeMethod", "command", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
+        "type" : "object"
+      },
+      "appsettingsdto.DockerfileTemplateResp" : {
+        "properties" : {
+          "template" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "template" ],
         "type" : "object"
       },
       "appsettingsdto.DomainReq" : {
@@ -36790,6 +36922,18 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/appsettingsdto.StorageSettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appsettingsdto.GetDockerfileTemplateResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appsettingsdto.DockerfileTemplateResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -44717,9 +44861,12 @@
           },
           "updatedAt" : {
             "type" : "string"
+          },
+          "workers" : {
+            "$ref" : "#/components/schemas/settings_imagebuildsettingsdto.ImageBuildWorkerSettingsResp"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "noCache", "noVerbose", "resources", "size", "sources", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "noCache", "noVerbose", "resources", "size", "sources", "status", "type", "updateVer", "updatedAt", "workers" ],
         "type" : "object"
       },
       "settings_imagebuildsettingsdto.ImageBuildSourceSettingsReq" : {
@@ -44738,6 +44885,42 @@
           }
         },
         "required" : [ "repoCache" ],
+        "type" : "object"
+      },
+      "settings_imagebuildsettingsdto.ImageBuildWorkerSettingsReq" : {
+        "properties" : {
+          "nodeIds" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "nodeLabels" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "nodeIds", "nodeLabels" ],
+        "type" : "object"
+      },
+      "settings_imagebuildsettingsdto.ImageBuildWorkerSettingsResp" : {
+        "properties" : {
+          "nodeIds" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "nodeLabels" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "nodeIds", "nodeLabels" ],
         "type" : "object"
       },
       "settings_imagebuildsettingsdto.RepoCacheInfoResp" : {
@@ -44774,9 +44957,12 @@
           },
           "updateVer" : {
             "type" : "integer"
+          },
+          "workers" : {
+            "$ref" : "#/components/schemas/settings_imagebuildsettingsdto.ImageBuildWorkerSettingsReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "noCache", "noVerbose", "resources", "sources", "updateVer" ],
+        "required" : [ "availableInProjects", "default", "noCache", "noVerbose", "resources", "sources", "updateVer", "workers" ],
         "type" : "object"
       },
       "settings_imagebuildsettingsdto.UpdateImageBuildSettingsResp" : {
@@ -50357,7 +50543,16 @@
       },
       "systemsettings_systemcleanupdto.SystemClusterCleanupReq" : {
         "properties" : {
+          "buildCacheRetention" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
           "enabled" : {
+            "type" : "boolean"
+          },
+          "generalRetention" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "pruneBuildCache" : {
             "type" : "boolean"
           },
           "pruneContainers" : {
@@ -50373,12 +50568,21 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "enabled", "pruneContainers", "pruneImages", "pruneNetworks", "pruneVolumes" ],
+        "required" : [ "buildCacheRetention", "enabled", "generalRetention", "pruneBuildCache", "pruneContainers", "pruneImages", "pruneNetworks", "pruneVolumes" ],
         "type" : "object"
       },
       "systemsettings_systemcleanupdto.SystemClusterCleanupResp" : {
         "properties" : {
+          "buildCacheRetention" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
           "enabled" : {
+            "type" : "boolean"
+          },
+          "generalRetention" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "pruneBuildCache" : {
             "type" : "boolean"
           },
           "pruneContainers" : {
@@ -50394,7 +50598,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "enabled", "pruneContainers", "pruneImages", "pruneNetworks", "pruneVolumes" ],
+        "required" : [ "buildCacheRetention", "enabled", "generalRetention", "pruneBuildCache", "pruneContainers", "pruneImages", "pruneNetworks", "pruneVolumes" ],
         "type" : "object"
       },
       "systemsettings_systemcleanupdto.SystemFileCleanupReq" : {
@@ -51339,9 +51543,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -3,22 +3,29 @@ package appdeploymentserviceimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	imagebuildserviceclient "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
 )
 
 const (
@@ -162,7 +169,15 @@ func (s *service) repoDeployStepImageBuild(
 	deployment := data.Deployment
 	repoSource := deployment.Settings.RepoSource
 
+	s.addStepStartLog(ctx, data.appDeploymentData, "Start building docker image...")
+	defer s.addStepEndLog(ctx, data.appDeploymentData, timeutil.NowUTC(), err)
+
 	buildReq := &imagebuildservice.ImageBuildReq{
+		TaskExecData: &queue.TaskExecData{
+			Task:       data.Task,
+			RefObjects: data.RefObjects,
+			LogStore:   data.LogStore,
+		},
 		App:                data.App,
 		CommitHash:         repoSource.CommitHash,
 		Dockerfile:         repoSource.Dockerfile,
@@ -170,12 +185,85 @@ func (s *service) repoDeployStepImageBuild(
 		PushToRegistry:     repoSource.PushToRegistry,
 		ImageBuildSettings: data.ImageBuildSettings,
 		BuildID:            data.Task.ID,
-		RefObjects:         data.RefObjects,
-		LogStore:           data.LogStore,
 		CheckoutDir:        data.CheckoutDir,
 	}
 	if deployment.Settings.NoCache || (data.ImageBuildSettings != nil && data.ImageBuildSettings.NoCache) {
 		buildReq.NoCache = true
+	}
+
+	var buildWorkerNode *swarm.Node
+	if data.ImageBuildSettings != nil {
+		buildWorkerNode, err = s.imageBuildService.SelectBuildWorkerNode(ctx, data.ImageBuildSettings)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+	}
+
+	currNodeID, err := s.dockerManager.NodeCurrentID(ctx)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	isRemote := buildWorkerNode != nil && buildWorkerNode.ID != "" && buildWorkerNode.ID != currNodeID
+	if config.Current.DevMode.Enabled && config.Current.DevMode.ForceAgentLocal {
+		isRemote = true
+	}
+
+	for isRemote { // loop at most 1 time
+		nodeID, nodeName := currNodeID, "<current>"
+		if buildWorkerNode != nil {
+			nodeID = buildWorkerNode.ID
+			nodeName = gofn.Coalesce(buildWorkerNode.Spec.Name, buildWorkerNode.Description.Hostname)
+		}
+		agentAddr, err := s.agentService.GetAgentAddrForNode(ctx, nodeID)
+		if err != nil {
+			_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
+				fmt.Sprintf("Failed to get agent address for node '%s' (id '%s'): %v. "+
+					"Falling back to current node.", nodeName, nodeID, err),
+				tasklog.TsNow))
+			break
+		}
+
+		agentClient, err := imagebuildserviceclient.NewImageBuildServiceClient(agentAddr)
+		if err != nil {
+			_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
+				fmt.Sprintf("Failed to connect to agent on node '%s' (id '%s'): %v. "+
+					"Falling back to current node.", nodeName, nodeID, err),
+				tasklog.TsNow))
+			break
+		}
+		defer agentClient.Close()
+
+		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
+			fmt.Sprintf("Starting build process on worker node '%s' (id '%s')...", nodeName, nodeID),
+			tasklog.TsNow))
+
+		agentReq := &imagebuildagentdto.ImageBuildReq{
+			TaskID:        data.Task.ID,
+			AppID:         data.App.ID,
+			ImageBuildReq: *buildReq,
+			SendLog: func(frames []*tasklog.LogFrame) error {
+				return data.LogStore.Add(ctx, frames...)
+			},
+		}
+
+		timeStart := time.Now()
+		buildResp, err := agentClient.ImageBuild(ctx, agentReq)
+		if err != nil {
+			if time.Since(timeStart) < 10*time.Second && ctx.Err() == nil { //nolint:mnd
+				// If any error occurs within 10s, we can fall back to the current node.
+				// Otherwise, it is likely an error in the source code where retrying will make no difference.
+				_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
+					fmt.Sprintf("Failed to build image via agent on node '%s' (id '%s'): %v. "+
+						"Falling back to current node.", nodeName, nodeID, err),
+					tasklog.TsNow))
+				break
+			}
+			return apperrors.Wrap(err)
+		}
+
+		data.Deployment.Output.ImageTags = buildResp.ImageTags
+		return nil //nolint:staticcheck
 	}
 
 	buildResp, err := s.imageBuildService.ImageBuild(ctx, db, buildReq)

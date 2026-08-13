@@ -18,12 +18,15 @@ import (
 
 const (
 	imageBuildSettingName = "Image build settings"
-	imageBuildCPUDefault  = 2
-	imageBuildCPUMin      = 1
-	imageBuildCPUMax      = 8
-	imageBuildMemDefault  = 2 * unit.GB
-	imageBuildMemMin      = 1 * unit.GB
-	imageBuildMemMax      = 16 * unit.GB
+
+	imageBuildCPUDefault = 2
+	imageBuildCPUMin     = 1
+	imageBuildCPUMax     = 8
+	imageBuildMemDefault = 2 * unit.GB
+	imageBuildMemMin     = 1 * unit.GB
+	imageBuildMemMax     = 16 * unit.GB
+
+	imageBuildMaxParallelismDefault = 2
 )
 
 func (s *service) initDefaultImageBuildSettings(
@@ -44,6 +47,9 @@ func (s *service) initDefaultImageBuildSettings(
 		UpdatedAt:       timeNow,
 	}
 	imageBuild := &entity.ImageBuildSettings{
+		Workers: entity.ImageBuildWorkerSettings{
+			MaxParallelism: imageBuildMaxParallelismDefault,
+		},
 		Resources: entity.ImageBuildResourceSettings{
 			CPUs: imageBuildCPUDefault,
 			Mem:  imageBuildMemDefault,

@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -54,6 +55,7 @@ func (uc *UC) UpdateHttpSettings(
 	if data != nil && data.DomainChanged {
 		// Publish a message to reload config in other instances
 		_ = uc.systemEventBus.Publish(ctx, base.SystemEventHivepaasDomainReload)
+		config.SetAppDomainToNeedReload()
 	}
 
 	return &hpappsettingsdto.UpdateHttpSettingsResp{}, nil

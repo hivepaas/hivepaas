@@ -12,19 +12,18 @@ var (
 )
 
 func (cfg *Config) loadAppDomain() string {
-	appDomain := cfg.AppDomain
-	if appDomain == "" || time.Since(appDomainLastLoad) > 10*time.Minute {
-		mu.Lock()
-		defer mu.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
+
+	if cfg.AppDomain == "" || time.Since(appDomainLastLoad) > 10*time.Minute {
 		if appDomainLoadFunc != nil {
-			appDomain, _ = appDomainLoadFunc()
-		}
-		if appDomain != "" {
-			cfg.AppDomain = appDomain
-			appDomainLastLoad = time.Now()
+			if loadedDomain, err := appDomainLoadFunc(); err == nil && loadedDomain != "" {
+				cfg.AppDomain = loadedDomain
+				appDomainLastLoad = time.Now()
+			}
 		}
 	}
-	return appDomain
+	return cfg.AppDomain
 }
 
 func SetAppDomainReloadFunc(fn func() (string, error)) {
@@ -36,5 +35,5 @@ func SetAppDomainReloadFunc(fn func() (string, error)) {
 func SetAppDomainToNeedReload() {
 	mu.Lock()
 	defer mu.Unlock()
-	Current.AppDomain = ""
+	appDomainLastLoad = time.Time{}
 }

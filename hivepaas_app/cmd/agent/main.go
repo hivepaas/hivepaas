@@ -15,6 +15,7 @@ import (
 
 const (
 	startTimeoutDefault = 60 * time.Second
+	stopTimeoutDefault  = 10 * time.Minute
 )
 
 func main() {
@@ -33,6 +34,7 @@ func main() {
 
 	app := fx.New(
 		fx.StartTimeout(startTimeoutDefault),
+		fx.StopTimeout(stopTimeoutDefault),
 		fx.Provide(provides...),
 		fx.Invoke(internal.InitLogger),
 		fx.Invoke(internal.InitConfig),

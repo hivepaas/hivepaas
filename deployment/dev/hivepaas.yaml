@@ -143,6 +143,7 @@ services:
 
   app:
     image: hivepaas/hivepaas-dev:latest
+    stop_grace_period: 10m
     networks:
       hivepaas_net:
         aliases:
@@ -193,6 +194,7 @@ services:
 
   worker:
     image: hivepaas/hivepaas-dev:latest
+    stop_grace_period: 10m
     networks:
       - local_net
     environment:
@@ -224,6 +226,7 @@ services:
 
   updater:
     image: hivepaas/hivepaas-dev:latest
+    stop_grace_period: 10m
     networks:
       - local_net
     environment:
@@ -251,6 +254,7 @@ services:
 
   agent:
     image: hivepaas/hivepaas-agent-dev:latest
+    stop_grace_period: 10m
     environment:
       HP_CONFIG_FILE: config/config.development.toml
       HP_RUN_MODE: agent

@@ -10,12 +10,14 @@ function View({ status }: Props) {
         [EUserStatus.Active]: "Active",
         [EUserStatus.Pending]: "Pending",
         [EUserStatus.Disabled]: "Disabled",
+        [EUserStatus.Missing]: "Missing",
     };
 
     const statusColorMap: Record<EUserStatus, string> = {
         [EUserStatus.Active]: "bg-green-500 text-white",
         [EUserStatus.Pending]: "bg-orange-400 text-white",
         [EUserStatus.Disabled]: "bg-red-500 text-white",
+        [EUserStatus.Missing]: "bg-red-500 text-white",
     };
 
     return (

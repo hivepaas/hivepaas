@@ -3,6 +3,7 @@ export const EProjectStatus = {
     Locked: "locked",
     Disabled: "disabled",
     Deleting: "deleting",
+    Missing: "missing",
 } as const;
 
 export type EProjectStatus = (typeof EProjectStatus)[keyof typeof EProjectStatus];

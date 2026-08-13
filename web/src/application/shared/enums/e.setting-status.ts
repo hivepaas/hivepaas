@@ -4,6 +4,7 @@ export const ESettingStatus = {
     Pending: "pending",
     Disabled: "disabled",
     Expired: "expired",
+    Missing: "missing",
 } as const;
 
 export type ESettingStatus = (typeof ESettingStatus)[keyof typeof ESettingStatus];

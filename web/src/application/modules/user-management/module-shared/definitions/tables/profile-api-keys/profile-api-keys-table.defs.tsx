@@ -70,11 +70,13 @@ const columns: ColumnDef<ProfileApiKey>[] = [
                 [EProfileApiKeyStatus.Active]: "bg-green-500",
                 [EProfileApiKeyStatus.Disabled]: "bg-red-500",
                 [EProfileApiKeyStatus.Expired]: "bg-yellow-500",
+                [EProfileApiKeyStatus.Missing]: "bg-red-500",
             };
             const statusMap: Record<EProfileApiKeyStatus, string> = {
                 [EProfileApiKeyStatus.Active]: "Active",
                 [EProfileApiKeyStatus.Disabled]: "Disabled",
                 [EProfileApiKeyStatus.Expired]: "Expired",
+                [EProfileApiKeyStatus.Missing]: "Missing",
             };
             return (
                 <Badge

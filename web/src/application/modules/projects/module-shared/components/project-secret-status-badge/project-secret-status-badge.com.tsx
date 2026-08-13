@@ -10,6 +10,7 @@ function View({ status }: Props) {
         [EProjectSecretStatus.Pending]: "Pending",
         [EProjectSecretStatus.Disabled]: "Disabled",
         [EProjectSecretStatus.Expired]: "Expired",
+        [EProjectSecretStatus.Missing]: "Missing",
     };
 
     const statusColorMap: Record<EProjectSecretStatus, string> = {
@@ -17,6 +18,7 @@ function View({ status }: Props) {
         [EProjectSecretStatus.Pending]: "bg-yellow-500 text-white",
         [EProjectSecretStatus.Disabled]: "bg-red-500 text-white",
         [EProjectSecretStatus.Expired]: "bg-gray-500 text-white",
+        [EProjectSecretStatus.Missing]: "bg-red-500 text-white",
     };
 
     return (

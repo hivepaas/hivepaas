@@ -15,7 +15,9 @@ function View({ status }: Props) {
                 ? "Expired"
                 : status === ESettingStatus.Pending
                   ? "Pending"
-                  : "-";
+                  : status === ESettingStatus.Missing
+                    ? "Missing"
+                    : "-";
 
     return (
         <Badge
@@ -24,6 +26,7 @@ function View({ status }: Props) {
                 status === ESettingStatus.Disabled && "bg-red-600 text-white",
                 status === ESettingStatus.Expired && "bg-red-500 text-white",
                 status === ESettingStatus.Pending && "bg-amber-500 text-white",
+                status === ESettingStatus.Missing && "bg-red-600 text-white",
             )}
         >
             {label}

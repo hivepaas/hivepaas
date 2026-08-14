@@ -77,6 +77,9 @@ type ImageBuildResourceSettingsReq struct {
 }
 
 func (req *ImageBuildResourceSettingsReq) ToEntity() entity.ImageBuildResourceSettings {
+	if req == nil {
+		return entity.ImageBuildResourceSettings{}
+	}
 	return entity.ImageBuildResourceSettings{
 		CPUs:    req.CPUs,
 		Mem:     req.Mem,
@@ -99,6 +102,9 @@ type ImageBuildSourceSettingsReq struct {
 }
 
 func (req *ImageBuildSourceSettingsReq) ToEntity() entity.ImageBuildSourceSettings {
+	if req == nil {
+		return entity.ImageBuildSourceSettings{}
+	}
 	return entity.ImageBuildSourceSettings{
 		RepoCache: req.RepoCache,
 	}

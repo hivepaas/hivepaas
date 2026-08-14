@@ -61,7 +61,8 @@ func (s *service) sysCleanupCacheRepoSource(
 	}
 
 	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
-		bunex.SelectWhere("file.type = ?", base.FileTypeRepoCache),
+		bunex.SelectWhere("file.type = ?", base.FileTypeCache),
+		bunex.SelectWhereIn("file.kind IN (?)", base.AllFileCacheKinds...),
 		bunex.SelectWhere("file.storage_type = ?", base.FileStorageLocal),
 		bunex.SelectWhere("file.updated_at < ?", timeNow.Add(-retention)),
 	)

@@ -455,7 +455,7 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 		maxFileSize = cfg.BuildSourceMaxSize
 		fileExts = cfg.BuildSourceFileExts
 		requiredScopes = []base.ObjectScopeType{base.ObjectScopeApp}
-	case base.FileTypeSystemBackup, base.FileTypeRepoCache:
+	case base.FileTypeSystemBackup, base.FileTypeCache:
 		fallthrough
 	case base.FileTypeSchedJobOutput:
 		fallthrough

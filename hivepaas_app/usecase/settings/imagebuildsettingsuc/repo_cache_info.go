@@ -17,7 +17,8 @@ func (uc *UC) GetRepoCacheInfo(
 ) (*imagebuildsettingsdto.GetRepoCacheInfoResp, error) {
 	// Supports scope global and project only
 	listOpts := []bunex.SelectQueryOption{
-		bunex.SelectWhere("file.type = ?", base.FileTypeRepoCache),
+		bunex.SelectWhere("file.type = ?", base.FileTypeCache),
+		bunex.SelectWhereIn("file.kind IN (?)", base.AllFileCacheKinds...),
 		bunex.SelectWhere("file.storage_type = ?", base.FileStorageLocal),
 		bunex.SelectWhere("file.deleted IS NOT TRUE"),
 	}

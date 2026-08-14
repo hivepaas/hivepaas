@@ -85,7 +85,7 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 			ProjectID:       req.Scope.ProjectID,
 			AppID:           req.Scope.AppID,
 		}
-	case base.FileTypeSystemBackup, base.FileTypeRepoCache:
+	case base.FileTypeSystemBackup, base.FileTypeCache:
 		fallthrough
 	case base.FileTypeSchedJobOutput:
 		fallthrough

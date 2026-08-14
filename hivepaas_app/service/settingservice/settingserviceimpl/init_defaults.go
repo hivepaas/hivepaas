@@ -26,6 +26,16 @@ func (s *service) InitDefaults(
 
 	timeNow := timeutil.NowUTC()
 
+	// App placement settings
+	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
+		return item.Type == base.SettingTypeAppPlacementSettings
+	}) {
+		err = s.initDefaultAppPlacementSettings(ctx, db, timeNow)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+	}
+
 	// Image build settings
 	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
 		return item.Type == base.SettingTypeImageBuildSettings

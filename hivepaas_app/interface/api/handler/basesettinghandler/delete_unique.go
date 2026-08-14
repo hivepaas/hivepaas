@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc/appfeaturesettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appplacementsettingsuc/appplacementsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
@@ -70,6 +71,11 @@ func (h *Handler) DeleteUniqueSetting(
 		r := appfeaturesettingsdto.NewDeleteAppFeatureSettingsReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.AppFeatureSettingsUC.DeleteAppFeatureSettings(reqCtx, auth, r) }
+
+	case base.ResourceTypeAppPlacementSettings:
+		r := appplacementsettingsdto.NewDeleteAppPlacementSettingsReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.AppPlacementSettingsUC.DeleteAppPlacementSettings(reqCtx, auth, r) }
 
 	case base.ResourceTypeDomainSettings:
 		r := domainsettingsdto.NewDeleteDomainSettingsReq()

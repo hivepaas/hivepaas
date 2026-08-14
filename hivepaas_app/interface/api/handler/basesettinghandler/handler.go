@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accesstokenuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/acmednsprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appplacementsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandpipeuc"
@@ -40,114 +41,117 @@ import (
 
 type Handler struct {
 	*handler.BaseHandler
-	AuthHandler          *authhandler.Handler
-	OAuthUC              *oauthuc.UC
-	CloudStorageUC       *cloudstorageuc.UC
-	ClusterNetworkUC     *networkuc.UC
-	ClusterNodeUC        *nodeuc.UC
-	ClusterVolumeUC      *volumeuc.UC
-	SSHKeyUC             *sshkeyuc.UC
-	IMServiceUC          *imserviceuc.UC
-	RegistryAuthUC       *registryauthuc.UC
-	BasicAuthUC          *basicauthuc.UC
-	CommandPipeUC        *commandpipeuc.UC
-	CommandTemplateUC    *commandtemplateuc.UC
-	AcmeDnsProviderUC    *acmednsprovideruc.UC
-	SSLProviderUC        *sslprovideruc.UC
-	SSLCertUC            *sslcertuc.UC
-	DomainSettingsUC     *domainsettingsuc.UC
-	GithubAppUC          *githubappuc.UC
-	AccessTokenUC        *accesstokenuc.UC
-	SchedJobUC           *schedjobuc.UC
-	PeriodicJobUC        *periodicjobuc.UC
-	SecretUC             *secretuc.UC
-	ConfigFileUC         *configfileuc.UC
-	EmailUC              *emailuc.UC
-	APIKeyUC             *apikeyuc.UC
-	RepoWebhookUC        *repowebhookuc.UC
-	NotificationUC       *notificationuc.UC
-	ImageBuildUC         *imagebuildsettingsuc.UC
-	SystemCleanupUC      *systemcleanupuc.UC
-	SystemBackupUC       *systembackupuc.UC
-	GitCredentialUC      *gitcredentialuc.UC
-	SSLRenewalUC         *sslrenewaluc.UC
-	FileUC               *fileuc.UC
-	StorageSettingsUC    *storagesettingsuc.UC
-	AppFeatureSettingsUC *appfeaturesettingsuc.UC
+	AuthHandler            *authhandler.Handler
+	AccessTokenUC          *accesstokenuc.UC
+	AcmeDnsProviderUC      *acmednsprovideruc.UC
+	APIKeyUC               *apikeyuc.UC
+	AppFeatureSettingsUC   *appfeaturesettingsuc.UC
+	AppPlacementSettingsUC *appplacementsettingsuc.UC
+	BasicAuthUC            *basicauthuc.UC
+	CloudStorageUC         *cloudstorageuc.UC
+	ClusterNetworkUC       *networkuc.UC
+	ClusterNodeUC          *nodeuc.UC
+	ClusterVolumeUC        *volumeuc.UC
+	CommandPipeUC          *commandpipeuc.UC
+	CommandTemplateUC      *commandtemplateuc.UC
+	ConfigFileUC           *configfileuc.UC
+	DomainSettingsUC       *domainsettingsuc.UC
+	EmailUC                *emailuc.UC
+	FileUC                 *fileuc.UC
+	GitCredentialUC        *gitcredentialuc.UC
+	GithubAppUC            *githubappuc.UC
+	ImageBuildUC           *imagebuildsettingsuc.UC
+	IMServiceUC            *imserviceuc.UC
+	NotificationUC         *notificationuc.UC
+	OAuthUC                *oauthuc.UC
+	PeriodicJobUC          *periodicjobuc.UC
+	RegistryAuthUC         *registryauthuc.UC
+	RepoWebhookUC          *repowebhookuc.UC
+	SchedJobUC             *schedjobuc.UC
+	SecretUC               *secretuc.UC
+	SSHKeyUC               *sshkeyuc.UC
+	SSLCertUC              *sslcertuc.UC
+	SSLProviderUC          *sslprovideruc.UC
+	SSLRenewalUC           *sslrenewaluc.UC
+	StorageSettingsUC      *storagesettingsuc.UC
+	SystemBackupUC         *systembackupuc.UC
+	SystemCleanupUC        *systemcleanupuc.UC
 }
 
 func New(
 	baseHandler *handler.BaseHandler,
 	authHandler *authhandler.Handler,
-	oauthUC *oauthuc.UC,
+	accessTokenUC *accesstokenuc.UC,
+	acmeDnsProviderUC *acmednsprovideruc.UC,
+	apiKeyUC *apikeyuc.UC,
+	appFeatureSettingsUC *appfeaturesettingsuc.UC,
+	appPlacementSettingsUC *appplacementsettingsuc.UC,
+	basicAuthUC *basicauthuc.UC,
 	cloudStorageUC *cloudstorageuc.UC,
 	clusterNetworkUC *networkuc.UC,
 	clusterNodeUC *nodeuc.UC,
 	clusterVolumeUC *volumeuc.UC,
-	sshKeyUC *sshkeyuc.UC,
-	imServiceUC *imserviceuc.UC,
-	registryAuthUC *registryauthuc.UC,
-	basicAuthUC *basicauthuc.UC,
 	commandPipeUC *commandpipeuc.UC,
 	commandTemplateUC *commandtemplateuc.UC,
-	acmeDnsProviderUC *acmednsprovideruc.UC,
-	sslProviderUC *sslprovideruc.UC,
-	sslCertUC *sslcertuc.UC,
-	domainSettingsUC *domainsettingsuc.UC,
-	githubAppUC *githubappuc.UC,
-	accessTokenUC *accesstokenuc.UC,
-	schedJobUC *schedjobuc.UC,
-	periodicJobUC *periodicjobuc.UC,
-	secretUC *secretuc.UC,
 	configFileUC *configfileuc.UC,
+	domainSettingsUC *domainsettingsuc.UC,
 	emailUC *emailuc.UC,
-	apiKeyUC *apikeyuc.UC,
-	repoWebhookUC *repowebhookuc.UC,
-	notificationUC *notificationuc.UC,
-	imageBuildUC *imagebuildsettingsuc.UC,
-	systemCleanupUC *systemcleanupuc.UC,
-	systemBackupUC *systembackupuc.UC,
-	gitCredentialUC *gitcredentialuc.UC,
-	sslRenewalUC *sslrenewaluc.UC,
 	fileUC *fileuc.UC,
+	gitCredentialUC *gitcredentialuc.UC,
+	githubAppUC *githubappuc.UC,
+	imageBuildUC *imagebuildsettingsuc.UC,
+	imServiceUC *imserviceuc.UC,
+	notificationUC *notificationuc.UC,
+	oauthUC *oauthuc.UC,
+	periodicJobUC *periodicjobuc.UC,
+	registryAuthUC *registryauthuc.UC,
+	repoWebhookUC *repowebhookuc.UC,
+	schedJobUC *schedjobuc.UC,
+	secretUC *secretuc.UC,
+	sshKeyUC *sshkeyuc.UC,
+	sslCertUC *sslcertuc.UC,
+	sslProviderUC *sslprovideruc.UC,
+	sslRenewalUC *sslrenewaluc.UC,
 	storageSettingsUC *storagesettingsuc.UC,
-	appFeatureSettingsUC *appfeaturesettingsuc.UC,
+	systemBackupUC *systembackupuc.UC,
+	systemCleanupUC *systemcleanupuc.UC,
 ) *Handler {
 	return &Handler{
-		BaseHandler:          baseHandler,
-		AuthHandler:          authHandler,
-		OAuthUC:              oauthUC,
-		CloudStorageUC:       cloudStorageUC,
-		ClusterNetworkUC:     clusterNetworkUC,
-		ClusterNodeUC:        clusterNodeUC,
-		ClusterVolumeUC:      clusterVolumeUC,
-		SSHKeyUC:             sshKeyUC,
-		IMServiceUC:          imServiceUC,
-		RegistryAuthUC:       registryAuthUC,
-		BasicAuthUC:          basicAuthUC,
-		CommandPipeUC:        commandPipeUC,
-		CommandTemplateUC:    commandTemplateUC,
-		AcmeDnsProviderUC:    acmeDnsProviderUC,
-		SSLProviderUC:        sslProviderUC,
-		SSLCertUC:            sslCertUC,
-		DomainSettingsUC:     domainSettingsUC,
-		GithubAppUC:          githubAppUC,
-		AccessTokenUC:        accessTokenUC,
-		SchedJobUC:           schedJobUC,
-		PeriodicJobUC:        periodicJobUC,
-		SecretUC:             secretUC,
-		ConfigFileUC:         configFileUC,
-		EmailUC:              emailUC,
-		APIKeyUC:             apiKeyUC,
-		RepoWebhookUC:        repoWebhookUC,
-		NotificationUC:       notificationUC,
-		ImageBuildUC:         imageBuildUC,
-		SystemCleanupUC:      systemCleanupUC,
-		SystemBackupUC:       systemBackupUC,
-		GitCredentialUC:      gitCredentialUC,
-		SSLRenewalUC:         sslRenewalUC,
-		FileUC:               fileUC,
-		StorageSettingsUC:    storageSettingsUC,
-		AppFeatureSettingsUC: appFeatureSettingsUC,
+		BaseHandler:            baseHandler,
+		AuthHandler:            authHandler,
+		AccessTokenUC:          accessTokenUC,
+		AcmeDnsProviderUC:      acmeDnsProviderUC,
+		APIKeyUC:               apiKeyUC,
+		AppFeatureSettingsUC:   appFeatureSettingsUC,
+		AppPlacementSettingsUC: appPlacementSettingsUC,
+		BasicAuthUC:            basicAuthUC,
+		CloudStorageUC:         cloudStorageUC,
+		ClusterNetworkUC:       clusterNetworkUC,
+		ClusterNodeUC:          clusterNodeUC,
+		ClusterVolumeUC:        clusterVolumeUC,
+		CommandPipeUC:          commandPipeUC,
+		CommandTemplateUC:      commandTemplateUC,
+		ConfigFileUC:           configFileUC,
+		DomainSettingsUC:       domainSettingsUC,
+		EmailUC:                emailUC,
+		FileUC:                 fileUC,
+		GitCredentialUC:        gitCredentialUC,
+		GithubAppUC:            githubAppUC,
+		ImageBuildUC:           imageBuildUC,
+		IMServiceUC:            imServiceUC,
+		NotificationUC:         notificationUC,
+		OAuthUC:                oauthUC,
+		PeriodicJobUC:          periodicJobUC,
+		RegistryAuthUC:         registryAuthUC,
+		RepoWebhookUC:          repoWebhookUC,
+		SchedJobUC:             schedJobUC,
+		SecretUC:               secretUC,
+		SSHKeyUC:               sshKeyUC,
+		SSLCertUC:              sslCertUC,
+		SSLProviderUC:          sslProviderUC,
+		SSLRenewalUC:           sslRenewalUC,
+		StorageSettingsUC:      storageSettingsUC,
+		SystemBackupUC:         systemBackupUC,
+		SystemCleanupUC:        systemCleanupUC,
 	}
 }

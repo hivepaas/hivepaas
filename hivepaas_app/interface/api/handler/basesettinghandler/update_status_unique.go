@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc/appfeaturesettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appplacementsettingsuc/appplacementsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
@@ -58,6 +59,13 @@ func (h *Handler) UpdateUniqueSettingStatus(
 		r := appfeaturesettingsdto.NewUpdateAppFeatureSettingsStatusReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.AppFeatureSettingsUC.UpdateAppFeatureSettingsStatus(reqCtx, auth, r) }
+
+	case base.ResourceTypeAppPlacementSettings:
+		r := appplacementsettingsdto.NewUpdateAppPlacementSettingsStatusReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) {
+			return h.AppPlacementSettingsUC.UpdateAppPlacementSettingsStatus(reqCtx, auth, r)
+		}
 
 	case base.ResourceTypeDomainSettings:
 		r := domainsettingsdto.NewUpdateDomainSettingsStatusReq()

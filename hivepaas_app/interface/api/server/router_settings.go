@@ -33,6 +33,14 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		acmeDnsProviderGroup.POST("/test-access", settingHandler.TestAcmeDnsProviderAccess)
 	}
 
+	{ // app placement settings group
+		appPlacementGroup := settingGroup.Group("/app-placement-settings")
+		appPlacementGroup.GET("", settingHandler.GetAppPlacementSettings)
+		appPlacementGroup.PUT("", settingHandler.UpdateAppPlacementSettings)
+		appPlacementGroup.PUT("/status", settingHandler.UpdateAppPlacementSettingsStatus)
+		appPlacementGroup.DELETE("", settingHandler.DeleteAppPlacementSettings)
+	}
+
 	{ // basic auth group
 		basicAuthGroup := settingGroup.Group("/basic-auth")
 		basicAuthGroup.GET("/:itemID", settingHandler.GetBasicAuth)

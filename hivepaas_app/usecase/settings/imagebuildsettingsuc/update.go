@@ -35,5 +35,7 @@ func (uc *UC) UpdateImageBuildSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
+	// TODO (med): validate the IDs to be existing
+
 	return &imagebuildsettingsdto.UpdateImageBuildSettingsResp{}, nil
 }

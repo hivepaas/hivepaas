@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 )
@@ -20,7 +21,19 @@ func (uc *UC) GetImageBuildSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	respData, err := imagebuildsettingsdto.TransformImageBuild(resp.Data, resp.RefObjects)
+	setting := resp.Data
+	buildSettings := setting.MustAsImageBuildSettings()
+	refClusterObjects := entity.NewRefClusterObjects()
+
+	if len(buildSettings.Workers.NodeIDs) > 0 {
+		nodeListResp, err := uc.dockerManager.NodeList(ctx)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		refClusterObjects.AddRefNodes(nodeListResp.Items...)
+	}
+
+	respData, err := imagebuildsettingsdto.TransformImageBuild(setting, resp.RefObjects, refClusterObjects)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

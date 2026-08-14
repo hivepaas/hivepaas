@@ -51,6 +51,24 @@ func (r *RefClusterObjects) AddRefClusterObjects(refObjects *RefClusterObjects) 
 	}
 }
 
+func (r *RefClusterObjects) AddRefNodes(refNodes ...swarm.Node) {
+	for i := range refNodes {
+		r.RefNodes[refNodes[i].ID] = &refNodes[i]
+	}
+}
+
+func (r *RefClusterObjects) AddRefVolumes(refVolumes ...volume.Volume) {
+	for i := range refVolumes {
+		r.RefVolumes[dockerhelper.GetVolumeID(&refVolumes[i])] = &refVolumes[i]
+	}
+}
+
+func (r *RefClusterObjects) AddRefNetworks(refNetworks ...network.Network) {
+	for i := range refNetworks {
+		r.RefNetworks[refNetworks[i].ID] = &refNetworks[i]
+	}
+}
+
 type RefClusterObjectIDs struct {
 	RefNodeIDs    []string
 	RefVolumeIDs  []string

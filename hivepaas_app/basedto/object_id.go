@@ -1,8 +1,6 @@
 package basedto
 
 import (
-	"time"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
@@ -69,8 +67,11 @@ type NamedObjectResp struct {
 	Name string `json:"name"`
 }
 
-type ObjectUpdatedAtResp struct {
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
 type NamedObjectSliceResp []*NamedObjectResp
+
+func NewMissingNamedObject(id string) *NamedObjectResp {
+	return &NamedObjectResp{
+		ID:   id,
+		Name: "missing",
+	}
+}

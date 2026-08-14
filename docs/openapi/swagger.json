@@ -45192,20 +45192,20 @@
           "maxParallelism" : {
             "type" : "integer"
           },
-          "nodeIds" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
           "nodeLabels" : {
             "items" : {
               "type" : "string"
             },
             "type" : "array"
+          },
+          "nodes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            },
+            "type" : "array"
           }
         },
-        "required" : [ "maxParallelism", "nodeIds", "nodeLabels" ],
+        "required" : [ "maxParallelism", "nodeLabels", "nodes" ],
         "type" : "object"
       },
       "settings_imagebuildsettingsdto.ImageBuildWorkerSettingsResp" : {
@@ -45213,20 +45213,20 @@
           "maxParallelism" : {
             "type" : "integer"
           },
-          "nodeIds" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
           "nodeLabels" : {
             "items" : {
               "type" : "string"
             },
             "type" : "array"
+          },
+          "nodes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+            },
+            "type" : "array"
           }
         },
-        "required" : [ "maxParallelism", "nodeIds", "nodeLabels" ],
+        "required" : [ "maxParallelism", "nodeLabels", "nodes" ],
         "type" : "object"
       },
       "settings_imagebuildsettingsdto.RepoCacheInfoResp" : {
@@ -51849,9 +51849,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

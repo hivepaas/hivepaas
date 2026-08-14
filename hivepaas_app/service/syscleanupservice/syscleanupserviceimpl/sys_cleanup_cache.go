@@ -59,8 +59,10 @@ func (s *service) sysCleanupCacheRepoSource(
 	if data.CleanupCacheRepo == base.CleanupFlagForce {
 		retention = 0
 	}
+	scopeObjectID := data.Scope.ScopeObjectID()
 
 	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
+		bunex.SelectWhereIf(scopeObjectID != "", "file.object_id = ?", scopeObjectID),
 		bunex.SelectWhere("file.type = ?", base.FileTypeCache),
 		bunex.SelectWhereIn("file.kind IN (?)", base.AllFileCacheKinds...),
 		bunex.SelectWhere("file.storage_type = ?", base.FileStorageLocal),

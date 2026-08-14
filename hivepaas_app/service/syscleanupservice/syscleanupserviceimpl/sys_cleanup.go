@@ -34,6 +34,9 @@ func (s *service) Cleanup(
 			FileCleanup:    &entity.FileCleanupOutput{},
 		},
 	}
+	if req.Scope == nil {
+		req.Scope = entity.NewObjectScopeGlobal()
+	}
 	if data.LogStore == nil {
 		data.LogStore = tasklog.NewLocalStore(fmt.Sprintf("task:%v:log", req.Task.ID))
 	}

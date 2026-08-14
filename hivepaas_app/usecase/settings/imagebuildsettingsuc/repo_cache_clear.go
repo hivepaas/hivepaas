@@ -25,6 +25,7 @@ func (uc *UC) ClearRepoCache(
 				ID: "fake-task-id",
 			},
 		},
+		Scope: req.Scope,
 		SysCleanupSettings: &entity.SystemCleanup{
 			CacheCleanup: entity.SystemCacheCleanup{
 				Enabled: true,

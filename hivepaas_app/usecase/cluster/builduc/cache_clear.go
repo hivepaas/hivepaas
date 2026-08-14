@@ -25,6 +25,7 @@ func (uc *UC) ClearBuildCache(
 				ID: "fake-task-id",
 			},
 		},
+		Scope: entity.NewObjectScopeGlobal(),
 		SysCleanupSettings: &entity.SystemCleanup{
 			ClusterCleanup: entity.SystemClusterCleanup{
 				Enabled:         true,

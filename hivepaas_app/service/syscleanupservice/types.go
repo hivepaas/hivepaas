@@ -8,6 +8,7 @@ import (
 
 type SysCleanupReq struct {
 	*queue.TaskExecData
+	Scope              *entity.ObjectScope
 	SysCleanupSettings *entity.SystemCleanup
 
 	CleanupClusterContainers base.CleanupFlag

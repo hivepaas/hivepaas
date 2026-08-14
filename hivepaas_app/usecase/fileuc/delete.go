@@ -33,6 +33,9 @@ func (uc *UC) DeleteFile(
 		if len(req.Types) > 0 {
 			opts = append(opts, bunex.SelectWhereIn("file.type IN (?)", req.Types...))
 		}
+		if len(req.Kinds) > 0 {
+			opts = append(opts, bunex.SelectWhereIn("file.kind IN (?)", req.Kinds...))
+		}
 
 		file, err := uc.fileRepo.GetByID(ctx, db, req.ID, opts...)
 		if err != nil {

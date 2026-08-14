@@ -438,35 +438,41 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 		return apperrors.Wrap(err)
 	}
 
-	// File type
-	fileType := ctx.PostForm("fileType")
+	// File type & kind
+	fileType := base.FileType(ctx.PostForm("fileType"))
+	fileKind := base.FileKind(ctx.PostForm("fileKind"))
 	var maxFile int
 	var maxFileSize unit.DataSize
 	var fileExts []string
 	var requiredScopes []base.ObjectScopeType
-	switch base.FileType(fileType) {
+	switch fileType {
 	case base.FileTypeDataFile:
 		maxFile = cfg.DataMaxFile
 		maxFileSize = cfg.DataMaxSize
 		fileExts = cfg.DataFileExts
 		requiredScopes = []base.ObjectScopeType{base.ObjectScopeProject, base.ObjectScopeApp}
-	case base.FileTypeBuildSource:
-		maxFile = cfg.BuildSourceMaxFile
-		maxFileSize = cfg.BuildSourceMaxSize
-		fileExts = cfg.BuildSourceFileExts
-		requiredScopes = []base.ObjectScopeType{base.ObjectScopeApp}
-	case base.FileTypeSystemBackup, base.FileTypeCache:
+
+	case base.FileTypeTmp:
+		if fileKind == base.FileKindSourceCode {
+			maxFile = cfg.BuildSourceMaxFile
+			maxFileSize = cfg.BuildSourceMaxSize
+			fileExts = cfg.BuildSourceFileExts
+			requiredScopes = []base.ObjectScopeType{base.ObjectScopeApp}
+		} else {
+			// TODO: handle more kinds of type `tmp` for other scopes
+			requiredScopes = []base.ObjectScopeType{}
+		}
+
+	case base.FileTypeSystem, base.FileTypeCache:
 		fallthrough
 	case base.FileTypeSchedJobOutput:
 		fallthrough
 	default:
 		return apperrors.Wrap(apperrors.ErrFileTypeNotSupported).
-			WithParam("SupportedTypes", []base.FileType{base.FileTypeBuildSource})
+			WithParam("SupportedTypes", []base.FileType{base.FileTypeDataFile, base.FileTypeTmp})
 	}
-	req.FileType = base.FileType(fileType)
-
-	// File kind
-	req.FileKind = base.FileKind(ctx.PostForm("fileKind"))
+	req.FileType = fileType
+	req.FileKind = fileKind
 
 	// Scope
 	scope := base.ObjectScopeType(ctx.PostForm("scope"))

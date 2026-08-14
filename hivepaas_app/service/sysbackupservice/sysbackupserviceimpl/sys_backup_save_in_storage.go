@@ -81,7 +81,8 @@ func (s *service) sysBackupSaveResultInStorage(
 	remoteFile := &entity.File{
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeGlobal,
-		Type:        base.FileTypeSystemBackup,
+		Type:        base.FileTypeSystem,
+		Kind:        string(base.FileKindSystemBackup),
 		Status:      base.FileStatusActive,
 		StorageType: base.FileStorageCloud,
 		StorageID:   cloudStorage.ID,

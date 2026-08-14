@@ -79,19 +79,19 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 		default:
 			return nil, apperrors.Wrap(apperrors.ErrUnsupported).WithParam("Name", "Scope")
 		}
-	case base.FileTypeBuildSource:
+	case base.FileTypeTmp:
 		accessCheck = &permission.AppAccessCheck{
 			BaseAccessCheck: permission.BaseAccessCheck{AnyOf: []base.ActionType{base.ActionTypeWrite}},
 			ProjectID:       req.Scope.ProjectID,
 			AppID:           req.Scope.AppID,
 		}
-	case base.FileTypeSystemBackup, base.FileTypeCache:
+	case base.FileTypeSystem, base.FileTypeCache:
 		fallthrough
 	case base.FileTypeSchedJobOutput:
 		fallthrough
 	default:
 		return nil, apperrors.Wrap(apperrors.ErrFileTypeNotSupported).
-			WithParam("SupportedTypes", []base.FileType{base.FileTypeBuildSource})
+			WithParam("SupportedTypes", []base.FileType{base.FileTypeDataFile, base.FileTypeTmp})
 	}
 
 	auth, err = h.authHandler.GetCurrentAuth(ctx, accessCheck)

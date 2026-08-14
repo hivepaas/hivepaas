@@ -13,6 +13,7 @@ type DeleteFileReq struct {
 	Scope                    *base.ObjectScopeType `json:"-" mapstructure:"-"`
 	ObjectID                 string                `json:"-" mapstructure:"-"`
 	Types                    []base.FileType       `json:"-" mapstructure:"-"`
+	Kinds                    []base.FileKind       `json:"-"`
 	DeletePermanentlyIfLocal bool                  `json:"-" mapstructure:"deletePermanentlyIfLocal"`
 	DeletePermanently        bool                  `json:"-" mapstructure:"deletePermanently"`
 }

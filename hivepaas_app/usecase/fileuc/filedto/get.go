@@ -17,6 +17,7 @@ type GetFileReq struct {
 	ID       string          `json:"-" mapstructure:"-"`
 	ObjectID string          `json:"-" mapstructure:"-"`
 	Types    []base.FileType `json:"-" mapstructure:"type"`
+	Kinds    []base.FileKind `json:"-" mapstructure:"kind"`
 }
 
 func NewGetFileReq() *GetFileReq {
@@ -27,6 +28,7 @@ func (req *GetFileReq) Validate() apperrors.ValidationErrors {
 	var validators []vld.Validator
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	validators = append(validators, basedto.ValidateID(&req.ObjectID, false, "objectId")...)
+	// TODO: add validation
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

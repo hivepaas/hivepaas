@@ -62,7 +62,8 @@ func (s *service) sysCleanupLocalBackupFiles(
 	}
 
 	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
-		bunex.SelectWhere("file.type = ?", base.FileTypeSystemBackup),
+		bunex.SelectWhere("file.type = ?", base.FileTypeSystem),
+		bunex.SelectWhereIn("file.kind IN (?)", base.AllFileSystemBackupKinds...),
 		bunex.SelectWhere("file.storage_type = ?", base.FileStorageLocal),
 		bunex.SelectWhere("file.created_at < ?", timeNow.Add(-retention)),
 	)
@@ -116,7 +117,8 @@ func (s *service) sysCleanupCloudBackupFiles(
 	}
 
 	deletingFiles, _, err := s.fileRepo.List(ctx, db, nil,
-		bunex.SelectWhere("file.type = ?", base.FileTypeSystemBackup),
+		bunex.SelectWhere("file.type = ?", base.FileTypeSystem),
+		bunex.SelectWhereIn("file.kind IN (?)", base.AllFileSystemBackupKinds...),
 		bunex.SelectWhere("file.status = ?", base.FileStatusActive),
 		bunex.SelectWhere("file.storage_type = ?", base.FileStorageCloud),
 		bunex.SelectWhere("file.created_at < ?", timeNow.Add(-retention)),

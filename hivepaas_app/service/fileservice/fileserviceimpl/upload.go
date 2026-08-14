@@ -33,7 +33,7 @@ func (s *service) Upload(
 
 	var fileDir string
 	switch req.FileType { //nolint
-	case base.FileTypeBuildSource:
+	case base.FileTypeTmp:
 		fileDir = config.Current.DataPathFiles().RelPath()
 	default:
 		// Do nothing
@@ -58,7 +58,7 @@ func (s *service) Upload(
 			CreatedAt:   timeNow,
 			UpdatedAt:   timeNow,
 		}
-		if file.Type == base.FileTypeBuildSource {
+		if file.Type == base.FileTypeTmp {
 			file.Name = file.ID + "-" + file.Name
 		}
 		files = append(files, file)

@@ -2,6 +2,7 @@ package systemsettingshandler
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/gin-gonic/gin"
 
@@ -41,7 +42,8 @@ func (h *Handler) ListBackupFiles(ctx *gin.Context) {
 	}
 
 	req := filedto.NewListFileReq()
-	req.Types = []base.FileType{base.FileTypeSystemBackup}
+	req.Types = []base.FileType{base.FileTypeSystem}
+	req.Kinds = slices.Clone(base.AllFileSystemBackupKinds)
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -86,7 +88,8 @@ func (h *Handler) GetBackupFile(ctx *gin.Context) {
 
 	req := filedto.NewGetFileReq()
 	req.ID = fileID
-	req.Types = []base.FileType{base.FileTypeSystemBackup}
+	req.Types = []base.FileType{base.FileTypeSystem}
+	req.Kinds = slices.Clone(base.AllFileSystemBackupKinds)
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -186,7 +189,8 @@ func (h *Handler) DeleteBackupFile(ctx *gin.Context) {
 	req.ID = fileID
 	req.Scope = new(base.ObjectScopeGlobal)
 	req.DeletePermanentlyIfLocal = true
-	req.Types = []base.FileType{base.FileTypeSystemBackup}
+	req.Types = []base.FileType{base.FileTypeSystem}
+	req.Kinds = slices.Clone(base.AllFileSystemBackupKinds)
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return

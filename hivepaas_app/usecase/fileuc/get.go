@@ -20,6 +20,12 @@ func (uc *UC) GetFile(
 	if req.ObjectID != "" {
 		opts = append(opts, bunex.SelectWhere("file.object_id = ?", req.ObjectID))
 	}
+	if len(req.Types) > 0 {
+		opts = append(opts, bunex.SelectWhereIn("file.type IN (?)", req.Types...))
+	}
+	if len(req.Kinds) > 0 {
+		opts = append(opts, bunex.SelectWhereIn("file.kind IN (?)", req.Kinds...))
+	}
 
 	file, err := uc.fileRepo.GetByID(ctx, uc.db, req.ID, opts...)
 	if err != nil {

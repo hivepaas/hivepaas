@@ -64,7 +64,8 @@ func (s *service) sysBackupSaveResultInLocal(
 	localFile := &entity.File{
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeGlobal,
-		Type:        base.FileTypeSystemBackup,
+		Type:        base.FileTypeSystem,
+		Kind:        string(base.FileKindSystemBackup),
 		StorageType: base.FileStorageLocal,
 		Status:      base.FileStatusActive,
 		Name:        data.OutFileName,

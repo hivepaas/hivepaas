@@ -6,6 +6,8 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 )
 
 const (
@@ -28,12 +30,24 @@ func (s *service) applyPlacementSettings(
 	// Keep user-set constraints (filter out constraints previously managed by HivePaaS)
 	var prevHivepaasConstraints []string
 	if raw, ok := spec.Labels[labelAppPlacementConstraints]; ok && raw != "" {
-		prevHivepaasConstraints = strings.Split(raw, ",")
+		for _, item := range strings.Split(raw, ",") {
+			k, op, v := dockerhelper.ParsePlacementConstraint(item)
+			if op != "" {
+				prevHivepaasConstraints = append(prevHivepaasConstraints, k+op+v)
+			} else if trimmed := strings.TrimSpace(item); trimmed != "" {
+				prevHivepaasConstraints = append(prevHivepaasConstraints, trimmed)
+			}
+		}
 	}
 
 	for _, constraint := range currConstraints {
-		if !gofn.Contain(prevHivepaasConstraints, constraint) {
-			finalConstraints = append(finalConstraints, constraint)
+		k, op, v := dockerhelper.ParsePlacementConstraint(constraint)
+		constraintNorm := constraint
+		if op != "" {
+			constraintNorm = k + op + v
+		}
+		if !gofn.Contain(prevHivepaasConstraints, constraintNorm) {
+			finalConstraints = append(finalConstraints, constraintNorm)
 		}
 	}
 

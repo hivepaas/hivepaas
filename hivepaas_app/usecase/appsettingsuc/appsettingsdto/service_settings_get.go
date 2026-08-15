@@ -1,13 +1,12 @@
 package appsettingsdto
 
 import (
-	"strings"
-
 	"github.com/moby/moby/api/types/swarm"
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -108,16 +107,9 @@ func TransformServicePlacement(placement *swarm.Placement) *Placement {
 		Preferences: make([]*PlacementPreference, 0, len(placement.Preferences)),
 	}
 	for _, constraint := range placement.Constraints {
-		op := "=="
-		name, value, found := strings.Cut(constraint, op)
-		if !found {
-			op = "!="
-			name, value, found = strings.Cut(constraint, op)
-			if !found {
-				name = constraint
-				value = ""
-				op = ""
-			}
+		name, op, value := dockerhelper.ParsePlacementConstraint(constraint)
+		if op == "" {
+			name = constraint
 		}
 		res.Constraints = append(res.Constraints, &PlacementConstraint{
 			Name:  name,

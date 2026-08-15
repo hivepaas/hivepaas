@@ -5,7 +5,7 @@ import { useAppScheduledJobTaskLogsWsApi } from "~/projects/api";
 import type { EAppScheduledJobTaskStatus } from "~/projects/module-shared/enums";
 import { EAppScheduledJobTaskStatus as TaskStatus } from "~/projects/module-shared/enums";
 
-import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames } from "@application/shared/components";
+import { LogsViewer, parseLogsViewerFrames, useBufferedLogFrames } from "@application/shared/components";
 
 const TASK_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 340px), 2000px)";
 
@@ -18,7 +18,7 @@ export function ScheduledJobTaskLogsViewer({
     status,
     onStreamClosedWhileInProgress,
 }: ScheduledJobTaskLogsViewerProps) {
-    const [logs, setLogs] = useState<LogsViewerFrame[]>([]);
+    const { frames: logs, appendFrames, reset } = useBufferedLogFrames();
     const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
     const [refreshVersion, setRefreshVersion] = useState(0);
     const [isRefreshPending, setIsRefreshPending] = useState(false);
@@ -42,10 +42,10 @@ export function ScheduledJobTaskLogsViewer({
     );
 
     useEffect(() => {
-        setLogs([]);
+        reset();
         setSuppressAutoReconnect(false);
         setIsRefreshPending(false);
-    }, [taskID]);
+    }, [reset, taskID]);
 
     const handleRefresh = useCallback(() => {
         if (!showRefresh || isRefreshPending) {
@@ -73,7 +73,7 @@ export function ScheduledJobTaskLogsViewer({
         setWebSocketReadyState(WebSocket.CONNECTING);
 
         if (refreshVersion > 0) {
-            setLogs([]);
+            reset();
         }
 
         void streams
@@ -92,7 +92,7 @@ export function ScheduledJobTaskLogsViewer({
                                 return;
                             }
 
-                            setLogs(current => [...current, ...frames]);
+                            appendFrames(frames);
                         } catch (error) {
                             console.error("Failed to parse scheduled job task log frame", error);
                         }
@@ -156,7 +156,7 @@ export function ScheduledJobTaskLogsViewer({
             abortController.abort();
             subscription?.close();
         };
-    }, [onStreamClosedWhileInProgress, refreshVersion, shouldConnect, status, streamRequest, streams]);
+    }, [appendFrames, onStreamClosedWhileInProgress, refreshVersion, reset, shouldConnect, status, streamRequest, streams]);
 
     return (
         <LogsViewer

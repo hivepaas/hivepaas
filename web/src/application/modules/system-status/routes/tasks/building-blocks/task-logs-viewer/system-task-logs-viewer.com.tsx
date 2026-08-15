@@ -4,12 +4,12 @@ import type { WebSocketReadyState, WebSocketSubscription } from "@infrastructure
 import { useSystemTaskLogsWsApi } from "~/system-status/api";
 import { SystemTaskStatus, type SystemTaskStatus as SystemTaskStatusValue } from "~/system-status/domain";
 
-import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames } from "@application/shared/components";
+import { LogsViewer, parseLogsViewerFrames, useBufferedLogFrames } from "@application/shared/components";
 
 const TASK_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 340px), 2000px)";
 
 export function SystemTaskLogsViewer({ taskID, status, onStreamClosedWhileInProgress }: SystemTaskLogsViewerProps) {
-    const [logs, setLogs] = useState<LogsViewerFrame[]>([]);
+    const { frames: logs, appendFrames, reset } = useBufferedLogFrames();
     const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
     const [refreshVersion, setRefreshVersion] = useState(0);
     const [isRefreshPending, setIsRefreshPending] = useState(false);
@@ -29,10 +29,10 @@ export function SystemTaskLogsViewer({ taskID, status, onStreamClosedWhileInProg
     );
 
     useEffect(() => {
-        setLogs([]);
+        reset();
         setSuppressAutoReconnect(false);
         setIsRefreshPending(false);
-    }, [taskID]);
+    }, [reset, taskID]);
 
     const handleRefresh = useCallback(() => {
         if (!showRefresh || isRefreshPending) {
@@ -60,7 +60,7 @@ export function SystemTaskLogsViewer({ taskID, status, onStreamClosedWhileInProg
         setWebSocketReadyState(WebSocket.CONNECTING);
 
         if (refreshVersion > 0) {
-            setLogs([]);
+            reset();
         }
 
         void streams
@@ -79,7 +79,7 @@ export function SystemTaskLogsViewer({ taskID, status, onStreamClosedWhileInProg
                                 return;
                             }
 
-                            setLogs(current => [...current, ...frames]);
+                            appendFrames(frames);
                         } catch (error) {
                             console.error("Failed to parse system task log frame", error);
                         }
@@ -143,7 +143,7 @@ export function SystemTaskLogsViewer({ taskID, status, onStreamClosedWhileInProg
             abortController.abort();
             subscription?.close();
         };
-    }, [onStreamClosedWhileInProgress, refreshVersion, shouldConnect, status, streamRequest, streams]);
+    }, [appendFrames, onStreamClosedWhileInProgress, refreshVersion, reset, shouldConnect, status, streamRequest, streams]);
 
     return (
         <LogsViewer

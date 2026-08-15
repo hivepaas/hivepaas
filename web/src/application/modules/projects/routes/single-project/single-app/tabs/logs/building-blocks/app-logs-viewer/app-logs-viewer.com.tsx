@@ -5,7 +5,7 @@ import { useAppLogsWsApi } from "~/projects/api";
 import type { AppLogFrame, AppLogs_GetLogs_Req } from "~/projects/api/services";
 import { AppLogsQueries } from "~/projects/data";
 
-import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames } from "@application/shared/components";
+import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames, useBufferedLogFrames } from "@application/shared/components";
 
 import { AppLogsToolbarFilters, AppLogsToolbarStart } from "../app-logs-toolbar";
 
@@ -40,6 +40,12 @@ export function AppLogsViewer({
     const isConnectionActive = webSocketReadyState === WebSocket.CONNECTING || webSocketReadyState === WebSocket.OPEN;
     const isStreaming = webSocketReadyState === WebSocket.OPEN;
     const hasTimeFilter = since !== undefined || duration !== undefined;
+    const { appendFrames, reset, replaceFrames } = useBufferedLogFrames({
+        frames: logs,
+        onFramesChange: action => {
+            onLogsChange(tabID, action);
+        },
+    });
 
     const setReadyState = useCallback(
         (readyState: WebSocketReadyState) => {
@@ -85,7 +91,7 @@ export function AppLogsViewer({
         }
 
         closeStream();
-        onLogsChange(tabID, []);
+        reset();
         setReadyState(WebSocket.CONNECTING);
 
         const abortController = new AbortController();
@@ -106,7 +112,7 @@ export function AppLogsViewer({
                                 return;
                             }
 
-                            onLogsChange(tabID, current => [...current, ...frames]);
+                            appendFrames(frames);
                         } catch (error) {
                             console.error("Failed to parse app log frame", error);
                         }
@@ -143,7 +149,7 @@ export function AppLogsViewer({
                     setReadyState(WebSocket.CLOSED);
                 }
             });
-    }, [closeStream, isConnectionActive, onLogsChange, request, setReadyState, streams, tabID]);
+    }, [appendFrames, closeStream, isConnectionActive, request, reset, setReadyState, streams]);
 
     const handleRefresh = useCallback(async () => {
         if (isConnectionActive) {
@@ -153,9 +159,9 @@ export function AppLogsViewer({
         const result = await refreshLogs();
 
         if (result.data) {
-            onLogsChange(tabID, toLogsViewerFrames(result.data.data));
+            replaceFrames(toLogsViewerFrames(result.data.data));
         }
-    }, [isConnectionActive, onLogsChange, refreshLogs, tabID]);
+    }, [isConnectionActive, refreshLogs, replaceFrames]);
 
     const requestFilterRefresh = useCallback(() => {
         if (isConnectionActive) {

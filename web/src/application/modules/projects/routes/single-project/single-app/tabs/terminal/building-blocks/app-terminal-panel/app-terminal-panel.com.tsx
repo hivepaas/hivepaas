@@ -26,11 +26,14 @@ export function AppTerminalPanel({
     onSelectedShellChange,
 }: AppTerminalPanelProps) {
     const terminalElementRef = useRef<HTMLDivElement | null>(null);
+    const terminalFrameRef = useRef<HTMLDivElement | null>(null);
     const terminalRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
     const subscriptionRef = useRef<WebSocketSubscription | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const resizeFrameRef = useRef<number | null>(null);
+    const lastObservedFrameSizeRef = useRef({ clientWidth: 0, clientHeight: 0 });
+    const lastSentTerminalSizeRef = useRef({ cols: 0, rows: 0 });
     const inputEncoderRef = useRef(new TextEncoder());
     const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -45,6 +48,11 @@ export function AppTerminalPanel({
             return;
         }
 
+        if (lastSentTerminalSizeRef.current.cols === width && lastSentTerminalSizeRef.current.rows === height) {
+            return;
+        }
+
+        lastSentTerminalSizeRef.current = { cols: width, rows: height };
         socket.send(JSON.stringify(buildAppTerminalResizeMessage(width, height)));
     }, []);
 
@@ -70,7 +78,35 @@ export function AppTerminalPanel({
     }, []);
 
     const fitAndSendResize = useCallback(() => {
+        const frame = terminalFrameRef.current;
+
+        if (frame) {
+            const { clientWidth, clientHeight } = frame;
+            const lastObservedFrameSize = lastObservedFrameSizeRef.current;
+
+            if (
+                clientWidth === lastObservedFrameSize.clientWidth &&
+                clientHeight === lastObservedFrameSize.clientHeight
+            ) {
+                return;
+            }
+
+            lastObservedFrameSizeRef.current = { clientWidth, clientHeight };
+        }
+
+        const terminal = terminalRef.current;
+        const previousCols = terminal?.cols ?? 0;
+        const previousRows = terminal?.rows ?? 0;
+
         fitTerminal();
+
+        const nextCols = terminal?.cols ?? 0;
+        const nextRows = terminal?.rows ?? 0;
+
+        if (previousCols === nextCols && previousRows === nextRows) {
+            return;
+        }
+
         sendCurrentResize();
     }, [fitTerminal, sendCurrentResize]);
 
@@ -174,10 +210,14 @@ export function AppTerminalPanel({
 
     useEffect(() => {
         const element = terminalElementRef.current;
+        const frame = terminalFrameRef.current;
 
-        if (!element) {
+        if (!element || !frame) {
             return;
         }
+
+        lastObservedFrameSizeRef.current = { clientWidth: 0, clientHeight: 0 };
+        lastSentTerminalSizeRef.current = { cols: 0, rows: 0 };
 
         const terminal = new Terminal({
             convertEol: true,
@@ -212,7 +252,7 @@ export function AppTerminalPanel({
         });
         const resizeObserver = new ResizeObserver(scheduleFitAndResize);
 
-        resizeObserver.observe(element);
+        resizeObserver.observe(frame);
         window.addEventListener("resize", scheduleFitAndResize);
         scheduleFitAndResize();
 
@@ -234,6 +274,7 @@ export function AppTerminalPanel({
     }, [closeConnection, scheduleFitAndResize, sendResizeToSocket]);
 
     useEffect(() => {
+        lastObservedFrameSizeRef.current = { clientWidth: 0, clientHeight: 0 };
         scheduleFitAndResize();
     }, [isFullscreen, scheduleFitAndResize]);
 
@@ -334,6 +375,7 @@ export function AppTerminalPanel({
             </div>
 
             <div
+                ref={terminalFrameRef}
                 className={cn(
                     styles["terminalFrame"],
                     "min-h-0 overflow-hidden border border-slate-800",

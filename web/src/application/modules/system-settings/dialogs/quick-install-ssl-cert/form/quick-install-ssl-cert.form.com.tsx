@@ -43,6 +43,8 @@ const CUSTOM_KEY_TYPES: ESslKeyType[] = [
 
 type ProviderOption = Record<"id" | "name", string>;
 
+const EMPTY_PROVIDER_OPTIONS: ProviderOption[] = [];
+
 function getProviderKind(certType: ESslCertType): ESslProviderKind | undefined {
     switch (certType) {
         case ESslCertType.LetsEncrypt:
@@ -150,6 +152,7 @@ export function QuickInstallSslCertForm({
     }, [isDirty, onHasChanges, readOnly]);
 
     const certType = useWatch({ control, name: "certType" });
+    const keyTypeValue = useWatch({ control, name: "keyType" });
     const providerValue = useWatch({ control, name: "provider" });
     const acmeProviderValue = useWatch({ control, name: "acmeProvider" });
     const expireAt = useWatch({ control, name: "expireAt" });
@@ -168,7 +171,7 @@ export function QuickInstallSslCertForm({
     const providerQuery = SslProviderQueries.useFindManyPaginated({ kind: providerKind }, { enabled: isAcme });
     const acmeProviderQuery = AcmeDnsProviderQueries.useFindManyPaginated({}, { enabled: isAcme });
 
-    const providerOptions = useMemo(() => providerQuery.data?.data ?? [], [providerQuery.data?.data]);
+    const providerOptions = useMemo(() => providerQuery.data?.data ?? EMPTY_PROVIDER_OPTIONS, [providerQuery.data?.data]);
     const providerComboboxOptions = useMemo(
         () =>
             providerOptions.map(option => ({
@@ -178,7 +181,10 @@ export function QuickInstallSslCertForm({
         [providerOptions],
     );
 
-    const acmeProviderOptions = useMemo(() => acmeProviderQuery.data?.data ?? [], [acmeProviderQuery.data?.data]);
+    const acmeProviderOptions = useMemo(
+        () => acmeProviderQuery.data?.data ?? EMPTY_PROVIDER_OPTIONS,
+        [acmeProviderQuery.data?.data],
+    );
     const acmeProviderComboboxOptions = useMemo(
         () =>
             acmeProviderOptions.map(option => ({
@@ -188,12 +194,13 @@ export function QuickInstallSslCertForm({
         [acmeProviderOptions],
     );
 
-    // Reset key type to ECP256 when switching to ACME types
     useEffect(() => {
-        if (isAcme) {
-            setValue("keyType", ESslKeyType.ECP256);
+        if (!isAcme || ACME_KEY_TYPES.includes(keyTypeValue)) {
+            return;
         }
-    }, [isAcme, setValue]);
+
+        setValue("keyType", ESslKeyType.ECP256);
+    }, [isAcme, keyTypeValue, setValue]);
 
     // Clear provider when cert type changes away from provider-required types
     useEffect(() => {

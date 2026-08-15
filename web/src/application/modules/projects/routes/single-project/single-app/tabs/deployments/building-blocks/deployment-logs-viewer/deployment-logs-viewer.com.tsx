@@ -165,6 +165,7 @@ export function DeploymentLogsViewer({
             hasLineNumbers={false}
             fontSize="0.875rem"
             downloadFileName="deployment-logs.txt"
+            defaultShowDebugLogs
         />
     );
 }

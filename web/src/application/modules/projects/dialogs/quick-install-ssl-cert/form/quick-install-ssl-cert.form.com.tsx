@@ -10,7 +10,7 @@ import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { useController, useForm, useWatch } from "react-hook-form";
+import { useController, useForm } from "react-hook-form";
 import { ProjectAcmeDnsProviderQueries, ProjectSslProviderQueries } from "~/projects/data/queries";
 import { SSL_CERT_TYPE_OPTIONS } from "~/settings/module-shared/constants/ssl-provider.constants";
 
@@ -152,14 +152,46 @@ export function QuickInstallSslCertForm({
         onHasChanges?.(readOnly ? false : isDirty);
     }, [isDirty, onHasChanges, readOnly]);
 
-    const certType = useWatch({ control, name: "certType" });
-    const keyTypeValue = useWatch({ control, name: "keyType" });
-    const providerValue = useWatch({ control, name: "provider" });
-    const acmeProviderValue = useWatch({ control, name: "acmeProvider" });
-    const expireAt = useWatch({ control, name: "expireAt" });
-    const notifyFrom = useWatch({ control, name: "notifyFrom" });
-    const wildcardDomainWatched = useWatch({ control, name: "wildcardDomain" });
-    const effectiveDomain = wildcardDomainWatched ? toWildcardDomain(domain) : domain;
+    const { field: certTypeField } = useController({ name: "certType", control });
+    const { field: wildcardDomain } = useController({ name: "wildcardDomain", control });
+    const {
+        field: provider,
+        fieldState: { invalid: isProviderInvalid },
+    } = useController({ name: "provider", control });
+    const {
+        field: acmeProvider,
+        fieldState: { invalid: isAcmeProviderInvalid },
+    } = useController({ name: "acmeProvider", control });
+    const {
+        field: email,
+        fieldState: { invalid: isEmailInvalid },
+    } = useController({ name: "email", control });
+    const { field: keyType } = useController({ name: "keyType", control });
+    const { field: autoRenew } = useController({ name: "autoRenew", control });
+    const {
+        field: certificate,
+        fieldState: { invalid: isCertificateInvalid },
+    } = useController({ name: "certificate", control });
+    const {
+        field: privateKey,
+        fieldState: { invalid: isPrivateKeyInvalid },
+    } = useController({ name: "privateKey", control });
+    const {
+        field: expireAtField,
+        fieldState: { invalid: isExpireAtInvalid },
+    } = useController({ name: "expireAt", control });
+    const {
+        field: notifyFromField,
+        fieldState: { invalid: isNotifyFromInvalid },
+    } = useController({ name: "notifyFrom", control });
+
+    const certType = certTypeField.value;
+    const keyTypeValue = keyType.value;
+    const providerValue = provider.value;
+    const acmeProviderValue = acmeProvider.value;
+    const expireAt = expireAtField.value;
+    const notifyFrom = notifyFromField.value;
+    const effectiveDomain = wildcardDomain.value ? toWildcardDomain(domain) : domain;
 
     const isCustom = certType === ESslCertType.Custom;
     const isAcme = !isCustom && certType !== ESslCertType.SelfSigned;
@@ -209,7 +241,6 @@ export function QuickInstallSslCertForm({
         setValue("keyType", ESslKeyType.ECP256);
     }, [isAcme, keyTypeValue, setValue]);
 
-    // Clear provider when cert type changes away from provider-required types
     useEffect(() => {
         if (providerKind !== undefined || !providerValue) {
             return;
@@ -217,7 +248,6 @@ export function QuickInstallSslCertForm({
         setValue("provider", undefined, { shouldDirty: true });
     }, [providerKind, providerValue, setValue]);
 
-    // Clear provider if no longer in available options
     useEffect(() => {
         if (providerKind === undefined || !providerValue || providerQuery.isFetching || providerOptions.length === 0) {
             return;
@@ -227,7 +257,6 @@ export function QuickInstallSslCertForm({
         }
     }, [providerKind, providerOptions, providerQuery.isFetching, providerValue, setValue]);
 
-    // Clear ACME provider when switching to Custom
     useEffect(() => {
         if (isAcme || !acmeProviderValue) {
             return;
@@ -235,7 +264,6 @@ export function QuickInstallSslCertForm({
         setValue("acmeProvider", undefined, { shouldDirty: true });
     }, [acmeProviderValue, isAcme, setValue]);
 
-    // Clear ACME provider if no longer in available options
     useEffect(() => {
         if (!isAcme || !acmeProviderValue || acmeProviderQuery.isFetching || acmeProviderOptions.length === 0) {
             return;
@@ -258,39 +286,6 @@ export function QuickInstallSslCertForm({
             label: formatKeyTypeLabel(value),
         }));
     }, [isCustom]);
-
-    const { field: certTypeField } = useController({ name: "certType", control });
-    const { field: wildcardDomain } = useController({ name: "wildcardDomain", control });
-    const {
-        field: provider,
-        fieldState: { invalid: isProviderInvalid },
-    } = useController({ name: "provider", control });
-    const {
-        field: acmeProvider,
-        fieldState: { invalid: isAcmeProviderInvalid },
-    } = useController({ name: "acmeProvider", control });
-    const {
-        field: email,
-        fieldState: { invalid: isEmailInvalid },
-    } = useController({ name: "email", control });
-    const { field: keyType } = useController({ name: "keyType", control });
-    const { field: autoRenew } = useController({ name: "autoRenew", control });
-    const {
-        field: certificate,
-        fieldState: { invalid: isCertificateInvalid },
-    } = useController({ name: "certificate", control });
-    const {
-        field: privateKey,
-        fieldState: { invalid: isPrivateKeyInvalid },
-    } = useController({ name: "privateKey", control });
-    const {
-        field: expireAtField,
-        fieldState: { invalid: isExpireAtInvalid },
-    } = useController({ name: "expireAt", control });
-    const {
-        field: notifyFromField,
-        fieldState: { invalid: isNotifyFromInvalid },
-    } = useController({ name: "notifyFrom", control });
 
     function onValid(values: QuickInstallSslCertFormOutput) {
         if (readOnly) {

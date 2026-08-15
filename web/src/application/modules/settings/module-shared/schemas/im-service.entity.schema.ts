@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { EImServiceKind, ESettingType } from "@application/shared/enums";
+import { EImServiceKind } from "@application/shared/enums";
 
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
@@ -14,7 +14,7 @@ const TelegramSchema = z.object({
 });
 
 export const ImServiceSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.IMService),
+    type: z.string(),
     kind: z.nativeEnum(EImServiceKind),
     slack: WebhookSchema.nullish(),
     discord: WebhookSchema.nullish(),

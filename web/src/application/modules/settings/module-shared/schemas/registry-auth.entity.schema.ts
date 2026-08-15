@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { ESettingType } from "@application/shared/enums";
-
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
 /**
@@ -9,7 +7,7 @@ import { SettingsBaseEntitySchema } from "./settings-base.schema";
  */
 export const RegistryAuthSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     description: z.string().optional(),
-    type: z.literal(ESettingType.RegistryAuth),
+    type: z.string(),
     kind: z.string().optional(),
     inherited: z.boolean().optional(),
     address: z.string(),

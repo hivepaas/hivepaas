@@ -1,5 +1,3 @@
-import { type ESettingType } from "@application/shared/enums";
-
 import type { SettingsBaseEntity } from "./settings.base.entity";
 
 export interface NotificationViaEmail {
@@ -31,7 +29,6 @@ export interface NotificationViaTelegram {
 }
 
 export interface SettingNotification extends SettingsBaseEntity {
-    type: typeof ESettingType.Notification;
     viaEmail?: NotificationViaEmail;
     viaSlack?: NotificationViaSlack;
     viaDiscord?: NotificationViaDiscord;

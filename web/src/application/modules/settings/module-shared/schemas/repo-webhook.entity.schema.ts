@@ -1,11 +1,9 @@
 import { z } from "zod";
 
-import { ESettingType } from "@application/shared/enums";
-
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
 export const RepoWebhookSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.RepoWebhook),
+    type: z.string(),
     kind: z.string().default(""),
     secret: z.string().default(""),
     webhookURL: z.string().default(""),

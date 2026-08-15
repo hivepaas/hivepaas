@@ -33,7 +33,7 @@ export const PROJECT_COMMAND_TEMPLATE_DEFAULT_CONSOLE_SIZE = {
 
 export interface ProjectCommandTemplate {
     id: string;
-    type: "command-template";
+    type: string;
     name: string;
     kind: string;
     status: ESettingStatus;

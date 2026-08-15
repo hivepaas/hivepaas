@@ -1,6 +1,6 @@
 import type { SettingsBaseEntity } from "~/settings/domain";
 
-import type { ESettingStatus, ESettingType } from "@application/shared/enums";
+import type { ESettingStatus } from "@application/shared/enums";
 
 import type { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../module-shared/enums";
 
@@ -42,7 +42,6 @@ export interface SystemBackupNotification {
 }
 
 export interface SystemBackupSettings extends SettingsBaseEntity {
-    type: typeof ESettingType.SystemBackup;
     status: ESettingStatus;
     schedule: SystemBackupSchedule;
     compression: SystemBackupCompression;

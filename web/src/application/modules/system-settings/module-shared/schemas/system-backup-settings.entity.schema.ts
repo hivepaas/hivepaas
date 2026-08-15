@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { ESettingType } from "@application/shared/enums";
-
 import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../enums";
 
 const SystemBackupCompressionSchema = z
@@ -60,7 +58,7 @@ const SystemBackupNotificationSchema = z
     .nullable();
 
 export const SystemBackupSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.SystemBackup),
+    type: z.string(),
     schedule: SystemBackupScheduleSchema,
     compression: SystemBackupCompressionSchema,
     encryption: SystemBackupEncryptionSchema,

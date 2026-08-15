@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ESettingType, ESslKeyType, ESslProviderKind } from "@application/shared/enums";
+import { ESslKeyType, ESslProviderKind } from "@application/shared/enums";
 
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
@@ -12,7 +12,7 @@ const SslProviderEabSchema = z.object({
 });
 
 export const SslProviderSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.SSLProvider),
+    type: z.string(),
     kind: z.nativeEnum(ESslProviderKind),
     inherited: z.boolean().optional(),
     email: z.string(),

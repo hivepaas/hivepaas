@@ -3,11 +3,15 @@ import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
 import { ESettingStatus } from "@application/shared/enums";
 
-import { ESystemBackupFileStorageType, ESystemBackupFileType } from "../enums";
+import { ESystemBackupFileStorageType } from "../enums";
 
 export const SystemBackupFileEntitySchema = z.object({
     id: z.string(),
-    type: z.literal(ESystemBackupFileType.SystemBackup),
+    type: z.string(),
+    kind: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
     status: z.nativeEnum(ESettingStatus),
     key: z.string(),
     name: z.string(),

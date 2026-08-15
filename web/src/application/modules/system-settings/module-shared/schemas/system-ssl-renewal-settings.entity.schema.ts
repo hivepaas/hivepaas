@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { ESettingType } from "@application/shared/enums";
-
 const SystemSslRenewalScheduleSchema = z
     .object({
         cronExpr: z.string().nullish(),
@@ -32,7 +30,7 @@ const SystemSslRenewalNotificationSchema = z
     .transform(value => value ?? null);
 
 const SystemSslRenewalSettingsBaseSchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.SSLRenewal),
+    type: z.string(),
 });
 
 const SystemSslRenewalSettingsSchema = SystemSslRenewalSettingsBaseSchema.extend({

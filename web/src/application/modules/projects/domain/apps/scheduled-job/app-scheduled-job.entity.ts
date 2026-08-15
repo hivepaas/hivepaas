@@ -4,7 +4,7 @@ import type {
     EAppScheduledJobType,
 } from "~/projects/module-shared/enums";
 
-import type { ESettingStatus, ESettingType } from "@application/shared/enums";
+import type { ESettingStatus } from "@application/shared/enums";
 
 export interface AppScheduledJobNamedRef {
     id: string;
@@ -88,7 +88,7 @@ export interface AppScheduledJobCommandOutput {
 
 export interface AppScheduledJob {
     id: string;
-    type: ESettingType;
+    type: string;
     name: string;
     kind?: string;
     status: ESettingStatus;

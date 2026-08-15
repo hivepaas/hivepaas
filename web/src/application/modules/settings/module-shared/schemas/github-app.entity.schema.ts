@@ -1,11 +1,9 @@
 import { z } from "zod";
 
-import { ESettingType } from "@application/shared/enums";
-
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
 export const GithubAppSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.GithubApp),
+    type: z.string(),
     clientId: z.string().default(""),
     clientSecret: z.string().default(""),
     organization: z.string().default(""),

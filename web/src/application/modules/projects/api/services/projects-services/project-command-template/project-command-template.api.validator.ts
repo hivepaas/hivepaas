@@ -3,7 +3,7 @@ import { z } from "zod";
 import { PROJECT_COMMAND_TEMPLATE_DEFAULT_CONSOLE_SIZE } from "~/projects/domain";
 import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
 
-import { ESettingStatus, ESettingType } from "@application/shared/enums";
+import { ESettingStatus } from "@application/shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -74,7 +74,7 @@ const ConsoleSizeSchema = z
 
 const CommandTemplateSchema = z.object({
     id: z.string(),
-    type: z.literal(ESettingType.CommandTemplate),
+    type: z.string(),
     name: z
         .string()
         .nullish()

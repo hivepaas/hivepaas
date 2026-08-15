@@ -1,6 +1,6 @@
 import type { SettingsBaseEntity } from "~/settings/domain";
 
-import type { ESettingStatus, ESettingType } from "@application/shared/enums";
+import type { ESettingStatus } from "@application/shared/enums";
 
 export interface SystemCleanupSchedule {
     interval: string;
@@ -56,7 +56,6 @@ export interface SystemCleanupNotification {
 }
 
 export interface SystemCleanupSettings extends SettingsBaseEntity {
-    type: typeof ESettingType.SystemCleanup;
     status: ESettingStatus;
     schedule: SystemCleanupSchedule;
     dbObjectRetention: SystemCleanupDBObjectRetention;

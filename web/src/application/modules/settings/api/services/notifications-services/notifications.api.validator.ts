@@ -2,8 +2,6 @@ import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { ESettingType } from "@application/shared/enums";
-
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import {
@@ -49,7 +47,7 @@ const NotificationViaTelegramSchema = z.object({
 });
 
 const NotificationEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.Notification),
+    type: z.string(),
     viaEmail: NotificationViaEmailSchema.optional(),
     viaSlack: NotificationViaSlackSchema.optional(),
     viaDiscord: NotificationViaDiscordSchema.optional(),

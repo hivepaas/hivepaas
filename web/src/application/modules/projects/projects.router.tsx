@@ -70,6 +70,8 @@ const LEGACY_PROJECT_PROVIDER_SETTINGS_SOURCE_PATTERNS = {
     webhookEdit: "projects/:id/provider-settings/webhooks/:repoWebhookId/edit",
 } as const;
 
+const LEGACY_PROJECT_PROVIDER_SETTINGS_SPLAT_PATTERN = "projects/:id/provider-settings/*";
+
 // eslint-disable-next-line react-refresh/only-export-components
 function SingleAppRouteRedirect() {
     const { id, env, appId } = useParams<{ id: string; env: string; appId: string }>();
@@ -137,6 +139,39 @@ function ProjectWebhookSourcesRouteRedirect({ target }: ProjectWebhookSourcesRou
     return (
         <Navigate
             to={to}
+            replace
+        />
+    );
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+function LegacyProjectProviderSettingsRouteRedirect() {
+    const { id, "*": splat } = useParams<{ id: string; "*": string }>();
+
+    if (!id) {
+        return (
+            <Navigate
+                to={ROUTE.projects.list.$route}
+                replace
+            />
+        );
+    }
+
+    if (!splat) {
+        return (
+            <Navigate
+                to={ROUTE.projects.single.providerConfiguration.$route(id)}
+                replace
+            />
+        );
+    }
+
+    const target = `/projects/${id}/providers-and-keys/${splat}`;
+    const normalizedTarget = target.endsWith("/") ? target : `${target}/`;
+
+    return (
+        <Navigate
+            to={normalizedTarget}
             replace
         />
     );
@@ -378,6 +413,10 @@ export const projectsRouter: RouteObject = {
                 {
                     path: LEGACY_PROJECT_PROVIDER_SETTINGS_SOURCE_PATTERNS.webhookEdit,
                     element: <ProjectWebhookSourcesRouteRedirect target="edit" />,
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDER_SETTINGS_SPLAT_PATTERN,
+                    element: <LegacyProjectProviderSettingsRouteRedirect />,
                 },
                 {
                     path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.imPlatforms,

@@ -1,6 +1,6 @@
 ############################################################
 # Build dashboard
-FROM node:24-alpine AS dashboard_builder
+FROM node:26-alpine AS dashboard_builder
 RUN apk update && apk upgrade --no-cache && apk add --update --no-cache git yarn
 
 WORKDIR /build

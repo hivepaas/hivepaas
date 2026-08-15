@@ -1,0 +1,75 @@
+name: "🐛 Bug Report"
+description: "Report a bug or unexpected behavior in HivePaaS"
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue! Please search existing issues before creating a new one to avoid duplicates.
+
+  - type: input
+    id: version
+    attributes:
+      label: "HivePaaS Version"
+      description: "What version of HivePaaS are you running? (e.g. v1.0.0, latest dev)"
+      placeholder: "e.g. latest dev"
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: "Environment / OS"
+      description: "Operating System and Docker version"
+      placeholder: "e.g. Ubuntu 24.04 LTS, Docker 26.1.4, Swarm (3 managers, 2 workers)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "Describe the Bug"
+      description: "A clear and concise description of what the bug is."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to Reproduce"
+      description: "Steps to reproduce the behavior:"
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected Behavior"
+      description: "A clear and concise description of what you expected to happen."
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Relevant Logs / Screenshots"
+      description: "Please paste any relevant logs from HivePaaS, Traefik, or Docker."
+      render: shell
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Checklist"
+      options:
+        - label: "I have searched existing issues and this is not a duplicate."
+          required: true
+        - label: "I have provided all necessary logs and context."
+          required: false

@@ -1,0 +1,50 @@
+name: "✨ Feature Request"
+description: "Suggest an idea, enhancement, or new feature for HivePaaS"
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an idea to make HivePaaS better!
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problem or Use Case"
+      description: "Is your feature request related to a problem? Please describe."
+      placeholder: "I'm always frustrated when [...]"
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: "Proposed Solution"
+      description: "Describe the solution you'd like to see implemented."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives Considered"
+      description: "Describe any alternative solutions or features you've considered."
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional Context"
+      description: "Add any other context, mockups, or screenshots about the feature request here."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Checklist"
+      options:
+        - label: "I have searched existing issues and feature requests to avoid duplicates."
+          required: true

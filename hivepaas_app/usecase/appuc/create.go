@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/apphelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -216,6 +217,12 @@ func (uc *UC) preparePersistingAppService(
 ) error {
 	isDevEnv := config.Current.IsDevEnv()
 
+	appInfo := &apphelper.AppInfo{
+		Name: app.Name,
+		Key:  app.Key,
+		Env:  data.ProjectEnv.Name,
+	}
+
 	service := &swarm.Service{
 		Spec: swarm.ServiceSpec{
 			Mode: swarm.ServiceMode{
@@ -227,9 +234,7 @@ func (uc *UC) preparePersistingAppService(
 				Name: app.GlobalKey,
 				Labels: map[string]string{
 					appservice.LabelAppNamespace: data.Project.Key,
-					appservice.LabelAppKey:       app.Key,
-					appservice.LabelAppName:      app.Name,
-					appservice.LabelAppEnv:       data.ProjectEnv.Name,
+					appservice.LabelAppInfo:      apphelper.CalcAppInfoLabel(appInfo),
 				},
 			},
 			TaskTemplate: swarm.TaskSpec{

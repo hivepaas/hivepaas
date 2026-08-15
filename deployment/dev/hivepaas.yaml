@@ -48,8 +48,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     deploy:
       labels:
-        - "hivepaas.app.key=traefik"
-        - "hivepaas.app.name=traefik"
+        - "hivepaas.app.info={\"name\":\"traefik\",\"key\":\"traefik\"}"
       mode: replicated
       replicas: 1
       placement:
@@ -79,8 +78,7 @@ services:
       - db:/var/lib/postgresql
     deploy:
       labels:
-        - "hivepaas.app.key=db"
-        - "hivepaas.app.name=db"
+        - "hivepaas.app.info={\"name\":\"db\",\"key\":\"db\"}"
         - "traefik.enable=false"
       mode: replicated
       replicas: 1
@@ -101,8 +99,7 @@ services:
       - local_net
     deploy:
       labels:
-        - "hivepaas.app.key=redis"
-        - "hivepaas.app.name=redis"
+        - "hivepaas.app.info={\"name\":\"redis\",\"key\":\"redis\"}"
         - "traefik.enable=false"
       mode: replicated
       replicas: 1
@@ -125,8 +122,7 @@ services:
       local_net:
     deploy:
       labels:
-        - "hivepaas.app.key=adminer"
-        - "hivepaas.app.name=adminer"
+        - "hivepaas.app.info={\"name\":\"adminer\",\"key\":\"adminer\"}"
         - "traefik.enable=true"
         - "traefik.http.routers.adminer.rule=Host(`adminer.dev.hivepaas.com`)"
         - "traefik.http.routers.adminer.entrypoints=websecure"
@@ -163,8 +159,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       labels:
-        - "hivepaas.app.key=app"
-        - "hivepaas.app.name=app"
+        - "hivepaas.app.info={\"name\":\"app\",\"key\":\"app\"}"
         - "traefik.enable=true"
         - "traefik.http.services.app-svc.loadbalancer.server.port=10000"
         - "traefik.http.routers.app-router.rule=Host(`app.dev.hivepaas.com`)"
@@ -210,8 +205,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       labels:
-        - "hivepaas.app.key=worker"
-        - "hivepaas.app.name=worker"
+        - "hivepaas.app.info={\"name\":\"worker\",\"key\":\"worker\"}"
         - "traefik.enable=false"
       mode: replicated
       replicas: 0
@@ -238,8 +232,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     deploy:
       labels:
-        - "hivepaas.app.key=updater"
-        - "hivepaas.app.name=updater"
+        - "hivepaas.app.info={\"name\":\"updater\",\"key\":\"updater\"}"
         - "traefik.enable=false"
       mode: replicated
       replicas: 0
@@ -270,8 +263,7 @@ services:
       mode: global
       endpoint_mode: dnsrr
       labels:
-        - "hivepaas.app.key=agent"
-        - "hivepaas.app.name=agent"
+        - "hivepaas.app.info={\"name\":\"agent\",\"key\":\"agent\"}"
         - "traefik.enable=false"
     logging:
       driver: local

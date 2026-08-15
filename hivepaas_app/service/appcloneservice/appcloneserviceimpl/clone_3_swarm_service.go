@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/apphelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 )
 
@@ -60,10 +61,15 @@ func (s *service) cloneSwarmService(
 	}
 
 	// Update correct labels
-	destSvc.Spec.Labels[appservice.LabelAppNamespace] = destApp.Project.Key
-	destSvc.Spec.Labels[appservice.LabelAppKey] = destApp.Key
-	destSvc.Spec.Labels[appservice.LabelAppName] = destApp.Name
-	destSvc.Spec.Labels[appservice.LabelAppEnv] = destApp.ProjectEnv.Name
+	setLabelsFunc := func() {
+		destSvc.Spec.Labels[appservice.LabelAppNamespace] = destApp.Project.Key
+		destSvc.Spec.Labels[appservice.LabelAppInfo] = apphelper.CalcAppInfoLabel(&apphelper.AppInfo{
+			Name: destApp.Name,
+			Key:  destApp.Key,
+			Env:  destApp.ProjectEnv.Name,
+		})
+	}
+	setLabelsFunc()
 
 	// Update endpoints
 	if destSvc.Spec.EndpointSpec != nil {
@@ -129,6 +135,9 @@ func (s *service) cloneSwarmService(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
+
+	// Re-update labels to make them correct
+	setLabelsFunc()
 
 	// Create a service in docker
 	err = s.createSwarmService(ctx, data)

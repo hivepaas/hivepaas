@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/apphelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -44,12 +45,18 @@ func (s *service) SyncProject(
 
 	// Sync the services with the apps, create new apps if need to
 	for _, svc := range services {
-		appKey := svc.Spec.Labels[appservice.LabelAppKey]
-		appName := gofn.Coalesce(svc.Spec.Labels[appservice.LabelAppName], svc.Spec.Name)
+		appInfoLabel := svc.Spec.Labels[appservice.LabelAppInfo]
+		appInfo, err := apphelper.ParseAppInfoLabel(appInfoLabel)
+		if err != nil {
+			return nil, nil, nil, apperrors.Wrap(err)
+		}
+
+		appKey := appInfo.Key
+		appName := gofn.Coalesce(appInfo.Name, svc.Spec.Name)
 		if appKey == "" {
 			appKey = slugify.SlugifyAsKey(appName)
 		}
-		appEnv := gofn.Coalesce(svc.Spec.Labels[appservice.LabelAppEnv], "default")
+		appEnv := gofn.Coalesce(appInfo.Env, "default")
 		appGlobalKey := projecthelper.CalcAppGlobalKey(project.Key, appKey, appEnv)
 
 		if existingApp, exists := appMapByKey[appKey]; exists {

@@ -23,7 +23,7 @@ RUN go build -o hivepaas-agent ./hivepaas_app/cmd/agent/...
 
 ############################################################
 # Build a small image
-FROM alpine:3.23
+FROM alpine:3.24
 WORKDIR /hivepaas
 
 ARG TARGETARCH

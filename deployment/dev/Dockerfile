@@ -45,7 +45,7 @@ RUN go install github.com/rubenv/sql-migrate/...@latest && \
 
 ############################################################
 # Build a small image
-FROM alpine:3.23
+FROM alpine:3.24
 ARG TARGETARCH
 
 RUN apk update && \

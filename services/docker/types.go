@@ -26,7 +26,7 @@ const (
 const (
 	LabelTempResource    = "hivepaas.system.temp"
 	LabelTempResourceVal = "true"
-	LabelTempCreatedAt   = "hivepaas.system.created_at"
+	LabelTempCreatedAt   = "hivepaas.system.createdAt"
 
 	TempContainerPrefix = "hivepaas-cont-"
 	TempServicePrefix   = "hivepaas-svc-"

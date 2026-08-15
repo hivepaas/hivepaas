@@ -59,6 +59,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice/networkserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice/notificationserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice/placementserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice/projectserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice/repocheckoutserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/reslinkservice/reslinkserviceimpl"
@@ -300,6 +301,7 @@ var Provides = []any{
 	imagebuildserviceimpl.New,
 	networkserviceimpl.New,
 	notificationserviceimpl.New,
+	placementserviceimpl.New,
 	projectserviceimpl.New,
 	repocheckoutserviceimpl.New,
 	reslinkserviceimpl.New,

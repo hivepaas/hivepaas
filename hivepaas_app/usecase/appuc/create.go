@@ -21,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
 
@@ -33,21 +34,34 @@ func (uc *UC) CreateApp(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *appdto.CreateAppReq,
-) (*appdto.CreateAppResp, error) {
-	var appData *createAppData
-	var persistingData *persistingAppData
+) (resp *appdto.CreateAppResp, err error) {
+	resp = &appdto.CreateAppResp{}
 	var createdApp *entity.App
-	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		appData = &createAppData{}
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			err = errors.Join(err, apperrors.ErrPanic)
+		}
+		if err != nil && createdApp != nil && createdApp.ServiceID != "" {
+			_ = uc.clusterService.ServiceRemove(ctx, createdApp.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
+		}
+	}()
+
+	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
+		appData := &createAppData{}
 		err := uc.loadAppData(ctx, db, req, appData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		persistingData = &persistingAppData{}
-		uc.preparePersistingApp(req, appData, persistingData)
+		persistingData := &persistingAppData{}
+		err = uc.preparePersistingApp(ctx, db, req, appData, persistingData)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
 
 		createdApp = persistingData.UpsertingApps[0]
+		resp.Data = &basedto.ObjectIDResp{ID: createdApp.ID}
 
 		// Create a service in docker for the app
 		res, err := uc.dockerManager.ServiceCreate(ctx, appData.ServiceSpec)
@@ -63,16 +77,10 @@ func (uc *UC) CreateApp(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		// Transaction fails, but service is created in docker, need to delete it
-		if createdApp != nil && createdApp.ServiceID != "" {
-			_ = uc.clusterService.ServiceRemove(ctx, createdApp.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
-		}
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &appdto.CreateAppResp{
-		Data: &basedto.ObjectIDResp{ID: createdApp.ID},
-	}, nil
+	return resp, nil
 }
 
 type createAppData struct {
@@ -140,10 +148,12 @@ type persistingAppData struct {
 }
 
 func (uc *UC) preparePersistingApp(
+	ctx context.Context,
+	db database.IDB,
 	req *appdto.CreateAppReq,
 	data *createAppData,
 	persistingData *persistingAppData,
-) {
+) error {
 	timeNow := timeutil.NowUTC()
 	project := data.Project
 	app := &entity.App{
@@ -154,9 +164,16 @@ func (uc *UC) preparePersistingApp(
 		GlobalKey:    data.AppGlobalKey,
 		CreatedAt:    timeNow,
 	}
+
 	uc.preparePersistingAppBase(app, req.AppBaseReq, timeNow, persistingData)
 	uc.preparePersistingAppTags(app, req.Tags, 0, persistingData)
-	uc.preparePersistingAppSettingsDefault(app, timeNow, data, persistingData)
+	uc.preparePersistingAppSettingsDefault(app, timeNow, persistingData)
+
+	err := uc.preparePersistingAppService(ctx, db, app, data)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
 }
 
 func (uc *UC) preparePersistingAppBase(
@@ -191,55 +208,75 @@ func (uc *UC) preparePersistingAppTags(
 	}
 }
 
-func (uc *UC) preparePersistingAppSettingsDefault(
+func (uc *UC) preparePersistingAppService(
+	ctx context.Context,
+	db database.IDB,
 	app *entity.App,
-	timeNow time.Time,
 	data *createAppData,
-	persistingData *persistingAppData,
-) {
+) error {
 	isDevEnv := config.Current.IsDevEnv()
-	serviceSpec := &swarm.ServiceSpec{
-		Mode: swarm.ServiceMode{
-			Replicated: &swarm.ReplicatedService{
-				Replicas: new(uint64(1)),
-			},
-		},
-		Annotations: swarm.Annotations{
-			Name: app.GlobalKey,
-			Labels: map[string]string{
-				appservice.LabelAppNamespace: data.Project.Key,
-				appservice.LabelAppKey:       app.Key,
-				appservice.LabelAppName:      app.Name,
-				appservice.LabelAppEnv:       data.ProjectEnv.Name,
-			},
-		},
-		TaskTemplate: swarm.TaskSpec{
-			ContainerSpec: &swarm.ContainerSpec{
-				Image:    gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit),
-				Command:  gofn.If(isDevEnv, nil, []string{"sleep", "infinity"}),
-				Hostname: app.Key,
-				Init:     new(true), // default to use `tini`
-			},
-			Networks: []swarm.NetworkAttachmentConfig{
-				{
-					Target:  uc.networkService.GetProjectNetworkName(data.Project, data.ProjectEnv.Name),
-					Aliases: []string{app.Key},
+
+	service := &swarm.Service{
+		Spec: swarm.ServiceSpec{
+			Mode: swarm.ServiceMode{
+				Replicated: &swarm.ReplicatedService{
+					Replicas: new(uint64(1)),
 				},
 			},
-			LogDriver: &swarm.Driver{
-				// Default driver is `json-file`, but Docker recommends `local`
-				// See: https://docs.docker.com/engine/logging/configure/
-				Name: "local",
-				Options: map[string]string{
-					"max-size": "50m",
-					"max-file": "20",
-					"compress": "true",
+			Annotations: swarm.Annotations{
+				Name: app.GlobalKey,
+				Labels: map[string]string{
+					appservice.LabelAppNamespace: data.Project.Key,
+					appservice.LabelAppKey:       app.Key,
+					appservice.LabelAppName:      app.Name,
+					appservice.LabelAppEnv:       data.ProjectEnv.Name,
+				},
+			},
+			TaskTemplate: swarm.TaskSpec{
+				ContainerSpec: &swarm.ContainerSpec{
+					Image:    gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit),
+					Command:  gofn.If(isDevEnv, nil, []string{"sleep", "infinity"}),
+					Hostname: app.Key,
+					Init:     new(true), // default to use `tini`
+				},
+				Networks: []swarm.NetworkAttachmentConfig{
+					{
+						Target:  uc.networkService.GetProjectNetworkName(data.Project, data.ProjectEnv.Name),
+						Aliases: []string{app.Key},
+					},
+				},
+				LogDriver: &swarm.Driver{
+					// Default driver is `json-file`, but Docker recommends `local`
+					// See: https://docs.docker.com/engine/logging/configure/
+					Name: "local",
+					Options: map[string]string{
+						"max-size": "50m",
+						"max-file": "20",
+						"compress": "true",
+					},
 				},
 			},
 		},
 	}
-	data.ServiceSpec = serviceSpec
 
+	_, err := uc.placementService.ApplyPlacementSettings(ctx, db, &placementservice.ApplyPlacementSettingsReq{
+		App:                app,
+		Service:            service,
+		SkipSavingToDocker: true,
+	})
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	data.ServiceSpec = &service.Spec
+	return nil
+}
+
+func (uc *UC) preparePersistingAppSettingsDefault(
+	app *entity.App,
+	timeNow time.Time,
+	persistingData *persistingAppData,
+) {
 	// Init empty http settings
 	httpSettings := &entity.AppHttpSettings{}
 	dbHttpSetting := &entity.Setting{

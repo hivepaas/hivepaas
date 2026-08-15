@@ -8,12 +8,15 @@ import (
 	"github.com/moby/moby/client"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 )
 
 func (s *service) imageDeployStepServiceApply(
 	ctx context.Context,
+	db database.IDB,
 	data *imageDeploymentData,
 ) (err error) {
 	data.Step = stepServiceApply
@@ -24,6 +27,11 @@ func (s *service) imageDeployStepServiceApply(
 	defer s.addStepEndLog(ctx, data.appDeploymentData, timeutil.NowUTC(), err)
 
 	queryRegistry := false
+	placementReq := &placementservice.ApplyPlacementSettingsReq{
+		App:                data.App,
+		SkipSavingToDocker: true,
+	}
+
 	for i := range dockerServiceApplyRetryMax + 1 {
 		if i > 0 {
 			queryRegistry = true
@@ -51,6 +59,14 @@ func (s *service) imageDeployStepServiceApply(
 		contSpec.Image = imageSource.Image
 		contSpec.Dir = deployment.Settings.WorkingDir
 		dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
+
+		// Apply placement settings
+		placementReq.Service = service
+		_, e = s.placementService.ApplyPlacementSettings(ctx, db, placementReq)
+		if e != nil { // error, need to retry
+			err = apperrors.Wrap(e)
+			continue
+		}
 
 		_, e = s.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
 			func(options *client.ServiceUpdateOptions) {

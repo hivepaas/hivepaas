@@ -60,7 +60,7 @@ func (s *service) deployFromImage(
 	}
 
 	// 3. Apply image to service
-	err = s.imageDeployStepServiceApply(ctx, data)
+	err = s.imageDeployStepServiceApply(ctx, db, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

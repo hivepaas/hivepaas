@@ -95,7 +95,7 @@ func (s *service) deployFromRepo(
 	}
 
 	// 4. Apply image to service
-	err = s.repoDeployStepServiceApply(ctx, data)
+	err = s.repoDeployStepServiceApply(ctx, db, data)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

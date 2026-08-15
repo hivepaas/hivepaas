@@ -12,21 +12,22 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 type service struct {
-	db          *database.DB
-	redisClient rediscache.Client
+	db            *database.DB
+	redisClient   rediscache.Client
+	dockerManager docker.Manager
 
-	deploymentInfoRepo  cacherepository.DeploymentInfoRepo
-	deploymentRepo      repository.DeploymentRepo
-	lockRepo            repository.LockRepo
-	repoCheckoutService repocheckoutservice.Service
-	settingRepo         repository.SettingRepo
-	taskLogRepo         repository.TaskLogRepo
+	deploymentInfoRepo cacherepository.DeploymentInfoRepo
+	deploymentRepo     repository.DeploymentRepo
+	lockRepo           repository.LockRepo
+	settingRepo        repository.SettingRepo
+	taskLogRepo        repository.TaskLogRepo
 
 	agentService         agentservice.Service
 	appService           appservice.Service
@@ -34,19 +35,19 @@ type service struct {
 	containerExecService containerexecservice.Service
 	imageBuildService    imagebuildservice.Service
 	notificationService  notificationservice.Service
+	placementService     placementservice.Service
+	repoCheckoutService  repocheckoutservice.Service
 	settingService       settingservice.Service
-
-	dockerManager docker.Manager
 }
 
 func New(
 	db *database.DB,
 	redisClient rediscache.Client,
+	dockerManager docker.Manager,
 
 	deploymentInfoRepo cacherepository.DeploymentInfoRepo,
 	deploymentRepo repository.DeploymentRepo,
 	lockRepo repository.LockRepo,
-	repoCheckoutService repocheckoutservice.Service,
 	settingRepo repository.SettingRepo,
 	taskLogRepo repository.TaskLogRepo,
 
@@ -56,20 +57,20 @@ func New(
 	containerExecService containerexecservice.Service,
 	imageBuildService imagebuildservice.Service,
 	notificationService notificationservice.Service,
+	placementService placementservice.Service,
+	repoCheckoutService repocheckoutservice.Service,
 	settingService settingservice.Service,
-
-	dockerManager docker.Manager,
 ) appdeploymentservice.Service {
 	return &service{
-		db:          db,
-		redisClient: redisClient,
+		db:            db,
+		redisClient:   redisClient,
+		dockerManager: dockerManager,
 
-		deploymentInfoRepo:  deploymentInfoRepo,
-		deploymentRepo:      deploymentRepo,
-		lockRepo:            lockRepo,
-		repoCheckoutService: repoCheckoutService,
-		settingRepo:         settingRepo,
-		taskLogRepo:         taskLogRepo,
+		deploymentInfoRepo: deploymentInfoRepo,
+		deploymentRepo:     deploymentRepo,
+		lockRepo:           lockRepo,
+		settingRepo:        settingRepo,
+		taskLogRepo:        taskLogRepo,
 
 		agentService:         agentService,
 		appService:           appService,
@@ -77,8 +78,8 @@ func New(
 		containerExecService: containerExecService,
 		imageBuildService:    imageBuildService,
 		notificationService:  notificationService,
+		placementService:     placementService,
+		repoCheckoutService:  repoCheckoutService,
 		settingService:       settingService,
-
-		dockerManager: dockerManager,
 	}
 }

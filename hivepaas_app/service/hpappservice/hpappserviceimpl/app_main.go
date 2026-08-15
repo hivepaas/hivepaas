@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	authRateLimitAverage   = 3 // 20
-	authRateLimitBurst     = 3 // 30
-	authRateLimitMaxFlight = 3 // 10
+	authRateLimitAverage   = 20
+	authRateLimitBurst     = 30
+	authRateLimitMaxFlight = 10
 )
 
 func (s *service) GetHpAppSwarmService(ctx context.Context) (*swarm.Service, error) {

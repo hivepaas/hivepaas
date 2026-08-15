@@ -24,9 +24,6 @@ type Service interface {
 		objectID string, requireActive bool) (*entity.ObjectScope, error)
 	LoadObjectScopeData(ctx context.Context, db database.IDB, scope *entity.ObjectScope) error
 
-	// Default settings
-	InitDefaults(ctx context.Context, db database.IDB) error
-
 	// Events
 	OnCreate(ctx context.Context, db database.IDB, event *CreateEvent) error
 	OnUpdate(ctx context.Context, db database.IDB, event *UpdateEvent) error

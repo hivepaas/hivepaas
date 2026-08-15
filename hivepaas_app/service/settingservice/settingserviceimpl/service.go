@@ -7,7 +7,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemeventbusservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -22,7 +21,6 @@ func New(
 
 	appService appservice.Service,
 	projectService projectservice.Service,
-	sslService sslservice.Service,
 	systemEventBus systemeventbusservice.Service,
 	userService userservice.Service,
 
@@ -38,7 +36,6 @@ func New(
 
 		appService:     appService,
 		projectService: projectService,
-		sslService:     sslService,
 		systemEventBus: systemEventBus,
 		userService:    userService,
 
@@ -56,7 +53,6 @@ type service struct {
 
 	appService     appservice.Service
 	projectService projectservice.Service
-	sslService     sslservice.Service
 	systemEventBus systemeventbusservice.Service
 	userService    userservice.Service
 

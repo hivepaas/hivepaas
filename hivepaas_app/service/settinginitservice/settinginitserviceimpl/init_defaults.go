@@ -1,4 +1,4 @@
-package settingserviceimpl
+package settinginitserviceimpl
 
 import (
 	"context"

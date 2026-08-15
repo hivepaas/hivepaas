@@ -2,11 +2,23 @@ package hpappserviceimpl
 
 import (
 	"context"
+	"path/filepath"
+	"time"
 
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+)
+
+const (
+	authRateLimitAverage   = 3 // 20
+	authRateLimitBurst     = 3 // 30
+	authRateLimitMaxFlight = 3 // 10
 )
 
 func (s *service) GetHpAppSwarmService(ctx context.Context) (*swarm.Service, error) {
@@ -42,4 +54,42 @@ func (s *service) GetHpAppTasks(ctx context.Context) ([]swarm.Task, error) {
 		return nil, apperrors.Wrap(err)
 	}
 	return resp.Items, nil
+}
+
+func (s *service) SetupHttpSettingsDefault(
+	httpSettings *entity.AppHttpSettings,
+) {
+	for _, domain := range httpSettings.Domains {
+		domain.ContainerPort = config.Current.HTTPServer.Port
+		domain.ForceHttps = true
+		domain.CompressionConfig = &entity.HTTPCompressionConfig{
+			Enabled:         true,
+			MinResponseBody: unit.KB, // 1kb
+			DefaultEncoding: "br",    // brotli
+		}
+
+		var authPathConfig *entity.HTTPPathConfig
+		authPath := filepath.Join(config.Current.HTTPServer.BasePath, "auth")
+		for _, path := range domain.Paths {
+			if path.Path == authPath {
+				authPathConfig = path
+				break
+			}
+		}
+		if authPathConfig == nil {
+			authPathConfig = &entity.HTTPPathConfig{
+				Enabled: true,
+				Path:    authPath,
+				Mode:    base.HTTPPathModePrefix,
+			}
+			domain.Paths = append(domain.Paths, authPathConfig)
+		}
+		authPathConfig.RateLimitConfig = &entity.HTTPRateLimitConfig{
+			Enabled:        true,
+			Average:        authRateLimitAverage,
+			Period:         timeutil.Duration(time.Minute),
+			Burst:          authRateLimitBurst,
+			MaxInFlightReq: authRateLimitMaxFlight,
+		}
+	}
 }

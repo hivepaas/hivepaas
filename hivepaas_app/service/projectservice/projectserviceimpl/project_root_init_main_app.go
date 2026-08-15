@@ -14,7 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 )
 
 var (
@@ -45,7 +45,7 @@ func (s *service) initRootProjectMainApp(
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
-	serviceSetting := &entity.HivePaaSService{
+	dbServiceSetting.MustSetData(&entity.HivePaaSService{
 		AppSettings: entity.HivePaaSAppSettings{
 			Replicas: 1,
 		},
@@ -62,8 +62,7 @@ func (s *service) initRootProjectMainApp(
 			BaseInterval: timeutil.Duration(cfg.Tasks.Periodic.BaseInterval),
 			BatchSize:    cfg.Tasks.Periodic.BatchSize,
 		},
-	}
-	dbServiceSetting.MustSetData(serviceSetting)
+	})
 
 	// Add HTTP settings for the main app
 	dbHttpSetting := &entity.Setting{
@@ -84,15 +83,10 @@ func (s *service) initRootProjectMainApp(
 				Enabled:       true,
 				Domain:        cfg.AppDomain,
 				ContainerPort: cfg.HTTPServer.Port,
-				ForceHttps:    true,
-				CompressionConfig: &entity.HTTPCompressionConfig{
-					Enabled:         true,
-					MinResponseBody: unit.KB, // 1kb
-					DefaultEncoding: "br",    // brotli
-				},
 			},
 		},
 	}
+	s.hpAppService.SetupHttpSettingsDefault(httpSettings)
 	dbHttpSetting.MustSetData(httpSettings)
 
 	// Sync env-vars from the swarm service
@@ -129,6 +123,13 @@ func (s *service) initRootProjectMainApp(
 
 	// Insert the settings into DB
 	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{dbServiceSetting, dbHttpSetting, dbEnvVarsSetting})
+	if err != nil {
+		return false, apperrors.Wrap(err)
+	}
+
+	err = s.traefikService.ApplyAppConfig(ctx, app, service, &traefikservice.AppConfigData{
+		HttpSettings: httpSettings,
+	})
 	if err != nil {
 		return false, apperrors.Wrap(err)
 	}

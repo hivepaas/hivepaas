@@ -3,9 +3,11 @@ package sessionuc
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/totp"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
@@ -13,6 +15,7 @@ import (
 
 const (
 	passcodeMaxAttempts = 5
+	mfaPasscodeDuration = 2 * time.Minute
 )
 
 func (uc *UC) LoginWithPasscode(
@@ -32,12 +35,13 @@ func (uc *UC) LoginWithPasscode(
 	// Verify passcode TOTP
 	if !totp.VerifyPasscode(req.Passcode, dbUser.TotpSecret) {
 		passcode, err := uc.cacheMfaPasscodeRepo.Get(ctx, mfaTokenClaims.UserID)
-		if err != nil {
-			if errors.Is(err, apperrors.ErrNotFound) {
-				return nil, apperrors.Wrap(apperrors.ErrPasscodeMismatched).
-					WithMsgLog("need to login with password first")
-			}
+		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 			return nil, apperrors.Wrap(err)
+		}
+		if passcode == nil {
+			passcode = &cacheentity.MFAPasscode{Attempts: 1}
+			_ = uc.cacheMfaPasscodeRepo.Set(ctx, mfaTokenClaims.UserID, passcode, mfaPasscodeDuration)
+			return nil, apperrors.Wrap(apperrors.ErrPasscodeMismatched)
 		}
 		if passcode.Attempts >= passcodeMaxAttempts {
 			_ = uc.cacheMfaPasscodeRepo.Del(ctx, mfaTokenClaims.UserID)

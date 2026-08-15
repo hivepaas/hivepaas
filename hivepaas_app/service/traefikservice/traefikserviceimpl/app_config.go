@@ -114,6 +114,11 @@ func (s *service) loadAppConfigData(
 		return apperrors.Wrap(err)
 	}
 	data.traefikSvc = traefikSvc
+
+	if data.RefObjects == nil {
+		data.RefObjects = entity.NewRefObjects()
+	}
+
 	return nil
 }
 

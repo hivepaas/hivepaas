@@ -147,6 +147,8 @@ func (uc *UC) prepareUpdatingHttpSettings(
 	setting := data.HttpSetting
 	timeNow := timeutil.NowUTC()
 
+	uc.hpAppService.SetupHttpSettingsDefault(data.NewHttpSettings)
+
 	setting.UpdateVer++
 	setting.UpdatedAt = timeNow
 	setting.Status = base.SettingStatusActive

@@ -1,4 +1,4 @@
-package settingserviceimpl
+package settinginitserviceimpl
 
 import (
 	"context"
@@ -13,34 +13,26 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 )
 
-const (
-	appPlacementSettingName = "App placement settings"
-)
-
-func (s *service) initDefaultAppPlacementSettings(
+func (s *service) initDefaultNotificationSettings(
 	ctx context.Context,
 	db database.IDB,
 	timeNow time.Time,
 ) (err error) {
-	appPlacementSetting := &entity.Setting{
+	notifSetting := &entity.Setting{
 		ID:              gofn.Must(ulid.NewStringULID()),
 		Scope:           base.ObjectScopeGlobal,
-		Type:            base.SettingTypeAppPlacementSettings,
+		Type:            base.SettingTypeNotification,
 		Status:          base.SettingStatusActive,
-		Name:            appPlacementSettingName,
-		AvailInProjects: true,
+		Name:            "default",
+		AvailInProjects: false,
 		Default:         true,
-		Version:         entity.CurrentAppPlacementSettingsVersion,
+		Version:         entity.CurrentNotificationVersion,
 		CreatedAt:       timeNow,
 		UpdatedAt:       timeNow,
 	}
-	appPlacement := &entity.AppPlacementSettings{
-		ExcludeBuildNodes:   true,
-		ExcludeManagerNodes: true,
-	}
-	appPlacementSetting.MustSetData(appPlacement)
+	notifSetting.MustSetData(entity.NewNotificationDefaultForScope(entity.NewObjectScopeGlobal()))
 
-	err = s.settingRepo.Insert(ctx, db, appPlacementSetting)
+	err = s.settingRepo.Insert(ctx, db, notifSetting)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

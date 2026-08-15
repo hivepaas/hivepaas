@@ -21,6 +21,11 @@ const (
 	maxPasswordFailsInARow       = 10
 	passwordCheckDurationEachRow = 2 * time.Minute
 	loginAttemptExp              = 4 * time.Hour
+	mfaPasscodeExp               = 2 * time.Minute
+
+	// dummyHashForTimingAttack is a pre-calculated valid Argon2id hash used to equalize execution time
+	// when a non-existent username is checked.
+	dummyHashForTimingAttack = "MTIzNDU2Nzg5MA== AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 )
 
 const (
@@ -34,6 +39,10 @@ func (uc *UC) LoginWithPassword(
 ) (resp *sessiondto.LoginWithPasswordResp, err error) {
 	dbUser, err := uc.userRepo.GetByUsernameOrEmail(ctx, uc.db, req.Username, req.Username)
 	if err != nil {
+		if errors.Is(err, apperrors.ErrNotFound) {
+			// Perform dummy password verification to prevent user enumeration via timing attack
+			_ = uc.userService.VerifyPassword(&entity.User{Password: dummyHashForTimingAttack}, req.Password)
+		}
 		return nil, uc.wrapSensitiveError(err)
 	}
 
@@ -64,6 +73,9 @@ func (uc *UC) LoginWithPassword(
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
+
+		// Initialize MFA passcode attempts tracker in redis
+		_ = uc.cacheMfaPasscodeRepo.Set(ctx, dbUser.ID, &cacheentity.MFAPasscode{Attempts: 0}, mfaPasscodeExp)
 
 		return &sessiondto.LoginWithPasswordResp{
 			Data: &sessiondto.LoginWithPasswordDataResp{

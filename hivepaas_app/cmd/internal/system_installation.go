@@ -18,7 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settinginitservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
 )
 
@@ -29,7 +29,7 @@ func SystemInstallation(
 	sysStatusRepo repository.SystemStatusRepo,
 	projectRepo repository.ProjectRepo,
 	userService userservice.Service,
-	settingService settingservice.Service,
+	settingInitService settinginitservice.Service,
 	projectService projectservice.Service,
 	logger logging.Logger,
 ) {
@@ -47,7 +47,7 @@ func SystemInstallation(
 
 			if sysStatus.NextStep == base.InstallationStepInitData {
 				err = sysInstallationInitData(ctx, db, sysStatusRepo, projectRepo, userService,
-					settingService, projectService, logger)
+					settingInitService, projectService, logger)
 				if err != nil {
 					return fmt.Errorf("failed to initialize system data: %w", err)
 				}
@@ -67,7 +67,7 @@ func sysInstallationInitData(
 	sysStatusRepo repository.SystemStatusRepo,
 	projectRepo repository.ProjectRepo,
 	userService userservice.Service,
-	settingService settingservice.Service,
+	settingInitService settinginitservice.Service,
 	projectService projectservice.Service,
 	logger logging.Logger,
 ) error {
@@ -89,7 +89,7 @@ func sysInstallationInitData(
 			return fmt.Errorf("failed to initialize admin user: %w", err)
 		}
 
-		if err = settingService.InitDefaults(ctx, db); err != nil {
+		if err = settingInitService.InitDefaults(ctx, db); err != nil {
 			return fmt.Errorf("failed to initialize default settings: %w", err)
 		}
 

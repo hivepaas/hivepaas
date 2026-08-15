@@ -22,7 +22,7 @@ func NewCreateImageReq() *CreateImageReq {
 }
 
 func (req *CreateImageReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1, imageNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateObjectIDReq(&req.RegistryAuth, false, "registryAuth")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

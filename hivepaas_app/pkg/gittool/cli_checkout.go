@@ -17,7 +17,7 @@ func (cli *checkoutCli) checkoutTargetCommit(
 	repo *git.Repository,
 ) (commit *object.Commit, err error) {
 	commitHash := cli.opts.CommitHash
-	if commitHash != "" { //nolint:nestif
+	if commitHash != "" {
 		// Fetch the commit
 		cmd := exec.CommandContext(ctx, "git", "fetch", "--depth=1", "origin", commitHash)
 		cmd.Dir = cli.opts.CheckoutDir

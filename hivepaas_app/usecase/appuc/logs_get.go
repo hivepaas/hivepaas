@@ -69,7 +69,7 @@ func (uc *UC) GetAppLogs(
 	}
 
 	var logsReader io.ReadCloser
-	if req.TaskID != "" { //nolint:nestif
+	if req.TaskID != "" {
 		// Validate task belongs to the service
 		taskInspect, err := uc.dockerManager.TaskInspect(ctx, req.TaskID)
 		if err != nil {

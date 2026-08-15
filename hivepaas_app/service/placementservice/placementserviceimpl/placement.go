@@ -49,7 +49,7 @@ func (s *service) loadPlacementSettingsData(
 	ctx context.Context,
 	db database.IDB,
 	data *placementSettingsData,
-) (err error) {
+) error {
 	if data.Service == nil {
 		if data.App == nil || data.App.ServiceID == "" {
 			return apperrors.NewArgumentInvalid("App.ServiceID")

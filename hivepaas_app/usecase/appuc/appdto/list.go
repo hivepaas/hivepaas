@@ -30,7 +30,7 @@ func NewListAppReq() *ListAppReq {
 }
 
 func (req *ListAppReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, false, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.ParentID, false, "parentId")...)

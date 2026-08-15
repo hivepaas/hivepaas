@@ -24,7 +24,7 @@ func NewUpdateNodeReq() *UpdateNodeReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateNodeReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, req.UpdateSettingReq.Validate()...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, false, 1, nodeNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.Role, false, docker.AllNodeRoles, "role")...)

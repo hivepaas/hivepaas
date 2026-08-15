@@ -190,7 +190,7 @@ func (req *UpdateHttpSettingsReq) ModifyRequest() error {
 
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateHttpSettingsReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, vld.Slice(req.Domains).ForEach(
 		func(r *DomainReq, index int, elemValidator vld.ItemValidator) {
 			elemValidator.Validate(r.validate(fmt.Sprintf("domains[%d]", index))...)

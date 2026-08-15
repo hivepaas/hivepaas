@@ -25,7 +25,7 @@ func NewGetProjectReq() *GetProjectReq {
 }
 
 func (req *GetProjectReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

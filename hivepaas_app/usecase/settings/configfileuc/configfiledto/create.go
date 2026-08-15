@@ -115,7 +115,7 @@ func NewCreateConfigFileReq() *CreateConfigFileReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *CreateConfigFileReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, req.validate(true, "")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

@@ -23,7 +23,7 @@ func NewGetStorageSettingsReq() *GetStorageSettingsReq {
 }
 
 func (req *GetStorageSettingsReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, req.GetUniqueSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

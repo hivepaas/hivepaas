@@ -74,7 +74,7 @@ func (s *service) ListTask(
 	if len(req.TargetIDs) > 0 {
 		listOpts = append(listOpts, bunex.SelectWhereIn("task.target_id IN (?)", req.TargetIDs...))
 	}
-	if len(req.Statuses) > 0 { //nolint:nestif
+	if len(req.Statuses) > 0 {
 		statuses := req.Statuses
 		if gofn.Contain(statuses, base.TaskStatusInProgress) {
 			statuses = gofn.Drop(statuses, base.TaskStatusInProgress)

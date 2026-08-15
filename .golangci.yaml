@@ -17,13 +17,17 @@ linters:
     - gocritic
     - gocyclo
     - gosec
+    - govet
     - lll
+    - makezero
     - misspell
     - mnd
     - nakedret
-    - nestif
     - nilerr
+#    - prealloc
+    - revive
     - rowserrcheck
+    - sloglint
     - staticcheck
     - unconvert
     - unparam
@@ -37,10 +41,17 @@ linters:
       min-complexity: 30
     gocyclo:
       min-complexity: 30
+    govet:
+#      enable:
+#        - shadow
     lll:
       line-length: 120
     misspell:
       locale: US
+    revive:
+      rules:
+        - name: var-naming
+          disabled: true
   exclusions:
     generated: lax
     presets:
@@ -59,6 +70,7 @@ linters:
           - gocyclo
           - gosec
           - mnd
+          - revive
           - staticcheck
           - wrapcheck
         path: _test\.go
@@ -82,7 +94,7 @@ formatters:
         - prefix(github.com/hivepaas/hivepaas)
     goimports:
       local-prefixes:
-        - github.com/golangci/golangci-lint
+        - github.com/hivepaas/hivepaas
   exclusions:
     generated: lax
     paths:

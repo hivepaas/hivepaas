@@ -87,7 +87,7 @@ func (r *RefObjects) GetObjectScope(
 		if app.Project == nil {
 			app.Project = r.RefProjects[app.ProjectID]
 		}
-		if requireActive { //nolint:nestif
+		if requireActive {
 			if app.Status != base.AppStatusActive {
 				return nil, apperrors.Wrap(apperrors.ErrAppInactive).WithParam("Name", app.Name)
 			}

@@ -22,7 +22,7 @@ func NewLoginWithAPIKeyReq() *LoginWithAPIKeyReq {
 }
 
 func (req *LoginWithAPIKeyReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.KeyID, true, minKeyLen, maxKeyLen, "keyId")...)
 	validators = append(validators, basedto.ValidateStr(&req.SecretKey, true, minKeyLen, maxKeyLen, "secretKey")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

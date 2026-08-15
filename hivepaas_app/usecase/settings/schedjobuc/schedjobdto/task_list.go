@@ -28,7 +28,7 @@ func NewListSchedJobTaskReq() *ListSchedJobTaskReq {
 }
 
 func (req *ListSchedJobTaskReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.JobID, true, "jobId")...)
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
 		base.AllTaskStatuses, "status")...)

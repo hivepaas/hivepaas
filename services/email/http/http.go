@@ -53,7 +53,7 @@ func SendMail(
 			bodyMap[passwordField] = password
 		}
 
-		if contentType == "application/json" { //nolint:nestif
+		if contentType == "application/json" {
 			if len(recipients) == 1 && toAddressesField != "" {
 				bodyMap[toAddressField] = recipients[0]
 			} else {

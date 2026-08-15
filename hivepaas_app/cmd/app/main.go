@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"time"
 
 	"go.uber.org/fx"
@@ -16,15 +15,10 @@ const (
 )
 
 func main() {
-	provides := []any{
-		context.Background,
-	}
-	provides = append(provides, registry.Provides...)
-
 	app := fx.New(
 		fx.StartTimeout(startTimeoutDefault),
 		fx.StopTimeout(stopTimeoutDefault),
-		fx.Provide(provides...),
+		fx.Provide(registry.Provides...),
 		fx.Invoke(internal.InitLogger),
 		fx.Invoke(internal.InitConfig),
 		fx.Invoke(internal.InitDBConnection),

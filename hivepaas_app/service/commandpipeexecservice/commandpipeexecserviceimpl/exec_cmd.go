@@ -24,7 +24,7 @@ func (s *service) calcCommand(
 		return nil, apperrors.Wrap(apperrors.ErrInternal).WithMsgLog("command/script is empty")
 	}
 
-	if command.Script.IsValid() { //nolint:nestif
+	if command.Script.IsValid() {
 		script := command.Script.Value
 		if script == "" && command.Script.ID != "" {
 			scriptSetting := data.RefObjects.RefSettings[command.Script.ID]

@@ -159,7 +159,6 @@ func (h *BaseHandler) parsePagination(ctx *gin.Context, paging *basedto.Paging) 
 		}
 	}
 
-	//nolint:nestif
 	if sortQuery := ctx.Query("sort"); sortQuery != "" {
 		orders := basedto.Orders{}
 		sort := strings.Split(sortQuery, ",")

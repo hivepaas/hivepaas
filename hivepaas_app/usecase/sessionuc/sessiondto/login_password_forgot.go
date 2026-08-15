@@ -22,7 +22,7 @@ func (req *LoginPasswordForgotReq) ModifyRequest() error {
 }
 
 func (req *LoginPasswordForgotReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.Email, true, 1,
 		maxEmailLen, "email")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

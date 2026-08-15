@@ -44,7 +44,6 @@ func (s *service) applyPlacementSettings(
 		newHivepaasConstraints = append(newHivepaasConstraints, "node.role!=manager")
 	}
 
-	//nolint:nestif
 	if data.PlacementSettings.ExcludeBuildNodes && data.BuildSettings != nil {
 		for _, nodeID := range data.BuildSettings.Workers.NodeIDs {
 			if nodeID == "" {

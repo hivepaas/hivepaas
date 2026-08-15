@@ -60,7 +60,6 @@ func (l *localFileSystem) Exists(prefix string, filepath string) bool {
 			return false
 		}
 	}
-	//nolint:nestif
 	if p := strings.TrimPrefix(filepath, prefix); len(p) < len(filepath) {
 		name := path.Join(l.root, p)
 		stats, err := os.Stat(name)

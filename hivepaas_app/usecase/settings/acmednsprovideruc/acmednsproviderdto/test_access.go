@@ -19,7 +19,7 @@ func NewTestProviderAccessReq() *TestProviderAccessReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *TestProviderAccessReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, req.validate("")...)
 	validators = append(validators, basedto.ValidateStr(&req.TestDomain, true, 1, base.DomainNameMaxLen,
 		"testDomain")...)

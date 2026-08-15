@@ -19,7 +19,7 @@ func NewUpdateBasicAuthStatusReq() *UpdateBasicAuthStatusReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateBasicAuthStatusReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateStrIn(req.Status, false,
 		base.AllSettingSettableStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

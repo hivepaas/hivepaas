@@ -142,7 +142,7 @@ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []ti
 		return res, nil
 	}
 
-	if s.CronExpr != "" { //nolint:nestif
+	if s.CronExpr != "" {
 		cronSched, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
@@ -194,7 +194,7 @@ func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res 
 		return res, nil
 	}
 
-	if s.CronExpr != "" { //nolint:nestif
+	if s.CronExpr != "" {
 		cronSched, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
 			return nil, apperrors.Wrap(err)

@@ -1,6 +1,8 @@
 package registry
 
 import (
+	"context"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
@@ -152,6 +154,8 @@ import (
 )
 
 var Provides = []any{
+	context.Background,
+
 	// Configuration
 	config.LoadConfig,
 

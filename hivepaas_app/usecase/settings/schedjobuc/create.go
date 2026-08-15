@@ -161,7 +161,7 @@ func (uc *UC) calcUpsertingScriptSettings(
 		}
 	}
 
-	if newSchedJob != nil { //nolint:nestif
+	if newSchedJob != nil {
 		cmd := newSchedJob.Command
 		if cmd != nil && len(cmd.Script.Value) > scriptLenThreshold {
 			scriptSetting := newScriptSetting(jobSetting, timeNow)

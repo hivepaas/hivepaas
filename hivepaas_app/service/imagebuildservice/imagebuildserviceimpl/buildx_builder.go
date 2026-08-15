@@ -39,7 +39,7 @@ func (s *service) ensureCustomBuilder(
 	}
 
 	// Update container resource limits (CPUs, Memory) dynamically if settings are provided
-	if res != nil && (res.CPUs > 0 || res.Mem > 0 || res.MemSwap > 0) { //nolint:nestif
+	if res != nil && (res.CPUs > 0 || res.Mem > 0 || res.MemSwap > 0) {
 		resList, err := s.dockerManager.ContainerList(ctx, func(opts *client.ContainerListOptions) {
 			opts.All = true
 			docker.FilterAdd(&opts.Filters, "label", fmt.Sprintf("com.docker.buildx.builder=%s", builderName))

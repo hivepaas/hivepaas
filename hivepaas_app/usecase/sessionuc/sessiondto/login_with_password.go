@@ -37,7 +37,7 @@ func (req *LoginWithPasswordReq) ModifyRequest() error {
 }
 
 func (req *LoginWithPasswordReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.Username, true, 1,
 		maxUsernameLen, "username")...)
 	validators = append(validators, basedto.ValidateStr(&req.Password, true, 1,

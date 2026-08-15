@@ -66,7 +66,7 @@ func (uc *UC) buildStartupCommand(
 	}
 
 	// 2. Append updated user-configured settings and args from StartupCommand
-	if req.StartupCommand != nil { //nolint:nestif
+	if req.StartupCommand != nil {
 		cmd := req.StartupCommand
 		if cmd.LogLevel != "" {
 			newArgs = append(newArgs, "--log=true")

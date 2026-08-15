@@ -17,7 +17,7 @@ func NewGetRepoCacheInfoReq() *GetRepoCacheInfoReq {
 }
 
 func (req *GetRepoCacheInfoReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateCond(req.Scope.IsValid(), "params")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

@@ -101,7 +101,7 @@ func (q *taskQueue) Start() (err error) {
 	}
 
 	// Initialize task queue worker if configured
-	if runWorker { //nolint:nestif
+	if runWorker {
 		q.logger.Infof("starting task queue worker...")
 
 		q.periodicBatchSize = lpSettings.PeriodicSettings.BatchSize

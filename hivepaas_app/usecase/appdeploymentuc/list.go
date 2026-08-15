@@ -31,7 +31,7 @@ func (uc *UC) ListDeployment(
 	}
 
 	var listOpts []bunex.SelectQueryOption
-	if len(req.Status) > 0 { //nolint:nestif
+	if len(req.Status) > 0 {
 		statuses := req.Status
 		if gofn.Contain(statuses, base.DeploymentStatusInProgress) {
 			cond := bunex.SelectWhereIn("deployment.id IN (?)", inprogressDeploymentIDs...)

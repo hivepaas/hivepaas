@@ -19,7 +19,8 @@ const (
 )
 
 func main() {
-	provides := []any{
+	provides := make([]any, 0, len(registry.Provides)+2) //nolint:mnd
+	provides = append(provides,
 		context.Background,
 		func(agentSrv *agentserver.AgentServer) internal.GrpcRegistrar {
 			return func(s *grpc.Server) {
@@ -28,8 +29,7 @@ func main() {
 				agentproto.RegisterNodeCleanupServiceServer(s, agentSrv)
 				agentproto.RegisterImageBuildServiceServer(s, agentSrv)
 			}
-		},
-	}
+		})
 	provides = append(provides, registry.Provides...)
 
 	app := fx.New(

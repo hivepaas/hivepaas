@@ -93,7 +93,7 @@ func (uc *UC) handleGithubAppManifestFlowOnInstallation(
 	githubApp.InstallationID = req.InstallationID
 	appSetting.MustSetData(githubApp)
 
-	if manifestCache.Reprovision { //nolint:nestif
+	if manifestCache.Reprovision {
 		// Loads the setting from DB to check update version matching
 		dbSetting, err := uc.SettingRepo.GetByID(ctx, uc.DB, nil, "", appSetting.ID, false)
 		if err != nil {

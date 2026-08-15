@@ -164,7 +164,7 @@ func (cli *validationCli) processValidationOpts(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	if authMethod != nil { //nolint:nestif
+	if authMethod != nil {
 		parseURL, err := vcsurl.Parse(cli.opts.URL)
 		if err != nil {
 			return apperrors.Wrap(err)

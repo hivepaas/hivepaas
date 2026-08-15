@@ -24,7 +24,7 @@ func NewGetAppDeploymentSettingsReq() *GetAppDeploymentSettingsReq {
 }
 
 func (req *GetAppDeploymentSettingsReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
@@ -113,7 +113,7 @@ func TransformDeploymentSettings(
 		}
 	}
 
-	if resp.ImageSource != nil { //nolint:nestif
+	if resp.ImageSource != nil {
 		if resp.ImageSource.RegistryAuth != nil && resp.ImageSource.RegistryAuth.ID != "" {
 			itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.ImageSource.RegistryAuth.ID])
 			if itemResp == nil {
@@ -124,7 +124,7 @@ func TransformDeploymentSettings(
 			resp.ImageSource.RegistryAuth = nil
 		}
 	}
-	if resp.RepoSource != nil { //nolint:nestif
+	if resp.RepoSource != nil {
 		if resp.RepoSource.Credentials != nil && resp.RepoSource.Credentials.ID != "" {
 			itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[resp.RepoSource.Credentials.ID])
 			if itemResp == nil {

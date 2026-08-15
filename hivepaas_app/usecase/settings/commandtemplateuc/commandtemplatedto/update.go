@@ -22,7 +22,7 @@ func (req *UpdateCommandTemplateReq) ModifyRequest() error {
 }
 
 func (req *UpdateCommandTemplateReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, req.CommandTemplateBaseReq.Validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

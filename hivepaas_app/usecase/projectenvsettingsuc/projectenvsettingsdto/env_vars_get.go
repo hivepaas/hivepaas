@@ -18,7 +18,7 @@ func NewGetProjectEnvEnvVarsReq() *GetProjectEnvEnvVarsReq {
 }
 
 func (req *GetProjectEnvEnvVarsReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

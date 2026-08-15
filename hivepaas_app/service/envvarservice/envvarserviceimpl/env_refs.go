@@ -59,7 +59,7 @@ func (s *service) processRefsRecursively(
 			return match
 		}
 		refName, varName := parseEnvRef(match) // env form: ${VAR} or ${secrets.NAME} or ${an_app.VAR}
-		if refName == secretRefPrefix {        //nolint:nestif
+		if refName == secretRefPrefix {
 			refSecret, exists := data.SecretStore[varName]
 			if !exists {
 				env.Errors = append(env.Errors, &envvarservice.ParseError{

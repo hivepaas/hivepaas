@@ -130,7 +130,7 @@ func (req *CreateCommandTemplateReq) ModifyRequest() error {
 }
 
 func (req *CreateCommandTemplateReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, req.CommandTemplateBaseReq.Validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

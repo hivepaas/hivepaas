@@ -77,7 +77,7 @@ func (uc *UC) createVolumeInDocker(
 	}
 
 	driverOpts := map[string]string{}
-	if req.Driver == docker.VolumeDriverLocal { //nolint:nestif
+	if req.Driver == docker.VolumeDriverLocal {
 		switch {
 		case req.BindOptions != nil:
 			directory, err := uc.calcBindDirectory(ctx, req, req.BindOptions.Directory)

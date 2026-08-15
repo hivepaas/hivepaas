@@ -66,7 +66,6 @@ func (s *service) sendNotification(
 	return nil
 }
 
-//nolint:nestif
 func (s *service) buildNotificationMsgData(
 	data *healthcheckData,
 ) {

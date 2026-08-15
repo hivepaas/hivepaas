@@ -66,7 +66,6 @@ func (s *service) doHealthcheckREST(
 		return apperrors.Wrap(apperrors.ErrActionFailed)
 	}
 
-	//nolint:nestif
 	if healthchk.ReturnText != nil || healthchk.ReturnJSON != nil {
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {

@@ -181,7 +181,7 @@ func (s *service) DeleteSecretForApp(
 	}
 
 	// If this app is parent of some other apps, also remove the secret from the child apps
-	if !app.IsChildApp() { //nolint:nestif
+	if !app.IsChildApp() {
 		childApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)

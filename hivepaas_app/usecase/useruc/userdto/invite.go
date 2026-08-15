@@ -31,7 +31,7 @@ func (req *InviteUserReq) ModifyRequest() error {
 }
 
 func (req *InviteUserReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateStrIn(&req.Role, true,
 		base.AllUserRoles, "role")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.SecurityOption, true,

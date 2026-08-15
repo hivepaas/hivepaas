@@ -24,7 +24,7 @@ func NewHandleRepoWebhookReq() *HandleRepoWebhookReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *HandleRepoWebhookReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.ID, true,
 		1, idMaxLen, "id")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

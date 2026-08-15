@@ -26,7 +26,7 @@ func NewGetSchedJobReq() *GetSchedJobReq {
 }
 
 func (req *GetSchedJobReq) Validate() apperrors.ValidationErrors {
-	var validators []vld.Validator
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, req.GetSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
@@ -125,7 +125,7 @@ func TransformSchedJob(
 		commandtemplatedto.TransformScript(&job.Command.Script, refObjects, resp.Command)
 	}
 
-	if job.CommandOutput != nil { //nolint:nestif
+	if job.CommandOutput != nil {
 		cmdOutput := job.CommandOutput
 		cmdOutputResp := resp.CommandOutput
 

@@ -1,7 +1,7 @@
 import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { ESettingStatus, ESettingType } from "@application/shared/enums";
+import { ESettingStatus } from "@application/shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -55,7 +55,7 @@ const SettingRefSchema = z
 
 const CommandPipeSchema = z.object({
     id: z.string(),
-    type: z.literal(ESettingType.CommandPipe),
+    type: z.string(),
     name: z
         .string()
         .nullish()

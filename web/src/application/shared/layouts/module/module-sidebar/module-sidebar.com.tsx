@@ -6,7 +6,7 @@ import {
     Container,
     LayoutGrid,
     type LucideIcon,
-    Settings,
+    Puzzle,
     Settings2,
     SlidersHorizontal,
     User,
@@ -67,10 +67,10 @@ const navMain: SidebarItem[] = [
         ],
     },
     {
-        title: "Settings",
+        title: "Providers & Keys",
         route: "#",
         pattern: ROUTE.settings.$pattern,
-        icon: Settings,
+        icon: Puzzle,
         moduleId: MODULE_IDS.Settings,
         items: [
             {

@@ -10,7 +10,7 @@ import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { useController, useForm, useWatch } from "react-hook-form";
+import { useController, useForm } from "react-hook-form";
 import { AcmeDnsProviderQueries, SslProviderQueries } from "~/settings/data/queries";
 import { SSL_CERT_TYPE_OPTIONS } from "~/settings/module-shared/constants/ssl-provider.constants";
 
@@ -42,6 +42,8 @@ const CUSTOM_KEY_TYPES: ESslKeyType[] = [
 ];
 
 type ProviderOption = Record<"id" | "name", string>;
+
+const EMPTY_PROVIDER_OPTIONS: ProviderOption[] = [];
 
 function getProviderKind(certType: ESslCertType): ESslProviderKind | undefined {
     switch (certType) {
@@ -149,102 +151,6 @@ export function QuickInstallSslCertForm({
         onHasChanges?.(readOnly ? false : isDirty);
     }, [isDirty, onHasChanges, readOnly]);
 
-    const certType = useWatch({ control, name: "certType" });
-    const providerValue = useWatch({ control, name: "provider" });
-    const acmeProviderValue = useWatch({ control, name: "acmeProvider" });
-    const expireAt = useWatch({ control, name: "expireAt" });
-    const notifyFrom = useWatch({ control, name: "notifyFrom" });
-    const wildcardDomainWatched = useWatch({ control, name: "wildcardDomain" });
-    const effectiveDomain = wildcardDomainWatched ? toWildcardDomain(domain) : domain;
-
-    const isCustom = certType === ESslCertType.Custom;
-    const isAcme = !isCustom && certType !== ESslCertType.SelfSigned;
-    const requiresProvider = certType === ESslCertType.ZeroSSL || certType === ESslCertType.GoogleTrust;
-    const providerKind = getProviderKind(certType);
-
-    const sslProvidersRoute = ROUTE.settings.sslProviders.$route;
-    const acmeDnsProvidersRoute = ROUTE.settings.acmeDnsProviders.$route;
-
-    const providerQuery = SslProviderQueries.useFindManyPaginated({ kind: providerKind }, { enabled: isAcme });
-    const acmeProviderQuery = AcmeDnsProviderQueries.useFindManyPaginated({}, { enabled: isAcme });
-
-    const providerOptions = useMemo(() => providerQuery.data?.data ?? [], [providerQuery.data?.data]);
-    const providerComboboxOptions = useMemo(
-        () =>
-            providerOptions.map(option => ({
-                value: { id: option.id, name: option.name } satisfies ProviderOption,
-                label: option.name,
-            })),
-        [providerOptions],
-    );
-
-    const acmeProviderOptions = useMemo(() => acmeProviderQuery.data?.data ?? [], [acmeProviderQuery.data?.data]);
-    const acmeProviderComboboxOptions = useMemo(
-        () =>
-            acmeProviderOptions.map(option => ({
-                value: { id: option.id, name: option.name } satisfies ProviderOption,
-                label: option.name,
-            })),
-        [acmeProviderOptions],
-    );
-
-    // Reset key type to ECP256 when switching to ACME types
-    useEffect(() => {
-        if (isAcme) {
-            setValue("keyType", ESslKeyType.ECP256);
-        }
-    }, [isAcme, setValue]);
-
-    // Clear provider when cert type changes away from provider-required types
-    useEffect(() => {
-        if (providerKind !== undefined || !providerValue) {
-            return;
-        }
-        setValue("provider", undefined, { shouldDirty: true });
-    }, [providerKind, providerValue, setValue]);
-
-    // Clear provider if no longer in available options
-    useEffect(() => {
-        if (providerKind === undefined || !providerValue || providerQuery.isFetching || providerOptions.length === 0) {
-            return;
-        }
-        if (!providerOptions.some(o => o.id === providerValue.id)) {
-            setValue("provider", undefined, { shouldDirty: true });
-        }
-    }, [providerKind, providerOptions, providerQuery.isFetching, providerValue, setValue]);
-
-    // Clear ACME provider when switching to Custom
-    useEffect(() => {
-        if (isAcme || !acmeProviderValue) {
-            return;
-        }
-        setValue("acmeProvider", undefined, { shouldDirty: true });
-    }, [acmeProviderValue, isAcme, setValue]);
-
-    // Clear ACME provider if no longer in available options
-    useEffect(() => {
-        if (!isAcme || !acmeProviderValue || acmeProviderQuery.isFetching || acmeProviderOptions.length === 0) {
-            return;
-        }
-        if (!acmeProviderOptions.some(o => o.id === acmeProviderValue.id)) {
-            setValue("acmeProvider", undefined, { shouldDirty: true });
-        }
-    }, [acmeProviderOptions, acmeProviderQuery.isFetching, acmeProviderValue, isAcme, setValue]);
-
-    useEffect(() => {
-        if (!expireAt || notifyFrom) {
-            return;
-        }
-        setValue("notifyFrom", addDays(expireAt, -30), { shouldDirty: true });
-    }, [expireAt, notifyFrom, setValue]);
-
-    const keyTypeOptions = useMemo(() => {
-        return (isCustom ? CUSTOM_KEY_TYPES : ACME_KEY_TYPES).map(value => ({
-            value,
-            label: formatKeyTypeLabel(value),
-        }));
-    }, [isCustom]);
-
     const { field: certTypeField } = useController({ name: "certType", control });
     const { field: wildcardDomain } = useController({ name: "wildcardDomain", control });
     const {
@@ -277,6 +183,102 @@ export function QuickInstallSslCertForm({
         field: notifyFromField,
         fieldState: { invalid: isNotifyFromInvalid },
     } = useController({ name: "notifyFrom", control });
+
+    const certType = certTypeField.value;
+    const keyTypeValue = keyType.value;
+    const providerValue = provider.value;
+    const acmeProviderValue = acmeProvider.value;
+    const expireAt = expireAtField.value;
+    const notifyFrom = notifyFromField.value;
+    const effectiveDomain = wildcardDomain.value ? toWildcardDomain(domain) : domain;
+
+    const isCustom = certType === ESslCertType.Custom;
+    const isAcme = !isCustom && certType !== ESslCertType.SelfSigned;
+    const requiresProvider = certType === ESslCertType.ZeroSSL || certType === ESslCertType.GoogleTrust;
+    const providerKind = getProviderKind(certType);
+
+    const sslProvidersRoute = ROUTE.settings.sslProviders.$route;
+    const acmeDnsProvidersRoute = ROUTE.settings.acmeDnsProviders.$route;
+
+    const providerQuery = SslProviderQueries.useFindManyPaginated({ kind: providerKind }, { enabled: isAcme });
+    const acmeProviderQuery = AcmeDnsProviderQueries.useFindManyPaginated({}, { enabled: isAcme });
+
+    const providerOptions = useMemo(() => providerQuery.data?.data ?? EMPTY_PROVIDER_OPTIONS, [providerQuery.data?.data]);
+    const providerComboboxOptions = useMemo(
+        () =>
+            providerOptions.map(option => ({
+                value: { id: option.id, name: option.name } satisfies ProviderOption,
+                label: option.name,
+            })),
+        [providerOptions],
+    );
+
+    const acmeProviderOptions = useMemo(
+        () => acmeProviderQuery.data?.data ?? EMPTY_PROVIDER_OPTIONS,
+        [acmeProviderQuery.data?.data],
+    );
+    const acmeProviderComboboxOptions = useMemo(
+        () =>
+            acmeProviderOptions.map(option => ({
+                value: { id: option.id, name: option.name } satisfies ProviderOption,
+                label: option.name,
+            })),
+        [acmeProviderOptions],
+    );
+
+    useEffect(() => {
+        if (!isAcme || ACME_KEY_TYPES.includes(keyTypeValue)) {
+            return;
+        }
+
+        setValue("keyType", ESslKeyType.ECP256);
+    }, [isAcme, keyTypeValue, setValue]);
+
+    useEffect(() => {
+        if (providerKind !== undefined || !providerValue) {
+            return;
+        }
+        setValue("provider", undefined, { shouldDirty: true });
+    }, [providerKind, providerValue, setValue]);
+
+    useEffect(() => {
+        if (providerKind === undefined || !providerValue || providerQuery.isFetching || providerOptions.length === 0) {
+            return;
+        }
+        if (!providerOptions.some(o => o.id === providerValue.id)) {
+            setValue("provider", undefined, { shouldDirty: true });
+        }
+    }, [providerKind, providerOptions, providerQuery.isFetching, providerValue, setValue]);
+
+    useEffect(() => {
+        if (isAcme || !acmeProviderValue) {
+            return;
+        }
+        setValue("acmeProvider", undefined, { shouldDirty: true });
+    }, [acmeProviderValue, isAcme, setValue]);
+
+    useEffect(() => {
+        if (!isAcme || !acmeProviderValue || acmeProviderQuery.isFetching || acmeProviderOptions.length === 0) {
+            return;
+        }
+        if (!acmeProviderOptions.some(o => o.id === acmeProviderValue.id)) {
+            setValue("acmeProvider", undefined, { shouldDirty: true });
+        }
+    }, [acmeProviderOptions, acmeProviderQuery.isFetching, acmeProviderValue, isAcme, setValue]);
+
+    useEffect(() => {
+        if (!expireAt || notifyFrom) {
+            return;
+        }
+        setValue("notifyFrom", addDays(expireAt, -30), { shouldDirty: true });
+    }, [expireAt, notifyFrom, setValue]);
+
+    const keyTypeOptions = useMemo(() => {
+        return (isCustom ? CUSTOM_KEY_TYPES : ACME_KEY_TYPES).map(value => ({
+            value,
+            label: formatKeyTypeLabel(value),
+        }));
+    }, [isCustom]);
 
     function onValid(values: QuickInstallSslCertFormOutput) {
         if (readOnly) {

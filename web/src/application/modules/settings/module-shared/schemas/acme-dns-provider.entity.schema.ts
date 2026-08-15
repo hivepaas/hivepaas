@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { EAcmeDnsProviderKind, ESettingType } from "@application/shared/enums";
+import { EAcmeDnsProviderKind } from "@application/shared/enums";
 
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
@@ -80,7 +80,7 @@ export const AcmeDnsProviderTencentCloudEntitySchema = z.object({
 });
 
 export const AcmeDnsProviderSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.AcmeDnsProvider),
+    type: z.string(),
     kind: z.nativeEnum(EAcmeDnsProviderKind),
     inherited: z.boolean().optional(),
     acmeDns: AcmeDnsProviderAcmeDNSEntitySchema.nullish(),

@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { ESettingType } from "@application/shared/enums";
-
 const SystemCleanupDBObjectRetentionSchema = z.object({
     enabled: z.boolean(),
     tasks: z.string(),
@@ -66,7 +64,7 @@ const SystemCleanupNotificationSchema = z
     .nullable();
 
 export const SystemCleanupSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.SystemCleanup),
+    type: z.string(),
     schedule: SystemCleanupScheduleSchema,
     dbObjectRetention: SystemCleanupDBObjectRetentionSchema,
     clusterCleanup: SystemCleanupClusterCleanupSchema,

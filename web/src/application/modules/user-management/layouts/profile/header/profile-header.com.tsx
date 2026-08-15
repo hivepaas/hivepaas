@@ -18,7 +18,7 @@ function View() {
         <div className="bg-background pt-4 px-5 rounded-lg">
             <h3 className="text-lg font-semibold">Your account</h3>
 
-            <div className="flex items-center gap-4 mt-4 pb-3 border-b border-border">
+            <div className="flex items-center gap-4 mt-4 pb-3 border-border">
                 <div className="flex items-center gap-4">
                     <Avatar
                         name={profile.fullName ?? ""}

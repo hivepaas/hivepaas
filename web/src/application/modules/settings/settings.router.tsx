@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 
 import { MODULE_IDS, ROUTE } from "@/application/shared/constants";
-import { Navigate, Outlet, type RouteObject } from "react-router";
+import { Navigate, Outlet, type RouteObject, useParams } from "react-router";
 
 import { ModuleTitle } from "@application/shared/components/module-title";
 import { ConditionalModule } from "@application/shared/permissions";
@@ -62,6 +62,30 @@ function createSettingsModuleRoute(
             },
         ],
     };
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+function LegacySettingsRouteRedirect() {
+    const { "*": splat } = useParams<{ "*": string }>();
+
+    if (!splat) {
+        return (
+            <Navigate
+                to="/providers-and-keys/"
+                replace
+            />
+        );
+    }
+
+    const target = `/providers-and-keys/${splat}`;
+    const normalizedTarget = target.endsWith("/") ? target : `${target}/`;
+
+    return (
+        <Navigate
+            to={normalizedTarget}
+            replace
+        />
+    );
 }
 
 export const settingsRouter: RouteObject = {
@@ -277,5 +301,13 @@ export const settingsRouter: RouteObject = {
                 return SettingsNotificationTargetEditRoute;
             },
         ),
+        {
+            path: "settings",
+            element: <LegacySettingsRouteRedirect />,
+        },
+        {
+            path: "settings/*",
+            element: <LegacySettingsRouteRedirect />,
+        },
     ],
 } as const;

@@ -1,12 +1,10 @@
 import { z } from "zod";
 
-import { ESettingType } from "@application/shared/enums";
-
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
 export const OAuthSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     description: z.string().optional(),
-    type: z.literal(ESettingType.OAuth),
+    type: z.string(),
     kind: z.string().optional(),
     organization: z.string(),
     clientId: z.string(),

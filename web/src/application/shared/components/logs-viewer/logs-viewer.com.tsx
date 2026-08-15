@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import "@patternfly/react-core/dist/styles/base-no-reset.css";
@@ -7,7 +7,7 @@ import { LogViewer } from "@patternfly/react-log-viewer";
 import { LogsViewerToolbar } from "./building-blocks";
 import styles from "./logs-viewer.module.scss";
 import type { LogsViewerProps } from "./logs-viewer.types";
-import { buildDisplayedLogFrames, getAnsiLogLines, getPlainLogLines } from "./logs-viewer.utils";
+import { useDisplayedLogLines } from "./use-displayed-log-lines";
 
 const DEFAULT_LOG_VIEWER_HEIGHT = 1_000;
 const DEFAULT_FULLSCREEN_LOG_VIEWER_HEIGHT = "auto";
@@ -39,14 +39,10 @@ export function LogsViewer({
     const [followLogs, setFollowLogs] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
-    const displayedFrames = useMemo(() => buildDisplayedLogFrames(frames, showDebugLogs), [frames, showDebugLogs]);
-    const displayedPlainLines = useMemo(
-        () => displayedFrames.flatMap(frame => getPlainLogLines(frame, showTimestamps)),
-        [displayedFrames, showTimestamps],
-    );
-    const displayedAnsiLines = useMemo(
-        () => displayedFrames.flatMap(frame => getAnsiLogLines(frame, showTimestamps)),
-        [displayedFrames, showTimestamps],
+    const { plainLines: displayedPlainLines, ansiLines: displayedAnsiLines } = useDisplayedLogLines(
+        frames,
+        showDebugLogs,
+        showTimestamps,
     );
     const scrollToRow = followLogs && displayedAnsiLines.length > 0 ? displayedAnsiLines.length - 1 : undefined;
     const logViewerInstanceKey = `${String(logViewerKey ?? "default")}:${isFullscreen ? "fullscreen" : "inline"}`;
@@ -94,7 +90,6 @@ export function LogsViewer({
                 height={isFullscreen ? fullscreenHeight : height}
                 scrollToRow={scrollToRow}
                 isTextWrapped={isTextWrapped}
-                fastRowHeightEstimationLimit={0}
                 toolbar={
                     <LogsViewerToolbar
                         isStreaming={isStreaming}

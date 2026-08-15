@@ -17,7 +17,7 @@ import {
     EAppScheduledJobType,
 } from "~/projects/module-shared/enums";
 
-import { ESettingStatus, ESettingType } from "@application/shared/enums";
+import { ESettingStatus } from "@application/shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -178,7 +178,7 @@ const NotificationSchema = z
 
 const AppScheduledJobSchema = z.object({
     id: z.string(),
-    type: z.nativeEnum(ESettingType),
+    type: z.string(),
     name: z.string(),
     kind: z.string().optional(),
     status: z.nativeEnum(ESettingStatus),

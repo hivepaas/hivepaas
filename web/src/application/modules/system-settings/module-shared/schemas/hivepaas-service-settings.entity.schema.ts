@@ -1,8 +1,6 @@
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { ESettingType } from "@application/shared/enums";
-
 const HivePaaSAppSettingsSchema = z.object({
     replicas: z.number(),
 });
@@ -29,7 +27,7 @@ const HivePaaSProxySettingsSchema = z.object({
 });
 
 export const HivePaaSServiceSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.HivePaaSService),
+    type: z.string(),
     appSettings: HivePaaSAppSettingsSchema,
     workerSettings: HivePaaSWorkerSettingsSchema,
     taskSettings: HivePaaSTaskSettingsSchema,

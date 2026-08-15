@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ECloudStorageKind, ESettingType } from "@application/shared/enums";
+import { ECloudStorageKind } from "@application/shared/enums";
 
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
@@ -14,7 +14,7 @@ export const CloudStorageS3EntitySchema = z.object({
 
 export const CloudStorageSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     description: z.string().optional(),
-    type: z.literal(ESettingType.CloudStorage),
+    type: z.string(),
     kind: z.nativeEnum(ECloudStorageKind).optional(),
     inherited: z.boolean().optional(),
     s3: CloudStorageS3EntitySchema,

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { EEmailKind, ESettingType } from "@application/shared/enums";
+import { EEmailKind } from "@application/shared/enums";
 
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
@@ -35,7 +35,7 @@ const EmailHTTPSchema = z.object({
 });
 
 export const EmailSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.Email),
+    type: z.string(),
     kind: z.nativeEnum(EEmailKind),
     smtp: EmailSMTPSchema.nullish(),
     http: EmailHTTPSchema.nullish(),

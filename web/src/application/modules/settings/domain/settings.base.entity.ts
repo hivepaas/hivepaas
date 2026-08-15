@@ -1,8 +1,8 @@
-import type { ESettingStatus, ESettingType } from "@application/shared/enums";
+import type { ESettingStatus } from "@application/shared/enums";
 
 export interface SettingsBaseEntity {
     id: string;
-    type: ESettingType;
+    type: string;
     name: string;
     kind?: string;
     status: ESettingStatus;

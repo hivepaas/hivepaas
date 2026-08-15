@@ -1,5 +1,5 @@
 export const ESystemBackupFileType = {
-    SystemBackup: "system-backup",
+    System: "system",
 } as const;
 
 export type ESystemBackupFileType = (typeof ESystemBackupFileType)[keyof typeof ESystemBackupFileType];

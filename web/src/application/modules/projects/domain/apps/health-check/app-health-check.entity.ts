@@ -6,7 +6,7 @@ import type {
 } from "~/projects/module-shared/enums";
 import type { SettingsBaseEntity } from "~/settings/domain";
 
-import type { ESettingStatus, ESettingType } from "@application/shared/enums";
+import type { ESettingStatus } from "@application/shared/enums";
 
 export interface AppHealthCheckNamedRef {
     id: string;
@@ -50,7 +50,7 @@ export interface AppHealthCheckNotification {
 
 export interface AppHealthCheck {
     id: string;
-    type: ESettingType;
+    type: string;
     name: string;
     kind?: string;
     status: ESettingStatus;

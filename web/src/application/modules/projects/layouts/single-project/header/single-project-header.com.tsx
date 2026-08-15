@@ -61,7 +61,7 @@ function View({ projectId }: Props) {
         },
         {
             route: ROUTE.projects.single.providerConfiguration.accessTokens.$route(projectId),
-            label: "Provider Settings",
+            label: "Providers & Keys",
             activePathPrefixes: [ROUTE.projects.single.providerConfiguration.$route(projectId)],
         },
         {

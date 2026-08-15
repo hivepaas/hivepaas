@@ -1,6 +1,6 @@
 import type { SettingsBaseEntity } from "~/settings/domain";
 
-import type { ESettingStatus, ESettingType } from "@application/shared/enums";
+import type { ESettingStatus } from "@application/shared/enums";
 
 export interface SystemSslRenewalSchedule {
     interval: string;
@@ -22,7 +22,6 @@ export interface SystemSslRenewalNotification {
 }
 
 export interface SystemSslRenewalSettings extends SettingsBaseEntity {
-    type: typeof ESettingType.SSLRenewal;
     status: ESettingStatus;
     schedule: SystemSslRenewalSchedule;
     notification?: SystemSslRenewalNotification | null;

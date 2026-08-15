@@ -1,5 +1,4 @@
 import { ESettingType } from "@application/shared/enums";
-import type { ESettingType as SettingType } from "@application/shared/enums";
 
 export const GIT_SELECTOR_PAGE_SIZE = 50;
 
@@ -65,6 +64,6 @@ export function truncateSha(sha: string): string {
     return sha.slice(0, 7);
 }
 
-export function canUseGitCredentialSelectors(type?: SettingType | null): boolean {
+export function canUseGitCredentialSelectors(type?: string | null): boolean {
     return type === ESettingType.GithubApp || type === ESettingType.AccessToken;
 }

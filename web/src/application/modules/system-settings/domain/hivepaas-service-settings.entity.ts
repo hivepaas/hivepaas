@@ -1,7 +1,5 @@
 import type { SettingsBaseEntity } from "~/settings/domain";
 
-import type { ESettingType } from "@application/shared/enums";
-
 export interface HivePaaSAppSettings {
     replicas: number;
 }
@@ -28,7 +26,6 @@ export interface HivePaaSProxySettings {
 }
 
 export interface HivePaaSServiceSettings extends SettingsBaseEntity {
-    type: typeof ESettingType.HivePaaSService;
     appSettings: HivePaaSAppSettings;
     workerSettings: HivePaaSWorkerSettings;
     taskSettings: HivePaaSTaskSettings;

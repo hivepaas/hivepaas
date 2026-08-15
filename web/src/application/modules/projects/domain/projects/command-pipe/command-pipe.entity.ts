@@ -17,7 +17,7 @@ export interface ProjectCommandPipeSettingRef {
 
 export interface ProjectCommandPipe {
     id: string;
-    type: "command-pipe";
+    type: string;
     name: string;
     status: ESettingStatus;
     inherited: boolean;

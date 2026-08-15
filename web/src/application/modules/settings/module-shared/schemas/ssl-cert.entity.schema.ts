@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { ESettingType, ESslCertType, ESslKeyType } from "@application/shared/enums";
+import { ESslCertType, ESslKeyType } from "@application/shared/enums";
 
 import { SettingsBaseEntitySchema } from "./settings-base.schema";
 
@@ -27,7 +27,7 @@ const SslCertTypeSchema = z
  * SSL cert setting from API (aligned with BE `SSLCertResp` + `BaseSettingResp`).
  */
 export const SslCertSettingEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
-    type: z.literal(ESettingType.SSLCert),
+    type: z.string(),
     kind: z.string().optional(),
     inherited: z.boolean().optional(),
     certType: SslCertTypeSchema,

@@ -54,6 +54,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -87,6 +88,10 @@ services:
         - "traefik.enable=false"
       mode: replicated
       replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -109,6 +114,10 @@ services:
         - "traefik.enable=false"
       mode: replicated
       replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -138,6 +147,10 @@ services:
         - "traefik.http.routers.adminer-http.entrypoints=web"
         - "traefik.http.services.adminer.loadbalancer.server.port=8080"
         - "traefik.swarm.network=hivepaas_net"
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -157,6 +170,10 @@ services:
       labels:
         - "hivepaas.app.info={\"name\":\"redis_ui\",\"key\":\"redis_ui\"}"
         - "traefik.enable=false"
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -206,6 +223,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -233,6 +251,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -260,6 +279,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:

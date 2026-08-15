@@ -13,6 +13,13 @@ echo "---------------------------------------------------------------"
 docker swarm leave --force || true
 docker swarm init
 
+# Label the current node as control-plane
+NODE_ID=$(docker info --format '{{.Swarm.NodeID}}')
+if [ -n "$NODE_ID" ]; then
+  echo "Labeling node $NODE_ID as control-plane..."
+  docker node update --label-add hivepaas.role=control-plane "$NODE_ID"
+fi
+
 HIVEPAAS_DIR=hivepaas
 HIVEPAAS_SSL_CERTS=$HIVEPAAS_DIR/ssl/certs
 HIVEPAAS_FILES=$HIVEPAAS_DIR/files
@@ -46,7 +53,13 @@ fi
 
 # Create overlay network for traefik to discover services
 echo "Create overlay network 'hivepaas_net'..."
-docker network create --driver overlay --attachable hivepaas_net || true
+docker network create \
+  --driver overlay \
+  --attachable \
+  --subnet 10.11.0.0/16 \
+  --gateway 10.11.0.1 \
+  --opt com.docker.network.driver.mtu=1380 \
+  hivepaas_net || true
 
 # Create some volumes
 docker volume create test-vol-1

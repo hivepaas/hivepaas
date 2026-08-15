@@ -39,9 +39,22 @@ fi
 echo "Init docker swarm..."
 docker swarm init || true
 
+# Label the current node as control-plane
+NODE_ID=$(docker info --format '{{.Swarm.NodeID}}')
+if [ -n "$NODE_ID" ]; then
+  echo "Labeling node $NODE_ID as control-plane..."
+  docker node update --label-add hivepaas.role=control-plane "$NODE_ID"
+fi
+
 # Create overlay network for traefik to discover services
 echo "Create overlay network 'hivepaas_net'..."
-docker network create --driver overlay --attachable hivepaas_net || true
+docker network create \
+  --driver overlay \
+  --attachable \
+  --subnet 10.11.0.0/16 \
+  --gateway 10.11.0.1 \
+  --opt com.docker.network.driver.mtu=1380 \
+  hivepaas_net || true
 
 # Deploy hivepaas stack
 echo "Deploy hivepaas stack..."

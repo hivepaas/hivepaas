@@ -54,6 +54,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -85,6 +86,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -106,6 +108,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -131,6 +134,10 @@ services:
         - "traefik.http.routers.adminer-http.entrypoints=web"
         - "traefik.http.services.adminer.loadbalancer.server.port=8080"
         - "traefik.swarm.network=hivepaas_net"
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -181,6 +188,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -212,6 +220,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:
@@ -239,6 +248,7 @@ services:
       placement:
         constraints:
           - node.role == manager
+          - node.labels.hivepaas.role == control-plane
     logging:
       driver: local
       options:

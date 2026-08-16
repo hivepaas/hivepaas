@@ -12,7 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingeventservice"
 )
 
 type DeleteUniqueSettingReq struct {
@@ -76,7 +76,9 @@ func (uc *BaseUC) DeleteUniqueSetting(
 		}
 
 		// Fire delete event
-		err = uc.SettingService.OnDelete(ctx, db, &settingservice.DeleteEvent{Setting: persistingData.Setting})
+		err = uc.SettingEventService.OnDelete(ctx, db, &settingeventservice.DeleteEvent{
+			Setting: persistingData.Setting,
+		})
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -96,7 +98,7 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 	req *DeleteUniqueSettingReq,
 	data *DeleteUniqueSettingData,
 ) (err error) {
-	if err = uc.SettingService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
+	if err = uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
 		return apperrors.Wrap(err)
 	}
 

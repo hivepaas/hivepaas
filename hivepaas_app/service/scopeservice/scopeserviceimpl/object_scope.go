@@ -1,4 +1,4 @@
-package settingserviceimpl
+package scopeserviceimpl
 
 import (
 	"context"

@@ -29,7 +29,7 @@ func (uc *UC) BeginReprovisionGithubApp(
 	}
 
 	// Loads and validates object scope data
-	err = uc.SettingService.LoadObjectScopeData(ctx, uc.DB, req.Scope)
+	err = uc.ScopeService.LoadObjectScopeData(ctx, uc.DB, req.Scope)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

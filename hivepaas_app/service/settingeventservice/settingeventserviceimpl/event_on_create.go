@@ -1,22 +1,20 @@
-package settingserviceimpl
+package settingeventserviceimpl
 
 import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingeventservice"
 )
 
-func (s *service) OnUpdate(
+func (s *service) OnCreate(
 	ctx context.Context,
-	db database.IDB,
-	event *settingservice.UpdateEvent,
+	_ database.IDB,
+	event *settingeventservice.CreateEvent,
 ) (err error) {
-	// Reload periodic jobs in workers as the update may relate
 	if event.Setting.IsTypeIn(base.SettingTypePeriodicJob, base.SettingTypeIMService, base.SettingTypeEmail) {
 		_ = s.systemEventBus.Publish(ctx, base.SystemEventPeriodicSettingsReload)
 	}
-
 	return nil
 }

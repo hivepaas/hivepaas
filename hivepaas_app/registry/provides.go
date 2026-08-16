@@ -67,6 +67,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/reslinkservice/reslinkserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice/schedjobexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice/schedjobserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice/scopeserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingeventservice/settingeventserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settinginitservice/settinginitserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice/settingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslrenewalservice/sslrenewalserviceimpl"
@@ -312,6 +314,8 @@ var Provides = []any{
 	reslinkserviceimpl.New,
 	schedjobexecserviceimpl.New,
 	schedjobserviceimpl.New,
+	scopeserviceimpl.New,
+	settingeventserviceimpl.New,
 	settinginitserviceimpl.New,
 	settingserviceimpl.New,
 	sslrenewalserviceimpl.New,

@@ -15,7 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingeventservice"
 )
 
 type UpdateUniqueSettingReq struct {
@@ -91,7 +91,7 @@ func (uc *BaseUC) UpdateUniqueSetting(
 		}
 
 		// Fire update event
-		err = uc.SettingService.OnUpdate(ctx, db, &settingservice.UpdateEvent{
+		err = uc.SettingEventService.OnUpdate(ctx, db, &settingeventservice.UpdateEvent{
 			Setting:    persistingData.Setting,
 			OldSetting: data.Setting,
 		})
@@ -114,7 +114,7 @@ func (uc *BaseUC) loadUniqueSettingForUpdate(
 	req *UpdateUniqueSettingReq,
 	data *UpdateUniqueSettingData,
 ) (err error) {
-	if err = uc.SettingService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
+	if err = uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
 		return apperrors.Wrap(err)
 	}
 

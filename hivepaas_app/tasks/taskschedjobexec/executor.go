@@ -20,6 +20,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslrenewalservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
@@ -37,6 +38,7 @@ type Executor struct {
 	appService          appservice.Service
 	notificationService notificationservice.Service
 	schedJobExecService schedjobexecservice.Service
+	scopeService        scopeservice.Service
 	settingService      settingservice.Service
 	sslRenewalService   sslrenewalservice.Service
 	sysBackupService    sysbackupservice.Service
@@ -54,6 +56,7 @@ func NewExecutor(
 	appService appservice.Service,
 	notificationService notificationservice.Service,
 	schedJobExecService schedjobexecservice.Service,
+	scopeService scopeservice.Service,
 	settingService settingservice.Service,
 	sslRenewalService sslrenewalservice.Service,
 	sysBackupService sysbackupservice.Service,
@@ -69,6 +72,7 @@ func NewExecutor(
 		appService:          appService,
 		notificationService: notificationService,
 		schedJobExecService: schedJobExecService,
+		scopeService:        scopeService,
 		settingService:      settingService,
 		sslRenewalService:   sslRenewalService,
 		sysBackupService:    sysBackupService,
@@ -176,7 +180,7 @@ func (e *Executor) loadSchedJobData(
 	db database.IDB,
 	data *taskData,
 ) (err error) {
-	scope, err := e.settingService.LoadObjectScope(ctx, db, data.SchedJob.Scope, data.SchedJob.ObjectID, true)
+	scope, err := e.scopeService.LoadObjectScope(ctx, db, data.SchedJob.Scope, data.SchedJob.ObjectID, true)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

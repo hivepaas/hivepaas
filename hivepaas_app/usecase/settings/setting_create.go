@@ -14,7 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingeventservice"
 )
 
 type CreateSettingReq struct {
@@ -96,7 +96,7 @@ func (uc *BaseUC) CreateSetting(
 		}
 
 		// Fire create event
-		err = uc.SettingService.OnCreate(ctx, db, &settingservice.CreateEvent{Setting: persistingData.Setting})
+		err = uc.SettingEventService.OnCreate(ctx, db, &settingeventservice.CreateEvent{Setting: persistingData.Setting})
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -118,7 +118,7 @@ func (uc *BaseUC) loadSettingForCreation(
 	req *CreateSettingReq,
 	data *CreateSettingData,
 ) (err error) {
-	if err = uc.SettingService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
+	if err = uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
 		return apperrors.Wrap(err)
 	}
 

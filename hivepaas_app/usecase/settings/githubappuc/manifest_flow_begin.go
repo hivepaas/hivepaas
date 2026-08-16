@@ -51,7 +51,7 @@ func (uc *UC) BeginGithubAppManifestFlow(
 	req *githubappdto.BeginGithubAppManifestFlowReq,
 ) (*githubappdto.BeginGithubAppManifestFlowResp, error) {
 	// Loads and validates object scope data
-	err := uc.SettingService.LoadObjectScopeData(ctx, uc.DB, req.Scope)
+	err := uc.ScopeService.LoadObjectScopeData(ctx, uc.DB, req.Scope)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

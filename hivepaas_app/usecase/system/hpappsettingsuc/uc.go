@@ -3,6 +3,7 @@ package hpappsettingsuc
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
@@ -24,6 +25,7 @@ type UC struct {
 	appRepo     repository.AppRepo
 	settingRepo repository.SettingRepo
 
+	appHttpService apphttpservice.Service
 	appService     appservice.Service
 	domainService  domainservice.Service
 	hpAppService   hpappservice.Service
@@ -43,6 +45,7 @@ func New(
 	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
 
+	appHttpService apphttpservice.Service,
 	appService appservice.Service,
 	domainService domainservice.Service,
 	hpAppService hpappservice.Service,
@@ -62,6 +65,7 @@ func New(
 		appRepo:     appRepo,
 		settingRepo: settingRepo,
 
+		appHttpService: appHttpService,
 		appService:     appService,
 		domainService:  domainService,
 		hpAppService:   hpAppService,

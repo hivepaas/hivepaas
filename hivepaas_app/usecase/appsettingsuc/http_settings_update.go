@@ -16,7 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -41,7 +41,7 @@ func (uc *UC) UpdateAppHttpSettings(
 			return apperrors.Wrap(err)
 		}
 
-		err = uc.applyAppHttpSettings(ctx, data)
+		err = uc.applyAppHttpSettings(ctx, db, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -176,49 +176,22 @@ func (uc *UC) prepareUpdatingAppHttpSettings(
 
 func (uc *UC) applyAppHttpSettings(
 	ctx context.Context,
+	db database.IDB,
 	data *updateAppHttpSettingsData,
 ) error {
-	app := data.App
 	appHttpSettings, err := data.HttpSetting.AsAppHttpSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	mapSslSettings := map[string]*entity.Setting{}
-	for _, sslID := range appHttpSettings.GetSSLCertIDs() {
-		if s := data.RefObjects.RefSettings[sslID]; s != nil {
-			mapSslSettings[s.ID] = s
-		}
-	}
-	err = uc.sslService.WriteCertFiles(false, gofn.MapValues(mapSslSettings)...)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	inspect, err := uc.dockerManager.ServiceInspect(ctx, app.ServiceID)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	service := &inspect.Service
-
-	err = uc.traefikService.ApplyAppConfig(ctx, app, service, &traefikservice.AppConfigData{
+	_, err = uc.appHttpService.ApplyHttpSettings(ctx, db, &apphttpservice.ApplyAppHttpReq{
+		App:          data.App,
 		HttpSettings: appHttpSettings,
 		RefObjects:   data.RefObjects,
 	})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-
-	err = uc.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, service, data.HttpSetting)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	_, err = uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
 	return nil
 }
 

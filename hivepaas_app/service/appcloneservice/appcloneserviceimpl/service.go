@@ -3,6 +3,7 @@ package appcloneserviceimpl
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
@@ -19,11 +20,13 @@ import (
 )
 
 type service struct {
-	taskQueue queue.TaskQueue
+	taskQueue     queue.TaskQueue
+	dockerManager docker.Manager
 
 	appRepo     repository.AppRepo
 	settingRepo repository.SettingRepo
 
+	appHttpService         apphttpservice.Service
 	appService             appservice.Service
 	clusterSecretService   clustersecretservice.Service
 	clusterService         clusterservice.Service
@@ -35,16 +38,16 @@ type service struct {
 	sslService             sslservice.Service
 	traefikService         traefikservice.Service
 	volumeService          volumeservice.Service
-
-	dockerManager docker.Manager
 }
 
 func New(
 	taskQueue queue.TaskQueue,
+	dockerManager docker.Manager,
 
 	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
 
+	appHttpService apphttpservice.Service,
 	appService appservice.Service,
 	clusterSecretService clustersecretservice.Service,
 	clusterService clusterservice.Service,
@@ -56,15 +59,15 @@ func New(
 	sslService sslservice.Service,
 	traefikService traefikservice.Service,
 	volumeService volumeservice.Service,
-
-	dockerManager docker.Manager,
 ) appcloneservice.Service {
 	return &service{
-		taskQueue: taskQueue,
+		taskQueue:     taskQueue,
+		dockerManager: dockerManager,
 
 		appRepo:     appRepo,
 		settingRepo: settingRepo,
 
+		appHttpService:         appHttpService,
 		appService:             appService,
 		clusterSecretService:   clusterSecretService,
 		clusterService:         clusterService,
@@ -76,7 +79,5 @@ func New(
 		sslService:             sslService,
 		traefikService:         traefikService,
 		volumeService:          volumeService,
-
-		dockerManager: dockerManager,
 	}
 }

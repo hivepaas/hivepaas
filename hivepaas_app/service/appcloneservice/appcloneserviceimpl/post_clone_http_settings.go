@@ -3,16 +3,15 @@ package appcloneserviceimpl
 import (
 	"context"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
 )
 
 func (s *service) applyAppHttpSettings(
 	ctx context.Context,
+	db database.IDB,
 	data *appCloneData,
 ) error {
 	app := data.DestApp
@@ -25,35 +24,13 @@ func (s *service) applyAppHttpSettings(
 		return apperrors.Wrap(err)
 	}
 
-	mapSslSettings := map[string]*entity.Setting{}
-	for _, sslID := range httpSettings.GetSSLCertIDs() {
-		if s := data.RefObjects.RefSettings[sslID]; s != nil {
-			mapSslSettings[s.ID] = s
-		}
-	}
-	err = s.sslService.WriteCertFiles(false, gofn.MapValues(mapSslSettings)...)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	service := &inspect.Service
-
-	err = s.traefikService.ApplyAppConfig(ctx, app, service, &traefikservice.AppConfigData{
+	_, err = s.appHttpService.ApplyHttpSettings(ctx, db, &apphttpservice.ApplyAppHttpReq{
+		App:          app,
 		HttpSettings: httpSettings,
 		RefObjects:   data.RefObjects,
 	})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-
-	_, err = s.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
 	return nil
 }

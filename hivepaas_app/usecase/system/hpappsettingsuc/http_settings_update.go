@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -16,8 +15,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
 
@@ -42,7 +41,7 @@ func (uc *UC) UpdateHttpSettings(
 			return apperrors.Wrap(err)
 		}
 
-		err = uc.applyHttpSettings(ctx, data)
+		err = uc.applyHttpSettings(ctx, db, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -159,6 +158,7 @@ func (uc *UC) prepareUpdatingHttpSettings(
 
 func (uc *UC) applyHttpSettings(
 	ctx context.Context,
+	db database.IDB,
 	data *updateHttpSettingsData,
 ) error {
 	appHttpSettings, err := data.HttpSetting.AsAppHttpSettings()
@@ -166,36 +166,17 @@ func (uc *UC) applyHttpSettings(
 		return apperrors.Wrap(err)
 	}
 
-	mapSslSettings := map[string]*entity.Setting{}
-	for _, sslID := range appHttpSettings.GetSSLCertIDs() {
-		if s := data.RefObjects.RefSettings[sslID]; s != nil {
-			mapSslSettings[s.ID] = s
-		}
-	}
-	err = uc.sslService.WriteCertFiles(false, gofn.MapValues(mapSslSettings)...)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	inspect, err := uc.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	service := &inspect.Service
-
-	err = uc.traefikService.ApplyAppConfig(ctx, data.App, service, &traefikservice.AppConfigData{
-		HttpSettings: appHttpSettings,
-		RefObjects:   data.RefObjects,
+	resp, err := uc.appHttpService.ApplyHttpSettings(ctx, db, &apphttpservice.ApplyAppHttpReq{
+		App:                 data.App,
+		HttpSettings:        appHttpSettings,
+		RefObjects:          data.RefObjects,
+		SkipUpdatingService: true,
 	})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	err = uc.networkService.UpdateAppGlobalRoutingNetwork(ctx, data.App, service, data.HttpSetting)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
+	service := resp.Service
 	if service.Spec.UpdateConfig == nil {
 		service.Spec.UpdateConfig = &swarm.UpdateConfig{}
 	}

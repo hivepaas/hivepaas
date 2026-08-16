@@ -103,7 +103,7 @@ func (s *service) CloneApp(
 		return nil, apperrors.Wrap(err)
 	}
 
-	err = s.applyAppHttpSettings(ctx, data)
+	err = s.applyAppHttpSettings(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

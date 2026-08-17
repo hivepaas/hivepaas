@@ -14,11 +14,11 @@ func TestGetCommand(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("success loading pg_dump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "pg_dump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "pg_dump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "pg_dump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -34,11 +34,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading pg_restore pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "pg_restore", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "pg_restore.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "pg_restore (pipe)", setting.Name)
 
 			cmdData, err := setting.AsCommandTemplate()
@@ -53,11 +53,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading mysqldump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "mysqldump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "mysqldump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "mysqldump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -73,11 +73,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading mysql pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "mysql", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "mysql.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "mysql (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -93,11 +93,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading mariadb-dump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "mariadb-dump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "mariadb-dump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "mariadb-dump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -113,11 +113,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading mariadb pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "mariadb", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "mariadb.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "mariadb (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -133,11 +133,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading mongodump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "mongodump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "mongodump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "mongodump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -153,11 +153,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading mongorestore pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "mongorestore", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "mongorestore.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "mongorestore (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -173,11 +173,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading redis-dump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "redis-dump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "redis-dump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "redis-dump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -193,18 +193,18 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading redis-restore pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "redis-restore", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "redis-restore.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "redis-restore (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
 			cmdData, err := setting.AsCommandTemplate()
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
-				assert.Contains(t, cmdData.Command, "redis-cli")
+				assert.Contains(t, cmdData.Command, "sh -c")
 				assert.NotEmpty(t, cmdData.Link)
 				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
@@ -213,11 +213,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading clickhouse-dump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "clickhouse-dump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "clickhouse-dump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "clickhouse-dump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -233,11 +233,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading clickhouse-restore pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "clickhouse-restore", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "clickhouse-restore.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "clickhouse-restore (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -253,11 +253,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading sqlite-dump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "sqlite-dump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "sqlite-dump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "sqlite-dump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -273,11 +273,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading sqlite-restore pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "sqlite-restore", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "sqlite-restore.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "sqlite-restore (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -293,11 +293,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading sqlserver-dump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "sqlserver-dump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "sqlserver-dump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "sqlserver-dump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -313,11 +313,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading sqlserver-restore pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "sqlserver-restore", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "sqlserver-restore.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "sqlserver-restore (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -333,18 +333,18 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading influx-dump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "influx-dump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "influx-dump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "influx-dump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
 			cmdData, err := setting.AsCommandTemplate()
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
-				assert.Contains(t, cmdData.Command, "influx")
+				assert.Contains(t, cmdData.Command, "sh -c")
 				assert.NotEmpty(t, cmdData.Link)
 				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
@@ -353,18 +353,18 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading influx-restore pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "influx-restore", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "influx-restore.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "influx-restore (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
 			cmdData, err := setting.AsCommandTemplate()
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
-				assert.Contains(t, cmdData.Command, "influx")
+				assert.Contains(t, cmdData.Command, "sh -c")
 				assert.NotEmpty(t, cmdData.Link)
 				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
@@ -373,11 +373,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading elasticsearch-dump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "elasticsearch-dump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "elasticsearch-dump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "elasticsearch-dump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -393,11 +393,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading elasticsearch-restore pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "elasticsearch-restore", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "elasticsearch-restore.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "elasticsearch-restore (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -413,18 +413,18 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading dolt-dump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "dolt-dump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "dolt-dump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "dolt-dump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
 			cmdData, err := setting.AsCommandTemplate()
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
-				assert.Contains(t, cmdData.Command, "dolt")
+				assert.Contains(t, cmdData.Command, "sh -c")
 				assert.NotEmpty(t, cmdData.Link)
 				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
@@ -433,18 +433,18 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading dolt-restore pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "dolt-restore", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "dolt-restore.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "dolt-restore (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
 			cmdData, err := setting.AsCommandTemplate()
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
-				assert.Contains(t, cmdData.Command, "dolt")
+				assert.Contains(t, cmdData.Command, "sh -c")
 				assert.NotEmpty(t, cmdData.Link)
 				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
@@ -453,11 +453,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading neon-dump pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "neon-dump", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "neon-dump.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "neon-dump (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -473,11 +473,11 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("success loading neon-restore pipe command template", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "neon-restore", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "neon-restore.pipe")
 		assert.NoError(t, err)
 		if assert.NotNil(t, setting) {
 			assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
-			assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
+			assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
 			assert.Equal(t, "neon-restore (pipe)", setting.Name)
 			assert.Equal(t, base.SettingStatusActive, setting.Status)
 
@@ -493,7 +493,7 @@ func TestGetCommand(t *testing.T) {
 	})
 
 	t.Run("nonexistent command template returns error", func(t *testing.T) {
-		setting, err := s.GetCommand(ctx, "nonexistent_cmd", "pipe")
+		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "nonexistent_cmd.pipe")
 		assert.Error(t, err)
 		assert.Nil(t, setting)
 	})

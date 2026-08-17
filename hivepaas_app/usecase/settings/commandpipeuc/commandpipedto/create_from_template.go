@@ -13,6 +13,7 @@ type CreateCommandPipeFromTemplateReq struct {
 	settings.CreateSettingReq
 	Name        string `json:"name"`
 	CommandType string `json:"commandType"`
+	CommandKind string `json:"commandKind"`
 }
 
 func NewCreateCommandPipeFromTemplateReq() *CreateCommandPipeFromTemplateReq {
@@ -26,6 +27,8 @@ func (req *CreateCommandPipeFromTemplateReq) Validate() apperrors.ValidationErro
 		base.SettingNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateStr(&req.CommandType, true, 1,
 		base.SettingNameMaxLen, "commandType")...)
+	validators = append(validators, basedto.ValidateStr(&req.CommandKind, true, 1,
+		base.SettingNameMaxLen, "commandKind")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

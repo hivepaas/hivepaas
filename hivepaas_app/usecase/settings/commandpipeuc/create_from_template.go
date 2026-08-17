@@ -71,73 +71,73 @@ func (uc *UC) createTemplatedCommands(
 	db database.IDB,
 	req *commandpipedto.CreateCommandPipeFromTemplateReq,
 ) (srcCmd, tgtCmd *entity.Setting, pipeName string, err error) {
-	cmdKind := "pipe"
+	const cmdPipe = ".pipe"
 	var e1, e2 error
 
-	switch req.CommandType {
+	switch req.CommandKind {
 	case "postgres", "postgresql":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "pg_dump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "pg_restore", cmdKind)
-		pipeName = req.CommandType + " (pg_dump -> pg_restore)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "pg_dump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "pg_restore"+cmdPipe)
+		pipeName = req.CommandKind + " (pg_dump -> pg_restore)"
 
 	case "mysql":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "mysqldump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "mysql", cmdKind)
-		pipeName = req.CommandType + " (mysqldump -> mysql)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "mysqldump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "mysql"+cmdPipe)
+		pipeName = req.CommandKind + " (mysqldump -> mysql)"
 
 	case "mariadb":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "mariadb-dump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "mariadb", cmdKind)
-		pipeName = req.CommandType + " (mariadb-dump -> mariadb)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "mariadb-dump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "mariadb"+cmdPipe)
+		pipeName = req.CommandKind + " (mariadb-dump -> mariadb)"
 
 	case "mongo", "mongodb":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "mongodump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "mongorestore", cmdKind)
-		pipeName = req.CommandType + " (mongodump -> mongorestore)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "mongodump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "mongorestore"+cmdPipe)
+		pipeName = req.CommandKind + " (mongodump -> mongorestore)"
 
 	case "redis":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "redis-dump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "redis-restore", cmdKind)
-		pipeName = req.CommandType + " (redis-dump -> redis-restore)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "redis-dump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "redis-restore"+cmdPipe)
+		pipeName = req.CommandKind + " (redis-dump -> redis-restore)"
 
 	case "clickhouse":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "clickhouse-dump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "clickhouse-restore", cmdKind)
-		pipeName = req.CommandType + " (clickhouse-dump -> clickhouse-restore)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "clickhouse-dump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "clickhouse-restore"+cmdPipe)
+		pipeName = req.CommandKind + " (clickhouse-dump -> clickhouse-restore)"
 
 	case "sqlite", "sqlite3":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "sqlite-dump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "sqlite-restore", cmdKind)
-		pipeName = req.CommandType + " (sqlite-dump -> sqlite-restore)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "sqlite-dump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "sqlite-restore"+cmdPipe)
+		pipeName = req.CommandKind + " (sqlite-dump -> sqlite-restore)"
 
 	case "sqlserver", "mssql":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "sqlserver-dump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "sqlserver-restore", cmdKind)
-		pipeName = req.CommandType + " (sqlserver-dump -> sqlserver-restore)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "sqlserver-dump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "sqlserver-restore"+cmdPipe)
+		pipeName = req.CommandKind + " (sqlserver-dump -> sqlserver-restore)"
 
 	case "influx", "influxdb":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "influx-dump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "influx-restore", cmdKind)
-		pipeName = req.CommandType + " (influx-dump -> influx-restore)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "influx-dump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "influx-restore"+cmdPipe)
+		pipeName = req.CommandKind + " (influx-dump -> influx-restore)"
 
 	case "elasticsearch", "opensearch":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "elasticsearch-dump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "elasticsearch-restore", cmdKind)
-		pipeName = req.CommandType + " (elasticsearch-dump -> elasticsearch-restore)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "elasticsearch-dump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "elasticsearch-restore"+cmdPipe)
+		pipeName = req.CommandKind + " (elasticsearch-dump -> elasticsearch-restore)"
 
 	case "dolt":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "dolt-dump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "dolt-restore", cmdKind)
-		pipeName = req.CommandType + " (dolt-dump -> dolt-restore)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "dolt-dump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "dolt-restore"+cmdPipe)
+		pipeName = req.CommandKind + " (dolt-dump -> dolt-restore)"
 
 	case "neon", "neon-postgres":
-		srcCmd, e1 = uc.commandService.GetCommand(ctx, "neon-dump", cmdKind)
-		tgtCmd, e2 = uc.commandService.GetCommand(ctx, "neon-restore", cmdKind)
-		pipeName = req.CommandType + " (neon-dump -> neon-restore)"
+		srcCmd, e1 = uc.commandService.GetCommand(ctx, req.CommandType, "neon-dump"+cmdPipe)
+		tgtCmd, e2 = uc.commandService.GetCommand(ctx, req.CommandType, "neon-restore"+cmdPipe)
+		pipeName = req.CommandKind + " (neon-dump -> neon-restore)"
 
 	default:
 		return nil, nil, "",
-			apperrors.NewUnsupported(fmt.Sprintf("Argument '%s'", req.CommandType))
+			apperrors.NewUnsupported(fmt.Sprintf("Argument '%s'", req.CommandKind))
 	}
 	err = errors.Join(e1, e2)
 	if err != nil {

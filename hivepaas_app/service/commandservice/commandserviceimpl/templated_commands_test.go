@@ -26,6 +26,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "pg_dump")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -43,6 +45,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "pg_restore")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -61,6 +65,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "mysqldump")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -79,6 +85,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "mysql")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -97,6 +105,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "mariadb-dump")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -115,6 +125,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "mariadb")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -133,6 +145,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "mongodump")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -151,6 +165,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "mongorestore")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -169,6 +185,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "redis-cli")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -186,7 +204,9 @@ func TestGetCommand(t *testing.T) {
 			cmdData, err := setting.AsCommandTemplate()
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
-				assert.Contains(t, cmdData.Command, "sh -c")
+				assert.Contains(t, cmdData.Command, "redis-cli")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -205,6 +225,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "clickhouse-client")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -223,6 +245,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "clickhouse-client")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -241,6 +265,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "sqlite3")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -259,6 +285,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "sqlite3")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -277,6 +305,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "sqlcmd")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -295,6 +325,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "sqlcmd")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -313,6 +345,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "influx")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -331,6 +365,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "influx")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -349,6 +385,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "elasticdump")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -367,6 +405,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "elasticdump")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -385,6 +425,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "dolt")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -403,6 +445,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "dolt")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -421,6 +465,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "pg_dump")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}
@@ -439,6 +485,8 @@ func TestGetCommand(t *testing.T) {
 			assert.NoError(t, err)
 			if assert.NotNil(t, cmdData) {
 				assert.Contains(t, cmdData.Command, "pg_restore")
+				assert.NotEmpty(t, cmdData.Link)
+				assert.NotEmpty(t, cmdData.Desc)
 				assert.NotEmpty(t, cmdData.ArgGroups)
 			}
 		}

@@ -1,5 +1,7 @@
 {
   "command":"mongorestore ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://www.mongodb.com/docs/database-tools/mongorestore/",
+  "desc":"Read compressed archive stream from stdin and restore into MongoDB",
   "envVars":[],
   "argGroups":[
     {

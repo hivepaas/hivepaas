@@ -1,5 +1,7 @@
 {
   "command":"pg_dump ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://www.postgresql.org/docs/current/app-pgdump.html",
+  "desc":"Dump PostgreSQL schema and data to stdout as a custom format stream",
   "envVars":[
     {"k":"PGPASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
   ],

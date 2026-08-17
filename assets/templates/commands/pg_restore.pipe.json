@@ -1,5 +1,7 @@
 {
   "command":"pg_restore ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://www.postgresql.org/docs/current/app-pgrestore.html",
+  "desc":"Read stream from stdin and restore into a PostgreSQL database",
   "envVars":[
     {"k":"PGPASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
   ],

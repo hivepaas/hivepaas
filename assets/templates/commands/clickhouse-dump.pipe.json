@@ -1,5 +1,7 @@
 {
   "command":"clickhouse-client ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://clickhouse.com/docs/en/interfaces/cli",
+  "desc":"Export ClickHouse table data to stdout as a Native binary stream",
   "envVars":[
     {"k":"CLICKHOUSE_PASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
   ],

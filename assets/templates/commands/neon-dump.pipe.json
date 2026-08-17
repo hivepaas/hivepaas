@@ -1,5 +1,7 @@
 {
   "command":"pg_dump ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://neon.tech/docs/guides/logical-backup-pgdump",
+  "desc":"Dump Neon Postgres database to stdout as a stream over an SSL connection",
   "envVars":[
     {"k":"PGPASSWORD", "v":"${HIVEPAAS_PASSWORD}"},
     {"k":"PGSSLMODE", "v":"require"}

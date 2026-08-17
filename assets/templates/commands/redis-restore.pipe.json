@@ -1,5 +1,7 @@
 {
   "command":"sh -c \"tee ${CMD_FILE_ARGS} > /dev/null && redis-cli ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}\"",
+  "link":"https://redis.io/docs/latest/develop/connect/cli/",
+  "desc":"Write stream to an RDB dump file on disk and trigger Redis shutdown to reload",
   "envVars":[
     {"k":"REDISCLI_AUTH", "v":"${HIVEPAAS_PASSWORD}"}
   ],

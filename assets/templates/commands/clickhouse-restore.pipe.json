@@ -1,5 +1,7 @@
 {
   "command":"clickhouse-client ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://clickhouse.com/docs/en/interfaces/cli",
+  "desc":"Read Native binary stream from stdin and insert into a ClickHouse table",
   "envVars":[
     {"k":"CLICKHOUSE_PASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
   ],

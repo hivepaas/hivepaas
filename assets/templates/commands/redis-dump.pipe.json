@@ -1,5 +1,7 @@
 {
   "command":"redis-cli ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://redis.io/docs/latest/develop/connect/cli/",
+  "desc":"Dump Redis dataset to stdout as an RDB snapshot binary stream",
   "envVars":[
     {"k":"REDISCLI_AUTH", "v":"${HIVEPAAS_PASSWORD}"}
   ],

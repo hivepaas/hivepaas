@@ -1,5 +1,7 @@
 {
   "command":"sqlite3 ${CMD_FILE_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://www.sqlite.org/cli.html",
+  "desc":"Dump SQLite database file to stdout as an SQL stream",
   "envVars":[],
   "argGroups":[
     {

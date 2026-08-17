@@ -1,5 +1,7 @@
 {
   "command":"sh -c \"rm -rf /tmp/influx_bak && mkdir -p /tmp/influx_bak && tar -xzf - -C /tmp/influx_bak && influx restore /tmp/influx_bak ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} && rm -rf /tmp/influx_bak\"",
+  "link":"https://docs.influxdata.com/influxdb/v2/reference/cli/influx/restore/",
+  "desc":"Extract stream from stdin into a temp directory and restore into InfluxDB",
   "envVars":[
     {"k":"INFLUX_TOKEN", "v":"${HIVEPAAS_PASSWORD}"}
   ],

@@ -1,5 +1,7 @@
 {
   "command":"sh -c \"rm -rf /tmp/dolt_bak && mkdir -p /tmp/dolt_bak && tar -xzf - -C /tmp/dolt_bak && dolt ${CMD_DATA_ARGS} backup restore file:///tmp/dolt_bak && rm -rf /tmp/dolt_bak\"",
+  "link":"https://docs.dolthub.com/cli-reference/cli#dolt-backup",
+  "desc":"Extract stream from stdin into a temp directory and restore Dolt database and commit history",
   "envVars":[],
   "argGroups":[
     {

@@ -1,5 +1,7 @@
 {
   "command":"mariadb ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://mariadb.com/kb/en/mariadb-command-line-client/",
+  "desc":"Read SQL script stream from stdin and execute it into a MariaDB database",
   "envVars":[
     {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
   ],

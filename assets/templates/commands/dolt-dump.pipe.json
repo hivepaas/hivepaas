@@ -1,5 +1,7 @@
 {
   "command":"sh -c \"rm -rf /tmp/dolt_bak && (dolt ${CMD_DATA_ARGS} backup remove hivepaas_bak 2>/dev/null || true) && dolt ${CMD_DATA_ARGS} backup add hivepaas_bak file:///tmp/dolt_bak && dolt ${CMD_DATA_ARGS} backup sync hivepaas_bak > /dev/null && tar -czf - -C /tmp/dolt_bak . && rm -rf /tmp/dolt_bak\"",
+  "link":"https://docs.dolthub.com/cli-reference/cli#dolt-backup",
+  "desc":"Sync Dolt database and commit history to a temp directory, compress and stream to stdout via tar",
   "envVars":[],
   "argGroups":[
     {

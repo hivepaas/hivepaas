@@ -1,5 +1,7 @@
 {
   "command":"sqlite3 ${CMD_FILE_ARGS}",
+  "link":"https://www.sqlite.org/cli.html",
+  "desc":"Read SQL stream from stdin and restore into a SQLite database file",
   "envVars":[],
   "argGroups":[
     {

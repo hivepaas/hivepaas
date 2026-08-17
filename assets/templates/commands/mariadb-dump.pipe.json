@@ -1,5 +1,7 @@
 {
   "command":"mariadb-dump ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://mariadb.com/kb/en/mariadb-dump/",
+  "desc":"Dump MariaDB schema and data to stdout as an SQL script stream",
   "envVars":[
     {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
   ],

@@ -1,5 +1,7 @@
 {
   "command":"sh -c \"rm -rf /tmp/influx_bak && influx backup /tmp/influx_bak ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} > /dev/null && tar -czf - -C /tmp/influx_bak . && rm -rf /tmp/influx_bak\"",
+  "link":"https://docs.influxdata.com/influxdb/v2/reference/cli/influx/backup/",
+  "desc":"Backup InfluxDB to a temp directory, compress and stream to stdout via tar",
   "envVars":[
     {"k":"INFLUX_TOKEN", "v":"${HIVEPAAS_PASSWORD}"}
   ],

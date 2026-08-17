@@ -1,5 +1,7 @@
 {
   "command":"mongodump ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://www.mongodb.com/docs/database-tools/mongodump/",
+  "desc":"Dump MongoDB data to stdout as a compressed archive stream",
   "envVars":[],
   "argGroups":[
     {

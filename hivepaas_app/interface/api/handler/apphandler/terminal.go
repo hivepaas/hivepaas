@@ -96,6 +96,21 @@ func (h *Handler) OpenAppTerminal(ctx *gin.Context) {
 		return
 	}
 
+	type InitMessage struct {
+		Type        string `json:"type"`
+		ContainerID string `json:"containerId"`
+		NodeID      string `json:"nodeId,omitempty"`
+	}
+
+	initMsg, err := json.Marshal(InitMessage{
+		Type:        "init",
+		ContainerID: resp.ContainerID,
+		NodeID:      resp.NodeID,
+	})
+	if err == nil {
+		_ = wsConn.WriteMessage(websocket.TextMessage, initMsg)
+	}
+
 	type ResizeMessage struct {
 		Type   string `json:"type"`
 		Width  uint   `json:"width"`

@@ -25,6 +25,8 @@ type ContainerExecReq struct {
 }
 
 type ContainerExecResp struct {
+	ContainerID      string
+	NodeID           string
 	ExecStarted      bool
 	IsRemoteExec     bool
 	ExecCreateResult *client.ExecCreateResult

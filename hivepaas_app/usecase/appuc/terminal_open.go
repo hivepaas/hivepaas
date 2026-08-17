@@ -57,6 +57,8 @@ func (uc *UC) OpenTerminal(
 	}
 
 	return &appdto.OpenTerminalResp{
+		ContainerID:      execResp.ContainerID,
+		NodeID:           execResp.NodeID,
 		ExecAttachResult: execResp.ExecAttachResult,
 		ExecResizeFunc:   execResp.ExecResizeFunc,
 		CloseFunc:        execResp.CloseFunc,

@@ -92,7 +92,10 @@ func (s *service) containerExec(
 		retryable:    true,
 	}
 
+	containerID := task.Status.ContainerStatus.ContainerID
 	resp = &containerexecservice.ContainerExecResp{
+		ContainerID:    containerID,
+		NodeID:         task.NodeID,
 		IsRemoteExec:   isRemote,
 		CloseFunc:      execHelper.Close,
 		ExecResizeFunc: execHelper.ExecResize,
@@ -103,8 +106,8 @@ func (s *service) containerExec(
 		}
 	}()
 
-	containerID := task.Status.ContainerStatus.ContainerID
 	createResp, attachResp, startResp, err := execHelper.ExecCreate(ctx, containerID, req)
+
 	if err != nil {
 		// retry one more time with excluding the current node from the list
 		if execHelper.retryable && retry < containerExecRetryMax {

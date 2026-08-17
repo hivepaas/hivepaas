@@ -38,6 +38,8 @@ func (req *OpenTerminalReq) Validate() apperrors.ValidationErrors {
 
 type OpenTerminalResp struct {
 	Meta             *basedto.Meta                              `json:"meta"`
+	ContainerID      string                                     `json:"containerId"`
+	NodeID           string                                     `json:"nodeId"`
 	ExecAttachResult *client.ExecAttachResult                   `json:"-"`
 	ExecResizeFunc   func(ctx context.Context, w, h uint) error `json:"-"`
 	CloseFunc        func()                                     `json:"-"`

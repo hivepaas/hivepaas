@@ -1,0 +1,35 @@
+{
+  "command":"influx backup ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_OUTPUT_ARGS}",
+  "link":"https://docs.influxdata.com/influxdb/v2/reference/cli/influx/backup/",
+  "desc":"Backup InfluxDB metadata and bucket data to a local directory",
+  "envVars":[
+    {"k":"INFLUX_TOKEN", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"http://localhost:${HIVEPAAS_PORT}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--bucket", "value":"${HIVEPAAS_DATABASE}"},
+        {"use":false, "name":"--org", "value":"${HIVEPAAS_ORG}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OUTPUT_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"/tmp/influx_backup"}
+      ]
+    }
+  ]
+}

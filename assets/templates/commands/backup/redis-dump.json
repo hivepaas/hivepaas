@@ -1,0 +1,33 @@
+{
+  "command":"redis-cli ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_OUTPUT_ARGS}",
+  "link":"https://redis.io/docs/latest/operate/oss_and_stack/management/admin/#save-rdb-snapshot-to-file",
+  "desc":"Export Redis database snapshot to a local RDB file on disk",
+  "envVars":[
+    {"k":"REDISCLI_AUTH", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-h", "value":"localhost"},
+        {"use":true, "name":"-p", "value":"${HIVEPAAS_PORT}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OUTPUT_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"--rdb", "value":"/tmp/dump.rdb"}
+      ]
+    }
+  ]
+}

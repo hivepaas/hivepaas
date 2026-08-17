@@ -1,0 +1,28 @@
+{
+  "command":"mysql ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://dev.mysql.com/doc/refman/8.4/en/create-database.html",
+  "desc":"Create a new MySQL database with utf8mb4 character set",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-e", "value":"CREATE DATABASE IF NOT EXISTS `${HIVEPAAS_TARGET_DB}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"}
+      ]
+    }
+  ]
+}

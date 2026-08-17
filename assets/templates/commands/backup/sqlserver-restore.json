@@ -1,0 +1,35 @@
+{
+  "command":"sqlcmd ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_INPUT_ARGS}",
+  "link":"https://learn.microsoft.com/en-us/sql/t-sql/statements/restore-statements-transact-sql",
+  "desc":"Restore SQL Server database from a native BAK file with replace",
+  "envVars":[
+    {"k":"SQLCMDPASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-S", "value":"localhost,${HIVEPAAS_PORT}"},
+        {"use":true, "name":"-U", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-b"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_INPUT_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-Q", "value":"RESTORE DATABASE [${HIVEPAAS_DATABASE}] FROM DISK = N'/var/opt/mssql/data/${HIVEPAAS_DATABASE}.bak' WITH REPLACE;"}
+      ]
+    }
+  ]
+}

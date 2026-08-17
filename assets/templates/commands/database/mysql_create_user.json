@@ -1,0 +1,28 @@
+{
+  "command":"mysql ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://dev.mysql.com/doc/refman/8.4/en/create-user.html",
+  "desc":"Create a new MySQL user and grant privileges on the database",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-e", "value":"CREATE USER IF NOT EXISTS '${HIVEPAAS_TARGET_USER}'@'%' IDENTIFIED BY '${HIVEPAAS_TARGET_PASSWORD}'; GRANT ALL PRIVILEGES ON `${HIVEPAAS_TARGET_DB}`.* TO '${HIVEPAAS_TARGET_USER}'@'%'; FLUSH PRIVILEGES;"}
+      ]
+    }
+  ]
+}

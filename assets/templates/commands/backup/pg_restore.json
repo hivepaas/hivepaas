@@ -1,0 +1,52 @@
+{
+  "command":"pg_restore ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_INPUT_ARGS}",
+  "link":"https://www.postgresql.org/docs/current/app-pgrestore.html",
+  "desc":"Restore PostgreSQL database from a local dump file on disk",
+  "envVars":[
+    {"k":"PGPASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--username", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--no-password"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--clean"},
+        {"use":false, "name":"--create"},
+        {"use":false, "name":"--data-only"},
+        {"use":true, "name":"--dbname", "value":"${HIVEPAAS_DATABASE}"},
+        {"use":false, "name":"--exit-on-error"},
+        {"use":true, "name":"--if-exists"},
+        {"use":false, "name":"--jobs", "value":"2"},
+        {"use":false, "name":"--no-data-for-failed-tables"},
+        {"use":true, "name":"--no-owner"},
+        {"use":false, "name":"--no-privileges"},
+        {"use":false, "name":"--no-tablespaces"},
+        {"use":false, "name":"--schema", "value":"public"},
+        {"use":false, "name":"--schema-only"},
+        {"use":false, "name":"--single-transaction"},
+        {"use":false, "name":"--table", "value":"table_name"},
+        {"use":true, "name":"--verbose"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_INPUT_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"/tmp/${HIVEPAAS_DATABASE}.dump"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "command":"mongorestore ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_INPUT_ARGS}",
+  "link":"https://www.mongodb.com/docs/database-tools/mongorestore/",
+  "desc":"Restore MongoDB database from a local archive file on disk",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--username", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--password", "value":"${HIVEPAAS_PASSWORD}"},
+        {"use":true, "name":"--authenticationDatabase", "value":"admin"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--drop"},
+        {"use":true, "name":"--gzip"},
+        {"use":false, "name":"--noIndexRestore"},
+        {"use":true, "name":"--nsInclude", "value":"${HIVEPAAS_DATABASE}.*"},
+        {"use":false, "name":"--numParallelCollections", "value":"4"},
+        {"use":false, "name":"--preserveUUID"},
+        {"use":false, "name":"--stopOnError"},
+        {"use":false, "name":"--verbose"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_INPUT_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--archive", "value":"/tmp/${HIVEPAAS_DATABASE}.archive"}
+      ]
+    }
+  ]
+}

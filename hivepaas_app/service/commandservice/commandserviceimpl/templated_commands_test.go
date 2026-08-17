@@ -492,6 +492,57 @@ func TestGetCommand(t *testing.T) {
 		}
 	})
 
+	standaloneBackupTemplates := []struct {
+		name        string
+		expectedCmd string
+	}{
+		{"pg_dump", "pg_dump"},
+		{"pg_restore", "pg_restore"},
+		{"mysqldump", "mysqldump"},
+		{"mysql", "mysql"},
+		{"mariadb-dump", "mariadb-dump"},
+		{"mariadb", "mariadb"},
+		{"mongodump", "mongodump"},
+		{"mongorestore", "mongorestore"},
+		{"redis-dump", "redis-cli"},
+		{"redis-restore", "cp"},
+		{"clickhouse-dump", "clickhouse-client"},
+		{"clickhouse-restore", "clickhouse-client"},
+		{"sqlite-dump", "sqlite3"},
+		{"sqlite-restore", "sqlite3"},
+		{"sqlserver-dump", "sqlcmd"},
+		{"sqlserver-restore", "sqlcmd"},
+		{"influx-dump", "influx"},
+		{"influx-restore", "influx"},
+		{"elasticsearch-dump", "elasticdump"},
+		{"elasticsearch-restore", "elasticdump"},
+		{"dolt-dump", "dolt"},
+		{"dolt-restore", "dolt"},
+		{"neon-dump", "pg_dump"},
+		{"neon-restore", "pg_restore"},
+	}
+
+	for _, tc := range standaloneBackupTemplates {
+		t.Run("success loading "+tc.name+" standalone backup command template", func(t *testing.T) {
+			setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), tc.name)
+			assert.NoError(t, err)
+			if assert.NotNil(t, setting) {
+				assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
+				assert.Equal(t, string(base.CommandTemplateBackup), setting.Kind)
+				assert.Equal(t, tc.name, setting.Name)
+				assert.Equal(t, base.SettingStatusActive, setting.Status)
+
+				cmdData, err := setting.AsCommandTemplate()
+				assert.NoError(t, err)
+				if assert.NotNil(t, cmdData) {
+					assert.Contains(t, cmdData.Command, tc.expectedCmd)
+					assert.NotEmpty(t, cmdData.Link)
+					assert.NotEmpty(t, cmdData.Desc)
+				}
+			}
+		})
+	}
+
 	diagnosticsTemplates := []struct {
 		name        string
 		expectedCmd string
@@ -643,6 +694,45 @@ func TestGetCommand(t *testing.T) {
 			if assert.NotNil(t, setting) {
 				assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
 				assert.Equal(t, string(base.CommandTemplateTesting), setting.Kind)
+				assert.Equal(t, tc.name, setting.Name)
+				assert.Equal(t, base.SettingStatusActive, setting.Status)
+
+				cmdData, err := setting.AsCommandTemplate()
+				assert.NoError(t, err)
+				if assert.NotNil(t, cmdData) {
+					assert.Contains(t, cmdData.Command, tc.expectedCmd)
+					assert.NotEmpty(t, cmdData.Link)
+					assert.NotEmpty(t, cmdData.Desc)
+				}
+			}
+		})
+	}
+
+	databaseTemplates := []struct {
+		name        string
+		expectedCmd string
+	}{
+		{"pg_create_database", "psql"},
+		{"pg_create_user", "psql"},
+		{"pg_enable_extensions", "psql"},
+		{"mysql_create_database", "mysql"},
+		{"mysql_create_user", "mysql"},
+		{"mariadb_create_database", "mariadb"},
+		{"mariadb_create_user", "mariadb"},
+		{"mongo_create_user", "mongosh"},
+		{"mongo_drop_database", "mongosh"},
+		{"redis_flushdb_async", "redis-cli"},
+		{"redis_flushall_async", "redis-cli"},
+		{"clickhouse_create_database", "clickhouse-client"},
+	}
+
+	for _, tc := range databaseTemplates {
+		t.Run("success loading "+tc.name+" database command template", func(t *testing.T) {
+			setting, err := s.GetCommand(ctx, string(base.CommandTemplateDatabase), tc.name)
+			assert.NoError(t, err)
+			if assert.NotNil(t, setting) {
+				assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
+				assert.Equal(t, string(base.CommandTemplateDatabase), setting.Kind)
 				assert.Equal(t, tc.name, setting.Name)
 				assert.Equal(t, base.SettingStatusActive, setting.Status)
 

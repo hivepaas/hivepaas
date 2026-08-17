@@ -112,6 +112,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		commandTemplateGroup.GET("/:itemID", projectSettingsHandler.GetCommandTemplate)
 		commandTemplateGroup.GET("", projectSettingsHandler.ListCommandTemplate)
 		commandTemplateGroup.POST("", projectSettingsHandler.CreateCommandTemplate)
+		commandTemplateGroup.POST("/from-template", projectSettingsHandler.CreateCommandTemplateFromTemplate)
 		commandTemplateGroup.PUT("/:itemID", projectSettingsHandler.UpdateCommandTemplate)
 		commandTemplateGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateCommandTemplateStatus)
 		commandTemplateGroup.DELETE("/:itemID", projectSettingsHandler.DeleteCommandTemplate)

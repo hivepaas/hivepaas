@@ -1,0 +1,24 @@
+{
+  "command":"dolt ${CMD_OPTS_ARGS} ${CMD_INPUT_ARGS}",
+  "link":"https://docs.dolthub.com/cli/cli/dolt-sql",
+  "desc":"Restore Dolt database from a local SQL file on disk",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"sql"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_INPUT_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-f", "value":"/tmp/${HIVEPAAS_DATABASE}.sql"}
+      ]
+    }
+  ]
+}

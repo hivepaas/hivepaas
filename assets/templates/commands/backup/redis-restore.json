@@ -1,0 +1,7 @@
+{
+  "command":"sh -c \"cp /tmp/dump.rdb /data/dump.rdb && chown redis:redis /data/dump.rdb\"",
+  "link":"https://redis.io/docs/latest/operate/oss_and_stack/management/admin/#load-rdb-snapshot",
+  "desc":"Restore Redis dataset from a local dump.rdb file on disk",
+  "envVars":[],
+  "argGroups":[]
+}

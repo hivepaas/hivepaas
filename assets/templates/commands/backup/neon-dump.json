@@ -1,0 +1,53 @@
+{
+  "command":"pg_dump ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_OUTPUT_ARGS}",
+  "link":"https://neon.tech/docs/import/import-from-postgres",
+  "desc":"Dump Neon PostgreSQL database to a local file on disk with custom or directory format",
+  "envVars":[
+    {"k":"PGPASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--username", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--dbname", "value":"${HIVEPAAS_DATABASE}"},
+        {"use":true, "name":"--no-password"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":false, "name":"--blobs"},
+        {"use":false, "name":"--clean"},
+        {"use":false, "name":"--create"},
+        {"use":false, "name":"--data-only"},
+        {"use":false, "name":"--exclude-table", "value":"table_name"},
+        {"use":true, "name":"--format", "value":"custom"},
+        {"use":false, "name":"--if-exists"},
+        {"use":false, "name":"--inserts"},
+        {"use":false, "name":"--no-comments"},
+        {"use":true, "name":"--no-owner"},
+        {"use":false, "name":"--no-privileges"},
+        {"use":false, "name":"--no-tablespaces"},
+        {"use":false, "name":"--schema", "value":"public"},
+        {"use":false, "name":"--schema-only"},
+        {"use":false, "name":"--table", "value":"table_name"},
+        {"use":true, "name":"--verbose"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OUTPUT_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--file", "value":"/tmp/${HIVEPAAS_DATABASE}.dump"}
+      ]
+    }
+  ]
+}

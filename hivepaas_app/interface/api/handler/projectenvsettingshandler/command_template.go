@@ -65,9 +65,9 @@ func (h *Handler) CreateCommandTemplate(ctx *gin.Context) {
 // CreateCommandTemplateFromTemplate Creates a new command template setting from a template
 // @Summary Creates a new command template setting from a template
 // @Description Creates a new command template setting from a template
-// @Tags    project_settings
+// @Tags    project_env_settings
 // @Produce json
-// @Id      createProjectCommandTemplateFromTemplate
+// @Id      createProjectEnvCommandTemplateFromTemplate
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project Env"
 // @Param   body body commandtemplatedto.CreateCommandTemplateFromTemplateReq true "request data"
@@ -76,7 +76,7 @@ func (h *Handler) CreateCommandTemplate(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/command-templates/from-template [post]
 func (h *Handler) CreateCommandTemplateFromTemplate(ctx *gin.Context) {
-	h.Handler.CreateCommandTemplateFromTemplate(ctx, base.ObjectScopeProject)
+	h.Handler.CreateCommandTemplateFromTemplate(ctx, base.ObjectScopeProjectEnv)
 }
 
 // UpdateCommandTemplate Updates command template

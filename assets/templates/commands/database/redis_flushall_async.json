@@ -1,0 +1,28 @@
+{
+  "command":"redis-cli ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://redis.io/docs/latest/commands/flushall/",
+  "desc":"Delete all keys from all Redis databases asynchronously without blocking",
+  "envVars":[
+    {"k":"REDISCLI_AUTH", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-h", "value":"localhost"},
+        {"use":true, "name":"-p", "value":"${HIVEPAAS_PORT}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"FLUSHALL"},
+        {"use":true, "name":"ASYNC"}
+      ]
+    }
+  ]
+}

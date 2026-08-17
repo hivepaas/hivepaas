@@ -1,0 +1,24 @@
+{
+  "command":"dolt ${CMD_OPTS_ARGS} ${CMD_OUTPUT_ARGS}",
+  "link":"https://docs.dolthub.com/cli/cli/dolt-dump",
+  "desc":"Dump Dolt database tables and schema to a local SQL file on disk",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"dump"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OUTPUT_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-r", "value":"/tmp/${HIVEPAAS_DATABASE}.sql"}
+      ]
+    }
+  ]
+}

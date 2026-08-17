@@ -1,0 +1,41 @@
+{
+  "command":"mysql ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_INPUT_ARGS}",
+  "link":"https://dev.mysql.com/doc/refman/8.4/en/mysql.html",
+  "desc":"Restore MySQL database from a local SQL script file on disk",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":false, "name":"--binary-mode"},
+        {"use":false, "name":"--force"},
+        {"use":true, "name":"--max-allowed-packet", "value":"64M"},
+        {"use":false, "name":"--reconnect"},
+        {"use":false, "name":"--show-warnings"},
+        {"use":true, "name":"--database", "value":"${HIVEPAAS_DATABASE}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_INPUT_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-e", "value":"source /tmp/${HIVEPAAS_DATABASE}.sql"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "command":"mariadb-dump ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_OUTPUT_ARGS}",
+  "link":"https://mariadb.com/kb/en/mariadb-dump/",
+  "desc":"Dump MariaDB database to a local SQL file with transactional consistency",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--add-drop-table"},
+        {"use":false, "name":"--add-locks"},
+        {"use":false, "name":"--complete-insert"},
+        {"use":false, "name":"--disable-keys"},
+        {"use":true, "name":"--events"},
+        {"use":false, "name":"--extended-insert"},
+        {"use":false, "name":"--lock-tables"},
+        {"use":false, "name":"--no-create-info"},
+        {"use":false, "name":"--no-data"},
+        {"use":true, "name":"--quick"},
+        {"use":true, "name":"--routines"},
+        {"use":true, "name":"--single-transaction"},
+        {"use":false, "name":"--skip-comments"},
+        {"use":true, "name":"--triggers"},
+        {"use":true, "name":"--databases", "value":"${HIVEPAAS_DATABASE}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OUTPUT_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--result-file", "value":"/tmp/${HIVEPAAS_DATABASE}.sql"}
+      ]
+    }
+  ]
+}

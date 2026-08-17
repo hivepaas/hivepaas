@@ -1,0 +1,24 @@
+{
+  "command":"sqlite3 ${CMD_OPTS_ARGS} ${CMD_INPUT_ARGS}",
+  "link":"https://www.sqlite.org/cli.html#backup",
+  "desc":"Restore SQLite database from a local backup file on disk",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"/data/database.sqlite"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_INPUT_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":".restore '/tmp/database_backup.sqlite'"}
+      ]
+    }
+  ]
+}

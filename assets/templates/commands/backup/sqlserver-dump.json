@@ -1,0 +1,35 @@
+{
+  "command":"sqlcmd ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_OUTPUT_ARGS}",
+  "link":"https://learn.microsoft.com/en-us/sql/t-sql/statements/backup-transact-sql",
+  "desc":"Backup SQL Server database to a native BAK file with compression",
+  "envVars":[
+    {"k":"SQLCMDPASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-S", "value":"localhost,${HIVEPAAS_PORT}"},
+        {"use":true, "name":"-U", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-b"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OUTPUT_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-Q", "value":"BACKUP DATABASE [${HIVEPAAS_DATABASE}] TO DISK = N'/var/opt/mssql/data/${HIVEPAAS_DATABASE}.bak' WITH INIT, COMPRESSION;"}
+      ]
+    }
+  ]
+}

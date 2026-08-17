@@ -1,0 +1,26 @@
+{
+  "command":"elasticdump ${CMD_INPUT_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://github.com/elasticsearch-dump/elasticsearch-dump",
+  "desc":"Restore Elasticsearch index data from a local JSON file on disk",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_INPUT_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--input", "value":"/tmp/${HIVEPAAS_DATABASE}_data.json"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--output", "value":"http://${HIVEPAAS_USER}:${HIVEPAAS_PASSWORD}@localhost:${HIVEPAAS_PORT}/${HIVEPAAS_DATABASE}"},
+        {"use":false, "name":"--limit", "value":"1000"},
+        {"use":true, "name":"--type", "value":"data"}
+      ]
+    }
+  ]
+}

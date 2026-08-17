@@ -1,0 +1,43 @@
+{
+  "command":"mongodump ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_OUTPUT_ARGS}",
+  "link":"https://www.mongodb.com/docs/database-tools/mongodump/",
+  "desc":"Dump MongoDB database to a single compressed archive file on disk",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--username", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--password", "value":"${HIVEPAAS_PASSWORD}"},
+        {"use":true, "name":"--authenticationDatabase", "value":"admin"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":false, "name":"--collection", "value":"collection_name"},
+        {"use":true, "name":"--db", "value":"${HIVEPAAS_DATABASE}"},
+        {"use":false, "name":"--excludeCollection", "value":"excluded_collection"},
+        {"use":true, "name":"--gzip"},
+        {"use":false, "name":"--numParallelCollections", "value":"4"},
+        {"use":false, "name":"--query", "value":"{}"},
+        {"use":false, "name":"--readPreference", "value":"secondaryPreferred"},
+        {"use":false, "name":"--verbose"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OUTPUT_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--archive", "value":"/tmp/${HIVEPAAS_DATABASE}.archive"}
+      ]
+    }
+  ]
+}

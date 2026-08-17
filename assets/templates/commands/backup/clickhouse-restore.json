@@ -1,0 +1,34 @@
+{
+  "command":"clickhouse-client ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} ${CMD_INPUT_ARGS}",
+  "link":"https://clickhouse.com/docs/en/operations/backup",
+  "desc":"Restore ClickHouse database from a local backup archive on disk",
+  "envVars":[
+    {"k":"CLICKHOUSE_PASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_INPUT_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--query", "value":"RESTORE DATABASE ${HIVEPAAS_DATABASE} FROM Disk('backups', '${HIVEPAAS_DATABASE}.zip');"}
+      ]
+    }
+  ]
+}

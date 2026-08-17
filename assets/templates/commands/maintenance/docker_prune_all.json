@@ -1,0 +1,20 @@
+{
+  "command":"docker ${CMD_OPTS_ARGS}",
+  "link":"https://docs.docker.com/reference/cli/docker/system/prune/",
+  "desc":"Remove all unused containers, networks, images, and build cache",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"system"},
+        {"use":true, "name":"prune"},
+        {"use":true, "name":"-a"},
+        {"use":true, "name":"-f"},
+        {"use":true, "name":"--volumes"}
+      ]
+    }
+  ]
+}

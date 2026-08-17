@@ -1,0 +1,7 @@
+{
+  "command":"sh -c \"find /var/lib/docker/containers -name \\\"*-json.log\\\" -exec truncate -s 0 {} + 2>/dev/null || true\"",
+  "link":"https://docs.docker.com/engine/logging/drivers/json-file/",
+  "desc":"Truncate and zero out all Docker JSON container log files on the host",
+  "envVars":[],
+  "argGroups":[]
+}

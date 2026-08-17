@@ -537,6 +537,47 @@ func TestGetCommand(t *testing.T) {
 		})
 	}
 
+	maintenanceTemplates := []struct {
+		name        string
+		expectedCmd string
+	}{
+		{"pg_vacuum_analyze", "psql"},
+		{"pg_reindex_database", "psql"},
+		{"mysql_optimize", "mysqlcheck"},
+		{"mysql_analyze", "mysqlcheck"},
+		{"mariadb_optimize", "mariadb-check"},
+		{"mariadb_analyze", "mariadb-check"},
+		{"redis_memory_purge", "redis-cli"},
+		{"redis_bgsave", "redis-cli"},
+		{"mongo_compact", "mongosh"},
+		{"clickhouse_optimize_table", "clickhouse-client"},
+		{"elasticsearch_forcemerge", "curl"},
+		{"elasticsearch_clearcache", "curl"},
+		{"docker_prune_all", "docker"},
+		{"docker_logs_cleanup", "sh -c"},
+	}
+
+	for _, tc := range maintenanceTemplates {
+		t.Run("success loading "+tc.name+" maintenance command template", func(t *testing.T) {
+			setting, err := s.GetCommand(ctx, string(base.CommandTemplateMaintenance), tc.name)
+			assert.NoError(t, err)
+			if assert.NotNil(t, setting) {
+				assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
+				assert.Equal(t, string(base.CommandTemplateMaintenance), setting.Kind)
+				assert.Equal(t, tc.name, setting.Name)
+				assert.Equal(t, base.SettingStatusActive, setting.Status)
+
+				cmdData, err := setting.AsCommandTemplate()
+				assert.NoError(t, err)
+				if assert.NotNil(t, cmdData) {
+					assert.Contains(t, cmdData.Command, tc.expectedCmd)
+					assert.NotEmpty(t, cmdData.Link)
+					assert.NotEmpty(t, cmdData.Desc)
+				}
+			}
+		})
+	}
+
 	t.Run("nonexistent command template returns error", func(t *testing.T) {
 		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "nonexistent_cmd.pipe")
 		assert.Error(t, err)

@@ -1,0 +1,30 @@
+{
+  "command":"psql ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://www.postgresql.org/docs/current/sql-reindex.html",
+  "desc":"Rebuild all indexes in the PostgreSQL database to remove index bloat",
+  "envVars":[
+    {"k":"PGPASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--username", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--dbname", "value":"${HIVEPAAS_DATABASE}"},
+        {"use":true, "name":"--no-password"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-c", "value":"REINDEX DATABASE \"${HIVEPAAS_DATABASE}\";"}
+      ]
+    }
+  ]
+}

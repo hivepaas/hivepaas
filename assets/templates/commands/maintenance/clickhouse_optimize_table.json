@@ -1,0 +1,28 @@
+{
+  "command":"clickhouse-client ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://clickhouse.com/docs/en/sql-reference/statements/optimize",
+  "desc":"Merge data parts and optimize storage for a ClickHouse table",
+  "envVars":[
+    {"k":"CLICKHOUSE_PASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"--query", "value":"OPTIMIZE TABLE ${HIVEPAAS_TABLE} FINAL;"}
+      ]
+    }
+  ]
+}

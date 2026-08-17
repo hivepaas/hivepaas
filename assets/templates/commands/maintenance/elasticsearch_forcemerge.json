@@ -1,0 +1,26 @@
+{
+  "command":"curl ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-forcemerge.html",
+  "desc":"Force merge index segments and purge deleted documents in Elasticsearch",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-s"},
+        {"use":true, "name":"-X", "value":"POST"},
+        {"use":true, "name":"-u", "value":"${HIVEPAAS_USER}:${HIVEPAAS_PASSWORD}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"http://localhost:${HIVEPAAS_PORT}/_forcemerge?max_num_segments=1"}
+      ]
+    }
+  ]
+}

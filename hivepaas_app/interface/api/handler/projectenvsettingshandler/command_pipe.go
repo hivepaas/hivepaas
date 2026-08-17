@@ -62,6 +62,23 @@ func (h *Handler) CreateCommandPipe(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeCommandPipe, base.ObjectScopeProjectEnv)
 }
 
+// CreateCommandPipeFromTemplate Creates a command pipe setting from template
+// @Summary Creates a command pipe setting from template
+// @Description Creates a command pipe setting from template
+// @Tags    project_env_settings
+// @Produce json
+// @Id      createProjectEnvCommandPipeFromTemplate
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project Env"
+// @Param   body body commandpipedto.CreateCommandPipeFromTemplateReq true "request data"
+// @Success 201 {object} commandpipedto.CreateCommandPipeFromTemplateResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/command-pipes/from-template [post]
+func (h *Handler) CreateCommandPipeFromTemplate(ctx *gin.Context) {
+	h.Handler.CreateCommandPipeFromTemplate(ctx, base.ObjectScopeProjectEnv)
+}
+
 // UpdateCommandPipe Updates command pipe
 // @Summary Updates command pipe
 // @Description Updates command pipe

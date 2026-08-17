@@ -101,6 +101,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		commandPipeGroup.GET("/:itemID", projectSettingsHandler.GetCommandPipe)
 		commandPipeGroup.GET("", projectSettingsHandler.ListCommandPipe)
 		commandPipeGroup.POST("", projectSettingsHandler.CreateCommandPipe)
+		commandPipeGroup.POST("/from-template", projectSettingsHandler.CreateCommandPipeFromTemplate)
 		commandPipeGroup.PUT("/:itemID", projectSettingsHandler.UpdateCommandPipe)
 		commandPipeGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateCommandPipeStatus)
 		commandPipeGroup.DELETE("/:itemID", projectSettingsHandler.DeleteCommandPipe)

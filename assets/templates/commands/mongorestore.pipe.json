@@ -1,0 +1,32 @@
+{
+  "command":"mongorestore ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--username", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--password", "value":"${HIVEPAAS_PASSWORD}"},
+        {"use":false, "name":"--authenticationDatabase", "value":"admin"},
+        {"use":true, "name":"--db", "value":"${HIVEPAAS_DATABASE}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--archive"},
+        {"use":true, "name":"--gzip"},
+        {"use":true, "name":"--drop"},
+        {"use":true, "name":"--stopOnError"},
+        {"use":false, "name":"--noIndexRestore"},
+        {"use":false, "name":"--verbose"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "command":"clickhouse-client ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "envVars":[
+    {"k":"CLICKHOUSE_PASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--database", "value":"${HIVEPAAS_DATABASE}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--query", "value":"SELECT * FROM ${YOUR_TABLE} FORMAT Native"},
+        {"use":false, "name":"--verbose"}
+      ]
+    }
+  ]
+}

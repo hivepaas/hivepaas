@@ -1,0 +1,14 @@
+{
+  "command":"sh -c \"rm -rf /tmp/dolt_bak && (dolt ${CMD_DATA_ARGS} backup remove hivepaas_bak 2>/dev/null || true) && dolt ${CMD_DATA_ARGS} backup add hivepaas_bak file:///tmp/dolt_bak && dolt ${CMD_DATA_ARGS} backup sync hivepaas_bak > /dev/null && tar -czf - -C /tmp/dolt_bak . && rm -rf /tmp/dolt_bak\"",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_DATA_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--data-dir", "value":"/var/lib/dolt"}
+      ]
+    }
+  ]
+}

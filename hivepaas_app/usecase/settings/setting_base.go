@@ -68,7 +68,9 @@ func (uc *BaseUC) checkNameConflict(
 	if name == "" {
 		return nil
 	}
-	setting, err := uc.SettingRepo.GetByName(ctx, db, req.Scope, req.Type, name, false)
+	setting, err := uc.SettingRepo.GetByName(ctx, db, req.Scope, req.Type, name, false,
+		bunex.SelectColumns("id", "name"),
+	)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}

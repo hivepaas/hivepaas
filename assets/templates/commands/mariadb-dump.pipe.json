@@ -1,0 +1,35 @@
+{
+  "command":"mariadb-dump ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--databases", "value":"${HIVEPAAS_DATABASE}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--single-transaction"},
+        {"use":true, "name":"--quick"},
+        {"use":true, "name":"--routines"},
+        {"use":true, "name":"--triggers"},
+        {"use":true, "name":"--events"},
+        {"use":true, "name":"--add-drop-table"},
+        {"use":false, "name":"--no-data"},
+        {"use":false, "name":"--no-create-info"},
+        {"use":false, "name":"--verbose"}
+      ]
+    }
+  ]
+}

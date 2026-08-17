@@ -1,0 +1,22 @@
+{
+  "command":"sqlite3 ${CMD_FILE_ARGS} ${CMD_OPTS_ARGS}",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_FILE_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"/data/app.db"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":".dump"}
+      ]
+    }
+  ]
+}

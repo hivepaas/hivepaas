@@ -1,0 +1,35 @@
+{
+  "command":"sh -c \"tee ${CMD_FILE_ARGS} > /dev/null && redis-cli ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}\"",
+  "envVars":[
+    {"k":"REDISCLI_AUTH", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_FILE_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"/data/dump.rdb"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-h", "value":"localhost"},
+        {"use":true, "name":"-p", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--no-auth-warning"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"SHUTDOWN"},
+        {"use":true, "name":"NOSAVE"}
+      ]
+    }
+  ]
+}

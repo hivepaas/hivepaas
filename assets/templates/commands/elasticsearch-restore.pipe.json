@@ -1,0 +1,24 @@
+{
+  "command":"elasticdump ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--input", "value":"$"},
+        {"use":true, "name":"--output", "value":"http://${HIVEPAAS_USER}:${HIVEPAAS_PASSWORD}@localhost:${HIVEPAAS_PORT}/${HIVEPAAS_DATABASE}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--type", "value":"data"},
+        {"use":false, "name":"--limit", "value":"10000"}
+      ]
+    }
+  ]
+}

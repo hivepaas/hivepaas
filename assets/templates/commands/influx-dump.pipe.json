@@ -1,0 +1,26 @@
+{
+  "command":"sh -c \"rm -rf /tmp/influx_bak && influx backup /tmp/influx_bak ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS} > /dev/null && tar -czf - -C /tmp/influx_bak . && rm -rf /tmp/influx_bak\"",
+  "envVars":[
+    {"k":"INFLUX_TOKEN", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"--host", "value":"http://localhost:${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--org", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--bucket", "value":"${HIVEPAAS_DATABASE}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":false, "name":"--token", "value":"${HIVEPAAS_PASSWORD}"}
+      ]
+    }
+  ]
+}

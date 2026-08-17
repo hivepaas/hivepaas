@@ -1,0 +1,36 @@
+{
+  "command":"pg_restore ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "envVars":[
+    {"k":"PGPASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--username", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--dbname", "value":"${HIVEPAAS_DATABASE}"},
+        {"use":true, "name":"--no-password"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--clean"},
+        {"use":true, "name":"--if-exists"},
+        {"use":true, "name":"--no-owner"},
+        {"use":true, "name":"--no-privileges"},
+        {"use":true, "name":"--single-transaction"},
+        {"use":true, "name":"--exit-on-error"},
+        {"use":false, "name":"--data-only"},
+        {"use":false, "name":"--schema-only"},
+        {"use":false, "name":"--verbose"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "command":"sh -c \"rm -rf /tmp/dolt_bak && mkdir -p /tmp/dolt_bak && tar -xzf - -C /tmp/dolt_bak && dolt ${CMD_DATA_ARGS} backup restore file:///tmp/dolt_bak && rm -rf /tmp/dolt_bak\"",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_DATA_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--data-dir", "value":"/var/lib/dolt"}
+      ]
+    }
+  ]
+}

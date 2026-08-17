@@ -1,0 +1,28 @@
+{
+  "command":"mariadb ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://mariadb.com/kb/en/information-schema-tables-table/",
+  "desc":"Display data and index disk size for tables in the database",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-e", "value":"SELECT table_name, ROUND((data_length + index_length) / 1024 / 1024, 2) AS total_mb, ROUND(data_length / 1024 / 1024, 2) AS data_mb, ROUND(index_length / 1024 / 1024, 2) AS index_mb, table_rows FROM information_schema.tables WHERE table_schema = '${HIVEPAAS_DATABASE}' ORDER BY (data_length + index_length) DESC LIMIT 20;"}
+      ]
+    }
+  ]
+}

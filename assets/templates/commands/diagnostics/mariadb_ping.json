@@ -1,0 +1,28 @@
+{
+  "command":"mariadb-admin ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://mariadb.com/kb/en/mariadb-admin/",
+  "desc":"Check MariaDB server connectivity status via mariadb-admin",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"ping"}
+      ]
+    }
+  ]
+}

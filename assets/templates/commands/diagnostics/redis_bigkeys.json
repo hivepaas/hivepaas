@@ -1,0 +1,27 @@
+{
+  "command":"redis-cli ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://redis.io/docs/latest/develop/connect/cli/#scan-for-big-keys",
+  "desc":"Scan the Redis keyspace for the largest keys consuming memory",
+  "envVars":[
+    {"k":"REDISCLI_AUTH", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-h", "value":"localhost"},
+        {"use":true, "name":"-p", "value":"${HIVEPAAS_PORT}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"--bigkeys"}
+      ]
+    }
+  ]
+}

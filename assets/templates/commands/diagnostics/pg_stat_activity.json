@@ -1,0 +1,30 @@
+{
+  "command":"psql ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-PG-STAT-ACTIVITY-VIEW",
+  "desc":"List active connections, running queries, and duration in PostgreSQL",
+  "envVars":[
+    {"k":"PGPASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--username", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--dbname", "value":"${HIVEPAAS_DATABASE}"},
+        {"use":true, "name":"--no-password"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-c", "value":"SELECT pid, now() - query_start AS duration, state, query FROM pg_stat_activity WHERE state != 'idle' ORDER BY duration DESC LIMIT 20;"}
+      ]
+    }
+  ]
+}

@@ -492,6 +492,51 @@ func TestGetCommand(t *testing.T) {
 		}
 	})
 
+	diagnosticsTemplates := []struct {
+		name        string
+		expectedCmd string
+	}{
+		{"pg_stat_activity", "psql"},
+		{"pg_table_size", "psql"},
+		{"pg_ping", "psql"},
+		{"mysql_processlist", "mysql"},
+		{"mysql_table_size", "mysql"},
+		{"mysql_ping", "mysqladmin"},
+		{"mariadb_processlist", "mariadb"},
+		{"mariadb_table_size", "mariadb"},
+		{"mariadb_ping", "mariadb-admin"},
+		{"redis_info", "redis-cli"},
+		{"redis_bigkeys", "redis-cli"},
+		{"redis_ping", "redis-cli"},
+		{"mongo_server_status", "mongosh"},
+		{"mongo_db_stats", "mongosh"},
+		{"mongo_ping", "mongosh"},
+		{"clickhouse_processes", "clickhouse-client"},
+		{"elasticsearch_cluster_health", "curl"},
+	}
+
+	for _, tc := range diagnosticsTemplates {
+		t.Run("success loading "+tc.name+" diagnostics command template", func(t *testing.T) {
+			setting, err := s.GetCommand(ctx, string(base.CommandTemplateDiagnostics), tc.name)
+			assert.NoError(t, err)
+			if assert.NotNil(t, setting) {
+				assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
+				assert.Equal(t, string(base.CommandTemplateDiagnostics), setting.Kind)
+				assert.Equal(t, tc.name, setting.Name)
+				assert.Equal(t, base.SettingStatusActive, setting.Status)
+
+				cmdData, err := setting.AsCommandTemplate()
+				assert.NoError(t, err)
+				if assert.NotNil(t, cmdData) {
+					assert.Contains(t, cmdData.Command, tc.expectedCmd)
+					assert.NotEmpty(t, cmdData.Link)
+					assert.NotEmpty(t, cmdData.Desc)
+					assert.NotEmpty(t, cmdData.ArgGroups)
+				}
+			}
+		})
+	}
+
 	t.Run("nonexistent command template returns error", func(t *testing.T) {
 		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "nonexistent_cmd.pipe")
 		assert.Error(t, err)

@@ -59,6 +59,22 @@ func (h *Handler) CreateCommandTemplate(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeCommandTemplate, base.ObjectScopeProject)
 }
 
+// CreateCommandTemplateFromTemplate Creates a new command template setting from a template
+// @Summary Creates a new command template setting from a template
+// @Description Creates a new command template setting from a template
+// @Tags    project_settings
+// @Produce json
+// @Id      createProjectCommandTemplateFromTemplate
+// @Param   projectID path string true "project ID"
+// @Param   body body commandtemplatedto.CreateCommandTemplateFromTemplateReq true "request data"
+// @Success 201 {object} commandtemplatedto.CreateCommandTemplateFromTemplateResp
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /projects/{projectID}/command-templates/from-template [post]
+func (h *Handler) CreateCommandTemplateFromTemplate(ctx *gin.Context) {
+	h.Handler.CreateCommandTemplateFromTemplate(ctx, base.ObjectScopeProject)
+}
+
 // UpdateCommandTemplate Updates command template
 // @Summary Updates command template
 // @Description Updates command template

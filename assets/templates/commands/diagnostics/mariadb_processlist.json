@@ -1,0 +1,28 @@
+{
+  "command":"mariadb ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://mariadb.com/kb/en/show-processlist/",
+  "desc":"Show current running threads and active transactions in MariaDB",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-e", "value":"SHOW FULL PROCESSLIST;"}
+      ]
+    }
+  ]
+}

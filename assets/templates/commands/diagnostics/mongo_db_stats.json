@@ -1,0 +1,29 @@
+{
+  "command":"mongosh ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://www.mongodb.com/docs/manual/reference/command/dbStats/",
+  "desc":"Display collection counts, storage size, and index size of MongoDB database",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--username", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--password", "value":"${HIVEPAAS_PASSWORD}"},
+        {"use":true, "name":"--authenticationDatabase", "value":"admin"},
+        {"use":true, "name":"--quiet"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"--eval", "value":"JSON.stringify(db.getSiblingDB('${HIVEPAAS_DATABASE}').stats())"}
+      ]
+    }
+  ]
+}

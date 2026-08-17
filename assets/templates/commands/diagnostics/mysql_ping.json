@@ -1,0 +1,28 @@
+{
+  "command":"mysqladmin ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://dev.mysql.com/doc/refman/8.4/en/mysqladmin.html",
+  "desc":"Check MySQL server connectivity status via mysqladmin",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"ping"}
+      ]
+    }
+  ]
+}

@@ -126,7 +126,7 @@ export function CreateNetworkDialog() {
                         <Button
                             type="submit"
                             disabled={!canWrite || isPending}
-                            className="min-w-[120px]"
+                            className="min-w-[100px]"
                         >
                             Save
                         </Button>

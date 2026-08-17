@@ -124,7 +124,7 @@ export function CreateNetworkFormRoute({ scope }: Props) {
                         <Button
                             type="submit"
                             disabled={isPending}
-                            className="min-w-[120px]"
+                            className="min-w-[100px]"
                         >
                             Save
                         </Button>

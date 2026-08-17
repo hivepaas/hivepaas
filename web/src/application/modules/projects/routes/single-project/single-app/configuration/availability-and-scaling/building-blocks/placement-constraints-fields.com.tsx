@@ -118,11 +118,11 @@ export function PlacementConstraintsFields() {
                                 value={newName}
                                 onChange={setNewName}
                                 placeholder="Select or type name"
-                                inputClassName="h-9"
+                                // classNameContainer="h-9"
                             />
 
                             <div className="flex items-center rounded-md shadow-xs bg-background border border-input">
-                                <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md h-9 flex items-center">
+                                <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md flex items-center h-full">
                                     Op
                                 </span>
                                 <Select
@@ -131,7 +131,7 @@ export function PlacementConstraintsFields() {
                                         setNewOp(v as EAppServicePlacement);
                                     }}
                                 >
-                                    <SelectTrigger className="flex-1 border-0 shadow-none focus:ring-0 rounded-l-none h-9">
+                                    <SelectTrigger className="flex-1 border-0 shadow-none focus:ring-0 rounded-l-none">
                                         <SelectValue placeholder="Select op" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -141,8 +141,8 @@ export function PlacementConstraintsFields() {
                                 </Select>
                             </div>
 
-                            <div className="flex items-center rounded-md shadow-xs bg-background border border-input flex-1">
-                                <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md h-9 flex items-center">
+                            <div className="flex items-center rounded-md shadow-xs bg-background border border-input flex-1 h-9">
+                                <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md flex items-center h-full">
                                     Value
                                 </span>
                                 <Input
@@ -150,7 +150,7 @@ export function PlacementConstraintsFields() {
                                     onChange={e => {
                                         setNewValue(e.target.value);
                                     }}
-                                    className="border-0 shadow-none focus-visible:ring-0 rounded-l-none h-9"
+                                    className="border-0 shadow-none focus-visible:ring-0 rounded-l-none"
                                     placeholder="value"
                                 />
                             </div>
@@ -161,7 +161,7 @@ export function PlacementConstraintsFields() {
                             variant="outline"
                             onClick={handleAddConstraint}
                             disabled={!newName || !newValue}
-                            className="h-9 px-4 shrink-0"
+                            className="px-4 shrink-0"
                         >
                             <Plus className="size-4" /> Add
                         </Button>
@@ -186,8 +186,8 @@ export function PlacementConstraintsFields() {
                                                     placeholder="Select or type name"
                                                     inputClassName="h-8"
                                                 />
-                                                <div className="flex items-center rounded-md shadow-xs bg-background border border-input">
-                                                    <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md h-8 flex items-center">
+                                                <div className="flex items-center rounded-md shadow-xs bg-background border border-input h-9">
+                                                    <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md flex items-center h-full">
                                                         Op
                                                     </span>
                                                     <Select

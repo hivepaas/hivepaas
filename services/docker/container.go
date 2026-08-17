@@ -316,3 +316,17 @@ func (m *manager) ContainerUpdate(
 	}
 	return &resp, nil
 }
+
+func (m *manager) ContainerCopyFrom(
+	ctx context.Context,
+	containerID string,
+	srcPath string,
+) (*client.CopyFromContainerResult, error) {
+	resp, err := m.client.CopyFromContainer(ctx, containerID, client.CopyFromContainerOptions{
+		SourcePath: srcPath,
+	})
+	if err != nil {
+		return nil, apperrors.NewInfra(err)
+	}
+	return &resp, nil
+}

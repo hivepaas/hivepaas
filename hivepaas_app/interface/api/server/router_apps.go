@@ -154,6 +154,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		containerGroup := appGroup.Group("/:appID/container")
 		// Check port
 		containerGroup.POST("/check-port", appContainerHandler.CheckAppContainerPort)
+		// Download file
+		containerGroup.GET("/file-download", appContainerHandler.DownloadFileFromContainer)
 	}
 
 	{ // Deployments

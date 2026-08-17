@@ -83,6 +83,8 @@ type Manager interface {
 		*client.ContainerCreateResult, int64 /*status code*/, error)
 	ContainerUpdate(ctx context.Context, containerID string, options ...ContainerUpdateOption) (
 		*client.ContainerUpdateResult, error)
+	ContainerCopyFrom(ctx context.Context, containerID string, srcPath string) (
+		*client.CopyFromContainerResult, error)
 
 	// Images
 	ImageList(ctx context.Context, options ...ImageListOption) (

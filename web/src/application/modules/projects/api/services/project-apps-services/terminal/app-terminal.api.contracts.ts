@@ -19,6 +19,12 @@ export interface AppTerminalResizeMessage {
     height: number;
 }
 
+export interface AppTerminalInitMessage {
+    type: "init";
+    containerId: string;
+    nodeId: string;
+}
+
 export type AppTerminalWs_Open_Req = {
     data: {
         projectID: string;

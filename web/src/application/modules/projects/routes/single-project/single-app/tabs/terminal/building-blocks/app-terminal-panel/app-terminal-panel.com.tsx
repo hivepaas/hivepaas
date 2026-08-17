@@ -9,7 +9,7 @@ import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { useAppTerminalWsApi } from "~/projects/api";
-import { buildAppTerminalResizeMessage } from "~/projects/api/services";
+import { type AppTerminalInitMessage, buildAppTerminalResizeMessage } from "~/projects/api/services";
 
 import styles from "./app-terminal-panel.module.scss";
 
@@ -37,11 +37,13 @@ export function AppTerminalPanel({
     const inputEncoderRef = useRef(new TextEncoder());
     const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [connectedInfo, setConnectedInfo] = useState<AppTerminalInitMessage | null>(null);
     const { streams } = useAppTerminalWsApi();
 
     const isConnectionActive = webSocketReadyState === WebSocket.CONNECTING || webSocketReadyState === WebSocket.OPEN;
     const canConnect = selectedShell !== "" && !isConnectionActive;
     const status = getTerminalStatus(webSocketReadyState);
+    void connectedInfo;
 
     const sendResizeToSocket = useCallback((socket: WebSocket | undefined, width: number, height: number) => {
         if (!socket || socket.readyState !== WebSocket.OPEN || width <= 0 || height <= 0) {
@@ -129,6 +131,7 @@ export function AppTerminalPanel({
         subscriptionRef.current = null;
         subscription?.close();
         setWebSocketReadyState(WebSocket.CLOSED);
+        setConnectedInfo(null);
     }, []);
 
     const handleConnect = useCallback(() => {
@@ -164,7 +167,19 @@ export function AppTerminalPanel({
                         terminalRef.current?.focus();
                         sendCurrentResize(socket);
                     },
-                    onMessage: message => {
+                    onMessage: (message, event) => {
+                        if (typeof event.data === "string") {
+                            try {
+                                const parsed: unknown = JSON.parse(event.data);
+                                if (isAppTerminalInitMessage(parsed)) {
+                                    setConnectedInfo(parsed);
+                                    return;
+                                }
+                            } catch {
+                                // Ignore non-JSON text message and write to terminal
+                            }
+                        }
+
                         terminalRef.current?.write(message);
                     },
                     onMessageError: error => {
@@ -183,6 +198,7 @@ export function AppTerminalPanel({
                         }
 
                         setWebSocketReadyState(WebSocket.CLOSED);
+                        setConnectedInfo(null);
                     },
                     onReadyStateChange: readyState => {
                         setWebSocketReadyState(readyState);
@@ -190,6 +206,7 @@ export function AppTerminalPanel({
                 },
                 abortController.signal,
             )
+
             .then(subscription => {
                 if (abortController.signal.aborted) {
                     subscription.close();
@@ -429,4 +446,17 @@ interface AppTerminalPanelProps {
     supportedShells: string[];
     selectedShell: string;
     onSelectedShellChange: (shell: string) => void;
+}
+
+function isAppTerminalInitMessage(data: unknown): data is AppTerminalInitMessage {
+    if (typeof data !== "object" || data === null) {
+        return false;
+    }
+
+    const candidate = data as Record<string, unknown>;
+    return (
+        candidate["type"] === "init" &&
+        typeof candidate["containerId"] === "string" &&
+        typeof candidate["nodeId"] === "string"
+    );
 }

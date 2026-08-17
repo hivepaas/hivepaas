@@ -7,6 +7,9 @@ option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/p
 service ContainerService {
   // ContainerExec starts a command execution in a container and pipes stdout/stderr/stdin/resize.
   rpc ContainerExec(stream ContainerExecReq) returns (stream ContainerExecResp);
+
+  // ContainerCopyFrom extracts a file or directory archive from a container.
+  rpc ContainerCopyFrom(ContainerCopyFromReq) returns (stream ContainerCopyFromResp);
 }
 
 message ContainerExecReq {
@@ -38,3 +41,19 @@ message ContainerExecResp {
     int32 exit_code = 3;
   }
 }
+
+message ContainerCopyFromReq {
+  string container_id = 1;
+  string path = 2;
+  bool is_dir = 3;
+  string compression_format = 4;
+}
+
+message ContainerCopyFromResp {
+  bytes chunk = 1;
+  string file_name = 2;
+  int64 file_size = 3;
+  string content_type = 4;
+}
+
+

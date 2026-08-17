@@ -353,6 +353,142 @@ func (*ContainerExecResp_Stderr) isContainerExecResp_Value() {}
 
 func (*ContainerExecResp_ExitCode) isContainerExecResp_Value() {}
 
+type ContainerCopyFromReq struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	ContainerId       string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	Path              string                 `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	IsDir             bool                   `protobuf:"varint,3,opt,name=is_dir,json=isDir,proto3" json:"is_dir,omitempty"`
+	CompressionFormat string                 `protobuf:"bytes,4,opt,name=compression_format,json=compressionFormat,proto3" json:"compression_format,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ContainerCopyFromReq) Reset() {
+	*x = ContainerCopyFromReq{}
+	mi := &file_container_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerCopyFromReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerCopyFromReq) ProtoMessage() {}
+
+func (x *ContainerCopyFromReq) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerCopyFromReq.ProtoReflect.Descriptor instead.
+func (*ContainerCopyFromReq) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ContainerCopyFromReq) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *ContainerCopyFromReq) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *ContainerCopyFromReq) GetIsDir() bool {
+	if x != nil {
+		return x.IsDir
+	}
+	return false
+}
+
+func (x *ContainerCopyFromReq) GetCompressionFormat() string {
+	if x != nil {
+		return x.CompressionFormat
+	}
+	return ""
+}
+
+type ContainerCopyFromResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Chunk         []byte                 `protobuf:"bytes,1,opt,name=chunk,proto3" json:"chunk,omitempty"`
+	FileName      string                 `protobuf:"bytes,2,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	FileSize      int64                  `protobuf:"varint,3,opt,name=file_size,json=fileSize,proto3" json:"file_size,omitempty"`
+	ContentType   string                 `protobuf:"bytes,4,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContainerCopyFromResp) Reset() {
+	*x = ContainerCopyFromResp{}
+	mi := &file_container_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerCopyFromResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerCopyFromResp) ProtoMessage() {}
+
+func (x *ContainerCopyFromResp) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerCopyFromResp.ProtoReflect.Descriptor instead.
+func (*ContainerCopyFromResp) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ContainerCopyFromResp) GetChunk() []byte {
+	if x != nil {
+		return x.Chunk
+	}
+	return nil
+}
+
+func (x *ContainerCopyFromResp) GetFileName() string {
+	if x != nil {
+		return x.FileName
+	}
+	return ""
+}
+
+func (x *ContainerCopyFromResp) GetFileSize() int64 {
+	if x != nil {
+		return x.FileSize
+	}
+	return 0
+}
+
+func (x *ContainerCopyFromResp) GetContentType() string {
+	if x != nil {
+		return x.ContentType
+	}
+	return ""
+}
+
 var File_container_proto protoreflect.FileDescriptor
 
 const file_container_proto_rawDesc = "" +
@@ -378,9 +514,20 @@ const file_container_proto_rawDesc = "" +
 	"\x06stdout\x18\x01 \x01(\fH\x00R\x06stdout\x12\x18\n" +
 	"\x06stderr\x18\x02 \x01(\fH\x00R\x06stderr\x12\x1d\n" +
 	"\texit_code\x18\x03 \x01(\x05H\x00R\bexitCodeB\a\n" +
-	"\x05value2Z\n" +
+	"\x05value\"\x93\x01\n" +
+	"\x14ContainerCopyFromReq\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x12\n" +
+	"\x04path\x18\x02 \x01(\tR\x04path\x12\x15\n" +
+	"\x06is_dir\x18\x03 \x01(\bR\x05isDir\x12-\n" +
+	"\x12compression_format\x18\x04 \x01(\tR\x11compressionFormat\"\x8a\x01\n" +
+	"\x15ContainerCopyFromResp\x12\x14\n" +
+	"\x05chunk\x18\x01 \x01(\fR\x05chunk\x12\x1b\n" +
+	"\tfile_name\x18\x02 \x01(\tR\bfileName\x12\x1b\n" +
+	"\tfile_size\x18\x03 \x01(\x03R\bfileSize\x12!\n" +
+	"\fcontent_type\x18\x04 \x01(\tR\vcontentType2\xac\x01\n" +
 	"\x10ContainerService\x12F\n" +
-	"\rContainerExec\x12\x17.agent.ContainerExecReq\x1a\x18.agent.ContainerExecResp(\x010\x01BLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
+	"\rContainerExec\x12\x17.agent.ContainerExecReq\x1a\x18.agent.ContainerExecResp(\x010\x01\x12P\n" +
+	"\x11ContainerCopyFrom\x12\x1b.agent.ContainerCopyFromReq\x1a\x1c.agent.ContainerCopyFromResp0\x01BLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
 
 var (
 	file_container_proto_rawDescOnce sync.Once
@@ -394,21 +541,25 @@ func file_container_proto_rawDescGZIP() []byte {
 	return file_container_proto_rawDescData
 }
 
-var file_container_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_container_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_container_proto_goTypes = []any{
-	(*ContainerExecReq)(nil),    // 0: agent.ContainerExecReq
-	(*ContainerExecConfig)(nil), // 1: agent.ContainerExecConfig
-	(*TerminalSize)(nil),        // 2: agent.TerminalSize
-	(*ContainerExecResp)(nil),   // 3: agent.ContainerExecResp
+	(*ContainerExecReq)(nil),      // 0: agent.ContainerExecReq
+	(*ContainerExecConfig)(nil),   // 1: agent.ContainerExecConfig
+	(*TerminalSize)(nil),          // 2: agent.TerminalSize
+	(*ContainerExecResp)(nil),     // 3: agent.ContainerExecResp
+	(*ContainerCopyFromReq)(nil),  // 4: agent.ContainerCopyFromReq
+	(*ContainerCopyFromResp)(nil), // 5: agent.ContainerCopyFromResp
 }
 var file_container_proto_depIdxs = []int32{
 	1, // 0: agent.ContainerExecReq.config:type_name -> agent.ContainerExecConfig
 	2, // 1: agent.ContainerExecReq.resize:type_name -> agent.TerminalSize
 	2, // 2: agent.ContainerExecConfig.console_size:type_name -> agent.TerminalSize
 	0, // 3: agent.ContainerService.ContainerExec:input_type -> agent.ContainerExecReq
-	3, // 4: agent.ContainerService.ContainerExec:output_type -> agent.ContainerExecResp
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
+	4, // 4: agent.ContainerService.ContainerCopyFrom:input_type -> agent.ContainerCopyFromReq
+	3, // 5: agent.ContainerService.ContainerExec:output_type -> agent.ContainerExecResp
+	5, // 6: agent.ContainerService.ContainerCopyFrom:output_type -> agent.ContainerCopyFromResp
+	5, // [5:7] is the sub-list for method output_type
+	3, // [3:5] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
 	3, // [3:3] is the sub-list for extension extendee
 	0, // [0:3] is the sub-list for field type_name
@@ -435,7 +586,7 @@ func file_container_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_container_proto_rawDesc), len(file_container_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

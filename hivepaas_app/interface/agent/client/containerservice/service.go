@@ -9,11 +9,14 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
 )
 
 // ContainerServiceClient defines the client interface for ContainerService gRPC methods.
 type ContainerServiceClient interface {
 	ContainerExec(ctx context.Context) (*ContainerExecStream, error)
+	ContainerCopyFrom(ctx context.Context, req *containeragentdto.DownloadFileInput) (
+		*RemoteFileDownloadResult, error)
 	Close() error
 }
 

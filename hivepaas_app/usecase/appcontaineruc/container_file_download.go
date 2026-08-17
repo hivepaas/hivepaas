@@ -1,95 +1,18 @@
 package appcontaineruc
 
 import (
-	"archive/tar"
-	"compress/gzip"
 	"context"
 	"io"
-	"path/filepath"
-
-	"github.com/klauspost/compress/zstd"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/containerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc/appcontainerdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
 )
-
-type tarReadCloser struct {
-	tarReader  *tar.Reader
-	underlying io.Closer
-}
-
-func (r *tarReadCloser) Read(p []byte) (int, error) {
-	n, err := r.tarReader.Read(p)
-	if err != nil {
-		if err == io.EOF {
-			return n, io.EOF
-		}
-		return n, apperrors.Wrap(err)
-	}
-	return n, nil
-}
-
-func (r *tarReadCloser) Close() error {
-	if r.underlying != nil {
-		if err := r.underlying.Close(); err != nil {
-			return apperrors.Wrap(err)
-		}
-	}
-	return nil
-}
-
-func compressStream(
-	srcReader io.ReadCloser,
-	format base.FileCompressionFormat,
-) (io.ReadCloser, error) {
-	if format == base.FileCompressionNone {
-		return srcReader, nil
-	}
-
-	pr, pw := io.Pipe()
-
-	var compWriter io.WriteCloser
-	switch format {
-	case base.FileCompressionNone:
-		return srcReader, nil
-	case base.FileCompressionFormatGzip:
-		compWriter = gzip.NewWriter(pw)
-	case base.FileCompressionFormatZstd:
-		zstdW, err := zstd.NewWriter(pw)
-		if err != nil {
-			_ = pr.Close()
-			_ = pw.Close()
-			return nil, apperrors.Wrap(err)
-		}
-		compWriter = zstdW
-	default:
-		return srcReader, nil
-	}
-
-	go func() {
-		defer func() {
-			_ = srcReader.Close()
-			_ = compWriter.Close()
-		}()
-
-		_, err := io.Copy(compWriter, srcReader)
-		if err != nil {
-			_ = pw.CloseWithError(err)
-			return
-		}
-		if err := compWriter.Close(); err != nil {
-			_ = pw.CloseWithError(err)
-			return
-		}
-		_ = pw.Close()
-	}()
-
-	return pr, nil
-}
 
 func (uc *UC) DownloadFileFromContainer(
 	ctx context.Context,
@@ -111,78 +34,70 @@ func (uc *UC) DownloadFileFromContainer(
 			WithMsgLog("service not exist for app")
 	}
 
-	res, err := uc.dockerManager.ContainerCopyFrom(ctx, req.ContainerID, req.Path)
+	var (
+		resultFileName    string
+		resultFileSize    int64
+		resultContentType string
+		resultReader      io.ReadCloser
+	)
+
+	currNodeID, err := uc.dockerManager.NodeCurrentID(ctx)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	reader := res.Content
-	stat := res.Stat
+	isRemote := req.NodeID != "" && req.NodeID != currNodeID
+	if isRemote {
+		agentAddr, err := uc.agentService.GetAgentAddrForNode(ctx, req.NodeID)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
 
-	cleanPath := filepath.Clean(req.Path)
-	baseName := filepath.Base(cleanPath)
-	if baseName == "/" || baseName == "." {
-		baseName = "root"
-	}
+		agentClient, err := containerservice.NewContainerServiceClient(agentAddr)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
 
-	var (
-		resultReader      io.ReadCloser
-		resultFileName    string
-		resultFileSize    int64
-		resultContentType string
-	)
+		remoteRes, err := agentClient.ContainerCopyFrom(ctx, &containeragentdto.DownloadFileInput{
+			ContainerID:       req.ContainerID,
+			Path:              req.Path,
+			IsDir:             req.IsDir,
+			CompressionFormat: req.CompressionFormat,
+		})
+		if err != nil {
+			_ = agentClient.Close()
+			return nil, apperrors.Wrap(err)
+		}
 
-	if req.IsDir || stat.Mode.IsDir() {
-		resultReader = reader
-		resultFileName = baseName + ".tar"
-		resultContentType = "application/x-tar"
+		resultFileName = remoteRes.FileName
+		resultFileSize = remoteRes.FileSize
+		resultContentType = remoteRes.ContentType
+		resultReader = &clientReadCloser{
+			reader: remoteRes.Reader,
+			client: agentClient,
+		}
 	} else {
-		tarReader := tar.NewReader(reader)
-		header, err := tarReader.Next()
+		res, err := uc.dockerManager.ContainerCopyFrom(ctx, req.ContainerID, req.Path)
 		if err != nil {
-			_ = reader.Close()
 			return nil, apperrors.Wrap(err)
 		}
 
-		fileName := header.Name
-		if fileName == "" {
-			fileName = baseName
-		} else {
-			fileName = filepath.Base(fileName)
-		}
-
-		resultReader = &tarReadCloser{
-			tarReader:  tarReader,
-			underlying: reader,
-		}
-		resultFileName = fileName
-		resultFileSize = header.Size
-		resultContentType = "application/octet-stream"
-	}
-
-	switch req.CompressionFormat {
-	case base.FileCompressionNone:
-		// No compression, keep original stream
-	case base.FileCompressionFormatGzip:
-		compressedReader, err := compressStream(resultReader, req.CompressionFormat)
+		resp, err := uc.containerFileService.StreamFile(ctx, &containerfileservice.StreamFileReq{
+			Path:              req.Path,
+			IsDir:             req.IsDir,
+			CompressionFormat: req.CompressionFormat,
+			Content:           res.Content,
+			Stat:              &res.Stat,
+		})
 		if err != nil {
-			_ = resultReader.Close()
+			_ = res.Content.Close()
 			return nil, apperrors.Wrap(err)
 		}
-		resultReader = compressedReader
-		resultFileName += ".gz"
-		resultContentType = "application/gzip"
-		resultFileSize = 0
-	case base.FileCompressionFormatZstd:
-		compressedReader, err := compressStream(resultReader, req.CompressionFormat)
-		if err != nil {
-			_ = resultReader.Close()
-			return nil, apperrors.Wrap(err)
-		}
-		resultReader = compressedReader
-		resultFileName += ".zst"
-		resultContentType = "application/zstd"
-		resultFileSize = 0
+
+		resultFileName = resp.FileName
+		resultFileSize = resp.FileSize
+		resultContentType = resp.ContentType
+		resultReader = resp.Reader
 	}
 
 	return &appcontainerdto.DownloadFileFromContainerResp{
@@ -191,4 +106,38 @@ func (uc *UC) DownloadFileFromContainer(
 		ContentType: resultContentType,
 		Reader:      resultReader,
 	}, nil
+}
+
+type clientReadCloser struct {
+	reader io.ReadCloser
+	client containerservice.ContainerServiceClient
+}
+
+func (r *clientReadCloser) Read(p []byte) (int, error) {
+	n, err := r.reader.Read(p)
+	if err != nil {
+		if err == io.EOF {
+			return n, io.EOF
+		}
+		return n, apperrors.Wrap(err)
+	}
+	return n, nil
+}
+
+func (r *clientReadCloser) Close() error {
+	var errs []error
+	if r.reader != nil {
+		if err := r.reader.Close(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if r.client != nil {
+		if err := r.client.Close(); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	if len(errs) > 0 {
+		return apperrors.Wrap(errs[0])
+	}
+	return nil
 }

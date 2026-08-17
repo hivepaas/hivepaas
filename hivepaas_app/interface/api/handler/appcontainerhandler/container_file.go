@@ -1,7 +1,9 @@
 package appcontainerhandler
 
 import (
+	"fmt"
 	"io"
+	"net/url"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -52,7 +54,11 @@ func (h *Handler) DownloadFileFromContainer(ctx *gin.Context) {
 	}
 	defer resp.Reader.Close()
 
-	ctx.Header("Content-Disposition", "attachment; filename="+resp.FileName)
+	ctx.Header("Content-Disposition", fmt.Sprintf(
+		`attachment; filename="%s"; filename*=UTF-8''%s`,
+		resp.FileName,
+		url.QueryEscape(resp.FileName),
+	))
 	ctx.Header("Content-Type", resp.ContentType)
 	if resp.FileSize > 0 {
 		ctx.Header("Content-Length", strconv.FormatInt(resp.FileSize, 10))

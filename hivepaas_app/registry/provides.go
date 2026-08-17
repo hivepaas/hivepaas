@@ -53,6 +53,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandpipeexecservice/commandpipeexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandservice/commandserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice/containerexecserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice/containerfileserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dbservice/dbserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice/domainserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/emailservice/emailserviceimpl"
@@ -304,6 +305,7 @@ var Provides = []any{
 	commandpipeexecserviceimpl.New,
 	commandserviceimpl.New,
 	containerexecserviceimpl.New,
+	containerfileserviceimpl.New,
 	dbserviceimpl.New,
 	domainserviceimpl.New,
 	emailserviceimpl.New,

@@ -5018,6 +5018,67 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/command-pipes/from-template" : {
+      "post" : {
+        "description" : "Creates a command pipe setting from template",
+        "operationId" : "createProjectCommandPipeFromTemplate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_commandpipedto.CreateCommandPipeFromTemplateReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_commandpipedto.CreateCommandPipeFromTemplateResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a command pipe setting from template",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/command-pipes/{itemID}" : {
       "delete" : {
         "description" : "Deletes command pipe setting",
@@ -20247,6 +20308,75 @@
           }
         },
         "summary" : "Creates a new command pipe setting",
+        "tags" : [ "project_env_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/command-pipes/from-template" : {
+      "post" : {
+        "description" : "Creates a command pipe setting from template",
+        "operationId" : "createProjectEnvCommandPipeFromTemplate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_commandpipedto.CreateCommandPipeFromTemplateReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_commandpipedto.CreateCommandPipeFromTemplateResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a command pipe setting from template",
         "tags" : [ "project_env_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -35738,7 +35868,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -35756,7 +35886,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -43046,6 +43176,36 @@
         "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "sourceCommand", "status", "targetCommand", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
+      "settings_commandpipedto.CreateCommandPipeFromTemplateReq" : {
+        "properties" : {
+          "availableInProjects" : {
+            "type" : "boolean"
+          },
+          "commandType" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "availableInProjects", "commandType", "default", "name" ],
+        "type" : "object"
+      },
+      "settings_commandpipedto.CreateCommandPipeFromTemplateResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "settings_commandpipedto.CreateCommandPipeReq" : {
         "properties" : {
           "availableInProjects" : {
@@ -43264,6 +43424,9 @@
           "consoleSize" : {
             "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateConsoleSizeReq"
           },
+          "desc" : {
+            "type" : "string"
+          },
           "envVars" : {
             "items" : {
               "$ref" : "#/components/schemas/basedto.EnvVarReq"
@@ -43271,6 +43434,9 @@
             "type" : "array"
           },
           "kind" : {
+            "type" : "string"
+          },
+          "link" : {
             "type" : "string"
           },
           "name" : {
@@ -43286,7 +43452,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "argGroups", "command", "consoleSize", "envVars", "kind", "name", "script", "tty", "workingDir" ],
+        "required" : [ "argGroups", "command", "consoleSize", "desc", "envVars", "kind", "link", "name", "script", "tty", "workingDir" ],
         "type" : "object"
       },
       "settings_commandtemplatedto.CommandTemplateConsoleSizeReq" : {
@@ -43336,6 +43502,9 @@
           "default" : {
             "type" : "boolean"
           },
+          "desc" : {
+            "type" : "string"
+          },
           "envVars" : {
             "items" : {
               "$ref" : "#/components/schemas/basedto.EnvVarResp"
@@ -43352,6 +43521,9 @@
             "type" : "boolean"
           },
           "kind" : {
+            "type" : "string"
+          },
+          "link" : {
             "type" : "string"
           },
           "name" : {
@@ -43383,7 +43555,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "argGroups", "availableInProjects", "command", "consoleSize", "createdAt", "default", "envVars", "expireAt", "id", "inherited", "kind", "name", "script", "size", "status", "tty", "type", "updateVer", "updatedAt", "workingDir" ],
+        "required" : [ "argGroups", "availableInProjects", "command", "consoleSize", "createdAt", "default", "desc", "envVars", "expireAt", "id", "inherited", "kind", "link", "name", "script", "size", "status", "tty", "type", "updateVer", "updatedAt", "workingDir" ],
         "type" : "object"
       },
       "settings_commandtemplatedto.CreateCommandTemplateReq" : {
@@ -43406,6 +43578,9 @@
           "default" : {
             "type" : "boolean"
           },
+          "desc" : {
+            "type" : "string"
+          },
           "envVars" : {
             "items" : {
               "$ref" : "#/components/schemas/basedto.EnvVarReq"
@@ -43413,6 +43588,9 @@
             "type" : "array"
           },
           "kind" : {
+            "type" : "string"
+          },
+          "link" : {
             "type" : "string"
           },
           "name" : {
@@ -43428,7 +43606,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "argGroups", "availableInProjects", "command", "consoleSize", "default", "envVars", "kind", "name", "script", "tty", "workingDir" ],
+        "required" : [ "argGroups", "availableInProjects", "command", "consoleSize", "default", "desc", "envVars", "kind", "link", "name", "script", "tty", "workingDir" ],
         "type" : "object"
       },
       "settings_commandtemplatedto.CreateCommandTemplateResp" : {
@@ -43499,6 +43677,9 @@
           "default" : {
             "type" : "boolean"
           },
+          "desc" : {
+            "type" : "string"
+          },
           "envVars" : {
             "items" : {
               "$ref" : "#/components/schemas/basedto.EnvVarReq"
@@ -43506,6 +43687,9 @@
             "type" : "array"
           },
           "kind" : {
+            "type" : "string"
+          },
+          "link" : {
             "type" : "string"
           },
           "name" : {
@@ -43524,7 +43708,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "argGroups", "availableInProjects", "command", "consoleSize", "default", "envVars", "kind", "name", "script", "tty", "updateVer", "workingDir" ],
+        "required" : [ "argGroups", "availableInProjects", "command", "consoleSize", "default", "desc", "envVars", "kind", "link", "name", "script", "tty", "updateVer", "workingDir" ],
         "type" : "object"
       },
       "settings_commandtemplatedto.UpdateCommandTemplateResp" : {
@@ -51849,9 +52033,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

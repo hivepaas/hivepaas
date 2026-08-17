@@ -27,6 +27,8 @@ type CommandTemplate struct {
 	ArgGroups   []*CommandTemplateArgGroup `json:"argGroups,omitempty"`
 	ConsoleSize CommandTemplateConsoleSize `json:"consoleSize,omitzero"`
 	TTY         bool                       `json:"tty,omitempty"`
+	Link        string                     `json:"link,omitempty"`
+	Desc        string                     `json:"desc,omitempty"`
 }
 
 type CommandTemplateArgGroup struct {

@@ -38,6 +38,8 @@ type CommandTemplateResp struct {
 	ArgGroups   []*CommandTemplateArgGroupResp  `json:"argGroups,omitempty"`
 	ConsoleSize *CommandTemplateConsoleSizeResp `json:"consoleSize,omitempty"`
 	TTY         bool                            `json:"tty,omitempty"`
+	Link        string                          `json:"link,omitempty"`
+	Desc        string                          `json:"desc,omitempty"`
 }
 
 type CommandTemplateArgGroupResp struct {

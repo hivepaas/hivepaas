@@ -28,6 +28,8 @@ type CommandTemplateBaseReq struct {
 	ArgGroups   []*CommandTemplateArgGroupReq  `json:"argGroups"`
 	ConsoleSize *CommandTemplateConsoleSizeReq `json:"consoleSize"`
 	TTY         bool                           `json:"tty"`
+	Link        string                         `json:"link,omitempty"`
+	Desc        string                         `json:"desc,omitempty"`
 }
 
 func (req *CommandTemplateBaseReq) ToEntity() *entity.CommandTemplate {
@@ -46,6 +48,8 @@ func (req *CommandTemplateBaseReq) ToEntity() *entity.CommandTemplate {
 		}),
 		ConsoleSize: req.ConsoleSize.ToEntity(),
 		TTY:         req.TTY,
+		Link:        req.Link,
+		Desc:        req.Desc,
 	}
 }
 
@@ -53,6 +57,8 @@ func (req *CommandTemplateBaseReq) ModifyRequest() error {
 	req.Name = strings.TrimSpace(req.Name)
 	req.WorkingDir = strings.TrimSpace(req.WorkingDir)
 	req.Script = strings.ReplaceAll(req.Script, "\r\n", "\n")
+	req.Link = strings.TrimSpace(req.Link)
+	req.Desc = strings.TrimSpace(req.Desc)
 	return nil
 }
 
@@ -63,8 +69,14 @@ func (req *CommandTemplateBaseReq) Validate(field string) (res []vld.Validator) 
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
 	cmdValid := (req.Command != "" && req.Script == "") || (req.Command == "" && req.Script != "")
 	res = append(res, basedto.ValidateCond(cmdValid, field+"command|script")...)
-	res = append(res, basedto.ValidateStr(&req.Command, false, 1, int(base.ExecCommandMaxSize), field+"command")...)
-	res = append(res, basedto.ValidateStr(&req.Script, false, 1, int(base.ExecCommandMaxSize), field+"script")...)
+	res = append(res, basedto.ValidateStr(&req.Command, false, 1, int(base.ExecCommandMaxSize),
+		field+"command")...)
+	res = append(res, basedto.ValidateStr(&req.Script, false, 1, int(base.ExecCommandMaxSize),
+		field+"script")...)
+	res = append(res, basedto.ValidateStr(&req.Link, false, base.URLMinLen, base.URLMaxLen,
+		field+"link")...)
+	res = append(res, basedto.ValidateStr(&req.Desc, false, base.SettingDescMinLen, base.SettingDescMaxLen,
+		field+"desc")...)
 	return res
 }
 

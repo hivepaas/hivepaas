@@ -4,6 +4,9 @@ const (
 	SettingNameMinLen = 1
 	SettingNameMaxLen = 100
 
+	SettingDescMinLen = 1
+	SettingDescMaxLen = 1000
+
 	URLMinLen = 3
 	URLMaxLen = 500
 

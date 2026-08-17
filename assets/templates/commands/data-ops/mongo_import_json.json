@@ -1,0 +1,31 @@
+{
+  "command":"mongoimport ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://www.mongodb.com/docs/database-tools/mongoimport/",
+  "desc":"Import documents from a JSON file into a MongoDB collection",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--username", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--password", "value":"${HIVEPAAS_PASSWORD}"},
+        {"use":true, "name":"--authenticationDatabase", "value":"admin"},
+        {"use":true, "name":"--db", "value":"${HIVEPAAS_DATABASE}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--collection", "value":"${HIVEPAAS_TABLE}"},
+        {"use":true, "name":"--file", "value":"/tmp/${HIVEPAAS_TABLE}.json"},
+        {"use":true, "name":"--jsonArray"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "command":"npx prisma migrate deploy ${CMD_OPTS_ARGS}",
+  "link":"https://www.prisma.io/docs/reference/api-reference/prisma-cli-reference#migrate-deploy",
+  "desc":"Apply all pending migrations to the database in production with Prisma",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":false, "name":"--schema", "value":"/app/prisma/schema.prisma"}
+      ]
+    }
+  ]
+}

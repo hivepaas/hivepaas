@@ -1,0 +1,19 @@
+{
+  "command":"k6 ${CMD_OPTS_ARGS}",
+  "link":"https://k6.io/docs/using-k6/k6-options/",
+  "desc":"Run modern load and performance testing script with k6",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"run"},
+        {"use":true, "name":"--vus", "value":"10"},
+        {"use":true, "name":"--duration", "value":"30s"},
+        {"use":true, "name":"/app/load_test.js"}
+      ]
+    }
+  ]
+}

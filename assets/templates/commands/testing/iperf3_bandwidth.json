@@ -1,0 +1,19 @@
+{
+  "command":"iperf3 ${CMD_OPTS_ARGS}",
+  "link":"https://software.es.net/iperf/",
+  "desc":"Test maximum network bandwidth and TCP throughput between nodes",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-c", "value":"${HIVEPAAS_TARGET_HOST}"},
+        {"use":true, "name":"-p", "value":"5201"},
+        {"use":true, "name":"-t", "value":"10"},
+        {"use":true, "name":"-P", "value":"4"}
+      ]
+    }
+  ]
+}

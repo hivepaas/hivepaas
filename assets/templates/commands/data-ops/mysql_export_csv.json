@@ -1,0 +1,30 @@
+{
+  "command":"mysql ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://dev.mysql.com/doc/refman/8.4/en/mysql-batch-commands.html",
+  "desc":"Export table data from MySQL to tab/comma formatted stream",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"--batch"},
+        {"use":true, "name":"--raw"},
+        {"use":true, "name":"-e", "value":"SELECT * FROM ${HIVEPAAS_TABLE};"}
+      ]
+    }
+  ]
+}

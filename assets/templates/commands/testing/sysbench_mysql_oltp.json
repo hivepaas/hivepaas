@@ -1,0 +1,24 @@
+{
+  "command":"sysbench ${CMD_OPTS_ARGS}",
+  "link":"https://github.com/akopytov/sysbench",
+  "desc":"Run OLTP read/write benchmark test against MySQL using sysbench",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"oltp_read_write"},
+        {"use":true, "name":"--mysql-host", "value":"localhost"},
+        {"use":true, "name":"--mysql-port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--mysql-user", "value":"${HIVEPAAS_USER}"},
+        {"use":true, "name":"--mysql-password", "value":"${HIVEPAAS_PASSWORD}"},
+        {"use":true, "name":"--mysql-db", "value":"${HIVEPAAS_DATABASE}"},
+        {"use":true, "name":"--threads", "value":"8"},
+        {"use":true, "name":"--time", "value":"30"},
+        {"use":true, "name":"run"}
+      ]
+    }
+  ]
+}

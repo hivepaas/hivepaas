@@ -1,0 +1,31 @@
+{
+  "command":"mysqlslap ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://dev.mysql.com/doc/refman/8.4/en/mysqlslap.html",
+  "desc":"Emulate client load and benchmark MySQL query throughput",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--concurrency", "value":"20"},
+        {"use":true, "name":"--iterations", "value":"5"},
+        {"use":true, "name":"--number-of-queries", "value":"1000"},
+        {"use":true, "name":"--auto-generate-sql"}
+      ]
+    }
+  ]
+}

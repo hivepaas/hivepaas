@@ -1,0 +1,18 @@
+{
+  "command":"migrate ${CMD_OPTS_ARGS}",
+  "link":"https://github.com/golang-migrate/migrate",
+  "desc":"Apply all available up migrations using golang-migrate",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-path", "value":"/migrations"},
+        {"use":true, "name":"-database", "value":"${DATABASE_URL}"},
+        {"use":true, "name":"up"}
+      ]
+    }
+  ]
+}

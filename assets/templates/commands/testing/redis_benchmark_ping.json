@@ -1,0 +1,30 @@
+{
+  "command":"redis-benchmark ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/benchmarks/",
+  "desc":"Benchmark PING command throughput and connection latency in Redis",
+  "envVars":[
+    {"k":"REDISCLI_AUTH", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-h", "value":"localhost"},
+        {"use":true, "name":"-p", "value":"${HIVEPAAS_PORT}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-q"},
+        {"use":true, "name":"-n", "value":"50000"},
+        {"use":true, "name":"-c", "value":"20"},
+        {"use":true, "name":"-t", "value":"ping"}
+      ]
+    }
+  ]
+}

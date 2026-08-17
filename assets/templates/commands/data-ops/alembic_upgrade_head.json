@@ -1,0 +1,18 @@
+{
+  "command":"alembic ${CMD_OPTS_ARGS}",
+  "link":"https://alembic.sqlalchemy.org/en/latest/tutorial.html#running-our-first-migration",
+  "desc":"Upgrade database schema to the latest revision with Alembic",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":false, "name":"-c", "value":"/app/alembic.ini"},
+        {"use":true, "name":"upgrade"},
+        {"use":true, "name":"head"}
+      ]
+    }
+  ]
+}

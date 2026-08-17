@@ -1,0 +1,32 @@
+{
+  "command":"mysqlimport ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://dev.mysql.com/doc/refman/8.4/en/mysqlimport.html",
+  "desc":"Import CSV data into MySQL table via mysqlimport utility",
+  "envVars":[
+    {"k":"MYSQL_PWD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"--local"},
+        {"use":true, "name":"--fields-terminated-by", "value":","},
+        {"use":true, "name":"--ignore-lines", "value":"1"},
+        {"use":true, "name":"${HIVEPAAS_DATABASE}"},
+        {"use":true, "name":"/tmp/${HIVEPAAS_TABLE}.csv"}
+      ]
+    }
+  ]
+}

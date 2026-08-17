@@ -578,6 +578,85 @@ func TestGetCommand(t *testing.T) {
 		})
 	}
 
+	dataOpsTemplates := []struct {
+		name        string
+		expectedCmd string
+	}{
+		{"migrate_up", "migrate"},
+		{"migrate_down", "migrate"},
+		{"goose_up", "goose"},
+		{"goose_down", "goose"},
+		{"prisma_migrate_deploy", "prisma"},
+		{"alembic_upgrade_head", "alembic"},
+		{"pg_export_csv", "psql"},
+		{"pg_import_csv", "psql"},
+		{"mysql_export_csv", "mysql"},
+		{"mysql_import_csv", "mysqlimport"},
+		{"mongo_export_json", "mongoexport"},
+		{"mongo_import_json", "mongoimport"},
+		{"clickhouse_export_parquet", "clickhouse-client"},
+		{"clickhouse_import_parquet", "clickhouse-client"},
+	}
+
+	for _, tc := range dataOpsTemplates {
+		t.Run("success loading "+tc.name+" data-ops command template", func(t *testing.T) {
+			setting, err := s.GetCommand(ctx, string(base.CommandTemplateDataOps), tc.name)
+			assert.NoError(t, err)
+			if assert.NotNil(t, setting) {
+				assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
+				assert.Equal(t, string(base.CommandTemplateDataOps), setting.Kind)
+				assert.Equal(t, tc.name, setting.Name)
+				assert.Equal(t, base.SettingStatusActive, setting.Status)
+
+				cmdData, err := setting.AsCommandTemplate()
+				assert.NoError(t, err)
+				if assert.NotNil(t, cmdData) {
+					assert.Contains(t, cmdData.Command, tc.expectedCmd)
+					assert.NotEmpty(t, cmdData.Link)
+					assert.NotEmpty(t, cmdData.Desc)
+				}
+			}
+		})
+	}
+
+	testingTemplates := []struct {
+		name        string
+		expectedCmd string
+	}{
+		{"pgbench_init", "pgbench"},
+		{"pgbench_run", "pgbench"},
+		{"sysbench_mysql_oltp", "sysbench"},
+		{"mysqlslap_run", "mysqlslap"},
+		{"redis_benchmark", "redis-benchmark"},
+		{"redis_benchmark_ping", "redis-benchmark"},
+		{"mongo_bench_insert", "mongosh"},
+		{"clickhouse_benchmark", "clickhouse-benchmark"},
+		{"hey_load_test", "hey"},
+		{"k6_run", "k6"},
+		{"iperf3_bandwidth", "iperf3"},
+	}
+
+	for _, tc := range testingTemplates {
+		t.Run("success loading "+tc.name+" testing command template", func(t *testing.T) {
+			setting, err := s.GetCommand(ctx, string(base.CommandTemplateTesting), tc.name)
+			assert.NoError(t, err)
+			if assert.NotNil(t, setting) {
+				assert.Equal(t, base.SettingTypeCommandTemplate, setting.Type)
+				assert.Equal(t, string(base.CommandTemplateTesting), setting.Kind)
+				assert.Equal(t, tc.name, setting.Name)
+				assert.Equal(t, base.SettingStatusActive, setting.Status)
+
+				cmdData, err := setting.AsCommandTemplate()
+				assert.NoError(t, err)
+				if assert.NotNil(t, cmdData) {
+					assert.Contains(t, cmdData.Command, tc.expectedCmd)
+					assert.NotEmpty(t, cmdData.Link)
+					assert.NotEmpty(t, cmdData.Desc)
+				}
+			}
+		})
+	}
+
 	t.Run("nonexistent command template returns error", func(t *testing.T) {
 		setting, err := s.GetCommand(ctx, string(base.CommandTemplateBackup), "nonexistent_cmd.pipe")
 		assert.Error(t, err)

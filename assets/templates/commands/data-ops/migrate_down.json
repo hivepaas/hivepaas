@@ -1,0 +1,19 @@
+{
+  "command":"migrate ${CMD_OPTS_ARGS}",
+  "link":"https://github.com/golang-migrate/migrate",
+  "desc":"Roll back the most recent migration using golang-migrate",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-path", "value":"/migrations"},
+        {"use":true, "name":"-database", "value":"${DATABASE_URL}"},
+        {"use":true, "name":"down"},
+        {"use":true, "name":"1"}
+      ]
+    }
+  ]
+}

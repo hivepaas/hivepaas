@@ -1,0 +1,30 @@
+{
+  "command":"clickhouse-benchmark ${CMD_CONN_ARGS} ${CMD_OPTS_ARGS}",
+  "link":"https://clickhouse.com/docs/en/operations/utilities/clickhouse-benchmark",
+  "desc":"Benchmark query execution performance and latency percentiles in ClickHouse",
+  "envVars":[
+    {"k":"CLICKHOUSE_PASSWORD", "v":"${HIVEPAAS_PASSWORD}"}
+  ],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_CONN_ARGS",
+      "separator":"=",
+      "args":[
+        {"use":true, "name":"--host", "value":"localhost"},
+        {"use":true, "name":"--port", "value":"${HIVEPAAS_PORT}"},
+        {"use":true, "name":"--user", "value":"${HIVEPAAS_USER}"}
+      ]
+    },
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"--query", "value":"SELECT count(*) FROM system.numbers WHERE number % 2 = 0"},
+        {"use":true, "name":"-c", "value":"10"},
+        {"use":true, "name":"-t", "value":"10"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "command":"hey ${CMD_OPTS_ARGS}",
+  "link":"https://github.com/rakyll/hey",
+  "desc":"Send concurrent HTTP requests and measure response time percentiles",
+  "envVars":[],
+  "argGroups":[
+    {
+      "enabled":true,
+      "exportEnv":"CMD_OPTS_ARGS",
+      "separator":" ",
+      "args":[
+        {"use":true, "name":"-n", "value":"10000"},
+        {"use":true, "name":"-c", "value":"50"},
+        {"use":true, "name":"-m", "value":"GET"},
+        {"use":true, "name":"http://localhost:8080/"}
+      ]
+    }
+  ]
+}

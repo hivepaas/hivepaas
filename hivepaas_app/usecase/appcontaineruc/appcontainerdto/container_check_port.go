@@ -1,4 +1,4 @@
-package appsettingsdto
+package appcontainerdto
 
 import (
 	vld "github.com/tiendc/go-validator"

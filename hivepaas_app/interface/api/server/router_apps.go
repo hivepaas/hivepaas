@@ -12,6 +12,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	appDeploymentHandler := s.handlerRegistry.appDeploymentHandler
 	appActionHandler := s.handlerRegistry.appActionHandler
 	appPreviewHandler := s.handlerRegistry.appPreviewHandler
+	appContainerHandler := s.handlerRegistry.appContainerHandler
 
 	{ // List apps from `projects/projectID/apps`
 		projectGroup.GET("/apps", appHandler.ListAppInProject)
@@ -152,7 +153,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	{ // App containers
 		containerGroup := appGroup.Group("/:appID/container")
 		// Check port
-		containerGroup.POST("/check-port", appSettingsHandler.CheckAppContainerPort)
+		containerGroup.POST("/check-port", appContainerHandler.CheckAppContainerPort)
 	}
 
 	{ // Deployments

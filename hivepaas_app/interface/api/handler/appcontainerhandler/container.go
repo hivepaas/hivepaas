@@ -1,4 +1,4 @@
-package appsettingshandler
+package appcontainerhandler
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc/appcontainerdto"
 )
 
 // CheckAppContainerPort Checks a container port for availability
@@ -19,8 +19,8 @@ import (
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
-// @Param   body body appsettingsdto.CheckAppContainerPortReq true "request data"
-// @Success 200 {object} appsettingsdto.CheckAppContainerPortResp
+// @Param   body body appcontainerdto.CheckAppContainerPortReq true "request data"
+// @Success 200 {object} appcontainerdto.CheckAppContainerPortResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/container/check-port [post]
@@ -31,7 +31,7 @@ func (h *Handler) CheckAppContainerPort(ctx *gin.Context) {
 		return
 	}
 
-	req := appsettingsdto.NewCheckAppContainerPortReq()
+	req := appcontainerdto.NewCheckAppContainerPortReq()
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
@@ -40,7 +40,7 @@ func (h *Handler) CheckAppContainerPort(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.appSettingsUC.CheckAppContainerPort(h.RequestCtx(ctx), auth, req)
+	resp, err := h.appContainerUC.CheckAppContainerPort(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

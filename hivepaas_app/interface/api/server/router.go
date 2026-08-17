@@ -9,6 +9,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/assets"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appactionhandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appcontainerhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appdeploymenthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apppreviewhandler"
@@ -36,82 +37,85 @@ import (
 
 type HandlerRegistry struct {
 	authHandler               *authhandler.Handler
-	clusterHandler            *clusterhandler.Handler
-	sessionHandler            *sessionhandler.Handler
-	userHandler               *userhandler.Handler
-	projectHandler            *projecthandler.Handler
-	projectEnvHandler         *projectenvhandler.Handler
-	projectSettingsHandler    *projectsettingshandler.Handler
-	projectEnvSettingsHandler *projectenvsettingshandler.Handler
-	appHandler                *apphandler.Handler
-	appSettingsHandler        *appsettingshandler.Handler
-	appDeploymentHandler      *appdeploymenthandler.Handler
 	appActionHandler          *appactionhandler.Handler
+	appContainerHandler       *appcontainerhandler.Handler
+	appDeploymentHandler      *appdeploymenthandler.Handler
+	appHandler                *apphandler.Handler
 	appPreviewHandler         *apppreviewhandler.Handler
+	appSettingsHandler        *appsettingshandler.Handler
+	clusterHandler            *clusterhandler.Handler
+	devHelperHandler          *devhelperhandler.Handler
+	fileHandler               *filehandler.Handler
+	hivepaasHandler           *hivepaashandler.Handler
+	imageHandler              *imagehandler.Handler
+	projectEnvHandler         *projectenvhandler.Handler
+	projectEnvSettingsHandler *projectenvsettingshandler.Handler
+	projectHandler            *projecthandler.Handler
+	projectSettingsHandler    *projectsettingshandler.Handler
+	sessionHandler            *sessionhandler.Handler
 	settingHandler            *settinghandler.Handler
-	userSettingsHandler       *usersettingshandler.Handler
+	supportHandler            *supporthandler.Handler
 	systemHandler             *systemhandler.Handler
 	systemSettingsHandler     *systemsettingshandler.Handler
-	hivepaasHandler           *hivepaashandler.Handler
 	traefikHandler            *traefikhandler.Handler
+	userHandler               *userhandler.Handler
+	userSettingsHandler       *usersettingshandler.Handler
 	webhookHandler            *webhookhandler.Handler
-	fileHandler               *filehandler.Handler
-	imageHandler              *imagehandler.Handler
-	supportHandler            *supporthandler.Handler
-	devHelperHandler          *devhelperhandler.Handler
 }
 
 func NewHandlerRegistry(
 	authHandler *authhandler.Handler,
-	clusterHandler *clusterhandler.Handler,
-	sessionHandler *sessionhandler.Handler,
-	userHandler *userhandler.Handler,
-	projectHandler *projecthandler.Handler,
-	projectEnvHandler *projectenvhandler.Handler,
-	projectSettingsHandler *projectsettingshandler.Handler,
-	projectEnvSettingsHandler *projectenvsettingshandler.Handler,
-	appHandler *apphandler.Handler,
-	appSettingsHandler *appsettingshandler.Handler,
-	appDeploymentHandler *appdeploymenthandler.Handler,
 	appActionHandler *appactionhandler.Handler,
+	appContainerHandler *appcontainerhandler.Handler,
+	appDeploymentHandler *appdeploymenthandler.Handler,
+	appHandler *apphandler.Handler,
 	appPreviewHandler *apppreviewhandler.Handler,
+	appSettingsHandler *appsettingshandler.Handler,
+	clusterHandler *clusterhandler.Handler,
+	devHelperHandler *devhelperhandler.Handler,
+	fileHandler *filehandler.Handler,
+	hivepaasHandler *hivepaashandler.Handler,
+	imageHandler *imagehandler.Handler,
+	projectEnvHandler *projectenvhandler.Handler,
+	projectEnvSettingsHandler *projectenvsettingshandler.Handler,
+	projectHandler *projecthandler.Handler,
+	projectSettingsHandler *projectsettingshandler.Handler,
+	sessionHandler *sessionhandler.Handler,
 	settingHandler *settinghandler.Handler,
-	userSettingsHandler *usersettingshandler.Handler,
+	supportHandler *supporthandler.Handler,
 	systemHandler *systemhandler.Handler,
 	systemSettingsHandler *systemsettingshandler.Handler,
-	hivepaasHandler *hivepaashandler.Handler,
 	traefikHandler *traefikhandler.Handler,
+	userHandler *userhandler.Handler,
+	userSettingsHandler *usersettingshandler.Handler,
 	webhookHandler *webhookhandler.Handler,
-	fileHandler *filehandler.Handler,
-	imageHandler *imagehandler.Handler,
-	supportHandler *supporthandler.Handler,
-	devHelperHandler *devhelperhandler.Handler,
 ) *HandlerRegistry {
 	return &HandlerRegistry{
 		authHandler:               authHandler,
-		clusterHandler:            clusterHandler,
-		sessionHandler:            sessionHandler,
-		userHandler:               userHandler,
-		projectHandler:            projectHandler,
-		projectEnvHandler:         projectEnvHandler,
-		projectSettingsHandler:    projectSettingsHandler,
-		projectEnvSettingsHandler: projectEnvSettingsHandler,
-		appHandler:                appHandler,
-		appSettingsHandler:        appSettingsHandler,
-		appDeploymentHandler:      appDeploymentHandler,
 		appActionHandler:          appActionHandler,
+		appContainerHandler:       appContainerHandler,
+		appDeploymentHandler:      appDeploymentHandler,
+		appHandler:                appHandler,
 		appPreviewHandler:         appPreviewHandler,
+		appSettingsHandler:        appSettingsHandler,
+		clusterHandler:            clusterHandler,
+		devHelperHandler:          devHelperHandler,
+		fileHandler:               fileHandler,
+		hivepaasHandler:           hivepaasHandler,
+		imageHandler:              imageHandler,
+		projectEnvHandler:         projectEnvHandler,
+		projectEnvSettingsHandler: projectEnvSettingsHandler,
+		projectHandler:            projectHandler,
+		projectSettingsHandler:    projectSettingsHandler,
+		sessionHandler:            sessionHandler,
 		settingHandler:            settingHandler,
-		userSettingsHandler:       userSettingsHandler,
+		supportHandler:            supportHandler,
 		systemHandler:             systemHandler,
 		systemSettingsHandler:     systemSettingsHandler,
-		hivepaasHandler:           hivepaasHandler,
 		traefikHandler:            traefikHandler,
+		userHandler:               userHandler,
+		userSettingsHandler:       userSettingsHandler,
 		webhookHandler:            webhookHandler,
-		fileHandler:               fileHandler,
-		imageHandler:              imageHandler,
-		supportHandler:            supportHandler,
-		devHelperHandler:          devHelperHandler,
 	}
 }
 

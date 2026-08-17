@@ -1,4 +1,4 @@
-package appsettingsuc
+package appcontaineruc
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc/appcontainerdto"
 )
 
 const (
@@ -22,8 +22,8 @@ const (
 func (uc *UC) CheckAppContainerPort(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *appsettingsdto.CheckAppContainerPortReq,
-) (*appsettingsdto.CheckAppContainerPortResp, error) {
+	req *appcontainerdto.CheckAppContainerPortReq,
+) (*appcontainerdto.CheckAppContainerPortResp, error) {
 	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, true,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
@@ -40,12 +40,12 @@ func (uc *UC) CheckAppContainerPort(
 	conn, err := net.DialTimeout("tcp", address, timeout)
 	if err == nil && conn != nil {
 		defer conn.Close()
-		return &appsettingsdto.CheckAppContainerPortResp{
-			Data: &appsettingsdto.CheckAppContainerPortDataResp{Open: true},
+		return &appcontainerdto.CheckAppContainerPortResp{
+			Data: &appcontainerdto.CheckAppContainerPortDataResp{Open: true},
 		}, nil
 	}
 
-	return &appsettingsdto.CheckAppContainerPortResp{
-		Data: &appsettingsdto.CheckAppContainerPortDataResp{Open: false},
+	return &appcontainerdto.CheckAppContainerPortResp{
+		Data: &appcontainerdto.CheckAppContainerPortDataResp{Open: false},
 	}, nil
 }

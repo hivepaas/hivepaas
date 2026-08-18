@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"io"
 	"sync"
 	"time"
 
@@ -325,6 +326,41 @@ func (m *manager) ContainerCopyFrom(
 	resp, err := m.client.CopyFromContainer(ctx, containerID, client.CopyFromContainerOptions{
 		SourcePath: srcPath,
 	})
+	if err != nil {
+		return nil, apperrors.NewInfra(err)
+	}
+	return &resp, nil
+}
+
+type ContainerCopyToOption func(*client.CopyToContainerOptions)
+
+func ContainerCopyToWithAllowOverwriteDirWithFile(allow bool) ContainerCopyToOption {
+	return func(o *client.CopyToContainerOptions) {
+		o.AllowOverwriteDirWithFile = allow
+	}
+}
+
+func ContainerCopyToWithCopyUIDGID(copyUIDGID bool) ContainerCopyToOption {
+	return func(o *client.CopyToContainerOptions) {
+		o.CopyUIDGID = copyUIDGID
+	}
+}
+
+func (m *manager) ContainerCopyTo(
+	ctx context.Context,
+	containerID string,
+	dstPath string,
+	content io.Reader,
+	options ...ContainerCopyToOption,
+) (*client.CopyToContainerResult, error) {
+	opts := client.CopyToContainerOptions{
+		DestinationPath: dstPath,
+		Content:         content,
+	}
+	for _, opt := range options {
+		opt(&opts)
+	}
+	resp, err := m.client.CopyToContainer(ctx, containerID, opts)
 	if err != nil {
 		return nil, apperrors.NewInfra(err)
 	}

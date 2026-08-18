@@ -185,6 +185,7 @@ var (
 	ErrServiceNotRunning             = NewErr(ErrServiceUnavailable, "ERR_SERVICE_NOT_RUNNING")
 	ErrMountTypeUnsupported          = NewErr(ErrUnsupported, "ERR_MOUNT_TYPE_UNSUPPORTED")
 	ErrServiceModeReplicatedRequired = NewErr(ErrPreconditionFailed, "ERR_SERVICE_MODE_REPLICATED_REQUIRED")
+	ErrActiveContainerNotFound       = NewErr(ErrNotFound, "ERR_ACTIVE_CONTAINER_NOT_FOUND")
 )
 
 // Errors for files

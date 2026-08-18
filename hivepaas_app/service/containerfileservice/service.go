@@ -5,5 +5,6 @@ import (
 )
 
 type Service interface {
-	StreamFile(ctx context.Context, req *StreamFileReq) (*StreamFileResp, error)
+	PrepareDownloadStream(ctx context.Context, req *PrepareDownloadStreamReq) (*PrepareDownloadStreamResp, error)
+	PrepareUploadTarStream(ctx context.Context, req *PrepareUploadTarStreamReq) (*PrepareUploadTarStreamResp, error)
 }

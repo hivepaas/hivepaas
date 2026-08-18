@@ -489,6 +489,208 @@ func (x *ContainerCopyFromResp) GetContentType() string {
 	return ""
 }
 
+type ContainerCopyToReq struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Value:
+	//
+	//	*ContainerCopyToReq_Metadata
+	//	*ContainerCopyToReq_Chunk
+	Value         isContainerCopyToReq_Value `protobuf_oneof:"value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContainerCopyToReq) Reset() {
+	*x = ContainerCopyToReq{}
+	mi := &file_container_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerCopyToReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerCopyToReq) ProtoMessage() {}
+
+func (x *ContainerCopyToReq) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerCopyToReq.ProtoReflect.Descriptor instead.
+func (*ContainerCopyToReq) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ContainerCopyToReq) GetValue() isContainerCopyToReq_Value {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *ContainerCopyToReq) GetMetadata() *ContainerCopyToMetadata {
+	if x != nil {
+		if x, ok := x.Value.(*ContainerCopyToReq_Metadata); ok {
+			return x.Metadata
+		}
+	}
+	return nil
+}
+
+func (x *ContainerCopyToReq) GetChunk() []byte {
+	if x != nil {
+		if x, ok := x.Value.(*ContainerCopyToReq_Chunk); ok {
+			return x.Chunk
+		}
+	}
+	return nil
+}
+
+type isContainerCopyToReq_Value interface {
+	isContainerCopyToReq_Value()
+}
+
+type ContainerCopyToReq_Metadata struct {
+	Metadata *ContainerCopyToMetadata `protobuf:"bytes,1,opt,name=metadata,proto3,oneof"`
+}
+
+type ContainerCopyToReq_Chunk struct {
+	Chunk []byte `protobuf:"bytes,2,opt,name=chunk,proto3,oneof"`
+}
+
+func (*ContainerCopyToReq_Metadata) isContainerCopyToReq_Value() {}
+
+func (*ContainerCopyToReq_Chunk) isContainerCopyToReq_Value() {}
+
+type ContainerCopyToMetadata struct {
+	state                     protoimpl.MessageState `protogen:"open.v1"`
+	ContainerId               string                 `protobuf:"bytes,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	DstPath                   string                 `protobuf:"bytes,2,opt,name=dst_path,json=dstPath,proto3" json:"dst_path,omitempty"`
+	AllowOverwriteDirWithFile bool                   `protobuf:"varint,3,opt,name=allow_overwrite_dir_with_file,json=allowOverwriteDirWithFile,proto3" json:"allow_overwrite_dir_with_file,omitempty"`
+	CopyUidGid                bool                   `protobuf:"varint,4,opt,name=copy_uid_gid,json=copyUidGid,proto3" json:"copy_uid_gid,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
+}
+
+func (x *ContainerCopyToMetadata) Reset() {
+	*x = ContainerCopyToMetadata{}
+	mi := &file_container_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerCopyToMetadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerCopyToMetadata) ProtoMessage() {}
+
+func (x *ContainerCopyToMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerCopyToMetadata.ProtoReflect.Descriptor instead.
+func (*ContainerCopyToMetadata) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ContainerCopyToMetadata) GetContainerId() string {
+	if x != nil {
+		return x.ContainerId
+	}
+	return ""
+}
+
+func (x *ContainerCopyToMetadata) GetDstPath() string {
+	if x != nil {
+		return x.DstPath
+	}
+	return ""
+}
+
+func (x *ContainerCopyToMetadata) GetAllowOverwriteDirWithFile() bool {
+	if x != nil {
+		return x.AllowOverwriteDirWithFile
+	}
+	return false
+}
+
+func (x *ContainerCopyToMetadata) GetCopyUidGid() bool {
+	if x != nil {
+		return x.CopyUidGid
+	}
+	return false
+}
+
+type ContainerCopyToResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContainerCopyToResp) Reset() {
+	*x = ContainerCopyToResp{}
+	mi := &file_container_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerCopyToResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerCopyToResp) ProtoMessage() {}
+
+func (x *ContainerCopyToResp) ProtoReflect() protoreflect.Message {
+	mi := &file_container_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerCopyToResp.ProtoReflect.Descriptor instead.
+func (*ContainerCopyToResp) Descriptor() ([]byte, []int) {
+	return file_container_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ContainerCopyToResp) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ContainerCopyToResp) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_container_proto protoreflect.FileDescriptor
 
 const file_container_proto_rawDesc = "" +
@@ -524,10 +726,24 @@ const file_container_proto_rawDesc = "" +
 	"\x05chunk\x18\x01 \x01(\fR\x05chunk\x12\x1b\n" +
 	"\tfile_name\x18\x02 \x01(\tR\bfileName\x12\x1b\n" +
 	"\tfile_size\x18\x03 \x01(\x03R\bfileSize\x12!\n" +
-	"\fcontent_type\x18\x04 \x01(\tR\vcontentType2\xac\x01\n" +
+	"\fcontent_type\x18\x04 \x01(\tR\vcontentType\"s\n" +
+	"\x12ContainerCopyToReq\x12<\n" +
+	"\bmetadata\x18\x01 \x01(\v2\x1e.agent.ContainerCopyToMetadataH\x00R\bmetadata\x12\x16\n" +
+	"\x05chunk\x18\x02 \x01(\fH\x00R\x05chunkB\a\n" +
+	"\x05value\"\xbb\x01\n" +
+	"\x17ContainerCopyToMetadata\x12!\n" +
+	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x19\n" +
+	"\bdst_path\x18\x02 \x01(\tR\adstPath\x12@\n" +
+	"\x1dallow_overwrite_dir_with_file\x18\x03 \x01(\bR\x19allowOverwriteDirWithFile\x12 \n" +
+	"\fcopy_uid_gid\x18\x04 \x01(\bR\n" +
+	"copyUidGid\"I\n" +
+	"\x13ContainerCopyToResp\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\xf8\x01\n" +
 	"\x10ContainerService\x12F\n" +
 	"\rContainerExec\x12\x17.agent.ContainerExecReq\x1a\x18.agent.ContainerExecResp(\x010\x01\x12P\n" +
-	"\x11ContainerCopyFrom\x12\x1b.agent.ContainerCopyFromReq\x1a\x1c.agent.ContainerCopyFromResp0\x01BLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
+	"\x11ContainerCopyFrom\x12\x1b.agent.ContainerCopyFromReq\x1a\x1c.agent.ContainerCopyFromResp0\x01\x12J\n" +
+	"\x0fContainerCopyTo\x12\x19.agent.ContainerCopyToReq\x1a\x1a.agent.ContainerCopyToResp(\x01BLZJgithub.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentprotob\x06proto3"
 
 var (
 	file_container_proto_rawDescOnce sync.Once
@@ -541,28 +757,34 @@ func file_container_proto_rawDescGZIP() []byte {
 	return file_container_proto_rawDescData
 }
 
-var file_container_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_container_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_container_proto_goTypes = []any{
-	(*ContainerExecReq)(nil),      // 0: agent.ContainerExecReq
-	(*ContainerExecConfig)(nil),   // 1: agent.ContainerExecConfig
-	(*TerminalSize)(nil),          // 2: agent.TerminalSize
-	(*ContainerExecResp)(nil),     // 3: agent.ContainerExecResp
-	(*ContainerCopyFromReq)(nil),  // 4: agent.ContainerCopyFromReq
-	(*ContainerCopyFromResp)(nil), // 5: agent.ContainerCopyFromResp
+	(*ContainerExecReq)(nil),        // 0: agent.ContainerExecReq
+	(*ContainerExecConfig)(nil),     // 1: agent.ContainerExecConfig
+	(*TerminalSize)(nil),            // 2: agent.TerminalSize
+	(*ContainerExecResp)(nil),       // 3: agent.ContainerExecResp
+	(*ContainerCopyFromReq)(nil),    // 4: agent.ContainerCopyFromReq
+	(*ContainerCopyFromResp)(nil),   // 5: agent.ContainerCopyFromResp
+	(*ContainerCopyToReq)(nil),      // 6: agent.ContainerCopyToReq
+	(*ContainerCopyToMetadata)(nil), // 7: agent.ContainerCopyToMetadata
+	(*ContainerCopyToResp)(nil),     // 8: agent.ContainerCopyToResp
 }
 var file_container_proto_depIdxs = []int32{
 	1, // 0: agent.ContainerExecReq.config:type_name -> agent.ContainerExecConfig
 	2, // 1: agent.ContainerExecReq.resize:type_name -> agent.TerminalSize
 	2, // 2: agent.ContainerExecConfig.console_size:type_name -> agent.TerminalSize
-	0, // 3: agent.ContainerService.ContainerExec:input_type -> agent.ContainerExecReq
-	4, // 4: agent.ContainerService.ContainerCopyFrom:input_type -> agent.ContainerCopyFromReq
-	3, // 5: agent.ContainerService.ContainerExec:output_type -> agent.ContainerExecResp
-	5, // 6: agent.ContainerService.ContainerCopyFrom:output_type -> agent.ContainerCopyFromResp
-	5, // [5:7] is the sub-list for method output_type
-	3, // [3:5] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	7, // 3: agent.ContainerCopyToReq.metadata:type_name -> agent.ContainerCopyToMetadata
+	0, // 4: agent.ContainerService.ContainerExec:input_type -> agent.ContainerExecReq
+	4, // 5: agent.ContainerService.ContainerCopyFrom:input_type -> agent.ContainerCopyFromReq
+	6, // 6: agent.ContainerService.ContainerCopyTo:input_type -> agent.ContainerCopyToReq
+	3, // 7: agent.ContainerService.ContainerExec:output_type -> agent.ContainerExecResp
+	5, // 8: agent.ContainerService.ContainerCopyFrom:output_type -> agent.ContainerCopyFromResp
+	8, // 9: agent.ContainerService.ContainerCopyTo:output_type -> agent.ContainerCopyToResp
+	7, // [7:10] is the sub-list for method output_type
+	4, // [4:7] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_container_proto_init() }
@@ -580,13 +802,17 @@ func file_container_proto_init() {
 		(*ContainerExecResp_Stderr)(nil),
 		(*ContainerExecResp_ExitCode)(nil),
 	}
+	file_container_proto_msgTypes[6].OneofWrappers = []any{
+		(*ContainerCopyToReq_Metadata)(nil),
+		(*ContainerCopyToReq_Chunk)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_container_proto_rawDesc), len(file_container_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

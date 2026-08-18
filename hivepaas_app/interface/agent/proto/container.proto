@@ -10,6 +10,9 @@ service ContainerService {
 
   // ContainerCopyFrom extracts a file or directory archive from a container.
   rpc ContainerCopyFrom(ContainerCopyFromReq) returns (stream ContainerCopyFromResp);
+
+  // ContainerCopyTo uploads a tar stream into a container.
+  rpc ContainerCopyTo(stream ContainerCopyToReq) returns (ContainerCopyToResp);
 }
 
 message ContainerExecReq {
@@ -55,5 +58,25 @@ message ContainerCopyFromResp {
   int64 file_size = 3;
   string content_type = 4;
 }
+
+message ContainerCopyToReq {
+  oneof value {
+    ContainerCopyToMetadata metadata = 1;
+    bytes chunk = 2;
+  }
+}
+
+message ContainerCopyToMetadata {
+  string container_id = 1;
+  string dst_path = 2;
+  bool allow_overwrite_dir_with_file = 3;
+  bool copy_uid_gid = 4;
+}
+
+message ContainerCopyToResp {
+  bool success = 1;
+  string message = 2;
+}
+
 
 

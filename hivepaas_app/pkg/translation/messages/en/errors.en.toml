@@ -117,6 +117,7 @@ ERR_FEATURE_DISABLED = "Feature '{{.Name}}' is disabled"
 ERR_SERVICE_NOT_RUNNING = "Service '{{.Name}}' is not running"
 ERR_MOUNT_TYPE_UNSUPPORTED = "Mount type '{{.Type}}' is not supported"
 ERR_SERVICE_MODE_REPLICATED_REQUIRED = "Service is required to be in 'replicated' mode"
+ERR_ACTIVE_CONTAINER_NOT_FOUND = "No active container found for app '{{.App}}'"
 
 # File errors
 ERR_FILE_NOT_EXIST = "File '{{.Name}}' does not exist"

@@ -100,7 +100,7 @@ func (s *service) initOutputWriterToFile(
 
 	// 2. Compression
 	switch saveToFile.CompressionFormat {
-	case base.FileCompressionNone:
+	case base.FileCompressionNone, base.FileCompressionFormatZip, base.FileCompressionFormatTar:
 		// Do nothing
 	case base.FileCompressionFormatGzip:
 		compW = gzip.NewWriter(writer)
@@ -211,6 +211,8 @@ func (s *service) getOutputFileName(
 	case base.FileCompressionFormatZstd:
 		finalFileName += ".zst"
 	case base.FileCompressionNone: // Do nothing
+	case base.FileCompressionFormatZip, base.FileCompressionFormatTar:
+		fallthrough
 	default:
 		return "", apperrors.Wrap(apperrors.ErrArchiveFormatUnsupported).
 			WithParam("Format", cmdOutput.CompressionFormat)

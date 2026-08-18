@@ -38,6 +38,8 @@ func (s *service) sysBackupSaveResultInLocal(
 	case base.FileCompressionFormatZstd:
 		data.OutFileName += ".zst"
 	case base.FileCompressionNone: // Do nothing
+	case base.FileCompressionFormatZip, base.FileCompressionFormatTar:
+		fallthrough
 	default:
 		return apperrors.Wrap(apperrors.ErrArchiveFormatUnsupported).
 			WithParam("Format", data.SysBackupSettings.Compression.Format)

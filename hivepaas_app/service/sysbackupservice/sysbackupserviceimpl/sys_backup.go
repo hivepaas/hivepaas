@@ -180,6 +180,8 @@ func (s *service) sysBackupCreateWriter(
 		}
 		w = zstdW
 	case base.FileCompressionNone: // Do nothing
+	case base.FileCompressionFormatZip, base.FileCompressionFormatTar:
+		fallthrough
 	default:
 		return "", nil, nil, apperrors.Wrap(apperrors.ErrArchiveFormatUnsupported).
 			WithParam("Format", data.SysBackupSettings.Compression.Format)

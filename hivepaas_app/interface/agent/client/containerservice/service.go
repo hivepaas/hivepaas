@@ -17,6 +17,7 @@ type ContainerServiceClient interface {
 	ContainerExec(ctx context.Context) (*ContainerExecStream, error)
 	ContainerCopyFrom(ctx context.Context, req *containeragentdto.DownloadFileInput) (
 		*RemoteFileDownloadResult, error)
+	ContainerCopyTo(ctx context.Context, req *containeragentdto.UploadFileInput) error
 	Close() error
 }
 

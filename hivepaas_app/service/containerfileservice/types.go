@@ -8,7 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 )
 
-type StreamFileReq struct {
+type PrepareDownloadStreamReq struct {
 	Path              string
 	IsDir             bool
 	CompressionFormat base.FileCompressionFormat
@@ -17,9 +17,24 @@ type StreamFileReq struct {
 	Stat    *container.PathStat
 }
 
-type StreamFileResp struct {
+type PrepareDownloadStreamResp struct {
 	FileName    string
 	FileSize    int64
 	ContentType string
 	Reader      io.ReadCloser
+}
+
+type PrepareUploadTarStreamReq struct {
+	Path              string
+	FileName          string
+	FileSize          int64
+	Extract           bool
+	CompressionFormat base.FileCompressionFormat
+
+	Content io.ReadCloser
+}
+
+type PrepareUploadTarStreamResp struct {
+	DestPath  string
+	TarStream io.ReadCloser
 }

@@ -24,7 +24,7 @@ func (uc *UC) DownloadFile(
 		return apperrors.Wrap(err)
 	}
 
-	resp, err := uc.containerFileService.StreamFile(ctx, &containerfileservice.StreamFileReq{
+	resp, err := uc.containerFileService.PrepareDownloadStream(ctx, &containerfileservice.PrepareDownloadStreamReq{
 		Path:              input.Path,
 		IsDir:             input.IsDir,
 		CompressionFormat: input.CompressionFormat,

@@ -15,3 +15,9 @@ func (s *AgentServer) ContainerCopyFrom(
 ) error {
 	return containerservice.ContainerCopyFrom(s.containerAgentUC, req, stream) //nolint:wrapcheck
 }
+
+func (s *AgentServer) ContainerCopyTo(
+	stream agentproto.ContainerService_ContainerCopyToServer,
+) error {
+	return containerservice.ContainerCopyTo(s.containerAgentUC, stream) //nolint:wrapcheck
+}

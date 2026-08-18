@@ -14,11 +14,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 )
 
-//nolint:funlen
-func (s *service) StreamFile(
+func (s *service) PrepareDownloadStream(
 	ctx context.Context,
-	req *containerfileservice.StreamFileReq,
-) (*containerfileservice.StreamFileResp, error) {
+	req *containerfileservice.PrepareDownloadStreamReq,
+) (*containerfileservice.PrepareDownloadStreamResp, error) {
 	var (
 		reader = req.Content
 		isDir  = req.IsDir
@@ -76,7 +75,7 @@ func (s *service) StreamFile(
 	}
 
 	switch req.CompressionFormat {
-	case base.FileCompressionNone:
+	case base.FileCompressionNone, base.FileCompressionFormatZip, base.FileCompressionFormatTar:
 		// No compression, keep original stream
 	case base.FileCompressionFormatGzip:
 		compressedReader, err := compressStream(resultReader, req.CompressionFormat)
@@ -100,7 +99,7 @@ func (s *service) StreamFile(
 		resultFileSize = 0
 	}
 
-	return &containerfileservice.StreamFileResp{
+	return &containerfileservice.PrepareDownloadStreamResp{
 		FileName:    resultFileName,
 		FileSize:    resultFileSize,
 		ContentType: resultContentType,
@@ -145,7 +144,7 @@ func compressStream(
 
 	var compWriter io.WriteCloser
 	switch format {
-	case base.FileCompressionNone:
+	case base.FileCompressionNone, base.FileCompressionFormatZip, base.FileCompressionFormatTar:
 		return srcReader, nil
 	case base.FileCompressionFormatGzip:
 		compWriter = gzip.NewWriter(pw)

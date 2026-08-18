@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	ContainerService_ContainerExec_FullMethodName     = "/agent.ContainerService/ContainerExec"
 	ContainerService_ContainerCopyFrom_FullMethodName = "/agent.ContainerService/ContainerCopyFrom"
+	ContainerService_ContainerCopyTo_FullMethodName   = "/agent.ContainerService/ContainerCopyTo"
 )
 
 // ContainerServiceClient is the client API for ContainerService service.
@@ -31,6 +32,8 @@ type ContainerServiceClient interface {
 	ContainerExec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ContainerExecReq, ContainerExecResp], error)
 	// ContainerCopyFrom extracts a file or directory archive from a container.
 	ContainerCopyFrom(ctx context.Context, in *ContainerCopyFromReq, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ContainerCopyFromResp], error)
+	// ContainerCopyTo uploads a tar stream into a container.
+	ContainerCopyTo(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ContainerCopyToReq, ContainerCopyToResp], error)
 }
 
 type containerServiceClient struct {
@@ -73,6 +76,19 @@ func (c *containerServiceClient) ContainerCopyFrom(ctx context.Context, in *Cont
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContainerService_ContainerCopyFromClient = grpc.ServerStreamingClient[ContainerCopyFromResp]
 
+func (c *containerServiceClient) ContainerCopyTo(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ContainerCopyToReq, ContainerCopyToResp], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[2], ContainerService_ContainerCopyTo_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[ContainerCopyToReq, ContainerCopyToResp]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContainerService_ContainerCopyToClient = grpc.ClientStreamingClient[ContainerCopyToReq, ContainerCopyToResp]
+
 // ContainerServiceServer is the server API for ContainerService service.
 // All implementations must embed UnimplementedContainerServiceServer
 // for forward compatibility.
@@ -81,6 +97,8 @@ type ContainerServiceServer interface {
 	ContainerExec(grpc.BidiStreamingServer[ContainerExecReq, ContainerExecResp]) error
 	// ContainerCopyFrom extracts a file or directory archive from a container.
 	ContainerCopyFrom(*ContainerCopyFromReq, grpc.ServerStreamingServer[ContainerCopyFromResp]) error
+	// ContainerCopyTo uploads a tar stream into a container.
+	ContainerCopyTo(grpc.ClientStreamingServer[ContainerCopyToReq, ContainerCopyToResp]) error
 	mustEmbedUnimplementedContainerServiceServer()
 }
 
@@ -96,6 +114,9 @@ func (UnimplementedContainerServiceServer) ContainerExec(grpc.BidiStreamingServe
 }
 func (UnimplementedContainerServiceServer) ContainerCopyFrom(*ContainerCopyFromReq, grpc.ServerStreamingServer[ContainerCopyFromResp]) error {
 	return status.Error(codes.Unimplemented, "method ContainerCopyFrom not implemented")
+}
+func (UnimplementedContainerServiceServer) ContainerCopyTo(grpc.ClientStreamingServer[ContainerCopyToReq, ContainerCopyToResp]) error {
+	return status.Error(codes.Unimplemented, "method ContainerCopyTo not implemented")
 }
 func (UnimplementedContainerServiceServer) mustEmbedUnimplementedContainerServiceServer() {}
 func (UnimplementedContainerServiceServer) testEmbeddedByValue()                          {}
@@ -136,6 +157,13 @@ func _ContainerService_ContainerCopyFrom_Handler(srv interface{}, stream grpc.Se
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ContainerService_ContainerCopyFromServer = grpc.ServerStreamingServer[ContainerCopyFromResp]
 
+func _ContainerService_ContainerCopyTo_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ContainerServiceServer).ContainerCopyTo(&grpc.GenericServerStream[ContainerCopyToReq, ContainerCopyToResp]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContainerService_ContainerCopyToServer = grpc.ClientStreamingServer[ContainerCopyToReq, ContainerCopyToResp]
+
 // ContainerService_ServiceDesc is the grpc.ServiceDesc for ContainerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -154,6 +182,11 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "ContainerCopyFrom",
 			Handler:       _ContainerService_ContainerCopyFrom_Handler,
 			ServerStreams: true,
+		},
+		{
+			StreamName:    "ContainerCopyTo",
+			Handler:       _ContainerService_ContainerCopyTo_Handler,
+			ClientStreams: true,
 		},
 	},
 	Metadata: "container.proto",

@@ -63,6 +63,7 @@ linters:
       - linters:
           - contextcheck
           - err113
+          - errorlint
           - forcetypeassert
           - funlen
           - gocognit

@@ -2,7 +2,6 @@ package appcontaineruc
 
 import (
 	"context"
-	"io"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -12,13 +11,14 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc/appcontainerdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
-func (uc *UC) DownloadFileFromContainer(
+func (uc *UC) UploadFileToContainer(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *appcontainerdto.DownloadFileFromContainerReq,
-) (*appcontainerdto.DownloadFileFromContainerResp, error) {
+	req *appcontainerdto.UploadFileToContainerReq,
+) (*appcontainerdto.UploadFileToContainerResp, error) {
 	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, true, true,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
@@ -48,12 +48,23 @@ func (uc *UC) DownloadFileFromContainer(
 		req.NodeID = task.NodeID
 	}
 
-	var (
-		resultFileName    string
-		resultFileSize    int64
-		resultContentType string
-		resultReader      io.ReadCloser
-	)
+	prepResp, err := uc.containerFileService.PrepareUploadTarStream(ctx, &containerfileservice.PrepareUploadTarStreamReq{
+		Path:              req.Path,
+		FileName:          req.FileName,
+		FileSize:          req.FileSize,
+		Extract:           req.Extract,
+		CompressionFormat: req.CompressionFormat,
+		Content:           req.FileContent,
+	})
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+	defer prepResp.TarStream.Close()
+
+	overwrite := true
+	if req.Overwrite != nil {
+		overwrite = *req.Overwrite
+	}
 
 	currNodeID, err := uc.dockerManager.NodeCurrentID(ctx)
 	if err != nil {
@@ -71,87 +82,33 @@ func (uc *UC) DownloadFileFromContainer(
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
+		defer agentClient.Close()
 
-		remoteRes, err := agentClient.ContainerCopyFrom(ctx, &containeragentdto.DownloadFileInput{
-			ContainerID:       req.ContainerID,
-			Path:              req.Path,
-			IsDir:             req.IsDir,
-			CompressionFormat: req.CompressionFormat,
+		err = agentClient.ContainerCopyTo(ctx, &containeragentdto.UploadFileInput{
+			ContainerID: req.ContainerID,
+			DstPath:     prepResp.DestPath,
+			TarReader:   prepResp.TarStream,
+			Overwrite:   overwrite,
 		})
 		if err != nil {
-			_ = agentClient.Close()
 			return nil, apperrors.Wrap(err)
-		}
-
-		resultFileName = remoteRes.FileName
-		resultFileSize = remoteRes.FileSize
-		resultContentType = remoteRes.ContentType
-		resultReader = &clientReadCloser{
-			reader: remoteRes.Reader,
-			client: agentClient,
 		}
 	} else {
-		res, err := uc.dockerManager.ContainerCopyFrom(ctx, req.ContainerID, req.Path)
+		opts := make([]docker.ContainerCopyToOption, 0, 1)
+		if overwrite {
+			opts = append(opts, docker.ContainerCopyToWithAllowOverwriteDirWithFile(true))
+		}
+
+		_, err = uc.dockerManager.ContainerCopyTo(ctx, req.ContainerID, prepResp.DestPath, prepResp.TarStream, opts...)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
-
-		resp, err := uc.containerFileService.PrepareDownloadStream(ctx, &containerfileservice.PrepareDownloadStreamReq{
-			Path:              req.Path,
-			IsDir:             req.IsDir,
-			CompressionFormat: req.CompressionFormat,
-			Content:           res.Content,
-			Stat:              &res.Stat,
-		})
-		if err != nil {
-			_ = res.Content.Close()
-			return nil, apperrors.Wrap(err)
-		}
-
-		resultFileName = resp.FileName
-		resultFileSize = resp.FileSize
-		resultContentType = resp.ContentType
-		resultReader = resp.Reader
 	}
 
-	return &appcontainerdto.DownloadFileFromContainerResp{
-		FileName:    resultFileName,
-		FileSize:    resultFileSize,
-		ContentType: resultContentType,
-		Reader:      resultReader,
+	return &appcontainerdto.UploadFileToContainerResp{
+		Data: &appcontainerdto.UploadFileToContainerDataResp{
+			Path:    req.Path,
+			Message: "File uploaded successfully",
+		},
 	}, nil
-}
-
-type clientReadCloser struct {
-	reader io.ReadCloser
-	client containerservice.ContainerServiceClient
-}
-
-func (r *clientReadCloser) Read(p []byte) (int, error) {
-	n, err := r.reader.Read(p)
-	if err != nil {
-		if err == io.EOF {
-			return n, io.EOF
-		}
-		return n, apperrors.Wrap(err)
-	}
-	return n, nil
-}
-
-func (r *clientReadCloser) Close() error {
-	var errs []error
-	if r.reader != nil {
-		if err := r.reader.Close(); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	if r.client != nil {
-		if err := r.client.Close(); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	if len(errs) > 0 {
-		return apperrors.Wrap(errs[0])
-	}
-	return nil
 }

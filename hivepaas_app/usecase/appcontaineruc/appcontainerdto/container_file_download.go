@@ -35,7 +35,7 @@ func (req *DownloadFileFromContainerReq) Validate() apperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
-	validators = append(validators, basedto.ValidateID(&req.ContainerID, true, "containerId")...)
+	validators = append(validators, basedto.ValidateID(&req.ContainerID, false, "containerId")...)
 	validators = append(validators, basedto.ValidateStr(&req.Path, true, 1, filePathMaxLen, "path")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.CompressionFormat, false,
 		base.AllFileCompressionFormats, "compressionFormat")...)

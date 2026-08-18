@@ -8,6 +8,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 )
 
@@ -18,6 +19,7 @@ const (
 
 func (s *service) applyHttpSettings(
 	ctx context.Context,
+	db database.IDB,
 	data *applyAppHttpData,
 ) (err error) {
 	app := data.App
@@ -37,7 +39,9 @@ func (s *service) applyHttpSettings(
 		}
 	}
 
-	err = s.traefikService.ApplyAppConfig(ctx, app, appSvc, &traefikservice.AppConfigData{
+	_, err = s.traefikService.ApplyAppConfig(ctx, db, &traefikservice.ApplyAppConfigReq{
+		App:          app,
+		Service:      appSvc,
 		HttpSettings: appHttpSettings,
 		RefObjects:   data.RefObjects,
 	})

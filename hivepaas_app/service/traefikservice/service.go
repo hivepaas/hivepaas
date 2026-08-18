@@ -5,7 +5,7 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
 type Service interface {
@@ -15,6 +15,6 @@ type Service interface {
 	ReloadTraefikConfig(ctx context.Context, restartServiceOnFailure bool) error
 	ResetTraefikConfig(ctx context.Context) error
 
-	ApplyAppConfig(ctx context.Context, app *entity.App, service *swarm.Service, data *AppConfigData) error
-	RemoveAppConfig(ctx context.Context, app *entity.App, service *swarm.Service) error
+	ApplyAppConfig(ctx context.Context, db database.IDB, req *ApplyAppConfigReq) (*ApplyAppConfigResp, error)
+	RemoveAppConfig(ctx context.Context, db database.IDB, req *RemoveAppConfigReq) (*RemoveAppConfigResp, error)
 }

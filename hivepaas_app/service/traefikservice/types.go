@@ -1,8 +1,26 @@
 package traefikservice
 
-import "github.com/hivepaas/hivepaas/hivepaas_app/entity"
+import (
+	"github.com/moby/moby/api/types/swarm"
 
-type AppConfigData struct {
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+)
+
+type ApplyAppConfigReq struct {
+	App          *entity.App
+	Service      *swarm.Service
 	HttpSettings *entity.AppHttpSettings
 	RefObjects   *entity.RefObjects
+}
+
+type ApplyAppConfigResp struct {
+	Service *swarm.Service
+}
+
+type RemoveAppConfigReq struct {
+	App     *entity.App
+	Service *swarm.Service
+}
+
+type RemoveAppConfigResp struct {
 }

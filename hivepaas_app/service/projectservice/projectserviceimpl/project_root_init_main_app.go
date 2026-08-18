@@ -127,7 +127,9 @@ func (s *service) initRootProjectMainApp(
 		return false, apperrors.Wrap(err)
 	}
 
-	err = s.traefikService.ApplyAppConfig(ctx, app, service, &traefikservice.AppConfigData{
+	_, err = s.traefikService.ApplyAppConfig(ctx, db, &traefikservice.ApplyAppConfigReq{
+		App:          app,
+		Service:      service,
 		HttpSettings: httpSettings,
 	})
 	if err != nil {

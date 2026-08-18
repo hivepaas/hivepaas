@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 )
 
 func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.App) error {
@@ -104,7 +105,9 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 	}
 
 	// Remove app config from traefik
-	err = s.traefikService.RemoveAppConfig(ctx, app, nil)
+	_, err = s.traefikService.RemoveAppConfig(ctx, db, &traefikservice.RemoveAppConfigReq{
+		App: app,
+	})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

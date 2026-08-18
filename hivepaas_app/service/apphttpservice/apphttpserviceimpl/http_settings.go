@@ -27,7 +27,7 @@ func (s *service) ApplyHttpSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	err = s.applyHttpSettings(ctx, data)
+	err = s.applyHttpSettings(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}

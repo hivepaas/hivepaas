@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/htpasswd"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 )
@@ -33,8 +34,7 @@ var (
 )
 
 type appConfigData struct {
-	*traefikservice.AppConfigData
-	app        *entity.App
+	*traefikservice.ApplyAppConfigReq
 	confData   *AppTraefikConfig
 	traefikSvc *swarm.Service
 	hasCerts   bool
@@ -55,17 +55,15 @@ type AppTraefikTLSCertificate struct {
 
 func (s *service) ApplyAppConfig(
 	ctx context.Context,
-	app *entity.App,
-	service *swarm.Service,
-	cfgData *traefikservice.AppConfigData,
-) error {
+	db database.IDB,
+	req *traefikservice.ApplyAppConfigReq,
+) (*traefikservice.ApplyAppConfigResp, error) {
 	data := &appConfigData{
-		AppConfigData: cfgData,
-		app:           app,
+		ApplyAppConfigReq: req,
 	}
 	err := s.loadAppConfigData(ctx, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 	httpSettings := data.HttpSettings
 
@@ -79,30 +77,29 @@ func (s *service) ApplyAppConfig(
 		labels["traefik.swarm.network"] = base.NetworkGlobalRouting
 
 		for i, domain := range httpSettings.Domains {
-			if err := s.collectDomainConfig(app, domain, i, labels, traefikConfig, data); err != nil {
-				return apperrors.Wrap(err)
+			if err := s.collectDomainConfig(domain, i, labels, traefikConfig, data); err != nil {
+				return nil, apperrors.Wrap(err)
 			}
 		}
 	}
 
 	// 2. Apply Labels
-	err = s.updateSwarmServiceLabels(service, labels)
-	if err != nil {
-		return err
-	}
+	s.updateSwarmServiceLabels(data.Service, labels)
 
 	// 3. Write or delete YAML file
 	if data.hasCerts {
 		err := s.writeAppConfigFile(data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return nil, apperrors.Wrap(err)
 		}
 	} else {
 		// Ensure file does not exist if no certs are needed
-		_ = os.Remove(app.TraefikConfigPath())
+		_ = os.Remove(data.App.TraefikConfigPath())
 	}
 
-	return nil
+	return &traefikservice.ApplyAppConfigResp{
+		Service: data.Service,
+	}, nil
 }
 
 func (s *service) loadAppConfigData(
@@ -119,18 +116,25 @@ func (s *service) loadAppConfigData(
 		data.RefObjects = entity.NewRefObjects()
 	}
 
+	if data.Service == nil {
+		inspect, err := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		data.Service = &inspect.Service
+	}
+
 	return nil
 }
 
 func (s *service) collectDomainConfig(
-	app *entity.App,
 	domain *entity.AppDomain,
 	domainIndex int,
 	labels map[string]string,
 	traefikConfig *AppTraefikConfig,
 	data *appConfigData,
 ) error {
-	appKey := sanitizeRouterNameReplacer.Replace(app.Key)
+	appKey := sanitizeRouterNameReplacer.Replace(data.App.Key)
 	domainKey := sanitizeRouterNameReplacer.Replace(domain.Domain)
 	if domainKey == "" {
 		return nil
@@ -583,9 +587,9 @@ func (s *service) createPathRewriteConfig(
 func (s *service) updateSwarmServiceLabels(
 	service *swarm.Service,
 	labels map[string]string,
-) error {
+) {
 	if service == nil {
-		return nil
+		return
 	}
 	spec := &service.Spec
 	if spec.Labels == nil {
@@ -601,8 +605,6 @@ func (s *service) updateSwarmServiceLabels(
 	for k, v := range labels {
 		spec.Labels[k] = v
 	}
-
-	return nil
 }
 
 func (s *service) addTLSCertificate(
@@ -644,31 +646,8 @@ func (s *service) writeAppConfigFile(
 		return apperrors.Wrap(err)
 	}
 
-	err = os.WriteFile(data.app.TraefikConfigPath(), yamlData, defaultConfFileMode)
+	err = os.WriteFile(data.App.TraefikConfigPath(), yamlData, defaultConfFileMode)
 	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	return nil
-}
-
-func (s *service) RemoveAppConfig(
-	_ context.Context,
-	app *entity.App,
-	service *swarm.Service,
-) error {
-	// Clean from Swarm Service
-	if service != nil && service.Spec.Labels != nil {
-		for k := range service.Spec.Labels {
-			if strings.HasPrefix(k, "traefik.") {
-				delete(service.Spec.Labels, k)
-			}
-		}
-	}
-
-	// Clean file
-	err := os.Remove(app.TraefikConfigPath())
-	if err != nil && !os.IsNotExist(err) {
 		return apperrors.Wrap(err)
 	}
 

@@ -68,8 +68,8 @@ func (req *ImageBuildWorkerSettingsReq) validate(field string) (res []vld.Valida
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateObjectIDSliceReq(req.Nodes, true, 1, field+"nodes")...)
-	res = append(res, basedto.ValidateSliceEx(req.NodeLabels, true, 1, nodeLabelMaxLen,
+	res = append(res, basedto.ValidateObjectIDSliceReq(req.Nodes, true, 0, field+"nodes")...)
+	res = append(res, basedto.ValidateSliceEx(req.NodeLabels, true, 0, nodeLabelMaxLen,
 		nil, field+"nodeLabels")...)
 	return res
 }

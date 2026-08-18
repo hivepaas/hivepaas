@@ -8,7 +8,7 @@ export interface GlobalAlertDialogProps {
     onAction?: () => void;
     onCancel?: () => void;
     showFooter?: boolean;
-    type?: "default" | "error";
+    type?: "default" | "error" | "warning";
 }
 
 export interface GlobalAlertDialogState {

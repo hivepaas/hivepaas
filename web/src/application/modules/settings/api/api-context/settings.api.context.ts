@@ -5,6 +5,8 @@ import {
     AccessTokenApiValidator,
     AcmeDnsProviderApi,
     AcmeDnsProviderApiValidator,
+    AppPlacementSettingsApi,
+    AppPlacementSettingsApiValidator,
     BasicAuthApi,
     BasicAuthApiValidator,
     CloudStorageApi,
@@ -61,6 +63,7 @@ function createApi() {
     const githubAppValidator = new GithubAppApiValidator();
     const repoWebhookValidator = new RepoWebhookApiValidator();
     const imageBuildSettingsValidator = new ImageBuildSettingsApiValidator();
+    const appPlacementSettingsValidator = new AppPlacementSettingsApiValidator();
 
     return {
         settings: {
@@ -82,6 +85,7 @@ function createApi() {
             githubApp: new GithubAppApi(githubAppValidator),
             repoWebhook: new RepoWebhookApi(repoWebhookValidator),
             imageBuildSettings: new ImageBuildSettingsApi(imageBuildSettingsValidator),
+            appPlacementSettings: new AppPlacementSettingsApi(appPlacementSettingsValidator),
         },
     };
 }

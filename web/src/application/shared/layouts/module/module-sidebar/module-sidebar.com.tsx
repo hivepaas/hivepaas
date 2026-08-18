@@ -148,6 +148,11 @@ const navMain: SidebarItem[] = [
                 route: ROUTE.appSettings.imageBuild.$route,
                 pattern: ROUTE.appSettings.imageBuild.$pattern,
             },
+            {
+                title: "App Placement",
+                route: ROUTE.appSettings.appPlacement.$route,
+                pattern: ROUTE.appSettings.appPlacement.$pattern,
+            },
         ],
     },
     {

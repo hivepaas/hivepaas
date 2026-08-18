@@ -283,6 +283,11 @@ export const settingsRouter: RouteObject = {
 
             return SettingsImageBuildRoute;
         }),
+        createSettingsRoute(ROUTE.appSettings.appPlacement.$pattern, "App Placement", async () => {
+            const { SettingsAppPlacementRoute } = await getLazyComponents();
+
+            return SettingsAppPlacementRoute;
+        }),
         createSettingsRoute(ROUTE.settings.notificationTargets.$pattern, "Notification Targets", async () => {
             const { SettingsNotificationTargetsRoute } = await getLazyComponents();
 

@@ -1,6 +1,7 @@
 export * from "./domain-settings-services";
 export * from "./storage-settings-services";
 export * from "./image-build-settings-services";
+export * from "./app-placement-settings-services";
 export * from "./acme-dns-provider-services";
 export * from "./basic-auth-services";
 export * from "./git-credentials-services";

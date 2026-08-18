@@ -357,6 +357,11 @@ export const ROUTE = {
             $pattern: "settings/image-build",
             $route: "/settings/image-build/",
         },
+
+        appPlacement: {
+            $pattern: "settings/app-placement",
+            $route: "/settings/app-placement/",
+        },
     },
 
     /**

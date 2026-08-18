@@ -11,3 +11,4 @@ export * from "./cloud-storages";
 export * from "./oauth";
 export * from "./notification-targets";
 export * from "./image-build";
+export * from "./app-placement";

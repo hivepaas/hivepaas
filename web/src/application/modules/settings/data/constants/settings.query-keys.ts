@@ -33,4 +33,5 @@ export const QK = {
     "settings.storage-settings.find-one": "settings.storage-settings.find-one",
     "settings.image-build-settings.find-one": "settings.image-build-settings.find-one",
     "settings.image-build-settings.repo-cache.find-one": "settings.image-build-settings.repo-cache.find-one",
+    "settings.app-placement-settings.find-one": "settings.app-placement-settings.find-one",
 } as const;

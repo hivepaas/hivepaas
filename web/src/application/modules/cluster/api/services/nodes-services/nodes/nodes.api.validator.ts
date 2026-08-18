@@ -15,6 +15,7 @@ import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
  */
 const NodeSchema = z.object({
     id: z.string(),
+    refId: z.string(),
     name: z.string(),
     labels: z.record(z.string(), z.string()).nullable(),
     hostname: z.string(),
@@ -92,6 +93,7 @@ export class NodesApiValidator {
         return {
             data: data.map(node => ({
                 id: node.id,
+                refId: node.refId,
                 name: node.name === "<unset>" ? "" : node.name,
                 labels: node.labels ?? {},
                 hostname: node.hostname,
@@ -127,6 +129,7 @@ export class NodesApiValidator {
         return {
             data: {
                 id: data.id,
+                refId: data.refId,
                 name: data.name === "<unset>" ? "" : data.name,
                 labels: data.labels ?? {},
                 hostname: data.hostname,

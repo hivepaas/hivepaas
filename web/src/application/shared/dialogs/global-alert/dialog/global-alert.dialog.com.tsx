@@ -47,13 +47,17 @@ function View() {
             open={mode === "open"}
             onOpenChange={onOpenChange}
         >
-            <AlertDialogContent className="min-w-0 overflow-hidden">
+            <AlertDialogContent className="min-w-[390px] w-[680px] max-w-[680px] sm:max-w-[680px] overflow-hidden">
                 <AlertDialogHeader className="min-w-0">
                     <AlertDialogTitle>{title}</AlertDialogTitle>
                     <AlertDialogDescription
                         className={cn(
                             dashedBorderBox,
-                            type === "error" ? "text-red-500" : "text-gray-500",
+                            type === "error"
+                                ? "text-red-500"
+                                : type === "warning"
+                                  ? "text-yellow-500"
+                                  : "text-gray-500",
                             "min-w-0 max-w-full max-h-[min(50vh,24rem)] overflow-y-auto whitespace-pre-wrap break-all",
                         )}
                     >

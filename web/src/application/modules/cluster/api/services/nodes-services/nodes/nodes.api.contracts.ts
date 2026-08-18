@@ -54,7 +54,7 @@ export type Nodes_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
  * Create a node
  */
 export type Nodes_CreateOne_Req = ApiRequestBase<{
-    node: Omit<NodeBase, "id" | "createdAt" | "updatedAt">;
+    node: Omit<NodeBase, "id" | "refId" | "createdAt" | "updatedAt">;
 }>;
 
 export type Nodes_CreateOne_Res = ApiResponseBase<{

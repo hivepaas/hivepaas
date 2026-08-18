@@ -38,6 +38,8 @@ export {
     SettingsSslProviderCreateRoute,
     SettingsSSHKeyEditRoute,
     SettingsSSHKeyCreateRoute,
+    SettingsImageBuildRoute,
+    SettingsAppPlacementRoute,
 } from "./routes";
 
 /**

@@ -1,5 +1,7 @@
 export * from "./use-domain-settings.api";
 export * from "./use-storage-settings.api";
+export * from "./use-image-build-settings.api";
+export * from "./use-app-placement-settings.api";
 export * from "./use-acme-dns-provider.api";
 export * from "./use-basic-auth.api";
 export * from "./use-git-credentials.api";

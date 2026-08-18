@@ -7,6 +7,8 @@ export * from "./im-service.entity.schema";
 export * from "./email.entity.schema";
 export * from "./domain-settings.entity.schema";
 export * from "./storage-settings.entity.schema";
+export * from "./image-build-settings.entity.schema";
+export * from "./app-placement-settings.entity.schema";
 export * from "./basic-auth.entity.schema";
 export * from "./ssh-key.entity.schema";
 export * from "./access-token.entity.schema";

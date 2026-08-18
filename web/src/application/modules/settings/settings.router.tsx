@@ -278,6 +278,16 @@ export const settingsRouter: RouteObject = {
 
             return SettingsOAuthEditRoute;
         }),
+        createSettingsRoute(ROUTE.appSettings.imageBuild.$pattern, "Image Build", async () => {
+            const { SettingsImageBuildRoute } = await getLazyComponents();
+
+            return SettingsImageBuildRoute;
+        }),
+        createSettingsRoute(ROUTE.appSettings.appPlacement.$pattern, "App Placement", async () => {
+            const { SettingsAppPlacementRoute } = await getLazyComponents();
+
+            return SettingsAppPlacementRoute;
+        }),
         createSettingsRoute(ROUTE.settings.notificationTargets.$pattern, "Notification Targets", async () => {
             const { SettingsNotificationTargetsRoute } = await getLazyComponents();
 
@@ -303,7 +313,14 @@ export const settingsRouter: RouteObject = {
         ),
         {
             path: "settings",
-            element: <LegacySettingsRouteRedirect />,
+            element: (
+                <ConditionalModule id={MODULE_IDS.Settings}>
+                    <Navigate
+                        to={ROUTE.appSettings.imageBuild.$route}
+                        replace
+                    />
+                </ConditionalModule>
+            ),
         },
         {
             path: "settings/*",

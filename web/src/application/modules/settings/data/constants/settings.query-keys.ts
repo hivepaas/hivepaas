@@ -31,4 +31,7 @@ export const QK = {
     "settings.repo-webhook.find-one-by-id": "settings.repo-webhook.find-one-by-id",
     "settings.domain-settings.find-one": "settings.domain-settings.find-one",
     "settings.storage-settings.find-one": "settings.storage-settings.find-one",
+    "settings.image-build-settings.find-one": "settings.image-build-settings.find-one",
+    "settings.image-build-settings.repo-cache.find-one": "settings.image-build-settings.repo-cache.find-one",
+    "settings.app-placement-settings.find-one": "settings.app-placement-settings.find-one",
 } as const;

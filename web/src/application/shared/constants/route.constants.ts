@@ -294,7 +294,8 @@ export const ROUTE = {
 
             edit: {
                 $pattern: "providers-and-keys/acme-dns-providers/:acmeDnsProviderId/edit",
-                $route: (acmeDnsProviderId: string) => `/providers-and-keys/acme-dns-providers/${acmeDnsProviderId}/edit/`,
+                $route: (acmeDnsProviderId: string) =>
+                    `/providers-and-keys/acme-dns-providers/${acmeDnsProviderId}/edit/`,
             },
         },
 
@@ -342,6 +343,24 @@ export const ROUTE = {
                 $route: (notificationTargetId: string) =>
                     `/providers-and-keys/notification-targets/${notificationTargetId}/edit/`,
             },
+        },
+    },
+
+    /**
+     * App Settings
+     */
+    appSettings: {
+        $pattern: "settings",
+        $route: "/settings/image-build/",
+
+        imageBuild: {
+            $pattern: "settings/image-build",
+            $route: "/settings/image-build/",
+        },
+
+        appPlacement: {
+            $pattern: "settings/app-placement",
+            $route: "/settings/app-placement/",
         },
     },
 

@@ -37,7 +37,7 @@ function isDuplicate(key: string): boolean {
  * (e.g. an Axios interceptor) without React context.
  *
  * - message  → sonner info toast (stable id prevents stacking)
- * - warning  → GlobalAlertDialog (type: "error", title: "Warning")
+ * - warning  → GlobalAlertDialog (type: "warning", title: "Warning")
  * - error    → GlobalAlertDialog (type: "error", title: "Error")
  * - both warning + error → single modal, error takes precedence for title
  */
@@ -52,16 +52,20 @@ export function notifyApiMeta(meta: MetaNotifications): void {
 
     if (meta.warning || meta.error) {
         let title: string;
+        let type: "error" | "warning";
         let description: string;
 
         if (meta.error && meta.warning) {
             title = "Error";
+            type = "error";
             description = `${meta.error}\n\n${meta.warning}`;
         } else if (meta.error) {
             title = "Error";
+            type = "error";
             description = meta.error;
         } else {
             title = "Warning";
+            type = "warning";
             description = meta.warning!;
         }
 
@@ -83,7 +87,7 @@ export function notifyApiMeta(meta: MetaNotifications): void {
                 title,
                 description,
                 showFooter: false,
-                type: "error",
+                type,
             },
         });
     }

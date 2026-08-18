@@ -1,10 +1,10 @@
 import { createContext } from "react";
 
 import {
-    AcmeDnsProviderApi,
-    AcmeDnsProviderApiValidator,
     AccessTokenApi,
     AccessTokenApiValidator,
+    AcmeDnsProviderApi,
+    AcmeDnsProviderApiValidator,
     BasicAuthApi,
     BasicAuthApiValidator,
     CloudStorageApi,
@@ -19,6 +19,8 @@ import {
     GithubAppApiValidator,
     ImServiceApi,
     ImServiceApiValidator,
+    ImageBuildSettingsApi,
+    ImageBuildSettingsApiValidator,
     NotificationsApi,
     NotificationsApiValidator,
     OAuthApi,
@@ -58,6 +60,7 @@ function createApi() {
     const oauthValidator = new OAuthApiValidator();
     const githubAppValidator = new GithubAppApiValidator();
     const repoWebhookValidator = new RepoWebhookApiValidator();
+    const imageBuildSettingsValidator = new ImageBuildSettingsApiValidator();
 
     return {
         settings: {
@@ -78,6 +81,7 @@ function createApi() {
             oauth: new OAuthApi(oauthValidator),
             githubApp: new GithubAppApi(githubAppValidator),
             repoWebhook: new RepoWebhookApi(repoWebhookValidator),
+            imageBuildSettings: new ImageBuildSettingsApi(imageBuildSettingsValidator),
         },
     };
 }

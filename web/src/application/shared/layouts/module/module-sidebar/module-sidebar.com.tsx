@@ -7,6 +7,7 @@ import {
     LayoutGrid,
     type LucideIcon,
     Puzzle,
+    Settings,
     Settings2,
     SlidersHorizontal,
     User,
@@ -132,6 +133,20 @@ const navMain: SidebarItem[] = [
                 title: "SSL Providers",
                 route: ROUTE.settings.sslProviders.$route,
                 pattern: ROUTE.settings.sslProviders.$pattern,
+            },
+        ],
+    },
+    {
+        title: "Settings",
+        route: "#",
+        pattern: ROUTE.appSettings.$pattern,
+        icon: Settings,
+        moduleId: MODULE_IDS.Settings,
+        items: [
+            {
+                title: "Image Build",
+                route: ROUTE.appSettings.imageBuild.$route,
+                pattern: ROUTE.appSettings.imageBuild.$pattern,
             },
         ],
     },

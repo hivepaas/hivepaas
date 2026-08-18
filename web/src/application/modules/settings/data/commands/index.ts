@@ -1,5 +1,6 @@
 export * from "./domain-settings.commands";
 export * from "./storage-settings.commands";
+export * from "./image-build-settings.commands";
 export * from "./acme-dns-provider.commands";
 export * from "./basic-auth.commands";
 export * from "./notification.commands";

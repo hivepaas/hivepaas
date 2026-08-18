@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { ChevronDown, ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronRight, FilePen, Plus, Trash2, X } from "lucide-react";
 import { get, useController, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
@@ -24,7 +24,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui";
+import { Textarea } from "@/components/ui/textarea";
 
+import { EditCommandArgDialog } from "./building-blocks/edit-command-arg.dialog.com";
 import { createDefaultCommandArg, createDefaultCommandArgGroup } from "./command-arg-groups-section.helpers";
 import type { CommandArgGroupsFormValue } from "./command-arg-groups-section.types";
 
@@ -81,7 +83,12 @@ function getInputWidth(value: string, placeholder: string, min: number, max: num
     return `${width}ch`;
 }
 
+function getFirstLine(value: string) {
+    return value.split("\n")[0] ?? "";
+}
+
 function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName = "argGroups" }: ArgItemProps) {
+    const [editOpen, setEditOpen] = useState(false);
     const {
         control,
         formState: { errors },
@@ -94,8 +101,9 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName =
         fieldState: { error: nameError },
     } = useController({ control, name: `${basePath}.name` as never });
     const { field: value } = useController({ control, name: `${basePath}.value` as never });
-    const nameValue = name.value;
-    const argValue = value.value;
+    const nameValue = typeof name.value === "string" ? name.value : "";
+    const argValue = typeof value.value === "string" ? value.value : "";
+    const argValueFirstLine = getFirstLine(argValue);
 
     return (
         <div className="flex flex-col gap-1">
@@ -127,15 +135,35 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName =
                     disabled={readOnly}
                 />
                 <span className="text-sm text-muted-foreground">=</span>
-                <Input
+                <Textarea
                     {...value}
                     value={argValue}
                     onChange={value.onChange}
+                    onKeyDown={event => {
+                        if (event.key === "Enter") {
+                            event.preventDefault();
+                        }
+                    }}
                     placeholder="value"
-                    className="h-8 min-w-[8ch] max-w-[34ch]"
-                    style={{ width: getInputWidth(argValue, "value", 8, 34) }}
+                    minRows={1}
+                    maxRows={1}
+                    className="h-8 min-h-8 max-h-8 min-w-[8ch] max-w-[34ch] resize-none overflow-hidden py-1 leading-normal"
+                    style={{ width: getInputWidth(argValueFirstLine, "value", 8, 34) }}
                     disabled={readOnly}
                 />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 shrink-0 text-muted-foreground"
+                    onClick={() => {
+                        setEditOpen(true);
+                    }}
+                    disabled={readOnly}
+                >
+                    <FilePen className="size-4" />
+                    <span className="sr-only">Edit arg</span>
+                </Button>
                 <Button
                     type="button"
                     variant="ghost"
@@ -149,6 +177,18 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName =
                 </Button>
             </div>
             <FieldError errors={[nameError]} />
+
+            <EditCommandArgDialog
+                open={editOpen}
+                onOpenChange={setEditOpen}
+                name={nameValue}
+                value={argValue}
+                readOnly={readOnly}
+                onSave={nextValues => {
+                    name.onChange(nextValues.name);
+                    value.onChange(nextValues.value);
+                }}
+            />
         </div>
     );
 }

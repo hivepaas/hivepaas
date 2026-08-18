@@ -1,4 +1,4 @@
-package entityutil
+package settinghelper
 
 import (
 	"testing"
@@ -27,50 +27,50 @@ func TestSetting(t *testing.T) {
 	}
 	settings := []*entity.Setting{setting1, setting2, setting3}
 
-	t.Run("GetSettingsByType", func(t *testing.T) {
+	t.Run("FindSettingsByType", func(t *testing.T) {
 		t.Run("multiple matches", func(t *testing.T) {
-			res := GetSettingsByType(settings, base.SettingTypePeriodicJob)
+			res := FindSettingsByType(settings, base.SettingTypePeriodicJob)
 			assert.Len(t, res, 2)
 			assert.Equal(t, []*entity.Setting{setting1, setting3}, res)
 		})
 
 		t.Run("single match", func(t *testing.T) {
-			res := GetSettingsByType(settings, base.SettingTypeEmail)
+			res := FindSettingsByType(settings, base.SettingTypeEmail)
 			assert.Len(t, res, 1)
 			assert.Equal(t, []*entity.Setting{setting2}, res)
 		})
 
 		t.Run("no match", func(t *testing.T) {
-			res := GetSettingsByType(settings, base.SettingTypeHivePaaSService)
+			res := FindSettingsByType(settings, base.SettingTypeHivePaaSService)
 			assert.Empty(t, res)
 		})
 
 		t.Run("empty input", func(t *testing.T) {
-			res := GetSettingsByType(nil, base.SettingTypePeriodicJob)
+			res := FindSettingsByType(nil, base.SettingTypePeriodicJob)
 			assert.Empty(t, res)
 		})
 	})
 
-	t.Run("GetSettingByType", func(t *testing.T) {
+	t.Run("FindSettingByType", func(t *testing.T) {
 		t.Run("match found returns first", func(t *testing.T) {
-			res := GetSettingByType(settings, base.SettingTypePeriodicJob)
+			res := FindSettingByType(settings, base.SettingTypePeriodicJob)
 			assert.NotNil(t, res)
 			assert.Equal(t, setting1, res)
 		})
 
 		t.Run("single match found", func(t *testing.T) {
-			res := GetSettingByType(settings, base.SettingTypeEmail)
+			res := FindSettingByType(settings, base.SettingTypeEmail)
 			assert.NotNil(t, res)
 			assert.Equal(t, setting2, res)
 		})
 
 		t.Run("no match returns nil", func(t *testing.T) {
-			res := GetSettingByType(settings, base.SettingTypeHivePaaSService)
+			res := FindSettingByType(settings, base.SettingTypeHivePaaSService)
 			assert.Nil(t, res)
 		})
 
 		t.Run("empty input returns nil", func(t *testing.T) {
-			res := GetSettingByType(nil, base.SettingTypePeriodicJob)
+			res := FindSettingByType(nil, base.SettingTypePeriodicJob)
 			assert.Nil(t, res)
 		})
 	})

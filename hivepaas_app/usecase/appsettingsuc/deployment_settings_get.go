@@ -9,7 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -40,7 +40,7 @@ func (uc *UC) GetAppDeploymentSettings(
 
 	input := &appsettingsdto.AppDeploymentSettingsTransformInput{
 		App:                app,
-		DeploymentSettings: entityutil.GetSettingByType(settings, base.SettingTypeAppDeployment),
+		DeploymentSettings: settinghelper.FindSettingByType(settings, base.SettingTypeAppDeployment),
 	}
 	err = uc.loadAppDeploymentSettingsRefData(ctx, uc.db, input)
 	if err != nil {

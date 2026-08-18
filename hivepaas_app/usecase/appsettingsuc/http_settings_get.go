@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -40,7 +41,7 @@ func (uc *UC) GetAppHttpSettings(
 
 	input := &appsettingsdto.AppHttpSettingsTransformInput{
 		App:          app,
-		HttpSettings: entityutil.GetSettingByType(settings, base.SettingTypeAppHttp),
+		HttpSettings: settinghelper.FindSettingByType(settings, base.SettingTypeAppHttp),
 	}
 
 	err = uc.loadAppHttpSettingsRefData(ctx, uc.db, input)

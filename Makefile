@@ -33,11 +33,28 @@ trivy:
 		docker run --rm -v "$(PWD)":/app -w /app aquasec/trivy:latest fs --skip-dirs "vendor,.temp,tmp,temp" --severity CRITICAL,HIGH .; \
 	fi
 
-build:
-	@go build -o hivepaas ./hivepaas_app/cmd/app/...
+# ----- Build flags -----
+PROD_LDFLAGS := -s -w
+PROD_FLAGS := -trimpath -ldflags="$(PROD_LDFLAGS)"
 
 run:
 	@go run ./hivepaas_app/cmd/app/...
+
+# Dev builds
+build:
+	@go build -o hivepaas ./hivepaas_app/cmd/app/...
+
+build-agent:
+	@go build -o hivepaas-agent ./hivepaas_app/cmd/agent/...
+
+# Production builds (Stripped & Trimpath)
+build-prod:
+	@go build $(PROD_FLAGS) -o hivepaas ./hivepaas_app/cmd/app/...
+
+build-agent-prod:
+	@go build $(PROD_FLAGS) -o hivepaas-agent ./hivepaas_app/cmd/agent/...
+
+build-all-prod: build-prod build-agent-prod
 
 # ----- Code generation -----
 gen: gen-go gen-swag

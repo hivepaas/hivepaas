@@ -19,7 +19,7 @@ COPY . .
 RUN make mod
 
 # Build the agent application
-RUN go build -o hivepaas-agent ./hivepaas_app/cmd/agent/...
+RUN make build-agent
 
 ############################################################
 # Build a small image

@@ -38,6 +38,8 @@ export type ProjectCommandTemplate_CreateOne_Payload = {
     argGroups: ProjectCommandTemplateArgGroup[];
     consoleSize: ProjectCommandTemplateConsoleSize;
     tty: boolean;
+    link: string;
+    desc: string;
 };
 
 export type ProjectCommandTemplate_CreateOne_Req = ApiRequestBase<{

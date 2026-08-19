@@ -15,6 +15,8 @@ export function createEmptyProjectCommandTemplateFormDefaults(): ProjectCommandT
     return {
         name: "",
         kind: "",
+        link: "",
+        desc: "",
         commandMode: PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Command,
         command: "",
         script: "",
@@ -35,6 +37,8 @@ export function mapProjectCommandTemplateToFormInput(
     return {
         name: commandTemplate.name,
         kind: commandTemplate.kind,
+        link: commandTemplate.link,
+        desc: commandTemplate.desc,
         commandMode: script.trim()
             ? PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Script
             : PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Command,

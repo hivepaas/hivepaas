@@ -8,6 +8,7 @@ import { SettingStatusBadge } from "~/settings/module-shared/components";
 import { ECommandTemplateKind } from "@application/shared/enums";
 
 import { ProjectCommandTemplateEditCell } from "./project-command-template-edit-cell.com";
+import { toCommandTemplateExternalHref } from "./project-command-template-external-href";
 import { ProjectCommandTemplateMenuCell } from "./project-command-template-menu-cell.com";
 
 function getKindClassName(kind: ProjectCommandTemplate["kind"]): string {
@@ -79,6 +80,29 @@ function createColumns(projectId: string): ColumnDef<ProjectCommandTemplate>[] {
                     aria-label="Script mode"
                 />
             ),
+        },
+        {
+            accessorKey: "link",
+            header: "Link",
+            enableSorting: false,
+            cell: ({ row: { original } }) => {
+                const href = toCommandTemplateExternalHref(original.link);
+
+                if (!href) {
+                    return "-";
+                }
+
+                return (
+                    <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-link"
+                    >
+                        Docs
+                    </a>
+                );
+            },
         },
         {
             accessorKey: "status",

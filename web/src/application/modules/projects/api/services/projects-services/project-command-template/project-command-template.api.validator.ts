@@ -102,6 +102,14 @@ const CommandTemplateSchema = z.object({
     consoleSize: ConsoleSizeSchema,
     tty: z.boolean().optional().default(false),
     size: z.number().optional().default(0),
+    link: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
+    desc: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
 });
 
 const FindManyPaginatedSchema = z.object({

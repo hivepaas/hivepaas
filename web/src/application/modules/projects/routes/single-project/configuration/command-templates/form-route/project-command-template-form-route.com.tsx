@@ -79,6 +79,8 @@ export function ProjectCommandTemplateFormRoute({ mode, projectId, commandTempla
             argGroups: normalizeProjectCommandTemplateArgGroups(values.argGroups),
             consoleSize: values.consoleSize,
             tty: values.tty,
+            link: values.link,
+            desc: values.desc,
         };
     }
 

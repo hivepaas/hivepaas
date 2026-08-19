@@ -7,6 +7,9 @@ export const PROJECT_COMMAND_TEMPLATE_COMMAND_MODE = {
 } as const;
 
 const COMMAND_TEMPLATE_MAX_SIZE = 300 * 1024;
+const COMMAND_TEMPLATE_LINK_MIN_LEN = 3;
+const COMMAND_TEMPLATE_LINK_MAX_LEN = 500;
+const COMMAND_TEMPLATE_DESC_MAX_LEN = 1000;
 
 const KeyValueSchema = z.object({
     key: z.string(),
@@ -31,6 +34,17 @@ export const ProjectCommandTemplateFormSchema = z
     .object({
         name: z.string().trim().min(1, "Name is required"),
         kind: z.string().trim().min(1, "Type is required"),
+        link: z
+            .string()
+            .trim()
+            .max(COMMAND_TEMPLATE_LINK_MAX_LEN, `Link must be at most ${COMMAND_TEMPLATE_LINK_MAX_LEN} characters`)
+            .refine(value => value.length === 0 || value.length >= COMMAND_TEMPLATE_LINK_MIN_LEN, {
+                message: `Link must be at least ${COMMAND_TEMPLATE_LINK_MIN_LEN} characters`,
+            }),
+        desc: z
+            .string()
+            .trim()
+            .max(COMMAND_TEMPLATE_DESC_MAX_LEN, `Description must be at most ${COMMAND_TEMPLATE_DESC_MAX_LEN} characters`),
         commandMode: z.enum([
             PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Command,
             PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Script,

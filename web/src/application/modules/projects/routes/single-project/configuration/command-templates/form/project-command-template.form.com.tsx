@@ -21,7 +21,9 @@ import {
 import { ECommandTemplateKind } from "@application/shared/enums";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
+import { Textarea } from "@/components/ui/textarea";
 
+import { toCommandTemplateExternalHref } from "../building-blocks/project-command-template-external-href";
 import {
     type ProjectCommandTemplateFormInput,
     type ProjectCommandTemplateFormOutput,
@@ -96,7 +98,17 @@ export function ProjectCommandTemplateForm({
         field: kind,
         fieldState: { invalid: isKindInvalid },
     } = useController({ control, name: "kind" });
+    const {
+        field: link,
+        fieldState: { invalid: isLinkInvalid },
+    } = useController({ control, name: "link" });
+    const {
+        field: desc,
+        fieldState: { invalid: isDescInvalid },
+    } = useController({ control, name: "desc" });
     const { field: defaultField } = useController({ control, name: "default" });
+    const trimmedLink = link.value.trim();
+    const linkHref = toCommandTemplateExternalHref(trimmedLink);
 
     function onValid(values: SchemaOutput) {
         if (isReadOnly) {
@@ -167,6 +179,50 @@ export function ProjectCommandTemplateForm({
                                         className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                                     />
                                     <FieldError errors={[errors.kind]} />
+                                </Field>
+                            </InfoBlock>
+
+                            <InfoBlock
+                                titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                title={<LabelWithInfo label="Link" />}
+                            >
+                                <Field>
+                                    <div className="flex items-center gap-3">
+                                        <Input
+                                            {...link}
+                                            placeholder="link to the command"
+                                            aria-invalid={isLinkInvalid}
+                                            className={`${PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS} min-w-0 flex-1`}
+                                        />
+                                        {linkHref ? (
+                                            <a
+                                                href={linkHref}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-link shrink-0"
+                                            >
+                                                View
+                                            </a>
+                                        ) : null}
+                                    </div>
+                                    <FieldError errors={[errors.link]} />
+                                </Field>
+                            </InfoBlock>
+
+                            <InfoBlock
+                                titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                title={<LabelWithInfo label="Description" />}
+                            >
+                                <Field>
+                                    <Textarea
+                                        {...desc}
+                                        placeholder="description"
+                                        aria-invalid={isDescInvalid}
+                                        minRows={3}
+                                        maxRows={3}
+                                        className={`${PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS} resize-y whitespace-pre-wrap break-words`}
+                                    />
+                                    <FieldError errors={[errors.desc]} />
                                 </Field>
                             </InfoBlock>
 

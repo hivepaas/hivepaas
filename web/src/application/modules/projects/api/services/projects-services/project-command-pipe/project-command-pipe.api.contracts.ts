@@ -36,6 +36,18 @@ export type ProjectCommandPipe_CreateOne_Req = ApiRequestBase<{
 
 export type ProjectCommandPipe_CreateOne_Res = ApiResponseBase<{ id: string }>;
 
+export type ProjectCommandPipe_CreateFromTemplate_Payload = {
+    commandType: string;
+    commandKind: string;
+};
+
+export type ProjectCommandPipe_CreateFromTemplate_Req = ApiRequestBase<{
+    projectID: string;
+    payload: ProjectCommandPipe_CreateFromTemplate_Payload;
+}>;
+
+export type ProjectCommandPipe_CreateFromTemplate_Res = ProjectCommandPipe_CreateOne_Res;
+
 export type ProjectCommandPipe_UpdateOne_Payload = ProjectCommandPipe_CreateOne_Payload & {
     updateVer: number;
 };

@@ -1,6 +1,8 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useProjectCommandPipeApi } from "~/projects/api/hooks";
 import type {
+    ProjectCommandPipe_CreateFromTemplate_Req,
+    ProjectCommandPipe_CreateFromTemplate_Res,
     ProjectCommandPipe_CreateOne_Req,
     ProjectCommandPipe_CreateOne_Res,
     ProjectCommandPipe_DeleteOne_Req,
@@ -25,6 +27,33 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({
                 queryKey: [QK["projects.command-pipes.$.find-many-paginated"]],
+            });
+
+            onSuccess?.(response, ...rest);
+        },
+        ...options,
+    });
+}
+
+type CreateFromTemplateReq = ProjectCommandPipe_CreateFromTemplate_Req["data"];
+type CreateFromTemplateRes = ProjectCommandPipe_CreateFromTemplate_Res;
+type CreateFromTemplateOptions = Omit<
+    UseMutationOptions<CreateFromTemplateRes, Error, CreateFromTemplateReq>,
+    "mutationFn"
+>;
+
+function useCreateFromTemplate({ onSuccess, ...options }: CreateFromTemplateOptions = {}) {
+    const { mutations } = useProjectCommandPipeApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.createFromTemplate,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.command-pipes.$.find-many-paginated"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.command-templates.$.find-many-paginated"]],
             });
 
             onSuccess?.(response, ...rest);
@@ -107,6 +136,7 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 
 export const ProjectCommandPipeCommands = Object.freeze({
     useCreateOne,
+    useCreateFromTemplate,
     useUpdateOne,
     useUpdateStatus,
     useDeleteOne,

@@ -61,7 +61,8 @@ type EnvVarsData struct {
 }
 
 type EnvLoadOptions struct {
-	BuildPhase bool
+	BuildPhase         bool
+	SkipLoadingSecrets bool
 }
 
 type EnvLoadFunc func(context.Context, database.IDB, *entity.ObjectScope, EnvLoadOptions) (

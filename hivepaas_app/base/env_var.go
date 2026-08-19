@@ -2,6 +2,10 @@ package base
 
 import "maps"
 
+const (
+	SecretRefInEnvMaxSize = 10 * 1024 // 10 KB
+)
+
 type EnvVarKind string
 
 const (

@@ -11,6 +11,9 @@ type Service interface {
 	HasRef(v string) bool
 	HasSecretRef(v string) bool
 
+	DefaultEnvLoad(ctx context.Context, db database.IDB, scope *entity.ObjectScope, options EnvLoadOptions) (
+		envVars []*EnvVar, secrets []*entity.Setting, err error)
+
 	BuildEnvVarsInProject(ctx context.Context, db database.IDB, req *BuildEnvVarsInProjectReq) (
 		*BuildEnvVarsInProjectResp, error)
 	BuildSystemEnvVarsInProject(ctx context.Context, db database.IDB, req *BuildSystemEnvVarsInProjectReq) (

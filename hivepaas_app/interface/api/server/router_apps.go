@@ -39,16 +39,6 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		tagGroup.POST("/delete", appSettingsHandler.DeleteAppTags)
 	}
 
-	{ // Logs
-		appGroup.GET("/:appID/logs/info", appHandler.GetAppLogsInfo)
-		appGroup.GET("/:appID/logs", appHandler.GetAppLogs)
-	}
-
-	{ // Terminal
-		appGroup.GET("/:appID/terminal/info", appHandler.GetAppTerminalInfo)
-		appGroup.GET("/:appID/terminal", appHandler.OpenAppTerminal)
-	}
-
 	{ // Settings
 		appGroup.GET("/:appID/deployment-settings", appSettingsHandler.GetAppDeploymentSettings)
 		appGroup.PUT("/:appID/deployment-settings", appSettingsHandler.UpdateAppDeploymentSettings)
@@ -71,10 +61,6 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.GET("/:appID/clone-settings", appSettingsHandler.GetAppCloneSettings)
 		appGroup.PUT("/:appID/clone-settings", appSettingsHandler.UpdateAppCloneSettings)
 		appGroup.POST("/:appID/clone-execute", appSettingsHandler.ExecuteAppClone)
-	}
-
-	{ // Service tasks
-		appGroup.GET("/:appID/service-tasks", appSettingsHandler.GetAppServiceTasks)
 	}
 
 	{ // Env vars
@@ -150,6 +136,11 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		periodicJobGroup.GET("/:itemID/tasks", appSettingsHandler.ListAppPeriodicJobTask)
 	}
 
+	{ // Command templates
+		commandTplGroup := appGroup.Group("/:appID/command-templates")
+		commandTplGroup.POST("/:itemID/build", appSettingsHandler.BuildCommandTemplate)
+	}
+
 	{ // App containers
 		containerGroup := appGroup.Group("/:appID/container")
 		// Check port
@@ -170,6 +161,20 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		deploymentGroup.POST("/:deploymentID/cancel", appDeploymentHandler.CancelAppDeployment)
 		// Logs
 		deploymentGroup.GET("/:deploymentID/logs", appDeploymentHandler.GetAppDeploymentLogs)
+	}
+
+	{ // Logs
+		appGroup.GET("/:appID/logs/info", appHandler.GetAppLogsInfo)
+		appGroup.GET("/:appID/logs", appHandler.GetAppLogs)
+	}
+
+	{ // Terminal
+		appGroup.GET("/:appID/terminal/info", appHandler.GetAppTerminalInfo)
+		appGroup.GET("/:appID/terminal", appHandler.OpenAppTerminal)
+	}
+
+	{ // Service tasks
+		appGroup.GET("/:appID/service-tasks", appSettingsHandler.GetAppServiceTasks)
 	}
 
 	{ // Actions

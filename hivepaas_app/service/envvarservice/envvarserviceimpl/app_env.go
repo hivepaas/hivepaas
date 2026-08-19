@@ -12,10 +12,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
-const (
-	refSecretMaxSize = 10 * 1024 // 10 KB
-)
-
 func (s *service) BuildEnvVarsInApp(
 	ctx context.Context,
 	db database.IDB,
@@ -106,9 +102,8 @@ func (s *service) loadVarDataInApp(
 		dataLoadFunc = s.DefaultEnvLoad
 	}
 
-	loadedVars, loadedSecrets, err := dataLoadFunc(ctx, db, app.GetObjectScope(), envvarservice.EnvLoadOptions{
-		BuildPhase: req.BuildOptions.BuildPhaseOnly,
-	})
+	req.LoadOptions.BuildPhase = req.BuildOptions.BuildPhaseOnly
+	loadedVars, loadedSecrets, err := dataLoadFunc(ctx, db, app.GetObjectScope(), req.LoadOptions)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

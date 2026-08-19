@@ -33,7 +33,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/container/file-download [get]
 func (h *Handler) DownloadFileFromContainer(ctx *gin.Context) {
-	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeExecute)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

@@ -3,6 +3,8 @@ package envvarserviceimpl
 import (
 	"context"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -20,8 +22,8 @@ func (s *service) DefaultEnvLoad(
 	settings, _, err := s.settingRepo.List(ctx, db, nil, nil,
 		bunex.SelectWhereGroup(
 			bunex.SelectWhere("setting.type = ?", base.SettingTypeEnvVar),
-			bunex.SelectWhereOr("(setting.type = ? AND setting.size <= ?)",
-				base.SettingTypeSecret, refSecretMaxSize),
+			bunex.SelectWhereOrIf(!options.SkipLoadingSecrets, "(setting.type = ? AND setting.size <= ?)",
+				base.SettingTypeSecret, base.SecretRefInEnvMaxSize),
 		),
 		bunex.SelectWhere("setting.object_id = ?", scope.ScopeObjectID()),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
@@ -30,8 +32,8 @@ func (s *service) DefaultEnvLoad(
 		return nil, nil, apperrors.Wrap(err)
 	}
 
-	envVars = make([]*envvarservice.EnvVar, 0, 20) //nolint:mnd
-	secrets = make([]*entity.Setting, 0, 10)       //nolint:mnd
+	envVars = make([]*envvarservice.EnvVar, 0, 30)                                   //nolint:mnd
+	secrets = make([]*entity.Setting, 0, gofn.If(options.SkipLoadingSecrets, 0, 10)) //nolint:mnd
 	for _, setting := range settings {
 		switch setting.Type { //nolint:exhaustive
 		case base.SettingTypeEnvVar:

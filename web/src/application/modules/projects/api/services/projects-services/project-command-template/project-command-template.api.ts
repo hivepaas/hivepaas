@@ -4,6 +4,8 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
 import type {
+    ProjectCommandTemplate_CreateFromTemplate_Req,
+    ProjectCommandTemplate_CreateFromTemplate_Res,
     ProjectCommandTemplate_CreateOne_Req,
     ProjectCommandTemplate_CreateOne_Res,
     ProjectCommandTemplate_DeleteOne_Req,
@@ -78,6 +80,25 @@ export class ProjectCommandTemplateApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.createOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async createFromTemplate(
+        request: ProjectCommandTemplate_CreateFromTemplate_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectCommandTemplate_CreateFromTemplate_Res, Error>> {
+        const { projectID, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post(`/projects/${projectID}/command-templates/from-template`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.createFromTemplate),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

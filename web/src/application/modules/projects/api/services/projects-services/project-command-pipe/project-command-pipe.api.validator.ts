@@ -6,6 +6,7 @@ import { ESettingStatus } from "@application/shared/enums";
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
+    ProjectCommandPipe_CreateFromTemplate_Res,
     ProjectCommandPipe_CreateOne_Res,
     ProjectCommandPipe_DeleteOne_Res,
     ProjectCommandPipe_FindManyPaginated_Res,
@@ -114,6 +115,15 @@ export class ProjectCommandPipeApiValidator {
     };
 
     createOne = (response: AxiosResponse): ProjectCommandPipe_CreateOne_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: CreateOneSchema,
+        });
+
+        return { data, meta };
+    };
+
+    createFromTemplate = (response: AxiosResponse): ProjectCommandPipe_CreateFromTemplate_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,

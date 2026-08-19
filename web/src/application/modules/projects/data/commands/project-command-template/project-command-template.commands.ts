@@ -1,6 +1,8 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useProjectCommandTemplateApi } from "~/projects/api/hooks";
 import type {
+    ProjectCommandTemplate_CreateFromTemplate_Req,
+    ProjectCommandTemplate_CreateFromTemplate_Res,
     ProjectCommandTemplate_CreateOne_Req,
     ProjectCommandTemplate_CreateOne_Res,
     ProjectCommandTemplate_DeleteOne_Req,
@@ -22,6 +24,30 @@ function useCreateOne({ onSuccess, ...options }: CreateOneOptions = {}) {
 
     return useMutation({
         mutationFn: mutations.createOne,
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.command-templates.$.find-many-paginated"]],
+            });
+
+            onSuccess?.(response, ...rest);
+        },
+        ...options,
+    });
+}
+
+type CreateFromTemplateReq = ProjectCommandTemplate_CreateFromTemplate_Req["data"];
+type CreateFromTemplateRes = ProjectCommandTemplate_CreateFromTemplate_Res;
+type CreateFromTemplateOptions = Omit<
+    UseMutationOptions<CreateFromTemplateRes, Error, CreateFromTemplateReq>,
+    "mutationFn"
+>;
+
+function useCreateFromTemplate({ onSuccess, ...options }: CreateFromTemplateOptions = {}) {
+    const { mutations } = useProjectCommandTemplateApi();
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: mutations.createFromTemplate,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({
                 queryKey: [QK["projects.command-templates.$.find-many-paginated"]],
@@ -107,6 +133,7 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 
 export const ProjectCommandTemplateCommands = Object.freeze({
     useCreateOne,
+    useCreateFromTemplate,
     useUpdateOne,
     useUpdateStatus,
     useDeleteOne,

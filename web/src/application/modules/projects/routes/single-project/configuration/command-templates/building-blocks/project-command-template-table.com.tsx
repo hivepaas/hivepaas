@@ -11,6 +11,7 @@ import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
 
+import { ProjectCommandTemplateFromTemplateMenu } from "./project-command-template-from-template-menu.com";
 import { ProjectCommandTemplateTableDefs } from "./project-command-template-table.defs";
 
 const PROJECT_SCOPE = { type: "project" } as const;
@@ -33,17 +34,22 @@ export function ProjectCommandTemplateTable({ projectId }: Props) {
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <SettingsScopeCreateButton
-                        scope={PROJECT_SCOPE}
-                        onClick={() => {
-                            navigate.modules(
-                                ROUTE.projects.single.providerConfiguration.commandTemplates.create.$route(projectId),
-                            );
-                        }}
-                    >
-                        <Plus className="size-4" />
-                        New Command Template
-                    </SettingsScopeCreateButton>
+                    <div className="flex flex-wrap gap-3">
+                        <ProjectCommandTemplateFromTemplateMenu projectId={projectId} />
+                        <SettingsScopeCreateButton
+                            scope={PROJECT_SCOPE}
+                            onClick={() => {
+                                navigate.modules(
+                                    ROUTE.projects.single.providerConfiguration.commandTemplates.create.$route(
+                                        projectId,
+                                    ),
+                                );
+                            }}
+                        >
+                            <Plus className="size-4" />
+                            New Command Template
+                        </SettingsScopeCreateButton>
+                    </div>
                 }
             />
             <DataTable

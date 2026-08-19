@@ -49,6 +49,18 @@ export type ProjectCommandTemplate_CreateOne_Req = ApiRequestBase<{
 
 export type ProjectCommandTemplate_CreateOne_Res = ApiResponseBase<{ id: string }>;
 
+export type ProjectCommandTemplate_CreateFromTemplate_Payload = {
+    commandType: string;
+    commandKind: string;
+};
+
+export type ProjectCommandTemplate_CreateFromTemplate_Req = ApiRequestBase<{
+    projectID: string;
+    payload: ProjectCommandTemplate_CreateFromTemplate_Payload;
+}>;
+
+export type ProjectCommandTemplate_CreateFromTemplate_Res = ProjectCommandTemplate_CreateOne_Res;
+
 export type ProjectCommandTemplate_UpdateOne_Payload = ProjectCommandTemplate_CreateOne_Payload & {
     updateVer: number;
 };

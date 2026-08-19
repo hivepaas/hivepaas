@@ -121,7 +121,7 @@ export function PlacementConstraintsFields() {
                                 // classNameContainer="h-9"
                             />
 
-                            <div className="flex items-center rounded-md shadow-xs bg-background border border-input">
+                            <div className="flex items-center rounded-md shadow-xs bg-background border border-input h-9">
                                 <span className="px-3 text-sm border-r border-input bg-muted/50 rounded-l-md flex items-center h-full">
                                     Op
                                 </span>

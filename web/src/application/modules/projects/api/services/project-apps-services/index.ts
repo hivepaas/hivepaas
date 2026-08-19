@@ -1,6 +1,7 @@
 export * from "./config-files";
 export * from "./data-files";
 export * from "./container-settings";
+export * from "./container-files";
 export * from "./deployments";
 export * from "./deployment-settings";
 export * from "./env-vars";

@@ -52,4 +52,6 @@ export interface ProjectCommandTemplate {
     consoleSize: ProjectCommandTemplateConsoleSize;
     tty: boolean;
     size: number;
+    link: string;
+    desc: string;
 }

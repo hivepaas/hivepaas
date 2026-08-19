@@ -5,6 +5,8 @@ import {
     AppCloneSettingsApiValidator,
     AppConfigFilesApi,
     AppConfigFilesApiValidator,
+    AppContainerFilesApi,
+    AppContainerFilesApiValidator,
     AppContainerSettingsApi,
     AppContainerSettingsApiValidator,
     AppDataFilesApi,
@@ -136,6 +138,7 @@ function createApi() {
     const projectClusterVolumesApiValidator = new ProjectClusterVolumesApiValidator();
     const projectDockerVolumesApiValidator = new ProjectDockerVolumesApiValidator();
     const projectNotificationApiValidator = new ProjectNotificationApiValidator();
+    const appContainerFilesApiValidator = new AppContainerFilesApiValidator();
     const appContainerSettingsApiValidator = new AppContainerSettingsApiValidator();
     const appConfigFilesApiValidator = new AppConfigFilesApiValidator();
     const appDataFilesApiValidator = new AppDataFilesApiValidator();
@@ -213,6 +216,9 @@ function createApi() {
                 },
                 containerSettings: {
                     $: new AppContainerSettingsApi(appContainerSettingsApiValidator),
+                },
+                containerFiles: {
+                    $: new AppContainerFilesApi(appContainerFilesApiValidator),
                 },
                 deploymentSettings: {
                     $: new AppDeploymentSettingsApi(appDeploymentSettingsApiValidator),

@@ -8,6 +8,7 @@ import { ESettingStatus } from "@application/shared/enums";
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
+    ProjectCommandTemplate_CreateFromTemplate_Res,
     ProjectCommandTemplate_CreateOne_Res,
     ProjectCommandTemplate_DeleteOne_Res,
     ProjectCommandTemplate_FindManyPaginated_Res,
@@ -153,6 +154,15 @@ export class ProjectCommandTemplateApiValidator {
     };
 
     createOne = (response: AxiosResponse): ProjectCommandTemplate_CreateOne_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: CreateOneSchema,
+        });
+
+        return { data, meta };
+    };
+
+    createFromTemplate = (response: AxiosResponse): ProjectCommandTemplate_CreateFromTemplate_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: CreateOneSchema,

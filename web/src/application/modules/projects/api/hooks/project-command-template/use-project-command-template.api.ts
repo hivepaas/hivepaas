@@ -3,6 +3,7 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
+    ProjectCommandTemplate_CreateFromTemplate_Req,
     ProjectCommandTemplate_CreateOne_Req,
     ProjectCommandTemplate_DeleteOne_Req,
     ProjectCommandTemplate_FindManyPaginated_Req,
@@ -80,6 +81,23 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to create project Command Template",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                createFromTemplate: async (data: ProjectCommandTemplate_CreateFromTemplate_Req["data"]) => {
+                    const result = await api.projects.commandTemplates.$.createFromTemplate({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to create project Command Template from template",
                                 error,
                             });
 

@@ -7,9 +7,11 @@ import { cn } from "@lib/utils";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Download, Maximize2, Minimize2, Upload } from "lucide-react";
 import { useAppTerminalWsApi } from "~/projects/api";
 import { type AppTerminalInitMessage, buildAppTerminalResizeMessage } from "~/projects/api/services";
+import { useExportContainerFilesDialog } from "~/projects/dialogs/export-container-files";
+import { useImportFilesToContainerDialog } from "~/projects/dialogs/import-files-to-container";
 
 import styles from "./app-terminal-panel.module.scss";
 
@@ -39,11 +41,22 @@ export function AppTerminalPanel({
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [connectedInfo, setConnectedInfo] = useState<AppTerminalInitMessage | null>(null);
     const { streams } = useAppTerminalWsApi();
+    const exportContainerFilesDialog = useExportContainerFilesDialog();
+    const importFilesToContainerDialog = useImportFilesToContainerDialog();
 
     const isConnectionActive = webSocketReadyState === WebSocket.CONNECTING || webSocketReadyState === WebSocket.OPEN;
     const canConnect = selectedShell !== "" && !isConnectionActive;
     const status = getTerminalStatus(webSocketReadyState);
-    void connectedInfo;
+    const nodeId = connectedInfo?.nodeId ?? "";
+    const containerId = connectedInfo?.containerId ?? "";
+
+    function openImportDialog() {
+        importFilesToContainerDialog.actions.open(projectID, env, appID, nodeId, containerId);
+    }
+
+    function openExportDialog() {
+        exportContainerFilesDialog.actions.open(projectID, env, appID, nodeId, containerId);
+    }
 
     const sendResizeToSocket = useCallback((socket: WebSocket | undefined, width: number, height: number) => {
         if (!socket || socket.readyState !== WebSocket.OPEN || width <= 0 || height <= 0) {
@@ -373,22 +386,45 @@ export function AppTerminalPanel({
                 </Tooltip>
             </div>
 
-            <div className="flex items-center gap-3">
-                <span
-                    aria-label={status.label}
-                    className={cn("size-4 rounded-full border-2", status.indicatorClassName)}
-                />
-                <span className={cn("text-sm", status.textClassName)}>{status.label}</span>
-                {isConnectionActive && (
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                    <span
+                        aria-label={status.label}
+                        className={cn("size-4 rounded-full border-2", status.indicatorClassName)}
+                    />
+                    <span className={cn("text-sm", status.textClassName)}>{status.label}</span>
+                    {isConnectionActive && (
+                        <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto px-0 text-base"
+                            onClick={closeConnection}
+                        >
+                            Stop
+                        </Button>
+                    )}
+                </div>
+
+                <div className="flex items-center gap-3">
                     <Button
                         type="button"
                         variant="link"
                         className="h-auto px-0 text-base"
-                        onClick={closeConnection}
+                        onClick={openImportDialog}
                     >
-                        Stop
+                        <Upload className="size-4" />
+                        Upload
                     </Button>
-                )}
+                    <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto px-0 text-base"
+                        onClick={openExportDialog}
+                    >
+                        <Download className="size-4" />
+                        Download
+                    </Button>
+                </div>
             </div>
 
             <div

@@ -22,6 +22,14 @@ import {
 import { CreateProjectDialog, useCreateProjectDialogState } from "~/projects/dialogs/create-project";
 import { CreateProjectAppDialog, useCreateProjectAppDialogState } from "~/projects/dialogs/create-project-app";
 import {
+    ExportContainerFilesDialog,
+    useExportContainerFilesDialogState,
+} from "~/projects/dialogs/export-container-files";
+import {
+    ImportFilesToContainerDialog,
+    useImportFilesToContainerDialogState,
+} from "~/projects/dialogs/import-files-to-container";
+import {
     ImportProjectSettingsDialog,
     useImportProjectSettingsDialogState,
 } from "~/projects/dialogs/import-project-settings";
@@ -109,6 +117,8 @@ function View() {
     const updateVolumeStatusDialog = useUpdateVolumeStatusDialogState();
     const updateProjectCommandPipeStatusDialog = useUpdateProjectCommandPipeStatusDialogState();
     const updateProjectCommandTemplateStatusDialog = useUpdateProjectCommandTemplateStatusDialogState();
+    const exportContainerFilesDialog = useExportContainerFilesDialogState();
+    const importFilesToContainerDialog = useImportFilesToContainerDialogState();
 
     useUpdateEffect(() => {
         createProjectDialog.destroy();
@@ -140,6 +150,8 @@ function View() {
         updateVolumeStatusDialog.destroy();
         updateProjectCommandPipeStatusDialog.destroy();
         updateProjectCommandTemplateStatusDialog.destroy();
+        exportContainerFilesDialog.destroy();
+        importFilesToContainerDialog.destroy();
     }, [location]);
 
     return (
@@ -173,6 +185,8 @@ function View() {
             <UpdateVolumeStatusDialog />
             <UpdateProjectCommandPipeStatusDialog />
             <UpdateProjectCommandTemplateStatusDialog />
+            <ExportContainerFilesDialog />
+            <ImportFilesToContainerDialog />
         </>
     );
 }

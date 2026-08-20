@@ -19,8 +19,8 @@ import (
 
 type CreateSettingReq struct {
 	BaseSettingReq
-	AvailInProjects bool `json:"availableInProjects"`
-	Default         bool `json:"default"`
+	Inheritable bool `json:"inheritable"`
+	Default     bool `json:"default"`
 }
 
 func (req *CreateSettingReq) Validate() (validators []vld.Validator) {
@@ -146,17 +146,17 @@ func (uc *BaseUC) prepareSettingCreation(
 ) {
 	timeNow := timeutil.NowUTC()
 	setting := &entity.Setting{
-		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           req.Scope.ScopeType,
-		ObjectID:        req.Scope.ScopeObjectID(),
-		Type:            req.Type,
-		Status:          base.SettingStatusActive,
-		Name:            data.VerifyingName,
-		AvailInProjects: gofn.If(!req.Scope.IsGlobalScope(), false, req.AvailInProjects),
-		Default:         req.Default,
-		Version:         data.Version,
-		CreatedAt:       timeNow,
-		UpdatedAt:       timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       req.Scope.ScopeType,
+		ObjectID:    req.Scope.ScopeObjectID(),
+		Type:        req.Type,
+		Status:      base.SettingStatusActive,
+		Name:        data.VerifyingName,
+		Inheritable: gofn.If(!req.Scope.IsGlobalScope(), false, req.Inheritable),
+		Default:     req.Default,
+		Version:     data.Version,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	persistingData.Setting = setting
 }

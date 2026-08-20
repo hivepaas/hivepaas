@@ -15,7 +15,7 @@ func (uc *UC) UpdateNetwork(
 	req *networkdto.UpdateNetworkReq,
 ) (*networkdto.UpdateNetworkResp, error) {
 	req.Type = currentSettingType
-	// NOTE: only allow updating `availInProjects` and `default`
+	// NOTE: only allow updating `inheritable` and `default`
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{})
 	if err != nil {
 		return nil, apperrors.Wrap(err)

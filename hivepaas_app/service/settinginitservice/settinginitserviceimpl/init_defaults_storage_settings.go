@@ -25,16 +25,16 @@ func (s *service) initDefaultStorageSettings(
 	timeNow time.Time,
 ) (err error) {
 	storageSetting := &entity.Setting{
-		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           base.ObjectScopeGlobal,
-		Type:            base.SettingTypeStorageSettings,
-		Status:          base.SettingStatusActive,
-		Name:            storageSettingName,
-		AvailInProjects: true,
-		Default:         true,
-		Version:         entity.CurrentStorageSettingsVersion,
-		CreatedAt:       timeNow,
-		UpdatedAt:       timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeGlobal,
+		Type:        base.SettingTypeStorageSettings,
+		Status:      base.SettingStatusActive,
+		Name:        storageSettingName,
+		Inheritable: true,
+		Default:     true,
+		Version:     entity.CurrentStorageSettingsVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	storage := &entity.StorageSettings{
 		BindSettings: &entity.StorageBindSettings{

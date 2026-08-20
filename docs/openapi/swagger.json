@@ -36548,7 +36548,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -36566,7 +36566,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -37976,9 +37976,6 @@
       },
       "appsettingsdto.HTTPBasicAuthConfigResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -37993,6 +37990,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -38019,7 +38019,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "enabled", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "enabled", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "appsettingsdto.HTTPCircuitBreakerConfigReq" : {
@@ -39931,9 +39931,6 @@
           "attachable" : {
             "type" : "boolean"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
@@ -39944,6 +39941,9 @@
             "type" : "boolean"
           },
           "enableIPv6" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "internal" : {
@@ -39965,7 +39965,7 @@
             "type" : "object"
           }
         },
-        "required" : [ "attachable", "availableInProjects", "default", "driver", "enableIPv4", "enableIPv6", "internal", "labels", "name", "options" ],
+        "required" : [ "attachable", "default", "driver", "enableIPv4", "enableIPv6", "inheritable", "internal", "labels", "name", "options" ],
         "type" : "object"
       },
       "cluster_networkdto.CreateNetworkResp" : {
@@ -40021,9 +40021,6 @@
           "attachable" : {
             "type" : "boolean"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -40046,6 +40043,9 @@
             "type" : "string"
           },
           "ingress" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "inherited" : {
@@ -40088,7 +40088,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "attachable", "availableInProjects", "createdAt", "default", "driver", "enableIPv4", "enableIPv6", "expireAt", "id", "ingress", "inherited", "internal", "kind", "labels", "name", "options", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "attachable", "createdAt", "default", "driver", "enableIPv4", "enableIPv6", "expireAt", "id", "ingress", "inheritable", "inherited", "internal", "kind", "labels", "name", "options", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "cluster_networkdto.SyncNetworkReq" : {
@@ -40105,17 +40105,17 @@
       },
       "cluster_networkdto.UpdateNetworkReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "updateVer" ],
+        "required" : [ "default", "inheritable", "updateVer" ],
         "type" : "object"
       },
       "cluster_networkdto.UpdateNetworkResp" : {
@@ -40129,14 +40129,14 @@
       },
       "cluster_networkdto.UpdateNetworkStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -40145,7 +40145,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "cluster_networkdto.UpdateNetworkStatusResp" : {
@@ -40357,9 +40357,6 @@
           "availability" : {
             "$ref" : "#/components/schemas/services_docker.NodeAvailability"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -40377,6 +40374,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -40427,7 +40427,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "addr", "availability", "availableInProjects", "createdAt", "default", "engineDesc", "expireAt", "hostname", "id", "inherited", "isLeader", "kind", "labels", "name", "platform", "refId", "resources", "role", "size", "state", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "addr", "availability", "createdAt", "default", "engineDesc", "expireAt", "hostname", "id", "inheritable", "inherited", "isLeader", "kind", "labels", "name", "platform", "refId", "resources", "role", "size", "state", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "cluster_nodedto.SetManagerNodesReq" : {
@@ -40456,10 +40456,10 @@
           "availability" : {
             "$ref" : "#/components/schemas/services_docker.NodeAvailability"
           },
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "labels" : {
@@ -40478,7 +40478,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availability", "availableInProjects", "default", "labels", "name", "role", "updateVer" ],
+        "required" : [ "availability", "default", "inheritable", "labels", "name", "role", "updateVer" ],
         "type" : "object"
       },
       "cluster_nodedto.UpdateNodeResp" : {
@@ -40495,9 +40495,6 @@
       },
       "cluster_volumedto.CreateVolumeReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "bindOptions" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/cluster_volumedto.VolumeBindOptionsReq"
@@ -40510,6 +40507,9 @@
           },
           "driver" : {
             "$ref" : "#/components/schemas/services_docker.VolumeDriver"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "labels" : {
             "additionalProperties" : {
@@ -40533,7 +40533,7 @@
             "$ref" : "#/components/schemas/cluster_volumedto.VolumeTmpfsOptionsReq"
           }
         },
-        "required" : [ "availableInProjects", "bindOptions", "default", "driver", "labels", "name", "nfsOptions", "options", "tmpfsOptions" ],
+        "required" : [ "bindOptions", "default", "driver", "inheritable", "labels", "name", "nfsOptions", "options", "tmpfsOptions" ],
         "type" : "object"
       },
       "cluster_volumedto.CreateVolumeResp" : {
@@ -40598,17 +40598,17 @@
       },
       "cluster_volumedto.UpdateVolumeReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "updateVer" ],
+        "required" : [ "default", "inheritable", "updateVer" ],
         "type" : "object"
       },
       "cluster_volumedto.UpdateVolumeResp" : {
@@ -40622,14 +40622,14 @@
       },
       "cluster_volumedto.UpdateVolumeStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -40638,7 +40638,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "cluster_volumedto.UpdateVolumeStatusResp" : {
@@ -40730,9 +40730,6 @@
       },
       "cluster_volumedto.VolumeResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "bindOptions" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/cluster_volumedto.VolumeBindOptionsResp"
@@ -40757,6 +40754,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -40810,7 +40810,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "bindOptions", "clusterVolumeSpec", "createdAt", "default", "driver", "expireAt", "id", "inherited", "kind", "labels", "mountpoint", "name", "nfsOptions", "options", "refCount", "scope", "size", "status", "tmpfsOptions", "type", "updateVer", "updatedAt" ],
+        "required" : [ "bindOptions", "clusterVolumeSpec", "createdAt", "default", "driver", "expireAt", "id", "inheritable", "inherited", "kind", "labels", "mountpoint", "name", "nfsOptions", "options", "refCount", "scope", "size", "status", "tmpfsOptions", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "cluster_volumedto.VolumeTmpfsOptionsReq" : {
@@ -42094,9 +42094,6 @@
       },
       "settings.BaseSettingResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -42108,6 +42105,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -42134,14 +42134,11 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_accesstokendto.AccessTokenResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "baseURL" : {
             "type" : "string"
           },
@@ -42156,6 +42153,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -42191,14 +42191,11 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "baseURL", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "secretMasked", "size", "status", "token", "type", "updateVer", "updatedAt", "user" ],
+        "required" : [ "baseURL", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "secretMasked", "size", "status", "token", "type", "updateVer", "updatedAt", "user" ],
         "type" : "object"
       },
       "settings_accesstokendto.CreateAccessTokenReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "baseURL" : {
             "type" : "string"
           },
@@ -42207,6 +42204,9 @@
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "kind" : {
             "type" : "string"
@@ -42221,7 +42221,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "baseURL", "default", "expireAt", "kind", "name", "token", "user" ],
+        "required" : [ "baseURL", "default", "expireAt", "inheritable", "kind", "name", "token", "user" ],
         "type" : "object"
       },
       "settings_accesstokendto.CreateAccessTokenResp" : {
@@ -42307,9 +42307,6 @@
       },
       "settings_accesstokendto.UpdateAccessTokenReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "baseURL" : {
             "type" : "string"
           },
@@ -42318,6 +42315,9 @@
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "kind" : {
             "type" : "string"
@@ -42335,7 +42335,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "baseURL", "default", "expireAt", "kind", "name", "token", "updateVer", "user" ],
+        "required" : [ "baseURL", "default", "expireAt", "inheritable", "kind", "name", "token", "updateVer", "user" ],
         "type" : "object"
       },
       "settings_accesstokendto.UpdateAccessTokenResp" : {
@@ -42349,14 +42349,14 @@
       },
       "settings_accesstokendto.UpdateAccessTokenStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -42365,7 +42365,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_accesstokendto.UpdateAccessTokenStatusResp" : {
@@ -42682,9 +42682,6 @@
           "acmeDns" : {
             "$ref" : "#/components/schemas/settings_acmednsproviderdto.AcmeDnsProviderAcmeDNSResp"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "azure" : {
             "$ref" : "#/components/schemas/settings_acmednsproviderdto.AcmeDnsProviderAzureResp"
           },
@@ -42720,6 +42717,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -42761,7 +42761,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "acmeDns", "availableInProjects", "azure", "baiduCloud", "cloudflare", "createdAt", "default", "digitalOcean", "expireAt", "gCloud", "goDaddy", "hetzner", "huaweiCloud", "id", "inherited", "kind", "name", "namecheap", "rfc2136", "route53", "secretMasked", "size", "status", "tencentCloud", "type", "updateVer", "updatedAt" ],
+        "required" : [ "acmeDns", "azure", "baiduCloud", "cloudflare", "createdAt", "default", "digitalOcean", "expireAt", "gCloud", "goDaddy", "hetzner", "huaweiCloud", "id", "inheritable", "inherited", "kind", "name", "namecheap", "rfc2136", "route53", "secretMasked", "size", "status", "tencentCloud", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_acmednsproviderdto.AcmeDnsProviderRoute53Req" : {
@@ -42835,9 +42835,6 @@
           "acmeDns" : {
             "$ref" : "#/components/schemas/settings_acmednsproviderdto.AcmeDnsProviderAcmeDNSReq"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "azure" : {
             "$ref" : "#/components/schemas/settings_acmednsproviderdto.AcmeDnsProviderAzureReq"
           },
@@ -42865,6 +42862,9 @@
           "huaweiCloud" : {
             "$ref" : "#/components/schemas/settings_acmednsproviderdto.AcmeDnsProviderHuaweiCloudReq"
           },
+          "inheritable" : {
+            "type" : "boolean"
+          },
           "kind" : {
             "type" : "string"
           },
@@ -42884,7 +42884,7 @@
             "$ref" : "#/components/schemas/settings_acmednsproviderdto.AcmeDnsProviderTencentCloudReq"
           }
         },
-        "required" : [ "acmeDns", "availableInProjects", "azure", "baiduCloud", "cloudflare", "default", "digitalOcean", "gCloud", "goDaddy", "hetzner", "huaweiCloud", "kind", "name", "namecheap", "rfc2136", "route53", "tencentCloud" ],
+        "required" : [ "acmeDns", "azure", "baiduCloud", "cloudflare", "default", "digitalOcean", "gCloud", "goDaddy", "hetzner", "huaweiCloud", "inheritable", "kind", "name", "namecheap", "rfc2136", "route53", "tencentCloud" ],
         "type" : "object"
       },
       "settings_acmednsproviderdto.CreateAcmeDnsProviderResp" : {
@@ -43003,9 +43003,6 @@
           "acmeDns" : {
             "$ref" : "#/components/schemas/settings_acmednsproviderdto.AcmeDnsProviderAcmeDNSReq"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "azure" : {
             "$ref" : "#/components/schemas/settings_acmednsproviderdto.AcmeDnsProviderAzureReq"
           },
@@ -43033,6 +43030,9 @@
           "huaweiCloud" : {
             "$ref" : "#/components/schemas/settings_acmednsproviderdto.AcmeDnsProviderHuaweiCloudReq"
           },
+          "inheritable" : {
+            "type" : "boolean"
+          },
           "kind" : {
             "type" : "string"
           },
@@ -43055,7 +43055,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "acmeDns", "availableInProjects", "azure", "baiduCloud", "cloudflare", "default", "digitalOcean", "gCloud", "goDaddy", "hetzner", "huaweiCloud", "kind", "name", "namecheap", "rfc2136", "route53", "tencentCloud", "updateVer" ],
+        "required" : [ "acmeDns", "azure", "baiduCloud", "cloudflare", "default", "digitalOcean", "gCloud", "goDaddy", "hetzner", "huaweiCloud", "inheritable", "kind", "name", "namecheap", "rfc2136", "route53", "tencentCloud", "updateVer" ],
         "type" : "object"
       },
       "settings_acmednsproviderdto.UpdateAcmeDnsProviderResp" : {
@@ -43069,14 +43069,14 @@
       },
       "settings_acmednsproviderdto.UpdateAcmeDnsProviderStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -43085,7 +43085,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_acmednsproviderdto.UpdateAcmeDnsProviderStatusResp" : {
@@ -43177,9 +43177,6 @@
       },
       "settings_appfeaturesettingsdto.AppFeatureSettingsResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -43191,6 +43188,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -43229,7 +43229,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "loggingSettings", "name", "previewSettings", "schedJobSettings", "size", "status", "terminalSettings", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "loggingSettings", "name", "previewSettings", "schedJobSettings", "size", "status", "terminalSettings", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_appfeaturesettingsdto.AppFeatureTerminalSettingsReq" : {
@@ -43264,10 +43264,10 @@
       },
       "settings_appfeaturesettingsdto.UpdateAppFeatureSettingsReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "loggingSettings" : {
@@ -43286,7 +43286,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "loggingSettings", "previewSettings", "schedJobSettings", "terminalSettings", "updateVer" ],
+        "required" : [ "default", "inheritable", "loggingSettings", "previewSettings", "schedJobSettings", "terminalSettings", "updateVer" ],
         "type" : "object"
       },
       "settings_appfeaturesettingsdto.UpdateAppFeatureSettingsResp" : {
@@ -43300,9 +43300,6 @@
       },
       "settings_appplacementsettingsdto.AppPlacementSettingsResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -43320,6 +43317,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -43346,7 +43346,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "excludeBuildNodes", "excludeManagerNodes", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "excludeBuildNodes", "excludeManagerNodes", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_appplacementsettingsdto.DeleteAppPlacementSettingsResp" : {
@@ -43372,9 +43372,6 @@
       },
       "settings_appplacementsettingsdto.UpdateAppPlacementSettingsReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
@@ -43384,11 +43381,14 @@
           "excludeManagerNodes" : {
             "type" : "boolean"
           },
+          "inheritable" : {
+            "type" : "boolean"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "excludeBuildNodes", "excludeManagerNodes", "updateVer" ],
+        "required" : [ "default", "excludeBuildNodes", "excludeManagerNodes", "inheritable", "updateVer" ],
         "type" : "object"
       },
       "settings_appplacementsettingsdto.UpdateAppPlacementSettingsResp" : {
@@ -43402,14 +43402,14 @@
       },
       "settings_appplacementsettingsdto.UpdateAppPlacementSettingsStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -43418,7 +43418,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_appplacementsettingsdto.UpdateAppPlacementSettingsStatusResp" : {
@@ -43432,9 +43432,6 @@
       },
       "settings_basicauthdto.BasicAuthResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -43446,6 +43443,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -43481,15 +43481,15 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "password", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "username" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "password", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "username" ],
         "type" : "object"
       },
       "settings_basicauthdto.CreateBasicAuthReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "name" : {
@@ -43502,7 +43502,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "default", "name", "password", "username" ],
+        "required" : [ "default", "inheritable", "name", "password", "username" ],
         "type" : "object"
       },
       "settings_basicauthdto.CreateBasicAuthResp" : {
@@ -43555,10 +43555,10 @@
       },
       "settings_basicauthdto.UpdateBasicAuthReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "name" : {
@@ -43574,7 +43574,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "default", "name", "password", "updateVer", "username" ],
+        "required" : [ "default", "inheritable", "name", "password", "updateVer", "username" ],
         "type" : "object"
       },
       "settings_basicauthdto.UpdateBasicAuthResp" : {
@@ -43588,14 +43588,14 @@
       },
       "settings_basicauthdto.UpdateBasicAuthStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -43604,7 +43604,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_basicauthdto.UpdateBasicAuthStatusResp" : {
@@ -43618,9 +43618,6 @@
       },
       "settings_cloudstoragedto.CloudStorageResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -43632,6 +43629,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -43664,7 +43664,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "s3", "secretMasked", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "s3", "secretMasked", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_cloudstoragedto.CloudStorageS3Req" : {
@@ -43711,10 +43711,10 @@
       },
       "settings_cloudstoragedto.CreateCloudStorageReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "kind" : {
@@ -43727,7 +43727,7 @@
             "$ref" : "#/components/schemas/settings_cloudstoragedto.CloudStorageS3Req"
           }
         },
-        "required" : [ "availableInProjects", "default", "kind", "name", "s3" ],
+        "required" : [ "default", "inheritable", "kind", "name", "s3" ],
         "type" : "object"
       },
       "settings_cloudstoragedto.CreateCloudStorageResp" : {
@@ -43804,10 +43804,10 @@
       },
       "settings_cloudstoragedto.UpdateCloudStorageReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "kind" : {
@@ -43823,7 +43823,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "kind", "name", "s3", "updateVer" ],
+        "required" : [ "default", "inheritable", "kind", "name", "s3", "updateVer" ],
         "type" : "object"
       },
       "settings_cloudstoragedto.UpdateCloudStorageResp" : {
@@ -43837,14 +43837,14 @@
       },
       "settings_cloudstoragedto.UpdateCloudStorageStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -43853,7 +43853,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_cloudstoragedto.UpdateCloudStorageStatusResp" : {
@@ -43867,9 +43867,6 @@
       },
       "settings_commandpipedto.CommandPipeResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -43881,6 +43878,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -43913,14 +43913,11 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "sourceCommand", "status", "targetCommand", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "sourceCommand", "status", "targetCommand", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_commandpipedto.CreateCommandPipeFromTemplateReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "commandKind" : {
             "type" : "string"
           },
@@ -43930,11 +43927,14 @@
           "default" : {
             "type" : "boolean"
           },
+          "inheritable" : {
+            "type" : "boolean"
+          },
           "name" : {
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "commandKind", "commandType", "default", "name" ],
+        "required" : [ "commandKind", "commandType", "default", "inheritable", "name" ],
         "type" : "object"
       },
       "settings_commandpipedto.CreateCommandPipeFromTemplateResp" : {
@@ -43951,10 +43951,10 @@
       },
       "settings_commandpipedto.CreateCommandPipeReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "name" : {
@@ -43967,7 +43967,7 @@
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "name", "sourceCommand", "targetCommand" ],
+        "required" : [ "default", "inheritable", "name", "sourceCommand", "targetCommand" ],
         "type" : "object"
       },
       "settings_commandpipedto.CreateCommandPipeResp" : {
@@ -44020,10 +44020,10 @@
       },
       "settings_commandpipedto.UpdateCommandPipeReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "name" : {
@@ -44039,7 +44039,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "name", "sourceCommand", "targetCommand", "updateVer" ],
+        "required" : [ "default", "inheritable", "name", "sourceCommand", "targetCommand", "updateVer" ],
         "type" : "object"
       },
       "settings_commandpipedto.UpdateCommandPipeResp" : {
@@ -44053,14 +44053,14 @@
       },
       "settings_commandpipedto.UpdateCommandPipeStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -44069,7 +44069,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_commandpipedto.UpdateCommandPipeStatusResp" : {
@@ -44230,9 +44230,6 @@
             },
             "type" : "array"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "command" : {
             "type" : "string"
           },
@@ -44259,6 +44256,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -44298,14 +44298,11 @@
             "type" : "string"
           }
         },
-        "required" : [ "argGroups", "availableInProjects", "command", "consoleSize", "createdAt", "default", "desc", "envVars", "expireAt", "id", "inherited", "kind", "link", "name", "script", "size", "status", "tty", "type", "updateVer", "updatedAt", "workingDir" ],
+        "required" : [ "argGroups", "command", "consoleSize", "createdAt", "default", "desc", "envVars", "expireAt", "id", "inheritable", "inherited", "kind", "link", "name", "script", "size", "status", "tty", "type", "updateVer", "updatedAt", "workingDir" ],
         "type" : "object"
       },
       "settings_commandtemplatedto.CreateCommandTemplateFromTemplateReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "commandKind" : {
             "type" : "string"
           },
@@ -44315,11 +44312,14 @@
           "default" : {
             "type" : "boolean"
           },
+          "inheritable" : {
+            "type" : "boolean"
+          },
           "name" : {
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "commandKind", "commandType", "default", "name" ],
+        "required" : [ "commandKind", "commandType", "default", "inheritable", "name" ],
         "type" : "object"
       },
       "settings_commandtemplatedto.CreateCommandTemplateFromTemplateResp" : {
@@ -44342,9 +44342,6 @@
             },
             "type" : "array"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "command" : {
             "type" : "string"
           },
@@ -44362,6 +44359,9 @@
               "$ref" : "#/components/schemas/basedto.EnvVarReq"
             },
             "type" : "array"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "kind" : {
             "type" : "string"
@@ -44382,7 +44382,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "argGroups", "availableInProjects", "command", "consoleSize", "default", "desc", "envVars", "kind", "link", "name", "script", "tty", "workingDir" ],
+        "required" : [ "argGroups", "command", "consoleSize", "default", "desc", "envVars", "inheritable", "kind", "link", "name", "script", "tty", "workingDir" ],
         "type" : "object"
       },
       "settings_commandtemplatedto.CreateCommandTemplateResp" : {
@@ -44441,9 +44441,6 @@
             },
             "type" : "array"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "command" : {
             "type" : "string"
           },
@@ -44461,6 +44458,9 @@
               "$ref" : "#/components/schemas/basedto.EnvVarReq"
             },
             "type" : "array"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "kind" : {
             "type" : "string"
@@ -44484,7 +44484,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "argGroups", "availableInProjects", "command", "consoleSize", "default", "desc", "envVars", "kind", "link", "name", "script", "tty", "updateVer", "workingDir" ],
+        "required" : [ "argGroups", "command", "consoleSize", "default", "desc", "envVars", "inheritable", "kind", "link", "name", "script", "tty", "updateVer", "workingDir" ],
         "type" : "object"
       },
       "settings_commandtemplatedto.UpdateCommandTemplateResp" : {
@@ -44498,14 +44498,14 @@
       },
       "settings_commandtemplatedto.UpdateCommandTemplateStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -44514,7 +44514,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_commandtemplatedto.UpdateCommandTemplateStatusResp" : {
@@ -44528,9 +44528,6 @@
       },
       "settings_configfiledto.ConfigFileResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "base64" : {
             "type" : "boolean"
           },
@@ -44548,6 +44545,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -44577,14 +44577,11 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "base64", "content", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "swarmRef", "type", "updateVer", "updatedAt" ],
+        "required" : [ "base64", "content", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "swarmRef", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_configfiledto.CreateConfigFileReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "base64" : {
             "type" : "boolean"
           },
@@ -44594,6 +44591,9 @@
           "default" : {
             "type" : "boolean"
           },
+          "inheritable" : {
+            "type" : "boolean"
+          },
           "name" : {
             "type" : "string"
           },
@@ -44601,7 +44601,7 @@
             "$ref" : "#/components/schemas/settings_configfiledto.SwarmConfigRefReq"
           }
         },
-        "required" : [ "availableInProjects", "base64", "content", "default", "name", "swarmRef" ],
+        "required" : [ "base64", "content", "default", "inheritable", "name", "swarmRef" ],
         "type" : "object"
       },
       "settings_configfiledto.CreateConfigFileResp" : {
@@ -44762,9 +44762,6 @@
       },
       "settings_configfiledto.UpdateConfigFileReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "base64" : {
             "type" : "boolean"
           },
@@ -44772,6 +44769,9 @@
             "type" : "string"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "name" : {
@@ -44784,7 +44784,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "base64", "content", "default", "name", "swarmRef", "updateVer" ],
+        "required" : [ "base64", "content", "default", "inheritable", "name", "swarmRef", "updateVer" ],
         "type" : "object"
       },
       "settings_configfiledto.UpdateConfigFileResp" : {
@@ -44798,14 +44798,14 @@
       },
       "settings_configfiledto.UpdateConfigFileStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -44814,7 +44814,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_configfiledto.UpdateConfigFileStatusResp" : {
@@ -44885,9 +44885,6 @@
             },
             "type" : "array"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "certSettings" : {
             "$ref" : "#/components/schemas/settings_domainsettingsdto.DomainCertSettingsResp"
           },
@@ -44902,6 +44899,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -44931,7 +44931,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "allowedDomains", "availableInProjects", "certSettings", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "rootDomain", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "allowedDomains", "certSettings", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "rootDomain", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_domainsettingsdto.GetDomainSettingsResp" : {
@@ -44954,13 +44954,13 @@
             },
             "type" : "array"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "certSettings" : {
             "$ref" : "#/components/schemas/settings_domainsettingsdto.DomainCertSettingsReq"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "rootDomain" : {
@@ -44970,7 +44970,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "allowedDomains", "availableInProjects", "certSettings", "default", "rootDomain", "updateVer" ],
+        "required" : [ "allowedDomains", "certSettings", "default", "inheritable", "rootDomain", "updateVer" ],
         "type" : "object"
       },
       "settings_domainsettingsdto.UpdateDomainSettingsResp" : {
@@ -44984,14 +44984,14 @@
       },
       "settings_domainsettingsdto.UpdateDomainSettingsStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -45000,7 +45000,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_domainsettingsdto.UpdateDomainSettingsStatusResp" : {
@@ -45014,14 +45014,14 @@
       },
       "settings_emaildto.CreateEmailReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "http" : {
             "$ref" : "#/components/schemas/settings_emaildto.EmailHTTP"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "kind" : {
             "type" : "string"
@@ -45033,7 +45033,7 @@
             "$ref" : "#/components/schemas/settings_emaildto.EmailSMTP"
           }
         },
-        "required" : [ "availableInProjects", "default", "http", "kind", "name", "smtp" ],
+        "required" : [ "default", "http", "inheritable", "kind", "name", "smtp" ],
         "type" : "object"
       },
       "settings_emaildto.CreateEmailResp" : {
@@ -45129,9 +45129,6 @@
       },
       "settings_emaildto.EmailResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -45146,6 +45143,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -45178,7 +45178,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "http", "id", "inherited", "kind", "name", "secretMasked", "size", "smtp", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "http", "id", "inheritable", "inherited", "kind", "name", "secretMasked", "size", "smtp", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_emaildto.EmailSMTP" : {
@@ -45294,14 +45294,14 @@
       },
       "settings_emaildto.UpdateEmailReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "http" : {
             "$ref" : "#/components/schemas/settings_emaildto.EmailHTTP"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "kind" : {
             "type" : "string"
@@ -45316,7 +45316,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "http", "kind", "name", "smtp", "updateVer" ],
+        "required" : [ "default", "http", "inheritable", "kind", "name", "smtp", "updateVer" ],
         "type" : "object"
       },
       "settings_emaildto.UpdateEmailResp" : {
@@ -45330,14 +45330,14 @@
       },
       "settings_emaildto.UpdateEmailStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -45346,7 +45346,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_emaildto.UpdateEmailStatusResp" : {
@@ -45375,9 +45375,6 @@
       },
       "settings_gitcredentialdto.GitCredentialResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -45389,6 +45386,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -45415,7 +45415,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_gitcredentialdto.ListBranchResp" : {
@@ -45573,10 +45573,10 @@
       },
       "settings_githubappdto.BeginGithubAppManifestFlowReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "name" : {
@@ -45589,7 +45589,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "availableInProjects", "default", "name", "org", "ssoEnabled" ],
+        "required" : [ "default", "inheritable", "name", "org", "ssoEnabled" ],
         "type" : "object"
       },
       "settings_githubappdto.BeginGithubAppManifestFlowResp" : {
@@ -45642,9 +45642,6 @@
           "appId" : {
             "type" : "integer"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "clientId" : {
             "type" : "string"
           },
@@ -45652,6 +45649,9 @@
             "type" : "string"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "installationId" : {
@@ -45670,7 +45670,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "appId", "availableInProjects", "clientId", "clientSecret", "default", "installationId", "name", "organization", "privateKey", "ssoEnabled" ],
+        "required" : [ "appId", "clientId", "clientSecret", "default", "inheritable", "installationId", "name", "organization", "privateKey", "ssoEnabled" ],
         "type" : "object"
       },
       "settings_githubappdto.CreateGithubAppResp" : {
@@ -45723,9 +45723,6 @@
           "appId" : {
             "type" : "integer"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "callbackURL" : {
             "type" : "string"
           },
@@ -45746,6 +45743,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -45793,7 +45793,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appId", "availableInProjects", "callbackURL", "clientId", "clientSecret", "createdAt", "default", "expireAt", "id", "inherited", "installationId", "kind", "name", "organization", "privateKey", "secretMasked", "size", "ssoEnabled", "status", "type", "updateVer", "updatedAt", "webhookSecret", "webhookURL" ],
+        "required" : [ "appId", "callbackURL", "clientId", "clientSecret", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "installationId", "kind", "name", "organization", "privateKey", "secretMasked", "size", "ssoEnabled", "status", "type", "updateVer", "updatedAt", "webhookSecret", "webhookURL" ],
         "type" : "object"
       },
       "settings_githubappdto.ListAppInstallationReq" : {
@@ -45900,9 +45900,6 @@
           "appId" : {
             "type" : "integer"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "clientId" : {
             "type" : "string"
           },
@@ -45910,6 +45907,9 @@
             "type" : "string"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "installationId" : {
@@ -45931,7 +45931,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "appId", "availableInProjects", "clientId", "clientSecret", "default", "installationId", "name", "organization", "privateKey", "ssoEnabled", "updateVer" ],
+        "required" : [ "appId", "clientId", "clientSecret", "default", "inheritable", "installationId", "name", "organization", "privateKey", "ssoEnabled", "updateVer" ],
         "type" : "object"
       },
       "settings_githubappdto.UpdateGithubAppResp" : {
@@ -45945,14 +45945,14 @@
       },
       "settings_githubappdto.UpdateGithubAppStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -45961,7 +45961,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_githubappdto.UpdateGithubAppStatusResp" : {
@@ -46071,9 +46071,6 @@
       },
       "settings_imagebuildsettingsdto.ImageBuildSettingsResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -46085,6 +46082,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -46126,7 +46126,7 @@
             "$ref" : "#/components/schemas/settings_imagebuildsettingsdto.ImageBuildWorkerSettingsResp"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "noCache", "noVerbose", "resources", "size", "sources", "status", "type", "updateVer", "updatedAt", "workers" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "noCache", "noVerbose", "resources", "size", "sources", "status", "type", "updateVer", "updatedAt", "workers" ],
         "type" : "object"
       },
       "settings_imagebuildsettingsdto.ImageBuildSourceSettingsReq" : {
@@ -46203,10 +46203,10 @@
       },
       "settings_imagebuildsettingsdto.UpdateImageBuildSettingsReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "noCache" : {
@@ -46228,7 +46228,7 @@
             "$ref" : "#/components/schemas/settings_imagebuildsettingsdto.ImageBuildWorkerSettingsReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "noCache", "noVerbose", "resources", "sources", "updateVer", "workers" ],
+        "required" : [ "default", "inheritable", "noCache", "noVerbose", "resources", "sources", "updateVer", "workers" ],
         "type" : "object"
       },
       "settings_imagebuildsettingsdto.UpdateImageBuildSettingsResp" : {
@@ -46242,14 +46242,14 @@
       },
       "settings_imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -46258,7 +46258,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_imagebuildsettingsdto.UpdateImageBuildSettingsStatusResp" : {
@@ -46272,14 +46272,14 @@
       },
       "settings_imservicedto.CreateIMServiceReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "discord" : {
             "$ref" : "#/components/schemas/settings_imservicedto.IMDiscordReq"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "kind" : {
             "type" : "string"
@@ -46294,7 +46294,7 @@
             "$ref" : "#/components/schemas/settings_imservicedto.IMTelegramReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "discord", "kind", "name", "slack", "telegram" ],
+        "required" : [ "default", "discord", "inheritable", "kind", "name", "slack", "telegram" ],
         "type" : "object"
       },
       "settings_imservicedto.CreateIMServiceResp" : {
@@ -46350,9 +46350,6 @@
       },
       "settings_imservicedto.IMServiceResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -46367,6 +46364,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -46402,7 +46402,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "discord", "expireAt", "id", "inherited", "kind", "name", "secretMasked", "size", "slack", "status", "telegram", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "discord", "expireAt", "id", "inheritable", "inherited", "kind", "name", "secretMasked", "size", "slack", "status", "telegram", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_imservicedto.IMSlackReq" : {
@@ -46497,14 +46497,14 @@
       },
       "settings_imservicedto.UpdateIMServiceReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "discord" : {
             "$ref" : "#/components/schemas/settings_imservicedto.IMDiscordReq"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "kind" : {
             "type" : "string"
@@ -46522,7 +46522,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "discord", "kind", "name", "slack", "telegram", "updateVer" ],
+        "required" : [ "default", "discord", "inheritable", "kind", "name", "slack", "telegram", "updateVer" ],
         "type" : "object"
       },
       "settings_imservicedto.UpdateIMServiceResp" : {
@@ -46536,14 +46536,14 @@
       },
       "settings_imservicedto.UpdateIMServiceStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -46552,7 +46552,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_imservicedto.UpdateIMServiceStatusResp" : {
@@ -46566,10 +46566,10 @@
       },
       "settings_notificationdto.CreateNotificationReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "minSendInterval" : {
@@ -46591,7 +46591,7 @@
             "$ref" : "#/components/schemas/settings_notificationdto.NotificationViaTelegramReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "minSendInterval", "name", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
+        "required" : [ "default", "inheritable", "minSendInterval", "name", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
         "type" : "object"
       },
       "settings_notificationdto.CreateNotificationResp" : {
@@ -46644,9 +46644,6 @@
       },
       "settings_notificationdto.NotificationResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -46658,6 +46655,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -46699,7 +46699,7 @@
             "$ref" : "#/components/schemas/settings_notificationdto.NotificationViaTelegramResp"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "minSendInterval", "name", "size", "status", "type", "updateVer", "updatedAt", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "minSendInterval", "name", "size", "status", "type", "updateVer", "updatedAt", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
         "type" : "object"
       },
       "settings_notificationdto.NotificationViaDiscordReq" : {
@@ -46854,10 +46854,10 @@
       },
       "settings_notificationdto.UpdateNotificationReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "minSendInterval" : {
@@ -46882,7 +46882,7 @@
             "$ref" : "#/components/schemas/settings_notificationdto.NotificationViaTelegramReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "minSendInterval", "name", "updateVer", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
+        "required" : [ "default", "inheritable", "minSendInterval", "name", "updateVer", "viaDiscord", "viaEmail", "viaSlack", "viaTelegram" ],
         "type" : "object"
       },
       "settings_notificationdto.UpdateNotificationResp" : {
@@ -46896,14 +46896,14 @@
       },
       "settings_notificationdto.UpdateNotificationStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -46912,7 +46912,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_notificationdto.UpdateNotificationStatusResp" : {
@@ -46932,9 +46932,6 @@
           "autoDiscoveryURL" : {
             "type" : "string"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "clientId" : {
             "type" : "string"
           },
@@ -46942,6 +46939,9 @@
             "type" : "string"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "kind" : {
@@ -46966,7 +46966,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authURL", "autoDiscoveryURL", "availableInProjects", "clientId", "clientSecret", "default", "kind", "name", "organization", "profileURL", "scopes", "tokenURL" ],
+        "required" : [ "authURL", "autoDiscoveryURL", "clientId", "clientSecret", "default", "inheritable", "kind", "name", "organization", "profileURL", "scopes", "tokenURL" ],
         "type" : "object"
       },
       "settings_oauthdto.CreateOAuthResp" : {
@@ -47037,9 +47037,6 @@
           "autoDiscoveryURL" : {
             "type" : "string"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "callbackURL" : {
             "type" : "string"
           },
@@ -47060,6 +47057,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -47104,7 +47104,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "authURL", "autoDiscoveryURL", "availableInProjects", "callbackURL", "clientId", "clientSecret", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "organization", "profileURL", "scopes", "secretMasked", "size", "status", "tokenURL", "type", "updateVer", "updatedAt" ],
+        "required" : [ "authURL", "autoDiscoveryURL", "callbackURL", "clientId", "clientSecret", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "organization", "profileURL", "scopes", "secretMasked", "size", "status", "tokenURL", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_oauthdto.UpdateOAuthReq" : {
@@ -47115,9 +47115,6 @@
           "autoDiscoveryURL" : {
             "type" : "string"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "clientId" : {
             "type" : "string"
           },
@@ -47125,6 +47122,9 @@
             "type" : "string"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "kind" : {
@@ -47152,7 +47152,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "authURL", "autoDiscoveryURL", "availableInProjects", "clientId", "clientSecret", "default", "kind", "name", "organization", "profileURL", "scopes", "tokenURL", "updateVer" ],
+        "required" : [ "authURL", "autoDiscoveryURL", "clientId", "clientSecret", "default", "inheritable", "kind", "name", "organization", "profileURL", "scopes", "tokenURL", "updateVer" ],
         "type" : "object"
       },
       "settings_oauthdto.UpdateOAuthResp" : {
@@ -47166,14 +47166,14 @@
       },
       "settings_oauthdto.UpdateOAuthStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -47182,7 +47182,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_oauthdto.UpdateOAuthStatusResp" : {
@@ -47196,14 +47196,14 @@
       },
       "settings_periodicjobdto.CreatePeriodicJobReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "healthcheck" : {
             "$ref" : "#/components/schemas/settings_periodicjobdto.HealthcheckReq"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "interval" : {
             "$ref" : "#/components/schemas/timeutil.Duration"
@@ -47227,7 +47227,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "availableInProjects", "default", "healthcheck", "interval", "kind", "maxRetry", "name", "notification", "retryDelay", "timeout" ],
+        "required" : [ "default", "healthcheck", "inheritable", "interval", "kind", "maxRetry", "name", "notification", "retryDelay", "timeout" ],
         "type" : "object"
       },
       "settings_periodicjobdto.CreatePeriodicJobResp" : {
@@ -47463,9 +47463,6 @@
       },
       "settings_periodicjobdto.PeriodicJobResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -47480,6 +47477,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -47521,7 +47521,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "healthcheck", "id", "inherited", "interval", "kind", "maxRetry", "name", "notification", "retryDelay", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "healthcheck", "id", "inheritable", "inherited", "interval", "kind", "maxRetry", "name", "notification", "retryDelay", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_periodicjobdto.PeriodicNotificationReq" : {
@@ -47568,14 +47568,14 @@
       },
       "settings_periodicjobdto.UpdatePeriodicJobReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "healthcheck" : {
             "$ref" : "#/components/schemas/settings_periodicjobdto.HealthcheckReq"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "interval" : {
             "$ref" : "#/components/schemas/timeutil.Duration"
@@ -47602,7 +47602,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "healthcheck", "interval", "kind", "maxRetry", "name", "notification", "retryDelay", "timeout", "updateVer" ],
+        "required" : [ "default", "healthcheck", "inheritable", "interval", "kind", "maxRetry", "name", "notification", "retryDelay", "timeout", "updateVer" ],
         "type" : "object"
       },
       "settings_periodicjobdto.UpdatePeriodicJobResp" : {
@@ -47616,14 +47616,14 @@
       },
       "settings_periodicjobdto.UpdatePeriodicJobStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -47632,7 +47632,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_periodicjobdto.UpdatePeriodicJobStatusResp" : {
@@ -47649,10 +47649,10 @@
           "address" : {
             "type" : "string"
           },
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "name" : {
@@ -47668,7 +47668,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "address", "availableInProjects", "default", "name", "password", "readonly", "username" ],
+        "required" : [ "address", "default", "inheritable", "name", "password", "readonly", "username" ],
         "type" : "object"
       },
       "settings_registryauthdto.CreateRegistryAuthResp" : {
@@ -47724,9 +47724,6 @@
           "address" : {
             "type" : "string"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -47738,6 +47735,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -47776,7 +47776,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "address", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "password", "readonly", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "username" ],
+        "required" : [ "address", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "password", "readonly", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "username" ],
         "type" : "object"
       },
       "settings_registryauthdto.TestRegistryAuthConnReq" : {
@@ -47814,10 +47814,10 @@
           "address" : {
             "type" : "string"
           },
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "name" : {
@@ -47836,7 +47836,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "address", "availableInProjects", "default", "name", "password", "readonly", "updateVer", "username" ],
+        "required" : [ "address", "default", "inheritable", "name", "password", "readonly", "updateVer", "username" ],
         "type" : "object"
       },
       "settings_registryauthdto.UpdateRegistryAuthResp" : {
@@ -47850,14 +47850,14 @@
       },
       "settings_registryauthdto.UpdateRegistryAuthStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -47866,7 +47866,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_registryauthdto.UpdateRegistryAuthStatusResp" : {
@@ -47880,10 +47880,10 @@
       },
       "settings_repowebhookdto.CreateRepoWebhookReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "kind" : {
@@ -47896,7 +47896,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "default", "kind", "name", "secret" ],
+        "required" : [ "default", "inheritable", "kind", "name", "secret" ],
         "type" : "object"
       },
       "settings_repowebhookdto.CreateRepoWebhookResp" : {
@@ -47964,9 +47964,6 @@
       },
       "settings_repowebhookdto.RepoWebhookResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -47978,6 +47975,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -48010,15 +48010,15 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "secret", "size", "status", "type", "updateVer", "updatedAt", "webhookURL" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "secret", "size", "status", "type", "updateVer", "updatedAt", "webhookURL" ],
         "type" : "object"
       },
       "settings_repowebhookdto.UpdateRepoWebhookReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "kind" : {
@@ -48034,7 +48034,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "kind", "name", "secret", "updateVer" ],
+        "required" : [ "default", "inheritable", "kind", "name", "secret", "updateVer" ],
         "type" : "object"
       },
       "settings_repowebhookdto.UpdateRepoWebhookResp" : {
@@ -48048,14 +48048,14 @@
       },
       "settings_repowebhookdto.UpdateRepoWebhookStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -48064,7 +48064,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_repowebhookdto.UpdateRepoWebhookStatusResp" : {
@@ -48151,9 +48151,6 @@
       },
       "settings_schedjobdto.CommandOutputFileStorageResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "bucket" : {
             "type" : "string"
           },
@@ -48168,6 +48165,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -48194,7 +48194,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "bucket", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "bucket", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_schedjobdto.CommandOutputPipeToAppReq" : {
@@ -48310,9 +48310,6 @@
           "app" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "command" : {
             "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateBaseReq"
           },
@@ -48323,6 +48320,9 @@
             "type" : "boolean"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "jobType" : {
@@ -48362,7 +48362,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "app", "availableInProjects", "command", "commandOutput", "controlDisabled", "default", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout" ],
         "type" : "object"
       },
       "settings_schedjobdto.CreateSchedJobResp" : {
@@ -48481,9 +48481,6 @@
           "app" : {
             "$ref" : "#/components/schemas/basedto.NamedObjectResp"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "command" : {
             "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateResp"
           },
@@ -48504,6 +48501,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -48570,7 +48570,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "availableInProjects", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_schedjobdto.SchedJobTaskLogsDataResp" : {
@@ -48628,9 +48628,6 @@
           "app" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "command" : {
             "$ref" : "#/components/schemas/settings_commandtemplatedto.CommandTemplateBaseReq"
           },
@@ -48641,6 +48638,9 @@
             "type" : "boolean"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "jobType" : {
@@ -48683,7 +48683,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "app", "availableInProjects", "command", "commandOutput", "controlDisabled", "default", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout", "updateVer" ],
+        "required" : [ "app", "command", "commandOutput", "controlDisabled", "default", "inheritable", "jobType", "maxRetry", "name", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "timeout", "updateVer" ],
         "type" : "object"
       },
       "settings_schedjobdto.UpdateSchedJobResp" : {
@@ -48697,14 +48697,14 @@
       },
       "settings_schedjobdto.UpdateSchedJobStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -48713,7 +48713,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_schedjobdto.UpdateSchedJobStatusResp" : {
@@ -48727,13 +48727,13 @@
       },
       "settings_secretdto.CreateSecretReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "base64" : {
             "type" : "boolean"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "key" : {
@@ -48746,7 +48746,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "base64", "default", "key", "swarmRef", "value" ],
+        "required" : [ "base64", "default", "inheritable", "key", "swarmRef", "value" ],
         "type" : "object"
       },
       "settings_secretdto.CreateSecretResp" : {
@@ -48853,9 +48853,6 @@
       },
       "settings_secretdto.SecretResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "base64" : {
             "type" : "boolean"
           },
@@ -48870,6 +48867,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -48902,7 +48902,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "base64", "createdAt", "default", "expireAt", "id", "inherited", "key", "kind", "name", "size", "status", "swarmRef", "type", "updateVer", "updatedAt" ],
+        "required" : [ "base64", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "key", "kind", "name", "size", "status", "swarmRef", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_secretdto.SwarmRefFileTargetReq" : {
@@ -48961,13 +48961,13 @@
       },
       "settings_secretdto.UpdateSecretReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "base64" : {
             "type" : "boolean"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "key" : {
@@ -48983,7 +48983,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "base64", "default", "key", "swarmRef", "updateVer", "value" ],
+        "required" : [ "base64", "default", "inheritable", "key", "swarmRef", "updateVer", "value" ],
         "type" : "object"
       },
       "settings_secretdto.UpdateSecretResp" : {
@@ -48997,14 +48997,14 @@
       },
       "settings_secretdto.UpdateSecretStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -49013,7 +49013,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_secretdto.UpdateSecretStatusResp" : {
@@ -49027,10 +49027,10 @@
       },
       "settings_sshkeydto.CreateSSHKeyReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "keyType" : {
@@ -49052,7 +49052,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "default", "keyType", "kind", "name", "passphrase", "privateKey", "publicKey" ],
+        "required" : [ "default", "inheritable", "keyType", "kind", "name", "passphrase", "privateKey", "publicKey" ],
         "type" : "object"
       },
       "settings_sshkeydto.CreateSSHKeyResp" : {
@@ -49144,9 +49144,6 @@
       },
       "settings_sshkeydto.SSHKeyResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -49158,6 +49155,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -49199,15 +49199,15 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "keyType", "kind", "name", "passphrase", "privateKey", "publicKey", "secretMasked", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "keyType", "kind", "name", "passphrase", "privateKey", "publicKey", "secretMasked", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "settings_sshkeydto.UpdateSSHKeyReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "keyType" : {
@@ -49232,7 +49232,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "keyType", "kind", "name", "passphrase", "privateKey", "publicKey", "updateVer" ],
+        "required" : [ "default", "inheritable", "keyType", "kind", "name", "passphrase", "privateKey", "publicKey", "updateVer" ],
         "type" : "object"
       },
       "settings_sshkeydto.UpdateSSHKeyResp" : {
@@ -49246,14 +49246,14 @@
       },
       "settings_sshkeydto.UpdateSSHKeyStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -49262,7 +49262,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_sshkeydto.UpdateSSHKeyStatusResp" : {
@@ -49280,9 +49280,6 @@
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           },
           "autoRenew" : {
-            "type" : "boolean"
-          },
-          "availableInProjects" : {
             "type" : "boolean"
           },
           "certType" : {
@@ -49303,6 +49300,9 @@
           "expireAt" : {
             "type" : "string"
           },
+          "inheritable" : {
+            "type" : "boolean"
+          },
           "keyType" : {
             "type" : "string"
           },
@@ -49322,7 +49322,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "acmeProvider", "autoRenew", "availableInProjects", "certType", "certificate", "default", "domain", "email", "expireAt", "keyType", "notification", "notifyFrom", "privateKey", "provider", "validPeriod" ],
+        "required" : [ "acmeProvider", "autoRenew", "certType", "certificate", "default", "domain", "email", "expireAt", "inheritable", "keyType", "notification", "notifyFrom", "privateKey", "provider", "validPeriod" ],
         "type" : "object"
       },
       "settings_sslcertdto.CreateSSLCertResp" : {
@@ -49393,9 +49393,6 @@
           "autoRenew" : {
             "type" : "boolean"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "certType" : {
             "type" : "string"
           },
@@ -49419,6 +49416,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -49469,7 +49469,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "acmeProvider", "autoRenew", "availableInProjects", "certType", "certificate", "createdAt", "default", "domain", "email", "expireAt", "id", "inherited", "keyType", "kind", "name", "notification", "notifyFrom", "privateKey", "provider", "renewableFrom", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "validPeriod" ],
+        "required" : [ "acmeProvider", "autoRenew", "certType", "certificate", "createdAt", "default", "domain", "email", "expireAt", "id", "inheritable", "inherited", "keyType", "kind", "name", "notification", "notifyFrom", "privateKey", "provider", "renewableFrom", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "validPeriod" ],
         "type" : "object"
       },
       "settings_sslcertdto.UpdateSSLCertReq" : {
@@ -49478,9 +49478,6 @@
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           },
           "autoRenew" : {
-            "type" : "boolean"
-          },
-          "availableInProjects" : {
             "type" : "boolean"
           },
           "certType" : {
@@ -49500,6 +49497,9 @@
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "keyType" : {
             "type" : "string"
@@ -49523,7 +49523,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "acmeProvider", "autoRenew", "availableInProjects", "certType", "certificate", "default", "domain", "email", "expireAt", "keyType", "notification", "notifyFrom", "privateKey", "provider", "updateVer", "validPeriod" ],
+        "required" : [ "acmeProvider", "autoRenew", "certType", "certificate", "default", "domain", "email", "expireAt", "inheritable", "keyType", "notification", "notifyFrom", "privateKey", "provider", "updateVer", "validPeriod" ],
         "type" : "object"
       },
       "settings_sslcertdto.UpdateSSLCertResp" : {
@@ -49537,14 +49537,14 @@
       },
       "settings_sslcertdto.UpdateSSLCertStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -49553,7 +49553,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_sslcertdto.UpdateSSLCertStatusResp" : {
@@ -49567,9 +49567,6 @@
       },
       "settings_sslproviderdto.CreateSSLProviderReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
@@ -49581,6 +49578,9 @@
           },
           "googleTrust" : {
             "$ref" : "#/components/schemas/settings_sslproviderdto.SSLProviderGoogleTrustReq"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "kind" : {
             "type" : "string"
@@ -49595,7 +49595,7 @@
             "$ref" : "#/components/schemas/settings_sslproviderdto.SSLProviderZeroSSLReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "defaultKeyType", "email", "googleTrust", "kind", "letsEncrypt", "name", "zeroSSL" ],
+        "required" : [ "default", "defaultKeyType", "email", "googleTrust", "inheritable", "kind", "letsEncrypt", "name", "zeroSSL" ],
         "type" : "object"
       },
       "settings_sslproviderdto.CreateSSLProviderResp" : {
@@ -49678,9 +49678,6 @@
       },
       "settings_sslproviderdto.SSLProviderResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -49701,6 +49698,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -49736,7 +49736,7 @@
             "$ref" : "#/components/schemas/settings_sslproviderdto.SSLProviderZeroSSLResp"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "defaultKeyType", "email", "expireAt", "googleTrust", "id", "inherited", "kind", "letsEncrypt", "name", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "zeroSSL" ],
+        "required" : [ "createdAt", "default", "defaultKeyType", "email", "expireAt", "googleTrust", "id", "inheritable", "inherited", "kind", "letsEncrypt", "name", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "zeroSSL" ],
         "type" : "object"
       },
       "settings_sslproviderdto.SSLProviderZeroSSLReq" : {
@@ -49765,9 +49765,6 @@
       },
       "settings_sslproviderdto.UpdateSSLProviderReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
@@ -49779,6 +49776,9 @@
           },
           "googleTrust" : {
             "$ref" : "#/components/schemas/settings_sslproviderdto.SSLProviderGoogleTrustReq"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "kind" : {
             "type" : "string"
@@ -49796,7 +49796,7 @@
             "$ref" : "#/components/schemas/settings_sslproviderdto.SSLProviderZeroSSLReq"
           }
         },
-        "required" : [ "availableInProjects", "default", "defaultKeyType", "email", "googleTrust", "kind", "letsEncrypt", "name", "updateVer", "zeroSSL" ],
+        "required" : [ "default", "defaultKeyType", "email", "googleTrust", "inheritable", "kind", "letsEncrypt", "name", "updateVer", "zeroSSL" ],
         "type" : "object"
       },
       "settings_sslproviderdto.UpdateSSLProviderResp" : {
@@ -49810,14 +49810,14 @@
       },
       "settings_sslproviderdto.UpdateSSLProviderStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -49826,7 +49826,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_sslproviderdto.UpdateSSLProviderStatusResp" : {
@@ -49941,9 +49941,6 @@
       },
       "settings_storagesettingsdto.StorageSettingsResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "bindSettings" : {
             "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageBindSettingsResp"
           },
@@ -49961,6 +49958,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -49993,7 +49993,7 @@
             "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageVolumeSettingsResp"
           }
         },
-        "required" : [ "availableInProjects", "bindSettings", "clusterVolumeSettings", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "tmpfsSettings", "type", "updateVer", "updatedAt", "volumeSettings" ],
+        "required" : [ "bindSettings", "clusterVolumeSettings", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "tmpfsSettings", "type", "updateVer", "updatedAt", "volumeSettings" ],
         "type" : "object"
       },
       "settings_storagesettingsdto.StorageTmpfsSettingsReq" : {
@@ -50062,9 +50062,6 @@
       },
       "settings_storagesettingsdto.UpdateStorageSettingsReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "bindSettings" : {
             "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageBindSettingsReq"
           },
@@ -50072,6 +50069,9 @@
             "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageClusterVolumeSettingsReq"
           },
           "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
             "type" : "boolean"
           },
           "tmpfsSettings" : {
@@ -50084,7 +50084,7 @@
             "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageVolumeSettingsReq"
           }
         },
-        "required" : [ "availableInProjects", "bindSettings", "clusterVolumeSettings", "default", "tmpfsSettings", "updateVer", "volumeSettings" ],
+        "required" : [ "bindSettings", "clusterVolumeSettings", "default", "inheritable", "tmpfsSettings", "updateVer", "volumeSettings" ],
         "type" : "object"
       },
       "settings_storagesettingsdto.UpdateStorageSettingsResp" : {
@@ -50098,14 +50098,14 @@
       },
       "settings_storagesettingsdto.UpdateStorageSettingsStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -50114,7 +50114,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "settings_storagesettingsdto.UpdateStorageSettingsStatusResp" : {
@@ -50446,9 +50446,6 @@
           "appSettings" : {
             "$ref" : "#/components/schemas/system_hpappsettingsdto.HivePaaSAppSettingsResp"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -50460,6 +50457,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -50498,7 +50498,7 @@
             "$ref" : "#/components/schemas/system_hpappsettingsdto.HivePaaSWorkerSettingsResp"
           }
         },
-        "required" : [ "appSettings", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "periodicSettings", "proxySettings", "size", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
+        "required" : [ "appSettings", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "periodicSettings", "proxySettings", "size", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.UpdateHttpSettingsReq" : {
@@ -50909,9 +50909,6 @@
           "appSettings" : {
             "$ref" : "#/components/schemas/system_traefiksettingsdto.TraefikAppSettingsResp"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -50923,6 +50920,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -50949,7 +50949,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appSettings", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "appSettings", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "system_traefiksettingsdto.StartupCommandReq" : {
@@ -51140,9 +51140,6 @@
       },
       "systemsettings_sslrenewaldto.SSLRenewalResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -51154,6 +51151,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -51193,7 +51193,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "systemsettings_sslrenewaldto.ScheduleReq" : {
@@ -51230,10 +51230,10 @@
       },
       "systemsettings_sslrenewaldto.UpdateSSLRenewalReq" : {
         "properties" : {
-          "availableInProjects" : {
+          "default" : {
             "type" : "boolean"
           },
-          "default" : {
+          "inheritable" : {
             "type" : "boolean"
           },
           "notification" : {
@@ -51249,7 +51249,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "notification", "schedule", "status", "updateVer" ],
+        "required" : [ "default", "inheritable", "notification", "schedule", "status", "updateVer" ],
         "type" : "object"
       },
       "systemsettings_sslrenewaldto.UpdateSSLRenewalResp" : {
@@ -51346,9 +51346,6 @@
       },
       "systemsettings_systembackupdto.SystemBackupCloudStorageResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "bucket" : {
             "type" : "string"
           },
@@ -51366,6 +51363,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -51392,7 +51392,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "bucket", "createdAt", "default", "destinationDir", "expireAt", "id", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "bucket", "createdAt", "default", "destinationDir", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "systemsettings_systembackupdto.SystemBackupCompressionReq" : {
@@ -51457,9 +51457,6 @@
       },
       "systemsettings_systembackupdto.SystemBackupResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "cloudStorage" : {
             "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupCloudStorageResp"
           },
@@ -51483,6 +51480,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -51522,14 +51522,11 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "cloudStorage", "compression", "createdAt", "dbBackupConfig", "default", "encryption", "expireAt", "id", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "cloudStorage", "compression", "createdAt", "dbBackupConfig", "default", "encryption", "expireAt", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "systemsettings_systembackupdto.UpdateSystemBackupReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "cloudStorage" : {
             "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupCloudStorageReq"
           },
@@ -51545,6 +51542,9 @@
           "encryption" : {
             "$ref" : "#/components/schemas/systemsettings_systembackupdto.SystemBackupEncryptionReq"
           },
+          "inheritable" : {
+            "type" : "boolean"
+          },
           "notification" : {
             "$ref" : "#/components/schemas/basedto.BaseEventNotificationReq"
           },
@@ -51558,7 +51558,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "cloudStorage", "compression", "dbBackupConfig", "default", "encryption", "notification", "schedule", "status", "updateVer" ],
+        "required" : [ "cloudStorage", "compression", "dbBackupConfig", "default", "encryption", "inheritable", "notification", "schedule", "status", "updateVer" ],
         "type" : "object"
       },
       "systemsettings_systembackupdto.UpdateSystemBackupResp" : {
@@ -51736,9 +51736,6 @@
       },
       "systemsettings_systemcleanupdto.SystemCleanupResp" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "backupCleanup" : {
             "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemBackupCleanupResp"
           },
@@ -51765,6 +51762,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -51804,7 +51804,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "availableInProjects", "backupCleanup", "cacheCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "default", "expireAt", "fileCleanup", "id", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "backupCleanup", "cacheCleanup", "clusterCleanup", "createdAt", "dbObjectRetention", "default", "expireAt", "fileCleanup", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "systemsettings_systemcleanupdto.SystemClusterCleanupReq" : {
@@ -51887,9 +51887,6 @@
       },
       "systemsettings_systemcleanupdto.UpdateSystemCleanupReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "backupCleanup" : {
             "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemBackupCleanupReq"
           },
@@ -51908,6 +51905,9 @@
           "fileCleanup" : {
             "$ref" : "#/components/schemas/systemsettings_systemcleanupdto.SystemFileCleanupReq"
           },
+          "inheritable" : {
+            "type" : "boolean"
+          },
           "notification" : {
             "$ref" : "#/components/schemas/basedto.BaseEventNotificationReq"
           },
@@ -51921,7 +51921,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "backupCleanup", "cacheCleanup", "clusterCleanup", "dbObjectRetention", "default", "fileCleanup", "notification", "schedule", "status", "updateVer" ],
+        "required" : [ "backupCleanup", "cacheCleanup", "clusterCleanup", "dbObjectRetention", "default", "fileCleanup", "inheritable", "notification", "schedule", "status", "updateVer" ],
         "type" : "object"
       },
       "systemsettings_systemcleanupdto.UpdateSystemCleanupResp" : {
@@ -51953,9 +51953,6 @@
           "accessAction" : {
             "$ref" : "#/components/schemas/base.AccessActions"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "createdAt" : {
             "type" : "string"
           },
@@ -51967,6 +51964,9 @@
           },
           "id" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "inherited" : {
             "type" : "boolean"
@@ -51996,7 +51996,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessAction", "availableInProjects", "createdAt", "default", "expireAt", "id", "inherited", "keyId", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "accessAction", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "keyId", "kind", "name", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "usersettings_apikeydto.CreateAPIKeyReq" : {
@@ -52004,20 +52004,20 @@
           "accessAction" : {
             "$ref" : "#/components/schemas/base.AccessActions"
           },
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
           },
+          "inheritable" : {
+            "type" : "boolean"
+          },
           "name" : {
             "type" : "string"
           }
         },
-        "required" : [ "accessAction", "availableInProjects", "default", "expireAt", "name" ],
+        "required" : [ "accessAction", "default", "expireAt", "inheritable", "name" ],
         "type" : "object"
       },
       "usersettings_apikeydto.CreateAPIKeyResp" : {
@@ -52070,14 +52070,14 @@
       },
       "usersettings_apikeydto.UpdateAPIKeyStatusReq" : {
         "properties" : {
-          "availableInProjects" : {
-            "type" : "boolean"
-          },
           "default" : {
             "type" : "boolean"
           },
           "expireAt" : {
             "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
           },
           "status" : {
             "type" : "string"
@@ -52086,7 +52086,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "availableInProjects", "default", "expireAt", "status", "updateVer" ],
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
         "type" : "object"
       },
       "usersettings_apikeydto.UpdateAPIKeyStatusResp" : {
@@ -52809,9 +52809,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -19,10 +19,10 @@ import (
 
 type UpdateSettingReq struct {
 	BaseSettingReq
-	ID              string `json:"-"`
-	AvailInProjects bool   `json:"availableInProjects"`
-	Default         bool   `json:"default"`
-	UpdateVer       int    `json:"updateVer"`
+	ID          string `json:"-"`
+	Inheritable bool   `json:"inheritable"`
+	Default     bool   `json:"default"`
+	UpdateVer   int    `json:"updateVer"`
 }
 
 func (req *UpdateSettingReq) Validate() (validators []vld.Validator) {
@@ -180,7 +180,7 @@ func (uc *BaseUC) prepareSettingUpdate(
 	copySetting := *data.Setting
 	setting := &copySetting
 	setting.Name = gofn.Coalesce(data.VerifyingName, setting.Name)
-	setting.AvailInProjects = gofn.If(!req.Scope.IsGlobalScope(), false, req.AvailInProjects)
+	setting.Inheritable = gofn.If(!req.Scope.IsGlobalScope(), false, req.Inheritable)
 	setting.Default = req.Default
 	setting.UpdateVer++
 	setting.UpdatedAt = timeNow

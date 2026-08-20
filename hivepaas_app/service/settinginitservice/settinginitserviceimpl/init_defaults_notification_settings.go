@@ -19,16 +19,16 @@ func (s *service) initDefaultNotificationSettings(
 	timeNow time.Time,
 ) (err error) {
 	notifSetting := &entity.Setting{
-		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           base.ObjectScopeGlobal,
-		Type:            base.SettingTypeNotification,
-		Status:          base.SettingStatusActive,
-		Name:            "default",
-		AvailInProjects: false,
-		Default:         true,
-		Version:         entity.CurrentNotificationVersion,
-		CreatedAt:       timeNow,
-		UpdatedAt:       timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeGlobal,
+		Type:        base.SettingTypeNotification,
+		Status:      base.SettingStatusActive,
+		Name:        "default",
+		Inheritable: false,
+		Default:     true,
+		Version:     entity.CurrentNotificationVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	notifSetting.MustSetData(entity.NewNotificationDefaultForScope(entity.NewObjectScopeGlobal()))
 

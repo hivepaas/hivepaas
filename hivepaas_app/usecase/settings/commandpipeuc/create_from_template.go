@@ -150,8 +150,8 @@ func (uc *UC) createTemplatedCommands(
 		tgtCmd.Scope = req.Scope.ScopeType
 		tgtCmd.ObjectID = req.Scope.ScopeObjectID()
 	}
-	srcCmd.AvailInProjects = req.AvailInProjects
-	tgtCmd.AvailInProjects = req.AvailInProjects
+	srcCmd.Inheritable = req.Inheritable
+	tgtCmd.Inheritable = req.Inheritable
 
 	// Prevent repeated names by adding suffix
 	srcCmd.Name, err = uc.calcCommandPipeName(ctx, db, req.Scope, base.SettingTypeCommandTemplate, srcCmd.Name)

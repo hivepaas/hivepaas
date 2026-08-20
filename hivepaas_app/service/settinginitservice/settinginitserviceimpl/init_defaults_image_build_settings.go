@@ -35,16 +35,16 @@ func (s *service) initDefaultImageBuildSettings(
 	timeNow time.Time,
 ) (err error) {
 	imageBuildSetting := &entity.Setting{
-		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           base.ObjectScopeGlobal,
-		Type:            base.SettingTypeImageBuildSettings,
-		Status:          base.SettingStatusActive,
-		Name:            imageBuildSettingName,
-		AvailInProjects: true,
-		Default:         true,
-		Version:         entity.CurrentImageBuildSettingsVersion,
-		CreatedAt:       timeNow,
-		UpdatedAt:       timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeGlobal,
+		Type:        base.SettingTypeImageBuildSettings,
+		Status:      base.SettingStatusActive,
+		Name:        imageBuildSettingName,
+		Inheritable: true,
+		Default:     true,
+		Version:     entity.CurrentImageBuildSettingsVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	imageBuild := &entity.ImageBuildSettings{
 		Workers: entity.ImageBuildWorkerSettings{

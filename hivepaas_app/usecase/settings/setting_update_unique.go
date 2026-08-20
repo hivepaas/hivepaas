@@ -20,9 +20,9 @@ import (
 
 type UpdateUniqueSettingReq struct {
 	BaseSettingReq
-	AvailInProjects bool `json:"availableInProjects"`
-	Default         bool `json:"default"`
-	UpdateVer       int  `json:"updateVer"`
+	Inheritable bool `json:"inheritable"`
+	Default     bool `json:"default"`
+	UpdateVer   int  `json:"updateVer"`
 }
 
 type UpdateUniqueSettingResp struct {
@@ -164,24 +164,24 @@ func (uc *BaseUC) prepareUniqueSettingUpdate(
 	var setting *entity.Setting
 	if data.Setting == nil {
 		setting = &entity.Setting{
-			ID:              gofn.Must(ulid.NewStringULID()),
-			Scope:           req.Scope.ScopeType,
-			ObjectID:        req.Scope.ScopeObjectID(),
-			Type:            req.Type,
-			Status:          base.SettingStatusActive,
-			Name:            data.Name,
-			Kind:            data.Kind,
-			AvailInProjects: gofn.If(!req.Scope.IsGlobalScope(), false, req.AvailInProjects),
-			Default:         req.Default,
-			Version:         data.Version,
-			CreatedAt:       timeNow,
-			UpdatedAt:       timeNow,
+			ID:          gofn.Must(ulid.NewStringULID()),
+			Scope:       req.Scope.ScopeType,
+			ObjectID:    req.Scope.ScopeObjectID(),
+			Type:        req.Type,
+			Status:      base.SettingStatusActive,
+			Name:        data.Name,
+			Kind:        data.Kind,
+			Inheritable: gofn.If(!req.Scope.IsGlobalScope(), false, req.Inheritable),
+			Default:     req.Default,
+			Version:     data.Version,
+			CreatedAt:   timeNow,
+			UpdatedAt:   timeNow,
 		}
 	} else {
 		copySetting := *data.Setting
 		setting = &copySetting
 		setting.Name = gofn.Coalesce(data.Name, setting.Name)
-		setting.AvailInProjects = gofn.If(!req.Scope.IsGlobalScope(), false, req.AvailInProjects)
+		setting.Inheritable = gofn.If(!req.Scope.IsGlobalScope(), false, req.Inheritable)
 		setting.Default = req.Default
 		setting.UpdateVer++
 		setting.UpdatedAt = timeNow

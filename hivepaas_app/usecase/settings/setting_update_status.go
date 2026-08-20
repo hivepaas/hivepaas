@@ -20,12 +20,12 @@ import (
 
 type UpdateSettingStatusReq struct {
 	BaseSettingReq
-	ID                  string              `json:"-"`
-	Status              *base.SettingStatus `json:"status"`
-	ExpireAt            *time.Time          `json:"expireAt"`
-	AvailableInProjects *bool               `json:"availableInProjects"`
-	Default             *bool               `json:"default"`
-	UpdateVer           int                 `json:"updateVer"`
+	ID          string              `json:"-"`
+	Status      *base.SettingStatus `json:"status"`
+	ExpireAt    *time.Time          `json:"expireAt"`
+	Inheritable *bool               `json:"inheritable"`
+	Default     *bool               `json:"default"`
+	UpdateVer   int                 `json:"updateVer"`
 }
 
 func (req *UpdateSettingStatusReq) Validate() (validators []vld.Validator) {
@@ -167,8 +167,8 @@ func (uc *BaseUC) prepareSettingStatusUpdate(
 	if req.ExpireAt != nil {
 		setting.ExpireAt = *req.ExpireAt
 	}
-	if req.AvailableInProjects != nil {
-		setting.AvailInProjects = gofn.If(!req.Scope.IsGlobalScope(), false, *req.AvailableInProjects)
+	if req.Inheritable != nil {
+		setting.Inheritable = gofn.If(!req.Scope.IsGlobalScope(), false, *req.Inheritable)
 	}
 	if req.Default != nil {
 		setting.Default = *req.Default

@@ -61,7 +61,7 @@ func (s *service) SyncNetworks(
 				RefID: net.ID,
 			}
 			if net.Name == base.NetworkGlobalRouting {
-				setting.AvailInProjects = true
+				setting.Inheritable = true
 			}
 			if err := setting.SetData(volEntity); err != nil {
 				return nil, apperrors.Wrap(err)

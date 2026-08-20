@@ -29,16 +29,16 @@ func (s *service) initDefaultDomainSettings(
 	timeNow time.Time,
 ) (err error) {
 	domainSetting := &entity.Setting{
-		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           base.ObjectScopeGlobal,
-		Type:            base.SettingTypeDomainSettings,
-		Status:          base.SettingStatusActive,
-		Name:            domainSettingName,
-		AvailInProjects: true,
-		Default:         true,
-		Version:         entity.CurrentDomainSettingsVersion,
-		CreatedAt:       timeNow,
-		UpdatedAt:       timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeGlobal,
+		Type:        base.SettingTypeDomainSettings,
+		Status:      base.SettingStatusActive,
+		Name:        domainSettingName,
+		Inheritable: true,
+		Default:     true,
+		Version:     entity.CurrentDomainSettingsVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	domain := &entity.DomainSettings{
 		RootDomain: config.Current.RootDomain,

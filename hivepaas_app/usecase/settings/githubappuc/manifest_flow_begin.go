@@ -61,18 +61,18 @@ func (uc *UC) BeginGithubAppManifestFlow(
 	timeNow := timeutil.NowUTC()
 
 	appSetting := &entity.Setting{
-		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           req.Scope.ScopeType,
-		ObjectID:        req.Scope.ScopeObjectID(),
-		Type:            base.SettingTypeGithubApp,
-		Kind:            string(base.SettingTypeGithubApp),
-		Status:          base.SettingStatusActive,
-		Name:            gofn.Coalesce(req.Name, "my hivepaas app"),
-		AvailInProjects: req.AvailInProjects,
-		Default:         req.Default,
-		Version:         entity.CurrentGithubAppVersion,
-		CreatedAt:       timeNow,
-		UpdatedAt:       timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       req.Scope.ScopeType,
+		ObjectID:    req.Scope.ScopeObjectID(),
+		Type:        base.SettingTypeGithubApp,
+		Kind:        string(base.SettingTypeGithubApp),
+		Status:      base.SettingStatusActive,
+		Name:        gofn.Coalesce(req.Name, "my hivepaas app"),
+		Inheritable: req.Inheritable,
+		Default:     req.Default,
+		Version:     entity.CurrentGithubAppVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	githubApp := &entity.GithubApp{
 		Organization: req.Org,

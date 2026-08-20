@@ -15,7 +15,7 @@ func (uc *UC) UpdateVolume(
 	req *volumedto.UpdateVolumeReq,
 ) (*volumedto.UpdateVolumeResp, error) {
 	req.Type = currentSettingType
-	// NOTE: only allow updating `availInProjects` and `default`
+	// NOTE: only allow updating `inheritable` and `default`
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{})
 	if err != nil {
 		return nil, apperrors.Wrap(err)

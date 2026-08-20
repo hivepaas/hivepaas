@@ -10,11 +10,11 @@ import (
 
 type BeginGithubAppManifestFlowReq struct {
 	settings.BaseSettingReq
-	Name            string `json:"name"`
-	Org             string `json:"org"`
-	SSOEnabled      bool   `json:"ssoEnabled"`
-	AvailInProjects bool   `json:"availableInProjects"`
-	Default         bool   `json:"default"`
+	Name        string `json:"name"`
+	Org         string `json:"org"`
+	SSOEnabled  bool   `json:"ssoEnabled"`
+	Inheritable bool   `json:"inheritable"`
+	Default     bool   `json:"default"`
 }
 
 func NewBeginGithubAppManifestFlowReq() *BeginGithubAppManifestFlowReq {

@@ -107,7 +107,7 @@ VALUES ('user', '01JAB9XED0GTXBSQDFVYAJ8WA1', 'project', '01JAB9XED0GTXBSQDFVYAJ
 ON CONFLICT DO NOTHING;
 
 -- Settings: Providers
-INSERT INTO settings (id, scope, object_id, type, kind, name, status, avail_in_projects, is_default, data, created_at, updated_at)
+INSERT INTO settings (id, scope, object_id, type, kind, name, status, inheritable, is_default, data, created_at, updated_at)
 VALUES ('01JAB9XED0GTXBSQDFVYAJ8WE1', '', NULL, 'oauth', 'github', 'Github', 'active', true, true,
         '{"org": "hivepaas-test", "clientId": "Ov23lirztQpWxZTKNcTQ", "clientSecret": "hpsalt:i+NlaPQDkZ5LZQ== ITUM2K0dxQTb5D0DvCeEiHlO1vWzL5807TPfKH0E/37TBOoowSgogEYIp7leyYL7QGEfPDpM2cxb3+8fnlAeU6qlNQc="}',
         '2025-10-01 00:00:00', '2025-10-01 00:00:00'),

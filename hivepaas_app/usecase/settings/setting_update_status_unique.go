@@ -19,11 +19,11 @@ import (
 
 type UpdateUniqueSettingStatusReq struct {
 	BaseSettingReq
-	Status              *base.SettingStatus `json:"status"`
-	ExpireAt            *time.Time          `json:"expireAt"`
-	AvailableInProjects *bool               `json:"availableInProjects"`
-	Default             *bool               `json:"default"`
-	UpdateVer           int                 `json:"updateVer"`
+	Status      *base.SettingStatus `json:"status"`
+	ExpireAt    *time.Time          `json:"expireAt"`
+	Inheritable *bool               `json:"inheritable"`
+	Default     *bool               `json:"default"`
+	UpdateVer   int                 `json:"updateVer"`
 }
 
 type UpdateUniqueSettingStatusResp struct {
@@ -155,8 +155,8 @@ func (uc *BaseUC) prepareUniqueSettingStatusUpdate(
 	if req.ExpireAt != nil {
 		setting.ExpireAt = *req.ExpireAt
 	}
-	if req.AvailableInProjects != nil {
-		setting.AvailInProjects = gofn.If(!req.Scope.IsGlobalScope(), false, *req.AvailableInProjects)
+	if req.Inheritable != nil {
+		setting.Inheritable = gofn.If(!req.Scope.IsGlobalScope(), false, *req.Inheritable)
 	}
 	if req.Default != nil {
 		setting.Default = *req.Default
@@ -171,7 +171,7 @@ func (uc *BaseUC) persistUniqueSettingStatusUpdate(
 	persistingData *PersistingSettingStatusData,
 ) error {
 	err := uc.SettingRepo.Update(ctx, db, persistingData.Setting,
-		bunex.UpdateColumns("update_ver", "updated_at", "status", "expire_at", "avail_in_projects", "is_default"),
+		bunex.UpdateColumns("update_ver", "updated_at", "status", "expire_at", "inheritable", "is_default"),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)

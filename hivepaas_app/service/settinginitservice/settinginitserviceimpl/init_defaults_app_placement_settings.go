@@ -23,16 +23,16 @@ func (s *service) initDefaultAppPlacementSettings(
 	timeNow time.Time,
 ) (err error) {
 	appPlacementSetting := &entity.Setting{
-		ID:              gofn.Must(ulid.NewStringULID()),
-		Scope:           base.ObjectScopeGlobal,
-		Type:            base.SettingTypeAppPlacementSettings,
-		Status:          base.SettingStatusActive,
-		Name:            appPlacementSettingName,
-		AvailInProjects: true,
-		Default:         true,
-		Version:         entity.CurrentAppPlacementSettingsVersion,
-		CreatedAt:       timeNow,
-		UpdatedAt:       timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeGlobal,
+		Type:        base.SettingTypeAppPlacementSettings,
+		Status:      base.SettingStatusActive,
+		Name:        appPlacementSettingName,
+		Inheritable: true,
+		Default:     true,
+		Version:     entity.CurrentAppPlacementSettingsVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	appPlacement := &entity.AppPlacementSettings{
 		ExcludeBuildNodes:   true,

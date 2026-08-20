@@ -1,17 +1,16 @@
 import { useRef } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldErrors, useController, useForm } from "react-hook-form";
 import { UploadIcon } from "lucide-react";
+import { type FieldErrors, useController, useForm } from "react-hook-form";
 
 import { InfoBlock } from "@application/shared/components";
 
-import { Button } from "@/components/ui/button";
+import { Button, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 
 import type { ImportFilesToContainerFormInput, ImportFilesToContainerFormOutput } from "../schemas";
 import { ImportFilesToContainerFormSchema } from "../schemas";
@@ -83,7 +82,10 @@ export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
             <DialogBody>
                 <FieldGroup>
                     <Field>
-                        <InfoBlock title="File">
+                        <InfoBlock
+                            title="File"
+                            titleWidth={130}
+                        >
                             <div className="flex items-center gap-3">
                                 <Button
                                     type="button"
@@ -114,7 +116,10 @@ export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
                     </Field>
 
                     <Field>
-                        <InfoBlock title="Destination Path">
+                        <InfoBlock
+                            title="Destination Path"
+                            titleWidth={130}
+                        >
                             <Input
                                 {...path}
                                 placeholder="/path/in/container"
@@ -125,7 +130,10 @@ export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
                     </Field>
 
                     <Field>
-                        <InfoBlock title="Extract">
+                        <InfoBlock
+                            title="Extract"
+                            titleWidth={130}
+                        >
                             <label
                                 htmlFor="import-container-extract"
                                 className="flex items-center gap-3 text-sm font-medium"
@@ -144,34 +152,36 @@ export function ImportFilesToContainerForm({ isPending, onSubmit }: Props) {
 
                     {extract.value && (
                         <Field>
-                            <InfoBlock title="Compression">
-                                <div className="flex flex-wrap gap-2">
-                                    {compressionOptions.map(option => (
-                                        <Button
-                                            key={option.value}
-                                            type="button"
-                                            variant="outline"
-                                            disabled={isPending}
-                                            className={cn(
-                                                "min-w-[72px]",
-                                                compression.value === option.value &&
-                                                    "border-primary bg-background shadow-xs",
-                                            )}
-                                            onClick={() => {
-                                                compression.onChange(option.value);
-                                            }}
-                                        >
-                                            {option.label}
-                                        </Button>
-                                    ))}
-                                </div>
+                            <InfoBlock
+                                title="Compression"
+                                titleWidth={130}
+                            >
+                                <Tabs
+                                    value={compression.value}
+                                    onValueChange={compression.onChange}
+                                >
+                                    <TabsList>
+                                        {compressionOptions.map(option => (
+                                            <TabsTrigger
+                                                key={option.value}
+                                                value={option.value}
+                                                disabled={isPending}
+                                            >
+                                                {option.label}
+                                            </TabsTrigger>
+                                        ))}
+                                    </TabsList>
+                                </Tabs>
                                 <FieldError errors={[errors.compression]} />
                             </InfoBlock>
                         </Field>
                     )}
 
                     <Field>
-                        <InfoBlock title="Overwrite">
+                        <InfoBlock
+                            title="Overwrite"
+                            titleWidth={130}
+                        >
                             <label
                                 htmlFor="import-container-overwrite"
                                 className="flex items-center gap-3 text-sm font-medium"

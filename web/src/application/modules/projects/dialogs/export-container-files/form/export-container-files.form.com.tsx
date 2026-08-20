@@ -3,12 +3,11 @@ import { type FieldErrors, useController, useForm } from "react-hook-form";
 
 import { InfoBlock } from "@application/shared/components";
 
-import { Button } from "@/components/ui/button";
+import { Button, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 
 import type { ExportContainerFilesFormInput, ExportContainerFilesFormOutput } from "../schemas";
 import { ExportContainerFilesFormSchema } from "../schemas";
@@ -66,7 +65,10 @@ export function ExportContainerFilesForm({ isPending, onSubmit }: Props) {
             <DialogBody>
                 <FieldGroup>
                     <Field>
-                        <InfoBlock title="Path">
+                        <InfoBlock
+                            title="Path"
+                            titleWidth={130}
+                        >
                             <Input
                                 {...path}
                                 placeholder="/path/in/container"
@@ -77,7 +79,10 @@ export function ExportContainerFilesForm({ isPending, onSubmit }: Props) {
                     </Field>
 
                     <Field>
-                        <InfoBlock title="Is Directory">
+                        <InfoBlock
+                            title="Is Directory"
+                            titleWidth={130}
+                        >
                             <label
                                 htmlFor="export-container-is-dir"
                                 className="flex items-center gap-3 text-sm font-medium"
@@ -95,27 +100,26 @@ export function ExportContainerFilesForm({ isPending, onSubmit }: Props) {
                     </Field>
 
                     <Field>
-                        <InfoBlock title="Compress">
-                            <div className="flex flex-wrap gap-2">
-                                {compressionOptions.map(option => (
-                                    <Button
-                                        key={option.value}
-                                        type="button"
-                                        variant="outline"
-                                        disabled={isPending}
-                                        className={cn(
-                                            "min-w-[72px]",
-                                            compression.value === option.value &&
-                                                "border-primary bg-background shadow-xs",
-                                        )}
-                                        onClick={() => {
-                                            compression.onChange(option.value);
-                                        }}
-                                    >
-                                        {option.label}
-                                    </Button>
-                                ))}
-                            </div>
+                        <InfoBlock
+                            title="Compress"
+                            titleWidth={130}
+                        >
+                            <Tabs
+                                value={compression.value}
+                                onValueChange={compression.onChange}
+                            >
+                                <TabsList>
+                                    {compressionOptions.map(option => (
+                                        <TabsTrigger
+                                            key={option.value}
+                                            value={option.value}
+                                            disabled={isPending}
+                                        >
+                                            {option.label}
+                                        </TabsTrigger>
+                                    ))}
+                                </TabsList>
+                            </Tabs>
                             <FieldError errors={[errors.compression]} />
                         </InfoBlock>
                     </Field>

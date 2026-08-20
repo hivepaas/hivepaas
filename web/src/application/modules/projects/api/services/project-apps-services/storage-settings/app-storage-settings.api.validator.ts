@@ -8,7 +8,10 @@ import { type AppStorageSettings_FindOne_Res } from "./app-storage-settings.api.
 
 const VolumeDriverSchema = z.object({
     name: z.string().optional(),
-    options: z.record(z.string()).optional(),
+    options: z
+        .record(z.string())
+        .nullish()
+        .transform(rec => rec ?? ({} as Record<string, string>)),
 });
 
 const BindOptionsSchema = z.object({

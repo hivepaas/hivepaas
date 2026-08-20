@@ -48,7 +48,7 @@ export function CreateOrEditRegistryAuthForm({
             username: initialValues?.username ?? "",
             password: initialValues?.password ?? "",
             readonly: initialValues?.readonly ?? false,
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditRegistryAuthFormSchema),
@@ -85,7 +85,7 @@ export function CreateOrEditRegistryAuthForm({
         fieldState: { invalid: isPasswordInvalid },
     } = useController({ name: "password", control });
     const { field: readonly } = useController({ name: "readonly", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditRegistryAuthFormOutput) {
@@ -213,9 +213,9 @@ export function CreateOrEditRegistryAuthForm({
                             title={<LabelWithInfo label="Available in Projects" />}
                         >
                             <Checkbox
-                                checked={availableInProjects.value}
+                                checked={inheritable.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(Boolean(checked));
+                                    inheritable.onChange(Boolean(checked));
                                 }}
                             />
                         </InfoBlock>

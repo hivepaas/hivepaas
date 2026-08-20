@@ -6,7 +6,7 @@ export const CreateOrEditRegistryAuthFormSchema = z.object({
     username: z.string().trim().min(1, "Username is required"),
     password: z.string().min(1, "Password is required"),
     readonly: z.boolean(),
-    availableInProjects: z.boolean(),
+    inheritable: z.boolean(),
     default: z.boolean(),
 });
 

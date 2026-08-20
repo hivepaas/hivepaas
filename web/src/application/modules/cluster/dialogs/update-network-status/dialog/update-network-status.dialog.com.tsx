@@ -97,7 +97,7 @@ export function UpdateNetworkStatusDialog() {
             networkID: network.id,
             payload: {
                 ...payload,
-                availableInProjects: values.availableInProjects,
+                inheritable: values.inheritable,
             },
         });
     }
@@ -133,7 +133,7 @@ export function UpdateNetworkStatusDialog() {
         ? {
               status: network.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: network.expireAt ?? undefined,
-              availableInProjects: network.availableInProjects,
+              inheritable: network.inheritable,
               default: network.default,
           }
         : undefined;

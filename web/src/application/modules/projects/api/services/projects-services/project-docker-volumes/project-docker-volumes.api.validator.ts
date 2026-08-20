@@ -21,7 +21,7 @@ const DockerVolumeSchema = z.object({
         .default({})
         .transform(value => value ?? {}),
     scope: z.string(),
-    availableInProjects: z.boolean(),
+    inheritable: z.boolean(),
     refCount: z.number(),
     size: z.number(),
     updateVer: z.number(),

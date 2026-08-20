@@ -10,7 +10,7 @@ export const CreateOrEditCloudStorageFormSchema = z.object({
     region: z.string().trim().min(1, "Region is required"),
     bucket: z.string().trim().min(1, "Bucket is required"),
     endpoint: z.string().trim(),
-    availableInProjects: z.boolean(),
+    inheritable: z.boolean(),
     default: z.boolean(),
 });
 

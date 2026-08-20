@@ -18,7 +18,7 @@ export type AccessToken_FindOneById_Req = ApiRequestBase<{ id: string }>;
 export type AccessToken_FindOneById_Res = ApiResponseBase<SettingAccessToken>;
 
 export type AccessToken_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     expireAt: Date | null;
     kind: string;
@@ -47,7 +47,7 @@ export type AccessToken_UpdateMeta_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

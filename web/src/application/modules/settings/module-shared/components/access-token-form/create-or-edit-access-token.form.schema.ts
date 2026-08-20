@@ -7,7 +7,7 @@ export const CreateOrEditAccessTokenFormSchema = z.object({
     token: z.string().min(1, "Token is required"),
     baseURL: z.string().trim(),
     expireAt: z.date().nullable(),
-    availableInProjects: z.boolean(),
+    inheritable: z.boolean(),
     default: z.boolean(),
 });
 

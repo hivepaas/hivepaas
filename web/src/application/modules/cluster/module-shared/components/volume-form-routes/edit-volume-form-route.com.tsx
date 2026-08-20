@@ -73,7 +73,7 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
                 volumeID: volume.id,
                 payload: {
                     updateVer: volume.updateVer,
-                    availableInProjects: values.availableInProjects,
+                    inheritable: values.inheritable,
                     default: values.default,
                 },
             });

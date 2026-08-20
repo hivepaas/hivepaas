@@ -57,7 +57,7 @@ function getRestPayload(values: CreateOrEditAppHealthCheckFormOutput): AppHealth
 
 function mapFormValuesToPayload(values: CreateOrEditAppHealthCheckFormOutput): AppHealthChecks_Upsert_Payload {
     return {
-        availableInProjects: false,
+        inheritable: false,
         default: false,
         name: values.name,
         kind: "healthcheck",

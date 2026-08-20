@@ -29,7 +29,7 @@ export type GithubApp_BasePayload = {
 };
 
 export type GithubApp_CreateOne_Payload = GithubApp_BasePayload & {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
 };
 export type GithubApp_CreateOne_Req = ApiRequestBase<{
@@ -53,7 +53,7 @@ export type GithubApp_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 export type GithubApp_UpdateStatus_Req = ApiRequestBase<{
@@ -76,7 +76,7 @@ export type GithubApp_BeginManifestFlow_Payload = {
     name: string;
     org: string;
     ssoEnabled: boolean;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
 };
 export type GithubApp_BeginManifestFlow_Req = ApiRequestBase<{

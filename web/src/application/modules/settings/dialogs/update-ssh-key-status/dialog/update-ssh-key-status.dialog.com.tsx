@@ -67,7 +67,7 @@ export function UpdateSSHKeyStatusDialog() {
             updateVer: sshKey.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -104,7 +104,7 @@ export function UpdateSSHKeyStatusDialog() {
         ? {
               status: sshKey.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: sshKey.expireAt ?? undefined,
-              availableInProjects: sshKey.availableInProjects ?? false,
+              inheritable: sshKey.inheritable ?? false,
               default: sshKey.default ?? false,
           }
         : undefined;

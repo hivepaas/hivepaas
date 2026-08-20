@@ -36,7 +36,7 @@ export type AppHealthChecks_Healthcheck_Payload = {
 };
 
 export type AppHealthChecks_Upsert_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     kind: "healthcheck";
@@ -102,7 +102,7 @@ export type AppHealthChecks_UpdateStatus_Req = ApiRequestBase<{
         updateVer: number;
         status: ESettingStatus;
         expireAt: Date | null;
-        availableInProjects: boolean;
+        inheritable: boolean;
         default: boolean;
     };
 }>;

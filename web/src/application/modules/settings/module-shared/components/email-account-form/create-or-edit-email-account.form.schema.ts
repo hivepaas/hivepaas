@@ -26,7 +26,7 @@ export const CreateOrEditEmailAccountFormSchema = z
         httpContentType: z.string().trim(),
         headers: z.array(KeyValueSchema),
         fieldMapping: z.array(KeyValueSchema),
-        availableInProjects: z.boolean(),
+        inheritable: z.boolean(),
         default: z.boolean(),
     })
     .superRefine((value, ctx) => {

@@ -18,7 +18,7 @@ export type BasicAuth_FindOneById_Req = ApiRequestBase<{
 export type BasicAuth_FindOneById_Res = ApiResponseBase<SettingBasicAuth>;
 
 export type BasicAuth_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     username: string;
@@ -31,7 +31,7 @@ export type BasicAuth_CreateOne_Res = ApiResponseBase<{ id: string }>;
 
 export type BasicAuth_UpdateOne_Payload = {
     updateVer: number;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     username: string;
@@ -47,7 +47,7 @@ export type BasicAuth_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 export type BasicAuth_UpdateStatus_Req = ApiRequestBase<{

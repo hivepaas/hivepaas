@@ -81,7 +81,7 @@ export class ClusterNetworksApi extends BaseApi {
             ingress: payload.ingress,
             labels: payload.labels,
             options: payload.options,
-            availableInProjects: payload.availableInProjects,
+            inheritable: payload.inheritable,
             default: payload.default ?? false,
         };
 

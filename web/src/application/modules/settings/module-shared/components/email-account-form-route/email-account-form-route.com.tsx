@@ -15,8 +15,8 @@ import type {
     CreateOrEditEmailAccountFormOutput,
     TestSendMailFormOutput,
 } from "~/settings/module-shared/components/email-account-form";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -112,7 +112,7 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
         const headers = toRecord(values.headers);
 
         return {
-            availableInProjects: scope.type === "project" ? false : values.availableInProjects,
+            inheritable: scope.type === "project" ? false : values.inheritable,
             default: values.default,
             name: values.name,
             kind: values.kind,
@@ -180,11 +180,7 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
         }
 
         setTestStatus("idle");
-        const {
-            availableInProjects: _availableInProjects,
-            default: _default,
-            ...payload
-        } = createPayload(testAccountValues);
+        const { inheritable: _inheritable, default: _default, ...payload } = createPayload(testAccountValues);
 
         testSendMail({
             payload: {
@@ -329,7 +325,7 @@ function toInitialValues(emailAccount: SettingEmail): Partial<CreateOrEditEmailA
         httpContentType: emailAccount.http?.contentType ?? "application/json",
         headers: toKeyValueList(emailAccount.http?.headers),
         fieldMapping: toKeyValueList(emailAccount.http?.fieldMapping),
-        availableInProjects: emailAccount.availableInProjects ?? false,
+        inheritable: emailAccount.inheritable ?? false,
         default: emailAccount.default ?? false,
     };
 }

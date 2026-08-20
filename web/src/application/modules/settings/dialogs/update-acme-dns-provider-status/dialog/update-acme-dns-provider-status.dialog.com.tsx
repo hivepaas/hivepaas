@@ -82,7 +82,7 @@ export function UpdateAcmeDnsProviderStatusDialog() {
             updateVer: acmeDnsProvider.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -130,11 +130,9 @@ export function UpdateAcmeDnsProviderStatusDialog() {
     const initialValues = acmeDnsProvider
         ? {
               status:
-                  acmeDnsProvider.status === ESettingStatus.Disabled
-                      ? ESettingStatus.Disabled
-                      : ESettingStatus.Active,
+                  acmeDnsProvider.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: acmeDnsProvider.expireAt ?? undefined,
-              availableInProjects: acmeDnsProvider.availableInProjects ?? false,
+              inheritable: acmeDnsProvider.inheritable ?? false,
               default: acmeDnsProvider.default ?? false,
           }
         : undefined;

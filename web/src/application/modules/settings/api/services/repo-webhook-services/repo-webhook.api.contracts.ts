@@ -24,7 +24,7 @@ export type RepoWebhook_BasePayload = {
 };
 
 export type RepoWebhook_CreateOne_Payload = RepoWebhook_BasePayload & {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
 };
 export type RepoWebhook_CreateOne_Req = ApiRequestBase<{
@@ -49,7 +49,7 @@ export type RepoWebhook_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 export type RepoWebhook_UpdateStatus_Req = ApiRequestBase<{

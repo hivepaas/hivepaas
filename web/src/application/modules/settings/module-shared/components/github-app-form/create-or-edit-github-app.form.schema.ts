@@ -9,7 +9,7 @@ export const CreateOrEditGithubAppFormSchema = z.object({
     clientSecret: z.string().min(1, "Client secret is required"),
     privateKey: z.string().trim().min(1, "Private key is required"),
     ssoEnabled: z.boolean(),
-    availableInProjects: z.boolean(),
+    inheritable: z.boolean(),
     default: z.boolean(),
 });
 

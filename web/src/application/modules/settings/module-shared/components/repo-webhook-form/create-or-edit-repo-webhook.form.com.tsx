@@ -77,7 +77,7 @@ export function CreateOrEditRepoWebhookForm({
             name: initialValues?.name ?? "",
             kind: initialValues?.kind ?? ERepoWebhookKind.Github,
             secret: initialValues?.secret ?? "",
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditRepoWebhookFormSchema),
@@ -109,7 +109,7 @@ export function CreateOrEditRepoWebhookForm({
         field: secret,
         fieldState: { invalid: isSecretInvalid },
     } = useController({ name: "secret", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
     const resolvedKindOptions =
         typeof kind.value === "string" && kind.value.length > 0 && !kindOptions.includes(kind.value)
@@ -154,13 +154,7 @@ export function CreateOrEditRepoWebhookForm({
             <div className="flex flex-col gap-6">
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
-                <div
-                    className={cn(
-                        dashedBorderBox,
-                        SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
-                        "leading-6 ",
-                    )}
-                >
+                <div className={cn(dashedBorderBox, SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS, "leading-6 ")}>
                     <p>
                         <span className="text-orange-500">Note:</span> Webhooks allow{" "}
                         <span className="text-orange-500">HivePaaS</span> to receive events from your source code
@@ -291,13 +285,7 @@ export function CreateOrEditRepoWebhookForm({
                                 </Button>
                             </div>
                         ) : (
-                            <div
-                                className={cn(
-                                    dashedBorderBox,
-                                    SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
-                                    "text-sm p-2",
-                                )}
-                            >
+                            <div className={cn(dashedBorderBox, SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS, "text-sm p-2")}>
                                 please create a webhook first
                             </div>
                         )}
@@ -309,9 +297,9 @@ export function CreateOrEditRepoWebhookForm({
                             title={<LabelWithInfo label="Available in Projects" />}
                         >
                             <Checkbox
-                                checked={availableInProjects.value}
+                                checked={inheritable.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(Boolean(checked));
+                                    inheritable.onChange(Boolean(checked));
                                 }}
                             />
                         </InfoBlock>

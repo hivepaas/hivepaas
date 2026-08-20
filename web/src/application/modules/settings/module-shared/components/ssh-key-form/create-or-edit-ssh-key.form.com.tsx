@@ -60,7 +60,7 @@ export function CreateOrEditSSHKeyForm({
             publicKey: initialValues?.publicKey ?? "",
             privateKey: initialValues?.privateKey ?? "",
             passphrase: initialValues?.passphrase ?? "",
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditSSHKeyFormSchema),
@@ -115,7 +115,7 @@ export function CreateOrEditSSHKeyForm({
         field: passphrase,
         fieldState: { invalid: isPassphraseInvalid },
     } = useController({ name: "passphrase", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditSSHKeyFormOutput) {
@@ -315,9 +315,9 @@ export function CreateOrEditSSHKeyForm({
                                 title={<LabelWithInfo label="Available in Projects" />}
                             >
                                 <Checkbox
-                                    checked={availableInProjects.value}
+                                    checked={inheritable.value}
                                     onCheckedChange={checked => {
-                                        availableInProjects.onChange(Boolean(checked));
+                                        inheritable.onChange(Boolean(checked));
                                     }}
                                 />
                             </InfoBlock>

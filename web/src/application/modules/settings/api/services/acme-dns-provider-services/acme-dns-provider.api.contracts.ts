@@ -39,7 +39,7 @@ export type AcmeDnsProvider_ConfigPayload = {
 };
 
 export type AcmeDnsProvider_CreateOne_Payload = AcmeDnsProvider_ConfigPayload & {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
 };
 
@@ -55,7 +55,7 @@ export type AcmeDnsProvider_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

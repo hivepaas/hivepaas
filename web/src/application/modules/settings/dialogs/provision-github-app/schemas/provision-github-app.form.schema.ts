@@ -7,7 +7,7 @@ export const ProvisionGithubAppFormSchema = z
         ownerType: z.enum([EGithubAppOwnerType.Organization, EGithubAppOwnerType.User]),
         org: z.string().trim(),
         ssoEnabled: z.boolean(),
-        availableInProjects: z.boolean(),
+        inheritable: z.boolean(),
         default: z.boolean(),
     })
     .superRefine((value, ctx) => {

@@ -12,13 +12,13 @@ export interface ClusterNetworkCreatePayload {
     ingress: boolean;
     labels: Record<string, string>;
     options: Record<string, string>;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default?: boolean;
 }
 
 export interface ClusterNetworkUpdatePayload {
     updateVer: number;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
 }
 

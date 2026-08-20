@@ -97,7 +97,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
 
     function createPayload(values: CreateOrEditRepoWebhookFormOutput) {
         return {
-            availableInProjects: scope.type === "project" ? false : values.availableInProjects,
+            inheritable: scope.type === "project" ? false : values.inheritable,
             default: values.default,
             name: values.name,
             kind: values.kind,
@@ -176,7 +176,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
               name: repoWebhook.name,
               kind: repoWebhook.kind as ERepoWebhookKind,
               secret: matchedCreatedWebhook?.secret ?? repoWebhook.secret,
-              availableInProjects: repoWebhook.availableInProjects ?? false,
+              inheritable: repoWebhook.inheritable ?? false,
               default: repoWebhook.default ?? false,
           }
         : createdInitialValues;

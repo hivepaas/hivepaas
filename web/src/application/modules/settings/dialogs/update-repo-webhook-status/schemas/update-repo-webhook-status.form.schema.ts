@@ -5,7 +5,7 @@ import { ESettingStatus } from "@application/shared/enums";
 export const UpdateRepoWebhookStatusFormSchema = z.object({
     status: z.enum([ESettingStatus.Active, ESettingStatus.Disabled]),
     expireAt: z.date().optional().nullable(),
-    availableInProjects: z.boolean(),
+    inheritable: z.boolean(),
     default: z.boolean(),
 });
 

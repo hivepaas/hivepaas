@@ -28,7 +28,7 @@ export type ProjectClusterVolumes_CreateOne_Req = ApiRequestBase<{
     projectID: string;
     payload: ClusterVolumeBasePayload & {
         default: boolean;
-        availableInProjects?: false;
+        inheritable?: false;
     };
 }>;
 
@@ -39,8 +39,8 @@ export type ProjectClusterVolumes_CreateOne_Res = ApiResponseBase<{
 export type ProjectClusterVolumes_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
     volumeID: string;
-    payload: Omit<ClusterVolumeUpdatePayload, "availableInProjects"> & {
-        availableInProjects?: false;
+    payload: Omit<ClusterVolumeUpdatePayload, "inheritable"> & {
+        inheritable?: false;
     };
 }>;
 
@@ -51,8 +51,8 @@ export type ProjectClusterVolumes_UpdateOne_Res = ApiResponseBase<{
 export type ProjectClusterVolumes_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
     volumeID: string;
-    payload: Omit<ClusterVolumeUpdateStatusPayload, "availableInProjects"> & {
-        availableInProjects?: false;
+    payload: Omit<ClusterVolumeUpdateStatusPayload, "inheritable"> & {
+        inheritable?: false;
     };
 }>;
 

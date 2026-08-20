@@ -7,7 +7,7 @@ export interface DockerVolume {
     labels: Record<string, string>;
     options: Record<string, string>;
     scope: string;
-    availableInProjects: boolean;
+    inheritable: boolean;
     refCount: number;
     size: number;
     updateVer: number;

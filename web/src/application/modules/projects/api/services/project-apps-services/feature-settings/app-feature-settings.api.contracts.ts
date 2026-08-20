@@ -13,7 +13,7 @@ export type AppFeaturePreviewSettingsUpdatePayload = {
 };
 
 export type AppFeatureSettings_UpdatePayload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     updateVer: number;
     loggingSettings: AppFeatureToggleSettings;

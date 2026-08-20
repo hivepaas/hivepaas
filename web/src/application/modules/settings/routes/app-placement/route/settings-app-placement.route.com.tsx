@@ -57,7 +57,7 @@ export function SettingsAppPlacementRoute() {
         update({
             payload: {
                 updateVer: settings.updateVer,
-                availableInProjects: settings.availableInProjects ?? true,
+                inheritable: settings.inheritable ?? true,
                 default: settings.default ?? true,
                 excludeManagerNodes: values.excludeManagerNodes,
                 excludeBuildNodes: values.excludeBuildNodes,

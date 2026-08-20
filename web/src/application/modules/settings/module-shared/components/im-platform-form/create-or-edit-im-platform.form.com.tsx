@@ -61,7 +61,7 @@ export function CreateOrEditImPlatformForm({
             webhook: initialValues?.webhook ?? "",
             botToken: initialValues?.botToken ?? "",
             chatId: initialValues?.chatId ?? "",
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditImPlatformFormSchema),
@@ -103,7 +103,7 @@ export function CreateOrEditImPlatformForm({
         field: chatId,
         fieldState: { invalid: isChatIdInvalid },
     } = useController({ name: "chatId", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditImPlatformFormOutput) {
@@ -246,9 +246,9 @@ export function CreateOrEditImPlatformForm({
                                 title={<LabelWithInfo label="Available in Projects" />}
                             >
                                 <Checkbox
-                                    checked={availableInProjects.value}
+                                    checked={inheritable.value}
                                     onCheckedChange={checked => {
-                                        availableInProjects.onChange(Boolean(checked));
+                                        inheritable.onChange(Boolean(checked));
                                     }}
                                 />
                             </InfoBlock>

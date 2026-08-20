@@ -74,7 +74,7 @@ export class ProjectClusterVolumesApi extends BaseApi {
             ...payload,
             name: JsonTransformer.string({ data: payload.name }),
             driver: JsonTransformer.string({ data: payload.driver }),
-            availableInProjects: false,
+            inheritable: false,
         };
 
         return lastValueFrom(
@@ -93,7 +93,7 @@ export class ProjectClusterVolumesApi extends BaseApi {
         const { projectID, volumeID, payload } = request.data;
         const json = {
             ...payload,
-            availableInProjects: false,
+            inheritable: false,
         };
 
         return lastValueFrom(
@@ -112,7 +112,7 @@ export class ProjectClusterVolumesApi extends BaseApi {
         const { projectID, volumeID, payload } = request.data;
         const json = {
             ...payload,
-            availableInProjects: false,
+            inheritable: false,
         };
 
         return lastValueFrom(

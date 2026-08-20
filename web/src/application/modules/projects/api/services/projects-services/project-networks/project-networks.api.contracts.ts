@@ -29,8 +29,8 @@ export type ProjectNetworks_FindOneById_Res = ApiResponseBase<ProjectNetworkEnti
 
 export type ProjectNetworks_CreateOne_Req = ApiRequestBase<{
     projectID: string;
-    payload: Omit<ClusterNetworkCreatePayload, "availableInProjects"> & {
-        availableInProjects?: false;
+    payload: Omit<ClusterNetworkCreatePayload, "inheritable"> & {
+        inheritable?: false;
     };
 }>;
 
@@ -41,8 +41,8 @@ export type ProjectNetworks_CreateOne_Res = ApiResponseBase<{
 export type ProjectNetworks_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
     networkID: string;
-    payload: Omit<ClusterNetworkUpdatePayload, "availableInProjects"> & {
-        availableInProjects?: false;
+    payload: Omit<ClusterNetworkUpdatePayload, "inheritable"> & {
+        inheritable?: false;
     };
 }>;
 
@@ -53,8 +53,8 @@ export type ProjectNetworks_UpdateOne_Res = ApiResponseBase<{
 export type ProjectNetworks_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
     networkID: string;
-    payload: Omit<ClusterNetworkUpdateStatusPayload, "availableInProjects"> & {
-        availableInProjects?: false;
+    payload: Omit<ClusterNetworkUpdateStatusPayload, "inheritable"> & {
+        inheritable?: false;
     };
 }>;
 

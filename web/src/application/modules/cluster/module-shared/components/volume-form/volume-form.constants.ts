@@ -32,6 +32,6 @@ export const DEFAULT_VOLUME_FORM_VALUES: CreateOrEditVolumeFormInput = {
     },
     labels: [],
     options: [],
-    availableInProjects: false,
+    inheritable: false,
     default: false,
 };

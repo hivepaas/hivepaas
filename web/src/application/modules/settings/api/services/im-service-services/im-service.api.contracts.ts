@@ -29,7 +29,7 @@ export type ImService_FindOneById_Req = ApiRequestBase<{
 export type ImService_FindOneById_Res = ApiResponseBase<SettingImService>;
 
 export type ImService_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     kind: EImServiceKind;
@@ -59,7 +59,7 @@ export type ImService_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

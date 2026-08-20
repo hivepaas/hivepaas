@@ -10,8 +10,8 @@ import type {
     CreateOrEditImPlatformFormInput,
     CreateOrEditImPlatformFormOutput,
 } from "~/settings/module-shared/components/im-platform-form";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -92,7 +92,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
 
     function createPayload(values: CreateOrEditImPlatformFormOutput) {
         const basePayload = {
-            availableInProjects: scope.type === "project" ? false : values.availableInProjects,
+            inheritable: scope.type === "project" ? false : values.inheritable,
             default: values.default,
             name: values.name,
             kind: values.kind,
@@ -191,7 +191,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
                         : "",
               botToken: imPlatform.kind === EImServiceKind.Telegram ? (imPlatform.telegram?.botToken ?? "") : "",
               chatId: imPlatform.kind === EImServiceKind.Telegram ? (imPlatform.telegram?.chatId ?? "") : "",
-              availableInProjects: imPlatform.availableInProjects ?? false,
+              inheritable: imPlatform.inheritable ?? false,
               default: imPlatform.default ?? false,
           }
         : undefined;

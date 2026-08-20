@@ -81,7 +81,7 @@ export function UpdateSslProviderStatusDialog() {
             updateVer: sslProvider.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -130,7 +130,7 @@ export function UpdateSslProviderStatusDialog() {
         ? {
               status: sslProvider.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: sslProvider.expireAt ?? undefined,
-              availableInProjects: sslProvider.availableInProjects ?? false,
+              inheritable: sslProvider.inheritable ?? false,
               default: sslProvider.default ?? false,
           }
         : undefined;

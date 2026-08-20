@@ -17,7 +17,7 @@ import { KeyValueList } from "@application/shared/form";
 interface ViewNetworkFormValues {
     labels: { key: string; value: string }[];
     options: { key: string; value: string }[];
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
 }
 
@@ -42,19 +42,18 @@ export function ViewNetworkForm({
         defaultValues: {
             labels: toKeyValueList(network.labels),
             options: toKeyValueList(network.options),
-            availableInProjects: network.availableInProjects,
+            inheritable: network.inheritable,
             default: network.default,
         },
     });
     const { control, handleSubmit } = methods;
-    const { field: availableInProjects } = useController({ control, name: "availableInProjects" });
+    const { field: inheritable } = useController({ control, name: "inheritable" });
     const { field: defaultField } = useController({ control, name: "default" });
 
     const isKnownDriver =
         network.driver === EClusterNetworkDriver.Overlay || network.driver === EClusterNetworkDriver.Bridge;
     const coreDisabled = true;
-    const availableInProjectsDisabled =
-        readOnlyAvailableInProjects || readOnlyInherited || readOnlyPermission || isPending;
+    const inheritableDisabled = readOnlyAvailableInProjects || readOnlyInherited || readOnlyPermission || isPending;
     const defaultDisabled = readOnlyDefault || readOnlyInherited || readOnlyPermission || isPending;
 
     function onValid(values: ViewNetworkFormOutput) {
@@ -176,14 +175,14 @@ export function ViewNetworkForm({
 
                     {showAvailableInProjects ? (
                         <fieldset
-                            disabled={availableInProjectsDisabled}
+                            disabled={inheritableDisabled}
                             className="border-0 p-0 m-0 min-w-0"
                         >
                             <CheckboxField
                                 title={<LabelWithInfo label="Available in Projects" />}
-                                checked={availableInProjects.value}
+                                checked={inheritable.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(checked);
+                                    inheritable.onChange(checked);
                                 }}
                             />
                         </fieldset>

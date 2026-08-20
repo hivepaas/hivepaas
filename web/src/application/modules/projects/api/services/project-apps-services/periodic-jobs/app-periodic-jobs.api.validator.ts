@@ -76,7 +76,7 @@ const AppHealthCheckSchema = z
         kind: z.string().optional(),
         status: z.nativeEnum(ESettingStatus),
         inherited: z.boolean().optional().default(false),
-        availableInProjects: z.boolean().optional().default(false),
+        inheritable: z.boolean().optional().default(false),
         default: z.boolean().optional().default(false),
         updateVer: z.number(),
         createdAt: z.coerce.date(),

@@ -7,7 +7,7 @@ export interface NetworkPublic {
     kind?: string;
     status: ESettingStatus;
     inherited: boolean;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     updateVer: number;
     size: number;

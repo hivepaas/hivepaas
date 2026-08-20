@@ -27,7 +27,7 @@ export type ProjectCommandTemplate_FindOneById_Req = ApiRequestBase<{
 export type ProjectCommandTemplate_FindOneById_Res = ApiResponseBase<ProjectCommandTemplate>;
 
 export type ProjectCommandTemplate_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     kind: string;
@@ -77,7 +77,7 @@ export type ProjectCommandTemplate_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

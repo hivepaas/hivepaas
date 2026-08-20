@@ -54,7 +54,7 @@ export function CreateOrEditCloudStorageForm({
             region: initialValues?.region ?? "",
             bucket: initialValues?.bucket ?? "",
             endpoint: initialValues?.endpoint ?? "",
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditCloudStorageFormSchema),
@@ -102,7 +102,7 @@ export function CreateOrEditCloudStorageForm({
         field: endpoint,
         fieldState: { invalid: isEndpointInvalid },
     } = useController({ name: "endpoint", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditCloudStorageFormOutput) {
@@ -287,9 +287,9 @@ export function CreateOrEditCloudStorageForm({
                             title={<LabelWithInfo label="Available in Projects" />}
                         >
                             <Checkbox
-                                checked={availableInProjects.value}
+                                checked={inheritable.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(Boolean(checked));
+                                    inheritable.onChange(Boolean(checked));
                                 }}
                             />
                         </InfoBlock>

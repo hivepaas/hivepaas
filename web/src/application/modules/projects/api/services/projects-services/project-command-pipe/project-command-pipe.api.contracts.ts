@@ -22,7 +22,7 @@ export type ProjectCommandPipe_FindOneById_Req = ApiRequestBase<{
 export type ProjectCommandPipe_FindOneById_Res = ApiResponseBase<ProjectCommandPipe>;
 
 export type ProjectCommandPipe_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     sourceCommand: { id: string };
@@ -64,7 +64,7 @@ export type ProjectCommandPipe_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

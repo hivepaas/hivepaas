@@ -87,7 +87,7 @@ export function CreateOrEditEmailAccountForm({
             httpContentType: initialValues?.httpContentType ?? "application/json",
             headers: initialValues?.headers ?? [],
             fieldMapping: initialValues?.fieldMapping ?? [],
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditEmailAccountFormSchema),
@@ -151,7 +151,7 @@ export function CreateOrEditEmailAccountForm({
     const { field: httpDisplayName } = useController({ name: "httpDisplayName", control });
     const { field: httpPassword } = useController({ name: "httpPassword", control });
     const { field: httpContentType } = useController({ name: "httpContentType", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditEmailAccountFormOutput) {
@@ -417,9 +417,9 @@ export function CreateOrEditEmailAccountForm({
                                     title={<LabelWithInfo label="Available in Projects" />}
                                 >
                                     <Checkbox
-                                        checked={availableInProjects.value}
+                                        checked={inheritable.value}
                                         onCheckedChange={checked => {
-                                            availableInProjects.onChange(Boolean(checked));
+                                            inheritable.onChange(Boolean(checked));
                                         }}
                                     />
                                 </InfoBlock>

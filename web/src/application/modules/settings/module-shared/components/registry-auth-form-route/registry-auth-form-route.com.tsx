@@ -10,8 +10,8 @@ import type {
     CreateOrEditRegistryAuthFormInput,
     CreateOrEditRegistryAuthFormOutput,
 } from "~/settings/module-shared/components/registry-auth-form";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -93,7 +93,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
 
     function createPayload(values: CreateOrEditRegistryAuthFormOutput) {
         return {
-            availableInProjects: scope.type === "project" ? false : values.availableInProjects,
+            inheritable: scope.type === "project" ? false : values.inheritable,
             default: values.default,
             name: values.name,
             address: values.address,
@@ -165,7 +165,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
               username: registryAuth.username,
               password: registryAuth.password,
               readonly: registryAuth.readonly,
-              availableInProjects: registryAuth.availableInProjects ?? false,
+              inheritable: registryAuth.inheritable ?? false,
               default: registryAuth.default ?? false,
           }
         : undefined;

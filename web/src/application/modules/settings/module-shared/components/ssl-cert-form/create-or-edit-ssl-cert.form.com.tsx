@@ -148,7 +148,7 @@ export function CreateOrEditSslCertForm({
             privateKey: initialValues?.privateKey ?? "",
             expireAt: initialValues?.expireAt ?? null,
             notifyFrom: initialValues?.notifyFrom ?? null,
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
             notification: {
                 successUseDefault: initialValues?.notification?.successUseDefault ?? true,
@@ -183,7 +183,7 @@ export function CreateOrEditSslCertForm({
             privateKey: initialValues?.privateKey ?? "",
             expireAt: initialValues?.expireAt ?? null,
             notifyFrom: initialValues?.notifyFrom ?? null,
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
             notification: {
                 successUseDefault: initialValues?.notification?.successUseDefault ?? true,
@@ -194,7 +194,7 @@ export function CreateOrEditSslCertForm({
         });
     }, [
         initialValues?.autoRenew,
-        initialValues?.availableInProjects,
+        initialValues?.inheritable,
         initialValues?.certType,
         initialValues?.certificate,
         initialValues?.default,
@@ -398,7 +398,7 @@ export function CreateOrEditSslCertForm({
         field: notifyFromField,
         fieldState: { invalid: isNotifyFromInvalid },
     } = useController({ name: "notifyFrom", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditSslCertFormOutput) {
@@ -739,9 +739,9 @@ export function CreateOrEditSslCertForm({
                                     title={<LabelWithInfo label="Available in Projects" />}
                                 >
                                     <Checkbox
-                                        checked={availableInProjects.value}
+                                        checked={inheritable.value}
                                         onCheckedChange={checked => {
-                                            availableInProjects.onChange(Boolean(checked));
+                                            inheritable.onChange(Boolean(checked));
                                         }}
                                     />
                                 </InfoBlock>

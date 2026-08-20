@@ -20,7 +20,7 @@ export const CreateOrEditNotificationTargetFormSchema = z
         telegramUseDefault: z.boolean(),
         telegramSettingId: z.string().trim(),
         minSendInterval: z.string().trim().min(1, "Override Min Send Interval is required"),
-        availableInProjects: z.boolean(),
+        inheritable: z.boolean(),
         default: z.boolean(),
     })
     .superRefine((values, ctx) => {

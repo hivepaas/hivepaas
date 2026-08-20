@@ -41,7 +41,7 @@ function mapFormValuesToPayload(
     const commandOutput = buildCommandOutputPayload(values);
 
     return {
-        availableInProjects: false,
+        inheritable: false,
         default: false,
         name: values.name,
         jobType: EAppScheduledJobType.ContainerCommand,

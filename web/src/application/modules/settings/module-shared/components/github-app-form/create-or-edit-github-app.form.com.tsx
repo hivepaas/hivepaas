@@ -64,7 +64,7 @@ export function CreateOrEditGithubAppForm({
             clientSecret: initialValues?.clientSecret ?? "",
             privateKey: initialValues?.privateKey ?? "",
             ssoEnabled: initialValues?.ssoEnabled ?? true,
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditGithubAppFormSchema),
@@ -113,7 +113,7 @@ export function CreateOrEditGithubAppForm({
         fieldState: { invalid: isPrivateKeyInvalid },
     } = useController({ name: "privateKey", control });
     const { field: ssoEnabled } = useController({ name: "ssoEnabled", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     const hasReadonlyWebhookValues = [
@@ -372,9 +372,9 @@ export function CreateOrEditGithubAppForm({
                             title={<LabelWithInfo label="Available in Projects" />}
                         >
                             <Checkbox
-                                checked={availableInProjects.value}
+                                checked={inheritable.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(Boolean(checked));
+                                    inheritable.onChange(Boolean(checked));
                                 }}
                             />
                         </InfoBlock>

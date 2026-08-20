@@ -14,7 +14,7 @@ export type ImageBuildSettings_NamedObject_Payload = Pick<ImageBuildWorkerNode, 
 
 export type ImageBuildSettings_UpdateOne_Payload = {
     updateVer: number;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
     workers: {
         nodes: ImageBuildSettings_NamedObject_Payload[];

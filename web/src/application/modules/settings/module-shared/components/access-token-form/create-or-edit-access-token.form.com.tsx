@@ -56,7 +56,7 @@ export function CreateOrEditAccessTokenForm({
             token: initialValues?.token ?? "",
             baseURL: initialValues?.baseURL ?? "",
             expireAt: initialValues?.expireAt ?? null,
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditAccessTokenFormSchema),
@@ -100,7 +100,7 @@ export function CreateOrEditAccessTokenForm({
         field: expireAt,
         fieldState: { invalid: isExpireAtInvalid },
     } = useController({ name: "expireAt", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditAccessTokenFormOutput) {
@@ -254,9 +254,9 @@ export function CreateOrEditAccessTokenForm({
                             title={<LabelWithInfo label="Available in Projects" />}
                         >
                             <Checkbox
-                                checked={availableInProjects.value}
+                                checked={inheritable.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(Boolean(checked));
+                                    inheritable.onChange(Boolean(checked));
                                 }}
                             />
                         </InfoBlock>

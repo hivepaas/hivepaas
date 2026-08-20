@@ -73,7 +73,7 @@ export const CreateOrEditAcmeDnsProviderFormSchema = z
         tencentCloudSecretId: optionalTrimmedString(MAX_LEN_200, "Secret ID"),
         tencentCloudSecretKey: optionalTrimmedString(MAX_LEN_1000, "Secret Key"),
         tencentCloudRegion: optionalTrimmedString(MAX_LEN_200, "Region"),
-        availableInProjects: z.boolean(),
+        inheritable: z.boolean(),
         default: z.boolean(),
     })
     .superRefine((value, ctx) => {
@@ -175,6 +175,6 @@ export const DEFAULT_ACME_DNS_PROVIDER_FORM_VALUES: CreateOrEditAcmeDnsProviderF
     tencentCloudSecretId: "",
     tencentCloudSecretKey: "",
     tencentCloudRegion: "",
-    availableInProjects: false,
+    inheritable: false,
     default: false,
 };

@@ -90,7 +90,7 @@ export function CreateOrEditAcmeDnsProviderForm({
         field: kindField,
         fieldState: { invalid: isKindInvalid },
     } = useController({ name: "kind", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditAcmeDnsProviderFormOutput) {
@@ -200,9 +200,9 @@ export function CreateOrEditAcmeDnsProviderForm({
                                 title={<LabelWithInfo label="Available in Projects" />}
                             >
                                 <Checkbox
-                                    checked={availableInProjects.value}
+                                    checked={inheritable.value}
                                     onCheckedChange={checked => {
-                                        availableInProjects.onChange(Boolean(checked));
+                                        inheritable.onChange(Boolean(checked));
                                     }}
                                 />
                             </InfoBlock>

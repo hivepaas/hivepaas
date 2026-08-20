@@ -33,7 +33,7 @@ const ImageBuildSettingsSchema = z.object({
     kind: z.string().optional(),
     status: z.nativeEnum(ESettingStatus),
     inherited: z.boolean().optional(),
-    availableInProjects: z.boolean().optional(),
+    inheritable: z.boolean().optional(),
     default: z.boolean().optional(),
     updateVer: z.number(),
     createdAt: z.coerce.date(),

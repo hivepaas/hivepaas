@@ -33,7 +33,7 @@ export function CreateNetworkForm({
             ingress: false,
             labels: [],
             options: [],
-            availableInProjects: false,
+            inheritable: false,
             default: false,
         },
         resolver: zodResolver(CreateNetworkFormSchema),
@@ -51,7 +51,7 @@ export function CreateNetworkForm({
     const { field: enableIPv6 } = useController({ control, name: "enableIPv6" });
     const { field: internal } = useController({ control, name: "internal" });
     const { field: attachable } = useController({ control, name: "attachable" });
-    const { field: availableInProjects } = useController({ control, name: "availableInProjects" });
+    const { field: inheritable } = useController({ control, name: "inheritable" });
     const { field: defaultField } = useController({ control, name: "default" });
 
     function onValid(values: CreateNetworkFormOutput) {
@@ -160,9 +160,9 @@ export function CreateNetworkForm({
                         {showAvailableInProjects ? (
                             <CheckboxField
                                 title="Available in Projects"
-                                checked={availableInProjects.value}
+                                checked={inheritable.value}
                                 onCheckedChange={value => {
-                                    availableInProjects.onChange(value);
+                                    inheritable.onChange(value);
                                 }}
                             />
                         ) : null}

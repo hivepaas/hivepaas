@@ -18,7 +18,7 @@ export type CloudStorage_FindOneById_Req = ApiRequestBase<{ id: string }>;
 export type CloudStorage_FindOneById_Res = ApiResponseBase<SettingCloudStorage>;
 
 export type CloudStorage_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     kind: ECloudStorageKind;
     name: string;
@@ -44,7 +44,7 @@ export type CloudStorage_UpdateMeta_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

@@ -150,7 +150,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
         const notifyFrom = values.notifyFrom ?? addDays(expireAt, -30);
 
         return {
-            availableInProjects: scope.type === "project" ? false : values.availableInProjects,
+            inheritable: scope.type === "project" ? false : values.inheritable,
             default: values.default,
             certType: values.certType,
             provider: values.provider?.id ? { id: values.provider.id } : undefined,
@@ -228,7 +228,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
                   privateKey: sslCert.privateKey,
                   expireAt: sslCert.expireAt ?? null,
                   notifyFrom: sslCert.notifyFrom ?? null,
-                  availableInProjects: sslCert.availableInProjects ?? false,
+                  inheritable: sslCert.inheritable ?? false,
                   default: sslCert.default ?? false,
                   notification: {
                       successUseDefault: sslCert.notification?.successUseDefault ?? true,
@@ -242,7 +242,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
                   email: domainSettings?.email ?? "",
                   keyType: domainSettings?.keyType ?? ESslKeyType.ECP256,
                   autoRenew: domainSettings?.autoRenew ?? true,
-                  availableInProjects: false,
+                  inheritable: false,
                   default: false,
                   notification: {
                       successUseDefault: true,

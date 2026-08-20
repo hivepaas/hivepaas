@@ -22,7 +22,7 @@ export const CreateOrEditSslCertFormSchema = z
         privateKey: z.string().trim(),
         expireAt: z.date().optional().nullable(),
         notifyFrom: z.date().optional().nullable(),
-        availableInProjects: z.boolean(),
+        inheritable: z.boolean(),
         default: z.boolean(),
         notification: z.object({
             successUseDefault: z.boolean(),

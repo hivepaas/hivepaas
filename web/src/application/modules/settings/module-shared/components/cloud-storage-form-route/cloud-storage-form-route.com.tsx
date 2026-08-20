@@ -10,8 +10,8 @@ import type {
     CreateOrEditCloudStorageFormInput,
     CreateOrEditCloudStorageFormOutput,
 } from "~/settings/module-shared/components/cloud-storage-form";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -94,7 +94,7 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
 
     function createPayload(values: CreateOrEditCloudStorageFormOutput) {
         return {
-            availableInProjects: scope.type === "project" ? false : values.availableInProjects,
+            inheritable: scope.type === "project" ? false : values.inheritable,
             default: values.default,
             kind: values.kind,
             name: values.name,
@@ -176,7 +176,7 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
               region: cloudStorage.s3.region,
               bucket: cloudStorage.s3.bucket,
               endpoint: cloudStorage.s3.endpoint,
-              availableInProjects: cloudStorage.availableInProjects ?? false,
+              inheritable: cloudStorage.inheritable ?? false,
               default: cloudStorage.default ?? false,
           }
         : undefined;

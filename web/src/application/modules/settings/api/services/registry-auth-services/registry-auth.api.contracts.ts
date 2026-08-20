@@ -20,7 +20,7 @@ export type RegistryAuth_FindOneById_Req = ApiRequestBase<{
 export type RegistryAuth_FindOneById_Res = ApiResponseBase<SettingRegistryAuth>;
 
 export type RegistryAuth_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     address: string;
@@ -37,7 +37,7 @@ export type RegistryAuth_CreateOne_Res = ApiResponseBase<{ id: string }>;
 
 export type RegistryAuth_UpdateOne_Payload = {
     updateVer: number;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     address: string;
@@ -57,7 +57,7 @@ export type RegistryAuth_UpdateMeta_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

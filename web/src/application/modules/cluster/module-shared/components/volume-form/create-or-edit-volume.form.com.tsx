@@ -100,14 +100,13 @@ export function CreateOrEditVolumeForm({
     const { field: tmpfsSize } = useController({ control, name: "tmpfsOptions.size" });
     const { field: tmpfsUid } = useController({ control, name: "tmpfsOptions.uid" });
     const { field: tmpfsExtraOptions } = useController({ control, name: "tmpfsOptions.extraOptions" });
-    const { field: availableInProjects } = useController({ control, name: "availableInProjects" });
+    const { field: inheritable } = useController({ control, name: "inheritable" });
     const { field: defaultField } = useController({ control, name: "default" });
 
     const currentDriverMode = useWatch({ control, name: "driverMode" });
     const currentLocalType = useWatch({ control, name: "localType" });
     const coreDisabled = readOnlyCore || readOnlyInherited || readOnlyPermission || isPending;
-    const availableInProjectsDisabled =
-        readOnlyAvailableInProjects || readOnlyInherited || readOnlyPermission || isPending;
+    const inheritableDisabled = readOnlyAvailableInProjects || readOnlyInherited || readOnlyPermission || isPending;
     const defaultDisabled = readOnlyDefault || readOnlyInherited || readOnlyPermission || isPending;
 
     function onValid(values: CreateOrEditVolumeFormOutput) {
@@ -416,14 +415,14 @@ export function CreateOrEditVolumeForm({
 
                     {showAvailableInProjects ? (
                         <fieldset
-                            disabled={availableInProjectsDisabled}
+                            disabled={inheritableDisabled}
                             className="border-0 p-0 m-0 min-w-0"
                         >
                             <CheckboxField
                                 title={<LabelWithInfo label="Available in Projects" />}
-                                checked={availableInProjects.value}
+                                checked={inheritable.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(checked);
+                                    inheritable.onChange(checked);
                                 }}
                             />
                         </fieldset>

@@ -7,7 +7,7 @@ export interface ProjectCommandPipeSettingRef {
     kind: string;
     status: ESettingStatus;
     inherited: boolean;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     updateVer: number;
     createdAt: Date;
@@ -21,7 +21,7 @@ export interface ProjectCommandPipe {
     name: string;
     status: ESettingStatus;
     inherited: boolean;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     updateVer: number;
     createdAt: Date;

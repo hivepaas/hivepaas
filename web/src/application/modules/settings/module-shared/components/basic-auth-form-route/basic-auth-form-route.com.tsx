@@ -10,8 +10,8 @@ import type {
     CreateOrEditBasicAuthFormInput,
     CreateOrEditBasicAuthFormOutput,
 } from "~/settings/module-shared/components/basic-auth-form";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -82,7 +82,7 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
 
     function createPayload(values: CreateOrEditBasicAuthFormOutput) {
         return {
-            availableInProjects: scope.type === "project" ? false : values.availableInProjects,
+            inheritable: scope.type === "project" ? false : values.inheritable,
             default: values.default,
             name: values.name,
             username: values.username,
@@ -137,7 +137,7 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
               name: basicAuth.name,
               username: basicAuth.username,
               password: basicAuth.password,
-              availableInProjects: basicAuth.availableInProjects ?? false,
+              inheritable: basicAuth.inheritable ?? false,
               default: basicAuth.default ?? false,
           }
         : undefined;

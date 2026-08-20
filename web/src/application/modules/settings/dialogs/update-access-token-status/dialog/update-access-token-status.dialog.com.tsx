@@ -72,7 +72,7 @@ export function UpdateAccessTokenStatusDialog() {
             updateVer: accessToken.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -109,7 +109,7 @@ export function UpdateAccessTokenStatusDialog() {
         ? {
               status: accessToken.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: accessToken.expireAt ?? undefined,
-              availableInProjects: accessToken.availableInProjects ?? false,
+              inheritable: accessToken.inheritable ?? false,
               default: accessToken.default ?? false,
           }
         : undefined;

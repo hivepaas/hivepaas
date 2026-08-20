@@ -10,8 +10,8 @@ import type {
     CreateOrEditAccessTokenFormInput,
     CreateOrEditAccessTokenFormOutput,
 } from "~/settings/module-shared/components/access-token-form";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -92,7 +92,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
 
     function createPayload(values: CreateOrEditAccessTokenFormOutput) {
         return {
-            availableInProjects: scope.type === "project" ? false : values.availableInProjects,
+            inheritable: scope.type === "project" ? false : values.inheritable,
             default: values.default,
             expireAt: values.expireAt,
             kind: values.kind,
@@ -167,7 +167,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
               token: accessToken.token,
               baseURL: accessToken.baseURL,
               expireAt: accessToken.expireAt ?? null,
-              availableInProjects: accessToken.availableInProjects ?? false,
+              inheritable: accessToken.inheritable ?? false,
               default: accessToken.default ?? false,
           }
         : undefined;

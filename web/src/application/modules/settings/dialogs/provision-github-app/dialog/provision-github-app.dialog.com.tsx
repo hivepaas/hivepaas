@@ -56,7 +56,7 @@ export function ProvisionGithubAppDialog() {
             name: values.name,
             org: values.ownerType === EGithubAppOwnerType.Organization ? values.org : "",
             ssoEnabled: values.ssoEnabled,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 

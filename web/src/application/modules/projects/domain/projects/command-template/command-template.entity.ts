@@ -38,7 +38,7 @@ export interface ProjectCommandTemplate {
     kind: string;
     status: ESettingStatus;
     inherited: boolean;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     updateVer: number;
     createdAt: Date;

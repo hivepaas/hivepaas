@@ -41,7 +41,7 @@ const DEFAULT_FORM_VALUES: CreateOrEditSslProviderFormInput = {
     defaultKeyType: SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
     eabKid: "",
     eabHmacKey: "",
-    availableInProjects: false,
+    inheritable: false,
     default: false,
 };
 
@@ -114,7 +114,7 @@ export function CreateOrEditSslProviderForm({
         field: eabHmacKey,
         fieldState: { invalid: isEabHmacKeyInvalid },
     } = useController({ name: "eabHmacKey", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: CreateOrEditSslProviderFormOutput) {
@@ -305,9 +305,9 @@ export function CreateOrEditSslProviderForm({
                             title={<LabelWithInfo label="Available in Projects" />}
                         >
                             <Checkbox
-                                checked={availableInProjects.value}
+                                checked={inheritable.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(Boolean(checked));
+                                    inheritable.onChange(Boolean(checked));
                                 }}
                             />
                         </InfoBlock>

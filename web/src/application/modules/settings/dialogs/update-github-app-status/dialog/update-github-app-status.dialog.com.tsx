@@ -79,7 +79,7 @@ export function UpdateGithubAppStatusDialog() {
             updateVer: githubApp.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -128,7 +128,7 @@ export function UpdateGithubAppStatusDialog() {
         ? {
               status: githubApp.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: githubApp.expireAt ?? undefined,
-              availableInProjects: githubApp.availableInProjects ?? false,
+              inheritable: githubApp.inheritable ?? false,
               default: githubApp.default ?? false,
           }
         : undefined;

@@ -9,7 +9,7 @@ export const CreateOrEditSSHKeyFormSchema = z.object({
     publicKey: z.string(),
     privateKey: z.string().min(1, "Private key is required"),
     passphrase: z.string(),
-    availableInProjects: z.boolean(),
+    inheritable: z.boolean(),
     default: z.boolean(),
 });
 

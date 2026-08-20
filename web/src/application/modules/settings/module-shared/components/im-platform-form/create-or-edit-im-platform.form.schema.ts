@@ -9,7 +9,7 @@ export const CreateOrEditImPlatformFormSchema = z
         webhook: z.string().trim(),
         botToken: z.string().trim(),
         chatId: z.string().trim(),
-        availableInProjects: z.boolean(),
+        inheritable: z.boolean(),
         default: z.boolean(),
     })
     .superRefine((values, ctx) => {

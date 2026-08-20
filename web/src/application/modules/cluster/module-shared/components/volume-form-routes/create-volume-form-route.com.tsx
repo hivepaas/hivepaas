@@ -48,7 +48,7 @@ export function CreateVolumeFormRoute({ scope }: Props) {
 
         if (scope.type === "cluster") {
             createClusterVolume({
-                payload: toVolumeCreatePayload(values, values.availableInProjects),
+                payload: toVolumeCreatePayload(values, values.inheritable),
             });
             return;
         }
@@ -57,7 +57,7 @@ export function CreateVolumeFormRoute({ scope }: Props) {
             projectID: scope.projectId,
             payload: {
                 ...toVolumeBasePayload(values),
-                availableInProjects: false,
+                inheritable: false,
                 default: values.default,
             },
         });

@@ -76,7 +76,7 @@ export function UpdateSslCertStatusDialog() {
             updateVer: sslCert.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -125,7 +125,7 @@ export function UpdateSslCertStatusDialog() {
         ? {
               status: sslCert.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: sslCert.expireAt ?? undefined,
-              availableInProjects: sslCert.availableInProjects ?? false,
+              inheritable: sslCert.inheritable ?? false,
               default: sslCert.default ?? false,
           }
         : undefined;

@@ -57,7 +57,7 @@ export const CreateOrEditVolumeFormSchema = z
         tmpfsOptions: TmpfsOptionsSchema,
         labels: z.array(KeyValueSchema),
         options: z.array(KeyValueSchema),
-        availableInProjects: z.boolean(),
+        inheritable: z.boolean(),
         default: z.boolean(),
     })
     .superRefine((values, ctx) => {

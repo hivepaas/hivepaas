@@ -79,7 +79,7 @@ export function UpdateRepoWebhookStatusDialog() {
             updateVer: repoWebhook.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -128,7 +128,7 @@ export function UpdateRepoWebhookStatusDialog() {
         ? {
               status: repoWebhook.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: repoWebhook.expireAt ?? undefined,
-              availableInProjects: repoWebhook.availableInProjects ?? false,
+              inheritable: repoWebhook.inheritable ?? false,
               default: repoWebhook.default ?? false,
           }
         : undefined;

@@ -18,8 +18,8 @@ import type {
     CreateOrEditAcmeDnsProviderFormInput,
     CreateOrEditAcmeDnsProviderFormOutput,
 } from "~/settings/module-shared/components/acme-dns-provider-form";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -325,7 +325,7 @@ function createPayload(
 ): AcmeDnsProvider_CreateOne_Payload {
     return {
         ...createConfigPayload(values),
-        availableInProjects: isProjectScope ? false : values.availableInProjects,
+        inheritable: isProjectScope ? false : values.inheritable,
         default: values.default,
     };
 }
@@ -334,7 +334,7 @@ function createInitialValues(acmeDnsProvider?: SettingAcmeDnsProvider): Partial<
     if (!acmeDnsProvider) {
         return {
             kind: EAcmeDnsProviderKind.AcmeDNS,
-            availableInProjects: false,
+            inheritable: false,
             default: false,
         };
     }
@@ -377,7 +377,7 @@ function createInitialValues(acmeDnsProvider?: SettingAcmeDnsProvider): Partial<
         tencentCloudSecretId: acmeDnsProvider.tencentCloud?.secretId ?? "",
         tencentCloudSecretKey: secretValue(acmeDnsProvider.tencentCloud?.secretKey, acmeDnsProvider.secretMasked),
         tencentCloudRegion: acmeDnsProvider.tencentCloud?.region ?? "",
-        availableInProjects: acmeDnsProvider.availableInProjects ?? false,
+        inheritable: acmeDnsProvider.inheritable ?? false,
         default: acmeDnsProvider.default ?? false,
     };
 }

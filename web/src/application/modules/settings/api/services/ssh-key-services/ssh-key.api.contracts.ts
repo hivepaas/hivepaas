@@ -18,7 +18,7 @@ export type SSHKey_FindOneById_Req = ApiRequestBase<{ id: string }>;
 export type SSHKey_FindOneById_Res = ApiResponseBase<SettingSSHKey>;
 
 export type SSHKey_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     kind: ESSHKeyKind;
@@ -47,7 +47,7 @@ export type SSHKey_UpdateMeta_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

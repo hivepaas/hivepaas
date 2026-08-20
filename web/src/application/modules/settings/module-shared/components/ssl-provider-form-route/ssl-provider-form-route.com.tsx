@@ -7,6 +7,7 @@ import type { SslProvider_CreateOne_Payload } from "~/settings/api/services/ssl-
 import { SslProviderCommands } from "~/settings/data/commands";
 import { SslProviderQueries } from "~/settings/data/queries";
 import type { SettingSslProvider } from "~/settings/domain";
+import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
 import {
     CreateOrEditSslProviderForm,
     SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
@@ -16,7 +17,6 @@ import type {
     CreateOrEditSslProviderFormOutput,
 } from "~/settings/module-shared/components/ssl-provider-form";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
-import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -70,7 +70,7 @@ function createPayload(
     };
 
     return {
-        availableInProjects: isProjectScope ? false : values.availableInProjects,
+        inheritable: isProjectScope ? false : values.inheritable,
         default: values.default,
         name: values.name,
         kind: values.kind,
@@ -191,13 +191,13 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
                   email: sslProvider.email,
                   defaultKeyType: sslProvider.defaultKeyType || SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
                   ...getEabValues(sslProvider),
-                  availableInProjects: sslProvider.availableInProjects ?? false,
+                  inheritable: sslProvider.inheritable ?? false,
                   default: sslProvider.default ?? false,
               }
             : {
                   kind: ESslProviderKind.LetsEncrypt,
                   defaultKeyType: SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
-                  availableInProjects: false,
+                  inheritable: false,
                   default: false,
               };
     const shouldRenderForm = mode === "create" || !!sslProvider;

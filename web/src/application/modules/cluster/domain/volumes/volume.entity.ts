@@ -60,13 +60,13 @@ export interface ClusterVolumeBasePayload {
 }
 
 export interface ClusterVolumeCreatePayload extends ClusterVolumeBasePayload {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
 }
 
 export interface ClusterVolumeUpdatePayload {
     updateVer: number;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
 }
 

@@ -5,7 +5,7 @@ export const CreateOrEditRepoWebhookFormSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
     kind: z.nativeEnum(ERepoWebhookKind),
     secret: z.string().trim().max(100, "Secret must be 100 characters or less"),
-    availableInProjects: z.boolean(),
+    inheritable: z.boolean(),
     default: z.boolean(),
 });
 

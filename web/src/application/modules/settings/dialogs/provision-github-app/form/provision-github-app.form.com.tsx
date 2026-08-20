@@ -49,7 +49,7 @@ export function ProvisionGithubAppForm({
             ownerType: initialValues?.ownerType ?? EGithubAppOwnerType.Organization,
             org: initialValues?.org ?? "",
             ssoEnabled: initialValues?.ssoEnabled ?? true,
-            availableInProjects: initialValues?.availableInProjects ?? true,
+            inheritable: initialValues?.inheritable ?? true,
             default: initialValues?.default ?? true,
         },
         resolver: zodResolver(ProvisionGithubAppFormSchema),
@@ -69,7 +69,7 @@ export function ProvisionGithubAppForm({
         fieldState: { invalid: isOrgInvalid },
     } = useController({ name: "org", control });
     const { field: ssoEnabled } = useController({ name: "ssoEnabled", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: ProvisionGithubAppFormOutput) {
@@ -191,9 +191,9 @@ export function ProvisionGithubAppForm({
                                     title={<LabelWithInfo label="Available in Projects" />}
                                 >
                                     <Checkbox
-                                        checked={availableInProjects.value}
+                                        checked={inheritable.value}
                                         onCheckedChange={checked => {
-                                            availableInProjects.onChange(Boolean(checked));
+                                            inheritable.onChange(Boolean(checked));
                                         }}
                                     />
                                 </InfoBlock>

@@ -38,7 +38,7 @@ export type Notification_ViaTelegram_Payload = {
 };
 
 export type Notification_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     viaEmail: Notification_ViaEmail_Payload | null;
@@ -82,7 +82,7 @@ export type Notifications_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

@@ -72,7 +72,7 @@ export function UpdateNotificationTargetStatusDialog() {
             updateVer: notificationTarget.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -112,7 +112,7 @@ export function UpdateNotificationTargetStatusDialog() {
                       ? ESettingStatus.Disabled
                       : ESettingStatus.Active,
               expireAt: notificationTarget.expireAt ?? undefined,
-              availableInProjects: notificationTarget.availableInProjects ?? false,
+              inheritable: notificationTarget.inheritable ?? false,
               default: notificationTarget.default ?? false,
           }
         : undefined;

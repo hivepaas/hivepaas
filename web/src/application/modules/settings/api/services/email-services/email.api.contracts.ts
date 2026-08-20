@@ -52,7 +52,7 @@ export type Email_FindOneById_Req = ApiRequestBase<{
 export type Email_FindOneById_Res = ApiResponseBase<SettingEmail>;
 
 export type Email_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     kind: EEmailKind;
@@ -81,7 +81,7 @@ export type Email_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 
@@ -98,7 +98,7 @@ export type Email_DeleteOne_Req = ApiRequestBase<{
 
 export type Email_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
 
-export type Email_TestSendMail_Payload = Omit<Email_CreateOne_Payload, "availableInProjects" | "default"> & {
+export type Email_TestSendMail_Payload = Omit<Email_CreateOne_Payload, "inheritable" | "default"> & {
     testRecipient: string;
     testSubject: string;
     testContent: string;

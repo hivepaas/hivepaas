@@ -10,8 +10,8 @@ import type {
     CreateOrEditNotificationTargetFormInput,
     CreateOrEditNotificationTargetFormOutput,
 } from "~/settings/module-shared/components/notification-target-form";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
+import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -128,7 +128,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
             : null;
 
         return {
-            availableInProjects: scope.type === "project" ? false : values.availableInProjects,
+            inheritable: scope.type === "project" ? false : values.inheritable,
             default: values.default,
             name: values.name,
             viaEmail,
@@ -201,7 +201,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
               telegramUseDefault: notificationTarget.viaTelegram?.useDefault ?? true,
               telegramSettingId: notificationTarget.viaTelegram?.setting?.id ?? "",
               minSendInterval: notificationTarget.minSendInterval || "3m",
-              availableInProjects: notificationTarget.availableInProjects ?? false,
+              inheritable: notificationTarget.inheritable ?? false,
               default: notificationTarget.default ?? false,
           }
         : undefined;

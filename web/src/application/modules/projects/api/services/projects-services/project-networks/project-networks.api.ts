@@ -81,7 +81,7 @@ export class ProjectNetworksApi extends BaseApi {
             ingress: payload.ingress,
             labels: payload.labels,
             options: payload.options,
-            availableInProjects: false,
+            inheritable: false,
             default: payload.default ?? false,
         };
 
@@ -101,7 +101,7 @@ export class ProjectNetworksApi extends BaseApi {
         const { projectID, networkID, payload } = request.data;
         const json = {
             ...payload,
-            availableInProjects: false,
+            inheritable: false,
         };
 
         return lastValueFrom(
@@ -120,7 +120,7 @@ export class ProjectNetworksApi extends BaseApi {
         const { projectID, networkID, payload } = request.data;
         const json = {
             ...payload,
-            availableInProjects: false,
+            inheritable: false,
         };
 
         return lastValueFrom(

@@ -81,7 +81,7 @@ export function UpdateEmailAccountStatusDialog() {
             updateVer: emailAccount.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -131,7 +131,7 @@ export function UpdateEmailAccountStatusDialog() {
         ? {
               status: emailAccount.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: emailAccount.expireAt ?? undefined,
-              availableInProjects: emailAccount.availableInProjects ?? false,
+              inheritable: emailAccount.inheritable ?? false,
               default: emailAccount.default ?? false,
           }
         : undefined;

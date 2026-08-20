@@ -79,7 +79,7 @@ export function UpdateBasicAuthStatusDialog() {
             updateVer: basicAuth.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -128,7 +128,7 @@ export function UpdateBasicAuthStatusDialog() {
         ? {
               status: basicAuth.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: basicAuth.expireAt ?? undefined,
-              availableInProjects: basicAuth.availableInProjects ?? false,
+              inheritable: basicAuth.inheritable ?? false,
               default: basicAuth.default ?? false,
           }
         : undefined;

@@ -13,7 +13,7 @@ export type SslProviderEab_Payload = {
 };
 
 export type SslProvider_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     kind: ESslProviderKind;
@@ -32,7 +32,7 @@ export type SslProvider_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

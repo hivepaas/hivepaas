@@ -104,7 +104,7 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
 
     function createPayload(values: CreateOrEditGithubAppFormOutput) {
         return {
-            availableInProjects: scope.type === "project" ? false : values.availableInProjects,
+            inheritable: scope.type === "project" ? false : values.inheritable,
             default: values.default,
             name: values.name,
             organization: values.organization,
@@ -226,12 +226,12 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
                   clientSecret: githubApp.secretMasked ? "" : githubApp.clientSecret,
                   privateKey: githubApp.secretMasked ? "" : githubApp.privateKey,
                   ssoEnabled: githubApp.ssoEnabled,
-                  availableInProjects: githubApp.availableInProjects ?? false,
+                  inheritable: githubApp.inheritable ?? false,
                   default: githubApp.default ?? false,
               }
             : {
                   ssoEnabled: true,
-                  availableInProjects: true,
+                  inheritable: true,
                   default: true,
               };
     const readonlyValues =

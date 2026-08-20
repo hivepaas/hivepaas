@@ -65,7 +65,7 @@ export function toVolumeFormInitialValues(volume: ClusterVolume): CreateOrEditVo
         },
         labels: toKeyValueList(volume.labels),
         options: toKeyValueList(volume.options),
-        availableInProjects: volume.availableInProjects ?? false,
+        inheritable: volume.inheritable ?? false,
         default: volume.default ?? false,
     };
 }
@@ -122,11 +122,11 @@ export function toVolumeBasePayload(values: CreateOrEditVolumeFormOutput): Clust
 
 export function toVolumeCreatePayload(
     values: CreateOrEditVolumeFormOutput,
-    availableInProjects: boolean,
+    inheritable: boolean,
 ): ClusterVolumeCreatePayload {
     return {
         ...toVolumeBasePayload(values),
-        availableInProjects,
+        inheritable,
         default: values.default,
     };
 }

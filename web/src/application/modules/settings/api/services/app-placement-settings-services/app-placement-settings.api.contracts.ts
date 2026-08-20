@@ -7,7 +7,7 @@ export type AppPlacementSettings_FindOne_Res = ApiResponseBase<AppPlacementSetti
 
 export type AppPlacementSettings_UpdateOne_Payload = {
     updateVer: number;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
     excludeManagerNodes: boolean;
     excludeBuildNodes: boolean;

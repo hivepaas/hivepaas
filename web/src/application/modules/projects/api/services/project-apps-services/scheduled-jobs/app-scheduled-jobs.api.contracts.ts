@@ -85,7 +85,7 @@ export type AppScheduledJobs_CommandOutput_Payload = {
 };
 
 export type AppScheduledJobs_Upsert_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     name: string;
     jobType: EAppScheduledJobType;
@@ -158,7 +158,7 @@ export type AppScheduledJobs_UpdateStatus_Req = ApiRequestBase<{
         updateVer: number;
         status: ESettingStatus;
         expireAt: Date | null;
-        availableInProjects: boolean;
+        inheritable: boolean;
         default: boolean;
     };
 }>;

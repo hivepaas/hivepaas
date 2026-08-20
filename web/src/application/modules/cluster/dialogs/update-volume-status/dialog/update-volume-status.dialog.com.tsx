@@ -99,7 +99,7 @@ export function UpdateVolumeStatusDialog() {
             volumeID: volume.id,
             payload: {
                 ...payload,
-                availableInProjects: values.availableInProjects,
+                inheritable: values.inheritable,
             },
         });
     }
@@ -133,7 +133,7 @@ export function UpdateVolumeStatusDialog() {
         ? {
               status: volume.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: volume.expireAt ?? undefined,
-              availableInProjects: volume.availableInProjects ?? false,
+              inheritable: volume.inheritable ?? false,
               default: volume.default ?? false,
           }
         : undefined;

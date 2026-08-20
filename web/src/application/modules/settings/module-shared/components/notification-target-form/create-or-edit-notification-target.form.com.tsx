@@ -141,7 +141,7 @@ export function CreateOrEditNotificationTargetForm({
             telegramUseDefault: initialValues?.telegramUseDefault ?? true,
             telegramSettingId: initialValues?.telegramSettingId ?? "",
             minSendInterval: initialValues?.minSendInterval ?? "3m",
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditNotificationTargetFormSchema),
@@ -200,7 +200,7 @@ export function CreateOrEditNotificationTargetForm({
         field: minSendInterval,
         fieldState: { invalid: isMinSendIntervalInvalid },
     } = useController({ name: "minSendInterval", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     const isEmailEnabled = emailEnabled.value;
@@ -713,9 +713,9 @@ export function CreateOrEditNotificationTargetForm({
                             title={<LabelWithInfo label="Available in Projects" />}
                         >
                             <Checkbox
-                                checked={availableInProjects.value}
+                                checked={inheritable.value}
                                 onCheckedChange={checked => {
-                                    availableInProjects.onChange(Boolean(checked));
+                                    inheritable.onChange(Boolean(checked));
                                 }}
                             />
                         </InfoBlock>

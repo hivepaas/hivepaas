@@ -62,7 +62,7 @@ export function UpdateAppScheduledJobStatusDialog() {
                 updateVer: data.data.updateVer,
                 status: values.status,
                 expireAt: values.expireAt ?? null,
-                availableInProjects: false,
+                inheritable: false,
                 default: values.default,
             },
         });

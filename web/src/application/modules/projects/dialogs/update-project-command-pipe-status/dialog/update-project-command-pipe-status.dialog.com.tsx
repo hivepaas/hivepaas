@@ -63,7 +63,7 @@ export function UpdateProjectCommandPipeStatusDialog() {
                 updateVer: commandPipe.updateVer,
                 status: values.status,
                 expireAt: values.expireAt ?? null,
-                availableInProjects: false,
+                inheritable: false,
                 default: values.default,
             },
         });

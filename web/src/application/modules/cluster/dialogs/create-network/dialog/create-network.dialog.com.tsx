@@ -81,7 +81,7 @@ export function CreateNetworkDialog() {
             createClusterNetwork({
                 payload: {
                     ...payload,
-                    availableInProjects: values.availableInProjects,
+                    inheritable: values.inheritable,
                 },
             });
             return;

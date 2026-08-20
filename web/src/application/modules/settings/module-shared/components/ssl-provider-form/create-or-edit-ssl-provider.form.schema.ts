@@ -12,7 +12,7 @@ export const CreateOrEditSslProviderFormSchema = z
         defaultKeyType: z.nativeEnum(ESslKeyType).or(z.literal(SSL_PROVIDER_UNSPECIFIED_KEY_TYPE)),
         eabKid: z.string().trim(),
         eabHmacKey: z.string().trim(),
-        availableInProjects: z.boolean(),
+        inheritable: z.boolean(),
         default: z.boolean(),
     })
     .superRefine((value, ctx) => {

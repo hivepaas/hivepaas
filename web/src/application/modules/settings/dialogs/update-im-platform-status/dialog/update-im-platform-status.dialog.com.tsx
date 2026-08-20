@@ -81,7 +81,7 @@ export function UpdateImPlatformStatusDialog() {
             updateVer: imPlatform.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -130,7 +130,7 @@ export function UpdateImPlatformStatusDialog() {
         ? {
               status: imPlatform.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: imPlatform.expireAt ?? undefined,
-              availableInProjects: imPlatform.availableInProjects ?? false,
+              inheritable: imPlatform.inheritable ?? false,
               default: imPlatform.default ?? false,
           }
         : undefined;

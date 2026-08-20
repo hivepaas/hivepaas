@@ -77,7 +77,7 @@ export function CreateNetworkFormRoute({ scope }: Props) {
             createClusterNetwork({
                 payload: {
                     ...payload,
-                    availableInProjects: values.availableInProjects,
+                    inheritable: values.inheritable,
                 },
             });
             return;

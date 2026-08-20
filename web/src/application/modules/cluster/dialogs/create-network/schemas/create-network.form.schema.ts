@@ -29,7 +29,7 @@ export const CreateNetworkFormSchema = z
         ingress: z.boolean(),
         labels: z.array(KeyValueSchema),
         options: z.array(KeyValueSchema),
-        availableInProjects: z.boolean(),
+        inheritable: z.boolean(),
         default: z.boolean(),
     })
     .superRefine((values, ctx) => {

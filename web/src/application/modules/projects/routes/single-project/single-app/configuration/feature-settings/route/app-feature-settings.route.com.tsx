@@ -29,7 +29,7 @@ function mapFormValuesToPayload(
     const creationDelay = values.previewSettings.creationDelay.trim() || DEFAULT_PREVIEW_CREATION_DELAY;
 
     return {
-        availableInProjects: server.availableInProjects ?? false,
+        inheritable: server.inheritable ?? false,
         default: server.default ?? false,
         updateVer: server.updateVer,
         loggingSettings: values.loggingSettings,

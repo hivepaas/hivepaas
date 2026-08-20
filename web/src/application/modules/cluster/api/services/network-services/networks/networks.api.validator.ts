@@ -37,7 +37,7 @@ export const ClusterNetworkSchema = z.object({
     kind: z.string().optional(),
     status: z.nativeEnum(ESettingStatus),
     inherited: optionalBooleanSchema,
-    availableInProjects: optionalBooleanSchema,
+    inheritable: optionalBooleanSchema,
     default: optionalBooleanSchema,
     updateVer: z.number(),
     size: z

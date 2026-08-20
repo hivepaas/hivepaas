@@ -70,7 +70,7 @@ export function ViewNetworkRoute({ scope, networkId }: Props) {
                 networkID: network.id,
                 payload: {
                     updateVer: network.updateVer,
-                    availableInProjects: values.availableInProjects,
+                    inheritable: values.inheritable,
                     default: values.default,
                 },
             });

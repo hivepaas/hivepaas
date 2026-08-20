@@ -72,7 +72,7 @@ export function UpdateCloudStorageStatusDialog() {
             updateVer: cloudStorage.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            availableInProjects: state.scope.type === "project" ? false : values.availableInProjects,
+            inheritable: state.scope.type === "project" ? false : values.inheritable,
             default: values.default,
         };
 
@@ -109,7 +109,7 @@ export function UpdateCloudStorageStatusDialog() {
         ? {
               status: cloudStorage.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: cloudStorage.expireAt ?? undefined,
-              availableInProjects: cloudStorage.availableInProjects ?? false,
+              inheritable: cloudStorage.inheritable ?? false,
               default: cloudStorage.default ?? false,
           }
         : undefined;

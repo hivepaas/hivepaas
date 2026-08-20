@@ -72,7 +72,7 @@ export function SettingsImageBuildRoute() {
         update({
             payload: {
                 updateVer: settings.updateVer,
-                availableInProjects: settings.availableInProjects ?? true,
+                inheritable: settings.inheritable ?? true,
                 default: settings.default ?? true,
                 workers: {
                     nodes: values.workers.nodes.map(node => ({ id: node.id })),

@@ -51,7 +51,7 @@ export function UpdateSslCertStatusForm({
         defaultValues: {
             status: initialValues?.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
             expireAt: initialValues?.expireAt ?? undefined,
-            availableInProjects: initialValues?.availableInProjects ?? false,
+            inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(UpdateSslCertStatusFormSchema),
@@ -69,7 +69,7 @@ export function UpdateSslCertStatusForm({
         field: expireAt,
         fieldState: { invalid: isExpireAtInvalid },
     } = useController({ name: "expireAt", control });
-    const { field: availableInProjects } = useController({ name: "availableInProjects", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: UpdateSslCertStatusFormOutput) {
@@ -151,9 +151,9 @@ export function UpdateSslCertStatusForm({
                                     titleWidth={160}
                                 >
                                     <Checkbox
-                                        checked={availableInProjects.value}
+                                        checked={inheritable.value}
                                         onCheckedChange={checked => {
-                                            availableInProjects.onChange(Boolean(checked));
+                                            inheritable.onChange(Boolean(checked));
                                         }}
                                     />
                                 </InfoBlock>

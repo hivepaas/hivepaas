@@ -83,7 +83,7 @@ const CommandTemplateSchema = z.object({
     kind: z.string(),
     status: z.nativeEnum(ESettingStatus),
     inherited: z.boolean().optional().default(false),
-    availableInProjects: z.boolean().optional().default(false),
+    inheritable: z.boolean().optional().default(false),
     default: z.boolean().optional().default(false),
     updateVer: z.number(),
     createdAt: z.coerce.date(),

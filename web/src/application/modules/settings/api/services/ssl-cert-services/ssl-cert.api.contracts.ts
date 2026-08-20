@@ -18,7 +18,7 @@ export type SslCert_Provider_Payload = {
 };
 
 export type SslCert_CreateOne_Payload = {
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     certType: ESslCertType;
     provider?: SslCert_Provider_Payload;
@@ -37,7 +37,7 @@ export type SslCert_CreateOne_Payload = {
 
 export type SslCert_UpdateOne_Payload = {
     updateVer: number;
-    availableInProjects: boolean;
+    inheritable: boolean;
     default: boolean;
     certType: ESslCertType;
     provider?: SslCert_Provider_Payload;
@@ -58,7 +58,7 @@ export type SslCert_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
-    availableInProjects?: boolean;
+    inheritable?: boolean;
     default?: boolean;
 };
 

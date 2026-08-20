@@ -59,7 +59,7 @@ export function ImportFilesToContainerDialog() {
                 }
             }}
         >
-            <DialogFixedContent className="min-w-[390px] w-[800px]">
+            <DialogFixedContent className="min-w-[390px] w-[680px]">
                 <DialogHeader>
                     <DialogTitle>Import Files to Container</DialogTitle>
                     <DialogDescription>

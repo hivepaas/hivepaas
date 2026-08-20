@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 
+import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectCommandTemplateCommands } from "~/projects/data/commands";
 import { SettingsScopePermissionAction } from "~/settings/module-shared/components";
 
-import { cn } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -84,7 +84,7 @@ export function ProjectCommandTemplateFromTemplateMenu({ projectId }: Props) {
                                                     type="button"
                                                     disabled={isPending}
                                                     className={cn(
-                                                        "rounded-sm px-4 py-1.5 text-left text-sm",
+                                                        "rounded-sm pr-4 py-1.5 pl-8 text-left text-sm",
                                                         "hover:bg-accent hover:text-accent-foreground",
                                                         "disabled:pointer-events-none disabled:opacity-50",
                                                     )}

@@ -7,7 +7,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { AppScheduledJobsQueries, ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
-import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
+import { ProjectAppStatusBadge, ProjectEnvFilter } from "~/projects/module-shared/components";
 
 import { BackButton, PopConfirm, TabNavigation } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -156,14 +156,24 @@ function View({ projectId, env, appId }: Props) {
     ];
     return (
         <div className="bg-background pt-4 px-5 rounded-lg">
-            <div className="flex items-center justify-between">
-                <SingleAppBreadcrumbs
-                    app={appData}
-                    appRoute={appRoute}
-                    items={taskBreadcrumbItems}
-                    parentApp={appData.parentApp}
-                    project={project}
-                />
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex justify-between w-full min-w-0 flex-wrap items-center gap-3">
+                    <SingleAppBreadcrumbs
+                        app={appData}
+                        appRoute={appRoute}
+                        items={taskBreadcrumbItems}
+                        parentApp={appData.parentApp}
+                        project={project}
+                    />
+                    {appEnv ? (
+                        <ProjectEnvFilter
+                            projectId={projectId}
+                            envs={[appEnv]}
+                            showAll={false}
+                            interactive={false}
+                        />
+                    ) : null}
+                </div>
             </div>
 
             <div className="flex items-center gap-4 mt-4 pb-4">
@@ -178,12 +188,6 @@ function View({ projectId, env, appId }: Props) {
                         <div className="flex items-center gap-2">
                             <h2 className="text-[20px] font-semibold text-foreground">{appData.name}</h2>
                             <ProjectAppStatusBadge status={appData.status} />
-                            {appData.env && (
-                                <ProjectEnvBadge
-                                    name={appData.env}
-                                    color={appEnv?.color}
-                                />
-                            )}
                         </div>
                     </div>
                 </div>

@@ -146,6 +146,7 @@ export function ProjectCommandPipeForm({
                                 label="Source Command"
                                 placeholder="select command"
                                 readOnly={isReadOnly}
+                                showConfigureLink
                             />
 
                             <CommandTemplateSelectField

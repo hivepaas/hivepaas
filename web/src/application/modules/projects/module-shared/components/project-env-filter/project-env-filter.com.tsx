@@ -9,15 +9,23 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ALL_ENV_COLOR = "#a3a3a3";
 
-function View({ projectId, envs, className }: Props) {
+function View({ projectId, envs, className, showAll = true, interactive = true }: Props) {
     const { selectedEnv, setSelectedEnv } = useProjectEnvFilter(projectId);
     const normalizeSelectedEnv = useProjectEnvFilterStore(state => state.normalizeSelectedEnv);
     const envNames = useMemo(() => envs.map(env => env.name), [envs]);
-    const activeEnv = envNames.includes(selectedEnv) ? selectedEnv : PROJECT_ENV_FILTER_ALL;
+    const activeEnv = interactive
+        ? envNames.includes(selectedEnv)
+            ? selectedEnv
+            : PROJECT_ENV_FILTER_ALL
+        : (envNames[0] ?? PROJECT_ENV_FILTER_ALL);
 
     useEffect(() => {
+        if (!interactive) {
+            return;
+        }
+
         normalizeSelectedEnv(projectId, envNames);
-    }, [projectId, envNames, normalizeSelectedEnv]);
+    }, [interactive, projectId, envNames, normalizeSelectedEnv]);
 
     if (envs.length === 0) {
         return null;
@@ -29,11 +37,11 @@ function View({ projectId, envs, className }: Props) {
     return (
         <Tabs
             value={activeEnv}
-            onValueChange={setSelectedEnv}
+            onValueChange={interactive ? setSelectedEnv : undefined}
             className={cn("max-w-full shrink-0 gap-0", className)}
         >
             <TabsList
-                aria-label="Project environment filter"
+                aria-label={interactive ? "Project environment filter" : "App environment"}
                 className="h-9 max-w-full justify-start gap-1 overflow-x-auto rounded-lg bg-muted p-1"
             >
                 {envs.map(env => (
@@ -44,7 +52,7 @@ function View({ projectId, envs, className }: Props) {
                         style={{
                             backgroundColor: env.color,
                         }}
-                        aria-label={`Filter apps by ${env.name} environment`}
+                        aria-label={interactive ? `Filter apps by ${env.name} environment` : `${env.name} environment`}
                     >
                         {activeEnv === env.name && (
                             <Check
@@ -56,22 +64,24 @@ function View({ projectId, envs, className }: Props) {
                     </TabsTrigger>
                 ))}
 
-                <TabsTrigger
-                    value={PROJECT_ENV_FILTER_ALL}
-                    className={triggerClassName}
-                    style={{
-                        backgroundColor: ALL_ENV_COLOR,
-                    }}
-                    aria-label="Show apps from all environments"
-                >
-                    {activeEnv === PROJECT_ENV_FILTER_ALL && (
-                        <Check
-                            className="size-3"
-                            aria-hidden
-                        />
-                    )}
-                    <span className="min-w-0 truncate">all</span>
-                </TabsTrigger>
+                {showAll ? (
+                    <TabsTrigger
+                        value={PROJECT_ENV_FILTER_ALL}
+                        className={triggerClassName}
+                        style={{
+                            backgroundColor: ALL_ENV_COLOR,
+                        }}
+                        aria-label="Show apps from all environments"
+                    >
+                        {activeEnv === PROJECT_ENV_FILTER_ALL && (
+                            <Check
+                                className="size-3"
+                                aria-hidden
+                            />
+                        )}
+                        <span className="min-w-0 truncate">all</span>
+                    </TabsTrigger>
+                ) : null}
             </TabsList>
         </Tabs>
     );
@@ -81,6 +91,8 @@ interface Props {
     projectId: string;
     envs: ProjectEnvEntity[];
     className?: string;
+    showAll?: boolean;
+    interactive?: boolean;
 }
 
 export const ProjectEnvFilter = memo(View);

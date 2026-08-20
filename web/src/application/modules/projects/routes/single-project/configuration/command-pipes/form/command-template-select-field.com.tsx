@@ -4,9 +4,10 @@ import { useController, useFormContext } from "react-hook-form";
 import { ProjectCommandTemplateQueries } from "~/projects/data/queries";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AppLink, Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
-import { Field, FieldError, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
+import { Field, FieldError } from "@/components/ui";
 
 import type { ProjectCommandPipeFormInput } from "../schemas";
 
@@ -15,15 +16,19 @@ const COMMAND_TEMPLATE_SELECT_PAGINATION = {
     size: 100,
 } as const;
 
-const EMPTY_COMMAND_VALUE = "__none__";
+type CommandTemplateOption = {
+    id: string;
+    name: string;
+};
 
 interface CommandTemplateSelectFieldProps {
     projectId: string;
     name: "sourceCommandId" | "targetCommandId";
     label: string;
     placeholder: string;
-    fallbackOption?: { id: string; name: string } | null;
+    fallbackOption?: CommandTemplateOption | null;
     readOnly?: boolean;
+    showConfigureLink?: boolean;
 }
 
 export function CommandTemplateSelectField({
@@ -33,6 +38,7 @@ export function CommandTemplateSelectField({
     placeholder,
     fallbackOption = null,
     readOnly = false,
+    showConfigureLink = false,
 }: CommandTemplateSelectFieldProps) {
     const {
         control,
@@ -43,7 +49,7 @@ export function CommandTemplateSelectField({
         fieldState: { invalid },
     } = useController({ control, name });
 
-    const { data, isFetching } = ProjectCommandTemplateQueries.useFindManyPaginated(
+    const { data, isFetching, refetch, isRefetching } = ProjectCommandTemplateQueries.useFindManyPaginated(
         {
             projectID: projectId,
             pagination: COMMAND_TEMPLATE_SELECT_PAGINATION,
@@ -53,20 +59,23 @@ export function CommandTemplateSelectField({
         },
     );
 
-    const options = useMemo(() => {
+    const comboboxOptions = useMemo(() => {
         const items = (data?.data ?? []).map(item => ({
             id: item.id,
             name: item.name,
         }));
 
         if (!fallbackOption?.id || items.some(item => item.id === fallbackOption.id)) {
-            return items;
+            return items.map(item => ({ value: item, label: item.name }));
         }
 
-        return [{ id: fallbackOption.id, name: fallbackOption.name }, ...items];
+        return [{ id: fallbackOption.id, name: fallbackOption.name }, ...items].map(item => ({
+            value: item,
+            label: item.name,
+        }));
     }, [data?.data, fallbackOption]);
 
-    const selectValue = field.value ? field.value : EMPTY_COMMAND_VALUE;
+    const selectedTemplateId = field.value || "";
 
     return (
         <InfoBlock
@@ -74,32 +83,59 @@ export function CommandTemplateSelectField({
             title={<LabelWithInfo label={label} />}
         >
             <Field>
-                <Select
-                    value={selectValue}
-                    onValueChange={value => {
-                        field.onChange(value === EMPTY_COMMAND_VALUE ? "" : value);
-                    }}
-                    disabled={readOnly || isFetching}
-                >
-                    <SelectTrigger
+                <div className="flex items-center gap-3">
+                    <Combobox<CommandTemplateOption>
+                        options={comboboxOptions}
+                        value={selectedTemplateId || null}
+                        onChange={(_, option) => {
+                            if (readOnly) {
+                                return;
+                            }
+
+                            field.onChange(option?.id ?? "");
+                        }}
+                        placeholder={placeholder}
+                        searchable
+                        allowClear
+                        closeOnSelect
+                        emptyText="No command templates available"
+                        valueKey="id"
                         aria-invalid={invalid}
                         className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                    >
-                        <SelectValue placeholder={placeholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value={EMPTY_COMMAND_VALUE}>None</SelectItem>
-                        {options.map(option => (
-                            <SelectItem
-                                key={option.id}
-                                value={option.id}
-                            >
-                                {option.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                        loading={isFetching}
+                        onRefresh={() => void refetch()}
+                        isRefreshing={isRefetching}
+                        disabled={readOnly}
+                    />
+                    {selectedTemplateId ? (
+                        <AppLink.Basic
+                            to={ROUTE.projects.single.providerConfiguration.commandTemplates.edit.$route(
+                                projectId,
+                                selectedTemplateId,
+                            )}
+                            className="shrink-0 text-sm text-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            ignorePrevPath
+                        >
+                            View
+                        </AppLink.Basic>
+                    ) : null}
+                </div>
                 <FieldError errors={[errors[name]]} />
+                {showConfigureLink ? (
+                    <div className="text-xs">
+                        <AppLink.Basic
+                            to={ROUTE.projects.single.providerConfiguration.commandTemplates.$route(projectId)}
+                            className="text-link"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            ignorePrevPath
+                        >
+                            Configure Command Templates
+                        </AppLink.Basic>
+                    </div>
+                ) : null}
             </Field>
         </InfoBlock>
     );

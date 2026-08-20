@@ -7,6 +7,8 @@ import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
  */
 export type ProjectEnvVars_FindOne_Req = ApiRequestBase<{
     projectID: string;
+    /** When set to a concrete env name, uses /projects/{id}/{env}/env-vars */
+    env?: string;
 }>;
 
 export type ProjectEnvVars_FindOne_Res = ApiResponseBase<ProjectEnvVar>;
@@ -17,6 +19,8 @@ export type ProjectEnvVars_FindOne_Res = ApiResponseBase<ProjectEnvVar>;
 export type ProjectEnvVars_UpdateOne_Req = ApiRequestBase<
     {
         projectID: string;
+        /** When set to a concrete env name, uses /projects/{id}/{env}/env-vars */
+        env?: string;
         updateVer: number;
     } & ProjectEnvVar
 >;
@@ -30,6 +34,8 @@ export type ProjectEnvVars_UpdateOne_Res = ApiResponseBase<{
  */
 export type ProjectEnvVars_Compute_Req = ApiRequestBase<{
     projectID: string;
+    /** When set to a concrete env name, uses /projects/{id}/{env}/env-vars/compute */
+    env?: string;
     buildtimeEnvVars?: { key: string; value: string; isLiteral: boolean }[];
     runtimeEnvVars?: { key: string; value: string; isLiteral: boolean }[];
 }>;

@@ -17,6 +17,14 @@ function toEnvVarWire(envVars: { key: string; value: string; isLiteral: boolean 
     return envVars.map(({ key, value, isLiteral }) => ({ key, value, isLiteral }));
 }
 
+function getEnvVarsBasePath(projectID: string, env?: string): string {
+    if (env && env !== "all") {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/env-vars`;
+    }
+
+    return `/projects/${projectID}/env-vars`;
+}
+
 export class ProjectEnvVarsApi extends BaseApi {
     public constructor(private readonly validator: ProjectEnvVarsApiValidator) {
         super();
@@ -29,11 +37,11 @@ export class ProjectEnvVarsApi extends BaseApi {
         request: ProjectEnvVars_FindOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectEnvVars_FindOne_Res, Error>> {
-        const { projectID } = request.data;
+        const { projectID, env } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/env-vars`, {
+                this.client.v1.get(getEnvVarsBasePath(projectID, env), {
                     signal,
                 }),
             ).pipe(
@@ -51,7 +59,7 @@ export class ProjectEnvVarsApi extends BaseApi {
         request: ProjectEnvVars_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectEnvVars_UpdateOne_Res, Error>> {
-        const { projectID, updateVer, buildtime, runtime } = request.data;
+        const { projectID, env, updateVer, buildtime, runtime } = request.data;
 
         const json = {
             updateVer,
@@ -67,7 +75,7 @@ export class ProjectEnvVarsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/env-vars`, json, {
+                this.client.v1.put(getEnvVarsBasePath(projectID, env), json, {
                     signal,
                 }),
             ).pipe(
@@ -84,7 +92,7 @@ export class ProjectEnvVarsApi extends BaseApi {
         request: ProjectEnvVars_Compute_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectEnvVars_Compute_Res, Error>> {
-        const { projectID, buildtimeEnvVars, runtimeEnvVars } = request.data;
+        const { projectID, env, buildtimeEnvVars, runtimeEnvVars } = request.data;
 
         const json = {
             buildtimeEnvVars: JsonTransformer.array({
@@ -99,7 +107,7 @@ export class ProjectEnvVarsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/env-vars/compute`, json, {
+                this.client.v1.post(`${getEnvVarsBasePath(projectID, env)}/compute`, json, {
                     signal,
                 }),
             ).pipe(

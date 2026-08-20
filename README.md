@@ -6,7 +6,7 @@
 
 An open-source, resource-efficient alternative to Heroku, Render, and Coolify for managing and deploying applications on your own servers.
 
-[![Go Version](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat&logo=go)](https://golang.org)
+[![Go Version](https://img.shields.io/badge/Go-1.27+-00ADD8?style=flat&logo=go)](https://golang.org)
 [![Docker](https://img.shields.io/badge/Docker-Swarm-2496ED?style=flat&logo=docker)](https://docs.docker.com/engine/swarm/)
 [![Traefik](https://img.shields.io/badge/Traefik-v3-24A1C1?style=flat&logo=traefik)](https://traefik.io)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)

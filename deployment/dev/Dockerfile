@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/tmp/yarn-cache \
 
 ############################################################
 # Build backend
-FROM golang:1.26-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 RUN apk update && \
     apk add --no-cache -U tzdata make git build-base ca-certificates && \

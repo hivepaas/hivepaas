@@ -13,9 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go: ["1.26.x"]
+        go: ["1.27.x"]
         include:
-          - go: 1.26.x
+          - go: 1.27.x
             latest: true
 
     steps:
@@ -37,7 +37,7 @@ jobs:
 
       - name: Setup Dependencies
         run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.12.2
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.13.0
 
       - name: Lint
         run: make lint-local
@@ -55,12 +55,12 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v7
         with:
-          go-version: '1.26.x'
+          go-version: '1.27.x'
 
       - name: Run govulncheck
         uses: golang/govulncheck-action@v1
         with:
-          go-version-input: '1.26.x'
+          go-version-input: '1.27.x'
           package-path: './...'
 
   trivy:

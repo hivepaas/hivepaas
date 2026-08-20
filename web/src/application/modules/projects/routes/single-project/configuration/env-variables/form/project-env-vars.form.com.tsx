@@ -1,12 +1,21 @@
 import React, { type PropsWithChildren, useImperativeHandle, useRef, useState } from "react";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "@components/ui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CircleHelp } from "lucide-react";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectEnvVarsCommands } from "~/projects/data/commands/project-env-vars";
-import { EnvVarsFormHeader, type FinalEnvValueItem, FinalEnvValuesDialog } from "~/projects/module-shared/components";
+import type { ProjectEnvEntity } from "~/projects/domain";
+import {
+    EnvVarsFormHeader,
+    type FinalEnvValueItem,
+    FinalEnvValuesDialog,
+    ProjectEnvScopeBadge,
+} from "~/projects/module-shared/components";
+import { PROJECT_ENV_FILTER_ALL, getProjectEnvFilterParam } from "~/projects/module-shared/hooks";
 
 import { EnvVarsBaseForm } from "@application/modules/projects/module-shared/form/env-vars/env-vars.form.com";
 
@@ -39,12 +48,22 @@ function toEnvVarWire(envVars: EnvVarFormItem[]) {
         }));
 }
 
+function getScopeTooltip(selectedEnv: string): string {
+    if (!selectedEnv || selectedEnv === PROJECT_ENV_FILTER_ALL) {
+        return "Variables take effect in all environments. Switch environments in the top right to change scope.";
+    }
+
+    return `Variables only take effect in env "${selectedEnv}". Switch environments in the top right to change scope.`;
+}
+
 export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>(function ProjectEnvVarsForm(
-    { defaultValues, onSubmit, readOnly = false, children }: Props,
+    { defaultValues, selectedEnv, envs, onSubmit, readOnly = false, children }: Props,
     ref: React.ForwardedRef<ProjectEnvVarsFormRef>,
 ) {
     const { id: projectId } = useParams<{ id: string }>();
     invariant(projectId, "projectId must be defined");
+
+    const scopedEnv = getProjectEnvFilterParam(selectedEnv);
 
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: {
@@ -91,6 +110,7 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
             setFinalValuesSectionTitle("Build Time Env Variables");
             computeEnvVars({
                 projectID: projectId,
+                env: scopedEnv,
                 buildtimeEnvVars,
             });
             return;
@@ -105,6 +125,7 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
         setFinalValuesSectionTitle("Runtime Env Variables");
         computeEnvVars({
             projectID: projectId,
+            env: scopedEnv,
             runtimeEnvVars,
         });
     }
@@ -194,6 +215,30 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
                         disabled={readOnly}
                         className="contents"
                     >
+                        <div className="flex items-center gap-2">
+                            <ProjectEnvScopeBadge
+                                selectedEnv={selectedEnv}
+                                envs={envs}
+                            />
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        aria-label="Environment scope help"
+                                    >
+                                        <CircleHelp className="size-4" />
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent
+                                    side="right"
+                                    className="max-w-xs"
+                                >
+                                    {getScopeTooltip(selectedEnv)}
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+
                         <EnvVarsFormHeader
                             search={{ value: search, onChange: setSearch }}
                             isRevealed={isRevealed}
@@ -253,6 +298,8 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
 
 type Props = PropsWithChildren<{
     ref?: React.Ref<ProjectEnvVarsFormRef>;
+    selectedEnv: string;
+    envs: ProjectEnvEntity[];
     defaultValues: Partial<ProjectEnvVarsFormSchemaInput>;
     onSubmit: (values: ProjectEnvVarsFormSchemaOutput) => void;
     readOnly?: boolean;

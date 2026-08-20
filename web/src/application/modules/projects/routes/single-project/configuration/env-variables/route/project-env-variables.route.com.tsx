@@ -3,9 +3,15 @@ import { useRef } from "react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
+import { ProjectsQueries } from "~/projects/data";
 import { ProjectEnvVarsCommands } from "~/projects/data/commands/project-env-vars";
 import { ProjectEnvVarsQueries } from "~/projects/data/queries/project-env-vars";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
+import {
+    PROJECT_ENV_FILTER_ALL,
+    getProjectEnvFilterParam,
+    useSelectedProjectEnv,
+} from "~/projects/module-shared/hooks";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -27,12 +33,18 @@ export function ProjectEnvVariablesRoute() {
 
     invariant(projectId, "projectId must be defined");
 
+    const selectedEnv = useSelectedProjectEnv(projectId);
+    const scopedEnv = getProjectEnvFilterParam(selectedEnv);
+    const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
+    const projectEnvs = projectData?.data.envs ?? [];
+
     const {
         data: envVarsData,
         isLoading: isLoadingEnvVars,
         error: envVarsError,
         refetch: refetchEnvVars,
-    } = ProjectEnvVarsQueries.useFindOne({ projectID: projectId });
+        isFetching: isFetchingEnvVars,
+    } = ProjectEnvVarsQueries.useFindOne({ projectID: projectId, env: scopedEnv });
 
     const { mutate: update, isPending } = ProjectEnvVarsCommands.useUpdateOne({
         onSuccess: () => {
@@ -55,12 +67,14 @@ export function ProjectEnvVariablesRoute() {
 
         update({
             projectID: projectId,
+            env: scopedEnv,
             ...values,
             updateVer: envVarsData.data.updateVer,
         });
     }
 
-    if (isLoadingEnvVars) {
+    // Show loader on initial load or when switching env scope before cached data arrives.
+    if (isLoadingEnvVars || (isFetchingEnvVars && !envVarsData)) {
         return <AppLoader />;
     }
 
@@ -76,10 +90,14 @@ export function ProjectEnvVariablesRoute() {
     invariant(envVarsData, "envVarsData must be defined");
 
     const { data: envVars } = envVarsData;
+    const scopeKey = scopedEnv ?? PROJECT_ENV_FILTER_ALL;
 
     return (
         <ProjectEnvVarsForm
+            key={scopeKey}
             ref={formRef}
+            selectedEnv={selectedEnv}
+            envs={projectEnvs}
             defaultValues={{
                 buildtime: envVars.buildtime,
                 runtime: envVars.runtime,

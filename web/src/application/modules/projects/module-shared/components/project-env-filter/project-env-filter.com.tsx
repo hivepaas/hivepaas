@@ -3,11 +3,10 @@ import { memo, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
 import type { ProjectEnvEntity } from "~/projects/domain";
+import { PROJECT_ALL_ENV_COLOR } from "~/projects/module-shared/constants";
 import { PROJECT_ENV_FILTER_ALL, useProjectEnvFilter, useProjectEnvFilterStore } from "~/projects/module-shared/hooks";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const ALL_ENV_COLOR = "#a3a3a3";
 
 function View({ projectId, envs, className, showAll = true, interactive = true }: Props) {
     const { selectedEnv, setSelectedEnv } = useProjectEnvFilter(projectId);
@@ -69,7 +68,7 @@ function View({ projectId, envs, className, showAll = true, interactive = true }
                         value={PROJECT_ENV_FILTER_ALL}
                         className={triggerClassName}
                         style={{
-                            backgroundColor: ALL_ENV_COLOR,
+                            backgroundColor: PROJECT_ALL_ENV_COLOR,
                         }}
                         aria-label="Show apps from all environments"
                     >

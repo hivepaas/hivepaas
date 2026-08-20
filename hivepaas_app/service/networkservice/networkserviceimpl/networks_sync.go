@@ -60,6 +60,9 @@ func (s *service) SyncNetworks(
 			volEntity := &entity.ClusterNetwork{
 				RefID: net.ID,
 			}
+			if net.Name == base.NetworkGlobalRouting {
+				setting.AvailInProjects = true
+			}
 			if err := setting.SetData(volEntity); err != nil {
 				return nil, apperrors.Wrap(err)
 			}

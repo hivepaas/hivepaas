@@ -93,6 +93,9 @@ func (uc *UC) loadProjectEnvEnvVarsForUpdate(
 ) error {
 	projectEnv, err := uc.projectEnvRepo.GetByID(ctx, db, req.ProjectID, req.ProjectEnvID,
 		bunex.SelectFor("UPDATE OF project_env"),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
 		bunex.SelectRelation("Apps",
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		),

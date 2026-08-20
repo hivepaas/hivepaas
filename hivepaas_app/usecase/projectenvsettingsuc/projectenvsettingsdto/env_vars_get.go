@@ -30,34 +30,74 @@ type GetProjectEnvEnvVarsResp struct {
 }
 
 type EnvVarsResp struct {
-	BuildtimeEnvVars []*basedto.EnvVarResp `json:"buildtimeEnvVars"`
-	RuntimeEnvVars   []*basedto.EnvVarResp `json:"runtimeEnvVars"`
-	UpdateVer        int                   `json:"updateVer"`
+	InheritedBuildtimeEnvVars []*basedto.EnvVarResp `json:"inheritedBuildtimeEnvVars"`
+	BuildtimeEnvVars          []*basedto.EnvVarResp `json:"buildtimeEnvVars"`
+	InheritedRuntimeEnvVars   []*basedto.EnvVarResp `json:"inheritedRuntimeEnvVars"`
+	RuntimeEnvVars            []*basedto.EnvVarResp `json:"runtimeEnvVars"`
+
+	UpdateVer int `json:"updateVer"`
 }
 
-func TransformEnvVars(setting *entity.Setting) (resp *EnvVarsResp, err error) {
-	if setting == nil {
-		return
-	}
+type EnvVarsTransformationInput struct {
+	ProjectEnv *entity.ProjectEnv
+	Vars       []*entity.Setting
+}
+
+func TransformEnvVars(input *EnvVarsTransformationInput) (resp *EnvVarsResp, err error) {
 	resp = &EnvVarsResp{
-		BuildtimeEnvVars: make([]*basedto.EnvVarResp, 0, 20), //nolint
-		RuntimeEnvVars:   make([]*basedto.EnvVarResp, 0, 20), //nolint
-		UpdateVer:        setting.UpdateVer,
+		InheritedBuildtimeEnvVars: make([]*basedto.EnvVarResp, 0, 20), //nolint
+		BuildtimeEnvVars:          make([]*basedto.EnvVarResp, 0, 20), //nolint
+		InheritedRuntimeEnvVars:   make([]*basedto.EnvVarResp, 0, 20), //nolint
+		RuntimeEnvVars:            make([]*basedto.EnvVarResp, 0, 20), //nolint
 	}
 
-	envVars, err := setting.AsEnvVars()
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-	if envVars != nil {
-		for _, v := range envVars.Data {
-			res := basedto.TransformEnvVar(v)
-			if v.IsBuild {
-				resp.BuildtimeEnvVars = append(resp.BuildtimeEnvVars, res)
-			} else {
-				resp.RuntimeEnvVars = append(resp.RuntimeEnvVars, res)
-			}
+	var envEnvVars, projectEnvVars *entity.EnvVars
+	for _, envSetting := range input.Vars {
+		switch envSetting.ObjectID {
+		case input.ProjectEnv.ID:
+			envEnvVars = envSetting.MustAsEnvVars()
+		case input.ProjectEnv.ProjectID:
+			projectEnvVars = envSetting.MustAsEnvVars()
 		}
 	}
+
+	TransformInheritedEnvVars(projectEnvVars, resp)
+	TransformOwnEnvVars(envEnvVars, resp)
+
 	return resp, nil
+}
+
+func TransformOwnEnvVars(
+	appEnvVars *entity.EnvVars,
+	resp *EnvVarsResp,
+) {
+	if appEnvVars == nil {
+		return
+	}
+	for _, env := range appEnvVars.Data {
+		envResp := basedto.TransformEnvVar(env)
+		switch {
+		case env.IsBuild:
+			resp.BuildtimeEnvVars = append(resp.BuildtimeEnvVars, envResp)
+		default:
+			resp.RuntimeEnvVars = append(resp.RuntimeEnvVars, envResp)
+		}
+	}
+}
+
+func TransformInheritedEnvVars(
+	projectEnvVars *entity.EnvVars,
+	resp *EnvVarsResp,
+) {
+	if projectEnvVars == nil {
+		return
+	}
+	for _, env := range projectEnvVars.Data {
+		envResp := basedto.TransformEnvVar(env)
+		if env.IsBuild {
+			resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, envResp)
+		} else {
+			resp.InheritedRuntimeEnvVars = append(resp.InheritedRuntimeEnvVars, envResp)
+		}
+	}
 }

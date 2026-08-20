@@ -108,6 +108,12 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		gitCredentialGroup.GET("/:itemID/repository/pull-requests", projectEnvSettingsHandler.ListGitPullRequest)
 	}
 
+	{ // Github-app group
+		githubAppGroup := projectEnvGroup.Group("/github-apps")
+		githubAppGroup.GET("/:itemID", projectEnvSettingsHandler.GetGithubApp)
+		githubAppGroup.GET("", projectEnvSettingsHandler.ListGithubApp)
+	}
+
 	{ // IM service group
 		imServiceGroup := projectEnvGroup.Group("/im-services")
 		imServiceGroup.GET("/:itemID", projectEnvSettingsHandler.GetIMService)
@@ -136,6 +142,12 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		registryAuthGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateRegistryAuth)
 		registryAuthGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateRegistryAuthStatus)
 		registryAuthGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteRegistryAuth)
+	}
+
+	{ // Repo webhook group
+		repoWebhookGroup := projectEnvGroup.Group("/repo-webhooks")
+		repoWebhookGroup.GET("/:itemID", projectEnvSettingsHandler.GetRepoWebhook)
+		repoWebhookGroup.GET("", projectEnvSettingsHandler.ListRepoWebhook)
 	}
 
 	{ // Secrets

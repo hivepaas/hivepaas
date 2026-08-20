@@ -29,14 +29,14 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/git-credentials [get]
 func (h *Handler) ListGitCredentials(ctx *gin.Context) {
-	auth, projectID, _, err := h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "")
+	auth, projectID, projectEnvID, _, err := h.GetAuthProjectEnvSettings(ctx, base.ActionTypeRead, "")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
 	req := gitcredentialdto.NewListGitCredentialReq()
-	req.Scope = entity.NewObjectScopeProject(projectID)
+	req.Scope = entity.NewObjectScopeProjectEnv(projectID, projectEnvID)
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -69,14 +69,14 @@ func (h *Handler) ListGitCredentials(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/git-credentials/{itemID}/repositories [get]
 func (h *Handler) ListGitRepository(ctx *gin.Context) {
-	auth, projectID, itemID, err := h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "itemID")
+	auth, projectID, projectEnvID, itemID, err := h.GetAuthProjectEnvSettings(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
 	req := gitcredentialdto.NewListRepoReq()
-	req.Scope = entity.NewObjectScopeProject(projectID)
+	req.Scope = entity.NewObjectScopeProjectEnv(projectID, projectEnvID)
 	req.ID = itemID
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
@@ -112,14 +112,14 @@ func (h *Handler) ListGitRepository(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/git-credentials/{itemID}/repository/branches [get]
 func (h *Handler) ListGitBranch(ctx *gin.Context) {
-	auth, projectID, itemID, err := h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "itemID")
+	auth, projectID, projectEnvID, itemID, err := h.GetAuthProjectEnvSettings(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
 	req := gitcredentialdto.NewListBranchReq()
-	req.Scope = entity.NewObjectScopeProject(projectID)
+	req.Scope = entity.NewObjectScopeProjectEnv(projectID, projectEnvID)
 	req.ID = itemID
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
@@ -155,14 +155,14 @@ func (h *Handler) ListGitBranch(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/git-credentials/{itemID}/repository/pull-requests [get]
 func (h *Handler) ListGitPullRequest(ctx *gin.Context) {
-	auth, projectID, itemID, err := h.GetAuthProjectSettings(ctx, base.ActionTypeRead, "itemID")
+	auth, projectID, projectEnvID, itemID, err := h.GetAuthProjectEnvSettings(ctx, base.ActionTypeRead, "itemID")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
 	req := gitcredentialdto.NewListPullRequestReq()
-	req.Scope = entity.NewObjectScopeProject(projectID)
+	req.Scope = entity.NewObjectScopeProjectEnv(projectID, projectEnvID)
 	req.ID = itemID
 	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)

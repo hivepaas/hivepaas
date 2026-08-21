@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -49,18 +50,21 @@ func (s *service) applyHttpSettings(
 		return apperrors.Wrap(err)
 	}
 
-	if !data.SkipApplyingNetworks {
-		err = s.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, appSvc, data.HttpSettings)
+	if !data.SkipUpdatingService {
+		err = s.dockerManager.ServiceUpdateFunc(ctx, appSvc.ID,
+			func(_ int, svc *swarm.Service) error {
+				if !data.SkipApplyingNetworks {
+					if err := s.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, svc, data.HttpSettings); err != nil {
+						return apperrors.Wrap(err)
+					}
+				}
+				return nil
+			}, defaultServiceUpdateRetryMax, defaultServiceUpdateRetryDelay, 0)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-	}
-
-	if !data.SkipUpdatingService {
-		err = gofn.ExecRetry(func() error {
-			_, err = s.dockerManager.ServiceUpdate(ctx, appSvc.ID, &appSvc.Version, &appSvc.Spec)
-			return apperrors.Wrap(err)
-		}, defaultServiceUpdateRetryMax, defaultServiceUpdateRetryDelay)
+	} else if !data.SkipApplyingNetworks {
+		err = s.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, appSvc, data.HttpSettings)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

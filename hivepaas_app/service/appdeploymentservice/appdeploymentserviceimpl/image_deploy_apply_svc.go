@@ -2,9 +2,8 @@ package appdeploymentserviceimpl
 
 import (
 	"context"
-	"errors"
-	"time"
 
+	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -32,55 +31,27 @@ func (s *service) imageDeployStepServiceApply(
 		SkipSavingToDocker: true,
 	}
 
-	for i := range dockerServiceApplyRetryMax + 1 {
-		if i > 0 {
-			queryRegistry = true
-			select {
-			case <-ctx.Done():
-				err = apperrors.Wrap(ctx.Err())
-				break
-			case <-time.After(time.Duration(1+i) * time.Second):
+	err = s.dockerManager.ServiceUpdateFunc(ctx, data.App.ServiceID,
+		func(i int, svc *swarm.Service) error {
+			if i > 0 {
+				queryRegistry = true
 			}
-		}
+			contSpec := svc.Spec.TaskTemplate.ContainerSpec
+			contSpec.Image = imageSource.Image
+			contSpec.Dir = deployment.Settings.WorkingDir
+			dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
 
-		inspect, e := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
-		if e != nil { // error, need to retry
-			if errors.Is(e, apperrors.ErrNotFound) {
-				err = apperrors.Wrap(e)
-				break
+			placementReq.Service = svc
+			_, err := s.placementService.ApplyPlacementSettings(ctx, db, placementReq)
+			if err != nil {
+				return apperrors.Wrap(err)
 			}
-			err = apperrors.Wrap(e)
-			continue
-		}
-
-		service := &inspect.Service
-		spec := &service.Spec
-		contSpec := spec.TaskTemplate.ContainerSpec
-		contSpec.Image = imageSource.Image
-		contSpec.Dir = deployment.Settings.WorkingDir
-		dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
-
-		// Apply placement settings
-		placementReq.Service = service
-		_, e = s.placementService.ApplyPlacementSettings(ctx, db, placementReq)
-		if e != nil { // error, need to retry
-			err = apperrors.Wrap(e)
-			continue
-		}
-
-		_, e = s.dockerManager.ServiceUpdate(ctx, data.App.ServiceID, &service.Version, spec,
-			func(options *client.ServiceUpdateOptions) {
-				options.EncodedRegistryAuth = data.RegAuthHeader
-				options.QueryRegistry = queryRegistry
-			})
-		if e != nil { // error, need to retry
-			err = apperrors.Wrap(e)
-			continue
-		}
-		// successful, no need to retry
-		err = nil
-		break
-	}
+			return nil
+		}, dockerServiceApplyRetryMax, 0, 0,
+		func(options *client.ServiceUpdateOptions) {
+			options.EncodedRegistryAuth = data.RegAuthHeader
+			options.QueryRegistry = queryRegistry
+		})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

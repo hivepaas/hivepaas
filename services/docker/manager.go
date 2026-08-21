@@ -157,6 +157,8 @@ type Manager interface {
 		*client.ServiceCreateResult, error)
 	ServiceUpdate(ctx context.Context, serviceID string, version *swarm.Version, spec *swarm.ServiceSpec,
 		options ...ServiceUpdateOption) (*client.ServiceUpdateResult, error)
+	ServiceUpdateFunc(ctx context.Context, serviceID string, fn func(int, *swarm.Service) error,
+		retryMax int, retryDelay time.Duration, delayIncr time.Duration, options ...ServiceUpdateOption) error
 	ServiceRollback(ctx context.Context, serviceID string, options ...ServiceUpdateOption) (
 		*client.ServiceUpdateResult, error)
 	ServiceForceUpdate(ctx context.Context, serviceID string) error

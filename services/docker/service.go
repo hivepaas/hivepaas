@@ -159,6 +159,70 @@ func (m *manager) ServiceUpdate(
 	return &resp, nil
 }
 
+func (m *manager) ServiceUpdateFunc(
+	ctx context.Context,
+	serviceID string,
+	fn func(int, *swarm.Service) error,
+	retryMax int,
+	retryDelay time.Duration,
+	delayIncr time.Duration,
+	options ...ServiceUpdateOption,
+) (err error) {
+	if serviceID == "" {
+		return nil
+	}
+	if retryDelay <= 0 {
+		retryDelay = defaultRetryDelay
+	}
+
+	for i := range retryMax + 1 {
+		if i > 0 {
+			delay := retryDelay
+			if delayIncr > 0 {
+				delay += time.Duration(i-1) * delayIncr
+			}
+			if delay > 0 {
+				timer := time.NewTimer(delay)
+				select {
+				case <-ctx.Done():
+					timer.Stop()
+					return apperrors.Wrap(ctx.Err())
+				case <-timer.C:
+				}
+			}
+		}
+
+		inspect, e := m.ServiceInspect(ctx, serviceID)
+		if e != nil { // error, need to retry
+			err = apperrors.Wrap(e)
+			if errors.Is(e, apperrors.ErrNotFound) {
+				return err
+			}
+			continue
+		}
+
+		service := &inspect.Service
+		e = fn(i, service)
+		if e != nil { // error from user function, no retry
+			err = apperrors.Wrap(e)
+			return err
+		}
+
+		_, e = m.ServiceUpdate(ctx, serviceID, &service.Version, &service.Spec, options...)
+		if e != nil { // error, need to retry
+			err = apperrors.Wrap(e)
+			continue
+		}
+
+		// successful, no need to retry
+		return nil
+	}
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	return nil
+}
+
 func (m *manager) ServiceRollback(
 	ctx context.Context,
 	serviceID string,

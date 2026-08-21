@@ -9,6 +9,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 )
 
+const (
+	defaultServiceRetryMax = 2
+)
+
 type persistingAppData struct {
 	appservice.PersistingAppData
 }

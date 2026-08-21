@@ -258,18 +258,14 @@ func (uc *UC) applyAppStorageSettings(
 	ctx context.Context,
 	data *updateAppStorageSettingsData,
 ) error {
-	inspect, err := uc.dockerManager.ServiceInspect(ctx, data.Service.ID)
+	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID,
+		func(_ int, service *swarm.Service) error {
+			service.Spec.TaskTemplate.ContainerSpec.Mounts = data.FinalMounts
+			return nil
+		}, defaultServiceRetryMax, 0, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	service := &inspect.Service
-	service.Spec.TaskTemplate.ContainerSpec.Mounts = data.FinalMounts
-
-	_, err = uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
 	return nil
 }
 

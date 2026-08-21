@@ -32,15 +32,7 @@ func (uc *UC) UpdateAppContainerSettings(
 			return apperrors.Wrap(err)
 		}
 
-		persistingData := &persistingAppData{}
-		uc.prepareUpdatingAppContainerSettings(req, data)
-
-		err = uc.persistData(ctx, db, persistingData)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-
-		err = uc.applyAppContainerSettings(ctx, data)
+		err = uc.applyAppContainerSettings(ctx, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -239,14 +231,17 @@ func (uc *UC) prepareUpdatingAppContainerLogDriver(
 
 func (uc *UC) applyAppContainerSettings(
 	ctx context.Context,
+	req *appsettingsdto.UpdateAppContainerSettingsReq,
 	data *updateAppContainerSettingsData,
 ) error {
-	service := data.Service
-
-	_, err := uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
+	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID,
+		func(_ int, service *swarm.Service) error {
+			data.Service = service
+			uc.prepareUpdatingAppContainerSettings(req, data)
+			return nil
+		}, defaultServiceRetryMax, 0, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-
 	return nil
 }

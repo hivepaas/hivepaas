@@ -33,18 +33,7 @@ func (uc *UC) UpdateAppNetworkSettings(
 			return apperrors.Wrap(err)
 		}
 
-		persistingData := &persistingAppData{}
-		err = uc.prepareUpdatingAppNetworkSettings(req, data)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-
-		err = uc.persistData(ctx, db, persistingData)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-
-		err = uc.applyAppNetworkSettings(ctx, data)
+		err = uc.applyAppNetworkSettings(ctx, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -235,14 +224,16 @@ func (uc *UC) prepareUpdatingAppDNSConfig(
 
 func (uc *UC) applyAppNetworkSettings(
 	ctx context.Context,
+	req *appsettingsdto.UpdateAppNetworkSettingsReq,
 	data *updateAppNetworkSettingsData,
 ) error {
-	service := data.Service
-
-	_, err := uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
+	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID,
+		func(_ int, service *swarm.Service) error {
+			data.Service = service
+			return uc.prepareUpdatingAppNetworkSettings(req, data)
+		}, defaultServiceRetryMax, 0, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-
 	return nil
 }

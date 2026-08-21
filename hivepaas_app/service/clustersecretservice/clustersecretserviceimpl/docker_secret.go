@@ -24,6 +24,7 @@ const (
 )
 
 const (
+	itemRemovalRetryMax   = 2
 	itemRemovalRetryDelay = 3 * time.Second
 	itemRemovalRetryIncr  = 3 * time.Second
 )
@@ -106,41 +107,37 @@ func (s *service) addSwarmSecretsToService(
 	app *entity.App,
 	refs []*entity.SwarmSecretRef,
 ) (err error) {
-	if app.ServiceID == "" || len(refs) == 0 {
+	if len(refs) == 0 || app.ServiceID == "" {
 		return nil
 	}
 
-	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	swarmSvc := &inspect.Service
-	containerSpec := swarmSvc.Spec.TaskTemplate.ContainerSpec
-
-	for _, swarmRef := range refs {
-		if swarmRef == nil || swarmRef.SecretID == "" {
-			continue
-		}
-		// Only add the secret to the swarm service when the target file name is not used by another secret
-		_, inUse := gofn.Find(containerSpec.Secrets, func(sec *swarm.SecretReference) bool {
-			return sec.File != nil && sec.File.Name == swarmRef.File.Name
-		})
-		if inUse {
-			continue
-		}
-		containerSpec.Secrets = append(containerSpec.Secrets, &swarm.SecretReference{
-			File: &swarm.SecretReferenceFileTarget{
-				Name: swarmRef.File.Name,
-				UID:  swarmRef.File.UID,
-				GID:  swarmRef.File.GID,
-				Mode: swarmRef.File.Mode.ToFileMode(),
-			},
-			SecretID:   swarmRef.SecretID,
-			SecretName: swarmRef.SecretName,
-		})
-	}
-
-	_, err = s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &swarmSvc.Version, &swarmSvc.Spec)
+	err = s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID,
+		func(_ int, swarmSvc *swarm.Service) error {
+			containerSpec := swarmSvc.Spec.TaskTemplate.ContainerSpec
+			for _, swarmRef := range refs {
+				if swarmRef == nil || swarmRef.SecretID == "" {
+					continue
+				}
+				// Only add the secret to the swarm service when the target file name is not used by another secret
+				_, inUse := gofn.Find(containerSpec.Secrets, func(sec *swarm.SecretReference) bool {
+					return sec.File != nil && sec.File.Name == swarmRef.File.Name
+				})
+				if inUse {
+					continue
+				}
+				containerSpec.Secrets = append(containerSpec.Secrets, &swarm.SecretReference{
+					File: &swarm.SecretReferenceFileTarget{
+						Name: swarmRef.File.Name,
+						UID:  swarmRef.File.UID,
+						GID:  swarmRef.File.GID,
+						Mode: swarmRef.File.Mode.ToFileMode(),
+					},
+					SecretID:   swarmRef.SecretID,
+					SecretName: swarmRef.SecretName,
+				})
+			}
+			return nil
+		}, itemRemovalRetryMax, 0, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -237,27 +234,24 @@ func (s *service) removeSwarmSecretFromService(
 		return nil
 	}
 
-	inspect, err := s.dockerManager.ServiceInspect(ctx, serviceID)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	swarmSvc := &inspect.Service
+	err = s.dockerManager.ServiceUpdateFunc(ctx, serviceID,
+		func(_ int, swarmSvc *swarm.Service) error {
+			hasChanges := false
+			updateSecrets := make([]*swarm.SecretReference, 0, len(swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets))
+			for _, sec := range swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets {
+				if swarmRef.SecretID == sec.SecretID {
+					hasChanges = true
+					continue
+				}
+				updateSecrets = append(updateSecrets, sec)
+			}
+			if !hasChanges {
+				return nil
+			}
 
-	hasChanges := false
-	updateSecrets := make([]*swarm.SecretReference, 0, len(swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets))
-	for _, sec := range swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets {
-		if swarmRef.SecretID == sec.SecretID {
-			hasChanges = true
-			continue
-		}
-		updateSecrets = append(updateSecrets, sec)
-	}
-	if !hasChanges {
-		return nil
-	}
-
-	swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets = updateSecrets
-	_, err = s.dockerManager.ServiceUpdate(ctx, serviceID, &swarmSvc.Version, &swarmSvc.Spec)
+			swarmSvc.Spec.TaskTemplate.ContainerSpec.Secrets = updateSecrets
+			return nil
+		}, itemRemovalRetryMax, 0, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -19,6 +18,8 @@ import (
 
 const (
 	labelHivePaaSAppPrevServiceMode = "hivepaas.app.prevServiceMode"
+	serviceStatusUpdateRetryMax     = 2
+	serviceStatusUpdateRetryDelay   = 3 * time.Second
 )
 
 func (s *service) SetAppStatus(
@@ -90,85 +91,68 @@ func (s *service) SetAppRunning(ctx context.Context, app *entity.App, running bo
 	}
 }
 
-func (s *service) stopApp(ctx context.Context, app *entity.App, service *swarm.Service) error {
+func (s *service) stopApp(ctx context.Context, app *entity.App, _ *swarm.Service) error {
 	if app.ServiceID == "" {
 		return nil
 	}
 
-	if service == nil {
-		inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		service = &inspect.Service
-	}
+	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID,
+		func(_ int, service *swarm.Service) error {
+			if service.Spec.Mode.Replicated != nil &&
+				(service.Spec.Mode.Replicated.Replicas == nil || *service.Spec.Mode.Replicated.Replicas == 0) {
+				return nil
+			}
 
-	if service.Spec.Mode.Replicated != nil &&
-		(service.Spec.Mode.Replicated.Replicas == nil || *service.Spec.Mode.Replicated.Replicas == 0) {
-		return nil
-	}
+			prevSvcMode, err := json.Marshal(service.Spec.Mode)
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
+			if service.Spec.Labels == nil {
+				service.Spec.Labels = make(map[string]string)
+			}
+			service.Spec.Labels[labelHivePaaSAppPrevServiceMode] = string(prevSvcMode)
 
-	prevSvcMode, err := json.Marshal(service.Spec.Mode)
+			// Scale down to 0
+			service.Spec.Mode = swarm.ServiceMode{
+				Replicated: &swarm.ReplicatedService{
+					Replicas: new(uint64(0)),
+				},
+			}
+			return nil
+		}, serviceStatusUpdateRetryMax, serviceStatusUpdateRetryDelay, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	service.Spec.Labels[labelHivePaaSAppPrevServiceMode] = string(prevSvcMode)
-
-	// Scale down to 0
-	service.Spec.Mode = swarm.ServiceMode{
-		Replicated: &swarm.ReplicatedService{
-			Replicas: new(uint64(0)),
-		},
-	}
-
-	err = gofn.ExecRetry(func() error {
-		_, err := s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &service.Version, &service.Spec)
-		return apperrors.Wrap(err)
-	}, 2, 3*time.Second) //nolint:mnd
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
 	return nil
 }
 
-func (s *service) startApp(ctx context.Context, app *entity.App, service *swarm.Service) error {
+func (s *service) startApp(ctx context.Context, app *entity.App, _ *swarm.Service) error {
 	if app.ServiceID == "" {
 		return nil
 	}
 
-	if service == nil {
-		inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		service = &inspect.Service
-	}
-
-	prevSvcModeStr := service.Spec.Labels[labelHivePaaSAppPrevServiceMode]
-	if prevSvcModeStr != "" {
-		mode := swarm.ServiceMode{}
-		err := json.Unmarshal(reflectutil.UnsafeStrToBytes(prevSvcModeStr), &mode)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		service.Spec.Mode = mode
-		delete(service.Spec.Labels, labelHivePaaSAppPrevServiceMode)
-	} else {
-		service.Spec.Mode = swarm.ServiceMode{
-			Replicated: &swarm.ReplicatedService{
-				Replicas: new(uint64(1)),
-			},
-		}
-	}
-
-	err := gofn.ExecRetry(func() error {
-		_, err := s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &service.Version, &service.Spec)
-		return apperrors.Wrap(err)
-	}, 2, 3*time.Second) //nolint:mnd
+	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID,
+		func(_ int, service *swarm.Service) error {
+			prevSvcModeStr := service.Spec.Labels[labelHivePaaSAppPrevServiceMode]
+			if prevSvcModeStr != "" {
+				mode := swarm.ServiceMode{}
+				err := json.Unmarshal(reflectutil.UnsafeStrToBytes(prevSvcModeStr), &mode)
+				if err != nil {
+					return apperrors.Wrap(err)
+				}
+				service.Spec.Mode = mode
+				delete(service.Spec.Labels, labelHivePaaSAppPrevServiceMode)
+			} else {
+				service.Spec.Mode = swarm.ServiceMode{
+					Replicated: &swarm.ReplicatedService{
+						Replicas: new(uint64(1)),
+					},
+				}
+			}
+			return nil
+		}, serviceStatusUpdateRetryMax, serviceStatusUpdateRetryDelay, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-
 	return nil
 }

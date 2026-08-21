@@ -96,41 +96,37 @@ func (s *service) addSwarmConfigsToService(
 	app *entity.App,
 	refs []*entity.SwarmConfigRef,
 ) (err error) {
-	if app.ServiceID == "" || len(refs) == 0 {
+	if len(refs) == 0 || app.ServiceID == "" {
 		return nil
 	}
 
-	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	swarmSvc := &inspect.Service
-	containerSpec := swarmSvc.Spec.TaskTemplate.ContainerSpec
-
-	for _, swarmRef := range refs {
-		if swarmRef == nil || swarmRef.ConfigID == "" {
-			continue
-		}
-		// Only add the config to the swarm service when the target file name is not used by another config
-		_, inUse := gofn.Find(containerSpec.Configs, func(cfg *swarm.ConfigReference) bool {
-			return cfg.File != nil && cfg.File.Name == swarmRef.File.Name
-		})
-		if inUse {
-			continue
-		}
-		containerSpec.Configs = append(containerSpec.Configs, &swarm.ConfigReference{
-			File: &swarm.ConfigReferenceFileTarget{
-				Name: swarmRef.File.Name,
-				UID:  swarmRef.File.UID,
-				GID:  swarmRef.File.GID,
-				Mode: swarmRef.File.Mode.ToFileMode(),
-			},
-			ConfigID:   swarmRef.ConfigID,
-			ConfigName: swarmRef.ConfigName,
-		})
-	}
-
-	_, err = s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &swarmSvc.Version, &swarmSvc.Spec)
+	err = s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID,
+		func(_ int, swarmSvc *swarm.Service) error {
+			containerSpec := swarmSvc.Spec.TaskTemplate.ContainerSpec
+			for _, swarmRef := range refs {
+				if swarmRef == nil || swarmRef.ConfigID == "" {
+					continue
+				}
+				// Only add the config to the swarm service when the target file name is not used by another config
+				_, inUse := gofn.Find(containerSpec.Configs, func(cfg *swarm.ConfigReference) bool {
+					return cfg.File != nil && cfg.File.Name == swarmRef.File.Name
+				})
+				if inUse {
+					continue
+				}
+				containerSpec.Configs = append(containerSpec.Configs, &swarm.ConfigReference{
+					File: &swarm.ConfigReferenceFileTarget{
+						Name: swarmRef.File.Name,
+						UID:  swarmRef.File.UID,
+						GID:  swarmRef.File.GID,
+						Mode: swarmRef.File.Mode.ToFileMode(),
+					},
+					ConfigID:   swarmRef.ConfigID,
+					ConfigName: swarmRef.ConfigName,
+				})
+			}
+			return nil
+		}, itemRemovalRetryMax, 0, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -227,27 +223,24 @@ func (s *service) removeSwarmConfigFromService(
 		return nil
 	}
 
-	inspect, err := s.dockerManager.ServiceInspect(ctx, serviceID)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	swarmSvc := &inspect.Service
+	err = s.dockerManager.ServiceUpdateFunc(ctx, serviceID,
+		func(_ int, swarmSvc *swarm.Service) error {
+			hasChanges := false
+			updateConfigs := make([]*swarm.ConfigReference, 0, len(swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs))
+			for _, cfg := range swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs {
+				if swarmRef.ConfigID == cfg.ConfigID {
+					hasChanges = true
+					continue
+				}
+				updateConfigs = append(updateConfigs, cfg)
+			}
+			if !hasChanges {
+				return nil
+			}
 
-	hasChanges := false
-	updateConfigs := make([]*swarm.ConfigReference, 0, len(swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs))
-	for _, cfg := range swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs {
-		if swarmRef.ConfigID == cfg.ConfigID {
-			hasChanges = true
-			continue
-		}
-		updateConfigs = append(updateConfigs, cfg)
-	}
-	if !hasChanges {
-		return nil
-	}
-
-	swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs = updateConfigs
-	_, err = s.dockerManager.ServiceUpdate(ctx, serviceID, &swarmSvc.Version, &swarmSvc.Spec)
+			swarmSvc.Spec.TaskTemplate.ContainerSpec.Configs = updateConfigs
+			return nil
+		}, itemRemovalRetryMax, 0, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

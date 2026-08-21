@@ -68,23 +68,18 @@ func (s *service) applyEnvVarToService(
 		envVars = append(envVars, env.ToString("="))
 	}
 
-	err := gofn.ExecRetryCtx(ctx, func() error {
-		service, err := s.clusterService.ServiceInspect(ctx, app.ServiceID, false)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		if service.Spec.TaskTemplate.ContainerSpec == nil {
-			service.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
-		}
-
-		currEnvVars := service.Spec.TaskTemplate.ContainerSpec.Env
-		if gofn.ContentEqual(currEnvVars, envVars) { // No change, just return
+	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID,
+		func(_ int, service *swarm.Service) error {
+			if service.Spec.TaskTemplate.ContainerSpec == nil {
+				service.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
+			}
+			currEnvVars := service.Spec.TaskTemplate.ContainerSpec.Env
+			if gofn.ContentEqual(currEnvVars, envVars) { // No change
+				return nil
+			}
+			service.Spec.TaskTemplate.ContainerSpec.Env = envVars
 			return nil
-		}
-		service.Spec.TaskTemplate.ContainerSpec.Env = envVars
-		_, err = s.dockerManager.ServiceUpdate(ctx, app.ServiceID, &service.Version, &service.Spec)
-		return apperrors.Wrap(err)
-	}, applyEnvVarRetryMax, applyEnvVarRetryDelay)
+		}, applyEnvVarRetryMax, applyEnvVarRetryDelay, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -34,15 +34,7 @@ func (uc *UC) UpdateAppResourceSettings(
 			return apperrors.Wrap(err)
 		}
 
-		persistingData := &persistingAppData{}
-		uc.prepareUpdatingAppResourceSettings(req, data)
-
-		err = uc.persistData(ctx, db, persistingData)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-
-		err = uc.applyAppResourceSettings(ctx, data)
+		err = uc.applyAppResourceSettings(ctx, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -242,14 +234,17 @@ func (uc *UC) prepareUpdatingAppCapabilities(
 
 func (uc *UC) applyAppResourceSettings(
 	ctx context.Context,
+	req *appsettingsdto.UpdateAppResourceSettingsReq,
 	data *updateAppResourceSettingsData,
 ) error {
-	service := data.Service
-
-	_, err := uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
+	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID,
+		func(_ int, service *swarm.Service) error {
+			data.Service = service
+			uc.prepareUpdatingAppResourceSettings(req, data)
+			return nil
+		}, defaultServiceRetryMax, 0, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-
 	return nil
 }

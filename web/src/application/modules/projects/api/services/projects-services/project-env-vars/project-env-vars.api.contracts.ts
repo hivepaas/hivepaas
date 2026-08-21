@@ -1,4 +1,4 @@
-import { type ProjectEnvVar } from "~/projects/domain";
+import { type ProjectBuildtimeEnvVar, type ProjectEnvVar, type ProjectRuntimeEnvVar } from "~/projects/domain";
 
 import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 
@@ -22,7 +22,9 @@ export type ProjectEnvVars_UpdateOne_Req = ApiRequestBase<
         /** When set to a concrete env name, uses /projects/{id}/{env}/env-vars */
         env?: string;
         updateVer: number;
-    } & ProjectEnvVar
+        buildtime: ProjectBuildtimeEnvVar[];
+        runtime: ProjectRuntimeEnvVar[];
+    }
 >;
 
 export type ProjectEnvVars_UpdateOne_Res = ApiResponseBase<{

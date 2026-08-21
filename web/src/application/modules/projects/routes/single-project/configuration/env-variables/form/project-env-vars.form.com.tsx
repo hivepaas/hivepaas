@@ -17,7 +17,7 @@ import {
 } from "~/projects/module-shared/components";
 import { PROJECT_ENV_FILTER_ALL, getProjectEnvFilterParam } from "~/projects/module-shared/hooks";
 
-import { EnvVarsBaseForm } from "@application/modules/projects/module-shared/form/env-vars/env-vars.form.com";
+import { EnvVarsBaseForm, InheritedEnvVarsAccordion } from "~/projects/module-shared/form";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
@@ -57,7 +57,7 @@ function getScopeTooltip(selectedEnv: string): string {
 }
 
 export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>(function ProjectEnvVarsForm(
-    { defaultValues, selectedEnv, envs, onSubmit, readOnly = false, children }: Props,
+    { defaultValues, inheritedValues, selectedEnv, envs, onSubmit, readOnly = false, children }: Props,
     ref: React.ForwardedRef<ProjectEnvVarsFormRef>,
 ) {
     const { id: projectId } = useParams<{ id: string }>();
@@ -252,6 +252,14 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
                             readOnly={readOnly}
                         />
 
+                        {inheritedValues && (
+                            <InheritedEnvVarsAccordion
+                                title="Inherited Build Time Env Variables"
+                                items={inheritedValues.buildtime}
+                                search={search}
+                                isRevealed={isRevealed}
+                            />
+                        )}
                         <EnvVarsBaseForm
                             search={search}
                             viewMode={viewMode}
@@ -264,6 +272,14 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
                             }}
                         />
                         <div className="h-px bg-border" />
+                        {inheritedValues && (
+                            <InheritedEnvVarsAccordion
+                                title="Inherited Runtime Env Variables"
+                                items={inheritedValues.runtime}
+                                search={search}
+                                isRevealed={isRevealed}
+                            />
+                        )}
                         <EnvVarsBaseForm
                             search={search}
                             viewMode={viewMode}
@@ -301,6 +317,7 @@ type Props = PropsWithChildren<{
     selectedEnv: string;
     envs: ProjectEnvEntity[];
     defaultValues: Partial<ProjectEnvVarsFormSchemaInput>;
+    inheritedValues?: { buildtime: EnvVarFormItem[]; runtime: EnvVarFormItem[] };
     onSubmit: (values: ProjectEnvVarsFormSchemaOutput) => void;
     readOnly?: boolean;
 }>;

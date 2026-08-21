@@ -102,6 +102,10 @@ export function ProjectEnvVariablesRoute() {
                 buildtime: envVars.buildtime,
                 runtime: envVars.runtime,
             }}
+            inheritedValues={{
+                buildtime: envVars.inheritedBuildtimeEnvVars,
+                runtime: envVars.inheritedRuntimeEnvVars,
+            }}
             onSubmit={handleSubmit}
             readOnly={!canWrite}
         >

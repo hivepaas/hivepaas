@@ -18,7 +18,7 @@ export function ProjectEnvBadge({ name, color, className }: ProjectEnvBadgeProps
 
     return (
         <Tabs
-            className={cn("max-w-full shrink-0 gap-0", className)}
+            className={cn("shrink-0 gap-0", className)}
             value={name}
         >
             <TabsList className="h-9 max-w-full justify-start gap-1 overflow-x-auto rounded-lg bg-muted p-1">

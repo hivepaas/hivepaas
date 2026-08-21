@@ -85,6 +85,7 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
                 return (
                     <ProjectEnvBadge
                         name={original.env}
+                        className="items-center"
                         color={projectEnv?.color}
                     />
                 );

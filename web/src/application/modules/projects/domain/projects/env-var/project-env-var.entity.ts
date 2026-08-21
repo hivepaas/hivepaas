@@ -17,7 +17,9 @@ export type ProjectRuntimeEnvVar = {
 export type ProjectSharedEnvVar = ProjectRuntimeEnvVar;
 
 export type ProjectEnvVar = {
+    inheritedBuildtimeEnvVars: ProjectBuildtimeEnvVar[];
     buildtime: ProjectBuildtimeEnvVar[];
+    inheritedRuntimeEnvVars: ProjectRuntimeEnvVar[];
     runtime: ProjectRuntimeEnvVar[];
     updateVer: number;
 };

@@ -13,7 +13,7 @@ import { useCreateProjectAppDialogState } from "../hooks";
 import { type CreateProjectAppFormOutput } from "../schemas";
 
 export function CreateProjectAppDialog() {
-    const { state, props, ...actions } = useCreateProjectAppDialogState();
+    const { state, props: dialogOptions, ...actions } = useCreateProjectAppDialogState();
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
@@ -80,6 +80,7 @@ export function CreateProjectAppDialog() {
                 </DialogHeader>
                 <CreateProjectAppForm
                     envs={envs}
+                    initialEnv={dialogOptions?.initialEnv}
                     isPending={isPending}
                     readOnly={!canWrite}
                     onSubmit={onSubmit}

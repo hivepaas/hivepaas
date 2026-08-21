@@ -22,6 +22,7 @@ export function ProjectAppsTable({ projectId }: Props) {
     const selectedEnv = useSelectedProjectEnv(projectId);
     const env = getProjectEnvFilterParam(selectedEnv);
     const { actions } = useCreateProjectAppDialog({
+        initialEnv: env,
         onClose: () => {
             actions.close();
         },

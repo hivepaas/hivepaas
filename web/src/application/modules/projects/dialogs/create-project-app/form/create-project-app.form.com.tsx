@@ -21,9 +21,15 @@ import {
     createCreateProjectAppFormSchema,
 } from "../schemas";
 
-export function CreateProjectAppForm({ envs, isPending, readOnly = false, onSubmit, onHasChanges }: Props) {
-    const defaultEnv = envs[0]?.name ?? "";
+export function CreateProjectAppForm({ envs, initialEnv, isPending, readOnly = false, onSubmit, onHasChanges }: Props) {
     const envNames = useMemo(() => envs.map(env => env.name), [envs]);
+    const defaultEnv = useMemo(() => {
+        if (initialEnv && envNames.includes(initialEnv)) {
+            return initialEnv;
+        }
+
+        return envs[0]?.name ?? "";
+    }, [envNames, envs, initialEnv]);
     const schema = useMemo(() => createCreateProjectAppFormSchema(envNames), [envNames]);
 
     const {
@@ -52,13 +58,13 @@ export function CreateProjectAppForm({ envs, isPending, readOnly = false, onSubm
     const selectedEnv = envs.find(env => env.name === selectedEnvName);
 
     useEffect(() => {
-        const nextEnv = envs[0]?.name ?? "";
+        const nextEnv = defaultEnv;
         const currentEnvExists = selectedEnvName === "" || envs.some(env => env.name === selectedEnvName);
 
         if ((!selectedEnvName || !currentEnvExists) && selectedEnvName !== nextEnv) {
             setValue("env", nextEnv, { shouldDirty: false });
         }
-    }, [envs, selectedEnvName, setValue]);
+    }, [defaultEnv, envs, selectedEnvName, setValue]);
 
     const {
         field: name,
@@ -250,6 +256,7 @@ export function CreateProjectAppForm({ envs, isPending, readOnly = false, onSubm
 
 interface Props {
     envs: ProjectEnvEntity[];
+    initialEnv?: string;
     isPending: boolean;
     readOnly?: boolean;
     onSubmit: (values: CreateProjectAppFormOutput) => Promise<void> | void;

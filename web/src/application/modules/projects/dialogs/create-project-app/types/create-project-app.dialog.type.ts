@@ -12,6 +12,7 @@ export interface CreateProjectAppDialogState {
 
 export interface CreateProjectAppDialogOptions {
     props?: {
+        initialEnv?: string;
         onClose?: () => void;
         onSuccess?: () => void;
         onError?: (error: Error) => void;

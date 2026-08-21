@@ -2,8 +2,6 @@ package githelper
 
 import (
 	"strings"
-
-	"github.com/go-git/go-git/v5/plumbing"
 )
 
 const (
@@ -12,6 +10,31 @@ const (
 	refPullPrefix          = "refs/pull/"
 	refMergeRequestsPrefix = "refs/merge-requests/"
 )
+
+type ReferenceName string
+
+func (r ReferenceName) String() string {
+	return string(r)
+}
+
+func (r ReferenceName) Short() string {
+	s := string(r)
+	if after, ok := strings.CutPrefix(s, refHeadsPrefix); ok {
+		return after
+	}
+	if after, ok := strings.CutPrefix(s, refTagsPrefix); ok {
+		return after
+	}
+	return s
+}
+
+func NewBranchReferenceName(name string) ReferenceName {
+	return ReferenceName(refHeadsPrefix + name)
+}
+
+func NewTagReferenceName(name string) ReferenceName {
+	return ReferenceName(refTagsPrefix + name)
+}
 
 type RefType string
 
@@ -37,7 +60,7 @@ func (rt RefType) CanCheckout() bool {
 	return rt == RefBranch || rt == RefTag || rt == RefPull
 }
 
-func NormalizeRepoRef(ref string) plumbing.ReferenceName {
+func NormalizeRepoRef(ref string) ReferenceName {
 	if ref == "" || ref == "HEAD" { //nolint:goconst
 		return "HEAD"
 	}
@@ -45,32 +68,30 @@ func NormalizeRepoRef(ref string) plumbing.ReferenceName {
 
 	// Heads ref (branch)
 	if after, ok := strings.CutPrefix(ref, "heads/"); ok {
-		ref = after
-		return plumbing.NewBranchReferenceName(ref)
+		return NewBranchReferenceName(after)
 	}
 
 	// Tags ref
 	if after, ok := strings.CutPrefix(ref, "tags/"); ok {
-		ref = after
-		return plumbing.NewTagReferenceName(ref)
+		return NewTagReferenceName(after)
 	}
 
 	// Pull ref (github, gitea)
 	if after, ok := strings.CutPrefix(ref, "pull/"); ok {
 		ref = after
 		ref, _ = strings.CutSuffix(ref, "/head")
-		return plumbing.ReferenceName(refPullPrefix + ref + "/head")
+		return ReferenceName(refPullPrefix + ref + "/head")
 	}
 
 	// Merge request ref (gitlab)
 	if after, ok := strings.CutPrefix(ref, "merge-requests/"); ok {
 		ref = after
 		ref, _ = strings.CutSuffix(ref, "/head")
-		return plumbing.ReferenceName(refMergeRequestsPrefix + ref + "/head")
+		return ReferenceName(refMergeRequestsPrefix + ref + "/head")
 	}
 
 	// Branch
-	return plumbing.NewBranchReferenceName(ref)
+	return NewBranchReferenceName(ref)
 }
 
 func GetRefType(ref string) RefType {
@@ -89,7 +110,7 @@ func GetRefType(ref string) RefType {
 func GetRefShort(ref string) (RefType, string) {
 	refType := GetRefType(ref)
 	if refType == RefBranch || refType == RefTag {
-		return refType, plumbing.ReferenceName(ref).Short()
+		return refType, ReferenceName(ref).Short()
 	}
 	return refType, ref
 }

@@ -141,6 +141,7 @@ ERR_PULL_REQUEST_NOT_FOUND = "Pull request '{{.PullRequest}}' is not found"
 ERR_PULL_REQUEST_INVALID = "Pull request '{{.PullRequest}}' is invalid"
 ERR_GIT_TYPE_UNSUPPORTED = "Git type '{{.Type}}' is not supported"
 ERR_GIT_AUTH_METHOD_UNSUPPORTED = "Git authentication method '{{.AuthMethod}}' is not supported"
+ERR_GIT_LOG_OUTPUT_UNEXPECTED = "Git log output is unexpected: {{.Output}}"
 
 # Build errors
 ERR_DOCKERFILE_NOT_FOUND = "Dockerfile is not found at '{{.Name}}'"

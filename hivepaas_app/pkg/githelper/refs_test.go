@@ -3,20 +3,19 @@ package githelper
 import (
 	"testing"
 
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNormalizeRepoRef(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected plumbing.ReferenceName
+		expected ReferenceName
 	}{
 		{"", "HEAD"},
 		{"refs/heads/main", "refs/heads/main"},
-		{"tags/v1.0", plumbing.NewTagReferenceName("v1.0")},
-		{"heads/feature", plumbing.NewBranchReferenceName("feature")},
-		{"somebranch", plumbing.NewBranchReferenceName("somebranch")},
+		{"tags/v1.0", NewTagReferenceName("v1.0")},
+		{"heads/feature", NewBranchReferenceName("feature")},
+		{"somebranch", NewBranchReferenceName("somebranch")},
 	}
 
 	for _, tt := range tests {

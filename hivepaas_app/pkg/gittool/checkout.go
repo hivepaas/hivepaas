@@ -7,10 +7,6 @@ import (
 	"strings"
 
 	"github.com/gitsight/go-vcsurl"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -18,12 +14,18 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
+type CommitInfo struct {
+	Hash    string
+	Author  string
+	Message string
+}
+
 type CheckoutOptions struct {
 	URL         string
 	Credentials *entity.Setting
 
 	RemoteName    string
-	ReferenceName plumbing.ReferenceName
+	ReferenceName githelper.ReferenceName
 	CommitHash    string
 
 	SubmodulesEnabled bool
@@ -42,7 +44,7 @@ type CheckoutOptions struct {
 func CheckoutWithGitCli(
 	ctx context.Context,
 	checkoutOpts *CheckoutOptions,
-) (repo *git.Repository, commit *object.Commit, err error) {
+) (commit *CommitInfo, err error) {
 	cli := &checkoutCli{
 		opts: checkoutOpts,
 	}
@@ -57,52 +59,47 @@ type checkoutCli struct {
 
 func (cli *checkoutCli) checkout(
 	ctx context.Context,
-) (repo *git.Repository, commit *object.Commit, err error) {
+) (commit *CommitInfo, err error) {
 	// 1. Prepare args
 	if err = cli.processCheckoutOpts(ctx); err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// 2. Clone repository if source cache is not there
 	if !cli.opts.CacheLoaded {
 		if err = cli.clone(ctx); err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return nil, nil, apperrors.Wrap(err)
-	}
-
-	// Open repo with go-git
-	if repo, err = git.PlainOpen(cli.opts.CheckoutDir); err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// 3. Checkout target commit
-	if commit, err = cli.checkoutTargetCommit(ctx, repo); err != nil {
-		return nil, nil, apperrors.Wrap(err)
+	if commit, err = cli.checkoutTargetCommit(ctx); err != nil {
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// 4. Fetch submodules if needed
 	if err = cli.fetchSubmodules(ctx); err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 
 	// 5. Pull LFS files if configured
@@ -111,11 +108,11 @@ func (cli *checkoutCli) checkout(
 	// 6. Cleanup orphaned data
 	if cli.needCleanup {
 		if err = cli.cleanup(ctx); err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, apperrors.Wrap(err)
 		}
 	}
 
-	return repo, commit, nil
+	return commit, nil
 }
 
 func (cli *checkoutCli) processCheckoutOpts(
@@ -146,7 +143,7 @@ func (cli *checkoutCli) processCheckoutOpts(
 		}
 
 		switch auth := authMethod.(type) {
-		case *http.BasicAuth:
+		case *authBasic:
 			// Use https url
 			if !strings.HasPrefix(cli.opts.URL, "https://") {
 				cli.opts.URL = githelper.GetHttpsUrl(parseURL)

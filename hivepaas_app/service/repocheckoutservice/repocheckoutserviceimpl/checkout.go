@@ -7,12 +7,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/gittool"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -88,7 +86,7 @@ func (s *service) doCheckout(
 		URL:         repoSource.RepoURL,
 		Credentials: data.CredSetting,
 
-		ReferenceName:     plumbing.ReferenceName(repoSource.RepoRef),
+		ReferenceName:     githelper.ReferenceName(repoSource.RepoRef),
 		CommitHash:        repoSource.CommitHash,
 		SubmodulesEnabled: repoSource.RepoOptions.GitSubmodulesEnabled,
 		LFSEnabled:        repoSource.RepoOptions.GitLFSEnabled,
@@ -99,10 +97,10 @@ func (s *service) doCheckout(
 		LogStore:    data.LogStore,
 	}
 
-	var commit *object.Commit
+	var commit *gittool.CommitInfo
 	checkoutStart := time.Now()
 	for {
-		_, commit, err = gittool.CheckoutWithGitCli(ctx, checkoutOptions)
+		commit, err = gittool.CheckoutWithGitCli(ctx, checkoutOptions)
 		if err == nil {
 			break
 		}
@@ -122,10 +120,10 @@ func (s *service) doCheckout(
 	}
 
 	data.CheckoutDuration = time.Since(checkoutStart)
-	data.Resp.CommitHash = commit.Hash.String()
+	data.Resp.CommitHash = commit.Hash
 	data.Resp.CommitMessage = commit.Message
 	data.Resp.CommitTitle = strutil.GetFirstLine(commit.Message)
-	data.Resp.CommitAuthor = commit.Author.Name
+	data.Resp.CommitAuthor = commit.Author
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {

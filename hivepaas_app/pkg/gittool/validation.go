@@ -9,8 +9,6 @@ import (
 	"strings"
 
 	"github.com/gitsight/go-vcsurl"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -24,7 +22,7 @@ type ValidationOptions struct {
 	Credentials *entity.Setting
 
 	RemoteName    string
-	ReferenceName plumbing.ReferenceName
+	ReferenceName githelper.ReferenceName
 	CommitHash    string
 	TempDir       string
 }
@@ -171,7 +169,7 @@ func (cli *validationCli) processValidationOpts(
 		}
 
 		switch auth := authMethod.(type) {
-		case *http.BasicAuth:
+		case *authBasic:
 			// Use https url
 			if !strings.HasPrefix(cli.opts.URL, "https://") {
 				cli.opts.URL = githelper.GetHttpsUrl(parseURL)

@@ -2,11 +2,10 @@ package gittool
 
 import (
 	"context"
+	"encoding/pem"
 	"os"
 
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
+	"golang.org/x/crypto/ssh"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -19,15 +18,31 @@ const (
 	sshKeyFileMode = 0600
 )
 
+type AuthMethod interface {
+	Name() string
+}
+
+type authBasic struct {
+	Username string
+	Password string
+}
+
+func (b *authBasic) Name() string {
+	return "http-basic-auth"
+}
+
 type authSSHKey struct {
-	*ssh.PublicKeys
 	PEMBytes []byte
+}
+
+func (a *authSSHKey) Name() string {
+	return "ssh-key"
 }
 
 func calcGitAuthMethod(
 	ctx context.Context,
 	gitCreds *entity.Setting,
-) (auth transport.AuthMethod, err error) {
+) (auth AuthMethod, err error) {
 	if gitCreds == nil {
 		return auth, nil
 	}
@@ -41,7 +56,7 @@ func calcGitAuthMethod(
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
-		auth = &http.BasicAuth{
+		auth = &authBasic{
 			Username: "default", // this can be anything except an empty string
 			Password: token,
 		}
@@ -51,7 +66,7 @@ func calcGitAuthMethod(
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
-		auth = &http.BasicAuth{
+		auth = &authBasic{
 			Username: "default", // this can be anything except an empty string
 			Password: token,
 		}
@@ -66,13 +81,22 @@ func calcGitAuthMethod(
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
-		authRaw, err := ssh.NewPublicKeys("git", reflectutil.UnsafeStrToBytes(privateKey), passphrase)
-		if err != nil {
-			return nil, apperrors.Wrap(err)
+
+		pemBytes := reflectutil.UnsafeStrToBytes(privateKey)
+		if passphrase != "" {
+			rawKey, err := ssh.ParseRawPrivateKeyWithPassphrase(pemBytes, reflectutil.UnsafeStrToBytes(passphrase))
+			if err != nil {
+				return nil, apperrors.Wrap(err)
+			}
+			pemBlock, err := ssh.MarshalPrivateKey(rawKey, "")
+			if err != nil {
+				return nil, apperrors.Wrap(err)
+			}
+			pemBytes = pem.EncodeToMemory(pemBlock)
 		}
+
 		auth = &authSSHKey{
-			PublicKeys: authRaw,
-			PEMBytes:   reflectutil.UnsafeStrToBytes(privateKey),
+			PEMBytes: pemBytes,
 		}
 	}
 	return auth, nil
@@ -96,7 +120,7 @@ func writeSshKeyFile(baseDir string, pemBytes []byte) (sshKeyFile string, err er
 		return "", apperrors.Wrap(err)
 	}
 
-	if pemBytes[len(pemBytes)-1] != '\n' {
+	if len(pemBytes) > 0 && pemBytes[len(pemBytes)-1] != '\n' {
 		if _, err := fh.Write([]byte("\n")); err != nil {
 			return "", apperrors.Wrap(err)
 		}

@@ -2,11 +2,8 @@ package gittool
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
-
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/object"
+	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
@@ -14,8 +11,7 @@ import (
 
 func (cli *checkoutCli) checkoutTargetCommit(
 	ctx context.Context,
-	repo *git.Repository,
-) (commit *object.Commit, err error) {
+) (commit *CommitInfo, err error) {
 	commitHash := cli.opts.CommitHash
 	if commitHash != "" {
 		// Fetch the commit
@@ -27,19 +23,6 @@ func (cli *checkoutCli) checkoutTargetCommit(
 		addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
-		}
-
-		// Make sure the commit belongs to the branch (skip for Pull Requests)
-		if !cli.opts.refType.IsPull() {
-			cmd = exec.CommandContext(ctx, "git", "merge-base", "--is-ancestor", commitHash,
-				fmt.Sprintf("%s/%s", cli.opts.RemoteName, cli.opts.refShort))
-			cmd.Dir = cli.opts.CheckoutDir
-			cmd.Env = []string{}
-			out, err = cmd.CombinedOutput()
-			addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
-			if err != nil {
-				return nil, apperrors.Wrap(err)
-			}
 		}
 	} else {
 		//nolint:gosec
@@ -71,13 +54,35 @@ func (cli *checkoutCli) checkoutTargetCommit(
 		return nil, apperrors.Wrap(err)
 	}
 
-	head, err := repo.Head()
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-	commit, err = repo.CommitObject(head.Hash())
+	commit, err = cli.getHeadCommit(ctx)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 	return commit, nil
+}
+
+func (cli *checkoutCli) getHeadCommit(
+	ctx context.Context,
+) (*CommitInfo, error) {
+	cmd := exec.CommandContext(ctx, "git", "log", "-1", "--format=%H%x1f%an%x1f%B")
+	cmd.Dir = cli.opts.CheckoutDir
+	cmd.Env = cli.sharedEnv
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	outStr := string(out)
+	const noParts = 3
+	parts := strings.SplitN(outStr, "\x1f", noParts)
+	if len(parts) < noParts {
+		return nil, apperrors.Wrap(apperrors.ErrGitLogOutputUnexpected).WithParam("Output", outStr)
+	}
+
+	return &CommitInfo{
+		Hash:    strings.TrimSpace(parts[0]),
+		Author:  strings.TrimSpace(parts[1]),
+		Message: strings.TrimRight(parts[2], "\r\n"),
+	}, nil
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -13,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/gittool"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -127,7 +127,7 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 			err := gittool.ValidateWithGitCli(ctx, &gittool.ValidationOptions{
 				URL:           repoSource.RepoURL,
 				Credentials:   refObjects.RefSettings[repoSource.Credentials.ID],
-				ReferenceName: plumbing.ReferenceName(repoSource.RepoRef),
+				ReferenceName: githelper.ReferenceName(repoSource.RepoRef),
 			})
 			if err != nil {
 				return apperrors.Wrap(err)

@@ -11,6 +11,8 @@ import type {
     ProjectCommandTemplate_CreateFromTemplate_Res,
     ProjectCommandTemplate_CreateOne_Res,
     ProjectCommandTemplate_DeleteOne_Res,
+    ProjectCommandTemplate_BuildForApp_Res,
+    ProjectCommandTemplate_FindManyEnvPaginated_Res,
     ProjectCommandTemplate_FindManyPaginated_Res,
     ProjectCommandTemplate_FindOneById_Res,
     ProjectCommandTemplate_UpdateOne_Res,
@@ -130,12 +132,28 @@ const CreateOneSchema = z.object({
     meta: BaseMetaApiSchema.nullish(),
 });
 
+const BuildForAppSchema = z.object({
+    data: z.object({
+        command: z.string(),
+    }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
 const MetaOnlySchema = z.object({
     meta: BaseMetaApiSchema.nullish(),
 });
 
 export class ProjectCommandTemplateApiValidator {
     findManyPaginated = (response: AxiosResponse): ProjectCommandTemplate_FindManyPaginated_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: FindManyPaginatedSchema,
+        });
+
+        return { data, meta };
+    };
+
+    findManyEnvPaginated = (response: AxiosResponse): ProjectCommandTemplate_FindManyEnvPaginated_Res => {
         const { data, meta } = parseApiResponse({
             response,
             schema: FindManyPaginatedSchema,
@@ -196,5 +214,14 @@ export class ProjectCommandTemplateApiValidator {
         });
 
         return { data: { type: "success" } };
+    };
+
+    buildForApp = (response: AxiosResponse): ProjectCommandTemplate_BuildForApp_Res => {
+        const { data, meta } = parseApiResponse({
+            response,
+            schema: BuildForAppSchema,
+        });
+
+        return { data, meta };
     };
 }

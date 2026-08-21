@@ -19,6 +19,16 @@ export type ProjectCommandTemplate_FindManyPaginated_Req = ApiRequestBase<{
 
 export type ProjectCommandTemplate_FindManyPaginated_Res = ApiResponsePaginated<ProjectCommandTemplate>;
 
+export type ProjectCommandTemplate_FindManyEnvPaginated_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    pagination?: PaginationState;
+    sorting?: SortingState;
+    search?: string;
+}>;
+
+export type ProjectCommandTemplate_FindManyEnvPaginated_Res = ApiResponsePaginated<ProjectCommandTemplate>;
+
 export type ProjectCommandTemplate_FindOneById_Req = ApiRequestBase<{
     projectID: string;
     id: string;
@@ -95,3 +105,12 @@ export type ProjectCommandTemplate_DeleteOne_Req = ApiRequestBase<{
 }>;
 
 export type ProjectCommandTemplate_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type ProjectCommandTemplate_BuildForApp_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    id: string;
+}>;
+
+export type ProjectCommandTemplate_BuildForApp_Res = ApiResponseBase<{ command: string }>;

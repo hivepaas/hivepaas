@@ -1,6 +1,8 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useProjectCommandTemplateApi } from "~/projects/api/hooks";
 import type {
+    ProjectCommandTemplate_BuildForApp_Req,
+    ProjectCommandTemplate_BuildForApp_Res,
     ProjectCommandTemplate_CreateFromTemplate_Req,
     ProjectCommandTemplate_CreateFromTemplate_Res,
     ProjectCommandTemplate_CreateOne_Req,
@@ -131,10 +133,25 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
     });
 }
 
+type BuildForAppReq = ProjectCommandTemplate_BuildForApp_Req["data"];
+type BuildForAppRes = ProjectCommandTemplate_BuildForApp_Res;
+type BuildForAppOptions = Omit<UseMutationOptions<BuildForAppRes, Error, BuildForAppReq>, "mutationFn">;
+
+function useBuildForApp(options: BuildForAppOptions = {}) {
+    const { mutations } = useProjectCommandTemplateApi();
+
+    return useMutation({
+        mutationKey: [QK["projects.apps.command-templates.$.build"]],
+        mutationFn: mutations.buildForApp,
+        ...options,
+    });
+}
+
 export const ProjectCommandTemplateCommands = Object.freeze({
     useCreateOne,
     useCreateFromTemplate,
     useUpdateOne,
     useUpdateStatus,
     useDeleteOne,
+    useBuildForApp,
 });

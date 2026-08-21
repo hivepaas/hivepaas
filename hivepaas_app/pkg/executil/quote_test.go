@@ -30,6 +30,9 @@ func TestArgQuote(t *testing.T) {
 		{"'already quoted'", "'already quoted'"},
 		{"\"already double quoted\"", "\"already double quoted\""},
 		{"it's", "it\\'s"},
+		{"${HIVEPAAS_PORT}", "${HIVEPAAS_PORT}"},
+		{"localhost:${HIVEPAAS_PORT}", "localhost:${HIVEPAAS_PORT}"},
+		{"${CMD_CONN_ARGS}", "${CMD_CONN_ARGS}"},
 	}
 
 	for _, tt := range tests {

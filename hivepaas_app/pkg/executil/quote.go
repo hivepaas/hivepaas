@@ -24,6 +24,10 @@ func ArgQuote(arg string) string {
 	if IsQuoted(arg) {
 		return arg
 	}
+	// Do not escape template placeholders ${...} or single words without whitespace/quotes
+	if strings.Contains(arg, "${") || !strings.ContainsAny(arg, " \t\n\"'") {
+		return arg
+	}
 	return shellquote.Join(arg)
 }
 

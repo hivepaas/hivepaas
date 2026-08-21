@@ -54,6 +54,13 @@ func (s *service) processRefsRecursively(
 		visitingMap = make(map[string]struct{})
 	}
 
+	// Prevent infinite loop due to circular references (Call-stack based cycle detection)
+	if _, exists := visitingMap[env.Key]; exists {
+		return apperrors.Wrap(apperrors.ErrEnvVarCircularReference).WithParam("Name", env.Key)
+	}
+	visitingMap[env.Key] = struct{}{}
+	defer delete(visitingMap, env.Key)
+
 	replFunc := func(match string) string {
 		if gErr != nil {
 			return match
@@ -118,13 +125,6 @@ func (s *service) processRefsRecursively(
 			}
 			return val.Value
 		}
-
-		// Prevent infinite loop due to circular references
-		if _, exists := visitingMap[varName]; exists {
-			gErr = apperrors.Wrap(apperrors.ErrEnvVarCircularReference).WithParam("Name", varName)
-			return match
-		}
-		visitingMap[varName] = struct{}{}
 
 		refEnv, exists := data.EnvStore[varName]
 		if !exists {

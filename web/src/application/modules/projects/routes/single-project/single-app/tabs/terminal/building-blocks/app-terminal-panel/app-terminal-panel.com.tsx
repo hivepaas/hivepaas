@@ -409,7 +409,7 @@ export function AppTerminalPanel({
                     <Button
                         type="button"
                         variant="link"
-                        className="h-auto px-0 text-base"
+                        className="h-auto py-0 text-base"
                         onClick={openImportDialog}
                     >
                         <Upload className="size-4" />
@@ -418,7 +418,7 @@ export function AppTerminalPanel({
                     <Button
                         type="button"
                         variant="link"
-                        className="h-auto px-0 text-base"
+                        className="h-auto py-0 text-base"
                         onClick={openExportDialog}
                     >
                         <Download className="size-4" />

@@ -24,7 +24,6 @@ export default tseslint.config(
             ".understand-anything/**",
             "src/infrastructure/api/be-api/**",
             "src/components/ui/**",
-            "openapi-ts.config.ts",
             "vite.config.d.ts",
         ],
     },

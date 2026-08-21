@@ -10,7 +10,6 @@ Common scripts:
 - `npm run lint:ci`
 - `npm run build`
 - `npm run format:src`
-- `npm run codegen`
 - `npm run agents:check`
 
 ## Agent Quick Start

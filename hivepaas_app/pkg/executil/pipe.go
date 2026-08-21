@@ -51,23 +51,34 @@ func (w *safeWriter) Write(p []byte) (n int, err error) {
 	return
 }
 
+func (w *safeWriter) String() string {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.buf.String()
+}
+
 // RunPipeline executes a series of commands in a pipeline (cmd1 | cmd2 | ... | cmdN).
 // It connects the standard output of each command to the standard input of the next.
 // It combines the stdout of the final command and the stderr of all commands into a single output,
 // similar to cmd.CombinedOutput().
 func RunPipeline(cmds ...*exec.Cmd) (string, error) {
-	if len(cmds) == 0 {
+	numCmds := len(cmds)
+	if numCmds == 0 {
 		return "", nil
 	}
 
+	lastCmd := cmds[numCmds-1]
+	precedingCmds := cmds[:numCmds-1]
+
 	// 1. Pipe the stdout of each command to the stdin of the next command
-	for i := 0; i < len(cmds)-1; i++ {
-		stdout, err := cmds[i].StdoutPipe()
+	for i, nextCmd := range cmds[1:] {
+		prevCmd := cmds[i]
+		stdout, err := prevCmd.StdoutPipe()
 		if err != nil {
 			return "", fmt.Errorf("failed to create stdout pipe for command %d (%s): %w",
-				i, cmds[i].Path, err)
+				i, prevCmd.Path, err)
 		}
-		cmds[i+1].Stdin = stdout
+		nextCmd.Stdin = stdout
 	}
 
 	// 2. Retrieve a pooled buffer for the combined output and defer its return
@@ -79,32 +90,45 @@ func RunPipeline(cmds ...*exec.Cmd) (string, error) {
 	writer := &safeWriter{buf: outBuf}
 
 	// 3. Connect final stdout and all stderrs to the combined writer
-	cmds[len(cmds)-1].Stdout = writer
-	for i := range cmds {
-		cmds[i].Stderr = writer
+	lastCmd.Stdout = writer
+	for _, cmd := range cmds {
+		cmd.Stderr = writer
 	}
 
 	// 4. Start all preceding commands asynchronously
 	// Using Start() allows the commands to execute concurrently and stream data through pipes
-	for i := 0; i < len(cmds)-1; i++ {
-		if err := cmds[i].Start(); err != nil {
-			return outBuf.String(), fmt.Errorf("failed to start command %d (%s): %w",
-				i, cmds[i].Path, err)
+	var startedCmds []*exec.Cmd
+	for i, cmd := range precedingCmds {
+		if err := cmd.Start(); err != nil {
+			for _, started := range startedCmds {
+				_ = started.Wait()
+			}
+			return writer.String(), fmt.Errorf("failed to start command %d (%s): %w",
+				i, cmd.Path, err)
 		}
+		startedCmds = append(startedCmds, cmd)
 	}
 
 	// 5. Execute the final command synchronously (Run starts the command and waits for it to finish)
-	if err := cmds[len(cmds)-1].Run(); err != nil {
-		return outBuf.String(), fmt.Errorf("failed to run last command (%s): %w",
-			cmds[len(cmds)-1].Path, err)
-	}
+	lastErr := lastCmd.Run()
 
-	// 6. Wait for all preceding commands to release their resources and exit
-	for i := 0; i < len(cmds)-1; i++ {
-		if err := cmds[i].Wait(); err != nil {
-			return outBuf.String(), fmt.Errorf("command %d (%s) failed during wait: %w",
-				i, cmds[i].Path, err)
+	// 6. Always wait for all preceding commands to release their resources and flush I/O
+	var waitErr error
+	for i, cmd := range precedingCmds {
+		if err := cmd.Wait(); err != nil && waitErr == nil {
+			waitErr = fmt.Errorf("command %d (%s) failed during wait: %w",
+				i, cmd.Path, err)
 		}
 	}
-	return outBuf.String(), nil
+
+	output := writer.String()
+	if lastErr != nil {
+		return output, fmt.Errorf("failed to run last command (%s): %w",
+			lastCmd.Path, lastErr)
+	}
+	if waitErr != nil {
+		return output, waitErr
+	}
+
+	return output, nil
 }

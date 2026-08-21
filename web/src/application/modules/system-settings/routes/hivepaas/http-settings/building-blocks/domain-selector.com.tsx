@@ -205,7 +205,7 @@ export function DomainSelector({ activeDomainIndex, setActiveDomainIndex, readOn
                 title={
                     <LabelWithInfo
                         label="Domains"
-                        content="Manage domains for HivePaaS. The first domain is the default. Maximum 2 domains."
+                        content="Configure domains for HivePaaS. The first domain is the default. Maximum 2 domains."
                     />
                 }
             >

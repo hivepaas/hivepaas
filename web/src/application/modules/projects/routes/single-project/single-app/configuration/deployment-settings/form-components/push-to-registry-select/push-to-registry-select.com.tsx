@@ -99,7 +99,7 @@ export function PushToRegistrySelect({ readOnly = false }: Props) {
                         target="_blank"
                         rel="noopener noreferrer"
                     >
-                        Manage Image Registry Credentials
+                        Configure Registry Credentials
                     </AppLink.Basic>
                 </div>
             </Field>

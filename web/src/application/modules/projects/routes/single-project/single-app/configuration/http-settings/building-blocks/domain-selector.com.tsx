@@ -277,7 +277,7 @@ export function DomainSelector({
                     title={
                         <LabelWithInfo
                             label="Domains"
-                            content="Manage domains for this app. Click a domain to edit its settings."
+                            content="Configure domains for this app. Click a domain to edit its settings."
                         />
                     }
                 >

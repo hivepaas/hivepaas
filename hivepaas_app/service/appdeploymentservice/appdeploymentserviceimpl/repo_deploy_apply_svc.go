@@ -44,8 +44,8 @@ func (s *service) repoDeployStepServiceApply(
 		SkipSavingToDocker: true,
 	}
 
-	err = s.dockerManager.ServiceUpdateFunc(ctx, data.App.ServiceID,
-		func(i int, svc *swarm.Service) error {
+	err = s.dockerManager.ServiceUpdateFunc(ctx, data.App.ServiceID, nil,
+		func(i int, svc *swarm.Service) (bool, error) {
 			if i > 0 {
 				queryRegistry = true
 			}
@@ -57,10 +57,10 @@ func (s *service) repoDeployStepServiceApply(
 			placementReq.Service = svc
 			_, err := s.placementService.ApplyPlacementSettings(ctx, db, placementReq)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return false, apperrors.Wrap(err)
 			}
-			return nil
-		}, dockerServiceApplyRetryMax, 0, 0,
+			return true, nil
+		}, dockerServiceApplyRetryMax, 0,
 		func(options *client.ServiceUpdateOptions) {
 			options.EncodedRegistryAuth = regAuthHeader
 			options.QueryRegistry = queryRegistry

@@ -30,7 +30,7 @@ func (uc *UC) UpdateConfigFileStatus(
 					_, err = uc.ClusterSecretService.CreateConfigForApp(ctx, db, req.Scope.App, configFile)
 				} else {
 					// Delete the related config in docker swarm
-					err = uc.ClusterSecretService.DeleteConfigForApp(ctx, db, req.Scope.App, configFile)
+					err = uc.ClusterSecretService.RemoveConfigForApp(ctx, db, req.Scope.App, configFile)
 				}
 				if err != nil {
 					return apperrors.Wrap(err)

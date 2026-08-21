@@ -3,7 +3,6 @@ package envvarserviceimpl
 import (
 	"context"
 	"sort"
-	"time"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
@@ -14,8 +13,7 @@ import (
 )
 
 const (
-	applyEnvVarRetryMax   = 2
-	applyEnvVarRetryDelay = time.Second * 2
+	applyEnvVarRetryMax = 2
 )
 
 func (s *service) ApplyEnvVarsForApps(
@@ -68,18 +66,18 @@ func (s *service) applyEnvVarToService(
 		envVars = append(envVars, env.ToString("="))
 	}
 
-	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID,
-		func(_ int, service *swarm.Service) error {
+	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID, nil,
+		func(_ int, service *swarm.Service) (bool, error) {
 			if service.Spec.TaskTemplate.ContainerSpec == nil {
 				service.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
 			}
 			currEnvVars := service.Spec.TaskTemplate.ContainerSpec.Env
 			if gofn.ContentEqual(currEnvVars, envVars) { // No change
-				return nil
+				return false, nil
 			}
 			service.Spec.TaskTemplate.ContainerSpec.Env = envVars
-			return nil
-		}, applyEnvVarRetryMax, applyEnvVarRetryDelay, 0)
+			return true, nil
+		}, applyEnvVarRetryMax, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -161,12 +161,12 @@ func (uc *UC) applyAppServiceSettings(
 	req *appsettingsdto.UpdateAppServiceSettingsReq,
 	data *updateAppServiceSettingsData,
 ) error {
-	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID,
-		func(_ int, service *swarm.Service) error {
+	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID, data.Service,
+		func(_ int, service *swarm.Service) (bool, error) {
 			data.Service = service
 			uc.prepareUpdatingAppServiceSettings(req, data)
-			return nil
-		}, defaultServiceRetryMax, 0, 0)
+			return true, nil
+		}, defaultServiceRetryMax, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -3,7 +3,6 @@ package appserviceimpl
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/moby/moby/api/types/swarm"
 
@@ -19,7 +18,6 @@ import (
 const (
 	labelHivePaaSAppPrevServiceMode = "hivepaas.app.prevServiceMode"
 	serviceStatusUpdateRetryMax     = 2
-	serviceStatusUpdateRetryDelay   = 3 * time.Second
 )
 
 func (s *service) SetAppStatus(
@@ -91,21 +89,21 @@ func (s *service) SetAppRunning(ctx context.Context, app *entity.App, running bo
 	}
 }
 
-func (s *service) stopApp(ctx context.Context, app *entity.App, _ *swarm.Service) error {
+func (s *service) stopApp(ctx context.Context, app *entity.App, service *swarm.Service) error {
 	if app.ServiceID == "" {
 		return nil
 	}
 
-	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID,
-		func(_ int, service *swarm.Service) error {
+	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID, service,
+		func(_ int, service *swarm.Service) (bool, error) {
 			if service.Spec.Mode.Replicated != nil &&
 				(service.Spec.Mode.Replicated.Replicas == nil || *service.Spec.Mode.Replicated.Replicas == 0) {
-				return nil
+				return false, nil
 			}
 
 			prevSvcMode, err := json.Marshal(service.Spec.Mode)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return false, apperrors.Wrap(err)
 			}
 			if service.Spec.Labels == nil {
 				service.Spec.Labels = make(map[string]string)
@@ -118,27 +116,27 @@ func (s *service) stopApp(ctx context.Context, app *entity.App, _ *swarm.Service
 					Replicas: new(uint64(0)),
 				},
 			}
-			return nil
-		}, serviceStatusUpdateRetryMax, serviceStatusUpdateRetryDelay, 0)
+			return true, nil
+		}, serviceStatusUpdateRetryMax, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	return nil
 }
 
-func (s *service) startApp(ctx context.Context, app *entity.App, _ *swarm.Service) error {
+func (s *service) startApp(ctx context.Context, app *entity.App, service *swarm.Service) error {
 	if app.ServiceID == "" {
 		return nil
 	}
 
-	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID,
-		func(_ int, service *swarm.Service) error {
+	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID, service,
+		func(_ int, service *swarm.Service) (bool, error) {
 			prevSvcModeStr := service.Spec.Labels[labelHivePaaSAppPrevServiceMode]
 			if prevSvcModeStr != "" {
 				mode := swarm.ServiceMode{}
 				err := json.Unmarshal(reflectutil.UnsafeStrToBytes(prevSvcModeStr), &mode)
 				if err != nil {
-					return apperrors.Wrap(err)
+					return false, apperrors.Wrap(err)
 				}
 				service.Spec.Mode = mode
 				delete(service.Spec.Labels, labelHivePaaSAppPrevServiceMode)
@@ -149,8 +147,8 @@ func (s *service) startApp(ctx context.Context, app *entity.App, _ *swarm.Servic
 					},
 				}
 			}
-			return nil
-		}, serviceStatusUpdateRetryMax, serviceStatusUpdateRetryDelay, 0)
+			return true, nil
+		}, serviceStatusUpdateRetryMax, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

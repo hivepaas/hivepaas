@@ -162,10 +162,10 @@ func (m *manager) ServiceUpdate(
 func (m *manager) ServiceUpdateFunc(
 	ctx context.Context,
 	serviceID string,
-	fn func(int, *swarm.Service) error,
+	service *swarm.Service,
+	fn func(int, *swarm.Service) (bool, error),
 	retryMax int,
 	retryDelay time.Duration,
-	delayIncr time.Duration,
 	options ...ServiceUpdateOption,
 ) (err error) {
 	if serviceID == "" {
@@ -177,12 +177,8 @@ func (m *manager) ServiceUpdateFunc(
 
 	for i := range retryMax + 1 {
 		if i > 0 {
-			delay := retryDelay
-			if delayIncr > 0 {
-				delay += time.Duration(i-1) * delayIncr
-			}
-			if delay > 0 {
-				timer := time.NewTimer(delay)
+			if retryDelay > 0 {
+				timer := time.NewTimer(retryDelay)
 				select {
 				case <-ctx.Done():
 					timer.Stop()
@@ -192,20 +188,25 @@ func (m *manager) ServiceUpdateFunc(
 			}
 		}
 
-		inspect, e := m.ServiceInspect(ctx, serviceID)
-		if e != nil { // error, need to retry
-			err = apperrors.Wrap(e)
-			if errors.Is(e, apperrors.ErrNotFound) {
-				return err
+		if i > 0 || service == nil {
+			inspect, e := m.ServiceInspect(ctx, serviceID)
+			if e != nil { // error, need to retry
+				err = apperrors.Wrap(e)
+				if errors.Is(e, apperrors.ErrNotFound) {
+					return err
+				}
+				continue
 			}
-			continue
+			service = &inspect.Service
 		}
 
-		service := &inspect.Service
-		e = fn(i, service)
+		success, e := fn(i, service)
 		if e != nil { // error from user function, no retry
 			err = apperrors.Wrap(e)
 			return err
+		}
+		if !success { // the user doesn't want to continue the update
+			return nil
 		}
 
 		_, e = m.ServiceUpdate(ctx, serviceID, &service.Version, &service.Spec, options...)
@@ -214,8 +215,7 @@ func (m *manager) ServiceUpdateFunc(
 			continue
 		}
 
-		// successful, no need to retry
-		return nil
+		return nil // successful, no need to retry
 	}
 	if err != nil {
 		return apperrors.Wrap(err)

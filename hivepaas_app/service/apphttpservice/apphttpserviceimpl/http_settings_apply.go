@@ -2,20 +2,13 @@ package apphttpserviceimpl
 
 import (
 	"context"
-	"time"
 
-	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
-)
-
-const (
-	defaultServiceUpdateRetryMax   = 2
-	defaultServiceUpdateRetryDelay = time.Second * 2
 )
 
 func (s *service) applyHttpSettings(
@@ -50,21 +43,16 @@ func (s *service) applyHttpSettings(
 		return apperrors.Wrap(err)
 	}
 
-	if !data.SkipUpdatingService {
-		err = s.dockerManager.ServiceUpdateFunc(ctx, appSvc.ID,
-			func(_ int, svc *swarm.Service) error {
-				if !data.SkipApplyingNetworks {
-					if err := s.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, svc, data.HttpSettings); err != nil {
-						return apperrors.Wrap(err)
-					}
-				}
-				return nil
-			}, defaultServiceUpdateRetryMax, defaultServiceUpdateRetryDelay, 0)
+	if !data.SkipApplyingNetworks {
+		err = s.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, appSvc, data.HttpSettings)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
-	} else if !data.SkipApplyingNetworks {
-		err = s.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, appSvc, data.HttpSettings)
+	}
+
+	if !data.SkipUpdatingService {
+		// NOTE: don't use ServiceUpdateFunc in this context
+		_, err = s.dockerManager.ServiceUpdate(ctx, appSvc.ID, &appSvc.Version, &appSvc.Spec)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

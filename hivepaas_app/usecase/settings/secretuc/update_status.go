@@ -39,7 +39,7 @@ func (uc *UC) UpdateSecretStatus(
 					_, err = uc.ClusterSecretService.CreateSecretForApp(ctx, db, req.Scope.App, secret)
 				} else {
 					// Delete the related secret in the cluster
-					err = uc.ClusterSecretService.DeleteSecretForApp(ctx, db, req.Scope.App, secret)
+					err = uc.ClusterSecretService.RemoveSecretForApp(ctx, db, req.Scope.App, secret)
 				}
 				if err != nil {
 					return apperrors.Wrap(err)

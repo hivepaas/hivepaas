@@ -227,11 +227,11 @@ func (uc *UC) applyAppNetworkSettings(
 	req *appsettingsdto.UpdateAppNetworkSettingsReq,
 	data *updateAppNetworkSettingsData,
 ) error {
-	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID,
-		func(_ int, service *swarm.Service) error {
+	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID, data.Service,
+		func(_ int, service *swarm.Service) (bool, error) {
 			data.Service = service
-			return uc.prepareUpdatingAppNetworkSettings(req, data)
-		}, defaultServiceRetryMax, 0, 0)
+			return true, uc.prepareUpdatingAppNetworkSettings(req, data)
+		}, defaultServiceRetryMax, 0)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -145,6 +145,8 @@ export const QK = {
      */
     "projects.command-templates.$.find-many-paginated": "projects.command-templates.$.find-many-paginated",
     "projects.command-templates.$.find-one-by-id": "projects.command-templates.$.find-one-by-id",
+    "projects.env.command-templates.$.find-many-paginated": "projects.env.command-templates.$.find-many-paginated",
+    "projects.apps.command-templates.$.build": "projects.apps.command-templates.$.build",
     /*
      * Project SSL certs
      */

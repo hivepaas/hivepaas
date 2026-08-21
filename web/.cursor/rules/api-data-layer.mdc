@@ -37,5 +37,5 @@ alwaysApply: false
 # Generated API
 
 - Treat `src/infrastructure/api/be-api/**` as generated output.
-- Regenerate through the existing codegen scripts instead of manually editing generated files.
+- Do not manually edit generated files.
 - Do not add generated files to hand-written barrels unless nearby generated examples already do so.

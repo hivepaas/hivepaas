@@ -4,12 +4,16 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
 import type {
+    ProjectCommandTemplate_BuildForApp_Req,
+    ProjectCommandTemplate_BuildForApp_Res,
     ProjectCommandTemplate_CreateFromTemplate_Req,
     ProjectCommandTemplate_CreateFromTemplate_Res,
     ProjectCommandTemplate_CreateOne_Req,
     ProjectCommandTemplate_CreateOne_Res,
     ProjectCommandTemplate_DeleteOne_Req,
     ProjectCommandTemplate_DeleteOne_Res,
+    ProjectCommandTemplate_FindManyEnvPaginated_Req,
+    ProjectCommandTemplate_FindManyEnvPaginated_Res,
     ProjectCommandTemplate_FindManyPaginated_Req,
     ProjectCommandTemplate_FindManyPaginated_Res,
     ProjectCommandTemplate_FindOneById_Req,
@@ -42,6 +46,28 @@ export class ProjectCommandTemplateApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.findManyPaginated),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findManyEnvPaginated(
+        request: ProjectCommandTemplate_FindManyEnvPaginated_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectCommandTemplate_FindManyEnvPaginated_Res, Error>> {
+        const { projectID, env, search, pagination, sorting } = request.data;
+        const query = this.queryBuilder.getInstance();
+        query.pagination(pagination).sorting(sorting).search(search);
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/command-templates`, {
+                    params: query.build(),
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.findManyEnvPaginated),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -151,6 +177,20 @@ export class ProjectCommandTemplateApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.delete(`/projects/${projectID}/command-templates/${id}`)).pipe(
                 map(this.validator.deleteOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async buildForApp(
+        request: ProjectCommandTemplate_BuildForApp_Req,
+    ): Promise<Result<ProjectCommandTemplate_BuildForApp_Res, Error>> {
+        const { projectID, env, appID, id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/command-templates/${id}/build`, {})).pipe(
+                map(this.validator.buildForApp),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

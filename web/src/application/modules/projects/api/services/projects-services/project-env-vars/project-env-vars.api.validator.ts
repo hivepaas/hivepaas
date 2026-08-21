@@ -40,7 +40,9 @@ function toDomainEnvVar(envVar: z.infer<typeof ProjectBuildtimeEnvVarSchema>) {
  * Project env var schema
  */
 const ProjectEnvVarSchema = z.object({
+    inheritedBuildtimeEnvVars: z.array(ProjectBuildtimeEnvVarSchema).nullish(),
     buildtimeEnvVars: z.array(ProjectBuildtimeEnvVarSchema),
+    inheritedRuntimeEnvVars: z.array(ProjectRuntimeEnvVarSchema).nullish(),
     runtimeEnvVars: z.array(ProjectRuntimeEnvVarSchema),
     updateVer: z.number(),
 });
@@ -78,7 +80,13 @@ export class ProjectEnvVarsApiValidator {
 
         return {
             data: {
+                inheritedBuildtimeEnvVars: data?.inheritedBuildtimeEnvVars
+                    ? data.inheritedBuildtimeEnvVars.map(toDomainEnvVar)
+                    : [],
                 buildtime: data ? data.buildtimeEnvVars.map(toDomainEnvVar) : [],
+                inheritedRuntimeEnvVars: data?.inheritedRuntimeEnvVars
+                    ? data.inheritedRuntimeEnvVars.map(toDomainEnvVar)
+                    : [],
                 runtime: data ? data.runtimeEnvVars.map(toDomainEnvVar) : [],
                 updateVer: data?.updateVer ?? 0,
             },

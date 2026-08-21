@@ -3,9 +3,11 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
+    ProjectCommandTemplate_BuildForApp_Req,
     ProjectCommandTemplate_CreateFromTemplate_Req,
     ProjectCommandTemplate_CreateOne_Req,
     ProjectCommandTemplate_DeleteOne_Req,
+    ProjectCommandTemplate_FindManyEnvPaginated_Req,
     ProjectCommandTemplate_FindManyPaginated_Req,
     ProjectCommandTemplate_FindOneById_Req,
     ProjectCommandTemplate_UpdateOne_Req,
@@ -38,6 +40,29 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to get project Command Templates",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                findManyEnvPaginated: async (
+                    data: ProjectCommandTemplate_FindManyEnvPaginated_Req["data"],
+                    signal?: AbortSignal,
+                ) => {
+                    const result = await api.projects.commandTemplates.$.findManyEnvPaginated(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to get environment Command Templates",
                                 error,
                             });
 
@@ -149,6 +174,23 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to delete project Command Template",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                buildForApp: async (data: ProjectCommandTemplate_BuildForApp_Req["data"]) => {
+                    const result = await api.projects.commandTemplates.$.buildForApp({
+                        data,
+                    });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to build command template",
                                 error,
                             });
 

@@ -7,12 +7,13 @@ import { cn } from "@lib/utils";
 import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
-import { Download, Maximize2, Minimize2, Upload } from "lucide-react";
+import { Download, Maximize2, Minimize2, TextCursorInputIcon, Upload } from "lucide-react";
 import { useAppTerminalWsApi } from "~/projects/api";
 import { type AppTerminalInitMessage, buildAppTerminalResizeMessage } from "~/projects/api/services";
 import { useExportContainerFilesDialog } from "~/projects/dialogs/export-container-files";
 import { useImportFilesToContainerDialog } from "~/projects/dialogs/import-files-to-container";
 
+import { AppTerminalCommandTemplatePanel } from "./app-terminal-command-template-panel.com";
 import styles from "./app-terminal-panel.module.scss";
 
 const TERMINAL_HEIGHT = "clamp(700px, calc(100vh - 330px), 2000px)";
@@ -39,6 +40,7 @@ export function AppTerminalPanel({
     const inputEncoderRef = useRef(new TextEncoder());
     const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isCommandTemplatePanelOpen, setIsCommandTemplatePanelOpen] = useState(false);
     const [connectedInfo, setConnectedInfo] = useState<AppTerminalInitMessage | null>(null);
     const { streams } = useAppTerminalWsApi();
     const exportContainerFilesDialog = useExportContainerFilesDialog();
@@ -56,6 +58,11 @@ export function AppTerminalPanel({
 
     function openExportDialog() {
         exportContainerFilesDialog.actions.open(projectID, env, appID, nodeId, containerId);
+    }
+
+    function insertCommand(command: string) {
+        terminalRef.current?.paste(command);
+        terminalRef.current?.focus();
     }
 
     const sendResizeToSocket = useCallback((socket: WebSocket | undefined, width: number, height: number) => {
@@ -306,7 +313,7 @@ export function AppTerminalPanel({
     useEffect(() => {
         lastObservedFrameSizeRef.current = { clientWidth: 0, clientHeight: 0 };
         scheduleFitAndResize();
-    }, [isFullscreen, scheduleFitAndResize]);
+    }, [isCommandTemplatePanelOpen, isFullscreen, scheduleFitAndResize]);
 
     useEffect(() => {
         if (!isFullscreen) {
@@ -397,7 +404,7 @@ export function AppTerminalPanel({
                         <Button
                             type="button"
                             variant="link"
-                            className="h-auto px-0 text-base"
+                            className="h-auto px-0 py-0 text-base"
                             onClick={closeConnection}
                         >
                             Stop
@@ -409,7 +416,19 @@ export function AppTerminalPanel({
                     <Button
                         type="button"
                         variant="link"
-                        className="h-auto px-0 text-base"
+                        className="h-auto py-0 text-base"
+                        aria-pressed={isCommandTemplatePanelOpen}
+                        onClick={() => {
+                            setIsCommandTemplatePanelOpen(current => !current);
+                        }}
+                    >
+                        <TextCursorInputIcon className="size-4" />
+                        Insert Command
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto py-0 text-base"
                         onClick={openImportDialog}
                     >
                         <Upload className="size-4" />
@@ -418,7 +437,7 @@ export function AppTerminalPanel({
                     <Button
                         type="button"
                         variant="link"
-                        className="h-auto px-0 text-base"
+                        className="h-auto py-0 text-base"
                         onClick={openExportDialog}
                     >
                         <Download className="size-4" />
@@ -428,18 +447,27 @@ export function AppTerminalPanel({
             </div>
 
             <div
-                ref={terminalFrameRef}
-                className={cn(
-                    styles["terminalFrame"],
-                    "min-h-0 overflow-hidden border border-slate-800",
-                    isFullscreen ? "flex-1" : "w-full",
-                )}
+                className={cn("flex min-h-0 gap-4", isFullscreen ? "flex-1" : "w-full")}
                 style={isFullscreen ? undefined : { height: TERMINAL_HEIGHT }}
             >
                 <div
-                    ref={terminalElementRef}
-                    className={styles["terminalHost"]}
-                />
+                    ref={terminalFrameRef}
+                    className={cn(styles["terminalFrame"], "min-h-0 flex-1 overflow-hidden border border-slate-800")}
+                >
+                    <div
+                        ref={terminalElementRef}
+                        className={styles["terminalHost"]}
+                    />
+                </div>
+                {isCommandTemplatePanelOpen && (
+                    <AppTerminalCommandTemplatePanel
+                        projectID={projectID}
+                        env={env}
+                        appID={appID}
+                        isConnected={webSocketReadyState === WebSocket.OPEN}
+                        onInsertCommand={insertCommand}
+                    />
+                )}
             </div>
         </div>
     );

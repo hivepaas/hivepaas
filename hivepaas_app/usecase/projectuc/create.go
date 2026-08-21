@@ -209,16 +209,17 @@ func (uc *UC) preparePersistingProjectWebhook(
 	persistingData *persistingProjectData,
 ) {
 	setting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeProject,
-		ObjectID:  project.ID,
-		Type:      base.SettingTypeRepoWebhook,
-		Status:    base.SettingStatusActive,
-		Name:      projectWebhookName,
-		Default:   true,
-		Version:   entity.CurrentRepoWebhookVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeProject,
+		ObjectID:    project.ID,
+		Type:        base.SettingTypeRepoWebhook,
+		Status:      base.SettingStatusActive,
+		Name:        projectWebhookName,
+		Inheritable: true,
+		Default:     true,
+		Version:     entity.CurrentRepoWebhookVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	setting.MustSetData(&entity.RepoWebhook{
 		Secret: gofn.RandTokenAsHex(projectWebhookSecretLen),
@@ -232,16 +233,17 @@ func (uc *UC) preparePersistingProjectNotificationDefault(
 	persistingData *persistingProjectData,
 ) {
 	setting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeProject,
-		ObjectID:  project.ID,
-		Type:      base.SettingTypeNotification,
-		Status:    base.SettingStatusActive,
-		Name:      projectNotificationName,
-		Default:   true,
-		Version:   entity.CurrentNotificationVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeProject,
+		ObjectID:    project.ID,
+		Type:        base.SettingTypeNotification,
+		Status:      base.SettingStatusActive,
+		Name:        projectNotificationName,
+		Inheritable: true,
+		Default:     true,
+		Version:     entity.CurrentNotificationVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	setting.MustSetData(entity.NewNotificationDefaultForScope(entity.NewObjectScopeProject(project.ID)))
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)

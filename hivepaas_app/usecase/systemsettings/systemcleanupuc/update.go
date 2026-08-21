@@ -116,14 +116,15 @@ func (uc *UC) loadSettingData(
 	if jobSetting == nil {
 		timeNow := timeutil.NowUTC()
 		jobSetting = &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     req.Scope.ScopeType,
-			Type:      base.SettingTypeSchedJob,
-			Status:    base.SettingStatusActive,
-			Name:      cleanupJobName,
-			Version:   entity.CurrentSchedJobVersion,
-			CreatedAt: timeNow,
-			UpdatedAt: timeNow,
+			ID:          gofn.Must(ulid.NewStringULID()),
+			Scope:       req.Scope.ScopeType,
+			Type:        base.SettingTypeSchedJob,
+			Status:      base.SettingStatusActive,
+			Name:        cleanupJobName,
+			Inheritable: true,
+			Version:     entity.CurrentSchedJobVersion,
+			CreatedAt:   timeNow,
+			UpdatedAt:   timeNow,
 		}
 		schedJob := &entity.SchedJob{
 			JobType:       base.SchedJobTypeSystemCleanup,

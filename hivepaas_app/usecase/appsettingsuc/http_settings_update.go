@@ -157,12 +157,13 @@ func (uc *UC) prepareUpdatingAppHttpSettings(
 
 	if setting == nil {
 		setting = &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.ObjectScopeApp,
-			ObjectID:  app.ID,
-			Type:      base.SettingTypeAppHttp,
-			CreatedAt: timeNow,
-			Version:   entity.CurrentAppHttpSettingsVersion,
+			ID:          gofn.Must(ulid.NewStringULID()),
+			Scope:       base.ObjectScopeApp,
+			ObjectID:    app.ID,
+			Type:        base.SettingTypeAppHttp,
+			Inheritable: true,
+			CreatedAt:   timeNow,
+			Version:     entity.CurrentAppHttpSettingsVersion,
 		}
 		data.HttpSetting = setting
 	}

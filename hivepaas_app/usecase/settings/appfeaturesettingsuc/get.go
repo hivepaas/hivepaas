@@ -32,13 +32,14 @@ func (uc *UC) GetAppFeatureSettings(
 		timeNow := time.Now()
 		resp = &settings.GetUniqueSettingResp{
 			Data: &entity.Setting{
-				ID:        gofn.Must(ulid.NewStringULID()),
-				Scope:     req.Scope.ScopeType,
-				Type:      base.SettingTypeAppFeatures,
-				Status:    base.SettingStatusActive,
-				ObjectID:  req.Scope.ScopeObjectID(),
-				CreatedAt: timeNow,
-				UpdatedAt: timeNow,
+				ID:          gofn.Must(ulid.NewStringULID()),
+				Scope:       req.Scope.ScopeType,
+				Type:        base.SettingTypeAppFeatures,
+				Status:      base.SettingStatusActive,
+				ObjectID:    req.Scope.ScopeObjectID(),
+				Inheritable: true,
+				CreatedAt:   timeNow,
+				UpdatedAt:   timeNow,
 			},
 		}
 		featureSettings := &entity.AppFeatureSettings{}

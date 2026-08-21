@@ -171,7 +171,7 @@ func (uc *BaseUC) prepareUniqueSettingUpdate(
 			Status:      base.SettingStatusActive,
 			Name:        data.Name,
 			Kind:        data.Kind,
-			Inheritable: gofn.If(!req.Scope.IsGlobalScope(), false, req.Inheritable),
+			Inheritable: req.Inheritable,
 			Default:     req.Default,
 			Version:     data.Version,
 			CreatedAt:   timeNow,
@@ -181,7 +181,7 @@ func (uc *BaseUC) prepareUniqueSettingUpdate(
 		copySetting := *data.Setting
 		setting = &copySetting
 		setting.Name = gofn.Coalesce(data.Name, setting.Name)
-		setting.Inheritable = gofn.If(!req.Scope.IsGlobalScope(), false, req.Inheritable)
+		setting.Inheritable = req.Inheritable
 		setting.Default = req.Default
 		setting.UpdateVer++
 		setting.UpdatedAt = timeNow

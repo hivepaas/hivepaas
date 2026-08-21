@@ -68,6 +68,7 @@ func (s *service) CreateProjectDefaultVolume(
 		Kind:            string(driver),
 		Status:          base.SettingStatusActive,
 		Name:            "default",
+		Inheritable:     true,
 		Default:         true,
 		Version:         entity.CurrentClusterVolumeVersion,
 		UpdateVer:       1,

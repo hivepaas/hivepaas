@@ -106,12 +106,13 @@ func (uc *UC) prepareUpdatingAppCloneSettings(
 
 	if setting == nil {
 		setting = &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.ObjectScopeApp,
-			ObjectID:  app.ID,
-			Type:      base.SettingTypeAppClone,
-			CreatedAt: timeNow,
-			Version:   entity.CurrentAppCloneSettingsVersion,
+			ID:          gofn.Must(ulid.NewStringULID()),
+			Scope:       base.ObjectScopeApp,
+			ObjectID:    app.ID,
+			Type:        base.SettingTypeAppClone,
+			Inheritable: true,
+			CreatedAt:   timeNow,
+			Version:     entity.CurrentAppCloneSettingsVersion,
 		}
 		data.AppCloneSetting = setting
 	}

@@ -36,14 +36,15 @@ func (s *service) initRootProjectMainApp(
 
 	// Add service settings for the app
 	dbServiceSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.HivepaasScope,
-		Type:      base.SettingTypeHivePaaSService,
-		Status:    base.SettingStatusActive,
-		Name:      "Service settings",
-		Version:   entity.CurrentHivePaaSServiceVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.HivepaasScope,
+		Type:        base.SettingTypeHivePaaSService,
+		Status:      base.SettingStatusActive,
+		Name:        "Service settings",
+		Inheritable: true,
+		Version:     entity.CurrentHivePaaSServiceVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	dbServiceSetting.MustSetData(&entity.HivePaaSService{
 		AppSettings: entity.HivePaaSAppSettings{
@@ -66,14 +67,15 @@ func (s *service) initRootProjectMainApp(
 
 	// Add HTTP settings for the main app
 	dbHttpSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeApp,
-		ObjectID:  app.ID,
-		Type:      base.SettingTypeAppHttp,
-		Status:    base.SettingStatusActive,
-		Version:   entity.CurrentAppHttpSettingsVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeApp,
+		ObjectID:    app.ID,
+		Type:        base.SettingTypeAppHttp,
+		Status:      base.SettingStatusActive,
+		Inheritable: true,
+		Version:     entity.CurrentAppHttpSettingsVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	httpSettings := &entity.AppHttpSettings{
 		Port:           cfg.HTTPServer.Port,
@@ -91,14 +93,15 @@ func (s *service) initRootProjectMainApp(
 
 	// Sync env-vars from the swarm service
 	dbEnvVarsSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeApp,
-		ObjectID:  app.ID,
-		Type:      base.SettingTypeEnvVar,
-		Status:    base.SettingStatusActive,
-		Version:   entity.CurrentEnvVarsVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeApp,
+		ObjectID:    app.ID,
+		Type:        base.SettingTypeEnvVar,
+		Status:      base.SettingStatusActive,
+		Inheritable: true,
+		Version:     entity.CurrentEnvVarsVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	envVars := &entity.EnvVars{}
 	var newEnv []string

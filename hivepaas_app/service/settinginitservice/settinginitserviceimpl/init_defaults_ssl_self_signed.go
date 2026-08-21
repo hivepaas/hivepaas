@@ -62,16 +62,17 @@ func (s *service) initDefaultSSLSelfSigned(
 
 	// SSL cert settings
 	sslSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeGlobal,
-		Type:      base.SettingTypeSSLCert,
-		Kind:      string(base.SSLCertTypeSelfSigned),
-		Status:    base.SettingStatusActive,
-		Name:      domain,
-		Default:   true,
-		Version:   entity.CurrentSSLCertVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeGlobal,
+		Type:        base.SettingTypeSSLCert,
+		Kind:        string(base.SSLCertTypeSelfSigned),
+		Status:      base.SettingStatusActive,
+		Name:        domain,
+		Inheritable: true,
+		Default:     true,
+		Version:     entity.CurrentSSLCertVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	sslCert := &entity.SSLCert{
 		CertType:      base.SSLCertTypeSelfSigned,

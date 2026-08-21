@@ -96,14 +96,15 @@ func (uc *UC) calcUpsertingScriptSettings(
 
 func newScriptSetting(jobSetting *entity.Setting, timeNow time.Time) *entity.Setting {
 	return &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     jobSetting.Scope,
-		ObjectID:  jobSetting.ObjectID,
-		Type:      base.SettingTypeScript,
-		Status:    base.SettingStatusActive,
-		Name:      "script of cmd template: " + jobSetting.Name,
-		Version:   entity.CurrentScriptVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       jobSetting.Scope,
+		ObjectID:    jobSetting.ObjectID,
+		Type:        base.SettingTypeScript,
+		Status:      base.SettingStatusActive,
+		Name:        "script of cmd template: " + jobSetting.Name,
+		Inheritable: jobSetting.Inheritable,
+		Version:     entity.CurrentScriptVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 }

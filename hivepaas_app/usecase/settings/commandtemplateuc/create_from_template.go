@@ -82,6 +82,8 @@ func (uc *UC) createTemplatedCommand(
 		return nil, nil, apperrors.Wrap(err)
 	}
 
+	cmdSetting.Inheritable = req.Inheritable
+
 	return cmdSetting, cmdTpl, nil
 }
 

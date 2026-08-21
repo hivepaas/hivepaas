@@ -78,7 +78,7 @@ func (uc *UC) loadSettingsForImport(
 		return apperrors.Wrap(err)
 	}
 	for _, setting := range settings {
-		// Ignore if the setting belongs to the project already
+		// Ignore if the setting belongs to the project env already
 		if setting.ObjectID != data.ProjectEnv.ID {
 			data.Settings = append(data.Settings, setting)
 		}

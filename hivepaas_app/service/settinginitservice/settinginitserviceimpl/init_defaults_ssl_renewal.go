@@ -30,14 +30,15 @@ func (s *service) initDefaultSSLRenewal(
 ) (err error) {
 	// Renewal settings
 	renewalSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.HivepaasScope,
-		Type:      base.SettingTypeSSLRenewal,
-		Status:    sslRenewalDefaultStatus,
-		Name:      sslRenewalSettingName,
-		Version:   entity.CurrentSSLRenewalVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.HivepaasScope,
+		Type:        base.SettingTypeSSLRenewal,
+		Status:      sslRenewalDefaultStatus,
+		Name:        sslRenewalSettingName,
+		Inheritable: false,
+		Version:     entity.CurrentSSLRenewalVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	renewal := &entity.SSLRenewal{
 		Schedule: entity.SchedJobSchedule{
@@ -53,15 +54,16 @@ func (s *service) initDefaultSSLRenewal(
 
 	// Renewal job
 	jobSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.HivepaasScope,
-		Type:      base.SettingTypeSchedJob,
-		Kind:      string(base.SchedJobTypeSSLRenewal),
-		Status:    sslRenewalDefaultStatus,
-		Name:      sslRenewalJobName,
-		Version:   entity.CurrentSchedJobVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.HivepaasScope,
+		Type:        base.SettingTypeSchedJob,
+		Kind:        string(base.SchedJobTypeSSLRenewal),
+		Status:      sslRenewalDefaultStatus,
+		Name:        sslRenewalJobName,
+		Inheritable: false,
+		Version:     entity.CurrentSchedJobVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	schedJob := &entity.SchedJob{
 		JobType:       base.SchedJobTypeSSLRenewal,

@@ -285,13 +285,14 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 	// Init empty http settings
 	httpSettings := &entity.AppHttpSettings{}
 	dbHttpSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeApp,
-		Type:      base.SettingTypeAppHttp,
-		Status:    base.SettingStatusActive,
-		ObjectID:  app.ID,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeApp,
+		Type:        base.SettingTypeAppHttp,
+		Status:      base.SettingStatusActive,
+		ObjectID:    app.ID,
+		Inheritable: true,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	dbHttpSetting.MustSetData(httpSettings)
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbHttpSetting)
@@ -300,13 +301,14 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 	featureSettings := &entity.AppFeatureSettings{}
 	entity.InitAppFeatureSettingsDefault(featureSettings)
 	dbFeatureSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeApp,
-		Type:      base.SettingTypeAppFeatures,
-		Status:    base.SettingStatusActive,
-		ObjectID:  app.ID,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeApp,
+		Type:        base.SettingTypeAppFeatures,
+		Status:      base.SettingStatusActive,
+		ObjectID:    app.ID,
+		Inheritable: true,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	dbFeatureSetting.MustSetData(featureSettings)
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbFeatureSetting)

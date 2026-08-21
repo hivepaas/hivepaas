@@ -132,12 +132,13 @@ func (uc *UC) prepareUpdatingProjectEnvVars(
 
 	if setting == nil {
 		setting = &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.ObjectScopeProject,
-			ObjectID:  project.ID,
-			Type:      base.SettingTypeEnvVar,
-			CreatedAt: timeNow,
-			Version:   entity.CurrentEnvVarsVersion,
+			ID:          gofn.Must(ulid.NewStringULID()),
+			Scope:       base.ObjectScopeProject,
+			ObjectID:    project.ID,
+			Type:        base.SettingTypeEnvVar,
+			Inheritable: true,
+			CreatedAt:   timeNow,
+			Version:     entity.CurrentEnvVarsVersion,
 		}
 	}
 	setting.UpdateVer++

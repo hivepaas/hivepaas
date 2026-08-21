@@ -180,7 +180,7 @@ func (uc *BaseUC) prepareSettingUpdate(
 	copySetting := *data.Setting
 	setting := &copySetting
 	setting.Name = gofn.Coalesce(data.VerifyingName, setting.Name)
-	setting.Inheritable = gofn.If(!req.Scope.IsGlobalScope(), false, req.Inheritable)
+	setting.Inheritable = req.Inheritable
 	setting.Default = req.Default
 	setting.UpdateVer++
 	setting.UpdatedAt = timeNow

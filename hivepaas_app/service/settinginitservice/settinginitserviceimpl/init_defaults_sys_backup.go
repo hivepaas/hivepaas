@@ -32,14 +32,15 @@ func (s *service) initDefaultSystemBackup(
 ) (err error) {
 	// Backup settings
 	backupSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.HivepaasScope,
-		Type:      base.SettingTypeSystemBackup,
-		Status:    sysBackupDefaultStatus,
-		Name:      sysBackupSettingName,
-		Version:   entity.CurrentSystemBackupVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.HivepaasScope,
+		Type:        base.SettingTypeSystemBackup,
+		Status:      sysBackupDefaultStatus,
+		Name:        sysBackupSettingName,
+		Inheritable: false,
+		Version:     entity.CurrentSystemBackupVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	backup := &entity.SystemBackup{
 		Schedule: entity.SchedJobSchedule{
@@ -64,15 +65,16 @@ func (s *service) initDefaultSystemBackup(
 
 	// Backup job
 	jobSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.HivepaasScope,
-		Type:      base.SettingTypeSchedJob,
-		Kind:      string(base.SchedJobTypeSystemBackup),
-		Status:    sysBackupDefaultStatus,
-		Name:      sysBackupJobName,
-		Version:   entity.CurrentSchedJobVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.HivepaasScope,
+		Type:        base.SettingTypeSchedJob,
+		Kind:        string(base.SchedJobTypeSystemBackup),
+		Status:      sysBackupDefaultStatus,
+		Name:        sysBackupJobName,
+		Inheritable: false,
+		Version:     entity.CurrentSchedJobVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	schedJob := &entity.SchedJob{
 		JobType:       base.SchedJobTypeSystemBackup,

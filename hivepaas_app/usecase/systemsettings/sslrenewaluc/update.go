@@ -117,15 +117,16 @@ func (uc *UC) loadSettingData(
 	if jobSetting == nil {
 		timeNow := timeutil.NowUTC()
 		jobSetting = &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     req.Scope.ScopeType,
-			Type:      base.SettingTypeSchedJob,
-			Kind:      string(base.SchedJobTypeSSLRenewal),
-			Status:    base.SettingStatusActive,
-			Name:      renewalJobName,
-			Version:   entity.CurrentSchedJobVersion,
-			CreatedAt: timeNow,
-			UpdatedAt: timeNow,
+			ID:          gofn.Must(ulid.NewStringULID()),
+			Scope:       req.Scope.ScopeType,
+			Type:        base.SettingTypeSchedJob,
+			Kind:        string(base.SchedJobTypeSSLRenewal),
+			Status:      base.SettingStatusActive,
+			Name:        renewalJobName,
+			Inheritable: true,
+			Version:     entity.CurrentSchedJobVersion,
+			CreatedAt:   timeNow,
+			UpdatedAt:   timeNow,
 		}
 		schedJob := &entity.SchedJob{
 			JobType:       base.SchedJobTypeSSLRenewal,

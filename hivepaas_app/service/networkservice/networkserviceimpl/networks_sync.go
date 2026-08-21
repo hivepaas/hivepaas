@@ -49,19 +49,17 @@ func (s *service) SyncNetworks(
 
 		if setting == nil {
 			setting = &entity.Setting{
-				ID:      gofn.Must(ulid.NewStringULID()),
-				Scope:   base.ObjectScopeGlobal,
-				Type:    currentSettingType,
-				Kind:    net.Driver,
-				Status:  base.SettingStatusActive,
-				Name:    net.Name,
-				Version: currentSettingVersion,
+				ID:          gofn.Must(ulid.NewStringULID()),
+				Scope:       base.ObjectScopeGlobal,
+				Type:        currentSettingType,
+				Kind:        net.Driver,
+				Status:      base.SettingStatusActive,
+				Name:        net.Name,
+				Inheritable: net.Name == base.NetworkGlobalRouting,
+				Version:     currentSettingVersion,
 			}
 			volEntity := &entity.ClusterNetwork{
 				RefID: net.ID,
-			}
-			if net.Name == base.NetworkGlobalRouting {
-				setting.Inheritable = true
 			}
 			if err := setting.SetData(volEntity); err != nil {
 				return nil, apperrors.Wrap(err)

@@ -42,14 +42,15 @@ func (s *service) initDefaultSystemCleanup(
 ) (err error) {
 	// Cleanup settings
 	cleanupSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.HivepaasScope,
-		Type:      base.SettingTypeSystemCleanup,
-		Status:    sysCleanupDefaultStatus,
-		Name:      sysCleanupSettingName,
-		Version:   entity.CurrentSystemCleanupVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.HivepaasScope,
+		Type:        base.SettingTypeSystemCleanup,
+		Status:      sysCleanupDefaultStatus,
+		Name:        sysCleanupSettingName,
+		Inheritable: false,
+		Version:     entity.CurrentSystemCleanupVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	cleanup := &entity.SystemCleanup{
 		Schedule: entity.SchedJobSchedule{
@@ -94,15 +95,16 @@ func (s *service) initDefaultSystemCleanup(
 
 	// Cleanup job
 	jobSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.HivepaasScope,
-		Type:      base.SettingTypeSchedJob,
-		Kind:      string(base.SchedJobTypeSystemCleanup),
-		Status:    sysCleanupDefaultStatus,
-		Name:      sysCleanupJobName,
-		Version:   entity.CurrentSchedJobVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.HivepaasScope,
+		Type:        base.SettingTypeSchedJob,
+		Kind:        string(base.SchedJobTypeSystemCleanup),
+		Status:      sysCleanupDefaultStatus,
+		Name:        sysCleanupJobName,
+		Inheritable: false,
+		Version:     entity.CurrentSchedJobVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	schedJob := &entity.SchedJob{
 		JobType:       base.SchedJobTypeSystemCleanup,

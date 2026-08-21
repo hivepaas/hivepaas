@@ -150,12 +150,13 @@ func (uc *UC) prepareUpdatingAppDeploymentSettings(
 
 	if setting == nil {
 		setting = &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.ObjectScopeApp,
-			ObjectID:  app.ID,
-			Type:      base.SettingTypeAppDeployment,
-			CreatedAt: timeNow,
-			Version:   entity.CurrentAppDeploymentSettingsVersion,
+			ID:          gofn.Must(ulid.NewStringULID()),
+			Scope:       base.ObjectScopeApp,
+			ObjectID:    app.ID,
+			Type:        base.SettingTypeAppDeployment,
+			Inheritable: true,
+			CreatedAt:   timeNow,
+			Version:     entity.CurrentAppDeploymentSettingsVersion,
 		}
 		data.DeploymentSetting = setting
 	}

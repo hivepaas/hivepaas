@@ -69,14 +69,15 @@ func (s *service) GetOrCreateProjectNetwork(
 		hasChange = true
 		timeNow := time.Now()
 		setting = &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     base.ObjectScopeProject,
-			ObjectID:  project.ID,
-			Type:      base.SettingTypeClusterNetwork,
-			Status:    base.SettingStatusActive,
-			Default:   true,
-			CreatedAt: timeNow,
-			UpdatedAt: timeNow,
+			ID:          gofn.Must(ulid.NewStringULID()),
+			Scope:       base.ObjectScopeProject,
+			ObjectID:    project.ID,
+			Type:        base.SettingTypeClusterNetwork,
+			Status:      base.SettingStatusActive,
+			Inheritable: true,
+			Default:     true,
+			CreatedAt:   timeNow,
+			UpdatedAt:   timeNow,
 		}
 	}
 	if setting.Kind != inspect.Network.Driver {

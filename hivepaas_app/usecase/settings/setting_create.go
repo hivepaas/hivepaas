@@ -152,7 +152,7 @@ func (uc *BaseUC) prepareSettingCreation(
 		Type:        req.Type,
 		Status:      base.SettingStatusActive,
 		Name:        data.VerifyingName,
-		Inheritable: gofn.If(!req.Scope.IsGlobalScope(), false, req.Inheritable),
+		Inheritable: req.Inheritable,
 		Default:     req.Default,
 		Version:     data.Version,
 		CreatedAt:   timeNow,

@@ -29,14 +29,15 @@ func (s *service) initRootProjectTraefikApp(
 
 	// Add service settings for the app
 	dbServiceSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.HivepaasScope,
-		Type:      base.SettingTypeTraefikService,
-		Status:    base.SettingStatusActive,
-		Name:      "Service settings",
-		Version:   entity.CurrentTraefikServiceVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.HivepaasScope,
+		Type:        base.SettingTypeTraefikService,
+		Status:      base.SettingStatusActive,
+		Name:        "Service settings",
+		Inheritable: true,
+		Version:     entity.CurrentTraefikServiceVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	serviceSetting := &entity.TraefikService{
 		AppSettings: entity.TraefikAppSettings{
@@ -47,14 +48,15 @@ func (s *service) initRootProjectTraefikApp(
 
 	// Sync env-vars from the swarm service
 	dbEnvVarsSetting := &entity.Setting{
-		ID:        gofn.Must(ulid.NewStringULID()),
-		Scope:     base.ObjectScopeApp,
-		ObjectID:  app.ID,
-		Type:      base.SettingTypeEnvVar,
-		Status:    base.SettingStatusActive,
-		Version:   entity.CurrentEnvVarsVersion,
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeApp,
+		ObjectID:    app.ID,
+		Type:        base.SettingTypeEnvVar,
+		Status:      base.SettingStatusActive,
+		Inheritable: true,
+		Version:     entity.CurrentEnvVarsVersion,
+		CreatedAt:   timeNow,
+		UpdatedAt:   timeNow,
 	}
 	envVars := &entity.EnvVars{}
 	var newEnv []string

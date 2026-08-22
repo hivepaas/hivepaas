@@ -10,6 +10,19 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
+type StatusCodeError struct {
+	Code   int
+	Status string
+}
+
+func (e *StatusCodeError) Error() string {
+	return fmt.Sprintf("telegram server error: %s", e.Status)
+}
+
+func (e *StatusCodeError) Retryable() bool {
+	return e.Code >= http.StatusInternalServerError || e.Code == http.StatusTooManyRequests
+}
+
 type sendMessagePayload struct {
 	ChatID    string `json:"chat_id"`
 	Text      string `json:"text"`
@@ -42,8 +55,8 @@ func (c *Client) SendMessage(ctx context.Context, botToken, chatID, text, parseM
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode >= 400 { //nolint:mnd
-		return apperrors.Wrap(apperrors.ErrHTTPRequestFailed).WithParam("StatusCode", resp.StatusCode)
+	if resp.StatusCode >= http.StatusBadRequest {
+		return &StatusCodeError{Code: resp.StatusCode, Status: resp.Status}
 	}
 
 	return nil

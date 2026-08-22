@@ -14,7 +14,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
-	"github.com/hivepaas/hivepaas/services/email"
 )
 
 func (s *service) NotifyForTaskResult(
@@ -202,7 +201,7 @@ func (s *service) notifyForTaskResultViaEmail(
 		subject = gofn.If(data.ActionSucceeded, "Action succeeded", "Action failed")
 	}
 
-	err = email.SendMail(ctx, emailAcc, userEmails, subject, buf.String())
+	err = s.emailSendMsg(ctx, emailAcc, userEmails, subject, buf.String())
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

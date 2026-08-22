@@ -17,9 +17,22 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/httpclient"
 )
 
+type StatusCodeError struct {
+	Code   int
+	Status string
+}
+
+func (e *StatusCodeError) Error() string {
+	return fmt.Sprintf("sending email via HTTP failed with status: %s", e.Status)
+}
+
+func (e *StatusCodeError) Retryable() bool {
+	return e.Code >= http.StatusInternalServerError || e.Code == http.StatusTooManyRequests
+}
+
 //nolint:gocognit
 func SendMail(
-	_ context.Context,
+	ctx context.Context,
 	conf *entity.EmailHTTP,
 	recipients []string,
 	subject string,
@@ -65,7 +78,7 @@ func SendMail(
 				return apperrors.Wrap(err)
 			}
 
-			req, err = http.NewRequest(string(conf.Method), conf.Endpoint, bytes.NewBuffer(dataBytes))
+			req, err = http.NewRequestWithContext(ctx, string(conf.Method), conf.Endpoint, bytes.NewBuffer(dataBytes))
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -82,7 +95,8 @@ func SendMail(
 				formValues.Add(gofn.Coalesce(toAddressesField, toAddressField), strings.Join(recipients, ","))
 			}
 
-			req, err = http.NewRequest(string(conf.Method), conf.Endpoint, strings.NewReader(formValues.Encode()))
+			req, err = http.NewRequestWithContext(ctx, string(conf.Method), conf.Endpoint,
+				strings.NewReader(formValues.Encode()))
 			if err != nil {
 				return apperrors.Wrap(err)
 			}
@@ -91,7 +105,7 @@ func SendMail(
 		req.Header.Set("Content-Type", contentType)
 
 	case base.HTTPMethodGet:
-		req, err = http.NewRequest(string(conf.Method), conf.Endpoint, nil)
+		req, err = http.NewRequestWithContext(ctx, string(conf.Method), conf.Endpoint, nil)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -129,9 +143,8 @@ func SendMail(
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("%w: sending email via HTTP requests failed with status: %s",
-			apperrors.ErrActionFailed, resp.Status)
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return &StatusCodeError{Code: resp.StatusCode, Status: resp.Status}
 	}
 	return nil
 }

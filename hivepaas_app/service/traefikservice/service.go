@@ -17,4 +17,6 @@ type Service interface {
 
 	ApplyAppConfig(ctx context.Context, db database.IDB, req *ApplyAppConfigReq) (*ApplyAppConfigResp, error)
 	RemoveAppConfig(ctx context.Context, db database.IDB, req *RemoveAppConfigReq) (*RemoveAppConfigResp, error)
+
+	ApplyTrustedIPsToWebEntrypoints(ctx context.Context, req *ApplyTrustedIPsReq) (*ApplyTrustedIPsResp, error)
 }

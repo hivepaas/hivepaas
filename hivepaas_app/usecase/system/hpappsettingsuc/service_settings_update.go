@@ -3,9 +3,6 @@ package hpappsettingsuc
 import (
 	"context"
 	"errors"
-	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -18,8 +15,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/traefikhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
 
@@ -87,7 +84,9 @@ func (uc *UC) UpdateServiceSettings(
 
 	// Apply trusted IPs to traefik if configured
 	if req.ProxySettings.ProxyProvider != "" {
-		e := uc.applyTrustedIPsToTraefik(ctx, req.ProxySettings.TrustedIPs)
+		_, e := uc.traefikService.ApplyTrustedIPsToWebEntrypoints(ctx, &traefikservice.ApplyTrustedIPsReq{
+			TrustedIPs: req.ProxySettings.TrustedIPs,
+		})
 		err = errors.Join(err, e)
 	}
 
@@ -256,84 +255,5 @@ func (uc *UC) applyServiceSettingsToWorkerService(
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	return nil
-}
-
-func (uc *UC) applyTrustedIPsToTraefik(
-	ctx context.Context,
-	trustedIPs []string,
-) error {
-	traefikSvc, err := uc.traefikService.GetTraefikSwarmService(ctx)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	if traefikSvc == nil {
-		return nil
-	}
-
-	if traefikSvc.Spec.TaskTemplate.ContainerSpec == nil {
-		traefikSvc.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
-	}
-
-	sort.Strings(trustedIPs)
-	trustedIPsStr := strings.Join(trustedIPs, ",")
-	epWeb := "entrypoints.web.forwardedheaders.trustedips"
-	epWebsecure := "entrypoints.websecure.forwardedheaders.trustedips"
-	hasEpWebTrustedIPs := false
-	hasEpWebsecureTrustedIPs := false
-	hasChanges := false
-
-	existingArgs := traefikSvc.Spec.TaskTemplate.ContainerSpec.Args
-	newArgs := make([]string, 0, len(existingArgs)+2) //nolint:mnd
-	for _, arg := range existingArgs {
-		key, val, valid := traefikhelper.ParseCommandArg(arg)
-		if !valid {
-			newArgs = append(newArgs, arg)
-			continue
-		}
-		if key == epWeb {
-			hasEpWebTrustedIPs = true
-			if val != trustedIPsStr && trustedIPsStr != "" {
-				newArgs = append(newArgs, fmt.Sprintf("--%s=%s", epWeb, trustedIPsStr))
-				hasChanges = true
-				continue
-			}
-		}
-		if key == epWebsecure {
-			hasEpWebsecureTrustedIPs = true
-			if val != trustedIPsStr && trustedIPsStr != "" {
-				newArgs = append(newArgs, fmt.Sprintf("--%s=%s", epWebsecure, trustedIPsStr))
-				hasChanges = true
-				continue
-			}
-		}
-		newArgs = append(newArgs, arg) // keeps other args
-	}
-
-	if !hasEpWebTrustedIPs && trustedIPsStr != "" {
-		newArgs = append(newArgs, fmt.Sprintf("--%s=%s", epWeb, trustedIPsStr))
-		hasChanges = true
-	}
-	if !hasEpWebsecureTrustedIPs && trustedIPsStr != "" {
-		newArgs = append(newArgs, fmt.Sprintf("--%s=%s", epWebsecure, trustedIPsStr))
-		hasChanges = true
-	}
-	if !hasChanges {
-		return nil
-	}
-
-	traefikSvc.Spec.TaskTemplate.ContainerSpec.Args = newArgs
-
-	if traefikSvc.Spec.UpdateConfig == nil {
-		traefikSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
-	}
-	traefikSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
-	traefikSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
-
-	_, err = uc.dockerManager.ServiceUpdate(ctx, traefikSvc.ID, &traefikSvc.Version, &traefikSvc.Spec)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
 	return nil
 }

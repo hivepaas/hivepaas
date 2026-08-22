@@ -631,7 +631,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 		key := newLink.GetKey()
 		if currLink, ok := mapCurrLinks[key]; ok {
 			delete(mapCurrLinks, key)
-			if currLink.Data != newLink.Data {
+			if currLink.Index != newLink.Index || currLink.Data != newLink.Data {
 				upsertingLinks = append(upsertingLinks, newLink)
 			}
 		} else { // No existing link in the current map, need to add

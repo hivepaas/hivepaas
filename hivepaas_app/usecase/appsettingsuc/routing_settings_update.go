@@ -140,7 +140,7 @@ func (uc *UC) loadAppRoutingSettingsForUpdate(
 	newPort = newRoutingSettings.Port
 	if newRoutingSettings.ExposePublicly && len(newRoutingSettings.Domains) > 0 &&
 		newRoutingSettings.Domains[0].Enabled {
-		oldDomain = newRoutingSettings.Domains[0].Domain
+		newDomain = newRoutingSettings.Domains[0].Domain
 	}
 	data.PortChanged = oldPort != newPort
 	data.DomainChanged = oldDomain != newDomain

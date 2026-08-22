@@ -20,10 +20,12 @@ func (s *service) BuildSystemEnvVarsInApp(
 	req *envvarservice.BuildSystemEnvVarsInAppReq,
 ) ([]*envvarservice.EnvVar, error) {
 	routeLinks, _, err := s.resLinkRepo.List(ctx, db, nil,
-		bunex.SelectJoin("JOIN settings ON settings.id = res_link.src_id"),
+		bunex.SelectJoin("JOIN settings ON settings.id = res_link.src_id AND settings.deleted_at IS NULL"),
 		bunex.SelectWhere("res_link.src_type = ?", base.ResourceTypeSetting),
+		bunex.SelectWhere("settings.type = ?", base.SettingTypeAppRouting),
 		bunex.SelectWhere("settings.object_id = ?", req.App.ID),
 		bunex.SelectWhereIn("res_link.dst_type IN (?)", base.ResourceTypePort, base.ResourceTypeDomain),
+		bunex.SelectOrder("res_link.index"),
 	)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

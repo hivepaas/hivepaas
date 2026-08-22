@@ -150,6 +150,17 @@ func (s *AppRoutingSettings) GetActiveDomainNames() (res []string) {
 	return res
 }
 
+func (s *AppRoutingSettings) GetActivePorts() []int {
+	activePorts := []int{s.Port}
+	for _, domain := range s.Domains {
+		if !domain.Enabled {
+			continue
+		}
+		activePorts = append(activePorts, domain.ContainerPort)
+	}
+	return gofn.ToSet(activePorts)
+}
+
 func (s *AppRoutingSettings) GetType() base.SettingType {
 	return base.SettingTypeAppRouting
 }
@@ -211,15 +222,18 @@ func (s *AppRoutingSettings) GetResourceLinks(setting *Setting) []*ResLink {
 		})
 	}
 
-	// Links port
-	resLinks = append(resLinks, &ResLink{
-		SrcType:   base.ResourceTypeSetting,
-		SrcID:     setting.ID,
-		DstType:   base.ResourceTypePort,
-		DstID:     strconv.Itoa(s.Port),
-		CreatedAt: timeNow,
-		UpdatedAt: timeNow,
-	})
+	// Links ports
+	for i, port := range s.GetActivePorts() {
+		resLinks = append(resLinks, &ResLink{
+			SrcType:   base.ResourceTypeSetting,
+			SrcID:     setting.ID,
+			DstType:   base.ResourceTypePort,
+			DstID:     strconv.Itoa(port),
+			Index:     i,
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		})
+	}
 
 	return resLinks
 }

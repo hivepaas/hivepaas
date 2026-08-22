@@ -10,10 +10,12 @@ import (
 	"unicode"
 
 	"github.com/moby/moby/api/types/swarm"
+	"github.com/tiendc/gofn"
 	"gopkg.in/yaml.v3"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/htpasswd"
@@ -35,9 +37,10 @@ var (
 
 type appConfigData struct {
 	*traefikservice.ApplyAppConfigReq
-	confData   *AppTraefikConfig
-	traefikSvc *swarm.Service
-	hasCerts   bool
+	confData         *AppTraefikConfig
+	traefikSvc       *swarm.Service
+	hasCerts         bool
+	tcpPortsNeedOpen []string
 }
 
 type AppTraefikConfig struct {
@@ -65,18 +68,18 @@ func (s *service) ApplyAppConfig(
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	httpSettings := data.RoutingSettings
+	routingSettings := data.RoutingSettings
 
 	// 1. Calculate labels and TLS certs
 	labels := make(map[string]string)
 	traefikConfig := &AppTraefikConfig{}
 	data.confData = traefikConfig
 
-	if httpSettings != nil && httpSettings.ExposePublicly {
+	if routingSettings != nil && routingSettings.ExposePublicly {
 		labels["traefik.enable"] = labelValueTrue
 		labels["traefik.swarm.network"] = base.NetworkGlobalRouting
 
-		for i, domain := range httpSettings.Domains {
+		for i, domain := range routingSettings.Domains {
 			if err := s.collectDomainConfig(domain, i, labels, traefikConfig, data); err != nil {
 				return nil, apperrors.Wrap(err)
 			}
@@ -92,9 +95,21 @@ func (s *service) ApplyAppConfig(
 		if err != nil {
 			return nil, apperrors.Wrap(err)
 		}
-	} else {
+	} else if data.App != nil && config.Current != nil {
 		// Ensure file does not exist if no certs are needed
 		_ = os.Remove(data.App.TraefikConfigPath())
+	}
+
+	// 4. Open required TCP ports in traefik
+	if len(data.tcpPortsNeedOpen) > 0 {
+		data.tcpPortsNeedOpen = gofn.ToSet(data.tcpPortsNeedOpen)
+		_, err = s.OpenPorts(ctx, &traefikservice.OpenPortReq{
+			Service:   data.traefikSvc,
+			OpenPorts: data.tcpPortsNeedOpen,
+		})
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
 	}
 
 	return &traefikservice.ApplyAppConfigResp{
@@ -134,16 +149,49 @@ func (s *service) collectDomainConfig(
 	traefikConfig *AppTraefikConfig,
 	data *appConfigData,
 ) error {
+	if !domain.Enabled {
+		return nil
+	}
+
 	appKey := sanitizeRouterNameReplacer.Replace(data.App.Key)
 	domainKey := sanitizeRouterNameReplacer.Replace(domain.Domain)
 	if domainKey == "" {
 		return nil
 	}
 
+	containerPort := gofn.Coalesce(domain.ContainerPort, data.RoutingSettings.Port)
+	if containerPort == 0 {
+		return nil
+	}
+
+	if domain.Protocol == base.NetworkProtocolTCP {
+		routerName := fmt.Sprintf("tcp-router-%v-%v", appKey, domainIndex)
+		serviceName := fmt.Sprintf("tcp-svc-%v-%v", appKey, domainIndex)
+
+		labels[fmt.Sprintf("traefik.tcp.routers.%s.rule", routerName)] = fmt.Sprintf("HostSNI(`%s`)", domain.Domain)
+		labels[fmt.Sprintf("traefik.tcp.routers.%s.entrypoints", routerName)] = fmt.Sprintf("tcp-svc-%d", containerPort)
+		labels[fmt.Sprintf("traefik.tcp.routers.%s.service", routerName)] = serviceName
+		labels[fmt.Sprintf("traefik.tcp.routers.%s.tls", routerName)] = labelValueTrue
+
+		if domain.SSLCert.ID != "" {
+			if s.addTLSCertificate(traefikConfig, domain.SSLCert.ID) {
+				data.hasCerts = true
+			}
+		} else if domain.TLSPassthrough {
+			labels[fmt.Sprintf("traefik.tcp.routers.%s.tls.passthrough", routerName)] = labelValueTrue
+		}
+
+		labels[fmt.Sprintf("traefik.tcp.services.%s.loadbalancer.server.port", serviceName)] = strconv.Itoa(containerPort)
+
+		data.tcpPortsNeedOpen = append(data.tcpPortsNeedOpen, strconv.Itoa(containerPort)+"/tcp")
+		return nil
+	}
+
+	// HTTP / HTTPS
 	// Service
 	serviceName := fmt.Sprintf("svc-%v-%v", appKey, domainIndex)
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", serviceName)] =
-		strconv.Itoa(domain.ContainerPort)
+		strconv.Itoa(containerPort)
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.passhostheader", serviceName)] = labelValueTrue
 	if domain.LBConfig != nil && domain.LBConfig.Strategy != "" {
 		labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.strategy", serviceName)] =

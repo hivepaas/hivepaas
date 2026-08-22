@@ -48,7 +48,7 @@ func (uc *UC) ListApp(
 				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			),
 			bunex.SelectRelation("Settings",
-				// NOTE: load http settings to extract active domain names of the app
+				// NOTE: load routing settings to extract active domain names of the app
 				bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
 			),
 		)

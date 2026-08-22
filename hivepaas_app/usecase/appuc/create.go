@@ -282,9 +282,9 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 	timeNow time.Time,
 	persistingData *persistingAppData,
 ) {
-	// Init empty http settings
-	httpSettings := &entity.AppRoutingSettings{}
-	dbHttpSetting := &entity.Setting{
+	// Init empty routing settings
+	routingSettings := &entity.AppRoutingSettings{}
+	dbRoutingSetting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeApp,
 		Type:        base.SettingTypeAppRouting,
@@ -294,8 +294,8 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 		CreatedAt:   timeNow,
 		UpdatedAt:   timeNow,
 	}
-	dbHttpSetting.MustSetData(httpSettings)
-	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbHttpSetting)
+	dbRoutingSetting.MustSetData(routingSettings)
+	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbRoutingSetting)
 
 	// Init feature settings
 	featureSettings := &entity.AppFeatureSettings{}

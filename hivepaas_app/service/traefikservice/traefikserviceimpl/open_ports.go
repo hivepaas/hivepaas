@@ -18,15 +18,18 @@ func (s *service) OpenPorts(
 	ctx context.Context,
 	req *traefikservice.OpenPortReq,
 ) (resp *traefikservice.OpenPortResp, err error) {
-	svc, err := s.GetTraefikSwarmService(ctx)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
+	if req.Service == nil {
+		svc, err := s.GetTraefikSwarmService(ctx)
+		if err != nil {
+			return nil, apperrors.Wrap(err)
+		}
+		req.Service = svc
 	}
-	if svc == nil {
+	if req.Service == nil {
 		return nil, nil
 	}
 	resp = &traefikservice.OpenPortResp{
-		Service: svc,
+		Service: req.Service,
 	}
 
 	applyFunc := func(_ int, svc *swarm.Service) (bool, error) {
@@ -62,9 +65,10 @@ func (s *service) OpenPorts(
 	}
 
 	if req.SkipUpdatingServiceInDocker {
-		_, err = applyFunc(0, svc)
+		_, err = applyFunc(0, req.Service)
 	} else {
-		err = s.dockerManager.ServiceUpdateFunc(ctx, svc.ID, svc, applyFunc, defaultServiceUpdateRetryMax, 0)
+		err = s.dockerManager.ServiceUpdateFunc(ctx, req.Service.ID, req.Service, applyFunc,
+			defaultServiceUpdateRetryMax, 0)
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)

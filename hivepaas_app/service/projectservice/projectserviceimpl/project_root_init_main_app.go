@@ -65,8 +65,8 @@ func (s *service) initRootProjectMainApp(
 		},
 	})
 
-	// Add HTTP settings for the main app
-	dbHttpSetting := &entity.Setting{
+	// Add routing settings for the main app
+	dbRoutingSetting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeApp,
 		ObjectID:    app.ID,
@@ -77,7 +77,7 @@ func (s *service) initRootProjectMainApp(
 		CreatedAt:   timeNow,
 		UpdatedAt:   timeNow,
 	}
-	httpSettings := &entity.AppRoutingSettings{
+	routingSettings := &entity.AppRoutingSettings{
 		Port:           cfg.HTTPServer.Port,
 		ExposePublicly: true,
 		Domains: []*entity.AppDomain{
@@ -88,8 +88,8 @@ func (s *service) initRootProjectMainApp(
 			},
 		},
 	}
-	s.hpAppService.SetupHttpSettingsDefault(httpSettings)
-	dbHttpSetting.MustSetData(httpSettings)
+	s.hpAppService.SetupRoutingSettingsDefault(routingSettings)
+	dbRoutingSetting.MustSetData(routingSettings)
 
 	// Sync env-vars from the swarm service
 	dbEnvVarsSetting := &entity.Setting{
@@ -125,7 +125,7 @@ func (s *service) initRootProjectMainApp(
 	dbEnvVarsSetting.MustSetData(envVars)
 
 	// Insert the settings into DB
-	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{dbServiceSetting, dbHttpSetting, dbEnvVarsSetting})
+	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{dbServiceSetting, dbRoutingSetting, dbEnvVarsSetting})
 	if err != nil {
 		return false, apperrors.Wrap(err)
 	}
@@ -133,7 +133,7 @@ func (s *service) initRootProjectMainApp(
 	_, err = s.traefikService.ApplyAppConfig(ctx, db, &traefikservice.ApplyAppConfigReq{
 		App:             app,
 		Service:         service,
-		RoutingSettings: httpSettings,
+		RoutingSettings: routingSettings,
 	})
 	if err != nil {
 		return false, apperrors.Wrap(err)

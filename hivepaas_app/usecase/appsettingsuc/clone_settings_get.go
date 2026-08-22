@@ -104,23 +104,23 @@ func (uc *UC) initDefaultAppCloneSettings(
 		}
 	}
 
-	httpSetting := app.GetSettingByType(base.SettingTypeAppRouting)
+	routingSetting := app.GetSettingByType(base.SettingTypeAppRouting)
 	refObjects := entity.NewRefObjects()
-	var httpSettings *entity.AppRoutingSettings
-	if httpSetting != nil {
-		httpSettings = httpSetting.MustAsAppRoutingSettings()
+	var routingSettings *entity.AppRoutingSettings
+	if routingSetting != nil {
+		routingSettings = routingSetting.MustAsAppRoutingSettings()
 		err = uc.settingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, app.GetObjectScope(),
-			true, httpSetting)
+			true, routingSetting)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 	} else {
-		httpSettings = &entity.AppRoutingSettings{}
+		routingSettings = &entity.AppRoutingSettings{}
 	}
 
 	currDomainSettings := cloneSettings.CloneHttpDomains
 	cloneSettings.CloneHttpDomains = nil
-	for _, domain := range httpSettings.Domains {
+	for _, domain := range routingSettings.Domains {
 		domainSettings, _ := gofn.Find(currDomainSettings, func(d *entity.AppCloneHttpDomainSettings) bool {
 			return d.SourceDomain == domain.Domain
 		})

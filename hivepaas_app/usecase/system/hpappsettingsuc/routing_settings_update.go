@@ -20,28 +20,28 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
 
-func (uc *UC) UpdateHttpSettings(
+func (uc *UC) UpdateRoutingSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *hpappsettingsdto.UpdateHttpSettingsReq,
-) (*hpappsettingsdto.UpdateHttpSettingsResp, error) {
-	var data *updateHttpSettingsData
+	req *hpappsettingsdto.UpdateRoutingSettingsReq,
+) (*hpappsettingsdto.UpdateRoutingSettingsResp, error) {
+	var data *updateRoutingSettingsData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data = &updateHttpSettingsData{}
-		err := uc.loadHttpSettingsForUpdate(ctx, db, req, data)
+		data = &updateRoutingSettingsData{}
+		err := uc.loadRoutingSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
-		uc.prepareUpdatingHttpSettings(ctx, data, persistingData)
+		uc.prepareUpdatingRoutingSettings(ctx, data, persistingData)
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		err = uc.applyHttpSettings(ctx, db, data)
+		err = uc.applyRoutingSettings(ctx, db, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -57,26 +57,26 @@ func (uc *UC) UpdateHttpSettings(
 		config.SetAppDomainToNeedReload()
 	}
 
-	return &hpappsettingsdto.UpdateHttpSettingsResp{}, nil
+	return &hpappsettingsdto.UpdateRoutingSettingsResp{}, nil
 }
 
-type updateHttpSettingsData struct {
-	App             *entity.App
-	HttpSetting     *entity.Setting
-	NewHttpSettings *entity.AppRoutingSettings
-	RefObjects      *entity.RefObjects
-	DomainChanged   bool
+type updateRoutingSettingsData struct {
+	App                *entity.App
+	RoutingSetting     *entity.Setting
+	NewRoutingSettings *entity.AppRoutingSettings
+	RefObjects         *entity.RefObjects
+	DomainChanged      bool
 }
 
 type persistingAppData struct {
 	appservice.PersistingAppData
 }
 
-func (uc *UC) loadHttpSettingsForUpdate(
+func (uc *UC) loadRoutingSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
-	req *hpappsettingsdto.UpdateHttpSettingsReq,
-	data *updateHttpSettingsData,
+	req *hpappsettingsdto.UpdateRoutingSettingsReq,
+	data *updateRoutingSettingsData,
 ) error {
 	app, err := uc.hpAppService.LoadAppByKey(ctx, uc.db, base.HivepaasAppKey,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
@@ -92,32 +92,32 @@ func (uc *UC) loadHttpSettingsForUpdate(
 		return apperrors.Wrap(err)
 	}
 	data.App = app
-	data.HttpSetting = app.GetSettingByType(base.SettingTypeAppRouting)
+	data.RoutingSetting = app.GetSettingByType(base.SettingTypeAppRouting)
 
-	if data.HttpSetting != nil && data.HttpSetting.UpdateVer != req.UpdateVer {
+	if data.RoutingSetting != nil && data.RoutingSetting.UpdateVer != req.UpdateVer {
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
-	httpSettings := data.HttpSetting.MustAsAppRoutingSettings()
+	routingSettings := data.RoutingSetting.MustAsAppRoutingSettings()
 	var currDomain string
-	if domains := httpSettings.GetActiveDomainNames(); len(domains) > 0 {
+	if domains := routingSettings.GetActiveDomainNames(); len(domains) > 0 {
 		currDomain = domains[0]
 	}
 
-	if err := req.ApplyTo(httpSettings); err != nil {
+	if err := req.ApplyTo(routingSettings); err != nil {
 		return apperrors.Wrap(err)
 	}
-	data.NewHttpSettings = httpSettings
+	data.NewRoutingSettings = routingSettings
 
 	// Make sure all reference settings used in these settings exist actively
 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, app.GetObjectScope(),
-		true, httpSettings.GetRefObjectIDs())
+		true, routingSettings.GetRefObjectIDs())
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Active domains of the app need to validate
-	activeDomains := httpSettings.GetActiveDomainNames()
+	activeDomains := routingSettings.GetActiveDomainNames()
 
 	// Verify domains are allowed in project
 	err = uc.domainService.VerifyProjectDomains(ctx, db, app.ProjectID, activeDomains)
@@ -138,30 +138,30 @@ func (uc *UC) loadHttpSettingsForUpdate(
 	return nil
 }
 
-func (uc *UC) prepareUpdatingHttpSettings(
+func (uc *UC) prepareUpdatingRoutingSettings(
 	_ context.Context,
-	data *updateHttpSettingsData,
+	data *updateRoutingSettingsData,
 	persistingData *persistingAppData,
 ) {
-	setting := data.HttpSetting
+	setting := data.RoutingSetting
 	timeNow := timeutil.NowUTC()
 
-	uc.hpAppService.SetupHttpSettingsDefault(data.NewHttpSettings)
+	uc.hpAppService.SetupRoutingSettingsDefault(data.NewRoutingSettings)
 
 	setting.UpdateVer++
 	setting.UpdatedAt = timeNow
 	setting.Status = base.SettingStatusActive
 	setting.ExpireAt = time.Time{}
-	setting.MustSetData(data.NewHttpSettings)
+	setting.MustSetData(data.NewRoutingSettings)
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 }
 
-func (uc *UC) applyHttpSettings(
+func (uc *UC) applyRoutingSettings(
 	ctx context.Context,
 	db database.IDB,
-	data *updateHttpSettingsData,
+	data *updateRoutingSettingsData,
 ) error {
-	appHttpSettings, err := data.HttpSetting.AsAppRoutingSettings()
+	appHttpSettings, err := data.RoutingSetting.AsAppRoutingSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

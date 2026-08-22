@@ -10,6 +10,9 @@ import (
 )
 
 func (s *service) GetTraefikSwarmService(ctx context.Context) (*swarm.Service, error) {
+	if s.dockerManager == nil {
+		return nil, nil
+	}
 	service, err := s.dockerManager.ServiceGetByName(ctx, base.HivepaasTraefikServiceName, false)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

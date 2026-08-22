@@ -9,23 +9,23 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
 )
 
-type GetHttpSettingsReq struct {
+type GetRoutingSettingsReq struct {
 }
 
-func NewGetHttpSettingsReq() *GetHttpSettingsReq {
-	return &GetHttpSettingsReq{}
+func NewGetRoutingSettingsReq() *GetRoutingSettingsReq {
+	return &GetRoutingSettingsReq{}
 }
 
-func (req *GetHttpSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetRoutingSettingsReq) Validate() apperrors.ValidationErrors {
 	return nil
 }
 
-type GetHttpSettingsResp struct {
-	Meta *basedto.Meta     `json:"meta"`
-	Data *HttpSettingsResp `json:"data"`
+type GetRoutingSettingsResp struct {
+	Meta *basedto.Meta        `json:"meta"`
+	Data *RoutingSettingsResp `json:"data"`
 }
 
-type HttpSettingsResp struct {
+type RoutingSettingsResp struct {
 	Domains   []*DomainResp `json:"domains"`
 	UpdateVer int           `json:"updateVer"`
 }
@@ -51,23 +51,23 @@ type HTTPRateLimitConfigResp struct {
 	MaxInFlightReq int               `json:"maxInFlightReq"`
 }
 
-type HttpSettingsTransformInput struct {
-	App           *entity.App
-	HttpSettings  *entity.Setting
-	RefSettingMap map[string]*entity.Setting
+type RoutingSettingsTransformInput struct {
+	App             *entity.App
+	RoutingSettings *entity.Setting
+	RefSettingMap   map[string]*entity.Setting
 }
 
-func TransformHttpSettings(input *HttpSettingsTransformInput) (resp *HttpSettingsResp, err error) {
-	resp = &HttpSettingsResp{}
-	if input.HttpSettings == nil {
+func TransformRoutingSettings(input *RoutingSettingsTransformInput) (resp *RoutingSettingsResp, err error) {
+	resp = &RoutingSettingsResp{}
+	if input.RoutingSettings == nil {
 		return resp, nil
 	}
 
-	if err = copier.Copy(&resp, input.HttpSettings); err != nil {
+	if err = copier.Copy(&resp, input.RoutingSettings); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	appHttpSettings := input.HttpSettings.MustAsAppRoutingSettings()
-	if err = copier.Copy(&resp, appHttpSettings); err != nil {
+	routingSettings := input.RoutingSettings.MustAsAppRoutingSettings()
+	if err = copier.Copy(&resp, routingSettings); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 

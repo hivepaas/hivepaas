@@ -115,7 +115,7 @@ func TransformAppStats(app *entity.App, input *AppTransformationInput) *AppStats
 	if service == nil || service.ServiceStatus == nil {
 		return nil
 	}
-	//nolint
+	//nolint:gosec
 	return &AppStatsResp{
 		RunningTasks:   int(service.ServiceStatus.RunningTasks),
 		DesiredTasks:   int(service.ServiceStatus.DesiredTasks),
@@ -128,8 +128,23 @@ func TransformAppAccessLinks(app *entity.App) (resp []string) {
 	if setting == nil {
 		return nil
 	}
-	for _, domain := range setting.MustAsAppRoutingSettings().GetActiveDomainNames() {
-		resp = append(resp, "https://"+domain)
+	routingSettings := setting.MustAsAppRoutingSettings()
+	for _, domain := range routingSettings.Domains {
+		if !domain.Enabled {
+			continue
+		}
+		var scheme string
+		switch domain.Protocol {
+		case base.NetworkProtocolHTTP:
+			scheme = "https://"
+		case base.NetworkProtocolTCP:
+			scheme = "tcp://"
+		case base.NetworkProtocolUDP:
+			scheme = "udp://"
+		default:
+			scheme = "https://"
+		}
+		resp = append(resp, scheme+domain.Domain)
 	}
 	return resp
 }

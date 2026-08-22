@@ -75,11 +75,11 @@ func (s *service) onCloneHttpSetting(
 	setting *entity.Setting,
 	data *createPreviewData,
 ) (*entity.Setting, error) {
-	httpSettings := setting.MustAsAppRoutingSettings()
+	routingSettings := setting.MustAsAppRoutingSettings()
 
 	var activeDomains []string
-	currDomains := httpSettings.Domains
-	httpSettings.Domains = nil
+	currDomains := routingSettings.Domains
+	routingSettings.Domains = nil
 	for _, domain := range currDomains {
 		if !domain.Enabled {
 			continue
@@ -87,7 +87,7 @@ func (s *service) onCloneHttpSetting(
 		subdomain := strings.TrimSuffix(data.CalcSubdomain, "."+domain.Domain)
 		domain.Domain = fmt.Sprintf("%v.%v", subdomain, domain.Domain)
 		// TODO: handle SSL cert
-		httpSettings.Domains = append(httpSettings.Domains, domain)
+		routingSettings.Domains = append(routingSettings.Domains, domain)
 		activeDomains = append(activeDomains, domain.Domain)
 	}
 
@@ -97,7 +97,7 @@ func (s *service) onCloneHttpSetting(
 		return nil, apperrors.Wrap(err)
 	}
 
-	setting.MustSetData(httpSettings)
+	setting.MustSetData(routingSettings)
 	return setting, nil
 }
 

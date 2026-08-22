@@ -17,8 +17,8 @@ import (
 func (uc *UC) GetHttpSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *hpappsettingsdto.GetHttpSettingsReq,
-) (*hpappsettingsdto.GetHttpSettingsResp, error) {
+	req *hpappsettingsdto.GetRoutingSettingsReq,
+) (*hpappsettingsdto.GetRoutingSettingsResp, error) {
 	app, err := uc.hpAppService.LoadAppByKey(ctx, uc.db, base.HivepaasAppKey,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 	)
@@ -35,9 +35,9 @@ func (uc *UC) GetHttpSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	input := &hpappsettingsdto.HttpSettingsTransformInput{
-		App:          app,
-		HttpSettings: settinghelper.FindSettingByType(settings, base.SettingTypeAppRouting),
+	input := &hpappsettingsdto.RoutingSettingsTransformInput{
+		App:             app,
+		RoutingSettings: settinghelper.FindSettingByType(settings, base.SettingTypeAppRouting),
 	}
 
 	err = uc.loadHttpSettingsRefData(ctx, uc.db, input)
@@ -45,12 +45,12 @@ func (uc *UC) GetHttpSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp, err := hpappsettingsdto.TransformHttpSettings(input)
+	resp, err := hpappsettingsdto.TransformRoutingSettings(input)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &hpappsettingsdto.GetHttpSettingsResp{
+	return &hpappsettingsdto.GetRoutingSettingsResp{
 		Data: resp,
 	}, nil
 }
@@ -58,14 +58,14 @@ func (uc *UC) GetHttpSettings(
 func (uc *UC) loadHttpSettingsRefData(
 	ctx context.Context,
 	db database.IDB,
-	input *hpappsettingsdto.HttpSettingsTransformInput,
+	input *hpappsettingsdto.RoutingSettingsTransformInput,
 ) (err error) {
-	if input.HttpSettings == nil {
+	if input.RoutingSettings == nil {
 		return nil
 	}
 
 	app := input.App
-	appHttpSettings, err := input.HttpSettings.AsAppRoutingSettings()
+	appHttpSettings, err := input.RoutingSettings.AsAppRoutingSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

@@ -56,10 +56,10 @@ func (s *service) GetHpAppTasks(ctx context.Context) ([]swarm.Task, error) {
 	return resp.Items, nil
 }
 
-func (s *service) SetupHttpSettingsDefault(
-	httpSettings *entity.AppRoutingSettings,
+func (s *service) SetupRoutingSettingsDefault(
+	routingSettings *entity.AppRoutingSettings,
 ) {
-	for _, domain := range httpSettings.Domains {
+	for _, domain := range routingSettings.Domains {
 		domain.ContainerPort = config.Current.HTTPServer.Port
 		domain.ForceHttps = true
 		domain.CompressionConfig = &entity.HTTPCompressionConfig{

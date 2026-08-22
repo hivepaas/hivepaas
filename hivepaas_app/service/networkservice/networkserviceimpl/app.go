@@ -14,7 +14,7 @@ func (s *service) UpdateAppGlobalRoutingNetwork(
 	ctx context.Context,
 	_ *entity.App,
 	service *swarm.Service,
-	httpSettings *entity.AppRoutingSettings,
+	routingSettings *entity.AppRoutingSettings,
 ) error {
 	globalNetworkID, err := s.GetGlobalRoutingNetworkID(ctx)
 	if err != nil {
@@ -24,15 +24,15 @@ func (s *service) UpdateAppGlobalRoutingNetwork(
 	spec := &service.Spec
 	networks := make([]swarm.NetworkAttachmentConfig, 0, len(spec.TaskTemplate.Networks)+1)
 	for _, net := range spec.TaskTemplate.Networks {
-		if httpSettings.ExposePublicly && (net.Target == base.NetworkGlobalRouting || net.Target == globalNetworkID) {
+		if routingSettings.ExposePublicly && (net.Target == base.NetworkGlobalRouting || net.Target == globalNetworkID) {
 			return nil // app is attached to the external net already
 		}
-		if !httpSettings.ExposePublicly && (net.Target == base.NetworkGlobalRouting || net.Target == globalNetworkID) {
+		if !routingSettings.ExposePublicly && (net.Target == base.NetworkGlobalRouting || net.Target == globalNetworkID) {
 			continue
 		}
 		networks = append(networks, net)
 	}
-	if httpSettings.ExposePublicly {
+	if routingSettings.ExposePublicly {
 		networks = append(networks, swarm.NetworkAttachmentConfig{
 			Target: globalNetworkID,
 		})

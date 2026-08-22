@@ -3,8 +3,12 @@ package base
 type NetworkProtocol string
 
 const (
-	NetworkProtocolTCP NetworkProtocol = "tcp"
-	NetworkProtocolUDP NetworkProtocol = "udp"
+	NetworkProtocolHTTP NetworkProtocol = "http"
+	NetworkProtocolTCP  NetworkProtocol = "tcp"
+	NetworkProtocolUDP  NetworkProtocol = "udp"
 )
 
-var AllNetworkProtocols = []NetworkProtocol{NetworkProtocolTCP, NetworkProtocolUDP}
+var (
+	AllNetworkProtocols = []NetworkProtocol{NetworkProtocolHTTP, NetworkProtocolTCP, NetworkProtocolUDP}
+	AllRoutingProtocols = []NetworkProtocol{NetworkProtocolHTTP, NetworkProtocolTCP}
+)

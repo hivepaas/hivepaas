@@ -15,18 +15,18 @@ func (s *service) applyAppHttpSettings(
 	data *appCloneData,
 ) error {
 	app := data.DestApp
-	httpSetting := app.GetSettingByType(base.SettingTypeAppRouting)
-	if httpSetting == nil {
+	routingSetting := app.GetSettingByType(base.SettingTypeAppRouting)
+	if routingSetting == nil {
 		return nil
 	}
-	httpSettings, err := httpSetting.AsAppRoutingSettings()
+	routingSettings, err := routingSetting.AsAppRoutingSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	_, err = s.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
 		App:             app,
-		RoutingSettings: httpSettings,
+		RoutingSettings: routingSettings,
 		RefObjects:      data.RefObjects,
 	})
 	if err != nil {

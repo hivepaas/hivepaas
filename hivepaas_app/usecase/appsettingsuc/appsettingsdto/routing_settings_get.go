@@ -50,11 +50,15 @@ type RoutingSettingsResp struct {
 }
 
 type DomainResp struct {
-	Enabled              bool                          `json:"enabled"`
-	Domain               string                        `json:"domain"`
+	Enabled        bool                    `json:"enabled"`
+	Domain         string                  `json:"domain"`
+	Protocol       base.NetworkProtocol    `json:"protocol"`
+	ContainerPort  int                     `json:"containerPort"`
+	SSLCert        *sslcertdto.SSLCertResp `json:"sslCert,omitempty"`
+	TLSPassthrough bool                    `json:"tlsPassthrough,omitempty"`
+
+	// HTTP (layer 7) configuration
 	DomainRedirect       string                        `json:"domainRedirect,omitempty"`
-	SSLCert              *sslcertdto.SSLCertResp       `json:"sslCert,omitempty"`
-	ContainerPort        int                           `json:"containerPort"`
 	ForceHttps           bool                          `json:"forceHttps,omitempty"`
 	LBConfig             *HTTPLBConfigResp             `json:"lbConfig,omitempty"`
 	BasicAuth            *HTTPBasicAuthConfigResp      `json:"basicAuth,omitempty"`

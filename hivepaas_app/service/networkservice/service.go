@@ -13,7 +13,7 @@ import (
 type Service interface {
 	GetGlobalRoutingNetworkID(ctx context.Context) (string, error)
 	UpdateAppGlobalRoutingNetwork(ctx context.Context, app *entity.App, service *swarm.Service,
-		httpSettings *entity.AppRoutingSettings) error
+		routingSettings *entity.AppRoutingSettings) error
 
 	ListProjectNetworks(ctx context.Context, db database.IDB, project *entity.Project) (
 		[]*entity.Setting, map[string]*network.Summary, error)

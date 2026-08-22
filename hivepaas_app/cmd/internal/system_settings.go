@@ -45,7 +45,7 @@ func sysSettingsLoadAppDomain(
 	cfg *config.Config,
 ) (err error) {
 	loaderFunc := func() (string, error) {
-		dbHttpSettings, _, err := settingRepo.List(ctx, db, nil, nil,
+		dbRoutingSettings, _, err := settingRepo.List(ctx, db, nil, nil,
 			bunex.SelectJoin("JOIN apps AS app ON app.id = setting.object_id"),
 			bunex.SelectJoin("JOIN projects AS project ON project.id = app.project_id"),
 			bunex.SelectWhere("project.key = ?", base.HivepaasProjectKey),
@@ -56,12 +56,12 @@ func sysSettingsLoadAppDomain(
 		if err != nil {
 			return "", apperrors.Wrap(err)
 		}
-		if len(dbHttpSettings) == 0 {
+		if len(dbRoutingSettings) == 0 {
 			return "", nil
 		}
-		httpSettings := dbHttpSettings[0].MustAsAppRoutingSettings()
-		if len(httpSettings.Domains) > 0 {
-			return httpSettings.Domains[0].Domain, nil
+		routingSettings := dbRoutingSettings[0].MustAsAppRoutingSettings()
+		if len(routingSettings.Domains) > 0 {
+			return routingSettings.Domains[0].Domain, nil
 		}
 		return "", nil
 	}

@@ -38,11 +38,15 @@ func (req *UpdateAppRoutingSettingsReq) ToEntity() *entity.AppRoutingSettings {
 }
 
 type DomainReq struct {
-	Enabled              bool                         `json:"enabled"`
-	Domain               string                       `json:"domain"`
+	Enabled        bool                 `json:"enabled"`
+	Domain         string               `json:"domain"`
+	Protocol       base.NetworkProtocol `json:"protocol"`
+	ContainerPort  int                  `json:"containerPort"`
+	SSLCert        basedto.ObjectIDReq  `json:"sslCert"`
+	TLSPassthrough bool                 `json:"tlsPassthrough"`
+
+	// HTTP (layer 7) configuration
 	DomainRedirect       string                       `json:"domainRedirect"`
-	SSLCert              basedto.ObjectIDReq          `json:"sslCert"`
-	ContainerPort        int                          `json:"containerPort"`
 	ForceHttps           bool                         `json:"forceHttps"`
 	LBConfig             *HTTPLBConfigReq             `json:"lbConfig"`
 	BasicAuth            *HTTPBasicAuthConfigReq      `json:"basicAuth"`
@@ -56,12 +60,18 @@ type DomainReq struct {
 }
 
 func (req *DomainReq) ToEntity() *entity.AppDomain {
+	proto := req.Protocol
+	if proto == "" {
+		proto = base.NetworkProtocolHTTP
+	}
 	return &entity.AppDomain{
 		Enabled:              req.Enabled,
 		Domain:               req.Domain,
-		DomainRedirect:       req.DomainRedirect,
-		SSLCert:              entity.ObjectID{ID: req.SSLCert.ID},
+		Protocol:             proto,
 		ContainerPort:        req.ContainerPort,
+		SSLCert:              entity.ObjectID{ID: req.SSLCert.ID},
+		TLSPassthrough:       req.TLSPassthrough,
+		DomainRedirect:       req.DomainRedirect,
 		ForceHttps:           req.ForceHttps,
 		LBConfig:             req.LBConfig.ToEntity(),
 		BasicAuth:            req.BasicAuth.ToEntity(),
@@ -82,34 +92,39 @@ func (req *DomainReq) modifyRequest() error {
 	if req == nil {
 		return nil
 	}
+	if req.Protocol == "" {
+		req.Protocol = base.NetworkProtocolHTTP
+	}
 	req.Domain = strings.ToLower(strings.TrimSpace(req.Domain))
-	if err := req.LBConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
-	}
-	if err := req.BasicAuth.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
-	}
-	if err := req.ClientConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
-	}
-	if err := req.HeaderConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
-	}
-	if err := req.CompressionConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
-	}
-	if err := req.RateLimitConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
-	}
-	if err := req.PathRewriteConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
-	}
-	if err := req.CircuitBreakerConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
-	}
-	for _, pathReq := range req.Paths {
-		if err := pathReq.modifyRequest(); err != nil {
+	if req.Protocol == base.NetworkProtocolHTTP {
+		if err := req.LBConfig.modifyRequest(); err != nil {
 			return apperrors.Wrap(err)
+		}
+		if err := req.BasicAuth.modifyRequest(); err != nil {
+			return apperrors.Wrap(err)
+		}
+		if err := req.ClientConfig.modifyRequest(); err != nil {
+			return apperrors.Wrap(err)
+		}
+		if err := req.HeaderConfig.modifyRequest(); err != nil {
+			return apperrors.Wrap(err)
+		}
+		if err := req.CompressionConfig.modifyRequest(); err != nil {
+			return apperrors.Wrap(err)
+		}
+		if err := req.RateLimitConfig.modifyRequest(); err != nil {
+			return apperrors.Wrap(err)
+		}
+		if err := req.PathRewriteConfig.modifyRequest(); err != nil {
+			return apperrors.Wrap(err)
+		}
+		if err := req.CircuitBreakerConfig.modifyRequest(); err != nil {
+			return apperrors.Wrap(err)
+		}
+		for _, pathReq := range req.Paths {
+			if err := pathReq.modifyRequest(); err != nil {
+				return apperrors.Wrap(err)
+			}
 		}
 	}
 	return nil
@@ -123,22 +138,25 @@ func (req *DomainReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
+	res = append(res, basedto.ValidateStrIn(&req.Protocol, false, base.AllRoutingProtocols, field+"protocol")...)
 	res = append(res, basedto.ValidateDomain(&req.Domain, true, base.DomainNameMaxLen,
 		false, field+"domain")...)
-	res = append(res, basedto.ValidateDomain(&req.DomainRedirect, false, base.DomainNameMaxLen,
-		false, field+"domainRedirect")...)
-	res = append(res, basedto.ValidatePort(&req.ContainerPort, true, 1, field+"containerPort")...)
+	res = append(res, basedto.ValidatePort(&req.ContainerPort, false, 1, field+"containerPort")...)
 
-	res = append(res, req.LBConfig.validate(field+"lbConfig")...)
-	res = append(res, req.BasicAuth.validate(field+"basicAuth")...)
-	res = append(res, req.ClientConfig.validate(field+"clientConfig")...)
-	res = append(res, req.HeaderConfig.validate(field+"headerConfig")...)
-	res = append(res, req.CompressionConfig.validate(field+"compressionConfig")...)
-	res = append(res, req.RateLimitConfig.validate(field+"rateLimitConfig")...)
-	res = append(res, req.PathRewriteConfig.validate(field+"pathRewriteConfig")...)
-	res = append(res, req.CircuitBreakerConfig.validate(field+"circuitBreakerConfig")...)
-	for i, pathReq := range req.Paths {
-		res = append(res, pathReq.validate(field+fmt.Sprintf("paths[%v]", i))...)
+	if req.Protocol == base.NetworkProtocolHTTP {
+		res = append(res, basedto.ValidateDomain(&req.DomainRedirect, false, base.DomainNameMaxLen,
+			false, field+"domainRedirect")...)
+		res = append(res, req.LBConfig.validate(field+"lbConfig")...)
+		res = append(res, req.BasicAuth.validate(field+"basicAuth")...)
+		res = append(res, req.ClientConfig.validate(field+"clientConfig")...)
+		res = append(res, req.HeaderConfig.validate(field+"headerConfig")...)
+		res = append(res, req.CompressionConfig.validate(field+"compressionConfig")...)
+		res = append(res, req.RateLimitConfig.validate(field+"rateLimitConfig")...)
+		res = append(res, req.PathRewriteConfig.validate(field+"pathRewriteConfig")...)
+		res = append(res, req.CircuitBreakerConfig.validate(field+"circuitBreakerConfig")...)
+		for i, pathReq := range req.Paths {
+			res = append(res, pathReq.validate(field+fmt.Sprintf("paths[%v]", i))...)
+		}
 	}
 	return res
 }

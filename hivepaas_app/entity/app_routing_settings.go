@@ -33,11 +33,15 @@ type AppRoutingSettings struct {
 }
 
 type AppDomain struct {
-	Enabled              bool                      `json:"enabled"`
-	Domain               string                    `json:"domain"`
+	Enabled        bool                 `json:"enabled"`
+	Domain         string               `json:"domain"`
+	Protocol       base.NetworkProtocol `json:"protocol"`
+	ContainerPort  int                  `json:"containerPort,omitempty"`
+	TLSPassthrough bool                 `json:"tlsPassthrough,omitempty"`
+	SSLCert        ObjectID             `json:"sslCert,omitzero"`
+
+	// HTTP (layer 7) configuration
 	DomainRedirect       string                    `json:"domainRedirect,omitempty"`
-	SSLCert              ObjectID                  `json:"sslCert,omitzero"`
-	ContainerPort        int                       `json:"containerPort,omitempty"`
 	ForceHttps           bool                      `json:"forceHttps,omitempty"`
 	LBConfig             *HTTPLBConfig             `json:"lbConfig,omitempty"`
 	BasicAuth            *HTTPBasicAuthConfig      `json:"basicAuth,omitempty"`

@@ -19,7 +19,7 @@ func (s *service) BuildSystemEnvVarsInApp(
 	db database.IDB,
 	req *envvarservice.BuildSystemEnvVarsInAppReq,
 ) ([]*envvarservice.EnvVar, error) {
-	httpLinks, _, err := s.resLinkRepo.List(ctx, db, nil,
+	routeLinks, _, err := s.resLinkRepo.List(ctx, db, nil,
 		bunex.SelectJoin("JOIN settings ON settings.id = res_link.src_id"),
 		bunex.SelectWhere("res_link.src_type = ?", base.ResourceTypeSetting),
 		bunex.SelectWhere("settings.object_id = ?", req.App.ID),
@@ -28,7 +28,7 @@ func (s *service) BuildSystemEnvVarsInApp(
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	httpResLinks := entity.ResLinks(httpLinks)
+	routeResLinks := entity.ResLinks(routeLinks)
 
 	result := []*envvarservice.EnvVar{
 		{
@@ -41,14 +41,14 @@ func (s *service) BuildSystemEnvVarsInApp(
 		{
 			EnvVar: &entity.EnvVar{
 				Key:      base.AppSystemEnvVarPort,
-				Value:    gofn.Head(httpResLinks.GetDstIDByDstType(base.ResourceTypePort)),
+				Value:    gofn.Head(routeResLinks.GetDstIDByDstType(base.ResourceTypePort)),
 				IsShared: true,
 			},
 		},
 		{
 			EnvVar: &entity.EnvVar{
 				Key:      base.AppSystemEnvVarDomain,
-				Value:    gofn.Head(httpResLinks.GetDstIDByDstType(base.ResourceTypeDomain)),
+				Value:    gofn.Head(routeResLinks.GetDstIDByDstType(base.ResourceTypeDomain)),
 				IsShared: true,
 			},
 		},

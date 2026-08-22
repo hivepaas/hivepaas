@@ -146,10 +146,10 @@ func (s *service) onCloneHttpSettingDefault(
 	data *appCloneData,
 ) (*entity.Setting, error) {
 	settings := data.CloneSettings
-	httpSettings := setting.MustAsAppRoutingSettings()
+	routingSettings := setting.MustAsAppRoutingSettings()
 
-	currDomains := httpSettings.Domains
-	httpSettings.Domains = nil
+	currDomains := routingSettings.Domains
+	routingSettings.Domains = nil
 	for _, copySettings := range settings.CloneHttpDomains {
 		appDomain, _ := gofn.Find(currDomains, func(item *entity.AppDomain) bool {
 			return item.Domain == copySettings.SourceDomain
@@ -160,9 +160,9 @@ func (s *service) onCloneHttpSettingDefault(
 		appDomain.Domain = copySettings.TargetDomain
 		appDomain.SSLCert = entity.ObjectID{ID: copySettings.TargetSSLCert.ID}
 		// TODO: handle SSL cert validation
-		httpSettings.Domains = append(httpSettings.Domains, appDomain)
+		routingSettings.Domains = append(routingSettings.Domains, appDomain)
 	}
 
-	setting.MustSetData(httpSettings)
+	setting.MustSetData(routingSettings)
 	return setting, nil
 }

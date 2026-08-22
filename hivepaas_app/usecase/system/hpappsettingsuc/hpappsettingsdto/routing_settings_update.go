@@ -16,12 +16,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
-type UpdateHttpSettingsReq struct {
+type UpdateRoutingSettingsReq struct {
 	Domains   []*DomainReq `json:"domains"`
 	UpdateVer int          `json:"updateVer"`
 }
 
-func (req *UpdateHttpSettingsReq) ApplyTo(setting *entity.AppRoutingSettings) error {
+func (req *UpdateRoutingSettingsReq) ApplyTo(setting *entity.AppRoutingSettings) error {
 	currDomains := setting.Domains
 	setting.Domains = []*entity.AppDomain{}
 	for _, domain := range req.Domains {
@@ -175,11 +175,11 @@ func (req *HTTPRateLimitConfigReq) validate(field string) (res []vld.Validator) 
 	return res
 }
 
-func NewUpdateHttpSettingsReq() *UpdateHttpSettingsReq {
-	return &UpdateHttpSettingsReq{}
+func NewUpdateRoutingSettingsReq() *UpdateRoutingSettingsReq {
+	return &UpdateRoutingSettingsReq{}
 }
 
-func (req *UpdateHttpSettingsReq) ModifyRequest() error {
+func (req *UpdateRoutingSettingsReq) ModifyRequest() error {
 	for _, domainReq := range req.Domains {
 		if err := domainReq.modifyRequest(); err != nil {
 			return apperrors.Wrap(err)
@@ -189,7 +189,7 @@ func (req *UpdateHttpSettingsReq) ModifyRequest() error {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateHttpSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateRoutingSettingsReq) Validate() apperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, vld.Slice(req.Domains).ForEach(
 		func(r *DomainReq, index int, elemValidator vld.ItemValidator) {
@@ -198,6 +198,6 @@ func (req *UpdateHttpSettingsReq) Validate() apperrors.ValidationErrors {
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type UpdateHttpSettingsResp struct {
+type UpdateRoutingSettingsResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

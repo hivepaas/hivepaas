@@ -11,17 +11,17 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
 
-// GetHttpSettings Gets HivePaaS HTTP settings
-// @Summary Gets HivePaaS HTTP settings
-// @Description Gets HivePaaS HTTP settings
+// GetRoutingSettings Gets HivePaaS routing settings
+// @Summary Gets HivePaaS routing settings
+// @Description Gets HivePaaS routing settings
 // @Tags    system_hivepaas
 // @Produce json
-// @Id      getHivePaaSHttpSettings
-// @Success 200 {object} hpappsettingsdto.GetHttpSettingsResp
+// @Id      getHivePaaSRoutingSettings
+// @Success 200 {object} hpappsettingsdto.GetRoutingSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/hivepaas/http-settings [get]
-func (h *Handler) GetHttpSettings(ctx *gin.Context) {
+func (h *Handler) GetRoutingSettings(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
 		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
 		Module:          base.ResourceModuleSystem,
@@ -31,12 +31,12 @@ func (h *Handler) GetHttpSettings(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Get HTTP settings").
+		h.RenderError(ctx, apperrors.NewForbidden("Get routing settings").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}
 
-	req := hpappsettingsdto.NewGetHttpSettingsReq()
+	req := hpappsettingsdto.NewGetRoutingSettingsReq()
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -51,18 +51,18 @@ func (h *Handler) GetHttpSettings(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// UpdateHttpSettings Updates HivePaaS HTTP settings
-// @Summary Updates HivePaaS HTTP settings
-// @Description Updates HivePaaS HTTP settings
+// UpdateRoutingSettings Updates HivePaaS routing settings
+// @Summary Updates HivePaaS routing settings
+// @Description Updates HivePaaS routing settings
 // @Tags    system_hivepaas
 // @Produce json
-// @Id      updateHivePaaSHttpSettings
-// @Param   body body hpappsettingsdto.UpdateHttpSettingsReq true "request data"
-// @Success 200 {object} hpappsettingsdto.UpdateHttpSettingsResp
+// @Id      updateHivePaaSRoutingSettings
+// @Param   body body hpappsettingsdto.UpdateRoutingSettingsReq true "request data"
+// @Success 200 {object} hpappsettingsdto.UpdateRoutingSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /system/hivepaas/http-settings [put]
-func (h *Handler) UpdateHttpSettings(ctx *gin.Context) {
+func (h *Handler) UpdateRoutingSettings(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
 		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
 		Module:          base.ResourceModuleSystem,
@@ -72,18 +72,18 @@ func (h *Handler) UpdateHttpSettings(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Update HTTP settings").
+		h.RenderError(ctx, apperrors.NewForbidden("Update routing settings").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}
 
-	req := hpappsettingsdto.NewUpdateHttpSettingsReq()
+	req := hpappsettingsdto.NewUpdateRoutingSettingsReq()
 	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	resp, err := h.hpAppSettingsUC.UpdateHttpSettings(h.RequestCtx(ctx), auth, req)
+	resp, err := h.hpAppSettingsUC.UpdateRoutingSettings(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

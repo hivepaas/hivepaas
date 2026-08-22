@@ -44,8 +44,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice/agentserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice/appcloneserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice/apphttpserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice/apppreviewserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice/approutingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice/clustercleanupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice/clustersecretserviceimpl"
@@ -296,8 +296,8 @@ var Provides = []any{
 	agentserviceimpl.New,
 	appcloneserviceimpl.New,
 	appdeploymentserviceimpl.New,
-	apphttpserviceimpl.New,
 	apppreviewserviceimpl.New,
+	approutingserviceimpl.New,
 	appserviceimpl.New,
 	clustercleanupserviceimpl.New,
 	clustersecretserviceimpl.New,

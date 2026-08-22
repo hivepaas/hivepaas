@@ -18,17 +18,17 @@ import (
 	"github.com/hivepaas/hivepaas/services/traefik"
 )
 
-type GetAppHttpSettingsReq struct {
+type GetAppRoutingSettingsReq struct {
 	ProjectID    string `json:"-"`
 	ProjectEnvID string `json:"-"`
 	AppID        string `json:"-"`
 }
 
-func NewGetAppHttpSettingsReq() *GetAppHttpSettingsReq {
-	return &GetAppHttpSettingsReq{}
+func NewGetAppRoutingSettingsReq() *GetAppRoutingSettingsReq {
+	return &GetAppRoutingSettingsReq{}
 }
 
-func (req *GetAppHttpSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetAppRoutingSettingsReq) Validate() apperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
@@ -36,12 +36,12 @@ func (req *GetAppHttpSettingsReq) Validate() apperrors.ValidationErrors {
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type GetAppHttpSettingsResp struct {
-	Meta *basedto.Meta     `json:"meta"`
-	Data *HttpSettingsResp `json:"data"`
+type GetAppRoutingSettingsResp struct {
+	Meta *basedto.Meta        `json:"meta"`
+	Data *RoutingSettingsResp `json:"data"`
 }
 
-type HttpSettingsResp struct {
+type RoutingSettingsResp struct {
 	DomainSuggestion string        `json:"domainSuggestion"`
 	Port             int           `json:"port"`
 	ExposePublicly   bool          `json:"exposePublicly"`
@@ -140,25 +140,25 @@ type HTTPPathConfigResp struct {
 	CircuitBreakerConfig *HTTPCircuitBreakerConfigResp `json:"circuitBreakerConfig,omitempty"`
 }
 
-type AppHttpSettingsTransformInput struct {
-	App           *entity.App
-	HttpSettings  *entity.Setting
-	RefSettingMap map[string]*entity.Setting
+type AppRoutingSettingsTransformInput struct {
+	App             *entity.App
+	RoutingSettings *entity.Setting
+	RefSettingMap   map[string]*entity.Setting
 }
 
-func TransformHttpSettings(input *AppHttpSettingsTransformInput) (resp *HttpSettingsResp, err error) {
-	resp = &HttpSettingsResp{}
+func TransformRoutingSettings(input *AppRoutingSettingsTransformInput) (resp *RoutingSettingsResp, err error) {
+	resp = &RoutingSettingsResp{}
 	resp.DomainSuggestion = fmt.Sprintf("<name>.%v", config.Current.RootDomain)
 
-	if input.HttpSettings == nil {
+	if input.RoutingSettings == nil {
 		return resp, nil
 	}
 
-	if err = copier.Copy(&resp, input.HttpSettings); err != nil {
+	if err = copier.Copy(&resp, input.RoutingSettings); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	appHttpSettings := input.HttpSettings.MustAsAppHttpSettings()
-	if err = copier.Copy(&resp, appHttpSettings); err != nil {
+	routingSettings := input.RoutingSettings.MustAsAppRoutingSettings()
+	if err = copier.Copy(&resp, routingSettings); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 

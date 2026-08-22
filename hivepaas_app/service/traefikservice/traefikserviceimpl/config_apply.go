@@ -65,7 +65,7 @@ func (s *service) ApplyAppConfig(
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	httpSettings := data.HttpSettings
+	httpSettings := data.RoutingSettings
 
 	// 1. Calculate labels and TLS certs
 	labels := make(map[string]string)

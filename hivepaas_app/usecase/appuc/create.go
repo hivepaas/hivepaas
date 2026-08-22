@@ -283,11 +283,11 @@ func (uc *UC) preparePersistingAppSettingsDefault(
 	persistingData *persistingAppData,
 ) {
 	// Init empty http settings
-	httpSettings := &entity.AppHttpSettings{}
+	httpSettings := &entity.AppRoutingSettings{}
 	dbHttpSetting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeApp,
-		Type:        base.SettingTypeAppHttp,
+		Type:        base.SettingTypeAppRouting,
 		Status:      base.SettingStatusActive,
 		ObjectID:    app.ID,
 		Inheritable: true,

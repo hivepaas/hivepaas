@@ -6,7 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 )
 
 func (s *service) applyAppHttpSettings(
@@ -15,19 +15,19 @@ func (s *service) applyAppHttpSettings(
 	data *appCloneData,
 ) error {
 	app := data.DestApp
-	httpSetting := app.GetSettingByType(base.SettingTypeAppHttp)
+	httpSetting := app.GetSettingByType(base.SettingTypeAppRouting)
 	if httpSetting == nil {
 		return nil
 	}
-	httpSettings, err := httpSetting.AsAppHttpSettings()
+	httpSettings, err := httpSetting.AsAppRoutingSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	_, err = s.appHttpService.ApplyHttpSettings(ctx, db, &apphttpservice.ApplyAppHttpReq{
-		App:          app,
-		HttpSettings: httpSettings,
-		RefObjects:   data.RefObjects,
+	_, err = s.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
+		App:             app,
+		RoutingSettings: httpSettings,
+		RefObjects:      data.RefObjects,
 	})
 	if err != nil {
 		return apperrors.Wrap(err)

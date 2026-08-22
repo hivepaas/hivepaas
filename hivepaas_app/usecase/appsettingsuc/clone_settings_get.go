@@ -32,7 +32,7 @@ func (uc *UC) GetAppCloneSettings(
 	}
 
 	settings, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
-		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppClone, base.SettingTypeAppHttp),
+		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppClone, base.SettingTypeAppRouting),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 		bunex.SelectWhere("setting.object_id = ?", app.ID),
 	)
@@ -104,18 +104,18 @@ func (uc *UC) initDefaultAppCloneSettings(
 		}
 	}
 
-	httpSetting := app.GetSettingByType(base.SettingTypeAppHttp)
+	httpSetting := app.GetSettingByType(base.SettingTypeAppRouting)
 	refObjects := entity.NewRefObjects()
-	var httpSettings *entity.AppHttpSettings
+	var httpSettings *entity.AppRoutingSettings
 	if httpSetting != nil {
-		httpSettings = httpSetting.MustAsAppHttpSettings()
+		httpSettings = httpSetting.MustAsAppRoutingSettings()
 		err = uc.settingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, app.GetObjectScope(),
 			true, httpSetting)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 	} else {
-		httpSettings = &entity.AppHttpSettings{}
+		httpSettings = &entity.AppRoutingSettings{}
 	}
 
 	currDomainSettings := cloneSettings.CloneHttpDomains

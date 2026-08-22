@@ -70,14 +70,14 @@ func (s *service) initRootProjectMainApp(
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeApp,
 		ObjectID:    app.ID,
-		Type:        base.SettingTypeAppHttp,
+		Type:        base.SettingTypeAppRouting,
 		Status:      base.SettingStatusActive,
 		Inheritable: true,
-		Version:     entity.CurrentAppHttpSettingsVersion,
+		Version:     entity.CurrentAppRoutingSettingsVersion,
 		CreatedAt:   timeNow,
 		UpdatedAt:   timeNow,
 	}
-	httpSettings := &entity.AppHttpSettings{
+	httpSettings := &entity.AppRoutingSettings{
 		Port:           cfg.HTTPServer.Port,
 		ExposePublicly: true,
 		Domains: []*entity.AppDomain{
@@ -131,9 +131,9 @@ func (s *service) initRootProjectMainApp(
 	}
 
 	_, err = s.traefikService.ApplyAppConfig(ctx, db, &traefikservice.ApplyAppConfigReq{
-		App:          app,
-		Service:      service,
-		HttpSettings: httpSettings,
+		App:             app,
+		Service:         service,
+		RoutingSettings: httpSettings,
 	})
 	if err != nil {
 		return false, apperrors.Wrap(err)

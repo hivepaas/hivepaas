@@ -6,7 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandservice"
@@ -31,7 +31,7 @@ type UC struct {
 
 	appCloneService      appcloneservice.Service
 	appDeploymentService appdeploymentservice.Service
-	appHttpService       apphttpservice.Service
+	appRoutingService    approutingservice.Service
 	appService           appservice.Service
 	clusterService       clusterservice.Service
 	commandService       commandservice.Service
@@ -57,7 +57,7 @@ func New(
 
 	appCloneService appcloneservice.Service,
 	appDeploymentService appdeploymentservice.Service,
-	appHttpService apphttpservice.Service,
+	appRoutingService approutingservice.Service,
 	appService appservice.Service,
 	clusterService clusterservice.Service,
 	commandService commandservice.Service,
@@ -82,7 +82,7 @@ func New(
 
 		appCloneService:      appCloneService,
 		appDeploymentService: appDeploymentService,
-		appHttpService:       appHttpService,
+		appRoutingService:    appRoutingService,
 		appService:           appService,
 		clusterService:       clusterService,
 		commandService:       commandService,

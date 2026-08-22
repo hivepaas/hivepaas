@@ -13,19 +13,19 @@ import (
 )
 
 const (
-	CurrentAppHttpSettingsVersion = 1
+	CurrentAppRoutingSettingsVersion = 1
 )
 
-var _ = registerSettingParser(base.SettingTypeAppHttp, &appHttpSettingsParser{})
+var _ = registerSettingParser(base.SettingTypeAppRouting, &appHttpSettingsParser{})
 
 type appHttpSettingsParser struct {
 }
 
 func (s *appHttpSettingsParser) New() SettingData {
-	return &AppHttpSettings{}
+	return &AppRoutingSettings{}
 }
 
-type AppHttpSettings struct {
+type AppRoutingSettings struct {
 	Port           int          `json:"port"`
 	ExposePublicly bool         `json:"exposePublicly"`
 	Domains        []*AppDomain `json:"domains,omitempty"`
@@ -123,7 +123,7 @@ type HTTPPathConfig struct {
 	CircuitBreakerConfig *HTTPCircuitBreakerConfig `json:"circuitBreakerConfig,omitempty"`
 }
 
-func (s *AppHttpSettings) GetDomain(domain string) *AppDomain {
+func (s *AppRoutingSettings) GetDomain(domain string) *AppDomain {
 	domain = strings.ToLower(domain)
 	for _, domainRec := range s.Domains {
 		if domainRec.Domain == domain {
@@ -133,7 +133,7 @@ func (s *AppHttpSettings) GetDomain(domain string) *AppDomain {
 	return nil
 }
 
-func (s *AppHttpSettings) GetActiveDomainNames() (res []string) {
+func (s *AppRoutingSettings) GetActiveDomainNames() (res []string) {
 	if !s.ExposePublicly {
 		return
 	}
@@ -146,17 +146,17 @@ func (s *AppHttpSettings) GetActiveDomainNames() (res []string) {
 	return res
 }
 
-func (s *AppHttpSettings) GetType() base.SettingType {
-	return base.SettingTypeAppHttp
+func (s *AppRoutingSettings) GetType() base.SettingType {
+	return base.SettingTypeAppRouting
 }
 
-func (s *AppHttpSettings) GetRefObjectIDs() *RefObjectIDs {
+func (s *AppRoutingSettings) GetRefObjectIDs() *RefObjectIDs {
 	return &RefObjectIDs{
 		RefSettingIDs: gofn.Flatten(s.GetSSLCertIDs(), s.GetBasicAuthIDs()),
 	}
 }
 
-func (s *AppHttpSettings) GetSSLCertIDs() (res []string) {
+func (s *AppRoutingSettings) GetSSLCertIDs() (res []string) {
 	for _, domain := range s.Domains {
 		if !domain.Enabled {
 			continue
@@ -169,7 +169,7 @@ func (s *AppHttpSettings) GetSSLCertIDs() (res []string) {
 	return
 }
 
-func (s *AppHttpSettings) GetBasicAuthIDs() (res []string) {
+func (s *AppRoutingSettings) GetBasicAuthIDs() (res []string) {
 	for _, domain := range s.Domains {
 		if !domain.Enabled {
 			continue
@@ -187,7 +187,7 @@ func (s *AppHttpSettings) GetBasicAuthIDs() (res []string) {
 	return
 }
 
-func (s *AppHttpSettings) GetResourceLinks(setting *Setting) []*ResLink {
+func (s *AppRoutingSettings) GetResourceLinks(setting *Setting) []*ResLink {
 	resLinks := s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 
 	// Links domains to the current setting
@@ -220,10 +220,10 @@ func (s *AppHttpSettings) GetResourceLinks(setting *Setting) []*ResLink {
 	return resLinks
 }
 
-func (s *Setting) AsAppHttpSettings() (*AppHttpSettings, error) {
-	return parseSettingAs[*AppHttpSettings](s)
+func (s *Setting) AsAppRoutingSettings() (*AppRoutingSettings, error) {
+	return parseSettingAs[*AppRoutingSettings](s)
 }
 
-func (s *Setting) MustAsAppHttpSettings() *AppHttpSettings {
-	return gofn.Must(s.AsAppHttpSettings())
+func (s *Setting) MustAsAppRoutingSettings() *AppRoutingSettings {
+	return gofn.Must(s.AsAppRoutingSettings())
 }

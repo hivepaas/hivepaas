@@ -9,10 +9,10 @@ import (
 // APP HTTP CONFIG
 
 type ApplyAppConfigReq struct {
-	App          *entity.App
-	Service      *swarm.Service // if nil, it will be reloaded automatically
-	HttpSettings *entity.AppHttpSettings
-	RefObjects   *entity.RefObjects
+	App             *entity.App
+	Service         *swarm.Service // if nil, it will be reloaded automatically
+	RoutingSettings *entity.AppRoutingSettings
+	RefObjects      *entity.RefObjects
 }
 
 type ApplyAppConfigResp struct {

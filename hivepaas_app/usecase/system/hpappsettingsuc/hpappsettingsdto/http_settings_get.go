@@ -66,7 +66,7 @@ func TransformHttpSettings(input *HttpSettingsTransformInput) (resp *HttpSetting
 	if err = copier.Copy(&resp, input.HttpSettings); err != nil {
 		return nil, apperrors.Wrap(err)
 	}
-	appHttpSettings := input.HttpSettings.MustAsAppHttpSettings()
+	appHttpSettings := input.HttpSettings.MustAsAppRoutingSettings()
 	if err = copier.Copy(&resp, appHttpSettings); err != nil {
 		return nil, apperrors.Wrap(err)
 	}

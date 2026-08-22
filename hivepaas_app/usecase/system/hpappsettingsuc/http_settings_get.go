@@ -27,7 +27,7 @@ func (uc *UC) GetHttpSettings(
 	}
 
 	settings, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
-		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 		bunex.SelectWhere("setting.object_id = ?", app.ID),
 	)
@@ -37,7 +37,7 @@ func (uc *UC) GetHttpSettings(
 
 	input := &hpappsettingsdto.HttpSettingsTransformInput{
 		App:          app,
-		HttpSettings: settinghelper.FindSettingByType(settings, base.SettingTypeAppHttp),
+		HttpSettings: settinghelper.FindSettingByType(settings, base.SettingTypeAppRouting),
 	}
 
 	err = uc.loadHttpSettingsRefData(ctx, uc.db, input)
@@ -65,7 +65,7 @@ func (uc *UC) loadHttpSettingsRefData(
 	}
 
 	app := input.App
-	appHttpSettings, err := input.HttpSettings.AsAppHttpSettings()
+	appHttpSettings, err := input.HttpSettings.AsAppRoutingSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

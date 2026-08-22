@@ -57,7 +57,7 @@ func (s *service) GetHpAppTasks(ctx context.Context) ([]swarm.Task, error) {
 }
 
 func (s *service) SetupHttpSettingsDefault(
-	httpSettings *entity.AppHttpSettings,
+	httpSettings *entity.AppRoutingSettings,
 ) {
 	for _, domain := range httpSettings.Domains {
 		domain.ContainerPort = config.Current.HTTPServer.Port

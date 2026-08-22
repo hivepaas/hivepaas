@@ -14,11 +14,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
-func (uc *UC) GetAppHttpSettings(
+func (uc *UC) GetAppRoutingSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *appsettingsdto.GetAppHttpSettingsReq,
-) (*appsettingsdto.GetAppHttpSettingsResp, error) {
+	req *appsettingsdto.GetAppRoutingSettingsReq,
+) (*appsettingsdto.GetAppRoutingSettingsResp, error) {
 	app, err := uc.appService.LoadApp(ctx, uc.db, req.ProjectID, req.AppID, false, false,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
@@ -31,7 +31,7 @@ func (uc *UC) GetAppHttpSettings(
 	}
 
 	settings, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
-		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 		bunex.SelectWhere("setting.object_id = ?", app.ID),
 	)
@@ -39,41 +39,41 @@ func (uc *UC) GetAppHttpSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	input := &appsettingsdto.AppHttpSettingsTransformInput{
-		App:          app,
-		HttpSettings: settinghelper.FindSettingByType(settings, base.SettingTypeAppHttp),
+	input := &appsettingsdto.AppRoutingSettingsTransformInput{
+		App:             app,
+		RoutingSettings: settinghelper.FindSettingByType(settings, base.SettingTypeAppRouting),
 	}
 
-	err = uc.loadAppHttpSettingsRefData(ctx, uc.db, input)
+	err = uc.loadAppRoutingSettingsRefData(ctx, uc.db, input)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp, err := appsettingsdto.TransformHttpSettings(input)
+	resp, err := appsettingsdto.TransformRoutingSettings(input)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	return &appsettingsdto.GetAppHttpSettingsResp{
+	return &appsettingsdto.GetAppRoutingSettingsResp{
 		Data: resp,
 	}, nil
 }
 
-func (uc *UC) loadAppHttpSettingsRefData(
+func (uc *UC) loadAppRoutingSettingsRefData(
 	ctx context.Context,
 	db database.IDB,
-	input *appsettingsdto.AppHttpSettingsTransformInput,
+	input *appsettingsdto.AppRoutingSettingsTransformInput,
 ) (err error) {
-	if input.HttpSettings == nil {
+	if input.RoutingSettings == nil {
 		return nil
 	}
 
 	app := input.App
-	appHttpSettings, err := input.HttpSettings.AsAppHttpSettings()
+	routingSettings, err := input.RoutingSettings.AsAppRoutingSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	settingIDs := appHttpSettings.GetRefObjectIDs().RefSettingIDs
+	settingIDs := routingSettings.GetRefObjectIDs().RefSettingIDs
 
 	settings, _, err := uc.settingRepo.List(ctx, db, app.GetObjectScope(), nil,
 		bunex.SelectWhere("setting.id IN (?)", bunex.List(settingIDs)),

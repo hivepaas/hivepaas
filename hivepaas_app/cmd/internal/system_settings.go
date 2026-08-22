@@ -50,7 +50,7 @@ func sysSettingsLoadAppDomain(
 			bunex.SelectJoin("JOIN projects AS project ON project.id = app.project_id"),
 			bunex.SelectWhere("project.key = ?", base.HivepaasProjectKey),
 			bunex.SelectWhere("app.key = ?", base.HivepaasAppKey),
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
+			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
 			bunex.SelectLimit(1),
 		)
 		if err != nil {
@@ -59,7 +59,7 @@ func sysSettingsLoadAppDomain(
 		if len(dbHttpSettings) == 0 {
 			return "", nil
 		}
-		httpSettings := dbHttpSettings[0].MustAsAppHttpSettings()
+		httpSettings := dbHttpSettings[0].MustAsAppRoutingSettings()
 		if len(httpSettings.Domains) > 0 {
 			return httpSettings.Domains[0].Domain, nil
 		}

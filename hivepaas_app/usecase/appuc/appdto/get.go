@@ -124,11 +124,11 @@ func TransformAppStats(app *entity.App, input *AppTransformationInput) *AppStats
 }
 
 func TransformAppAccessLinks(app *entity.App) (resp []string) {
-	setting := app.GetSettingByType(base.SettingTypeAppHttp)
+	setting := app.GetSettingByType(base.SettingTypeAppRouting)
 	if setting == nil {
 		return nil
 	}
-	for _, domain := range setting.MustAsAppHttpSettings().GetActiveDomainNames() {
+	for _, domain := range setting.MustAsAppRoutingSettings().GetActiveDomainNames() {
 		resp = append(resp, "https://"+domain)
 	}
 	return resp

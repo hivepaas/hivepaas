@@ -1,8 +1,8 @@
-package apphttpserviceimpl
+package approutingserviceimpl
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
@@ -31,7 +31,7 @@ func New(
 	settingService settingservice.Service,
 	sslService sslservice.Service,
 	traefikService traefikservice.Service,
-) apphttpservice.Service {
+) approutingservice.Service {
 	return &service{
 		db:            db,
 		dockerManager: dockerManager,

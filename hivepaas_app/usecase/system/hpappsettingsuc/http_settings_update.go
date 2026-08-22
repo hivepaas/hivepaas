@@ -15,7 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
@@ -63,7 +63,7 @@ func (uc *UC) UpdateHttpSettings(
 type updateHttpSettingsData struct {
 	App             *entity.App
 	HttpSetting     *entity.Setting
-	NewHttpSettings *entity.AppHttpSettings
+	NewHttpSettings *entity.AppRoutingSettings
 	RefObjects      *entity.RefObjects
 	DomainChanged   bool
 }
@@ -85,20 +85,20 @@ func (uc *UC) loadHttpSettingsForUpdate(
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
 		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
+			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
 		),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	data.App = app
-	data.HttpSetting = app.GetSettingByType(base.SettingTypeAppHttp)
+	data.HttpSetting = app.GetSettingByType(base.SettingTypeAppRouting)
 
 	if data.HttpSetting != nil && data.HttpSetting.UpdateVer != req.UpdateVer {
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
-	httpSettings := data.HttpSetting.MustAsAppHttpSettings()
+	httpSettings := data.HttpSetting.MustAsAppRoutingSettings()
 	var currDomain string
 	if domains := httpSettings.GetActiveDomainNames(); len(domains) > 0 {
 		currDomain = domains[0]
@@ -161,14 +161,14 @@ func (uc *UC) applyHttpSettings(
 	db database.IDB,
 	data *updateHttpSettingsData,
 ) error {
-	appHttpSettings, err := data.HttpSetting.AsAppHttpSettings()
+	appHttpSettings, err := data.HttpSetting.AsAppRoutingSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	resp, err := uc.appHttpService.ApplyHttpSettings(ctx, db, &apphttpservice.ApplyAppHttpReq{
+	resp, err := uc.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
 		App:                 data.App,
-		HttpSettings:        appHttpSettings,
+		RoutingSettings:     appHttpSettings,
 		RefObjects:          data.RefObjects,
 		SkipUpdatingService: true,
 	})

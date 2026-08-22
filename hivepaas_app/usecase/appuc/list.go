@@ -49,7 +49,7 @@ func (uc *UC) ListApp(
 			),
 			bunex.SelectRelation("Settings",
 				// NOTE: load http settings to extract active domain names of the app
-				bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
+				bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
 			),
 		)
 	} else {

@@ -69,9 +69,9 @@ func (s *service) cloneAppSettings(
 	// Validation
 
 	// Active domains of the app need to validate
-	newHttpSetting := destApp.GetSettingByType(base.SettingTypeAppHttp)
+	newHttpSetting := destApp.GetSettingByType(base.SettingTypeAppRouting)
 	if newHttpSetting != nil {
-		activeDomains := newHttpSetting.MustAsAppHttpSettings().GetActiveDomainNames()
+		activeDomains := newHttpSetting.MustAsAppRoutingSettings().GetActiveDomainNames()
 
 		// Verify domains are allowed in project
 		err = s.domainService.VerifyProjectDomains(ctx, db, destApp.ProjectID, activeDomains)
@@ -99,7 +99,7 @@ func (s *service) onCloneSettingDefault(
 		return setting, nil
 	case base.SettingTypeAppDeployment:
 		return s.onCloneDeploymentSettingDefault(setting, data)
-	case base.SettingTypeAppHttp:
+	case base.SettingTypeAppRouting:
 		return s.onCloneHttpSettingDefault(setting, data)
 	case base.SettingTypeAppFeatures:
 		return setting, nil
@@ -146,7 +146,7 @@ func (s *service) onCloneHttpSettingDefault(
 	data *appCloneData,
 ) (*entity.Setting, error) {
 	settings := data.CloneSettings
-	httpSettings := setting.MustAsAppHttpSettings()
+	httpSettings := setting.MustAsAppRoutingSettings()
 
 	currDomains := httpSettings.Domains
 	httpSettings.Domains = nil

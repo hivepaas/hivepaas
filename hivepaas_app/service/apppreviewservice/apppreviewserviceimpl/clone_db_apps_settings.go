@@ -31,7 +31,7 @@ func (s *service) onCloneDBAppSetting(
 		return nil, nil
 	case base.SettingTypeAppDeployment:
 		return nil, nil
-	case base.SettingTypeAppHttp:
+	case base.SettingTypeAppRouting:
 		return nil, nil
 	case base.SettingTypeEnvVar:
 		return s.onCloneDBAppEnvVars(setting, data)

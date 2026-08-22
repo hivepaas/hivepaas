@@ -1,4 +1,4 @@
-package apphttpservice
+package approutingservice
 
 import (
 	"github.com/moby/moby/api/types/swarm"
@@ -6,9 +6,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
 
-type ApplyAppHttpReq struct {
+type ApplyAppRoutingReq struct {
 	App                       *entity.App
-	HttpSettings              *entity.AppHttpSettings
+	RoutingSettings           *entity.AppRoutingSettings
 	RefObjects                *entity.RefObjects
 	Service                   *swarm.Service
 	SkipApplyingSslCerts      bool
@@ -17,6 +17,6 @@ type ApplyAppHttpReq struct {
 	SkipUpdatingService       bool
 }
 
-type ApplyAppHttpResp struct {
+type ApplyAppRoutingResp struct {
 	Service *swarm.Service
 }

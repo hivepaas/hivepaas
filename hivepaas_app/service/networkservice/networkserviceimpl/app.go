@@ -14,7 +14,7 @@ func (s *service) UpdateAppGlobalRoutingNetwork(
 	ctx context.Context,
 	_ *entity.App,
 	service *swarm.Service,
-	httpSettings *entity.AppHttpSettings,
+	httpSettings *entity.AppRoutingSettings,
 ) error {
 	globalNetworkID, err := s.GetGlobalRoutingNetworkID(ctx)
 	if err != nil {

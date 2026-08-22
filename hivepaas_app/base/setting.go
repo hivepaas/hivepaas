@@ -12,8 +12,8 @@ const (
 	SettingTypeAppClone             SettingType = "app-clone"
 	SettingTypeAppDeployment        SettingType = "app-deployment"
 	SettingTypeAppFeatures          SettingType = "app-features"
-	SettingTypeAppHttp              SettingType = "app-http"
 	SettingTypeAppPlacementSettings SettingType = "app-placement-settings"
+	SettingTypeAppRouting           SettingType = "app-routing"
 	SettingTypeBasicAuth            SettingType = "basic-auth"
 	SettingTypeCloudStorage         SettingType = "cloud-storage"
 	SettingTypeClusterNetwork       SettingType = "cluster-network"
@@ -50,7 +50,7 @@ const (
 
 var (
 	AllAppSettingTypes = []SettingType{SettingTypeApp, SettingTypeAppDeployment,
-		SettingTypeAppHttp, SettingTypeEnvVar, SettingTypeSecret, SettingTypeConfigFile,
+		SettingTypeAppRouting, SettingTypeEnvVar, SettingTypeSecret, SettingTypeConfigFile,
 		SettingTypeSchedJob, SettingTypePeriodicJob}
 
 	AllProjectSettingTypes = []SettingType{SettingTypeProject, SettingTypeEnvVar, SettingTypeSecret}

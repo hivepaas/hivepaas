@@ -21,7 +21,7 @@ type UpdateHttpSettingsReq struct {
 	UpdateVer int          `json:"updateVer"`
 }
 
-func (req *UpdateHttpSettingsReq) ApplyTo(setting *entity.AppHttpSettings) error {
+func (req *UpdateHttpSettingsReq) ApplyTo(setting *entity.AppRoutingSettings) error {
 	currDomains := setting.Domains
 	setting.Domains = []*entity.AppDomain{}
 	for _, domain := range req.Domains {

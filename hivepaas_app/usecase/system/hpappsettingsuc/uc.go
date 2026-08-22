@@ -3,7 +3,7 @@ package hpappsettingsuc
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
@@ -25,16 +25,16 @@ type UC struct {
 	appRepo     repository.AppRepo
 	settingRepo repository.SettingRepo
 
-	appHttpService apphttpservice.Service
-	appService     appservice.Service
-	domainService  domainservice.Service
-	hpAppService   hpappservice.Service
-	networkService networkservice.Service
-	settingService settingservice.Service
-	sslService     sslservice.Service
-	systemEventBus systemeventbusservice.Service
-	taskService    taskservice.Service
-	traefikService traefikservice.Service
+	appRoutingService approutingservice.Service
+	appService        appservice.Service
+	domainService     domainservice.Service
+	hpAppService      hpappservice.Service
+	networkService    networkservice.Service
+	settingService    settingservice.Service
+	sslService        sslservice.Service
+	systemEventBus    systemeventbusservice.Service
+	taskService       taskservice.Service
+	traefikService    traefikservice.Service
 }
 
 func New(
@@ -45,7 +45,7 @@ func New(
 	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
 
-	appHttpService apphttpservice.Service,
+	appRoutingService approutingservice.Service,
 	appService appservice.Service,
 	domainService domainservice.Service,
 	hpAppService hpappservice.Service,
@@ -65,15 +65,15 @@ func New(
 		appRepo:     appRepo,
 		settingRepo: settingRepo,
 
-		appHttpService: appHttpService,
-		appService:     appService,
-		domainService:  domainService,
-		hpAppService:   hpAppService,
-		networkService: networkService,
-		settingService: settingService,
-		sslService:     sslService,
-		systemEventBus: systemEventBus,
-		taskService:    taskService,
-		traefikService: traefikService,
+		appRoutingService: appRoutingService,
+		appService:        appService,
+		domainService:     domainService,
+		hpAppService:      hpAppService,
+		networkService:    networkService,
+		settingService:    settingService,
+		sslService:        sslService,
+		systemEventBus:    systemEventBus,
+		taskService:       taskService,
+		traefikService:    traefikService,
 	}
 }

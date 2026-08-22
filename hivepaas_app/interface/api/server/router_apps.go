@@ -44,8 +44,11 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.PUT("/:appID/deployment-settings", appSettingsHandler.UpdateAppDeploymentSettings)
 		appGroup.GET("/:appID/deployment-settings/dockerfile-template",
 			appSettingsHandler.GetBuildDockerfileTemplate)
-		appGroup.GET("/:appID/http-settings", appSettingsHandler.GetAppHttpSettings)
-		appGroup.PUT("/:appID/http-settings", appSettingsHandler.UpdateAppHttpSettings)
+		// TODO: remove these functions
+		appGroup.GET("/:appID/http-settings", appSettingsHandler.GetAppRoutingSettings)
+		appGroup.PUT("/:appID/http-settings", appSettingsHandler.UpdateAppRoutingSettings)
+		appGroup.GET("/:appID/routing-settings", appSettingsHandler.GetAppRoutingSettings)
+		appGroup.PUT("/:appID/routing-settings", appSettingsHandler.UpdateAppRoutingSettings)
 		appGroup.GET("/:appID/service-settings", appSettingsHandler.GetAppServiceSettings)
 		appGroup.PUT("/:appID/service-settings", appSettingsHandler.UpdateAppServiceSettings)
 		appGroup.GET("/:appID/network-settings", appSettingsHandler.GetAppNetworkSettings)

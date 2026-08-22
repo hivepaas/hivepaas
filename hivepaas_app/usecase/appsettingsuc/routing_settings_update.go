@@ -16,32 +16,32 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
-func (uc *UC) UpdateAppHttpSettings(
+func (uc *UC) UpdateAppRoutingSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
-	req *appsettingsdto.UpdateAppHttpSettingsReq,
-) (*appsettingsdto.UpdateAppHttpSettingsResp, error) {
-	var data *updateAppHttpSettingsData
+	req *appsettingsdto.UpdateAppRoutingSettingsReq,
+) (*appsettingsdto.UpdateAppRoutingSettingsResp, error) {
+	var data *updateAppRoutingSettingsData
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data = &updateAppHttpSettingsData{}
-		err := uc.loadAppHttpSettingsForUpdate(ctx, db, req, data)
+		data = &updateAppRoutingSettingsData{}
+		err := uc.loadAppRoutingSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
-		uc.prepareUpdatingAppHttpSettings(ctx, data, persistingData)
+		uc.prepareUpdatingAppRoutingSettings(ctx, data, persistingData)
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		err = uc.applyAppHttpSettings(ctx, db, data)
+		err = uc.applyAppRoutingSettings(ctx, db, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
@@ -51,7 +51,7 @@ func (uc *UC) UpdateAppHttpSettings(
 		return nil, apperrors.Wrap(err)
 	}
 
-	resp := &appsettingsdto.UpdateAppHttpSettingsResp{
+	resp := &appsettingsdto.UpdateAppRoutingSettingsResp{
 		Meta: &basedto.Meta{},
 	}
 
@@ -64,21 +64,21 @@ func (uc *UC) UpdateAppHttpSettings(
 	return resp, nil
 }
 
-type updateAppHttpSettingsData struct {
-	App             *entity.App
-	HttpSetting     *entity.Setting
-	NewHttpSettings *entity.AppHttpSettings
-	RefObjects      *entity.RefObjects
+type updateAppRoutingSettingsData struct {
+	App                *entity.App
+	RoutingSetting     *entity.Setting
+	NewRoutingSettings *entity.AppRoutingSettings
+	RefObjects         *entity.RefObjects
 
 	PortChanged   bool
 	DomainChanged bool
 }
 
-func (uc *UC) loadAppHttpSettingsForUpdate(
+func (uc *UC) loadAppRoutingSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
-	req *appsettingsdto.UpdateAppHttpSettingsReq,
-	data *updateAppHttpSettingsData,
+	req *appsettingsdto.UpdateAppRoutingSettingsReq,
+	data *updateAppRoutingSettingsData,
 ) error {
 	app, err := uc.appService.LoadApp(ctx, db, req.ProjectID, req.AppID, true, true,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
@@ -88,31 +88,31 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 		),
 		bunex.SelectRelation("ProjectEnv"),
 		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppHttp),
+			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
 		),
 	)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 	data.App = app
-	data.HttpSetting = app.GetSettingByType(base.SettingTypeAppHttp)
+	data.RoutingSetting = app.GetSettingByType(base.SettingTypeAppRouting)
 
-	if data.HttpSetting != nil && data.HttpSetting.UpdateVer != req.UpdateVer {
+	if data.RoutingSetting != nil && data.RoutingSetting.UpdateVer != req.UpdateVer {
 		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
 	}
 
-	newHttpSettings := req.ToEntity()
-	data.NewHttpSettings = newHttpSettings
+	newRoutingSettings := req.ToEntity()
+	data.NewRoutingSettings = newRoutingSettings
 
 	// Make sure all reference settings used in these settings exist actively
 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, app.GetObjectScope(),
-		true, newHttpSettings.GetRefObjectIDs())
+		true, newRoutingSettings.GetRefObjectIDs())
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	// Active domains of the app need to validate
-	activeDomains := newHttpSettings.GetActiveDomainNames()
+	activeDomains := newRoutingSettings.GetActiveDomainNames()
 
 	// Verify domains are allowed in project
 	err = uc.domainService.VerifyProjectDomains(ctx, db, app.ProjectID, activeDomains)
@@ -129,16 +129,18 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 	// Detect some changes
 	var oldPort, newPort int
 	var oldDomain, newDomain string
-	if data.HttpSetting != nil {
-		oldHttpSettings := data.HttpSetting.MustAsAppHttpSettings()
-		oldPort = oldHttpSettings.Port
-		if oldHttpSettings.ExposePublicly && len(oldHttpSettings.Domains) > 0 && oldHttpSettings.Domains[0].Enabled {
-			oldDomain = oldHttpSettings.Domains[0].Domain
+	if data.RoutingSetting != nil {
+		oldRoutingSettings := data.RoutingSetting.MustAsAppRoutingSettings()
+		oldPort = oldRoutingSettings.Port
+		if oldRoutingSettings.ExposePublicly && len(oldRoutingSettings.Domains) > 0 &&
+			oldRoutingSettings.Domains[0].Enabled {
+			oldDomain = oldRoutingSettings.Domains[0].Domain
 		}
 	}
-	newPort = newHttpSettings.Port
-	if newHttpSettings.ExposePublicly && len(newHttpSettings.Domains) > 0 && newHttpSettings.Domains[0].Enabled {
-		oldDomain = newHttpSettings.Domains[0].Domain
+	newPort = newRoutingSettings.Port
+	if newRoutingSettings.ExposePublicly && len(newRoutingSettings.Domains) > 0 &&
+		newRoutingSettings.Domains[0].Enabled {
+		oldDomain = newRoutingSettings.Domains[0].Domain
 	}
 	data.PortChanged = oldPort != newPort
 	data.DomainChanged = oldDomain != newDomain
@@ -146,13 +148,13 @@ func (uc *UC) loadAppHttpSettingsForUpdate(
 	return nil
 }
 
-func (uc *UC) prepareUpdatingAppHttpSettings(
+func (uc *UC) prepareUpdatingAppRoutingSettings(
 	_ context.Context,
-	data *updateAppHttpSettingsData,
+	data *updateAppRoutingSettingsData,
 	persistingData *persistingAppData,
 ) {
 	app := data.App
-	setting := data.HttpSetting
+	setting := data.RoutingSetting
 	timeNow := timeutil.NowUTC()
 
 	if setting == nil {
@@ -160,35 +162,35 @@ func (uc *UC) prepareUpdatingAppHttpSettings(
 			ID:          gofn.Must(ulid.NewStringULID()),
 			Scope:       base.ObjectScopeApp,
 			ObjectID:    app.ID,
-			Type:        base.SettingTypeAppHttp,
+			Type:        base.SettingTypeAppRouting,
 			Inheritable: true,
 			CreatedAt:   timeNow,
-			Version:     entity.CurrentAppHttpSettingsVersion,
+			Version:     entity.CurrentAppRoutingSettingsVersion,
 		}
-		data.HttpSetting = setting
+		data.RoutingSetting = setting
 	}
 	setting.UpdateVer++
 	setting.UpdatedAt = timeNow
 	setting.Status = base.SettingStatusActive
 	setting.ExpireAt = time.Time{}
-	setting.MustSetData(data.NewHttpSettings)
+	setting.MustSetData(data.NewRoutingSettings)
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 }
 
-func (uc *UC) applyAppHttpSettings(
+func (uc *UC) applyAppRoutingSettings(
 	ctx context.Context,
 	db database.IDB,
-	data *updateAppHttpSettingsData,
+	data *updateAppRoutingSettingsData,
 ) error {
-	appHttpSettings, err := data.HttpSetting.AsAppHttpSettings()
+	routingSettings, err := data.RoutingSetting.AsAppRoutingSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
-	_, err = uc.appHttpService.ApplyHttpSettings(ctx, db, &apphttpservice.ApplyAppHttpReq{
-		App:          data.App,
-		HttpSettings: appHttpSettings,
-		RefObjects:   data.RefObjects,
+	_, err = uc.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
+		App:             data.App,
+		RoutingSettings: routingSettings,
+		RefObjects:      data.RefObjects,
 	})
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -199,7 +201,7 @@ func (uc *UC) applyAppHttpSettings(
 func (uc *UC) applyAppEnvVars(
 	ctx context.Context,
 	db database.IDB,
-	data *updateAppHttpSettingsData,
+	data *updateAppRoutingSettingsData,
 	inTx bool,
 ) error {
 	if !data.PortChanged && !data.DomainChanged {

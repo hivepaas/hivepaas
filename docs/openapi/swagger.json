@@ -15656,146 +15656,6 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/{projectEnv}/apps/{appID}/http-settings" : {
-      "get" : {
-        "description" : "Gets app HTTP settings",
-        "operationId" : "getAppHttpSettings",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "project env",
-          "in" : "path",
-          "name" : "projectEnv",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "app ID",
-          "in" : "path",
-          "name" : "appID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/appsettingsdto.GetAppHttpSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets app HTTP settings",
-        "tags" : [ "app_settings" ]
-      },
-      "put" : {
-        "description" : "Updates app HTTP settings",
-        "operationId" : "updateAppHttpSettings",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "project env",
-          "in" : "path",
-          "name" : "projectEnv",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "app ID",
-          "in" : "path",
-          "name" : "appID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/appsettingsdto.UpdateAppHttpSettingsReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/appsettingsdto.UpdateAppHttpSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Updates app HTTP settings",
-        "tags" : [ "app_settings" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/logs" : {
       "get" : {
         "description" : "Stream app logs via websocket",
@@ -17302,6 +17162,146 @@
         },
         "summary" : "Restarts an app",
         "tags" : [ "app_actions" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/routing-settings" : {
+      "get" : {
+        "description" : "Gets app routing settings",
+        "operationId" : "getAppRoutingSettings",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.GetAppRoutingSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets app routing settings",
+        "tags" : [ "app_settings" ]
+      },
+      "put" : {
+        "description" : "Updates app routing settings",
+        "operationId" : "updateAppRoutingSettings",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appsettingsdto.UpdateAppRoutingSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.UpdateAppRoutingSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates app routing settings",
+        "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -36548,7 +36548,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -37875,18 +37875,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "appsettingsdto.GetAppHttpSettingsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/appsettingsdto.HttpSettingsResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
       "appsettingsdto.GetAppNetworkSettingsResp" : {
         "properties" : {
           "data" : {
@@ -37903,6 +37891,18 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/appsettingsdto.ResourceSettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appsettingsdto.GetAppRoutingSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appsettingsdto.RoutingSettingsResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -38478,30 +38478,6 @@
         "required" : [ "address", "hostnames" ],
         "type" : "object"
       },
-      "appsettingsdto.HttpSettingsResp" : {
-        "properties" : {
-          "domainSuggestion" : {
-            "type" : "string"
-          },
-          "domains" : {
-            "items" : {
-              "$ref" : "#/components/schemas/appsettingsdto.DomainResp"
-            },
-            "type" : "array"
-          },
-          "exposePublicly" : {
-            "type" : "boolean"
-          },
-          "port" : {
-            "type" : "integer"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "domainSuggestion", "domains", "exposePublicly", "port", "updateVer" ],
-        "type" : "object"
-      },
       "appsettingsdto.LogDriver" : {
         "properties" : {
           "name" : {
@@ -38766,6 +38742,30 @@
           }
         },
         "required" : [ "condition", "delay", "maxAttempts", "window" ],
+        "type" : "object"
+      },
+      "appsettingsdto.RoutingSettingsResp" : {
+        "properties" : {
+          "domainSuggestion" : {
+            "type" : "string"
+          },
+          "domains" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.DomainResp"
+            },
+            "type" : "array"
+          },
+          "exposePublicly" : {
+            "type" : "boolean"
+          },
+          "port" : {
+            "type" : "integer"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "domainSuggestion", "domains", "exposePublicly", "port", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.SELinuxContext" : {
@@ -39193,36 +39193,6 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "appsettingsdto.UpdateAppHttpSettingsReq" : {
-        "properties" : {
-          "domains" : {
-            "items" : {
-              "$ref" : "#/components/schemas/appsettingsdto.DomainReq"
-            },
-            "type" : "array"
-          },
-          "exposePublicly" : {
-            "type" : "boolean"
-          },
-          "port" : {
-            "type" : "integer"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "domains", "exposePublicly", "port", "updateVer" ],
-        "type" : "object"
-      },
-      "appsettingsdto.UpdateAppHttpSettingsResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "appsettingsdto.UpdateAppNetworkSettingsDataResp" : {
         "type" : "object"
       },
@@ -39299,6 +39269,36 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appsettingsdto.UpdateAppRoutingSettingsReq" : {
+        "properties" : {
+          "domains" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.DomainReq"
+            },
+            "type" : "array"
+          },
+          "exposePublicly" : {
+            "type" : "boolean"
+          },
+          "port" : {
+            "type" : "integer"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "domains", "exposePublicly", "port", "updateVer" ],
+        "type" : "object"
+      },
+      "appsettingsdto.UpdateAppRoutingSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppServiceSettingsDataResp" : {
@@ -52809,9 +52809,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

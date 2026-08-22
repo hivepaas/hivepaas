@@ -19,7 +19,7 @@ type Service interface {
 	GetHpAppTasks(ctx context.Context) ([]swarm.Task, error)
 	RestartHpAppSwarmService(ctx context.Context) error
 	ReloadHpAppConfig(ctx context.Context) error
-	SetupHttpSettingsDefault(httpSettings *entity.AppHttpSettings)
+	SetupHttpSettingsDefault(httpSettings *entity.AppRoutingSettings)
 
 	GetAppReleaseInfo(ctx context.Context) (*AppReleaseInfo, error)
 	UpdateSystemVersion(ctx context.Context, db database.IDB, targetVersion *base.ReleaseInfo) error

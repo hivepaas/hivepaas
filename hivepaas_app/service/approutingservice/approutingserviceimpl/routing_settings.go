@@ -1,33 +1,33 @@
-package apphttpserviceimpl
+package approutingserviceimpl
 
 import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apphttpservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 )
 
-type applyAppHttpData struct {
-	*apphttpservice.ApplyAppHttpReq
+type applyAppRoutingData struct {
+	*approutingservice.ApplyAppRoutingReq
 }
 
-func (s *service) ApplyHttpSettings(
+func (s *service) ApplyRoutingSettings(
 	ctx context.Context,
 	db database.IDB,
-	req *apphttpservice.ApplyAppHttpReq,
-) (resp *apphttpservice.ApplyAppHttpResp, err error) {
-	resp = &apphttpservice.ApplyAppHttpResp{}
-	data := &applyAppHttpData{
-		ApplyAppHttpReq: req,
+	req *approutingservice.ApplyAppRoutingReq,
+) (resp *approutingservice.ApplyAppRoutingResp, err error) {
+	resp = &approutingservice.ApplyAppRoutingResp{}
+	data := &applyAppRoutingData{
+		ApplyAppRoutingReq: req,
 	}
 
-	err = s.loadAppHttpData(ctx, db, data)
+	err = s.loadAppRoutingData(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	err = s.applyHttpSettings(ctx, db, data)
+	err = s.applyRoutingSettings(ctx, db, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -36,13 +36,13 @@ func (s *service) ApplyHttpSettings(
 	return resp, nil
 }
 
-func (s *service) loadAppHttpData(
+func (s *service) loadAppRoutingData(
 	ctx context.Context,
 	db database.IDB,
-	data *applyAppHttpData,
+	data *applyAppRoutingData,
 ) (err error) {
 	// Load reference objects
-	refObjectIDs := data.HttpSettings.GetRefObjectIDs()
+	refObjectIDs := data.RoutingSettings.GetRefObjectIDs()
 
 	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, data.App.GetObjectScope(),
 		true, refObjectIDs)

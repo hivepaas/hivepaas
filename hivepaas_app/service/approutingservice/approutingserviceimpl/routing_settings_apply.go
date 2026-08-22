@@ -1,4 +1,4 @@
-package apphttpserviceimpl
+package approutingserviceimpl
 
 import (
 	"context"
@@ -11,18 +11,18 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 )
 
-func (s *service) applyHttpSettings(
+func (s *service) applyRoutingSettings(
 	ctx context.Context,
 	db database.IDB,
-	data *applyAppHttpData,
+	data *applyAppRoutingData,
 ) (err error) {
 	app := data.App
 	appSvc := data.Service
-	appHttpSettings := data.HttpSettings
+	routingSettings := data.RoutingSettings
 
 	if !data.SkipApplyingSslCerts {
 		mapSslSettings := map[string]*entity.Setting{}
-		for _, sslID := range appHttpSettings.GetSSLCertIDs() {
+		for _, sslID := range routingSettings.GetSSLCertIDs() {
 			if s := data.RefObjects.RefSettings[sslID]; s != nil {
 				mapSslSettings[s.ID] = s
 			}
@@ -34,17 +34,17 @@ func (s *service) applyHttpSettings(
 	}
 
 	_, err = s.traefikService.ApplyAppConfig(ctx, db, &traefikservice.ApplyAppConfigReq{
-		App:          app,
-		Service:      appSvc,
-		HttpSettings: appHttpSettings,
-		RefObjects:   data.RefObjects,
+		App:             app,
+		Service:         appSvc,
+		RoutingSettings: routingSettings,
+		RefObjects:      data.RefObjects,
 	})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	if !data.SkipApplyingNetworks {
-		err = s.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, appSvc, data.HttpSettings)
+		err = s.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, appSvc, data.RoutingSettings)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

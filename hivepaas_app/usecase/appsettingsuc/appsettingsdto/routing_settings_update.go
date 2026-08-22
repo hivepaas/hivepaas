@@ -17,7 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/services/traefik"
 )
 
-type UpdateAppHttpSettingsReq struct {
+type UpdateAppRoutingSettingsReq struct {
 	ProjectID      string       `json:"-"`
 	ProjectEnvID   string       `json:"-"`
 	AppID          string       `json:"-"`
@@ -27,8 +27,8 @@ type UpdateAppHttpSettingsReq struct {
 	UpdateVer      int          `json:"updateVer"`
 }
 
-func (req *UpdateAppHttpSettingsReq) ToEntity() *entity.AppHttpSettings {
-	return &entity.AppHttpSettings{
+func (req *UpdateAppRoutingSettingsReq) ToEntity() *entity.AppRoutingSettings {
+	return &entity.AppRoutingSettings{
 		Port:           req.Port,
 		ExposePublicly: req.ExposePublicly,
 		Domains: gofn.MapSlice(req.Domains, func(r *DomainReq) *entity.AppDomain {
@@ -530,11 +530,11 @@ func (r *HTTPPathConfigReq) validate(field string) (res []vld.Validator) {
 	return res
 }
 
-func NewUpdateAppHttpSettingsReq() *UpdateAppHttpSettingsReq {
-	return &UpdateAppHttpSettingsReq{}
+func NewUpdateAppRoutingSettingsReq() *UpdateAppRoutingSettingsReq {
+	return &UpdateAppRoutingSettingsReq{}
 }
 
-func (req *UpdateAppHttpSettingsReq) ModifyRequest() error {
+func (req *UpdateAppRoutingSettingsReq) ModifyRequest() error {
 	activePort := 0
 	for _, domainReq := range req.Domains {
 		if activePort == 0 && domainReq.Enabled {
@@ -551,7 +551,7 @@ func (req *UpdateAppHttpSettingsReq) ModifyRequest() error {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateAppHttpSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateAppRoutingSettingsReq) Validate() apperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 5) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
@@ -564,6 +564,6 @@ func (req *UpdateAppHttpSettingsReq) Validate() apperrors.ValidationErrors {
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
-type UpdateAppHttpSettingsResp struct {
+type UpdateAppRoutingSettingsResp struct {
 	Meta *basedto.Meta `json:"meta"`
 }

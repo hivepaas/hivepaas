@@ -10,27 +10,27 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
-// GetAppHttpSettings Gets app HTTP settings
-// @Summary Gets app HTTP settings
-// @Description Gets app HTTP settings
+// GetAppRoutingSettings Gets app routing settings
+// @Summary Gets app routing settings
+// @Description Gets app routing settings
 // @Tags    app_settings
 // @Produce json
-// @Id      getAppHttpSettings
+// @Id      getAppRoutingSettings
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
-// @Success 200 {object} appsettingsdto.GetAppHttpSettingsResp
+// @Success 200 {object} appsettingsdto.GetAppRoutingSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/http-settings [get]
-func (h *Handler) GetAppHttpSettings(ctx *gin.Context) {
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/routing-settings [get]
+func (h *Handler) GetAppRoutingSettings(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := appsettingsdto.NewGetAppHttpSettingsReq()
+	req := appsettingsdto.NewGetAppRoutingSettingsReq()
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
@@ -39,7 +39,7 @@ func (h *Handler) GetAppHttpSettings(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.appSettingsUC.GetAppHttpSettings(h.RequestCtx(ctx), auth, req)
+	resp, err := h.appSettingsUC.GetAppRoutingSettings(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -48,28 +48,28 @@ func (h *Handler) GetAppHttpSettings(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
-// UpdateAppHttpSettings Updates app HTTP settings
-// @Summary Updates app HTTP settings
-// @Description Updates app HTTP settings
+// UpdateAppRoutingSettings Updates app routing settings
+// @Summary Updates app routing settings
+// @Description Updates app routing settings
 // @Tags    app_settings
 // @Produce json
-// @Id      updateAppHttpSettings
+// @Id      updateAppRoutingSettings
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
-// @Param   body body appsettingsdto.UpdateAppHttpSettingsReq true "request data"
-// @Success 200 {object} appsettingsdto.UpdateAppHttpSettingsResp
+// @Param   body body appsettingsdto.UpdateAppRoutingSettingsReq true "request data"
+// @Success 200 {object} appsettingsdto.UpdateAppRoutingSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/http-settings [put]
-func (h *Handler) UpdateAppHttpSettings(ctx *gin.Context) {
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/routing-settings [put]
+func (h *Handler) UpdateAppRoutingSettings(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := appsettingsdto.NewUpdateAppHttpSettingsReq()
+	req := appsettingsdto.NewUpdateAppRoutingSettingsReq()
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
 	req.AppID = appID
@@ -78,7 +78,7 @@ func (h *Handler) UpdateAppHttpSettings(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.appSettingsUC.UpdateAppHttpSettings(h.RequestCtx(ctx), auth, req)
+	resp, err := h.appSettingsUC.UpdateAppRoutingSettings(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

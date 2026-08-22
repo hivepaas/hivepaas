@@ -37,7 +37,7 @@ func (s *service) onCloneAppSetting(
 		return nil, nil
 	case base.SettingTypeAppDeployment:
 		return s.onCloneDeploymentSetting(setting, data)
-	case base.SettingTypeAppHttp:
+	case base.SettingTypeAppRouting:
 		return s.onCloneHttpSetting(ctx, db, setting, data)
 	case base.SettingTypeEnvVar:
 		return s.onCloneEnvVars(setting, data)
@@ -75,7 +75,7 @@ func (s *service) onCloneHttpSetting(
 	setting *entity.Setting,
 	data *createPreviewData,
 ) (*entity.Setting, error) {
-	httpSettings := setting.MustAsAppHttpSettings()
+	httpSettings := setting.MustAsAppRoutingSettings()
 
 	var activeDomains []string
 	currDomains := httpSettings.Domains

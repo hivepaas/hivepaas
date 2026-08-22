@@ -24,6 +24,9 @@ func (s *service) CreateConfigsForApp(
 ) (refs []*entity.SwarmConfigRef, err error) {
 	refs = make([]*entity.SwarmConfigRef, 0, len(configs))
 	for _, cfg := range configs {
+		if cfg == nil {
+			continue
+		}
 		ref, err := s.createSwarmConfig(ctx, db, app, cfg)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
@@ -39,6 +42,9 @@ func (s *service) CreateConfigForApp(
 	app *entity.App,
 	config *entity.ConfigFile,
 ) (*entity.SwarmConfigRef, error) {
+	if config == nil {
+		return nil, nil
+	}
 	refs, err := s.CreateConfigsForApp(ctx, db, app, []*entity.ConfigFile{config})
 	ref, _ := gofn.First(refs)
 	return ref, apperrors.Wrap(err)

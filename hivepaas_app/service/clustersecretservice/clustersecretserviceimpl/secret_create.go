@@ -24,6 +24,9 @@ func (s *service) CreateSecretsForApp(
 ) (refs []*entity.SwarmSecretRef, err error) {
 	refs = make([]*entity.SwarmSecretRef, 0, len(secrets))
 	for _, secret := range secrets {
+		if secret == nil {
+			continue
+		}
 		ref, err := s.createSwarmSecret(ctx, db, app, secret)
 		if err != nil {
 			return nil, apperrors.Wrap(err)
@@ -39,6 +42,9 @@ func (s *service) CreateSecretForApp(
 	app *entity.App,
 	secret *entity.Secret,
 ) (*entity.SwarmSecretRef, error) {
+	if secret == nil {
+		return nil, nil
+	}
 	refs, err := s.CreateSecretsForApp(ctx, db, app, []*entity.Secret{secret})
 	ref, _ := gofn.First(refs)
 	return ref, apperrors.Wrap(err)

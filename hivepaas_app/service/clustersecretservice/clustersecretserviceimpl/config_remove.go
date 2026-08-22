@@ -78,7 +78,7 @@ func (s *service) RemoveConfigForApp(
 ) (err error) {
 	configRefs := make([]*entity.SwarmConfigRef, 0, len(configs))
 	for _, config := range configs {
-		if config.SwarmRef == nil || config.SwarmRef.ConfigID == "" {
+		if config == nil || config.SwarmRef == nil || config.SwarmRef.ConfigID == "" {
 			continue
 		}
 		configRefs = append(configRefs, config.SwarmRef)

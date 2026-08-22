@@ -78,7 +78,7 @@ func (s *service) RemoveSecretForApp(
 ) (err error) {
 	secretRefs := make([]*entity.SwarmSecretRef, 0, len(secrets))
 	for _, secret := range secrets {
-		if secret.SwarmRef == nil || secret.SwarmRef.SecretID == "" {
+		if secret == nil || secret.SwarmRef == nil || secret.SwarmRef.SecretID == "" {
 			continue
 		}
 		secretRefs = append(secretRefs, secret.SwarmRef)

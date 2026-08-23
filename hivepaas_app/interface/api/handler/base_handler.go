@@ -129,9 +129,11 @@ func (h *BaseHandler) RenderError(ctx *gin.Context, err error) {
 
 // SaveError save error in to DB
 func (h *BaseHandler) SaveError(ctx *gin.Context, _ error, errInfo *apperrors.ErrorInfo) {
-	_, _ = h.sysErrorUC.CreateSysError(ctx, &syserrordto.CreateSysErrorReq{
-		ErrorInfo: errInfo,
-	})
+	if h != nil && h.sysErrorUC != nil {
+		_, _ = h.sysErrorUC.CreateSysError(ctx, &syserrordto.CreateSysErrorReq{
+			ErrorInfo: errInfo,
+		})
+	}
 }
 
 // parsePagination parses paging and sorting params

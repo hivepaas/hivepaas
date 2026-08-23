@@ -70,7 +70,7 @@ func (s *HTTPServer) init() {
 
 	// Configures middlewares
 	engine.Use(
-		recovery.Recovery(s.config),
+		recovery.Recovery(s.config, s.handlerRegistry.baseHandler),
 		loggermiddleware.Logger(s.logger),
 		secureheaders.SecureHeaders,
 		cors.CORS(s.config),

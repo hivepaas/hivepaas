@@ -8,6 +8,7 @@ import (
 	swaggoGin "github.com/swaggo/gin-swagger"
 
 	"github.com/hivepaas/hivepaas/assets"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appactionhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appcontainerhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appdeploymenthandler"
@@ -36,6 +37,7 @@ import (
 )
 
 type HandlerRegistry struct {
+	baseHandler               *handler.BaseHandler
 	authHandler               *authhandler.Handler
 	appActionHandler          *appactionhandler.Handler
 	appContainerHandler       *appcontainerhandler.Handler
@@ -64,6 +66,7 @@ type HandlerRegistry struct {
 }
 
 func NewHandlerRegistry(
+	baseHandler *handler.BaseHandler,
 	authHandler *authhandler.Handler,
 	appActionHandler *appactionhandler.Handler,
 	appContainerHandler *appcontainerhandler.Handler,
@@ -91,6 +94,7 @@ func NewHandlerRegistry(
 	webhookHandler *webhookhandler.Handler,
 ) *HandlerRegistry {
 	return &HandlerRegistry{
+		baseHandler:               baseHandler,
 		authHandler:               authHandler,
 		appActionHandler:          appActionHandler,
 		appContainerHandler:       appContainerHandler,

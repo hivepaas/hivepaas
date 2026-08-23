@@ -255,7 +255,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                                 <span className="text-orange-500">MY_ENV = {"${ENV2}"}</span> or{" "}
                                 <span className="text-orange-500">MY_ENV = {"${secrets.MY_SECRET}"}</span>.
                             </p>
-                            <p className="mt-3">
+                            <p>
                                 Use Secrets if you do not want anyone to see their values. Secrets will be filtered out
                                 from log data, while Env vars will not.
                             </p>

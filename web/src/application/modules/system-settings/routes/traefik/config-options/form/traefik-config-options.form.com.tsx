@@ -2,6 +2,8 @@ import React, { type PropsWithChildren, useImperativeHandle } from "react";
 
 import { Checkbox, Field, FieldError, FieldGroup } from "@components/ui";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { type FieldPath, FormProvider, useController, useForm, useFormContext } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import type { TraefikConfigOptions } from "~/system-settings/api/services";
@@ -202,17 +204,16 @@ export function TraefikConfigOptionsForm({ ref, defaultValues, onSubmit, readOnl
                     disabled={readOnly}
                     className="contents"
                 >
-                    <div className="rounded-lg border border-dashed bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
+                    <div className={cn(dashedBorderBox, "text-sm leading-6 text-muted-foreground")}>
                         For configuration details, see{" "}
                         <a
-                            className="text-blue-500 hover:text-blue-600"
+                            className="text-blue-500 underline underline-offset-2 hover:text-blue-600"
                             href="https://doc.traefik.io/traefik/reference/install-configuration/configuration-options/"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
                             docs
-                        </a>{" "}
-                        .
+                        </a>
                     </div>
 
                     <ContentBlock label="Startup Command">

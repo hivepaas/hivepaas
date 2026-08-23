@@ -1,3 +1,5 @@
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -104,7 +106,7 @@ function AppConfigStorageContent() {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="rounded-md border border-dashed border-primary bg-accent p-2 text-sm text-muted-foreground">
+            <div className={cn(dashedBorderBox, "text-sm leading-6 text-muted-foreground")}>
                 For configuration details, see{" "}
                 <a
                     href="https://docs.docker.com/reference/api/engine/version/v1.52/#tag/Service/operation/ServiceUpdate"

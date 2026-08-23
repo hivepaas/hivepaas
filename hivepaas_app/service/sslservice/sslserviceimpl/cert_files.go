@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/tiendc/gofn"
 
@@ -44,7 +45,11 @@ func (s *service) WriteCertFiles(
 			continue
 		}
 
-		certBytes := reflectutil.UnsafeStrToBytes(sslCert.Certificate)
+		certStr := sslCert.Certificate
+		if sslCert.CACertificate != "" {
+			certStr = strings.TrimSpace(certStr) + "\n" + strings.TrimSpace(sslCert.CACertificate)
+		}
+		certBytes := reflectutil.UnsafeStrToBytes(certStr)
 		privateKey, err := sslCert.PrivateKey.GetPlain()
 		if err != nil {
 			return apperrors.Wrap(err)

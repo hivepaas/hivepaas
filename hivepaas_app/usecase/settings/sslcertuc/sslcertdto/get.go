@@ -44,6 +44,7 @@ type SSLCertResp struct {
 	Domain        string                             `json:"domain"`
 	Certificate   string                             `json:"certificate"`
 	PrivateKey    string                             `json:"privateKey"`
+	CACertificate string                             `json:"caCertificate,omitempty"`
 	KeyType       base.SSLKeyType                    `json:"keyType"`
 	ValidPeriod   timeutil.Duration                  `json:"validPeriod"`
 	Email         string                             `json:"email"`
@@ -101,6 +102,9 @@ func TransformSSLCert(
 	if resp.SecretMasked {
 		resp.PrivateKey = maskedSecret
 		resp.Certificate = maskedSecret
+		if resp.CACertificate != "" {
+			resp.CACertificate = maskedSecret
+		}
 	}
 
 	resp.Notification = basedto.TransformBaseEventNotification(config.Notification, refObjects)
@@ -120,6 +124,9 @@ func TransformSSLCertBasic(
 	}
 	resp.Certificate = maskedSecret
 	resp.PrivateKey = maskedSecret
+	if resp.CACertificate != "" {
+		resp.CACertificate = maskedSecret
+	}
 	resp.SecretMasked = true
 	resp.Notification = nil
 	return resp, nil

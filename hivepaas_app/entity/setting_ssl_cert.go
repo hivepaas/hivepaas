@@ -24,12 +24,14 @@ func (s *sslCertParser) New() SettingData {
 }
 
 type SSLCert struct {
-	CertType      base.SSLCertType       `json:"certType"`
-	Provider      ObjectID               `json:"provider,omitzero"`
-	Domain        string                 `json:"domain"`
-	Certificate   string                 `json:"certificate"`
-	PrivateKey    EncryptedField         `json:"privateKey"`
-	KeyType       base.SSLKeyType        `json:"keyType"`
+	CertType      base.SSLCertType `json:"certType"`
+	Provider      ObjectID         `json:"provider,omitzero"`
+	Domain        string           `json:"domain"`
+	Certificate   string           `json:"certificate"`
+	PrivateKey    EncryptedField   `json:"privateKey"`
+	CACertificate string           `json:"caCertificate,omitempty"`
+	KeyType       base.SSLKeyType  `json:"keyType"`
+
 	ValidPeriod   timeutil.Duration      `json:"validPeriod"`
 	Email         string                 `json:"email"`
 	BaseFilename  string                 `json:"baseFilename,omitempty"`

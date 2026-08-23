@@ -27,36 +27,38 @@ type CreateSSLCertReq struct {
 }
 
 type SSLCertBaseReq struct {
-	CertType     base.SSLCertType                  `json:"certType"`
-	Provider     basedto.ObjectIDReq               `json:"provider"`
-	Domain       string                            `json:"domain"`
-	Certificate  string                            `json:"certificate"`
-	PrivateKey   string                            `json:"privateKey"`
-	KeyType      base.SSLKeyType                   `json:"keyType"`
-	ValidPeriod  timeutil.Duration                 `json:"validPeriod"`
-	Email        string                            `json:"email"`
-	AutoRenew    bool                              `json:"autoRenew"`
-	AcmeProvider basedto.ObjectIDReq               `json:"acmeProvider"`
-	ExpireAt     time.Time                         `json:"expireAt"`
-	NotifyFrom   time.Time                         `json:"notifyFrom"`
-	Notification *basedto.BaseEventNotificationReq `json:"notification"`
+	CertType      base.SSLCertType                  `json:"certType"`
+	Provider      basedto.ObjectIDReq               `json:"provider"`
+	Domain        string                            `json:"domain"`
+	Certificate   string                            `json:"certificate"`
+	PrivateKey    string                            `json:"privateKey"`
+	CACertificate string                            `json:"caCertificate"`
+	KeyType       base.SSLKeyType                   `json:"keyType"`
+	ValidPeriod   timeutil.Duration                 `json:"validPeriod"`
+	Email         string                            `json:"email"`
+	AutoRenew     bool                              `json:"autoRenew"`
+	AcmeProvider  basedto.ObjectIDReq               `json:"acmeProvider"`
+	ExpireAt      time.Time                         `json:"expireAt"`
+	NotifyFrom    time.Time                         `json:"notifyFrom"`
+	Notification  *basedto.BaseEventNotificationReq `json:"notification"`
 }
 
 func (req *SSLCertBaseReq) ToEntity() *entity.SSLCert {
 	return &entity.SSLCert{
-		CertType:     req.CertType,
-		Provider:     entity.ObjectID{ID: req.Provider.ID},
-		Domain:       req.Domain,
-		Certificate:  req.Certificate,
-		PrivateKey:   entity.NewEncryptedField(req.PrivateKey),
-		KeyType:      req.KeyType,
-		ValidPeriod:  req.ValidPeriod,
-		Email:        req.Email,
-		AutoRenew:    req.AutoRenew,
-		AcmeProvider: entity.ObjectID{ID: req.AcmeProvider.ID},
-		ExpireAt:     req.ExpireAt,
-		NotifyFrom:   req.NotifyFrom,
-		Notification: req.Notification.ToEntity(),
+		CertType:      req.CertType,
+		Provider:      entity.ObjectID{ID: req.Provider.ID},
+		Domain:        req.Domain,
+		Certificate:   req.Certificate,
+		PrivateKey:    entity.NewEncryptedField(req.PrivateKey),
+		CACertificate: req.CACertificate,
+		KeyType:       req.KeyType,
+		ValidPeriod:   req.ValidPeriod,
+		Email:         req.Email,
+		AutoRenew:     req.AutoRenew,
+		AcmeProvider:  entity.ObjectID{ID: req.AcmeProvider.ID},
+		ExpireAt:      req.ExpireAt,
+		NotifyFrom:    req.NotifyFrom,
+		Notification:  req.Notification.ToEntity(),
 	}
 }
 
@@ -95,6 +97,7 @@ func (req *SSLCertBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateDomain(&req.Domain, true, base.DomainNameMaxLen, true, field+"domain")...)
 	res = append(res, basedto.ValidateStr(&req.Certificate, requireCert, 1, keyMaxLen, field+"certificate")...)
 	res = append(res, basedto.ValidateStr(&req.PrivateKey, requireCert, 1, keyMaxLen, field+"privateKey")...)
+	res = append(res, basedto.ValidateStr(&req.CACertificate, false, 1, keyMaxLen, field+"caCertificate")...)
 	res = append(res, basedto.ValidateEmail(&req.Email, false, field+"email")...)
 	res = append(res, basedto.ValidateObjectIDReq(&req.AcmeProvider, requireAcmeProvider, field+"acmeProvider")...)
 

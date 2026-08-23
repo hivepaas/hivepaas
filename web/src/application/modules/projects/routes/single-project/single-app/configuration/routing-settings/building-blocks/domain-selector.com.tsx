@@ -13,8 +13,8 @@ import { PopConfirm } from "@application/shared/components/pop-confirm";
 import { isValidDomain } from "@application/shared/utils/domain";
 
 import {
-    type AppConfigHttpSettingsFormSchemaInput,
-    type AppConfigHttpSettingsFormSchemaOutput,
+    type AppConfigRoutingSettingsFormSchemaInput,
+    type AppConfigRoutingSettingsFormSchemaOutput,
     createDefaultCompressionConfig,
     emptyDomain,
 } from "../schemas";
@@ -110,10 +110,10 @@ export function DomainSelector({
     setSuppressDomainAutoSelect,
     readOnly = false,
 }: DomainSelectorProps) {
-    const { control, clearErrors, getValues, reset } = useFormContext<
-        AppConfigHttpSettingsFormSchemaInput,
+    const { control, clearErrors, getValues, reset, setValue } = useFormContext<
+        AppConfigRoutingSettingsFormSchemaInput,
         unknown,
-        AppConfigHttpSettingsFormSchemaOutput
+        AppConfigRoutingSettingsFormSchemaOutput
     >();
 
     const { fields, append, move } = useFieldArray({ control, name: "domains" });
@@ -242,7 +242,21 @@ export function DomainSelector({
                                     return;
                                 }
 
-                                port.onChange(v ?? 0);
+                                const prevPort = port.value;
+                                const newPort = v ?? 0;
+                                port.onChange(newPort);
+
+                                if (prevPort !== newPort) {
+                                    const currentDomains = getValues("domains");
+                                    currentDomains.forEach((d, idx) => {
+                                        if (d.containerPort === prevPort) {
+                                            setValue(`domains.${idx}.containerPort`, newPort, {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                            });
+                                        }
+                                    });
+                                }
                             }}
                             useGrouping={false}
                             placeholder="8080"
@@ -273,103 +287,106 @@ export function DomainSelector({
             </InfoBlock>
 
             {exposePublicly.value && (
-                <InfoBlock
-                    title={
-                        <LabelWithInfo
-                            label="Domains"
-                            content="Configure domains for this app. Click a domain to edit its settings."
-                        />
-                    }
-                >
-                    <div className="flex flex-wrap items-center gap-2">
-                        {fields.map((field, i) => (
-                            <DomainChip
-                                key={field.id}
-                                domain={domainValues[i]?.domain ?? ""}
-                                isFirst={i === 0}
-                                isActive={i === activeDomainIndex}
-                                readOnly={readOnly}
-                                onClick={() => {
-                                    setActiveDomainIndex(i);
-                                }}
-                                onMoveLeft={() => {
-                                    handleMoveLeft(i);
-                                }}
-                                onView={() => {
-                                    handleViewDomain(domainValues[i]?.domain ?? "");
-                                }}
-                                onRemove={() => {
-                                    handleRemoveDomain(i);
-                                }}
+                <>
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Domains"
+                                content="Configure domains for this app. Click a domain to edit its settings."
                             />
-                        ))}
-
-                        {isAdding ? (
-                            <div className="flex items-center gap-1">
-                                <Input
-                                    value={newDomainDraft}
-                                    onChange={e => {
-                                        setNewDomainDraft(e.target.value);
-                                        setDomainInputError(null);
+                        }
+                    >
+                        <div className="flex flex-wrap items-center gap-2">
+                            {fields.map((field, i) => (
+                                <DomainChip
+                                    key={field.id}
+                                    domain={domainValues[i]?.domain ?? ""}
+                                    isFirst={i === 0}
+                                    isActive={i === activeDomainIndex}
+                                    readOnly={readOnly}
+                                    onClick={() => {
+                                        setActiveDomainIndex(i);
                                     }}
-                                    placeholder="e.g. app.example.com"
-                                    className="h-8 w-48 text-xs"
-                                    onKeyDown={e => {
-                                        if (e.key === "Enter") {
-                                            e.preventDefault();
-                                            handleConfirmAdd();
-                                        }
-                                        if (e.key === "Escape") {
-                                            handleCancelAdd();
-                                        }
+                                    onMoveLeft={() => {
+                                        handleMoveLeft(i);
+                                    }}
+                                    onView={() => {
+                                        handleViewDomain(domainValues[i]?.domain ?? "");
+                                    }}
+                                    onRemove={() => {
+                                        handleRemoveDomain(i);
                                     }}
                                 />
-                                <Button
-                                    type="button"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    title="Confirm"
-                                    onClick={handleConfirmAdd}
-                                >
-                                    <Check className="size-3" />
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    title="Cancel"
-                                    onClick={handleCancelAdd}
-                                >
-                                    <X className="size-3" />
-                                </Button>
-                            </div>
-                        ) : (
-                            !readOnly && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    title="Add domain"
-                                    onClick={() => {
-                                        setNewDomainDraft(suggestedDomain);
-                                        setDomainInputError(null);
-                                        setIsAdding(true);
-                                    }}
-                                >
-                                    <Plus className="size-4" />
-                                </Button>
-                            )
-                        )}
-                    </div>
-                    {domainInputError && <FieldError errors={[{ message: domainInputError }]} />}
-                </InfoBlock>
-            )}
-            {fields.length > 0 && activeDomainIndex >= 0 && activeDomainIndex < fields.length && (
-                <div className="text-red-500 font-medium bg-accent py-2 px-3 rounded-lg">
-                    Selected domain: {domainValues[activeDomainIndex]?.domain.trim() ?? "—"}
-                </div>
+                            ))}
+
+                            {isAdding ? (
+                                <div className="flex items-center gap-1">
+                                    <Input
+                                        value={newDomainDraft}
+                                        onChange={e => {
+                                            setNewDomainDraft(e.target.value);
+                                            setDomainInputError(null);
+                                        }}
+                                        placeholder="e.g. app.example.com"
+                                        className="h-8 w-48 text-xs"
+                                        onKeyDown={e => {
+                                            if (e.key === "Enter") {
+                                                e.preventDefault();
+                                                handleConfirmAdd();
+                                            }
+                                            if (e.key === "Escape") {
+                                                handleCancelAdd();
+                                            }
+                                        }}
+                                    />
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        title="Confirm"
+                                        onClick={handleConfirmAdd}
+                                    >
+                                        <Check className="size-3" />
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        title="Cancel"
+                                        onClick={handleCancelAdd}
+                                    >
+                                        <X className="size-3" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                !readOnly && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        title="Add domain"
+                                        onClick={() => {
+                                            setNewDomainDraft(suggestedDomain);
+                                            setDomainInputError(null);
+                                            setIsAdding(true);
+                                        }}
+                                    >
+                                        <Plus className="size-4" />
+                                    </Button>
+                                )
+                            )}
+                        </div>
+                        {domainInputError && <FieldError errors={[{ message: domainInputError }]} />}
+                    </InfoBlock>
+
+                    {fields.length > 0 && activeDomainIndex >= 0 && activeDomainIndex < fields.length && (
+                        <div className="text-red-500 font-medium bg-accent py-2 px-3 rounded-lg">
+                            Selected domain: {domainValues[activeDomainIndex]?.domain.trim() ?? "—"}
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

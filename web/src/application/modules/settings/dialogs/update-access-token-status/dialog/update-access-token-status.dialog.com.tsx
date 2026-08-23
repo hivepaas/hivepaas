@@ -6,12 +6,12 @@ import { ProjectAccessTokenCommands } from "~/projects/data/commands";
 import { ProjectAccessTokenQueries } from "~/projects/data/queries";
 import { AccessTokenCommands } from "~/settings/data/commands";
 import { AccessTokenQueries } from "~/settings/data/queries";
+import { UpdateSSHKeyStatusForm as UpdateAccessTokenStatusForm } from "~/settings/dialogs/update-ssh-key-status/form";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
-import { UpdateAccessTokenStatusForm } from "../form";
 import { useUpdateAccessTokenStatusDialogState } from "../hooks";
 import type { UpdateAccessTokenStatusFormOutput } from "../schemas";
 

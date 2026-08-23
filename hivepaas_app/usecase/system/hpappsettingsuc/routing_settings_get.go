@@ -14,7 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
 
-func (uc *UC) GetHttpSettings(
+func (uc *UC) GetRoutingSettings(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *hpappsettingsdto.GetRoutingSettingsReq,
@@ -40,7 +40,7 @@ func (uc *UC) GetHttpSettings(
 		RoutingSettings: settinghelper.FindSettingByType(settings, base.SettingTypeAppRouting),
 	}
 
-	err = uc.loadHttpSettingsRefData(ctx, uc.db, input)
+	err = uc.loadRoutingSettingsRefData(ctx, uc.db, input)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
@@ -55,7 +55,7 @@ func (uc *UC) GetHttpSettings(
 	}, nil
 }
 
-func (uc *UC) loadHttpSettingsRefData(
+func (uc *UC) loadRoutingSettingsRefData(
 	ctx context.Context,
 	db database.IDB,
 	input *hpappsettingsdto.RoutingSettingsTransformInput,
@@ -65,11 +65,11 @@ func (uc *UC) loadHttpSettingsRefData(
 	}
 
 	app := input.App
-	appHttpSettings, err := input.RoutingSettings.AsAppRoutingSettings()
+	routingSettings, err := input.RoutingSettings.AsAppRoutingSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	settingIDs := appHttpSettings.GetRefObjectIDs().RefSettingIDs
+	settingIDs := routingSettings.GetRefObjectIDs().RefSettingIDs
 
 	settings, _, err := uc.settingRepo.List(ctx, db, app.GetObjectScope(), nil,
 		bunex.SelectWhere("setting.id IN (?)", bunex.List(settingIDs)),

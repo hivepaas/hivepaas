@@ -25,9 +25,9 @@ type AppCloneSettings struct {
 	TargetStatus   base.AppStatus `json:"targetStatus,omitempty"`
 	TargetReplicas int            `json:"targetReplicas,omitempty"`
 
-	CloneDeploymentSettings bool                          `json:"cloneDeploymentSettings,omitempty"`
-	CloneHttpSettings       bool                          `json:"cloneHttpSettings,omitempty"`
-	CloneHttpDomains        []*AppCloneHttpDomainSettings `json:"cloneHttpDomains,omitempty"`
+	CloneDeploymentSettings bool                             `json:"cloneDeploymentSettings,omitempty"`
+	CloneRoutingSettings    bool                             `json:"cloneRoutingSettings,omitempty"`
+	CloneRoutingDomains     []*AppCloneRoutingDomainSettings `json:"cloneRoutingDomains,omitempty"`
 
 	CloneVolumes    bool     `json:"cloneVolumes,omitempty"`
 	CloneVolumeData bool     `json:"cloneVolumeData,omitempty"`
@@ -47,7 +47,7 @@ type AppCloneSettings struct {
 	Notification *BaseEventNotification `json:"notification,omitempty"`
 }
 
-type AppCloneHttpDomainSettings struct {
+type AppCloneRoutingDomainSettings struct {
 	SourceDomain  string   `json:"sourceDomain"`
 	TargetDomain  string   `json:"targetDomain"`
 	SourceSSLCert ObjectID `json:"sourceSslCert,omitzero"`
@@ -60,7 +60,7 @@ func (s *AppCloneSettings) GetType() base.SettingType {
 
 func (s *AppCloneSettings) GetRefObjectIDs() *RefObjectIDs {
 	refIDs := &RefObjectIDs{}
-	for _, domain := range s.CloneHttpDomains {
+	for _, domain := range s.CloneRoutingDomains {
 		if domain.SourceSSLCert.ID != "" {
 			refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, domain.SourceSSLCert.ID)
 		}

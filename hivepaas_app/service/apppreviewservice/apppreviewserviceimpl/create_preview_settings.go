@@ -38,7 +38,7 @@ func (s *service) onCloneAppSetting(
 	case base.SettingTypeAppDeployment:
 		return s.onCloneDeploymentSetting(setting, data)
 	case base.SettingTypeAppRouting:
-		return s.onCloneHttpSetting(ctx, db, setting, data)
+		return s.onCloneRoutingSetting(ctx, db, setting, data)
 	case base.SettingTypeEnvVar:
 		return s.onCloneEnvVars(setting, data)
 	case base.SettingTypeSecret:
@@ -69,7 +69,7 @@ func (s *service) onCloneDeploymentSetting(
 	return setting, nil
 }
 
-func (s *service) onCloneHttpSetting(
+func (s *service) onCloneRoutingSetting(
 	ctx context.Context,
 	db database.IDB,
 	setting *entity.Setting,

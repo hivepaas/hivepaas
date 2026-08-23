@@ -9,7 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 )
 
-func (s *service) applyAppHttpSettings(
+func (s *service) applyAppRoutingSettings(
 	ctx context.Context,
 	db database.IDB,
 	data *appCloneData,

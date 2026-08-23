@@ -20,7 +20,7 @@ import (
 // @Success 200 {object} hpappsettingsdto.GetRoutingSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /system/hivepaas/http-settings [get]
+// @Router  /system/hivepaas/routing-settings [get]
 func (h *Handler) GetRoutingSettings(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
 		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
@@ -42,7 +42,7 @@ func (h *Handler) GetRoutingSettings(ctx *gin.Context) {
 		return
 	}
 
-	resp, err := h.hpAppSettingsUC.GetHttpSettings(h.RequestCtx(ctx), auth, req)
+	resp, err := h.hpAppSettingsUC.GetRoutingSettings(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -61,10 +61,10 @@ func (h *Handler) GetRoutingSettings(ctx *gin.Context) {
 // @Success 200 {object} hpappsettingsdto.UpdateRoutingSettingsResp
 // @Failure 400 {object} apperrors.ErrorInfo
 // @Failure 500 {object} apperrors.ErrorInfo
-// @Router  /system/hivepaas/http-settings [put]
+// @Router  /system/hivepaas/routing-settings [put]
 func (h *Handler) UpdateRoutingSettings(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
-		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
 		Module:          base.ResourceModuleSystem,
 	})
 	if err != nil {

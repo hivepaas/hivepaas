@@ -85,7 +85,7 @@ func (uc *UC) initDefaultAppCloneSettings(
 			TargetReplicas: -1,
 
 			CloneDeploymentSettings: true,
-			CloneHttpSettings:       true,
+			CloneRoutingSettings:    true,
 
 			CloneVolumes:    true,
 			CloneVolumeData: true,
@@ -118,14 +118,14 @@ func (uc *UC) initDefaultAppCloneSettings(
 		routingSettings = &entity.AppRoutingSettings{}
 	}
 
-	currDomainSettings := cloneSettings.CloneHttpDomains
-	cloneSettings.CloneHttpDomains = nil
+	currDomainSettings := cloneSettings.CloneRoutingDomains
+	cloneSettings.CloneRoutingDomains = nil
 	for _, domain := range routingSettings.Domains {
-		domainSettings, _ := gofn.Find(currDomainSettings, func(d *entity.AppCloneHttpDomainSettings) bool {
+		domainSettings, _ := gofn.Find(currDomainSettings, func(d *entity.AppCloneRoutingDomainSettings) bool {
 			return d.SourceDomain == domain.Domain
 		})
 		if domainSettings == nil {
-			domainSettings = &entity.AppCloneHttpDomainSettings{
+			domainSettings = &entity.AppCloneRoutingDomainSettings{
 				SourceDomain: domain.Domain,
 				TargetDomain: "clone_" + domain.Domain,
 			}
@@ -139,7 +139,7 @@ func (uc *UC) initDefaultAppCloneSettings(
 			domainSettings.TargetSSLCert = domain.SSLCert
 		}
 
-		cloneSettings.CloneHttpDomains = append(cloneSettings.CloneHttpDomains, domainSettings)
+		cloneSettings.CloneRoutingDomains = append(cloneSettings.CloneRoutingDomains, domainSettings)
 	}
 
 	input.AppCloneSettings = cloneSettings

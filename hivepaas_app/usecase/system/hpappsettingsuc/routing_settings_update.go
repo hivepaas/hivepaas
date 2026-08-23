@@ -161,14 +161,14 @@ func (uc *UC) applyRoutingSettings(
 	db database.IDB,
 	data *updateRoutingSettingsData,
 ) error {
-	appHttpSettings, err := data.RoutingSetting.AsAppRoutingSettings()
+	routingSettings, err := data.RoutingSetting.AsAppRoutingSettings()
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
 
 	resp, err := uc.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
 		App:                 data.App,
-		RoutingSettings:     appHttpSettings,
+		RoutingSettings:     routingSettings,
 		RefObjects:          data.RefObjects,
 		SkipUpdatingService: true,
 	})

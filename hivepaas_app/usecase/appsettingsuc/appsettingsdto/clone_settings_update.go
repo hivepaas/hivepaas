@@ -28,9 +28,9 @@ type UpdateAppCloneSettingsReq struct {
 	TargetStatus   base.AppStatus `json:"targetStatus"`
 	TargetReplicas int            `json:"targetReplicas"`
 
-	CloneDeploymentSettings bool                             `json:"cloneDeploymentSettings"`
-	CloneHttpSettings       bool                             `json:"cloneHttpSettings"`
-	CloneHttpDomains        []*AppCloneHttpDomainSettingsReq `json:"cloneHttpDomains"`
+	CloneDeploymentSettings bool                                `json:"cloneDeploymentSettings"`
+	CloneRoutingSettings    bool                                `json:"cloneRoutingSettings"`
+	CloneRoutingDomains     []*AppCloneRoutingDomainSettingsReq `json:"cloneRoutingDomains"`
 
 	CloneVolumes    bool     `json:"cloneVolumes"`
 	CloneVolumeData bool     `json:"cloneVolumeData"`
@@ -66,8 +66,8 @@ func (req *UpdateAppCloneSettingsReq) Validate() apperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateStrIn(&req.TargetStatus, false,
 		base.AllAppStatuses, "targetStatus")...)
 
-	for i, domain := range req.CloneHttpDomains {
-		field := fmt.Sprintf("cloneHttpDomains[%d].", i)
+	for i, domain := range req.CloneRoutingDomains {
+		field := fmt.Sprintf("cloneRoutingDomains[%d].", i)
 		validators = append(validators, basedto.ValidateDomain(&domain.SourceDomain, true, domainMaxLen,
 			false, field+"sourceDomain")...)
 		validators = append(validators, basedto.ValidateDomain(&domain.TargetDomain, true, domainMaxLen,
@@ -85,9 +85,9 @@ func (req *UpdateAppCloneSettingsReq) ToEntity() *entity.AppCloneSettings {
 		TargetReplicas: req.TargetReplicas,
 
 		CloneDeploymentSettings: req.CloneDeploymentSettings,
-		CloneHttpSettings:       req.CloneHttpSettings,
-		CloneHttpDomains: gofn.MapSlice(req.CloneHttpDomains,
-			func(d *AppCloneHttpDomainSettingsReq) *entity.AppCloneHttpDomainSettings {
+		CloneRoutingSettings:    req.CloneRoutingSettings,
+		CloneRoutingDomains: gofn.MapSlice(req.CloneRoutingDomains,
+			func(d *AppCloneRoutingDomainSettingsReq) *entity.AppCloneRoutingDomainSettings {
 				return d.ToEntity()
 			}),
 
@@ -108,18 +108,18 @@ func (req *UpdateAppCloneSettingsReq) ToEntity() *entity.AppCloneSettings {
 	}
 }
 
-type AppCloneHttpDomainSettingsReq struct {
+type AppCloneRoutingDomainSettingsReq struct {
 	SourceDomain  string              `json:"sourceDomain"`
 	TargetDomain  string              `json:"targetDomain"`
 	SourceSSLCert basedto.ObjectIDReq `json:"sourceSslCert"`
 	TargetSSLCert basedto.ObjectIDReq `json:"targetSslCert"`
 }
 
-func (req *AppCloneHttpDomainSettingsReq) ToEntity() *entity.AppCloneHttpDomainSettings {
+func (req *AppCloneRoutingDomainSettingsReq) ToEntity() *entity.AppCloneRoutingDomainSettings {
 	if req == nil {
 		return nil
 	}
-	return &entity.AppCloneHttpDomainSettings{
+	return &entity.AppCloneRoutingDomainSettings{
 		SourceDomain:  req.SourceDomain,
 		TargetDomain:  req.TargetDomain,
 		SourceSSLCert: *req.SourceSSLCert.ToEntity(),

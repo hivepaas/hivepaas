@@ -33149,96 +33149,6 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/system/hivepaas/http-settings" : {
-      "get" : {
-        "description" : "Gets HivePaaS routing settings",
-        "operationId" : "getHivePaaSRoutingSettings",
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/system_hpappsettingsdto.GetRoutingSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets HivePaaS routing settings",
-        "tags" : [ "system_hivepaas" ]
-      },
-      "put" : {
-        "description" : "Updates HivePaaS routing settings",
-        "operationId" : "updateHivePaaSRoutingSettings",
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/system_hpappsettingsdto.UpdateRoutingSettingsReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/system_hpappsettingsdto.UpdateRoutingSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Updates HivePaaS routing settings",
-        "tags" : [ "system_hivepaas" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
     "/system/hivepaas/release-info" : {
       "get" : {
         "description" : "Gets release info of the app",
@@ -33327,6 +33237,96 @@
           }
         },
         "summary" : "Restarts hivepaas app containers",
+        "tags" : [ "system_hivepaas" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/hivepaas/routing-settings" : {
+      "get" : {
+        "description" : "Gets HivePaaS routing settings",
+        "operationId" : "getHivePaaSRoutingSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.GetRoutingSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets HivePaaS routing settings",
+        "tags" : [ "system_hivepaas" ]
+      },
+      "put" : {
+        "description" : "Updates HivePaaS routing settings",
+        "operationId" : "updateHivePaaSRoutingSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/system_hpappsettingsdto.UpdateRoutingSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.UpdateRoutingSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates HivePaaS routing settings",
         "tags" : [ "system_hivepaas" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -36548,7 +36548,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -36566,7 +36566,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -37030,7 +37030,7 @@
         "required" : [ "mode" ],
         "type" : "object"
       },
-      "appsettingsdto.AppCloneHttpDomainSettingsReq" : {
+      "appsettingsdto.AppCloneRoutingDomainSettingsReq" : {
         "properties" : {
           "sourceDomain" : {
             "type" : "string"
@@ -37048,7 +37048,7 @@
         "required" : [ "sourceDomain", "sourceSslCert", "targetDomain", "targetSslCert" ],
         "type" : "object"
       },
-      "appsettingsdto.AppCloneHttpDomainSettingsResp" : {
+      "appsettingsdto.AppCloneRoutingDomainSettingsResp" : {
         "properties" : {
           "sourceDomain" : {
             "type" : "string"
@@ -37077,16 +37077,16 @@
           "cloneEnvVars" : {
             "type" : "boolean"
           },
-          "cloneHttpDomains" : {
+          "clonePeriodicJobs" : {
+            "type" : "boolean"
+          },
+          "cloneRoutingDomains" : {
             "items" : {
-              "$ref" : "#/components/schemas/appsettingsdto.AppCloneHttpDomainSettingsResp"
+              "$ref" : "#/components/schemas/appsettingsdto.AppCloneRoutingDomainSettingsResp"
             },
             "type" : "array"
           },
-          "cloneHttpSettings" : {
-            "type" : "boolean"
-          },
-          "clonePeriodicJobs" : {
+          "cloneRoutingSettings" : {
             "type" : "boolean"
           },
           "cloneSchedJobs" : {
@@ -37141,7 +37141,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "cloneConfigFiles", "cloneDeploymentSettings", "cloneEnvVars", "cloneHttpDomains", "cloneHttpSettings", "clonePeriodicJobs", "cloneSchedJobs", "cloneSecrets", "cloneVolumeData", "cloneVolumes", "commandPipes", "excludedVolumes", "includedVolumes", "liveVolumeClone", "notification", "targetEnv", "targetName", "targetReplicas", "targetStatus", "updateVer" ],
+        "required" : [ "cloneConfigFiles", "cloneDeploymentSettings", "cloneEnvVars", "clonePeriodicJobs", "cloneRoutingDomains", "cloneRoutingSettings", "cloneSchedJobs", "cloneSecrets", "cloneVolumeData", "cloneVolumes", "commandPipes", "excludedVolumes", "includedVolumes", "liveVolumeClone", "notification", "targetEnv", "targetName", "targetReplicas", "targetStatus", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.BindOptions" : {
@@ -38951,16 +38951,16 @@
           "cloneEnvVars" : {
             "type" : "boolean"
           },
-          "cloneHttpDomains" : {
+          "clonePeriodicJobs" : {
+            "type" : "boolean"
+          },
+          "cloneRoutingDomains" : {
             "items" : {
-              "$ref" : "#/components/schemas/appsettingsdto.AppCloneHttpDomainSettingsReq"
+              "$ref" : "#/components/schemas/appsettingsdto.AppCloneRoutingDomainSettingsReq"
             },
             "type" : "array"
           },
-          "cloneHttpSettings" : {
-            "type" : "boolean"
-          },
-          "clonePeriodicJobs" : {
+          "cloneRoutingSettings" : {
             "type" : "boolean"
           },
           "cloneSchedJobs" : {
@@ -39015,7 +39015,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "cloneConfigFiles", "cloneDeploymentSettings", "cloneEnvVars", "cloneHttpDomains", "cloneHttpSettings", "clonePeriodicJobs", "cloneSchedJobs", "cloneSecrets", "cloneVolumeData", "cloneVolumes", "commandPipes", "excludedVolumes", "includedVolumes", "liveVolumeClone", "notification", "targetEnv", "targetName", "targetReplicas", "targetStatus", "updateVer" ],
+        "required" : [ "cloneConfigFiles", "cloneDeploymentSettings", "cloneEnvVars", "clonePeriodicJobs", "cloneRoutingDomains", "cloneRoutingSettings", "cloneSchedJobs", "cloneSecrets", "cloneVolumeData", "cloneVolumes", "commandPipes", "excludedVolumes", "includedVolumes", "liveVolumeClone", "notification", "targetEnv", "targetName", "targetReplicas", "targetStatus", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppCloneSettingsResp" : {
@@ -52832,9 +52832,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -23,8 +23,8 @@ func (s *HTTPServer) registerHivePaaSRoutes(systemGroup *gin.RouterGroup) *gin.R
 	hivepaasGroup.PUT("/service-settings", hivepaasHandler.UpdateServiceSettings)
 
 	// Routing settings
-	hivepaasGroup.GET("/http-settings", hivepaasHandler.GetRoutingSettings)
-	hivepaasGroup.PUT("/http-settings", hivepaasHandler.UpdateRoutingSettings)
+	hivepaasGroup.GET("/routing-settings", hivepaasHandler.GetRoutingSettings)
+	hivepaasGroup.PUT("/routing-settings", hivepaasHandler.UpdateRoutingSettings)
 
 	return hivepaasGroup
 }

@@ -69,9 +69,9 @@ func (s *service) cloneAppSettings(
 	// Validation
 
 	// Active domains of the app need to validate
-	newHttpSetting := destApp.GetSettingByType(base.SettingTypeAppRouting)
-	if newHttpSetting != nil {
-		activeDomains := newHttpSetting.MustAsAppRoutingSettings().GetActiveDomainNames()
+	newRoutingSetting := destApp.GetSettingByType(base.SettingTypeAppRouting)
+	if newRoutingSetting != nil {
+		activeDomains := newRoutingSetting.MustAsAppRoutingSettings().GetActiveDomainNames()
 
 		// Verify domains are allowed in project
 		err = s.domainService.VerifyProjectDomains(ctx, db, destApp.ProjectID, activeDomains)
@@ -100,7 +100,7 @@ func (s *service) onCloneSettingDefault(
 	case base.SettingTypeAppDeployment:
 		return s.onCloneDeploymentSettingDefault(setting, data)
 	case base.SettingTypeAppRouting:
-		return s.onCloneHttpSettingDefault(setting, data)
+		return s.onCloneRoutingSettingDefault(setting, data)
 	case base.SettingTypeAppFeatures:
 		return setting, nil
 	case base.SettingTypeEnvVar:
@@ -141,7 +141,7 @@ func (s *service) onCloneDeploymentSettingDefault(
 	return setting, nil
 }
 
-func (s *service) onCloneHttpSettingDefault(
+func (s *service) onCloneRoutingSettingDefault(
 	setting *entity.Setting,
 	data *appCloneData,
 ) (*entity.Setting, error) {
@@ -150,7 +150,7 @@ func (s *service) onCloneHttpSettingDefault(
 
 	currDomains := routingSettings.Domains
 	routingSettings.Domains = nil
-	for _, copySettings := range settings.CloneHttpDomains {
+	for _, copySettings := range settings.CloneRoutingDomains {
 		appDomain, _ := gofn.Find(currDomains, func(item *entity.AppDomain) bool {
 			return item.Domain == copySettings.SourceDomain
 		})

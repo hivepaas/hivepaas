@@ -40,9 +40,9 @@ type AppCloneSettingsResp struct {
 	TargetStatus   base.AppStatus `json:"targetStatus,omitempty"`
 	TargetReplicas int            `json:"targetReplicas,omitempty"`
 
-	CloneDeploymentSettings bool                              `json:"cloneDeploymentSettings,omitempty"`
-	CloneHttpSettings       bool                              `json:"cloneHttpSettings,omitempty"`
-	CloneHttpDomains        []*AppCloneHttpDomainSettingsResp `json:"cloneHttpDomains,omitempty" copy:"-"`
+	CloneDeploymentSettings bool                                 `json:"cloneDeploymentSettings,omitempty"`
+	CloneRoutingSettings    bool                                 `json:"cloneRoutingSettings,omitempty"`
+	CloneRoutingDomains     []*AppCloneRoutingDomainSettingsResp `json:"cloneRoutingDomains,omitempty" copy:"-"`
 
 	CloneVolumes    bool     `json:"cloneVolumes"`
 	CloneVolumeData bool     `json:"cloneVolumeData"`
@@ -62,7 +62,7 @@ type AppCloneSettingsResp struct {
 	UpdateVer int `json:"updateVer"`
 }
 
-type AppCloneHttpDomainSettingsResp struct {
+type AppCloneRoutingDomainSettingsResp struct {
 	SourceDomain  string                    `json:"sourceDomain"`
 	TargetDomain  string                    `json:"targetDomain"`
 	SourceSSLCert *settings.BaseSettingResp `json:"sourceSslCert,omitempty"`
@@ -92,9 +92,9 @@ func TransformAppCloneSettings(input *AppCloneSettingsTransformInput) (*AppClone
 			return nil, apperrors.Wrap(err)
 		}
 
-		resp.CloneHttpDomains = nil
-		for _, domain := range appCloneSettings.CloneHttpDomains {
-			domainResp := &AppCloneHttpDomainSettingsResp{
+		resp.CloneRoutingDomains = nil
+		for _, domain := range appCloneSettings.CloneRoutingDomains {
+			domainResp := &AppCloneRoutingDomainSettingsResp{
 				SourceDomain: domain.SourceDomain,
 				TargetDomain: domain.TargetDomain,
 			}
@@ -112,7 +112,7 @@ func TransformAppCloneSettings(input *AppCloneSettingsTransformInput) (*AppClone
 				}
 				domainResp.TargetSSLCert = certResp
 			}
-			resp.CloneHttpDomains = append(resp.CloneHttpDomains, domainResp)
+			resp.CloneRoutingDomains = append(resp.CloneRoutingDomains, domainResp)
 		}
 
 		for _, pipe := range appCloneSettings.CommandPipes {

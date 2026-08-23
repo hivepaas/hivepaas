@@ -16,12 +16,12 @@ const (
 	CurrentAppRoutingSettingsVersion = 1
 )
 
-var _ = registerSettingParser(base.SettingTypeAppRouting, &appHttpSettingsParser{})
+var _ = registerSettingParser(base.SettingTypeAppRouting, &appRoutingSettingsParser{})
 
-type appHttpSettingsParser struct {
+type appRoutingSettingsParser struct {
 }
 
-func (s *appHttpSettingsParser) New() SettingData {
+func (s *appRoutingSettingsParser) New() SettingData {
 	return &AppRoutingSettings{}
 }
 

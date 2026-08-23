@@ -14,5 +14,6 @@ func (s *HTTPServer) registerDevRoutes(apiGroup *gin.RouterGroup) {
 	devHelperGroup.POST("/dev-mode-login", devHelperHandler.DevModeLogin)
 	devHelperGroup.POST("/lock-task", devHelperHandler.LockTask)
 	devHelperGroup.POST("/long-req", devHelperHandler.SimulateLongRequest)
+	devHelperGroup.POST("/crash-simulate", devHelperHandler.SimulateCrash)
 	devHelperGroup.POST("/exec-cmd", devHelperHandler.ExecuteCmd)
 }

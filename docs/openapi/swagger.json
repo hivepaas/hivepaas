@@ -33151,14 +33151,14 @@
     },
     "/system/hivepaas/http-settings" : {
       "get" : {
-        "description" : "Gets HivePaaS HTTP settings",
-        "operationId" : "getHivePaaSHttpSettings",
+        "description" : "Gets HivePaaS routing settings",
+        "operationId" : "getHivePaaSRoutingSettings",
         "responses" : {
           "200" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_hpappsettingsdto.GetHttpSettingsResp"
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.GetRoutingSettingsResp"
                 }
               }
             },
@@ -33185,17 +33185,17 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Gets HivePaaS HTTP settings",
+        "summary" : "Gets HivePaaS routing settings",
         "tags" : [ "system_hivepaas" ]
       },
       "put" : {
-        "description" : "Updates HivePaaS HTTP settings",
-        "operationId" : "updateHivePaaSHttpSettings",
+        "description" : "Updates HivePaaS routing settings",
+        "operationId" : "updateHivePaaSRoutingSettings",
         "requestBody" : {
           "content" : {
             "*/*" : {
               "schema" : {
-                "$ref" : "#/components/schemas/system_hpappsettingsdto.UpdateHttpSettingsReq"
+                "$ref" : "#/components/schemas/system_hpappsettingsdto.UpdateRoutingSettingsReq"
               }
             }
           },
@@ -33207,7 +33207,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_hpappsettingsdto.UpdateHttpSettingsResp"
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.UpdateRoutingSettingsResp"
                 }
               }
             },
@@ -33234,7 +33234,7 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Updates HivePaaS HTTP settings",
+        "summary" : "Updates HivePaaS routing settings",
         "tags" : [ "system_hivepaas" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -36548,7 +36548,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -36566,7 +36566,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -37662,6 +37662,7 @@
             "type" : "string"
           },
           "domainRedirect" : {
+            "description" : "HTTP (layer 7) configuration",
             "type" : "string"
           },
           "enabled" : {
@@ -37685,14 +37686,20 @@
             },
             "type" : "array"
           },
+          "protocol" : {
+            "type" : "string"
+          },
           "rateLimitConfig" : {
             "$ref" : "#/components/schemas/appsettingsdto.HTTPRateLimitConfigReq"
           },
           "sslCert" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "tlsPassthrough" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "rateLimitConfig", "sslCert" ],
+        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "protocol", "rateLimitConfig", "sslCert", "tlsPassthrough" ],
         "type" : "object"
       },
       "appsettingsdto.DomainResp" : {
@@ -37716,6 +37723,7 @@
             "type" : "string"
           },
           "domainRedirect" : {
+            "description" : "HTTP (layer 7) configuration",
             "type" : "string"
           },
           "enabled" : {
@@ -37739,14 +37747,20 @@
             },
             "type" : "array"
           },
+          "protocol" : {
+            "type" : "string"
+          },
           "rateLimitConfig" : {
             "$ref" : "#/components/schemas/appsettingsdto.HTTPRateLimitConfigResp"
           },
           "sslCert" : {
             "$ref" : "#/components/schemas/settings_sslcertdto.SSLCertResp"
+          },
+          "tlsPassthrough" : {
+            "type" : "boolean"
           }
         },
-        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "rateLimitConfig", "sslCert" ],
+        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "protocol", "rateLimitConfig", "sslCert", "tlsPassthrough" ],
         "type" : "object"
       },
       "appsettingsdto.EndpointSpec" : {
@@ -50204,10 +50218,10 @@
         "required" : [ "clientConfig", "domain", "enabled", "rateLimitConfig", "sslCert" ],
         "type" : "object"
       },
-      "system_hpappsettingsdto.GetHttpSettingsResp" : {
+      "system_hpappsettingsdto.GetRoutingSettingsResp" : {
         "properties" : {
           "data" : {
-            "$ref" : "#/components/schemas/system_hpappsettingsdto.HttpSettingsResp"
+            "$ref" : "#/components/schemas/system_hpappsettingsdto.RoutingSettingsResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -50426,7 +50440,7 @@
         "required" : [ "concurrency", "replicas", "runWorkerInMainApp" ],
         "type" : "object"
       },
-      "system_hpappsettingsdto.HttpSettingsResp" : {
+      "system_hpappsettingsdto.RoutingSettingsResp" : {
         "properties" : {
           "domains" : {
             "items" : {
@@ -50501,7 +50515,7 @@
         "required" : [ "appSettings", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "periodicSettings", "proxySettings", "size", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
         "type" : "object"
       },
-      "system_hpappsettingsdto.UpdateHttpSettingsReq" : {
+      "system_hpappsettingsdto.UpdateRoutingSettingsReq" : {
         "properties" : {
           "domains" : {
             "items" : {
@@ -50516,7 +50530,7 @@
         "required" : [ "domains", "updateVer" ],
         "type" : "object"
       },
-      "system_hpappsettingsdto.UpdateHttpSettingsResp" : {
+      "system_hpappsettingsdto.UpdateRoutingSettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -52809,9 +52823,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

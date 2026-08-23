@@ -227,10 +227,10 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, onClose 
                 {uploadMethod === "cloud" && (
                     <>
                         <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                            <span className="text-orange-500">Note:</span> Uploading a file from cloud storage (S3) only
-                            creates a database record referencing the file; the file content is not downloaded to the
-                            local system. If you delete the file from the cloud storage, local file operations may no
-                            longer work.
+                            <span className="font-semibold text-orange-500">Note:</span> Uploading a file from cloud
+                            storage (S3) only creates a database record referencing the file; the file content is not
+                            downloaded to the local system. If you delete the file from the cloud storage, local file
+                            operations may no longer work.
                         </div>
 
                         <InfoBlock

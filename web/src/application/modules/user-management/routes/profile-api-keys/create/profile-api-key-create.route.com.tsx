@@ -127,12 +127,12 @@ export function ProfileApiKeyCreateRoute() {
 
                         {createdKey.secretKey && (
                             <>
-                                <p className="text-sm text-orange-500 dark:text-orange-400">
-                                    IMPORTANT:
-                                    <br />
-                                    The secret key will not be stored on the server. Once this page is closed, you will
-                                    not be able to view it again.
+                                <p className="text-sm">
+                                    <span className="font-semibold text-orange-500">Important:</span> The secret key
+                                    will not be stored on the server. Once this page is closed, you will not be able to
+                                    view it again.
                                 </p>
+
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex-1">
                                         <p className="text-sm font-medium mb-1">Secret key:</p>

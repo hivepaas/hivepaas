@@ -142,19 +142,20 @@ function View({ projectId, env, appId, dataFile }: Props) {
                     </DialogHeader>
                     <DialogBody className="flex flex-col gap-4">
                         {isLocalFile ? (
-                            <div className={cn(dashedBorderBox)}>
-                                <span className="font-medium text-orange-500">Warning:</span> This will delete the
+                            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                                <span className="font-semibold text-orange-500">Warning:</span> This will delete the
                                 database record and permanently erase the physical file from the storage system. Once
                                 deleted, this file cannot be retrieved or restored.
                             </div>
                         ) : (
                             <>
-                                <p className={cn(dashedBorderBox)}>
+                                <p className={cn(dashedBorderBox, "text-sm leading-6")}>
                                     If you select{" "}
                                     <span className="font-medium text-orange-500">Delete Physical File</span>, the file
                                     will be permanently deleted and cannot be recovered. Otherwise, only the file record
                                     in the database will be removed.
                                 </p>
+
                                 <label
                                     htmlFor={`deletePhysicalFile-${dataFile.id}`}
                                     className="flex items-center gap-3 text-sm font-medium"

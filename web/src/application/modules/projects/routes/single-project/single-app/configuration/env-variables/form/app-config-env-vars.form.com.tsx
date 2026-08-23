@@ -50,9 +50,9 @@ function SharedEnvVarsNotice() {
             <p>
                 These are runtime environment variables that can be accessed by other applications within the same
                 project. <br />
-                <span className="text-orange-500">Important:</span> Always use these variables to establish inter-app
-                connections instead of hardcoding static values (such as fixed IPs or local domain names). Hardcoding
-                values may prevent certain HivePaaS features from working properly.{" "}
+                <span className="font-semibold text-orange-500">Important:</span> Always use these variables to
+                establish inter-app connections instead of hardcoding static values (such as fixed IPs or local domain
+                names). Hardcoding values may prevent certain HivePaaS features from working properly.{" "}
                 <button
                     type="button"
                     className="text-primary hover:underline"
@@ -250,8 +250,8 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                     >
                         <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                             <p>
-                                <span className="text-orange-500">Note:</span> From an env var, you can reference
-                                another env var or secret, for example:{" "}
+                                <span className="font-semibold text-orange-500">Note:</span> From an env var, you can
+                                reference another env var or secret, for example:{" "}
                                 <span className="text-orange-500">MY_ENV = {"${ENV2}"}</span> or{" "}
                                 <span className="text-orange-500">MY_ENV = {"${secrets.MY_SECRET}"}</span>.
                             </p>

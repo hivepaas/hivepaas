@@ -45,8 +45,8 @@ export function AppConfigSecretsRoute() {
     return (
         <div className="flex flex-col gap-6">
             <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                <span className="text-orange-500">Note:</span> Secrets larger than 10 KB cannot be referenced from an
-                environment variable using the syntax{" "}
+                <span className="font-semibold text-orange-500">Note:</span> Secrets larger than 10 KB cannot be
+                referenced from an environment variable using the syntax{" "}
                 <span className="text-orange-500">MY_ENV={"${secrets.MY_SECRET}"}</span>.
             </div>
 

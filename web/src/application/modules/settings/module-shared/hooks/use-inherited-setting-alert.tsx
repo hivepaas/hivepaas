@@ -2,8 +2,8 @@ import { useGlobalAlertDialog } from "@application/shared/dialogs";
 
 export const inheritedSettingReadonlyDescription = (
     <>
-        <span className="text-orange-500">Important:</span> Inherited and imported settings cannot be changed here.
-        Please go to the corresponding scope to make changes.
+        <span className="font-semibold text-orange-500">Important:</span> Inherited and imported settings cannot be
+        changed here. Please go to the corresponding scope to make changes.
     </>
 );
 

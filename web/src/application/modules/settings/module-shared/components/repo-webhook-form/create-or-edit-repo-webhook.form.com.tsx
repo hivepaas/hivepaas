@@ -156,7 +156,7 @@ export function CreateOrEditRepoWebhookForm({
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
                 <div className={cn(dashedBorderBox, SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS, "leading-6 ")}>
                     <p>
-                        <span className="text-orange-500">Note:</span> Webhooks allow{" "}
+                        <span className="font-semibold text-orange-500">Note:</span> Webhooks allow{" "}
                         <span className="text-orange-500">HivePaaS</span> to receive events from your source code
                         management systems (such as GitHub or GitLab). After creating a webhook here, you can use the
                         generated URL and Secret to configure it on your GitHub or GitLab organization or repository

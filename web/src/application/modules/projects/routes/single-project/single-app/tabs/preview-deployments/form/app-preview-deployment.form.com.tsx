@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import type { AppPreviews_PrepareCreate_Res } from "~/projects/api/services";
 import { BranchesDialog, PullRequestsDialog } from "~/projects/module-shared/components";
@@ -121,15 +123,15 @@ export function AppPreviewDeploymentForm({
                     </InfoBlock>
 
                     {!isDashboardUI && (
-                        <div className="rounded-md border border-dashed border-primary/70 bg-muted/30 px-6 py-5">
-                            <p className="text-sm">
+                        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                            <p>
                                 Type <span className="font-medium text-orange-500">/hivepaas deploy</span> in the pull
                                 request you want to deploy.
                             </p>
-                            <p className="mt-4 text-sm">
-                                <span className="font-medium text-orange-500">Note:</span> This method only works if you
-                                have configured the GitHub App or webhook correctly, and preview deployments have been
-                                enabled{" "}
+                            <p className="mt-2">
+                                <span className="font-semibold text-orange-500">Note:</span> This method only works if
+                                you have configured the GitHub App or webhook correctly, and preview deployments have
+                                been enabled{" "}
                                 <AppLink.Modules
                                     to={ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(
                                         projectId,

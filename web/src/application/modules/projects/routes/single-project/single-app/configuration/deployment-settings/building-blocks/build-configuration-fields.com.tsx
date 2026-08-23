@@ -5,9 +5,9 @@ import { Textarea } from "@components/ui/textarea";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { useParams } from "react-router";
+import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { useAppDeploymentSettingsApi } from "~/projects/api/hooks/project-apps";
 import { QK } from "~/projects/data/constants";
@@ -23,6 +23,7 @@ import {
     type AppConfigDeploymentSettingsFormSchemaInput,
     type AppConfigDeploymentSettingsFormSchemaOutput,
 } from "../schemas";
+
 import { DockerfileContentEditor } from "./dockerfile-content-editor.com";
 
 export function BuildConfigurationFields({ readOnly = false }: Props) {
@@ -122,9 +123,7 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
             <InfoBlock title="Dockerfile Source">
                 <Tabs
                     value={
-                        sourceField.value === EDockerfileSource.Auto
-                            ? EDockerfileSource.Auto
-                            : EDockerfileSource.Manual
+                        sourceField.value === EDockerfileSource.Auto ? EDockerfileSource.Auto : EDockerfileSource.Manual
                     }
                     onValueChange={value => {
                         if (readOnly) {
@@ -246,9 +245,9 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
             </InfoBlock>
 
             <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                <strong>Important:</strong> If your cluster has multiple nodes, a container registry must be
-                configured. Without pushing to a registry, other worker nodes won&apos;t be able to access the image to
-                run your application.
+                <span className="font-semibold text-orange-500">Important:</span> If your cluster has multiple nodes, a
+                container registry must be configured. Without pushing to a registry, other worker nodes won&apos;t be
+                able to access the image to run your application.
             </div>
 
             <PushToRegistrySelect readOnly={readOnly} />

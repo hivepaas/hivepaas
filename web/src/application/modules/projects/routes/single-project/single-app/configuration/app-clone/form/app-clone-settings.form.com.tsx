@@ -424,7 +424,7 @@ function CommandPipesSection({ projectId, readOnly }: { projectId: string; readO
                 <>
                     <div className={cn(dashedBorderBox, "leading-6 mb-6")}>
                         <p>
-                            <span className="text-orange-500">Note:</span>{" "}
+                            <span className="font-semibold text-orange-500">Note:</span>{" "}
                             <span className="font-semibold">Post-Clone Commands</span> offer higher data consistency
                             compared to raw Volume Cloning. For instance, you can use{" "}
                             <code className="text-orange-500">pg_dump</code> on the source app paired with{" "}
@@ -690,7 +690,7 @@ export function AppCloneSettingsForm({
                                 <ConditionalSection enabled={cloneVolumes}>
                                     <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                                         <p>
-                                            <span className="text-orange-500">Warning:</span>{" "}
+                                            <span className="font-semibold text-orange-500">Warning:</span>{" "}
                                             <span className="font-semibold">Raw volume cloning</span> is not recommended
                                             for database-type applications (e.g., PostgreSQL, MySQL, Redis, MongoDB)
                                             while actively running with continuous read/write operations and active

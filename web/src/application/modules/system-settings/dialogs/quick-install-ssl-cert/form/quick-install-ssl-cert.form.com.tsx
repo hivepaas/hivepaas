@@ -384,8 +384,8 @@ export function QuickInstallSslCertForm({
                         {isAcme && (
                             <>
                                 <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                                    <span className="text-orange-500">Note:</span> SSL provider is required if you
-                                    select{" "}
+                                    <span className="font-semibold text-orange-500">Note:</span> SSL provider is
+                                    required if you select{" "}
                                     <AppLink.Modules
                                         to={sslProvidersRoute}
                                         className="text-link"
@@ -446,8 +446,8 @@ export function QuickInstallSslCertForm({
                                 </Field>
 
                                 <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                                    <span className="text-orange-500">Note:</span> ACME DNS provider is required if your
-                                    domain is a wildcard domain.
+                                    <span className="font-semibold text-orange-500">Note:</span> ACME DNS provider is
+                                    required if your domain is a wildcard domain.
                                 </div>
 
                                 <Field>

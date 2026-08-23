@@ -96,10 +96,11 @@ export function ProvisionGithubAppForm({
                 {isReadOnly && <PermissionReadonlyNotice />}
                 <div className={cn(dashedBorderBox, "flex flex-col gap-5 text-sm leading-6")}>
                     <div>
-                        <span className="text-orange-500">Important:</span> When you click begin, you will be redirected
-                        to the GitHub page where you will be guided on how to set up a GitHub App. Make sure you are
-                        logged into GitHub before starting.
+                        <span className="font-semibold text-orange-500">Important:</span> When you click begin, you will
+                        be redirected to the GitHub page where you will be guided on how to set up a GitHub App. Make
+                        sure you are logged into GitHub before starting.
                     </div>
+
                     <div className="flex justify-start">
                         <Button
                             type="button"

@@ -39,7 +39,7 @@ function SectionHeader({ children }: PropsWithChildren) {
 function NoteBox({ children }: PropsWithChildren) {
     return (
         <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-            <span className="text-orange-500">Note: </span>
+            <span className="font-semibold text-orange-500">Note: </span>
             {children}
         </div>
     );

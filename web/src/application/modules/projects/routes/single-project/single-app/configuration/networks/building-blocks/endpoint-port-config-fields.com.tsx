@@ -125,12 +125,10 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                 </div>
             </InfoBlock>
 
-            <div className={cn(dashedBorderBox)}>
-                <div className="max-w-[735px] mx-auto">
-                    <span className="text-sm text-orange-500">Note:</span> It is recommended not to expose container
-                    ports directly to the host to avoid conflict between apps from different projects. If you need
-                    external access, consider using port mapping in the HTTP settings.
-                </div>
+            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                <span className="font-semibold text-orange-500">Note:</span> It is recommended not to expose container
+                ports directly to the host to avoid conflict between apps from different projects. If you need external
+                access, consider using port mapping in the HTTP settings.
             </div>
 
             <InfoBlock

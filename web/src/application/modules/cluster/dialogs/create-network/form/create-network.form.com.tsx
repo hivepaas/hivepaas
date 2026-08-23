@@ -78,10 +78,11 @@ export function CreateNetworkForm({
                 <div>
                     {showProjectNamePrefixNote ? (
                         <div className={cn(dashedBorderBox, "mb-6 text-sm leading-6")}>
-                            <span className="text-orange-500">Note:</span> The name of the network in the project will
-                            be prefixed with the name of the project.
+                            <span className="font-semibold text-orange-500">Note:</span> The name of the network in the
+                            project will be prefixed with the name of the project.
                         </div>
                     ) : null}
+
                     <fieldset
                         disabled={readOnly || isPending}
                         className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"

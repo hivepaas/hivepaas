@@ -81,10 +81,11 @@ export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Prop
             >
                 <div className={cn(dashedBorderBox, "space-y-3 text-sm leading-6")}>
                     <p>
-                        <span className="text-orange-500">Note:</span> An API key allows you to call the HivePaaS API
-                        without accessing the dashboard. We recommend granting only the permissions necessary for your
-                        purpose.
+                        <span className="font-semibold text-orange-500">Note:</span> An API key allows you to call the
+                        HivePaaS API without accessing the dashboard. We recommend granting only the permissions
+                        necessary for your purpose.
                     </p>
+
                     <p>
                         Examples of permission scopes: to trigger a deployment for an application or access the
                         application&apos;s terminal, you need <span className="text-orange-500">Execute</span>{" "}

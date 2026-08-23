@@ -1,5 +1,7 @@
 import { useMemo } from "react";
 
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { Plus } from "lucide-react";
 import { PROJECT_SETTINGS_IMPORT_KIND } from "~/projects/data/commands";
 import { ProjectAcmeDnsProviderQueries } from "~/projects/data/queries";
@@ -54,9 +56,10 @@ function AcmeDnsProviderTableView({ scope }: Props) {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="rounded-md border border-dashed border-primary/70 bg-muted/30 px-4 py-3 text-center text-sm">
-                <span className="text-orange-500">Note:</span> {ACME_DNS_PROVIDER_NOTE}
+            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                <span className="font-semibold text-orange-500">Note:</span> {ACME_DNS_PROVIDER_NOTE}
             </div>
+
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={

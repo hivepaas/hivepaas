@@ -134,7 +134,7 @@ export function ProjectCommandPipeForm({
                             </InfoBlock>
 
                             <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                                <span className="text-orange-500">Note:</span> If either the{" "}
+                                <span className="font-semibold text-orange-500">Note:</span> If either the{" "}
                                 <span className="text-orange-500">Source Command</span> or{" "}
                                 <span className="text-orange-500">Target Command</span> is missing, the remaining
                                 command will still be executed on its corresponding app.

@@ -113,16 +113,16 @@ function AppPreviewWarningBox() {
     return (
         <div className={cn(dashedBorderBox, "space-y-2 text-sm leading-6")}>
             <p>
-                <span className="font-semibold">Warning:</span> Deploying a Preview App that executes database schema
-                migrations against a shared database may break or crash the Main App.
+                <span className="font-semibold text-orange-500">Warning:</span> Deploying a Preview App that executes
+                database schema migrations against a shared database may break or crash the Main App.
             </p>
             <p>
                 <span className="font-semibold">Solution:</span> Add the Database Apps you want to clone here so the
                 Preview App operates on an isolated database instance.
             </p>
             <p>
-                <span className="font-semibold">Note:</span> Selected Database Apps must have their Clone Settings
-                pre-configured.
+                <span className="font-semibold text-orange-500">Note:</span> Selected Database Apps must have their
+                Clone Settings pre-configured.
             </p>
         </div>
     );
@@ -201,8 +201,8 @@ export function AppFeatureSettingsForm({
                         className="contents"
                     >
                         <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                            <span className="text-orange-500">Note:</span> By default, some features may be locked to
-                            enhance security. If you need those features, you can unlock them here.
+                            <span className="font-semibold text-orange-500">Note:</span> By default, some features may
+                            be locked to enhance security. If you need those features, you can unlock them here.
                         </div>
 
                         <ContentBlock label="Service logs">

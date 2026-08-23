@@ -42,9 +42,12 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
     const mount = isEditMode ? mountsWithIds.find(item => item._id === mountId) : undefined;
 
     function navigateToList() {
-        navigate.modules(ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId), {
-            ignorePrevPath: true,
-        });
+        navigate.modules(
+            ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId),
+            {
+                ignorePrevPath: true,
+            },
+        );
     }
 
     async function handleSubmit(values: StorageMountFormOutput) {
@@ -115,8 +118,8 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
                 readOnly={!canWrite}
                 onClose={navigateToList}
             >
-                <div className={cn(dashedBorderBox, "mb-4")}>
-                    <span className="font-bold text-orange-500">Important:</span> If your cluster consists of more
+                <div className={cn(dashedBorderBox, "text-sm leading-6 mb-4")}>
+                    <span className="font-semibold text-orange-500">Important:</span> If your cluster consists of more
                     than 1 node, you need to ensure that the directories or volumes are accessible from all nodes.
                     Otherwise, your apps may not function properly.
                 </div>

@@ -163,14 +163,14 @@ export function HivePaaSHttpSettingsForm({ ref, defaultValues, onSubmit, readOnl
                 >
                     <NoteBox>
                         <div>
-                            <span className="text-orange-500">Note:</span> If you want to change the app&apos;s domain,
-                            please add a new domain, set it as default, and verify that it works as expected before
-                            deleting the old one.
+                            <span className="font-semibold text-orange-500">Note:</span> If you want to change the
+                            app&apos;s domain, please add a new domain, set it as default, and verify that it works as
+                            expected before deleting the old one.
                         </div>
                         <div className="mt-2">
-                            <span className="text-orange-500">Warning:</span> Incorrect configuration may cause you to
-                            lose access to the dashboard. These changes may cause the application to restart, and you
-                            may lose access to the dashboard for approximately 30 seconds.
+                            <span className="font-semibold text-orange-500">Warning:</span> Incorrect configuration may
+                            cause you to lose access to the dashboard. These changes may cause the application to
+                            restart, and you may lose access to the dashboard for approximately 30 seconds.
                         </div>
                     </NoteBox>
 

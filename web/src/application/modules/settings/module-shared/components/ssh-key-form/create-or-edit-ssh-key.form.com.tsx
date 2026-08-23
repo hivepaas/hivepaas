@@ -335,9 +335,9 @@ export function CreateOrEditSSHKeyForm({
                             />
                         </InfoBlock>
 
-                        <div className={cn(dashedBorderBox)}>
-                            <span className="text-orange-500">Note:</span> You can use the Public Key on GitHub or
-                            GitLab. If you intend to use it on GitHub, it is recommended to add it under the{" "}
+                        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                            <span className="font-semibold text-orange-500">Note:</span> You can use the Public Key on
+                            GitHub or GitLab. If you intend to use it on GitHub, it is recommended to add it under the{" "}
                             <span className="text-orange-500">Deploy Keys</span> section of a specific repository
                             instead of adding it to the user&apos;s <span className="text-orange-500">SSH Keys</span>{" "}
                             section to enhance security.

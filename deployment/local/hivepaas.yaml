@@ -100,7 +100,7 @@ services:
 
   redis:
     image: redis:8-alpine
-    command: redis-server
+    command: redis-server --save "" --appendonly no
     networks:
       - local_net
     ports:

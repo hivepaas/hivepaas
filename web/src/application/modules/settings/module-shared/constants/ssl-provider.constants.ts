@@ -17,7 +17,7 @@ export const SSL_CERT_TYPE_OPTIONS = [
     },
     {
         value: ESslCertType.Custom,
-        label: ESslCertType.Custom,
+        label: "Custom",
     },
 ] as const;
 
@@ -77,7 +77,7 @@ export function formatSslCertType(certType: string): string {
     }
 
     if (certType === ESslCertType.SelfSigned) {
-        return ESslCertType.SelfSigned;
+        return "Self-signed";
     }
 
     return SSL_CERT_TYPE_OPTIONS.find(option => option.value === certType)?.label ?? certType;

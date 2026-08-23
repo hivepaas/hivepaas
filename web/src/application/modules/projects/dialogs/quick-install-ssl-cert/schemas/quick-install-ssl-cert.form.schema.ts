@@ -22,7 +22,9 @@ export const QuickInstallSslCertFormSchema = z
         autoRenew: z.boolean(),
         certificate: z.string().trim(),
         privateKey: z.string().trim(),
+        caCertificate: z.string().trim().optional(),
         expireAt: z.date().optional().nullable(),
+
         notifyFrom: z.date().optional().nullable(),
     })
     .superRefine((value, ctx) => {

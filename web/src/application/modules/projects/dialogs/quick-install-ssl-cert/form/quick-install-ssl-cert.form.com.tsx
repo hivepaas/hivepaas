@@ -123,6 +123,7 @@ export function QuickInstallSslCertForm({
             autoRenew: prefillAutoRenew,
             certificate: "",
             privateKey: "",
+            caCertificate: "",
             expireAt: null,
             notifyFrom: null,
         },
@@ -143,6 +144,7 @@ export function QuickInstallSslCertForm({
             autoRenew: prefillAutoRenew,
             certificate: "",
             privateKey: "",
+            caCertificate: "",
             expireAt: null,
             notifyFrom: null,
         });
@@ -176,6 +178,10 @@ export function QuickInstallSslCertForm({
         field: privateKey,
         fieldState: { invalid: isPrivateKeyInvalid },
     } = useController({ name: "privateKey", control });
+    const {
+        field: caCertificate,
+        fieldState: { invalid: isCaCertificateInvalid },
+    } = useController({ name: "caCertificate", control });
     const {
         field: expireAtField,
         fieldState: { invalid: isExpireAtInvalid },
@@ -594,6 +600,7 @@ export function QuickInstallSslCertForm({
                                             aria-invalid={isCertificateInvalid}
                                             rows={4}
                                             disabled={readOnly}
+                                            placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
                                         />
                                         <FieldError errors={[errors.certificate]} />
                                     </InfoBlock>
@@ -614,8 +621,25 @@ export function QuickInstallSslCertForm({
                                             aria-invalid={isPrivateKeyInvalid}
                                             rows={4}
                                             disabled={readOnly}
+                                            placeholder={"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"}
                                         />
                                         <FieldError errors={[errors.privateKey]} />
+                                    </InfoBlock>
+                                </Field>
+
+                                <Field>
+                                    <InfoBlock
+                                        title={<LabelWithInfo label="CA Certificate" />}
+                                        titleWidth={150}
+                                    >
+                                        <Textarea
+                                            {...caCertificate}
+                                            aria-invalid={isCaCertificateInvalid}
+                                            rows={4}
+                                            disabled={readOnly}
+                                            placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
+                                        />
+                                        <FieldError errors={[errors.caCertificate]} />
                                     </InfoBlock>
                                 </Field>
 

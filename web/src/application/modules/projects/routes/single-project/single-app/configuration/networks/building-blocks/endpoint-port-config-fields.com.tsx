@@ -126,9 +126,9 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
             </InfoBlock>
 
             <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                <span className="font-semibold text-orange-500">Note:</span> It is recommended not to expose container
-                ports directly to the host to avoid conflict between apps from different projects. If you need external
-                access, consider using port mapping in the Routing settings.
+                <span className="font-semibold text-orange-500">Note:</span> Directly publishing container ports to the
+                host is primarily recommended for UDP services. For HTTP, HTTPS, or TCP traffic, please configure them
+                in the Routing settings instead.
             </div>
 
             <InfoBlock

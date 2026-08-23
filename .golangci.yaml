@@ -24,6 +24,7 @@ linters:
     - mnd
     - nakedret
     - nilerr
+#    - nilnil
 #    - prealloc
     - revive
     - rowserrcheck

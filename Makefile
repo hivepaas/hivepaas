@@ -23,6 +23,10 @@ lint-local:
 test:
 	@./scripts/test.sh
 
+nilaway:
+	# run once: go install go.uber.org/nilaway/cmd/nilaway@latest
+	@nilaway ./hivepaas_app/...
+
 vuln:
 	@go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 

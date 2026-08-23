@@ -55,6 +55,10 @@ services:
         constraints:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 120s
     logging:
       driver: local
       options:
@@ -92,6 +96,10 @@ services:
         constraints:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 120s
     logging:
       driver: local
       options:
@@ -118,6 +126,10 @@ services:
         constraints:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 120s
     logging:
       driver: local
       options:
@@ -151,6 +163,10 @@ services:
         constraints:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 120s
     logging:
       driver: local
       options:
@@ -174,6 +190,10 @@ services:
         constraints:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 120s
     logging:
       driver: local
       options:
@@ -224,6 +244,10 @@ services:
         constraints:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 120s
     logging:
       driver: local
       options:
@@ -252,6 +276,10 @@ services:
         constraints:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 120s
     logging:
       driver: local
       options:
@@ -280,6 +308,10 @@ services:
         constraints:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 120s
     logging:
       driver: local
       options:
@@ -305,6 +337,10 @@ services:
         - "traefik.enable=false"
       mode: global
       endpoint_mode: dnsrr
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 120s
     logging:
       driver: local
       options:

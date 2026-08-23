@@ -1,8 +1,10 @@
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { inheritedSettingReadonlyDescription } from "~/settings/module-shared/hooks";
 
-export function InheritedSettingReadonlyNotice() {
+export function InheritedSettingReadonlyNotice({ className }: { className?: string } = {}) {
     return (
-        <div className="border border-dashed border-primary rounded-md bg-muted/40 px-5 py-4 text-center text-sm mb-3">
+        <div className={cn(dashedBorderBox, "text-sm leading-6 mb-4", className)}>
             {inheritedSettingReadonlyDescription}
         </div>
     );

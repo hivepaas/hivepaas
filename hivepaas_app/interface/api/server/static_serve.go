@@ -28,8 +28,13 @@ func StaticServe(urlPrefix string, fs ServeFileSystem) gin.HandlerFunc {
 		fileserver = http.StripPrefix(urlPrefix, fileserver)
 	}
 	return func(c *gin.Context) {
-		if fs.Exists(urlPrefix, c.Request.URL.Path) {
-			if cacheHeader := fs.CacheControlHeader(); cacheHeader != "" {
+		reqPath := c.Request.URL.Path
+		if fs.Exists(urlPrefix, reqPath) {
+			if strings.HasPrefix(reqPath, "/assets/") {
+				c.Writer.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			} else if strings.HasSuffix(reqPath, ".html") || reqPath == "/" {
+				c.Writer.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			} else if cacheHeader := fs.CacheControlHeader(); cacheHeader != "" {
 				c.Writer.Header().Set("Cache-Control", cacheHeader)
 			}
 			fileserver.ServeHTTP(c.Writer, c.Request)

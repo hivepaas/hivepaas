@@ -2,7 +2,10 @@ package appserviceimpl
 
 import (
 	"context"
+	"errors"
 	"time"
+
+	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -47,12 +50,22 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 		}
 	}
 
-	// TODO (high): remove secrets, config in docker
+	if app.ServiceID != "" {
+		// Gets secrets, configs used by the app to remove later
+		secrets, configs, err := s.getDockerSecretsAndConfigs(ctx, app, nil)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
 
-	// Remove service for the app in docker swarm
-	err = s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
-	if err != nil {
-		return apperrors.Wrap(err)
+		// Remove service for the app in docker swarm
+		err = s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+		// After the service is removed, we can safely remove the configs/secrets
+		// NOTE: just ignore the returning error if there is
+		_ = s.deleteDockerSecretsAndConfigs(ctx, secrets, configs)
 	}
 
 	// Delete ref resources in DB
@@ -119,5 +132,54 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 		return apperrors.Wrap(err)
 	}
 
+	return nil
+}
+
+func (s *service) getDockerSecretsAndConfigs(
+	ctx context.Context,
+	app *entity.App,
+	service *swarm.Service, // can be nil
+) ([]*swarm.SecretReference, []*swarm.ConfigReference, error) {
+	if service == nil {
+		inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
+		if err != nil {
+			if errors.Is(err, apperrors.ErrNotFound) {
+				return nil, nil, nil
+			}
+			return nil, nil, apperrors.Wrap(err)
+		}
+		service = &inspect.Service
+	}
+
+	if service.Spec.TaskTemplate.ContainerSpec == nil {
+		return nil, nil, nil
+	}
+	secrets := service.Spec.TaskTemplate.ContainerSpec.Secrets
+	configs := service.Spec.TaskTemplate.ContainerSpec.Configs
+
+	return secrets, configs, nil
+}
+
+func (s *service) deleteDockerSecretsAndConfigs(
+	ctx context.Context,
+	secrets []*swarm.SecretReference,
+	configs []*swarm.ConfigReference,
+) error {
+	configIDs := make([]string, 0, len(configs))
+	for _, config := range configs {
+		configIDs = append(configIDs, config.ConfigID)
+	}
+	e1 := s.clusterSecretService.ConfigsRemove(ctx, configIDs, clusterservice.ItemRemovalRetryMax, 0)
+
+	secretIDs := make([]string, 0, len(secrets))
+	for _, secret := range secrets {
+		secretIDs = append(secretIDs, secret.SecretID)
+	}
+	e2 := s.clusterSecretService.SecretsRemove(ctx, secretIDs, clusterservice.ItemRemovalRetryMax, 0)
+
+	err := errors.Join(e1, e2)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
 	return nil
 }

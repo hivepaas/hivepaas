@@ -41,8 +41,6 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 		return apperrors.Wrap(err)
 	}
 
-	// TODO (high): remove secrets, config in docker
-
 	// Delete ref resources in DB
 	projectIDs := []string{project.ID}
 

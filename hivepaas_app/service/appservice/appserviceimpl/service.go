@@ -5,6 +5,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -21,6 +22,7 @@ func New(
 	tagRepo repository.TagRepo,
 	taskRepo repository.TaskRepo,
 
+	clusterSecretService clustersecretservice.Service,
 	clusterService clusterservice.Service,
 	traefikService traefikservice.Service,
 
@@ -38,8 +40,9 @@ func New(
 		tagRepo:        tagRepo,
 		taskRepo:       taskRepo,
 
-		clusterService: clusterService,
-		traefikService: traefikService,
+		clusterSecretService: clusterSecretService,
+		clusterService:       clusterService,
+		traefikService:       traefikService,
 
 		dockerManager:     dockerManager,
 		permissionManager: permissionManager,
@@ -57,8 +60,9 @@ type service struct {
 	tagRepo        repository.TagRepo
 	taskRepo       repository.TaskRepo
 
-	clusterService clusterservice.Service
-	traefikService traefikservice.Service
+	clusterSecretService clustersecretservice.Service
+	clusterService       clusterservice.Service
+	traefikService       traefikservice.Service
 
 	dockerManager     docker.Manager
 	permissionManager permission.Manager

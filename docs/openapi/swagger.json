@@ -36548,7 +36548,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -36566,7 +36566,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -49296,6 +49296,9 @@
           "autoRenew" : {
             "type" : "boolean"
           },
+          "caCertificate" : {
+            "type" : "string"
+          },
           "certType" : {
             "type" : "string"
           },
@@ -49336,7 +49339,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "acmeProvider", "autoRenew", "certType", "certificate", "default", "domain", "email", "expireAt", "inheritable", "keyType", "notification", "notifyFrom", "privateKey", "provider", "validPeriod" ],
+        "required" : [ "acmeProvider", "autoRenew", "caCertificate", "certType", "certificate", "default", "domain", "email", "expireAt", "inheritable", "keyType", "notification", "notifyFrom", "privateKey", "provider", "validPeriod" ],
         "type" : "object"
       },
       "settings_sslcertdto.CreateSSLCertResp" : {
@@ -49406,6 +49409,9 @@
           },
           "autoRenew" : {
             "type" : "boolean"
+          },
+          "caCertificate" : {
+            "type" : "string"
           },
           "certType" : {
             "type" : "string"
@@ -49483,7 +49489,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "acmeProvider", "autoRenew", "certType", "certificate", "createdAt", "default", "domain", "email", "expireAt", "id", "inheritable", "inherited", "keyType", "kind", "name", "notification", "notifyFrom", "privateKey", "provider", "renewableFrom", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "validPeriod" ],
+        "required" : [ "acmeProvider", "autoRenew", "caCertificate", "certType", "certificate", "createdAt", "default", "domain", "email", "expireAt", "id", "inheritable", "inherited", "keyType", "kind", "name", "notification", "notifyFrom", "privateKey", "provider", "renewableFrom", "secretMasked", "size", "status", "type", "updateVer", "updatedAt", "validPeriod" ],
         "type" : "object"
       },
       "settings_sslcertdto.UpdateSSLCertReq" : {
@@ -49493,6 +49499,9 @@
           },
           "autoRenew" : {
             "type" : "boolean"
+          },
+          "caCertificate" : {
+            "type" : "string"
           },
           "certType" : {
             "type" : "string"
@@ -49537,7 +49546,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "acmeProvider", "autoRenew", "certType", "certificate", "default", "domain", "email", "expireAt", "inheritable", "keyType", "notification", "notifyFrom", "privateKey", "provider", "updateVer", "validPeriod" ],
+        "required" : [ "acmeProvider", "autoRenew", "caCertificate", "certType", "certificate", "default", "domain", "email", "expireAt", "inheritable", "keyType", "notification", "notifyFrom", "privateKey", "provider", "updateVer", "validPeriod" ],
         "type" : "object"
       },
       "settings_sslcertdto.UpdateSSLCertResp" : {
@@ -52823,9 +52832,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -40,8 +40,8 @@ type AppCloneSettingsResp struct {
 	TargetStatus   base.AppStatus `json:"targetStatus,omitempty"`
 	TargetReplicas int            `json:"targetReplicas,omitempty"`
 
-	CloneDeploymentSettings bool                                 `json:"cloneDeploymentSettings,omitempty"`
-	CloneRoutingSettings    bool                                 `json:"cloneRoutingSettings,omitempty"`
+	CloneDeploymentSettings bool                                 `json:"cloneDeploymentSettings"`
+	CloneRoutingSettings    bool                                 `json:"cloneRoutingSettings"`
 	CloneRoutingDomains     []*AppCloneRoutingDomainSettingsResp `json:"cloneRoutingDomains,omitempty" copy:"-"`
 
 	CloneVolumes    bool     `json:"cloneVolumes"`
@@ -50,11 +50,11 @@ type AppCloneSettingsResp struct {
 	IncludedVolumes []string `json:"includedVolumes,omitempty"`
 	ExcludedVolumes []string `json:"excludedVolumes,omitempty"`
 
-	CloneEnvVars      bool `json:"cloneEnvVars,omitempty"`
-	CloneSecrets      bool `json:"cloneSecrets,omitempty"`
-	CloneConfigFiles  bool `json:"cloneConfigFiles,omitempty"`
-	ClonePeriodicJobs bool `json:"clonePeriodicJobs,omitempty"`
-	CloneSchedJobs    bool `json:"cloneSchedJobs,omitempty"`
+	CloneEnvVars      bool `json:"cloneEnvVars"`
+	CloneSecrets      bool `json:"cloneSecrets"`
+	CloneConfigFiles  bool `json:"cloneConfigFiles"`
+	ClonePeriodicJobs bool `json:"clonePeriodicJobs"`
+	CloneSchedJobs    bool `json:"cloneSchedJobs"`
 
 	CommandPipes []*settings.BaseSettingResp        `json:"commandPipes,omitempty"`
 	Notification *basedto.BaseEventNotificationResp `json:"notification,omitempty"`

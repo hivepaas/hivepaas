@@ -25,21 +25,21 @@ type AppCloneSettings struct {
 	TargetStatus   base.AppStatus `json:"targetStatus,omitempty"`
 	TargetReplicas int            `json:"targetReplicas,omitempty"`
 
-	CloneDeploymentSettings bool                             `json:"cloneDeploymentSettings,omitempty"`
-	CloneRoutingSettings    bool                             `json:"cloneRoutingSettings,omitempty"`
+	CloneDeploymentSettings bool                             `json:"cloneDeploymentSettings"`
+	CloneRoutingSettings    bool                             `json:"cloneRoutingSettings"`
 	CloneRoutingDomains     []*AppCloneRoutingDomainSettings `json:"cloneRoutingDomains,omitempty"`
 
-	CloneVolumes    bool     `json:"cloneVolumes,omitempty"`
-	CloneVolumeData bool     `json:"cloneVolumeData,omitempty"`
-	LiveVolumeClone bool     `json:"liveVolumeClone,omitempty"`
+	CloneVolumes    bool     `json:"cloneVolumes"`
+	CloneVolumeData bool     `json:"cloneVolumeData"`
+	LiveVolumeClone bool     `json:"liveVolumeClone"`
 	IncludedVolumes []string `json:"includedVolumes,omitempty"` // ids or names
 	ExcludedVolumes []string `json:"excludedVolumes,omitempty"` // ids or names
 
-	CloneEnvVars      bool `json:"cloneEnvVars,omitempty"`
-	CloneSecrets      bool `json:"cloneSecrets,omitempty"`
-	CloneConfigFiles  bool `json:"cloneConfigFiles,omitempty"`
-	ClonePeriodicJobs bool `json:"clonePeriodicJobs,omitempty"`
-	CloneSchedJobs    bool `json:"cloneSchedJobs,omitempty"`
+	CloneEnvVars      bool `json:"cloneEnvVars"`
+	CloneSecrets      bool `json:"cloneSecrets"`
+	CloneConfigFiles  bool `json:"cloneConfigFiles"`
+	ClonePeriodicJobs bool `json:"clonePeriodicJobs"`
+	CloneSchedJobs    bool `json:"cloneSchedJobs"`
 
 	// CommandPipes commands to run after cloning
 	CommandPipes ObjectIDSlice `json:"commandPipes,omitempty"`

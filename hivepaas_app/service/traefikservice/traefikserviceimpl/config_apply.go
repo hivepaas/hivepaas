@@ -164,6 +164,7 @@ func (s *service) collectDomainConfig(
 		return nil
 	}
 
+	// TCP
 	if domain.Protocol == base.NetworkProtocolTCP {
 		routerName := fmt.Sprintf("tcp-router-%v-%v", appKey, domainIndex)
 		serviceName := fmt.Sprintf("tcp-svc-%v-%v", appKey, domainIndex)
@@ -173,12 +174,12 @@ func (s *service) collectDomainConfig(
 		labels[fmt.Sprintf("traefik.tcp.routers.%s.service", routerName)] = serviceName
 		labels[fmt.Sprintf("traefik.tcp.routers.%s.tls", routerName)] = labelValueTrue
 
-		if domain.SSLCert.ID != "" {
+		if domain.TLSPassthrough {
+			labels[fmt.Sprintf("traefik.tcp.routers.%s.tls.passthrough", routerName)] = labelValueTrue
+		} else if domain.SSLCert.ID != "" {
 			if s.addTLSCertificate(traefikConfig, domain.SSLCert.ID) {
 				data.hasCerts = true
 			}
-		} else if domain.TLSPassthrough {
-			labels[fmt.Sprintf("traefik.tcp.routers.%s.tls.passthrough", routerName)] = labelValueTrue
 		}
 
 		labels[fmt.Sprintf("traefik.tcp.services.%s.loadbalancer.server.port", serviceName)] = strconv.Itoa(containerPort)
@@ -188,6 +189,23 @@ func (s *service) collectDomainConfig(
 	}
 
 	// HTTP / HTTPS
+	if domain.TLSPassthrough {
+		routerName := fmt.Sprintf("tcp-router-%v-%v", appKey, domainIndex)
+		serviceName := fmt.Sprintf("tcp-svc-%v-%v", appKey, domainIndex)
+
+		labels[fmt.Sprintf("traefik.tcp.routers.%s.rule", routerName)] = fmt.Sprintf("HostSNI(`%s`)", domain.Domain)
+		labels[fmt.Sprintf("traefik.tcp.routers.%s.entrypoints", routerName)] = "websecure" //nolint:goconst
+		labels[fmt.Sprintf("traefik.tcp.routers.%s.service", routerName)] = serviceName
+		labels[fmt.Sprintf("traefik.tcp.routers.%s.tls", routerName)] = labelValueTrue
+		labels[fmt.Sprintf("traefik.tcp.routers.%s.tls.passthrough", routerName)] = labelValueTrue
+
+		labels[fmt.Sprintf("traefik.tcp.services.%s.loadbalancer.server.port", serviceName)] = strconv.Itoa(containerPort)
+
+		// Force Https config
+		s.createForceHttpsConfig(domain.ForceHttps, domain.Domain, "", routerName, labels)
+		return nil
+	}
+
 	// Service
 	serviceName := fmt.Sprintf("svc-%v-%v", appKey, domainIndex)
 	labels[fmt.Sprintf("traefik.http.services.%s.loadbalancer.server.port", serviceName)] =
@@ -204,7 +222,7 @@ func (s *service) collectDomainConfig(
 		fmt.Sprintf("Host(`%s`)", domain.Domain)
 	labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = serviceName
 	labels[fmt.Sprintf("traefik.http.routers.%s.tls", routerName)] = labelValueTrue
-	labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", routerName)] = "websecure"
+	labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", routerName)] = "websecure" //nolint:goconst
 
 	var middlewares []string
 
@@ -339,7 +357,11 @@ func (s *service) createForceHttpsConfig(
 	routerName += "-forcehttps"
 	labels[fmt.Sprintf("traefik.http.routers.%s.rule", routerName)] =
 		fmt.Sprintf("Host(`%s`)", domain)
-	labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = serviceName
+	if serviceName != "" {
+		labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = serviceName
+	} else {
+		labels[fmt.Sprintf("traefik.http.routers.%s.service", routerName)] = "noop@internal"
+	}
 	// Listen to HTTP, then redirect to HTTPS
 	labels[fmt.Sprintf("traefik.http.routers.%s.entrypoints", routerName)] = "web"
 

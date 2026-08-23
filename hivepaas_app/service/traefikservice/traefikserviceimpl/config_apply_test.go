@@ -15,7 +15,7 @@ import (
 func TestApplyAppConfig(t *testing.T) {
 	s := &service{}
 
-	t.Run("HTTP and TCP domains", func(t *testing.T) {
+	t.Run("HTTP, HTTP with TLS Passthrough, and TCP domains", func(t *testing.T) {
 		app := &entity.App{
 			Key:       "my_app",
 			ServiceID: "svc-123",
@@ -39,6 +39,14 @@ func TestApplyAppConfig(t *testing.T) {
 					Domain:        "app.myapp.com",
 					Protocol:      base.NetworkProtocolHTTP,
 					ContainerPort: 8080,
+				},
+				{
+					Enabled:        true,
+					Domain:         "passthrough.myapp.com",
+					Protocol:       base.NetworkProtocolHTTP,
+					ContainerPort:  8443,
+					TLSPassthrough: true,
+					ForceHttps:     true,
 				},
 				{
 					Enabled:        true,
@@ -68,20 +76,31 @@ func TestApplyAppConfig(t *testing.T) {
 		// Old HTTP router cleaned
 		assert.NotContains(t, labels, "traefik.http.routers.old.rule")
 
-		// 1. HTTP Router
+		// 1. Standard HTTP Router
 		assert.Equal(t, "Host(`app.myapp.com`)", labels["traefik.http.routers.router-my-app-0.rule"])
 		assert.Equal(t, "websecure", labels["traefik.http.routers.router-my-app-0.entrypoints"])
 		assert.Equal(t, "svc-my-app-0", labels["traefik.http.routers.router-my-app-0.service"])
 		assert.Equal(t, labelValueTrue, labels["traefik.http.routers.router-my-app-0.tls"])
 		assert.Equal(t, "8080", labels["traefik.http.services.svc-my-app-0.loadbalancer.server.port"])
 
-		// 2. TCP Router with HostSNI
-		assert.Equal(t, "HostSNI(`db.myapp.com`)", labels["traefik.tcp.routers.tcp-router-my-app-1.rule"])
-		assert.Equal(t, "tcp-svc-5432", labels["traefik.tcp.routers.tcp-router-my-app-1.entrypoints"])
+		// 2. HTTP Domain with TLS Passthrough (routed via TCP router on websecure)
+		assert.Equal(t, "HostSNI(`passthrough.myapp.com`)", labels["traefik.tcp.routers.tcp-router-my-app-1.rule"])
+		assert.Equal(t, "websecure", labels["traefik.tcp.routers.tcp-router-my-app-1.entrypoints"])
 		assert.Equal(t, "tcp-svc-my-app-1", labels["traefik.tcp.routers.tcp-router-my-app-1.service"])
 		assert.Equal(t, labelValueTrue, labels["traefik.tcp.routers.tcp-router-my-app-1.tls"])
 		assert.Equal(t, labelValueTrue, labels["traefik.tcp.routers.tcp-router-my-app-1.tls.passthrough"])
-		assert.Equal(t, "5432", labels["traefik.tcp.services.tcp-svc-my-app-1.loadbalancer.server.port"])
+		assert.Equal(t, "8443", labels["traefik.tcp.services.tcp-svc-my-app-1.loadbalancer.server.port"])
+		// ForceHttps redirect router on web port 80
+		assert.Equal(t, "Host(`passthrough.myapp.com`)", labels["traefik.http.routers.tcp-router-my-app-1-forcehttps.rule"])
+		assert.Equal(t, "web", labels["traefik.http.routers.tcp-router-my-app-1-forcehttps.entrypoints"])
+
+		// 3. TCP Router with HostSNI
+		assert.Equal(t, "HostSNI(`db.myapp.com`)", labels["traefik.tcp.routers.tcp-router-my-app-2.rule"])
+		assert.Equal(t, "tcp-svc-5432", labels["traefik.tcp.routers.tcp-router-my-app-2.entrypoints"])
+		assert.Equal(t, "tcp-svc-my-app-2", labels["traefik.tcp.routers.tcp-router-my-app-2.service"])
+		assert.Equal(t, labelValueTrue, labels["traefik.tcp.routers.tcp-router-my-app-2.tls"])
+		assert.Equal(t, labelValueTrue, labels["traefik.tcp.routers.tcp-router-my-app-2.tls.passthrough"])
+		assert.Equal(t, "5432", labels["traefik.tcp.services.tcp-svc-my-app-2.loadbalancer.server.port"])
 	})
 
 	t.Run("ExposePublicly disabled cleans labels", func(t *testing.T) {

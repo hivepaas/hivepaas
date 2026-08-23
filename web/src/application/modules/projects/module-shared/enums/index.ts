@@ -34,3 +34,4 @@ export * from "./e.service-mode";
 export * from "./e.app-service-placement";
 export * from "./e.deployment-repo-option";
 export * from "./e.dockerfile-source";
+export * from "./e.routing-protocol";

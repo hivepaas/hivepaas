@@ -3,7 +3,7 @@ import {
     type AppRoutingSettings,
     type AppRoutingSettingsUpdatePayload,
 } from "~/projects/domain";
-import { type EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums";
+import { type EHttpPathMode, ELBStrategy, ERoutingProtocol } from "~/projects/module-shared/enums";
 
 import {
     type AppConfigRoutingSettingsFormSchemaInput,
@@ -20,10 +20,13 @@ function mapDomainToFormInput(domain: AppRoutingDomain): AppConfigRoutingSetting
     return {
         enabled: domain.enabled,
         domain: domain.domain,
+        protocol: domain.protocol ?? ERoutingProtocol.HTTP,
         containerPort: domain.containerPort,
+        tlsPassthrough: domain.tlsPassthrough ?? false,
         domainRedirect: domain.domainRedirect ?? "",
         sslCert: domain.sslCert?.id ? { id: domain.sslCert.id, name: domain.sslCert.name } : undefined,
         forceHttps: domain.forceHttps ?? false,
+
         basicAuth: domain.basicAuth?.id
             ? { id: domain.basicAuth.id, name: domain.basicAuth.name, enabled: domain.basicAuth.enabled }
             : undefined,
@@ -184,10 +187,13 @@ export function mapFormValuesToPayload(
         domains: values.domains.map(domain => ({
             enabled: domain.enabled,
             domain: domain.domain,
+            protocol: domain.protocol,
             containerPort: domain.containerPort,
+            tlsPassthrough: domain.tlsPassthrough,
             domainRedirect: domain.domainRedirect,
             sslCert: { id: domain.sslCert?.id ?? "" },
             forceHttps: domain.forceHttps,
+
             basicAuth: { id: domain.basicAuth?.id ?? "", enabled: domain.basicAuth?.enabled ?? false },
             lbConfig:
                 domain.lbConfig && isLBStrategy(domain.lbConfig.strategy)

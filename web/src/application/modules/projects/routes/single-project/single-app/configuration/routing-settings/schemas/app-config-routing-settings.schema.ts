@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums";
+import { EHttpPathMode, ELBStrategy, ERoutingProtocol } from "~/projects/module-shared/enums";
 
 import { isValidDomain } from "@application/shared/utils/domain";
 
@@ -86,7 +86,9 @@ export const DomainFormSchema = z
     .object({
         enabled: z.boolean(),
         domain: z.string(),
+        protocol: z.nativeEnum(ERoutingProtocol),
         containerPort: z.number().int().min(1).max(65535),
+        tlsPassthrough: z.boolean(),
         domainRedirect: z.string(),
         sslCert: HttpSettingsRefSchema.optional(),
         forceHttps: z.boolean(),
@@ -100,6 +102,7 @@ export const DomainFormSchema = z
         circuitBreakerConfig: HttpCircuitBreakerConfigSchema.optional(),
         paths: z.array(HttpPathConfigSchema),
     })
+
     .superRefine((values, ctx) => {
         const domain = values.domain.trim();
         if (!domain) {
@@ -214,7 +217,9 @@ export function createDefaultCircuitBreakerConfig(): z.infer<typeof HttpCircuitB
 export const emptyDomain: z.input<typeof DomainFormSchema> = {
     enabled: true,
     domain: "",
+    protocol: ERoutingProtocol.HTTP,
     containerPort: 80,
+    tlsPassthrough: false,
     domainRedirect: "",
     forceHttps: true,
     lbConfig: createDefaultLBConfig(),

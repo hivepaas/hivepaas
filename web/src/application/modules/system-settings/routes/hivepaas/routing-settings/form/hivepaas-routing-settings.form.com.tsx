@@ -42,7 +42,6 @@ function ConditionalDomainDetailSections({
     const domains = useWatch<SchemaInput, "domains">({ name: "domains" });
     const hasDomains = domains.length > 0;
     const activeDomain = activeDomainIndex >= 0 ? domains[activeDomainIndex] : undefined;
-    const hasActiveDomain = Boolean(activeDomain);
 
     useEffect(() => {
         const len = domains.length;
@@ -58,13 +57,15 @@ function ConditionalDomainDetailSections({
         }
     }, [activeDomainIndex, domains.length, setActiveDomainIndex]);
 
-    if (!hasDomains || !hasActiveDomain) {
+    if (!hasDomains || !activeDomain) {
         return null;
     }
 
+    const domainName = activeDomain.domain.trim();
+
     return (
         <>
-            <ContentBlock label="General">
+            <ContentBlock label={<span className="text-red-500">Selected domain: {domainName || "—"}</span>}>
                 <div className="flex flex-col gap-6 px-2">
                     <SslCert
                         domainIndex={activeDomainIndex}

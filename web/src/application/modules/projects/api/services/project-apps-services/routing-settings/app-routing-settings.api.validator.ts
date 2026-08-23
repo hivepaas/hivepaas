@@ -11,7 +11,7 @@ import {
     type AppRoutingPathRewriteConfig,
     type AppRoutingRateLimitConfig,
 } from "~/projects/domain";
-import { EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums";
+import { EHttpPathMode, ELBStrategy, ERoutingProtocol } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -99,9 +99,11 @@ const HttpPathConfigSchema = z.object({
 const DomainSchema = z.object({
     enabled: z.boolean(),
     domain: z.string(),
+    protocol: z.nativeEnum(ERoutingProtocol).optional(),
     domainRedirect: z.string().optional(),
     sslCert: SettingRefSchema.nullish(),
     containerPort: z.number(),
+    tlsPassthrough: z.boolean().optional(),
     forceHttps: z.boolean().optional(),
     basicAuth: BasicAuthConfigSchema.nullish(),
     lbConfig: HttpLBConfigSchema.nullish(),
@@ -264,9 +266,11 @@ function mapDomain(raw: z.infer<typeof DomainSchema>): AppRoutingDomain {
     return {
         enabled: raw.enabled,
         domain: raw.domain,
+        protocol: raw.protocol ?? ERoutingProtocol.HTTP,
         domainRedirect: raw.domainRedirect,
         sslCert: mapSettingRef(raw.sslCert ?? undefined),
         containerPort: raw.containerPort,
+        tlsPassthrough: raw.tlsPassthrough ?? false,
         forceHttps: raw.forceHttps,
         basicAuth: mapBasicAuthConfig(raw.basicAuth ?? undefined),
         lbConfig: mapLBConfig(raw.lbConfig ?? undefined),

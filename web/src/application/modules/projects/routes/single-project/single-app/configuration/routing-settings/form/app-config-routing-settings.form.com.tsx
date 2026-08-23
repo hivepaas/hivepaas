@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, type FieldPath, FormProvider, useController, useForm, useWatch } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import { type AppRoutingSettings } from "~/projects/domain";
+import { ERoutingProtocol } from "~/projects/module-shared/enums";
 
 import { ContentBlock } from "@application/shared/components";
 
@@ -46,6 +47,9 @@ function ConditionalDomainDetailSections({
     const hasActiveDomain = Boolean(activeDomain);
     const activeDomainRedirect = typeof activeDomain?.domainRedirect === "string" ? activeDomain.domainRedirect : "";
     const hasRedirect = Boolean(activeDomainRedirect.trim());
+    const isHttp = (activeDomain?.protocol ?? ERoutingProtocol.HTTP) === ERoutingProtocol.HTTP;
+    const isTlsPassthrough = Boolean(activeDomain?.tlsPassthrough);
+    const showHttpAdvancedSections = isHttp && !isTlsPassthrough;
 
     useEffect(() => {
         const len = domains.length;
@@ -89,12 +93,14 @@ function ConditionalDomainDetailSections({
                     domainIndex={activeDomainIndex}
                     readOnly={readOnly}
                 />
-                <LBConfigSection
-                    prefix={`domains.${activeDomainIndex}.lbConfig`}
-                    readOnly={readOnly}
-                />
+                {showHttpAdvancedSections && (
+                    <LBConfigSection
+                        prefix={`domains.${activeDomainIndex}.lbConfig`}
+                        readOnly={readOnly}
+                    />
+                )}
             </div>
-            {!hasRedirect && (
+            {showHttpAdvancedSections && !hasRedirect && (
                 <>
                     <div className="flex flex-col gap-6 px-2">
                         <DomainConfigurableSections

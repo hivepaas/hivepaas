@@ -1,4 +1,4 @@
-import type { EHttpPathMode, ELBStrategy } from "~/projects/module-shared/enums";
+import type { EHttpPathMode, ELBStrategy, ERoutingProtocol } from "~/projects/module-shared/enums";
 import type { SettingsBaseEntity } from "~/settings/domain";
 
 export type AppRoutingSettings = {
@@ -37,9 +37,11 @@ export type AppRoutingBasicAuthConfig = {
 export type AppRoutingDomain = {
     enabled: boolean;
     domain: string;
+    protocol?: ERoutingProtocol;
     domainRedirect?: string;
     sslCert?: { id: string; name: string } | null;
     containerPort: number;
+    tlsPassthrough?: boolean;
     forceHttps?: boolean;
     basicAuth?: AppRoutingBasicAuthConfig | null;
     lbConfig?: AppRoutingLBConfig | null;
@@ -127,9 +129,11 @@ export type AppRoutingBasicAuthConfigReq = AppRoutingSettingsObjectIdReq & {
 export type AppRoutingSettingsUpdateDomain = {
     enabled: boolean;
     domain: string;
+    protocol: ERoutingProtocol;
     domainRedirect: string;
     sslCert: AppRoutingSettingsObjectIdReq;
     containerPort: number;
+    tlsPassthrough: boolean;
     forceHttps: boolean;
     basicAuth: AppRoutingBasicAuthConfigReq;
     lbConfig?: AppRoutingLBConfig | null;

@@ -2,14 +2,19 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/moby/moby/client"
 	"go.uber.org/fx"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -21,15 +26,22 @@ const (
 
 func InitDockerManager(
 	lc fx.Lifecycle,
+	db *database.DB,
 	cfg *config.Config,
 	manager docker.Manager,
 	clusterService clusterservice.Service,
+	networkService networkservice.Service,
+	volumeService volumeservice.Service,
 	logger logging.Logger,
 ) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	lc.Append(fx.Hook{
 		OnStart: func(startCtx context.Context) error {
 			logger.Info("initializing docker manager ...")
+			err := syncSwarmObjects(ctx, db, clusterService, networkService, volumeService)
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
 			if cfg.RunMode == config.RunModeApp || cfg.RunMode == config.RunModeAppAndWorker {
 				go registerSwarmNodeEvents(ctx, manager, clusterService, logger)
 			}
@@ -42,6 +54,19 @@ func InitDockerManager(
 		},
 	})
 	return nil
+}
+
+func syncSwarmObjects(
+	ctx context.Context,
+	db *database.DB,
+	clusterService clusterservice.Service,
+	networkService networkservice.Service,
+	volumeService volumeservice.Service,
+) error {
+	_, e1 := clusterService.SyncNodes(ctx, db)
+	_, e2 := networkService.SyncNetworks(ctx, db)
+	_, e3 := volumeService.SyncVolumes(ctx, db)
+	return errors.Join(e1, e2, e3)
 }
 
 //nolint:gocognit

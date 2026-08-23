@@ -16,7 +16,8 @@ export * from "./use-app-service-settings.api";
 export * from "./use-app-service-tasks.api";
 export * from "./use-app-resource-settings.api";
 export * from "./use-app-storage-settings.api";
-export * from "./use-app-http-settings.api";
+export * from "./use-app-routing-settings.api";
+
 export * from "./use-app-periodic-jobs.api";
 export * from "./use-app-scheduled-jobs.api";
 export * from "./use-app-scheduled-job-task-logs.ws-api";

@@ -5,12 +5,13 @@ export type AppCloneSettingRef = {
     name: string;
 };
 
-export type AppCloneHttpDomainSettings = {
+export type AppCloneRoutingDomainSettings = {
     sourceDomain: string;
     targetDomain: string;
     sourceSslCert?: AppCloneSettingRef | null;
     targetSslCert?: AppCloneSettingRef | null;
 };
+export type AppCloneHttpDomainSettings = AppCloneRoutingDomainSettings;
 
 export type AppCloneEventNotification = {
     successUseDefault: boolean;
@@ -25,8 +26,9 @@ export interface AppCloneSettings {
     targetStatus: EProjectAppStatus;
     targetReplicas: number;
     cloneDeploymentSettings: boolean;
-    cloneHttpSettings: boolean;
-    cloneHttpDomains: AppCloneHttpDomainSettings[];
+    cloneRoutingSettings: boolean;
+    cloneRoutingDomains: AppCloneRoutingDomainSettings[];
+
     cloneVolumes: boolean;
     cloneVolumeData: boolean;
     liveVolumeClone: boolean;

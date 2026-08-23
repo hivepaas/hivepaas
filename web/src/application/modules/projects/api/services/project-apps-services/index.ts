@@ -15,7 +15,8 @@ export * from "./service-tasks";
 export * from "./network-settings";
 export * from "./resource-settings";
 export * from "./storage-settings";
-export * from "./http-settings";
+export * from "./routing-settings";
+
 export * from "./periodic-jobs";
 export * from "./scheduled-jobs";
 export * from "./logs";

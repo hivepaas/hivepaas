@@ -60,11 +60,11 @@ export const systemSettingsRouter: RouteObject = {
                     },
                 },
                 {
-                    path: "http-settings",
+                    path: "routing-settings",
                     lazy: async () => {
-                        const { SystemSettingsHivePaaSHttpSettingsRoute } = await getLazyComponents();
+                        const { SystemSettingsHivePaaSRoutingSettingsRoute } = await getLazyComponents();
 
-                        return { Component: SystemSettingsHivePaaSHttpSettingsRoute };
+                        return { Component: SystemSettingsHivePaaSRoutingSettingsRoute };
                     },
                 },
             ],

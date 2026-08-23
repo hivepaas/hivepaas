@@ -6,7 +6,7 @@ const AppCloneSettingRefSchema = z.object({
     name: z.string(),
 });
 
-const AppCloneHttpDomainSchema = z.object({
+const AppCloneRoutingDomainSchema = z.object({
     sourceDomain: z.string(),
     targetDomain: z.string(),
     sourceSslCert: AppCloneSettingRefSchema.nullable(),
@@ -31,8 +31,8 @@ const AppCloneSettingsFormSchemaBase = z.object({
     targetStatus: AppCloneTargetStatusSchema,
     targetReplicas: z.coerce.number(),
     cloneDeploymentSettings: z.boolean(),
-    cloneHttpSettings: z.boolean(),
-    cloneHttpDomains: z.array(AppCloneHttpDomainSchema),
+    cloneRoutingSettings: z.boolean(),
+    cloneRoutingDomains: z.array(AppCloneRoutingDomainSchema),
     cloneVolumes: z.boolean(),
     cloneVolumeData: z.boolean(),
     stopSourceAppBeforeClone: z.boolean(),
@@ -74,8 +74,9 @@ export const emptyAppCloneSettingsFormDefaults: AppCloneSettingsFormSchemaInput 
     targetStatus: EProjectAppStatus.Active,
     targetReplicas: -1,
     cloneDeploymentSettings: true,
-    cloneHttpSettings: true,
-    cloneHttpDomains: [],
+    cloneRoutingSettings: true,
+    cloneRoutingDomains: [],
+
     cloneVolumes: true,
     cloneVolumeData: true,
     stopSourceAppBeforeClone: false,

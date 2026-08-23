@@ -1,8 +1,8 @@
 import { createContext } from "react";
 
 import {
-    HivePaaSHttpSettingsApi,
-    HivePaaSHttpSettingsApiValidator,
+    HivePaaSRoutingSettingsApi,
+    HivePaaSRoutingSettingsApiValidator,
     HivePaaSServiceSettingsApi,
     HivePaaSServiceSettingsApiValidator,
     SystemBackupApi,
@@ -25,14 +25,15 @@ function createApi() {
     const systemCleanupValidator = new SystemCleanupApiValidator();
     const systemSslRenewalValidator = new SystemSslRenewalApiValidator();
     const hivePaaSServiceSettingsValidator = new HivePaaSServiceSettingsApiValidator();
-    const hivePaaSHttpSettingsValidator = new HivePaaSHttpSettingsApiValidator();
+    const hivePaaSRoutingSettingsValidator = new HivePaaSRoutingSettingsApiValidator();
     const traefikServiceSettingsValidator = new TraefikServiceSettingsApiValidator();
     const traefikConfigOptionsValidator = new TraefikConfigOptionsApiValidator();
 
     return {
         systemSettings: {
             hivepaasServiceSettings: new HivePaaSServiceSettingsApi(hivePaaSServiceSettingsValidator),
-            hivepaasHttpSettings: new HivePaaSHttpSettingsApi(hivePaaSHttpSettingsValidator),
+            hivepaasRoutingSettings: new HivePaaSRoutingSettingsApi(hivePaaSRoutingSettingsValidator),
+            hivepaasHttpSettings: new HivePaaSRoutingSettingsApi(hivePaaSRoutingSettingsValidator),
             traefikServiceSettings: new TraefikServiceSettingsApi(traefikServiceSettingsValidator),
             traefikConfigOptions: new TraefikConfigOptionsApi(traefikConfigOptionsValidator),
             backup: new SystemBackupApi(systemBackupValidator),

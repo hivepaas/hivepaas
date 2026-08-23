@@ -5,12 +5,13 @@ import type { ApiRequestBase, ApiResponseBase } from "@infrastructure/api";
 export type AppCloneSettings_FindOne_Req = ApiRequestBase<{ projectID: string; env: string; appID: string }>;
 export type AppCloneSettings_FindOne_Res = ApiResponseBase<AppCloneSettings>;
 
-export type AppCloneSettings_UpdateHttpDomainPayload = {
+export type AppCloneSettings_UpdateRoutingDomainPayload = {
     sourceDomain: string;
     targetDomain: string;
     sourceSslCert: { id: string };
     targetSslCert: { id: string };
 };
+export type AppCloneSettings_UpdateHttpDomainPayload = AppCloneSettings_UpdateRoutingDomainPayload;
 
 export type AppCloneSettings_UpdatePayload = {
     updateVer: number;
@@ -19,8 +20,9 @@ export type AppCloneSettings_UpdatePayload = {
     targetStatus: AppCloneSettings["targetStatus"];
     targetReplicas: number;
     cloneDeploymentSettings: boolean;
-    cloneHttpSettings: boolean;
-    cloneHttpDomains: AppCloneSettings_UpdateHttpDomainPayload[];
+    cloneRoutingSettings: boolean;
+    cloneRoutingDomains: AppCloneSettings_UpdateRoutingDomainPayload[];
+
     cloneVolumes: boolean;
     cloneVolumeData: boolean;
     liveVolumeClone: boolean;

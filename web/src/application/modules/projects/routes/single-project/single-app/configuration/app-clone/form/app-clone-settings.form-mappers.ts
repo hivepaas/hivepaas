@@ -37,8 +37,8 @@ export function mapAppCloneSettingsToFormInput(data: AppCloneSettings): AppClone
         targetStatus: normalizeTargetStatus(data.targetStatus),
         targetReplicas: data.targetReplicas,
         cloneDeploymentSettings: data.cloneDeploymentSettings,
-        cloneHttpSettings: data.cloneHttpSettings,
-        cloneHttpDomains: data.cloneHttpDomains.map(domain => ({
+        cloneRoutingSettings: data.cloneRoutingSettings,
+        cloneRoutingDomains: data.cloneRoutingDomains.map(domain => ({
             sourceDomain: domain.sourceDomain,
             targetDomain: domain.targetDomain,
             sourceSslCert: domain.sourceSslCert ?? null,
@@ -77,8 +77,8 @@ export function mapFormToUpdatePayload(
         targetStatus: values.targetStatus,
         targetReplicas: values.targetReplicas,
         cloneDeploymentSettings: values.cloneDeploymentSettings,
-        cloneHttpSettings: values.cloneHttpSettings,
-        cloneHttpDomains: values.cloneHttpDomains
+        cloneRoutingSettings: values.cloneRoutingSettings,
+        cloneRoutingDomains: values.cloneRoutingDomains
             .filter(domain => domain.targetDomain.trim() !== "")
             .map(domain => ({
                 sourceDomain: domain.sourceDomain,
@@ -86,6 +86,7 @@ export function mapFormToUpdatePayload(
                 sourceSslCert: { id: domain.sourceSslCert?.id ?? "" },
                 targetSslCert: { id: domain.targetSslCert?.id ?? "" },
             })),
+
         cloneVolumes: values.cloneVolumes,
         cloneVolumeData: values.cloneVolumeData,
         liveVolumeClone: !values.stopSourceAppBeforeClone,

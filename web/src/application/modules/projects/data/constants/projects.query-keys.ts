@@ -64,7 +64,8 @@ export const QK = {
      * Project App Deployment Settings
      */
     "projects.apps.deployment-settings.$.find-one": "projects.apps.deployment-settings.$.find-one",
-    "projects.apps.deployment-settings.$.dockerfile-template": "projects.apps.deployment-settings.$.dockerfile-template",
+    "projects.apps.deployment-settings.$.dockerfile-template":
+        "projects.apps.deployment-settings.$.dockerfile-template",
     /*
      * Project App Feature Settings
      */
@@ -90,9 +91,10 @@ export const QK = {
     "projects.image-build-settings.$.find-one": "projects.image-build-settings.$.find-one",
     "projects.image-build-settings.repo-cache.$.find-one": "projects.image-build-settings.repo-cache.$.find-one",
     /*
-     * Project App HTTP Settings
+     * Project App Routing Settings
      */
-    "projects.apps.http-settings.$.find-one": "projects.apps.http-settings.$.find-one",
+    "projects.apps.routing-settings.$.find-one": "projects.apps.routing-settings.$.find-one",
+
     /*
      * Project App Periodic Jobs (health checks)
      */

@@ -23,8 +23,8 @@ function View({ children }: PropsWithChildren) {
             route: ROUTE.systemSettings.hivepaas.general.$route,
         },
         {
-            label: "HTTP Settings",
-            route: ROUTE.systemSettings.hivepaas.httpSettings.$route,
+            label: "Routing Settings",
+            route: ROUTE.systemSettings.hivepaas.routingSettings.$route,
         },
     ];
 

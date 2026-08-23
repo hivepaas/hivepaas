@@ -1,7 +1,8 @@
 export * from "./general";
 export * from "./deployment-settings";
 export * from "./container-settings";
-export * from "./http-settings";
+export * from "./routing-settings";
+
 export * from "./periodic-jobs";
 export * from "./scheduled-jobs";
 export * from "./env-variables";

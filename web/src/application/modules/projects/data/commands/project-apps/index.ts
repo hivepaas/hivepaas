@@ -14,6 +14,7 @@ export * from "./app-network-settings.commands";
 export * from "./app-service-settings.commands";
 export * from "./app-resource-settings.commands";
 export * from "./app-storage-settings.commands";
-export * from "./app-http-settings.commands";
+export * from "./app-routing-settings.commands";
+
 export * from "./app-periodic-jobs.commands";
 export * from "./app-scheduled-jobs.commands";

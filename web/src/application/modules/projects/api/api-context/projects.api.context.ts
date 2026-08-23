@@ -95,10 +95,6 @@ import {
     ProjectsApiValidator,
 } from "~/projects/api/services";
 import {
-    AppHttpSettingsApi,
-    AppHttpSettingsApiValidator,
-} from "~/projects/api/services/project-apps-services/http-settings";
-import {
     AppNetworkSettingsApi,
     AppNetworkSettingsApiValidator,
 } from "~/projects/api/services/project-apps-services/network-settings";
@@ -106,6 +102,10 @@ import {
     AppResourceSettingsApi,
     AppResourceSettingsApiValidator,
 } from "~/projects/api/services/project-apps-services/resource-settings";
+import {
+    AppRoutingSettingsApi,
+    AppRoutingSettingsApiValidator,
+} from "~/projects/api/services/project-apps-services/routing-settings";
 import {
     AppStorageSettingsApi,
     AppStorageSettingsApiValidator,
@@ -154,7 +154,7 @@ function createApi() {
     const appNetworkSettingsApiValidator = new AppNetworkSettingsApiValidator();
     const appResourceSettingsApiValidator = new AppResourceSettingsApiValidator();
     const appStorageSettingsApiValidator = new AppStorageSettingsApiValidator();
-    const appHttpSettingsApiValidator = new AppHttpSettingsApiValidator();
+    const appRoutingSettingsApiValidator = new AppRoutingSettingsApiValidator();
     const appServiceSettingsApiValidator = new AppServiceSettingsApiValidator();
     const appServiceTasksApiValidator = new AppServiceTasksApiValidator();
     const appSecretsApiValidator = new AppSecretsApiValidator();
@@ -247,8 +247,8 @@ function createApi() {
                 storageSettings: {
                     $: new AppStorageSettingsApi(appStorageSettingsApiValidator),
                 },
-                httpSettings: {
-                    $: new AppHttpSettingsApi(appHttpSettingsApiValidator),
+                routingSettings: {
+                    $: new AppRoutingSettingsApi(appRoutingSettingsApiValidator),
                 },
                 serviceSettings: {
                     $: new AppServiceSettingsApi(appServiceSettingsApiValidator),

@@ -216,26 +216,26 @@ function TargetStatusSelect({ readOnly, error }: { readOnly: boolean; error?: Ho
     );
 }
 
-function HttpDomainFields({ projectId, readOnly }: { projectId: string; readOnly: boolean }) {
+function RoutingDomainFields({ projectId, readOnly }: { projectId: string; readOnly: boolean }) {
     const { control, formState } = useFormContext<SchemaInput, unknown, SchemaOutput>();
-    const { fields } = useFieldArray({ control, name: "cloneHttpDomains" });
+    const { fields } = useFieldArray({ control, name: "cloneRoutingDomains" });
 
     return (
         <div className="flex flex-col gap-4">
             {fields.map((field, index) => (
-                <HttpDomainRow
+                <RoutingDomainRow
                     key={field.id}
                     projectId={projectId}
                     index={index}
                     readOnly={readOnly}
-                    domainError={formState.errors.cloneHttpDomains?.[index]?.targetDomain}
+                    domainError={formState.errors.cloneRoutingDomains?.[index]?.targetDomain}
                 />
             ))}
         </div>
     );
 }
 
-function HttpDomainRow({
+function RoutingDomainRow({
     projectId,
     index,
     readOnly,
@@ -247,11 +247,14 @@ function HttpDomainRow({
     domainError?: HookFormFieldError;
 }) {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
-    const sourceDomain = useWatch({ control, name: `cloneHttpDomains.${index}.sourceDomain` });
-    const sourceSslCert = useWatch({ control, name: `cloneHttpDomains.${index}.sourceSslCert` });
-    const targetDomain = useWatch({ control, name: `cloneHttpDomains.${index}.targetDomain` });
-    const { field: targetDomainField } = useController({ control, name: `cloneHttpDomains.${index}.targetDomain` });
-    const { field: targetSslCertField } = useController({ control, name: `cloneHttpDomains.${index}.targetSslCert` });
+    const sourceDomain = useWatch({ control, name: `cloneRoutingDomains.${index}.sourceDomain` });
+    const sourceSslCert = useWatch({ control, name: `cloneRoutingDomains.${index}.sourceSslCert` });
+    const targetDomain = useWatch({ control, name: `cloneRoutingDomains.${index}.targetDomain` });
+    const { field: targetDomainField } = useController({ control, name: `cloneRoutingDomains.${index}.targetDomain` });
+    const { field: targetSslCertField } = useController({
+        control,
+        name: `cloneRoutingDomains.${index}.targetSslCert`,
+    });
 
     const [searchQuery, setSearchQuery] = useState("");
     const normalizedTargetDomain = typeof targetDomain === "string" ? targetDomain.trim() : "";
@@ -543,7 +546,7 @@ export function AppCloneSettingsForm({
     });
 
     const cloneDeploymentSettings = useWatch({ control: methods.control, name: "cloneDeploymentSettings" });
-    const cloneHttpSettings = useWatch({ control: methods.control, name: "cloneHttpSettings" });
+    const cloneRoutingSettings = useWatch({ control: methods.control, name: "cloneRoutingSettings" });
     const cloneVolumes = useWatch({ control: methods.control, name: "cloneVolumes" });
 
     useUpdateEffect(() => {
@@ -672,11 +675,11 @@ export function AppCloneSettingsForm({
                             </div>
                         </ContentBlock>
 
-                        <ContentBlock label="Clone HTTP Settings">
+                        <ContentBlock label="Clone Routing Settings">
                             <div className="flex flex-col gap-6">
-                                <SectionEnabledField name="cloneHttpSettings" />
-                                <ConditionalSection enabled={cloneHttpSettings}>
-                                    <HttpDomainFields
+                                <SectionEnabledField name="cloneRoutingSettings" />
+                                <ConditionalSection enabled={cloneRoutingSettings}>
+                                    <RoutingDomainFields
                                         projectId={projectId}
                                         readOnly={readOnly}
                                     />

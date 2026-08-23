@@ -105,8 +105,9 @@ function View({ projectId, env, appId }: Props) {
         : [];
     const configurationActivePathPrefixes = [
         ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(projectId, env, appId),
-        ROUTE.projects.single.apps.single.configuration.httpSettings.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.routingSettings.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.envVariables.$route(projectId, env, appId),
+
         ROUTE.projects.single.apps.single.configuration.secrets.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.configFiles.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.containerSettings.$route(projectId, env, appId),

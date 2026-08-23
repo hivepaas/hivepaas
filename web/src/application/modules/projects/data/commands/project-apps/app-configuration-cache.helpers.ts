@@ -47,8 +47,9 @@ export function invalidateSingleAppConfigurationQueries(queryClient: QueryClient
         queryKey: [QK["projects.apps.storage-settings.$.find-one"], scope],
     });
     void queryClient.invalidateQueries({
-        queryKey: [QK["projects.apps.http-settings.$.find-one"], scope],
+        queryKey: [QK["projects.apps.routing-settings.$.find-one"], scope],
     });
+
     void queryClient.invalidateQueries({
         queryKey: [QK["projects.apps.secrets.$.find-many-paginated"]],
     });

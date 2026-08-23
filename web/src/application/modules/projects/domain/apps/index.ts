@@ -14,4 +14,4 @@ export * from "./scheduled-job";
 export * from "./network-settings";
 export * from "./resource-settings";
 export * from "./storage-settings";
-export * from "./http-settings";
+export * from "./routing-settings";

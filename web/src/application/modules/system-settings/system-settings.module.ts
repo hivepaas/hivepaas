@@ -3,6 +3,7 @@
  */
 export {
     SystemSettingsHivePaaSGeneralRoute,
+    SystemSettingsHivePaaSRoutingSettingsRoute,
     SystemSettingsHivePaaSHttpSettingsRoute,
     SystemSettingsTraefikGeneralRoute,
     SystemSettingsTraefikConfigOptionsRoute,

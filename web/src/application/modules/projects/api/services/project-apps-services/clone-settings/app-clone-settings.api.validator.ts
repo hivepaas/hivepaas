@@ -17,7 +17,7 @@ const SettingRefSchema = z
     .nullish()
     .transform(value => value ?? null);
 
-const HttpDomainSchema = z.object({
+const RoutingDomainSchema = z.object({
     sourceDomain: z.string(),
     targetDomain: z.string(),
     sourceSslCert: SettingRefSchema,
@@ -40,11 +40,12 @@ const AppCloneSettingsSchema = z.object({
     targetStatus: z.nativeEnum(EProjectAppStatus).optional().default(EProjectAppStatus.Active),
     targetReplicas: z.number().optional().default(-1),
     cloneDeploymentSettings: z.boolean().optional().default(true),
-    cloneHttpSettings: z.boolean().optional().default(true),
-    cloneHttpDomains: z
-        .array(HttpDomainSchema)
+    cloneRoutingSettings: z.boolean().optional().default(true),
+    cloneRoutingDomains: z
+        .array(RoutingDomainSchema)
         .nullish()
         .transform(value => value ?? []),
+
     cloneVolumes: z.boolean().optional().default(true),
     cloneVolumeData: z.boolean().optional().default(true),
     liveVolumeClone: z.boolean().optional().default(true),
@@ -61,6 +62,7 @@ const AppCloneSettingsSchema = z.object({
     cloneConfigFiles: z.boolean().optional().default(true),
     clonePeriodicJobs: z.boolean().optional().default(true),
     cloneSchedJobs: z.boolean().optional().default(true),
+
     commandPipes: z
         .array(
             z.object({

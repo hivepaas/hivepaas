@@ -146,7 +146,7 @@ function ProjectWebhookSourcesRouteRedirect({ target }: ProjectWebhookSourcesRou
 
 // eslint-disable-next-line react-refresh/only-export-components
 function LegacyProjectProviderSettingsRouteRedirect() {
-    const { id, "*": splat } = useParams<{ id: string; "*": string }>();
+    const { id, "*": splat } = useParams<{ "id": string; "*": string }>();
 
     if (!id) {
         return (
@@ -1418,13 +1418,14 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.apps.single.configuration.httpSettings.$pattern,
+                            path: ROUTE.projects.single.apps.single.configuration.routingSettings.$pattern,
                             lazy: async () => {
-                                const { AppConfigHttpSettingsRoute } = await getLazyComponents();
+                                const { AppConfigRoutingSettingsRoute } = await getLazyComponents();
 
-                                return { Component: AppConfigHttpSettingsRoute };
+                                return { Component: AppConfigRoutingSettingsRoute };
                             },
                         },
+
                         {
                             path: ROUTE.projects.single.apps.single.configuration.periodicJobs.$pattern,
                             lazy: async () => {

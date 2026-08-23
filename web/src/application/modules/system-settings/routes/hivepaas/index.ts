@@ -1,2 +1,2 @@
 export * from "./general";
-export * from "./http-settings";
+export * from "./routing-settings";

@@ -35,9 +35,10 @@ function View({ children }: PropsWithChildren) {
             route: ROUTE.projects.single.apps.single.configuration.deploymentSettings.$route(projectId, env, appId),
         },
         {
-            label: "HTTP Settings",
-            route: ROUTE.projects.single.apps.single.configuration.httpSettings.$route(projectId, env, appId),
+            label: "Routing Settings",
+            route: ROUTE.projects.single.apps.single.configuration.routingSettings.$route(projectId, env, appId),
         },
+
         {
             label: "Env Variables",
             route: ROUTE.projects.single.apps.single.configuration.envVariables.$route(projectId, env, appId),

@@ -76,6 +76,7 @@ export {
     AppConfigGeneralRoute,
     AppConfigDeploymentSettingsRoute,
     AppConfigContainerSettingsRoute,
+    AppConfigRoutingSettingsRoute,
     AppConfigHttpSettingsRoute,
     AppPeriodicJobsRoute,
     AppPeriodicJobHealthCheckCreateRoute,

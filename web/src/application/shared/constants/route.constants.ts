@@ -379,9 +379,9 @@ export const ROUTE = {
                 $route: "/system/hivepaas/general/",
             },
 
-            httpSettings: {
-                $pattern: "system/hivepaas/http-settings",
-                $route: "/system/hivepaas/http-settings/",
+            routingSettings: {
+                $pattern: "system/hivepaas/routing-settings",
+                $route: "/system/hivepaas/routing-settings/",
             },
         },
 
@@ -511,10 +511,10 @@ export const ROUTE = {
                                 `/projects/${id}/${env}/apps/${appId}/container-settings/`,
                         },
 
-                        httpSettings: {
-                            $pattern: "projects/:id/:env/apps/:appId/http-settings",
+                        routingSettings: {
+                            $pattern: "projects/:id/:env/apps/:appId/routing-settings",
                             $route: (id: string, env: string, appId: string) =>
-                                `/projects/${id}/${env}/apps/${appId}/http-settings/`,
+                                `/projects/${id}/${env}/apps/${appId}/routing-settings/`,
                         },
 
                         periodicJobs: {

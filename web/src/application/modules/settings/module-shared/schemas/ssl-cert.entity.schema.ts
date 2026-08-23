@@ -36,7 +36,9 @@ export const SslCertSettingEntitySchema = SettingsBaseEntitySchema.omit({ descri
     domain: z.string(),
     certificate: z.string(),
     privateKey: z.string(),
+    caCertificate: z.string().optional(),
     keyType: z.nativeEnum(ESslKeyType),
+
     validPeriod: z.string(),
     email: z.string(),
     autoRenew: z.boolean(),

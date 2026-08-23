@@ -93,7 +93,9 @@ export function QuickInstallSslCertDialog() {
                 domain: certDomain,
                 certificate: isCustom ? values.certificate : "",
                 privateKey: isCustom ? values.privateKey : "",
+                caCertificate: isCustom ? values.caCertificate : "",
                 keyType: values.keyType,
+
                 validPeriod: `${validPeriodDays}d`,
                 email: values.email,
                 autoRenew: isCustom ? false : values.autoRenew,

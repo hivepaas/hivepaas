@@ -146,6 +146,7 @@ export function CreateOrEditSslCertForm({
             autoRenew: initialValues?.autoRenew ?? true,
             certificate: initialValues?.certificate ?? "",
             privateKey: initialValues?.privateKey ?? "",
+            caCertificate: initialValues?.caCertificate ?? "",
             expireAt: initialValues?.expireAt ?? null,
             notifyFrom: initialValues?.notifyFrom ?? null,
             inheritable: initialValues?.inheritable ?? false,
@@ -181,6 +182,7 @@ export function CreateOrEditSslCertForm({
             autoRenew: initialValues?.autoRenew ?? true,
             certificate: initialValues?.certificate ?? "",
             privateKey: initialValues?.privateKey ?? "",
+            caCertificate: initialValues?.caCertificate ?? "",
             expireAt: initialValues?.expireAt ?? null,
             notifyFrom: initialValues?.notifyFrom ?? null,
             inheritable: initialValues?.inheritable ?? false,
@@ -193,23 +195,24 @@ export function CreateOrEditSslCertForm({
             },
         });
     }, [
-        initialValues?.autoRenew,
-        initialValues?.inheritable,
-        initialValues?.certType,
-        initialValues?.certificate,
-        initialValues?.default,
+        initialProvider,
+        initialAcmeProvider,
         initialValues?.domain,
+        initialValues?.certType,
         initialValues?.email,
-        initialValues?.expireAt,
         initialValues?.keyType,
+        initialValues?.autoRenew,
+        initialValues?.certificate,
+        initialValues?.privateKey,
+        initialValues?.caCertificate,
+        initialValues?.expireAt,
+        initialValues?.notifyFrom,
+        initialValues?.inheritable,
+        initialValues?.default,
         initialValues?.notification?.failure,
         initialValues?.notification?.failureUseDefault,
         initialValues?.notification?.success,
         initialValues?.notification?.successUseDefault,
-        initialValues?.notifyFrom,
-        initialValues?.privateKey,
-        initialAcmeProvider,
-        initialProvider,
         reset,
     ]);
 
@@ -390,6 +393,10 @@ export function CreateOrEditSslCertForm({
         field: privateKey,
         fieldState: { invalid: isPrivateKeyInvalid },
     } = useController({ name: "privateKey", control });
+    const {
+        field: caCertificate,
+        fieldState: { invalid: isCaCertificateInvalid },
+    } = useController({ name: "caCertificate", control });
     const {
         field: expireAtField,
         fieldState: { invalid: isExpireAtInvalid },
@@ -663,6 +670,9 @@ export function CreateOrEditSslCertForm({
                                                 aria-invalid={isCertificateInvalid}
                                                 rows={4}
                                                 maxRows={7}
+                                                placeholder={
+                                                    "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                                                }
                                             />
                                             <FieldError errors={[errors.certificate]} />
                                         </Field>
@@ -683,8 +693,29 @@ export function CreateOrEditSslCertForm({
                                                 aria-invalid={isPrivateKeyInvalid}
                                                 rows={4}
                                                 maxRows={7}
+                                                placeholder={
+                                                    "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+                                                }
                                             />
                                             <FieldError errors={[errors.privateKey]} />
+                                        </Field>
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="CA Certificate" />}
+                                    >
+                                        <Field>
+                                            <Textarea
+                                                {...caCertificate}
+                                                aria-invalid={isCaCertificateInvalid}
+                                                rows={4}
+                                                maxRows={7}
+                                                placeholder={
+                                                    "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+                                                }
+                                            />
+                                            <FieldError errors={[errors.caCertificate]} />
                                         </Field>
                                     </InfoBlock>
 

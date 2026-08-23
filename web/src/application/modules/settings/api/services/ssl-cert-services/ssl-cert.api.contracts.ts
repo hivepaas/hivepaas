@@ -26,6 +26,7 @@ export type SslCert_CreateOne_Payload = {
     domain: string;
     certificate: string;
     privateKey: string;
+    caCertificate?: string;
     keyType: ESslKeyType;
     validPeriod: string;
     email: string;
@@ -45,6 +46,7 @@ export type SslCert_UpdateOne_Payload = {
     domain: string;
     certificate: string;
     privateKey: string;
+    caCertificate?: string;
     keyType: ESslKeyType;
     validPeriod: string;
     email: string;

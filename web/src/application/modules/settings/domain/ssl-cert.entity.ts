@@ -21,7 +21,9 @@ export interface SettingSslCert extends SettingsBaseEntity {
     domain: string;
     certificate: string;
     privateKey: string;
+    caCertificate?: string;
     keyType: ESslKeyType;
+
     /** Duration string from API (e.g. `720h`, `30d`). */
     validPeriod: string;
     email: string;

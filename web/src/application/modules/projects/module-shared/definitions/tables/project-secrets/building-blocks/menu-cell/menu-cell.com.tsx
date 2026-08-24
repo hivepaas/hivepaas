@@ -11,7 +11,7 @@ import { PopConfirm } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
-function View({ projectId, secret }: Props) {
+function View({ projectId, env, secret }: Props) {
     const [open, setOpen] = useState(false);
     const { canDelete } = useConditionalModule({ id: MODULE_IDS.Project });
 
@@ -50,7 +50,7 @@ function View({ projectId, secret }: Props) {
                             cancelText="Cancel"
                             description="Confirm deletion of this item?"
                             onConfirm={() => {
-                                deleteOne({ projectID: projectId, secretID: secret.id });
+                                deleteOne({ projectID: projectId, env, secretID: secret.id });
                             }}
                         >
                             <Button
@@ -88,6 +88,7 @@ function View({ projectId, secret }: Props) {
 
 interface Props {
     projectId: string;
+    env?: string;
     secret: ProjectSecret;
 }
 

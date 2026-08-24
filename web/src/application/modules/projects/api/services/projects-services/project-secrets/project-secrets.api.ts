@@ -17,6 +17,14 @@ import { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
 
+function getProjectSecretsBasePath(projectID: string, env?: string): string {
+    if (env && env !== "all") {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/secrets`;
+    }
+
+    return `/projects/${projectID}/secrets`;
+}
+
 export class ProjectSecretsApi extends BaseApi {
     public constructor(private readonly validator: ProjectSecretsApiValidator) {
         super();
@@ -29,7 +37,7 @@ export class ProjectSecretsApi extends BaseApi {
         request: ProjectSecrets_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSecrets_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, env, search, pagination, sorting } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
@@ -37,12 +45,12 @@ export class ProjectSecretsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/secrets`, {
+                this.client.v1.get(getProjectSecretsBasePath(projectID, env), {
                     params: query.build(),
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyPaginated),
+                map(response => this.validator.findManyPaginated(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -56,15 +64,15 @@ export class ProjectSecretsApi extends BaseApi {
         request: ProjectSecrets_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSecrets_FindOneById_Res, Error>> {
-        const { projectID, secretID } = request.data;
+        const { projectID, env, secretID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/secrets/${secretID}`, {
+                this.client.v1.get(`${getProjectSecretsBasePath(projectID, env)}/${secretID}`, {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findOneById),
+                map(response => this.validator.findOneById(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -78,7 +86,7 @@ export class ProjectSecretsApi extends BaseApi {
         request: ProjectSecrets_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSecrets_CreateOne_Res, Error>> {
-        const { projectID, name, value, base64 } = request.data;
+        const { projectID, env, name, value, base64 } = request.data;
 
         const json = {
             key: JsonTransformer.string({
@@ -93,11 +101,11 @@ export class ProjectSecretsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/secrets`, json, {
+                this.client.v1.post(getProjectSecretsBasePath(projectID, env), json, {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.createOne),
+                map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -108,10 +116,10 @@ export class ProjectSecretsApi extends BaseApi {
      * Delete a project secret
      */
     async deleteOne(request: ProjectSecrets_DeleteOne_Req): Promise<Result<ProjectSecrets_DeleteOne_Res, Error>> {
-        const { projectID, secretID } = request.data;
+        const { projectID, env, secretID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/secrets/${secretID}`)).pipe(
+            from(this.client.v1.delete(`${getProjectSecretsBasePath(projectID, env)}/${secretID}`)).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -125,7 +133,7 @@ export class ProjectSecretsApi extends BaseApi {
         request: ProjectSecrets_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSecrets_UpdateOne_Res, Error>> {
-        const { projectID, secretID, updateVer, name, value, base64 } = request.data;
+        const { projectID, env, secretID, updateVer, name, value, base64 } = request.data;
 
         const json = {
             updateVer,
@@ -140,7 +148,7 @@ export class ProjectSecretsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/secrets/${secretID}`, json, {
+                this.client.v1.put(`${getProjectSecretsBasePath(projectID, env)}/${secretID}`, json, {
                     signal,
                 }),
             ).pipe(

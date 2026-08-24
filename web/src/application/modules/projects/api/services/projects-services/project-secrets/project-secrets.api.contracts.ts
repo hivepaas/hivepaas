@@ -8,6 +8,7 @@ import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } 
  */
 export type ProjectSecrets_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
@@ -20,6 +21,7 @@ export type ProjectSecrets_FindManyPaginated_Res = ApiResponsePaginated<ProjectS
  */
 export type ProjectSecrets_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     name: string;
     value: string;
     base64: boolean;
@@ -34,6 +36,7 @@ export type ProjectSecrets_CreateOne_Res = ApiResponseBase<{
  */
 export type ProjectSecrets_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     secretID: string;
 }>;
 
@@ -44,6 +47,7 @@ export type ProjectSecrets_FindOneById_Res = ApiResponseBase<ProjectSecret>;
  */
 export type ProjectSecrets_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     secretID: string;
 }>;
 
@@ -57,6 +61,7 @@ export type ProjectSecrets_DeleteOne_Res = ApiResponseBase<{
 export type ProjectSecrets_UpdateOne_Req = ApiRequestBase<
     {
         projectID: string;
+        env?: string;
         secretID: string;
         updateVer: number;
     } & Partial<Omit<ProjectSecret, "id" | "key" | "createdAt" | "updatedAt" | "updateVer">> & {

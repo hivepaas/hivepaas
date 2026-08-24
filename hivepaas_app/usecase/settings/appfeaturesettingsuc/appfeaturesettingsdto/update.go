@@ -104,6 +104,7 @@ type AppFeaturePreviewSettingsReq struct {
 	CreationDelay timeutil.Duration        `json:"creationDelay"`
 	AppsToClone   basedto.ObjectIDSliceReq `json:"appsToClone"`
 	AutoCloneApps bool                     `json:"autoCloneApps"`
+	Commands      basedto.ObjectIDSliceReq `json:"commands"`
 }
 
 func (req *AppFeaturePreviewSettingsReq) ToEntity() *entity.AppFeaturePreviewSettings {
@@ -115,6 +116,7 @@ func (req *AppFeaturePreviewSettingsReq) ToEntity() *entity.AppFeaturePreviewSet
 		CreationDelay: req.CreationDelay,
 		AppsToClone:   req.AppsToClone.ToEntity(),
 		AutoCloneApps: req.AutoCloneApps,
+		Commands:      req.Commands.ToEntity(),
 	}
 }
 
@@ -126,6 +128,7 @@ func (req *AppFeaturePreviewSettingsReq) validate(field string) (res []vld.Valid
 		field += "."
 	}
 	res = append(res, basedto.ValidateObjectIDSliceReq(req.AppsToClone, true, 0, field+"appsToClone")...)
+	res = append(res, basedto.ValidateObjectIDSliceReq(req.Commands, true, 0, field+"commands")...)
 	return res
 }
 

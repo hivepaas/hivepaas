@@ -44,6 +44,7 @@ type AppFeaturePreviewSettings struct {
 	CreationDelay timeutil.Duration `json:"creationDelay,omitempty"`
 	AppsToClone   ObjectIDSlice     `json:"appsToClone,omitempty"`
 	AutoCloneApps bool              `json:"autoCloneApps,omitempty"`
+	Commands      ObjectIDSlice     `json:"commands,omitempty"`
 }
 
 func (s *AppFeatureSettings) GetType() base.SettingType {
@@ -56,6 +57,11 @@ func (s *AppFeatureSettings) GetRefObjectIDs() *RefObjectIDs {
 		for _, app := range s.PreviewSettings.AppsToClone {
 			if app.ID != "" {
 				refIDs.RefAppIDs = append(refIDs.RefAppIDs, app.ID)
+			}
+		}
+		for _, cmd := range s.PreviewSettings.Commands {
+			if cmd.ID != "" {
+				refIDs.RefSettingIDs = append(refIDs.RefSettingIDs, cmd.ID)
 			}
 		}
 	}

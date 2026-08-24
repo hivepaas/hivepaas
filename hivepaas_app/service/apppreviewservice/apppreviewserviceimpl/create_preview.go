@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
 )
@@ -29,6 +30,7 @@ type createPreviewData struct {
 	CalcAppName   string
 	RandSuffix    string
 
+	FeatureSettings    *entity.AppFeatureSettings
 	PreviewApp         *entity.App
 	Deployment         *entity.Deployment
 	DeploymentTask     *entity.Task
@@ -86,6 +88,12 @@ func (s *service) CreatePreview(
 		return nil, apperrors.Wrap(err)
 	}
 
+	// Run custom commands
+	err = s.runCommands(ctx, db, data)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
 	err = s.createDeploymentAndTask(ctx, data)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -109,6 +117,10 @@ func (s *service) loadAppDataForCreatingPreview(
 	db database.IDB,
 	data *createPreviewData,
 ) (err error) {
+	if data.LogStore == nil {
+		data.LogStore = tasklog.NewNullStore()
+	}
+
 	app, err := s.appService.LoadApp(ctx, db, data.App.ProjectID, data.App.ID, true, true,
 		bunex.SelectFor("UPDATE OF app"),
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
@@ -117,7 +129,10 @@ func (s *service) loadAppDataForCreatingPreview(
 		),
 		bunex.SelectRelation("ProjectEnv"),
 		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppDeployment),
+			bunex.SelectWhere("setting.type IN (?)", []base.SettingType{
+				base.SettingTypeAppDeployment,
+				base.SettingTypeAppFeatures,
+			}),
 		),
 	)
 	if err != nil {
@@ -137,6 +152,10 @@ func (s *service) loadAppDataForCreatingPreview(
 		return apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
 	}
 	data.App = app
+
+	if featureSetting := app.GetSettingByType(base.SettingTypeAppFeatures); featureSetting != nil {
+		data.FeatureSettings = featureSetting.MustAsAppFeatureSettings()
+	}
 
 	data.RandSuffix = gofn.RandTokenAsHex(4) //nolint:mnd
 	data.CalcRepoRef, data.PullNumber, err = githelper.NormalizePullRef(data.RepoRef)

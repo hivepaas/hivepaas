@@ -4,6 +4,7 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
@@ -52,10 +53,11 @@ type AppFeatureSchedJobSettingsResp struct {
 }
 
 type AppFeaturePreviewSettingsResp struct {
-	Enabled       bool                  `json:"enabled"`
-	CreationDelay timeutil.Duration     `json:"creationDelay,omitempty"`
-	AppsToClone   []*appdto.AppBaseResp `json:"appsToClone,omitempty" copy:"-"`
-	AutoCloneApps bool                  `json:"autoCloneApps,omitempty"`
+	Enabled       bool                        `json:"enabled"`
+	CreationDelay timeutil.Duration           `json:"creationDelay,omitempty"`
+	AppsToClone   []*appdto.AppBaseResp       `json:"appsToClone,omitempty" copy:"-"`
+	AutoCloneApps bool                        `json:"autoCloneApps,omitempty"`
+	Commands      []*settings.BaseSettingResp `json:"commands,omitempty" copy:"-"`
 }
 
 type AppFeatureSettingsTransformInput struct {
@@ -88,6 +90,13 @@ func TransformAppFeatureSettings(
 				appResp = appdto.NewMissingApp(appID.ID)
 			}
 			resp.PreviewSettings.AppsToClone = append(resp.PreviewSettings.AppsToClone, appResp)
+		}
+		for _, cmdID := range config.PreviewSettings.Commands {
+			cmdResp, _ := settings.TransformSettingBase(input.RefObjects.RefSettings[cmdID.ID])
+			if cmdResp == nil {
+				cmdResp = settings.NewMissingSetting(cmdID.ID, base.SettingTypeCommandTemplate)
+			}
+			resp.PreviewSettings.Commands = append(resp.PreviewSettings.Commands, cmdResp)
 		}
 	}
 

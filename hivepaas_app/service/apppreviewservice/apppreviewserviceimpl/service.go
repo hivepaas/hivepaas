@@ -6,8 +6,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 )
 
 type service struct {
@@ -20,8 +23,11 @@ type service struct {
 	appCloneService      appcloneservice.Service
 	appDeploymentService appdeploymentservice.Service
 	appService           appservice.Service
+	commandService       commandservice.Service
+	containerExecService containerexecservice.Service
 	domainService        domainservice.Service
 	envVarService        envvarservice.Service
+	settingService       settingservice.Service
 }
 
 func New(
@@ -34,8 +40,11 @@ func New(
 	appCloneService appcloneservice.Service,
 	appDeploymentService appdeploymentservice.Service,
 	appService appservice.Service,
+	commandService commandservice.Service,
+	containerExecService containerexecservice.Service,
 	domainService domainservice.Service,
 	envVarService envvarservice.Service,
+	settingService settingservice.Service,
 ) apppreviewservice.Service {
 	return &service{
 		appRepo:        appRepo,
@@ -47,7 +56,10 @@ func New(
 		appCloneService:      appCloneService,
 		appDeploymentService: appDeploymentService,
 		appService:           appService,
+		commandService:       commandService,
+		containerExecService: containerExecService,
 		domainService:        domainService,
 		envVarService:        envVarService,
+		settingService:       settingService,
 	}
 }

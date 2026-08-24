@@ -641,7 +641,7 @@ export function CreateOrEditSslCertForm({
                                 </>
                             )}
 
-                            {!isCustom ? (
+                            {!isCustom && (
                                 <InfoBlock
                                     titleWidth={220}
                                     title={<LabelWithInfo label="Auto-renew" />}
@@ -653,7 +653,9 @@ export function CreateOrEditSslCertForm({
                                         }}
                                     />
                                 </InfoBlock>
-                            ) : (
+                            )}
+
+                            {isCustom && (
                                 <>
                                     <InfoBlock
                                         titleWidth={220}
@@ -718,13 +720,17 @@ export function CreateOrEditSslCertForm({
                                             <FieldError errors={[errors.caCertificate]} />
                                         </Field>
                                     </InfoBlock>
+                                </>
+                            )}
 
+                            {!isAcme && (
+                                <>
                                     <InfoBlock
                                         titleWidth={220}
                                         title={
                                             <LabelWithInfo
                                                 label="Expire At"
-                                                isRequired
+                                                isRequired={isCustom}
                                             />
                                         }
                                     >

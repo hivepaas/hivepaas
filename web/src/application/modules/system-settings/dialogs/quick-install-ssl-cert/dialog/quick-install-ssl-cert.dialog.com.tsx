@@ -75,7 +75,7 @@ export function QuickInstallSslCertDialog() {
         createdNameRef.current = values.name;
 
         const isCustom = values.certType === ESslCertType.Custom;
-        const isAcme = !isCustom;
+        const isAcme = values.certType !== ESslCertType.Custom && values.certType !== ESslCertType.SelfSigned;
         const validPeriodDays = isAcme ? 90 : 365;
         const now = new Date();
         const fallbackExpireAt = addDays(now, validPeriodDays);

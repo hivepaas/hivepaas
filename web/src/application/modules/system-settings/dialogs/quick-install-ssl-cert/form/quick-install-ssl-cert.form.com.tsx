@@ -497,7 +497,7 @@ export function QuickInstallSslCertForm({
                             <InfoBlock
                                 title={
                                     <LabelWithInfo
-                                        label={isCustom ? "E-mail" : "Registration E-mail"}
+                                        label={isAcme ? "Registration E-mail" : "E-mail"}
                                         isRequired
                                     />
                                 }
@@ -552,7 +552,7 @@ export function QuickInstallSslCertForm({
                             </InfoBlock>
                         </Field>
 
-                        {!isCustom ? (
+                        {!isCustom && (
                             <Field>
                                 <InfoBlock
                                     title={
@@ -576,7 +576,9 @@ export function QuickInstallSslCertForm({
                                     />
                                 </InfoBlock>
                             </Field>
-                        ) : (
+                        )}
+
+                        {isCustom && (
                             <>
                                 <Field>
                                     <InfoBlock
@@ -635,13 +637,17 @@ export function QuickInstallSslCertForm({
                                         <FieldError errors={[errors.caCertificate]} />
                                     </InfoBlock>
                                 </Field>
+                            </>
+                        )}
 
+                        {!isAcme && (
+                            <>
                                 <Field>
                                     <InfoBlock
                                         title={
                                             <LabelWithInfo
                                                 label="Expire At"
-                                                isRequired
+                                                isRequired={isCustom}
                                             />
                                         }
                                         titleWidth={150}

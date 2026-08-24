@@ -29,6 +29,7 @@ export const QuickInstallSslCertFormSchema = z
     })
     .superRefine((value, ctx) => {
         const isCustom = value.certType === ESslCertType.Custom;
+        const isAcme = value.certType !== ESslCertType.Custom && value.certType !== ESslCertType.SelfSigned;
         const requiresProvider = value.certType === ESslCertType.ZeroSSL || value.certType === ESslCertType.GoogleTrust;
 
         if (requiresProvider && !value.provider?.id) {
@@ -39,7 +40,7 @@ export const QuickInstallSslCertFormSchema = z
             });
         }
 
-        if (value.wildcardDomain && !isCustom && !value.acmeProvider?.id) {
+        if (value.wildcardDomain && isAcme && !value.acmeProvider?.id) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 path: ["acmeProvider"],

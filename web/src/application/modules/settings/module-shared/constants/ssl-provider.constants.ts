@@ -16,6 +16,10 @@ export const SSL_CERT_TYPE_OPTIONS = [
         label: "Google Trust",
     },
     {
+        value: ESslCertType.SelfSigned,
+        label: "Self-signed",
+    },
+    {
         value: ESslCertType.Custom,
         label: "Custom",
     },

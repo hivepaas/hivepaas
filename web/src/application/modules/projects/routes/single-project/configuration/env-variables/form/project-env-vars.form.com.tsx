@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleHelp } from "lucide-react";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { useParams } from "react-router";
+import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectEnvVarsCommands } from "~/projects/data/commands/project-env-vars";
@@ -73,6 +74,13 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
         resolver: zodResolver(ProjectEnvVarsFormSchema),
         mode: "onSubmit",
     });
+
+    useUpdateEffect(() => {
+        methods.reset({
+            ...DEFAULTS,
+            ...defaultValues,
+        });
+    }, [defaultValues]);
 
     const { isDirty } = methods.formState;
 

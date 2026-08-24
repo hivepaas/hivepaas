@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { type FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { useParams } from "react-router";
+import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectAppEnvVarsCommands } from "~/projects/data/commands";
@@ -95,6 +96,13 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
         resolver: zodResolver(AppConfigEnvVarsFormSchema),
         mode: "onSubmit",
     });
+
+    useUpdateEffect(() => {
+        methods.reset({
+            ...DEFAULTS,
+            ...defaultValues,
+        });
+    }, [defaultValues]);
 
     const { isDirty } = methods.formState;
 

@@ -170,16 +170,6 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		sshKeyGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSSHKey)
 	}
 
-	{ // SSL Provider group
-		sslProviderGroup := projectEnvGroup.Group("/ssl-providers")
-		sslProviderGroup.GET("/:itemID", projectEnvSettingsHandler.GetSSLProvider)
-		sslProviderGroup.GET("", projectEnvSettingsHandler.ListSSLProvider)
-		sslProviderGroup.POST("", projectEnvSettingsHandler.CreateSSLProvider)
-		sslProviderGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateSSLProvider)
-		sslProviderGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateSSLProviderStatus)
-		sslProviderGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSSLProvider)
-	}
-
 	{ // SSL Cert group
 		sslCertGroup := projectEnvGroup.Group("/ssl-certs")
 		sslCertGroup.GET("/:itemID", projectEnvSettingsHandler.GetSSLCert)
@@ -189,6 +179,17 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		sslCertGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateSSLCertStatus)
 		sslCertGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSSLCert)
 		sslCertGroup.POST("/:itemID/renew", projectEnvSettingsHandler.RenewSSLCert)
+		sslCertGroup.GET("/:itemID/download", projectEnvSettingsHandler.DownloadSSLCertBundle)
+	}
+
+	{ // SSL Provider group
+		sslProviderGroup := projectEnvGroup.Group("/ssl-providers")
+		sslProviderGroup.GET("/:itemID", projectEnvSettingsHandler.GetSSLProvider)
+		sslProviderGroup.GET("", projectEnvSettingsHandler.ListSSLProvider)
+		sslProviderGroup.POST("", projectEnvSettingsHandler.CreateSSLProvider)
+		sslProviderGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateSSLProvider)
+		sslProviderGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateSSLProviderStatus)
+		sslProviderGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteSSLProvider)
 	}
 
 	_ = s.registerAppRoutes(projectGroup, projectEnvGroup)

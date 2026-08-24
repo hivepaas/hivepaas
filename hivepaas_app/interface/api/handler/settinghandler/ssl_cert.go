@@ -118,3 +118,18 @@ func (h *Handler) DeleteSSLCert(ctx *gin.Context) {
 func (h *Handler) RenewSSLCert(ctx *gin.Context) {
 	h.SSLCertRenew(ctx, base.ObjectScopeGlobal)
 }
+
+// DownloadSSLCertBundle Downloads SSL cert bundle
+// @Summary Downloads SSL cert bundle
+// @Description Downloads SSL cert bundle
+// @Tags    settings
+// @Produce application/zip
+// @Id      downloadSettingSSLCert
+// @Param   itemID path string true "setting ID"
+// @Success 200 {file} binary
+// @Failure 400 {object} apperrors.ErrorInfo
+// @Failure 500 {object} apperrors.ErrorInfo
+// @Router  /settings/ssl-certs/{itemID}/download [get]
+func (h *Handler) DownloadSSLCertBundle(ctx *gin.Context) {
+	h.SSLCertBundleDownload(ctx, base.ObjectScopeGlobal)
+}

@@ -17,11 +17,10 @@ type CreatePreviewReq struct {
 	ProjectEnvID string `json:"-"`
 	AppID        string `json:"-"`
 
-	RepoRef           string `json:"repoRef"`
-	CustomSubdomain   string `json:"customSubdomain"`
-	NoStart           bool   `json:"noStart"`
-	CloneDBApps       bool   `json:"cloneDbApps"`
-	SkipCloningDBApps bool   `json:"skipCloningDbApps"`
+	RepoRef         string `json:"repoRef"`
+	CustomSubdomain string `json:"customSubdomain"`
+	NoStart         bool   `json:"noStart"`
+	CloneDBApps     *bool  `json:"cloneDbApps"`
 }
 
 func NewCreatePreviewReq() *CreatePreviewReq {

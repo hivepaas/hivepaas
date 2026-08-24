@@ -1,13 +1,12 @@
 package entity
 
 type TaskAppPreviewArgs struct {
-	ParentApp         ObjectID              `json:"parentApp"`
-	RepoRef           string                `json:"repoRef"`
-	CustomSubdomain   string                `json:"customSubdomain,omitempty"`
-	NoStart           bool                  `json:"noStart,omitempty"`
-	CloneDBApps       bool                  `json:"cloneDbApps,omitempty"`
-	SkipCloningDBApps bool                  `json:"skipCloningDbApps,omitempty"`
-	Trigger           *AppDeploymentTrigger `json:"trigger,omitempty"`
+	ParentApp       ObjectID              `json:"parentApp"`
+	RepoRef         string                `json:"repoRef"`
+	CustomSubdomain string                `json:"customSubdomain,omitempty"`
+	NoStart         bool                  `json:"noStart,omitempty"`
+	CloneDBApps     bool                  `json:"cloneDbApps,omitempty"`
+	Trigger         *AppDeploymentTrigger `json:"trigger,omitempty"`
 }
 
 type TaskAppPreviewOutput struct {

@@ -29,13 +29,16 @@ func (uc *UC) createAppPreview(
 			return apperrors.Wrap(err)
 		}
 
+		cloneDBApps := commentEvent.previewDeployCloneDB || previewSettings.AutoCloneApps
+		if commentEvent.previewDeployNoCloneDB {
+			cloneDBApps = false
+		}
 		previewTask, err = uc.appPreviewService.CreateAppPreviewTask(app, &entity.TaskAppPreviewArgs{
-			ParentApp:         entity.ObjectID{ID: app.ID},
-			RepoRef:           repoRef,
-			NoStart:           commentEvent.previewDeployNoStart,
-			CustomSubdomain:   commentEvent.previewDeploySubdomain,
-			CloneDBApps:       commentEvent.previewDeployCloneDB,
-			SkipCloningDBApps: commentEvent.previewDeployNoCloneDB,
+			ParentApp:       entity.ObjectID{ID: app.ID},
+			RepoRef:         repoRef,
+			NoStart:         commentEvent.previewDeployNoStart,
+			CustomSubdomain: commentEvent.previewDeploySubdomain,
+			CloneDBApps:     cloneDBApps,
 			Trigger: &entity.AppDeploymentTrigger{
 				Source:   base.DeploymentTriggerSourceRepoWebhook,
 				SourceID: webhookID,

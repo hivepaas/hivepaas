@@ -64,22 +64,18 @@ func (uc *UC) PrepareCreatePreview(
 		return nil, apperrors.Wrap(err)
 	}
 
-	respData := &apppreviewdto.PrepareCreatePreviewDataResp{
-		RepoURL: repoSource.RepoURL,
-	}
+	resp.Data.RepoURL = repoSource.RepoURL
 	if repoSource.Credentials.ID != "" {
-		respData.RepoCredentials = &basedto.ObjectIDResp{ID: repoSource.Credentials.ID}
+		resp.Data.RepoCredentials = &basedto.ObjectIDResp{ID: repoSource.Credentials.ID}
 	}
 
 	credSetting := refObjects.RefSettings[repoSource.Credentials.ID]
 	if credSetting != nil {
 		if credSetting.Type == base.SettingTypeGithubApp || credSetting.Type == base.SettingTypeAccessToken {
-			respData.CanListBranches = true
-			respData.CanListPullRequests = true
+			resp.Data.CanListBranches = true
+			resp.Data.CanListPullRequests = true
 		}
 	}
 
-	return &apppreviewdto.PrepareCreatePreviewResp{
-		Data: respData,
-	}, nil
+	return resp, nil
 }

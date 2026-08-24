@@ -22,18 +22,23 @@ func (uc *UC) CreatePreview(
 ) (*apppreviewdto.CreatePreviewResp, error) {
 	var previewTask *entity.Task
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		app, err := uc.loadAppForCreatePreview(ctx, db, req)
+		data := &createPreviewData{}
+		err := uc.loadAppForCreatePreview(ctx, db, req, data)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		previewTask, err = uc.appPreviewService.CreateAppPreviewTask(app, &entity.TaskAppPreviewArgs{
-			ParentApp:         entity.ObjectID{ID: app.ID},
-			RepoRef:           req.RepoRef,
-			CustomSubdomain:   req.CustomSubdomain,
-			NoStart:           req.NoStart,
-			CloneDBApps:       req.CloneDBApps,
-			SkipCloningDBApps: req.SkipCloningDBApps,
+		cloneDBApps := data.PreviewSettings.AutoCloneApps
+		if req.CloneDBApps != nil {
+			cloneDBApps = *req.CloneDBApps
+		}
+
+		previewTask, err = uc.appPreviewService.CreateAppPreviewTask(data.App, &entity.TaskAppPreviewArgs{
+			ParentApp:       entity.ObjectID{ID: data.App.ID},
+			RepoRef:         req.RepoRef,
+			CustomSubdomain: req.CustomSubdomain,
+			NoStart:         req.NoStart,
+			CloneDBApps:     cloneDBApps,
 			Trigger: &entity.AppDeploymentTrigger{
 				Source:   base.DeploymentTriggerSourceUser,
 				SourceID: auth.User.ID,
@@ -67,11 +72,17 @@ func (uc *UC) CreatePreview(
 	}, nil
 }
 
+type createPreviewData struct {
+	App             *entity.App
+	PreviewSettings *entity.AppFeaturePreviewSettings
+}
+
 func (uc *UC) loadAppForCreatePreview(
 	ctx context.Context,
 	db database.IDB,
 	req *apppreviewdto.CreatePreviewReq,
-) (*entity.App, error) {
+	data *createPreviewData,
+) error {
 	app, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, db, req.ProjectID, req.AppID,
 		true, true,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
@@ -81,16 +92,17 @@ func (uc *UC) loadAppForCreatePreview(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return apperrors.Wrap(err)
 	}
 	// The app must not be a child app
 	if app.IsChildApp() {
-		return nil, apperrors.Wrap(apperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
+		return apperrors.Wrap(apperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
 	}
+	data.App = app
 
 	previewSettings := featureSettings.PreviewSettings
 	if previewSettings == nil || !previewSettings.Enabled {
-		return nil, apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
+		return apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
 	}
 
 	// Check if preview already exists for this repo ref
@@ -100,11 +112,12 @@ func (uc *UC) loadAppForCreatePreview(
 	}
 	existingPreview, err := uc.appPreviewService.GetPreview(ctx, db, app.ID, calcRepoRef, bunex.SelectColumns("id"))
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
+		return apperrors.Wrap(err)
 	}
 	if existingPreview != nil {
-		return nil, apperrors.NewAlreadyExist("Preview app")
+		return apperrors.NewAlreadyExist("Preview app")
 	}
+	data.PreviewSettings = previewSettings
 
-	return app, nil
+	return nil
 }

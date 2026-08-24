@@ -199,7 +199,7 @@ func (s *service) loadAppDataForCreatingPreview(
 			return apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
 		}
 		var cloningAppIDs []string
-		if taskArgs.CloneDBApps || (previewSettings.AutoCloneApps && !taskArgs.SkipCloningDBApps) {
+		if taskArgs.CloneDBApps {
 			cloningAppIDs = previewSettings.AppsToClone.ToIDStringSlice()
 		}
 		cloningApps, err := s.appService.LoadAppsSkipMissing(ctx, db, app.Project.ID, cloningAppIDs, true, false,

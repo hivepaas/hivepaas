@@ -34,7 +34,7 @@ export function DomainGeneralFields({ domainIndex, readOnly = false }: DomainGen
     const domainName = domain.value.trim();
 
     return (
-        <ContentBlock label={<span className="text-red-500">Selected domain: {domainName || "—"}</span>}>
+        <ContentBlock label={<span className="text-red-400">Selected domain: {domainName || "—"}</span>}>
             <div className="flex flex-col gap-6">
                 <InfoBlock title="Protocol">
                     <Tabs

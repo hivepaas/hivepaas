@@ -109,7 +109,7 @@ function ConditionalDomainDetailSections({
                         />
                     </div>
 
-                    <ContentBlock label="Path Configuration">
+                    <ContentBlock label={<span className="text-red-400">Path Configuration</span>}>
                         <div className="flex flex-col gap-6">
                             <PathsSection
                                 domainIndex={activeDomainIndex}

@@ -65,7 +65,7 @@ function ConditionalDomainDetailSections({
 
     return (
         <>
-            <ContentBlock label={<span className="text-red-500">Selected domain: {domainName || "—"}</span>}>
+            <ContentBlock label={<span className="text-red-400">Selected domain: {domainName || "—"}</span>}>
                 <div className="flex flex-col gap-6 px-2">
                     <SslCert
                         domainIndex={activeDomainIndex}

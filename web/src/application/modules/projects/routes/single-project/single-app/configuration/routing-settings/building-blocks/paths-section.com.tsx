@@ -76,7 +76,7 @@ function PathRow({
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        <span className="font-mono text-sm text-red-500">Path: {path.value}</span>
+                        <span className="font-mono text-sm text-red-400">Path: {path.value}</span>
                         <Badge>{mode.value}</Badge>
                     </button>
                 </CollapsibleTrigger>

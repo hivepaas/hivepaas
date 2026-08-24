@@ -6,6 +6,7 @@ const (
 	TaskTypeDummy        TaskType = "task:dummy"
 	TaskTypeAppDeploy    TaskType = "task:app-deploy"
 	TaskTypeAppClone     TaskType = "task:app-clone"
+	TaskTypeAppPreview   TaskType = "task:app-preview"
 	TaskTypeSchedJobExec TaskType = "task:sched-job-exec"
 	TaskTypePeriodicExec TaskType = "task:periodic-exec"
 	TaskTypeSystemUpdate TaskType = "task:system-update"
@@ -14,7 +15,7 @@ const (
 
 var (
 	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
-		TaskTypeSchedJobExec, TaskTypePeriodicExec,
+		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
 		TaskTypeSystemUpdate, TaskTypeWorkflow}
 )
 

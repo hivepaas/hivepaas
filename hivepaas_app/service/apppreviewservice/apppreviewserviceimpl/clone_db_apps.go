@@ -84,6 +84,16 @@ func (s *service) cloneDBApps(
 		}
 	}
 
+	// Store the result in the task output
+	data.Output.ClonedDBApps = make(entity.ObjectIDSlice, 0, len(data.CloneDBAppsData))
+	for _, cloneData := range data.CloneDBAppsData {
+		if cloneData.CloneResp != nil && cloneData.CloneResp.TargetApp != nil {
+			data.Output.ClonedDBApps = append(data.Output.ClonedDBApps, &entity.ObjectID{
+				ID: cloneData.CloneResp.TargetApp.ID,
+			})
+		}
+	}
+
 	return nil
 }
 

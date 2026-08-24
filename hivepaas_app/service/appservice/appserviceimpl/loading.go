@@ -20,6 +20,9 @@ func (s *service) LoadApps(
 	requireProjectActive, requireAppsActive bool,
 	extraOpts ...bunex.SelectQueryOption, // NOTE: make sure to add SelectRelation("Project & ProjectEnv")
 ) ([]*entity.App, error) {
+	if len(appIDs) == 0 {
+		return nil, nil
+	}
 	apps, err := s.appRepo.ListByIDs(ctx, db, projectID, appIDs, extraOpts...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -48,6 +51,9 @@ func (s *service) LoadAppsSkipMissing(
 	requireProjectActive, requireAppsActive bool,
 	extraOpts ...bunex.SelectQueryOption, // NOTE: make sure to add SelectRelation("Project & ProjectEnv")
 ) ([]*entity.App, error) {
+	if len(appIDs) == 0 {
+		return nil, nil
+	}
 	apps, err := s.appRepo.ListByIDs(ctx, db, projectID, appIDs, extraOpts...)
 	if err != nil {
 		return nil, apperrors.Wrap(err)

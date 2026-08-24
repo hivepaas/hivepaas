@@ -79,6 +79,14 @@ func (uc *UC) ListAppBase(
 		return nil, apperrors.Wrap(err)
 	}
 
+	// NOTE: make sure we init the project env and project for the parent app
+	for _, app := range apps {
+		if app.ParentApp != nil {
+			app.ParentApp.Project = app.Project
+			app.ParentApp.ProjectEnv = app.ProjectEnv
+		}
+	}
+
 	return &appdto.ListAppBaseResp{
 		Meta: &basedto.ListMeta{Page: pagingMeta},
 		Data: appdto.TransformAppsBase(apps),

@@ -14,5 +14,6 @@ type Service interface {
 	GetPreviews(ctx context.Context, db database.IDB, appID string, extraOpts ...bunex.SelectQueryOption) (
 		[]*entity.App, error)
 
+	CreateAppPreviewTask(app *entity.App, args *entity.TaskAppPreviewArgs) (*entity.Task, error)
 	CreatePreview(ctx context.Context, db database.Tx, req *CreatePreviewReq) (*CreatePreviewResp, error)
 }

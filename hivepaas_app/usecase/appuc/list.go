@@ -96,6 +96,14 @@ func (uc *UC) ListApp(
 		return nil, apperrors.Wrap(err)
 	}
 
+	// NOTE: make sure we init the project env and project for the parent app
+	for _, app := range apps {
+		if app.ParentApp != nil {
+			app.ParentApp.Project = app.Project
+			app.ParentApp.ProjectEnv = app.ProjectEnv
+		}
+	}
+
 	transformationInput := &appdto.AppTransformationInput{}
 
 	if req.GetStats && len(apps) > 0 {

@@ -4,16 +4,11 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
 )
 
 func (uc *UC) createAppPreview(
@@ -26,61 +21,48 @@ func (uc *UC) createAppPreview(
 	if app.IsChildApp() { // The app is already a preview app, skips it
 		return nil
 	}
-	var createResp *apppreviewservice.CreatePreviewResp
-	defer func() {
-		if (err != nil || recover() != nil) && createResp != nil && createResp.OnCleanup != nil {
-			_ = createResp.OnCleanup(gofn.Coalesce(err, apperrors.ErrPanic))
-		}
-	}()
 
+	var previewTask *entity.Task
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) (err error) {
-		// Creating a preview may take time, so we don't lock the parent app.
-		// However, after creating, we check the app status again. If it's not active and valid,
-		// the preview app will be deleted.
-
-		previewSettings, cloneApps, err := uc.loadAppPreviewSettings(ctx, db, app, commentEvent)
+		previewSettings, err := uc.loadAppPreviewSettings(ctx, db, app)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		createResp, err = uc.appPreviewService.CreatePreview(ctx, db, &apppreviewservice.CreatePreviewReq{
-			App:             app,
-			RepoRef:         repoRef,
-			NoStart:         commentEvent.previewDeployNoStart,
-			CustomSubdomain: commentEvent.previewDeploySubdomain,
-			CloneDBApps:     cloneApps,
-			OnInitDeployment: func(deployment *entity.Deployment) error {
-				deployment.Trigger = &entity.AppDeploymentTrigger{
-					Source:   base.DeploymentTriggerSourceRepoWebhook,
-					SourceID: webhookID,
-					ChangeID: "pr-" + strconv.FormatInt(commentEvent.PRNumber, 10),
-				}
-				return nil
-			},
-			OnDeploymentTask: func(task *entity.Task) error {
-				task.RunAt = timeutil.NowUTC()
-				if !commentEvent.previewDeployNoWait {
-					task.RunAt = task.RunAt.Add(previewSettings.CreationDelay.ToDuration())
-				}
-				return nil
+		previewTask, err = uc.appPreviewService.CreateAppPreviewTask(app, &entity.TaskAppPreviewArgs{
+			ParentApp:         entity.ObjectID{ID: app.ID},
+			RepoRef:           repoRef,
+			NoStart:           commentEvent.previewDeployNoStart,
+			CustomSubdomain:   commentEvent.previewDeploySubdomain,
+			CloneDBApps:       commentEvent.previewDeployCloneDB,
+			SkipCloningDBApps: commentEvent.previewDeployNoCloneDB,
+			Trigger: &entity.AppDeploymentTrigger{
+				Source:   base.DeploymentTriggerSourceRepoWebhook,
+				SourceID: webhookID,
+				ChangeID: "pr-" + strconv.FormatInt(commentEvent.PRNumber, 10),
 			},
 		})
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
 
-		// Ensure app valid when we complete creating the preview
-		err = uc.appService.EnsureAppActive(ctx, db, app, false, false)
+		if !commentEvent.previewDeployNoWait && previewSettings.CreationDelay > 0 {
+			previewTask.RunAt = previewTask.RunAt.Add(previewSettings.CreationDelay.ToDuration())
+		}
+
+		err = uc.taskRepo.Upsert(ctx, db, previewTask,
+			entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}
+
 		return nil
 	})
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
-	if createResp != nil && createResp.DeploymentTask != nil {
-		_ = uc.taskQueue.ScheduleTask(ctx, createResp.DeploymentTask)
+	if previewTask != nil {
+		_ = uc.taskQueue.ScheduleTask(ctx, previewTask)
 	}
 	return nil
 }
@@ -89,37 +71,19 @@ func (uc *UC) loadAppPreviewSettings(
 	ctx context.Context,
 	db database.IDB,
 	app *entity.App,
-	commentEvent *repoPRCommentEventData,
-) (previewSettings *entity.AppFeaturePreviewSettings, cloneApps []*entity.App, err error) {
-	app, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, db, app.ProjectID, app.ID,
+) (previewSettings *entity.AppFeaturePreviewSettings, err error) {
+	_, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, db, app.ProjectID, app.ID,
 		false, false)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, apperrors.Wrap(err)
 	}
 	previewSettings = featureSettings.PreviewSettings
 	if previewSettings == nil || !previewSettings.Enabled {
-		return nil, nil, apperrors.Wrap(apperrors.ErrFeatureDisabled).
+		return nil, apperrors.Wrap(apperrors.ErrFeatureDisabled).
 			WithParam("Name", "app preview")
 	}
 
-	var cloningAppIDs []string
-	if commentEvent.previewDeployCloneDB || (previewSettings.AutoCloneApps && !commentEvent.previewDeployNoCloneDB) {
-		cloningAppIDs = previewSettings.AppsToClone.ToIDStringSlice()
-	}
-
-	cloningApps, err := uc.appService.LoadAppsSkipMissing(ctx, db, app.Project.ID, cloningAppIDs,
-		true, false,
-		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		bunex.SelectRelation("Project",
-			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		),
-		bunex.SelectRelation("ProjectEnv"),
-	)
-	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
-	}
-
-	return previewSettings, cloningApps, nil
+	return previewSettings, nil
 }
 
 func (uc *UC) deleteAppPreview(

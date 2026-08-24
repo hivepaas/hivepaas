@@ -19,10 +19,14 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
 type createPreviewData struct {
 	*apppreviewservice.CreatePreviewReq
+
+	Args   *entity.TaskAppPreviewArgs
+	Output *entity.TaskAppPreviewOutput
 
 	CalcRepoRef   string // normalized repo ref
 	PullNumber    uint64
@@ -36,6 +40,7 @@ type createPreviewData struct {
 	DeploymentTask     *entity.Task
 	DeploymentSettings *entity.AppDeploymentSettings
 
+	CloneDBApps               []*entity.App
 	CloneDBAppsData           map[string]*cloneDBAppData
 	CloneDBAppsEnvRefReplacer *strings.Replacer
 }
@@ -47,7 +52,13 @@ func (s *service) CreatePreview(
 ) (_ *apppreviewservice.CreatePreviewResp, err error) {
 	data := &createPreviewData{
 		CreatePreviewReq: req,
+		Output:           &entity.TaskAppPreviewOutput{},
 	}
+	s.initLogStore(data)
+	defer func() {
+		ctx = context.WithoutCancel(ctx)
+		_ = s.saveLogs(ctx, db, data)
+	}()
 
 	err = s.loadAppDataForCreatingPreview(ctx, db, data)
 	if err != nil {
@@ -71,7 +82,21 @@ func (s *service) CreatePreview(
 		return nil, apperrors.Wrap(err)
 	}
 
+	// Preview app will be cloned from the current app
+	cloneTask := &entity.Task{
+		ID:       "fake-task-id",
+		Scope:    base.ObjectScopeApp,
+		ObjectID: data.App.ID,
+		Type:     base.TaskTypeAppClone,
+	}
+	cloneTask.MustSetArgs(&entity.TaskAppCloneArgs{SrcApp: entity.ObjectID{ID: data.App.ID}})
+
 	cloneResp, err = s.appCloneService.CloneApp(ctx, db, &appcloneservice.AppCloneReq{
+		TaskExecData: &queue.TaskExecData{
+			Task:       cloneTask,
+			RefObjects: data.RefObjects,
+			LogStore:   data.LogStore,
+		},
 		SrcApp: data.App,
 		OnCloneApp: func(targetApp, srcApp *entity.App) error {
 			data.PreviewApp = targetApp
@@ -104,6 +129,17 @@ func (s *service) CreatePreview(
 		return nil, apperrors.Wrap(err)
 	}
 
+	if s.taskQueue != nil && data.DeploymentTask != nil {
+		data.OnPostTransaction(func() { //nolint:contextcheck
+			_ = s.taskQueue.ScheduleTask(context.Background(), data.DeploymentTask)
+		})
+	}
+
+	// Save result to the task's output
+	data.Output.PreviewApp = entity.ObjectID{ID: data.PreviewApp.ID}
+	data.Output.Deployment = entity.ObjectID{ID: data.Deployment.ID}
+	_ = data.Task.SetOutput(data.Output)
+
 	return &apppreviewservice.CreatePreviewResp{
 		PreviewApp:     data.PreviewApp,
 		Deployment:     data.Deployment,
@@ -117,11 +153,22 @@ func (s *service) loadAppDataForCreatingPreview(
 	db database.IDB,
 	data *createPreviewData,
 ) (err error) {
-	if data.LogStore == nil {
-		data.LogStore = tasklog.NewNullStore()
+	taskArgs, err := data.Task.ArgsAsAppPreview()
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	if taskArgs == nil || taskArgs.ParentApp.ID == "" {
+		return apperrors.NewNotFound("Parent app ID in task args")
+	}
+	data.Args = taskArgs
+	if taskArgs.Trigger != nil {
+		data.OnInitDeployment = func(deployment *entity.Deployment) error {
+			deployment.Trigger = taskArgs.Trigger
+			return nil
+		}
 	}
 
-	app, err := s.appService.LoadApp(ctx, db, data.App.ProjectID, data.App.ID, true, true,
+	app, err := s.appService.LoadApp(ctx, db, "", taskArgs.ParentApp.ID, true, true,
 		bunex.SelectFor("UPDATE OF app"),
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
@@ -129,10 +176,8 @@ func (s *service) loadAppDataForCreatingPreview(
 		),
 		bunex.SelectRelation("ProjectEnv"),
 		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type IN (?)", []base.SettingType{
-				base.SettingTypeAppDeployment,
-				base.SettingTypeAppFeatures,
-			}),
+			bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppDeployment,
+				base.SettingTypeAppFeatures),
 		),
 	)
 	if err != nil {
@@ -141,6 +186,33 @@ func (s *service) loadAppDataForCreatingPreview(
 	// The app must not be a child app
 	if app.IsChildApp() {
 		return apperrors.Wrap(apperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
+	}
+	data.App = app
+
+	if featureSetting := app.GetSettingByType(base.SettingTypeAppFeatures); featureSetting != nil {
+		data.FeatureSettings = featureSetting.MustAsAppFeatureSettings()
+	}
+
+	if data.FeatureSettings != nil && data.FeatureSettings.PreviewSettings != nil {
+		previewSettings := data.FeatureSettings.PreviewSettings
+		if !previewSettings.Enabled {
+			return apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
+		}
+		var cloningAppIDs []string
+		if taskArgs.CloneDBApps || (previewSettings.AutoCloneApps && !taskArgs.SkipCloningDBApps) {
+			cloningAppIDs = previewSettings.AppsToClone.ToIDStringSlice()
+		}
+		cloningApps, err := s.appService.LoadAppsSkipMissing(ctx, db, app.Project.ID, cloningAppIDs, true, false,
+			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+			bunex.SelectRelation("Project",
+				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			),
+			bunex.SelectRelation("ProjectEnv"),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		data.CloneDBApps = cloningApps
 	}
 
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
@@ -151,19 +223,14 @@ func (s *service) loadAppDataForCreatingPreview(
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo || deploymentSettings.RepoSource == nil {
 		return apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
 	}
-	data.App = app
-
-	if featureSetting := app.GetSettingByType(base.SettingTypeAppFeatures); featureSetting != nil {
-		data.FeatureSettings = featureSetting.MustAsAppFeatureSettings()
-	}
 
 	data.RandSuffix = gofn.RandTokenAsHex(4) //nolint:mnd
-	data.CalcRepoRef, data.PullNumber, err = githelper.NormalizePullRef(data.RepoRef)
+	data.CalcRepoRef, data.PullNumber, err = githelper.NormalizePullRef(taskArgs.RepoRef)
 	if err != nil {
-		data.CalcRepoRef = string(githelper.NormalizeRepoRef(data.RepoRef))
+		data.CalcRepoRef = string(githelper.NormalizeRepoRef(taskArgs.RepoRef))
 		data.PullNumber = 0
 	}
-	data.CalcSubdomain = data.CustomSubdomain
+	data.CalcSubdomain = taskArgs.CustomSubdomain
 	if data.CalcSubdomain == "" && data.PullNumber > 0 {
 		data.CalcSubdomain = fmt.Sprintf("pr-%v", data.PullNumber)
 	}
@@ -251,5 +318,65 @@ func (s *service) persistAppPreviewData(
 		return apperrors.Wrap(err)
 	}
 
+	return nil
+}
+
+func (s *service) initLogStore(data *createPreviewData) {
+	if data.LogStore != nil {
+		return
+	}
+	if data.Task != nil && s.redisClient != nil {
+		data.LogStore = tasklog.NewRemoteStore(fmt.Sprintf("task:%s:log", data.Task.ID), s.redisClient)
+		data.LogStore.SetOnFlush(tasklog.DefaultMaxSize, func(ctx context.Context, frames []*tasklog.LogFrame) error {
+			return s.saveLogFramesToDB(ctx, s.db, data.Task.ID, frames)
+		})
+	} else {
+		data.LogStore = tasklog.NewNullStore()
+	}
+}
+
+func (s *service) saveLogs(
+	ctx context.Context,
+	db database.IDB,
+	data *createPreviewData,
+) error {
+	logStore := data.LogStore
+	if logStore == nil || data.Task == nil {
+		return nil
+	}
+
+	logFrames, err := logStore.GetData(ctx, 0)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+	_ = logStore.Close() //nolint
+
+	return s.saveLogFramesToDB(ctx, db, data.Task.ID, logFrames)
+}
+
+func (s *service) saveLogFramesToDB(
+	ctx context.Context,
+	db database.IDB,
+	taskID string,
+	logFrames []*tasklog.LogFrame,
+) error {
+	if s.taskLogRepo == nil || len(logFrames) == 0 {
+		return nil
+	}
+	for _, chunk := range gofn.Chunk(logFrames, 10000) { //nolint
+		taskLogs := make([]*entity.TaskLog, 0, len(chunk))
+		for _, logFrame := range chunk {
+			taskLogs = append(taskLogs, &entity.TaskLog{
+				TaskID: taskID,
+				Type:   logFrame.Type,
+				Data:   logFrame.Data,
+				Ts:     logFrame.Ts,
+			})
+		}
+		err := s.taskLogRepo.InsertMulti(ctx, db, taskLogs)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+	}
 	return nil
 }

@@ -16,6 +16,7 @@ type UC struct {
 	appRepo        repository.AppRepo
 	deploymentRepo repository.DeploymentRepo
 	settingRepo    repository.SettingRepo
+	taskRepo       repository.TaskRepo
 
 	appDeploymentService appdeploymentservice.Service
 	appPreviewService    apppreviewservice.Service
@@ -29,6 +30,7 @@ func New(
 	appRepo repository.AppRepo,
 	deploymentRepo repository.DeploymentRepo,
 	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
 
 	appDeploymentService appdeploymentservice.Service,
 	appPreviewService apppreviewservice.Service,
@@ -41,6 +43,7 @@ func New(
 		appRepo:        appRepo,
 		deploymentRepo: deploymentRepo,
 		settingRepo:    settingRepo,
+		taskRepo:       taskRepo,
 
 		appDeploymentService: appDeploymentService,
 		appPreviewService:    appPreviewService,

@@ -89,6 +89,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue/queueimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskappclone"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskappdeploy"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskapppreview"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskschedjobexec"
@@ -190,6 +191,7 @@ var Provides = []any{
 	queueimpl.New,
 	taskappclone.NewExecutor,
 	taskappdeploy.NewExecutor,
+	taskapppreview.NewExecutor,
 	taskdummy.NewExecutor,
 	taskperiodicjobexec.NewExecutor,
 	taskschedjobexec.NewExecutor,

@@ -137,7 +137,7 @@ func (s *service) onCloneAppService(
 	}
 
 	// When we need to clone related DB apps, must not start the preview
-	noStartService := data.NoStart || len(data.CloneDBApps) > 0
+	noStartService := data.Args.NoStart || len(data.CloneDBApps) > 0
 
 	if noStartService { // If noStart, use replicated service mode with replicas = 0
 		if targetSvcSpec.Mode.Replicated == nil {

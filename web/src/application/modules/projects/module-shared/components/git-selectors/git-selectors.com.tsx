@@ -33,6 +33,7 @@ export function GitRepositoriesDialog({
     open,
     onOpenChange,
     projectId,
+    env,
     credentialId,
     onSelect,
 }: GitRepositoriesDialogProps) {
@@ -43,6 +44,7 @@ export function GitRepositoriesDialog({
     const query = ProjectGitCredentialsQueries.useFindManyRepos(
         {
             projectID: projectId,
+            env,
             itemID: credentialId,
             pagination: createSelectorPagination(page),
         },
@@ -185,6 +187,7 @@ export function PullRequestsDialog({
     open,
     onOpenChange,
     projectId,
+    env,
     credentialId,
     repository,
     isGithubAppCredential,
@@ -198,6 +201,7 @@ export function PullRequestsDialog({
     const query = ProjectGitCredentialsQueries.useFindManyPullRequests(
         {
             projectID: projectId,
+            env,
             itemID: credentialId,
             owner: requestOwner,
             repo: repository.repo,
@@ -353,6 +357,7 @@ export function BranchesDialog({
     open,
     onOpenChange,
     projectId,
+    env,
     credentialId,
     repository,
     isGithubAppCredential,
@@ -368,6 +373,7 @@ export function BranchesDialog({
     const query = ProjectGitCredentialsQueries.useFindManyBranches(
         {
             projectID: projectId,
+            env,
             itemID: credentialId,
             owner: requestOwner,
             repo: repository.repo,
@@ -510,6 +516,7 @@ interface GitRepositoriesDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     projectId: string;
+    env?: string;
     credentialId: string;
     onSelect: (repository: ProjectGitRepo) => void;
 }
@@ -518,6 +525,7 @@ interface GitRefSelectorDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     projectId: string;
+    env?: string;
     credentialId: string;
     repository: ParsedGitRepository;
     isGithubAppCredential: boolean;

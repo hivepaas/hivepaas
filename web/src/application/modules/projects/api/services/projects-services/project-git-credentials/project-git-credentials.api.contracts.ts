@@ -8,6 +8,7 @@ export type { ProjectGitRepo };
 
 export type ProjectGitCredentials_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
@@ -17,6 +18,7 @@ export type ProjectGitCredentials_FindManyPaginated_Res = ApiResponsePaginated<S
 
 export type ProjectGitCredentials_FindManyRepos_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     itemID: string;
     pagination?: PaginationState;
     sorting?: SortingState;
@@ -47,6 +49,7 @@ export interface ProjectGitPullRequest {
 
 export type ProjectGitCredentials_FindManyBranches_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     itemID: string;
     owner?: string;
     repo: string;
@@ -59,6 +62,7 @@ export type ProjectGitCredentials_FindManyBranches_Res = ApiResponsePaginated<Pr
 
 export type ProjectGitCredentials_FindManyPullRequests_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     itemID: string;
     owner?: string;
     repo: string;

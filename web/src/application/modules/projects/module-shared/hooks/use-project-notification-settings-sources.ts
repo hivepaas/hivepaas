@@ -17,7 +17,10 @@ function toOptions(items: NotificationSettingsRef[]): NotificationSettingsSource
     }));
 }
 
-export function useProjectNotificationSettingsSources(projectId: string): {
+export function useProjectNotificationSettingsSources(
+    projectId: string,
+    env?: string,
+): {
     sources: NotificationSettingsSources;
     manageLink: NotificationSettingsManageLink;
 } {
@@ -25,11 +28,11 @@ export function useProjectNotificationSettingsSources(projectId: string): {
     const [failureSearch, setFailureSearch] = useState("");
 
     const successQuery = ProjectNotificationQueries.useFindManyPaginated(
-        { projectID: projectId, search: successSearch },
+        { projectID: projectId, env, search: successSearch },
         { enabled: projectId.length > 0 },
     );
     const failureQuery = ProjectNotificationQueries.useFindManyPaginated(
-        { projectID: projectId, search: failureSearch },
+        { projectID: projectId, env, search: failureSearch },
         { enabled: projectId.length > 0 },
     );
 

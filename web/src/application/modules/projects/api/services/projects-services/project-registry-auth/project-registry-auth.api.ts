@@ -19,6 +19,14 @@ import type {
 } from "./project-registry-auth.api.contracts";
 import type { ProjectRegistryAuthApiValidator } from "./project-registry-auth.api.validator";
 
+function getProjectRegistryAuthBasePath(projectID: string, env?: string): string {
+    if (env) {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/registry-auth`;
+    }
+
+    return `/projects/${projectID}/registry-auth`;
+}
+
 export class ProjectRegistryAuthApi extends BaseApi {
     public constructor(private readonly validator: ProjectRegistryAuthApiValidator) {
         super();
@@ -28,18 +36,18 @@ export class ProjectRegistryAuthApi extends BaseApi {
         request: ProjectRegistryAuth_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectRegistryAuth_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, env, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/registry-auth`, {
+                this.client.v1.get(getProjectRegistryAuthBasePath(projectID, env), {
                     params: query.build(),
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyPaginated),
+                map(response => this.validator.findManyPaginated(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -50,15 +58,15 @@ export class ProjectRegistryAuthApi extends BaseApi {
         request: ProjectRegistryAuth_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectRegistryAuth_FindOneById_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/registry-auth/${id}`, {
+                this.client.v1.get(`${getProjectRegistryAuthBasePath(projectID, env)}/${id}`, {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findOneById),
+                map(response => this.validator.findOneById(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -77,7 +85,7 @@ export class ProjectRegistryAuthApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.createOne),
+                map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -96,7 +104,7 @@ export class ProjectRegistryAuthApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateOne),
+                map(response => this.validator.updateOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -115,7 +123,7 @@ export class ProjectRegistryAuthApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateMeta),
+                map(response => this.validator.updateMeta(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

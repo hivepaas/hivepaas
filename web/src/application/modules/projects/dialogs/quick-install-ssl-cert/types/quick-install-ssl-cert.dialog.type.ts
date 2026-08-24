@@ -8,11 +8,13 @@ export interface QuickInstallSslCertDialogState {
         | {
               mode: "open";
               projectId: string;
+              env: string;
               domain: string;
           }
         | {
               mode: "closed";
               projectId: null;
+              env: null;
               domain: null;
           };
 }

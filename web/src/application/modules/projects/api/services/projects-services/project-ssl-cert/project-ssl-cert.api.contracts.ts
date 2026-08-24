@@ -10,6 +10,7 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 export type ProjectSslCert_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
@@ -20,6 +21,7 @@ export type ProjectSslCert_FindManyPaginated_Res = ApiResponsePaginated<SettingS
 
 export type ProjectSslCert_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 
@@ -27,6 +29,7 @@ export type ProjectSslCert_FindOneById_Res = ApiResponseBase<SettingSslCert>;
 
 export type ProjectSslCert_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: SslCert_CreateOne_Payload;
 }>;
 

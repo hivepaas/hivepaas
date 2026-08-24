@@ -102,10 +102,15 @@ const HttpPathConfigSchema = z.object({
     websocketConfig: HttpWebsocketConfigSchema.nullish(),
 });
 
+const RoutingProtocolSchema = z.preprocess(
+    value => (value === "" ? undefined : value),
+    z.nativeEnum(ERoutingProtocol).optional(),
+);
+
 const DomainSchema = z.object({
     enabled: z.boolean(),
     domain: z.string(),
-    protocol: z.nativeEnum(ERoutingProtocol).optional(),
+    protocol: RoutingProtocolSchema,
     domainRedirect: z.string().optional(),
     sslCert: SettingRefSchema.nullish(),
     containerPort: z.number(),

@@ -19,6 +19,14 @@ import type {
 } from "./project-cloud-storage.api.contracts";
 import type { ProjectCloudStorageApiValidator } from "./project-cloud-storage.api.validator";
 
+function getProjectCloudStorageBasePath(projectID: string, env?: string): string {
+    if (env) {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/cloud-storages`;
+    }
+
+    return `/projects/${projectID}/cloud-storages`;
+}
+
 export class ProjectCloudStorageApi extends BaseApi {
     public constructor(private readonly validator: ProjectCloudStorageApiValidator) {
         super();
@@ -28,13 +36,18 @@ export class ProjectCloudStorageApi extends BaseApi {
         request: ProjectCloudStorage_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, env, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
-            from(this.client.v1.get(`/projects/${projectID}/cloud-storages`, { params: query.build(), signal })).pipe(
-                map(this.validator.findManyPaginated),
+            from(
+                this.client.v1.get(getProjectCloudStorageBasePath(projectID, env), {
+                    params: query.build(),
+                    signal,
+                }),
+            ).pipe(
+                map(response => this.validator.findManyPaginated(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -49,7 +62,7 @@ export class ProjectCloudStorageApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.get(`/projects/${projectID}/cloud-storages/${id}`, { signal })).pipe(
-                map(this.validator.findOneById),
+                map(response => this.validator.findOneById(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -64,7 +77,7 @@ export class ProjectCloudStorageApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.post(`/projects/${projectID}/cloud-storages`, payload, { signal })).pipe(
-                map(this.validator.createOne),
+                map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -79,7 +92,7 @@ export class ProjectCloudStorageApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.put(`/projects/${projectID}/cloud-storages/${id}`, payload, { signal })).pipe(
-                map(this.validator.updateOne),
+                map(response => this.validator.updateOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -94,7 +107,7 @@ export class ProjectCloudStorageApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.put(`/projects/${projectID}/cloud-storages/${id}/status`, payload, { signal })).pipe(
-                map(this.validator.updateMeta),
+                map(response => this.validator.updateMeta(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -108,7 +121,7 @@ export class ProjectCloudStorageApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.delete(`/projects/${projectID}/cloud-storages/${id}`)).pipe(
-                map(this.validator.deleteOne),
+                map(response => this.validator.deleteOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

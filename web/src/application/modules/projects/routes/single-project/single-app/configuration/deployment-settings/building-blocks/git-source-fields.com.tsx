@@ -19,8 +19,9 @@ import {
 } from "../schemas";
 
 export function GitSourceFields({ readOnly = false }: Props) {
-    const { id: projectId } = useParams<{ id: string }>();
+    const { id: projectId, env } = useParams<{ id: string; env: string }>();
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
 
     const gitSubmodulesOptionId = "repo-options-git-submodules";
     const gitLfsOptionId = "repo-options-git-lfs";
@@ -159,6 +160,7 @@ export function GitSourceFields({ readOnly = false }: Props) {
                     open={isBranchesDialogOpen}
                     onOpenChange={setBranchesDialogOpen}
                     projectId={projectId}
+                    env={env}
                     credentialId={credentialId}
                     repository={repository}
                     isGithubAppCredential={isGithubAppCredential}

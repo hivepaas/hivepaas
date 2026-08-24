@@ -5,6 +5,7 @@ import { ProjectSecretsCommands } from "~/projects/data/commands";
 import { ProjectSecretsQueries } from "~/projects/data/queries";
 import { CreateOrEditProjectSecretForm } from "~/projects/dialogs/create-or-edit-project-secret/form";
 import type { CreateOrEditProjectSecretFormOutput } from "~/projects/dialogs/create-or-edit-project-secret/schemas";
+import { getProjectEnvFilterParam, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
 
 import { AppLoader, RouteFormHeader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -45,6 +46,8 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
     const { navigate } = useAppNavigate();
     const isEditMode = mode === "edit";
     const listRoute = ROUTE.projects.single.providerConfiguration.secrets.$route(projectId);
+    const selectedEnv = useSelectedProjectEnv(projectId);
+    const scopedEnv = getProjectEnvFilterParam(selectedEnv);
 
     function navigateToList() {
         navigate.modules(listRoute, { ignorePrevPath: true });
@@ -58,6 +61,7 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
     const detailQuery = ProjectSecretsQueries.useFindOneById(
         {
             projectID: projectId,
+            env: scopedEnv,
             secretID: secretId ?? "",
         },
         {
@@ -91,6 +95,7 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
         if (isEditMode && secret) {
             updateProjectSecret({
                 projectID: projectId,
+                env: scopedEnv,
                 secretID: secret.id,
                 updateVer: secret.updateVer,
                 name: values.name,
@@ -103,6 +108,7 @@ export function ProjectSecretFormRoute({ mode, projectId, secretId }: Props) {
         if (!isEditMode && value !== undefined) {
             createProjectSecret({
                 projectID: projectId,
+                env: scopedEnv,
                 name: values.name,
                 value,
                 base64,

@@ -16,8 +16,9 @@ import {
 } from "../../schemas";
 
 export function DockerRegistryAuth({ readOnly = false }: Props) {
-    const { id: projectId } = useParams<{ id: string }>();
+    const { id: projectId, env } = useParams<{ id: string; env: string }>();
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
 
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
@@ -34,6 +35,7 @@ export function DockerRegistryAuth({ readOnly = false }: Props) {
         isRefetching,
     } = ProjectRegistryAuthQueries.useFindManyPaginated({
         projectID: projectId,
+        env,
         search: searchQuery,
     });
 

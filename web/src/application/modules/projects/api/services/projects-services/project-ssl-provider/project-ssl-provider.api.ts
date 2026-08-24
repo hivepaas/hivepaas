@@ -19,6 +19,14 @@ import type {
 } from "./project-ssl-provider.api.contracts";
 import type { ProjectSslProviderApiValidator } from "./project-ssl-provider.api.validator";
 
+function getProjectSslProviderBasePath(projectID: string, env?: string): string {
+    if (env) {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/ssl-providers`;
+    }
+
+    return `/projects/${projectID}/ssl-providers`;
+}
+
 export class ProjectSslProviderApi extends BaseApi {
     public constructor(private readonly validator: ProjectSslProviderApiValidator) {
         super();
@@ -28,7 +36,7 @@ export class ProjectSslProviderApi extends BaseApi {
         request: ProjectSslProvider_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslProvider_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting, kind } = request.data;
+        const { projectID, env, search, pagination, sorting, kind } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
@@ -39,12 +47,12 @@ export class ProjectSslProviderApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/ssl-providers`, {
+                this.client.v1.get(getProjectSslProviderBasePath(projectID, env), {
                     params,
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyPaginated),
+                map(response => this.validator.findManyPaginated(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -63,7 +71,7 @@ export class ProjectSslProviderApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findOneById),
+                map(response => this.validator.findOneById(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -82,7 +90,7 @@ export class ProjectSslProviderApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.createOne),
+                map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -101,7 +109,7 @@ export class ProjectSslProviderApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateOne),
+                map(response => this.validator.updateOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -120,7 +128,7 @@ export class ProjectSslProviderApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateStatus),
+                map(response => this.validator.updateStatus(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -134,7 +142,7 @@ export class ProjectSslProviderApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.delete(`/projects/${projectID}/ssl-providers/${id}`)).pipe(
-                map(this.validator.deleteOne),
+                map(response => this.validator.deleteOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

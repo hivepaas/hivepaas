@@ -35,6 +35,7 @@ export function QuickInstallSslCertDialog() {
 
     const open = state.mode !== "closed";
     const projectId = state.mode === "open" ? state.projectId : null;
+    const env = state.mode === "open" ? state.env : null;
     const domain = state.mode === "open" ? state.domain : "";
     const domainSettingsQuery = ProjectDomainSettingsQueries.useFindOne(
         { projectID: projectId ?? "" },
@@ -92,6 +93,7 @@ export function QuickInstallSslCertDialog() {
 
         createSslCert({
             projectID: projectId,
+            env: env ?? undefined,
             payload: {
                 inheritable: false,
                 default: false,
@@ -147,6 +149,7 @@ export function QuickInstallSslCertDialog() {
                 </DialogHeader>
                 <QuickInstallSslCertForm
                     projectId={projectId}
+                    env={env ?? undefined}
                     domain={domain}
                     isPending={isPending}
                     prefill={prefill}

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectSecretsCommands } from "~/projects/data/commands";
+import { getProjectEnvFilterParam, useSelectedProjectEnv } from "~/projects/module-shared/hooks";
 
 import { MODULE_IDS } from "@application/shared/constants";
 import { useConditionalModule } from "@application/shared/permissions";
@@ -46,6 +47,8 @@ export function CreateOrEditProjectSecretDialog() {
     const isEditMode = mode === "edit";
     const projectId = mode !== "closed" ? state.projectId : null;
     const scope = mode !== "closed" ? state.scope : null;
+    const selectedEnv = useSelectedProjectEnv(projectId ?? "");
+    const scopedEnv = getProjectEnvFilterParam(selectedEnv);
 
     const { mutate: createProjectSecret, isPending: isCreatingProject } = ProjectSecretsCommands.useCreateOne({
         onSuccess: () => {
@@ -80,6 +83,7 @@ export function CreateOrEditProjectSecretDialog() {
         if (state.mode === "edit") {
             updateProjectSecret({
                 projectID: projectId,
+                env: scopedEnv,
                 secretID: state.secret.id,
                 updateVer: state.secret.updateVer,
                 name: values.name,
@@ -89,6 +93,7 @@ export function CreateOrEditProjectSecretDialog() {
         } else if (state.mode === "open" && value !== undefined) {
             createProjectSecret({
                 projectID: projectId,
+                env: scopedEnv,
                 name: values.name,
                 value,
                 base64,

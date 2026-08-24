@@ -15,8 +15,9 @@ import {
 } from "../../schemas";
 
 export function GitRepositoryInput({ readOnly = false }: Props) {
-    const { id: projectId } = useParams<{ id: string }>();
+    const { id: projectId, env } = useParams<{ id: string; env: string }>();
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
     const [isRepositoriesDialogOpen, setRepositoriesDialogOpen] = useState(false);
 
     const { control } = useFormContext<
@@ -78,6 +79,7 @@ export function GitRepositoryInput({ readOnly = false }: Props) {
                     open={isRepositoriesDialogOpen}
                     onOpenChange={setRepositoriesDialogOpen}
                     projectId={projectId}
+                    env={env}
                     credentialId={credentialId}
                     onSelect={repository => {
                         repoUrl.onChange(repository.cloneURL);

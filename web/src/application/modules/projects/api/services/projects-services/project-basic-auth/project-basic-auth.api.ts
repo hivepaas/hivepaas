@@ -19,6 +19,14 @@ import type {
     ProjectBasicAuth_UpdateStatus_Res,
 } from "./project-basic-auth.api.contracts";
 
+function getProjectBasicAuthBasePath(projectID: string, env?: string): string {
+    if (env) {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/basic-auth`;
+    }
+
+    return `/projects/${projectID}/basic-auth`;
+}
+
 export class ProjectBasicAuthApi extends BaseApi {
     public constructor(private readonly validator: ProjectBasicAuthApiValidator) {
         super();
@@ -28,18 +36,18 @@ export class ProjectBasicAuthApi extends BaseApi {
         request: ProjectBasicAuth_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectBasicAuth_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, env, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/basic-auth`, {
+                this.client.v1.get(getProjectBasicAuthBasePath(projectID, env), {
                     params: query.build(),
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyPaginated),
+                map(response => this.validator.findManyPaginated(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -58,7 +66,7 @@ export class ProjectBasicAuthApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findOneById),
+                map(response => this.validator.findOneById(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -77,7 +85,7 @@ export class ProjectBasicAuthApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.createOne),
+                map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -96,7 +104,7 @@ export class ProjectBasicAuthApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateOne),
+                map(response => this.validator.updateOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -115,7 +123,7 @@ export class ProjectBasicAuthApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateStatus),
+                map(response => this.validator.updateStatus(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -127,7 +135,7 @@ export class ProjectBasicAuthApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.delete(`/projects/${projectID}/basic-auth/${id}`)).pipe(
-                map(this.validator.deleteOne),
+                map(response => this.validator.deleteOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

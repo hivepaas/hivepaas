@@ -16,8 +16,9 @@ import {
 } from "../../schemas";
 
 export function GitCredentialSelect({ readOnly = false }: Props) {
-    const { id: projectId } = useParams<{ id: string }>();
+    const { id: projectId, env } = useParams<{ id: string; env: string }>();
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
 
     const { control } = useFormContext<
         AppConfigDeploymentSettingsFormSchemaInput,
@@ -34,6 +35,7 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
         isRefetching,
     } = ProjectGitCredentialsQueries.useFindManyPaginated({
         projectID: projectId,
+        env,
         search: searchQuery,
     });
 

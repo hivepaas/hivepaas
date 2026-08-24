@@ -19,6 +19,14 @@ import type {
 } from "./project-notification.api.contracts";
 import type { ProjectNotificationApiValidator } from "./project-notification.api.validator";
 
+function getProjectNotificationsBasePath(projectID: string, env?: string): string {
+    if (env) {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/notifications`;
+    }
+
+    return `/projects/${projectID}/notifications`;
+}
+
 export class ProjectNotificationApi extends BaseApi {
     public constructor(private readonly validator: ProjectNotificationApiValidator) {
         super();
@@ -28,18 +36,18 @@ export class ProjectNotificationApi extends BaseApi {
         request: ProjectNotification_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, env, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/notifications`, {
+                this.client.v1.get(getProjectNotificationsBasePath(projectID, env), {
                     params: query.build(),
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyPaginated),
+                map(response => this.validator.findManyPaginated(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -50,15 +58,15 @@ export class ProjectNotificationApi extends BaseApi {
         request: ProjectNotification_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_FindOneById_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/notifications/${id}`, {
+                this.client.v1.get(`${getProjectNotificationsBasePath(projectID, env)}/${id}`, {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findOneById),
+                map(response => this.validator.findOneById(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -73,7 +81,7 @@ export class ProjectNotificationApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.post(`/projects/${projectID}/notifications`, payload, { signal })).pipe(
-                map(this.validator.createOne),
+                map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

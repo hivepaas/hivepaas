@@ -15,6 +15,14 @@ import type {
 } from "./project-git-credentials.api.contracts";
 import type { ProjectGitCredentialsApiValidator } from "./project-git-credentials.api.validator";
 
+function getProjectGitCredentialsBasePath(projectID: string, env?: string): string {
+    if (env) {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/git-credentials`;
+    }
+
+    return `/projects/${projectID}/git-credentials`;
+}
+
 export class ProjectGitCredentialsApi extends BaseApi {
     public constructor(private readonly validator: ProjectGitCredentialsApiValidator) {
         super();
@@ -24,18 +32,18 @@ export class ProjectGitCredentialsApi extends BaseApi {
         request: ProjectGitCredentials_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectGitCredentials_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, env, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/git-credentials`, {
+                this.client.v1.get(getProjectGitCredentialsBasePath(projectID, env), {
                     params: query.build(),
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyPaginated),
+                map(response => this.validator.findManyPaginated(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -46,18 +54,18 @@ export class ProjectGitCredentialsApi extends BaseApi {
         request: ProjectGitCredentials_FindManyRepos_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectGitCredentials_FindManyRepos_Res, Error>> {
-        const { projectID, itemID, search, pagination, sorting } = request.data;
+        const { projectID, env, itemID, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/git-credentials/${itemID}/repositories`, {
+                this.client.v1.get(`${getProjectGitCredentialsBasePath(projectID, env)}/${itemID}/repositories`, {
                     params: query.build(),
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyRepos),
+                map(response => this.validator.findManyRepos(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -68,13 +76,13 @@ export class ProjectGitCredentialsApi extends BaseApi {
         request: ProjectGitCredentials_FindManyBranches_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectGitCredentials_FindManyBranches_Res, Error>> {
-        const { projectID, itemID, owner, repo, search, pagination, sorting } = request.data;
+        const { projectID, env, itemID, owner, repo, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/git-credentials/${itemID}/repository/branches`, {
+                this.client.v1.get(`${getProjectGitCredentialsBasePath(projectID, env)}/${itemID}/repository/branches`, {
                     params: {
                         ...query.build(),
                         ...(owner !== undefined ? { owner } : {}),
@@ -83,7 +91,7 @@ export class ProjectGitCredentialsApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyBranches),
+                map(response => this.validator.findManyBranches(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -94,13 +102,13 @@ export class ProjectGitCredentialsApi extends BaseApi {
         request: ProjectGitCredentials_FindManyPullRequests_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectGitCredentials_FindManyPullRequests_Res, Error>> {
-        const { projectID, itemID, owner, repo, search, pagination, sorting } = request.data;
+        const { projectID, env, itemID, owner, repo, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/git-credentials/${itemID}/repository/pull-requests`, {
+                this.client.v1.get(`${getProjectGitCredentialsBasePath(projectID, env)}/${itemID}/repository/pull-requests`, {
                     params: {
                         ...query.build(),
                         ...(owner !== undefined ? { owner } : {}),
@@ -109,7 +117,7 @@ export class ProjectGitCredentialsApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyPullRequests),
+                map(response => this.validator.findManyPullRequests(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

@@ -208,6 +208,7 @@ function View({ projectId, env, appId }: Props) {
                         description="Are you sure you want to re-deploy this app?"
                         confirmText="Re-deploy"
                         cancelText="Cancel"
+                        variant="destructive"
                         onConfirm={() => {
                             deploy({ projectID: projectId, env, appID: appId });
                         }}
@@ -227,6 +228,7 @@ function View({ projectId, env, appId }: Props) {
                         description="Are you sure you want to restart this app?"
                         confirmText="Restart"
                         cancelText="Cancel"
+                        variant="destructive"
                         onConfirm={() => {
                             restart({ projectID: projectId, env, appID: appId });
                         }}
@@ -247,6 +249,7 @@ function View({ projectId, env, appId }: Props) {
                             description="Are you sure you want to stop this app?"
                             confirmText="Stop"
                             cancelText="Cancel"
+                            variant="destructive"
                             onConfirm={() => {
                                 setRunning({ projectID: projectId, env, appID: appId, running: false });
                             }}

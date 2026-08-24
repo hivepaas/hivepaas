@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
@@ -11,6 +13,8 @@ export function PopConfirm({
     confirmText = "Confirm",
     cancelText = "Cancel",
     variant = "default",
+    confirmButtonClassName,
+    cancelButtonClassName,
     side,
     align,
 }: Props) {
@@ -47,6 +51,7 @@ export function PopConfirm({
                         <Button
                             variant="outline"
                             size="sm"
+                            className={cn("min-w-[70px]", cancelButtonClassName)}
                             onClick={handleCancel}
                         >
                             {cancelText}
@@ -54,6 +59,7 @@ export function PopConfirm({
                         <Button
                             variant={variant}
                             size="sm"
+                            className={cn("min-w-[70px]", confirmButtonClassName)}
                             onClick={handleConfirm}
                         >
                             {confirmText}
@@ -72,6 +78,8 @@ interface Props extends React.PropsWithChildren {
     confirmText?: string;
     cancelText?: string;
     variant?: "default" | "destructive";
+    confirmButtonClassName?: string;
+    cancelButtonClassName?: string;
     side?: "top" | "bottom" | "left" | "right";
     align?: "start" | "center" | "end";
 }

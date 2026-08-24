@@ -7,8 +7,6 @@ import { type FieldPath, FormProvider, useForm, useWatch } from "react-hook-form
 import { useUpdateEffect } from "react-use";
 import type { HivePaaSRoutingSettings } from "~/system-settings/domain";
 
-import { ContentBlock } from "@application/shared/components";
-
 import type { ValidationException } from "@infrastructure/exceptions/validation";
 
 import { ClientConfigSection, DomainSelector, RateLimitConfigSection } from "../building-blocks";
@@ -64,17 +62,16 @@ function ConditionalDomainDetailSections({
     const domainName = activeDomain.domain.trim();
 
     return (
-        <>
-            <ContentBlock label={<span className="text-red-400">Selected domain: {domainName || "—"}</span>}>
-                <div className="flex flex-col gap-6 px-2">
-                    <SslCert
-                        domainIndex={activeDomainIndex}
-                        readOnly={readOnly}
-                    />
-                </div>
-            </ContentBlock>
+        <div className="flex flex-col gap-6">
+            <div className="sticky top-0 z-20 rounded-lg bg-accent px-3 py-2 font-medium shadow-xs">
+                <span className="text-red-400">Selected domain: {domainName || "—"}</span>
+            </div>
 
             <div className="flex flex-col gap-6 px-2">
+                <SslCert
+                    domainIndex={activeDomainIndex}
+                    readOnly={readOnly}
+                />
                 <ClientConfigSection
                     prefix={`domains.${activeDomainIndex}.clientConfig`}
                     readOnly={readOnly}
@@ -84,7 +81,7 @@ function ConditionalDomainDetailSections({
                     readOnly={readOnly}
                 />
             </div>
-        </>
+        </div>
     );
 }
 

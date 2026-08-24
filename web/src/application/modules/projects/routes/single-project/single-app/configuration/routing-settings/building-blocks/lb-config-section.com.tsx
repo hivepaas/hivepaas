@@ -28,6 +28,7 @@ export function LBConfigSection({ prefix, readOnly = false }: LBConfigSectionPro
 
     return (
         <ContentBlock
+            headerClassName="top-11"
             label={
                 <div className="flex items-center gap-2">
                     Load Balancing Configuration{" "}

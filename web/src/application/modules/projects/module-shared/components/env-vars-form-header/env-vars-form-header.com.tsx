@@ -35,7 +35,7 @@ function View({
     );
 
     return (
-        <div className="flex items-center justify-between gap-4">
+        <div className="sticky top-0 z-20 flex items-center justify-between gap-4 bg-background py-2.5">
             {/* Search Input */}
             <div className="relative">
                 <div className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50">

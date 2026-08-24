@@ -44,7 +44,6 @@ function ConditionalDomainDetailSections({
     const domains = useWatch<SchemaInput, "domains">({ name: "domains" });
     const hasDomains = domains.length > 0;
     const activeDomain = activeDomainIndex >= 0 ? domains[activeDomainIndex] : undefined;
-    const hasActiveDomain = Boolean(activeDomain);
     const activeDomainRedirect = typeof activeDomain?.domainRedirect === "string" ? activeDomain.domainRedirect : "";
     const hasRedirect = Boolean(activeDomainRedirect.trim());
     const isHttp = (activeDomain?.protocol ?? ERoutingProtocol.HTTP) === ERoutingProtocol.HTTP;
@@ -82,12 +81,18 @@ function ConditionalDomainDetailSections({
         }
     }, [activeDomainIndex, domains.length, setActiveDomainIndex, suppressDomainAutoSelectRef]);
 
-    if (!hasDomains || !hasActiveDomain) {
+    if (!hasDomains || !activeDomain) {
         return null;
     }
 
+    const domainName = activeDomain.domain.trim();
+
     return (
-        <>
+        <div className="flex flex-col gap-6">
+            <div className="sticky top-0 z-20 rounded-lg bg-accent px-3 py-2 font-medium shadow-xs">
+                <span className="text-red-400">Selected domain: {domainName || "—"}</span>
+            </div>
+
             <div className="flex flex-col gap-6 px-2">
                 <DomainGeneralFields
                     domainIndex={activeDomainIndex}
@@ -109,7 +114,10 @@ function ConditionalDomainDetailSections({
                         />
                     </div>
 
-                    <ContentBlock label={<span className="text-red-400">Path Configuration</span>}>
+                    <ContentBlock
+                        headerClassName="top-11"
+                        label={<span className="text-red-400">Path Configuration</span>}
+                    >
                         <div className="flex flex-col gap-6">
                             <PathsSection
                                 domainIndex={activeDomainIndex}
@@ -119,7 +127,7 @@ function ConditionalDomainDetailSections({
                     </ContentBlock>
                 </>
             )}
-        </>
+        </div>
     );
 }
 

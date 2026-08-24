@@ -57,7 +57,7 @@ export function ClientConfigSection({ prefix, autoExpandToken, readOnly = false,
             open={open}
             onOpenChange={setOpen}
         >
-            <div className="flex justify-between items-center font-medium bg-accent py-2 px-3 rounded-lg">
+            <div className="sticky top-11 z-10 flex justify-between items-center font-medium bg-accent py-2 px-3 rounded-lg shadow-xs">
                 <CollapsibleTrigger asChild>
                     <button
                         type="button"

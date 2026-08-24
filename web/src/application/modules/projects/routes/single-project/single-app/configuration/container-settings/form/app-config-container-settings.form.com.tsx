@@ -171,7 +171,10 @@ export function AppConfigContainerSettingsForm({ ref, defaultValues, onSubmit, r
                                     value={section.value}
                                     className="border-none"
                                 >
-                                    <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent">
+                                    <AccordionTrigger
+                                        headerClassName="sticky top-0 z-10"
+                                        className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent rounded-md shadow-xs"
+                                    >
                                         {section.title}
                                     </AccordionTrigger>
                                     <AccordionContent className="pt-4 pb-0 pl-4">{section.content}</AccordionContent>

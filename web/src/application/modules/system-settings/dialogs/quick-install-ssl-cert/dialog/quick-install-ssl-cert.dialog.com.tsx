@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { differenceInCalendarDays } from "date-fns";
 import { toast } from "sonner";
 import { SslCertCommands } from "~/settings/data/commands";
 import { DomainSettingsQueries } from "~/settings/data/queries";
@@ -76,12 +77,15 @@ export function QuickInstallSslCertDialog() {
 
         const isCustom = values.certType === ESslCertType.Custom;
         const isAcme = values.certType !== ESslCertType.Custom && values.certType !== ESslCertType.SelfSigned;
-        const validPeriodDays = isAcme ? 90 : 365;
+        const defaultValidityDays = isAcme ? 90 : 365;
         const now = new Date();
-        const fallbackExpireAt = addDays(now, validPeriodDays);
+        const fallbackExpireAt = addDays(now, defaultValidityDays);
         const expireAt = values.expireAt ?? fallbackExpireAt;
         const notifyFrom = values.notifyFrom ?? addDays(expireAt, -30);
         const certDomain = values.wildcardDomain ? toWildcardDomain(values.domain) : values.domain;
+        const validPeriodDays = values.expireAt
+            ? Math.max(1, differenceInCalendarDays(values.expireAt, now))
+            : defaultValidityDays;
 
         createSslCert({
             payload: {

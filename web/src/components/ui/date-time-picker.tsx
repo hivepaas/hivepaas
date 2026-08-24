@@ -312,7 +312,7 @@ function Calendar({
                     return (
                         <div className="inline-flex gap-2">
                             <Select
-                                defaultValue={calendarMonth.date.getMonth().toString()}
+                                value={calendarMonth.date.getMonth().toString()}
                                 onValueChange={value => {
                                     const newDate = new Date(calendarMonth.date);
                                     newDate.setMonth(Number.parseInt(value, 10));
@@ -334,7 +334,7 @@ function Calendar({
                                 </SelectContent>
                             </Select>
                             <Select
-                                defaultValue={calendarMonth.date.getFullYear().toString()}
+                                value={calendarMonth.date.getFullYear().toString()}
                                 onValueChange={value => {
                                     const newDate = new Date(calendarMonth.date);
                                     newDate.setFullYear(Number.parseInt(value, 10));
@@ -742,14 +742,16 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
         const [month, setMonth] = React.useState<Date>(value ?? defaultPopupValue);
         const buttonRef = useRef<HTMLButtonElement>(null);
         const [displayDate, setDisplayDate] = React.useState<Date | undefined>(value ?? undefined);
-        onMonthChange ||= onChange;
 
         /**
-         * Makes sure display date updates when value change on
+         * Makes sure display date and month update when value change on
          * parent component
          */
         React.useEffect(() => {
             setDisplayDate(value);
+            if (value) {
+                setMonth(value);
+            }
         }, [value]);
 
         /**
@@ -774,25 +776,16 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
         }, [fromDate, toDate, disabledDates]);
 
         /**
-         * carry over the current time when a user clicks a new day
-         * instead of resetting to 00:00
+         * carry over the current time when a user navigates to a new month/year
          */
         const handleMonthChange = (newDay: Date | undefined) => {
             if (!newDay) {
                 return;
             }
-            if (!defaultPopupValue) {
-                newDay.setHours(month?.getHours() ?? 0, month?.getMinutes() ?? 0, month?.getSeconds() ?? 0);
-                onMonthChange?.(newDay);
-                setMonth(newDay);
-                return;
-            }
-            const diff = newDay.getTime() - defaultPopupValue.getTime();
-            const diffInDays = diff / (1000 * 60 * 60 * 24);
-            const newDateFull = add(defaultPopupValue, { days: Math.ceil(diffInDays) });
-            newDateFull.setHours(month?.getHours() ?? 0, month?.getMinutes() ?? 0, month?.getSeconds() ?? 0);
-            onMonthChange?.(newDateFull);
-            setMonth(newDateFull);
+            const targetDate = new Date(newDay);
+            targetDate.setHours(month?.getHours() ?? 0, month?.getMinutes() ?? 0, month?.getSeconds() ?? 0);
+            setMonth(targetDate);
+            onMonthChange?.(targetDate);
         };
 
         const onSelect = (newDay?: Date) => {

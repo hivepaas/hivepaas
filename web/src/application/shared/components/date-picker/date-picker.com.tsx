@@ -79,6 +79,9 @@ export function DatePicker({
                     mode="single"
                     selected={value ?? undefined}
                     onSelect={onChange}
+                    captionLayout="dropdown"
+                    startMonth={new Date(new Date().getFullYear() - 50, 0)}
+                    endMonth={new Date(new Date().getFullYear() + 50, 11)}
                 />
             </PopoverContent>
         </Popover>

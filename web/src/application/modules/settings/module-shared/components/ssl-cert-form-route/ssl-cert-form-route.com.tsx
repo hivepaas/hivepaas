@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { differenceInCalendarDays } from "date-fns";
 import { toast } from "sonner";
 import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { ProjectDomainSettingsQueries, ProjectSslCertQueries } from "~/projects/data/queries";
@@ -144,10 +145,13 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
     function createPayload(values: CreateOrEditSslCertFormOutput) {
         const now = new Date();
         const isCustom = values.certType === ESslCertType.Custom;
-        const generatedCertValidityDays = getGeneratedCertValidityDays(values.certType);
-        const fallbackExpireAt = addDays(now, generatedCertValidityDays);
+        const defaultValidityDays = getGeneratedCertValidityDays(values.certType);
+        const fallbackExpireAt = addDays(now, defaultValidityDays);
         const expireAt = values.expireAt ?? fallbackExpireAt;
         const notifyFrom = values.notifyFrom ?? addDays(expireAt, -30);
+        const validPeriodDays = values.expireAt
+            ? Math.max(1, differenceInCalendarDays(values.expireAt, now))
+            : defaultValidityDays;
 
         return {
             inheritable: scope.type === "project" ? false : values.inheritable,
@@ -160,7 +164,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
             privateKey: isCustom ? values.privateKey : "",
             caCertificate: isCustom ? values.caCertificate : "",
             keyType: values.keyType,
-            validPeriod: `${generatedCertValidityDays}d`,
+            validPeriod: `${validPeriodDays}d`,
             email: values.email,
             autoRenew: isCustom ? false : values.autoRenew,
             expireAt,

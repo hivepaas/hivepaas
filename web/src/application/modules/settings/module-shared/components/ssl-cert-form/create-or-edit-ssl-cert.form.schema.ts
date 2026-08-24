@@ -36,7 +36,7 @@ export const CreateOrEditSslCertFormSchema = z
     .superRefine((value, ctx) => {
         const requiresProvider = value.certType === ESslCertType.ZeroSSL || value.certType === ESslCertType.GoogleTrust;
         const requiresAcmeProvider =
-            value.domain.trim().startsWith("*.") &&
+            value.domain.includes("*") &&
             value.certType !== ESslCertType.Custom &&
             value.certType !== ESslCertType.SelfSigned;
 

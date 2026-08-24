@@ -40,7 +40,8 @@ export const QuickInstallSslCertFormSchema = z
             });
         }
 
-        if (value.wildcardDomain && isAcme && !value.acmeProvider?.id) {
+        const isWildcard = value.wildcardDomain || value.domain.includes("*");
+        if (isWildcard && isAcme && !value.acmeProvider?.id) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 path: ["acmeProvider"],

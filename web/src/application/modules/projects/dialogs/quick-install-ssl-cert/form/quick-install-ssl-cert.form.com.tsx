@@ -8,8 +8,6 @@ import { Input } from "@components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { dashedBorderBox } from "@lib/styles";
-import { cn } from "@lib/utils";
 import { useController, useForm } from "react-hook-form";
 import { ProjectAcmeDnsProviderQueries, ProjectSslProviderQueries } from "~/projects/data/queries";
 import { SSL_CERT_TYPE_OPTIONS } from "~/settings/module-shared/constants/ssl-provider.constants";
@@ -59,8 +57,10 @@ function getProviderKind(certType: ESslCertType): ESslProviderKind | undefined {
 }
 
 function toWildcardDomain(domain: string): string {
-    const parts = domain.split(".");
-    return `*.${parts.length > 2 ? parts.slice(1).join(".") : domain}`;
+    const trimmed = domain.trim();
+    const cleanDomain = trimmed.startsWith("*.") ? trimmed.slice(2) : trimmed;
+    const parts = cleanDomain.split(".");
+    return `*.${parts.length > 1 ? parts.slice(1).join(".") : cleanDomain}`;
 }
 
 function formatKeyTypeLabel(value: ESslKeyType): string {
@@ -390,27 +390,6 @@ export function QuickInstallSslCertForm({
 
                         {isAcme && (
                             <>
-                                <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                                    <span className="font-semibold text-orange-500">Note:</span> SSL provider is
-                                    required if you select{" "}
-                                    <AppLink.Modules
-                                        to={sslProvidersRoute}
-                                        className="text-link"
-                                        ignorePrevPath
-                                    >
-                                        Zero SSL
-                                    </AppLink.Modules>{" "}
-                                    or{" "}
-                                    <AppLink.Modules
-                                        to={sslProvidersRoute}
-                                        className="text-link"
-                                        ignorePrevPath
-                                    >
-                                        Google Trust Services
-                                    </AppLink.Modules>{" "}
-                                    as the certificate type.
-                                </div>
-
                                 <Field>
                                     <InfoBlock
                                         title={
@@ -452,17 +431,12 @@ export function QuickInstallSslCertForm({
                                     </InfoBlock>
                                 </Field>
 
-                                <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                                    <span className="font-semibold text-orange-500">Note:</span> ACME DNS provider is
-                                    required if your domain is a wildcard domain.
-                                </div>
-
                                 <Field>
                                     <InfoBlock
                                         title={
                                             <LabelWithInfo
                                                 label="ACME DNS Provider"
-                                                isRequired={wildcardDomain.value}
+                                                isRequired={wildcardDomain.value || effectiveDomain.includes("*")}
                                             />
                                         }
                                         titleWidth={150}

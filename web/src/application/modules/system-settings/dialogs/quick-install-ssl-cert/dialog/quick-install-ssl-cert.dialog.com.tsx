@@ -15,8 +15,10 @@ import { useQuickInstallSslCertDialogState } from "../hooks";
 import type { QuickInstallSslCertFormOutput } from "../schemas";
 
 function toWildcardDomain(domain: string): string {
-    const parts = domain.split(".");
-    return `*.${parts.length > 2 ? parts.slice(1).join(".") : domain}`;
+    const trimmed = domain.trim();
+    const cleanDomain = trimmed.startsWith("*.") ? trimmed.slice(2) : trimmed;
+    const parts = cleanDomain.split(".");
+    return `*.${parts.length > 1 ? parts.slice(1).join(".") : cleanDomain}`;
 }
 
 function addDays(date: Date, days: number): Date {

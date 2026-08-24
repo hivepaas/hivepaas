@@ -24,7 +24,7 @@ function mapDomainToFormInput(domain: AppRoutingDomain): AppConfigRoutingSetting
         containerPort: domain.containerPort,
         tlsPassthrough: domain.tlsPassthrough ?? false,
         domainRedirect: domain.domainRedirect ?? "",
-        sslCert: domain.sslCert?.id ? { id: domain.sslCert.id, name: domain.sslCert.name } : undefined,
+        sslCert: domain.sslCert?.id ? { id: domain.sslCert.id, name: domain.sslCert.name } : null,
         forceHttps: domain.forceHttps ?? false,
 
         basicAuth: domain.basicAuth?.id

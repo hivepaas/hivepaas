@@ -15,7 +15,7 @@ function mapDomainToFormInput(domain: HivePaaSRoutingDomain): HivePaaSRoutingSet
     return {
         enabled: domain.enabled,
         domain: domain.domain,
-        sslCert: domain.sslCert?.id ? { id: domain.sslCert.id, name: domain.sslCert.name } : undefined,
+        sslCert: domain.sslCert?.id ? { id: domain.sslCert.id, name: domain.sslCert.name } : null,
         clientConfig: domain.clientConfig
             ? {
                   enabled: domain.clientConfig.enabled,

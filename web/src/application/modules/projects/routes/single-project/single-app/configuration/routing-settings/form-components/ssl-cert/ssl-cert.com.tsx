@@ -27,7 +27,7 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
     const [selectedSslId, setSelectedSslId] = useState<string | null>(null);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Project });
 
-    const { control, setValue } = useFormContext<
+    const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
         AppConfigHttpSettingsFormSchemaOutput
@@ -43,7 +43,7 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
     const { actions: quickInstallActions } = useQuickInstallSslCertDialog({
         onSuccess: created => {
             setSelectedSslId(created.id);
-            setValue(`domains.${domainIndex}.sslCert`, { id: created.id, name: created.name }, { shouldDirty: true });
+            sslCert.onChange({ id: created.id, name: created.name });
             void refetch();
         },
     });
@@ -68,11 +68,21 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
     );
 
     const comboboxOptions = useMemo(() => {
-        return sslCerts.map(cert => ({
+        const list = sslCerts.map(cert => ({
             value: { id: cert.id, name: cert.name },
             label: cert.name,
         }));
-    }, [sslCerts]);
+
+        const currentSsl = sslCert.value;
+        if (currentSsl?.id && !list.some(item => item.value.id.toLowerCase() === currentSsl.id.toLowerCase())) {
+            list.unshift({
+                value: { id: currentSsl.id, name: currentSsl.name || currentSsl.id },
+                label: currentSsl.name || currentSsl.id,
+            });
+        }
+
+        return list;
+    }, [sslCerts, sslCert.value]);
 
     return (
         <>
@@ -95,18 +105,14 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
                                         return;
                                     }
 
-                                    if (!option) {
-                                        setValue(`domains.${domainIndex}.sslCert`, undefined, { shouldDirty: true });
+                                    if (!option?.id) {
+                                        sslCert.onChange(null);
                                         setSelectedSslId(null);
                                         setModalOpen(false);
                                         return;
                                     }
 
-                                    setValue(
-                                        `domains.${domainIndex}.sslCert`,
-                                        { id: option.id, name: option.name },
-                                        { shouldDirty: true },
-                                    );
+                                    sslCert.onChange({ id: option.id, name: option.name });
                                     setSelectedSslId(option.id);
                                 }}
                                 onSearch={setSearchQuery}

@@ -72,6 +72,24 @@ export interface ComboboxProps<T extends Record<string, unknown> = Record<string
     "renderOption"?: (option: ComboboxOption<T>) => React.ReactNode;
 }
 
+function getOptionValueString<T extends Record<string, unknown>>(option: ComboboxOption<T>, valueKey: keyof T): string {
+    const raw = option.value[valueKey];
+    if (typeof raw === "string") {
+        return raw;
+    }
+    if (typeof raw === "number" || typeof raw === "boolean") {
+        return `${raw}`;
+    }
+    return "";
+}
+
+function normalizeValue(value: string | number | null | undefined): string | null {
+    if (value == null || value === "") {
+        return null;
+    }
+    return (typeof value === "string" ? value : `${value}`).toLowerCase();
+}
+
 export function Combobox<T extends Record<string, unknown> = Record<string, unknown>>({
     options,
     value,
@@ -106,23 +124,25 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
         }
     }, [debouncedSearch, onSearch]);
 
+    const normalizedValue = normalizeValue(value);
+
     const selectedOption = React.useMemo(() => {
-        return options.find(opt => String(opt.value[valueKey]) === String(value));
-    }, [options, value, valueKey]);
+        if (normalizedValue == null) return undefined;
+        return options.find(opt => getOptionValueString(opt, valueKey).toLowerCase() === normalizedValue);
+    }, [options, normalizedValue, valueKey]);
 
     const handleOpenChange = (nextOpen: boolean) => {
         setSearch("");
         setOpen(nextOpen);
     };
 
-    const handleSelect = (currentValue: string) => {
-        const option = options.find(opt => String(opt.value[valueKey]) === currentValue);
-        if (!option || option.disabled) {
+    const handleSelectOption = (option: ComboboxOption<T>) => {
+        if (option.disabled) {
             return;
         }
 
-        const optionValue = String(option.value[valueKey]);
-        const isDeselecting = currentValue === String(value);
+        const optionValue = getOptionValueString(option, valueKey);
+        const isDeselecting = normalizedValue != null && normalizedValue === optionValue.toLowerCase();
         const newValue = isDeselecting ? null : optionValue;
         const selectedOptionData = isDeselecting ? null : option.value;
 
@@ -146,7 +166,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
 
     return (
         <div className={cn("flex w-full min-w-0 items-center gap-1.5", className)}>
-            <div className="group/clear min-w-0 flex-1">
+            <div className="relative group/clear min-w-0 flex-1">
                 <Popover
                     open={open}
                     onOpenChange={handleOpenChange}
@@ -177,25 +197,13 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                             </span>
                             {loading ? (
                                 <Loader2 className="ml-2 h-4 w-4 shrink-0 animate-spin opacity-50" />
-                            ) : showClear ? (
-                                <>
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50 group-hover/clear:hidden" />
-                                    <span
-                                        role="button"
-                                        tabIndex={-1}
-                                        aria-label="Clear"
-                                        className="ml-2 hidden rounded-sm p-0.5 text-muted-foreground hover:text-foreground group-hover/clear:inline-flex"
-                                        onPointerDown={e => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                        }}
-                                        onClick={handleClear}
-                                    >
-                                        <X className="size-3.5" />
-                                    </span>
-                                </>
                             ) : (
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                <ChevronsUpDown
+                                    className={cn(
+                                        "ml-2 h-4 w-4 shrink-0 opacity-50",
+                                        showClear && "group-hover/clear:opacity-0 transition-opacity",
+                                    )}
+                                />
                             )}
                         </Button>
                     </PopoverTrigger>
@@ -222,13 +230,22 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                                         {options.length > 0 && (
                                             <CommandGroup>
                                                 {options.map(option => {
-                                                    const optionValue = String(option.value[valueKey]);
+                                                    const optionValue = getOptionValueString(option, valueKey);
+                                                    const isChecked =
+                                                        normalizedValue != null &&
+                                                        normalizedValue === optionValue.toLowerCase();
                                                     return (
                                                         <CommandItem
                                                             key={optionValue}
-                                                            value={optionValue}
+                                                            value={
+                                                                option.label
+                                                                    ? `${option.label} ${optionValue}`
+                                                                    : optionValue
+                                                            }
                                                             disabled={option.disabled}
-                                                            onSelect={handleSelect}
+                                                            onSelect={() => {
+                                                                handleSelectOption(option);
+                                                            }}
                                                         >
                                                             {renderOption ? (
                                                                 renderOption(option)
@@ -241,7 +258,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                                                             <Check
                                                                 className={cn(
                                                                     "ml-auto h-4 w-4 shrink-0",
-                                                                    value === optionValue ? "opacity-100" : "opacity-0",
+                                                                    isChecked ? "opacity-100" : "opacity-0",
                                                                 )}
                                                             />
                                                         </CommandItem>
@@ -255,6 +272,18 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                         </Command>
                     </PopoverContent>
                 </Popover>
+
+                {showClear && (
+                    <button
+                        type="button"
+                        tabIndex={-1}
+                        aria-label="Clear"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover/clear:flex items-center justify-center size-5 rounded-sm text-muted-foreground hover:text-foreground bg-background hover:bg-muted transition-colors z-10"
+                        onClick={handleClear}
+                    >
+                        <X className="size-3.5" />
+                    </button>
+                )}
             </div>
             {showRefresh && (
                 <Button

@@ -95,7 +95,7 @@ export const DomainFormSchema = z
         containerPort: z.number().int().min(1).max(65535),
         tlsPassthrough: z.boolean(),
         domainRedirect: z.string(),
-        sslCert: HttpSettingsRefSchema.optional(),
+        sslCert: HttpSettingsRefSchema.nullable().optional(),
         forceHttps: z.boolean(),
         basicAuth: HttpBasicAuthConfigSchema.optional(),
         lbConfig: HttpLBConfigSchema.optional(),

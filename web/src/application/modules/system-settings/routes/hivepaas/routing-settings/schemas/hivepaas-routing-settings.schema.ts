@@ -32,7 +32,7 @@ export const DomainFormSchema = z
     .object({
         enabled: z.boolean(),
         domain: z.string(),
-        sslCert: RoutingSettingsRefSchema.optional(),
+        sslCert: RoutingSettingsRefSchema.nullable().optional(),
         clientConfig: RoutingClientConfigSchema,
         rateLimitConfig: RoutingRateLimitConfigSchema,
     })

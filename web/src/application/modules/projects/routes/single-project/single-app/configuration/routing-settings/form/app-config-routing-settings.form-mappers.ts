@@ -94,6 +94,11 @@ function mapDomainToFormInput(domain: AppRoutingDomain): AppConfigRoutingSetting
                   responseCode: domain.circuitBreakerConfig.responseCode,
               }
             : undefined,
+        websocketConfig: domain.websocketConfig
+            ? {
+                  enabled: domain.websocketConfig.enabled,
+              }
+            : undefined,
         paths: (domain.paths ?? []).map(path => ({
             enabled: path.enabled,
             path: path.path,
@@ -162,6 +167,11 @@ function mapDomainToFormInput(domain: AppRoutingDomain): AppConfigRoutingSetting
                       fallbackDuration: path.circuitBreakerConfig.fallbackDuration,
                       recoveryDuration: path.circuitBreakerConfig.recoveryDuration,
                       responseCode: path.circuitBreakerConfig.responseCode,
+                  }
+                : undefined,
+            websocketConfig: path.websocketConfig
+                ? {
+                      enabled: path.websocketConfig.enabled,
                   }
                 : undefined,
         })),
@@ -276,6 +286,11 @@ export function mapFormValuesToPayload(
                       responseCode: domain.circuitBreakerConfig.responseCode,
                   }
                 : null,
+            websocketConfig: domain.websocketConfig
+                ? {
+                      enabled: domain.websocketConfig.enabled,
+                  }
+                : null,
             paths: domain.paths.map(path => ({
                 enabled: path.enabled,
                 path: path.path,
@@ -356,6 +371,11 @@ export function mapFormValuesToPayload(
                           fallbackDuration: path.circuitBreakerConfig.fallbackDuration,
                           recoveryDuration: path.circuitBreakerConfig.recoveryDuration,
                           responseCode: path.circuitBreakerConfig.responseCode,
+                      }
+                    : null,
+                websocketConfig: path.websocketConfig
+                    ? {
+                          enabled: path.websocketConfig.enabled,
                       }
                     : null,
             })),

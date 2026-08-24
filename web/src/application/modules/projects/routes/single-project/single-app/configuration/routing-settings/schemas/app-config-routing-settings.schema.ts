@@ -67,6 +67,10 @@ export const HttpCircuitBreakerConfigSchema = z.object({
     responseCode: z.number().min(0),
 });
 
+export const HttpWebsocketConfigSchema = z.object({
+    enabled: z.boolean(),
+});
+
 export const HttpPathConfigSchema = z.object({
     enabled: z.boolean(),
     path: z.string().min(1, "Path is required"),
@@ -78,6 +82,7 @@ export const HttpPathConfigSchema = z.object({
     rateLimitConfig: HttpRateLimitConfigSchema.optional(),
     pathRewriteConfig: HttpPathRewriteConfigSchema.optional(),
     circuitBreakerConfig: HttpCircuitBreakerConfigSchema.optional(),
+    websocketConfig: HttpWebsocketConfigSchema.optional(),
 });
 
 const DOMAIN_MAX_LEN = 100; // mirrors backend base.DomainNameMaxLen
@@ -100,6 +105,7 @@ export const DomainFormSchema = z
         rateLimitConfig: HttpRateLimitConfigSchema.optional(),
         pathRewriteConfig: HttpPathRewriteConfigSchema.optional(),
         circuitBreakerConfig: HttpCircuitBreakerConfigSchema.optional(),
+        websocketConfig: HttpWebsocketConfigSchema.optional(),
         paths: z.array(HttpPathConfigSchema),
     })
 
@@ -211,6 +217,12 @@ export function createDefaultCircuitBreakerConfig(): z.infer<typeof HttpCircuitB
         fallbackDuration: "",
         recoveryDuration: "",
         responseCode: 0,
+    };
+}
+
+export function createDefaultWebsocketConfig(): z.infer<typeof HttpWebsocketConfigSchema> {
+    return {
+        enabled: true,
     };
 }
 

@@ -15,26 +15,29 @@ import {
     createDefaultHeaderConfig,
     createDefaultPathRewriteConfig,
     createDefaultRateLimitConfig,
+    createDefaultWebsocketConfig,
 } from "../schemas";
 
 type ConfigKeyDomain =
     | "basicAuth"
+    | "circuitBreakerConfig"
     | "clientConfig"
     | "compressionConfig"
     | "headerConfig"
     | "pathRewriteConfig"
     | "rateLimitConfig"
-    | "circuitBreakerConfig";
+    | "websocketConfig";
 export type ConfigSectionKey = ConfigKeyDomain;
 
 const OPTIONS: { key: ConfigKeyDomain; label: string }[] = [
     { key: "basicAuth", label: "Basic Auth" },
+    { key: "circuitBreakerConfig", label: "Circuit Breaker Configuration" },
     { key: "clientConfig", label: "Client Configuration" },
     { key: "compressionConfig", label: "Compression Configuration" },
     { key: "headerConfig", label: "Header Configuration" },
     { key: "pathRewriteConfig", label: "Path Rewrite Configuration" },
     { key: "rateLimitConfig", label: "Rate Limit Configuration" },
-    { key: "circuitBreakerConfig", label: "Circuit Breaker Configuration" },
+    { key: "websocketConfig", label: "Websocket Configuration" },
 ];
 
 function segmentAtPath(
@@ -85,6 +88,12 @@ export function AddConfigurationDropdown({
             case "basicAuth":
                 setFormValue(fieldPath, createDefaultBasicAuthRef(), { shouldDirty: true, shouldValidate: true });
                 break;
+            case "circuitBreakerConfig":
+                setFormValue(fieldPath, createDefaultCircuitBreakerConfig(), {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                });
+                break;
             case "clientConfig":
                 setFormValue(fieldPath, createDefaultClientConfig(), { shouldDirty: true, shouldValidate: true });
                 break;
@@ -100,11 +109,8 @@ export function AddConfigurationDropdown({
             case "rateLimitConfig":
                 setFormValue(fieldPath, createDefaultRateLimitConfig(), { shouldDirty: true, shouldValidate: true });
                 break;
-            case "circuitBreakerConfig":
-                setFormValue(fieldPath, createDefaultCircuitBreakerConfig(), {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                });
+            case "websocketConfig":
+                setFormValue(fieldPath, createDefaultWebsocketConfig(), { shouldDirty: true, shouldValidate: true });
                 break;
             default:
                 break;

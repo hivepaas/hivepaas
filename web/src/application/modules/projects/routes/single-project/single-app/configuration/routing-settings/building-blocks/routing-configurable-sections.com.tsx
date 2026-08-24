@@ -15,6 +15,7 @@ import { CompressionConfigSection } from "./compression-config-section.com";
 import { HeaderConfigSection } from "./header-config-section.com";
 import { PathRewriteConfigSection } from "./path-rewrite-config-section.com";
 import { RateLimitConfigSection } from "./rate-limit-config-section.com";
+import { WebsocketConfigSection } from "./websocket-config-section.com";
 
 interface RoutingConfigurableSectionsProps {
     basePath: string;
@@ -48,6 +49,17 @@ export function RoutingConfigurableSections({ basePath, readOnly = false }: Rout
                     readOnly={readOnly}
                     onRemove={() => {
                         removeSection(`${basePath}.basicAuth`);
+                    }}
+                />
+            )}
+
+            {segment?.["circuitBreakerConfig"] != null && (
+                <CircuitBreakerConfigSection
+                    prefix={`${basePath}.circuitBreakerConfig`}
+                    readOnly={readOnly}
+                    autoExpandToken={expandSignal?.key === "circuitBreakerConfig" ? expandSignal.seq : undefined}
+                    onRemove={() => {
+                        removeSection(`${basePath}.circuitBreakerConfig`);
                     }}
                 />
             )}
@@ -107,13 +119,13 @@ export function RoutingConfigurableSections({ basePath, readOnly = false }: Rout
                 />
             )}
 
-            {segment?.["circuitBreakerConfig"] != null && (
-                <CircuitBreakerConfigSection
-                    prefix={`${basePath}.circuitBreakerConfig`}
+            {segment?.["websocketConfig"] != null && (
+                <WebsocketConfigSection
+                    prefix={`${basePath}.websocketConfig`}
                     readOnly={readOnly}
-                    autoExpandToken={expandSignal?.key === "circuitBreakerConfig" ? expandSignal.seq : undefined}
+                    autoExpandToken={expandSignal?.key === "websocketConfig" ? expandSignal.seq : undefined}
                     onRemove={() => {
-                        removeSection(`${basePath}.circuitBreakerConfig`);
+                        removeSection(`${basePath}.websocketConfig`);
                     }}
                 />
             )}

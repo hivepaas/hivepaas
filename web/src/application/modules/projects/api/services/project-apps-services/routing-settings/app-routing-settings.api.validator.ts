@@ -10,6 +10,7 @@ import {
     type AppRoutingPathConfig,
     type AppRoutingPathRewriteConfig,
     type AppRoutingRateLimitConfig,
+    type AppRoutingWebsocketConfig,
 } from "~/projects/domain";
 import { EHttpPathMode, ELBStrategy, ERoutingProtocol } from "~/projects/module-shared/enums";
 
@@ -79,6 +80,10 @@ const HttpCircuitBreakerConfigSchema = z.object({
     responseCode: z.number().nullish(),
 });
 
+const HttpWebsocketConfigSchema = z.object({
+    enabled: z.boolean(),
+});
+
 const HttpLBConfigSchema = z.object({
     strategy: z.nativeEnum(ELBStrategy),
 });
@@ -94,6 +99,7 @@ const HttpPathConfigSchema = z.object({
     rateLimitConfig: HttpRateLimitConfigSchema.nullish(),
     pathRewriteConfig: HttpPathRewriteConfigSchema.nullish(),
     circuitBreakerConfig: HttpCircuitBreakerConfigSchema.nullish(),
+    websocketConfig: HttpWebsocketConfigSchema.nullish(),
 });
 
 const DomainSchema = z.object({
@@ -113,6 +119,7 @@ const DomainSchema = z.object({
     rateLimitConfig: HttpRateLimitConfigSchema.nullish(),
     pathRewriteConfig: HttpPathRewriteConfigSchema.nullish(),
     circuitBreakerConfig: HttpCircuitBreakerConfigSchema.nullish(),
+    websocketConfig: HttpWebsocketConfigSchema.nullish(),
     paths: z.array(HttpPathConfigSchema).nullish(),
 });
 
@@ -222,6 +229,17 @@ function mapCircuitBreakerConfig(
     };
 }
 
+function mapWebsocketConfig(
+    raw: z.infer<typeof HttpWebsocketConfigSchema> | null | undefined,
+): AppRoutingWebsocketConfig | null {
+    if (raw == null) {
+        return null;
+    }
+    return {
+        enabled: raw.enabled,
+    };
+}
+
 function mapLBConfig(raw: z.infer<typeof HttpLBConfigSchema> | null | undefined): AppRoutingLBConfig | null {
     if (raw == null) {
         return null;
@@ -259,6 +277,7 @@ function mapPath(raw: z.infer<typeof HttpPathConfigSchema>): AppRoutingPathConfi
         rateLimitConfig: mapRateLimitConfig(raw.rateLimitConfig ?? undefined),
         pathRewriteConfig: mapPathRewriteConfig(raw.pathRewriteConfig ?? undefined),
         circuitBreakerConfig: mapCircuitBreakerConfig(raw.circuitBreakerConfig ?? undefined),
+        websocketConfig: mapWebsocketConfig(raw.websocketConfig ?? undefined),
     };
 }
 
@@ -280,6 +299,7 @@ function mapDomain(raw: z.infer<typeof DomainSchema>): AppRoutingDomain {
         rateLimitConfig: mapRateLimitConfig(raw.rateLimitConfig ?? undefined),
         pathRewriteConfig: mapPathRewriteConfig(raw.pathRewriteConfig ?? undefined),
         circuitBreakerConfig: mapCircuitBreakerConfig(raw.circuitBreakerConfig ?? undefined),
+        websocketConfig: mapWebsocketConfig(raw.websocketConfig ?? undefined),
         paths: raw.paths?.map(mapPath) ?? [],
     };
 }

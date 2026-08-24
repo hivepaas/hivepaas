@@ -11,4 +11,5 @@ export * from "./path-rewrite-config-section.com";
 export * from "./routing-configurable-sections.com";
 export * from "./lb-config-section.com";
 export * from "./rate-limit-config-section.com";
+export * from "./websocket-config-section.com";
 export * from "./paths-section.com";

@@ -51,7 +51,12 @@ export type AppRoutingDomain = {
     rateLimitConfig?: AppRoutingRateLimitConfig | null;
     pathRewriteConfig?: AppRoutingPathRewriteConfig | null;
     circuitBreakerConfig?: AppRoutingCircuitBreakerConfig | null;
+    websocketConfig?: AppRoutingWebsocketConfig | null;
     paths?: AppRoutingPathConfig[];
+};
+
+export type AppRoutingWebsocketConfig = {
+    enabled: boolean;
 };
 
 export type AppRoutingClientConfig = {
@@ -116,6 +121,7 @@ export type AppRoutingPathConfig = {
     rateLimitConfig?: AppRoutingRateLimitConfig | null;
     pathRewriteConfig?: AppRoutingPathRewriteConfig | null;
     circuitBreakerConfig?: AppRoutingCircuitBreakerConfig | null;
+    websocketConfig?: AppRoutingWebsocketConfig | null;
 };
 
 export type AppRoutingSettingsObjectIdReq = {
@@ -143,6 +149,7 @@ export type AppRoutingSettingsUpdateDomain = {
     rateLimitConfig?: AppRoutingRateLimitConfig | null;
     pathRewriteConfig?: AppRoutingPathRewriteConfig | null;
     circuitBreakerConfig?: AppRoutingCircuitBreakerConfig | null;
+    websocketConfig?: AppRoutingWebsocketConfig | null;
     paths: AppRoutingSettingsUpdatePath[] | null;
 };
 
@@ -157,6 +164,7 @@ export type AppRoutingSettingsUpdatePath = {
     rateLimitConfig?: AppRoutingRateLimitConfig | null;
     pathRewriteConfig?: AppRoutingPathRewriteConfig | null;
     circuitBreakerConfig?: AppRoutingCircuitBreakerConfig | null;
+    websocketConfig?: AppRoutingWebsocketConfig | null;
 };
 
 export type AppRoutingSettingsUpdatePayload = {
@@ -177,5 +185,6 @@ export type AppHttpCompressionConfig = AppRoutingCompressionConfig;
 export type AppHttpRateLimitConfig = AppRoutingRateLimitConfig;
 export type AppHttpPathRewriteConfig = AppRoutingPathRewriteConfig;
 export type AppHttpCircuitBreakerConfig = AppRoutingCircuitBreakerConfig;
+export type AppHttpWebsocketConfig = AppRoutingWebsocketConfig;
 export type AppHttpPathConfig = AppRoutingPathConfig;
 export type AppHttpSettingsUpdatePayload = AppRoutingSettingsUpdatePayload;

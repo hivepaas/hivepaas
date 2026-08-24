@@ -238,23 +238,23 @@ func (s *service) collectDomainConfig(
 		return apperrors.Wrap(err)
 	}
 
+	// CircuitBreaker config
+	s.createCircuitBreakerConfig(domain.CircuitBreakerConfig, routerName, labels, &middlewares)
+
 	// Client config
 	s.createClientConfig(domain.ClientConfig, routerName, labels, &middlewares, data)
-
-	// Header config
-	s.createHeaderConfig(domain.HeaderConfig, routerName, labels, &middlewares)
 
 	// Compression config
 	s.createCompressionConfig(domain.CompressionConfig, routerName, labels, &middlewares)
 
-	// RateLimit config
-	s.createRateLimitConfig(domain.RateLimitConfig, routerName, labels, &middlewares)
+	// Header config
+	s.createHeaderConfig(domain.HeaderConfig, routerName, labels, &middlewares)
 
 	// PathRewrite config
 	s.createPathRewriteConfig(domain.PathRewriteConfig, routerName, labels, &middlewares)
 
-	// CircuitBreaker config
-	s.createCircuitBreakerConfig(domain.CircuitBreakerConfig, routerName, labels, &middlewares)
+	// RateLimit config
+	s.createRateLimitConfig(domain.RateLimitConfig, routerName, labels, &middlewares)
 
 	if len(middlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] =
@@ -316,23 +316,23 @@ func (s *service) collectPathConfig(
 		return apperrors.Wrap(err)
 	}
 
+	// CircuitBreaker config for path
+	s.createCircuitBreakerConfig(pathCfg.CircuitBreakerConfig, pathRouterName, labels, &pathMiddlewares)
+
 	// Client config for path
 	s.createClientConfig(pathCfg.ClientConfig, pathRouterName, labels, &pathMiddlewares, data)
-
-	// Header config for path
-	s.createHeaderConfig(pathCfg.HeaderConfig, pathRouterName, labels, &pathMiddlewares)
 
 	// Compression config
 	s.createCompressionConfig(pathCfg.CompressionConfig, pathRouterName, labels, &pathMiddlewares)
 
-	// RateLimit config for path
-	s.createRateLimitConfig(pathCfg.RateLimitConfig, pathRouterName, labels, &pathMiddlewares)
+	// Header config for path
+	s.createHeaderConfig(pathCfg.HeaderConfig, pathRouterName, labels, &pathMiddlewares)
 
 	// PathRewrite config for path
 	s.createPathRewriteConfig(pathCfg.PathRewriteConfig, pathRouterName, labels, &pathMiddlewares)
 
-	// CircuitBreaker config for path
-	s.createCircuitBreakerConfig(pathCfg.CircuitBreakerConfig, pathRouterName, labels, &pathMiddlewares)
+	// RateLimit config for path
+	s.createRateLimitConfig(pathCfg.RateLimitConfig, pathRouterName, labels, &pathMiddlewares)
 
 	if len(pathMiddlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", pathRouterName)] =
@@ -390,6 +390,65 @@ func (s *service) createRedirectionConfig(
 	*middlewares = append(*middlewares, mwName+middlewareProvider)
 }
 
+func (s *service) createBasicAuthConfig(
+	basicAuth *entity.HTTPBasicAuthConfig,
+	refObjects *entity.RefObjects,
+	routerName string,
+	labels map[string]string,
+	middlewares *[]string,
+) error {
+	if basicAuth == nil || !basicAuth.Enabled || basicAuth.ID == "" {
+		return nil
+	}
+	if s := refObjects.RefSettings[basicAuth.ID]; s != nil {
+		basicAuthConfig := s.MustAsBasicAuth()
+		password, err := basicAuthConfig.Password.GetPlain()
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		hashedPasswd, err := htpasswd.HashPassword(password)
+		if err == nil {
+			mwName := fmt.Sprintf("%s-basicauth", routerName)
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.basicauth.users", mwName)] =
+				fmt.Sprintf("%s:%s", basicAuthConfig.Username, hashedPasswd)
+			*middlewares = append(*middlewares, mwName+middlewareProvider)
+		}
+	}
+	return nil
+}
+
+func (s *service) createCircuitBreakerConfig(
+	cbCfg *entity.HTTPCircuitBreakerConfig,
+	routerName string,
+	labels map[string]string,
+	middlewares *[]string,
+) {
+	if cbCfg == nil || !cbCfg.Enabled || cbCfg.Expression == "" {
+		return
+	}
+	mwName := fmt.Sprintf("%s-circuitbreaker", routerName)
+	labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.expression", mwName)] = cbCfg.Expression
+
+	if cbCfg.CheckPeriod > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.checkperiod", mwName)] =
+			cbCfg.CheckPeriod.ToDuration().String()
+	}
+	if cbCfg.FallbackDuration > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.fallbackduration", mwName)] =
+			cbCfg.FallbackDuration.ToDuration().String()
+	}
+	if cbCfg.RecoveryDuration > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.recoveryduration", mwName)] =
+			cbCfg.RecoveryDuration.ToDuration().String()
+	}
+	if cbCfg.ResponseCode > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.responsecode", mwName)] =
+			strconv.Itoa(cbCfg.ResponseCode)
+	}
+
+	*middlewares = append(*middlewares, mwName+middlewareProvider)
+}
+
 func (s *service) createClientConfig(
 	clientCfg *entity.HTTPClientConfig,
 	routerName string,
@@ -437,6 +496,36 @@ func (s *service) hasTraefikTrustedIPs(traefikSvc *swarm.Service) bool {
 	return false
 }
 
+func (s *service) createCompressionConfig(
+	compCfg *entity.HTTPCompressionConfig,
+	routerName string,
+	labels map[string]string,
+	middlewares *[]string,
+) {
+	if compCfg == nil || !compCfg.Enabled {
+		return
+	}
+	mwName := fmt.Sprintf("%s-compress", routerName)
+	labels[fmt.Sprintf("traefik.http.middlewares.%s.compress", mwName)] = labelValueTrue
+	if len(compCfg.ExcludedContentTypes) > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.excludedcontenttypes", mwName)] =
+			strings.Join(compCfg.ExcludedContentTypes, ",")
+	}
+	if len(compCfg.IncludedContentTypes) > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.includedcontenttypes", mwName)] =
+			strings.Join(compCfg.IncludedContentTypes, ",")
+	}
+	if compCfg.MinResponseBody > 0 {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.minresponsebodybytes", mwName)] =
+			strconv.FormatInt(compCfg.MinResponseBody.Bytes(), 10)
+	}
+	if compCfg.DefaultEncoding != "" {
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.defaultencoding", mwName)] =
+			compCfg.DefaultEncoding
+	}
+	*middlewares = append(*middlewares, mwName+middlewareProvider)
+}
+
 func (s *service) createHeaderConfig(
 	headerCfg *entity.HTTPHeaderConfig,
 	routerName string,
@@ -477,129 +566,6 @@ func (s *service) createHeaderConfig(
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.contenttype.autodetect", mwContentTypeName)] = "true"
 		*middlewares = append(*middlewares, mwContentTypeName+middlewareProvider)
 	}
-}
-
-func (s *service) createBasicAuthConfig(
-	basicAuth *entity.HTTPBasicAuthConfig,
-	refObjects *entity.RefObjects,
-	routerName string,
-	labels map[string]string,
-	middlewares *[]string,
-) error {
-	if basicAuth == nil || !basicAuth.Enabled || basicAuth.ID == "" {
-		return nil
-	}
-	if s := refObjects.RefSettings[basicAuth.ID]; s != nil {
-		basicAuthConfig := s.MustAsBasicAuth()
-		password, err := basicAuthConfig.Password.GetPlain()
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		hashedPasswd, err := htpasswd.HashPassword(password)
-		if err == nil {
-			mwName := fmt.Sprintf("%s-basicauth", routerName)
-			labels[fmt.Sprintf("traefik.http.middlewares.%s.basicauth.users", mwName)] =
-				fmt.Sprintf("%s:%s", basicAuthConfig.Username, hashedPasswd)
-			*middlewares = append(*middlewares, mwName+middlewareProvider)
-		}
-	}
-	return nil
-}
-
-func (s *service) createCompressionConfig(
-	compCfg *entity.HTTPCompressionConfig,
-	routerName string,
-	labels map[string]string,
-	middlewares *[]string,
-) {
-	if compCfg == nil || !compCfg.Enabled {
-		return
-	}
-	mwName := fmt.Sprintf("%s-compress", routerName)
-	labels[fmt.Sprintf("traefik.http.middlewares.%s.compress", mwName)] = labelValueTrue
-	if len(compCfg.ExcludedContentTypes) > 0 {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.excludedcontenttypes", mwName)] =
-			strings.Join(compCfg.ExcludedContentTypes, ",")
-	}
-	if len(compCfg.IncludedContentTypes) > 0 {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.includedcontenttypes", mwName)] =
-			strings.Join(compCfg.IncludedContentTypes, ",")
-	}
-	if compCfg.MinResponseBody > 0 {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.minresponsebodybytes", mwName)] =
-			strconv.FormatInt(compCfg.MinResponseBody.Bytes(), 10)
-	}
-	if compCfg.DefaultEncoding != "" {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.compress.defaultencoding", mwName)] =
-			compCfg.DefaultEncoding
-	}
-	*middlewares = append(*middlewares, mwName+middlewareProvider)
-}
-
-func (s *service) createRateLimitConfig(
-	rlCfg *entity.HTTPRateLimitConfig,
-	routerName string,
-	labels map[string]string,
-	middlewares *[]string,
-) {
-	if rlCfg == nil || !rlCfg.Enabled {
-		return
-	}
-	if rlCfg.Average > 0 || rlCfg.Burst > 0 || rlCfg.Period > 0 {
-		mwName := fmt.Sprintf("%s-ratelimit", routerName)
-		if rlCfg.Average > 0 {
-			labels[fmt.Sprintf("traefik.http.middlewares.%s.ratelimit.average", mwName)] =
-				strconv.Itoa(rlCfg.Average)
-		}
-		if rlCfg.Burst > 0 {
-			labels[fmt.Sprintf("traefik.http.middlewares.%s.ratelimit.burst", mwName)] =
-				strconv.Itoa(rlCfg.Burst)
-		}
-		if rlCfg.Period > 0 {
-			labels[fmt.Sprintf("traefik.http.middlewares.%s.ratelimit.period", mwName)] =
-				rlCfg.Period.ToDuration().String()
-		}
-		*middlewares = append(*middlewares, mwName+middlewareProvider)
-	}
-
-	if rlCfg.MaxInFlightReq > 0 {
-		mwName := fmt.Sprintf("%s-inflightreq", routerName)
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.inflightreq.amount", mwName)] =
-			strconv.Itoa(rlCfg.MaxInFlightReq)
-		*middlewares = append(*middlewares, mwName+middlewareProvider)
-	}
-}
-
-func (s *service) createCircuitBreakerConfig(
-	cbCfg *entity.HTTPCircuitBreakerConfig,
-	routerName string,
-	labels map[string]string,
-	middlewares *[]string,
-) {
-	if cbCfg == nil || !cbCfg.Enabled || cbCfg.Expression == "" {
-		return
-	}
-	mwName := fmt.Sprintf("%s-circuitbreaker", routerName)
-	labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.expression", mwName)] = cbCfg.Expression
-
-	if cbCfg.CheckPeriod > 0 {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.checkperiod", mwName)] =
-			cbCfg.CheckPeriod.ToDuration().String()
-	}
-	if cbCfg.FallbackDuration > 0 {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.fallbackduration", mwName)] =
-			cbCfg.FallbackDuration.ToDuration().String()
-	}
-	if cbCfg.RecoveryDuration > 0 {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.recoveryduration", mwName)] =
-			cbCfg.RecoveryDuration.ToDuration().String()
-	}
-	if cbCfg.ResponseCode > 0 {
-		labels[fmt.Sprintf("traefik.http.middlewares.%s.circuitbreaker.responsecode", mwName)] =
-			strconv.Itoa(cbCfg.ResponseCode)
-	}
-
-	*middlewares = append(*middlewares, mwName+middlewareProvider)
 }
 
 func (s *service) createPathRewriteConfig(
@@ -651,6 +617,40 @@ func (s *service) createPathRewriteConfig(
 			labels[fmt.Sprintf("traefik.http.middlewares.%s.replacepath.path", mwName)] = rewriteCfg.PathReplace
 			*middlewares = append(*middlewares, mwName+middlewareProvider)
 		}
+	}
+}
+
+func (s *service) createRateLimitConfig(
+	rlCfg *entity.HTTPRateLimitConfig,
+	routerName string,
+	labels map[string]string,
+	middlewares *[]string,
+) {
+	if rlCfg == nil || !rlCfg.Enabled {
+		return
+	}
+	if rlCfg.Average > 0 || rlCfg.Burst > 0 || rlCfg.Period > 0 {
+		mwName := fmt.Sprintf("%s-ratelimit", routerName)
+		if rlCfg.Average > 0 {
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.ratelimit.average", mwName)] =
+				strconv.Itoa(rlCfg.Average)
+		}
+		if rlCfg.Burst > 0 {
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.ratelimit.burst", mwName)] =
+				strconv.Itoa(rlCfg.Burst)
+		}
+		if rlCfg.Period > 0 {
+			labels[fmt.Sprintf("traefik.http.middlewares.%s.ratelimit.period", mwName)] =
+				rlCfg.Period.ToDuration().String()
+		}
+		*middlewares = append(*middlewares, mwName+middlewareProvider)
+	}
+
+	if rlCfg.MaxInFlightReq > 0 {
+		mwName := fmt.Sprintf("%s-inflightreq", routerName)
+		labels[fmt.Sprintf("traefik.http.middlewares.%s.inflightreq.amount", mwName)] =
+			strconv.Itoa(rlCfg.MaxInFlightReq)
+		*middlewares = append(*middlewares, mwName+middlewareProvider)
 	}
 }
 

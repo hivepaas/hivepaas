@@ -36548,7 +36548,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -36566,7 +36566,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -37697,9 +37697,12 @@
           },
           "tlsPassthrough" : {
             "type" : "boolean"
+          },
+          "websocketConfig" : {
+            "$ref" : "#/components/schemas/appsettingsdto.HTTPWebsocketConfigReq"
           }
         },
-        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "protocol", "rateLimitConfig", "sslCert", "tlsPassthrough" ],
+        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "protocol", "rateLimitConfig", "sslCert", "tlsPassthrough", "websocketConfig" ],
         "type" : "object"
       },
       "appsettingsdto.DomainResp" : {
@@ -37758,9 +37761,12 @@
           },
           "tlsPassthrough" : {
             "type" : "boolean"
+          },
+          "websocketConfig" : {
+            "$ref" : "#/components/schemas/appsettingsdto.HTTPWebsocketConfigResp"
           }
         },
-        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "protocol", "rateLimitConfig", "sslCert", "tlsPassthrough" ],
+        "required" : [ "basicAuth", "circuitBreakerConfig", "clientConfig", "compressionConfig", "containerPort", "domain", "domainRedirect", "enabled", "forceHttps", "headerConfig", "lbConfig", "pathRewriteConfig", "paths", "protocol", "rateLimitConfig", "sslCert", "tlsPassthrough", "websocketConfig" ],
         "type" : "object"
       },
       "appsettingsdto.EndpointSpec" : {
@@ -38436,6 +38442,24 @@
           }
         },
         "required" : [ "average", "burst", "enabled", "maxInFlightReq", "period" ],
+        "type" : "object"
+      },
+      "appsettingsdto.HTTPWebsocketConfigReq" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled" ],
+        "type" : "object"
+      },
+      "appsettingsdto.HTTPWebsocketConfigResp" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "enabled" ],
         "type" : "object"
       },
       "appsettingsdto.Healthcheck" : {

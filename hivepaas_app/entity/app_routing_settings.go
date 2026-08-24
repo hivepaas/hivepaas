@@ -45,12 +45,13 @@ type AppDomain struct {
 	ForceHttps           bool                      `json:"forceHttps,omitempty"`
 	LBConfig             *HTTPLBConfig             `json:"lbConfig,omitempty"`
 	BasicAuth            *HTTPBasicAuthConfig      `json:"basicAuth,omitempty"`
+	CircuitBreakerConfig *HTTPCircuitBreakerConfig `json:"circuitBreakerConfig,omitempty"`
 	ClientConfig         *HTTPClientConfig         `json:"clientConfig,omitempty"`
 	CompressionConfig    *HTTPCompressionConfig    `json:"compressionConfig,omitempty"`
-	RateLimitConfig      *HTTPRateLimitConfig      `json:"rateLimitConfig,omitempty"`
 	HeaderConfig         *HTTPHeaderConfig         `json:"headerConfig,omitempty"`
 	PathRewriteConfig    *HTTPPathRewriteConfig    `json:"pathRewriteConfig,omitempty"`
-	CircuitBreakerConfig *HTTPCircuitBreakerConfig `json:"circuitBreakerConfig,omitempty"`
+	RateLimitConfig      *HTTPRateLimitConfig      `json:"rateLimitConfig,omitempty"`
+	WebsocketConfig      *HTTPWebsocketConfig      `json:"websocketConfig,omitempty"`
 	Paths                []*HTTPPathConfig         `json:"paths,omitempty"`
 }
 
@@ -63,20 +64,20 @@ type HTTPBasicAuthConfig struct {
 	ID      string `json:"id"`
 }
 
+type HTTPCircuitBreakerConfig struct {
+	Enabled          bool              `json:"enabled"`
+	Expression       string            `json:"expression,omitempty"`
+	CheckPeriod      timeutil.Duration `json:"checkPeriod,omitempty"`
+	FallbackDuration timeutil.Duration `json:"fallbackDuration,omitempty"`
+	RecoveryDuration timeutil.Duration `json:"recoveryDuration,omitempty"`
+	ResponseCode     int               `json:"responseCode,omitempty"`
+}
+
 type HTTPClientConfig struct {
 	Enabled        bool          `json:"enabled"`
 	MaxRequestBody unit.DataSize `json:"maxRequestBody,omitempty"`
 	MemRequestBody unit.DataSize `json:"memRequestBody,omitempty"`
 	AllowedIPs     []string      `json:"allowedIPs,omitempty"`
-}
-
-type HTTPHeaderConfig struct {
-	Enabled               bool              `json:"enabled"`
-	AutoContentType       bool              `json:"autoContentType,omitempty"`
-	ToAddToRequests       map[string]string `json:"toAddToRequests,omitempty"`
-	ToRemoveFromRequests  []string          `json:"toRemoveFromRequests,omitempty"`
-	ToAddToResponses      map[string]string `json:"toAddToResponses,omitempty"`
-	ToRemoveFromResponses []string          `json:"toRemoveFromResponses,omitempty"`
 }
 
 type HTTPCompressionConfig struct {
@@ -87,12 +88,13 @@ type HTTPCompressionConfig struct {
 	DefaultEncoding      string        `json:"defaultEncoding,omitempty"`
 }
 
-type HTTPRateLimitConfig struct {
-	Enabled        bool              `json:"enabled"`
-	Average        int               `json:"average,omitempty"`
-	Period         timeutil.Duration `json:"period,omitempty"`
-	Burst          int               `json:"burst,omitempty"`
-	MaxInFlightReq int               `json:"maxInFlightReq,omitempty"`
+type HTTPHeaderConfig struct {
+	Enabled               bool              `json:"enabled"`
+	AutoContentType       bool              `json:"autoContentType,omitempty"`
+	ToAddToRequests       map[string]string `json:"toAddToRequests,omitempty"`
+	ToRemoveFromRequests  []string          `json:"toRemoveFromRequests,omitempty"`
+	ToAddToResponses      map[string]string `json:"toAddToResponses,omitempty"`
+	ToRemoveFromResponses []string          `json:"toRemoveFromResponses,omitempty"`
 }
 
 type HTTPPathRewriteConfig struct {
@@ -105,13 +107,16 @@ type HTTPPathRewriteConfig struct {
 	PathReplaceWith    string `json:"pathReplaceWith,omitempty"`
 }
 
-type HTTPCircuitBreakerConfig struct {
-	Enabled          bool              `json:"enabled"`
-	Expression       string            `json:"expression,omitempty"`
-	CheckPeriod      timeutil.Duration `json:"checkPeriod,omitempty"`
-	FallbackDuration timeutil.Duration `json:"fallbackDuration,omitempty"`
-	RecoveryDuration timeutil.Duration `json:"recoveryDuration,omitempty"`
-	ResponseCode     int               `json:"responseCode,omitempty"`
+type HTTPRateLimitConfig struct {
+	Enabled        bool              `json:"enabled"`
+	Average        int               `json:"average,omitempty"`
+	Period         timeutil.Duration `json:"period,omitempty"`
+	Burst          int               `json:"burst,omitempty"`
+	MaxInFlightReq int               `json:"maxInFlightReq,omitempty"`
+}
+
+type HTTPWebsocketConfig struct {
+	Enabled bool `json:"enabled"`
 }
 
 type HTTPPathConfig struct {
@@ -119,12 +124,13 @@ type HTTPPathConfig struct {
 	Path                 string                    `json:"path"`
 	Mode                 base.HTTPPathMode         `json:"mode"`
 	BasicAuth            *HTTPBasicAuthConfig      `json:"basicAuth,omitempty"`
-	ClientConfig         *HTTPClientConfig         `json:"clientConfig,omitempty"`
-	HeaderConfig         *HTTPHeaderConfig         `json:"headerConfig,omitempty"`
-	CompressionConfig    *HTTPCompressionConfig    `json:"compressionConfig,omitempty"`
-	RateLimitConfig      *HTTPRateLimitConfig      `json:"rateLimitConfig,omitempty"`
-	PathRewriteConfig    *HTTPPathRewriteConfig    `json:"pathRewriteConfig,omitempty"`
 	CircuitBreakerConfig *HTTPCircuitBreakerConfig `json:"circuitBreakerConfig,omitempty"`
+	ClientConfig         *HTTPClientConfig         `json:"clientConfig,omitempty"`
+	CompressionConfig    *HTTPCompressionConfig    `json:"compressionConfig,omitempty"`
+	HeaderConfig         *HTTPHeaderConfig         `json:"headerConfig,omitempty"`
+	PathRewriteConfig    *HTTPPathRewriteConfig    `json:"pathRewriteConfig,omitempty"`
+	RateLimitConfig      *HTTPRateLimitConfig      `json:"rateLimitConfig,omitempty"`
+	WebsocketConfig      *HTTPWebsocketConfig      `json:"websocketConfig,omitempty"`
 }
 
 func (s *AppRoutingSettings) GetDomain(domain string) *AppDomain {

@@ -64,3 +64,14 @@ export type ProjectSslCert_RenewOne_Req = ApiRequestBase<{
 }>;
 
 export type ProjectSslCert_RenewOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type ProjectSslCert_DownloadBundle_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+}>;
+
+export type ProjectSslCert_DownloadBundle_Res = ApiResponseBase<{
+    blob: Blob;
+    filename?: string;
+}>;

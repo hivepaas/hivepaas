@@ -1,3 +1,4 @@
+import type { AxiosResponse } from "axios";
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
@@ -8,6 +9,8 @@ import type {
     ProjectSslCert_CreateOne_Res,
     ProjectSslCert_DeleteOne_Req,
     ProjectSslCert_DeleteOne_Res,
+    ProjectSslCert_DownloadBundle_Req,
+    ProjectSslCert_DownloadBundle_Res,
     ProjectSslCert_FindManyPaginated_Req,
     ProjectSslCert_FindManyPaginated_Res,
     ProjectSslCert_FindOneById_Req,
@@ -20,6 +23,34 @@ import type {
     ProjectSslCert_UpdateStatus_Res,
 } from "./project-ssl-cert.api.contracts";
 import type { ProjectSslCertApiValidator } from "./project-ssl-cert.api.validator";
+
+function parseFilenameFromContentDisposition(contentDisposition?: string): string | undefined {
+    if (!contentDisposition) {
+        return undefined;
+    }
+
+    const encodedFilename = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition)?.[1];
+    if (encodedFilename) {
+        return decodeURIComponent(encodedFilename);
+    }
+
+    const filename = /filename="?([^";]+)"?/i.exec(contentDisposition)?.[1];
+    return filename ? decodeURIComponent(filename) : undefined;
+}
+
+function mapDownloadResponse(response: AxiosResponse<Blob>): ProjectSslCert_DownloadBundle_Res {
+    const headers = response.headers as Record<string, unknown>;
+    const contentDisposition = headers["content-disposition"];
+
+    return {
+        data: {
+            blob: response.data,
+            filename: parseFilenameFromContentDisposition(
+                typeof contentDisposition === "string" ? contentDisposition : undefined,
+            ),
+        },
+    };
+}
 
 function getProjectSslCertBasePath(projectID: string, env?: string): string {
     if (env) {
@@ -155,6 +186,26 @@ export class ProjectSslCertApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.post(`/projects/${projectID}/ssl-certs/${id}/renew`, {})).pipe(
                 map(response => this.validator.renewOne(response)),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async downloadBundle(
+        request: ProjectSslCert_DownloadBundle_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<ProjectSslCert_DownloadBundle_Res, Error>> {
+        const { projectID, env, id } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get<Blob>(`${getProjectSslCertBasePath(projectID, env)}/${id}/download`, {
+                    responseType: "blob",
+                    signal,
+                }),
+            ).pipe(
+                map(mapDownloadResponse),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

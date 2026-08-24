@@ -110,3 +110,12 @@ export type SslCert_RenewOne_Req = ApiRequestBase<{
 }>;
 
 export type SslCert_RenewOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type SslCert_DownloadBundle_Req = ApiRequestBase<{
+    id: string;
+}>;
+
+export type SslCert_DownloadBundle_Res = ApiResponseBase<{
+    blob: Blob;
+    filename?: string;
+}>;

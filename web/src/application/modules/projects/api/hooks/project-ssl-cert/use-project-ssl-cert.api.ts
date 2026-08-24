@@ -5,6 +5,7 @@ import { ProjectsApiContext } from "~/projects/api/api-context";
 import type {
     ProjectSslCert_CreateOne_Req,
     ProjectSslCert_DeleteOne_Req,
+    ProjectSslCert_DownloadBundle_Req,
     ProjectSslCert_FindManyPaginated_Req,
     ProjectSslCert_FindOneById_Req,
     ProjectSslCert_RenewOne_Req,
@@ -55,6 +56,26 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to get project SSL certificate",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                downloadBundle: async (data: ProjectSslCert_DownloadBundle_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.projects.sslCert.$.downloadBundle(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to download project SSL certificate bundle",
                                 error,
                             });
 

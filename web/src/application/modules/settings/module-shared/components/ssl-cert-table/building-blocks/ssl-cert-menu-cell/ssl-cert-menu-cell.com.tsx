@@ -2,9 +2,11 @@ import { memo, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { MoreVertical, RefreshCcw, SlidersHorizontal, Trash2Icon } from "lucide-react";
+import { Download, MoreVertical, RefreshCcw, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
+import { useProjectSslCertApi } from "~/projects/api/hooks";
 import { ProjectSslCertCommands } from "~/projects/data/commands";
+import { useSslCertApi } from "~/settings/api/hooks";
 import { SslCertCommands } from "~/settings/data/commands";
 import { useUpdateSslCertStatusDialog } from "~/settings/dialogs/update-ssl-cert-status";
 import type { SettingSslCert } from "~/settings/domain";
@@ -14,8 +16,22 @@ import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 import type { SslCertTableScope } from "../../ssl-cert-table.types";
 
+function saveBlob(blob: Blob, filename: string) {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    window.URL.revokeObjectURL(url);
+}
+
 function View({ scope, sslCert }: Props) {
     const [open, setOpen] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
+
+    const { queries: settingQueries } = useSslCertApi();
+    const { queries: projectQueries } = useProjectSslCertApi();
 
     const updateStatusDialog = useUpdateSslCertStatusDialog();
     const { mutate: renewSettingSslCert, isPending: isRenewingSetting } = SslCertCommands.useRenewOne({
@@ -49,6 +65,29 @@ function View({ scope, sslCert }: Props) {
     const isDeleting = isDeletingSetting || isDeletingProject;
     const isRenewing = isRenewingSetting || isRenewingProject;
     const isInheritedProject = isInheritedProjectSetting(scope, sslCert.inherited);
+
+    async function handleDownload() {
+        try {
+            setIsDownloading(true);
+            if (scope.type === "project") {
+                const { data } = await projectQueries.downloadBundle({
+                    projectID: scope.projectId,
+                    id: sslCert.id,
+                });
+                saveBlob(data.blob, data.filename ?? `${sslCert.name}.zip`);
+            } else {
+                const { data } = await settingQueries.downloadBundle({
+                    id: sslCert.id,
+                });
+                saveBlob(data.blob, data.filename ?? `${sslCert.name}.zip`);
+            }
+            setOpen(false);
+        } catch (error) {
+            toast.error(error instanceof Error ? error.message : "Failed to download SSL certificate bundle");
+        } finally {
+            setIsDownloading(false);
+        }
+    }
 
     function handleRenew() {
         if (scope.type === "project") {
@@ -107,6 +146,17 @@ function View({ scope, sslCert }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <div className="flex flex-col gap-0">
+                    <SettingsScopeMenuButton
+                        scope={scope}
+                        action="read"
+                        isLoading={isDownloading}
+                        onClick={() => {
+                            void handleDownload();
+                        }}
+                    >
+                        <Download className="mr-2 size-4" />
+                        Download Bundle
+                    </SettingsScopeMenuButton>
                     <SettingsScopeMenuButton
                         scope={scope}
                         action="write"

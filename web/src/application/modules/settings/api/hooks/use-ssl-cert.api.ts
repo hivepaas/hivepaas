@@ -5,6 +5,7 @@ import { SettingsApiContext } from "~/settings/api/api-context/settings.api.cont
 import type {
     SslCert_CreateOne_Req,
     SslCert_DeleteOne_Req,
+    SslCert_DownloadBundle_Req,
     SslCert_FindManyPaginated_Req,
     SslCert_FindOneById_Req,
     SslCert_RenewOne_Req,
@@ -55,6 +56,26 @@ function createHook() {
                         Err: error => {
                             notifyError({
                                 message: "Failed to get SSL certificate",
+                                error,
+                            });
+
+                            throw error;
+                        },
+                    });
+                },
+                downloadBundle: async (data: SslCert_DownloadBundle_Req["data"], signal?: AbortSignal) => {
+                    const result = await api.settings.sslCert.downloadBundle(
+                        {
+                            data,
+                        },
+                        signal,
+                    );
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            notifyError({
+                                message: "Failed to download SSL certificate bundle",
                                 error,
                             });
 

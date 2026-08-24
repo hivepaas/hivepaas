@@ -2,7 +2,7 @@ import { useId, useState } from "react";
 
 import { Check, FilePen } from "lucide-react";
 import Prism from "prismjs";
-import "prismjs/components/prism-clike";
+import "prismjs/components/prism-docker";
 import "prismjs/themes/prism-tomorrow.css";
 import type { FieldError as ReactHookFormFieldError } from "react-hook-form";
 import Editor from "react-simple-code-editor";
@@ -18,13 +18,13 @@ import {
 } from "@/components/ui/dialog";
 
 function highlightDockerfile(code: string): string {
-    const clikeGrammar = Prism.languages["clike"];
+    const dockerGrammar = Prism.languages["docker"];
 
-    if (!clikeGrammar) {
+    if (!dockerGrammar) {
         return code;
     }
 
-    return Prism.highlight(code, clikeGrammar, "clike");
+    return Prism.highlight(code, dockerGrammar, "docker");
 }
 
 export function DockerfileContentEditor({ value, onChange, invalid, error, readOnly = false }: Props) {

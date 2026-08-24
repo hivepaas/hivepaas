@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Check, FilePen } from "lucide-react";
 import Prism from "prismjs";
 import "prismjs/components/prism-bash";
-import "prismjs/components/prism-clike";
 import "prismjs/themes/prism-tomorrow.css";
 import type { FieldError as ReactHookFormFieldError } from "react-hook-form";
 import Editor from "react-simple-code-editor";

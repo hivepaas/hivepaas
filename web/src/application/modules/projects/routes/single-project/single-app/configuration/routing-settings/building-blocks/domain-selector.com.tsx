@@ -249,7 +249,7 @@ export function DomainSelector({
                                 if (prevPort !== newPort) {
                                     const currentDomains = getValues("domains");
                                     currentDomains.forEach((d, idx) => {
-                                        if (d.containerPort === prevPort) {
+                                        if (!d.overridePort) {
                                             setValue(`domains.${idx}.containerPort`, newPort, {
                                                 shouldDirty: true,
                                                 shouldValidate: true,

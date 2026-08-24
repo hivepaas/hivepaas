@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 
-import { Field, FieldError, FieldGroup } from "@components/ui";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@components/ui";
+import { Checkbox } from "@components/ui/checkbox";
 import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { InputNumber } from "@components/ui/input-number";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { useController, useFormContext } from "react-hook-form";
+import { useController, useFormContext, useWatch } from "react-hook-form";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { AppContainerSettingsCommands } from "~/projects/data/commands";
@@ -27,23 +28,30 @@ function View({ domainIndex, readOnly = false }: ContainerPortProps) {
     invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
-    const { control, getValues, setValue } = useFormContext<
+    const { control, getValues } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
         AppConfigHttpSettingsFormSchemaOutput
     >();
+
+    const outerPort = useWatch({ control, name: "port" });
 
     const {
         field: containerPort,
         fieldState: { error: containerPortError, invalid: isContainerPortInvalid },
     } = useController({ control, name: `domains.${domainIndex}.containerPort` });
 
+    const { field: overridePort } = useController({ control, name: `domains.${domainIndex}.overridePort` });
+
+    const isOverride = Boolean(overridePort.value);
+    const effectivePort = isOverride ? containerPort.value : outerPort;
+
     const [modalOpen, setModalOpen] = useState(false);
     const [result, setResult] = useState<CheckPortResult | null>(null);
 
     const { mutate: checkPort, isPending } = AppContainerSettingsCommands.useCheckPort({
         onSuccess: data => {
-            setResult({ port: containerPort.value, open: data.data.open });
+            setResult({ port: effectivePort, open: data.data.open });
             setModalOpen(true);
         },
     });
@@ -53,7 +61,7 @@ function View({ domainIndex, readOnly = false }: ContainerPortProps) {
             return;
         }
 
-        const port = containerPort.value;
+        const port = effectivePort;
         if (!port || !projectId || !env || !appId) return;
 
         checkPort({
@@ -76,37 +84,48 @@ function View({ domainIndex, readOnly = false }: ContainerPortProps) {
             >
                 <FieldGroup>
                     <Field>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                             <InputNumber
                                 name={containerPort.name}
                                 ref={containerPort.ref}
                                 onBlur={containerPort.onBlur}
-                                disabled={readOnly || containerPort.disabled}
-                                value={containerPort.value}
+                                disabled={readOnly || !isOverride || containerPort.disabled}
+                                value={effectivePort}
                                 onValueChange={v => {
-                                    if (readOnly) {
+                                    if (readOnly || !isOverride) {
                                         return;
                                     }
 
-                                    const prevContainerPort = containerPort.value;
-                                    const newContainerPort = v ?? 0;
-                                    containerPort.onChange(newContainerPort);
-
-                                    if (prevContainerPort !== newContainerPort) {
-                                        const outerPort = getValues("port");
-                                        if (outerPort === prevContainerPort) {
-                                            setValue("port", newContainerPort, {
-                                                shouldDirty: true,
-                                                shouldValidate: true,
-                                            });
-                                        }
-                                    }
+                                    containerPort.onChange(v ?? 0);
                                 }}
                                 useGrouping={false}
                                 placeholder="80"
                                 className="max-w-[100px]"
                                 aria-invalid={isContainerPortInvalid}
                             />
+
+                            <div className="flex items-center gap-1.5">
+                                <Checkbox
+                                    id={`domains.${domainIndex}.overridePort`}
+                                    checked={isOverride}
+                                    disabled={readOnly}
+                                    onCheckedChange={checked => {
+                                        if (readOnly) return;
+                                        const nextOverride = Boolean(checked);
+                                        overridePort.onChange(nextOverride);
+                                        if (!nextOverride) {
+                                            const currentOuterPort = getValues("port");
+                                            containerPort.onChange(currentOuterPort);
+                                        }
+                                    }}
+                                />
+                                <FieldLabel
+                                    htmlFor={`domains.${domainIndex}.overridePort`}
+                                    className="cursor-pointer font-normal text-muted-foreground select-none"
+                                >
+                                    Override port
+                                </FieldLabel>
+                            </div>
 
                             <button
                                 type="button"

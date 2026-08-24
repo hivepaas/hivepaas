@@ -63,6 +63,8 @@ export const InputNumber = forwardRef<HTMLInputElement, NumberInputProps>(
             classNameInput,
             "aria-label": ariaLabel,
             "aria-labelledby": ariaLabelledBy,
+            disabled,
+            readOnly,
             ...props
         },
         ref,
@@ -93,7 +95,10 @@ export const InputNumber = forwardRef<HTMLInputElement, NumberInputProps>(
             <NumberField
                 value={value}
                 defaultValue={defaultValue}
+                isDisabled={disabled}
+                isReadOnly={readOnly}
                 onChange={nextValue => {
+                    if (disabled || readOnly) return;
                     const normalizedValue = clampValue(nextValue, min, max);
                     setValue(normalizedValue);
                     onValueChange?.(normalizedValue);

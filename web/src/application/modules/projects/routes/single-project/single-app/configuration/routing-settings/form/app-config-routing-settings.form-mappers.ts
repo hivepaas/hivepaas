@@ -16,12 +16,18 @@ function isLBStrategy(value: string): value is (typeof ELBStrategy)[keyof typeof
     return Object.values(ELBStrategy).some(item => item === value);
 }
 
-function mapDomainToFormInput(domain: AppRoutingDomain): AppConfigRoutingSettingsFormSchemaInput["domains"][number] {
+function mapDomainToFormInput(
+    domain: AppRoutingDomain,
+    topLevelPort?: number,
+): AppConfigRoutingSettingsFormSchemaInput["domains"][number] {
+    const isOverridePort =
+        topLevelPort !== undefined && topLevelPort > 0 ? domain.containerPort !== topLevelPort : false;
     return {
         enabled: domain.enabled,
         domain: domain.domain,
         protocol: domain.protocol ?? ERoutingProtocol.HTTP,
         containerPort: domain.containerPort,
+        overridePort: isOverridePort,
         tlsPassthrough: domain.tlsPassthrough ?? false,
         domainRedirect: domain.domainRedirect ?? "",
         sslCert: domain.sslCert?.id ? { id: domain.sslCert.id, name: domain.sslCert.name } : null,
@@ -179,10 +185,11 @@ function mapDomainToFormInput(domain: AppRoutingDomain): AppConfigRoutingSetting
 }
 
 export function mapAppRoutingSettingsToFormInput(data: AppRoutingSettings): AppConfigRoutingSettingsFormSchemaInput {
+    const topLevelPort = data.port >= 1 && data.port <= 65535 ? data.port : 0;
     return {
-        port: data.port >= 1 && data.port <= 65535 ? data.port : 0,
+        port: topLevelPort,
         exposePublicly: data.exposePublicly,
-        domains: data.domains.map(mapDomainToFormInput),
+        domains: data.domains.map(d => mapDomainToFormInput(d, topLevelPort)),
     };
 }
 

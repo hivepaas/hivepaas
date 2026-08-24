@@ -27,7 +27,7 @@ function View({ domainIndex, readOnly = false }: ContainerPortProps) {
     invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
-    const { control } = useFormContext<
+    const { control, getValues, setValue } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
         unknown,
         AppConfigHttpSettingsFormSchemaOutput
@@ -88,13 +88,26 @@ function View({ domainIndex, readOnly = false }: ContainerPortProps) {
                                         return;
                                     }
 
-                                    containerPort.onChange(v ?? 0);
+                                    const prevContainerPort = containerPort.value;
+                                    const newContainerPort = v ?? 0;
+                                    containerPort.onChange(newContainerPort);
+
+                                    if (prevContainerPort !== newContainerPort) {
+                                        const outerPort = getValues("port");
+                                        if (outerPort === prevContainerPort) {
+                                            setValue("port", newContainerPort, {
+                                                shouldDirty: true,
+                                                shouldValidate: true,
+                                            });
+                                        }
+                                    }
                                 }}
                                 useGrouping={false}
                                 placeholder="80"
                                 className="max-w-[100px]"
                                 aria-invalid={isContainerPortInvalid}
                             />
+
                             <button
                                 type="button"
                                 className="text-blue-500 cursor-pointer hover:underline select-none disabled:opacity-50 disabled:cursor-not-allowed"

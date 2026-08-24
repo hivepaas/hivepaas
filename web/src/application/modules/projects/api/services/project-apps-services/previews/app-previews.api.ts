@@ -60,7 +60,7 @@ export class AppPreviewsApi extends BaseApi {
     }
 
     async createOne(request: AppPreviews_CreateOne_Req): Promise<Result<AppPreviews_CreateOne_Res, Error>> {
-        const { projectID, env, appID, repoRef, customSubdomain, noStart } = request.data;
+        const { projectID, env, appID, repoRef, customSubdomain, noStart, cloneDbApps } = request.data;
 
         return lastValueFrom(
             from(
@@ -68,6 +68,7 @@ export class AppPreviewsApi extends BaseApi {
                     repoRef,
                     customSubdomain,
                     noStart,
+                    ...(cloneDbApps !== undefined ? { cloneDbApps } : {}),
                 }),
             ).pipe(
                 map(this.validator.createOne),

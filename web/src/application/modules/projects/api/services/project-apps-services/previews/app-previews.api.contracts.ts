@@ -26,6 +26,8 @@ export type AppPreviews_PrepareCreate_Res = ApiResponseBase<{
     repoCredentials: { id: string } | null;
     canListBranches: boolean;
     canListPullRequests: boolean;
+    canCloneDbApps: boolean;
+    canSkipCloningDbApps: boolean;
 }>;
 
 export type AppPreviews_CreateOne_Req = ApiRequestBase<{
@@ -35,6 +37,7 @@ export type AppPreviews_CreateOne_Req = ApiRequestBase<{
     repoRef: string;
     customSubdomain: string;
     noStart: boolean;
+    cloneDbApps?: boolean;
 }>;
 
 export type AppPreviews_CreateOne_Res = ApiResponseBase<{

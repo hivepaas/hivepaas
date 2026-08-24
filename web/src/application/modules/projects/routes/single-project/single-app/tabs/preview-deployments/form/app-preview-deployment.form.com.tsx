@@ -38,6 +38,7 @@ export function AppPreviewDeploymentForm({
     readOnly = false,
     onSubmit,
 }: Props) {
+    const isCloneDbAppsAllowed = preparedPreview.canCloneDbApps || preparedPreview.canSkipCloningDbApps;
     const [isPullRequestsDialogOpen, setPullRequestsDialogOpen] = useState(false);
     const [isBranchesDialogOpen, setBranchesDialogOpen] = useState(false);
     const {
@@ -46,7 +47,10 @@ export function AppPreviewDeploymentForm({
         setValue,
         formState: { errors },
     } = useForm<AppPreviewDeploymentFormInput, unknown, AppPreviewDeploymentFormOutput>({
-        defaultValues: DEFAULT_APP_PREVIEW_DEPLOYMENT_FORM_VALUES,
+        defaultValues: {
+            ...DEFAULT_APP_PREVIEW_DEPLOYMENT_FORM_VALUES,
+            cloneDbApps: isCloneDbAppsAllowed,
+        },
         resolver: zodResolver(AppPreviewDeploymentFormSchema),
         mode: "onSubmit",
     });
@@ -60,6 +64,7 @@ export function AppPreviewDeploymentForm({
         field: customSubdomain,
         fieldState: { invalid: isCustomSubdomainInvalid },
     } = useController({ control, name: "customSubdomain" });
+    const { field: cloneDbApps } = useController({ control, name: "cloneDbApps" });
     const { field: noStart } = useController({ control, name: "noStart" });
 
     const repository = useMemo(() => parseGitRepository(preparedPreview.repoURL), [preparedPreview.repoURL]);
@@ -123,12 +128,45 @@ export function AppPreviewDeploymentForm({
                     </InfoBlock>
 
                     {!isDashboardUI && (
-                        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                            <p>
-                                Type <span className="font-medium text-orange-500">/hivepaas deploy</span> in the pull
-                                request you want to deploy.
-                            </p>
-                            <p className="mt-2">
+                        <div className={cn(dashedBorderBox, "space-y-4 text-sm leading-6")}>
+                            <div className="space-y-2">
+                                <p>Comment in your pull request to trigger a preview deployment:</p>
+                                <div className="rounded bg-muted/60 p-3 font-mono text-sm text-foreground">
+                                    /hivepaas deploy [subdomain=&lt;name&gt;] [clonedb|noclonedb] [nowait] [nostart]
+                                </div>
+                                <div className="space-y-1.5 pt-1 text-sm text-muted-foreground">
+                                    <p className="font-semibold text-foreground">Available flags:</p>
+                                    <ul className="list-disc space-y-1 pl-5">
+                                        <li>
+                                            <code className="text-foreground">subdomain=&lt;name&gt;</code>: Set a
+                                            custom subdomain (default:{" "}
+                                            <code className="text-foreground">pr-&lt;number&gt;</code>).
+                                        </li>
+                                        <li>
+                                            <code className="text-foreground">clonedb</code> /{" "}
+                                            <code className="text-foreground">noclonedb</code>: Force clone or skip
+                                            cloning configured database apps.
+                                        </li>
+                                        <li>
+                                            <code className="text-foreground">nowait</code>: Deploy immediately,
+                                            ignoring the configured creation delay.
+                                        </li>
+                                        <li>
+                                            <code className="text-foreground">nostart</code>: Create the preview app
+                                            without starting containers.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <p>To cancel an in-progress preview deployment:</p>
+                                <div className="rounded bg-muted/60 p-3 font-mono text-sm text-foreground">
+                                    /hivepaas cancel
+                                </div>
+                            </div>
+
+                            <p className="border-t pt-3 text-sm text-muted-foreground">
                                 <span className="font-semibold text-orange-500">Note:</span> This method only works if
                                 you have configured the GitHub App or webhook correctly, and preview deployments have
                                 been enabled{" "}
@@ -212,6 +250,19 @@ export function AppPreviewDeploymentForm({
                                     />
                                     <FieldError errors={[errors.customSubdomain]} />
                                 </Field>
+                            </InfoBlock>
+
+                            <InfoBlock
+                                title="Clone DB Apps"
+                                titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                            >
+                                <Checkbox
+                                    checked={Boolean(cloneDbApps.value)}
+                                    disabled={readOnly || !isCloneDbAppsAllowed}
+                                    onCheckedChange={checked => {
+                                        cloneDbApps.onChange(checked === true);
+                                    }}
+                                />
                             </InfoBlock>
 
                             <InfoBlock

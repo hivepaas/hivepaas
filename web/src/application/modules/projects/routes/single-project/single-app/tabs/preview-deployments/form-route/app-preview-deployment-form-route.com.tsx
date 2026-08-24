@@ -89,6 +89,8 @@ export function AppPreviewDeploymentFormRoute({ projectId, appId, env, initialPr
             return;
         }
 
+        const isCloneDbAppsAllowed = Boolean(preparedPreview?.canCloneDbApps ?? preparedPreview?.canSkipCloningDbApps);
+
         createPreview({
             projectID: projectId,
             env,
@@ -96,6 +98,7 @@ export function AppPreviewDeploymentFormRoute({ projectId, appId, env, initialPr
             repoRef: values.repoRef,
             customSubdomain: values.customSubdomain,
             noStart: values.noStart,
+            ...(isCloneDbAppsAllowed && values.cloneDbApps !== undefined ? { cloneDbApps: values.cloneDbApps } : {}),
         });
     }
 

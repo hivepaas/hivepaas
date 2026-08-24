@@ -18,6 +18,7 @@ export const AppPreviewDeploymentFormSchema = z
         repoRef: z.string().trim().max(255, "Git Ref must be 255 characters or fewer"),
         customSubdomain: z.string().trim().max(63, "Custom Subdomain must be 63 characters or fewer"),
         noStart: z.boolean(),
+        cloneDbApps: z.boolean().optional(),
     })
     .superRefine((values, ctx) => {
         if (values.trigger !== PREVIEW_DEPLOYMENT_TRIGGER.DashboardUI) {
@@ -41,4 +42,5 @@ export const DEFAULT_APP_PREVIEW_DEPLOYMENT_FORM_VALUES: AppPreviewDeploymentFor
     repoRef: "",
     customSubdomain: "",
     noStart: false,
+    cloneDbApps: false,
 };

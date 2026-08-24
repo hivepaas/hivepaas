@@ -26,6 +26,14 @@ const PrepareCreateSchema = z.object({
             .transform(value => value ?? null),
         canListBranches: z.boolean(),
         canListPullRequests: z.boolean(),
+        canCloneDbApps: z
+            .boolean()
+            .nullish()
+            .transform(value => value ?? false),
+        canSkipCloningDbApps: z
+            .boolean()
+            .nullish()
+            .transform(value => value ?? false),
     }),
     meta: BaseMetaApiSchema.nullish(),
 });

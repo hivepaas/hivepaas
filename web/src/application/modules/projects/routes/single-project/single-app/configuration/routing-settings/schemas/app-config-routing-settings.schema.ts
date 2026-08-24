@@ -218,7 +218,7 @@ export const emptyDomain: z.input<typeof DomainFormSchema> = {
     enabled: true,
     domain: "",
     protocol: ERoutingProtocol.HTTP,
-    containerPort: 80,
+    containerPort: 0,
     tlsPassthrough: false,
     domainRedirect: "",
     forceHttps: true,
@@ -227,7 +227,7 @@ export const emptyDomain: z.input<typeof DomainFormSchema> = {
 };
 
 export const emptyAppConfigRoutingSettingsFormDefaults: AppConfigRoutingSettingsFormSchemaInput = {
-    port: 8080,
+    port: 0,
     exposePublicly: false,
     domains: [],
 };

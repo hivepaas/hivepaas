@@ -170,7 +170,7 @@ function mapDomainToFormInput(domain: AppRoutingDomain): AppConfigRoutingSetting
 
 export function mapAppRoutingSettingsToFormInput(data: AppRoutingSettings): AppConfigRoutingSettingsFormSchemaInput {
     return {
-        port: data.port >= 1 && data.port <= 65535 ? data.port : 8080,
+        port: data.port >= 1 && data.port <= 65535 ? data.port : 0,
         exposePublicly: data.exposePublicly,
         domains: data.domains.map(mapDomainToFormInput),
     };

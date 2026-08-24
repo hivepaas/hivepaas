@@ -21,7 +21,7 @@ type CreatePreviewReq struct {
 	CustomSubdomain   string `json:"customSubdomain"`
 	NoStart           bool   `json:"noStart"`
 	CloneDBApps       bool   `json:"cloneDbApps"`
-	SkipCloningDBApps bool   `json:"skipCloningDBApps"`
+	SkipCloningDBApps bool   `json:"skipCloningDbApps"`
 }
 
 func NewCreatePreviewReq() *CreatePreviewReq {

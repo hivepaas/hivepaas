@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { flushSync } from "react-dom";
 
@@ -129,6 +129,20 @@ export function DomainSelector({
     const [isAdding, setIsAdding] = useState(false);
     const [newDomainDraft, setNewDomainDraft] = useState(suggestedDomain);
     const [domainInputError, setDomainInputError] = useState<string | null>(null);
+    const domainInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (isAdding && domainInputRef.current) {
+            const input = domainInputRef.current;
+            input.focus();
+            const dotIndex = input.value.indexOf(".");
+            if (dotIndex > 0) {
+                input.setSelectionRange(0, dotIndex);
+            } else {
+                input.select();
+            }
+        }
+    }, [isAdding]);
 
     function handleMoveLeft(index: number) {
         move(index, index - 1);
@@ -321,6 +335,7 @@ export function DomainSelector({
                         {isAdding ? (
                             <div className="flex items-center gap-1">
                                 <Input
+                                    ref={domainInputRef}
                                     value={newDomainDraft}
                                     onChange={e => {
                                         setNewDomainDraft(e.target.value);

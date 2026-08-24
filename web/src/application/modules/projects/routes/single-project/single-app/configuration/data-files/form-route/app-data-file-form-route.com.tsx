@@ -76,6 +76,7 @@ export function AppDataFileFormRoute({ projectId, appId, env }: Props) {
             <UploadAppDataFileForm
                 isPending={isPending}
                 projectId={projectId}
+                env={env}
                 onSubmit={onSubmit}
                 onClose={handleClose}
             />

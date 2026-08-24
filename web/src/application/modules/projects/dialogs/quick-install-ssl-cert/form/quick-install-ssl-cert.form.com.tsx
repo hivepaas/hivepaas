@@ -90,6 +90,7 @@ function addDays(date: Date, days: number): Date {
 
 export function QuickInstallSslCertForm({
     projectId,
+    env,
     domain,
     isPending,
     prefill,
@@ -208,11 +209,11 @@ export function QuickInstallSslCertForm({
     const acmeDnsProvidersRoute = ROUTE.projects.single.providerConfiguration.acmeDnsProviders.$route(projectId);
 
     const providerQuery = ProjectSslProviderQueries.useFindManyPaginated(
-        { projectID: projectId, kind: providerKind },
+        { projectID: projectId, env, kind: providerKind },
         { enabled: isAcme && !!projectId },
     );
     const acmeProviderQuery = ProjectAcmeDnsProviderQueries.useFindManyPaginated(
-        { projectID: projectId },
+        { projectID: projectId, env },
         { enabled: isAcme && !!projectId },
     );
 
@@ -700,6 +701,7 @@ interface PrefillValues {
 
 interface Props {
     projectId: string;
+    env?: string;
     domain: string;
     isPending: boolean;
     prefill?: PrefillValues;

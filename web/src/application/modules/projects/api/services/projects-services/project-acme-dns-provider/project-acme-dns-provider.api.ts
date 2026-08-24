@@ -19,6 +19,14 @@ import type {
 } from "./project-acme-dns-provider.api.contracts";
 import type { ProjectAcmeDnsProviderApiValidator } from "./project-acme-dns-provider.api.validator";
 
+function getProjectAcmeDnsProviderBasePath(projectID: string, env?: string): string {
+    if (env) {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/acme-dns-providers`;
+    }
+
+    return `/projects/${projectID}/acme-dns-providers`;
+}
+
 export class ProjectAcmeDnsProviderApi extends BaseApi {
     public constructor(private readonly validator: ProjectAcmeDnsProviderApiValidator) {
         super();
@@ -28,7 +36,7 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
         request: ProjectAcmeDnsProvider_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectAcmeDnsProvider_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting, kind } = request.data;
+        const { projectID, env, search, pagination, sorting, kind } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
@@ -39,12 +47,12 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/acme-dns-providers`, {
+                this.client.v1.get(getProjectAcmeDnsProviderBasePath(projectID, env), {
                     params,
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findManyPaginated),
+                map(response => this.validator.findManyPaginated(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -63,7 +71,7 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.findOneById),
+                map(response => this.validator.findOneById(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -82,7 +90,7 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.createOne),
+                map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -101,7 +109,7 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateOne),
+                map(response => this.validator.updateOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -120,7 +128,7 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateStatus),
+                map(response => this.validator.updateStatus(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -134,7 +142,7 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
 
         return lastValueFrom(
             from(this.client.v1.delete(`/projects/${projectID}/acme-dns-providers/${id}`)).pipe(
-                map(this.validator.deleteOne),
+                map(response => this.validator.deleteOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

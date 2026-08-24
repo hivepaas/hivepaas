@@ -18,8 +18,9 @@ import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFo
 import { SslInfo } from "./ssl-info.com";
 
 function View({ domainIndex, readOnly = false }: SslCertProps) {
-    const { id: projectId } = useParams<{ id: string }>();
+    const { id: projectId, env } = useParams<{ id: string; env: string }>();
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
 
     const [searchQuery, setSearchQuery] = useState("");
     const [modalOpen, setModalOpen] = useState(false);
@@ -54,12 +55,13 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
         isRefetching,
     } = ProjectSslCertQueries.useFindManyPaginated({
         projectID: projectId,
+        env,
         search: searchQuery,
         domain: normalizedDomain || undefined,
     });
 
     const { data: sslCertDetail, isFetching: isSslInfoLoading } = ProjectSslCertQueries.useFindOneById(
-        { projectID: projectId, id: selectedSslId ?? "" },
+        { projectID: projectId, env, id: selectedSslId ?? "" },
         {
             enabled: Boolean(selectedSslId),
         },
@@ -149,7 +151,7 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
                                                     return;
                                                 }
 
-                                                quickInstallActions.open(projectId, normalizedDomain);
+                                                quickInstallActions.open(projectId, env, normalizedDomain);
                                             }}
                                         >
                                             Quick Install

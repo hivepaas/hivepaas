@@ -10,6 +10,7 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 export type ProjectBasicAuth_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;

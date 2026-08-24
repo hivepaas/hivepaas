@@ -25,7 +25,7 @@ import { UploadAppDataFileFormSchema } from "../schemas";
 
 type StorageOption = { id: string; name: string };
 
-export function UploadAppDataFileForm({ isPending, onSubmit, projectId, onClose }: Props) {
+export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onClose }: Props) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [storageSearch, setStorageSearch] = useState("");
 
@@ -34,7 +34,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, onClose 
         isFetching: isStorageFetching,
         refetch: refetchStorage,
         isRefetching: isStorageRefetching,
-    } = ProjectCloudStorageQueries.useFindManyPaginated({ projectID: projectId, search: storageSearch });
+    } = ProjectCloudStorageQueries.useFindManyPaginated({ projectID: projectId, env, search: storageSearch });
 
     const storageOptions = useMemo(
         () =>
@@ -368,6 +368,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, onClose 
 interface Props {
     isPending: boolean;
     projectId: string;
+    env: string;
     onSubmit: (values: UploadAppDataFileFormValues) => Promise<void> | void;
     onClose?: () => void;
 }

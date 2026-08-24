@@ -5,7 +5,7 @@ import type { QuickInstallSslCertDialogOptions, QuickInstallSslCertDialogState }
 type State = QuickInstallSslCertDialogState & QuickInstallSslCertDialogOptions;
 
 interface Actions {
-    open: (projectId: string, domain: string, options?: QuickInstallSslCertDialogOptions) => void;
+    open: (projectId: string, env: string, domain: string, options?: QuickInstallSslCertDialogOptions) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -15,15 +15,17 @@ export const useQuickInstallSslCertDialogState = create<State & Actions>()(set =
     state: {
         mode: "closed",
         projectId: null,
+        env: null,
         domain: null,
     },
     props: {},
 
-    open: (projectId, domain, options = {}) => {
+    open: (projectId, env, domain, options = {}) => {
         set({
             state: {
                 mode: "open",
                 projectId,
+                env,
                 domain,
             },
             ...options,
@@ -35,6 +37,7 @@ export const useQuickInstallSslCertDialogState = create<State & Actions>()(set =
             state: {
                 mode: "closed",
                 projectId: null,
+                env: null,
                 domain: null,
             },
         });
@@ -56,6 +59,7 @@ export const useQuickInstallSslCertDialogState = create<State & Actions>()(set =
                 state: {
                     mode: "closed",
                     projectId: null,
+                    env: null,
                     domain: null,
                 },
                 props: {},

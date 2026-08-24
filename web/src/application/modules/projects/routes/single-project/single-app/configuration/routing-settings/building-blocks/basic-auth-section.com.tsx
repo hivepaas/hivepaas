@@ -24,8 +24,9 @@ interface BasicAuthSectionProps {
 export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAuthSectionProps) {
     const [open, setOpen] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
-    const { id: projectId } = useParams<{ id: string }>();
+    const { id: projectId, env } = useParams<{ id: string; env: string }>();
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
 
     const { control } = useFormContext<
         AppConfigHttpSettingsFormSchemaInput,
@@ -62,6 +63,7 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
         isRefetching,
     } = ProjectBasicAuthQueries.useFindManyPaginated({
         projectID: projectId,
+        env,
         search: searchQuery,
     });
 

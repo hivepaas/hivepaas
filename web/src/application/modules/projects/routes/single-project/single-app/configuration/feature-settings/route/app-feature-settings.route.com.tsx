@@ -4,7 +4,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import type { AppFeatureSettings_UpdatePayload } from "~/projects/api/services";
-import { AppFeatureSettingsCommands, AppFeatureSettingsQueries } from "~/projects/data";
+import { AppFeatureSettingsCommands, AppFeatureSettingsQueries, ProjectAppsQueries } from "~/projects/data";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import type { AppFeatureSettings } from "~/projects/domain";
 import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
@@ -54,6 +54,17 @@ export function AppFeatureSettingsRoute() {
     invariant(env, "env must be defined");
     invariant(appId, "appId must be defined");
 
+    const {
+        data: appData,
+        isLoading: isLoadingApp,
+        error: appError,
+    } = ProjectAppsQueries.useFindOneById({
+        projectID: projectId,
+        env,
+        appID: appId,
+    });
+    const isPreviewApp = Boolean(appData?.data.parentApp);
+
     const { data, isLoading, error, refetch } = AppFeatureSettingsQueries.useFindOne(
         {
             projectID: projectId,
@@ -96,14 +107,15 @@ export function AppFeatureSettingsRoute() {
         });
     }
 
-    if (isLoading) {
+    if (isLoading || isLoadingApp) {
         return <AppLoader />;
     }
 
-    if (error) {
+    const currentError = error ?? appError;
+    if (currentError) {
         return (
             <PageError
-                error={error}
+                error={currentError}
                 onRetry={refetch}
             />
         );
@@ -120,6 +132,7 @@ export function AppFeatureSettingsRoute() {
             defaultValues={data.data}
             onSubmit={handleSubmit}
             readOnly={!canWrite}
+            hidePreviewSettings={isPreviewApp}
         >
             <FormActionBar>
                 <ProjectPermissionSubmitButton isPending={isPending} />

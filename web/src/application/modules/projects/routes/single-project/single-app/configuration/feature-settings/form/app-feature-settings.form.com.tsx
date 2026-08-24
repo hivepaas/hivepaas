@@ -150,6 +150,7 @@ export function AppFeatureSettingsForm({
     defaultValues,
     onSubmit,
     readOnly = false,
+    hidePreviewSettings = false,
     children,
 }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -231,28 +232,30 @@ export function AppFeatureSettingsForm({
                             <FeatureToggleField name="terminalSettings.enabled" />
                         </ContentBlock>
 
-                        <ContentBlock label="App Preview">
-                            <div className="flex flex-col gap-6">
-                                <FeatureToggleField name="previewSettings.enabled" />
-                                {previewSettingsEnabled && (
-                                    <>
-                                        <PreviewCreationDelayField />
-                                        <AppPreviewWarningBox />
-                                        <DbAppsToCloneFields
-                                            projectID={projectID}
-                                            env={env}
-                                            appID={appID}
-                                            readOnly={readOnly}
-                                        />
-                                        <AutoCloneDbAppsField />
-                                        <PreviewCommandsFields
-                                            projectID={projectID}
-                                            readOnly={readOnly}
-                                        />
-                                    </>
-                                )}
-                            </div>
-                        </ContentBlock>
+                        {!hidePreviewSettings && (
+                            <ContentBlock label="App Preview">
+                                <div className="flex flex-col gap-6">
+                                    <FeatureToggleField name="previewSettings.enabled" />
+                                    {previewSettingsEnabled && (
+                                        <>
+                                            <PreviewCreationDelayField />
+                                            <AppPreviewWarningBox />
+                                            <DbAppsToCloneFields
+                                                projectID={projectID}
+                                                env={env}
+                                                appID={appID}
+                                                readOnly={readOnly}
+                                            />
+                                            <AutoCloneDbAppsField />
+                                            <PreviewCommandsFields
+                                                projectID={projectID}
+                                                readOnly={readOnly}
+                                            />
+                                        </>
+                                    )}
+                                </div>
+                            </ContentBlock>
+                        )}
 
                         {children}
                     </fieldset>
@@ -270,4 +273,5 @@ type Props = PropsWithChildren<{
     defaultValues?: AppFeatureSettings;
     onSubmit: (values: SchemaOutput) => void;
     readOnly?: boolean;
+    hidePreviewSettings?: boolean;
 }>;

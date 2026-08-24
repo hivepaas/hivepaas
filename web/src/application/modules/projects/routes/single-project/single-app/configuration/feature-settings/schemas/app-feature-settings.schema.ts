@@ -6,6 +6,11 @@ const AppFeaturePreviewAppRefSchema = z.object({
     photo: z.string().optional(),
 });
 
+const AppFeaturePreviewCommandRefSchema = z.object({
+    id: z.string(),
+    name: z.string(),
+});
+
 export const AppFeatureSettingsFormSchema = z.object({
     loggingSettings: z.object({
         enabled: z.boolean(),
@@ -21,6 +26,7 @@ export const AppFeatureSettingsFormSchema = z.object({
         creationDelay: z.string().trim(),
         appsToClone: z.array(AppFeaturePreviewAppRefSchema),
         autoCloneApps: z.boolean(),
+        commands: z.array(AppFeaturePreviewCommandRefSchema),
     }),
 });
 
@@ -28,6 +34,7 @@ export type AppFeatureSettingsFormSchemaInput = z.input<typeof AppFeatureSetting
 export type AppFeatureSettingsFormSchemaOutput = z.output<typeof AppFeatureSettingsFormSchema>;
 
 export const DEFAULT_PREVIEW_CREATION_DELAY = "30s";
+export const FEATURE_SETTINGS_TITLE_WIDTH = 295;
 
 export const emptyAppFeatureSettingsFormDefaults: AppFeatureSettingsFormSchemaInput = {
     loggingSettings: {
@@ -44,5 +51,6 @@ export const emptyAppFeatureSettingsFormDefaults: AppFeatureSettingsFormSchemaIn
         creationDelay: DEFAULT_PREVIEW_CREATION_DELAY,
         appsToClone: [],
         autoCloneApps: false,
+        commands: [],
     },
 };

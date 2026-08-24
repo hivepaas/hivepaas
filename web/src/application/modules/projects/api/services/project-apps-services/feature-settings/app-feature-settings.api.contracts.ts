@@ -10,6 +10,7 @@ export type AppFeaturePreviewSettingsUpdatePayload = {
     creationDelay: string;
     appsToClone: { id: string }[];
     autoCloneApps: boolean;
+    commands: { id: string }[];
 };
 
 export type AppFeatureSettings_UpdatePayload = {

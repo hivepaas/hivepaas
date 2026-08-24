@@ -40,6 +40,7 @@ function mapFormValuesToPayload(
             creationDelay,
             appsToClone: values.previewSettings.appsToClone.map(app => ({ id: app.id })),
             autoCloneApps: values.previewSettings.autoCloneApps,
+            commands: values.previewSettings.commands.map(cmd => ({ id: cmd.id })),
         },
     };
 }

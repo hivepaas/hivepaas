@@ -13,11 +13,18 @@ export type AppFeaturePreviewAppRef = {
     env?: string;
 };
 
+export type AppFeaturePreviewCommandRef = {
+    id: string;
+    name: string;
+    type?: string;
+};
+
 export type AppFeaturePreviewSettings = {
     enabled: boolean;
     creationDelay: string;
     appsToClone: AppFeaturePreviewAppRef[];
     autoCloneApps: boolean;
+    commands: AppFeaturePreviewCommandRef[];
 };
 
 export interface AppFeatureSettings extends SettingsBaseEntity {

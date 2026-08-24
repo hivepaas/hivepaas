@@ -22,12 +22,19 @@ const AppFeaturePreviewAppRefSchema = z.object({
     env: z.string().optional(),
 });
 
+const AppFeaturePreviewCommandRefSchema = z.object({
+    id: z.string(),
+    name: z.string().optional().default(""),
+    type: z.string().optional(),
+});
+
 const AppFeaturePreviewSettingsSchema = z
     .object({
         enabled: z.boolean().optional().default(true),
         creationDelay: z.string().optional().default(""),
         appsToClone: z.array(AppFeaturePreviewAppRefSchema).optional().default([]),
         autoCloneApps: z.boolean().optional().default(false),
+        commands: z.array(AppFeaturePreviewCommandRefSchema).optional().default([]),
     })
     .nullish()
     .transform(value => ({
@@ -35,6 +42,7 @@ const AppFeaturePreviewSettingsSchema = z
         creationDelay: value?.creationDelay ?? "",
         appsToClone: value?.appsToClone ?? [],
         autoCloneApps: value?.autoCloneApps ?? false,
+        commands: value?.commands ?? [],
     }));
 
 const AppFeatureSettingsSchema = SettingsBaseEntitySchema.extend({

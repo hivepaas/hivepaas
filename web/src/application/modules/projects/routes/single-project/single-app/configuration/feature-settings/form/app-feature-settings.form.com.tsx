@@ -12,12 +12,13 @@ import { ContentBlock, InfoBlock } from "@application/shared/components";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
 
-import { DbAppsToCloneFields } from "../building-blocks";
+import { DbAppsToCloneFields, PreviewCommandsFields } from "../building-blocks";
 import {
     AppFeatureSettingsFormSchema,
     type AppFeatureSettingsFormSchemaInput,
     type AppFeatureSettingsFormSchemaOutput,
     DEFAULT_PREVIEW_CREATION_DELAY,
+    FEATURE_SETTINGS_TITLE_WIDTH,
     emptyAppFeatureSettingsFormDefaults,
 } from "../schemas";
 import type { AppFeatureSettingsFormRef } from "../types";
@@ -49,6 +50,10 @@ function mapFeatureSettingsToFormInput(data: AppFeatureSettings): SchemaInput {
                 ...(app.photo !== undefined ? { photo: app.photo } : {}),
             })),
             autoCloneApps: data.previewSettings.autoCloneApps,
+            commands: data.previewSettings.commands.map(cmd => ({
+                id: cmd.id,
+                name: cmd.name,
+            })),
         },
     };
 }
@@ -58,7 +63,10 @@ function FeatureToggleField({ name }: { name: FeatureToggleFieldPath }) {
     const { field } = useController({ control, name });
 
     return (
-        <InfoBlock title="Enabled">
+        <InfoBlock
+            title="Enabled"
+            titleWidth={FEATURE_SETTINGS_TITLE_WIDTH}
+        >
             <Checkbox
                 checked={field.value}
                 onCheckedChange={value => {
@@ -77,7 +85,10 @@ function PreviewCreationDelayField() {
     } = useController({ control, name: "previewSettings.creationDelay" });
 
     return (
-        <InfoBlock title="Preview Creation Delay">
+        <InfoBlock
+            title="Preview Creation Delay"
+            titleWidth={FEATURE_SETTINGS_TITLE_WIDTH}
+        >
             <FieldGroup>
                 <Field>
                     <Input
@@ -98,7 +109,10 @@ function AutoCloneDbAppsField() {
     const { field } = useController({ control, name: "previewSettings.autoCloneApps" });
 
     return (
-        <InfoBlock title="Auto Clone DB Apps On Preview Creation">
+        <InfoBlock
+            title="Auto Clone DB Apps on Preview Creation"
+            titleWidth={FEATURE_SETTINGS_TITLE_WIDTH}
+        >
             <Checkbox
                 checked={field.value}
                 onCheckedChange={value => {
@@ -231,6 +245,10 @@ export function AppFeatureSettingsForm({
                                             readOnly={readOnly}
                                         />
                                         <AutoCloneDbAppsField />
+                                        <PreviewCommandsFields
+                                            projectID={projectID}
+                                            readOnly={readOnly}
+                                        />
                                     </>
                                 )}
                             </div>

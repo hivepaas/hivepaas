@@ -6,9 +6,14 @@ import { useFieldArray, useFormContext, useFormState } from "react-hook-form";
 import { toast } from "sonner";
 import { ProjectAppsQueries } from "~/projects/data";
 
-import { ComboboxWithAddon, InfoBlock, PopConfirm } from "@application/shared/components";
+import { AppLink, ComboboxWithAddon, InfoBlock, PopConfirm } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
-import type { AppFeatureSettingsFormSchemaInput, AppFeatureSettingsFormSchemaOutput } from "../schemas";
+import {
+    type AppFeatureSettingsFormSchemaInput,
+    type AppFeatureSettingsFormSchemaOutput,
+    FEATURE_SETTINGS_TITLE_WIDTH,
+} from "../schemas";
 
 type AppOption = {
     id: string;
@@ -77,7 +82,10 @@ export function DbAppsToCloneFields({ projectID, env, appID, readOnly = false }:
     }
 
     return (
-        <InfoBlock title="DB Apps to Clone">
+        <InfoBlock
+            title="DB Apps to Clone"
+            titleWidth={FEATURE_SETTINGS_TITLE_WIDTH}
+        >
             <div className="flex max-w-[545px] flex-col gap-2">
                 <div className="flex gap-2">
                     <ComboboxWithAddon<AppOption>
@@ -112,7 +120,7 @@ export function DbAppsToCloneFields({ projectID, env, appID, readOnly = false }:
                         {fields.map((field, index) => (
                             <div
                                 key={field.fieldId}
-                                className="grid grid-cols-[minmax(0,1fr)_76px] items-center gap-2 py-1.5"
+                                className="grid grid-cols-[minmax(0,1fr)_auto_76px] items-center gap-2 py-1.5"
                             >
                                 <div className="flex min-w-0 items-center gap-2">
                                     <Avatar
@@ -121,7 +129,20 @@ export function DbAppsToCloneFields({ projectID, env, appID, readOnly = false }:
                                     />
                                     <span className="truncate text-sm">{field.name}</span>
                                 </div>
-                                <div className="w-[76px]">
+                                <AppLink.Basic
+                                    to={ROUTE.projects.single.apps.single.configuration.general.$route(
+                                        projectID,
+                                        env,
+                                        field.id,
+                                    )}
+                                    className="shrink-0 text-xs text-link"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    ignorePrevPath
+                                >
+                                    View
+                                </AppLink.Basic>
+                                <div className="flex w-[76px] justify-end">
                                     <PopConfirm
                                         title="Remove app"
                                         variant="destructive"

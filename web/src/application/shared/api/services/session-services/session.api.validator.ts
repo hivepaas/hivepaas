@@ -3,7 +3,7 @@ import { z } from "zod";
 import { AccessSchema } from "~/user-management/module-shared/schemas";
 
 import { type Session_GetProfile_Res, type Session_Logout_Res } from "@application/shared/api/services";
-import { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
+import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 import type { ModulePermission, ProjectPermission } from "@application/shared/permissions";
 
 import { parseApiResponse } from "@infrastructure/api";
@@ -99,7 +99,7 @@ const GetProfileSchema = z.object({
             accessExpireAt: z.coerce.date().nullable(),
             lastAccess: z.coerce.date().nullable(),
             createdAt: z.coerce.date(),
-            status: z.nativeEnum(EUserStatus),
+            status: z.string(),
             mfaSecret: z.string().optional(),
             projectAccesses: z.array(ProjectAccessSchema).nullable().optional(),
             moduleAccesses: z.array(ModuleAccessSchema).nullable().optional(),

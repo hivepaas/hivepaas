@@ -1,8 +1,6 @@
 import type { AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { ESettingStatus } from "@application/shared/enums";
-
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
@@ -42,7 +40,7 @@ const SettingRefSchema = z
             .nullish()
             .transform(value => value ?? ""),
         kind: z.string().optional().default(""),
-        status: z.nativeEnum(ESettingStatus),
+        status: z.string(),
         inherited: z.boolean().optional().default(false),
         inheritable: z.boolean().optional().default(false),
         default: z.boolean().optional().default(false),
@@ -61,7 +59,7 @@ const CommandPipeSchema = z.object({
         .string()
         .nullish()
         .transform(value => value ?? ""),
-    status: z.nativeEnum(ESettingStatus),
+    status: z.string(),
     inherited: z.boolean().optional().default(false),
     inheritable: z.boolean().optional().default(false),
     default: z.boolean().optional().default(false),

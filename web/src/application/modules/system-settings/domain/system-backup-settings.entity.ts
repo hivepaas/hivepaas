@@ -2,6 +2,8 @@ import type { SettingsBaseEntity } from "~/settings/domain";
 
 import type { ESettingStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 import type { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../module-shared/enums";
 
 export interface SystemBackupSchedule {
@@ -42,7 +44,7 @@ export interface SystemBackupNotification {
 }
 
 export interface SystemBackupSettings extends SettingsBaseEntity {
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
     schedule: SystemBackupSchedule;
     compression: SystemBackupCompression;
     encryption: SystemBackupEncryption;

@@ -7,7 +7,6 @@ import type {
 } from "~/projects/api/services/project-apps-services";
 import {
     EAppDeploymentMethod,
-    EAppDeploymentStatus,
     EAppDeploymentTriggerSource,
 } from "~/projects/module-shared/enums";
 
@@ -120,7 +119,7 @@ const NullableDateSchema = z.preprocess(
 
 const AppDeploymentSchema = z.object({
     id: z.string(),
-    status: z.nativeEnum(EAppDeploymentStatus),
+    status: z.string(),
     updateVer: z.number(),
     settings: DeploymentSettingsSchema,
     trigger: DeploymentTriggerSchema,

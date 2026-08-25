@@ -1,5 +1,6 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
 import { type ProjectSecret } from "~/projects/domain";
+import type { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
@@ -64,7 +65,8 @@ export type ProjectSecrets_UpdateOne_Req = ApiRequestBase<
         env?: string;
         secretID: string;
         updateVer: number;
-    } & Partial<Omit<ProjectSecret, "id" | "key" | "createdAt" | "updatedAt" | "updateVer">> & {
+    } & Partial<Omit<ProjectSecret, "id" | "key" | "status" | "createdAt" | "updatedAt" | "updateVer">> & {
+            status?: EProjectSecretStatus;
             value?: string;
         }
 >;

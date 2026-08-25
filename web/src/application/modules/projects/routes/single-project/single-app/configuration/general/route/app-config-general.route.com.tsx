@@ -80,7 +80,6 @@ export function AppConfigGeneralRoute() {
                 tags,
                 note,
                 updateVer: data.data.updateVer,
-                status: data.data.status,
             },
             {
                 onSuccess: () => {

@@ -6,8 +6,6 @@ import type {
     Profile_FindManyApiKeysPaginated_Res,
     Profile_GetProfile2FASetup_Res,
 } from "@application/shared/api/services";
-import { EProfileApiKeyStatus } from "@application/shared/enums";
-
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
@@ -41,7 +39,7 @@ const ProfileApiKeySchema = z.object({
         .nullable()
         .optional(),
     expireAt: z.coerce.date().optional(),
-    status: z.nativeEnum(EProfileApiKeyStatus),
+    status: z.string(),
 });
 
 /**

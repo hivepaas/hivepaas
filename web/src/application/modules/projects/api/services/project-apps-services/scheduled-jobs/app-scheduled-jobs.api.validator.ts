@@ -13,11 +13,8 @@ import { APP_SCHEDULED_JOB_DEFAULT_CONSOLE_SIZE } from "~/projects/domain";
 import {
     EAppScheduledJobArgSeparator,
     EAppScheduledJobTaskPriority,
-    EAppScheduledJobTaskStatus,
     EAppScheduledJobType,
 } from "~/projects/module-shared/enums";
-
-import { ESettingStatus } from "@application/shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -181,7 +178,7 @@ const AppScheduledJobSchema = z.object({
     type: z.string(),
     name: z.string(),
     kind: z.string().optional(),
-    status: z.nativeEnum(ESettingStatus),
+    status: z.string(),
     inherited: z.boolean().optional().default(false),
     inheritable: z.boolean().optional().default(false),
     default: z.boolean().optional().default(false),
@@ -231,7 +228,7 @@ const AppScheduledJobTaskConfigSchema = z.preprocess(
 const AppScheduledJobTaskSchema = z.object({
     id: z.string(),
     type: z.string().optional().default(""),
-    status: z.nativeEnum(EAppScheduledJobTaskStatus),
+    status: z.string(),
     config: AppScheduledJobTaskConfigSchema,
     lastError: z.string().optional().default(""),
     updateVer: z.number(),

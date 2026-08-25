@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { EProjectAppStatus } from "~/projects/module-shared/enums";
-
 const OptionalStringSchema = z
     .string()
     .nullish()
@@ -17,10 +15,7 @@ export const ProjectAppParentSchema = z
         id: z.string(),
         name: OptionalStringSchema,
         key: OptionalStringSchema,
-        status: z
-            .union([z.nativeEnum(EProjectAppStatus), z.literal("")])
-            .nullish()
-            .transform(value => value ?? ""),
+        status: z.string().nullish().transform(value => value ?? ""),
         env: OptionalStringSchema,
     })
     .nullish()
@@ -30,7 +25,7 @@ export const ProjectAppSchema = z.object({
     id: z.string(),
     name: z.string(),
     photo: z.string(),
-    status: z.nativeEnum(EProjectAppStatus),
+    status: z.string(),
     env: OptionalStringSchema,
     note: z.string(),
     tags: z.array(z.string()),

@@ -9,8 +9,6 @@ import type {
     ClusterNetworks_UpdateStatus_Res,
 } from "~/cluster/api/services/network-services";
 
-import { ESettingStatus } from "@application/shared/enums";
-
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const mapSchema = z
@@ -35,7 +33,7 @@ export const ClusterNetworkSchema = z.object({
         .nullish()
         .transform(value => value ?? ""),
     kind: z.string().optional(),
-    status: z.nativeEnum(ESettingStatus),
+    status: z.string(),
     inherited: optionalBooleanSchema,
     inheritable: optionalBooleanSchema,
     default: optionalBooleanSchema,

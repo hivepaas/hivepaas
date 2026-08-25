@@ -12,8 +12,6 @@ import {
     EAppHealthCheckType,
 } from "~/projects/module-shared/enums";
 
-import { ESettingStatus } from "@application/shared/enums";
-
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 const NamedRefSchema = z
@@ -74,7 +72,7 @@ const AppHealthCheckSchema = z
         type: z.string(),
         name: z.string(),
         kind: z.string().optional(),
-        status: z.nativeEnum(ESettingStatus),
+        status: z.string(),
         inherited: z.boolean().optional().default(false),
         inheritable: z.boolean().optional().default(false),
         default: z.boolean().optional().default(false),

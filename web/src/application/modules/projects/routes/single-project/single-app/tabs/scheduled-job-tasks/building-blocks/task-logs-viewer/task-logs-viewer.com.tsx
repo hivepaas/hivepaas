@@ -7,6 +7,8 @@ import { EAppScheduledJobTaskStatus as TaskStatus } from "~/projects/module-shar
 
 import { LogsViewer, parseLogsViewerFrames, useBufferedLogFrames } from "@application/shared/components";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 const TASK_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 340px), 2000px)";
 
 export function ScheduledJobTaskLogsViewer({
@@ -178,7 +180,7 @@ interface ScheduledJobTaskLogsScope {
     appID: string;
     scheduledJobID: string;
     taskID: string;
-    status: EAppScheduledJobTaskStatus;
+    status: OpenApiConstant<EAppScheduledJobTaskStatus>;
     onStreamClosedWhileInProgress: () => void;
 }
 

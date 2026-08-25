@@ -1,5 +1,7 @@
 import type { EProfileApiKeyStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface ProfileApiKey {
     id: string;
     name: string;
@@ -12,5 +14,5 @@ export interface ProfileApiKey {
         delete: boolean;
     } | null;
     expireAt?: Date;
-    status: EProfileApiKeyStatus;
+    status: OpenApiConstant<EProfileApiKeyStatus>;
 }

@@ -8,7 +8,7 @@ import {
 } from "~/user-management/api/services/users-services/users/users.api.contracts";
 import { AccessSchema } from "~/user-management/module-shared/schemas";
 
-import { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
+import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 
 import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -23,7 +23,7 @@ const UserSchema = z.object({
     photo: z.string().nullable(),
     position: z.string(),
     securityOption: z.nativeEnum(ESecuritySettings),
-    status: z.nativeEnum(EUserStatus),
+    status: z.string(),
     role: z.nativeEnum(EUserRole),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date().nullable(),

@@ -8,6 +8,8 @@ import type { SettingsBaseEntity } from "~/settings/domain";
 
 import type { ESettingStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface AppHealthCheckNamedRef {
     id: string;
     name: string;
@@ -53,7 +55,7 @@ export interface AppHealthCheck {
     type: string;
     name: string;
     kind?: string;
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
     inherited: boolean;
     inheritable: boolean;
     default: boolean;

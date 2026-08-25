@@ -7,6 +7,8 @@ import invariant from "tiny-invariant";
 import { AppDeploymentsCommands, AppDeploymentsQueries } from "~/projects/data";
 import { EAppDeploymentStatus } from "~/projects/module-shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 import {
     DeploymentLogsViewer,
     DeploymentSummaryCard,
@@ -18,17 +20,17 @@ import { showDeploymentCancelToast } from "../../utils";
 const DEPLOYMENT_DETAILS_REFETCH_INTERVAL_MS = 5_000;
 
 function shouldPollDeploymentDetails(
-    status: EAppDeploymentStatus | undefined,
+    status: OpenApiConstant<EAppDeploymentStatus> | undefined,
     shouldPollAfterStreamClose: boolean,
 ): boolean {
     return status === EAppDeploymentStatus.NotStarted || (shouldPollAfterStreamClose && isDeploymentInProgress(status));
 }
 
-function isDeploymentInProgress(status?: EAppDeploymentStatus): boolean {
+function isDeploymentInProgress(status?: OpenApiConstant<EAppDeploymentStatus>): boolean {
     return status === EAppDeploymentStatus.InProgress;
 }
 
-function isDeploymentTerminal(status?: EAppDeploymentStatus): boolean {
+function isDeploymentTerminal(status?: OpenApiConstant<EAppDeploymentStatus>): boolean {
     return (
         status === EAppDeploymentStatus.Canceled ||
         status === EAppDeploymentStatus.Done ||

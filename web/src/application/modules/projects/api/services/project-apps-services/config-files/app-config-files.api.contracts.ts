@@ -1,5 +1,6 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
 import { type AppConfigFile } from "~/projects/domain";
+import type { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
@@ -96,7 +97,9 @@ export type AppConfigFiles_UpdateOne_Req = ApiRequestBase<
         appID: string;
         configFileID: string;
         updateVer: number;
-    } & Partial<Omit<AppConfigFile, "id" | "createdAt" | "updatedAt" | "updateVer" | "inherited">>
+    } & Partial<Omit<AppConfigFile, "id" | "status" | "createdAt" | "updatedAt" | "updateVer" | "inherited">> & {
+            status?: EProjectSecretStatus;
+        }
 >;
 
 export type AppConfigFiles_UpdateOne_Res = ApiResponseBase<{

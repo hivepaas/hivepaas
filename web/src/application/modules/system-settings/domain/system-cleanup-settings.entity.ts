@@ -2,6 +2,8 @@ import type { SettingsBaseEntity } from "~/settings/domain";
 
 import type { ESettingStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface SystemCleanupSchedule {
     interval: string;
     cronExpr: string;
@@ -56,7 +58,7 @@ export interface SystemCleanupNotification {
 }
 
 export interface SystemCleanupSettings extends SettingsBaseEntity {
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
     schedule: SystemCleanupSchedule;
     dbObjectRetention: SystemCleanupDBObjectRetention;
     clusterCleanup: SystemCleanupClusterCleanup;

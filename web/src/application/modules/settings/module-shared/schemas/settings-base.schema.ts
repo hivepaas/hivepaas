@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { ESettingStatus } from "@application/shared/enums";
-
 export const SettingsBaseEntitySchema = z.object({
     id: z.string(),
     name: z
@@ -9,7 +7,7 @@ export const SettingsBaseEntitySchema = z.object({
         .nullish()
         .transform(value => value ?? ""),
     description: z.string().optional().default(""),
-    status: z.nativeEnum(ESettingStatus),
+    status: z.string(),
     type: z.string(),
     kind: z.string().optional(),
     inherited: z.boolean().optional(),

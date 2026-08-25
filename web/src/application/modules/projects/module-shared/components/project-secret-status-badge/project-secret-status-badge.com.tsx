@@ -4,8 +4,22 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@components/ui/badge";
 import { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
+function formatStatusLabel(status: string) {
+    if (!status.trim()) {
+        return "-";
+    }
+
+    return status
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b\w/g, char => char.toUpperCase());
+}
+
 function View({ status }: Props) {
-    const statusMap: Record<EProjectSecretStatus, string> = {
+    const statusMap: Partial<Record<EProjectSecretStatus, string>> = {
         [EProjectSecretStatus.Active]: "Active",
         [EProjectSecretStatus.Pending]: "Pending",
         [EProjectSecretStatus.Disabled]: "Disabled",
@@ -13,7 +27,7 @@ function View({ status }: Props) {
         [EProjectSecretStatus.Missing]: "Missing",
     };
 
-    const statusColorMap: Record<EProjectSecretStatus, string> = {
+    const statusColorMap: Partial<Record<EProjectSecretStatus, string>> = {
         [EProjectSecretStatus.Active]: "bg-green-500 text-white",
         [EProjectSecretStatus.Pending]: "bg-yellow-500 text-white",
         [EProjectSecretStatus.Disabled]: "bg-red-500 text-white",
@@ -22,14 +36,16 @@ function View({ status }: Props) {
     };
 
     return (
-        <Badge className={cn(statusColorMap[status] || "bg-primary text-primary-foreground", "h-6")}>
-            {statusMap[status] || status}
+        <Badge
+            className={cn(statusColorMap[status as EProjectSecretStatus] ?? "bg-primary text-primary-foreground", "h-6")}
+        >
+            {statusMap[status as EProjectSecretStatus] ?? formatStatusLabel(status)}
         </Badge>
     );
 }
 
 interface Props {
-    status: EProjectSecretStatus;
+    status: OpenApiConstant<EProjectSecretStatus>;
 }
 
 export const ProjectSecretStatusBadge = memo(View);

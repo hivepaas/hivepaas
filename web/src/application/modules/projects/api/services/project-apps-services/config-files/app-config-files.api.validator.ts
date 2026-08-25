@@ -6,8 +6,6 @@ import type {
     AppConfigFiles_FindOneById_Res,
     AppConfigFiles_GetDownloadToken_Res,
 } from "~/projects/api/services/project-apps-services";
-import { EProjectSecretStatus } from "~/projects/module-shared/enums";
-
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
@@ -19,7 +17,7 @@ const AppConfigFileSchema = z.object({
     content: z.string().optional().default(""),
     base64: z.boolean().optional().default(false),
     type: z.string().optional().default("config-file"),
-    status: z.nativeEnum(EProjectSecretStatus),
+    status: z.string(),
     inherited: z.boolean().optional().default(false),
     swarmRef: z
         .object({

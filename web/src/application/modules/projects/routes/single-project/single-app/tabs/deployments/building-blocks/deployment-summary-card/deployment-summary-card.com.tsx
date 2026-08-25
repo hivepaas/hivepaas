@@ -16,8 +16,9 @@ import {
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import { Avatar, Button, Skeleton } from "@/components/ui";
+import type { OpenApiConstant } from "@infrastructure/api";
 
-const STATUS_LABELS: Record<EAppDeploymentStatus, string> = {
+const STATUS_LABELS: Partial<Record<EAppDeploymentStatus, string>> = {
     [EAppDeploymentStatus.Done]: "Done",
     [EAppDeploymentStatus.Failed]: "Failed",
     [EAppDeploymentStatus.InProgress]: "In-Progress",
@@ -25,7 +26,7 @@ const STATUS_LABELS: Record<EAppDeploymentStatus, string> = {
     [EAppDeploymentStatus.Canceled]: "Canceled",
 };
 
-const STATUS_CLASS_NAMES: Record<EAppDeploymentStatus, string> = {
+const STATUS_CLASS_NAMES: Partial<Record<EAppDeploymentStatus, string>> = {
     [EAppDeploymentStatus.Done]: "bg-green-500 text-white hover:bg-green-500/90",
     [EAppDeploymentStatus.Failed]: "bg-red-500 text-white hover:bg-red-500/90",
     [EAppDeploymentStatus.InProgress]: "bg-purple-400 text-white hover:bg-purple-400/90",
@@ -33,7 +34,7 @@ const STATUS_CLASS_NAMES: Record<EAppDeploymentStatus, string> = {
     [EAppDeploymentStatus.Canceled]: "bg-zinc-500 text-white hover:bg-zinc-500/90",
 };
 
-const STATUS_BORDER_CLASS_NAMES: Record<EAppDeploymentStatus, string> = {
+const STATUS_BORDER_CLASS_NAMES: Partial<Record<EAppDeploymentStatus, string>> = {
     [EAppDeploymentStatus.Done]: "border-l-green-500",
     [EAppDeploymentStatus.Failed]: "border-l-red-500",
     [EAppDeploymentStatus.InProgress]: "border-l-purple-400",
@@ -60,11 +61,23 @@ function formatDateTime(date: Date | null): string {
     return date ? format(date, "yyyy-MM-dd HH:mm:ss") : "-";
 }
 
+function formatStatusLabel(status: string) {
+    if (!status.trim()) {
+        return "-";
+    }
+
+    return status
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b\w/g, char => char.toUpperCase());
+}
+
 function getUserDisplayName(user: AppDeploymentSourceUser): string {
     return user.fullName || user.email || user.username;
 }
 
-function canCancelDeployment(status: EAppDeploymentStatus): boolean {
+function canCancelDeployment(status: OpenApiConstant<EAppDeploymentStatus>): boolean {
     return status === EAppDeploymentStatus.InProgress || status === EAppDeploymentStatus.NotStarted;
 }
 
@@ -88,8 +101,12 @@ function stopCardClick(event: MouseEvent<HTMLElement>) {
     event.stopPropagation();
 }
 
-function StatusBadge({ status }: { status: EAppDeploymentStatus }) {
-    return <Badge className={cn("h-7 px-3", STATUS_CLASS_NAMES[status])}>{STATUS_LABELS[status]}</Badge>;
+function StatusBadge({ status }: { status: OpenApiConstant<EAppDeploymentStatus> }) {
+    return (
+        <Badge className={cn("h-7 px-3", STATUS_CLASS_NAMES[status as EAppDeploymentStatus])}>
+            {STATUS_LABELS[status as EAppDeploymentStatus] ?? formatStatusLabel(status)}
+        </Badge>
+    );
 }
 
 function InfoRow({ label, children }: { label: string; children: ReactNode }) {
@@ -233,7 +250,7 @@ export function DeploymentSummaryCard({
         <div
             className={cn(
                 "rounded-lg border bg-background p-5 shadow-xs",
-                variant === "list" ? [STATUS_BORDER_CLASS_NAMES[deployment.status]] : "border-0",
+                variant === "list" ? [STATUS_BORDER_CLASS_NAMES[deployment.status as EAppDeploymentStatus]] : "border-0",
                 isClickable &&
                     "cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             )}

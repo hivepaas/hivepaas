@@ -7,6 +7,18 @@ import { EProfileApiKeyStatus } from "@application/shared/enums";
 
 import { ActionsCell, KeyIdCell } from "./building-blocks";
 
+function formatStatusLabel(status: string) {
+    if (!status.trim()) {
+        return "-";
+    }
+
+    return status
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b\w/g, char => char.toUpperCase());
+}
+
 const columns: ColumnDef<ProfileApiKey>[] = [
     {
         accessorKey: "name",
@@ -66,13 +78,13 @@ const columns: ColumnDef<ProfileApiKey>[] = [
         header: "Status",
         cell: ({ row: { original } }) => {
             const { status } = original;
-            const statusColorMap: Record<EProfileApiKeyStatus, string> = {
+            const statusColorMap: Partial<Record<EProfileApiKeyStatus, string>> = {
                 [EProfileApiKeyStatus.Active]: "bg-green-500",
                 [EProfileApiKeyStatus.Disabled]: "bg-red-500",
                 [EProfileApiKeyStatus.Expired]: "bg-yellow-500",
                 [EProfileApiKeyStatus.Missing]: "bg-red-500",
             };
-            const statusMap: Record<EProfileApiKeyStatus, string> = {
+            const statusMap: Partial<Record<EProfileApiKeyStatus, string>> = {
                 [EProfileApiKeyStatus.Active]: "Active",
                 [EProfileApiKeyStatus.Disabled]: "Disabled",
                 [EProfileApiKeyStatus.Expired]: "Expired",
@@ -81,9 +93,9 @@ const columns: ColumnDef<ProfileApiKey>[] = [
             return (
                 <Badge
                     variant="default"
-                    className={statusColorMap[status]}
+                    className={statusColorMap[status as EProfileApiKeyStatus]}
                 >
-                    {statusMap[status]}
+                    {statusMap[status as EProfileApiKeyStatus] ?? formatStatusLabel(status)}
                 </Badge>
             );
         },

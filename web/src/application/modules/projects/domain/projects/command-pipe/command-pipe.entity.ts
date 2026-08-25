@@ -1,11 +1,13 @@
 import type { ESettingStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface ProjectCommandPipeSettingRef {
     id: string;
     type: string;
     name: string;
     kind: string;
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
     inherited: boolean;
     inheritable: boolean;
     default: boolean;
@@ -19,7 +21,7 @@ export interface ProjectCommandPipe {
     id: string;
     type: string;
     name: string;
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
     inherited: boolean;
     inheritable: boolean;
     default: boolean;

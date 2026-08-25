@@ -36,7 +36,7 @@ export function RateLimitConfigSection({ prefix, readOnly = false }: RateLimitCo
 
     return (
         <Collapsible open>
-            <div className="flex justify-between items-center font-medium bg-accent py-2 px-3 rounded-lg">
+            <div className="sticky top-11 z-10 flex justify-between items-center font-medium bg-accent py-2 px-3 rounded-lg shadow-xs">
                 <div className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium">
                     <span>Rate Limit Configuration (docs</span>
                     <a

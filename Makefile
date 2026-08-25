@@ -20,6 +20,9 @@ lint-local:
 	# curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.13.0
 	golangci-lint --timeout=5m run -v ./...
 
+lint-local-fast:
+	golangci-lint --timeout=5m run -v --new-from-rev=HEAD~1
+
 test:
 	@./scripts/test.sh
 

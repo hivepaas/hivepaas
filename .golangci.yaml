@@ -83,6 +83,14 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - \.appdata/
+      - \.temp/
+      - tmp/
+      - vendor/
+      - tools/
+      - deployment/
+      - dist-dashboard/
+      - test-results/
 formatters:
   enable:
     - gci
@@ -103,3 +111,11 @@ formatters:
       - third_party$
       - builtin$
       - examples$
+      - \.appdata/
+      - \.temp/
+      - tmp/
+      - vendor/
+      - tools/
+      - deployment/
+      - dist-dashboard/
+      - test-results/

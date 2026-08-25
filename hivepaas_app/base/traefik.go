@@ -20,6 +20,10 @@ var (
 )
 
 func IsTraefikCmdArgSettable(key string) bool {
-	_, exists := mapTraefikUnsettableCmdArgs[strings.ToLower(key)]
+	key = strings.ToLower(key)
+	if strings.HasPrefix(key, "entrypoints.tcp-svc-") || strings.HasPrefix(key, "entrypoints.udp-svc-") {
+		return false
+	}
+	_, exists := mapTraefikUnsettableCmdArgs[key]
 	return !exists
 }

@@ -36,6 +36,7 @@ type StartupCommandResp struct {
 	AccessLog bool     `json:"accessLog,omitempty"`
 	HTTP3     bool     `json:"http3,omitempty"`
 	FastProxy bool     `json:"fastProxy,omitempty"`
+	OpenPorts []string `json:"openPorts,omitempty"`
 	Args      []string `json:"args"`
 }
 
@@ -52,7 +53,8 @@ func TransformStartupCommand(
 	traefikSvc *swarm.Service,
 ) (resp *StartupCommandResp) {
 	resp = &StartupCommandResp{
-		Args: make([]string, 0, 20), //nolint:mnd
+		OpenPorts: make([]string, 0, 10), //nolint:mnd
+		Args:      make([]string, 0, 20), //nolint:mnd
 	}
 	if traefikSvc == nil || traefikSvc.Spec.TaskTemplate.ContainerSpec == nil {
 		return resp
@@ -61,7 +63,16 @@ func TransformStartupCommand(
 	var log bool
 	for _, arg := range traefikSvc.Spec.TaskTemplate.ContainerSpec.Args {
 		key, val, valid := traefikhelper.ParseCommandArg(arg)
-		if !valid || !base.IsTraefikCmdArgSettable(key) {
+		if !valid {
+			continue
+		}
+
+		if openPort, ok := parseOpenPortFromArg(key, val); ok {
+			resp.OpenPorts = append(resp.OpenPorts, openPort)
+			continue
+		}
+
+		if !base.IsTraefikCmdArgSettable(key) {
 			continue
 		}
 
@@ -86,6 +97,23 @@ func TransformStartupCommand(
 	}
 
 	return resp
+}
+
+func parseOpenPortFromArg(key, val string) (string, bool) {
+	if !strings.HasSuffix(key, ".address") {
+		return "", false
+	}
+	isTCP := strings.HasPrefix(key, "entrypoints.tcp-svc-")
+	isUDP := strings.HasPrefix(key, "entrypoints.udp-svc-")
+	if !isTCP && !isUDP {
+		return "", false
+	}
+
+	val = strings.TrimPrefix(strings.TrimSpace(val), ":")
+	if val == "" {
+		return "", false
+	}
+	return val, true
 }
 
 func isBoolTrue(val string) bool {

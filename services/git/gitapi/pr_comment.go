@@ -11,6 +11,19 @@ import (
 	"github.com/hivepaas/hivepaas/services/git/gitlab"
 )
 
+func CreatePullRequestCommentWithRetry(
+	ctx context.Context,
+	setting *entity.Setting,
+	owner string,
+	repo string,
+	pullNumber int,
+	message string,
+) error {
+	return retryExecute(ctx, func() error {
+		return CreatePullRequestComment(ctx, setting, owner, repo, pullNumber, message)
+	})
+}
+
 func CreatePullRequestComment(
 	ctx context.Context,
 	setting *entity.Setting,

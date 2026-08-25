@@ -206,7 +206,7 @@ func (s *service) dispatchPRComment(
 			}
 		}
 		if credSetting != nil {
-			err = gitapi.CreatePullRequestComment(ctx, credSetting, owner, repo, pullNumber, message)
+			err = gitapi.CreatePullRequestCommentWithRetry(ctx, credSetting, owner, repo, pullNumber, message)
 			return apperrors.Wrap(err)
 		}
 	}
@@ -220,7 +220,7 @@ func (s *service) dispatchPRComment(
 			return apperrors.Wrap(err)
 		}
 		if webhookSetting != nil {
-			err = gitapi.CreatePullRequestComment(ctx, webhookSetting, owner, repo, pullNumber, message)
+			err = gitapi.CreatePullRequestCommentWithRetry(ctx, webhookSetting, owner, repo, pullNumber, message)
 			return apperrors.Wrap(err)
 		}
 	}

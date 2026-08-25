@@ -142,6 +142,6 @@ func (uc *UC) sendPRComment(
 	if credSetting == nil {
 		return nil
 	}
-	err = gitapi.CreatePullRequestComment(ctx, credSetting, owner, repo, prNumber, message)
+	err = gitapi.CreatePullRequestCommentWithRetry(ctx, credSetting, owner, repo, prNumber, message)
 	return apperrors.Wrap(err)
 }

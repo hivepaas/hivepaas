@@ -6,12 +6,11 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/gitsight/go-vcsurl"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 )
 
 type CommitInfo struct {
@@ -146,7 +145,7 @@ func (cli *checkoutCli) processCheckoutOpts(
 		case *authBasic:
 			// Use https url
 			if !strings.HasPrefix(cli.opts.URL, "https://") {
-				cli.opts.URL = githelper.GetHttpsUrl(parseURL)
+				cli.opts.URL = parseURL.HTTPSRemote()
 			}
 			// Add user info to the url
 			u, err := url.Parse(cli.opts.URL)
@@ -159,7 +158,7 @@ func (cli *checkoutCli) processCheckoutOpts(
 		case *authSSHKey:
 			// Use SSH key to clone, the url must be like `git@host.domain:user/repo.git`
 			if !strings.HasPrefix(cli.opts.URL, "git@") {
-				cli.opts.URL = githelper.GetSshUrl(parseURL)
+				cli.opts.URL = parseURL.SSHRemote()
 			}
 
 			sshKeyFile, err := writeSshKeyFile(cli.opts.TempDir, auth.PEMBytes)

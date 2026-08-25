@@ -23,7 +23,6 @@ require (
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-contrib/logger v1.2.7
 	github.com/gin-gonic/gin v1.12.0
-	github.com/gitsight/go-vcsurl v1.0.1
 	github.com/go-acme/lego/v5 v5.3.1
 	github.com/go-co-op/gocron/v2 v2.22.0
 	github.com/go-errors/errors v1.5.1

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gitsight/go-vcsurl"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 	"github.com/hivepaas/hivepaas/services/git/gitapi"
 	"github.com/hivepaas/hivepaas/services/git/github"
 )

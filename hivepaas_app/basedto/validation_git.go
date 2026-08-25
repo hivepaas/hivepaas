@@ -1,10 +1,10 @@
 package basedto
 
 import (
-	"github.com/gitsight/go-vcsurl"
 	vld "github.com/tiendc/go-validator"
 
 	gitvalidation "github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper/validation"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 )
 
 func ValidateGitRepoURL[T ~string](s *T, required bool, field string) (result []vld.Validator) {

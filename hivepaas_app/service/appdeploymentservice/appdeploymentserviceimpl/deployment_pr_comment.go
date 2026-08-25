@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitsight/go-vcsurl"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
@@ -17,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 	"github.com/hivepaas/hivepaas/services/git/gitapi"
 )
 

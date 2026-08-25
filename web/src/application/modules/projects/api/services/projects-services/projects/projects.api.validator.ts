@@ -5,7 +5,7 @@ import {
     type Projects_FindManyPaginated_Res,
     type Projects_FindOneById_Res,
 } from "~/projects/api/services/projects-services";
-import { EProjectEnvStatus, EProjectStatus } from "~/projects/module-shared/enums";
+import { EProjectEnvStatus } from "~/projects/module-shared/enums";
 
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -24,7 +24,7 @@ const ProjectSchema = z.object({
     id: z.string(),
     name: z.string(),
     key: z.string(),
-    status: z.nativeEnum(EProjectStatus),
+    status: z.string(),
     photo: z.string(),
     note: z.string(),
     envs: z.array(ProjectEnvSchema).nullish(),

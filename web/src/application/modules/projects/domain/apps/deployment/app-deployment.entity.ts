@@ -6,6 +6,8 @@ import type {
 
 import type { EUserRole } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface AppDeploymentSourceUser {
     id: string;
     username: string;
@@ -47,7 +49,7 @@ export type AppDeploymentSettingsSnapshot = AppDeploymentRepoSettingsSnapshot | 
 
 export interface AppDeployment {
     id: string;
-    status: EAppDeploymentStatus;
+    status: OpenApiConstant<EAppDeploymentStatus>;
     updateVer: number;
     settings: AppDeploymentSettingsSnapshot;
     trigger: AppDeploymentTrigger | null;

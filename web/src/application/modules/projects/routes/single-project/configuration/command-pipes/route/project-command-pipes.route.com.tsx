@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
+import { ProjectProviderSettingsScopeHeader } from "~/projects/module-shared/components";
 
 import { ProjectCommandPipeTable } from "../building-blocks";
 
@@ -8,5 +9,10 @@ export function ProjectCommandPipesRoute() {
 
     invariant(projectId, "projectId must be defined");
 
-    return <ProjectCommandPipeTable projectId={projectId} />;
+    return (
+        <div className="flex flex-col gap-4">
+            <ProjectProviderSettingsScopeHeader projectId={projectId} />
+            <ProjectCommandPipeTable projectId={projectId} />
+        </div>
+    );
 }

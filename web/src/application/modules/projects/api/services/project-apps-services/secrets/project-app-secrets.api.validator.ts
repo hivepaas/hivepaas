@@ -6,8 +6,6 @@ import type {
     AppSecrets_FindOneById_Res,
     AppSecrets_GetDownloadToken_Res,
 } from "~/projects/api/services/project-apps-services";
-import { EProjectSecretStatus } from "~/projects/module-shared/enums";
-
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
@@ -20,7 +18,7 @@ const AppSecretSchema = z.object({
     key: z.string(),
     base64: z.boolean().optional().default(false),
     type: z.string().optional().default("secret"),
-    status: z.nativeEnum(EProjectSecretStatus),
+    status: z.string(),
     inherited: z.boolean().optional().default(false),
     swarmRef: z
         .object({

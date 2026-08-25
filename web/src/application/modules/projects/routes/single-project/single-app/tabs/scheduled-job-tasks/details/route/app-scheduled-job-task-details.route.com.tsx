@@ -8,6 +8,8 @@ import invariant from "tiny-invariant";
 import { AppScheduledJobsCommands, AppScheduledJobsQueries } from "~/projects/data";
 import { EAppScheduledJobTaskStatus } from "~/projects/module-shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 import {
     ScheduledJobTaskLogsViewer,
     ScheduledJobTaskSummaryCard,
@@ -18,17 +20,17 @@ import {
 const TASK_DETAILS_REFETCH_INTERVAL_MS = 5_000;
 
 function shouldPollTaskDetails(
-    status: EAppScheduledJobTaskStatus | undefined,
+    status: OpenApiConstant<EAppScheduledJobTaskStatus> | undefined,
     shouldPollAfterStreamClose: boolean,
 ): boolean {
     return status === EAppScheduledJobTaskStatus.NotStarted || (shouldPollAfterStreamClose && isTaskInProgress(status));
 }
 
-function isTaskInProgress(status?: EAppScheduledJobTaskStatus): boolean {
+function isTaskInProgress(status?: OpenApiConstant<EAppScheduledJobTaskStatus>): boolean {
     return status === EAppScheduledJobTaskStatus.InProgress;
 }
 
-function isTaskTerminal(status?: EAppScheduledJobTaskStatus): boolean {
+function isTaskTerminal(status?: OpenApiConstant<EAppScheduledJobTaskStatus>): boolean {
     return (
         status === EAppScheduledJobTaskStatus.Canceled ||
         status === EAppScheduledJobTaskStatus.Done ||

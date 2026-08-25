@@ -1,10 +1,12 @@
 import type { EProjectEnvStatus, EProjectStatus } from "~/projects/module-shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface ProjectBaseEntity {
     id: string;
     name: string;
     key: string;
-    status: EProjectStatus;
+    status: OpenApiConstant<EProjectStatus>;
     photo: string;
     note: string;
     envs: ProjectEnvEntity[];

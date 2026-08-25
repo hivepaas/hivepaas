@@ -62,13 +62,13 @@ export function parseApiError(error: unknown): Error {
      * Should never happen!
      */
     if (!isAxiosError(error)) {
-        return new Error("Invalid API Client error.");
+        return new UnexpectedApiErrorException();
     }
 
     /**
      * Network error
      */
-    if (error.code === AxiosError.ERR_NETWORK) {
+    if (error.code === AxiosError.ERR_NETWORK && !error.response) {
         return new NetworkException(error.message);
     }
 

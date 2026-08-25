@@ -68,9 +68,20 @@ export type ProjectApps_UpdateOne_Req = ApiRequestBase<
     } & Partial<
         Omit<
             ProjectAppDetails,
-            "id" | "key" | "env" | "createdAt" | "updatedAt" | "userAccesses" | "stats" | "parentApp" | "updateVer"
+            | "id"
+            | "key"
+            | "env"
+            | "status"
+            | "createdAt"
+            | "updatedAt"
+            | "userAccesses"
+            | "stats"
+            | "parentApp"
+            | "updateVer"
         >
-    >
+    > & {
+            status?: EProjectAppStatus;
+        }
 >;
 
 export type ProjectApps_UpdateOne_Res = ApiResponseBase<{

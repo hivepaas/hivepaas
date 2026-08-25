@@ -1,11 +1,13 @@
 import type { ESettingStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface ProjectImageBuildSettings {
     id: string;
     type: string;
     name: string;
     kind?: string;
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
     inherited?: boolean;
     inheritable?: boolean;
     default?: boolean;

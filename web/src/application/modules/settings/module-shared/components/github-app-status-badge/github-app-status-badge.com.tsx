@@ -5,6 +5,20 @@ import { cn } from "@lib/utils";
 
 import { ESettingStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
+function formatStatusLabel(status: string) {
+    if (!status.trim()) {
+        return "-";
+    }
+
+    return status
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b\w/g, char => char.toUpperCase());
+}
+
 function View({ status }: Props) {
     const label =
         status === ESettingStatus.Active
@@ -17,7 +31,7 @@ function View({ status }: Props) {
                   ? "Pending"
                   : status === ESettingStatus.Missing
                     ? "Missing"
-                    : "-";
+                    : formatStatusLabel(status);
 
     return (
         <Badge
@@ -35,7 +49,7 @@ function View({ status }: Props) {
 }
 
 interface Props {
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
 }
 
 export const GithubAppStatusBadge = memo(View);

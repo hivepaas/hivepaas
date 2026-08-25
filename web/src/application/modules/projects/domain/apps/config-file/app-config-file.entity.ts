@@ -1,5 +1,7 @@
 import type { EProjectSecretStatus } from "~/projects/module-shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface AppConfigFileSwarmRefFile {
     name: string;
     uid: string;
@@ -17,7 +19,7 @@ export interface AppConfigFile {
     content: string;
     base64: boolean;
     type: string;
-    status: EProjectSecretStatus;
+    status: OpenApiConstant<EProjectSecretStatus>;
     inherited: boolean;
     swarmRef: AppConfigFileSwarmRef | null;
     updateVer: number;

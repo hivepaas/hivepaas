@@ -2,17 +2,19 @@ import type { SettingsBaseEntity } from "~/settings/domain";
 
 import type { ESettingStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 import type { ESystemBackupFileStorageType } from "../module-shared/enums";
 
 export interface SystemBackupFileStorage extends SettingsBaseEntity {
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
 }
 
 export interface SystemBackupFile {
     id: string;
     type: string;
     kind: string;
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
     key: string;
     name: string;
     path: string;

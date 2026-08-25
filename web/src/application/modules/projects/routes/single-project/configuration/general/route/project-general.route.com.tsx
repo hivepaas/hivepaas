@@ -57,7 +57,6 @@ export function ProjectGeneralRoute() {
                 note: values.note,
                 owner: { id: values.ownerId },
                 updateVer: data.data.updateVer,
-                status: data.data.status,
             },
             {
                 onSuccess: () => {

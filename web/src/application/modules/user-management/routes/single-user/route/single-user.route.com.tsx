@@ -54,7 +54,6 @@ export function SingleUserRoute() {
             user: {
                 ...values,
                 id: userId,
-                status: user.status,
             },
         });
     }

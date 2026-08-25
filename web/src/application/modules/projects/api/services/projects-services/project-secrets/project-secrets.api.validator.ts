@@ -5,8 +5,6 @@ import type {
     ProjectSecrets_FindManyPaginated_Res,
     ProjectSecrets_FindOneById_Res,
 } from "~/projects/api/services/projects-services";
-import { EProjectSecretStatus } from "~/projects/module-shared/enums";
-
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
@@ -18,7 +16,7 @@ const ProjectSecretSchema = z.object({
     updateVer: z.number(),
     key: z.string(),
     base64: z.boolean().optional().default(false),
-    status: z.nativeEnum(EProjectSecretStatus),
+    status: z.string(),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date().nullable(),
 });

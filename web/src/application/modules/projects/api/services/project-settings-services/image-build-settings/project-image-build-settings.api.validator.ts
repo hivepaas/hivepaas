@@ -1,8 +1,6 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
 
-import { ESettingStatus } from "@application/shared/enums";
-
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
@@ -31,7 +29,7 @@ const ImageBuildSettingsSchema = z.object({
     type: z.string(),
     name: z.string(),
     kind: z.string().optional(),
-    status: z.nativeEnum(ESettingStatus),
+    status: z.string(),
     inherited: z.boolean().optional(),
     inheritable: z.boolean().optional(),
     default: z.boolean().optional(),

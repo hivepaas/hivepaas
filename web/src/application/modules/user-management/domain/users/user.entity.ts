@@ -1,10 +1,12 @@
 import type { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface UserBase {
     id: string;
     email: string;
     role: EUserRole;
-    status: EUserStatus;
+    status: OpenApiConstant<EUserStatus>;
     fullName: string;
     username: string;
     photo: string | null;

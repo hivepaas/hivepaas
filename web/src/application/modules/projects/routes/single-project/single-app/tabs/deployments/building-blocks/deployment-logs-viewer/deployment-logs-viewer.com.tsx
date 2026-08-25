@@ -7,6 +7,8 @@ import { EAppDeploymentStatus as AppDeploymentStatus } from "~/projects/module-s
 
 import { LogsViewer, parseLogsViewerFrames, useBufferedLogFrames } from "@application/shared/components";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 const DEPLOYMENT_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 340px), 2000px)";
 
 export function DeploymentLogsViewer({
@@ -175,7 +177,7 @@ interface DeploymentLogsScope {
     env: string;
     appID: string;
     deploymentID: string;
-    status: EAppDeploymentStatus;
+    status: OpenApiConstant<EAppDeploymentStatus>;
     onStreamClosedWhileInProgress: () => void;
 }
 

@@ -61,9 +61,10 @@ export class ProjectAccessTokenApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectAccessToken_CreateOne_Res, Error>> {
         const { projectID, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/access-tokens`, payload, { signal })).pipe(
+            from(this.client.v1.post(`/projects/${projectID}/access-tokens`, json, { signal })).pipe(
                 map(this.validator.createOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -76,9 +77,10 @@ export class ProjectAccessTokenApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectAccessToken_UpdateOne_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/access-tokens/${id}`, payload, { signal })).pipe(
+            from(this.client.v1.put(`/projects/${projectID}/access-tokens/${id}`, json, { signal })).pipe(
                 map(this.validator.updateOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -91,9 +93,10 @@ export class ProjectAccessTokenApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectAccessToken_UpdateMeta_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/access-tokens/${id}/status`, payload, { signal })).pipe(
+            from(this.client.v1.put(`/projects/${projectID}/access-tokens/${id}/status`, json, { signal })).pipe(
                 map(this.validator.updateMeta),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

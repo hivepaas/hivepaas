@@ -2,6 +2,8 @@ import type { SettingsBaseEntity } from "~/settings/domain";
 
 import type { ESettingStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface SystemSslRenewalSchedule {
     interval: string;
     cronExpr: string;
@@ -22,7 +24,7 @@ export interface SystemSslRenewalNotification {
 }
 
 export interface SystemSslRenewalSettings extends SettingsBaseEntity {
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
     schedule: SystemSslRenewalSchedule;
     notification?: SystemSslRenewalNotification | null;
     nextRuns: Date[];

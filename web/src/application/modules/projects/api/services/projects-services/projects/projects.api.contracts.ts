@@ -53,8 +53,13 @@ export type Projects_UpdateOne_Req = ApiRequestBase<
         updateVer: number;
         owner?: { id: string };
     } & Partial<
-        Omit<ProjectDetailsEntity, "id" | "key" | "createdAt" | "updatedAt" | "updateVer" | "owner" | "userAccesses">
-    >
+        Omit<
+            ProjectDetailsEntity,
+            "id" | "key" | "status" | "createdAt" | "updatedAt" | "updateVer" | "owner" | "userAccesses"
+        >
+    > & {
+            status?: EProjectStatus;
+        }
 >;
 
 export type Projects_UpdateOne_Res = ApiResponseBase<{

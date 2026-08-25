@@ -1,6 +1,8 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
 import { type UserBase } from "~/user-management/domain";
 
+import type { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
+
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
 /**
@@ -38,7 +40,11 @@ export type Users_DeleteOne_Res = ApiResponseBase<{
  * Update one user
  */
 export type Users_UpdateOne_Req = ApiRequestBase<{
-    user: Partial<Omit<UserBase, "createdAt" | "updatedAt" | "lastAccess" | "photo">>;
+    user: Partial<Omit<UserBase, "role" | "status" | "securityOption" | "createdAt" | "updatedAt" | "lastAccess" | "photo">> & {
+        role?: EUserRole;
+        status?: EUserStatus;
+        securityOption?: ESecuritySettings;
+    };
 }>;
 
 export type Users_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
@@ -47,7 +53,10 @@ export type Users_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
  * Invite a user
  */
 export type Users_InviteOne_Req = ApiRequestBase<{
-    user: Pick<UserBase, "email" | "role" | "securityOption" | "accessExpireAt" | "projectAccesses" | "moduleAccesses">;
+    user: Pick<UserBase, "email" | "accessExpireAt" | "projectAccesses" | "moduleAccesses"> & {
+        role: EUserRole;
+        securityOption: ESecuritySettings;
+    };
     sendInviteEmail?: boolean;
 }>;
 

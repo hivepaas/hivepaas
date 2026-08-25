@@ -2,6 +2,8 @@ import type { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enum
 
 import type { ESettingStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface ProjectCommandTemplateEnvVar {
     key: string;
     value: string;
@@ -36,7 +38,7 @@ export interface ProjectCommandTemplate {
     type: string;
     name: string;
     kind: string;
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
     inherited: boolean;
     inheritable: boolean;
     default: boolean;

@@ -1,6 +1,8 @@
 import type { ESecuritySettings, EUserRole, EUserStatus } from "@application/shared/enums";
 import type { ModulePermission, ProjectPermission } from "@application/shared/permissions/types";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface Profile {
     /**
      * User ID
@@ -38,7 +40,7 @@ export interface Profile {
 
     role: EUserRole;
 
-    status: EUserStatus;
+    status: OpenApiConstant<EUserStatus>;
 
     lastAccess: Date | null;
 

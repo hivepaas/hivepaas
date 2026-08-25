@@ -1,5 +1,7 @@
 import type { EAppScheduledJobTaskPriority, EAppScheduledJobTaskStatus } from "~/projects/module-shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export type AppScheduledJobTaskLogFrameType = "in" | "out" | "err" | "warn" | "debug";
 
 export interface AppScheduledJobTaskLogFrame {
@@ -20,7 +22,7 @@ export interface AppScheduledJobTaskConfig {
 export interface AppScheduledJobTask {
     id: string;
     type: string;
-    status: EAppScheduledJobTaskStatus;
+    status: OpenApiConstant<EAppScheduledJobTaskStatus>;
     config: AppScheduledJobTaskConfig;
     lastError: string;
     updateVer: number;

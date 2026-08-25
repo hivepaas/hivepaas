@@ -83,10 +83,11 @@ export class ProjectSslProviderApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslProvider_CreateOne_Res, Error>> {
         const { projectID, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/ssl-providers`, payload, {
+                this.client.v1.post(`/projects/${projectID}/ssl-providers`, json, {
                     signal,
                 }),
             ).pipe(
@@ -102,10 +103,11 @@ export class ProjectSslProviderApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslProvider_UpdateOne_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/ssl-providers/${id}`, payload, {
+                this.client.v1.put(`/projects/${projectID}/ssl-providers/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -121,10 +123,11 @@ export class ProjectSslProviderApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslProvider_UpdateStatus_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/ssl-providers/${id}/status`, payload, {
+                this.client.v1.put(`/projects/${projectID}/ssl-providers/${id}/status`, json, {
                     signal,
                 }),
             ).pipe(

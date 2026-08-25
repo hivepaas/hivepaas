@@ -6,6 +6,8 @@ import type {
 
 import type { ESettingStatus } from "@application/shared/enums";
 
+import type { OpenApiConstant } from "@infrastructure/api";
+
 export interface AppScheduledJobNamedRef {
     id: string;
     name: string;
@@ -91,7 +93,7 @@ export interface AppScheduledJob {
     type: string;
     name: string;
     kind?: string;
-    status: ESettingStatus;
+    status: OpenApiConstant<ESettingStatus>;
     inherited: boolean;
     inheritable: boolean;
     default: boolean;

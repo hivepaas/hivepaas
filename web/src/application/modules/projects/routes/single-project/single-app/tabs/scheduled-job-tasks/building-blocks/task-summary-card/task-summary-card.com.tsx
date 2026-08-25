@@ -12,8 +12,9 @@ import { EAppScheduledJobTaskStatus } from "~/projects/module-shared/enums";
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import { Button, Checkbox, Skeleton } from "@/components/ui";
+import type { OpenApiConstant } from "@infrastructure/api";
 
-const STATUS_LABELS: Record<EAppScheduledJobTaskStatus, string> = {
+const STATUS_LABELS: Partial<Record<EAppScheduledJobTaskStatus, string>> = {
     [EAppScheduledJobTaskStatus.Done]: "Done",
     [EAppScheduledJobTaskStatus.Failed]: "Failed",
     [EAppScheduledJobTaskStatus.InProgress]: "In-Progress",
@@ -21,7 +22,7 @@ const STATUS_LABELS: Record<EAppScheduledJobTaskStatus, string> = {
     [EAppScheduledJobTaskStatus.Canceled]: "Canceled",
 };
 
-const STATUS_CLASS_NAMES: Record<EAppScheduledJobTaskStatus, string> = {
+const STATUS_CLASS_NAMES: Partial<Record<EAppScheduledJobTaskStatus, string>> = {
     [EAppScheduledJobTaskStatus.Done]: "bg-green-500 text-white hover:bg-green-500/90",
     [EAppScheduledJobTaskStatus.Failed]: "bg-red-500 text-white hover:bg-red-500/90",
     [EAppScheduledJobTaskStatus.InProgress]: "bg-purple-400 text-white hover:bg-purple-400/90",
@@ -29,7 +30,7 @@ const STATUS_CLASS_NAMES: Record<EAppScheduledJobTaskStatus, string> = {
     [EAppScheduledJobTaskStatus.Canceled]: "bg-zinc-500 text-white hover:bg-zinc-500/90",
 };
 
-const STATUS_BORDER_CLASS_NAMES: Record<EAppScheduledJobTaskStatus, string> = {
+const STATUS_BORDER_CLASS_NAMES: Partial<Record<EAppScheduledJobTaskStatus, string>> = {
     [EAppScheduledJobTaskStatus.Done]: "border-l-green-500",
     [EAppScheduledJobTaskStatus.Failed]: "border-l-red-500",
     [EAppScheduledJobTaskStatus.InProgress]: "border-l-purple-400",
@@ -64,6 +65,18 @@ function formatValue(value: string | number | null | undefined): string {
     return String(value);
 }
 
+function formatStatusLabel(status: string) {
+    if (!status.trim()) {
+        return "-";
+    }
+
+    return status
+        .replace(/[_-]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/\b\w/g, char => char.toUpperCase());
+}
+
 function canCancelTask(task: AppScheduledJobTask): boolean {
     return (
         task.status === EAppScheduledJobTaskStatus.NotStarted ||
@@ -75,8 +88,12 @@ function shouldShowDuration(task: AppScheduledJobTask): task is AppScheduledJobT
     return task.status !== EAppScheduledJobTaskStatus.NotStarted && task.startedAt != null;
 }
 
-function StatusBadge({ status }: { status: EAppScheduledJobTaskStatus }) {
-    return <Badge className={cn("h-7 px-3", STATUS_CLASS_NAMES[status])}>{STATUS_LABELS[status]}</Badge>;
+function StatusBadge({ status }: { status: OpenApiConstant<EAppScheduledJobTaskStatus> }) {
+    return (
+        <Badge className={cn("h-7 px-3", STATUS_CLASS_NAMES[status as EAppScheduledJobTaskStatus])}>
+            {STATUS_LABELS[status as EAppScheduledJobTaskStatus] ?? formatStatusLabel(status)}
+        </Badge>
+    );
 }
 
 function InfoRow({ label, children }: { label: string; children: ReactNode }) {
@@ -116,7 +133,7 @@ export function ScheduledJobTaskSummaryCard({
         <div
             className={cn(
                 "rounded-lg border bg-background p-5 shadow-xs",
-                variant === "list" ? [STATUS_BORDER_CLASS_NAMES[task.status]] : "border-0",
+                variant === "list" ? [STATUS_BORDER_CLASS_NAMES[task.status as EAppScheduledJobTaskStatus]] : "border-0",
                 isClickable &&
                     "cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
             )}

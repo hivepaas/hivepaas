@@ -89,7 +89,7 @@ export function ProvisionGithubAppDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="min-w-[390px] w-[840px]">
+            <DialogFixedContent className="min-w-[390px] w-[750px]">
                 <DialogHeader>
                     <DialogTitle>Provision Github app</DialogTitle>
                 </DialogHeader>

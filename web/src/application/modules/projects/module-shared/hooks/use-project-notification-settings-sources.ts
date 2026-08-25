@@ -67,7 +67,7 @@ export function useProjectNotificationSettingsSources(
         },
         manageLink: {
             to: ROUTE.projects.single.providerConfiguration.notificationTargets.$route(projectId),
-            label: "Configure notification settings",
+            label: "Configure Notification Targets",
         },
     };
 }

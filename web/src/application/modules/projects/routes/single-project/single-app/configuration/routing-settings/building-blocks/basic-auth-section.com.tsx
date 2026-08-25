@@ -159,7 +159,6 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
                                     loading={isFetching}
                                     onRefresh={() => void refetch()}
                                     isRefreshing={isRefetching}
-                                    allowClear
                                     disabled={readOnly}
                                 />
                                 <FieldError errors={[nameError]} />

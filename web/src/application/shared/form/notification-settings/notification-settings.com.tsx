@@ -56,7 +56,6 @@ function NotificationSelect<TFieldValues extends FieldValues>({
                     disabled={readOnly}
                     onRefresh={source.onRefresh}
                     isRefreshing={source.isRefreshing}
-                    allowClear
                 />
                 <FieldError errors={[error]} />
                 <AppLink.Basic

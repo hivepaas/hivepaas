@@ -253,7 +253,6 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onC
                                         onSearch={setStorageSearch}
                                         placeholder="select cloud storage"
                                         searchable
-                                        allowClear
                                         closeOnSelect
                                         emptyText="No cloud storages available"
                                         className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
@@ -271,7 +270,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onC
                                         rel="noopener noreferrer"
                                         ignorePrevPath
                                     >
-                                        Configure storage settings
+                                        Configure Cloud Storages
                                     </AppLink.Modules>
                                 </Field>
                             </FieldGroup>

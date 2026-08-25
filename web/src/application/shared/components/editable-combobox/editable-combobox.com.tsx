@@ -18,7 +18,7 @@ export interface EditableComboboxProps {
     "placeholder"?: string;
     "className"?: string;
     "emptyText"?: string;
-    "allowClear"?: boolean;
+    "disableClear"?: boolean;
     "aria-invalid"?: boolean;
     "onRefresh"?: () => void;
     "isRefreshing"?: boolean;
@@ -35,7 +35,7 @@ export function EditableCombobox({
     placeholder = "Type or select...",
     className,
     emptyText = "No matching options",
-    allowClear = true,
+    disableClear = false,
     "aria-invalid": ariaInvalid,
     onRefresh,
     inputClassName,
@@ -80,7 +80,7 @@ export function EditableCombobox({
         inputRef.current?.focus();
     };
 
-    const showClear = allowClear && !disabled && text.length > 0;
+    const showClear = !disableClear && !disabled && text.length > 0;
 
     return (
         <div className={cn("flex w-full min-w-0 items-center gap-1.5", className)}>

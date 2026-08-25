@@ -409,7 +409,6 @@ export function QuickInstallSslCertForm({
                                             }}
                                             placeholder="select provider"
                                             searchable
-                                            allowClear
                                             closeOnSelect
                                             emptyText="No SSL providers available"
                                             valueKey="id"
@@ -450,7 +449,6 @@ export function QuickInstallSslCertForm({
                                             }}
                                             placeholder="select ACME DNS provider"
                                             searchable
-                                            allowClear
                                             closeOnSelect
                                             emptyText="No ACME DNS providers available"
                                             valueKey="id"
@@ -643,7 +641,6 @@ export function QuickInstallSslCertForm({
                                             }}
                                             aria-invalid={isExpireAtInvalid}
                                             placeholder="Select date"
-                                            allowClear
                                             disabled={readOnly}
                                         />
                                         <FieldError errors={[errors.expireAt]} />
@@ -666,7 +663,6 @@ export function QuickInstallSslCertForm({
                                             }}
                                             aria-invalid={isNotifyFromInvalid}
                                             placeholder="Select date"
-                                            allowClear
                                             disabled={readOnly}
                                         />
                                         <FieldError errors={[errors.notifyFrom]} />

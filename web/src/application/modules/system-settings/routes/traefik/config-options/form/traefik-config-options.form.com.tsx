@@ -55,7 +55,6 @@ function LogLevelField() {
                         aria-invalid={invalid}
                         className="w-[220px]"
                         inputClassName="w-[220px]"
-                        allowClear
                     />
                     <FieldError errors={[error]} />
                 </Field>

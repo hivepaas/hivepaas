@@ -384,7 +384,6 @@ export function CreateOrEditNotificationTargetForm({
                                                                 placeholder="None"
                                                                 emptyText="No email accounts available"
                                                                 searchable={false}
-                                                                allowClear
                                                                 loading={emailQuery.isLoading}
                                                                 onRefresh={() => {
                                                                     void emailQuery.refetch();
@@ -509,7 +508,6 @@ export function CreateOrEditNotificationTargetForm({
                                                                 placeholder="None"
                                                                 emptyText="No Slack webhooks available"
                                                                 searchable={false}
-                                                                allowClear
                                                                 loading={imServiceQuery.isLoading}
                                                                 onRefresh={() => {
                                                                     void imServiceQuery.refetch();
@@ -586,7 +584,6 @@ export function CreateOrEditNotificationTargetForm({
                                                                 placeholder="None"
                                                                 emptyText="No Discord webhooks available"
                                                                 searchable={false}
-                                                                allowClear
                                                                 loading={imServiceQuery.isLoading}
                                                                 onRefresh={() => {
                                                                     void imServiceQuery.refetch();
@@ -663,7 +660,6 @@ export function CreateOrEditNotificationTargetForm({
                                                                 placeholder="None"
                                                                 emptyText="No Telegram bots available"
                                                                 searchable={false}
-                                                                allowClear
                                                                 loading={imServiceQuery.isLoading}
                                                                 onRefresh={() => {
                                                                     void imServiceQuery.refetch();

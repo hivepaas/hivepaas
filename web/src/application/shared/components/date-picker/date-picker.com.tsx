@@ -15,7 +15,7 @@ export interface DatePickerProps {
     "disabled"?: boolean;
     "className"?: string;
     "aria-invalid"?: boolean;
-    "allowClear"?: boolean;
+    "disableClear"?: boolean;
 }
 
 export function DatePicker({
@@ -25,9 +25,9 @@ export function DatePicker({
     disabled,
     className,
     "aria-invalid": ariaInvalid,
-    allowClear = false,
+    disableClear = false,
 }: DatePickerProps) {
-    const showClear = allowClear && !disabled && Boolean(value);
+    const showClear = !disableClear && !disabled && Boolean(value);
 
     return (
         <Popover>

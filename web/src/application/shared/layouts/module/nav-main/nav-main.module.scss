@@ -45,6 +45,7 @@
     .label {
       overflow: hidden;
       font-size: 14px;
+      font-weight: 400;
 
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -66,8 +67,18 @@
       background-color: rgb(0 0 0 / 3%);
     }
 
+    &.is-top-level {
+      .label {
+        font-weight: 500;
+      }
+    }
+
     &.is-active {
       background-color: var(--sidebar-accent);
+
+      .label {
+        font-weight: 500;
+      }
 
       .active-indicator {
         opacity: 1;

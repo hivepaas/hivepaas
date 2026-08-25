@@ -183,7 +183,6 @@ export function SaveToFileSection({ projectId, readOnly = false }: Props) {
                                 valueKey="id"
                                 searchable
                                 closeOnSelect
-                                allowClear
                                 loading={isStorageFetching}
                                 onRefresh={() => void refetchStorage()}
                                 isRefreshing={isStorageRefetching}

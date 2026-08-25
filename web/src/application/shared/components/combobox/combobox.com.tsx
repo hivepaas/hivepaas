@@ -66,8 +66,8 @@ export interface ComboboxProps<T extends Record<string, unknown> = Record<string
     "isRefreshing"?: boolean;
     /** If label contains a space, render first token as a colored badge and the rest as text */
     "splitLabelBadge"?: boolean;
-    /** Show a clear button on hover when a value is selected */
-    "allowClear"?: boolean;
+    /** If true, disable the clear button on hover and deselect on click */
+    "disableClear"?: boolean;
     "renderSelectedOption"?: (option: ComboboxOption<T>) => React.ReactNode;
     "renderOption"?: (option: ComboboxOption<T>) => React.ReactNode;
 }
@@ -108,7 +108,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
     onRefresh,
     isRefreshing = false,
     splitLabelBadge = false,
-    allowClear = false,
+    disableClear = false,
     renderSelectedOption,
     renderOption,
 }: ComboboxProps<T>) {
@@ -142,7 +142,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
         }
 
         const optionValue = getOptionValueString(option, valueKey);
-        const isDeselecting = normalizedValue != null && normalizedValue === optionValue.toLowerCase();
+        const isDeselecting = !disableClear && normalizedValue != null && normalizedValue === optionValue.toLowerCase();
         const newValue = isDeselecting ? null : optionValue;
         const selectedOptionData = isDeselecting ? null : option.value;
 
@@ -154,7 +154,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
         }
     };
 
-    const showClear = allowClear && !disabled && !loading && value != null && value !== "";
+    const showClear = !disableClear && !disabled && !loading && value != null && value !== "";
 
     const handleClear = (e: React.MouseEvent) => {
         e.preventDefault();

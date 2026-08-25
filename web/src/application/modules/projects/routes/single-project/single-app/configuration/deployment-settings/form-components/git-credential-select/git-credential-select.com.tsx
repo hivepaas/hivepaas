@@ -70,7 +70,6 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
                         onSearch={setSearchQuery}
                         placeholder="Select git credentials"
                         searchable
-                        allowClear
                         closeOnSelect
                         emptyText="No git credentials available"
                         className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}

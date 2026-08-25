@@ -166,7 +166,6 @@ function ProxyProviderField({ readOnly }: { readOnly: boolean }) {
                         aria-invalid={invalid}
                         className="max-w-[280px]"
                         inputClassName="max-w-[280px]"
-                        allowClear
                         disabled={readOnly}
                     />
                     <FieldError errors={[error]} />

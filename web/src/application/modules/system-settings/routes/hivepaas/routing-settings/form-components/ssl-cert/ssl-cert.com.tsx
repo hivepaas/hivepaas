@@ -115,7 +115,6 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
                                 onRefresh={() => void refetch()}
                                 isRefreshing={isRefetching}
                                 splitLabelBadge
-                                allowClear
                                 disabled={readOnly}
                             />
 

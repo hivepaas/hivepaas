@@ -49,7 +49,6 @@ function View({ domainIndex, readOnly = false }: RedirectToProps) {
                 }}
                 placeholder="e.g. other-domain.com"
                 className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
-                allowClear
                 aria-invalid={isDomainRedirectInvalid}
                 disabled={readOnly}
             />

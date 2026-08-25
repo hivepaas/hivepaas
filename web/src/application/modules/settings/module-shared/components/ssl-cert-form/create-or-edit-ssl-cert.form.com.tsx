@@ -507,7 +507,6 @@ export function CreateOrEditSslCertForm({
                                             }}
                                             placeholder="select provider"
                                             searchable
-                                            allowClear
                                             closeOnSelect
                                             emptyText="No SSL providers available"
                                             className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}
@@ -604,7 +603,6 @@ export function CreateOrEditSslCertForm({
                                             }}
                                             placeholder="select ACME DNS provider"
                                             searchable
-                                            allowClear
                                             closeOnSelect
                                             emptyText="No ACME DNS providers available"
                                             className={SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS}

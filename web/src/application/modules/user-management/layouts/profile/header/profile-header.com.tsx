@@ -21,13 +21,15 @@ function View() {
             <div className="flex items-center gap-4 mt-4 pb-3 border-border">
                 <div className="flex items-center gap-4">
                     <Avatar
-                        name={profile.fullName ?? ""}
+                        name={profile.fullName ?? profile.username}
                         src={profile.photo}
                         className="size-20 text-2xl"
                     />
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-semibold text-foreground">{profile.fullName}</h2>
+                            <h2 className="text-lg font-semibold text-foreground">
+                                {profile.fullName ?? profile.username}
+                            </h2>
                             <UserStatusBadge status={profile.status} />
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">

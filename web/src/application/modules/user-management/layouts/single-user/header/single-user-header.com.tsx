@@ -206,13 +206,15 @@ export function View({ userId }: Props) {
                 <BackButton />
                 <div className="flex items-center gap-4">
                     <Avatar
-                        name={user.fullName}
+                        name={user.fullName || user.username}
                         src={user.photo}
                         className="size-20 text-2xl"
                     />
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-2">
-                            <h2 className="text-[20px] font-semibold text-foreground">{user.fullName}</h2>
+                            <h2 className="text-[20px] font-semibold text-foreground">
+                                {user.fullName || user.username}
+                            </h2>
                             <UserStatusBadge status={user.status} />
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">

@@ -96,7 +96,6 @@ export function CommandTemplateSelectField({
                         }}
                         placeholder={placeholder}
                         searchable
-                        allowClear
                         closeOnSelect
                         emptyText="No command templates available"
                         valueKey="id"

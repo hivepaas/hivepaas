@@ -339,7 +339,6 @@ function RoutingDomainRow({
                     loading={isFetching}
                     onRefresh={hasTargetDomain ? () => void refetch() : undefined}
                     isRefreshing={isRefetching}
-                    allowClear
                     disabled={readOnly || !hasTargetDomain}
                 />
             </MappingRow>

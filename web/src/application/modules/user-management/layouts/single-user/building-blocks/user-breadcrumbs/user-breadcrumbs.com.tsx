@@ -15,7 +15,7 @@ function View({ user }: Props) {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                    <BreadcrumbPage>{user.fullName}</BreadcrumbPage>
+                    <BreadcrumbPage>{user.fullName || user.username}</BreadcrumbPage>
                 </BreadcrumbItem>
             </BreadcrumbList>
         </Breadcrumb>

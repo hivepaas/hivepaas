@@ -312,7 +312,6 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                 valueKey="id"
                                 searchable
                                 closeOnSelect
-                                allowClear
                                 loading={isFetching}
                                 onRefresh={() => void refetch()}
                                 isRefreshing={isRefetching}

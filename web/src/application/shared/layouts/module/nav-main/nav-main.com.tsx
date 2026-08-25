@@ -71,7 +71,7 @@ function findActiveNavigationKey(items: NavigationItem[], pathname: string) {
     return patternMatch ? getNavigationItemKey(patternMatch) : null;
 }
 
-function NavigationLink({ route, label, Icon, isActive }: NavigationLinkProps) {
+function NavigationLink({ route, label, Icon, isActive, isTopLevel = false }: NavigationLinkProps) {
     return (
         <AppNavLink.Modules
             to={route}
@@ -86,6 +86,7 @@ function NavigationLink({ route, label, Icon, isActive }: NavigationLinkProps) {
                         className={cx("link-content", {
                             "is-active": isActive,
                             "is-pending": isPending,
+                            "is-top-level": isTopLevel,
                         })}
                     >
                         {Icon && <Icon className={cx("icon")} />}
@@ -105,6 +106,7 @@ interface NavigationLinkProps {
     label: string;
     Icon?: LucideIcon;
     isActive: boolean;
+    isTopLevel?: boolean;
 }
 
 interface NavigationGroupProps {
@@ -131,7 +133,7 @@ function NavigationGroup({ activeKey, item, pathname }: NavigationGroupProps) {
                 <CollapsibleTrigger asChild>
                     <SidebarMenuButton
                         tooltip={item.title}
-                        className="px-4"
+                        className="px-4 font-medium"
                     >
                         {item.icon && <item.icon />}
                         <span>{item.title}</span>
@@ -190,6 +192,7 @@ export function NavMain({ items }: { items: NavigationItem[] }) {
                                 label={item.title}
                                 Icon={item.icon}
                                 isActive={getNavigationItemKey(item) === activeKey}
+                                isTopLevel
                             />
                         </SidebarMenuItem>
                     ),

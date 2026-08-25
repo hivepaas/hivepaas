@@ -10,6 +10,7 @@ export * from "./project-env-input";
 export * from "./project-env-badge";
 export * from "./project-env-filter";
 export * from "./project-env-scope-badge";
+export * from "./project-provider-settings-scope-header";
 export * from "./git-selectors";
 export * from "./selector-dialog";
 export * from "./pickers";

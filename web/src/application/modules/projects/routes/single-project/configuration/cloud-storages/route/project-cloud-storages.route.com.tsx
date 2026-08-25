@@ -1,7 +1,14 @@
 import { useParams } from "react-router";
 import { ProjectCloudStorageTable } from "~/settings/module-shared/components";
 
+import { ProjectProviderSettingsScopeHeader } from "@application/modules/projects/module-shared/components";
+
 export function ProjectCloudStoragesRoute() {
     const { id: projectId = "" } = useParams();
-    return <ProjectCloudStorageTable projectId={projectId} />;
+    return (
+        <div className="flex flex-col gap-4">
+            <ProjectProviderSettingsScopeHeader projectId={projectId} />
+            <ProjectCloudStorageTable projectId={projectId} />
+        </div>
+    );
 }

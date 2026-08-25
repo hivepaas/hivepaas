@@ -55,16 +55,15 @@ func (s *service) CreatePreview(
 		Output:           &entity.TaskAppPreviewOutput{},
 	}
 	s.initLogStore(data)
+
 	defer func() {
-		ctx = context.WithoutCancel(ctx)
-		_ = s.saveLogs(ctx, db, data)
+		_ = s.saveLogs(context.WithoutCancel(ctx), db, data)
 	}()
-
-	err = s.loadAppDataForCreatingPreview(ctx, db, data)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
+	defer func() {
+		if err != nil {
+			_ = s.notifyPRForPreviewFailure(context.WithoutCancel(ctx), s.db, data, err)
+		}
+	}()
 	var cloneResp *appcloneservice.AppCloneResp
 	defer func() {
 		if rev := recover(); rev != nil {
@@ -75,6 +74,11 @@ func (s *service) CreatePreview(
 			cloneResp.OnCleanup = nil
 		}
 	}()
+
+	err = s.loadAppDataForCreatingPreview(ctx, db, data)
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
 
 	// When related DB apps are configured to clone for the previews
 	err = s.cloneDBApps(ctx, db, data)
@@ -153,6 +157,10 @@ func (s *service) loadAppDataForCreatingPreview(
 	db database.IDB,
 	data *createPreviewData,
 ) (err error) {
+	if data.RefObjects == nil {
+		data.RefObjects = entity.NewRefObjects()
+	}
+
 	taskArgs, err := data.Task.ArgsAsAppPreview()
 	if err != nil {
 		return apperrors.Wrap(err)
@@ -217,7 +225,7 @@ func (s *service) loadAppDataForCreatingPreview(
 
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
 	if deploymentSetting == nil {
-		return apperrors.NewNotFound("Deployment settings")
+		return apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
 	}
 	deploymentSettings := deploymentSetting.MustAsAppDeploymentSettings()
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo || deploymentSettings.RepoSource == nil {

@@ -50,7 +50,7 @@ func (uc *UC) PrepareCreatePreview(
 
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
 	if deploymentSetting == nil {
-		return nil, apperrors.NewNotFound("Deployment settings")
+		return nil, apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
 	}
 	deploymentSettings := deploymentSetting.MustAsAppDeploymentSettings()
 	repoSource := deploymentSettings.RepoSource

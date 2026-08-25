@@ -31,6 +31,7 @@ func (uc *UC) HandleRepoWebhook(
 
 type handleRepoWebhookData struct {
 	WebhookSetting *entity.Setting
+	RefObjects     *entity.RefObjects
 }
 
 type repoEventData struct {

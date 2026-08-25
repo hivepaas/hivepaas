@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
@@ -247,13 +248,19 @@ func (s *service) onPostTransaction(
 	defer func() {
 		_ = s.saveLogs(ctx, db, data, false)
 	}()
+	defer funcutil.EnsureNoPanic(nil)
 
 	if data.Task.IsDone() || data.Task.IsFailedCompletely() {
-		err := s.notifyForDeployment(ctx, db, data)
-		if err != nil {
+		if err := s.notifyForDeployment(ctx, db, data); err != nil {
 			_ = data.LogStore.Add(ctx,
 				tasklog.NewOutFrame("---------------------------------", tasklog.TsNow),
 				tasklog.NewOutFrame("Failed to send deployment notification with error: "+err.Error(),
+					tasklog.TsNow))
+		}
+		if prErr := s.notifyPRForDeploymentResult(ctx, db, data); prErr != nil {
+			_ = data.LogStore.Add(ctx,
+				tasklog.NewOutFrame("---------------------------------", tasklog.TsNow),
+				tasklog.NewOutFrame("Failed to send PR deployment notification with error: "+prErr.Error(),
 					tasklog.TsNow))
 		}
 	}

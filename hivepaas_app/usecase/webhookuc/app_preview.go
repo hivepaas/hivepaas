@@ -17,6 +17,7 @@ func (uc *UC) createAppPreview(
 	commentEvent *repoPRCommentEventData,
 	repoRef string,
 	webhookID string,
+	previewSettings *entity.AppFeaturePreviewSettings, // if nil, will be loaded from DB
 ) (err error) {
 	if app.IsChildApp() { // The app is already a preview app, skips it
 		return nil
@@ -24,9 +25,11 @@ func (uc *UC) createAppPreview(
 
 	var previewTask *entity.Task
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) (err error) {
-		previewSettings, err := uc.loadAppPreviewSettings(ctx, db, app)
-		if err != nil {
-			return apperrors.Wrap(err)
+		if previewSettings == nil {
+			previewSettings, err = uc.loadAppPreviewSettings(ctx, db, app)
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
 		}
 
 		cloneDBApps := commentEvent.previewDeployCloneDB || previewSettings.AutoCloneApps

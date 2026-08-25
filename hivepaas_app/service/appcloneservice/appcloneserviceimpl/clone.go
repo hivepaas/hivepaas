@@ -136,40 +136,39 @@ func (s *service) loadAppCloneData(
 	db database.IDB,
 	data *appCloneData,
 ) (err error) {
-	if data.SrcApp != nil && data.ClonedSettings != nil {
-		return nil
+	if data.RefObjects == nil {
+		data.RefObjects = entity.NewRefObjects()
 	}
 
-	taskArgs, err := data.Task.ArgsAsAppClone()
-	if err != nil {
-		return apperrors.Wrap(err)
+	if data.SrcApp == nil {
+		taskArgs, err := data.Task.ArgsAsAppClone()
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+		app, err := s.appService.LoadApp(ctx, db, "", taskArgs.SrcApp.ID, true, true,
+			bunex.SelectRelation("Project",
+				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			),
+			bunex.SelectRelation("Project.ProjectEnvs"),
+			bunex.SelectRelation("ProjectEnv"),
+			bunex.SelectRelation("Settings",
+				bunex.SelectWhere("setting.type = ?", base.SettingTypeAppClone),
+			),
+		)
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		data.SrcApp = app
 	}
 
-	app, err := s.appService.LoadApp(ctx, db, "", taskArgs.SrcApp.ID, true, true,
-		bunex.SelectRelation("Project",
-			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		),
-		bunex.SelectRelation("Project.ProjectEnvs"),
-		bunex.SelectRelation("ProjectEnv"),
-		bunex.SelectRelation("Settings",
-			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppClone),
-		),
-	)
-	if err != nil {
-		return apperrors.Wrap(err)
+	if data.CloneSettings == nil {
+		data.CloneSettings = &entity.AppCloneSettings{}
 	}
-	data.SrcApp = app
-
-	cloneSetting := app.GetSettingByType(base.SettingTypeAppClone)
-	if cloneSetting == nil {
-		return apperrors.NewNotFound("App clone settings")
-	}
-	cloneSettings := cloneSetting.MustAsAppCloneSettings()
-	data.CloneSettings = cloneSettings
 
 	// Loads all ref objects of the settings
-	err = s.settingService.LoadRefObjects(ctx, db, &data.RefObjects, app.GetObjectScope(),
-		true, cloneSetting)
+	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, data.SrcApp.GetObjectScope(),
+		true, data.CloneSettings.GetRefObjectIDs())
 	if err != nil {
 		return apperrors.Wrap(err)
 	}

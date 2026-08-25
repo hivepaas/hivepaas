@@ -78,9 +78,10 @@ export class ProjectNotificationApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_CreateOne_Res, Error>> {
         const { projectID, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/notifications`, payload, { signal })).pipe(
+            from(this.client.v1.post(`/projects/${projectID}/notifications`, json, { signal })).pipe(
                 map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -93,9 +94,10 @@ export class ProjectNotificationApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_UpdateOne_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/notifications/${id}`, payload, { signal })).pipe(
+            from(this.client.v1.put(`/projects/${projectID}/notifications/${id}`, json, { signal })).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -107,9 +109,10 @@ export class ProjectNotificationApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_UpdateStatus_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/notifications/${id}/status`, payload, { signal })).pipe(
+            from(this.client.v1.put(`/projects/${projectID}/notifications/${id}/status`, json, { signal })).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

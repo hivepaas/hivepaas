@@ -70,10 +70,11 @@ export class ProjectEmailApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectEmail_CreateOne_Res, Error>> {
         const { projectID, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/emails`, payload, {
+                this.client.v1.post(`/projects/${projectID}/emails`, json, {
                     signal,
                 }),
             ).pipe(
@@ -89,10 +90,11 @@ export class ProjectEmailApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectEmail_UpdateOne_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/emails/${id}`, payload, {
+                this.client.v1.put(`/projects/${projectID}/emails/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -108,10 +110,11 @@ export class ProjectEmailApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectEmail_UpdateStatus_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/emails/${id}/status`, payload, {
+                this.client.v1.put(`/projects/${projectID}/emails/${id}/status`, json, {
                     signal,
                 }),
             ).pipe(

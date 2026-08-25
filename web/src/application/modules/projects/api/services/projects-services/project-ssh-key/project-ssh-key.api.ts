@@ -61,9 +61,10 @@ export class ProjectSSHKeyApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectSSHKey_CreateOne_Res, Error>> {
         const { projectID, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/ssh-keys`, payload, { signal })).pipe(
+            from(this.client.v1.post(`/projects/${projectID}/ssh-keys`, json, { signal })).pipe(
                 map(this.validator.createOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -76,9 +77,10 @@ export class ProjectSSHKeyApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectSSHKey_UpdateOne_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/ssh-keys/${id}`, payload, { signal })).pipe(
+            from(this.client.v1.put(`/projects/${projectID}/ssh-keys/${id}`, json, { signal })).pipe(
                 map(this.validator.updateOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -91,9 +93,10 @@ export class ProjectSSHKeyApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectSSHKey_UpdateMeta_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/ssh-keys/${id}/status`, payload, { signal })).pipe(
+            from(this.client.v1.put(`/projects/${projectID}/ssh-keys/${id}/status`, json, { signal })).pipe(
                 map(this.validator.updateMeta),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

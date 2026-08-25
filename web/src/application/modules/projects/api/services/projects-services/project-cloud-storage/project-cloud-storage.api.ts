@@ -74,9 +74,10 @@ export class ProjectCloudStorageApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_CreateOne_Res, Error>> {
         const { projectID, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/cloud-storages`, payload, { signal })).pipe(
+            from(this.client.v1.post(`/projects/${projectID}/cloud-storages`, json, { signal })).pipe(
                 map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -89,9 +90,10 @@ export class ProjectCloudStorageApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_UpdateOne_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/cloud-storages/${id}`, payload, { signal })).pipe(
+            from(this.client.v1.put(`/projects/${projectID}/cloud-storages/${id}`, json, { signal })).pipe(
                 map(response => this.validator.updateOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -104,9 +106,10 @@ export class ProjectCloudStorageApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_UpdateMeta_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/cloud-storages/${id}/status`, payload, { signal })).pipe(
+            from(this.client.v1.put(`/projects/${projectID}/cloud-storages/${id}/status`, json, { signal })).pipe(
                 map(response => this.validator.updateMeta(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

@@ -116,10 +116,11 @@ export class ProjectSslCertApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslCert_CreateOne_Res, Error>> {
         const { projectID, env, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(getProjectSslCertBasePath(projectID, env), payload, {
+                this.client.v1.post(getProjectSslCertBasePath(projectID, env), json, {
                     signal,
                 }),
             ).pipe(
@@ -135,10 +136,11 @@ export class ProjectSslCertApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslCert_UpdateOne_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/ssl-certs/${id}`, payload, {
+                this.client.v1.put(`/projects/${projectID}/ssl-certs/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -154,10 +156,11 @@ export class ProjectSslCertApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslCert_UpdateStatus_Res, Error>> {
         const { projectID, id, payload } = request.data;
+        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/ssl-certs/${id}/status`, payload, {
+                this.client.v1.put(`/projects/${projectID}/ssl-certs/${id}/status`, json, {
                     signal,
                 }),
             ).pipe(

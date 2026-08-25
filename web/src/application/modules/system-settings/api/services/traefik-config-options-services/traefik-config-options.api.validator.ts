@@ -13,6 +13,7 @@ const StartupCommandSchema = z.object({
     accessLog: z.boolean().optional().default(false),
     http3: z.boolean().optional().default(false),
     fastProxy: z.boolean().optional().default(false),
+    openPorts: z.array(z.string()).optional().default([]),
     args: z.array(z.string()).default([]),
 });
 

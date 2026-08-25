@@ -11,6 +11,7 @@ export function mapTraefikConfigOptionsToFormInput(configOptions: TraefikConfigO
             accessLog: startupCommand.accessLog,
             http3: startupCommand.http3,
             fastProxy: startupCommand.fastProxy,
+            openPortsText: (startupCommand.openPorts ?? []).join(", "),
             argsText: startupCommand.args.join("\n"),
         },
     };

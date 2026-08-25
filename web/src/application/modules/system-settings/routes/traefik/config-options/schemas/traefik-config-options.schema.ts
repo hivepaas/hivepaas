@@ -6,6 +6,7 @@ export const TraefikConfigOptionsFormSchema = z.object({
         accessLog: z.boolean(),
         http3: z.boolean(),
         fastProxy: z.boolean(),
+        openPortsText: z.string().optional(),
         argsText: z.string(),
     }),
 });
@@ -19,6 +20,7 @@ export const emptyTraefikConfigOptionsFormDefaults: TraefikConfigOptionsFormInpu
         accessLog: false,
         http3: false,
         fastProxy: false,
+        openPortsText: "",
         argsText: "",
     },
 };

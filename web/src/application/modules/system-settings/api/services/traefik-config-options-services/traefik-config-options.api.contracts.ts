@@ -5,6 +5,7 @@ export interface TraefikConfigOptionsStartupCommand {
     accessLog: boolean;
     http3: boolean;
     fastProxy: boolean;
+    openPorts?: string[];
     args: string[];
 }
 

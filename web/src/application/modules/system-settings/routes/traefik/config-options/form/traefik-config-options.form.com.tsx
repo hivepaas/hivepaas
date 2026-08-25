@@ -111,6 +111,36 @@ function FastProxyField() {
     );
 }
 
+function OpenPortsField() {
+    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { field } = useController({ control, name: "startupCommand.openPortsText" });
+
+    return (
+        <InfoBlock
+            title={
+                <LabelWithInfo
+                    label="Open Ports"
+                    content="Ports dynamically opened by Traefik for deployed services."
+                />
+            }
+        >
+            <FieldGroup>
+                <Field>
+                    <Textarea
+                        value={field.value ?? ""}
+                        readOnly
+                        disabled
+                        placeholder="No open ports"
+                        minRows={4}
+                        maxRows={10}
+                        className="cursor-not-allowed bg-muted/30"
+                    />
+                </Field>
+            </FieldGroup>
+        </InfoBlock>
+    );
+}
+
 function ArgsField() {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const {
@@ -221,6 +251,7 @@ export function TraefikConfigOptionsForm({ ref, defaultValues, onSubmit, readOnl
                             <AccessLogField />
                             <Http3Field />
                             <FastProxyField />
+                            <OpenPortsField />
                             <ArgsField />
                         </div>
                     </ContentBlock>

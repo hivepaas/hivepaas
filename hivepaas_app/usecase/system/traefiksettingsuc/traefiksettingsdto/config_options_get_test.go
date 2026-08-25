@@ -40,11 +40,11 @@ func TestTransformStartupCommand_OpenPorts(t *testing.T) {
 	assert.True(t, resp.FastProxy)
 
 	expectedOpenPorts := []string{
-		"12312/tcp",
-		"8443/tcp",
+		"12312",
+		"8443",
 		"9000/tcp",
 		"10000/udp",
-		"53/udp",
+		"53",
 	}
 	assert.Equal(t, expectedOpenPorts, resp.OpenPorts)
 

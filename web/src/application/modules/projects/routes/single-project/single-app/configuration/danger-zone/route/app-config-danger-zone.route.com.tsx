@@ -81,7 +81,7 @@ export function AppConfigDangerZoneRoute() {
                         <Button
                             variant={statusButtonVariant}
                             disabled={isDenied || !isStatusActionable}
-                            className="min-w-[150px]"
+                            className="w-[120px]"
                             onClick={() => {
                                 if (isDenied || !isStatusActionable) {
                                     return;
@@ -110,7 +110,7 @@ export function AppConfigDangerZoneRoute() {
                         <Button
                             variant="destructive"
                             disabled={isDenied || isDeleting}
-                            className="min-w-[150px]"
+                            className="w-[120px]"
                             onClick={() => {
                                 if (isDenied || isDeleting) {
                                     return;

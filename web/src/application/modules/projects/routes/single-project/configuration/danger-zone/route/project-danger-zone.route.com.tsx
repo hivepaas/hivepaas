@@ -133,7 +133,7 @@ export function ProjectDangerZoneRoute() {
                         <Button
                             variant={statusButtonVariant}
                             disabled={isDenied || !isStatusActionable}
-                            className="min-w-[160px]"
+                            className="min-w-[120px]"
                             onClick={() => {
                                 if (isDenied || !isStatusActionable) {
                                     return;
@@ -162,7 +162,7 @@ export function ProjectDangerZoneRoute() {
                         <Button
                             variant="destructive"
                             disabled={isDenied || isDeleting}
-                            className="min-w-[160px]"
+                            className="min-w-[120px]"
                             onClick={() => {
                                 if (isDenied || isDeleting) {
                                     return;

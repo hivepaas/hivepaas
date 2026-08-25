@@ -8,6 +8,14 @@ import { toast } from "sonner";
 
 import { InputWithAddOn, PopConfirm } from "@application/shared/components";
 
+const RATIO_GRID_CLASSES: Record<string, string> = {
+    "50-50": "grid-cols-2",
+    "55-45": "grid-cols-[55fr_45fr]",
+    "60-40": "grid-cols-[60fr_40fr]",
+    "65-35": "grid-cols-[65fr_35fr]",
+    "70-30": "grid-cols-[70fr_30fr]",
+};
+
 function View<T>({
     name,
     keyLabel = "Name",
@@ -22,6 +30,7 @@ function View<T>({
     enableValueEditing = false,
     keyField = "key",
     valueField = "value",
+    ratio = "50-50",
 }: Props<T>) {
     const { control } = useFormContext<Record<string, Record<string, string>[]>>();
     const { fields, append, remove, update } = useFieldArray({ control, name: name as string });
@@ -31,6 +40,8 @@ function View<T>({
     const [editingIndex, setEditingIndex] = useState<number | null>(null);
     const [draftKey, setDraftKey] = useState("");
     const [draftValue, setDraftValue] = useState("");
+
+    const gridColsClass = RATIO_GRID_CLASSES[ratio] ?? "grid-cols-2";
 
     // enableValueEditing is kept as a backward-compatible alias for enableEditing.
     const showEditControls = enableEditing ?? enableValueEditing;
@@ -162,7 +173,7 @@ function View<T>({
     return (
         <div className={cn("flex flex-col gap-3", className)}>
             <div className="flex gap-2">
-                <div className="grid flex-1 grid-cols-2 gap-2">
+                <div className={cn("grid flex-1 gap-2", gridColsClass)}>
                     {renderKeyInput(keyInput, setKeyInput)}
                     <InputWithAddOn
                         addonLeft={valueLabel}
@@ -202,7 +213,7 @@ function View<T>({
                                 key={field.id}
                                 className="flex items-center group gap-2 py-2"
                             >
-                                <div className="grid grid-cols-2 flex-1 gap-2">
+                                <div className={cn("grid flex-1 gap-2 min-w-0", gridColsClass)}>
                                     {isEditing ? (
                                         <>
                                             {renderKeyInput(draftKey, setDraftKey, "h-8")}
@@ -228,8 +239,10 @@ function View<T>({
                                         </>
                                     ) : (
                                         <>
-                                            <div className="text-sm wrap-break-word">{rowKey}</div>
-                                            <div className="text-sm wrap-break-word">{rowValue}</div>
+                                            <div className="text-sm wrap-break-word break-words min-w-0">{rowKey}</div>
+                                            <div className="text-sm wrap-break-word break-words min-w-0">
+                                                {rowValue}
+                                            </div>
                                         </>
                                     )}
                                 </div>
@@ -318,6 +331,8 @@ type Props<T> = {
     enableValueEditing?: boolean;
     keyField?: string;
     valueField?: string;
+    /** Column width ratio between key and value. Defaults to "50-50" */
+    ratio?: "50-50" | "55-45" | "60-40" | "65-35" | "70-30" | (string & {});
 };
 
 export const KeyValueList = React.memo(View) as typeof View;

@@ -16,9 +16,10 @@ export function LabelsFields() {
             >
                 <KeyValueList<AppConfigContainerSettingsFormSchemaInput>
                     name="serviceLabels"
-                    className="max-w-[600px]"
+                    className="max-w-[800px]"
                     checkDuplicates
                     enableValueEditing
+                    ratio="55-45"
                 />
             </InfoBlock>
             <InfoBlock
@@ -31,9 +32,10 @@ export function LabelsFields() {
             >
                 <KeyValueList<AppConfigContainerSettingsFormSchemaInput>
                     name="containerLabels"
-                    className="max-w-[600px]"
+                    className="max-w-[800px]"
                     checkDuplicates
                     enableValueEditing
+                    ratio="55-45"
                 />
             </InfoBlock>
         </div>

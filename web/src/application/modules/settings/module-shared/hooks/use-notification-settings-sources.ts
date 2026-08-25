@@ -89,11 +89,11 @@ export function useNotificationSettingsSources(scope: NotificationSettingsScope)
             scope.type === "project"
                 ? {
                       to: ROUTE.projects.single.providerConfiguration.notificationTargets.$route(scope.projectId),
-                      label: "Configure notification settings",
+                      label: "Configure Notification Targets",
                   }
                 : {
                       to: ROUTE.settings.notificationTargets.$route,
-                      label: "Configure Notification Settings",
+                      label: "Configure Notification Targets",
                   },
     };
 }

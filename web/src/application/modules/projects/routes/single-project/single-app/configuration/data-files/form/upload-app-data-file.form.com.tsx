@@ -266,7 +266,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onC
                                     <FieldError errors={[localErrors["storage"]]} />
                                     <AppLink.Modules
                                         to={cloudStoragesRoute}
-                                        className="text-sm text-link"
+                                        className="text-xs text-link"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         ignorePrevPath

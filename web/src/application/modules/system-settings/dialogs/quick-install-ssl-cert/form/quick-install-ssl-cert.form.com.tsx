@@ -3,7 +3,7 @@ import React, { useEffect, useMemo } from "react";
 import { Button } from "@components/ui/button";
 import { Checkbox } from "@components/ui/checkbox";
 import { DialogActionFooter, DialogBody } from "@components/ui/dialog";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@components/ui/field";
+import { Field, FieldError, FieldGroup } from "@components/ui/field";
 import { Input } from "@components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { Textarea } from "@components/ui/textarea";
@@ -315,43 +315,43 @@ export function QuickInstallSslCertForm({
             >
                 <DialogBody>
                     <FieldGroup>
-                        <Field>
-                            <FieldLabel>Domain</FieldLabel>
+                        <InfoBlock
+                            title="Domain"
+                            titleWidth={150}
+                        >
                             <Input
                                 value={effectiveDomain}
                                 disabled
                             />
-                        </Field>
+                        </InfoBlock>
 
-                        <Field>
-                            <InfoBlock
-                                title={<LabelWithInfo label="Wildcard Domain" />}
-                                titleWidth={150}
-                            >
-                                <Checkbox
-                                    checked={wildcardDomain.value}
-                                    onCheckedChange={value => {
-                                        if (readOnly) {
-                                            return;
-                                        }
+                        <InfoBlock
+                            title={<LabelWithInfo label="Wildcard Domain" />}
+                            titleWidth={150}
+                        >
+                            <Checkbox
+                                checked={wildcardDomain.value}
+                                onCheckedChange={value => {
+                                    if (readOnly) {
+                                        return;
+                                    }
 
-                                        wildcardDomain.onChange(value === true);
-                                    }}
-                                    disabled={readOnly}
+                                    wildcardDomain.onChange(value === true);
+                                }}
+                                disabled={readOnly}
+                            />
+                        </InfoBlock>
+
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Certificate Type"
+                                    isRequired
                                 />
-                            </InfoBlock>
-                        </Field>
-
-                        <Field>
-                            <InfoBlock
-                                title={
-                                    <LabelWithInfo
-                                        label="Certificate Type"
-                                        isRequired
-                                    />
-                                }
-                                titleWidth={150}
-                            >
+                            }
+                            titleWidth={150}
+                        >
+                            <Field>
                                 <Select
                                     value={certTypeField.value}
                                     onValueChange={value => {
@@ -378,21 +378,21 @@ export function QuickInstallSslCertForm({
                                     </SelectContent>
                                 </Select>
                                 <FieldError errors={[errors.certType]} />
-                            </InfoBlock>
-                        </Field>
+                            </Field>
+                        </InfoBlock>
 
                         {isAcme && (
                             <>
-                                <Field>
-                                    <InfoBlock
-                                        title={
-                                            <LabelWithInfo
-                                                label="SSL Provider"
-                                                isRequired={requiresProvider}
-                                            />
-                                        }
-                                        titleWidth={150}
-                                    >
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="SSL Provider"
+                                            isRequired={requiresProvider}
+                                        />
+                                    }
+                                    titleWidth={150}
+                                >
+                                    <Field>
                                         <Combobox<ProviderOption>
                                             options={providerComboboxOptions}
                                             value={provider.value?.id ?? null}
@@ -414,26 +414,26 @@ export function QuickInstallSslCertForm({
                                         <FieldError errors={[errors.provider]} />
                                         <AppLink.Modules
                                             to={sslProvidersRoute}
-                                            className="text-sm text-link"
+                                            className="text-xs text-link"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             ignorePrevPath
                                         >
-                                            Configure SSL providers
+                                            Configure SSL Providers
                                         </AppLink.Modules>
-                                    </InfoBlock>
-                                </Field>
+                                    </Field>
+                                </InfoBlock>
 
-                                <Field>
-                                    <InfoBlock
-                                        title={
-                                            <LabelWithInfo
-                                                label="ACME DNS Provider"
-                                                isRequired={wildcardDomain.value || effectiveDomain.includes("*")}
-                                            />
-                                        }
-                                        titleWidth={150}
-                                    >
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="ACME DNS Provider"
+                                            isRequired={wildcardDomain.value || effectiveDomain.includes("*")}
+                                        />
+                                    }
+                                    titleWidth={150}
+                                >
+                                    <Field>
                                         <Combobox<ProviderOption>
                                             options={acmeProviderComboboxOptions}
                                             value={acmeProvider.value?.id ?? null}
@@ -455,28 +455,28 @@ export function QuickInstallSslCertForm({
                                         <FieldError errors={[errors.acmeProvider]} />
                                         <AppLink.Modules
                                             to={acmeDnsProvidersRoute}
-                                            className="text-sm text-link"
+                                            className="text-xs text-link"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             ignorePrevPath
                                         >
-                                            Configure ACME DNS providers
+                                            Configure ACME DNS Providers
                                         </AppLink.Modules>
-                                    </InfoBlock>
-                                </Field>
+                                    </Field>
+                                </InfoBlock>
                             </>
                         )}
 
-                        <Field>
-                            <InfoBlock
-                                title={
-                                    <LabelWithInfo
-                                        label={isAcme ? "Registration E-mail" : "E-mail"}
-                                        isRequired
-                                    />
-                                }
-                                titleWidth={150}
-                            >
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label={isAcme ? "Registration E-mail" : "E-mail"}
+                                    isRequired
+                                />
+                            }
+                            titleWidth={150}
+                        >
+                            <Field>
                                 <Input
                                     {...email}
                                     type="email"
@@ -484,19 +484,19 @@ export function QuickInstallSslCertForm({
                                     disabled={readOnly}
                                 />
                                 <FieldError errors={[errors.email]} />
-                            </InfoBlock>
-                        </Field>
+                            </Field>
+                        </InfoBlock>
 
-                        <Field>
-                            <InfoBlock
-                                title={
-                                    <LabelWithInfo
-                                        label="Key Type"
-                                        isRequired
-                                    />
-                                }
-                                titleWidth={150}
-                            >
+                        <InfoBlock
+                            title={
+                                <LabelWithInfo
+                                    label="Key Type"
+                                    isRequired
+                                />
+                            }
+                            titleWidth={150}
+                        >
+                            <Field>
                                 <Select
                                     value={keyType.value}
                                     onValueChange={value => {
@@ -523,47 +523,45 @@ export function QuickInstallSslCertForm({
                                     </SelectContent>
                                 </Select>
                                 <FieldError errors={[errors.keyType]} />
-                            </InfoBlock>
-                        </Field>
+                            </Field>
+                        </InfoBlock>
 
                         {!isCustom && (
-                            <Field>
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Auto-renew"
+                                        isRequired
+                                    />
+                                }
+                                titleWidth={150}
+                            >
+                                <Checkbox
+                                    checked={autoRenew.value}
+                                    onCheckedChange={value => {
+                                        if (readOnly) {
+                                            return;
+                                        }
+
+                                        autoRenew.onChange(value === true);
+                                    }}
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+                        )}
+
+                        {isCustom && (
+                            <>
                                 <InfoBlock
                                     title={
                                         <LabelWithInfo
-                                            label="Auto-renew"
+                                            label="Certificate"
                                             isRequired
                                         />
                                     }
                                     titleWidth={150}
                                 >
-                                    <Checkbox
-                                        checked={autoRenew.value}
-                                        onCheckedChange={value => {
-                                            if (readOnly) {
-                                                return;
-                                            }
-
-                                            autoRenew.onChange(value === true);
-                                        }}
-                                        disabled={readOnly}
-                                    />
-                                </InfoBlock>
-                            </Field>
-                        )}
-
-                        {isCustom && (
-                            <>
-                                <Field>
-                                    <InfoBlock
-                                        title={
-                                            <LabelWithInfo
-                                                label="Certificate"
-                                                isRequired
-                                            />
-                                        }
-                                        titleWidth={150}
-                                    >
+                                    <Field>
                                         <Textarea
                                             {...certificate}
                                             aria-invalid={isCertificateInvalid}
@@ -572,19 +570,19 @@ export function QuickInstallSslCertForm({
                                             placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
                                         />
                                         <FieldError errors={[errors.certificate]} />
-                                    </InfoBlock>
-                                </Field>
+                                    </Field>
+                                </InfoBlock>
 
-                                <Field>
-                                    <InfoBlock
-                                        title={
-                                            <LabelWithInfo
-                                                label="Private Key"
-                                                isRequired
-                                            />
-                                        }
-                                        titleWidth={150}
-                                    >
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="Private Key"
+                                            isRequired
+                                        />
+                                    }
+                                    titleWidth={150}
+                                >
+                                    <Field>
                                         <Textarea
                                             {...privateKey}
                                             aria-invalid={isPrivateKeyInvalid}
@@ -593,14 +591,14 @@ export function QuickInstallSslCertForm({
                                             placeholder={"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"}
                                         />
                                         <FieldError errors={[errors.privateKey]} />
-                                    </InfoBlock>
-                                </Field>
+                                    </Field>
+                                </InfoBlock>
 
-                                <Field>
-                                    <InfoBlock
-                                        title={<LabelWithInfo label="CA Certificate" />}
-                                        titleWidth={150}
-                                    >
+                                <InfoBlock
+                                    title={<LabelWithInfo label="CA Certificate" />}
+                                    titleWidth={150}
+                                >
+                                    <Field>
                                         <Textarea
                                             {...caCertificate}
                                             aria-invalid={isCaCertificateInvalid}
@@ -609,23 +607,23 @@ export function QuickInstallSslCertForm({
                                             placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
                                         />
                                         <FieldError errors={[errors.caCertificate]} />
-                                    </InfoBlock>
-                                </Field>
+                                    </Field>
+                                </InfoBlock>
                             </>
                         )}
 
                         {!isAcme && (
                             <>
-                                <Field>
-                                    <InfoBlock
-                                        title={
-                                            <LabelWithInfo
-                                                label="Expire At"
-                                                isRequired={isCustom}
-                                            />
-                                        }
-                                        titleWidth={150}
-                                    >
+                                <InfoBlock
+                                    title={
+                                        <LabelWithInfo
+                                            label="Expire At"
+                                            isRequired={isCustom}
+                                        />
+                                    }
+                                    titleWidth={150}
+                                >
+                                    <Field>
                                         <DatePicker
                                             value={expireAtField.value ?? undefined}
                                             onChange={date => {
@@ -641,14 +639,14 @@ export function QuickInstallSslCertForm({
                                             disabled={readOnly}
                                         />
                                         <FieldError errors={[errors.expireAt]} />
-                                    </InfoBlock>
-                                </Field>
+                                    </Field>
+                                </InfoBlock>
 
-                                <Field>
-                                    <InfoBlock
-                                        title={<LabelWithInfo label="Notify From" />}
-                                        titleWidth={150}
-                                    >
+                                <InfoBlock
+                                    title={<LabelWithInfo label="Notify From" />}
+                                    titleWidth={150}
+                                >
+                                    <Field>
                                         <DatePicker
                                             value={notifyFromField.value ?? undefined}
                                             onChange={date => {
@@ -664,8 +662,8 @@ export function QuickInstallSslCertForm({
                                             disabled={readOnly}
                                         />
                                         <FieldError errors={[errors.notifyFrom]} />
-                                    </InfoBlock>
-                                </Field>
+                                    </Field>
+                                </InfoBlock>
                             </>
                         )}
                     </FieldGroup>

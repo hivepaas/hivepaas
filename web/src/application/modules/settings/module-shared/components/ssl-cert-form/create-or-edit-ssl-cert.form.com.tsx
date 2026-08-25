@@ -521,12 +521,12 @@ export function CreateOrEditSslCertForm({
                                         <FieldError errors={[errors.provider]} />
                                         <AppLink.Modules
                                             to={sslProvidersManageRoute}
-                                            className="text-sm text-link"
+                                            className="text-xs text-link"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             ignorePrevPath
                                         >
-                                            Configure SSL providers
+                                            Configure SSL Providers
                                         </AppLink.Modules>
                                     </Field>
                                 </InfoBlock>
@@ -618,12 +618,12 @@ export function CreateOrEditSslCertForm({
                                         <FieldError errors={[errors.acmeProvider]} />
                                         <AppLink.Modules
                                             to={acmeDnsProvidersManageRoute}
-                                            className="text-sm text-link"
+                                            className="text-xs text-link"
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             ignorePrevPath
                                         >
-                                            Configure ACME DNS providers
+                                            Configure ACME DNS Providers
                                         </AppLink.Modules>
                                     </Field>
                                 </InfoBlock>

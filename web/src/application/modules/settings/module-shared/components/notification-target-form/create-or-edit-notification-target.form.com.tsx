@@ -393,13 +393,13 @@ export function CreateOrEditNotificationTargetForm({
                                                                 aria-invalid={isSenderEmailAccountInvalid}
                                                             />
                                                             <AppLink.Basic
-                                                                className="text-sm text-link"
+                                                                className="text-xs text-link"
                                                                 to={emailAccountsRoute}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
                                                                 ignorePrevPath
                                                             >
-                                                                Configure email accounts
+                                                                Configure Email Accounts
                                                             </AppLink.Basic>
                                                             <FieldError errors={[errors.senderEmailAccountId]} />
                                                         </Field>
@@ -518,7 +518,7 @@ export function CreateOrEditNotificationTargetForm({
                                                                 aria-invalid={isSlackWebhookInvalid}
                                                             />
                                                             <AppLink.Basic
-                                                                className="text-sm text-link"
+                                                                className="text-xs text-link"
                                                                 to={imPlatformsRoute}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
@@ -595,7 +595,7 @@ export function CreateOrEditNotificationTargetForm({
                                                                 aria-invalid={isDiscordWebhookInvalid}
                                                             />
                                                             <AppLink.Basic
-                                                                className="text-sm text-link"
+                                                                className="text-xs text-link"
                                                                 to={imPlatformsRoute}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
@@ -672,7 +672,7 @@ export function CreateOrEditNotificationTargetForm({
                                                                 aria-invalid={isTelegramSettingInvalid}
                                                             />
                                                             <AppLink.Basic
-                                                                className="text-sm text-link"
+                                                                className="text-xs text-link"
                                                                 to={imPlatformsRoute}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"

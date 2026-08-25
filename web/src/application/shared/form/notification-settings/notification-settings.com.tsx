@@ -63,7 +63,7 @@ function NotificationSelect<TFieldValues extends FieldValues>({
                     target="_blank"
                     rel="noreferrer"
                     to={manageLink.to}
-                    className="text-sm text-link"
+                    className="text-xs text-link"
                     ignorePrevPath
                 >
                     {manageLink.label}

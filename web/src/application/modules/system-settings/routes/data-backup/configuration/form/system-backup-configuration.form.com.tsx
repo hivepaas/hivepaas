@@ -320,7 +320,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                             <AppLink.Basic
                                 to={ROUTE.settings.cloudStorages.$route}
                                 target="_blank"
-                                className="text-sm text-blue-500"
+                                className="text-xs text-blue-500"
                                 ignorePrevPath
                             >
                                 Configure Cloud Storages

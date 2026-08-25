@@ -76,12 +76,15 @@ export function CircuitBreakerConfigSection({
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        Circuit Breaker Configuration
+                        <span>Circuit Breaker Configuration</span>
                         <a
-                            className="text-xs text-blue-500 hover:text-blue-600"
+                            className="text-xs text-blue-500 hover:text-blue-600 hover:underline"
                             href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/circuitbreaker/"
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={e => {
+                                e.stopPropagation();
+                            }}
                         >
                             (docs)
                         </a>

@@ -29,7 +29,7 @@ export function ClientConfigSection({ prefix, readOnly = false }: ClientConfigSe
                 <div className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium">
                     <span>Client Configuration</span>
                     <a
-                        className="text-xs text-blue-500 hover:text-blue-600"
+                        className="text-xs text-blue-500 hover:text-blue-600 hover:underline"
                         href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ipallowlist/"
                         target="_blank"
                         rel="noopener noreferrer"

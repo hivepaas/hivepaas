@@ -38,25 +38,28 @@ export function RateLimitConfigSection({ prefix, readOnly = false }: RateLimitCo
         <Collapsible open>
             <div className="sticky top-11 z-10 flex justify-between items-center font-medium bg-accent py-2 px-3 rounded-lg shadow-xs">
                 <div className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium">
-                    <span>Rate Limit Configuration (docs</span>
-                    <a
-                        className="text-xs text-blue-500 hover:text-blue-600"
-                        href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ratelimit/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        [1]
-                    </a>
-                    <span>,</span>
-                    <a
-                        className="text-xs text-blue-500 hover:text-blue-600"
-                        href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/inflightreq/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        [2]
-                    </a>
-                    <span>)</span>
+                    <span>Rate Limit Configuration</span>
+                    <span className="text-xs font-normal">
+                        (docs{" "}
+                        <a
+                            className="text-blue-500 hover:text-blue-600 hover:underline"
+                            href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ratelimit/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            [1]
+                        </a>
+                        {", "}
+                        <a
+                            className="text-blue-500 hover:text-blue-600 hover:underline"
+                            href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/inflightreq/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            [2]
+                        </a>
+                        )
+                    </span>
                 </div>
             </div>
             <CollapsibleContent>

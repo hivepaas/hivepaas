@@ -68,12 +68,15 @@ export function ClientConfigSection({ prefix, autoExpandToken, readOnly = false,
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        Client Configuration
+                        <span>Client Configuration</span>
                         <a
-                            className="text-xs text-blue-500 hover:text-blue-600"
+                            className="text-xs text-blue-500 hover:text-blue-600 hover:underline"
                             href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/buffering/"
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={e => {
+                                e.stopPropagation();
+                            }}
                         >
                             (docs)
                         </a>

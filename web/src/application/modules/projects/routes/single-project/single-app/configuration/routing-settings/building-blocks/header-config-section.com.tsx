@@ -54,10 +54,11 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        Header Configuration (docs
-                        <span className="ml-1">
+                        <span>Header Configuration</span>
+                        <span className="text-xs font-normal">
+                            (docs{" "}
                             <a
-                                className="text-xs text-blue-500 hover:text-blue-600"
+                                className="text-blue-500 hover:text-blue-600 hover:underline"
                                 href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/headers/"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -66,10 +67,10 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                 }}
                             >
                                 [1]
-                            </a>{" "}
-                            ,
+                            </a>
+                            {", "}
                             <a
-                                className="text-xs text-blue-500 hover:text-blue-600 ml-1"
+                                className="text-blue-500 hover:text-blue-600 hover:underline"
                                 href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/contenttype/"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -79,8 +80,8 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                             >
                                 [2]
                             </a>
-                        </span>{" "}
-                        )
+                            )
+                        </span>
                     </button>
                 </CollapsibleTrigger>
                 {onRemove && (

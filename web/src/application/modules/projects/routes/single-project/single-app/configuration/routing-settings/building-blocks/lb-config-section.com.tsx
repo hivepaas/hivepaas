@@ -31,9 +31,9 @@ export function LBConfigSection({ prefix, readOnly = false }: LBConfigSectionPro
             headerClassName="top-11"
             label={
                 <div className="flex items-center gap-2">
-                    Load Balancing Configuration{" "}
+                    <span>Load Balancing Configuration</span>
                     <a
-                        className="text-xs text-blue-500 hover:text-blue-600"
+                        className="text-xs text-blue-500 hover:text-blue-600 hover:underline"
                         href="https://doc.traefik.io/traefik/reference/routing-configuration/http/load-balancing/service/"
                         target="_blank"
                         rel="noopener noreferrer"

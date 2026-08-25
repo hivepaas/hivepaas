@@ -74,12 +74,15 @@ export function CompressionConfigSection({
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        Compression Configuration
+                        <span>Compression Configuration</span>
                         <a
-                            className="text-xs text-blue-500 hover:text-blue-600"
+                            className="text-xs text-blue-500 hover:text-blue-600 hover:underline"
                             href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/compress/"
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={e => {
+                                e.stopPropagation();
+                            }}
                         >
                             (docs)
                         </a>

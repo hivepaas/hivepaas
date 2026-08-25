@@ -71,27 +71,34 @@ export function RateLimitConfigSection({
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        Rate Limit Configuration (docs
-                        <span className="ml-1">
+                        <span>Rate Limit Configuration</span>
+                        <span className="text-xs font-normal">
+                            (docs{" "}
                             <a
-                                className="text-xs text-blue-500 hover:text-blue-600"
+                                className="text-blue-500 hover:text-blue-600 hover:underline"
                                 href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/ratelimit/"
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                }}
                             >
                                 [1]
-                            </a>{" "}
-                            ,
+                            </a>
+                            {", "}
                             <a
-                                className="text-xs text-blue-500 hover:text-blue-600 ml-1"
+                                className="text-blue-500 hover:text-blue-600 hover:underline"
                                 href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/inflightreq/"
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                onClick={e => {
+                                    e.stopPropagation();
+                                }}
                             >
                                 [2]
                             </a>
-                        </span>{" "}
-                        )
+                            )
+                        </span>
                     </button>
                 </CollapsibleTrigger>
                 {onRemove && (

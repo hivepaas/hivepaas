@@ -127,10 +127,11 @@ export function PathRewriteConfigSection({
                         ) : (
                             <ChevronRight className="size-4 shrink-0" />
                         )}
-                        Path Rewrite Configuration (docs
-                        <span className="ml-1">
+                        <span>Path Rewrite Configuration</span>
+                        <span className="text-xs font-normal">
+                            (docs{" "}
                             <a
-                                className="text-xs text-blue-500 hover:text-blue-600"
+                                className="text-blue-500 hover:text-blue-600 hover:underline"
                                 href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/addprefix/"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -139,10 +140,10 @@ export function PathRewriteConfigSection({
                                 }}
                             >
                                 [1]
-                            </a>{" "}
-                            ,
+                            </a>
+                            {", "}
                             <a
-                                className="text-xs text-blue-500 hover:text-blue-600 ml-1"
+                                className="text-blue-500 hover:text-blue-600 hover:underline"
                                 href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/stripprefix/"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -151,10 +152,10 @@ export function PathRewriteConfigSection({
                                 }}
                             >
                                 [2]
-                            </a>{" "}
-                            ,
+                            </a>
+                            {", "}
                             <a
-                                className="text-xs text-blue-500 hover:text-blue-600 ml-1"
+                                className="text-blue-500 hover:text-blue-600 hover:underline"
                                 href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/replacepath/"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -163,10 +164,10 @@ export function PathRewriteConfigSection({
                                 }}
                             >
                                 [3]
-                            </a>{" "}
-                            ,
+                            </a>
+                            {", "}
                             <a
-                                className="text-xs text-blue-500 hover:text-blue-600 ml-1"
+                                className="text-blue-500 hover:text-blue-600 hover:underline"
                                 href="https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/replacepathregex/"
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -176,8 +177,8 @@ export function PathRewriteConfigSection({
                             >
                                 [4]
                             </a>
-                        </span>{" "}
-                        )
+                            )
+                        </span>
                     </button>
                 </CollapsibleTrigger>
                 {onRemove && (

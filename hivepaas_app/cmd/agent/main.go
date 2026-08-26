@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"time"
 
 	"go.uber.org/fx"
@@ -19,9 +18,8 @@ const (
 )
 
 func main() {
-	provides := make([]any, 0, len(registry.Provides)+2) //nolint:mnd
+	provides := make([]any, 0, len(registry.Provides)+1)
 	provides = append(provides,
-		context.Background,
 		func(agentSrv *agentserver.AgentServer) internal.GrpcRegistrar {
 			return func(s *grpc.Server) {
 				agentproto.RegisterAgentServiceServer(s, agentSrv)

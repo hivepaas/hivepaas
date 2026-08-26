@@ -6,8 +6,8 @@ import (
 	"github.com/moby/moby/api/types/volume"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dockerhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
 func NewRefClusterObjects() *RefClusterObjects {

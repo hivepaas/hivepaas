@@ -105,6 +105,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
                 slack: { webhook: values.webhook },
                 discord: null,
                 telegram: null,
+                lark: null,
             };
         }
 
@@ -114,6 +115,20 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
                 slack: null,
                 discord: { webhook: values.webhook },
                 telegram: null,
+                lark: null,
+            };
+        }
+
+        if (values.kind === EImServiceKind.Lark) {
+            return {
+                ...basePayload,
+                slack: null,
+                discord: null,
+                telegram: null,
+                lark: {
+                    webhook: values.webhook,
+                    secret: values.secret ?? null,
+                },
             };
         }
 
@@ -125,6 +140,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
                 botToken: values.botToken,
                 chatId: values.chatId,
             },
+            lark: null,
         };
     }
 
@@ -194,7 +210,10 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
                       ? (imPlatform.slack?.webhook ?? "")
                       : imPlatform.kind === EImServiceKind.Discord
                         ? (imPlatform.discord?.webhook ?? "")
-                        : "",
+                        : imPlatform.kind === EImServiceKind.Lark
+                          ? (imPlatform.lark?.webhook ?? "")
+                          : "",
+              secret: imPlatform.kind === EImServiceKind.Lark ? (imPlatform.lark?.secret ?? "") : "",
               botToken: imPlatform.kind === EImServiceKind.Telegram ? (imPlatform.telegram?.botToken ?? "") : "",
               chatId: imPlatform.kind === EImServiceKind.Telegram ? (imPlatform.telegram?.chatId ?? "") : "",
               inheritable: imPlatform.inheritable ?? false,

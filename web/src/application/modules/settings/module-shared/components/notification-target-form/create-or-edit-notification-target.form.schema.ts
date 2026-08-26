@@ -19,6 +19,9 @@ export const CreateOrEditNotificationTargetFormSchema = z
         telegramEnabled: z.boolean(),
         telegramUseDefault: z.boolean(),
         telegramSettingId: z.string().trim(),
+        larkEnabled: z.boolean(),
+        larkUseDefault: z.boolean(),
+        larkWebhookId: z.string().trim(),
         minSendInterval: z.string().trim().min(1, "Override Min Send Interval is required"),
         inheritable: z.boolean(),
         default: z.boolean(),
@@ -50,6 +53,13 @@ export const CreateOrEditNotificationTargetFormSchema = z
                 code: z.ZodIssueCode.custom,
                 path: ["telegramSettingId"],
                 message: "Telegram Bot is required",
+            });
+        }
+        if (values.larkEnabled && !values.larkUseDefault && !values.larkWebhookId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["larkWebhookId"],
+                message: "Webhook is required",
             });
         }
     });

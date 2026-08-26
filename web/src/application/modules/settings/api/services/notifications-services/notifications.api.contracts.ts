@@ -37,6 +37,12 @@ export type Notification_ViaTelegram_Payload = {
     setting: Notification_RefObject_Payload;
 };
 
+export type Notification_ViaLark_Payload = {
+    enabled: boolean;
+    useDefault: boolean;
+    webhook: Notification_RefObject_Payload;
+};
+
 export type Notification_CreateOne_Payload = {
     inheritable: boolean;
     default: boolean;
@@ -45,6 +51,7 @@ export type Notification_CreateOne_Payload = {
     viaSlack: Notification_ViaSlack_Payload | null;
     viaDiscord: Notification_ViaDiscord_Payload | null;
     viaTelegram: Notification_ViaTelegram_Payload | null;
+    viaLark: Notification_ViaLark_Payload | null;
     minSendInterval: string;
 };
 

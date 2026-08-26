@@ -22,6 +22,9 @@ function getTargets(notification: SettingNotification): string {
     if (notification.viaTelegram?.enabled) {
         targets.push("telegram");
     }
+    if (notification.viaLark?.enabled) {
+        targets.push("lark");
+    }
 
     return targets.length > 0 ? targets.join(", ") : "-";
 }

@@ -15,11 +15,17 @@ export interface ImServiceTelegram {
     chatId: string;
 }
 
+export interface ImServiceLark {
+    webhook: string;
+    secret?: string | null;
+}
+
 export interface SettingImService extends SettingsBaseEntity {
     kind: EImServiceKind;
     slack?: ImServiceSlack | null;
     discord?: ImServiceDiscord | null;
     telegram?: ImServiceTelegram | null;
+    lark?: ImServiceLark | null;
     secretMasked?: boolean;
     inherited?: boolean;
 }

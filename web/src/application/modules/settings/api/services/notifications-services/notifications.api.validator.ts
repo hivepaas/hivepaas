@@ -2,7 +2,7 @@ import { type AxiosResponse } from "axios";
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
-import { PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
+import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import {
     type Notifications_CreateOne_Res,
@@ -19,9 +19,18 @@ const NotificationViaEmailSchema = z.object({
     enabled: z.boolean(),
     useDefault: z.boolean(),
     sender: SettingsRefSchema,
-    toProjectMembers: z.boolean(),
-    toProjectOwners: z.boolean(),
-    toAllAdmins: z.boolean(),
+    toProjectMembers: z
+        .boolean()
+        .nullish()
+        .transform(v => v ?? false),
+    toProjectOwners: z
+        .boolean()
+        .nullish()
+        .transform(v => v ?? false),
+    toAllAdmins: z
+        .boolean()
+        .nullish()
+        .transform(v => v ?? false),
     toAddresses: z
         .array(z.string())
         .nullish()
@@ -46,13 +55,23 @@ const NotificationViaTelegramSchema = z.object({
     setting: SettingsRefSchema,
 });
 
+const NotificationViaLarkSchema = z.object({
+    enabled: z.boolean(),
+    useDefault: z.boolean(),
+    webhook: SettingsRefSchema,
+});
+
 const NotificationEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     type: z.string(),
-    viaEmail: NotificationViaEmailSchema.optional(),
-    viaSlack: NotificationViaSlackSchema.optional(),
-    viaDiscord: NotificationViaDiscordSchema.optional(),
-    viaTelegram: NotificationViaTelegramSchema.optional(),
-    minSendInterval: z.string(),
+    viaEmail: NotificationViaEmailSchema.nullish().transform(value => value ?? undefined),
+    viaSlack: NotificationViaSlackSchema.nullish().transform(value => value ?? undefined),
+    viaDiscord: NotificationViaDiscordSchema.nullish().transform(value => value ?? undefined),
+    viaTelegram: NotificationViaTelegramSchema.nullish().transform(value => value ?? undefined),
+    viaLark: NotificationViaLarkSchema.nullish().transform(value => value ?? undefined),
+    minSendInterval: z
+        .string()
+        .nullish()
+        .transform(value => value ?? ""),
     inherited: z.boolean().optional(),
 });
 
@@ -69,6 +88,7 @@ const FindManyPaginatedSchema = z.object({
  */
 const FindOneByIdSchema = z.object({
     data: NotificationEntitySchema,
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 /**
@@ -78,27 +98,11 @@ const CreateOneSchema = z.object({
     data: z.object({
         id: z.string(),
     }),
+    meta: BaseMetaApiSchema.nullish(),
 });
 
-/**
- * Update one notification API response schema
- */
-const UpdateOneSchema = z.object({
-    type: z.literal("success"),
-});
-
-/**
- * Update notification status API response schema
- */
-const UpdateStatusSchema = z.object({
-    type: z.literal("success"),
-});
-
-/**
- * Delete one notification API response schema
- */
-const DeleteOneSchema = z.object({
-    type: z.literal("success"),
+const MetaOnlySchema = z.object({
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 export class NotificationsApiValidator {
@@ -149,14 +153,14 @@ export class NotificationsApiValidator {
      * Validate and transform update one notification API response
      */
     updateOne = (response: AxiosResponse): Notifications_UpdateOne_Res => {
-        const { type } = parseApiResponse({
+        parseApiResponse({
             response,
-            schema: UpdateOneSchema,
+            schema: MetaOnlySchema,
         });
 
         return {
             data: {
-                type,
+                type: "success",
             },
         };
     };
@@ -165,14 +169,14 @@ export class NotificationsApiValidator {
      * Validate and transform update notification status API response
      */
     updateStatus = (response: AxiosResponse): Notifications_UpdateStatus_Res => {
-        const { type } = parseApiResponse({
+        parseApiResponse({
             response,
-            schema: UpdateStatusSchema,
+            schema: MetaOnlySchema,
         });
 
         return {
             data: {
-                type,
+                type: "success",
             },
         };
     };
@@ -181,14 +185,14 @@ export class NotificationsApiValidator {
      * Validate and transform delete one notification API response
      */
     deleteOne = (response: AxiosResponse): Notifications_DeleteOne_Res => {
-        const { type } = parseApiResponse({
+        parseApiResponse({
             response,
-            schema: DeleteOneSchema,
+            schema: MetaOnlySchema,
         });
 
         return {
             data: {
-                type,
+                type: "success",
             },
         };
     };

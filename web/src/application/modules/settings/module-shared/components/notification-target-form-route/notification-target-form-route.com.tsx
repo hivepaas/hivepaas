@@ -127,6 +127,13 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
                   setting: { id: values.telegramUseDefault ? "" : values.telegramSettingId },
               }
             : null;
+        const viaLark = values.larkEnabled
+            ? {
+                  enabled: values.larkEnabled,
+                  useDefault: values.larkUseDefault,
+                  webhook: { id: values.larkUseDefault ? "" : values.larkWebhookId },
+              }
+            : null;
 
         return {
             inheritable: scope.type === "project" ? false : values.inheritable,
@@ -136,6 +143,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
             viaSlack,
             viaDiscord,
             viaTelegram,
+            viaLark,
             minSendInterval: values.minSendInterval,
         };
     }
@@ -206,6 +214,9 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
               telegramEnabled: notificationTarget.viaTelegram?.enabled ?? false,
               telegramUseDefault: notificationTarget.viaTelegram?.useDefault ?? true,
               telegramSettingId: notificationTarget.viaTelegram?.setting?.id ?? "",
+              larkEnabled: notificationTarget.viaLark?.enabled ?? false,
+              larkUseDefault: notificationTarget.viaLark?.useDefault ?? true,
+              larkWebhookId: notificationTarget.viaLark?.webhook?.id ?? "",
               minSendInterval: notificationTarget.minSendInterval || "3m",
               inheritable: notificationTarget.inheritable ?? false,
               default: notificationTarget.default ?? false,

@@ -17,6 +17,8 @@ function formatKind(kind: SettingImService["kind"]): string {
             return "Discord";
         case EImServiceKind.Telegram:
             return "Telegram";
+        case EImServiceKind.Lark:
+            return "Lark";
         default:
             return kind;
     }
@@ -30,6 +32,8 @@ function getKindClassName(kind: SettingImService["kind"]): string {
             return "bg-blue-300 text-white";
         case EImServiceKind.Telegram:
             return "bg-cyan-500 text-white";
+        case EImServiceKind.Lark:
+            return "bg-sky-500 text-white";
         default:
             return "bg-muted text-muted-foreground";
     }

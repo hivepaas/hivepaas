@@ -59,6 +59,7 @@ export function CreateOrEditImPlatformForm({
             name: initialValues?.name ?? "",
             kind: initialValues?.kind ?? EImServiceKind.Slack,
             webhook: initialValues?.webhook ?? "",
+            secret: initialValues?.secret ?? "",
             botToken: initialValues?.botToken ?? "",
             chatId: initialValues?.chatId ?? "",
             inheritable: initialValues?.inheritable ?? false,
@@ -95,6 +96,10 @@ export function CreateOrEditImPlatformForm({
         field: webhook,
         fieldState: { invalid: isWebhookInvalid },
     } = useController({ name: "webhook", control });
+    const {
+        field: secret,
+        fieldState: { invalid: isSecretInvalid },
+    } = useController({ name: "secret", control });
     const {
         field: botToken,
         fieldState: { invalid: isBotTokenInvalid },
@@ -169,6 +174,7 @@ export function CreateOrEditImPlatformForm({
                                         <SelectItem value={EImServiceKind.Slack}>Slack Webhook</SelectItem>
                                         <SelectItem value={EImServiceKind.Discord}>Discord Webhook</SelectItem>
                                         <SelectItem value={EImServiceKind.Telegram}>Telegram Bot</SelectItem>
+                                        <SelectItem value={EImServiceKind.Lark}>Lark Webhook</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FieldError errors={[errors.kind]} />
@@ -216,28 +222,53 @@ export function CreateOrEditImPlatformForm({
                                 </InfoBlock>
                             </>
                         ) : (
-                            <InfoBlock
-                                titleWidth={220}
-                                title={
-                                    <LabelWithInfo
-                                        label="Webhook URL"
-                                        isRequired
-                                    />
-                                }
-                            >
-                                <Field>
-                                    <PasswordInput
-                                        {...webhook}
-                                        aria-invalid={isWebhookInvalid}
-                                        placeholder={
-                                            kindValue === EImServiceKind.Slack
-                                                ? "Slack webhook URL"
-                                                : "Discord webhook URL"
+                            <>
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title={
+                                        <LabelWithInfo
+                                            label="Webhook URL"
+                                            isRequired
+                                        />
+                                    }
+                                >
+                                    <Field>
+                                        <PasswordInput
+                                            {...webhook}
+                                            aria-invalid={isWebhookInvalid}
+                                            placeholder={
+                                                kindValue === EImServiceKind.Slack
+                                                    ? "Slack webhook URL"
+                                                    : kindValue === EImServiceKind.Discord
+                                                      ? "Discord webhook URL"
+                                                      : "Lark webhook URL"
+                                            }
+                                        />
+                                        <FieldError errors={[errors.webhook]} />
+                                    </Field>
+                                </InfoBlock>
+
+                                {kindValue === EImServiceKind.Lark && (
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Secret"
+                                                content="Optional. Lark custom bot signature verification secret."
+                                            />
                                         }
-                                    />
-                                    <FieldError errors={[errors.webhook]} />
-                                </Field>
-                            </InfoBlock>
+                                    >
+                                        <Field>
+                                            <PasswordInput
+                                                {...secret}
+                                                aria-invalid={isSecretInvalid}
+                                                placeholder="Lark webhook secret (optional)"
+                                            />
+                                            <FieldError errors={[errors.secret]} />
+                                        </Field>
+                                    </InfoBlock>
+                                )}
+                            </>
                         )}
 
                         {showAvailableInProjects && (

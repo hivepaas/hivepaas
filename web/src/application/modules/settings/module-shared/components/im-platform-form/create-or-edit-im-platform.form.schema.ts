@@ -5,8 +5,9 @@ import { EImServiceKind } from "@application/shared/enums";
 export const CreateOrEditImPlatformFormSchema = z
     .object({
         name: z.string().trim().min(1, "Name is required"),
-        kind: z.enum([EImServiceKind.Slack, EImServiceKind.Discord, EImServiceKind.Telegram]),
+        kind: z.enum([EImServiceKind.Slack, EImServiceKind.Discord, EImServiceKind.Telegram, EImServiceKind.Lark]),
         webhook: z.string().trim(),
+        secret: z.string().trim().optional(),
         botToken: z.string().trim(),
         chatId: z.string().trim(),
         inheritable: z.boolean(),

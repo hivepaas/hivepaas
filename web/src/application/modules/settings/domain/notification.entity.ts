@@ -28,11 +28,18 @@ export interface NotificationViaTelegram {
     setting?: SettingsBaseEntity;
 }
 
+export interface NotificationViaLark {
+    enabled: boolean;
+    useDefault: boolean;
+    webhook?: SettingsBaseEntity;
+}
+
 export interface SettingNotification extends SettingsBaseEntity {
     viaEmail?: NotificationViaEmail;
     viaSlack?: NotificationViaSlack;
     viaDiscord?: NotificationViaDiscord;
     viaTelegram?: NotificationViaTelegram;
+    viaLark?: NotificationViaLark;
     minSendInterval: string; // duration in string format from BE
     inherited?: boolean;
 }

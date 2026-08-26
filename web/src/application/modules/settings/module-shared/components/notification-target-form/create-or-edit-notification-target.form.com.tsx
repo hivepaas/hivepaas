@@ -26,9 +26,9 @@ import type {
 import { CreateOrEditNotificationTargetFormSchema } from "./create-or-edit-notification-target.form.schema";
 
 const selectPagination = { page: 1, size: 100 };
-type NotificationSection = "email" | "slack" | "discord" | "telegram";
+type NotificationSection = "email" | "slack" | "discord" | "telegram" | "lark";
 
-const initialOpenSections: NotificationSection[] = ["email", "slack", "discord", "telegram"];
+const initialOpenSections: NotificationSection[] = ["email", "slack", "discord", "telegram", "lark"];
 
 function mergeOpenSections(current: NotificationSection[], additions: NotificationSection[]) {
     return Array.from(new Set([...current, ...additions]));
@@ -48,6 +48,9 @@ function getInvalidSections(errors: FieldErrors<CreateOrEditNotificationTargetFo
     }
     if (errors.telegramSettingId) {
         sections.push("telegram");
+    }
+    if (errors.larkWebhookId) {
+        sections.push("lark");
     }
 
     return sections;
@@ -81,6 +84,7 @@ function useNotificationSourceQueries(scope: NotificationTargetTableScope) {
     const projectEmails = ProjectEmailQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination: selectPagination,
         },
         { enabled: scope.type === "project" },
@@ -88,6 +92,7 @@ function useNotificationSourceQueries(scope: NotificationTargetTableScope) {
     const projectImServices = ProjectImServiceQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination: selectPagination,
         },
         { enabled: scope.type === "project" },
@@ -140,6 +145,9 @@ export function CreateOrEditNotificationTargetForm({
             telegramEnabled: initialValues?.telegramEnabled ?? false,
             telegramUseDefault: initialValues?.telegramUseDefault ?? true,
             telegramSettingId: initialValues?.telegramSettingId ?? "",
+            larkEnabled: initialValues?.larkEnabled ?? false,
+            larkUseDefault: initialValues?.larkUseDefault ?? true,
+            larkWebhookId: initialValues?.larkWebhookId ?? "",
             minSendInterval: initialValues?.minSendInterval ?? "3m",
             inheritable: initialValues?.inheritable ?? false,
             default: initialValues?.default ?? false,
@@ -196,6 +204,12 @@ export function CreateOrEditNotificationTargetForm({
         field: telegramSettingId,
         fieldState: { invalid: isTelegramSettingInvalid },
     } = useController({ name: "telegramSettingId", control });
+    const { field: larkEnabled } = useController({ name: "larkEnabled", control });
+    const { field: larkUseDefault } = useController({ name: "larkUseDefault", control });
+    const {
+        field: larkWebhookId,
+        fieldState: { invalid: isLarkWebhookInvalid },
+    } = useController({ name: "larkWebhookId", control });
     const {
         field: minSendInterval,
         fieldState: { invalid: isMinSendIntervalInvalid },
@@ -211,6 +225,8 @@ export function CreateOrEditNotificationTargetForm({
     const isDiscordUseDefault = discordUseDefault.value;
     const isTelegramEnabled = telegramEnabled.value;
     const isTelegramUseDefault = telegramUseDefault.value;
+    const isLarkEnabled = larkEnabled.value;
+    const isLarkUseDefault = larkUseDefault.value;
 
     const emailOptions = useMemo(() => buildEmailOptions(emailQuery.data?.data ?? []), [emailQuery.data?.data]);
     const slackOptions = useMemo(
@@ -223,6 +239,10 @@ export function CreateOrEditNotificationTargetForm({
     );
     const telegramOptions = useMemo(
         () => buildImOptions(imServiceQuery.data?.data ?? [], EImServiceKind.Telegram),
+        [imServiceQuery.data?.data],
+    );
+    const larkOptions = useMemo(
+        () => buildImOptions(imServiceQuery.data?.data ?? [], EImServiceKind.Lark),
         [imServiceQuery.data?.data],
     );
 
@@ -271,6 +291,13 @@ export function CreateOrEditNotificationTargetForm({
             telegramSettingId.onChange(option.value.id);
         }
     }, [isTelegramEnabled, isTelegramUseDefault, telegramOptions, telegramSettingId]);
+
+    useEffect(() => {
+        const option = larkOptions[0];
+        if (isLarkEnabled && !isLarkUseDefault && !larkWebhookId.value && larkOptions.length === 1 && option) {
+            larkWebhookId.onChange(option.value.id);
+        }
+    }, [isLarkEnabled, isLarkUseDefault, larkOptions, larkWebhookId]);
 
     const emailAccountsRoute =
         scope.type === "project"
@@ -677,6 +704,82 @@ export function CreateOrEditNotificationTargetForm({
                                                                 Configure IM Platforms
                                                             </AppLink.Basic>
                                                             <FieldError errors={[errors.telegramSettingId]} />
+                                                        </Field>
+                                                    </FieldGroup>
+                                                </InfoBlock>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        <AccordionItem
+                            value="lark"
+                            className="border-none"
+                        >
+                            <AccordionTrigger className="px-3 py-2 [&>svg]:rotate-90 [&[data-state=open]>svg]:rotate-0 bg-accent">
+                                Lark Notification
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-4 pb-0 pl-4">
+                                <div className="flex flex-col gap-6">
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={<LabelWithInfo label="Enabled" />}
+                                    >
+                                        <Checkbox
+                                            checked={isLarkEnabled}
+                                            onCheckedChange={checked => {
+                                                larkEnabled.onChange(Boolean(checked));
+                                            }}
+                                        />
+                                    </InfoBlock>
+                                    {isLarkEnabled && (
+                                        <>
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={<LabelWithInfo label="Use Default Lark Webhook" />}
+                                            >
+                                                <Checkbox
+                                                    checked={isLarkUseDefault}
+                                                    onCheckedChange={checked => {
+                                                        larkUseDefault.onChange(Boolean(checked));
+                                                    }}
+                                                />
+                                            </InfoBlock>
+                                            {!isLarkUseDefault && (
+                                                <InfoBlock
+                                                    titleWidth={220}
+                                                    title={<LabelWithInfo label="Webhook" />}
+                                                >
+                                                    <FieldGroup>
+                                                        <Field>
+                                                            <Combobox
+                                                                options={larkOptions}
+                                                                value={larkWebhookId.value}
+                                                                onChange={value => {
+                                                                    larkWebhookId.onChange(value ?? "");
+                                                                }}
+                                                                placeholder="None"
+                                                                emptyText="No Lark webhooks available"
+                                                                searchable={false}
+                                                                loading={imServiceQuery.isLoading}
+                                                                onRefresh={() => {
+                                                                    void imServiceQuery.refetch();
+                                                                }}
+                                                                isRefreshing={imServiceQuery.isRefetching}
+                                                                aria-invalid={isLarkWebhookInvalid}
+                                                            />
+                                                            <AppLink.Basic
+                                                                className="text-xs text-link"
+                                                                to={imPlatformsRoute}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                ignorePrevPath
+                                                            >
+                                                                Configure IM Platforms
+                                                            </AppLink.Basic>
+                                                            <FieldError errors={[errors.larkWebhookId]} />
                                                         </Field>
                                                     </FieldGroup>
                                                 </InfoBlock>

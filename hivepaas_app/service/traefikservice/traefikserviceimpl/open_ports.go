@@ -10,8 +10,8 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/traefikhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
+	"github.com/hivepaas/hivepaas/services/traefik/traefikhelper"
 )
 
 func (s *service) OpenPorts(

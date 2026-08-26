@@ -8,7 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/traefikhelper"
+	"github.com/hivepaas/hivepaas/services/traefik/traefikhelper"
 )
 
 type GetConfigOptionsReq struct {

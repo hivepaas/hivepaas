@@ -51,30 +51,31 @@ func TransformEnvVars(input *EnvVarsTransformationInput) (resp *EnvVarsResp, err
 		RuntimeEnvVars:            make([]*basedto.EnvVarResp, 0, 20), //nolint
 	}
 
-	var envEnvVars, projectEnvVars *entity.EnvVars
+	var envVars, projectVars *entity.EnvVars
 	for _, envSetting := range input.Vars {
 		switch envSetting.ObjectID {
 		case input.ProjectEnv.ID:
-			envEnvVars = envSetting.MustAsEnvVars()
+			envVars = envSetting.MustAsEnvVars()
+			resp.UpdateVer = envSetting.UpdateVer
 		case input.ProjectEnv.ProjectID:
-			projectEnvVars = envSetting.MustAsEnvVars()
+			projectVars = envSetting.MustAsEnvVars()
 		}
 	}
 
-	TransformInheritedEnvVars(projectEnvVars, resp)
-	TransformOwnEnvVars(envEnvVars, resp)
+	TransformInheritedEnvVars(projectVars, resp)
+	TransformOwnEnvVars(envVars, resp)
 
 	return resp, nil
 }
 
 func TransformOwnEnvVars(
-	appEnvVars *entity.EnvVars,
+	envVars *entity.EnvVars,
 	resp *EnvVarsResp,
 ) {
-	if appEnvVars == nil {
+	if envVars == nil {
 		return
 	}
-	for _, env := range appEnvVars.Data {
+	for _, env := range envVars.Data {
 		envResp := basedto.TransformEnvVar(env)
 		switch {
 		case env.IsBuild:
@@ -86,13 +87,13 @@ func TransformOwnEnvVars(
 }
 
 func TransformInheritedEnvVars(
-	projectEnvVars *entity.EnvVars,
+	projectVars *entity.EnvVars,
 	resp *EnvVarsResp,
 ) {
-	if projectEnvVars == nil {
+	if projectVars == nil {
 		return
 	}
-	for _, env := range projectEnvVars.Data {
+	for _, env := range projectVars.Data {
 		envResp := basedto.TransformEnvVar(env)
 		if env.IsBuild {
 			resp.InheritedBuildtimeEnvVars = append(resp.InheritedBuildtimeEnvVars, envResp)

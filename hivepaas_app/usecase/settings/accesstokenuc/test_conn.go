@@ -10,9 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httputil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accesstokenuc/accesstokendto"
-	"github.com/hivepaas/hivepaas/services/git/gitea"
-	"github.com/hivepaas/hivepaas/services/git/github"
-	"github.com/hivepaas/hivepaas/services/git/gitlab"
+	"github.com/hivepaas/hivepaas/services/git/gitapi"
 )
 
 func (uc *UC) TestAccessTokenConn(
@@ -22,16 +20,13 @@ func (uc *UC) TestAccessTokenConn(
 ) (*accesstokendto.TestAccessTokenConnResp, error) {
 	var err error
 	switch req.Kind {
-	case base.AccessTokenKindGithub:
-		err = uc.testGithubTokenConn(ctx, req)
-	case base.AccessTokenKindGitlab:
-		err = uc.testGitlabTokenConn(ctx, req)
-	case base.AccessTokenKindGitea:
-		err = uc.testGiteaTokenConn(ctx, req)
+	case base.AccessTokenKindGithub, base.AccessTokenKindGitlab, base.AccessTokenKindGitea,
+		base.AccessTokenKindBitbucket, base.AccessTokenKindGogs:
+		err = gitapi.TestAccessTokenConn(ctx, req.Kind, req.Token, req.BaseURL)
+
 	case base.AccessTokenKindCloudflare:
 		err = uc.testCloudflareTokenValid(ctx, req)
-	case base.AccessTokenKindBitbucket, base.AccessTokenKindGogs:
-		fallthrough
+
 	default:
 		err = apperrors.Wrap(apperrors.ErrTokenTypeUnsupported).WithParam("Type", req.Kind)
 	}
@@ -40,51 +35,6 @@ func (uc *UC) TestAccessTokenConn(
 	}
 
 	return &accesstokendto.TestAccessTokenConnResp{}, nil
-}
-
-func (uc *UC) testGithubTokenConn(
-	ctx context.Context,
-	req *accesstokendto.TestAccessTokenConnReq,
-) error {
-	client, err := github.NewFromToken(req.Token)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	_, _, err = client.ListUserRepos(ctx, &basedto.Paging{Limit: 1})
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	return nil
-}
-
-func (uc *UC) testGitlabTokenConn(
-	ctx context.Context,
-	req *accesstokendto.TestAccessTokenConnReq,
-) error {
-	client, err := gitlab.NewFromToken(req.Token, req.BaseURL)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	_, _, err = client.ListAllProjects(ctx, &basedto.Paging{Limit: 1})
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	return nil
-}
-
-func (uc *UC) testGiteaTokenConn(
-	ctx context.Context,
-	req *accesstokendto.TestAccessTokenConnReq,
-) error {
-	client, err := gitea.NewFromToken(req.Token, req.BaseURL)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	_, _, err = client.ListAllRepos(ctx, &basedto.Paging{Limit: 1})
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	return nil
 }
 
 func (uc *UC) testCloudflareTokenValid(

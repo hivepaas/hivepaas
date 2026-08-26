@@ -3,17 +3,12 @@ package gitcredentialuc
 import (
 	"context"
 
-	"github.com/tiendc/gofn"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/gitcredentialuc/gitcredentialdto"
-	"github.com/hivepaas/hivepaas/services/git/gitea"
-	"github.com/hivepaas/hivepaas/services/git/github"
-	"github.com/hivepaas/hivepaas/services/git/gitlab"
+	"github.com/hivepaas/hivepaas/services/git/gitapi"
 )
 
 func (uc *UC) ListBranch(
@@ -28,110 +23,31 @@ func (uc *UC) ListBranch(
 		return nil, apperrors.Wrap(err)
 	}
 
-	switch setting.Type { //nolint:exhaustive
-	case base.SettingTypeGithubApp:
-		return uc.listGithubBranch(ctx, req, setting)
-	case base.SettingTypeAccessToken:
-		switch base.GitSource(setting.Kind) {
-		case base.GitSourceGithub:
-			return uc.listGithubBranch(ctx, req, setting)
-		case base.GitSourceGitlab:
-			return uc.listGitlabBranch(ctx, req, setting)
-		case base.GitSourceGitea:
-			return uc.listGiteaBranch(ctx, req, setting)
-		case base.GitSourceBitbucket, base.GitSourceGogs:
-			fallthrough
-		default:
-			return nil, apperrors.Wrap(apperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
-		}
-	default:
-		return nil, apperrors.Wrap(apperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
-	}
-}
-
-func (uc *UC) listGithubBranch(
-	ctx context.Context,
-	req *gitcredentialdto.ListBranchReq,
-	setting *entity.Setting,
-) (*gitcredentialdto.ListBranchResp, error) {
-	client, err := github.NewFromSetting(setting)
+	gitResp, err := gitapi.ListBranch(ctx, setting, &gitapi.ListBranchReq{
+		Owner:  req.Owner,
+		Repo:   req.Repo,
+		Paging: &req.Paging,
+	})
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
-	// If setting is a github-app, we get `owner` from the setting
-	if setting.Type == base.SettingTypeGithubApp {
-		githubApp := setting.MustAsGithubApp()
-		if githubApp.Organization != "" && req.Owner != "" && githubApp.Organization != req.Owner {
-			return nil, apperrors.NewMismatch("owner", "organization")
-		}
-		req.Owner = gofn.Coalesce(req.Owner, githubApp.Organization)
+	var branchResp []*gitcredentialdto.BranchResp
+	switch gitResp.GitSource {
+	case base.GitSourceGithub:
+		branchResp, err = gitcredentialdto.TransformGithubBranches(gitResp.GithubBranches)
+	case base.GitSourceGitlab:
+		branchResp, err = gitcredentialdto.TransformGitlabBranches(gitResp.GitlabBranches)
+	case base.GitSourceGitea:
+		branchResp, err = gitcredentialdto.TransformGiteaBranches(gitResp.GiteaBranches)
+	case base.GitSourceBitbucket, base.GitSourceGogs:
 	}
-
-	branches, pagingMeta, err := client.ListBranch(ctx, req.Owner, req.Repo, &req.Paging)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	resp, err := gitcredentialdto.TransformGithubBranches(branches)
 	if err != nil {
 		return nil, apperrors.Wrap(err)
 	}
 
 	return &gitcredentialdto.ListBranchResp{
-		Meta: &basedto.ListMeta{Page: pagingMeta},
-		Data: resp,
-	}, nil
-}
-
-func (uc *UC) listGitlabBranch(
-	ctx context.Context,
-	req *gitcredentialdto.ListBranchReq,
-	setting *entity.Setting,
-) (*gitcredentialdto.ListBranchResp, error) {
-	client, err := gitlab.NewFromSetting(setting)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	branches, pagingMeta, err := client.ListBranch(ctx, req.Owner+"/"+req.Repo, &req.Paging)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	resp, err := gitcredentialdto.TransformGitlabBranches(branches)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	return &gitcredentialdto.ListBranchResp{
-		Meta: &basedto.ListMeta{Page: pagingMeta},
-		Data: resp,
-	}, nil
-}
-
-func (uc *UC) listGiteaBranch(
-	ctx context.Context,
-	req *gitcredentialdto.ListBranchReq,
-	setting *entity.Setting,
-) (*gitcredentialdto.ListBranchResp, error) {
-	client, err := gitea.NewFromSetting(setting)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	branches, pagingMeta, err := client.ListBranch(ctx, req.Owner, req.Repo, &req.Paging)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	resp, err := gitcredentialdto.TransformGiteaBranches(branches)
-	if err != nil {
-		return nil, apperrors.Wrap(err)
-	}
-
-	return &gitcredentialdto.ListBranchResp{
-		Meta: &basedto.ListMeta{Page: pagingMeta},
-		Data: resp,
+		Meta: &basedto.ListMeta{Page: gitResp.PagingMeta},
+		Data: branchResp,
 	}, nil
 }

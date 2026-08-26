@@ -18,10 +18,8 @@ lint:
 lint-local:
 	# Run this cmd locally once to install golangci-lint binary
 	# curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.13.0
+	# FASTER golangci-lint --timeout=5m run -v --new-from-rev=HEAD~1
 	golangci-lint --timeout=5m run -v ./...
-
-lint-local-fast:
-	golangci-lint --timeout=5m run -v --new-from-rev=HEAD~1
 
 test:
 	@./scripts/test.sh
@@ -64,7 +62,7 @@ build-agent-prod:
 build-all-prod: build-prod build-agent-prod
 
 # ----- Code generation -----
-gen: gen-go gen-swag
+gen: gen-go gen-proto gen-swag
 
 gen-go:
 	$(DEVTOOLS_CMD) env GOCACHE=/tmp/go-cache go generate ./...
@@ -80,7 +78,7 @@ gen-swag:
 
 SRC_LOCAL="github.com/hivepaas/hivepaas/"
 fmt: ## gofmt and goimports all go files
-	@find . -name '*.go' -not -wholename './vendor/*' -not -wholename './.temp/*' -not -wholename '*_gen.go' -not -wholename '*/mock_*.go' | while read -r file; do gofmt -w -s "$$file"; goimports -local ${SRC_LOCAL} -w "$$file"; done
+	@find . -name '*.go' -not -wholename './vendor/*' -not -wholename './.temp/*'  -not -wholename '*.pb.go' -not -wholename '*_gen.go' -not -wholename '*/mock_*.go' | while read -r file; do gofmt -w -s "$$file"; goimports -local ${SRC_LOCAL} -w "$$file"; done
 
 # ----- DB migration -----
 DB_MIGRATE_DIR := hivepaas_app/db
@@ -155,10 +153,3 @@ smee-run:
 	# github app id: 01JAB9XED0GTXBSQDFVYAJ8WJ1
 	# webhook id: 01JAB9XED0GTXBSQDFVYAJ8WO1 (github), 01JAB9XED0GTXBSQDFVYAJ8WO2 (gitlab), 01JAB9XED0GTXBSQDFVYAJ8WO3 (gitea)
 	gosmee client --saveDir tmp/gosmee/savedreplay https://smee.io/RBNiNjxieUIWZ6Ej http://localhost:10000/_/webhooks/01JAB9XED0GTXBSQDFVYAJ8WJ1
-
-# ----- Build local image -----
-build-image:
-	docker build -f deployment/dev/Dockerfile -t hivepaas:latest .
-
-build-agent-image:
-	docker build -f deployment/dev/Dockerfile.agent -t hivepaas-agent:latest .

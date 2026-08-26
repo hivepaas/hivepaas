@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
+	"github.com/hivepaas/hivepaas/services/im/lark"
 	"github.com/hivepaas/hivepaas/services/im/telegram"
 )
 
@@ -89,6 +90,8 @@ func isRetryableIMError(imKind base.IMServiceKind, err error) bool {
 		return isRetryableDiscordError(err)
 	case base.IMServiceKindTelegram:
 		return isRetryableTelegramError(err)
+	case base.IMServiceKindLark:
+		return isRetryableLarkError(err)
 	}
 	return false
 }
@@ -128,6 +131,17 @@ func isRetryableTelegramError(err error) bool {
 		return false
 	}
 	var statusCodeErr *telegram.StatusCodeError
+	if errors.As(err, &statusCodeErr) {
+		return statusCodeErr.Retryable()
+	}
+	return true
+}
+
+func isRetryableLarkError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var statusCodeErr *lark.StatusCodeError
 	if errors.As(err, &statusCodeErr) {
 		return statusCodeErr.Retryable()
 	}

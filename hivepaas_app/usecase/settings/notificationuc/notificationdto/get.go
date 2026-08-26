@@ -28,39 +28,46 @@ func (req *GetNotificationReq) Validate() apperrors.ValidationErrors {
 
 type NotificationResp struct {
 	*settings.BaseSettingResp
-	ViaEmail        *NotificationViaEmailResp    `json:"viaEmail"`
-	ViaSlack        *NotificationViaSlackResp    `json:"viaSlack"`
-	ViaDiscord      *NotificationViaDiscordResp  `json:"viaDiscord"`
-	ViaTelegram     *NotificationViaTelegramResp `json:"viaTelegram"`
+	ViaEmail        *NotificationViaEmailResp    `json:"viaEmail,omitempty"`
+	ViaSlack        *NotificationViaSlackResp    `json:"viaSlack,omitempty"`
+	ViaDiscord      *NotificationViaDiscordResp  `json:"viaDiscord,omitempty"`
+	ViaTelegram     *NotificationViaTelegramResp `json:"viaTelegram,omitempty"`
+	ViaLark         *NotificationViaLarkResp     `json:"viaLark,omitempty"`
 	MinSendInterval timeutil.Duration            `json:"minSendInterval"`
 }
 
 type NotificationViaEmailResp struct {
 	Enabled          bool                      `json:"enabled"`
 	UseDefault       bool                      `json:"useDefault"`
-	Sender           *settings.BaseSettingResp `json:"sender"`
-	ToProjectMembers bool                      `json:"toProjectMembers"`
-	ToProjectOwners  bool                      `json:"toProjectOwners"`
-	ToAllAdmins      bool                      `json:"toAllAdmins"`
-	ToAddresses      []string                  `json:"toAddresses"`
+	Sender           *settings.BaseSettingResp `json:"sender,omitempty"`
+	ToProjectMembers bool                      `json:"toProjectMembers,omitempty"`
+	ToProjectOwners  bool                      `json:"toProjectOwners,omitempty"`
+	ToAllAdmins      bool                      `json:"toAllAdmins,omitempty"`
+	ToAddresses      []string                  `json:"toAddresses,omitempty"`
 }
 
 type NotificationViaSlackResp struct {
 	Enabled    bool                      `json:"enabled"`
 	UseDefault bool                      `json:"useDefault"`
-	Webhook    *settings.BaseSettingResp `json:"webhook"`
+	Webhook    *settings.BaseSettingResp `json:"webhook,omitempty"`
 }
 
 type NotificationViaDiscordResp struct {
 	Enabled    bool                      `json:"enabled"`
 	UseDefault bool                      `json:"useDefault"`
-	Webhook    *settings.BaseSettingResp `json:"webhook"`
+	Webhook    *settings.BaseSettingResp `json:"webhook,omitempty"`
 }
 
 type NotificationViaTelegramResp struct {
 	Enabled    bool                      `json:"enabled"`
 	UseDefault bool                      `json:"useDefault"`
-	Setting    *settings.BaseSettingResp `json:"setting"`
+	Setting    *settings.BaseSettingResp `json:"setting,omitempty"`
+}
+
+type NotificationViaLarkResp struct {
+	Enabled    bool                      `json:"enabled"`
+	UseDefault bool                      `json:"useDefault"`
+	Webhook    *settings.BaseSettingResp `json:"webhook,omitempty"`
 }
 
 type GetNotificationResp struct {
@@ -120,6 +127,15 @@ func TransformNotification(
 			itemResp = settings.NewMissingSetting(viaTelegram.Setting.ID, base.SettingTypeIMService)
 		}
 		viaTelegram.Setting = itemResp
+	}
+
+	viaLark := resp.ViaLark
+	if viaLark != nil && viaLark.Webhook != nil && viaLark.Webhook.ID != "" {
+		itemResp, _ := settings.TransformSettingBase(refObjects.RefSettings[viaLark.Webhook.ID])
+		if itemResp == nil {
+			itemResp = settings.NewMissingSetting(viaLark.Webhook.ID, base.SettingTypeIMService)
+		}
+		viaLark.Webhook = itemResp
 	}
 
 	return resp, nil

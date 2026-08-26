@@ -26,6 +26,7 @@ type IMServiceBaseReq struct {
 	Slack    *IMSlackReq        `json:"slack"`
 	Discord  *IMDiscordReq      `json:"discord"`
 	Telegram *IMTelegramReq     `json:"telegram"`
+	Lark     *IMLarkReq         `json:"lark"`
 }
 
 func (req *IMServiceBaseReq) ToEntity() *entity.IMService {
@@ -37,6 +38,8 @@ func (req *IMServiceBaseReq) ToEntity() *entity.IMService {
 		imService.Discord = req.Discord.ToEntity()
 	case base.IMServiceKindTelegram:
 		imService.Telegram = req.Telegram.ToEntity()
+	case base.IMServiceKindLark:
+		imService.Lark = req.Lark.ToEntity()
 	}
 	return imService
 }
@@ -107,6 +110,30 @@ func (req *IMTelegramReq) validate(field string) (res []vld.Validator) {
 	return res
 }
 
+type IMLarkReq struct {
+	Webhook string `json:"webhook"`
+	Secret  string `json:"secret,omitempty"`
+}
+
+func (req *IMLarkReq) ToEntity() *entity.IMLark {
+	return &entity.IMLark{
+		Webhook: entity.NewEncryptedField(req.Webhook),
+		Secret:  entity.NewEncryptedField(req.Secret),
+	}
+}
+
+func (req *IMLarkReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return nil
+	}
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateStr(&req.Webhook, true, 1, webhookURLMaxLen, field+"webhook")...)
+	res = append(res, basedto.ValidateStr(&req.Secret, false, 0, tokenMaxLen, field+"secret")...)
+	return res
+}
+
 func (req *IMServiceBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
@@ -121,6 +148,9 @@ func (req *IMServiceBaseReq) validate(field string) (res []vld.Validator) {
 	case base.IMServiceKindTelegram:
 		res = append(res, basedto.ValidateCond(req.Telegram != nil, field+"telegram")...)
 		res = append(res, req.Telegram.validate(field+"telegram")...)
+	case base.IMServiceKindLark:
+		res = append(res, basedto.ValidateCond(req.Lark != nil, field+"lark")...)
+		res = append(res, req.Lark.validate(field+"lark")...)
 	}
 	return res
 }

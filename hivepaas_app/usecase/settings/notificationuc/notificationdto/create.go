@@ -22,6 +22,7 @@ type NotificationBaseReq struct {
 	ViaSlack        *NotificationViaSlackReq    `json:"viaSlack"`
 	ViaDiscord      *NotificationViaDiscordReq  `json:"viaDiscord"`
 	ViaTelegram     *NotificationViaTelegramReq `json:"viaTelegram"`
+	ViaLark         *NotificationViaLarkReq     `json:"viaLark"`
 	MinSendInterval timeutil.Duration           `json:"minSendInterval"`
 }
 
@@ -31,6 +32,7 @@ func (req *NotificationBaseReq) ToEntity() *entity.Notification {
 		ViaSlack:        req.ViaSlack.ToEntity(),
 		ViaDiscord:      req.ViaDiscord.ToEntity(),
 		ViaTelegram:     req.ViaTelegram.ToEntity(),
+		ViaLark:         req.ViaLark.ToEntity(),
 		MinSendInterval: req.MinSendInterval,
 	}
 }
@@ -108,6 +110,23 @@ func (req *NotificationViaTelegramReq) ToEntity() *entity.NotificationViaTelegra
 		Enabled:    req.Enabled,
 		UseDefault: req.UseDefault,
 		Setting:    entity.ObjectID{ID: req.Setting.ID},
+	}
+}
+
+type NotificationViaLarkReq struct {
+	Enabled    bool                `json:"enabled"`
+	UseDefault bool                `json:"useDefault"`
+	Webhook    basedto.ObjectIDReq `json:"webhook"`
+}
+
+func (req *NotificationViaLarkReq) ToEntity() *entity.NotificationViaLark {
+	if req == nil {
+		return nil
+	}
+	return &entity.NotificationViaLark{
+		Enabled:    req.Enabled,
+		UseDefault: req.UseDefault,
+		Webhook:    entity.ObjectID{ID: req.Webhook.ID},
 	}
 }
 

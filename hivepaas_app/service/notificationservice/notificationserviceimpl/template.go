@@ -18,6 +18,7 @@ const (
 	slackTemplateDir    = "slack/templates/"
 	discordTemplateDir  = "discord/templates/"
 	telegramTemplateDir = "telegram/templates/"
+	larkTemplateDir     = "lark/templates/"
 )
 
 type Template interface {
@@ -58,6 +59,8 @@ func (s *service) GetTemplate(
 		tpl, err = s.loadDiscordTemplate(ctx, db, name)
 	case notificationservice.TemplateTypeTelegram:
 		tpl, err = s.loadTelegramTemplate(ctx, db, name)
+	case notificationservice.TemplateTypeLark:
+		tpl, err = s.loadLarkTemplate(ctx, db, name)
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)
@@ -163,6 +166,32 @@ func (s *service) loadTelegramTemplate(
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), telegramTemplateDir+"ssl_renewal_notification.tpl")
 	case notificationservice.TemplateSystemUpdateNotification:
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), telegramTemplateDir+"system_update_notification.tpl")
+	}
+	if err != nil {
+		return nil, apperrors.Wrap(err)
+	}
+
+	return tpl, nil
+}
+
+func (s *service) loadLarkTemplate(
+	_ context.Context,
+	_ database.IDB,
+	name notificationservice.TemplateName,
+) (tpl Template, err error) {
+	switch name {
+	case notificationservice.TemplateAppDeploymentNotification:
+		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"app_deployment_notification.tpl")
+	case notificationservice.TemplateSchedTaskNotification:
+		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"sched_task_notification.tpl")
+	case notificationservice.TemplateHealthcheckNotification:
+		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"healthcheck_notification.tpl")
+	case notificationservice.TemplateSSLExpiringNotification:
+		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"ssl_expiring_notification.tpl")
+	case notificationservice.TemplateSSLRenewalNotification:
+		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"ssl_renewal_notification.tpl")
+	case notificationservice.TemplateSystemUpdateNotification:
+		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"system_update_notification.tpl")
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)

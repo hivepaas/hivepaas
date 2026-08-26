@@ -24,6 +24,7 @@ type IMService struct {
 	Slack    *IMSlack    `json:"slack,omitempty"`
 	Discord  *IMDiscord  `json:"discord,omitempty"`
 	Telegram *IMTelegram `json:"telegram,omitempty"`
+	Lark     *IMLark     `json:"lark,omitempty"`
 }
 
 type IMSlack struct {
@@ -37,6 +38,11 @@ type IMDiscord struct {
 type IMTelegram struct {
 	BotToken EncryptedField `json:"botToken"`
 	ChatID   string         `json:"chatId"`
+}
+
+type IMLark struct {
+	Webhook EncryptedField `json:"webhook"`
+	Secret  EncryptedField `json:"secret,omitempty"`
 }
 
 func (s *IMService) GetType() base.SettingType {
@@ -68,6 +74,18 @@ func (s *IMService) Decrypt() error {
 		_, err := s.Telegram.BotToken.GetPlain()
 		if err != nil {
 			return apperrors.Wrap(err)
+		}
+	}
+	if s.Lark != nil {
+		_, err := s.Lark.Webhook.GetPlain()
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		if s.Lark.Secret.IsEncrypted() {
+			_, err = s.Lark.Secret.GetPlain()
+			if err != nil {
+				return apperrors.Wrap(err)
+			}
 		}
 	}
 	return nil

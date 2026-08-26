@@ -601,3 +601,199 @@ func TestTelegramSystemUpdateTemplate(t *testing.T) {
 	assert.NoError(t, err)
 	t.Logf("Generated Telegram HTML:\n%s", buf.String())
 }
+
+func TestLarkAppDeploymentTemplate(t *testing.T) {
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/app_deployment_notification.tpl")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	tests := []struct {
+		name string
+		data notificationservice.TemplateDataAppDeployment
+	}{
+		{
+			name: "deployment success - repo method",
+			data: notificationservice.TemplateDataAppDeployment{
+				ProjectName:   "My Project",
+				AppName:       "My App",
+				Succeeded:     true,
+				Method:        "repo",
+				RepoURL:       "https://github.com/user/repo",
+				RepoRef:       "main",
+				CommitMsg:     "initial commit",
+				StartedAt:     time.Now(),
+				Duration:      45 * time.Second,
+				DashboardLink: "https://hivepaas.io/dashboard",
+			},
+		},
+		{
+			name: "deployment failure - image method",
+			data: notificationservice.TemplateDataAppDeployment{
+				ProjectName:   "Project A",
+				AppName:       "App B",
+				Succeeded:     false,
+				Method:        "image",
+				Image:         "nginx:latest",
+				StartedAt:     time.Now(),
+				Duration:      12 * time.Second,
+				DashboardLink: "https://hivepaas.io/dashboard/project-a/app-b",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			err := tpl.Execute(&buf, tt.data)
+			assert.NoError(t, err)
+
+			output := buf.String()
+			t.Logf("Generated Lark JSON output:\n%s", output)
+
+			var parsed map[string]any
+			err = json.Unmarshal([]byte(output), &parsed)
+			assert.NoError(t, err, "generated output should be valid JSON")
+			assert.Equal(t, "interactive", parsed["msg_type"])
+		})
+	}
+}
+
+func TestLarkHealthcheckTemplate(t *testing.T) {
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/healthcheck_notification.tpl")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := notificationservice.TemplateDataHealthcheck{
+		ProjectName:     "Test Project",
+		AppName:         "Test App",
+		Succeeded:       false,
+		HealthcheckName: "ping-check",
+		HealthcheckType: "http",
+		Retries:         3,
+		Expect:          "200 OK",
+		Actual:          "500 Internal Server Error",
+		StartedAt:       time.Now(),
+		Duration:        1500 * time.Millisecond,
+		DashboardLink:   "https://hivepaas.io/health",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	var parsed map[string]any
+	err = json.Unmarshal(buf.Bytes(), &parsed)
+	assert.NoError(t, err)
+	assert.Equal(t, "interactive", parsed["msg_type"])
+}
+
+func TestLarkSchedTaskTemplate(t *testing.T) {
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/sched_task_notification.tpl")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := notificationservice.TemplateDataSchedTask{
+		ProjectName:   "Test Project",
+		AppName:       "Test App",
+		Succeeded:     true,
+		SchedJobName:  "db-backup",
+		Schedule:      "0 0 * * *",
+		StartedAt:     time.Now(),
+		Duration:      15 * time.Second,
+		Retries:       0,
+		DashboardLink: "https://hivepaas.io/tasks",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	var parsed map[string]any
+	err = json.Unmarshal(buf.Bytes(), &parsed)
+	assert.NoError(t, err)
+	assert.Equal(t, "interactive", parsed["msg_type"])
+}
+
+func TestLarkSSLExpiringTemplate(t *testing.T) {
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/ssl_expiring_notification.tpl")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := notificationservice.TemplateDataSSLExpiring{
+		ProjectName:   "Test Project",
+		AppName:       "Test App",
+		SSLName:       "my-cert",
+		SSLType:       "Let's Encrypt",
+		Domain:        "example.com",
+		CreatedAt:     time.Now(),
+		ExpireAt:      time.Now().Add(7 * 24 * time.Hour),
+		ExpireIn:      timeutil.Duration(7 * 24 * time.Hour),
+		DashboardLink: "https://hivepaas.io/ssl",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	var parsed map[string]any
+	err = json.Unmarshal(buf.Bytes(), &parsed)
+	assert.NoError(t, err)
+	assert.Equal(t, "interactive", parsed["msg_type"])
+}
+
+func TestLarkSSLRenewalTemplate(t *testing.T) {
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/ssl_renewal_notification.tpl")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := notificationservice.TemplateDataSSLRenewal{
+		ProjectName:   "Test Project",
+		AppName:       "Test App",
+		Succeeded:     true,
+		SSLName:       "my-cert",
+		SSLType:       "Let's Encrypt",
+		Domain:        "example.com",
+		CreatedAt:     time.Now(),
+		ExpireAt:      time.Now().Add(90 * 24 * time.Hour),
+		DashboardLink: "https://hivepaas.io/ssl",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	var parsed map[string]any
+	err = json.Unmarshal(buf.Bytes(), &parsed)
+	assert.NoError(t, err)
+	assert.Equal(t, "interactive", parsed["msg_type"])
+}
+
+func TestLarkSystemUpdateTemplate(t *testing.T) {
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/system_update_notification.tpl")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := notificationservice.TemplateDataSystemUpdate{
+		Succeeded:      true,
+		CurrentVersion: "v1.0.0",
+		TargetVersion:  "v1.1.0",
+		StartedAt:      time.Now(),
+		Duration:       2 * time.Minute,
+		DashboardLink:  "https://hivepaas.io/system",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	var parsed map[string]any
+	err = json.Unmarshal(buf.Bytes(), &parsed)
+	assert.NoError(t, err)
+	assert.Equal(t, "interactive", parsed["msg_type"])
+}

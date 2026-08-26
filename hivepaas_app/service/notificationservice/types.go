@@ -15,6 +15,7 @@ const (
 	TemplateTypeSlack    TemplateType = "slack"
 	TemplateTypeDiscord  TemplateType = "discord"
 	TemplateTypeTelegram TemplateType = "telegram"
+	TemplateTypeLark     TemplateType = "lark"
 )
 
 type TemplateName string

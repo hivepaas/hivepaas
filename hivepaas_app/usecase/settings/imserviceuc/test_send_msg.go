@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imserviceuc/imservicedto"
 	"github.com/hivepaas/hivepaas/services/im/discord"
+	"github.com/hivepaas/hivepaas/services/im/lark"
 	"github.com/hivepaas/hivepaas/services/im/slack"
 	"github.com/hivepaas/hivepaas/services/im/telegram"
 )
@@ -25,6 +26,8 @@ func (uc *UC) TestSendInstantMsg(
 	case base.IMServiceKindTelegram:
 		err = telegram.NewClient().SendMessage(ctx, req.Telegram.BotToken, req.Telegram.ChatID,
 			req.TestMsg, "")
+	case base.IMServiceKindLark:
+		err = lark.NewClient().PostWebhook(ctx, req.Lark.Webhook, req.Lark.Secret, req.TestMsg)
 	}
 	if err != nil {
 		return nil, apperrors.Wrap(err)

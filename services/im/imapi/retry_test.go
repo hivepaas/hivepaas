@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/services/im/lark"
 	"github.com/hivepaas/hivepaas/services/im/telegram"
 )
 
@@ -202,21 +203,74 @@ func TestIsRetryableTelegramError(t *testing.T) {
 	})
 }
 
+func TestIsRetryableLarkError(t *testing.T) {
+	t.Run("nil error", func(t *testing.T) {
+		assert.False(t, isRetryableLarkError(nil))
+	})
+
+	t.Run("general network error", func(t *testing.T) {
+		assert.True(t, isRetryableLarkError(errors.New("connection timeout")))
+	})
+
+	t.Run("429 rate limited", func(t *testing.T) {
+		err := &lark.StatusCodeError{
+			Code:   http.StatusTooManyRequests,
+			Status: "429 Too Many Requests",
+		}
+		assert.True(t, isRetryableLarkError(err))
+	})
+
+	t.Run("500 internal server error", func(t *testing.T) {
+		err := &lark.StatusCodeError{
+			Code:   http.StatusInternalServerError,
+			Status: "500 Internal Server Error",
+		}
+		assert.True(t, isRetryableLarkError(err))
+	})
+
+	t.Run("502 bad gateway", func(t *testing.T) {
+		err := &lark.StatusCodeError{
+			Code:   http.StatusBadGateway,
+			Status: "502 Bad Gateway",
+		}
+		assert.True(t, isRetryableLarkError(err))
+	})
+
+	t.Run("400 bad request (non-retryable)", func(t *testing.T) {
+		err := &lark.StatusCodeError{
+			Code:   http.StatusBadRequest,
+			Status: "400 Bad Request",
+		}
+		assert.False(t, isRetryableLarkError(err))
+	})
+
+	t.Run("403 forbidden (non-retryable)", func(t *testing.T) {
+		err := &lark.StatusCodeError{
+			Code:   http.StatusForbidden,
+			Status: "403 Forbidden",
+		}
+		assert.False(t, isRetryableLarkError(err))
+	})
+}
+
 func TestIsRetryableIMError(t *testing.T) {
 	t.Run("nil error", func(t *testing.T) {
 		assert.False(t, isRetryableIMError(base.IMServiceKindSlack, nil))
+		assert.False(t, isRetryableIMError(base.IMServiceKindLark, nil))
 	})
 
 	t.Run("context canceled", func(t *testing.T) {
 		assert.False(t, isRetryableIMError(base.IMServiceKindSlack, context.Canceled))
 		assert.False(t, isRetryableIMError(base.IMServiceKindDiscord, context.Canceled))
 		assert.False(t, isRetryableIMError(base.IMServiceKindTelegram, context.Canceled))
+		assert.False(t, isRetryableIMError(base.IMServiceKindLark, context.Canceled))
 	})
 
 	t.Run("context deadline exceeded", func(t *testing.T) {
 		assert.True(t, isRetryableIMError(base.IMServiceKindSlack, context.DeadlineExceeded))
 		assert.True(t, isRetryableIMError(base.IMServiceKindDiscord, context.DeadlineExceeded))
 		assert.True(t, isRetryableIMError(base.IMServiceKindTelegram, context.DeadlineExceeded))
+		assert.True(t, isRetryableIMError(base.IMServiceKindLark, context.DeadlineExceeded))
 	})
 
 	t.Run("unknown provider", func(t *testing.T) {

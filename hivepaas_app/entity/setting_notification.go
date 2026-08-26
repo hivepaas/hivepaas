@@ -25,13 +25,14 @@ type Notification struct {
 	ViaSlack        *NotificationViaSlack    `json:"viaSlack,omitempty"`
 	ViaDiscord      *NotificationViaDiscord  `json:"viaDiscord,omitempty"`
 	ViaTelegram     *NotificationViaTelegram `json:"viaTelegram,omitempty"`
+	ViaLark         *NotificationViaLark     `json:"viaLark,omitempty"`
 	MinSendInterval timeutil.Duration        `json:"minSendInterval,omitempty"`
 }
 
 func (s *Notification) GetRefObjectIDs() *RefObjectIDs {
 	return &RefObjectIDs{
 		RefSettingIDs: gofn.Flatten(s.ViaEmail.GetRefSettingIDs(), s.ViaSlack.GetRefSettingIDs(),
-			s.ViaDiscord.GetRefSettingIDs(), s.ViaTelegram.GetRefSettingIDs()),
+			s.ViaDiscord.GetRefSettingIDs(), s.ViaTelegram.GetRefSettingIDs(), s.ViaLark.GetRefSettingIDs()),
 	}
 }
 
@@ -49,6 +50,10 @@ func (s *Notification) ShouldNotifyViaDiscord() bool {
 
 func (s *Notification) ShouldNotifyViaTelegram() bool {
 	return s.ViaTelegram != nil && s.ViaTelegram.Enabled
+}
+
+func (s *Notification) ShouldNotifyViaLark() bool {
+	return s.ViaLark != nil && s.ViaLark.Enabled
 }
 
 type NotificationViaEmail struct {
@@ -119,6 +124,22 @@ func (s *NotificationViaTelegram) GetRefSettingIDs() (res []string) {
 	return res
 }
 
+type NotificationViaLark struct {
+	Enabled    bool     `json:"enabled"`
+	UseDefault bool     `json:"useDefault"` // If true, use the default lark webhook in current scope
+	Webhook    ObjectID `json:"webhook,omitzero"`
+}
+
+func (s *NotificationViaLark) GetRefSettingIDs() (res []string) {
+	if s == nil || !s.Enabled {
+		return nil
+	}
+	if s.Webhook.ID != "" {
+		res = append(res, s.Webhook.ID)
+	}
+	return res
+}
+
 func (s *Notification) GetType() base.SettingType {
 	return base.SettingTypeNotification
 }
@@ -154,6 +175,10 @@ func NewNotificationDefaultForScope(scope *ObjectScope) *Notification {
 			UseDefault: true,
 		},
 		ViaTelegram: &NotificationViaTelegram{
+			Enabled:    true,
+			UseDefault: true,
+		},
+		ViaLark: &NotificationViaLark{
 			Enabled:    true,
 			UseDefault: true,
 		},

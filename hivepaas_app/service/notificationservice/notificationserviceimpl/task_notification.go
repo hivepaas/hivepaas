@@ -84,6 +84,15 @@ func (s *service) NotifyForTaskResult(
 			return err
 		})
 	}
+	if notification.ShouldNotifyViaLark() {
+		execFuncs = append(execFuncs, func(ctx context.Context) error {
+			err := s.notifyForTaskResultViaLark(ctx, db, data)
+			mu.Lock()
+			resp.DeliveryMap["lark"] = err == nil
+			mu.Unlock()
+			return err
+		})
+	}
 	if len(execFuncs) == 0 {
 		return resp, nil
 	}
@@ -110,7 +119,8 @@ func (s *service) loadDefaultNotificationSourceSettings(
 	needLoadSlack := notif.ViaSlack != nil && notif.ViaSlack.UseDefault
 	needLoadDiscord := notif.ViaDiscord != nil && notif.ViaDiscord.UseDefault
 	needLoadTelegram := notif.ViaTelegram != nil && notif.ViaTelegram.UseDefault
-	if needLoadSlack || needLoadDiscord || needLoadTelegram {
+	needLoadLark := notif.ViaLark != nil && notif.ViaLark.UseDefault
+	if needLoadSlack || needLoadDiscord || needLoadTelegram || needLoadLark {
 		settingTypes = append(settingTypes, base.SettingTypeIMService)
 	}
 
@@ -156,6 +166,14 @@ func (s *service) loadDefaultNotificationSourceSettings(
 		if setting != nil {
 			data.RefObjects.RefSettings[setting.ID] = setting
 			notif.ViaTelegram.Setting.ID = setting.ID
+		}
+	}
+	if needLoadLark {
+		setting, _ := gofn.First(settinghelper.FindSettingsByScope(settings, scope, base.SettingTypeIMService,
+			new(string(base.IMServiceKindLark))))
+		if setting != nil {
+			data.RefObjects.RefSettings[setting.ID] = setting
+			notif.ViaLark.Webhook.ID = setting.ID
 		}
 	}
 
@@ -227,4 +245,13 @@ func (s *service) notifyForTaskResultViaTelegram(
 ) error {
 	return s.imSendMsg(ctx, db, data.RefObjects.RefSettings[data.Notification.ViaTelegram.Setting.ID],
 		notificationservice.TemplateTypeTelegram, data.TemplateName, data.TemplateData)
+}
+
+func (s *service) notifyForTaskResultViaLark(
+	ctx context.Context,
+	db database.IDB,
+	data *notificationservice.TaskResultNotificationReq,
+) error {
+	return s.imSendMsg(ctx, db, data.RefObjects.RefSettings[data.Notification.ViaLark.Webhook.ID],
+		notificationservice.TemplateTypeLark, data.TemplateName, data.TemplateData)
 }

@@ -89,6 +89,17 @@ func TestSendMessage(t *testing.T) {
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, apperrors.ErrMissing))
 	})
+
+	t.Run("missing Lark setting", func(t *testing.T) {
+		setting := &entity.Setting{
+			Type: base.SettingTypeIMService,
+			Kind: string(base.IMServiceKindLark),
+			Data: "{}",
+		}
+		err := SendMessage(ctx, setting, "hello")
+		assert.Error(t, err)
+		assert.True(t, errors.Is(err, apperrors.ErrMissing))
+	})
 }
 
 func TestSendMessageWithRetry(t *testing.T) {

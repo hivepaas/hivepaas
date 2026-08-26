@@ -8,10 +8,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/services/im/discord"
+	"github.com/hivepaas/hivepaas/services/im/lark"
 	"github.com/hivepaas/hivepaas/services/im/slack"
 	"github.com/hivepaas/hivepaas/services/im/telegram"
 )
 
+//nolint:gocognit
 func SendMessage(
 	ctx context.Context,
 	setting *entity.Setting,
@@ -71,6 +73,23 @@ func SendMessage(
 			return apperrors.Wrap(err)
 		}
 		err = telegram.NewClient().SendMessage(ctx, botToken, imService.Telegram.ChatID, msg, "HTML")
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+
+	case base.IMServiceKindLark:
+		if imService.Lark == nil {
+			return apperrors.NewMissing("Lark setting")
+		}
+		webhookURL, err := imService.Lark.Webhook.GetPlain()
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		secret, err := imService.Lark.Secret.GetPlain()
+		if err != nil {
+			return apperrors.Wrap(err)
+		}
+		err = lark.NewClient().PostWebhook(ctx, webhookURL, secret, msg)
 		if err != nil {
 			return apperrors.Wrap(err)
 		}

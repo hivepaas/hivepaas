@@ -40,6 +40,7 @@ type IMServiceResp struct {
 	Slack        *IMSlackResp       `json:"slack,omitempty"`
 	Discord      *IMDiscordResp     `json:"discord,omitempty"`
 	Telegram     *IMTelegramResp    `json:"telegram,omitempty"`
+	Lark         *IMLarkResp        `json:"lark,omitempty"`
 	SecretMasked bool               `json:"secretMasked,omitempty"`
 }
 
@@ -68,6 +69,21 @@ type IMTelegramResp struct {
 
 func (resp *IMTelegramResp) CopyBotToken(field entity.EncryptedField) error {
 	resp.BotToken = field.String()
+	return nil
+}
+
+type IMLarkResp struct {
+	Webhook string `json:"webhook"`
+	Secret  string `json:"secret,omitempty"`
+}
+
+func (resp *IMLarkResp) CopyWebhook(field entity.EncryptedField) error {
+	resp.Webhook = field.String()
+	return nil
+}
+
+func (resp *IMLarkResp) CopySecret(field entity.EncryptedField) error {
+	resp.Secret = field.String()
 	return nil
 }
 
@@ -101,6 +117,14 @@ func TransformIMService(
 		resp.SecretMasked = config.Telegram.BotToken.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
 			resp.Telegram.BotToken = maskedSecret
+		}
+	case config.Lark != nil:
+		resp.SecretMasked = config.Lark.Webhook.IsEncrypted() || config.Lark.Secret.IsEncrypted() || resp.Inherited
+		if resp.SecretMasked {
+			resp.Lark.Webhook = maskedSecret
+			if config.Lark.Secret.String() != "" {
+				resp.Lark.Secret = maskedSecret
+			}
 		}
 	}
 

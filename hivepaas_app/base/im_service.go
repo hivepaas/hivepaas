@@ -6,8 +6,9 @@ const (
 	IMServiceKindSlack    IMServiceKind = "slack"
 	IMServiceKindDiscord  IMServiceKind = "discord"
 	IMServiceKindTelegram IMServiceKind = "telegram"
+	IMServiceKindLark     IMServiceKind = "lark"
 )
 
 var (
-	AllIMServiceKinds = []IMServiceKind{IMServiceKindSlack, IMServiceKindDiscord, IMServiceKindTelegram}
+	AllIMServiceKinds = []IMServiceKind{IMServiceKindSlack, IMServiceKindDiscord, IMServiceKindTelegram, IMServiceKindLark}
 )

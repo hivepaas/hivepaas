@@ -20,10 +20,6 @@ export function ProjectProviderSettingsScopeHeader({ projectId }: Props) {
     const envs = projectData?.data.envs ?? [];
     const isAll = !selectedEnv || selectedEnv === PROJECT_ENV_FILTER_ALL;
 
-    if (isAll) {
-        return null;
-    }
-
     return (
         <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
@@ -31,28 +27,27 @@ export function ProjectProviderSettingsScopeHeader({ projectId }: Props) {
                     selectedEnv={selectedEnv}
                     envs={envs}
                 />
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <button
-                            type="button"
-                            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            aria-label="Provider settings scope help"
-                        >
-                            <CircleHelp className="size-4" />
-                        </button>
-                    </TooltipTrigger>
-                    <TooltipContent
-                        side="right"
-                        className="max-w-xl"
-                    >
-                        {getScopeTooltip(selectedEnv)}
-                    </TooltipContent>
-                </Tooltip>
+                {!isAll && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                type="button"
+                                className="inline-flex size-5 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Provider settings scope help"
+                            >
+                                <CircleHelp className="size-4" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">{getScopeTooltip(selectedEnv)}</TooltipContent>
+                    </Tooltip>
+                )}
             </div>
 
-            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                <span className="font-semibold text-orange-500">Note:</span> {ENV_SETTING_NOTE}
-            </div>
+            {!isAll && (
+                <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                    <span className="font-semibold text-orange-500">Note:</span> {ENV_SETTING_NOTE}
+                </div>
+            )}
         </div>
     );
 }

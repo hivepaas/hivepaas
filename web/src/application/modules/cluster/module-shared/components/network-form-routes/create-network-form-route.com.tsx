@@ -12,7 +12,7 @@ import { useConditionalModule, useConditionalProject } from "@application/shared
 import { CreateNetworkForm } from "../../../dialogs/create-network/form";
 import type { CreateNetworkFormOutput } from "../../../dialogs/create-network/schemas";
 
-type CreateNetworkScope = { type: "cluster" } | { type: "project"; projectId: string };
+type CreateNetworkScope = { type: "cluster" } | { type: "project"; projectId: string; env?: string };
 
 function toRecord(items: { key: string; value: string }[]) {
     return items.reduce<Record<string, string>>((acc, item) => {
@@ -85,6 +85,7 @@ export function CreateNetworkFormRoute({ scope }: Props) {
 
         createProjectNetwork({
             projectID: scope.projectId,
+            env: scope.env,
             payload,
         });
     }

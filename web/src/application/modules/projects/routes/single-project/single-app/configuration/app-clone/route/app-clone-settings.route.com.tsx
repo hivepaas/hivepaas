@@ -151,6 +151,7 @@ export function AppCloneSettingsRoute() {
         <AppCloneSettingsForm
             ref={formRef}
             projectId={projectId}
+            env={env}
             envs={projectData.data.envs}
             defaultValues={data.data}
             onSubmit={handleSubmit}

@@ -21,6 +21,7 @@ import { emptyStorageMountFormDefaults } from "./storage-mount.form-mappers";
 
 type Props = {
     projectId: string;
+    env?: string;
     isPending: boolean;
     isEditMode?: boolean;
     defaultValues?: StorageMountFormInput;
@@ -32,6 +33,7 @@ type Props = {
 
 export function StorageMountForm({
     projectId,
+    env,
     isPending,
     isEditMode = false,
     defaultValues,
@@ -49,6 +51,7 @@ export function StorageMountForm({
         isRefetching,
     } = ProjectClusterVolumesQueries.useFindManyPaginated({
         projectID: projectId,
+        env,
         search: searchQuery,
     });
 

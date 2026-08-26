@@ -190,6 +190,7 @@ export function CreateOrEditAppHealthCheckDialog() {
                 </DialogHeader>
                 <CreateOrEditAppHealthCheckForm
                     projectId={projectId}
+                    env={env}
                     isPending={isCreating || isUpdating}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}

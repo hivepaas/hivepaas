@@ -32,10 +32,11 @@ interface StorageOption {
 
 interface Props {
     projectId: string;
+    env?: string;
     readOnly?: boolean;
 }
 
-export function SaveToFileSection({ projectId, readOnly = false }: Props) {
+export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
     const [storageSearch, setStorageSearch] = useState("");
 
     const { control } = useFormContext<SchemaInput>();
@@ -64,6 +65,7 @@ export function SaveToFileSection({ projectId, readOnly = false }: Props) {
         refetch: refetchStorage,
     } = ProjectCloudStorageQueries.useFindManyPaginated({
         projectID: projectId,
+        env,
         search: storageSearch,
     });
 

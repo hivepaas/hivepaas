@@ -25,11 +25,12 @@ import {
 interface Props {
     open: boolean;
     projectId: string;
+    env?: string;
     onClose: () => void;
     onSelect: (template: ProjectCommandTemplate) => void;
 }
 
-export function CommandTemplatePicker({ open, projectId, onClose, onSelect }: Props) {
+export function CommandTemplatePicker({ open, projectId, env, onClose, onSelect }: Props) {
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [rows, setRows] = useState<ProjectCommandTemplate[]>([]);
@@ -39,6 +40,7 @@ export function CommandTemplatePicker({ open, projectId, onClose, onSelect }: Pr
     const query = ProjectCommandTemplateQueries.useFindManyPaginated(
         {
             projectID: projectId,
+            env,
             search,
             pagination: createSelectorPagination(page),
         },

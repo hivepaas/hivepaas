@@ -55,6 +55,7 @@ export function CreateVolumeFormRoute({ scope }: Props) {
 
         createProjectVolume({
             projectID: scope.projectId,
+            env: scope.env,
             payload: {
                 ...toVolumeBasePayload(values),
                 inheritable: false,

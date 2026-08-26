@@ -298,6 +298,7 @@ export function AppPreviewDeploymentForm({
                         open={isPullRequestsDialogOpen}
                         onOpenChange={setPullRequestsDialogOpen}
                         projectId={projectId}
+                        env={env}
                         credentialId={credentialId}
                         repository={repository}
                         isGithubAppCredential={isGithubAppCredential}
@@ -307,6 +308,7 @@ export function AppPreviewDeploymentForm({
                         open={isBranchesDialogOpen}
                         onOpenChange={setBranchesDialogOpen}
                         projectId={projectId}
+                        env={env}
                         credentialId={credentialId}
                         repository={repository}
                         isGithubAppCredential={isGithubAppCredential}

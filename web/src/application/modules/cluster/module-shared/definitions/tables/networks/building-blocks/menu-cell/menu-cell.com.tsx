@@ -69,6 +69,7 @@ function View({ network, scope }: Props) {
 
         deleteOneProjectNetwork({
             projectID: scope.projectId,
+            env: scope.env,
             networkID: network.id,
         });
     }

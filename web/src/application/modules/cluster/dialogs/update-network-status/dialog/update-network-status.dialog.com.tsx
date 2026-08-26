@@ -62,6 +62,7 @@ export function UpdateNetworkStatusDialog() {
     const projectDetailQuery = ProjectNetworksQueries.useFindOneById(
         {
             projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
             networkID: detailId,
         },
         {
@@ -87,6 +88,7 @@ export function UpdateNetworkStatusDialog() {
         if (state.scope.type === "project") {
             updateProjectStatus({
                 projectID: state.scope.projectId,
+                env: state.scope.env,
                 networkID: network.id,
                 payload,
             });

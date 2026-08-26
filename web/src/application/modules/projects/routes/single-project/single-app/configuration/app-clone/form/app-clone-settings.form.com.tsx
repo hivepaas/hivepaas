@@ -216,7 +216,7 @@ function TargetStatusSelect({ readOnly, error }: { readOnly: boolean; error?: Ho
     );
 }
 
-function RoutingDomainFields({ projectId, readOnly }: { projectId: string; readOnly: boolean }) {
+function RoutingDomainFields({ projectId, env, readOnly }: { projectId: string; env?: string; readOnly: boolean }) {
     const { control, formState } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const { fields } = useFieldArray({ control, name: "cloneRoutingDomains" });
 
@@ -226,6 +226,7 @@ function RoutingDomainFields({ projectId, readOnly }: { projectId: string; readO
                 <RoutingDomainRow
                     key={field.id}
                     projectId={projectId}
+                    env={env}
                     index={index}
                     readOnly={readOnly}
                     domainError={formState.errors.cloneRoutingDomains?.[index]?.targetDomain}
@@ -237,11 +238,13 @@ function RoutingDomainFields({ projectId, readOnly }: { projectId: string; readO
 
 function RoutingDomainRow({
     projectId,
+    env,
     index,
     readOnly,
     domainError,
 }: {
     projectId: string;
+    env?: string;
     index: number;
     readOnly: boolean;
     domainError?: HookFormFieldError;
@@ -268,6 +271,7 @@ function RoutingDomainRow({
     } = ProjectSslCertQueries.useFindManyPaginated(
         {
             projectID: projectId,
+            env,
             search: searchQuery,
             domain: normalizedTargetDomain,
         },
@@ -346,7 +350,7 @@ function RoutingDomainRow({
     );
 }
 
-function CommandPipesSection({ projectId, readOnly }: { projectId: string; readOnly: boolean }) {
+function CommandPipesSection({ projectId, env, readOnly }: { projectId: string; env?: string; readOnly: boolean }) {
     const { control, setValue } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const commandPipes = useWatch({ control, name: "commandPipes" });
     const { field: enabledField } = useController({ control, name: "postCloneCommandsEnabled" });
@@ -360,6 +364,7 @@ function CommandPipesSection({ projectId, readOnly }: { projectId: string; readO
         isRefetching,
     } = ProjectCommandPipeQueries.useFindManyPaginated({
         projectID: projectId,
+        env,
         search: searchQuery,
     });
 
@@ -527,13 +532,14 @@ function ConditionalSection({ enabled, children }: PropsWithChildren<{ enabled: 
 export function AppCloneSettingsForm({
     ref,
     projectId,
+    env,
     envs,
     defaultValues,
     onSubmit,
     readOnly = false,
     children,
 }: Props) {
-    const envNames = useMemo(() => envs.map(env => env.name).filter(name => name.trim() !== ""), [envs]);
+    const envNames = useMemo(() => envs.map(item => item.name).filter(name => name.trim() !== ""), [envs]);
     const schema = useMemo(() => createAppCloneSettingsFormSchema(envNames), [envNames]);
 
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -680,6 +686,7 @@ export function AppCloneSettingsForm({
                                 <ConditionalSection enabled={cloneRoutingSettings}>
                                     <RoutingDomainFields
                                         projectId={projectId}
+                                        env={env}
                                         readOnly={readOnly}
                                     />
                                 </ConditionalSection>
@@ -720,6 +727,7 @@ export function AppCloneSettingsForm({
                         <ContentBlock label="Post-Clone Commands">
                             <CommandPipesSection
                                 projectId={projectId}
+                                env={env}
                                 readOnly={readOnly}
                             />
                         </ContentBlock>
@@ -739,6 +747,7 @@ export function AppCloneSettingsForm({
 type Props = PropsWithChildren<{
     ref?: React.Ref<AppCloneSettingsFormRef>;
     projectId: string;
+    env?: string;
     envs: ProjectEnvEntity[];
     defaultValues?: AppCloneSettings;
     onSubmit: (values: SchemaOutput) => void;

@@ -249,6 +249,7 @@ export function AppFeatureSettingsForm({
                                             <AutoCloneDbAppsField />
                                             <PreviewCommandsFields
                                                 projectID={projectID}
+                                                env={env}
                                                 readOnly={readOnly}
                                             />
                                         </>

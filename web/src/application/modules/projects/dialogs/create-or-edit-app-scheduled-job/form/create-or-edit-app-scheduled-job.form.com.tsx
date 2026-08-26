@@ -39,6 +39,7 @@ type SchemaOutput = CreateOrEditAppScheduledJobFormOutput;
 export function CreateOrEditAppScheduledJobForm({
     projectId,
     appId,
+    env,
     isPending,
     onSubmit,
     initialValues,
@@ -76,8 +77,10 @@ export function CreateOrEditAppScheduledJobForm({
         onHasChanges?.(readOnly ? false : isDirty);
     }, [isDirty, readOnly]);
 
-    const { sources: notificationSources, manageLink: notificationManageLink } =
-        useProjectNotificationSettingsSources(projectId);
+    const { sources: notificationSources, manageLink: notificationManageLink } = useProjectNotificationSettingsSources(
+        projectId,
+        env,
+    );
     const [isRetryConfigVisible, toggleRetryConfigVisible] = useToggle(false);
     const retryMaxInputId = React.useId();
     const retryDelayInputId = React.useId();
@@ -477,6 +480,7 @@ export function CreateOrEditAppScheduledJobForm({
                                 label="Command"
                                 showLoadTemplate
                                 templateProjectId={projectId}
+                                templateEnv={env}
                                 configureTemplatesLink={configureTemplatesLink}
                                 readOnly={readOnly}
                             />
@@ -526,6 +530,7 @@ export function CreateOrEditAppScheduledJobForm({
                             {commandOutputMode.value === EAppScheduledJobCommandOutputMode.SaveToFile && (
                                 <SaveToFileSection
                                     projectId={projectId}
+                                    env={env}
                                     readOnly={readOnly}
                                 />
                             )}
@@ -601,6 +606,7 @@ export function CreateOrEditAppScheduledJobForm({
 interface Props {
     projectId: string;
     appId: string;
+    env?: string;
     isPending: boolean;
     onSubmit: (values: SchemaOutput) => Promise<void> | void;
     initialValues?: AppScheduledJob;

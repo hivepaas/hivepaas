@@ -80,6 +80,7 @@ function mapInitialValues(healthCheck?: AppHealthCheck): CreateOrEditAppHealthCh
 
 export function CreateOrEditAppHealthCheckForm({
     projectId,
+    env,
     isPending,
     onSubmit,
     onHasChanges,
@@ -103,8 +104,10 @@ export function CreateOrEditAppHealthCheckForm({
     const healthcheckType = useWatch({ control, name: "healthcheckType" });
     const restMethod = useWatch({ control, name: "rest.method" });
     const returnBodyMode = useWatch({ control, name: "rest.returnBodyMode" });
-    const { sources: notificationSources, manageLink: notificationManageLink } =
-        useProjectNotificationSettingsSources(projectId);
+    const { sources: notificationSources, manageLink: notificationManageLink } = useProjectNotificationSettingsSources(
+        projectId,
+        env,
+    );
 
     const {
         field: name,
@@ -700,6 +703,7 @@ export function CreateOrEditAppHealthCheckForm({
 
 interface Props {
     projectId: string;
+    env?: string;
     isPending: boolean;
     onSubmit: (values: CreateOrEditAppHealthCheckFormOutput) => Promise<void> | void;
     onHasChanges?: (dirty: boolean) => void;

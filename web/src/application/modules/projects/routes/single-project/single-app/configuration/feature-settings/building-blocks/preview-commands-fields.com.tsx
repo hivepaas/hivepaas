@@ -20,7 +20,7 @@ type CommandOption = {
     name: string;
 };
 
-export function PreviewCommandsFields({ projectID, readOnly = false }: Props) {
+export function PreviewCommandsFields({ projectID, env, readOnly = false }: Props) {
     const [search, setSearch] = useState("");
     const [selectedCommand, setSelectedCommand] = useState<CommandOption | null>(null);
     const { control } = useFormContext<
@@ -38,6 +38,7 @@ export function PreviewCommandsFields({ projectID, readOnly = false }: Props) {
     const commandsQuery = ProjectCommandTemplateQueries.useFindManyPaginated(
         {
             projectID,
+            env,
             search,
             pagination: {
                 page: 1,
@@ -182,5 +183,6 @@ export function PreviewCommandsFields({ projectID, readOnly = false }: Props) {
 
 type Props = {
     projectID: string;
+    env?: string;
     readOnly?: boolean;
 };

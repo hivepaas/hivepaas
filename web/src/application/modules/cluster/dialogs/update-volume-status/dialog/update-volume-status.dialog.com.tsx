@@ -64,6 +64,7 @@ export function UpdateVolumeStatusDialog() {
     const projectDetailQuery = ProjectClusterVolumesQueries.useFindOneById(
         {
             projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
             volumeID: detailId,
         },
         {
@@ -89,6 +90,7 @@ export function UpdateVolumeStatusDialog() {
         if (state.scope.type === "project") {
             updateProjectStatus({
                 projectID: state.scope.projectId,
+                env: state.scope.env,
                 volumeID: volume.id,
                 payload,
             });

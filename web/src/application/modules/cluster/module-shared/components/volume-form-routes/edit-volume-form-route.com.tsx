@@ -36,6 +36,7 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
     const projectVolumeQuery = ProjectClusterVolumesQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             volumeID: volumeId,
         },
         {
@@ -82,6 +83,7 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
 
         updateProjectVolume({
             projectID: scope.projectId,
+            env: scope.env,
             volumeID: volume.id,
             payload: {
                 updateVer: volume.updateVer,

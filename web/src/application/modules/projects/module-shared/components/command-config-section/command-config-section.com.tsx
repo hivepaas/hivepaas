@@ -24,6 +24,7 @@ interface Props {
     fieldPrefix?: string;
     showLoadTemplate?: boolean;
     templateProjectId?: string;
+    templateEnv?: string;
     configureTemplatesLink?: string;
     readOnly?: boolean;
     showArgGroups?: boolean;
@@ -35,6 +36,7 @@ export function CommandConfigSection({
     fieldPrefix,
     showLoadTemplate = false,
     templateProjectId = "",
+    templateEnv,
     configureTemplatesLink,
     readOnly = false,
     showArgGroups = false,
@@ -348,6 +350,7 @@ export function CommandConfigSection({
                 <CommandTemplatePicker
                     open={pickerOpen}
                     projectId={templateProjectId}
+                    env={templateEnv}
                     onClose={() => {
                         setPickerOpen(false);
                     }}

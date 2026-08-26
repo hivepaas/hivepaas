@@ -30,6 +30,7 @@ export function ViewNetworkDialog() {
     const projectNetworkQuery = ProjectNetworksQueries.useFindOneById(
         {
             projectID: scope?.type === "project" ? scope.projectId : "",
+            env: scope?.type === "project" ? scope.env : undefined,
             networkID,
         },
         {

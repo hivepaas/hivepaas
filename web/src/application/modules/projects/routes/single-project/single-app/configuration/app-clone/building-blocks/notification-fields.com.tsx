@@ -7,10 +7,11 @@ import { NotificationSettings } from "@application/shared/form";
 import type { AppCloneSettingsFormSchemaInput } from "../schemas";
 
 export function AppCloneNotificationFields({ readOnly = false }: Props) {
-    const { id: projectId } = useParams<{ id: string }>();
+    const { id: projectId, env } = useParams<{ id: string; env: string }>();
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
 
-    const { sources, manageLink } = useProjectNotificationSettingsSources(projectId);
+    const { sources, manageLink } = useProjectNotificationSettingsSources(projectId, env);
 
     return (
         <NotificationSettings<AppCloneSettingsFormSchemaInput>

@@ -238,6 +238,7 @@ export function AppScheduledJobFormRoute({ mode, projectId, appId, env, schedule
                 <CreateOrEditAppScheduledJobForm
                     projectId={projectId}
                     appId={appId}
+                    env={env}
                     isPending={isCreating || isUpdating}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}

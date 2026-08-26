@@ -5,4 +5,5 @@ export type NetworkManagementScope =
     | {
           type: "project";
           projectId: string;
+          env?: string;
       };

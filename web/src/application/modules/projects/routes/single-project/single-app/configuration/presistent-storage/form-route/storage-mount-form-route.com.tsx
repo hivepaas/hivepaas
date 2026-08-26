@@ -111,6 +111,7 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
 
             <StorageMountForm
                 projectId={projectId}
+                env={env}
                 isPending={isPending}
                 isEditMode={isEditMode}
                 defaultValues={mount ? mountToFormInput(mount) : undefined}

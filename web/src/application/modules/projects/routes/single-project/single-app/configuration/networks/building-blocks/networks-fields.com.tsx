@@ -20,8 +20,9 @@ type NetworkOptionValue = {
 };
 
 export function NetworksFields({ readOnly = false }: Props) {
-    const { id: projectId } = useParams<{ id: string }>();
+    const { id: projectId, env } = useParams<{ id: string; env: string }>();
     invariant(projectId, "projectId must be defined");
+    invariant(env, "env must be defined");
 
     const { control, getValues } = useFormContext<
         AppConfigNetworksFormSchemaInput,
@@ -47,6 +48,7 @@ export function NetworksFields({ readOnly = false }: Props) {
         isRefetching,
     } = ProjectNetworksQueries.useFindManyPaginated({
         projectID: projectId,
+        env,
         search,
     });
 

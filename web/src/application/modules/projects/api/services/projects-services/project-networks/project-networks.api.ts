@@ -19,6 +19,14 @@ import {
 } from "./project-networks.api.contracts";
 import { type ProjectNetworksApiValidator } from "./project-networks.api.validator";
 
+function getProjectNetworksBasePath(projectID: string, env?: string): string {
+    if (env) {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/cluster-networks`;
+    }
+
+    return `/projects/${projectID}/cluster-networks`;
+}
+
 export class ProjectNetworksApi extends BaseApi {
     public constructor(private readonly validator: ProjectNetworksApiValidator) {
         super();
@@ -28,14 +36,14 @@ export class ProjectNetworksApi extends BaseApi {
         request: ProjectNetworks_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectNetworks_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, env, search, pagination, sorting } = request.data;
 
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/cluster-networks`, {
+                this.client.v1.get(getProjectNetworksBasePath(projectID, env), {
                     params: query.build(),
                     signal,
                 }),
@@ -51,11 +59,11 @@ export class ProjectNetworksApi extends BaseApi {
         request: ProjectNetworks_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectNetworks_FindOneById_Res, Error>> {
-        const { projectID, networkID } = request.data;
+        const { projectID, env, networkID } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/cluster-networks/${networkID}`, {
+                this.client.v1.get(`${getProjectNetworksBasePath(projectID, env)}/${networkID}`, {
                     signal,
                 }),
             ).pipe(
@@ -70,7 +78,7 @@ export class ProjectNetworksApi extends BaseApi {
         request: ProjectNetworks_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectNetworks_CreateOne_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
         const json = {
             name: JsonTransformer.string({ data: payload.name }),
             driver: payload.driver,
@@ -86,7 +94,7 @@ export class ProjectNetworksApi extends BaseApi {
         };
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/cluster-networks`, json, { signal })).pipe(
+            from(this.client.v1.post(getProjectNetworksBasePath(projectID, env), json, { signal })).pipe(
                 map(this.validator.createOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -98,14 +106,16 @@ export class ProjectNetworksApi extends BaseApi {
         request: ProjectNetworks_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectNetworks_UpdateOne_Res, Error>> {
-        const { projectID, networkID, payload } = request.data;
+        const { projectID, env, networkID, payload } = request.data;
         const json = {
             ...payload,
             inheritable: false,
         };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/cluster-networks/${networkID}`, json, { signal })).pipe(
+            from(
+                this.client.v1.put(`${getProjectNetworksBasePath(projectID, env)}/${networkID}`, json, { signal }),
+            ).pipe(
                 map(this.validator.updateOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -117,7 +127,7 @@ export class ProjectNetworksApi extends BaseApi {
         request: ProjectNetworks_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectNetworks_UpdateStatus_Res, Error>> {
-        const { projectID, networkID, payload } = request.data;
+        const { projectID, env, networkID, payload } = request.data;
         const json = {
             ...payload,
             inheritable: false,
@@ -125,7 +135,7 @@ export class ProjectNetworksApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/cluster-networks/${networkID}/status`, json, {
+                this.client.v1.put(`${getProjectNetworksBasePath(projectID, env)}/${networkID}/status`, json, {
                     signal,
                 }),
             ).pipe(
@@ -137,10 +147,10 @@ export class ProjectNetworksApi extends BaseApi {
     }
 
     async deleteOne(request: ProjectNetworks_DeleteOne_Req): Promise<Result<ProjectNetworks_DeleteOne_Res, Error>> {
-        const { projectID, networkID } = request.data;
+        const { projectID, env, networkID } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/cluster-networks/${networkID}`)).pipe(
+            from(this.client.v1.delete(`${getProjectNetworksBasePath(projectID, env)}/${networkID}`)).pipe(
                 map(() =>
                     Ok({
                         data: {

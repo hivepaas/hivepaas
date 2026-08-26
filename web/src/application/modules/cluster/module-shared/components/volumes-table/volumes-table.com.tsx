@@ -41,6 +41,7 @@ export function VolumeManagementTable({ scope }: Props) {
     const projectVolumesQuery = ProjectClusterVolumesQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination,
             sorting,
             search,
@@ -108,6 +109,7 @@ export function VolumeManagementTable({ scope }: Props) {
                         {scope.type === "project" && (
                             <ProjectSettingsImportButton
                                 projectId={scope.projectId}
+                                env={scope.env}
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume}
                             />
                         )}

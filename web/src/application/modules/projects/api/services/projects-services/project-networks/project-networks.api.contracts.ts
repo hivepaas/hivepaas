@@ -13,6 +13,7 @@ import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } 
  */
 export type ProjectNetworks_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
@@ -22,6 +23,7 @@ export type ProjectNetworks_FindManyPaginated_Res = ApiResponsePaginated<Project
 
 export type ProjectNetworks_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     networkID: string;
 }>;
 
@@ -29,6 +31,7 @@ export type ProjectNetworks_FindOneById_Res = ApiResponseBase<ProjectNetworkEnti
 
 export type ProjectNetworks_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: Omit<ClusterNetworkCreatePayload, "inheritable"> & {
         inheritable?: false;
     };
@@ -40,6 +43,7 @@ export type ProjectNetworks_CreateOne_Res = ApiResponseBase<{
 
 export type ProjectNetworks_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     networkID: string;
     payload: Omit<ClusterNetworkUpdatePayload, "inheritable"> & {
         inheritable?: false;
@@ -52,6 +56,7 @@ export type ProjectNetworks_UpdateOne_Res = ApiResponseBase<{
 
 export type ProjectNetworks_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     networkID: string;
     payload: Omit<ClusterNetworkUpdateStatusPayload, "inheritable"> & {
         inheritable?: false;
@@ -64,6 +69,7 @@ export type ProjectNetworks_UpdateStatus_Res = ApiResponseBase<{
 
 export type ProjectNetworks_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     networkID: string;
 }>;
 

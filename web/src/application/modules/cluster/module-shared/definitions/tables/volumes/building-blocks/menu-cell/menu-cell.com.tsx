@@ -68,6 +68,7 @@ function View({ volume, scope }: Props) {
 
         deleteProjectVolume({
             projectID: scope.projectId,
+            env: scope.env,
             volumeID: volume.id,
         });
     }

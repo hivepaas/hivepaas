@@ -34,6 +34,7 @@ export function ViewNetworkRoute({ scope, networkId }: Props) {
     const projectNetworkQuery = ProjectNetworksQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             networkID: networkId,
         },
         {
@@ -79,6 +80,7 @@ export function ViewNetworkRoute({ scope, networkId }: Props) {
 
         updateProjectNetwork({
             projectID: scope.projectId,
+            env: scope.env,
             networkID: network.id,
             payload: {
                 updateVer: network.updateVer,

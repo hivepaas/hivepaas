@@ -186,6 +186,7 @@ export function AppHealthCheckFormRoute({ mode, projectId, appId, env, healthChe
             {!isDetailLoading && shouldRenderForm && (
                 <CreateOrEditAppHealthCheckForm
                     projectId={projectId}
+                    env={env}
                     isPending={isCreating || isUpdating}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}

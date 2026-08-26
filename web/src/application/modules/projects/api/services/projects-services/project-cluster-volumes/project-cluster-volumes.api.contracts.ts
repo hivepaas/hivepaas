@@ -10,6 +10,7 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 export type ProjectClusterVolumes_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
@@ -19,6 +20,7 @@ export type ProjectClusterVolumes_FindManyPaginated_Res = ApiResponsePaginated<C
 
 export type ProjectClusterVolumes_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     volumeID: string;
 }>;
 
@@ -26,6 +28,7 @@ export type ProjectClusterVolumes_FindOneById_Res = ApiResponseBase<ClusterVolum
 
 export type ProjectClusterVolumes_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: ClusterVolumeBasePayload & {
         default: boolean;
         inheritable?: false;
@@ -38,6 +41,7 @@ export type ProjectClusterVolumes_CreateOne_Res = ApiResponseBase<{
 
 export type ProjectClusterVolumes_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     volumeID: string;
     payload: Omit<ClusterVolumeUpdatePayload, "inheritable"> & {
         inheritable?: false;
@@ -50,6 +54,7 @@ export type ProjectClusterVolumes_UpdateOne_Res = ApiResponseBase<{
 
 export type ProjectClusterVolumes_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     volumeID: string;
     payload: Omit<ClusterVolumeUpdateStatusPayload, "inheritable"> & {
         inheritable?: false;
@@ -62,6 +67,7 @@ export type ProjectClusterVolumes_UpdateStatus_Res = ApiResponseBase<{
 
 export type ProjectClusterVolumes_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     volumeID: string;
 }>;
 

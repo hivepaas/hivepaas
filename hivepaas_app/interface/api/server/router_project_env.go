@@ -57,6 +57,26 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		cloudStorageGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteCloudStorage)
 	}
 
+	{ // Cluster network group
+		networkGroup := projectEnvGroup.Group("/cluster-networks")
+		networkGroup.GET("/:itemID", projectEnvSettingsHandler.GetClusterNetwork)
+		networkGroup.GET("", projectEnvSettingsHandler.ListClusterNetwork)
+		networkGroup.POST("", projectEnvSettingsHandler.CreateClusterNetwork)
+		networkGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateClusterNetwork)
+		networkGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateClusterNetworkStatus)
+		networkGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteClusterNetwork)
+	}
+
+	{ // Cluster volume group
+		volumeGroup := projectEnvGroup.Group("/cluster-volumes")
+		volumeGroup.GET("/:itemID", projectEnvSettingsHandler.GetClusterVolume)
+		volumeGroup.GET("", projectEnvSettingsHandler.ListClusterVolume)
+		volumeGroup.POST("", projectEnvSettingsHandler.CreateClusterVolume)
+		volumeGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateClusterVolume)
+		volumeGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateClusterVolumeStatus)
+		volumeGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteClusterVolume)
+	}
+
 	{ // Command pipes group
 		commandPipeGroup := projectEnvGroup.Group("/command-pipes")
 		commandPipeGroup.GET("/:itemID", projectEnvSettingsHandler.GetCommandPipe)

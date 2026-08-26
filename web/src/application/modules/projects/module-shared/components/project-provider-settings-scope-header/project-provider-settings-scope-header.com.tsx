@@ -21,13 +21,13 @@ export function ProjectProviderSettingsScopeHeader({ projectId }: Props) {
     const isAll = !selectedEnv || selectedEnv === PROJECT_ENV_FILTER_ALL;
 
     return (
-        <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-2">
-                <ProjectEnvScopeBadge
-                    selectedEnv={selectedEnv}
-                    envs={envs}
-                />
-                {!isAll && (
+        <div className="flex flex-wrap items-center gap-2">
+            <ProjectEnvScopeBadge
+                selectedEnv={selectedEnv}
+                envs={envs}
+            />
+            {!isAll && (
+                <>
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <button
@@ -40,13 +40,18 @@ export function ProjectProviderSettingsScopeHeader({ projectId }: Props) {
                         </TooltipTrigger>
                         <TooltipContent side="right">{getScopeTooltip(selectedEnv)}</TooltipContent>
                     </Tooltip>
-                )}
-            </div>
 
-            {!isAll && (
-                <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                    <span className="font-semibold text-orange-500">Note:</span> {ENV_SETTING_NOTE}
-                </div>
+                    <div
+                        className={cn(
+                            dashedBorderBox,
+                            "inline-flex h-7 w-fit items-center px-3 py-0 text-xs sm:text-sm",
+                        )}
+                    >
+                        <span>
+                            <span className="font-semibold text-orange-500">Note:</span> {ENV_SETTING_NOTE}
+                        </span>
+                    </div>
+                </>
             )}
         </div>
     );

@@ -54,15 +54,17 @@ type TaskResultNotificationReq struct {
 }
 
 type TaskResultNotificationResp struct {
-	SendTs       time.Time
-	EmailSent    bool
-	SlackSent    bool
-	DiscordSent  bool
-	TelegramSent bool
+	SendTs      time.Time
+	DeliveryMap map[string]bool
 }
 
 func (r *TaskResultNotificationResp) HasSend() bool { // true if has at least one sending
-	return r.EmailSent || r.SlackSent || r.DiscordSent || r.TelegramSent
+	for _, sent := range r.DeliveryMap {
+		if sent {
+			return true
+		}
+	}
+	return false
 }
 
 //

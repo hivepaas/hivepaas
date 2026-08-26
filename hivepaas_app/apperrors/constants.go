@@ -142,7 +142,6 @@ var (
 	ErrObjectScopeInvalid                   = NewErr(ErrValueInvalid, "ERR_OBJECT_SCOPE_INVALID")
 	ErrInheritedSettingNonUpdatable         = NewErr(ErrNonEditable, "ERR_INHERITED_SETTING_NON_UPDATABLE")
 	ErrSettingTypeUnsupported               = NewErr(ErrUnsupported, "ERR_SETTING_TYPE_UNSUPPORTED")
-	ErrEnvVarContainInvalidReference        = NewErr(ErrValueInvalid, "ERR_ENV_VAR_CONTAIN_INVALID_REFERENCE")
 	ErrEnvVarCircularReference              = NewErr(ErrValueInvalid, "ERR_ENV_VAR_CIRCULAR_REFERENCE")
 	ErrSharedEnvVarContainExternalReference = NewErr(ErrValueInvalid, "ERR_SHARED_ENV_VAR_CONTAIN_EXTERNAL_REFERENCE")
 	ErrEnvVarExternalReferenceIsNotAllowed  = NewErr(ErrValueInvalid, "ERR_ENV_VAR_EXTERNAL_REFERENCE_IS_NOT_ALLOWED")
@@ -153,6 +152,7 @@ var (
 	ErrAddressInvalid                       = NewErr(ErrValueInvalid, "ERR_ADDRESS_INVALID")
 	ErrTokenTypeUnsupported                 = NewErr(ErrUnsupported, "ERR_TOKEN_TYPE_UNSUPPORTED")
 	ErrWebhookTypeUnsupported               = NewErr(ErrUnsupported, "ERR_WEBHOOK_TYPE_UNSUPPORTED")
+	ErrIMServiceUnsupported                 = NewErr(ErrUnsupported, "ERR_IM_SERVICE_UNSUPPORTED")
 	ErrDataVerNewerThanSystemVer            = NewErr(ErrValueInvalid, "ERR_DATA_VER_NEWER_THAN_SYSTEM_VER")
 )
 

@@ -6,6 +6,9 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bbpool"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/services/email"
 )
 
@@ -16,16 +19,37 @@ const (
 
 func (s *service) emailSendMsg(
 	ctx context.Context,
-	emailAcc *entity.Email,
+	db database.IDB,
+	emailSetting *entity.Setting,
 	recipients []string,
 	subject string,
-	content string,
+	templateName notificationservice.TemplateName,
+	templateData notificationservice.TemplateData,
 ) (err error) {
-	if emailAcc == nil || len(recipients) == 0 {
+	if len(recipients) == 0 {
 		return nil
 	}
+	if emailSetting == nil {
+		return apperrors.NewMissing("Sender email account")
+	}
+	emailAcc := emailSetting.MustAsEmail()
+	if emailAcc == nil {
+		return apperrors.NewMissing("Sender email account")
+	}
 
-	err = email.SendMailRetry(ctx, emailAcc, recipients, subject, content,
+	template, err := s.GetTemplate(ctx, db, notificationservice.TemplateTypeEmail, templateName)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	buf, bufDefer := bbpool.Small()
+	defer bufDefer(buf)
+	err = template.Execute(buf, templateData)
+	if err != nil {
+		return apperrors.Wrap(err)
+	}
+
+	err = email.SendMailRetry(ctx, emailAcc, recipients, subject, buf.String(),
 		emailSendRetryMax, emailSendRetryDelay)
 	if err != nil {
 		return apperrors.Wrap(err)

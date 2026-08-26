@@ -80,7 +80,6 @@ ERR_SCOPE_SETTING_REQUIRED = "Scope setting is required"
 ERR_OBJECT_SCOPE_INVALID = "Object scope '{{.Scope}}' is invalid"
 ERR_INHERITED_SETTING_NON_UPDATABLE = "Inherited or imported settings can't be updated"
 ERR_SETTING_TYPE_UNSUPPORTED = "Setting type '{{.Name}}' is not supported"
-ERR_ENV_VAR_CONTAIN_INVALID_REFERENCE = "Env var contains invalid reference"
 ERR_ENV_VAR_CIRCULAR_REFERENCE = "Circular reference detected at '{{.Name}}'"
 ERR_SHARED_ENV_VAR_CONTAIN_EXTERNAL_REFERENCE = "Shared variable {{.Name}} contains an external reference"
 ERR_ENV_VAR_EXTERNAL_REFERENCE_IS_NOT_ALLOWED = "Env variable {{.Name}} contains an external reference"
@@ -91,6 +90,7 @@ ERR_PRIVATE_KEY_TYPE_UNSUPPORTED = "Private key type '{{.Type}}' is not supporte
 ERR_ADDRESS_INVALID = "Address '{{.Address}}' is invalid"
 ERR_TOKEN_TYPE_UNSUPPORTED = "Token type '{{.Type}}' is not supported"
 ERR_WEBHOOK_TYPE_UNSUPPORTED = "Webhook type '{{.Type}}' is not supported"
+ERR_IM_SERVICE_UNSUPPORTED = "Instant message service '{{.Name}}' is not supported"
 ERR_DATA_VER_NEWER_THAN_SYSTEM_VER = "The version of data is newer than the system's"
 
 # Project errors

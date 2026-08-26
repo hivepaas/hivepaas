@@ -2,6 +2,7 @@ package notificationserviceimpl
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -9,7 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bbpool"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -22,7 +22,8 @@ func (s *service) NotifyForTaskResult(
 	data *notificationservice.TaskResultNotificationReq,
 ) (resp *notificationservice.TaskResultNotificationResp, err error) {
 	resp = &notificationservice.TaskResultNotificationResp{
-		SendTs: timeutil.NowUTC(),
+		SendTs:      timeutil.NowUTC(),
+		DeliveryMap: make(map[string]bool),
 	}
 	notification := data.Notification
 	if notification == nil {
@@ -38,34 +39,48 @@ func (s *service) NotifyForTaskResult(
 	minSendingInterval := notification.MinSendInterval.ToDuration()
 	shouldSkipNotif := minSendingInterval > 0 && data.LastEvent == currEvent &&
 		!data.LastSendTs.IsZero() && time.Since(data.LastSendTs) < minSendingInterval
+	if shouldSkipNotif {
+		return resp, nil
+	}
 
-	var execFuncs []func(ctx context.Context) error
+	var (
+		execFuncs []func(ctx context.Context) error
+		mu        sync.Mutex
+	)
 
-	if !shouldSkipNotif && notification.HasNotificationViaEmail() {
+	if notification.ShouldNotifyViaEmail() {
 		execFuncs = append(execFuncs, func(ctx context.Context) error {
 			err := s.notifyForTaskResultViaEmail(ctx, db, data)
-			resp.EmailSent = err == nil
+			mu.Lock()
+			resp.DeliveryMap["email"] = err == nil
+			mu.Unlock()
 			return err
 		})
 	}
-	if !shouldSkipNotif && notification.HasNotificationViaSlack() {
+	if notification.ShouldNotifyViaSlack() {
 		execFuncs = append(execFuncs, func(ctx context.Context) error {
 			err := s.notifyForTaskResultViaSlack(ctx, db, data)
-			resp.SlackSent = err == nil
+			mu.Lock()
+			resp.DeliveryMap["slack"] = err == nil
+			mu.Unlock()
 			return err
 		})
 	}
-	if !shouldSkipNotif && notification.HasNotificationViaDiscord() {
+	if notification.ShouldNotifyViaDiscord() {
 		execFuncs = append(execFuncs, func(ctx context.Context) error {
 			err := s.notifyForTaskResultViaDiscord(ctx, db, data)
-			resp.DiscordSent = err == nil
+			mu.Lock()
+			resp.DeliveryMap["discord"] = err == nil
+			mu.Unlock()
 			return err
 		})
 	}
-	if !shouldSkipNotif && notification.HasNotificationViaTelegram() {
+	if notification.ShouldNotifyViaTelegram() {
 		execFuncs = append(execFuncs, func(ctx context.Context) error {
 			err := s.notifyForTaskResultViaTelegram(ctx, db, data)
-			resp.TelegramSent = err == nil
+			mu.Lock()
+			resp.DeliveryMap["telegram"] = err == nil
+			mu.Unlock()
 			return err
 		})
 	}
@@ -152,18 +167,9 @@ func (s *service) notifyForTaskResultViaEmail(
 	db database.IDB,
 	data *notificationservice.TaskResultNotificationReq,
 ) error {
-	notification := data.Notification
-	if notification == nil || notification.ViaEmail == nil || !notification.ViaEmail.Enabled {
-		return nil
-	}
-
-	viaEmail := notification.ViaEmail
+	viaEmail := data.Notification.ViaEmail
 	emailSetting := data.RefObjects.RefSettings[viaEmail.Sender.ID]
 	if emailSetting == nil {
-		return apperrors.NewMissing("Sender email account")
-	}
-	emailAcc := emailSetting.MustAsEmail()
-	if emailAcc == nil {
 		return apperrors.NewMissing("Sender email account")
 	}
 
@@ -184,24 +190,12 @@ func (s *service) notifyForTaskResultViaEmail(
 		return nil
 	}
 
-	template, err := s.GetTemplate(ctx, db, notificationservice.TemplateTypeEmail, data.TemplateName)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	buf, bufDefer := bbpool.Small()
-	defer bufDefer(buf)
-	err = template.Execute(buf, data.TemplateData)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
 	subject := data.TemplateData.GetTitle()
 	if subject == "" {
 		subject = gofn.If(data.ActionSucceeded, "Action succeeded", "Action failed")
 	}
 
-	err = s.emailSendMsg(ctx, emailAcc, userEmails, subject, buf.String())
+	err = s.emailSendMsg(ctx, db, emailSetting, userEmails, subject, data.TemplateName, data.TemplateData)
 	if err != nil {
 		return apperrors.Wrap(err)
 	}
@@ -213,37 +207,8 @@ func (s *service) notifyForTaskResultViaSlack(
 	db database.IDB,
 	data *notificationservice.TaskResultNotificationReq,
 ) error {
-	notification := data.Notification
-	if notification == nil || notification.ViaSlack == nil || !notification.ViaSlack.Enabled {
-		return nil
-	}
-
-	imSetting := data.RefObjects.RefSettings[notification.ViaSlack.Webhook.ID]
-	if imSetting == nil {
-		return apperrors.NewMissing("Slack webhook")
-	}
-	imService := imSetting.MustAsIMService()
-	if imService == nil || imService.Slack == nil {
-		return apperrors.NewMissing("Slack webhook")
-	}
-
-	template, err := s.GetTemplate(ctx, db, notificationservice.TemplateTypeSlack, data.TemplateName)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	buf, bufDefer := bbpool.Small()
-	defer bufDefer(buf)
-	err = template.Execute(buf, data.TemplateData)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	err = s.slackSendMsg(ctx, imService.Slack, buf.String())
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	return nil
+	return s.imSendMsg(ctx, db, data.RefObjects.RefSettings[data.Notification.ViaSlack.Webhook.ID],
+		notificationservice.TemplateTypeSlack, data.TemplateName, data.TemplateData)
 }
 
 func (s *service) notifyForTaskResultViaDiscord(
@@ -251,37 +216,8 @@ func (s *service) notifyForTaskResultViaDiscord(
 	db database.IDB,
 	data *notificationservice.TaskResultNotificationReq,
 ) error {
-	notification := data.Notification
-	if notification == nil || notification.ViaDiscord == nil || !notification.ViaDiscord.Enabled {
-		return nil
-	}
-
-	imSetting := data.RefObjects.RefSettings[notification.ViaDiscord.Webhook.ID]
-	if imSetting == nil {
-		return apperrors.NewMissing("Discord webhook")
-	}
-	imService := imSetting.MustAsIMService()
-	if imService == nil || imService.Discord == nil {
-		return apperrors.NewMissing("Discord webhook")
-	}
-
-	template, err := s.GetTemplate(ctx, db, notificationservice.TemplateTypeDiscord, data.TemplateName)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	buf, bufDefer := bbpool.Small()
-	defer bufDefer(buf)
-	err = template.Execute(buf, data.TemplateData)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	err = s.discordSendMsg(ctx, imService.Discord, buf.String())
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	return nil
+	return s.imSendMsg(ctx, db, data.RefObjects.RefSettings[data.Notification.ViaDiscord.Webhook.ID],
+		notificationservice.TemplateTypeDiscord, data.TemplateName, data.TemplateData)
 }
 
 func (s *service) notifyForTaskResultViaTelegram(
@@ -289,35 +225,6 @@ func (s *service) notifyForTaskResultViaTelegram(
 	db database.IDB,
 	data *notificationservice.TaskResultNotificationReq,
 ) error {
-	notification := data.Notification
-	if notification == nil || notification.ViaTelegram == nil || !notification.ViaTelegram.Enabled {
-		return nil
-	}
-
-	imSetting := data.RefObjects.RefSettings[notification.ViaTelegram.Setting.ID]
-	if imSetting == nil {
-		return apperrors.NewMissing("Telegram configuration")
-	}
-	imService := imSetting.MustAsIMService()
-	if imService == nil || imService.Telegram == nil {
-		return apperrors.NewMissing("Telegram configuration")
-	}
-
-	template, err := s.GetTemplate(ctx, db, notificationservice.TemplateTypeTelegram, data.TemplateName)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	buf, bufDefer := bbpool.Small()
-	defer bufDefer(buf)
-	err = template.Execute(buf, data.TemplateData)
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-
-	err = s.telegramSendMsg(ctx, imService.Telegram, buf.String())
-	if err != nil {
-		return apperrors.Wrap(err)
-	}
-	return nil
+	return s.imSendMsg(ctx, db, data.RefObjects.RefSettings[data.Notification.ViaTelegram.Setting.ID],
+		notificationservice.TemplateTypeTelegram, data.TemplateName, data.TemplateData)
 }

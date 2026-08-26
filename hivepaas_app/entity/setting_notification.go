@@ -35,20 +35,20 @@ func (s *Notification) GetRefObjectIDs() *RefObjectIDs {
 	}
 }
 
-func (s *Notification) HasNotificationViaEmail() bool {
-	return s.ViaEmail != nil
+func (s *Notification) ShouldNotifyViaEmail() bool {
+	return s.ViaEmail != nil && s.ViaEmail.Enabled
 }
 
-func (s *Notification) HasNotificationViaSlack() bool {
-	return s.ViaSlack != nil
+func (s *Notification) ShouldNotifyViaSlack() bool {
+	return s.ViaSlack != nil && s.ViaSlack.Enabled
 }
 
-func (s *Notification) HasNotificationViaDiscord() bool {
-	return s.ViaDiscord != nil
+func (s *Notification) ShouldNotifyViaDiscord() bool {
+	return s.ViaDiscord != nil && s.ViaDiscord.Enabled
 }
 
-func (s *Notification) HasNotificationViaTelegram() bool {
-	return s.ViaTelegram != nil
+func (s *Notification) ShouldNotifyViaTelegram() bool {
+	return s.ViaTelegram != nil && s.ViaTelegram.Enabled
 }
 
 type NotificationViaEmail struct {

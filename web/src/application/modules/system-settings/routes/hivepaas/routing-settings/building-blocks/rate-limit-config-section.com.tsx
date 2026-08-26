@@ -58,7 +58,7 @@ export function RateLimitConfigSection({ prefix, readOnly = false }: RateLimitCo
                         >
                             [2]
                         </a>
-                        )
+                        {") "}
                     </span>
                 </div>
             </div>

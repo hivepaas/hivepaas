@@ -97,7 +97,7 @@ export function RateLimitConfigSection({
                             >
                                 [2]
                             </a>
-                            )
+                            {") "}
                         </span>
                     </button>
                 </CollapsibleTrigger>

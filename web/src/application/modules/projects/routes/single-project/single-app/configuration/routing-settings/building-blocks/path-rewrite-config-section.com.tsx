@@ -177,7 +177,7 @@ export function PathRewriteConfigSection({
                             >
                                 [4]
                             </a>
-                            )
+                            {") "}
                         </span>
                     </button>
                 </CollapsibleTrigger>

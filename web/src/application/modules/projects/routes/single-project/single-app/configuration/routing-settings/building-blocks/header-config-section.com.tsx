@@ -80,7 +80,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                             >
                                 [2]
                             </a>
-                            )
+                            {") "}
                         </span>
                     </button>
                 </CollapsibleTrigger>

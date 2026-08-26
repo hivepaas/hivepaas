@@ -18,7 +18,7 @@ func NewDeleteProjectTagsReq() *DeleteProjectTagsReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *DeleteProjectTagsReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateSlice(req.Tags, true, 1, nil, "tags")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

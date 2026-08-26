@@ -19,7 +19,7 @@ func NewGetTaskStatusReq() *GetTaskStatusReq {
 }
 
 func (req *GetTaskStatusReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

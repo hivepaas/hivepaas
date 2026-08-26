@@ -27,7 +27,7 @@ func NewListOAuthReq() *ListOAuthReq {
 }
 
 func (req *ListOAuthReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.ListSettingReq.Validate()...)
 	validators = append(validators, basedto.ValidateSlice(req.Kind, true, 0, base.AllOAuthKinds, "kind")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

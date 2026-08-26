@@ -30,7 +30,7 @@ func (req *CreateCommandPipeFromTemplateReq) ModifyRequest() error {
 
 // Validate implements interface basedto.ReqValidator
 func (req *CreateCommandPipeFromTemplateReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.Name, false, 1,
 		base.SettingNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateStr(&req.CommandType, true, 1,

@@ -21,7 +21,7 @@ func NewJoinNodeReq() *JoinNodeReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *JoinNodeReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateObjectIDReq(&req.SSHKey, true, "sshKey")...)
 	validators = append(validators, basedto.ValidateStr(&req.Host, true, 1, 100, "host")...)      //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.User, true, 1, 100, "user")...)      //nolint:mnd

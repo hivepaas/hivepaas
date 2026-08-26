@@ -30,7 +30,7 @@ func NewCreateFileReq() *CreateFileReq {
 }
 
 func (req *CreateFileReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStrIn(&req.FileType, true, base.AllFileTypes,
 		"fileType")...)
 	validators = append(validators, basedto.ValidateStr(&req.FileKind, true, 1, findKindMaxLen,

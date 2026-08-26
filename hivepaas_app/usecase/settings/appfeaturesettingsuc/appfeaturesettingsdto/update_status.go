@@ -19,7 +19,7 @@ func NewUpdateAppFeatureSettingsStatusReq() *UpdateAppFeatureSettingsStatusReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateAppFeatureSettingsStatusReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStrIn(req.Status, false,
 		base.AllSettingSettableStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

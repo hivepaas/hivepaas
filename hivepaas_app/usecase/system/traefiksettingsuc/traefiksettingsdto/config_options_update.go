@@ -77,7 +77,7 @@ func (req *UpdateConfigOptionsReq) ModifyRequest() error {
 
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateConfigOptionsReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.StartupCommand.validate("startupCommand")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

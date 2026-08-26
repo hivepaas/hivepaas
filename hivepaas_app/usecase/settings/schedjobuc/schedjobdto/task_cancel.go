@@ -19,7 +19,7 @@ func NewCancelSchedJobTaskReq() *CancelSchedJobTaskReq {
 }
 
 func (req *CancelSchedJobTaskReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.JobID, true, "jobId")...)
 	validators = append(validators, basedto.ValidateID(&req.TaskID, true, "taskId")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

@@ -19,7 +19,7 @@ func NewUpdatePeriodicJobReq() *UpdatePeriodicJobReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *UpdatePeriodicJobReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.validate("")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

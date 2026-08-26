@@ -16,7 +16,7 @@ func NewPasswordForgotReq() *PasswordForgotReq {
 }
 
 func (req *PasswordForgotReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateEmail(&req.Email, true, "email")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

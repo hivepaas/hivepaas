@@ -25,7 +25,7 @@ func NewCompleteMFATotpSetupReq() *CompleteMFATotpSetupReq {
 }
 
 func (req *CompleteMFATotpSetupReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.Passcode, true,
 		minPasscodeLen, maxPasscodeLen, "passcode")...)
 	validators = append(validators, basedto.ValidateStr(&req.TotpToken, true,

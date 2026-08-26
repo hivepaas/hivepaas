@@ -23,7 +23,7 @@ func NewCreateProjectTagReq() *CreateProjectTagReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *CreateProjectTagReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateStr(&req.Tag, true, minTagLen, maxTagLen, "tag")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

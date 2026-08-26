@@ -18,7 +18,7 @@ func NewDeletePeriodicJobReq() *DeletePeriodicJobReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *DeletePeriodicJobReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.DeleteSettingReq.Validate()...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

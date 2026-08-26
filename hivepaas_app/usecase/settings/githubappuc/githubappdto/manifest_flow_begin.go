@@ -23,7 +23,7 @@ func NewBeginGithubAppManifestFlowReq() *BeginGithubAppManifestFlowReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *BeginGithubAppManifestFlowReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

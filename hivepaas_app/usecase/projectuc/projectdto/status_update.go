@@ -20,7 +20,7 @@ func NewUpdateProjectStatusReq() *UpdateProjectStatusReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateProjectStatusReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStrIn(&req.Status, true, base.AllProjectStatuses, "status")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

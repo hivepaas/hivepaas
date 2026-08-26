@@ -21,7 +21,7 @@ func NewHandleGithubAppManifestFlowProgressReq() *HandleGithubAppManifestFlowPro
 
 // Validate implements interface basedto.ReqValidator
 func (req *HandleGithubAppManifestFlowProgressReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

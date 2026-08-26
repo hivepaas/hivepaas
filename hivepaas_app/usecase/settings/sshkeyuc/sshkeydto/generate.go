@@ -19,7 +19,7 @@ func NewGenerateSSHKeyReq() *GenerateSSHKeyReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *GenerateSSHKeyReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStrIn(&req.KeyType, true,
 		base.AllPrivateKeyTypes, "keyType")...)
 	validators = append(validators, basedto.ValidateStr(&req.Passphrase, false, 1,

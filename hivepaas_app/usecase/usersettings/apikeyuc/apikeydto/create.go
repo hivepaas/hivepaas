@@ -29,7 +29,7 @@ func NewCreateAPIKeyReq() *CreateAPIKeyReq {
 
 // Validate implements interface basedto.ReqValidator
 func (req *CreateAPIKeyReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	timeNow := timeutil.NowUTC()
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1,
 		base.SettingNameMaxLen, "name")...)

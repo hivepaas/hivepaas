@@ -22,7 +22,7 @@ func NewUpdatePasswordReq() *UpdatePasswordReq {
 }
 
 func (req *UpdatePasswordReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.CurrentPassword, true,
 		1, passwordMaxLen, "currentPassword")...)
 	validators = append(validators, basedto.ValidateStr(&req.NewPassword, true,

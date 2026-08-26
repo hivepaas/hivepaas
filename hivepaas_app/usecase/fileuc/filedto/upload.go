@@ -25,7 +25,7 @@ func NewUploadReq() *UploadReq {
 }
 
 func (req *UploadReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStrIn(&req.FileType, true, base.AllFileTypes, "type")...)
 	// TODO: add validation
 	return apperrors.NewValidationErrors(vld.Validate(validators...))

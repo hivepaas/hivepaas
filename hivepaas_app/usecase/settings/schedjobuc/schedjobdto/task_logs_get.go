@@ -28,7 +28,7 @@ func NewGetSchedJobTaskLogsReq() *GetSchedJobTaskLogsReq {
 }
 
 func (req *GetSchedJobTaskLogsReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.JobID, true, "jobId")...)
 	return apperrors.NewValidationErrors(vld.Validate(validators...))
 }

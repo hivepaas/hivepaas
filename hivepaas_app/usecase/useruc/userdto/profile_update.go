@@ -41,7 +41,7 @@ func (req *UpdateProfileReq) ModifyRequest() error {
 }
 
 func (req *UpdateProfileReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, validateUsername(&req.Username, false, "username")...)
 	validators = append(validators, basedto.ValidateEmail(&req.Email, false, "email")...)
 	validators = append(validators, basedto.ValidateStr(&req.FullName, false,

@@ -39,7 +39,7 @@ func (req *UpdateUserReq) ModifyRequest() error {
 }
 
 func (req *UpdateUserReq) Validate() apperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	validators = append(validators, validateUsername(&req.Username, false, "username")...)
 	validators = append(validators, basedto.ValidateEmail(&req.Email, false, "email")...)

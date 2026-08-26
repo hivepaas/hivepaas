@@ -2,6 +2,7 @@ package redishelper
 
 import (
 	"context"
+	"errors"
 
 	"github.com/redis/go-redis/v9"
 
@@ -32,6 +33,9 @@ func ZRangeByScore(
 ) ([]string, error) {
 	members, err := cmder.ZRangeByScore(ctx, key, opt).Result()
 	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return nil, nil
+		}
 		return nil, apperrors.Wrap(err).WithMsgLog("failed to get members by score from zset")
 	}
 	return members, nil

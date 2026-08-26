@@ -42,9 +42,9 @@ linters:
       min-complexity: 30
     gocyclo:
       min-complexity: 30
-    govet:
+#    govet:
 #      enable:
-#        - shadow
+#        - shadow # TOO MANY VIOLATIONS
     lll:
       line-length: 120
     misspell:
@@ -94,17 +94,17 @@ linters:
 formatters:
   enable:
     - gci
-    - gofmt
-    - goimports
+#    - gofmt # SO SLOW
+#    - goimports # SO SLOW
   settings:
     gci:
       sections:
         - standard
         - default
         - prefix(github.com/hivepaas/hivepaas)
-    goimports:
-      local-prefixes:
-        - github.com/hivepaas/hivepaas
+#    goimports:
+#      local-prefixes:
+#        - github.com/hivepaas/hivepaas
   exclusions:
     generated: lax
     paths:

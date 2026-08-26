@@ -2,6 +2,7 @@ package imagebuildserviceimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -9,16 +10,18 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
+	"github.com/redis/go-redis/v9"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/nanoid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 )
 
 const (
-	redisKeyBuildNodeActive = "build:node:%s:active"
-	buildNodeSlotTTL        = 2 * time.Hour
+	redisKeyBuildNodesSlots = "build:nodes:slots"
+	buildNodeSlotTTL        = 30 * time.Minute
 )
 
 type candidateNode struct {
@@ -40,6 +43,23 @@ func (s *service) SelectBuildWorkerNode(
 		return resp, nil
 	}
 
+	// 1. Purge expired slots and fetch current active slots in 1 roundtrip
+	now := time.Now().Unix()
+	pipe := s.redisClient.Pipeline()
+	pipe.ZRemRangeByScore(ctx, redisKeyBuildNodesSlots, "-inf", fmt.Sprint(now))
+	membersCmd := pipe.ZRange(ctx, redisKeyBuildNodesSlots, 0, -1)
+	if _, err = pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
+		return resp, apperrors.Wrap(err)
+	}
+
+	activeCounts := make(map[string]int)
+	for _, member := range membersCmd.Val() {
+		if parts := strings.SplitN(member, ":", 2); len(parts) == 2 { //nolint:mnd
+			activeCounts[parts[0]]++
+		}
+	}
+
+	// 2. Filter available nodes based on maxParallelism
 	var available []*candidateNode
 	maxParallelism := 0
 	if buildSetting != nil {
@@ -47,8 +67,7 @@ func (s *service) SelectBuildWorkerNode(
 	}
 
 	for _, cand := range candidates {
-		key := fmt.Sprintf(redisKeyBuildNodeActive, cand.node.ID)
-		count, _ := s.redisClient.Get(ctx, key).Int()
+		count := activeCounts[cand.node.ID]
 		cand.activeCount = count
 
 		if maxParallelism > 0 && count >= maxParallelism {
@@ -62,7 +81,7 @@ func (s *service) SelectBuildWorkerNode(
 		return resp, nil
 	}
 
-	// Sort by activeCount ascending (least loaded node first)
+	// 3. Sort by activeCount ascending (least loaded node first)
 	sort.SliceStable(available, func(i, j int) bool {
 		if available[i].activeCount == available[j].activeCount {
 			return available[i].node.ID < available[j].node.ID
@@ -70,20 +89,25 @@ func (s *service) SelectBuildWorkerNode(
 		return available[i].activeCount < available[j].activeCount
 	})
 
+	// 4. Allocate a unique slot for the selected node
 	selected := available[0].node
-	key := fmt.Sprintf(redisKeyBuildNodeActive, selected.ID)
-	_ = s.redisClient.Incr(ctx, key).Err()
-	_ = s.redisClient.Expire(ctx, key, buildNodeSlotTTL).Err()
+	slotID := nanoid.NewStandard16()
+	slotMember := fmt.Sprintf("%s:%s", selected.ID, slotID)
+	expireAt := float64(time.Now().Add(buildNodeSlotTTL).Unix())
+
+	if err = s.redisClient.ZAdd(ctx, redisKeyBuildNodesSlots, redis.Z{
+		Score:  expireAt,
+		Member: slotMember,
+	}).Err(); err != nil {
+		return resp, apperrors.Wrap(err)
+	}
 
 	var once sync.Once
 	releaseFunc := func() { //nolint:contextcheck
 		once.Do(func() {
 			releaseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second) //nolint:mnd
 			defer cancel()
-			val, err := s.redisClient.Decr(releaseCtx, key).Result()
-			if err == nil && val <= 0 {
-				_ = s.redisClient.Del(releaseCtx, key).Err()
-			}
+			_ = s.redisClient.ZRem(releaseCtx, redisKeyBuildNodesSlots, slotMember).Err()
 		})
 	}
 	resp.Node = selected

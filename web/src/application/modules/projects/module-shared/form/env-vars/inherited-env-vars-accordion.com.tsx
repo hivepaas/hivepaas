@@ -89,19 +89,21 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                                             </div>
 
                                             {/* Spacer to align with editable rows that have a multi-line toggle */}
-                                            <div className="h-8 w-8" />
+                                            <div className="size-9" />
 
-                                            {/* Literal badge */}
+                                            {/* Literal checkbox */}
                                             <div className="flex h-9 items-center gap-2">
                                                 <Checkbox
-                                                    checked
+                                                    checked={item.isLiteral}
                                                     disabled
                                                 />
-                                                <span className="text-sm cursor-pointer">Literal</span>
+                                                <span className="text-sm text-muted-foreground cursor-default">
+                                                    Literal
+                                                </span>
                                             </div>
 
                                             {/* Spacer to align with editable rows that have row action buttons */}
-                                            <div className="h-8 w-8" />
+                                            <div className="size-9" />
                                         </div>
                                     );
                                 })}

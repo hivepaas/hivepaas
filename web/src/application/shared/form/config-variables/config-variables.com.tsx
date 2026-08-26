@@ -279,7 +279,7 @@ function View<T>({
                                             aria-pressed={isMultiline}
                                             aria-disabled={rowReadOnly || cannotDisableMultiline || undefined}
                                             className={cn(
-                                                "h-8 w-8 text-muted-foreground",
+                                                "size-9 text-muted-foreground",
                                                 isMultiline && "text-foreground",
                                                 cannotDisableMultiline && "cursor-not-allowed opacity-50",
                                             )}
@@ -319,7 +319,7 @@ function View<T>({
 
                                 {/* Delete Button */}
                                 {rowReadOnly && !readOnly ? (
-                                    <div className="h-8 w-8" />
+                                    <div className="size-9" />
                                 ) : (
                                     <Button
                                         type="button"
@@ -333,7 +333,7 @@ function View<T>({
                                             remove(index);
                                         }}
                                         disabled={rowReadOnly}
-                                        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                        className="size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                     >
                                         <Trash2 className="size-4" />
                                     </Button>

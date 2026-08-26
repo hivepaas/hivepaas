@@ -14,7 +14,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
 
 var (

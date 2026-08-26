@@ -6,8 +6,8 @@ import (
 	"go.uber.org/fx"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/jwtsession"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
 
 func InitJWTSession(lc fx.Lifecycle, cfg *config.Config, logger logging.Logger) {

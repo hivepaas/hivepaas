@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging/mocks"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging/mocks"
 )
 
 type mockRedisClient struct {

@@ -8,8 +8,8 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemeventbusservice"
 )
 

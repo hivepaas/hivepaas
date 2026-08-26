@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"

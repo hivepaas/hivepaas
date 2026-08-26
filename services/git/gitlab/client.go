@@ -6,7 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/httpclient"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httpclient"
 )
 
 type Client struct {

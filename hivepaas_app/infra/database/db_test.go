@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging/mocks"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging/mocks"
 )
 
 func TestInterfaces(t *testing.T) {

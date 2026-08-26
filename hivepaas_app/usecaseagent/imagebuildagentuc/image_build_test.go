@@ -10,7 +10,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging/mocks"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging/mocks"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"

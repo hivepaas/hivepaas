@@ -10,7 +10,7 @@ import (
 	goerrors "github.com/go-errors/errors"
 	"github.com/hashicorp/go-multierror"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
 )
 

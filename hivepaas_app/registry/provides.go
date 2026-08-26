@@ -5,7 +5,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	agentserver "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/server"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler"
@@ -39,6 +38,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/webhookhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/server"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission/permissionimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice/agentserviceimpl"

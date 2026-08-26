@@ -7,7 +7,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
 )
 

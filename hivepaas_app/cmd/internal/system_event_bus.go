@@ -5,7 +5,7 @@ import (
 
 	"go.uber.org/fx"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemeventbusservice"
 )
 

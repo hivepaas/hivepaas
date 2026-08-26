@@ -10,11 +10,11 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/cors"
 	loggermiddleware "github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/logger"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/recovery"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/secureheaders"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
 
 type Server interface {

@@ -6,8 +6,8 @@ import (
 
 	"go.uber.org/fx"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
 
 func InitCache(lc fx.Lifecycle, client rediscache.Client, logger logging.Logger) {

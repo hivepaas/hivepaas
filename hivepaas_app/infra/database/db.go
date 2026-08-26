@@ -10,7 +10,7 @@ import (
 	"github.com/uptrace/bun/extra/bundebug"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
 
 // IDB base interface can be used on behalf of both bun.DB and bun.Tx

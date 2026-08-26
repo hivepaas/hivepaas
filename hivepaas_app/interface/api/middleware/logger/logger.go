@@ -3,7 +3,7 @@ package logger
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
 
 func Logger(logger logging.Logger) gin.HandlerFunc {

@@ -13,7 +13,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/httpclient"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httpclient"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/jsonutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"

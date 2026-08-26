@@ -83,6 +83,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
     const projectDetailQuery = ProjectRegistryAuthQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -112,6 +113,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
             if (scope.type === "project") {
                 updateProjectRegistryAuth({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: registryAuth.id,
                     payload: updatePayload,
                 });
@@ -123,7 +125,11 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
         }
 
         if (scope.type === "project") {
-            createProjectRegistryAuth({ projectID: scope.projectId, payload });
+            createProjectRegistryAuth({
+                projectID: scope.projectId,
+                env: scope.env,
+                payload,
+            });
             return;
         }
 

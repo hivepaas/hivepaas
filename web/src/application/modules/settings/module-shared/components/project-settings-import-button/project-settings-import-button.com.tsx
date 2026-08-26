@@ -2,12 +2,12 @@ import { Plus } from "lucide-react";
 import type { ProjectSettingsImportKind } from "~/projects/data/commands";
 import { useImportProjectSettingsDialog } from "~/projects/dialogs/import-project-settings";
 
-import { Button } from "@/components/ui";
-
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction } from "@application/shared/permissions";
 
-export function ProjectSettingsImportButton({ projectId, settingKind }: Props) {
+import { Button } from "@/components/ui";
+
+export function ProjectSettingsImportButton({ projectId, env, settingKind }: Props) {
     const importDialog = useImportProjectSettingsDialog();
 
     return (
@@ -19,7 +19,7 @@ export function ProjectSettingsImportButton({ projectId, settingKind }: Props) {
                 <Button
                     variant="outline"
                     onClick={() => {
-                        importDialog.actions.open(projectId, settingKind);
+                        importDialog.actions.open(projectId, settingKind, env);
                     }}
                     disabled={isDenied}
                 >
@@ -33,5 +33,6 @@ export function ProjectSettingsImportButton({ projectId, settingKind }: Props) {
 
 interface Props {
     projectId: string;
+    env?: string;
     settingKind: ProjectSettingsImportKind;
 }

@@ -5,4 +5,5 @@ export type AcmeDnsProviderTableScope =
     | {
           type: "project";
           projectId: string;
+          env?: string;
       };

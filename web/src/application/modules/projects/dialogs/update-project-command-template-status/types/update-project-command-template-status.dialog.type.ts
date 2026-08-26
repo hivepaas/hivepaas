@@ -3,6 +3,7 @@ export interface UpdateProjectCommandTemplateStatusDialogState {
         | {
               mode: "open";
               projectId: string;
+              env?: string;
               id: string;
           }
         | {

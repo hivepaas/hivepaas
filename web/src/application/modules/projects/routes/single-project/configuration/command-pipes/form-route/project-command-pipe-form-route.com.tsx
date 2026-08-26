@@ -16,7 +16,7 @@ import type { ProjectCommandPipeFormOutput } from "../schemas";
 
 type ProjectCommandPipeFormRouteMode = "create" | "edit";
 
-export function ProjectCommandPipeFormRoute({ mode, projectId, commandPipeId }: Props) {
+export function ProjectCommandPipeFormRoute({ mode, projectId, env, commandPipeId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
     const [saveRevision, setSaveRevision] = useState(0);
     const { canWrite } = useSettingsScopePermissions({ type: "project" });
@@ -51,6 +51,7 @@ export function ProjectCommandPipeFormRoute({ mode, projectId, commandPipeId }: 
     const detailQuery = ProjectCommandPipeQueries.useFindOneById(
         {
             projectID: projectId,
+            env,
             id: detailId,
         },
         { enabled: isEditMode },
@@ -74,6 +75,7 @@ export function ProjectCommandPipeFormRoute({ mode, projectId, commandPipeId }: 
         if (isEditMode && commandPipe) {
             updateProjectCommandPipe({
                 projectID: projectId,
+                env,
                 id: commandPipe.id,
                 payload: {
                     ...payload,
@@ -83,7 +85,7 @@ export function ProjectCommandPipeFormRoute({ mode, projectId, commandPipeId }: 
             return;
         }
 
-        createProjectCommandPipe({ projectID: projectId, payload });
+        createProjectCommandPipe({ projectID: projectId, env, payload });
     }
 
     function handleClose() {
@@ -138,5 +140,6 @@ export function ProjectCommandPipeFormRoute({ mode, projectId, commandPipeId }: 
 interface Props {
     mode: ProjectCommandPipeFormRouteMode;
     projectId: string;
+    env?: string;
     commandPipeId?: string;
 }

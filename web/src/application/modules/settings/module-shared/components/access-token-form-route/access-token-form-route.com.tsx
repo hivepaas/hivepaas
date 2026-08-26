@@ -82,6 +82,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
     const projectDetailQuery = ProjectAccessTokenQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -112,6 +113,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
             if (scope.type === "project") {
                 updateProjectAccessToken({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: accessToken.id,
                     payload: updatePayload,
                 });
@@ -123,7 +125,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
         }
 
         if (scope.type === "project") {
-            createProjectAccessToken({ projectID: scope.projectId, payload });
+            createProjectAccessToken({ projectID: scope.projectId, env: scope.env, payload });
             return;
         }
 

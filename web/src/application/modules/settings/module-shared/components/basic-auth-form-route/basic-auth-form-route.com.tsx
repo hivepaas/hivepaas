@@ -72,6 +72,7 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
     const projectDetailQuery = ProjectBasicAuthQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -99,6 +100,7 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
             if (scope.type === "project") {
                 updateProjectBasicAuth({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: basicAuth.id,
                     payload: updatePayload,
                 });
@@ -110,7 +112,11 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
         }
 
         if (scope.type === "project") {
-            createProjectBasicAuth({ projectID: scope.projectId, payload });
+            createProjectBasicAuth({
+                projectID: scope.projectId,
+                env: scope.env,
+                payload,
+            });
             return;
         }
 

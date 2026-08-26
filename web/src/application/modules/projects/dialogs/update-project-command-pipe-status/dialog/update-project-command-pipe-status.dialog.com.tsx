@@ -43,6 +43,7 @@ export function UpdateProjectCommandPipeStatusDialog() {
     const detailQuery = ProjectCommandPipeQueries.useFindOneById(
         {
             projectID: state.mode === "open" ? state.projectId : "",
+            env: state.mode === "open" ? state.env : undefined,
             id: detailId,
         },
         {
@@ -58,6 +59,7 @@ export function UpdateProjectCommandPipeStatusDialog() {
 
         updateProjectStatus({
             projectID: state.projectId,
+            env: state.env,
             id: commandPipe.id,
             payload: {
                 updateVer: commandPipe.updateVer,

@@ -171,6 +171,7 @@ export function ImportProjectSettingsDialog() {
 
     const open = state.mode !== "closed";
     const projectId = state.mode === "open" ? state.projectId : "";
+    const env = state.mode === "open" ? (state.env ?? undefined) : undefined;
     const settingKind = state.mode === "open" ? state.settingKind : null;
 
     const queryRequest = {
@@ -180,6 +181,7 @@ export function ImportProjectSettingsDialog() {
     };
     const projectListRequest = {
         projectID: projectId,
+        env,
         pagination: IMPORT_DIALOG_PAGINATION,
     };
 
@@ -572,6 +574,7 @@ export function ImportProjectSettingsDialog() {
 
         importSettings({
             projectID: state.projectId,
+            env: state.env ?? undefined,
             settingKind: state.settingKind,
             payload: {
                 settings: [...selectedIds].map(id => ({ id })),

@@ -52,6 +52,7 @@ export function UpdateSSHKeyStatusDialog() {
     const projectDetailQuery = ProjectSSHKeyQueries.useFindOneById(
         {
             projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
             id: detailId,
         },
         { enabled: state.mode === "open" && state.scope.type === "project" },
@@ -72,7 +73,12 @@ export function UpdateSSHKeyStatusDialog() {
         };
 
         if (state.scope.type === "project") {
-            updateProjectMeta({ projectID: state.scope.projectId, id: sshKey.id, payload });
+            updateProjectMeta({
+                projectID: state.scope.projectId,
+                env: state.scope.env,
+                id: sshKey.id,
+                payload,
+            });
             return;
         }
 

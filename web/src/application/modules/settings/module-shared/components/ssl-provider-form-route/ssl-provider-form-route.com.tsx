@@ -133,6 +133,7 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
     const projectDetailQuery = ProjectSslProviderQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -150,6 +151,7 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
             if (scope.type === "project") {
                 updateProjectSslProvider({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: sslProvider.id,
                     payload: updatePayload,
                 });
@@ -161,7 +163,11 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
         }
 
         if (scope.type === "project") {
-            createProjectSslProvider({ projectID: scope.projectId, payload });
+            createProjectSslProvider({
+                projectID: scope.projectId,
+                env: scope.env,
+                payload,
+            });
             return;
         }
 

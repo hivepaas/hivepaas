@@ -60,6 +60,7 @@ export function UpdateRegistryAuthStatusDialog() {
     const projectDetailQuery = ProjectRegistryAuthQueries.useFindOneById(
         {
             projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
             id: detailId,
         },
         {
@@ -86,6 +87,7 @@ export function UpdateRegistryAuthStatusDialog() {
         if (state.scope.type === "project") {
             updateProjectMeta({
                 projectID: state.scope.projectId,
+                env: state.scope.env,
                 id: registryAuth.id,
                 payload,
             });

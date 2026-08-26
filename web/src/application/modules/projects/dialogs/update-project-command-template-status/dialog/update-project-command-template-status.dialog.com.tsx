@@ -43,6 +43,7 @@ export function UpdateProjectCommandTemplateStatusDialog() {
     const detailQuery = ProjectCommandTemplateQueries.useFindOneById(
         {
             projectID: state.mode === "open" ? state.projectId : "",
+            env: state.mode === "open" ? state.env : undefined,
             id: detailId,
         },
         {
@@ -58,6 +59,7 @@ export function UpdateProjectCommandTemplateStatusDialog() {
 
         updateProjectStatus({
             projectID: state.projectId,
+            env: state.env,
             id: commandTemplate.id,
             payload: {
                 updateVer: commandTemplate.updateVer,

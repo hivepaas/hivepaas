@@ -30,6 +30,7 @@ function NotificationTargetTableView({ scope }: Props) {
     const projectQuery = ProjectNotificationQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination,
             sorting,
             search,
@@ -50,6 +51,7 @@ function NotificationTargetTableView({ scope }: Props) {
                         {scope.type === "project" && (
                             <ProjectSettingsImportButton
                                 projectId={scope.projectId}
+                                env={scope.env}
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.Notification}
                             />
                         )}
@@ -99,10 +101,11 @@ export function SettingsNotificationTargetTable() {
     return <NotificationTargetTableView scope={{ type: "settings" }} />;
 }
 
-export function ProjectNotificationTargetTable({ projectId }: ProjectProps) {
-    return <NotificationTargetTableView scope={{ type: "project", projectId }} />;
+export function ProjectNotificationTargetTable({ projectId, env }: ProjectProps) {
+    return <NotificationTargetTableView scope={{ type: "project", projectId, env }} />;
 }
 
 interface ProjectProps {
     projectId: string;
+    env?: string;
 }

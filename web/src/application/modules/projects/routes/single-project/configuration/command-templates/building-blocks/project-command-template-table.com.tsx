@@ -16,18 +16,19 @@ import { ProjectCommandTemplateTableDefs } from "./project-command-template-tabl
 
 const PROJECT_SCOPE = { type: "project" } as const;
 
-export function ProjectCommandTemplateTable({ projectId }: Props) {
+export function ProjectCommandTemplateTable({ projectId, env }: Props) {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
     const { navigate } = useAppNavigate();
 
     const { data: { data: commandTemplateItems, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
         ProjectCommandTemplateQueries.useFindManyPaginated({
             projectID: projectId,
+            env,
             pagination,
             sorting,
             search,
         });
-    const columns = useMemo(() => ProjectCommandTemplateTableDefs.columns(projectId), [projectId]);
+    const columns = useMemo(() => ProjectCommandTemplateTableDefs.columns(projectId, env), [projectId, env]);
 
     return (
         <div className="flex flex-col gap-4">
@@ -35,7 +36,10 @@ export function ProjectCommandTemplateTable({ projectId }: Props) {
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
                     <div className="flex flex-wrap gap-3">
-                        <ProjectCommandTemplateFromTemplateMenu projectId={projectId} />
+                        <ProjectCommandTemplateFromTemplateMenu
+                            projectId={projectId}
+                            env={env}
+                        />
                         <SettingsScopeCreateButton
                             scope={PROJECT_SCOPE}
                             onClick={() => {
@@ -72,4 +76,5 @@ export function ProjectCommandTemplateTable({ projectId }: Props) {
 
 interface Props {
     projectId: string;
+    env?: string;
 }

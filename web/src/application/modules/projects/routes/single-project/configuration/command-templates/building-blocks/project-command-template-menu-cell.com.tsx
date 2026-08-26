@@ -12,7 +12,7 @@ import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
 
 const PROJECT_SCOPE = { type: "project" } as const;
 
-function View({ projectId, commandTemplate }: Props) {
+function View({ projectId, env, commandTemplate }: Props) {
     const [open, setOpen] = useState(false);
 
     const updateStatusDialog = useUpdateProjectCommandTemplateStatusDialog();
@@ -30,12 +30,14 @@ function View({ projectId, commandTemplate }: Props) {
     function handleDelete() {
         deleteProjectCommandTemplate({
             projectID: projectId,
+            env,
             id: commandTemplate.id,
         });
     }
 
     function handleChangeStatus() {
         updateStatusDialog.actions.open(projectId, commandTemplate.id, {
+            env,
             props: {
                 readOnlyInherited: isInheritedProject,
             },
@@ -89,6 +91,7 @@ function View({ projectId, commandTemplate }: Props) {
 
 interface Props {
     projectId: string;
+    env?: string;
     commandTemplate: ProjectCommandTemplate;
 }
 

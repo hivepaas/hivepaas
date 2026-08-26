@@ -26,7 +26,7 @@ function getKindClassName(kind: ProjectCommandTemplate["kind"]): string {
     }
 }
 
-function createColumns(projectId: string): ColumnDef<ProjectCommandTemplate>[] {
+function createColumns(projectId: string, env?: string): ColumnDef<ProjectCommandTemplate>[] {
     return [
         {
             id: "view",
@@ -83,11 +83,13 @@ function createColumns(projectId: string): ColumnDef<ProjectCommandTemplate>[] {
         },
         {
             accessorKey: "link",
-            header: "Link",
-            enableSorting: false,
+            header: "External",
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
             cell: ({ row: { original } }) => {
                 const href = toCommandTemplateExternalHref(original.link);
-
                 if (!href) {
                     return "-";
                 }
@@ -96,10 +98,11 @@ function createColumns(projectId: string): ColumnDef<ProjectCommandTemplate>[] {
                     <a
                         href={href}
                         target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-link"
+                        rel="noreferrer"
+                        className="text-primary hover:underline font-mono text-xs truncate max-w-[200px] inline-block"
+                        title={original.link}
                     >
-                        Docs
+                        {original.link}
                     </a>
                 );
             },
@@ -130,12 +133,31 @@ function createColumns(projectId: string): ColumnDef<ProjectCommandTemplate>[] {
             },
         },
         {
+            accessorKey: "desc",
+            header: "Description",
+            cell: ({ row: { original } }) => {
+                if (!original.desc) {
+                    return "-";
+                }
+
+                return (
+                    <span
+                        className="truncate max-w-[200px] inline-block"
+                        title={original.desc}
+                    >
+                        {original.desc}
+                    </span>
+                );
+            },
+        },
+        {
             id: "actions",
             header: "",
             enableSorting: false,
             cell: ({ row: { original } }) => (
                 <ProjectCommandTemplateMenuCell
                     projectId={projectId}
+                    env={env}
                     commandTemplate={original}
                 />
             ),

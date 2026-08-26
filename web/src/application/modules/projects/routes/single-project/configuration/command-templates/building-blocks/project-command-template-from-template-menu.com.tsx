@@ -19,7 +19,7 @@ import {
 
 const PROJECT_SCOPE = { type: "project" } as const;
 
-export function ProjectCommandTemplateFromTemplateMenu({ projectId }: Props) {
+export function ProjectCommandTemplateFromTemplateMenu({ projectId, env }: Props) {
     const [open, setOpen] = useState(false);
 
     const { mutate: createFromTemplate, isPending } = ProjectCommandTemplateCommands.useCreateFromTemplate({
@@ -32,6 +32,7 @@ export function ProjectCommandTemplateFromTemplateMenu({ projectId }: Props) {
     function handleSelect(selection: CommandTemplateFromTemplateSelection) {
         createFromTemplate({
             projectID: projectId,
+            env,
             payload: {
                 commandType: selection.commandType,
                 commandKind: selection.commandKind,
@@ -112,4 +113,5 @@ export function ProjectCommandTemplateFromTemplateMenu({ projectId }: Props) {
 
 interface Props {
     projectId: string;
+    env?: string;
 }

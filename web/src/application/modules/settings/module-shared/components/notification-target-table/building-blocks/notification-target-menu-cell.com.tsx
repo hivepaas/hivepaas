@@ -37,7 +37,11 @@ function View({ scope, notificationTarget }: Props) {
 
     function handleDelete() {
         if (scope.type === "project") {
-            deleteProjectNotification({ projectID: scope.projectId, id: notificationTarget.id });
+            deleteProjectNotification({
+                projectID: scope.projectId,
+                env: scope.env,
+                id: notificationTarget.id,
+            });
             return;
         }
 

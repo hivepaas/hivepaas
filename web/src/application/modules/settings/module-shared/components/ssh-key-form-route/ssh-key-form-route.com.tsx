@@ -75,6 +75,7 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
     const projectDetailQuery = ProjectSSHKeyQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -103,7 +104,12 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
             const updatePayload = { ...payload, updateVer: sshKey.updateVer };
 
             if (scope.type === "project") {
-                updateProjectSSHKey({ projectID: scope.projectId, id: sshKey.id, payload: updatePayload });
+                updateProjectSSHKey({
+                    projectID: scope.projectId,
+                    env: scope.env,
+                    id: sshKey.id,
+                    payload: updatePayload,
+                });
                 return;
             }
 
@@ -112,7 +118,11 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
         }
 
         if (scope.type === "project") {
-            createProjectSSHKey({ projectID: scope.projectId, payload });
+            createProjectSSHKey({
+                projectID: scope.projectId,
+                env: scope.env,
+                payload,
+            });
             return;
         }
 

@@ -14,10 +14,12 @@ function createHook() {
                 open: (
                     projectId: string,
                     id: string,
-                    options: UpdateProjectCommandTemplateStatusDialogOptions = {},
+                    options: UpdateProjectCommandTemplateStatusDialogOptions & { env?: string } = {},
                 ) => {
+                    const { env, ...restOptions } = options;
                     actions.open(projectId, id, {
-                        ...options,
+                        ...restOptions,
+                        env,
                         props: { ...props, ...options.props },
                     });
                 },

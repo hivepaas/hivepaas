@@ -11,8 +11,8 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (projectId: string, settingKind: ProjectSettingsImportKind) => {
-                    actions.open(projectId, settingKind, { props });
+                open: (projectId: string, settingKind: ProjectSettingsImportKind, env?: string) => {
+                    actions.open(projectId, settingKind, { env, props });
                 },
                 close: () => {
                     actions.close();

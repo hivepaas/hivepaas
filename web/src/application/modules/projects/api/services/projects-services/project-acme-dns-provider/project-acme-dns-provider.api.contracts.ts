@@ -22,18 +22,21 @@ export type ProjectAcmeDnsProvider_FindManyPaginated_Res = ApiResponsePaginated<
 
 export type ProjectAcmeDnsProvider_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 export type ProjectAcmeDnsProvider_FindOneById_Res = ApiResponseBase<SettingAcmeDnsProvider>;
 
 export type ProjectAcmeDnsProvider_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: AcmeDnsProvider_CreateOne_Payload;
 }>;
 export type ProjectAcmeDnsProvider_CreateOne_Res = ApiResponseBase<{ id: string }>;
 
 export type ProjectAcmeDnsProvider_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: AcmeDnsProvider_UpdateOne_Payload;
 }>;
@@ -41,6 +44,7 @@ export type ProjectAcmeDnsProvider_UpdateOne_Res = ApiResponseBase<{ type: "succ
 
 export type ProjectAcmeDnsProvider_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: AcmeDnsProvider_UpdateStatus_Payload;
 }>;
@@ -48,6 +52,7 @@ export type ProjectAcmeDnsProvider_UpdateStatus_Res = ApiResponseBase<{ type: "s
 
 export type ProjectAcmeDnsProvider_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 export type ProjectAcmeDnsProvider_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;

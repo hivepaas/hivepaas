@@ -5,4 +5,5 @@ export type RegistryAuthTableScope =
     | {
           type: "project";
           projectId: string;
+          env?: string;
       };

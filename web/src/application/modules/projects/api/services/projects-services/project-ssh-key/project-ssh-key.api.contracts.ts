@@ -10,6 +10,7 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 export type ProjectSSHKey_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
@@ -17,12 +18,17 @@ export type ProjectSSHKey_FindManyPaginated_Req = ApiRequestBase<{
 
 export type ProjectSSHKey_FindManyPaginated_Res = ApiResponsePaginated<SettingSSHKey>;
 
-export type ProjectSSHKey_FindOneById_Req = ApiRequestBase<{ projectID: string; id: string }>;
+export type ProjectSSHKey_FindOneById_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+}>;
 
 export type ProjectSSHKey_FindOneById_Res = ApiResponseBase<SettingSSHKey>;
 
 export type ProjectSSHKey_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: SSHKey_CreateOne_Payload;
 }>;
 
@@ -30,6 +36,7 @@ export type ProjectSSHKey_CreateOne_Res = ApiResponseBase<{ id: string }>;
 
 export type ProjectSSHKey_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: SSHKey_UpdateOne_Payload;
 }>;
@@ -38,12 +45,17 @@ export type ProjectSSHKey_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
 export type ProjectSSHKey_UpdateMeta_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: SSHKey_UpdateMeta_Payload;
 }>;
 
 export type ProjectSSHKey_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
 
-export type ProjectSSHKey_DeleteOne_Req = ApiRequestBase<{ projectID: string; id: string }>;
+export type ProjectSSHKey_DeleteOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+}>;
 
 export type ProjectSSHKey_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;

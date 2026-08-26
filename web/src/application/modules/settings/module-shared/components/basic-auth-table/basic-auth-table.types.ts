@@ -5,4 +5,5 @@ export type BasicAuthTableScope =
     | {
           type: "project";
           projectId: string;
+          env?: string;
       };

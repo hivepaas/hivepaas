@@ -109,6 +109,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
     const projectDetailQuery = ProjectSslCertQueries.useFindOneById(
         {
             projectID: projectId,
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -182,6 +183,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
             if (scope.type === "project") {
                 updateProjectSslCert({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: sslCert.id,
                     payload: updatePayload,
                 });
@@ -193,7 +195,11 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
         }
 
         if (scope.type === "project") {
-            createProjectSslCert({ projectID: scope.projectId, payload });
+            createProjectSslCert({
+                projectID: scope.projectId,
+                env: scope.env,
+                payload,
+            });
             return;
         }
 

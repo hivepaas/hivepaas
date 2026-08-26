@@ -37,6 +37,7 @@ export type ProjectSslCert_CreateOne_Res = ApiResponseBase<{ id: string }>;
 
 export type ProjectSslCert_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: SslCert_UpdateOne_Payload;
 }>;
@@ -45,6 +46,7 @@ export type ProjectSslCert_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
 export type ProjectSslCert_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: SslCert_UpdateStatus_Payload;
 }>;
@@ -53,6 +55,7 @@ export type ProjectSslCert_UpdateStatus_Res = ApiResponseBase<{ type: "success" 
 
 export type ProjectSslCert_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 
@@ -60,6 +63,7 @@ export type ProjectSslCert_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
 
 export type ProjectSslCert_RenewOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 

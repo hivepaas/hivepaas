@@ -20,7 +20,7 @@ import { PROJECT_COMMAND_TEMPLATE_COMMAND_MODE, type ProjectCommandTemplateFormO
 
 type ProjectCommandTemplateFormRouteMode = "create" | "edit";
 
-export function ProjectCommandTemplateFormRoute({ mode, projectId, commandTemplateId }: Props) {
+export function ProjectCommandTemplateFormRoute({ mode, projectId, env, commandTemplateId }: Props) {
     const [hasChanges, setHasChanges] = useState(false);
     const [saveRevision, setSaveRevision] = useState(0);
     const { canWrite } = useSettingsScopePermissions({ type: "project" });
@@ -59,6 +59,7 @@ export function ProjectCommandTemplateFormRoute({ mode, projectId, commandTempla
     const detailQuery = ProjectCommandTemplateQueries.useFindOneById(
         {
             projectID: projectId,
+            env,
             id: detailId,
         },
         { enabled: isEditMode },
@@ -90,6 +91,7 @@ export function ProjectCommandTemplateFormRoute({ mode, projectId, commandTempla
         if (isEditMode && commandTemplate) {
             updateProjectCommandTemplate({
                 projectID: projectId,
+                env,
                 id: commandTemplate.id,
                 payload: {
                     ...payload,
@@ -99,7 +101,7 @@ export function ProjectCommandTemplateFormRoute({ mode, projectId, commandTempla
             return;
         }
 
-        createProjectCommandTemplate({ projectID: projectId, payload });
+        createProjectCommandTemplate({ projectID: projectId, env, payload });
     }
 
     function handleClose() {
@@ -154,5 +156,6 @@ export function ProjectCommandTemplateFormRoute({ mode, projectId, commandTempla
 interface Props {
     mode: ProjectCommandTemplateFormRouteMode;
     projectId: string;
+    env?: string;
     commandTemplateId?: string;
 }

@@ -36,7 +36,7 @@ function View({ scope, accessToken }: Props) {
 
     function handleDelete() {
         if (scope.type === "project") {
-            deleteProjectAccessToken({ projectID: scope.projectId, id: accessToken.id });
+            deleteProjectAccessToken({ projectID: scope.projectId, env: scope.env, id: accessToken.id });
             return;
         }
 

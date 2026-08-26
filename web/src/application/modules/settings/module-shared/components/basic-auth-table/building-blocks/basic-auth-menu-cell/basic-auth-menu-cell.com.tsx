@@ -39,6 +39,7 @@ function View({ scope, basicAuth }: Props) {
         if (scope.type === "project") {
             deleteProjectBasicAuth({
                 projectID: scope.projectId,
+                env: scope.env,
                 id: basicAuth.id,
             });
             return;

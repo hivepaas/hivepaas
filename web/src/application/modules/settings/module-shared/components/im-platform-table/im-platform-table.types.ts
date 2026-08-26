@@ -5,4 +5,5 @@ export type ImPlatformTableScope =
     | {
           type: "project";
           projectId: string;
+          env?: string;
       };

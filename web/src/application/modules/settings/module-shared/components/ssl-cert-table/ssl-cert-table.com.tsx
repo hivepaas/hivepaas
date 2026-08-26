@@ -36,6 +36,7 @@ function SslCertTableView({ scope }: Props) {
     const projectQuery = ProjectSslCertQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination,
             sorting,
             search,
@@ -58,6 +59,7 @@ function SslCertTableView({ scope }: Props) {
                         {scope.type === "project" && (
                             <ProjectSettingsImportButton
                                 projectId={scope.projectId}
+                                env={scope.env}
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.SslCert}
                             />
                         )}
@@ -107,10 +109,11 @@ export function SettingsSslCertTable() {
     return <SslCertTableView scope={{ type: "settings" }} />;
 }
 
-export function ProjectSslCertTable({ projectId }: ProjectProps) {
-    return <SslCertTableView scope={{ type: "project", projectId }} />;
+export function ProjectSslCertTable({ projectId, env }: ProjectProps) {
+    return <SslCertTableView scope={{ type: "project", projectId, env }} />;
 }
 
 interface ProjectProps {
     projectId: string;
+    env?: string;
 }

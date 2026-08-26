@@ -36,6 +36,7 @@ function RegistryAuthTableView({ scope }: Props) {
     const projectQuery = ProjectRegistryAuthQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination,
             sorting,
             search,
@@ -58,6 +59,7 @@ function RegistryAuthTableView({ scope }: Props) {
                         {scope.type === "project" && (
                             <ProjectSettingsImportButton
                                 projectId={scope.projectId}
+                                env={scope.env}
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.RegistryAuth}
                             />
                         )}
@@ -107,10 +109,11 @@ export function SettingsRegistryAuthTable() {
     return <RegistryAuthTableView scope={{ type: "settings" }} />;
 }
 
-export function ProjectRegistryAuthTable({ projectId }: ProjectProps) {
-    return <RegistryAuthTableView scope={{ type: "project", projectId }} />;
+export function ProjectRegistryAuthTable({ projectId, env }: ProjectProps) {
+    return <RegistryAuthTableView scope={{ type: "project", projectId, env }} />;
 }
 
 interface ProjectProps {
     projectId: string;
+    env?: string;
 }

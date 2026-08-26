@@ -2,7 +2,12 @@ import { type PaginationState, type SortingState } from "@infrastructure/data";
 import { type ProjectBaseEntity, type ProjectDetailsEntity } from "~/projects/domain";
 import type { EProjectEnvStatus, EProjectStatus } from "~/projects/module-shared/enums";
 
-import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
+import {
+    type ApiRequestBase,
+    type ApiResponseBase,
+    type ApiResponsePaginated,
+    type OpenApiConstant,
+} from "@infrastructure/api";
 
 /**
  * Find many projects paginated
@@ -58,7 +63,7 @@ export type Projects_UpdateOne_Req = ApiRequestBase<
             "id" | "key" | "status" | "createdAt" | "updatedAt" | "updateVer" | "owner" | "userAccesses"
         >
     > & {
-            status?: EProjectStatus;
+            status?: OpenApiConstant<EProjectStatus> | EProjectStatus;
         }
 >;
 
@@ -73,7 +78,7 @@ export type Projects_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
     payload: {
         updateVer: number;
-        status: EProjectStatus;
+        status: OpenApiConstant<EProjectStatus> | EProjectStatus;
     };
 }>;
 

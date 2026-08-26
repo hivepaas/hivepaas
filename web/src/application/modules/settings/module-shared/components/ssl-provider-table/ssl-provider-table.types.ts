@@ -5,4 +5,5 @@ export type SslProviderTableScope =
     | {
           type: "project";
           projectId: string;
+          env?: string;
       };

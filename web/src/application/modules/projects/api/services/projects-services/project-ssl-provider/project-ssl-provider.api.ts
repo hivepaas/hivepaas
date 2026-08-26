@@ -20,7 +20,7 @@ import type {
 import type { ProjectSslProviderApiValidator } from "./project-ssl-provider.api.validator";
 
 function getProjectSslProviderBasePath(projectID: string, env?: string): string {
-    if (env) {
+    if (env && env !== "all") {
         return `/projects/${projectID}/${encodeURIComponent(env)}/ssl-providers`;
     }
 
@@ -63,11 +63,11 @@ export class ProjectSslProviderApi extends BaseApi {
         request: ProjectSslProvider_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslProvider_FindOneById_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/ssl-providers/${id}`, {
+                this.client.v1.get(`${getProjectSslProviderBasePath(projectID, env)}/${id}`, {
                     signal,
                 }),
             ).pipe(
@@ -82,12 +82,12 @@ export class ProjectSslProviderApi extends BaseApi {
         request: ProjectSslProvider_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslProvider_CreateOne_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/ssl-providers`, json, {
+                this.client.v1.post(getProjectSslProviderBasePath(projectID, env), json, {
                     signal,
                 }),
             ).pipe(
@@ -102,12 +102,12 @@ export class ProjectSslProviderApi extends BaseApi {
         request: ProjectSslProvider_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslProvider_UpdateOne_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/ssl-providers/${id}`, json, {
+                this.client.v1.put(`${getProjectSslProviderBasePath(projectID, env)}/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -122,12 +122,12 @@ export class ProjectSslProviderApi extends BaseApi {
         request: ProjectSslProvider_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslProvider_UpdateStatus_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/ssl-providers/${id}/status`, json, {
+                this.client.v1.put(`${getProjectSslProviderBasePath(projectID, env)}/${id}/status`, json, {
                     signal,
                 }),
             ).pipe(
@@ -141,10 +141,10 @@ export class ProjectSslProviderApi extends BaseApi {
     async deleteOne(
         request: ProjectSslProvider_DeleteOne_Req,
     ): Promise<Result<ProjectSslProvider_DeleteOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/ssl-providers/${id}`)).pipe(
+            from(this.client.v1.delete(`${getProjectSslProviderBasePath(projectID, env)}/${id}`)).pipe(
                 map(response => this.validator.deleteOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

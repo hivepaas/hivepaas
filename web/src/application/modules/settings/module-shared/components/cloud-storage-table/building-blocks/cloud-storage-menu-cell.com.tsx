@@ -37,7 +37,11 @@ function View({ scope, cloudStorage }: Props) {
 
     function handleDelete() {
         if (scope.type === "project") {
-            deleteProjectCloudStorage({ projectID: scope.projectId, id: cloudStorage.id });
+            deleteProjectCloudStorage({
+                projectID: scope.projectId,
+                env: scope.env,
+                id: cloudStorage.id,
+            });
             return;
         }
 

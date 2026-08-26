@@ -85,6 +85,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
     const projectDetailQuery = ProjectNotificationQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -148,6 +149,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
             if (scope.type === "project") {
                 updateProjectNotification({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: notificationTarget.id,
                     payload: updatePayload,
                 });
@@ -159,7 +161,11 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
         }
 
         if (scope.type === "project") {
-            createProjectNotification({ projectID: scope.projectId, payload });
+            createProjectNotification({
+                projectID: scope.projectId,
+                env: scope.env,
+                payload,
+            });
             return;
         }
 

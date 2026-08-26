@@ -42,6 +42,7 @@ function View({ scope, acmeDnsProvider }: Props) {
         if (scope.type === "project") {
             deleteProjectAcmeDnsProvider({
                 projectID: scope.projectId,
+                env: scope.env,
                 id: acmeDnsProvider.id,
             });
             return;

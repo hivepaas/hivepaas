@@ -36,6 +36,7 @@ function SslProviderTableView({ scope }: Props) {
     const projectQuery = ProjectSslProviderQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination,
             sorting,
             search,
@@ -58,6 +59,7 @@ function SslProviderTableView({ scope }: Props) {
                         {scope.type === "project" && (
                             <ProjectSettingsImportButton
                                 projectId={scope.projectId}
+                                env={scope.env}
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.SslProvider}
                             />
                         )}
@@ -107,10 +109,11 @@ export function SettingsSslProviderTable() {
     return <SslProviderTableView scope={{ type: "settings" }} />;
 }
 
-export function ProjectSslProviderTable({ projectId }: ProjectProps) {
-    return <SslProviderTableView scope={{ type: "project", projectId }} />;
+export function ProjectSslProviderTable({ projectId, env }: ProjectProps) {
+    return <SslProviderTableView scope={{ type: "project", projectId, env }} />;
 }
 
 interface ProjectProps {
     projectId: string;
+    env?: string;
 }

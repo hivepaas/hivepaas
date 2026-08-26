@@ -58,10 +58,14 @@ export class ProjectCloudStorageApi extends BaseApi {
         request: ProjectCloudStorage_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_FindOneById_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.get(`/projects/${projectID}/cloud-storages/${id}`, { signal })).pipe(
+            from(
+                this.client.v1.get(`${getProjectCloudStorageBasePath(projectID, env)}/${id}`, {
+                    signal,
+                }),
+            ).pipe(
                 map(response => this.validator.findOneById(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -73,11 +77,11 @@ export class ProjectCloudStorageApi extends BaseApi {
         request: ProjectCloudStorage_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_CreateOne_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/cloud-storages`, json, { signal })).pipe(
+            from(this.client.v1.post(getProjectCloudStorageBasePath(projectID, env), json, { signal })).pipe(
                 map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -89,11 +93,15 @@ export class ProjectCloudStorageApi extends BaseApi {
         request: ProjectCloudStorage_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_UpdateOne_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/cloud-storages/${id}`, json, { signal })).pipe(
+            from(
+                this.client.v1.put(`${getProjectCloudStorageBasePath(projectID, env)}/${id}`, json, {
+                    signal,
+                }),
+            ).pipe(
                 map(response => this.validator.updateOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -105,11 +113,15 @@ export class ProjectCloudStorageApi extends BaseApi {
         request: ProjectCloudStorage_UpdateMeta_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_UpdateMeta_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/cloud-storages/${id}/status`, json, { signal })).pipe(
+            from(
+                this.client.v1.put(`${getProjectCloudStorageBasePath(projectID, env)}/${id}/status`, json, {
+                    signal,
+                }),
+            ).pipe(
                 map(response => this.validator.updateMeta(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -120,10 +132,10 @@ export class ProjectCloudStorageApi extends BaseApi {
     async deleteOne(
         request: ProjectCloudStorage_DeleteOne_Req,
     ): Promise<Result<ProjectCloudStorage_DeleteOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/cloud-storages/${id}`)).pipe(
+            from(this.client.v1.delete(`${getProjectCloudStorageBasePath(projectID, env)}/${id}`)).pipe(
                 map(response => this.validator.deleteOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

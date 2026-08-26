@@ -11,6 +11,7 @@ export interface ProjectSettingsImport_Import_Payload {
 
 export type ProjectSettingsImport_Import_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: ProjectSettingsImport_Import_Payload;
 }>;
 

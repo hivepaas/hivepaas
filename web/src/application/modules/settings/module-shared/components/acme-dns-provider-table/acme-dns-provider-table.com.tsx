@@ -41,6 +41,7 @@ function AcmeDnsProviderTableView({ scope }: Props) {
     const projectQuery = ProjectAcmeDnsProviderQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination,
             sorting,
             search,
@@ -67,6 +68,7 @@ function AcmeDnsProviderTableView({ scope }: Props) {
                         {scope.type === "project" && (
                             <ProjectSettingsImportButton
                                 projectId={scope.projectId}
+                                env={scope.env}
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.AcmeDnsProvider}
                             />
                         )}
@@ -116,10 +118,11 @@ export function SettingsAcmeDnsProviderTable() {
     return <AcmeDnsProviderTableView scope={{ type: "settings" }} />;
 }
 
-export function ProjectAcmeDnsProviderTable({ projectId }: ProjectProps) {
-    return <AcmeDnsProviderTableView scope={{ type: "project", projectId }} />;
+export function ProjectAcmeDnsProviderTable({ projectId, env }: ProjectProps) {
+    return <AcmeDnsProviderTableView scope={{ type: "project", projectId, env }} />;
 }
 
 interface ProjectProps {
     projectId: string;
+    env?: string;
 }

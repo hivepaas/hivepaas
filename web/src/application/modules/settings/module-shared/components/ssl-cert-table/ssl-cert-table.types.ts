@@ -5,4 +5,5 @@ export type SslCertTableScope =
     | {
           type: "project";
           projectId: string;
+          env?: string;
       };

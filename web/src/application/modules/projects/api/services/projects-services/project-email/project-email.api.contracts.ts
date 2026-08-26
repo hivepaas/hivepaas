@@ -10,6 +10,7 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 export type ProjectEmail_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
@@ -19,6 +20,7 @@ export type ProjectEmail_FindManyPaginated_Res = ApiResponsePaginated<SettingEma
 
 export type ProjectEmail_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 
@@ -26,6 +28,7 @@ export type ProjectEmail_FindOneById_Res = ApiResponseBase<SettingEmail>;
 
 export type ProjectEmail_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: Email_CreateOne_Payload;
 }>;
 
@@ -33,6 +36,7 @@ export type ProjectEmail_CreateOne_Res = ApiResponseBase<{ id: string }>;
 
 export type ProjectEmail_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: Email_UpdateOne_Payload;
 }>;
@@ -41,6 +45,7 @@ export type ProjectEmail_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
 export type ProjectEmail_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: Email_UpdateStatus_Payload;
 }>;
@@ -49,6 +54,7 @@ export type ProjectEmail_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>
 
 export type ProjectEmail_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 

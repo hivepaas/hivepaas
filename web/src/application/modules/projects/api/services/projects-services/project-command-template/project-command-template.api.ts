@@ -25,6 +25,14 @@ import type {
 } from "./project-command-template.api.contracts";
 import type { ProjectCommandTemplateApiValidator } from "./project-command-template.api.validator";
 
+function getProjectCommandTemplateBasePath(projectID: string, env?: string): string {
+    if (env && env !== "all") {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/command-templates`;
+    }
+
+    return `/projects/${projectID}/command-templates`;
+}
+
 export class ProjectCommandTemplateApi extends BaseApi {
     public constructor(private readonly validator: ProjectCommandTemplateApiValidator) {
         super();
@@ -34,13 +42,13 @@ export class ProjectCommandTemplateApi extends BaseApi {
         request: ProjectCommandTemplate_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandTemplate_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, env, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/command-templates`, {
+                this.client.v1.get(getProjectCommandTemplateBasePath(projectID, env), {
                     params: query.build(),
                     signal,
                 }),
@@ -78,11 +86,11 @@ export class ProjectCommandTemplateApi extends BaseApi {
         request: ProjectCommandTemplate_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandTemplate_FindOneById_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/command-templates/${id}`, {
+                this.client.v1.get(`${getProjectCommandTemplateBasePath(projectID, env)}/${id}`, {
                     signal,
                 }),
             ).pipe(
@@ -97,12 +105,12 @@ export class ProjectCommandTemplateApi extends BaseApi {
         request: ProjectCommandTemplate_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandTemplate_CreateOne_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/command-templates`, json, {
+                this.client.v1.post(getProjectCommandTemplateBasePath(projectID, env), json, {
                     signal,
                 }),
             ).pipe(
@@ -117,11 +125,11 @@ export class ProjectCommandTemplateApi extends BaseApi {
         request: ProjectCommandTemplate_CreateFromTemplate_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandTemplate_CreateFromTemplate_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/command-templates/from-template`, payload, {
+                this.client.v1.post(`${getProjectCommandTemplateBasePath(projectID, env)}/from-template`, payload, {
                     signal,
                 }),
             ).pipe(
@@ -136,12 +144,12 @@ export class ProjectCommandTemplateApi extends BaseApi {
         request: ProjectCommandTemplate_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandTemplate_UpdateOne_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/command-templates/${id}`, json, {
+                this.client.v1.put(`${getProjectCommandTemplateBasePath(projectID, env)}/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -156,12 +164,12 @@ export class ProjectCommandTemplateApi extends BaseApi {
         request: ProjectCommandTemplate_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandTemplate_UpdateStatus_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/command-templates/${id}/status`, json, {
+                this.client.v1.put(`${getProjectCommandTemplateBasePath(projectID, env)}/${id}/status`, json, {
                     signal,
                 }),
             ).pipe(
@@ -175,10 +183,10 @@ export class ProjectCommandTemplateApi extends BaseApi {
     async deleteOne(
         request: ProjectCommandTemplate_DeleteOne_Req,
     ): Promise<Result<ProjectCommandTemplate_DeleteOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/command-templates/${id}`)).pipe(
+            from(this.client.v1.delete(`${getProjectCommandTemplateBasePath(projectID, env)}/${id}`)).pipe(
                 map(this.validator.deleteOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -192,7 +200,9 @@ export class ProjectCommandTemplateApi extends BaseApi {
         const { projectID, env, appID, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/command-templates/${id}/build`, {})).pipe(
+            from(
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/command-templates/${id}/build`, {}),
+            ).pipe(
                 map(this.validator.buildForApp),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

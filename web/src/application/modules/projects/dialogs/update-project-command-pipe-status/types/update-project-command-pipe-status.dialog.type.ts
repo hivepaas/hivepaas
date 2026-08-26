@@ -3,6 +3,7 @@ export interface UpdateProjectCommandPipeStatusDialogState {
         | {
               mode: "open";
               projectId: string;
+              env?: string;
               id: string;
           }
         | {

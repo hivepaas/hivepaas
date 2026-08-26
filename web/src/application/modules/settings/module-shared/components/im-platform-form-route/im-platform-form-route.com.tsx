@@ -82,6 +82,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
     const projectDetailQuery = ProjectImServiceQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -136,6 +137,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
             if (scope.type === "project") {
                 updateProjectImPlatform({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: imPlatform.id,
                     payload: updatePayload,
                 });
@@ -147,7 +149,11 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
         }
 
         if (scope.type === "project") {
-            createProjectImPlatform({ projectID: scope.projectId, payload });
+            createProjectImPlatform({
+                projectID: scope.projectId,
+                env: scope.env,
+                payload,
+            });
             return;
         }
 

@@ -39,6 +39,7 @@ function View({ scope, sslProvider }: Props) {
         if (scope.type === "project") {
             deleteProjectSslProvider({
                 projectID: scope.projectId,
+                env: scope.env,
                 id: sslProvider.id,
             });
             return;

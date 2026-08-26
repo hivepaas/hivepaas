@@ -57,6 +57,7 @@ export function UpdateAccessTokenStatusDialog() {
     const projectDetailQuery = ProjectAccessTokenQueries.useFindOneById(
         {
             projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
             id: detailId,
         },
         { enabled: state.mode === "open" && state.scope.type === "project" },
@@ -77,7 +78,12 @@ export function UpdateAccessTokenStatusDialog() {
         };
 
         if (state.scope.type === "project") {
-            updateProjectMeta({ projectID: state.scope.projectId, id: accessToken.id, payload });
+            updateProjectMeta({
+                projectID: state.scope.projectId,
+                env: state.scope.env,
+                id: accessToken.id,
+                payload,
+            });
             return;
         }
 

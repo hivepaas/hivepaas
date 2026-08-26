@@ -30,6 +30,7 @@ function SSHKeyTableView({ scope }: Props) {
     const projectQuery = ProjectSSHKeyQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination,
             sorting,
             search,
@@ -50,6 +51,7 @@ function SSHKeyTableView({ scope }: Props) {
                         {scope.type === "project" && (
                             <ProjectSettingsImportButton
                                 projectId={scope.projectId}
+                                env={scope.env}
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.SSHKey}
                             />
                         )}
@@ -99,10 +101,11 @@ export function SettingsSSHKeyTable() {
     return <SSHKeyTableView scope={{ type: "settings" }} />;
 }
 
-export function ProjectSSHKeyTable({ projectId }: ProjectProps) {
-    return <SSHKeyTableView scope={{ type: "project", projectId }} />;
+export function ProjectSSHKeyTable({ projectId, env }: ProjectProps) {
+    return <SSHKeyTableView scope={{ type: "project", projectId, env }} />;
 }
 
 interface ProjectProps {
     projectId: string;
+    env?: string;
 }

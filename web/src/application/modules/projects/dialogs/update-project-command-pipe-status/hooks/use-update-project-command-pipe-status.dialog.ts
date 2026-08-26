@@ -11,9 +11,15 @@ function createHook() {
         return {
             state,
             actions: {
-                open: (projectId: string, id: string, options: UpdateProjectCommandPipeStatusDialogOptions = {}) => {
+                open: (
+                    projectId: string,
+                    id: string,
+                    options: UpdateProjectCommandPipeStatusDialogOptions & { env?: string } = {},
+                ) => {
+                    const { env, ...restOptions } = options;
                     actions.open(projectId, id, {
-                        ...options,
+                        ...restOptions,
+                        env,
                         props: { ...props, ...options.props },
                     });
                 },

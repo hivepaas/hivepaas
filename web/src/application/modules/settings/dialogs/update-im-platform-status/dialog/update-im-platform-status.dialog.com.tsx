@@ -62,6 +62,7 @@ export function UpdateImPlatformStatusDialog() {
     const projectDetailQuery = ProjectImServiceQueries.useFindOneById(
         {
             projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
             id: detailId,
         },
         {
@@ -88,6 +89,7 @@ export function UpdateImPlatformStatusDialog() {
         if (state.scope.type === "project") {
             updateProjectStatus({
                 projectID: state.scope.projectId,
+                env: state.scope.env,
                 id: imPlatform.id,
                 payload,
             });

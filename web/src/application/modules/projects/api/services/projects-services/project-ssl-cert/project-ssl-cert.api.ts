@@ -53,7 +53,7 @@ function mapDownloadResponse(response: AxiosResponse<Blob>): ProjectSslCert_Down
 }
 
 function getProjectSslCertBasePath(projectID: string, env?: string): string {
-    if (env) {
+    if (env && env !== "all") {
         return `/projects/${projectID}/${encodeURIComponent(env)}/ssl-certs`;
     }
 
@@ -135,12 +135,12 @@ export class ProjectSslCertApi extends BaseApi {
         request: ProjectSslCert_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslCert_UpdateOne_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/ssl-certs/${id}`, json, {
+                this.client.v1.put(`${getProjectSslCertBasePath(projectID, env)}/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -155,12 +155,12 @@ export class ProjectSslCertApi extends BaseApi {
         request: ProjectSslCert_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSslCert_UpdateStatus_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/ssl-certs/${id}/status`, json, {
+                this.client.v1.put(`${getProjectSslCertBasePath(projectID, env)}/${id}/status`, json, {
                     signal,
                 }),
             ).pipe(
@@ -172,10 +172,10 @@ export class ProjectSslCertApi extends BaseApi {
     }
 
     async deleteOne(request: ProjectSslCert_DeleteOne_Req): Promise<Result<ProjectSslCert_DeleteOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/ssl-certs/${id}`)).pipe(
+            from(this.client.v1.delete(`${getProjectSslCertBasePath(projectID, env)}/${id}`)).pipe(
                 map(response => this.validator.deleteOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -184,10 +184,10 @@ export class ProjectSslCertApi extends BaseApi {
     }
 
     async renewOne(request: ProjectSslCert_RenewOne_Req): Promise<Result<ProjectSslCert_RenewOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/ssl-certs/${id}/renew`, {})).pipe(
+            from(this.client.v1.post(`${getProjectSslCertBasePath(projectID, env)}/${id}/renew`, {})).pipe(
                 map(response => this.validator.renewOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

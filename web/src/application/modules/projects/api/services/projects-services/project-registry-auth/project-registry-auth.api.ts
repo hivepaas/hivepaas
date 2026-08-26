@@ -20,7 +20,7 @@ import type {
 import type { ProjectRegistryAuthApiValidator } from "./project-registry-auth.api.validator";
 
 function getProjectRegistryAuthBasePath(projectID: string, env?: string): string {
-    if (env) {
+    if (env && env !== "all") {
         return `/projects/${projectID}/${encodeURIComponent(env)}/registry-auth`;
     }
 
@@ -77,12 +77,12 @@ export class ProjectRegistryAuthApi extends BaseApi {
         request: ProjectRegistryAuth_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectRegistryAuth_CreateOne_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/registry-auth`, json, {
+                this.client.v1.post(getProjectRegistryAuthBasePath(projectID, env), json, {
                     signal,
                 }),
             ).pipe(
@@ -97,12 +97,12 @@ export class ProjectRegistryAuthApi extends BaseApi {
         request: ProjectRegistryAuth_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectRegistryAuth_UpdateOne_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/registry-auth/${id}`, json, {
+                this.client.v1.put(`${getProjectRegistryAuthBasePath(projectID, env)}/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -117,12 +117,12 @@ export class ProjectRegistryAuthApi extends BaseApi {
         request: ProjectRegistryAuth_UpdateMeta_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectRegistryAuth_UpdateMeta_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/registry-auth/${id}/status`, json, {
+                this.client.v1.put(`${getProjectRegistryAuthBasePath(projectID, env)}/${id}/status`, json, {
                     signal,
                 }),
             ).pipe(
@@ -136,10 +136,10 @@ export class ProjectRegistryAuthApi extends BaseApi {
     async deleteOne(
         request: ProjectRegistryAuth_DeleteOne_Req,
     ): Promise<Result<ProjectRegistryAuth_DeleteOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/registry-auth/${id}`)).pipe(
+            from(this.client.v1.delete(`${getProjectRegistryAuthBasePath(projectID, env)}/${id}`)).pipe(
                 map(this.validator.deleteOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

@@ -8,7 +8,11 @@ import type {
 type State = UpdateProjectCommandTemplateStatusDialogState & UpdateProjectCommandTemplateStatusDialogOptions;
 
 interface Actions {
-    open: (projectId: string, id: string, options?: UpdateProjectCommandTemplateStatusDialogOptions) => void;
+    open: (
+        projectId: string,
+        id: string,
+        options?: UpdateProjectCommandTemplateStatusDialogOptions & { env?: string },
+    ) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -22,13 +26,15 @@ export const useUpdateProjectCommandTemplateStatusDialogState = create<State & A
     props: {},
 
     open: (projectId, id, options = {}) => {
+        const { env, ...restOptions } = options;
         set({
             state: {
                 mode: "open",
                 projectId,
+                env,
                 id,
             },
-            ...options,
+            ...restOptions,
         });
     },
 

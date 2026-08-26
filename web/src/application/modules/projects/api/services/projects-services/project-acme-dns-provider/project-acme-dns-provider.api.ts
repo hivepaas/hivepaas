@@ -63,11 +63,11 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
         request: ProjectAcmeDnsProvider_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectAcmeDnsProvider_FindOneById_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/acme-dns-providers/${id}`, {
+                this.client.v1.get(`${getProjectAcmeDnsProviderBasePath(projectID, env)}/${id}`, {
                     signal,
                 }),
             ).pipe(
@@ -82,12 +82,12 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
         request: ProjectAcmeDnsProvider_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectAcmeDnsProvider_CreateOne_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/acme-dns-providers`, json, {
+                this.client.v1.post(getProjectAcmeDnsProviderBasePath(projectID, env), json, {
                     signal,
                 }),
             ).pipe(
@@ -102,12 +102,12 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
         request: ProjectAcmeDnsProvider_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectAcmeDnsProvider_UpdateOne_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/acme-dns-providers/${id}`, json, {
+                this.client.v1.put(`${getProjectAcmeDnsProviderBasePath(projectID, env)}/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -122,12 +122,12 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
         request: ProjectAcmeDnsProvider_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectAcmeDnsProvider_UpdateStatus_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/acme-dns-providers/${id}/status`, json, {
+                this.client.v1.put(`${getProjectAcmeDnsProviderBasePath(projectID, env)}/${id}/status`, json, {
                     signal,
                 }),
             ).pipe(
@@ -141,10 +141,10 @@ export class ProjectAcmeDnsProviderApi extends BaseApi {
     async deleteOne(
         request: ProjectAcmeDnsProvider_DeleteOne_Req,
     ): Promise<Result<ProjectAcmeDnsProvider_DeleteOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/acme-dns-providers/${id}`)).pipe(
+            from(this.client.v1.delete(`${getProjectAcmeDnsProviderBasePath(projectID, env)}/${id}`)).pipe(
                 map(response => this.validator.deleteOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

@@ -57,6 +57,7 @@ export function UpdateCloudStorageStatusDialog() {
     const projectDetailQuery = ProjectCloudStorageQueries.useFindOneById(
         {
             projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
             id: detailId,
         },
         { enabled: state.mode === "open" && state.scope.type === "project" },
@@ -77,7 +78,12 @@ export function UpdateCloudStorageStatusDialog() {
         };
 
         if (state.scope.type === "project") {
-            updateProjectMeta({ projectID: state.scope.projectId, id: cloudStorage.id, payload });
+            updateProjectMeta({
+                projectID: state.scope.projectId,
+                env: state.scope.env,
+                id: cloudStorage.id,
+                payload,
+            });
             return;
         }
 

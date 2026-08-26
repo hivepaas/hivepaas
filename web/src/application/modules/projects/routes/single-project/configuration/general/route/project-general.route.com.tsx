@@ -55,6 +55,7 @@ export function ProjectGeneralRoute() {
                 envs: values.envs,
                 tags: values.tags,
                 note: values.note,
+                status: data.data.status,
                 owner: { id: values.ownerId },
                 updateVer: data.data.updateVer,
             },

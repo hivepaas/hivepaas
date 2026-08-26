@@ -19,6 +19,14 @@ import type {
 } from "./project-email.api.contracts";
 import type { ProjectEmailApiValidator } from "./project-email.api.validator";
 
+function getProjectEmailBasePath(projectID: string, env?: string): string {
+    if (env && env !== "all") {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/emails`;
+    }
+
+    return `/projects/${projectID}/emails`;
+}
+
 export class ProjectEmailApi extends BaseApi {
     public constructor(private readonly validator: ProjectEmailApiValidator) {
         super();
@@ -28,13 +36,13 @@ export class ProjectEmailApi extends BaseApi {
         request: ProjectEmail_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectEmail_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, env, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/emails`, {
+                this.client.v1.get(getProjectEmailBasePath(projectID, env), {
                     params: query.build(),
                     signal,
                 }),
@@ -50,11 +58,11 @@ export class ProjectEmailApi extends BaseApi {
         request: ProjectEmail_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectEmail_FindOneById_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/emails/${id}`, {
+                this.client.v1.get(`${getProjectEmailBasePath(projectID, env)}/${id}`, {
                     signal,
                 }),
             ).pipe(
@@ -69,12 +77,12 @@ export class ProjectEmailApi extends BaseApi {
         request: ProjectEmail_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectEmail_CreateOne_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/emails`, json, {
+                this.client.v1.post(getProjectEmailBasePath(projectID, env), json, {
                     signal,
                 }),
             ).pipe(
@@ -89,12 +97,12 @@ export class ProjectEmailApi extends BaseApi {
         request: ProjectEmail_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectEmail_UpdateOne_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/emails/${id}`, json, {
+                this.client.v1.put(`${getProjectEmailBasePath(projectID, env)}/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -109,12 +117,12 @@ export class ProjectEmailApi extends BaseApi {
         request: ProjectEmail_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectEmail_UpdateStatus_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/emails/${id}/status`, json, {
+                this.client.v1.put(`${getProjectEmailBasePath(projectID, env)}/${id}/status`, json, {
                     signal,
                 }),
             ).pipe(
@@ -126,10 +134,10 @@ export class ProjectEmailApi extends BaseApi {
     }
 
     async deleteOne(request: ProjectEmail_DeleteOne_Req): Promise<Result<ProjectEmail_DeleteOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/emails/${id}`)).pipe(
+            from(this.client.v1.delete(`${getProjectEmailBasePath(projectID, env)}/${id}`)).pipe(
                 map(this.validator.deleteOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

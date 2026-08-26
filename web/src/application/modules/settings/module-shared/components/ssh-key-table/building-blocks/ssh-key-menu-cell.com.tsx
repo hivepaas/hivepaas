@@ -36,7 +36,11 @@ function View({ scope, sshKey }: Props) {
 
     function handleDelete() {
         if (scope.type === "project") {
-            deleteProjectSSHKey({ projectID: scope.projectId, id: sshKey.id });
+            deleteProjectSSHKey({
+                projectID: scope.projectId,
+                env: scope.env,
+                id: sshKey.id,
+            });
             return;
         }
 

@@ -72,6 +72,7 @@ function View({ scope, sslCert }: Props) {
             if (scope.type === "project") {
                 const { data } = await projectQueries.downloadBundle({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: sslCert.id,
                 });
                 saveBlob(data.blob, data.filename ?? `${sslCert.name}.zip`);
@@ -93,6 +94,7 @@ function View({ scope, sslCert }: Props) {
         if (scope.type === "project") {
             renewProjectSslCert({
                 projectID: scope.projectId,
+                env: scope.env,
                 id: sslCert.id,
             });
             return;
@@ -105,6 +107,7 @@ function View({ scope, sslCert }: Props) {
         if (scope.type === "project") {
             deleteProjectSslCert({
                 projectID: scope.projectId,
+                env: scope.env,
                 id: sslCert.id,
             });
             return;

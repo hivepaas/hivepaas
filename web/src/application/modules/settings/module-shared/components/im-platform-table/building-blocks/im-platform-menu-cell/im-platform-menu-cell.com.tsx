@@ -39,6 +39,7 @@ function View({ scope, imPlatform }: Props) {
         if (scope.type === "project") {
             deleteProjectImPlatform({
                 projectID: scope.projectId,
+                env: scope.env,
                 id: imPlatform.id,
             });
             return;

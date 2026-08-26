@@ -9,7 +9,7 @@ interface Actions {
     open: (
         projectId: string,
         settingKind: ProjectSettingsImportKind,
-        options?: ImportProjectSettingsDialogOptions,
+        options?: ImportProjectSettingsDialogOptions & { env?: string },
     ) => void;
     close: () => void;
     clear: () => void;
@@ -19,6 +19,7 @@ interface Actions {
 const closedState = {
     mode: "closed" as const,
     projectId: null,
+    env: null,
     settingKind: null,
 };
 
@@ -28,13 +29,15 @@ export const useImportProjectSettingsDialogState = create<State & Actions>()(set
     props: {},
 
     open: (projectId, settingKind, options = {}) => {
+        const { env, ...restOptions } = options;
         set({
             state: {
                 mode: "open",
                 projectId,
+                env,
                 settingKind,
             },
-            ...options,
+            ...restOptions,
         });
     },
 

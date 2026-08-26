@@ -3,7 +3,6 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
-import type { ProjectBasicAuthApiValidator } from "./project-basic-auth.api.validator";
 import type {
     ProjectBasicAuth_CreateOne_Req,
     ProjectBasicAuth_CreateOne_Res,
@@ -18,6 +17,7 @@ import type {
     ProjectBasicAuth_UpdateStatus_Req,
     ProjectBasicAuth_UpdateStatus_Res,
 } from "./project-basic-auth.api.contracts";
+import type { ProjectBasicAuthApiValidator } from "./project-basic-auth.api.validator";
 
 function getProjectBasicAuthBasePath(projectID: string, env?: string): string {
     if (env) {
@@ -58,11 +58,11 @@ export class ProjectBasicAuthApi extends BaseApi {
         request: ProjectBasicAuth_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectBasicAuth_FindOneById_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`/projects/${projectID}/basic-auth/${id}`, {
+                this.client.v1.get(`${getProjectBasicAuthBasePath(projectID, env)}/${id}`, {
                     signal,
                 }),
             ).pipe(
@@ -77,12 +77,12 @@ export class ProjectBasicAuthApi extends BaseApi {
         request: ProjectBasicAuth_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectBasicAuth_CreateOne_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(`/projects/${projectID}/basic-auth`, json, {
+                this.client.v1.post(getProjectBasicAuthBasePath(projectID, env), json, {
                     signal,
                 }),
             ).pipe(
@@ -97,12 +97,12 @@ export class ProjectBasicAuthApi extends BaseApi {
         request: ProjectBasicAuth_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectBasicAuth_UpdateOne_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/basic-auth/${id}`, json, {
+                this.client.v1.put(`${getProjectBasicAuthBasePath(projectID, env)}/${id}`, json, {
                     signal,
                 }),
             ).pipe(
@@ -117,12 +117,12 @@ export class ProjectBasicAuthApi extends BaseApi {
         request: ProjectBasicAuth_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectBasicAuth_UpdateStatus_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`/projects/${projectID}/basic-auth/${id}/status`, json, {
+                this.client.v1.put(`${getProjectBasicAuthBasePath(projectID, env)}/${id}/status`, json, {
                     signal,
                 }),
             ).pipe(
@@ -134,10 +134,10 @@ export class ProjectBasicAuthApi extends BaseApi {
     }
 
     async deleteOne(request: ProjectBasicAuth_DeleteOne_Req): Promise<Result<ProjectBasicAuth_DeleteOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/basic-auth/${id}`)).pipe(
+            from(this.client.v1.delete(`${getProjectBasicAuthBasePath(projectID, env)}/${id}`)).pipe(
                 map(response => this.validator.deleteOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

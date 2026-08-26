@@ -20,7 +20,7 @@ import type {
 import type { ProjectNotificationApiValidator } from "./project-notification.api.validator";
 
 function getProjectNotificationsBasePath(projectID: string, env?: string): string {
-    if (env) {
+    if (env && env !== "all") {
         return `/projects/${projectID}/${encodeURIComponent(env)}/notifications`;
     }
 
@@ -77,11 +77,11 @@ export class ProjectNotificationApi extends BaseApi {
         request: ProjectNotification_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_CreateOne_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/notifications`, json, { signal })).pipe(
+            from(this.client.v1.post(getProjectNotificationsBasePath(projectID, env), json, { signal })).pipe(
                 map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -93,11 +93,11 @@ export class ProjectNotificationApi extends BaseApi {
         request: ProjectNotification_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_UpdateOne_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/notifications/${id}`, json, { signal })).pipe(
+            from(this.client.v1.put(`${getProjectNotificationsBasePath(projectID, env)}/${id}`, json, { signal })).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -108,11 +108,13 @@ export class ProjectNotificationApi extends BaseApi {
         request: ProjectNotification_UpdateStatus_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_UpdateStatus_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/notifications/${id}/status`, json, { signal })).pipe(
+            from(
+                this.client.v1.put(`${getProjectNotificationsBasePath(projectID, env)}/${id}/status`, json, { signal }),
+            ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -122,10 +124,10 @@ export class ProjectNotificationApi extends BaseApi {
     async deleteOne(
         request: ProjectNotification_DeleteOne_Req,
     ): Promise<Result<ProjectNotification_DeleteOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/notifications/${id}`)).pipe(
+            from(this.client.v1.delete(`${getProjectNotificationsBasePath(projectID, env)}/${id}`)).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

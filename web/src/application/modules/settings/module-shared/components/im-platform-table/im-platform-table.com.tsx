@@ -36,6 +36,7 @@ function ImPlatformTableView({ scope }: Props) {
     const projectQuery = ProjectImServiceQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination,
             sorting,
             search,
@@ -58,6 +59,7 @@ function ImPlatformTableView({ scope }: Props) {
                         {scope.type === "project" && (
                             <ProjectSettingsImportButton
                                 projectId={scope.projectId}
+                                env={scope.env}
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.ImService}
                             />
                         )}
@@ -107,10 +109,11 @@ export function SettingsImPlatformTable() {
     return <ImPlatformTableView scope={{ type: "settings" }} />;
 }
 
-export function ProjectImPlatformTable({ projectId }: ProjectProps) {
-    return <ImPlatformTableView scope={{ type: "project", projectId }} />;
+export function ProjectImPlatformTable({ projectId, env }: ProjectProps) {
+    return <ImPlatformTableView scope={{ type: "project", projectId, env }} />;
 }
 
 interface ProjectProps {
     projectId: string;
+    env?: string;
 }

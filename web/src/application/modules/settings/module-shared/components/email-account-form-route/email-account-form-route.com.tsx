@@ -99,6 +99,7 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
     const projectDetailQuery = ProjectEmailQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -131,12 +132,12 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
                 : {
                       endpoint: values.httpEndpoint,
                       method: values.httpMethod,
-                      username: values.httpUsername,
-                      displayName: values.httpDisplayName,
-                      password: values.httpPassword,
                       contentType: values.httpContentType,
                       headers,
                       fieldMapping: toFieldMapping(values.fieldMapping),
+                      username: values.httpUsername,
+                      displayName: values.httpDisplayName,
+                      password: values.httpPassword,
                   },
         };
     }
@@ -145,11 +146,15 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
         const payload = createPayload(values);
 
         if (isEditMode && emailAccount) {
-            const updatePayload = { ...payload, updateVer: emailAccount.updateVer };
+            const updatePayload = {
+                ...payload,
+                updateVer: emailAccount.updateVer,
+            };
 
             if (scope.type === "project") {
                 updateProjectEmailAccount({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: emailAccount.id,
                     payload: updatePayload,
                 });
@@ -161,7 +166,11 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
         }
 
         if (scope.type === "project") {
-            createProjectEmailAccount({ projectID: scope.projectId, payload });
+            createProjectEmailAccount({
+                projectID: scope.projectId,
+                env: scope.env,
+                payload,
+            });
             return;
         }
 

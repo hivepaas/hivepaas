@@ -7,6 +7,7 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 export type ProjectCommandPipe_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
@@ -16,6 +17,7 @@ export type ProjectCommandPipe_FindManyPaginated_Res = ApiResponsePaginated<Proj
 
 export type ProjectCommandPipe_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 
@@ -31,6 +33,7 @@ export type ProjectCommandPipe_CreateOne_Payload = {
 
 export type ProjectCommandPipe_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: ProjectCommandPipe_CreateOne_Payload;
 }>;
 
@@ -43,6 +46,7 @@ export type ProjectCommandPipe_CreateFromTemplate_Payload = {
 
 export type ProjectCommandPipe_CreateFromTemplate_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: ProjectCommandPipe_CreateFromTemplate_Payload;
 }>;
 
@@ -54,6 +58,7 @@ export type ProjectCommandPipe_UpdateOne_Payload = ProjectCommandPipe_CreateOne_
 
 export type ProjectCommandPipe_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: ProjectCommandPipe_UpdateOne_Payload;
 }>;
@@ -70,6 +75,7 @@ export type ProjectCommandPipe_UpdateStatus_Payload = {
 
 export type ProjectCommandPipe_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: ProjectCommandPipe_UpdateStatus_Payload;
 }>;
@@ -78,6 +84,7 @@ export type ProjectCommandPipe_UpdateStatus_Res = ApiResponseBase<{ type: "succe
 
 export type ProjectCommandPipe_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 

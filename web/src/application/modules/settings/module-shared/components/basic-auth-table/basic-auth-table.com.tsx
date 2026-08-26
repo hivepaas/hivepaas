@@ -36,6 +36,7 @@ function BasicAuthTableView({ scope }: Props) {
     const projectQuery = ProjectBasicAuthQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination,
             sorting,
             search,
@@ -58,6 +59,7 @@ function BasicAuthTableView({ scope }: Props) {
                         {scope.type === "project" && (
                             <ProjectSettingsImportButton
                                 projectId={scope.projectId}
+                                env={scope.env}
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.BasicAuth}
                             />
                         )}
@@ -107,10 +109,11 @@ export function SettingsBasicAuthTable() {
     return <BasicAuthTableView scope={{ type: "settings" }} />;
 }
 
-export function ProjectBasicAuthTable({ projectId }: ProjectProps) {
-    return <BasicAuthTableView scope={{ type: "project", projectId }} />;
+export function ProjectBasicAuthTable({ projectId, env }: ProjectProps) {
+    return <BasicAuthTableView scope={{ type: "project", projectId, env }} />;
 }
 
 interface ProjectProps {
     projectId: string;
+    env?: string;
 }

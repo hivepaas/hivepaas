@@ -57,6 +57,7 @@ export function UpdateSslCertStatusDialog() {
     const projectDetailQuery = ProjectSslCertQueries.useFindOneById(
         {
             projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
             id: detailId,
         },
         {
@@ -83,6 +84,7 @@ export function UpdateSslCertStatusDialog() {
         if (state.scope.type === "project") {
             updateProjectStatus({
                 projectID: state.scope.projectId,
+                env: state.scope.env,
                 id: sslCert.id,
                 payload,
             });

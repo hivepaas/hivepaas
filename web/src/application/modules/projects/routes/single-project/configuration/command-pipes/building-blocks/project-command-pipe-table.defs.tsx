@@ -7,7 +7,7 @@ import { SettingStatusBadge } from "~/settings/module-shared/components";
 import { ProjectCommandPipeEditCell } from "./project-command-pipe-edit-cell.com";
 import { ProjectCommandPipeMenuCell } from "./project-command-pipe-menu-cell.com";
 
-function createColumns(projectId: string): ColumnDef<ProjectCommandPipe>[] {
+function createColumns(projectId: string, env?: string): ColumnDef<ProjectCommandPipe>[] {
     return [
         {
             id: "view",
@@ -65,6 +65,7 @@ function createColumns(projectId: string): ColumnDef<ProjectCommandPipe>[] {
             cell: ({ row: { original } }) => (
                 <ProjectCommandPipeMenuCell
                     projectId={projectId}
+                    env={env}
                     commandPipe={original}
                 />
             ),

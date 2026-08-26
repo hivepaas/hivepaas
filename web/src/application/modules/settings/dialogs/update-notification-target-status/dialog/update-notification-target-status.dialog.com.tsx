@@ -57,6 +57,7 @@ export function UpdateNotificationTargetStatusDialog() {
     const projectDetailQuery = ProjectNotificationQueries.useFindOneById(
         {
             projectID: state.mode === "open" && state.scope.type === "project" ? state.scope.projectId : "",
+            env: state.mode === "open" && state.scope.type === "project" ? state.scope.env : undefined,
             id: detailId,
         },
         { enabled: state.mode === "open" && state.scope.type === "project" },
@@ -77,7 +78,12 @@ export function UpdateNotificationTargetStatusDialog() {
         };
 
         if (state.scope.type === "project") {
-            updateProjectStatus({ projectID: state.scope.projectId, id: notificationTarget.id, payload });
+            updateProjectStatus({
+                projectID: state.scope.projectId,
+                env: state.scope.env,
+                id: notificationTarget.id,
+                payload,
+            });
             return;
         }
 

@@ -22,18 +22,21 @@ export type ProjectSslProvider_FindManyPaginated_Res = ApiResponsePaginated<Sett
 
 export type ProjectSslProvider_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 export type ProjectSslProvider_FindOneById_Res = ApiResponseBase<SettingSslProvider>;
 
 export type ProjectSslProvider_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: SslProvider_CreateOne_Payload;
 }>;
 export type ProjectSslProvider_CreateOne_Res = ApiResponseBase<{ id: string }>;
 
 export type ProjectSslProvider_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: SslProvider_UpdateOne_Payload;
 }>;
@@ -41,6 +44,7 @@ export type ProjectSslProvider_UpdateOne_Res = ApiResponseBase<{ type: "success"
 
 export type ProjectSslProvider_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: SslProvider_UpdateStatus_Payload;
 }>;
@@ -48,6 +52,7 @@ export type ProjectSslProvider_UpdateStatus_Res = ApiResponseBase<{ type: "succe
 
 export type ProjectSslProvider_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 export type ProjectSslProvider_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;

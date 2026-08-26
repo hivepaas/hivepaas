@@ -10,6 +10,7 @@ import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@inf
 
 export type ProjectImService_FindManyPaginated_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
@@ -19,6 +20,7 @@ export type ProjectImService_FindManyPaginated_Res = ApiResponsePaginated<Settin
 
 export type ProjectImService_FindOneById_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 
@@ -26,6 +28,7 @@ export type ProjectImService_FindOneById_Res = ApiResponseBase<SettingImService>
 
 export type ProjectImService_CreateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     payload: ImService_CreateOne_Payload;
 }>;
 
@@ -33,6 +36,7 @@ export type ProjectImService_CreateOne_Res = ApiResponseBase<{ id: string }>;
 
 export type ProjectImService_UpdateOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: ImService_UpdateOne_Payload;
 }>;
@@ -41,6 +45,7 @@ export type ProjectImService_UpdateOne_Res = ApiResponseBase<{ type: "success" }
 
 export type ProjectImService_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
     payload: ImService_UpdateStatus_Payload;
 }>;
@@ -49,6 +54,7 @@ export type ProjectImService_UpdateStatus_Res = ApiResponseBase<{ type: "success
 
 export type ProjectImService_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    env?: string;
     id: string;
 }>;
 

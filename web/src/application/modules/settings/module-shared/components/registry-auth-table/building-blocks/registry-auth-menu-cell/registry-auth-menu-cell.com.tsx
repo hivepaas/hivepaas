@@ -40,6 +40,7 @@ function View({ scope, registryAuth }: Props) {
         if (scope.type === "project") {
             deleteProjectRegistryAuth({
                 projectID: scope.projectId,
+                env: scope.env,
                 id: registryAuth.id,
             });
             return;

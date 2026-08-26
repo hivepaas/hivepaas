@@ -39,6 +39,7 @@ function View({ scope, emailAccount }: Props) {
         if (scope.type === "project") {
             deleteProjectEmailAccount({
                 projectID: scope.projectId,
+                env: scope.env,
                 id: emailAccount.id,
             });
             return;

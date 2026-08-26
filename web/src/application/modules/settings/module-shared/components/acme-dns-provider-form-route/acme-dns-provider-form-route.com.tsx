@@ -99,6 +99,7 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
     const projectDetailQuery = ProjectAcmeDnsProviderQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -119,6 +120,7 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
             if (scope.type === "project") {
                 updateProjectAcmeDnsProvider({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: acmeDnsProvider.id,
                     payload: updatePayload,
                 });
@@ -135,6 +137,7 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
         if (scope.type === "project") {
             createProjectAcmeDnsProvider({
                 projectID: scope.projectId,
+                env: scope.env,
                 payload,
             });
             return;

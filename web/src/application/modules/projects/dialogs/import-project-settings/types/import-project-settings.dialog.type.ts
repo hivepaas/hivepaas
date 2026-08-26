@@ -5,11 +5,13 @@ export interface ImportProjectSettingsDialogState {
         | {
               mode: "open";
               projectId: string;
+              env?: string;
               settingKind: ProjectSettingsImportKind;
           }
         | {
               mode: "closed";
               projectId: null;
+              env?: null;
               settingKind: null;
           };
 }

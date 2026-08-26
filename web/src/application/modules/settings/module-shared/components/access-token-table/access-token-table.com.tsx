@@ -30,6 +30,7 @@ function AccessTokenTableView({ scope }: Props) {
     const projectQuery = ProjectAccessTokenQueries.useFindManyPaginated(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             pagination,
             sorting,
             search,
@@ -50,6 +51,7 @@ function AccessTokenTableView({ scope }: Props) {
                         {scope.type === "project" && (
                             <ProjectSettingsImportButton
                                 projectId={scope.projectId}
+                                env={scope.env}
                                 settingKind={PROJECT_SETTINGS_IMPORT_KIND.AccessToken}
                             />
                         )}
@@ -99,10 +101,11 @@ export function SettingsAccessTokenTable() {
     return <AccessTokenTableView scope={{ type: "settings" }} />;
 }
 
-export function ProjectAccessTokenTable({ projectId }: ProjectProps) {
-    return <AccessTokenTableView scope={{ type: "project", projectId }} />;
+export function ProjectAccessTokenTable({ projectId, env }: ProjectProps) {
+    return <AccessTokenTableView scope={{ type: "project", projectId, env }} />;
 }
 
 interface ProjectProps {
     projectId: string;
+    env?: string;
 }

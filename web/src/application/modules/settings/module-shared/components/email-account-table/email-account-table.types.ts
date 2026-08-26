@@ -5,4 +5,5 @@ export type EmailAccountTableScope =
     | {
           type: "project";
           projectId: string;
+          env?: string;
       };

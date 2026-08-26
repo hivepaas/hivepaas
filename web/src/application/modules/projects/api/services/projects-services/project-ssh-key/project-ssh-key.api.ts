@@ -19,6 +19,14 @@ import type {
 } from "./project-ssh-key.api.contracts";
 import type { ProjectSSHKeyApiValidator } from "./project-ssh-key.api.validator";
 
+function getProjectSSHKeyBasePath(projectID: string, env?: string): string {
+    if (env && env !== "all") {
+        return `/projects/${projectID}/${encodeURIComponent(env)}/ssh-keys`;
+    }
+
+    return `/projects/${projectID}/ssh-keys`;
+}
+
 export class ProjectSSHKeyApi extends BaseApi {
     public constructor(private readonly validator: ProjectSSHKeyApiValidator) {
         super();
@@ -28,12 +36,17 @@ export class ProjectSSHKeyApi extends BaseApi {
         request: ProjectSSHKey_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSSHKey_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting } = request.data;
+        const { projectID, env, search, pagination, sorting } = request.data;
         const query = this.queryBuilder.getInstance();
         query.pagination(pagination).sorting(sorting).search(search);
 
         return lastValueFrom(
-            from(this.client.v1.get(`/projects/${projectID}/ssh-keys`, { params: query.build(), signal })).pipe(
+            from(
+                this.client.v1.get(getProjectSSHKeyBasePath(projectID, env), {
+                    params: query.build(),
+                    signal,
+                }),
+            ).pipe(
                 map(this.validator.findManyPaginated),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -45,10 +58,14 @@ export class ProjectSSHKeyApi extends BaseApi {
         request: ProjectSSHKey_FindOneById_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSSHKey_FindOneById_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.get(`/projects/${projectID}/ssh-keys/${id}`, { signal })).pipe(
+            from(
+                this.client.v1.get(`${getProjectSSHKeyBasePath(projectID, env)}/${id}`, {
+                    signal,
+                }),
+            ).pipe(
                 map(this.validator.findOneById),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -60,11 +77,15 @@ export class ProjectSSHKeyApi extends BaseApi {
         request: ProjectSSHKey_CreateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSSHKey_CreateOne_Res, Error>> {
-        const { projectID, payload } = request.data;
+        const { projectID, env, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/ssh-keys`, json, { signal })).pipe(
+            from(
+                this.client.v1.post(getProjectSSHKeyBasePath(projectID, env), json, {
+                    signal,
+                }),
+            ).pipe(
                 map(this.validator.createOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -76,11 +97,15 @@ export class ProjectSSHKeyApi extends BaseApi {
         request: ProjectSSHKey_UpdateOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSSHKey_UpdateOne_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/ssh-keys/${id}`, json, { signal })).pipe(
+            from(
+                this.client.v1.put(`${getProjectSSHKeyBasePath(projectID, env)}/${id}`, json, {
+                    signal,
+                }),
+            ).pipe(
                 map(this.validator.updateOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -92,11 +117,15 @@ export class ProjectSSHKeyApi extends BaseApi {
         request: ProjectSSHKey_UpdateMeta_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectSSHKey_UpdateMeta_Res, Error>> {
-        const { projectID, id, payload } = request.data;
+        const { projectID, env, id, payload } = request.data;
         const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`/projects/${projectID}/ssh-keys/${id}/status`, json, { signal })).pipe(
+            from(
+                this.client.v1.put(`${getProjectSSHKeyBasePath(projectID, env)}/${id}/status`, json, {
+                    signal,
+                }),
+            ).pipe(
                 map(this.validator.updateMeta),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -105,10 +134,10 @@ export class ProjectSSHKeyApi extends BaseApi {
     }
 
     async deleteOne(request: ProjectSSHKey_DeleteOne_Req): Promise<Result<ProjectSSHKey_DeleteOne_Res, Error>> {
-        const { projectID, id } = request.data;
+        const { projectID, env, id } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/ssh-keys/${id}`)).pipe(
+            from(this.client.v1.delete(`${getProjectSSHKeyBasePath(projectID, env)}/${id}`)).pipe(
                 map(this.validator.deleteOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

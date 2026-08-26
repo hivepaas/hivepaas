@@ -5,7 +5,11 @@ import type { UpdateProjectCommandPipeStatusDialogOptions, UpdateProjectCommandP
 type State = UpdateProjectCommandPipeStatusDialogState & UpdateProjectCommandPipeStatusDialogOptions;
 
 interface Actions {
-    open: (projectId: string, id: string, options?: UpdateProjectCommandPipeStatusDialogOptions) => void;
+    open: (
+        projectId: string,
+        id: string,
+        options?: UpdateProjectCommandPipeStatusDialogOptions & { env?: string },
+    ) => void;
     close: () => void;
     clear: () => void;
     destroy: () => void;
@@ -19,13 +23,15 @@ export const useUpdateProjectCommandPipeStatusDialogState = create<State & Actio
     props: {},
 
     open: (projectId, id, options = {}) => {
+        const { env, ...restOptions } = options;
         set({
             state: {
                 mode: "open",
                 projectId,
+                env,
                 id,
             },
-            ...options,
+            ...restOptions,
         });
     },
 

@@ -84,6 +84,7 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
     const projectDetailQuery = ProjectCloudStorageQueries.useFindOneById(
         {
             projectID: scope.type === "project" ? scope.projectId : "",
+            env: scope.type === "project" ? scope.env : undefined,
             id: detailId,
         },
         { enabled: isEditMode && scope.type === "project" },
@@ -117,6 +118,7 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
             if (scope.type === "project") {
                 updateProjectCloudStorage({
                     projectID: scope.projectId,
+                    env: scope.env,
                     id: cloudStorage.id,
                     payload: updatePayload,
                 });
@@ -128,7 +130,11 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
         }
 
         if (scope.type === "project") {
-            createProjectCloudStorage({ projectID: scope.projectId, payload });
+            createProjectCloudStorage({
+                projectID: scope.projectId,
+                env: scope.env,
+                payload,
+            });
             return;
         }
 

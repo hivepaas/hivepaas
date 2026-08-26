@@ -15,6 +15,7 @@ import {
     useWatch,
 } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
+import { toast } from "sonner";
 import { ProjectCommandPipeQueries, ProjectSslCertQueries } from "~/projects/data";
 import type { AppCloneSettings } from "~/projects/domain";
 import type { ProjectEnvEntity } from "~/projects/domain";
@@ -22,7 +23,15 @@ import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 
-import { AppLink, Combobox, ContentBlock, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import {
+    AppLink,
+    Combobox,
+    ComboboxWithAddon,
+    ContentBlock,
+    InfoBlock,
+    LabelWithInfo,
+    PopConfirm,
+} from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 
 import type { ValidationException } from "@infrastructure/exceptions/validation";
@@ -359,7 +368,7 @@ function CommandPipesSection({ projectId, env, readOnly }: { projectId: string; 
 
     const {
         data: { data: commandPipesList } = DEFAULT_PAGINATED_DATA,
-        isFetching,
+        isLoading,
         refetch,
         isRefetching,
     } = ProjectCommandPipeQueries.useFindManyPaginated({
@@ -395,6 +404,7 @@ function CommandPipesSection({ projectId, env, readOnly }: { projectId: string; 
         }
 
         if (commandPipes.some(pipe => pipe.id === selectedCommand.id)) {
+            toast.error(`"${selectedCommand.name}" already exists`);
             return;
         }
 
@@ -446,35 +456,40 @@ function CommandPipesSection({ projectId, env, readOnly }: { projectId: string; 
                         </p>
                     </div>
 
-                    <InfoBlock title="Command Pipes">
-                        <div className="flex flex-col gap-3 max-w-[600px]">
-                            <div className="flex items-center gap-2">
-                                <Combobox<{ id: string; name: string }>
-                                    options={availableOptions}
-                                    value={selectedCommand?.id ?? null}
+                    <InfoBlock
+                        title={
+                            <LabelWithInfo
+                                label="Command Pipes"
+                                content="Command pipes to execute on the target app after cloning."
+                            />
+                        }
+                    >
+                        <div className="flex max-w-[545px] flex-col gap-2">
+                            <div className="flex gap-2">
+                                <ComboboxWithAddon<{ id: string; name: string }>
+                                    addonLeft="Pipe"
+                                    value={selectedCommand?.id}
                                     onChange={(_, option) => {
                                         setSelectedCommand(option);
                                     }}
                                     onSearch={setSearchQuery}
-                                    placeholder="Select command to add"
-                                    searchable
-                                    closeOnSelect
-                                    emptyText="No command pipes available"
-                                    valueKey="id"
-                                    loading={isFetching}
                                     onRefresh={() => void refetch()}
                                     isRefreshing={isRefetching}
+                                    loading={isLoading}
+                                    valueKey="id"
+                                    options={availableOptions}
+                                    placeholder="select command pipe to add"
+                                    classNameContainer="max-w-[460px]"
                                     disabled={readOnly}
-                                    className="min-w-[220px]"
                                 />
+
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    disabled={readOnly || !selectedCommand}
                                     onClick={handleAddCommand}
+                                    disabled={readOnly || !selectedCommand}
                                 >
-                                    <Plus className="mr-2 size-4" />
-                                    Add
+                                    <Plus className="size-4" /> Add
                                 </Button>
                             </div>
 
@@ -489,30 +504,56 @@ function CommandPipesSection({ projectId, env, readOnly }: { projectId: string; 
                                 </AppLink.Basic>
                             </div>
 
-                            {commandPipes.length > 0 ? (
-                                <ul className="flex flex-col gap-2">
+                            {commandPipes.length > 0 && (
+                                <div className="flex w-full flex-col divide-y">
                                     {commandPipes.map(pipe => (
-                                        <li
+                                        <div
                                             key={pipe.id}
-                                            className="flex items-center justify-between rounded-md border px-3 py-2 text-sm"
+                                            className="grid grid-cols-[minmax(0,1fr)_auto_76px] items-center gap-2 py-1.5"
                                         >
-                                            <span className="truncate">{pipe.name}</span>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                className="size-8 shrink-0"
-                                                disabled={readOnly}
-                                                onClick={() => {
-                                                    handleRemoveCommand(pipe.id);
-                                                }}
+                                            <div className="grid min-w-0 grid-cols-1 items-center">
+                                                <span className="break-words text-sm">{pipe.name}</span>
+                                            </div>
+                                            <AppLink.Basic
+                                                to={ROUTE.projects.single.providerConfiguration.commandPipes.edit.$route(
+                                                    projectId,
+                                                    pipe.id,
+                                                )}
+                                                className="shrink-0 text-xs text-link"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                ignorePrevPath
                                             >
-                                                <Trash2 className="size-4" />
-                                            </Button>
-                                        </li>
+                                                View
+                                            </AppLink.Basic>
+                                            <div className="flex w-[76px] justify-end">
+                                                <PopConfirm
+                                                    title="Remove command pipe"
+                                                    variant="destructive"
+                                                    confirmText="Remove"
+                                                    cancelText="Cancel"
+                                                    description="Are you sure you want to remove this command pipe?"
+                                                    onConfirm={() => {
+                                                        if (!readOnly) {
+                                                            handleRemoveCommand(pipe.id);
+                                                        }
+                                                    }}
+                                                >
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 rounded-md text-zinc-400 hover:bg-red-50 hover:text-red-500"
+                                                        disabled={readOnly}
+                                                    >
+                                                        <Trash2 className="size-3.5" />
+                                                    </Button>
+                                                </PopConfirm>
+                                            </div>
+                                        </div>
                                     ))}
-                                </ul>
-                            ) : null}
+                                </div>
+                            )}
                         </div>
                     </InfoBlock>
                 </>

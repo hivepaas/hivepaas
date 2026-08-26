@@ -42,24 +42,25 @@ export function FieldListLayout({
                     variant="outline"
                     onClick={onAdd}
                     disabled={disabled || addDisabled}
+                    className="h-9 px-4"
                 >
                     <Plus className="size-4" /> Add
                 </Button>
             </div>
-            <div className="divide-y divide-zinc-200">
+            <div className="mt-2 divide-y divide-zinc-200">
                 {items.map(item => {
                     const hasEdit = item.onEdit !== undefined;
 
                     return (
                         <div
                             key={item.id}
-                            className="flex items-center gap-2 py-2"
+                            className="flex items-center group gap-2 py-2"
                         >
                             {item.content}
                             <div
                                 className={cn(
-                                    "flex shrink-0 items-center gap-1",
-                                    hasEdit ? "w-[76px] justify-space-between" : "w-[76px]",
+                                    "flex shrink-0 items-center justify-end gap-1",
+                                    hasEdit ? "w-[76px]" : "w-10",
                                 )}
                             >
                                 {hasEdit && (

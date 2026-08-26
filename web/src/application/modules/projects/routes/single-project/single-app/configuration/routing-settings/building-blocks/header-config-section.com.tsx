@@ -161,6 +161,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                     name={`${prefix}.toRemoveFromRequests` as never}
                                     placeholder="Header name"
                                     className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
+                                    enableValueEditing
                                     disabled={readOnly}
                                 />
                             </InfoBlock>
@@ -191,6 +192,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                     name={`${prefix}.toRemoveFromResponses` as never}
                                     placeholder="Header name"
                                     className={HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}
+                                    enableValueEditing
                                     disabled={readOnly}
                                 />
                             </InfoBlock>

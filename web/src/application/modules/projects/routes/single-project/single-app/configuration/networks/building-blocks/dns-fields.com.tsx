@@ -43,6 +43,7 @@ export function DNSFields({ readOnly = false }: Props) {
                         name={listName}
                         placeholder={placeholder}
                         className="max-w-[590px]"
+                        enableValueEditing
                         disabled={readOnly}
                     />
                 </InfoBlock>

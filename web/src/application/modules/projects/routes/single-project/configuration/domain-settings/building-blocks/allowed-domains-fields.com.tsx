@@ -23,6 +23,7 @@ export function AllowedDomainsFields({ readOnly = false }: Props) {
                     name="allowedDomains"
                     label="Name"
                     placeholder="*.sub.domain.name"
+                    enableValueEditing
                     disabled={readOnly}
                 />
                 <FieldError errors={[errors.allowedDomains]} />

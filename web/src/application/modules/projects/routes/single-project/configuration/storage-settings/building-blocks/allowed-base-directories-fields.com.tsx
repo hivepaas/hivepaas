@@ -30,6 +30,7 @@ export function AllowedBaseDirectoriesFields({ readOnly = false }: Props) {
                     label="Directory"
                     placeholder="directory"
                     className="max-w-[545px]"
+                    enableValueEditing
                     disabled={readOnly}
                 />
                 <FieldError errors={[errors.bindSettings?.baseDirs]} />

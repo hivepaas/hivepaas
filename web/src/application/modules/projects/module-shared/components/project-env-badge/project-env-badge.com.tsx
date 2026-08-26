@@ -21,7 +21,7 @@ export function ProjectEnvBadge({ name, color, className }: ProjectEnvBadgeProps
                 backgroundColor,
             }}
             className={cn(
-                "inline-flex h-7 max-w-[10rem] shrink-0 items-center justify-center rounded-md px-2.5 text-xs font-semibold text-white",
+                "inline-flex h-7 w-fit max-w-[10rem] shrink-0 items-center justify-center rounded-md px-2.5 text-xs font-semibold text-white",
                 className,
             )}
         >

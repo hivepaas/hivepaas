@@ -11,7 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 	"github.com/hivepaas/hivepaas/services/git/gitapi"
-	"github.com/hivepaas/hivepaas/services/git/github"
 )
 
 const (
@@ -105,15 +104,9 @@ func (uc *UC) sendPRComment(
 	prNumber := int(prCommentEvent.PRNumber)
 
 	// Case 1: Webhook setting is directly a Github App
-	if data != nil && data.WebhookSetting != nil && data.WebhookSetting.Type == base.SettingTypeGithubApp {
-		client, err := github.NewFromSetting(data.WebhookSetting)
-		if err != nil {
-			return apperrors.Wrap(err)
-		}
-		if _, err = client.CreatePullRequestComment(ctx, owner, repo, prNumber, message); err != nil {
-			return apperrors.Wrap(err)
-		}
-		return nil
+	if data.WebhookSetting != nil && data.WebhookSetting.Type == base.SettingTypeGithubApp {
+		err = gitapi.CreatePullRequestCommentWithRetry(ctx, data.WebhookSetting, owner, repo, prNumber, message)
+		return apperrors.Wrap(err)
 	}
 
 	// Case 2: Resolve credentials from the app's deployment settings

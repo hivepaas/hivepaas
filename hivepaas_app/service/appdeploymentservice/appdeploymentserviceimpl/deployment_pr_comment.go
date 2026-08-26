@@ -50,10 +50,6 @@ func (s *service) notifyPRForDeploymentResult(
 	repo := parsedURL.Name
 
 	message := s.buildPRDeploymentResultMessage(data)
-	if message == "" {
-		return nil
-	}
-
 	return s.dispatchPRComment(ctx, db, data, owner, repo, pullNumber, message)
 }
 
@@ -183,7 +179,6 @@ func (s *service) resolveAppPreviewURL(app *entity.App) string {
 	return ""
 }
 
-//nolint:gocognit,gocyclo
 func (s *service) dispatchPRComment(
 	ctx context.Context,
 	db database.IDB,
@@ -193,6 +188,9 @@ func (s *service) dispatchPRComment(
 	pullNumber int,
 	message string,
 ) (err error) {
+	if message == "" {
+		return nil
+	}
 	repoSource := data.Deployment.Settings.RepoSource
 
 	// 1. Try credentials from deployment repo source

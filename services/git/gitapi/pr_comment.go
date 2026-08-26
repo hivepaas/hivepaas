@@ -32,6 +32,9 @@ func CreatePullRequestComment(
 	pullNumber int,
 	message string,
 ) error {
+	if message == "" {
+		return nil
+	}
 	switch setting.Type { //nolint:exhaustive
 	case base.SettingTypeGithubApp:
 		client, err := github.NewFromSetting(setting)
@@ -73,11 +76,14 @@ func CreatePullRequestComment(
 			}
 
 		case base.GitSourceBitbucket, base.GitSourceGogs:
-			return nil
-		default:
-			return nil
-		}
-	}
+			fallthrough
 
+		default:
+			return apperrors.Wrap(apperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
+		}
+
+	default:
+		return apperrors.Wrap(apperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
+	}
 	return nil
 }

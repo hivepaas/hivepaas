@@ -23,7 +23,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/image-build-settings [get]
 func (h *Handler) GetImageBuildSettings(ctx *gin.Context) {
-	h.GetUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.ObjectScopeProject)
+	h.GetUniqueSetting(ctx, base.ResourceTypeImageBuild, base.ObjectScopeProject)
 }
 
 // UpdateImageBuildSettings Updates image build settings
@@ -39,7 +39,7 @@ func (h *Handler) GetImageBuildSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/image-build-settings [put]
 func (h *Handler) UpdateImageBuildSettings(ctx *gin.Context) {
-	h.UpdateUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.ObjectScopeProject)
+	h.UpdateUniqueSetting(ctx, base.ResourceTypeImageBuild, base.ObjectScopeProject)
 }
 
 // UpdateImageBuildSettingsStatus Updates image build status
@@ -55,7 +55,7 @@ func (h *Handler) UpdateImageBuildSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/image-build-settings/status [put]
 func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
-	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeImageBuildSettings, base.ObjectScopeProject)
+	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeImageBuild, base.ObjectScopeProject)
 }
 
 // DeleteImageBuildSettings Deletes image build settings
@@ -70,7 +70,7 @@ func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /projects/{projectID}/image-build-settings [delete]
 func (h *Handler) DeleteImageBuildSettings(ctx *gin.Context) {
-	h.DeleteUniqueSetting(ctx, base.ResourceTypeImageBuildSettings, base.ObjectScopeProject)
+	h.DeleteUniqueSetting(ctx, base.ResourceTypeImageBuild, base.ObjectScopeProject)
 }
 
 // GetRepoCacheInfo Gets repo cache info

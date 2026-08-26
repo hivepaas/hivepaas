@@ -37,12 +37,12 @@ func (s *service) initDefaultImageBuildSettings(
 	imageBuildSetting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeGlobal,
-		Type:        base.SettingTypeImageBuildSettings,
+		Type:        base.SettingTypeImageBuild,
 		Status:      base.SettingStatusActive,
 		Name:        imageBuildSettingName,
 		Inheritable: true,
 		Default:     true,
-		Version:     entity.CurrentImageBuildSettingsVersion,
+		Version:     entity.CurrentImageBuildVersion,
 		CreatedAt:   timeNow,
 		UpdatedAt:   timeNow,
 	}

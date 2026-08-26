@@ -120,14 +120,14 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 	}
 
 	{ // image-build settings group
-		imageBuildSettingsGroup := settingGroup.Group("/image-build-settings")
-		imageBuildSettingsGroup.GET("", settingHandler.GetImageBuildSettings)
-		imageBuildSettingsGroup.PUT("", settingHandler.UpdateImageBuildSettings)
-		imageBuildSettingsGroup.PUT("/status", settingHandler.UpdateImageBuildSettingsStatus)
-		imageBuildSettingsGroup.DELETE("", settingHandler.DeleteImageBuildSettings)
+		imageBuildGroup := settingGroup.Group("/image-build-settings")
+		imageBuildGroup.GET("", settingHandler.GetImageBuildSettings)
+		imageBuildGroup.PUT("", settingHandler.UpdateImageBuildSettings)
+		imageBuildGroup.PUT("/status", settingHandler.UpdateImageBuildSettingsStatus)
+		imageBuildGroup.DELETE("", settingHandler.DeleteImageBuildSettings)
 		// Repo cache
-		imageBuildSettingsGroup.GET("/repo-cache", settingHandler.GetRepoCacheInfo)
-		imageBuildSettingsGroup.POST("/repo-cache/clear", settingHandler.ClearRepoCache)
+		imageBuildGroup.GET("/repo-cache", settingHandler.GetRepoCacheInfo)
+		imageBuildGroup.POST("/repo-cache/clear", settingHandler.ClearRepoCache)
 	}
 
 	{ // oauth group

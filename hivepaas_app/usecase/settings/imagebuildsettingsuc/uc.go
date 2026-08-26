@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	currentSettingType = base.SettingTypeImageBuildSettings
+	currentSettingType = base.SettingTypeImageBuild
 )
 
 type UC struct {

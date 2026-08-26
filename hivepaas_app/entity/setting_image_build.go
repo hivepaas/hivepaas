@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	CurrentImageBuildSettingsVersion = 1
+	CurrentImageBuildVersion = 1
 
 	defaultCPUPeriod = 100000
 )
 
-var _ = registerSettingParser(base.SettingTypeImageBuildSettings, &imageBuildSettingsParser{})
+var _ = registerSettingParser(base.SettingTypeImageBuild, &imageBuildSettingsParser{})
 
 type imageBuildSettingsParser struct {
 }
@@ -57,7 +57,7 @@ func (s *ImageBuildResourceSettings) CPUsAsPeriodAndQuota() (int64, int64) {
 }
 
 func (s *ImageBuildSettings) GetType() base.SettingType {
-	return base.SettingTypeImageBuildSettings
+	return base.SettingTypeImageBuild
 }
 
 func (s *ImageBuildSettings) GetRefObjectIDs() *RefObjectIDs {

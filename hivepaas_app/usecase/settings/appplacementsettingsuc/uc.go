@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	currentSettingType = base.SettingTypeAppPlacementSettings
+	currentSettingType = base.SettingTypeAppPlacement
 )
 
 type UC struct {

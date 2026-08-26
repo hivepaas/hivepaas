@@ -28,7 +28,7 @@ func (s *service) InitDefaults(
 
 	// App placement settings
 	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
-		return item.Type == base.SettingTypeAppPlacementSettings
+		return item.Type == base.SettingTypeAppPlacement
 	}) {
 		err = s.initDefaultAppPlacementSettings(ctx, db, timeNow)
 		if err != nil {
@@ -38,7 +38,7 @@ func (s *service) InitDefaults(
 
 	// Image build settings
 	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
-		return item.Type == base.SettingTypeImageBuildSettings
+		return item.Type == base.SettingTypeImageBuild
 	}) {
 		err = s.initDefaultImageBuildSettings(ctx, db, timeNow)
 		if err != nil {

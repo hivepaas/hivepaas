@@ -25,12 +25,12 @@ func (s *service) initDefaultAppPlacementSettings(
 	appPlacementSetting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeGlobal,
-		Type:        base.SettingTypeAppPlacementSettings,
+		Type:        base.SettingTypeAppPlacement,
 		Status:      base.SettingStatusActive,
 		Name:        appPlacementSettingName,
 		Inheritable: true,
 		Default:     true,
-		Version:     entity.CurrentAppPlacementSettingsVersion,
+		Version:     entity.CurrentAppPlacementVersion,
 		CreatedAt:   timeNow,
 		UpdatedAt:   timeNow,
 	}

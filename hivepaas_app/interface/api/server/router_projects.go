@@ -185,14 +185,14 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	}
 
 	{ // Image build settings group
-		imageBuildSettingsGroup := projectGroup.Group("/:projectID/image-build-settings")
-		imageBuildSettingsGroup.GET("", projectSettingsHandler.GetImageBuildSettings)
-		imageBuildSettingsGroup.PUT("", projectSettingsHandler.UpdateImageBuildSettings)
-		imageBuildSettingsGroup.PUT("/status", projectSettingsHandler.UpdateImageBuildSettingsStatus)
-		imageBuildSettingsGroup.DELETE("", projectSettingsHandler.DeleteImageBuildSettings)
+		imageBuildGroup := projectGroup.Group("/:projectID/image-build-settings")
+		imageBuildGroup.GET("", projectSettingsHandler.GetImageBuildSettings)
+		imageBuildGroup.PUT("", projectSettingsHandler.UpdateImageBuildSettings)
+		imageBuildGroup.PUT("/status", projectSettingsHandler.UpdateImageBuildSettingsStatus)
+		imageBuildGroup.DELETE("", projectSettingsHandler.DeleteImageBuildSettings)
 		// Repo cache
-		imageBuildSettingsGroup.GET("/repo-cache", projectSettingsHandler.GetRepoCacheInfo)
-		imageBuildSettingsGroup.POST("/repo-cache/clear", projectSettingsHandler.ClearRepoCache)
+		imageBuildGroup.GET("/repo-cache", projectSettingsHandler.GetRepoCacheInfo)
+		imageBuildGroup.POST("/repo-cache/clear", projectSettingsHandler.ClearRepoCache)
 	}
 
 	{ // Notification group

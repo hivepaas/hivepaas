@@ -85,7 +85,7 @@ func (s *service) loadPlacementSettingsData(
 	// Load placement settings
 	if data.PlacementSettings == nil {
 		placementSetting, err := s.settingRepo.GetSingle(ctx, db, scope,
-			base.SettingTypeAppPlacementSettings, false)
+			base.SettingTypeAppPlacement, false)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 			return apperrors.Wrap(err)
 		}
@@ -97,7 +97,7 @@ func (s *service) loadPlacementSettingsData(
 	// Load build settings
 	if data.BuildSettings == nil {
 		buildSetting, err := s.settingRepo.GetSingle(ctx, db, scope,
-			base.SettingTypeImageBuildSettings, false)
+			base.SettingTypeImageBuild, false)
 		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 			return apperrors.Wrap(err)
 		}

@@ -4,17 +4,17 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 )
 
-func (s *AppPlacementSettings) Migrate(setting *Setting) (hasChange bool, err error) {
-	if setting.Version == CurrentAppPlacementSettingsVersion {
+func (s *ImageBuildSettings) Migrate(setting *Setting) (hasChange bool, err error) {
+	if setting.Version == CurrentImageBuildVersion {
 		return false, nil
 	}
-	if setting.Version > CurrentAppPlacementSettingsVersion {
+	if setting.Version > CurrentImageBuildVersion {
 		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change
 
-	setting.Version = CurrentAppPlacementSettingsVersion
+	setting.Version = CurrentImageBuildVersion
 	setting.UpdateVer++
 	setting.MustSetData(s)
 	return true, nil

@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	CurrentAppPlacementSettingsVersion = 1
+	CurrentAppPlacementVersion = 1
 )
 
-var _ = registerSettingParser(base.SettingTypeAppPlacementSettings, &appPlacementSettingsParser{})
+var _ = registerSettingParser(base.SettingTypeAppPlacement, &appPlacementSettingsParser{})
 
 type appPlacementSettingsParser struct {
 }
@@ -25,7 +25,7 @@ type AppPlacementSettings struct {
 }
 
 func (s *AppPlacementSettings) GetType() base.SettingType {
-	return base.SettingTypeAppPlacementSettings
+	return base.SettingTypeAppPlacement
 }
 
 func (s *AppPlacementSettings) GetRefObjectIDs() *RefObjectIDs {

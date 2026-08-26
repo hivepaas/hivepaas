@@ -72,7 +72,7 @@ func (h *Handler) GetUniqueSetting(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.AppFeatureSettingsUC.GetAppFeatureSettings(reqCtx, auth, r) }
 
-	case base.ResourceTypeAppPlacementSettings:
+	case base.ResourceTypeAppPlacement:
 		r := appplacementsettingsdto.NewGetAppPlacementSettingsReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.AppPlacementSettingsUC.GetAppPlacementSettings(reqCtx, auth, r) }
@@ -82,7 +82,7 @@ func (h *Handler) GetUniqueSetting(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.GetDomainSettings(reqCtx, auth, r) }
 
-	case base.ResourceTypeImageBuildSettings:
+	case base.ResourceTypeImageBuild:
 		r := imagebuildsettingsdto.NewGetImageBuildSettingsReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.GetImageBuildSettings(reqCtx, auth, r) }

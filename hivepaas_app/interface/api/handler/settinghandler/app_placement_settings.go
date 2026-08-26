@@ -19,7 +19,7 @@ import (
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/app-placement-settings [get]
 func (h *Handler) GetAppPlacementSettings(ctx *gin.Context) {
-	h.GetUniqueSetting(ctx, base.ResourceTypeAppPlacementSettings, base.ObjectScopeGlobal)
+	h.GetUniqueSetting(ctx, base.ResourceTypeAppPlacement, base.ObjectScopeGlobal)
 }
 
 // UpdateAppPlacementSettings Updates app placement settings
@@ -34,7 +34,7 @@ func (h *Handler) GetAppPlacementSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/app-placement-settings [put]
 func (h *Handler) UpdateAppPlacementSettings(ctx *gin.Context) {
-	h.UpdateUniqueSetting(ctx, base.ResourceTypeAppPlacementSettings, base.ObjectScopeGlobal)
+	h.UpdateUniqueSetting(ctx, base.ResourceTypeAppPlacement, base.ObjectScopeGlobal)
 }
 
 // UpdateAppPlacementSettingsStatus Updates app placement settings status
@@ -49,7 +49,7 @@ func (h *Handler) UpdateAppPlacementSettings(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/app-placement-settings/status [put]
 func (h *Handler) UpdateAppPlacementSettingsStatus(ctx *gin.Context) {
-	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeAppPlacementSettings, base.ObjectScopeGlobal)
+	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeAppPlacement, base.ObjectScopeGlobal)
 }
 
 // DeleteAppPlacementSettings Deletes app placement settings
@@ -63,5 +63,5 @@ func (h *Handler) UpdateAppPlacementSettingsStatus(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /settings/app-placement-settings [delete]
 func (h *Handler) DeleteAppPlacementSettings(ctx *gin.Context) {
-	h.DeleteUniqueSetting(ctx, base.ResourceTypeAppPlacementSettings, base.ObjectScopeGlobal)
+	h.DeleteUniqueSetting(ctx, base.ResourceTypeAppPlacement, base.ObjectScopeGlobal)
 }

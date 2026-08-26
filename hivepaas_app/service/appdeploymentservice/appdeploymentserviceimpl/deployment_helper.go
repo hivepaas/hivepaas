@@ -17,7 +17,7 @@ func (s *service) loadImageBuildSettings(
 	data *repoDeploymentData,
 ) error {
 	setting, err := s.settingRepo.GetSingle(ctx, db, data.App.Project.GetObjectScope(),
-		base.SettingTypeImageBuildSettings, true)
+		base.SettingTypeImageBuild, true)
 	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
 		return apperrors.Wrap(err)
 	}

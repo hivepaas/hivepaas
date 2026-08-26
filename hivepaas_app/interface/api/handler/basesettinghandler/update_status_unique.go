@@ -60,7 +60,7 @@ func (h *Handler) UpdateUniqueSettingStatus(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.AppFeatureSettingsUC.UpdateAppFeatureSettingsStatus(reqCtx, auth, r) }
 
-	case base.ResourceTypeAppPlacementSettings:
+	case base.ResourceTypeAppPlacement:
 		r := appplacementsettingsdto.NewUpdateAppPlacementSettingsStatusReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) {
@@ -72,7 +72,7 @@ func (h *Handler) UpdateUniqueSettingStatus(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.UpdateDomainSettingsStatus(reqCtx, auth, r) }
 
-	case base.ResourceTypeImageBuildSettings:
+	case base.ResourceTypeImageBuild:
 		r := imagebuildsettingsdto.NewUpdateImageBuildSettingsStatusReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.UpdateImageBuildSettingsStatus(reqCtx, auth, r) }

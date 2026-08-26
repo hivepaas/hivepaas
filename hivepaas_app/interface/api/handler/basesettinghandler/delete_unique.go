@@ -72,7 +72,7 @@ func (h *Handler) DeleteUniqueSetting(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.AppFeatureSettingsUC.DeleteAppFeatureSettings(reqCtx, auth, r) }
 
-	case base.ResourceTypeAppPlacementSettings:
+	case base.ResourceTypeAppPlacement:
 		r := appplacementsettingsdto.NewDeleteAppPlacementSettingsReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.AppPlacementSettingsUC.DeleteAppPlacementSettings(reqCtx, auth, r) }
@@ -82,7 +82,7 @@ func (h *Handler) DeleteUniqueSetting(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.DomainSettingsUC.DeleteDomainSettings(reqCtx, auth, r) }
 
-	case base.ResourceTypeImageBuildSettings:
+	case base.ResourceTypeImageBuild:
 		r := imagebuildsettingsdto.NewDeleteImageBuildSettingsReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.DeleteImageBuildSettings(reqCtx, auth, r) }

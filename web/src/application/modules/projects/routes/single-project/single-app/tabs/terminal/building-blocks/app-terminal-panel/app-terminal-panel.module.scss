@@ -1,18 +1,44 @@
 .terminalFrame {
-  background: #0f172a;
+  background-color: #0f172a;
 }
 
 .terminalHost {
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  background-color: #0f172a;
 
   :global(.xterm) {
     height: 100%;
     padding: 12px;
+    background-color: #0f172a !important;
+  }
+
+  :global(.xterm-screen) {
+    background-color: #0f172a !important;
   }
 
   :global(.xterm-viewport) {
-    background-color: transparent !important;
+    background-color: #0f172a !important;
+    scrollbar-width: thin;
+    scrollbar-color: #334155 #0f172a;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+      background-color: #0f172a;
+    }
+
+    &::-webkit-scrollbar-track {
+      background-color: #0f172a;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background-color: #334155;
+      border-radius: 9999px;
+
+      &:hover {
+        background-color: #475569;
+      }
+    }
   }
 }

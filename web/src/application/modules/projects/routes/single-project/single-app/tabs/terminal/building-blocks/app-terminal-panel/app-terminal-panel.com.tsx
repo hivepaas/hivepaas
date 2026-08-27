@@ -4,7 +4,10 @@ import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue }
 import { Tooltip, TooltipContent, TooltipTrigger } from "@components/ui/tooltip";
 import type { WebSocketReadyState, WebSocketSubscription } from "@infrastructure/websocket";
 import { cn } from "@lib/utils";
+import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { FitAddon } from "@xterm/addon-fit";
+import { WebLinksAddon } from "@xterm/addon-web-links";
+import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import { Download, Maximize2, Minimize2, TextCursorInputIcon, Upload } from "lucide-react";
@@ -270,10 +273,27 @@ export function AppTerminalPanel({
             },
         });
         const fitAddon = new FitAddon();
+        const webLinksAddon = new WebLinksAddon();
+        const clipboardAddon = new ClipboardAddon();
         terminal.loadAddon(fitAddon);
+        terminal.loadAddon(webLinksAddon);
+        terminal.loadAddon(clipboardAddon);
         terminal.open(element);
         terminalRef.current = terminal;
         fitAddonRef.current = fitAddon;
+
+        let webglAddon: WebglAddon | null = null;
+        try {
+            webglAddon = new WebglAddon();
+            webglAddon.onContextLoss(() => {
+                webglAddon?.dispose();
+                webglAddon = null;
+            });
+            terminal.loadAddon(webglAddon);
+        } catch (error) {
+            console.warn("WebGL addon not supported or failed to initialize, fallback to default renderer", error);
+            webglAddon = null;
+        }
 
         const dataDisposable = terminal.onData(data => {
             const socket = subscriptionRef.current?.socket;
@@ -299,6 +319,9 @@ export function AppTerminalPanel({
             window.removeEventListener("resize", scheduleFitAndResize);
             dataDisposable.dispose();
             resizeDisposable.dispose();
+            webglAddon?.dispose();
+            webLinksAddon.dispose();
+            clipboardAddon.dispose();
             terminal.dispose();
             terminalRef.current = null;
             fitAddonRef.current = null;

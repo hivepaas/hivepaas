@@ -13,6 +13,8 @@ export const DEFAULT_VOLUME_FORM_VALUES: CreateOrEditVolumeFormInput = {
     localType: EClusterVolumeLocalType.Bind,
     bindOptions: {
         directory: "",
+        nodeId: "",
+        nodeLabel: "",
         propagation: EClusterVolumePropagation.Default,
         readonly: false,
         extraOptions: "",

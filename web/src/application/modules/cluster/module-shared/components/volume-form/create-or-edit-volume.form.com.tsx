@@ -1,7 +1,10 @@
 import { type PropsWithChildren, type ReactNode } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
+import { NodesQueries } from "~/cluster/data/queries";
 import {
     EClusterVolumeDriverMode,
     EClusterVolumeLocalType,
@@ -33,6 +36,9 @@ import {
     CreateOrEditVolumeFormSchema,
 } from "./create-or-edit-volume.form.schema";
 import { DEFAULT_VOLUME_FORM_VALUES } from "./volume-form.constants";
+
+const LOCAL_VOLUME_NODE_NOTE =
+    "A local bind volume is physically stored on a specific node in your cluster. Selecting a target Node or specifying a Node Label ensures the volume directory is created on that node, and any service mounting this volume will be automatically pinned to run on that specific node.";
 
 const propagationOptions = [
     { value: EClusterVolumePropagation.Default, label: "default" },
@@ -88,6 +94,8 @@ export function CreateOrEditVolumeForm({
     const { field: customDriverName } = useController({ control, name: "customDriverName" });
     const { field: localType } = useController({ control, name: "localType" });
     const { field: bindDirectory } = useController({ control, name: "bindOptions.directory" });
+    const { field: bindNodeId } = useController({ control, name: "bindOptions.nodeId" });
+    const { field: bindNodeLabel } = useController({ control, name: "bindOptions.nodeLabel" });
     const { field: bindPropagation } = useController({ control, name: "bindOptions.propagation" });
     const { field: bindReadonly } = useController({ control, name: "bindOptions.readonly" });
     const { field: bindExtraOptions } = useController({ control, name: "bindOptions.extraOptions" });
@@ -102,6 +110,14 @@ export function CreateOrEditVolumeForm({
     const { field: tmpfsExtraOptions } = useController({ control, name: "tmpfsOptions.extraOptions" });
     const { field: inheritable } = useController({ control, name: "inheritable" });
     const { field: defaultField } = useController({ control, name: "default" });
+
+    const nodesQuery = NodesQueries.useFindManyPaginated({
+        pagination: {
+            page: 1,
+            size: 100,
+        },
+    });
+    const nodes = nodesQuery.data?.data ?? [];
 
     const currentDriverMode = useWatch({ control, name: "driverMode" });
     const currentLocalType = useWatch({ control, name: "localType" });
@@ -215,6 +231,56 @@ export function CreateOrEditVolumeForm({
                                                 {...bindDirectory}
                                                 value={bindDirectory.value}
                                                 placeholder="auto"
+                                                className="max-w-[420px]"
+                                            />
+                                        </InfoBlock>
+
+                                        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                                            <span className="font-semibold text-orange-500">Note:</span>{" "}
+                                            {LOCAL_VOLUME_NODE_NOTE}
+                                        </div>
+
+                                        <InfoBlock
+                                            title="Node"
+                                            titleWidth={190}
+                                        >
+                                            <Select
+                                                value={bindNodeId.value || "__none__"}
+                                                onValueChange={value => {
+                                                    bindNodeId.onChange(value === "__none__" ? "" : value);
+                                                }}
+                                            >
+                                                <SelectTrigger className="max-w-[420px]">
+                                                    <SelectValue placeholder="Select node (optional)" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="__none__">
+                                                        None (Current Manager Node)
+                                                    </SelectItem>
+                                                    {nodes.map(node => {
+                                                        const nodeName = node.name || node.hostname || node.refId;
+                                                        return (
+                                                            <SelectItem
+                                                                key={node.refId || node.id}
+                                                                value={node.refId || node.id}
+                                                            >
+                                                                {nodeName !== node.refId
+                                                                    ? `${nodeName} (${node.refId})`
+                                                                    : node.refId}
+                                                            </SelectItem>
+                                                        );
+                                                    })}
+                                                </SelectContent>
+                                            </Select>
+                                        </InfoBlock>
+                                        <InfoBlock
+                                            title="Node Label"
+                                            titleWidth={190}
+                                        >
+                                            <Input
+                                                {...bindNodeLabel}
+                                                value={bindNodeLabel.value}
+                                                placeholder="key=value or key"
                                                 className="max-w-[420px]"
                                             />
                                         </InfoBlock>

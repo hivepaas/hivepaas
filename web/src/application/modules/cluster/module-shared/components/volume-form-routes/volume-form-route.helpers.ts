@@ -41,6 +41,8 @@ export function toVolumeFormInitialValues(volume: ClusterVolume): CreateOrEditVo
         bindOptions: {
             ...DEFAULT_VOLUME_FORM_VALUES.bindOptions,
             directory: volume.bindOptions?.directory ?? DEFAULT_VOLUME_FORM_VALUES.bindOptions.directory,
+            nodeId: volume.bindOptions?.nodeId ?? DEFAULT_VOLUME_FORM_VALUES.bindOptions.nodeId,
+            nodeLabel: volume.bindOptions?.nodeLabel ?? DEFAULT_VOLUME_FORM_VALUES.bindOptions.nodeLabel,
             propagation: volume.bindOptions?.propagation ?? EClusterVolumePropagation.Default,
             readonly: volume.bindOptions?.readonly ?? false,
             extraOptions: volume.bindOptions?.extraOptions ?? DEFAULT_VOLUME_FORM_VALUES.bindOptions.extraOptions,
@@ -89,6 +91,8 @@ export function toVolumeBasePayload(values: CreateOrEditVolumeFormOutput): Clust
             ...payload,
             bindOptions: {
                 directory: optionalString(values.bindOptions.directory),
+                nodeId: optionalString(values.bindOptions.nodeId),
+                nodeLabel: optionalString(values.bindOptions.nodeLabel),
                 propagation: values.bindOptions.propagation,
                 readonly: values.bindOptions.readonly,
                 extraOptions: optionalString(values.bindOptions.extraOptions),

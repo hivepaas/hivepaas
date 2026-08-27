@@ -4,6 +4,8 @@ import type { EClusterVolumePropagation } from "../../module-shared/enums";
 
 export interface ClusterVolumeBindOptions {
     directory?: string;
+    nodeId?: string;
+    nodeLabel?: string;
     propagation?: EClusterVolumePropagation;
     readonly?: boolean;
     extraOptions?: string;

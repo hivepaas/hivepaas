@@ -12,6 +12,8 @@ const KeyValueSchema = z.object({
 
 const BindOptionsSchema = z.object({
     directory: z.string().trim(),
+    nodeId: z.string().trim(),
+    nodeLabel: z.string().trim(),
     propagation: z.nativeEnum(EClusterVolumePropagation),
     readonly: z.boolean(),
     extraOptions: z.string().trim(),

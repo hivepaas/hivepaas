@@ -29,6 +29,8 @@ const optionalStringSchema = z
 const BindOptionsSchema = z
     .object({
         directory: optionalStringSchema,
+        nodeId: optionalStringSchema,
+        nodeLabel: optionalStringSchema,
         propagation: z
             .nativeEnum(EClusterVolumePropagation)
             .nullish()

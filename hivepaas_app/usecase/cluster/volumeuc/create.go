@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -216,7 +217,7 @@ func (uc *UC) createBindDirectoryInNode(
 		}
 	}
 
-	targetDir := filepath.Join("/host", req.BindOptions.Directory)
+	targetDir := filepath.Join(volumeservice.HostPathPrefix, req.BindOptions.Directory)
 	mkdirCmd := fmt.Sprintf("mkdir -p '%s' && chmod -R 777 '%s'", targetDir, targetDir)
 	cmdReq := &nodeexecservice.CommandExecReq{
 		NodeID:    nodeID,

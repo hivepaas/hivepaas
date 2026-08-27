@@ -23,7 +23,6 @@ const (
 	rsyncWaitPollInterval    = 2 * time.Second
 	rsyncWaitTimeoutDuration = 30 * time.Minute
 	fileModeFull             = 0777
-	hostPathPrefix           = "/host"
 )
 
 func (s *service) Rsync(
@@ -97,7 +96,7 @@ func (s *service) getDirectHostPath(ctx context.Context, mnt *mount.Mount, subpa
 		hostPath = filepath.Join(hostPath, subpath)
 	}
 
-	hostPath = filepath.Join(hostPathPrefix, hostPath)
+	hostPath = filepath.Join(volumeservice.HostPathPrefix, hostPath)
 
 	// 4. Check if hostPath exists on Host OS
 	fileInfo, err := os.Stat(hostPath)
@@ -291,7 +290,7 @@ func (s *service) isVolumeAccessibleLocally(ctx context.Context, mnt *mount.Moun
 	}
 	switch mnt.Type {
 	case mount.TypeBind:
-		fileInfo, err := os.Stat(filepath.Join(hostPathPrefix, mnt.Source))
+		fileInfo, err := os.Stat(filepath.Join(volumeservice.HostPathPrefix, mnt.Source))
 		return err == nil && fileInfo.IsDir()
 	case mount.TypeVolume, mount.TypeCluster:
 		vol, err := s.dockerManager.VolumeInspect(ctx, mnt.Source)

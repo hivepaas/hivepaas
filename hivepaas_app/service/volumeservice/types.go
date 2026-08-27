@@ -2,6 +2,10 @@ package volumeservice
 
 import "github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 
+const (
+	HostPathPrefix = "/host"
+)
+
 type RsyncOptions struct {
 	Image         string
 	LogStore      *tasklog.Store

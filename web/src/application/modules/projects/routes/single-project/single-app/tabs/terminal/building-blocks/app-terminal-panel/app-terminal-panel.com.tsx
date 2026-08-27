@@ -16,11 +16,13 @@ import { type AppTerminalInitMessage, buildAppTerminalResizeMessage } from "~/pr
 import { useExportContainerFilesDialog } from "~/projects/dialogs/export-container-files";
 import { useImportFilesToContainerDialog } from "~/projects/dialogs/import-files-to-container";
 
+import { TextZoomIcon } from "@assets/icons";
+
 import { AppTerminalCommandTemplatePanel } from "./app-terminal-command-template-panel.com";
 import styles from "./app-terminal-panel.module.scss";
 
 const TERMINAL_HEIGHT = "clamp(700px, calc(100vh - 330px), 2000px)";
-const TERMINAL_FONT_SIZE = 14;
+const TERMINAL_FONT_SIZES = [14, 16, 18, 20] as const;
 const TERMINAL_SCROLLBACK = 10_000;
 
 export function AppTerminalPanel({
@@ -41,6 +43,7 @@ export function AppTerminalPanel({
     const lastObservedFrameSizeRef = useRef({ clientWidth: 0, clientHeight: 0 });
     const lastSentTerminalSizeRef = useRef({ cols: 0, rows: 0 });
     const inputEncoderRef = useRef(new TextEncoder());
+    const [fontSizeIndex, setFontSizeIndex] = useState(0);
     const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isCommandTemplatePanelOpen, setIsCommandTemplatePanelOpen] = useState(false);
@@ -48,6 +51,12 @@ export function AppTerminalPanel({
     const { streams } = useAppTerminalWsApi();
     const exportContainerFilesDialog = useExportContainerFilesDialog();
     const importFilesToContainerDialog = useImportFilesToContainerDialog();
+
+    const currentFontSize = TERMINAL_FONT_SIZES[fontSizeIndex] ?? 14;
+
+    const cycleFontSize = useCallback(() => {
+        setFontSizeIndex(current => (current + 1) % TERMINAL_FONT_SIZES.length);
+    }, []);
 
     const isConnectionActive = webSocketReadyState === WebSocket.CONNECTING || webSocketReadyState === WebSocket.OPEN;
     const canConnect = selectedShell !== "" && !isConnectionActive;
@@ -81,44 +90,59 @@ export function AppTerminalPanel({
         socket.send(JSON.stringify(buildAppTerminalResizeMessage(width, height)));
     }, []);
 
-    const sendCurrentResize = useCallback(
-        (socket = subscriptionRef.current?.socket) => {
-            const terminal = terminalRef.current;
+    const sendCurrentResize = useCallback((socket?: WebSocket) => {
+        const targetSocket = socket ?? subscriptionRef.current?.socket;
+        const terminal = terminalRef.current;
 
-            if (!terminal) {
-                return;
-            }
+        if (!targetSocket || targetSocket.readyState !== WebSocket.OPEN || !terminal) {
+            return;
+        }
 
-            sendResizeToSocket(socket, terminal.cols, terminal.rows);
-        },
-        [sendResizeToSocket],
-    );
+        const { cols, rows } = terminal;
+
+        if (cols <= 0 || rows <= 0) {
+            return;
+        }
+
+        const lastSent = lastSentTerminalSizeRef.current;
+        if (lastSent.cols === cols && lastSent.rows === rows) {
+            return;
+        }
+
+        lastSentTerminalSizeRef.current = { cols, rows };
+        targetSocket.send(JSON.stringify(buildAppTerminalResizeMessage(cols, rows)));
+    }, []);
 
     const fitTerminal = useCallback(() => {
+        const frame = terminalFrameRef.current;
+        const fitAddon = fitAddonRef.current;
+        const terminal = terminalRef.current;
+
+        if (!frame || !fitAddon || !terminal) {
+            return;
+        }
+
+        const { clientWidth, clientHeight } = frame;
+
+        if (clientWidth <= 0 || clientHeight <= 0) {
+            return;
+        }
+
+        const lastObserved = lastObservedFrameSizeRef.current;
+        if (lastObserved.clientWidth === clientWidth && lastObserved.clientHeight === clientHeight) {
+            return;
+        }
+
+        lastObservedFrameSizeRef.current = { clientWidth, clientHeight };
+
         try {
-            fitAddonRef.current?.fit();
-        } catch (error) {
-            console.error("Failed to fit app terminal", error);
+            fitAddon.fit();
+        } catch {
+            // Ignore fit error if dimensions are not yet measurable
         }
     }, []);
 
     const fitAndSendResize = useCallback(() => {
-        const frame = terminalFrameRef.current;
-
-        if (frame) {
-            const { clientWidth, clientHeight } = frame;
-            const lastObservedFrameSize = lastObservedFrameSizeRef.current;
-
-            if (
-                clientWidth === lastObservedFrameSize.clientWidth &&
-                clientHeight === lastObservedFrameSize.clientHeight
-            ) {
-                return;
-            }
-
-            lastObservedFrameSizeRef.current = { clientWidth, clientHeight };
-        }
-
         const terminal = terminalRef.current;
         const previousCols = terminal?.cols ?? 0;
         const previousRows = terminal?.rows ?? 0;
@@ -145,6 +169,13 @@ export function AppTerminalPanel({
             fitAndSendResize();
         });
     }, [fitAndSendResize]);
+
+    useEffect(() => {
+        if (terminalRef.current) {
+            terminalRef.current.options.fontSize = currentFontSize;
+            scheduleFitAndResize();
+        }
+    }, [currentFontSize, scheduleFitAndResize]);
 
     const closeConnection = useCallback(() => {
         abortControllerRef.current?.abort();
@@ -263,13 +294,16 @@ export function AppTerminalPanel({
             convertEol: true,
             cursorBlink: true,
             fontFamily: "Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-            fontSize: TERMINAL_FONT_SIZE,
+            fontSize: TERMINAL_FONT_SIZES[0],
             scrollback: TERMINAL_SCROLLBACK,
             theme: {
                 background: "#0f172a",
                 foreground: "#e5e7eb",
                 cursor: "#f8fafc",
                 selectionBackground: "#334155",
+                scrollbarSliderBackground: "#334155",
+                scrollbarSliderHoverBackground: "#475569",
+                scrollbarSliderActiveBackground: "#64748b",
             },
         });
         const fitAddon = new FitAddon();
@@ -398,22 +432,39 @@ export function AppTerminalPanel({
                     </Button>
                 </div>
 
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={isFullscreen ? "Exit fullscreen terminal" : "Fullscreen terminal"}
-                            onClick={() => {
-                                setIsFullscreen(current => !current);
-                            }}
-                        >
-                            {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{isFullscreen ? "Exit fullscreen" : "Fullscreen terminal"}</TooltipContent>
-                </Tooltip>
+                <div className="flex items-center gap-1">
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={`Text size: ${currentFontSize}px`}
+                                onClick={cycleFontSize}
+                            >
+                                <TextZoomIcon className="size-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{`Text size: ${currentFontSize}px`}</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={isFullscreen ? "Exit fullscreen terminal" : "Fullscreen terminal"}
+                                onClick={() => {
+                                    setIsFullscreen(current => !current);
+                                }}
+                            >
+                                {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isFullscreen ? "Exit fullscreen" : "Fullscreen terminal"}</TooltipContent>
+                    </Tooltip>
+                </div>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">

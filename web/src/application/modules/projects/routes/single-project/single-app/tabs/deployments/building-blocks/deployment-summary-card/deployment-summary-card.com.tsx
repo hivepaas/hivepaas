@@ -13,10 +13,12 @@ import {
     EAppDeploymentTriggerSource,
 } from "~/projects/module-shared/enums";
 
+import { LogViewerActionButtons } from "@application/shared/components";
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
-import { Avatar, Button, Skeleton } from "@/components/ui";
 import type { OpenApiConstant } from "@infrastructure/api";
+
+import { Avatar, Button, Skeleton } from "@/components/ui";
 
 const STATUS_LABELS: Partial<Record<EAppDeploymentStatus, string>> = {
     [EAppDeploymentStatus.Done]: "Done",
@@ -226,8 +228,12 @@ export function DeploymentSummaryCard({
     children,
     variant = "list",
     isCancelling = false,
+    isFullscreen = false,
+    fontSize,
     onCancel,
     onClick,
+    onToggleFullscreen,
+    onCycleFontSize,
 }: DeploymentSummaryCardProps) {
     const { output } = deployment;
     const sourceUser = deployment.trigger?.sourceUser;
@@ -249,10 +255,13 @@ export function DeploymentSummaryCard({
     return (
         <div
             className={cn(
-                "rounded-lg border bg-background p-5 shadow-xs",
-                variant === "list" ? [STATUS_BORDER_CLASS_NAMES[deployment.status as EAppDeploymentStatus]] : "border-0",
+                "rounded-lg border bg-background shadow-xs",
+                variant === "list"
+                    ? ["p-5", STATUS_BORDER_CLASS_NAMES[deployment.status as EAppDeploymentStatus]]
+                    : "border-0 p-0 shadow-none bg-transparent",
                 isClickable &&
                     "cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                isFullscreen && "flex-1 min-h-0 flex flex-col",
             )}
             style={{
                 borderLeftWidth: variant === "list" ? 4 : 0,
@@ -264,45 +273,56 @@ export function DeploymentSummaryCard({
         >
             <dl className="grid grid-cols-1 items-center gap-y-2 sm:grid-cols-[130px_minmax(0,1fr)] sm:gap-x-8 sm:gap-y-4">
                 <InfoRow label="Status">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <StatusBadge status={deployment.status} />
-                        {onCancel && canCancelDeployment(deployment.status) && (
-                            <Button
-                                type="button"
-                                variant="link"
-                                className="h-auto p-0 text-primary"
-                                isLoading={isCancelling}
-                                onClick={event => {
-                                    event.stopPropagation();
-                                    onCancel(deployment.id);
-                                }}
-                            >
-                                Cancel Deployment
-                            </Button>
-                        )}
-                        {variant === "details" && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                className="size-6 text-primary hover:text-primary"
-                                aria-label={
-                                    isDetailsContentOpen ? "Hide deployment details" : "Show deployment details"
-                                }
-                                title={isDetailsContentOpen ? "Hide deployment details" : "Show deployment details"}
-                                aria-expanded={isDetailsContentOpen}
-                                onClick={event => {
-                                    event.stopPropagation();
-                                    setIsDetailsContentOpen(current => !current);
-                                }}
-                            >
-                                <ChevronDown
-                                    className={cn(
-                                        "size-4 transition-transform duration-200",
-                                        isDetailsContentOpen && "rotate-180",
-                                    )}
-                                />
-                            </Button>
+                    <div className="flex items-center justify-between gap-3 w-full">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <StatusBadge status={deployment.status} />
+                            {onCancel && canCancelDeployment(deployment.status) && (
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    className="h-auto p-0 text-primary"
+                                    isLoading={isCancelling}
+                                    onClick={event => {
+                                        event.stopPropagation();
+                                        onCancel(deployment.id);
+                                    }}
+                                >
+                                    Cancel Deployment
+                                </Button>
+                            )}
+                            {variant === "details" && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="size-6 text-primary hover:text-primary"
+                                    aria-label={
+                                        isDetailsContentOpen ? "Hide deployment details" : "Show deployment details"
+                                    }
+                                    title={isDetailsContentOpen ? "Hide deployment details" : "Show deployment details"}
+                                    aria-expanded={isDetailsContentOpen}
+                                    onClick={event => {
+                                        event.stopPropagation();
+                                        setIsDetailsContentOpen(current => !current);
+                                    }}
+                                >
+                                    <ChevronDown
+                                        className={cn(
+                                            "size-4 transition-transform duration-200",
+                                            isDetailsContentOpen && "rotate-180",
+                                        )}
+                                    />
+                                </Button>
+                            )}
+                        </div>
+
+                        {variant === "details" && onToggleFullscreen && (
+                            <LogViewerActionButtons
+                                isFullscreen={isFullscreen}
+                                fontSize={fontSize}
+                                onToggleFullscreen={onToggleFullscreen}
+                                onCycleFontSize={onCycleFontSize}
+                            />
                         )}
                     </div>
                 </InfoRow>
@@ -393,7 +413,9 @@ export function DeploymentSummaryCard({
                 ) : null}
             </dl>
 
-            {children && <div className="mt-5 min-w-0">{children}</div>}
+            {children && (
+                <div className={cn("mt-5 min-w-0", isFullscreen && "flex-1 min-h-0 flex flex-col")}>{children}</div>
+            )}
         </div>
     );
 }
@@ -426,6 +448,10 @@ interface DeploymentSummaryCardProps {
     children?: ReactNode;
     variant?: DeploymentSummaryCardVariant;
     isCancelling?: boolean;
+    isFullscreen?: boolean;
+    fontSize?: number;
     onCancel?: (deploymentID: string) => void;
     onClick?: () => void;
+    onToggleFullscreen?: () => void;
+    onCycleFontSize?: () => void;
 }

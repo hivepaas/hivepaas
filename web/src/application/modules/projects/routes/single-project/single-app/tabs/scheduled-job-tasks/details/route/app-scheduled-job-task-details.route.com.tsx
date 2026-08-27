@@ -8,6 +8,8 @@ import invariant from "tiny-invariant";
 import { AppScheduledJobsCommands, AppScheduledJobsQueries } from "~/projects/data";
 import { EAppScheduledJobTaskStatus } from "~/projects/module-shared/enums";
 
+import { useLogViewerControls } from "@application/shared/components";
+
 import type { OpenApiConstant } from "@infrastructure/api";
 
 import {
@@ -60,6 +62,7 @@ export function AppScheduledJobTaskDetailsRoute() {
     invariant(taskId, "taskId must be defined");
 
     const [shouldPollAfterStreamClose, setShouldPollAfterStreamClose] = useState(false);
+    const { isFullscreen, toggleFullscreen, fontSize, cycleFontSize } = useLogViewerControls();
 
     const {
         data: taskResponse,
@@ -106,8 +109,14 @@ export function AppScheduledJobTaskDetailsRoute() {
     });
 
     return (
-        <section className={cn(listBox, "p-0")}>
-            <div className="flex flex-col gap-5">
+        <section
+            className={cn(
+                listBox,
+                isFullscreen &&
+                    "!max-w-none !w-auto fixed inset-4 z-50 min-h-0 rounded-lg border bg-background p-4 shadow-2xl flex flex-col",
+            )}
+        >
+            <div className={cn("flex flex-col gap-5", isFullscreen && "flex-1 min-h-0")}>
                 {isFetching && !task ? (
                     <ScheduledJobTaskSummaryCardSkeleton variant="details" />
                 ) : task ? (
@@ -116,6 +125,10 @@ export function AppScheduledJobTaskDetailsRoute() {
                         now={now}
                         variant="details"
                         isCancelling={isCancelling}
+                        isFullscreen={isFullscreen}
+                        fontSize={fontSize}
+                        onToggleFullscreen={toggleFullscreen}
+                        onCycleFontSize={cycleFontSize}
                         onCancel={id => {
                             cancelTask({
                                 projectID: projectId,
@@ -133,6 +146,8 @@ export function AppScheduledJobTaskDetailsRoute() {
                             scheduledJobID={scheduledJobId}
                             taskID={taskId}
                             status={task.status}
+                            fontSize={fontSize}
+                            height={isFullscreen ? "100%" : undefined}
                             onStreamClosedWhileInProgress={handleStreamClosedWhileInProgress}
                         />
                     </ScheduledJobTaskSummaryCard>

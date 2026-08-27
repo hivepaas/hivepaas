@@ -5,7 +5,12 @@ import { useAppLogsWsApi } from "~/projects/api";
 import type { AppLogFrame, AppLogs_GetLogs_Req } from "~/projects/api/services";
 import { AppLogsQueries } from "~/projects/data";
 
-import { LogsViewer, type LogsViewerFrame, parseLogsViewerFrames, useBufferedLogFrames } from "@application/shared/components";
+import {
+    LogsViewer,
+    type LogsViewerFrame,
+    parseLogsViewerFrames,
+    useBufferedLogFrames,
+} from "@application/shared/components";
 
 import { AppLogsToolbarFilters, AppLogsToolbarStart } from "../app-logs-toolbar";
 
@@ -25,6 +30,8 @@ export function AppLogsViewer({
     webSocketReadyState,
     isActive,
     shouldAutoStream,
+    fontSize,
+    height,
     onLogsChange,
     onLinesChange,
     onSinceChange,
@@ -209,8 +216,8 @@ export function AppLogsViewer({
             isStreaming={isStreaming}
             isRefreshPending={isRefreshPending}
             hasLineNumbers={false}
-            height={APP_LOG_VIEWER_HEIGHT}
-            fontSize="0.875rem"
+            height={height ?? APP_LOG_VIEWER_HEIGHT}
+            fontSize={fontSize}
             downloadFileName={taskId ? `app-logs-${tabLabel}.txt` : "app-logs-aggregation.txt"}
             toolbarStart={
                 <AppLogsToolbarStart
@@ -268,6 +275,8 @@ interface AppLogsViewerProps {
     webSocketReadyState: WebSocketReadyState;
     isActive: boolean;
     shouldAutoStream: boolean;
+    fontSize?: number;
+    height?: number | string;
     onLogsChange: (tabID: string, action: SetStateAction<LogsViewerFrame[]>) => void;
     onLinesChange: (tabID: string, action: SetStateAction<number | undefined>) => void;
     onSinceChange: (tabID: string, action: SetStateAction<Date | undefined>) => void;

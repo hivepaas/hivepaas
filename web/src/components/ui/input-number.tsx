@@ -34,6 +34,7 @@ export interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInp
     decimalScale?: number;
     showControls?: boolean;
     classNameInput?: string;
+    classNameInner?: string;
 }
 
 function clampValue(value: number, min?: number, max?: number): number {
@@ -61,6 +62,7 @@ export const InputNumber = forwardRef<HTMLInputElement, NumberInputProps>(
             placeholder,
             showControls = true,
             classNameInput,
+            classNameInner,
             "aria-label": ariaLabel,
             "aria-labelledby": ariaLabelledBy,
             disabled,
@@ -124,6 +126,7 @@ export const InputNumber = forwardRef<HTMLInputElement, NumberInputProps>(
                             "selection:bg-primary selection:text-primary-foreground w-full grow px-3 py-2 tabular-nums outline-none",
                             prefix && "ps-2",
                             suffix && "pe-2",
+                            classNameInner,
                         )}
                         placeholder={placeholder}
                         {...props}

@@ -25,7 +25,7 @@ export interface LogsViewerProps {
     useAnsiClasses?: boolean;
     height?: number | string;
     fullscreenHeight?: number | string;
-    fontSize?: string;
+    fontSize?: number;
     downloadFileName?: string;
     defaultShowDebugLogs?: boolean;
     defaultShowTimestamps?: boolean;
@@ -34,6 +34,11 @@ export interface LogsViewerProps {
     toolbarFilters?: ReactNode;
     className?: string;
     onRefresh?: () => void;
+}
+
+export interface LogsViewerSearchResult {
+    resultIndex: number;
+    resultCount: number;
 }
 
 export interface LogsViewerToolbarProps {
@@ -45,14 +50,19 @@ export interface LogsViewerToolbarProps {
     showTimestamps: boolean;
     showDebugLogs: boolean;
     followLogs: boolean;
-    isFullscreen: boolean;
+    isFullscreen?: boolean;
+    searchTerm: string;
+    searchResult?: LogsViewerSearchResult | null;
     toolbarStart?: ReactNode;
     toolbarFilters?: ReactNode;
+    onSearchTermChange: (term: string) => void;
+    onFindNext: () => void;
+    onFindPrevious: () => void;
     onToggleTextWrap: () => void;
     onToggleTimestamps: () => void;
     onToggleDebugLogs: () => void;
     onToggleFollowLogs: () => void;
-    onToggleFullscreen: () => void;
+    onToggleFullscreen?: () => void;
     onRefresh?: () => void;
 }
 

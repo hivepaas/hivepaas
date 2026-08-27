@@ -63,7 +63,7 @@ export default defineConfig(({ mode }) => {
                             ) {
                                 return "vendor-react";
                             }
-                            if (id.includes("/@xterm/") || id.includes("/@patternfly/") || id.includes("/prismjs/")) {
+                            if (id.includes("/@xterm/") || id.includes("/prismjs/")) {
                                 return "vendor-terminals";
                             }
                             if (

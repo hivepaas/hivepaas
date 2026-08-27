@@ -119,3 +119,12 @@ function getAnsiTimestampPrefix(frame: LogsViewerFrame, showTimestamps: boolean)
 function formatDatePart(value: number, length: number = 2): string {
     return String(value).padStart(length, "0");
 }
+
+export function formatFrameForXterm(frame: LogsViewerFrame, showTimestamps: boolean): string {
+    const lines = getAnsiLogLines(frame, showTimestamps);
+    return lines.join("\r\n") + "\r\n";
+}
+
+export function formatFramesForXterm(frames: LogsViewerFrame[], showTimestamps: boolean): string {
+    return frames.map(frame => formatFrameForXterm(frame, showTimestamps)).join("");
+}

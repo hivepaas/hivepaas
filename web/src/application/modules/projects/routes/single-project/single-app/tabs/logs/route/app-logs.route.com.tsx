@@ -7,7 +7,13 @@ import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { AppLogsQueries } from "~/projects/data";
 
-import { AppLink, AppLoader, type LogsViewerFrame } from "@application/shared/components";
+import {
+    AppLink,
+    AppLoader,
+    LogViewerActionButtons,
+    type LogsViewerFrame,
+    useLogViewerControls,
+} from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
@@ -20,6 +26,7 @@ const DEFAULT_LOG_LINES = 100;
 export function AppLogsRoute() {
     const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
     const [activeTab, setActiveTab] = useState(AGGREGATION_TAB_ID);
+    const { isFullscreen, toggleFullscreen, fontSize, cycleFontSize } = useLogViewerControls();
     const [tabStates, setTabStates] = useState<AppLogTabStates>(() => ({
         [AGGREGATION_TAB_ID]: createDefaultAppLogTabState(),
     }));
@@ -142,36 +149,53 @@ export function AppLogsRoute() {
     );
 
     return (
-        <section className={cn(listBox)}>
+        <section
+            className={cn(
+                listBox,
+                isFullscreen &&
+                    "!max-w-none !w-auto fixed inset-4 z-50 min-h-0 rounded-lg border bg-background p-4 shadow-2xl flex flex-col",
+            )}
+        >
             {isInfoLoading ? (
                 <AppLoader />
             ) : isLogsEnabled ? (
                 <Tabs
                     value={activeTab}
                     onValueChange={setActiveTab}
-                    className="gap-4"
+                    className={cn("gap-4", isFullscreen && "flex-1 min-h-0 flex flex-col")}
                 >
-                    <TabsList className="h-auto flex-wrap gap-1.5 sm:gap-2 p-0 justify-start">
-                        {tabs.map(tab => {
-                            const isStreaming = tabStates[tab.id]?.readyState === WebSocket.OPEN;
+                    <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+                        <TabsList className="h-auto flex-wrap gap-1.5 sm:gap-2 p-0 justify-start">
+                            {tabs.map(tab => {
+                                const isStreaming = tabStates[tab.id]?.readyState === WebSocket.OPEN;
 
-                            return (
-                                <TabsTrigger
-                                    key={tab.id}
-                                    value={tab.id}
-                                    className="text-xs sm:text-sm px-2.5 py-1.5 sm:px-3 sm:py-2"
-                                >
-                                    <span>{tab.label}</span>
-                                    {isStreaming && (
-                                        <span
-                                            aria-label={`${tab.label} streaming`}
-                                            className="size-2 sm:size-2.5 rounded-full bg-emerald-500"
-                                        />
-                                    )}
-                                </TabsTrigger>
-                            );
-                        })}
-                    </TabsList>
+                                return (
+                                    <TabsTrigger
+                                        key={tab.id}
+                                        value={tab.id}
+                                        className="text-xs sm:text-sm px-2.5 py-1.5 sm:px-3 sm:py-2"
+                                    >
+                                        <span>{tab.label}</span>
+                                        {isStreaming && (
+                                            <span
+                                                aria-label={`${tab.label} streaming`}
+                                                className="size-2 sm:size-2.5 rounded-full bg-emerald-500"
+                                            />
+                                        )}
+                                    </TabsTrigger>
+                                );
+                            })}
+                        </TabsList>
+
+                        <div className="flex items-center gap-1">
+                            <LogViewerActionButtons
+                                isFullscreen={isFullscreen}
+                                fontSize={fontSize}
+                                onToggleFullscreen={toggleFullscreen}
+                                onCycleFontSize={cycleFontSize}
+                            />
+                        </div>
+                    </div>
 
                     {tabs.map(tab => {
                         const tabState = tabStates[tab.id] ?? createDefaultAppLogTabState();
@@ -181,7 +205,10 @@ export function AppLogsRoute() {
                                 key={tab.id}
                                 value={tab.id}
                                 forceMount
-                                className="m-0 data-[state=inactive]:hidden"
+                                className={cn(
+                                    "m-0 data-[state=inactive]:hidden",
+                                    isFullscreen && "flex-1 min-h-0 flex flex-col",
+                                )}
                             >
                                 <AppLogsViewer
                                     tabID={tab.id}
@@ -197,6 +224,8 @@ export function AppLogsRoute() {
                                     webSocketReadyState={tabState.readyState}
                                     isActive={activeTab === tab.id}
                                     shouldAutoStream={tab.id === AGGREGATION_TAB_ID}
+                                    fontSize={fontSize}
+                                    height={isFullscreen ? "100%" : undefined}
                                     onLogsChange={handleTabLogsChange}
                                     onLinesChange={handleTabLinesChange}
                                     onSinceChange={handleTabSinceChange}

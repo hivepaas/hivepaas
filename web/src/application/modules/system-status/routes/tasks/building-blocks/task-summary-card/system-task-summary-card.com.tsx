@@ -9,6 +9,7 @@ import ReactTimeAgo from "react-time-ago";
 import type { SystemTask } from "~/system-status/domain";
 import { SystemTaskStatus } from "~/system-status/domain";
 
+import { LogViewerActionButtons } from "@application/shared/components";
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import { Button, Checkbox, Skeleton } from "@/components/ui";
@@ -98,10 +99,14 @@ export function SystemTaskSummaryCard({
     children,
     variant = "list",
     isCancelling = false,
+    isFullscreen = false,
+    fontSize,
     onCancel,
     onClick,
+    onToggleFullscreen,
+    onCycleFontSize,
 }: SystemTaskSummaryCardProps) {
-    const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(variant === "details");
+    const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(false);
     const isClickable = Boolean(onClick);
     const shouldShowDetailsContent = variant === "list" || isDetailsContentOpen;
     const { priority } = task.config;
@@ -120,10 +125,13 @@ export function SystemTaskSummaryCard({
     return (
         <div
             className={cn(
-                "rounded-lg border bg-background p-5 shadow-xs",
-                variant === "list" ? [STATUS_BORDER_CLASS_NAMES[task.status]] : "border-0",
+                "rounded-lg border bg-background shadow-xs",
+                variant === "list"
+                    ? ["p-5", STATUS_BORDER_CLASS_NAMES[task.status]]
+                    : "border-0 p-0 shadow-none bg-transparent",
                 isClickable &&
                     "cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                isFullscreen && "flex-1 min-h-0 flex flex-col",
             )}
             style={{
                 borderLeftWidth: variant === "list" ? 4 : 0,
@@ -135,43 +143,54 @@ export function SystemTaskSummaryCard({
         >
             <dl className="grid grid-cols-1 items-center gap-y-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-x-8 sm:gap-y-4">
                 <InfoRow label="Status">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <StatusBadge status={task.status} />
-                        {onCancel && canCancelTask(task) && (
-                            <Button
-                                type="button"
-                                variant="link"
-                                className="h-auto p-0 text-primary"
-                                isLoading={isCancelling}
-                                onClick={event => {
-                                    event.stopPropagation();
-                                    onCancel(task.id);
-                                }}
-                            >
-                                Cancel Task
-                            </Button>
-                        )}
-                        {variant === "details" && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                className="size-6 text-primary hover:text-primary"
-                                aria-label={isDetailsContentOpen ? "Hide task details" : "Show task details"}
-                                title={isDetailsContentOpen ? "Hide task details" : "Show task details"}
-                                aria-expanded={isDetailsContentOpen}
-                                onClick={event => {
-                                    event.stopPropagation();
-                                    setIsDetailsContentOpen(current => !current);
-                                }}
-                            >
-                                <ChevronDown
-                                    className={cn(
-                                        "size-4 transition-transform duration-200",
-                                        isDetailsContentOpen && "rotate-180",
-                                    )}
-                                />
-                            </Button>
+                    <div className="flex items-center justify-between gap-3 w-full">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <StatusBadge status={task.status} />
+                            {onCancel && canCancelTask(task) && (
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    className="h-auto p-0 text-primary"
+                                    isLoading={isCancelling}
+                                    onClick={event => {
+                                        event.stopPropagation();
+                                        onCancel(task.id);
+                                    }}
+                                >
+                                    Cancel Task
+                                </Button>
+                            )}
+                            {variant === "details" && (
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="size-6 text-primary hover:text-primary"
+                                    aria-label={isDetailsContentOpen ? "Hide task details" : "Show task details"}
+                                    title={isDetailsContentOpen ? "Hide task details" : "Show task details"}
+                                    aria-expanded={isDetailsContentOpen}
+                                    onClick={event => {
+                                        event.stopPropagation();
+                                        setIsDetailsContentOpen(current => !current);
+                                    }}
+                                >
+                                    <ChevronDown
+                                        className={cn(
+                                            "size-4 transition-transform duration-200",
+                                            isDetailsContentOpen && "rotate-180",
+                                        )}
+                                    />
+                                </Button>
+                            )}
+                        </div>
+
+                        {variant === "details" && onToggleFullscreen && (
+                            <LogViewerActionButtons
+                                isFullscreen={isFullscreen}
+                                fontSize={fontSize}
+                                onToggleFullscreen={onToggleFullscreen}
+                                onCycleFontSize={onCycleFontSize}
+                            />
                         )}
                     </div>
                 </InfoRow>
@@ -212,13 +231,10 @@ export function SystemTaskSummaryCard({
                 )}
 
                 {shouldShowDetailsContent && (
-                    <InfoRow label="Priority">
-                        <span>{priority}</span>
-                    </InfoRow>
-                )}
-
-                {variant === "details" && shouldShowDetailsContent && (
                     <>
+                        <InfoRow label="Priority">
+                            <span>{priority}</span>
+                        </InfoRow>
                         <InfoRow label="Control Enabled">
                             <Checkbox
                                 checked={controlEnabled}
@@ -256,7 +272,9 @@ export function SystemTaskSummaryCard({
                 )}
             </dl>
 
-            {children && <div className="mt-5 min-w-0">{children}</div>}
+            {children && (
+                <div className={cn("mt-5 min-w-0", isFullscreen && "flex-1 min-h-0 flex flex-col")}>{children}</div>
+            )}
         </div>
     );
 }
@@ -289,6 +307,10 @@ interface SystemTaskSummaryCardProps {
     children?: ReactNode;
     variant?: SystemTaskCardVariant;
     isCancelling?: boolean;
+    isFullscreen?: boolean;
+    fontSize?: number;
     onCancel?: (taskID: string) => void;
     onClick?: () => void;
+    onToggleFullscreen?: () => void;
+    onCycleFontSize?: () => void;
 }

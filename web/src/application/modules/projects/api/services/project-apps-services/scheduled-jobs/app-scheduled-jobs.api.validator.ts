@@ -283,9 +283,15 @@ const RunNowSchema = z.object({
 });
 
 const GetTaskLogsSchema = z.object({
-    data: z.object({
-        logs: z.array(AppScheduledJobTaskLogFrameSchema),
-    }),
+    data: z
+        .object({
+            logs: z
+                .array(AppScheduledJobTaskLogFrameSchema)
+                .nullish()
+                .transform(value => value ?? []),
+        })
+        .nullish()
+        .transform(value => value ?? { logs: [] }),
     meta: BaseMetaApiSchema.nullable(),
 });
 

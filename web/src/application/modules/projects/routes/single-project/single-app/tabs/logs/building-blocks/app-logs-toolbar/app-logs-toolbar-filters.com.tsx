@@ -21,17 +21,18 @@ export function AppLogsToolbarFilters({
     onRequestRefresh,
 }: AppLogsToolbarFiltersProps) {
     return (
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
             {!isLinesHidden && (
-                <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                     <span className="text-xs sm:text-sm font-medium text-foreground">Lines</span>
                     <InputNumber
                         value={lines}
                         min={1}
                         showControls={false}
                         useGrouping={false}
-                        className="w-[64px] sm:w-[76px]"
-                        classNameInput="h-8 sm:h-9 text-xs sm:text-sm"
+                        className="w-[56px] sm:w-[76px]"
+                        classNameInput="h-8 sm:h-9"
+                        classNameInner="text-xs sm:text-sm px-2"
                         onValueChange={value => {
                             onLinesChange(value && value > 0 ? value : undefined);
                         }}
@@ -52,8 +53,8 @@ export function AppLogsToolbarFilters({
                 placeholder="Since"
                 showClearButton
                 granularity="second"
-                containerClassName="w-[135px] sm:w-[160px]"
-                className="h-8 sm:h-9 text-xs sm:text-sm"
+                containerClassName="w-[115px] sm:w-[150px]"
+                className="h-8 sm:h-9 text-xs sm:text-sm px-2 sm:px-3"
                 toDate={new Date()}
             />
             <DurationPicker
@@ -84,7 +85,7 @@ function DurationPicker({ value, onChange }: DurationPickerProps) {
     }
 
     return (
-        <div className="relative w-[110px] sm:w-[132px]">
+        <div className="relative w-[88px] sm:w-[120px]">
             <Popover
                 open={open}
                 onOpenChange={setOpen}
@@ -94,7 +95,7 @@ function DurationPicker({ value, onChange }: DurationPickerProps) {
                         type="button"
                         variant="outline"
                         className={cn(
-                            "h-8 sm:h-9 w-full justify-between px-2.5 sm:px-3 text-xs sm:text-sm font-normal",
+                            "h-8 sm:h-9 w-full justify-between px-2 sm:px-3 text-xs sm:text-sm font-normal",
                             !value && "text-muted-foreground",
                         )}
                     >

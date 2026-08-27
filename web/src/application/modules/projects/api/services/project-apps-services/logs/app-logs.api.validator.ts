@@ -26,9 +26,15 @@ const GetInfoSchema = z.object({
 });
 
 const GetLogsSchema = z.object({
-    data: z.object({
-        logs: z.array(AppLogFrameSchema),
-    }),
+    data: z
+        .object({
+            logs: z
+                .array(AppLogFrameSchema)
+                .nullish()
+                .transform(value => value ?? []),
+        })
+        .nullish()
+        .transform(value => value ?? { logs: [] }),
     meta: BaseMetaApiSchema.nullable(),
 });
 

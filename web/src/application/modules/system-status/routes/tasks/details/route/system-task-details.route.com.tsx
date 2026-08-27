@@ -8,6 +8,8 @@ import invariant from "tiny-invariant";
 import { SystemTasksCommands, SystemTasksQueries } from "~/system-status/data";
 import { SystemTaskStatus } from "~/system-status/domain";
 
+import { useLogViewerControls } from "@application/shared/components";
+
 import {
     SystemTaskLogsViewer,
     SystemTaskSummaryCard,
@@ -37,6 +39,7 @@ export function SystemTaskDetailsRoute() {
     invariant(taskId, "taskId must be defined");
 
     const [shouldPollAfterStreamClose, setShouldPollAfterStreamClose] = useState(false);
+    const { isFullscreen, toggleFullscreen, fontSize, cycleFontSize } = useLogViewerControls();
 
     const {
         data: taskResponse,
@@ -79,8 +82,14 @@ export function SystemTaskDetailsRoute() {
     });
 
     return (
-        <section className={cn(listBox, "p-0")}>
-            <div className="flex flex-col gap-5">
+        <section
+            className={cn(
+                listBox,
+                isFullscreen &&
+                    "!max-w-none !w-auto fixed inset-4 z-50 min-h-0 rounded-lg border bg-background p-4 shadow-2xl flex flex-col",
+            )}
+        >
+            <div className={cn("flex flex-col gap-5", isFullscreen && "flex-1 min-h-0")}>
                 {isFetching && !task ? (
                     <SystemTaskSummaryCardSkeleton variant="details" />
                 ) : task ? (
@@ -89,6 +98,10 @@ export function SystemTaskDetailsRoute() {
                         now={now}
                         variant="details"
                         isCancelling={isCancelling}
+                        isFullscreen={isFullscreen}
+                        fontSize={fontSize}
+                        onToggleFullscreen={toggleFullscreen}
+                        onCycleFontSize={cycleFontSize}
                         onCancel={id => {
                             cancelTask({ taskID: id });
                         }}
@@ -96,6 +109,8 @@ export function SystemTaskDetailsRoute() {
                         <SystemTaskLogsViewer
                             taskID={taskId}
                             status={task.status}
+                            fontSize={fontSize}
+                            height={isFullscreen ? "100%" : undefined}
                             onStreamClosedWhileInProgress={handleStreamClosedWhileInProgress}
                         />
                     </SystemTaskSummaryCard>

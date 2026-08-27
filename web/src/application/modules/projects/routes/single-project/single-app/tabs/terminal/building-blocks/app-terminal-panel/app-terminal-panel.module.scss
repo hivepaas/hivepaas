@@ -10,7 +10,7 @@
 
   :global(.xterm) {
     height: 100%;
-    padding: 12px;
+    padding: 6px 8px;
     background-color: #0f172a !important;
   }
 
@@ -18,26 +18,55 @@
     background-color: #0f172a !important;
   }
 
+  :global(.xterm-scrollable-element) {
+    :global(.scrollbar) {
+      border: none !important;
+      box-shadow: none !important;
+      outline: none !important;
+    }
+
+    :global(.shadow) {
+      display: none !important;
+    }
+
+    :global(.scrollbar.vertical) {
+      width: 6px !important;
+      right: 4px !important;
+      background: transparent !important;
+      border: none !important;
+    }
+
+    :global(.scrollbar > .slider) {
+      width: 6px !important;
+      border-radius: 9999px !important;
+      background-color: #334155 !important;
+      border: none !important;
+
+      &:hover {
+        background-color: #475569 !important;
+      }
+    }
+  }
+
   :global(.xterm-viewport) {
     background-color: #0f172a !important;
-    scrollbar-width: thin;
-    scrollbar-color: #334155 #0f172a;
 
     &::-webkit-scrollbar {
-      width: 6px;
-      background-color: #0f172a;
+      width: 4px !important;
+      height: 4px !important;
+      background-color: transparent !important;
     }
 
     &::-webkit-scrollbar-track {
-      background-color: #0f172a;
+      background-color: transparent !important;
     }
 
     &::-webkit-scrollbar-thumb {
-      background-color: #334155;
-      border-radius: 9999px;
+      background-color: #334155 !important;
+      border-radius: 9999px !important;
 
       &:hover {
-        background-color: #475569;
+        background-color: #475569 !important;
       }
     }
   }

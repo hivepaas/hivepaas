@@ -5,7 +5,7 @@ import invariant from "tiny-invariant";
 import { ProjectsQueries } from "~/projects/data";
 import { useProjectUserAccessesDialog } from "~/projects/dialogs/project-user-accesses";
 
-import { BackButton, TabNavigation } from "@application/shared/components";
+import { TabNavigation } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
 import { ProjectEnvFilter, ProjectStatusBadge } from "@application/modules/projects/module-shared/components";
@@ -81,66 +81,48 @@ function View({ projectId }: Props) {
     }
 
     return (
-        <div className="bg-background pt-4 px-5 rounded-lg">
-            <div className="flex items-center justify-between gap-3">
-                <div className="flex justify-between w-full min-w-0 flex-wrap items-center gap-3">
-                    <SingleProjectBreadcrumbs project={project} />
+        <div className="bg-background pt-4 px-4 sm:px-5 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+                <SingleProjectBreadcrumbs project={project} />
+                <div className="flex items-center">
                     <ProjectEnvFilter
                         projectId={projectId}
                         envs={project.envs}
                     />
                 </div>
-                {/* <div className="flex items-center gap-2">
-                    <PopConfirm
-                        title="Remove project"
-                        variant="destructive"
-                        confirmText="Remove"
-                        cancelText="Cancel"
-                        description="Confirm deletion of this item?"
-                        onConfirm={handleRemove}
-                    >
-                        <Button
-                            variant="outline"
-                            disabled={isDeleting}
-                        >
-                            <Trash2 className="mr-2 size-4" />
-                            Remove
-                        </Button>
-                    </PopConfirm>
-                </div> */}
             </div>
 
-            <div className="flex items-center gap-4 mt-4 pb-4">
-                <BackButton />
-                <div className="w-full flex flex-wrap items-end gap-4">
-                    <div className="flex min-w-0 items-center gap-4">
-                        <Avatar
-                            name={project.name}
-                            src={project.photo}
-                            className="size-20 text-2xl"
-                        />
-                        <div className="flex min-w-0 flex-col gap-3">
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-[20px] font-semibold text-foreground">{project.name}</h2>
-                                <ProjectStatusBadge status={project.status} />
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <span className="text-sm text-muted-foreground">Owner</span>
-                                <Avatar
-                                    name={project.owner.fullName}
-                                    src={project.owner.photo}
-                                    className="size-8"
-                                    borderless
-                                />
-                                <span className="truncate text-sm font-medium">{project.owner.fullName}</span>
-                            </div>
-                        </div>
+            <div className="flex items-center gap-3 sm:gap-4 py-3 border-t border-border/40">
+                <Avatar
+                    name={project.name}
+                    src={project.photo}
+                    className="size-12 sm:size-14 md:size-16 text-lg sm:text-xl md:text-2xl shrink-0 rounded-xl"
+                />
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5 justify-center">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-lg sm:text-xl font-semibold text-foreground truncate">{project.name}</h2>
+                        <ProjectStatusBadge status={project.status} />
                     </div>
 
-                    <div className="ml-auto flex flex-wrap items-center justify-end gap-4">
-                        <div className="flex items-center gap-3">
-                            <span className="text-sm text-muted-foreground">Access</span>
-                            <div className="flex -space-x-2">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                            <span>Owner:</span>
+                            <Avatar
+                                name={project.owner.fullName}
+                                src={project.owner.photo}
+                                className="size-6 text-xs shrink-0"
+                                borderless
+                            />
+                            <span className="truncate font-medium text-foreground max-w-[130px] sm:max-w-[200px]">
+                                {project.owner.fullName}
+                            </span>
+                        </div>
+
+                        <span className="hidden sm:inline text-muted-foreground/30">•</span>
+
+                        <div className="flex items-center gap-1.5">
+                            <span>Access:</span>
+                            <div className="flex -space-x-1.5 items-center">
                                 {visibleAccessUsers.map(user => (
                                     <button
                                         key={user.id}
@@ -153,7 +135,7 @@ function View({ projectId }: Props) {
                                         <Avatar
                                             name={user.fullName || user.email || user.username}
                                             src={user.photo}
-                                            className="size-8 border-2 border-background"
+                                            className="size-6 text-[10px] border-2 border-background"
                                         />
                                     </button>
                                 ))}
@@ -162,7 +144,7 @@ function View({ projectId }: Props) {
                                         type="button"
                                         aria-label="Configure project access"
                                         title="Configure project access"
-                                        className="flex size-8 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary/10 p-0 text-xs font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        className="flex size-6 cursor-pointer items-center justify-center rounded-full border-2 border-background bg-primary/10 p-0 text-[10px] font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                                         onClick={openProjectUserAccessesDialog}
                                     >
                                         +{extraAccessUsers}
@@ -176,7 +158,9 @@ function View({ projectId }: Props) {
 
             <div className="border-b border-border" />
 
-            <TabNavigation links={links} />
+            <div className="overflow-x-auto">
+                <TabNavigation links={links} />
+            </div>
         </div>
     );
 }

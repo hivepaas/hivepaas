@@ -9,7 +9,7 @@ import invariant from "tiny-invariant";
 import { AppScheduledJobsQueries, ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
 import { ProjectAppStatusBadge, ProjectEnvFilter } from "~/projects/module-shared/components";
 
-import { BackButton, PopConfirm, TabNavigation } from "@application/shared/components";
+import { PopConfirm, TabNavigation } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
 import { SingleAppBreadcrumbs } from "../buidling-blocks";
@@ -156,53 +156,45 @@ function View({ projectId, env, appId }: Props) {
             : []),
     ];
     return (
-        <div className="bg-background pt-4 px-5 rounded-lg">
-            <div className="flex items-center justify-between gap-3">
-                <div className="flex justify-between w-full min-w-0 flex-wrap items-center gap-3">
-                    <SingleAppBreadcrumbs
-                        app={appData}
-                        appRoute={appRoute}
-                        items={taskBreadcrumbItems}
-                        parentApp={appData.parentApp}
-                        project={project}
-                    />
-                    {appEnv ? (
+        <div className="bg-background pt-4 px-4 sm:px-5 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+                <SingleAppBreadcrumbs
+                    app={appData}
+                    appRoute={appRoute}
+                    items={taskBreadcrumbItems}
+                    parentApp={appData.parentApp}
+                    project={project}
+                />
+                {appEnv ? (
+                    <div className="flex items-center">
                         <ProjectEnvFilter
                             projectId={projectId}
                             envs={[appEnv]}
                             showAll={false}
                             interactive={false}
                         />
-                    ) : null}
-                </div>
+                    </div>
+                ) : null}
             </div>
 
-            <div className="flex items-center gap-4 mt-4 pb-4">
-                <BackButton />
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3 border-t border-border/40">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     <Avatar
                         name={appData.name}
                         src={appData.photo}
-                        className="size-10 text-base"
+                        className="size-10 sm:size-12 text-base sm:text-lg shrink-0 rounded-xl"
                     />
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-[20px] font-semibold text-foreground">{appData.name}</h2>
+                    <div className="flex min-w-0 flex-col gap-1 justify-center">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <h2 className="text-lg sm:text-xl font-semibold text-foreground truncate">
+                                {appData.name}
+                            </h2>
                             <ProjectAppStatusBadge status={appData.status} />
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div className="border-b border-border" />
-
-            <div className="flex flex-wrap items-center gap-2">
-                <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <TabNavigation links={links} />
-                    <AppAccessLinksDropdown accessLinks={appData.accessLinks} />
-                </div>
-
-                <div className="ml-auto flex items-center gap-2 pb-1">
+                <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
                     <PopConfirm
                         title="Re-deploy app"
                         description="Are you sure you want to re-deploy this app?"
@@ -216,10 +208,12 @@ function View({ projectId, env, appId }: Props) {
                         <Button
                             type="button"
                             variant="outline"
+                            size="sm"
+                            className="h-8 text-xs sm:text-sm"
                             isLoading={isDeploying}
                             disabled={isAppActionPending && !isDeploying}
                         >
-                            <RefreshCw className="size-4 text-orange-600" />
+                            <RefreshCw className="size-3.5 text-orange-600 mr-1 sm:mr-1.5" />
                             Re-deploy
                         </Button>
                     </PopConfirm>
@@ -236,10 +230,12 @@ function View({ projectId, env, appId }: Props) {
                         <Button
                             type="button"
                             variant="outline"
+                            size="sm"
+                            className="h-8 text-xs sm:text-sm"
                             isLoading={isRestarting}
                             disabled={isAppActionPending && !isRestarting}
                         >
-                            <Power className="size-4 text-orange-600" />
+                            <Power className="size-3.5 text-orange-600 mr-1 sm:mr-1.5" />
                             Restart
                         </Button>
                     </PopConfirm>
@@ -257,10 +253,12 @@ function View({ projectId, env, appId }: Props) {
                             <Button
                                 type="button"
                                 variant="outline"
+                                size="sm"
+                                className="h-8 text-xs sm:text-sm"
                                 isLoading={isSettingRunning}
                                 disabled={isAppActionPending && !isSettingRunning}
                             >
-                                <Power className="size-4 text-orange-600" />
+                                <Power className="size-3.5 text-orange-600 mr-1 sm:mr-1.5" />
                                 {startStopText}
                             </Button>
                         </PopConfirm>
@@ -268,17 +266,26 @@ function View({ projectId, env, appId }: Props) {
                         <Button
                             type="button"
                             variant="outline"
+                            size="sm"
+                            className="h-8 text-xs sm:text-sm"
                             isLoading={isSettingRunning}
                             disabled={isAppActionPending && !isSettingRunning}
                             onClick={() => {
                                 setRunning({ projectID: projectId, env, appID: appId, running: true });
                             }}
                         >
-                            <Power className="size-4 text-orange-600" />
+                            <Power className="size-3.5 text-orange-600 mr-1 sm:mr-1.5" />
                             {startStopText}
                         </Button>
                     )}
                 </div>
+            </div>
+
+            <div className="border-b border-border" />
+
+            <div className="flex items-center gap-2 overflow-x-auto">
+                <TabNavigation links={links} />
+                <AppAccessLinksDropdown accessLinks={appData.accessLinks} />
             </div>
         </div>
     );

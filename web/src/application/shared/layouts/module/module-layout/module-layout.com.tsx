@@ -1,10 +1,12 @@
 import { type PropsWithChildren, useEffect } from "react";
 
+import { LogoIcon } from "@/assets/icons";
+
 import { useF2aSetupDialogState, useMfaSetupRequiredDialogState } from "@application/shared/dialogs";
 
 import { useAuthContext } from "@application/authentication/context";
 
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 import { ModuleSidebar } from "../module-sidebar";
 
@@ -33,6 +35,17 @@ export function ModuleLayout({ children }: PropsWithChildren) {
         <SidebarProvider>
             <ModuleSidebar />
             <SidebarInset>
+                {/* Mobile Header: only visible on mobile screens (below md breakpoint) */}
+                <header className="flex md:hidden items-center justify-between px-4 py-2.5 border-b bg-background sticky top-0 z-20 shadow-xs">
+                    <div className="flex items-center gap-2.5">
+                        <SidebarTrigger className="h-8 w-8 text-foreground" />
+                        <div className="flex items-center gap-2">
+                            <LogoIcon className="h-7 w-7" />
+                            <span className="font-semibold text-sm tracking-tight">HivePaaS</span>
+                        </div>
+                    </div>
+                </header>
+
                 <div className="flex flex-1 flex-col gap-4 p-4 bg-[#f5f5f5]">{children}</div>
             </SidebarInset>
         </SidebarProvider>

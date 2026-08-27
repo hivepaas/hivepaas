@@ -37521,7 +37521,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -37539,7 +37539,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -41672,6 +41672,12 @@
           "extraOptions" : {
             "type" : "string"
           },
+          "nodeId" : {
+            "type" : "string"
+          },
+          "nodeLabel" : {
+            "type" : "string"
+          },
           "propagation" : {
             "$ref" : "#/components/schemas/mount.Propagation"
           },
@@ -41679,7 +41685,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "directory", "extraOptions", "propagation", "readonly" ],
+        "required" : [ "directory", "extraOptions", "nodeId", "nodeLabel", "propagation", "readonly" ],
         "type" : "object"
       },
       "cluster_volumedto.VolumeBindOptionsResp" : {
@@ -41690,6 +41696,12 @@
           "extraOptions" : {
             "type" : "string"
           },
+          "nodeId" : {
+            "type" : "string"
+          },
+          "nodeLabel" : {
+            "type" : "string"
+          },
           "propagation" : {
             "$ref" : "#/components/schemas/mount.Propagation"
           },
@@ -41697,7 +41709,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "directory", "extraOptions", "propagation", "readonly" ],
+        "required" : [ "directory", "extraOptions", "nodeId", "nodeLabel", "propagation", "readonly" ],
         "type" : "object"
       },
       "cluster_volumedto.VolumeNfsOptionsReq" : {

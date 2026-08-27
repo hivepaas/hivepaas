@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -46,6 +47,10 @@ func (uc *UC) CreateVolume(
 			}
 			vol := &createResp.Volume
 			volEntity.RefID = dockerhelper.GetVolumeID(vol)
+			if req.BindOptions != nil {
+				volEntity.NodeID = req.BindOptions.NodeID
+				volEntity.NodeLabel = req.BindOptions.NodeLabel
+			}
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = vol.Driver
 			if err := pData.Setting.SetData(volEntity); err != nil {
@@ -74,6 +79,14 @@ func (uc *UC) createVolumeInDocker(
 	}
 	if err == nil {
 		return nil, hperrors.NewAlreadyExist("Cluster volume")
+	}
+
+	// If this is node-local directory bind, create the dir
+	if req.BindOptions != nil && req.BindOptions.Directory != "" {
+		err = uc.createBindDirectoryInNode(ctx, req)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
 
 	driverOpts := map[string]string{}
@@ -183,4 +196,43 @@ func (uc *UC) calcBindDirectory(
 
 	directory = filepath.Join(directory, subpath)
 	return directory, nil
+}
+
+func (uc *UC) createBindDirectoryInNode(
+	ctx context.Context,
+	req *volumedto.CreateVolumeReq,
+) (err error) {
+	if req.BindOptions == nil || req.BindOptions.Directory == "" {
+		return nil
+	}
+
+	nodeID := req.BindOptions.NodeID
+	nodeLabel := req.BindOptions.NodeLabel
+
+	if nodeID == "" && nodeLabel == "" {
+		nodeID, err = uc.dockerManager.NodeCurrentID(ctx)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+
+	targetDir := filepath.Join("/host", req.BindOptions.Directory)
+	mkdirCmd := fmt.Sprintf("mkdir -p '%s' && chmod -R 777 '%s'", targetDir, targetDir)
+	cmdReq := &nodeexecservice.CommandExecReq{
+		NodeID:    nodeID,
+		NodeLabel: nodeLabel,
+		CommandExecOpts: &nodeexecservice.CommandExecOpts{
+			Command: []string{"sh", "-c", mkdirCmd},
+		},
+	}
+
+	resp, err := uc.nodeExecService.ExecCommand(ctx, cmdReq)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if resp != nil && resp.ExitCode != 0 {
+		return hperrors.Wrap(hperrors.ErrDirNotCreated).WithParam("Name", req.BindOptions.Directory)
+	}
+
+	return nil
 }

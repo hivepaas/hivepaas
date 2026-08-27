@@ -293,6 +293,7 @@ services:
       HP_AGENT_SECRET_TOKEN: abc123
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - /:/host
     networks:
       - local_net
     deploy:

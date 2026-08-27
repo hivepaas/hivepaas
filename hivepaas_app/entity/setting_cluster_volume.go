@@ -20,7 +20,9 @@ func (s *clusterVolumeParser) New() SettingData {
 }
 
 type ClusterVolume struct {
-	RefID string `json:"refId"`
+	RefID     string `json:"refId"`
+	NodeID    string `json:"nodeId,omitempty"`
+	NodeLabel string `json:"nodeLabel,omitempty"`
 }
 
 func (s *ClusterVolume) GetType() base.SettingType {

@@ -58,6 +58,8 @@ func (req *VolumeBaseReq) ToEntity() *entity.ClusterVolume {
 
 type VolumeBindOptionsReq struct {
 	Directory    string            `json:"directory"`
+	NodeID       string            `json:"nodeId"`
+	NodeLabel    string            `json:"nodeLabel"`
 	Propagation  mount.Propagation `json:"propagation"`
 	Readonly     bool              `json:"readonly"`
 	ExtraOptions string            `json:"extraOptions"`

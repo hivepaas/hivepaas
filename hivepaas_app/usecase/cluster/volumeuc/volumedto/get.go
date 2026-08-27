@@ -58,6 +58,8 @@ type VolumeResp struct {
 
 type VolumeBindOptionsResp struct {
 	Directory    string            `json:"directory"`
+	NodeID       string            `json:"nodeId,omitempty"`
+	NodeLabel    string            `json:"nodeLabel,omitempty"`
 	Propagation  mount.Propagation `json:"propagation"`
 	Readonly     bool              `json:"readonly"`
 	ExtraOptions string            `json:"extraOptions"`
@@ -115,7 +117,7 @@ func TransformVolume(
 	if resp.Driver == docker.VolumeDriverLocal {
 		switch vol.Options["type"] {
 		case "none":
-			resp.BindOptions = transformVolumeTypeBind(vol)
+			resp.BindOptions = transformVolumeTypeBind(volEnt, vol)
 			resp.Options = nil
 		case "nfs":
 			resp.NfsOptions = transformVolumeTypeNfs(vol)
@@ -136,13 +138,18 @@ func transformVolumeCreatedAt(createdAt string) time.Time {
 	return time.Time{}
 }
 
-func transformVolumeTypeBind(vol *volume.Volume) *VolumeBindOptionsResp {
-	opts := strings.Split(vol.Options["o"], ",")
+func transformVolumeTypeBind(
+	volEnt *entity.ClusterVolume,
+	volDocker *volume.Volume,
+) *VolumeBindOptionsResp {
+	opts := strings.Split(volDocker.Options["o"], ",")
 	if !gofn.Contain(opts, "bind") {
 		return nil
 	}
 	resp := &VolumeBindOptionsResp{
-		Directory: vol.Options["device"],
+		Directory: volDocker.Options["device"],
+		NodeID:    volEnt.NodeID,
+		NodeLabel: volEnt.NodeLabel,
 	}
 	for _, opt := range opts {
 		if opt == "bind" {
@@ -165,11 +172,11 @@ func transformVolumeTypeBind(vol *volume.Volume) *VolumeBindOptionsResp {
 	return resp
 }
 
-func transformVolumeTypeNfs(vol *volume.Volume) *VolumeNfsOptionsResp {
+func transformVolumeTypeNfs(volDocker *volume.Volume) *VolumeNfsOptionsResp {
 	resp := &VolumeNfsOptionsResp{
-		Device: vol.Options["device"],
+		Device: volDocker.Options["device"],
 	}
-	opts := strings.Split(vol.Options["o"], ",")
+	opts := strings.Split(volDocker.Options["o"], ",")
 	for _, opt := range opts {
 		if opt == "ro" || opt == "rw" {
 			resp.Readonly = opt == "ro"
@@ -192,11 +199,11 @@ func transformVolumeTypeNfs(vol *volume.Volume) *VolumeNfsOptionsResp {
 	return resp
 }
 
-func transformVolumeTypeTmpfs(vol *volume.Volume) *VolumeTmpfsOptionsResp {
+func transformVolumeTypeTmpfs(volDocker *volume.Volume) *VolumeTmpfsOptionsResp {
 	resp := &VolumeTmpfsOptionsResp{
-		Device: vol.Options["device"],
+		Device: volDocker.Options["device"],
 	}
-	opts := strings.Split(vol.Options["o"], ",")
+	opts := strings.Split(volDocker.Options["o"], ",")
 	for _, opt := range opts {
 		if strings.HasPrefix(opt, "size=") {
 			val := opt[len("size="):]

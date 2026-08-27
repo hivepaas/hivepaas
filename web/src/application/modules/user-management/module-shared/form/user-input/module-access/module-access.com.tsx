@@ -53,7 +53,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
         <div>
             {isAdmin ? (
                 /* Admin view - Single "All modules" row */
-                <div className="space-y-0 divide-y">
+                <div className="space-y-0 divide-y divide-border/50">
                     <div className="flex items-center flex-wrap gap-4 py-2">
                         <div className="flex-1 font-semibold">All modules</div>
                         <div className="flex items-center gap-4">
@@ -110,7 +110,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                 </div>
             ) : fields.length > 0 ? (
                 /* Non-admin view - List of modules */
-                <div className="space-y-0 divide-y">
+                <div className="space-y-0 divide-y divide-border/50">
                     {fields.map((module, index) => (
                         <div
                             key={module.id}

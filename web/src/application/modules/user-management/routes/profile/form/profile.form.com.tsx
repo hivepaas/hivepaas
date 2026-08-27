@@ -19,6 +19,8 @@ import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
+import { Separator } from "@/components/ui/separator";
+
 import { Information, Security } from "../form-components";
 import { ProfileFormSchema, type ProfileFormSchemaInput, type ProfileFormSchemaOutput } from "../schemas";
 import { type ProfileFormRef } from "../types";
@@ -160,19 +162,19 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
                     <Information />
 
                     {/* Role */}
-                    <div className="h-px bg-border" />
+                    <Separator className="opacity-50" />
                     <InfoBlock title="Role">
                         <UserRoleBadge role={defaultValues.role} />
                     </InfoBlock>
 
                     {/* Joining date */}
-                    <div className="h-px bg-border" />
+                    <Separator className="opacity-50" />
                     <InfoBlock title={<LabelWithInfo label="Joining Date" />}>
                         <span className="text-sm">{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
                     </InfoBlock>
 
                     {/* Access Expiration */}
-                    <div className="h-px bg-border" />
+                    <Separator className="opacity-50" />
                     <InfoBlock title="Access Expiration">
                         {defaultValues.accessExpireAt
                             ? format(defaultValues.accessExpireAt, "yyyy-MM-dd HH:mm:ss")
@@ -180,7 +182,7 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
                     </InfoBlock>
 
                     {/* Security Option */}
-                    <div className="h-px bg-border" />
+                    <Separator className="opacity-50" />
                     <InfoBlock title="Security Option">
                         <UserSecurityBadge securityOption={defaultValues.securityOption} />
                     </InfoBlock>
@@ -189,7 +191,7 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
                     <Security defaultValues={defaultValues} />
 
                     {/* Project Access */}
-                    <div className="h-px bg-border" />
+                    <Separator className="opacity-50" />
                     <InfoBlock
                         title={
                             <LabelWithInfo
@@ -206,7 +208,7 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
                     </InfoBlock>
 
                     {/* Module Access */}
-                    <div className="h-px bg-border" />
+                    <Separator className="opacity-50" />
                     <InfoBlock
                         title={
                             <LabelWithInfo

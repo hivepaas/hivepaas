@@ -93,7 +93,7 @@ function View() {
         <AuthenticationLayout>
             <div className="flex flex-col gap-6">
                 <CardHeader className="flex flex-col items-center text-center">
-                    <LogoIcon className="h-12 w-12" />
+                    <LogoIcon className="h-12 w-12 text-foreground" />
                     <CardDescription className="font-medium">Sign in to HivePaaS</CardDescription>
                 </CardHeader>
                 <div className="w-full max-w-sm mx-auto">{child}</div>

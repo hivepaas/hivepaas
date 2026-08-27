@@ -9,6 +9,8 @@ import { useProfileContext } from "@application/shared/context";
 
 import { UserRoleBadge, UserStatusBadge } from "@application/modules/user-management/module-shared/components";
 
+import { Separator } from "@/components/ui/separator";
+
 function View() {
     const { profile } = useProfileContext();
 
@@ -16,7 +18,9 @@ function View() {
 
     return (
         <div className="bg-background py-3 sm:py-4 px-4 sm:px-5 rounded-lg">
-            <h3 className="text-base sm:text-lg font-bold text-foreground">Your account</h3>
+            <h3 className="text-base sm:text-lg font-bold text-foreground pb-3">Your account</h3>
+
+            <Separator className="opacity-50" />
 
             <div className="flex items-center gap-3 sm:gap-4 mt-3 sm:mt-4 pb-1">
                 <Avatar

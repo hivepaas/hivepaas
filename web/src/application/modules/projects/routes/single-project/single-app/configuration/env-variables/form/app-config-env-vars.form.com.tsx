@@ -15,6 +15,8 @@ import { type EnvVarsFormBaseSchemaInput } from "~/projects/module-shared/schema
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
+import { Separator } from "@/components/ui/separator";
+
 import {
     AppConfigEnvVarsFormSchema,
     type AppConfigEnvVarsFormSchemaInput,
@@ -301,7 +303,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                                 handleShowFinalValues("buildtime");
                             }}
                         />
-                        <div className="h-px bg-border" />
+                        <Separator className="opacity-50" />
                         {inheritedValues && (
                             <InheritedEnvVarsAccordion
                                 title="Inherited Runtime Env Variables"

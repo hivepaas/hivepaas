@@ -10,6 +10,8 @@ import { ROUTE } from "@application/shared/constants";
 
 import { ProjectEnvFilter, ProjectStatusBadge } from "@application/modules/projects/module-shared/components";
 
+import { Separator } from "@/components/ui/separator";
+
 import { SingleProjectBreadcrumbs } from "../buidling-blocks";
 
 import { SingleProjectHeaderSkeleton } from "./single-project-header.skeleton.com";
@@ -92,7 +94,9 @@ function View({ projectId }: Props) {
                 </div>
             </div>
 
-            <div className="flex items-center gap-3 sm:gap-4 py-2.5 border-t border-border/40">
+            <Separator className="opacity-50" />
+
+            <div className="flex items-center gap-3 sm:gap-4 py-2.5">
                 <Avatar
                     name={project.name}
                     src={project.photo}
@@ -156,7 +160,7 @@ function View({ projectId }: Props) {
                 </div>
             </div>
 
-            <div className="border-b border-border" />
+            <Separator className="opacity-50" />
 
             <div className="overflow-x-auto">
                 <TabNavigation links={links} />

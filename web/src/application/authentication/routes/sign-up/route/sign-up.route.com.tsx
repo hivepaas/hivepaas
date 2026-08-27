@@ -44,7 +44,7 @@ function View({ method }: ViewProps) {
         <AuthenticationLayout>
             <div className="w-full max-w-2xl mx-auto flex flex-col gap-6">
                 <CardHeader className="flex flex-col items-center text-center">
-                    <LogoIcon className="h-12 w-12" />
+                    <LogoIcon className="h-12 w-12 text-foreground" />
                     <CardDescription className="font-medium">Sign up to HivePaaS</CardDescription>
                 </CardHeader>
                 <SignUpForm

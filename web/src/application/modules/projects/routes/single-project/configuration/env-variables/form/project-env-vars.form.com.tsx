@@ -16,11 +16,12 @@ import {
     FinalEnvValuesDialog,
     ProjectEnvScopeBadge,
 } from "~/projects/module-shared/components";
+import { EnvVarsBaseForm, InheritedEnvVarsAccordion } from "~/projects/module-shared/form";
 import { PROJECT_ENV_FILTER_ALL, getProjectEnvFilterParam } from "~/projects/module-shared/hooks";
 
-import { EnvVarsBaseForm, InheritedEnvVarsAccordion } from "~/projects/module-shared/form";
-
 import { type ValidationException } from "@infrastructure/exceptions/validation";
+
+import { Separator } from "@/components/ui/separator";
 
 import {
     ProjectEnvVarsFormSchema,
@@ -279,7 +280,7 @@ export const ProjectEnvVarsForm = React.forwardRef<ProjectEnvVarsFormRef, Props>
                                 handleShowFinalValues("buildtime");
                             }}
                         />
-                        <div className="h-px bg-border" />
+                        <Separator className="opacity-50" />
                         {inheritedValues && (
                             <InheritedEnvVarsAccordion
                                 title="Inherited Runtime Env Variables"

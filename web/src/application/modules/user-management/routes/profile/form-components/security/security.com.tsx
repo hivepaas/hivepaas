@@ -8,6 +8,7 @@ import { useChangePasswordDialog, useF2aSetupDialog } from "@application/shared/
 import { ESecuritySettings, EUserStatus } from "@application/shared/enums";
 
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface Props {
     defaultValues: Pick<UserBase, "securityOption" | "status">;
@@ -44,7 +45,7 @@ export function Security({ defaultValues }: Props) {
 
     return (
         <>
-            <div className="h-px bg-border" />
+            <Separator className="opacity-50" />
             <InfoBlock title="Security">
                 <div className="flex flex-col gap-4">
                     {/* Password Set Row */}

@@ -1,7 +1,6 @@
 import { memo } from "react";
 
-import { Avatar } from "@components/ui";
-import { Button } from "@components/ui";
+import { Avatar, Button } from "@components/ui";
 import { format } from "date-fns";
 import { BadgeCheck, Check, Clock, KeyRound, Lock, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +16,8 @@ import { useAppNavigate } from "@application/shared/hooks/router";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { useResetUserPasswordDialog } from "@application/modules/user-management/dialogs";
+
+import { Separator } from "@/components/ui/separator";
 
 import { UserBreadcrumbs } from "../building-blocks";
 
@@ -90,7 +91,7 @@ export function View({ userId }: Props) {
 
     return (
         <div className="bg-background py-3 sm:py-4 px-4 sm:px-5 rounded-lg">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3">
                 <UserBreadcrumbs user={user} />
                 <div className="flex flex-wrap items-center gap-2">
                     {shouldShowToggleButtons && showDisable && canWrite && (
@@ -207,6 +208,9 @@ export function View({ userId }: Props) {
                     )}
                 </div>
             </div>
+
+            <Separator className="opacity-50" />
+
             <div className="flex items-center gap-3 sm:gap-4 mt-3 sm:mt-4 pb-1">
                 <Avatar
                     name={user.fullName || user.username}

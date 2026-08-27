@@ -12,6 +12,8 @@ import { UserInput } from "@application/modules/user-management/module-shared/fo
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
+import { Separator } from "@/components/ui/separator";
+
 import { Information } from "../form-components";
 import { SingleUserFormSchema, type SingleUserFormSchemaInput, type SingleUserFormSchemaOutput } from "../schemas";
 import { type SingleUserFormRef } from "../types";
@@ -102,19 +104,19 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false,
                         <Information />
 
                         {/* Role */}
-                        <div className="h-px bg-border" />
+                        <Separator className="opacity-50" />
                         <InfoBlock title="Role">
                             <UserInput.Role<SingleUserFormSchemaInput> name="role" />
                         </InfoBlock>
 
                         {/* Joining date */}
-                        <div className="h-px bg-border" />
+                        <Separator className="opacity-50" />
                         <InfoBlock title={<LabelWithInfo label="Joining Date" />}>
                             <span className="text-sm">{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
                         </InfoBlock>
 
                         {/* Access Expiration */}
-                        <div className="h-px bg-border" />
+                        <Separator className="opacity-50" />
                         <InfoBlock title="Access Expiration">
                             <UserInput.AccessExpiration<SingleUserFormSchemaInput>
                                 className="md:min-w-[400px] w-fit"
@@ -123,13 +125,13 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false,
                         </InfoBlock>
 
                         {/* Security Option */}
-                        <div className="h-px bg-border" />
+                        <Separator className="opacity-50" />
                         <InfoBlock title="Security Option">
                             <UserInput.SecurityOption<SingleUserFormSchemaInput> name="securityOption" />
                         </InfoBlock>
 
                         {/* Project Access */}
-                        <div className="h-px bg-border" />
+                        <Separator className="opacity-50" />
                         <InfoBlock
                             title={
                                 <LabelWithInfo
@@ -145,7 +147,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false,
                         </InfoBlock>
 
                         {/* Module Access */}
-                        <div className="h-px bg-border" />
+                        <Separator className="opacity-50" />
                         <InfoBlock
                             title={
                                 <LabelWithInfo

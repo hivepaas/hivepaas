@@ -17,6 +17,19 @@ interface TabItem {
     disabled?: boolean;
 }
 
+function normalizePath(path: string) {
+    return path.replace(/\/+$/, "");
+}
+
+function findActiveTab(tabs: TabItem[], pathname: string) {
+    const normalizedPathname = normalizePath(pathname);
+    const exactMatch = tabs.find(({ route }) => normalizePath(route) === normalizedPathname);
+    if (exactMatch) {
+        return exactMatch.route;
+    }
+    return tabs.find(({ route }) => normalizedPathname.startsWith(`${normalizePath(route)}/`))?.route;
+}
+
 function View({ children }: PropsWithChildren) {
     const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
 
@@ -99,7 +112,7 @@ function View({ children }: PropsWithChildren) {
         },
     ];
 
-    const activeKey = tabs.find(({ route }) => route === location.pathname)?.route;
+    const activeKey = findActiveTab(tabs, location.pathname);
 
     return (
         <div className="flex flex-col gap-2 md:flex-row md:gap-5 w-full max-w-[1400px] mx-auto min-w-0">

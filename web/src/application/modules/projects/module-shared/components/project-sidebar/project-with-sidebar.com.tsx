@@ -21,11 +21,13 @@ function normalizePath(path: string) {
     return path.replace(/\/+$/, "");
 }
 
-function isRouteActive(route: string, pathname: string) {
-    const normalizedRoute = normalizePath(route);
+function findActiveTab(tabs: TabItem[], pathname: string) {
     const normalizedPathname = normalizePath(pathname);
-
-    return normalizedPathname === normalizedRoute || normalizedPathname.startsWith(`${normalizedRoute}/`);
+    const exactMatch = tabs.find(({ route }) => normalizePath(route) === normalizedPathname);
+    if (exactMatch) {
+        return exactMatch.route;
+    }
+    return tabs.find(({ route }) => normalizedPathname.startsWith(`${normalizePath(route)}/`))?.route;
 }
 
 function createConfigurationTabs(projectId: string): TabItem[] {
@@ -161,7 +163,7 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
                 ? createSourcesTabs(projectId)
                 : createProviderConfigurationTabs(projectId);
 
-    const activeKey = tabs.find(({ route }) => isRouteActive(route, location.pathname))?.route;
+    const activeKey = findActiveTab(tabs, location.pathname);
     return (
         <div className="flex flex-col gap-2 md:flex-row md:gap-5 w-full max-w-[1400px] mx-auto min-w-0">
             {/* Mobile Dropdown Navigation (< md) */}

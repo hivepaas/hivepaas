@@ -14,6 +14,8 @@ import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
+import { Separator } from "@/components/ui/separator";
+
 import { SingleNodeBreadcrumbs } from "../buidling-blocks";
 
 import { SingleNodeHeaderSkeleton } from "./single-node-header.skeleton.com";
@@ -94,7 +96,9 @@ function View({ nodeId }: Props) {
                 </div>
             </div>
 
-            <div className="flex items-center gap-4 mt-4 pb-4">
+            <Separator className="my-3 opacity-50" />
+
+            <div className="flex items-center gap-4 pb-4">
                 <BackButton />
                 <div className="flex items-center gap-4">
                     <div className="flex flex-col gap-3">

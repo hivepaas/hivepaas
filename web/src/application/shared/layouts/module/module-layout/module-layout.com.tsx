@@ -40,8 +40,8 @@ export function ModuleLayout({ children }: PropsWithChildren) {
                     <div className="flex items-center gap-2.5">
                         <SidebarTrigger className="h-8 w-8 text-foreground" />
                         <div className="flex items-center gap-2">
-                            <LogoIcon className="h-7 w-7" />
-                            <span className="font-semibold text-sm tracking-tight">HivePaaS</span>
+                            <LogoIcon className="x-logo h-7 w-7 text-foreground" />
+                            <span className="font-semibold text-sm tracking-tight text-foreground">HivePaaS</span>
                         </div>
                     </div>
                 </header>

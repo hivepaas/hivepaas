@@ -12,6 +12,8 @@ import { ProjectAppStatusBadge, ProjectEnvFilter } from "~/projects/module-share
 import { PopConfirm, TabNavigation } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
+import { Separator } from "@/components/ui/separator";
+
 import { SingleAppBreadcrumbs } from "../buidling-blocks";
 
 import { AppAccessLinksDropdown } from "./building-blocks";
@@ -177,7 +179,9 @@ function View({ projectId, env, appId }: Props) {
                 ) : null}
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 border-t border-border/40">
+            <Separator className="opacity-50" />
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     <Avatar
                         name={appData.name}
@@ -281,7 +285,7 @@ function View({ projectId, env, appId }: Props) {
                 </div>
             </div>
 
-            <div className="border-b border-border" />
+            <Separator className="opacity-50" />
 
             <div className="flex items-center gap-2 overflow-x-auto">
                 <TabNavigation links={links} />

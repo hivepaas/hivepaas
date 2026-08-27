@@ -13,6 +13,7 @@ import { AppLink, InfoBlock } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
+import { Separator } from "@/components/ui/separator";
 
 import {
     type AppPreviewDeploymentFormInput,
@@ -166,7 +167,9 @@ export function AppPreviewDeploymentForm({
                                 </div>
                             </div>
 
-                            <p className="border-t pt-3 text-sm text-muted-foreground">
+                            <Separator className="opacity-50" />
+
+                            <p className="pt-1 text-sm text-muted-foreground">
                                 <span className="font-semibold text-orange-500">Note:</span> This method only works if
                                 you have configured the GitHub App or webhook correctly, and preview deployments have
                                 been enabled{" "}
@@ -277,19 +280,25 @@ export function AppPreviewDeploymentForm({
                                     }}
                                 />
                             </InfoBlock>
-
-                            <div className="flex justify-end pt-8">
-                                <Button
-                                    type="submit"
-                                    isLoading={isPending}
-                                    disabled={readOnly}
-                                >
-                                    Deploy
-                                </Button>
-                            </div>
                         </>
                     )}
                 </FieldGroup>
+
+                {isDashboardUI && (
+                    <div className="mt-6 shrink-0">
+                        <Separator className="opacity-50" />
+                        <div className="flex items-center justify-end pt-4">
+                            <Button
+                                type="submit"
+                                className="min-w-[100px]"
+                                isLoading={isPending}
+                                disabled={readOnly}
+                            >
+                                Deploy
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </form>
 
             {repository && credentialId && (

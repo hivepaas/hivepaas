@@ -13,6 +13,7 @@ import type { CreateProfileApiKeyFormSchemaOutput } from "@application/shared/di
 import { useAppNavigate } from "@application/shared/hooks/router";
 
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface CreatedApiKey {
     keyId: string;
@@ -154,6 +155,8 @@ export function ProfileApiKeyCreateRoute() {
                         )}
                     </div>
                 )}
+
+                <Separator className="opacity-50" />
 
                 <div className="pb-0 flex justify-end">
                     {showForm ? (

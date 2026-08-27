@@ -4,6 +4,8 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { cn } from "@/lib/utils";
 import { XIcon } from "lucide-react";
 
+import { Separator } from "@/components/ui/separator";
+
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
     return (
         <DialogPrimitive.Root
@@ -109,13 +111,16 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
     );
 }
 
-function DialogActionFooter({ className, ...props }: React.ComponentProps<"div">) {
+function DialogActionFooter({ className, children, ...props }: React.ComponentProps<"div">) {
     return (
         <div
             data-slot="dialog-action-footer"
-            className={cn("shrink-0 border-t bg-background px-6 pt-4 pb-6 flex justify-end", className)}
+            className="shrink-0 bg-background"
             {...props}
-        />
+        >
+            <Separator className="opacity-50" />
+            <div className={cn("px-6 pt-4 pb-6 flex items-center justify-end gap-3", className)}>{children}</div>
+        </div>
     );
 }
 

@@ -32,6 +32,7 @@ import {
     TabsTrigger,
 } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Separator } from "@/components/ui/separator";
 
 import { ESystemBackupCompressionFormat, ESystemBackupEncryptionFormat } from "../../../../module-shared/enums";
 import {
@@ -250,7 +251,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
 
                 <NextRunsField nextRuns={nextRuns} />
 
-                <div className="border-t" />
+                <Separator className="opacity-50" />
 
                 <InfoBlock title="Compress Backups">
                     <Tabs
@@ -294,7 +295,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                     </InfoBlock>
                 )}
 
-                <div className="border-t" />
+                <Separator className="opacity-50" />
 
                 <InfoBlock title="Save Backups in Cloud Storage">
                     <FieldGroup>

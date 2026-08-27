@@ -23,6 +23,8 @@ import { UsersPublicQueries } from "@application/shared/data-public/queries";
 import { EUserRole } from "@application/shared/enums";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
+import { Separator } from "@/components/ui/separator";
+
 import { useProjectUserAccessesDialogState } from "../hooks";
 
 type UserAccessOption = Record<string, unknown> & {
@@ -133,7 +135,7 @@ function EnvAccessSection({
 
     return (
         <div>
-            <hr className="border-border mb-4" />
+            <Separator className="mb-4 opacity-50" />
             <InfoBlock
                 title={
                     <div className="flex items-center gap-2">
@@ -701,7 +703,7 @@ export function ProjectUserAccessesDialog() {
                                             </div>
                                         </div>
                                     </InfoBlock>
-                                    <hr className="border-border" />
+                                    <Separator className="opacity-50" />
                                 </>
                             )}
 
@@ -774,7 +776,7 @@ export function ProjectUserAccessesDialog() {
 
                             {canViewModuleAccess && (
                                 <>
-                                    <hr className="border-border" />
+                                    <Separator className="opacity-50" />
                                     <InfoBlock
                                         title={
                                             <LabelWithInfo

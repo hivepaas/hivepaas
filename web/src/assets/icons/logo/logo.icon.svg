@@ -1,6 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36" class="x-logo hivepaas-logo">
     <!-- Rounded Hexagon Outline (Rounded outer and inner edges) -->
     <path
+        class="hivepaas-logo-hex"
         d="M 19.73,2.5 L 30.57,8.75 Q 32.3,9.75 32.3,11.75 L 32.3,24.25 Q 32.3,26.25 30.57,27.25 L 19.73,33.5 Q 18,34.5 16.27,33.5 L 5.43,27.25 Q 3.7,26.25 3.7,24.25 L 3.7,11.75 Q 3.7,9.75 5.43,8.75 L 16.27,2.5 Q 18,1.5 19.73,2.5 Z"
         fill="#111827"
         stroke="#111827"
@@ -10,7 +11,7 @@
     />
 
     <!-- Docker Container Stack & Ship Deck & Hull (Scaled down by 30%, centered, colored white) -->
-    <g transform="translate(18, 18) scale(0.7) translate(-18, -20.5)">
+    <g class="hivepaas-logo-inner" transform="translate(18, 18) scale(0.7) translate(-18, -20.5)">
         <!-- Column 1 (Height 1) -->
         <rect x="7.25" y="21" width="3.5" height="3.5" rx="0.8" ry="0.8" fill="#f5f5f7" />
 

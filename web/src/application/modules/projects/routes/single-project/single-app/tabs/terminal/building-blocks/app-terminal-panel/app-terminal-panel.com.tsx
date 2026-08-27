@@ -340,16 +340,16 @@ export function AppTerminalPanel({
                 isFullscreen && "fixed inset-4 z-50 min-h-0 rounded-lg border bg-background p-4 shadow-2xl",
             )}
         >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <div className="flex items-center gap-2">
-                        <span className="text-md text-foreground">Shell</span>
+                        <span className="text-sm sm:text-md text-foreground">Shell</span>
                         <Select
                             value={selectedShell}
                             disabled={isConnectionActive || supportedShells.length === 0}
                             onValueChange={onSelectedShellChange}
                         >
-                            <SelectTrigger className="w-28">
+                            <SelectTrigger className="w-24 sm:w-28 h-8 sm:h-9 text-xs sm:text-sm">
                                 <SelectValue placeholder="Shell" />
                             </SelectTrigger>
                             <SelectContent>
@@ -367,7 +367,7 @@ export function AppTerminalPanel({
                     <Button
                         type="button"
                         variant="link"
-                        className="h-auto px-0 text-base"
+                        className="h-auto px-0 text-sm sm:text-base"
                         disabled={!canConnect}
                         onClick={handleConnect}
                     >
@@ -380,7 +380,7 @@ export function AppTerminalPanel({
                         <Button
                             type="button"
                             variant="ghost"
-                            size="icon"
+                            size="icon-sm"
                             aria-label={isFullscreen ? "Exit fullscreen terminal" : "Fullscreen terminal"}
                             onClick={() => {
                                 setIsFullscreen(current => !current);
@@ -393,18 +393,18 @@ export function AppTerminalPanel({
                 </Tooltip>
             </div>
 
-            <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                     <span
                         aria-label={status.label}
-                        className={cn("size-4 rounded-full border-2", status.indicatorClassName)}
+                        className={cn("size-3.5 sm:size-4 rounded-full border-2", status.indicatorClassName)}
                     />
-                    <span className={cn("text-sm", status.textClassName)}>{status.label}</span>
+                    <span className={cn("text-xs sm:text-sm", status.textClassName)}>{status.label}</span>
                     {isConnectionActive && (
                         <Button
                             type="button"
                             variant="link"
-                            className="h-auto px-0 py-0 text-base"
+                            className="h-auto px-0 py-0 text-xs sm:text-sm"
                             onClick={closeConnection}
                         >
                             Stop
@@ -412,35 +412,35 @@ export function AppTerminalPanel({
                     )}
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <Button
                         type="button"
                         variant="link"
-                        className="h-auto py-0 text-base"
+                        className="h-auto py-0 text-xs sm:text-sm gap-1"
                         aria-pressed={isCommandTemplatePanelOpen}
                         onClick={() => {
                             setIsCommandTemplatePanelOpen(current => !current);
                         }}
                     >
-                        <TextCursorInputIcon className="size-4" />
+                        <TextCursorInputIcon className="size-3.5 sm:size-4" />
                         Insert Command
                     </Button>
                     <Button
                         type="button"
                         variant="link"
-                        className="h-auto py-0 text-base"
+                        className="h-auto py-0 text-xs sm:text-sm gap-1"
                         onClick={openImportDialog}
                     >
-                        <Upload className="size-4" />
+                        <Upload className="size-3.5 sm:size-4" />
                         Upload
                     </Button>
                     <Button
                         type="button"
                         variant="link"
-                        className="h-auto py-0 text-base"
+                        className="h-auto py-0 text-xs sm:text-sm gap-1"
                         onClick={openExportDialog}
                     >
-                        <Download className="size-4" />
+                        <Download className="size-3.5 sm:size-4" />
                         Download
                     </Button>
                 </div>

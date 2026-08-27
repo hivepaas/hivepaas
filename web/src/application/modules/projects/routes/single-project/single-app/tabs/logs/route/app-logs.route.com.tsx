@@ -151,7 +151,7 @@ export function AppLogsRoute() {
                     onValueChange={setActiveTab}
                     className="gap-4"
                 >
-                    <TabsList className="h-auto gap-2 p-0">
+                    <TabsList className="h-auto flex-wrap gap-1.5 sm:gap-2 p-0 justify-start">
                         {tabs.map(tab => {
                             const isStreaming = tabStates[tab.id]?.readyState === WebSocket.OPEN;
 
@@ -159,12 +159,13 @@ export function AppLogsRoute() {
                                 <TabsTrigger
                                     key={tab.id}
                                     value={tab.id}
+                                    className="text-xs sm:text-sm px-2.5 py-1.5 sm:px-3 sm:py-2"
                                 >
                                     <span>{tab.label}</span>
                                     {isStreaming && (
                                         <span
                                             aria-label={`${tab.label} streaming`}
-                                            className="size-2.5 rounded-full bg-emerald-500"
+                                            className="size-2 sm:size-2.5 rounded-full bg-emerald-500"
                                         />
                                     )}
                                 </TabsTrigger>

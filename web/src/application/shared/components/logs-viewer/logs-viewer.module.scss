@@ -4,6 +4,12 @@
     --pf-v6-c-log-viewer__list--FontSize: var(--logs-viewer-font-size);
   }
 
+  :global(.pf-v6-c-log-viewer__header) {
+    min-width: 0;
+    width: 100%;
+    overflow: visible;
+  }
+
   :global(.pf-v6-c-log-viewer__main) {
     overflow: hidden;
     border-radius: 0.375rem;
@@ -29,25 +35,16 @@
   }
 }
 
-.toolbar {
-  min-width: 0;
-}
-
-.searchItem {
-  // min-width: 14rem;
-}
-
 .search {
-  // width: 14rem;
+  width: 100%;
   max-width: 100%;
-}
 
-.filters {
-  min-width: 0;
-}
+  :global(.pf-v6-c-search-input) {
+    width: 100%;
+  }
 
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  :global(.pf-v6-c-text-input-group__text-input) {
+    font-size: 0.8125rem;
+    height: 2rem;
+  }
 }

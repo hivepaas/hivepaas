@@ -23,15 +23,15 @@ export function AppLogsToolbarFilters({
     return (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
             {!isLinesHidden && (
-                <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">Lines</span>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                    <span className="text-xs sm:text-sm font-medium text-foreground">Lines</span>
                     <InputNumber
                         value={lines}
                         min={1}
                         showControls={false}
                         useGrouping={false}
-                        className="w-[76px]"
-                        classNameInput="h-9"
+                        className="w-[64px] sm:w-[76px]"
+                        classNameInput="h-8 sm:h-9 text-xs sm:text-sm"
                         onValueChange={value => {
                             onLinesChange(value && value > 0 ? value : undefined);
                         }}
@@ -52,8 +52,8 @@ export function AppLogsToolbarFilters({
                 placeholder="Since"
                 showClearButton
                 granularity="second"
-                containerClassName="w-[160px]"
-                className="h-9"
+                containerClassName="w-[135px] sm:w-[160px]"
+                className="h-8 sm:h-9 text-xs sm:text-sm"
                 toDate={new Date()}
             />
             <DurationPicker
@@ -84,7 +84,7 @@ function DurationPicker({ value, onChange }: DurationPickerProps) {
     }
 
     return (
-        <div className="relative w-[132px]">
+        <div className="relative w-[110px] sm:w-[132px]">
             <Popover
                 open={open}
                 onOpenChange={setOpen}
@@ -93,10 +93,13 @@ function DurationPicker({ value, onChange }: DurationPickerProps) {
                     <Button
                         type="button"
                         variant="outline"
-                        className={cn("h-9 w-full justify-between px-3 font-normal", !value && "text-muted-foreground")}
+                        className={cn(
+                            "h-8 sm:h-9 w-full justify-between px-2.5 sm:px-3 text-xs sm:text-sm font-normal",
+                            !value && "text-muted-foreground",
+                        )}
                     >
                         <span className="truncate">{value ?? "Duration"}</span>
-                        <ChevronDown className="size-4 opacity-50" />
+                        <ChevronDown className="size-3.5 sm:size-4 opacity-50 shrink-0" />
                     </Button>
                 </PopoverTrigger>
                 <PopoverContent
@@ -106,7 +109,7 @@ function DurationPicker({ value, onChange }: DurationPickerProps) {
                     <Input
                         value={draft}
                         placeholder="Duration"
-                        className="mb-2 h-9"
+                        className="mb-2 h-8 sm:h-9 text-xs sm:text-sm"
                         onChange={event => {
                             setDraft(event.target.value);
                         }}
@@ -121,7 +124,7 @@ function DurationPicker({ value, onChange }: DurationPickerProps) {
                             <button
                                 key={option}
                                 type="button"
-                                className="rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                                className="rounded-sm px-2 py-1.5 text-left text-xs sm:text-sm hover:bg-accent hover:text-accent-foreground"
                                 onClick={() => {
                                     commitDuration(option);
                                 }}

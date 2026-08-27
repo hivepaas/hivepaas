@@ -51,6 +51,9 @@ func (s *service) createGlobalRoutingNetwork(ctx context.Context) (string, error
 			options.Driver = docker.NetworkDriverOverlay
 			options.Scope = docker.NetworkScopeSwarm
 			options.Attachable = true
+			options.Options = map[string]string{
+				docker.NetworkOptionDriverMTU: docker.DefaultOverlayNetworkMTU,
+			}
 			options.Labels = map[string]string{
 				"hivepaas.network.routing": "true",
 			}

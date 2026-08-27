@@ -22,6 +22,11 @@ const (
 	NetworkScopeLocal = "local"
 )
 
+const (
+	NetworkOptionDriverMTU   = "com.docker.network.driver.mtu"
+	DefaultOverlayNetworkMTU = "1380"
+)
+
 type NetworkListOption func(*client.NetworkListOptions)
 
 func (m *manager) NetworkList(

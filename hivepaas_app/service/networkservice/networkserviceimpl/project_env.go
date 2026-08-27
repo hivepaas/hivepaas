@@ -44,6 +44,9 @@ func (s *service) GetOrCreateProjectNetwork(
 				opts.Driver = docker.NetworkDriverOverlay
 				opts.Scope = docker.NetworkScopeSwarm
 				opts.Attachable = true
+				opts.Options = map[string]string{
+					docker.NetworkOptionDriverMTU: docker.DefaultOverlayNetworkMTU,
+				}
 				opts.Labels = map[string]string{
 					docker.StackLabelNamespace: project.Key,
 				}

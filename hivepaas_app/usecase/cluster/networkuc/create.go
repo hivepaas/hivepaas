@@ -71,6 +71,16 @@ func (uc *UC) createNetworkInDocker(
 		return nil, hperrors.NewAlreadyExist("Cluster network")
 	}
 
+	options := make(map[string]string, len(req.Options)+1)
+	for k, v := range req.Options {
+		options[k] = v
+	}
+	if req.Driver == docker.NetworkDriverOverlay {
+		if _, ok := options[docker.NetworkOptionDriverMTU]; !ok {
+			options[docker.NetworkOptionDriverMTU] = docker.DefaultOverlayNetworkMTU
+		}
+	}
+
 	createResp, err := uc.dockerManager.NetworkCreate(ctx, req.Name, func(opts *client.NetworkCreateOptions) {
 		opts.Driver = req.Driver
 		opts.Scope = docker.NetworkScopeSwarm
@@ -78,7 +88,7 @@ func (uc *UC) createNetworkInDocker(
 		opts.EnableIPv6 = &req.EnableIPv6
 		opts.Internal = req.Internal
 		opts.Attachable = req.Attachable
-		opts.Options = req.Options
+		opts.Options = options
 		opts.Labels = req.Labels
 	})
 	if err != nil {

@@ -355,6 +355,8 @@ networks:
   local_net:
     driver: overlay
     attachable: true
+    driver_opts:
+      com.docker.network.driver.mtu: 1380
 
 volumes:
   db:

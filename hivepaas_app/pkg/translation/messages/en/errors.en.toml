@@ -114,6 +114,7 @@ ERR_DEPLOYMENT_METHOD_REPO_REQUIRED = "App is required to be deployed from a rep
 ERR_FEATURE_DISABLED = "Feature '{{.Name}}' is disabled"
 
 # Cluster error
+ERR_NODE_WITH_LABEL_NOT_AVAILABLE = "Node with label '{{.Label}}' is not found or not ready"
 ERR_SERVICE_NOT_RUNNING = "Service '{{.Name}}' is not running"
 ERR_MOUNT_TYPE_UNSUPPORTED = "Mount type '{{.Type}}' is not supported"
 ERR_SERVICE_MODE_REPLICATED_REQUIRED = "Service is required to be in 'replicated' mode"

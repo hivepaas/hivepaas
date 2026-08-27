@@ -63,6 +63,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice/hpappserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice/networkserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice/notificationserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice/placementserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice/projectserviceimpl"
@@ -157,6 +158,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -317,6 +319,7 @@ var Provides = []any{
 	hpappserviceimpl.New,
 	imagebuildserviceimpl.New,
 	networkserviceimpl.New,
+	nodeexecserviceimpl.New,
 	notificationserviceimpl.New,
 	placementserviceimpl.New,
 	projectserviceimpl.New,
@@ -378,5 +381,6 @@ var Provides = []any{
 	// Use case: Agent
 	containeragentuc.New,
 	imagebuildagentuc.New,
+	nodeagentuc.New,
 	nodecleanupagentuc.New,
 }

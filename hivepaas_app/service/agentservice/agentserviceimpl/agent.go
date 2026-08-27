@@ -3,6 +3,7 @@ package agentserviceimpl
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
@@ -51,4 +52,42 @@ func (s *service) GetAgentAddrForNode(ctx context.Context, nodeID string) (strin
 	}
 
 	return targetIP + ":" + grpcPort, nil
+}
+
+func (s *service) GetAgentAddrForNodeLabel(ctx context.Context, nodeLabel string) (string, error) {
+	nodeLabel = strings.TrimSpace(nodeLabel)
+	if nodeLabel == "" {
+		return "", apperrors.Wrap(apperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
+	}
+
+	parts := strings.SplitN(nodeLabel, "=", 2) //nolint:mnd
+	key := strings.TrimSpace(parts[0])
+	val := ""
+	hasVal := len(parts) == 2 //nolint:mnd
+	if hasVal {
+		val = strings.TrimSpace(parts[1])
+	}
+
+	nodesResp, err := s.dockerManager.NodeList(ctx)
+	if err != nil {
+		return "", apperrors.Wrap(err)
+	}
+
+	var nodeID string
+	for i := range nodesResp.Items {
+		node := nodesResp.Items[i]
+		if node.Status.State != swarm.NodeStateReady {
+			continue
+		}
+		if actualVal, ok := node.Spec.Labels[key]; ok {
+			if !hasVal || actualVal == val {
+				nodeID = node.ID
+				break
+			}
+		}
+	}
+	if nodeID == "" {
+		return "", apperrors.Wrap(apperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
+	}
+	return s.GetAgentAddrForNode(ctx, nodeID)
 }

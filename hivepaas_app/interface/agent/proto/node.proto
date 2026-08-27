@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+service NodeService {
+  rpc ExecuteCommand(ExecCommandReq) returns (ExecCommandResp);
+}
+
+message ExecCommandReq {
+  repeated string command = 1;
+  repeated string env = 2;
+  string working_dir = 3;
+}
+
+message ExecCommandResp {
+  bytes stdout = 1;
+  bytes stderr = 2;
+  int32 exit_code = 3;
+}

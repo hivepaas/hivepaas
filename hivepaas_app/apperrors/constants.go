@@ -182,6 +182,7 @@ var (
 
 // Errors for cluster
 var (
+	ErrNodeWithLabelNotAvailable     = NewErr(ErrUnavailable, "ERR_NODE_WITH_LABEL_NOT_AVAILABLE")
 	ErrServiceNotRunning             = NewErr(ErrServiceUnavailable, "ERR_SERVICE_NOT_RUNNING")
 	ErrMountTypeUnsupported          = NewErr(ErrUnsupported, "ERR_MOUNT_TYPE_UNSUPPORTED")
 	ErrServiceModeReplicatedRequired = NewErr(ErrPreconditionFailed, "ERR_SERVICE_MODE_REPLICATED_REQUIRED")

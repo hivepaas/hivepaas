@@ -191,7 +191,7 @@ func (h *containerExecHelper) ExecCreate(
 				if req.StdinReader != nil {
 					opts.AttachStdin = true
 				}
-				h.isTTY = opts.TTY || opts.ConsoleSize.Width > 0 && opts.ConsoleSize.Height > 0
+				h.isTTY = opts.TTY
 			})
 		if err != nil {
 			return nil, nil, nil, hperrors.Wrap(err)
@@ -222,6 +222,10 @@ func (h *containerExecHelper) ExecCreate(
 			return nil, nil, nil, hperrors.Wrap(err)
 		}
 	}
+
+	opts := &client.ExecCreateOptions{}
+	req.ExecOptions(opts)
+	h.isTTY = opts.TTY
 
 	err = h.remoteStream.SendExecCreate(containerID, req.ExecOptions)
 	if err != nil {

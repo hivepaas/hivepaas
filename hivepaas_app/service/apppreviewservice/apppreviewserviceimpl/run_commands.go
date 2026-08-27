@@ -124,8 +124,10 @@ func (s *service) runSingleCommand(
 			opts.WorkingDir = cmdTemplate.WorkingDir
 			opts.Env = env
 			opts.TTY = cmdTemplate.TTY
-			opts.ConsoleSize.Width = gofn.Coalesce(cmdTemplate.ConsoleSize.Width, docker.DefaultConsoleSize.Width)
-			opts.ConsoleSize.Height = gofn.Coalesce(cmdTemplate.ConsoleSize.Height, docker.DefaultConsoleSize.Height)
+			if cmdTemplate.TTY {
+				opts.ConsoleSize.Width = gofn.Coalesce(cmdTemplate.ConsoleSize.Width, docker.DefaultConsoleSize.Width)
+				opts.ConsoleSize.Height = gofn.Coalesce(cmdTemplate.ConsoleSize.Height, docker.DefaultConsoleSize.Height)
+			}
 		},
 	})
 	if err != nil {

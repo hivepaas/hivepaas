@@ -77,8 +77,10 @@ func (s *service) SchedJobExec(
 			// NOTE: when redirect command stdout to a custom writer, we set TTY=false
 			if stdoutWriter == nil {
 				opts.TTY = command.TTY
-				opts.ConsoleSize.Width = gofn.Coalesce(command.ConsoleSize.Width, docker.DefaultConsoleSize.Width)
-				opts.ConsoleSize.Height = gofn.Coalesce(command.ConsoleSize.Height, docker.DefaultConsoleSize.Height)
+				if command.TTY {
+					opts.ConsoleSize.Width = gofn.Coalesce(command.ConsoleSize.Width, docker.DefaultConsoleSize.Width)
+					opts.ConsoleSize.Height = gofn.Coalesce(command.ConsoleSize.Height, docker.DefaultConsoleSize.Height)
+				}
 			}
 		},
 	})

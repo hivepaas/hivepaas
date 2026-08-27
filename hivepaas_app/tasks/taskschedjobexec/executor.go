@@ -220,8 +220,10 @@ func (e *Executor) saveLogs(
 
 	if addDurationInfo {
 		duration := timeutil.NowUTC().Sub(data.Task.StartedAt)
-		_ = logStore.Add(ctx, tasklog.NewOutFrame("Job execution finished in "+
-			duration.Truncate(time.Millisecond).String(), tasklog.TsNow))
+		_ = logStore.Add(ctx,
+			tasklog.NewOutFrame("\n---------------------------------\n", tasklog.TsNow),
+			tasklog.NewOutFrame("Job execution finished in "+
+				duration.Truncate(time.Millisecond).String()+"\n", tasklog.TsNow))
 	}
 
 	logFrames, err := logStore.GetData(ctx, 0)
@@ -272,8 +274,7 @@ func (e *Executor) onPostTransaction(
 		err := e.sendNotification(ctx, db, data)
 		if err != nil {
 			_ = data.LogStore.Add(ctx,
-				tasklog.NewOutFrame("---------------------------------", tasklog.TsNow),
-				tasklog.NewOutFrame("Failed to send result notification with error: "+err.Error(),
+				tasklog.NewOutFrame("Failed to send result notification with error: "+err.Error()+"\n",
 					tasklog.TsNow))
 		}
 	}

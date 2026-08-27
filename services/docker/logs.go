@@ -10,7 +10,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
@@ -35,15 +34,15 @@ func WithParseLogTimestamp(flag bool) ScanningLogOption {
 	}
 }
 
-func WithBatchRecvOptions(recvOpts batchrecvchan.Options) ScanningLogOption {
+func WithBatchRecvOptions(options batchrecvchan.Options) ScanningLogOption {
 	return func(o *ScanningLogOptions) {
-		o.BatchRecvOptions = recvOpts
+		o.BatchRecvOptions = options
 	}
 }
 
-func WithStdoutWriter(w io.Writer) ScanningLogOption {
+func WithStdoutWriter(writer io.Writer) ScanningLogOption {
 	return func(o *ScanningLogOptions) {
-		o.StdoutWriter = w
+		o.StdoutWriter = writer
 	}
 }
 
@@ -80,21 +79,22 @@ func StartScanningLog(
 			// Ref: https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Container/operation/ContainerAttach
 			_ = parseLogs(ctx, reader, batchChan, opts.StdoutWriter, opts.ParseLogTimestamp)
 		} else {
-			scanner := bufio.NewScanner(reader)
-			for scanner.Scan() {
-				logFrame := &tasklog.LogFrame{
-					Type: tasklog.LogTypeOut,
-					Data: reflectutil.UnsafeBytesToStr(scanner.Bytes()),
+			r := bufio.NewReader(reader)
+			for {
+				lineBytes, err := r.ReadBytes('\n')
+				if len(lineBytes) > 0 {
+					logFrame := &tasklog.LogFrame{
+						Type: tasklog.LogTypeOut,
+						Data: string(lineBytes),
+					}
+					if opts.ParseLogTimestamp {
+						logFrame.ParseTimestampFromData()
+					}
+					batchChan.Send(logFrame)
 				}
-				if opts.ParseLogTimestamp {
-					logFrame.ParseTimestampFromData()
-				}
-
-				if ctx.Err() != nil { // context is done
+				if err != nil || ctx.Err() != nil {
 					return
 				}
-
-				batchChan.Send(logFrame)
 			}
 		}
 	}()

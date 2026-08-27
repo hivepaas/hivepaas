@@ -86,7 +86,7 @@ func (h *Handler) DeleteNode(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /cluster/nodes/join [post]
 func (h *Handler) JoinNode(ctx *gin.Context) {
-	auth, _, err := h.getAuth(ctx, base.ResourceTypeNode, base.ActionTypeWrite, "")
+	auth, _, err := h.getAuth(ctx, base.ResourceTypeClusterNode, base.ActionTypeWrite, "")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -119,7 +119,7 @@ func (h *Handler) JoinNode(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /cluster/nodes/join-command [get]
 func (h *Handler) GetNodeJoinCommand(ctx *gin.Context) {
-	auth, _, err := h.getAuth(ctx, base.ResourceTypeNode, base.ActionTypeWrite, "")
+	auth, _, err := h.getAuth(ctx, base.ResourceTypeClusterNode, base.ActionTypeWrite, "")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -152,7 +152,7 @@ func (h *Handler) GetNodeJoinCommand(ctx *gin.Context) {
 // @Failure 500 {object} apperrors.ErrorInfo
 // @Router  /cluster/nodes/set-managers [post]
 func (h *Handler) SetManagerNodes(ctx *gin.Context) {
-	auth, _, err := h.getAuth(ctx, base.ResourceTypeNode, base.ActionTypeWrite, "")
+	auth, _, err := h.getAuth(ctx, base.ResourceTypeClusterNode, base.ActionTypeWrite, "")
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

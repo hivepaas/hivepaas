@@ -40,11 +40,8 @@ const (
 	ResourceTypeImage           ResourceType = "image"
 	ResourceTypeImageBuild      ResourceType = "image-build"
 	ResourceTypeIMService       ResourceType = "im-service"
-	ResourceTypeHivePaaSService ResourceType = "hivepaas-service"
 	ResourceTypeLogicalChildApp ResourceType = "logical-child-app"
 	ResourceTypeModule          ResourceType = "module"
-	ResourceTypeNetwork         ResourceType = "network"
-	ResourceTypeNode            ResourceType = "node"
 	ResourceTypeNotification    ResourceType = "notification"
 	ResourceTypeOAuth           ResourceType = "oauth"
 	ResourceTypePeriodicJob     ResourceType = "periodic-job"
@@ -66,9 +63,7 @@ const (
 	ResourceTypeSystemBackup    ResourceType = "system-backup"
 	ResourceTypeSystemCleanup   ResourceType = "system-cleanup"
 	ResourceTypeTask            ResourceType = "task"
-	ResourceTypeTraefikService  ResourceType = "traefik-service"
 	ResourceTypeUser            ResourceType = "user"
-	ResourceTypeVolume          ResourceType = "volume"
 )
 
 type ResourceModule string

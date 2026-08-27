@@ -2,11 +2,12 @@ import { type PropsWithChildren, memo } from "react";
 
 import { listBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { useLocation } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TabItem {
@@ -16,6 +17,7 @@ interface TabItem {
 
 function View({ children }: PropsWithChildren) {
     const location = useLocation();
+    const navigate = useNavigate();
 
     const tabs: TabItem[] = [
         {
@@ -31,8 +33,35 @@ function View({ children }: PropsWithChildren) {
     const activeKey = tabs.find(({ route }) => route === location.pathname)?.route;
 
     return (
-        <div className="flex flex-col gap-5 md:flex-row w-fit mx-auto">
-            <aside className="md:w-56 md:shrink-0">
+        <div className="flex flex-col gap-2 md:flex-row md:gap-5 w-full max-w-[1400px] mx-auto min-w-0">
+            {/* Mobile Dropdown Navigation (< md) */}
+            <div className="md:hidden w-full bg-background rounded-lg p-2.5 shadow-xs">
+                <Select
+                    value={activeKey}
+                    onValueChange={val => {
+                        if (val) {
+                            void navigate(val);
+                        }
+                    }}
+                >
+                    <SelectTrigger className="w-full bg-muted/40 font-medium">
+                        <SelectValue placeholder="Select section..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {tabs.map(tab => (
+                            <SelectItem
+                                key={tab.route}
+                                value={tab.route}
+                            >
+                                {tab.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            {/* Desktop Vertical Sidebar Navigation (>= md) */}
+            <aside className="hidden md:block w-56 shrink-0">
                 <div className="sticky top-4">
                     <div className="bg-background rounded-lg py-4">
                         <Tabs
@@ -61,7 +90,7 @@ function View({ children }: PropsWithChildren) {
                     </div>
                 </div>
             </aside>
-            <div className={cn(listBox, "w-7xl")}>{children}</div>
+            <div className={cn(listBox, "w-full min-w-0 flex-1")}>{children}</div>
         </div>
     );
 }

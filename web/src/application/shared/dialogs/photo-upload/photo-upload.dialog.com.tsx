@@ -53,6 +53,7 @@ export function PhotoUploadDialog({
                             <Button
                                 type="button"
                                 variant="outline"
+                                className="min-w-[100px]"
                                 onClick={() => {
                                     onOpenChange(false);
                                 }}

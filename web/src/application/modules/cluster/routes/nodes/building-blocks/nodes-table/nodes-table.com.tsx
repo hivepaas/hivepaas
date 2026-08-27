@@ -41,7 +41,7 @@ export function NodesTable() {
                         action="write"
                     >
                         {({ isDenied }) => (
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <Button
                                     variant="outline"
                                     onClick={setManagerNodesDialog.actions.open}

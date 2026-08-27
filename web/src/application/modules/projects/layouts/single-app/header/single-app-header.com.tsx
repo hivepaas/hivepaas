@@ -156,8 +156,8 @@ function View({ projectId, env, appId }: Props) {
             : []),
     ];
     return (
-        <div className="bg-background pt-4 px-4 sm:px-5 rounded-lg">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+        <div className="bg-background pt-3 sm:pt-4 px-3 sm:px-5 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5">
                 <SingleAppBreadcrumbs
                     app={appData}
                     appRoute={appRoute}
@@ -177,12 +177,12 @@ function View({ projectId, env, appId }: Props) {
                 ) : null}
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-3 border-t border-border/40">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 py-2.5 border-t border-border/40">
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                     <Avatar
                         name={appData.name}
                         src={appData.photo}
-                        className="size-10 sm:size-12 text-base sm:text-lg shrink-0 rounded-xl"
+                        className="size-9 sm:size-12 text-sm sm:text-lg shrink-0 rounded-xl"
                     />
                     <div className="flex min-w-0 flex-col gap-1 justify-center">
                         <div className="flex flex-wrap items-center gap-2">

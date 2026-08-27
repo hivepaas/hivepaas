@@ -46,7 +46,7 @@ export function ModuleLayout({ children }: PropsWithChildren) {
                     </div>
                 </header>
 
-                <div className="flex flex-1 flex-col gap-4 p-4 bg-[#f5f5f5]">{children}</div>
+                <div className="flex flex-1 flex-col gap-2 sm:gap-4 p-2 sm:p-4 bg-[#f5f5f5]">{children}</div>
             </SidebarInset>
         </SidebarProvider>
     );

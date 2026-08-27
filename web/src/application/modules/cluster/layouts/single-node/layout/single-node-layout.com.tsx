@@ -32,7 +32,7 @@ export function SingleNodeLayout({ children }: PropsWithChildren) {
     }
 
     return (
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-2 sm:gap-5">
             <SingleNodeHeader nodeId={id} />
             {children}
         </div>

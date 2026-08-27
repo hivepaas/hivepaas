@@ -6,8 +6,8 @@ import { cn } from "@lib/utils";
 function View() {
     return (
         <div className={cn(moduleHeaderBox)}>
-            <div className="py-2">
-                <h1 className="text-lg font-bold">Projects</h1>
+            <div className="py-0.5 sm:py-1.5">
+                <h1 className="text-base sm:text-lg font-bold text-foreground">Projects</h1>
             </div>
         </div>
     );

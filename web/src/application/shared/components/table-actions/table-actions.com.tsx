@@ -16,12 +16,12 @@ export function TableActions({ children, search, renderActions = null }: Props) 
     );
 
     return (
-        <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex flex-1 items-center gap-2 min-w-0">
                 {children}
 
                 {search && (
-                    <div className="relative">
+                    <div className="relative w-full sm:w-64 max-w-full">
                         <div className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50">
                             <SearchIcon className="size-4" />
                             <span className="sr-only">Search</span>
@@ -33,13 +33,17 @@ export function TableActions({ children, search, renderActions = null }: Props) 
                             }}
                             type="search"
                             placeholder="Search"
-                            className="peer px-9 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none"
+                            className="peer px-9 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none w-full"
                         />
                     </div>
                 )}
             </div>
 
-            {renderActions && <div className="flex items-center gap-2">{renderActions}</div>}
+            {renderActions && (
+                <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2 shrink-0">
+                    {renderActions}
+                </div>
+            )}
         </div>
     );
 }

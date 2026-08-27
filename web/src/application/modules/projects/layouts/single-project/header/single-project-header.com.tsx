@@ -81,8 +81,8 @@ function View({ projectId }: Props) {
     }
 
     return (
-        <div className="bg-background pt-4 px-4 sm:px-5 rounded-lg">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3">
+        <div className="bg-background pt-3 sm:pt-4 px-3 sm:px-5 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5">
                 <SingleProjectBreadcrumbs project={project} />
                 <div className="flex items-center">
                     <ProjectEnvFilter
@@ -92,7 +92,7 @@ function View({ projectId }: Props) {
                 </div>
             </div>
 
-            <div className="flex items-center gap-3 sm:gap-4 py-3 border-t border-border/40">
+            <div className="flex items-center gap-3 sm:gap-4 py-2.5 border-t border-border/40">
                 <Avatar
                     name={project.name}
                     src={project.photo}

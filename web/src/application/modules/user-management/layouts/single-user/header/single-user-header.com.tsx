@@ -10,7 +10,6 @@ import { UsersCommands } from "~/user-management/data/commands";
 import { UsersQueries } from "~/user-management/data/queries";
 import { UserRoleBadge, UserStatusBadge } from "~/user-management/module-shared/components";
 
-import { BackButton } from "@application/shared/components";
 import { PopConfirm } from "@application/shared/components/pop-confirm";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { EUserStatus } from "@application/shared/enums";
@@ -90,10 +89,10 @@ export function View({ userId }: Props) {
     };
 
     return (
-        <div className="bg-background pt-4 px-5 rounded-lg">
-            <div className="flex items-center justify-between">
+        <div className="bg-background py-3 sm:py-4 px-4 sm:px-5 rounded-lg">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b pb-3">
                 <UserBreadcrumbs user={user} />
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     {shouldShowToggleButtons && showDisable && canWrite && (
                         <PopConfirm
                             title="Disable User"
@@ -105,9 +104,10 @@ export function View({ userId }: Props) {
                         >
                             <Button
                                 variant="outline"
+                                size="sm"
                                 isLoading={isUpdating}
                             >
-                                <Lock className="mr-2 size-4" />
+                                <Lock className="mr-1.5 size-3.5" />
                                 Disable
                             </Button>
                         </PopConfirm>
@@ -120,9 +120,10 @@ export function View({ userId }: Props) {
                             {({ isDenied }) => (
                                 <Button
                                     variant="outline"
+                                    size="sm"
                                     disabled={isDenied}
                                 >
-                                    <Lock className="mr-2 size-4" />
+                                    <Lock className="mr-1.5 size-3.5" />
                                     Disable
                                 </Button>
                             )}
@@ -136,11 +137,12 @@ export function View({ userId }: Props) {
                             {({ isDenied }) => (
                                 <Button
                                     variant="outline"
+                                    size="sm"
                                     onClick={handleActivate}
                                     disabled={isDenied}
                                     isLoading={isUpdating}
                                 >
-                                    <Check className="mr-2 size-4" />
+                                    <Check className="mr-1.5 size-3.5" />
                                     Activate
                                 </Button>
                             )}
@@ -153,6 +155,7 @@ export function View({ userId }: Props) {
                         {({ isDenied }) => (
                             <Button
                                 variant="outline"
+                                size="sm"
                                 onClick={() => {
                                     if (!canWrite) {
                                         return;
@@ -162,7 +165,7 @@ export function View({ userId }: Props) {
                                 }}
                                 disabled={isDenied}
                             >
-                                <KeyRound className="mr-2 size-4" />
+                                <KeyRound className="mr-1.5 size-3.5" />
                                 Reset password
                             </Button>
                         )}
@@ -178,9 +181,10 @@ export function View({ userId }: Props) {
                         >
                             <Button
                                 variant="outline"
+                                size="sm"
                                 disabled={isDeleting}
                             >
-                                <Trash2 className="mr-2 size-4" />
+                                <Trash2 className="mr-1.5 size-3.5" />
                                 Remove
                             </Button>
                         </PopConfirm>
@@ -192,9 +196,10 @@ export function View({ userId }: Props) {
                             {({ isDenied }) => (
                                 <Button
                                     variant="outline"
+                                    size="sm"
                                     disabled={isDenied}
                                 >
-                                    <Trash2 className="mr-2 size-4" />
+                                    <Trash2 className="mr-1.5 size-3.5" />
                                     Remove
                                 </Button>
                             )}
@@ -202,52 +207,51 @@ export function View({ userId }: Props) {
                     )}
                 </div>
             </div>
-            <div className="flex items-center gap-4 mt-4 pb-4">
-                <BackButton />
-                <div className="flex items-center gap-4">
-                    <Avatar
-                        name={user.fullName || user.username}
-                        src={user.photo}
-                        className="size-20 text-2xl"
-                    />
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-[20px] font-semibold text-foreground">
-                                {user.fullName || user.username}
-                            </h2>
-                            <UserStatusBadge status={user.status} />
+            <div className="flex items-center gap-3 sm:gap-4 mt-3 sm:mt-4 pb-1">
+                <Avatar
+                    name={user.fullName || user.username}
+                    src={user.photo}
+                    className="size-12 sm:size-16 md:size-20 text-lg sm:text-xl md:text-2xl shrink-0"
+                />
+                <div className="flex flex-col gap-1.5 sm:gap-2.5 min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-base sm:text-lg font-semibold text-foreground truncate">
+                            {user.fullName || user.username}
+                        </h2>
+                        <UserStatusBadge status={user.status} />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                            <User className="size-3.5 sm:size-4 text-blue-500 shrink-0" />
+                            <div className="flex gap-1 items-center">
+                                <span>Position:</span>
+                                <span className="text-foreground font-medium">
+                                    {user.position || "Unknown position"}
+                                </span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                                <User className="size-4 text-blue-500" />
-                                <div className="flex gap-1 items-center">
-                                    <span>Position:</span>
-                                    <span className="text-black">{user.position || "Unknown position"}</span>
-                                </div>
+                        <span className="hidden sm:inline">•</span>
+                        <div className="flex gap-1.5 items-center">
+                            <BadgeCheck className="size-3.5 sm:size-4 text-blue-500 shrink-0" />
+                            <div className="flex gap-1 items-center">
+                                <span>Role:</span>
+                                <UserRoleBadge role={user.role} />
                             </div>
-                            <span>•</span>
-                            <div className="flex gap-1.5 items-center">
-                                <BadgeCheck className="size-4 text-blue-500" />
-                                <div className="flex gap-1 items-center">
-                                    <span>Role:</span>
-                                    <UserRoleBadge role={user.role} />
-                                </div>
-                            </div>
-                            {user.lastAccess && (
-                                <>
-                                    <span>•</span>
-                                    <div className="flex items-center gap-1.5">
-                                        <Clock className="size-4 text-blue-500" />
-                                        <div className="flex gap-1">
-                                            <span>Last access:</span>
-                                            <span className="text-black">
-                                                {format(user.lastAccess, "yyyy-MM-dd HH:mm:ss")}{" "}
-                                            </span>
-                                        </div>
+                        </div>
+                        {user.lastAccess && (
+                            <>
+                                <span className="hidden sm:inline">•</span>
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="size-3.5 sm:size-4 text-blue-500 shrink-0" />
+                                    <div className="flex gap-1">
+                                        <span>Last access:</span>
+                                        <span className="text-foreground font-medium">
+                                            {format(user.lastAccess, "yyyy-MM-dd HH:mm:ss")}{" "}
+                                        </span>
                                     </div>
-                                </>
-                            )}
-                        </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

@@ -3,8 +3,8 @@ package appsettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc/appfeaturesettingsdto"
 )
 
@@ -18,8 +18,8 @@ import (
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appfeaturesettingsdto.GetAppFeatureSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/feature-settings [get]
 func (h *Handler) GetAppFeatureSettings(ctx *gin.Context) {
 	h.GetUniqueSetting(ctx, base.ResourceTypeAppFeatures, base.ObjectScopeApp)
@@ -36,8 +36,8 @@ func (h *Handler) GetAppFeatureSettings(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   body body appfeaturesettingsdto.UpdateAppFeatureSettingsReq true "request data"
 // @Success 200 {object} appfeaturesettingsdto.UpdateAppFeatureSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/feature-settings [put]
 func (h *Handler) UpdateAppFeatureSettings(ctx *gin.Context) {
 	h.UpdateUniqueSetting(ctx, base.ResourceTypeAppFeatures, base.ObjectScopeApp)

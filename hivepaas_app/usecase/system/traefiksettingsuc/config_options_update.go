@@ -7,9 +7,9 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc/traefiksettingsdto"
 	"github.com/hivepaas/hivepaas/services/traefik/traefikhelper"
 )
@@ -21,7 +21,7 @@ func (uc *UC) UpdateConfigOptions(
 ) (*traefiksettingsdto.UpdateConfigOptionsResp, error) {
 	traefikSvc, err := uc.traefikService.GetTraefikSwarmService(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	newCommandArgs := uc.buildStartupCommand(req, traefikSvc)
@@ -41,7 +41,7 @@ func (uc *UC) UpdateConfigOptions(
 	// 4. Update Traefik Swarm Service via dockerManager
 	_, err = uc.dockerManager.ServiceUpdate(ctx, traefikSvc.ID, &traefikSvc.Version, &traefikSvc.Spec)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &traefiksettingsdto.UpdateConfigOptionsResp{}, nil

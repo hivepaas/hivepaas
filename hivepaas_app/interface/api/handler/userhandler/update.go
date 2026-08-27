@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
 )
 
@@ -19,8 +19,8 @@ import (
 // @Param   userID path string true "user ID"
 // @Param   body body userdto.UpdateUserReq true "request data"
 // @Success 200 {object} userdto.UpdateUserResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/{userID} [put]
 func (h *Handler) UpdateUser(ctx *gin.Context) {
 	auth, userID, err := h.getAuth(ctx, base.ResourceTypeUser, base.ActionTypeWrite, true)
@@ -53,8 +53,8 @@ func (h *Handler) UpdateUser(ctx *gin.Context) {
 // @Id      deleteUser
 // @Param   userID path string true "user ID"
 // @Success 200 {object} userdto.DeleteUserResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/{userID} [delete]
 func (h *Handler) DeleteUser(ctx *gin.Context) {
 	auth, userID, err := h.getAuth(ctx, base.ResourceTypeUser, base.ActionTypeDelete, true)

@@ -10,9 +10,9 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -30,17 +30,17 @@ func (uc *UC) UpdateAppNetworkSettings(
 		data := &updateAppNetworkSettingsData{}
 		err := uc.loadAppNetworkSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		err = uc.applyAppNetworkSettings(ctx, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.UpdateAppNetworkSettingsResp{}, nil
@@ -69,30 +69,30 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.App = app
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Service = service
 
 	if data.Service == nil || data.Service.Version.Index != uint64(req.UpdateVer) { //nolint:gosec
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
 	// Loads project local network
 	_, data.LocalNetwork, err = uc.networkService.GetOrCreateProjectNetwork(ctx, db, app.Project, app.ProjectEnv.Name)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 
 	// Setting networks must be available in the project
 	dbProjectNets, _, err := uc.networkService.ListProjectNetworks(ctx, db, app.Project)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	mapDbProjectNets := entityutil.SliceToIDMap(dbProjectNets)
 
@@ -114,7 +114,7 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 		// Regular network config using DB network ID
 		dbNet := mapDbProjectNets[netReq.ID]
 		if dbNet == nil {
-			return apperrors.Wrap(apperrors.ErrProjectNetworkUnavailable).
+			return hperrors.Wrap(hperrors.ErrProjectNetworkUnavailable).
 				WithParam("Name", gofn.Coalesce(netReq.Name, netReq.ID))
 		}
 		data.FinalNetworks = append(data.FinalNetworks, swarm.NetworkAttachmentConfig{
@@ -133,7 +133,7 @@ func (uc *UC) prepareUpdatingAppNetworkSettings(
 	uc.prepareUpdatingAppNetworkAttachments(data)
 	uc.prepareUpdatingAppHostsFileEntries(req, data)
 	if err := uc.prepareUpdatingAppDNSConfig(req, data); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	uc.prepareUpdatingAppEndpointSpec(req, data)
 	return nil
@@ -213,7 +213,7 @@ func (uc *UC) prepareUpdatingAppDNSConfig(
 	for _, addr := range req.DNSConfig.Nameservers {
 		netAddr, err := netip.ParseAddr(addr)
 		if err != nil {
-			return apperrors.Wrap(apperrors.ErrAddressInvalid).WithParam("Address", addr)
+			return hperrors.Wrap(hperrors.ErrAddressInvalid).WithParam("Address", addr)
 		}
 		containerSpec.DNSConfig.Nameservers = append(containerSpec.DNSConfig.Nameservers, netAddr)
 	}
@@ -233,7 +233,7 @@ func (uc *UC) applyAppNetworkSettings(
 			return true, uc.prepareUpdatingAppNetworkSettings(req, data)
 		}, defaultServiceRetryMax, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

@@ -5,9 +5,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/usersettings/apikeyuc/apikeydto"
@@ -24,7 +24,7 @@ func (uc *UC) CreateAPIKey(
 	req *apikeydto.CreateAPIKeyReq,
 ) (*apikeydto.CreateAPIKeyResp, error) {
 	if auth.User.IsDemoUser() {
-		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+		return nil, hperrors.Wrap(hperrors.ErrUserDemoUnauthorized)
 	}
 
 	actingUser := auth.User.User
@@ -50,13 +50,13 @@ func (uc *UC) CreateAPIKey(
 				AccessAction: req.AccessAction,
 			})
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &apikeydto.CreateAPIKeyResp{

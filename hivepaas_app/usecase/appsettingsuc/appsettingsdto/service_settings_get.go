@@ -4,8 +4,8 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/docker"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
@@ -20,12 +20,12 @@ func NewGetAppServiceSettingsReq() *GetAppServiceSettingsReq {
 	return &GetAppServiceSettingsReq{}
 }
 
-func (req *GetAppServiceSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetAppServiceSettingsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetAppServiceSettingsResp struct {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
@@ -29,7 +29,7 @@ func (r *grpcDownloadReader) Read(p []byte) (int, error) {
 		if errors.Is(err, io.EOF) {
 			return n, io.EOF
 		}
-		return n, apperrors.Wrap(err)
+		return n, hperrors.Wrap(err)
 	}
 	return n, nil
 }
@@ -39,7 +39,7 @@ func (r *grpcDownloadReader) Close() error {
 		r.cancelFunc()
 	}
 	if err := r.pr.Close(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -59,13 +59,13 @@ func (c *grpcContainerServiceClient) ContainerCopyFrom(
 
 	if err != nil {
 		cancelFunc()
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	firstResp, err := stream.Recv()
 	if err != nil {
 		cancelFunc()
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	pr, pw := io.Pipe()
@@ -75,7 +75,7 @@ func (c *grpcContainerServiceClient) ContainerCopyFrom(
 
 		if chunk := firstResp.GetChunk(); len(chunk) > 0 {
 			if _, writeErr := pw.Write(chunk); writeErr != nil {
-				_ = pw.CloseWithError(apperrors.Wrap(writeErr))
+				_ = pw.CloseWithError(hperrors.Wrap(writeErr))
 				return
 			}
 		}
@@ -87,13 +87,13 @@ func (c *grpcContainerServiceClient) ContainerCopyFrom(
 					_ = pw.Close()
 					return
 				}
-				_ = pw.CloseWithError(apperrors.Wrap(recvErr))
+				_ = pw.CloseWithError(hperrors.Wrap(recvErr))
 				return
 			}
 
 			if chunk := resp.GetChunk(); len(chunk) > 0 {
 				if _, writeErr := pw.Write(chunk); writeErr != nil {
-					_ = pw.CloseWithError(apperrors.Wrap(writeErr))
+					_ = pw.CloseWithError(hperrors.Wrap(writeErr))
 					return
 				}
 			}

@@ -6,8 +6,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc/appdeploymentdto"
@@ -30,12 +30,12 @@ func (uc *UC) GetDeploymentLogs(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	task := gofn.FirstOr(deployment.Tasks, nil)
 	if task == nil {
-		return nil, apperrors.NewNotFound("Deployment task")
+		return nil, hperrors.NewNotFound("Deployment task")
 	}
 
 	resp, err := uc.taskService.GetTaskLogs(ctx, uc.db, &taskservice.GetTaskLogsReq{
@@ -49,7 +49,7 @@ func (uc *UC) GetDeploymentLogs(
 		LogSessionTimeout:       deploymentLogSessionTimeout,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appdeploymentdto.GetDeploymentLogsResp{

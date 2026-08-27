@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 )
 
@@ -21,8 +21,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} nodedto.ListNodeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/nodes [get]
 func (h *Handler) ListNode(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeClusterNode, base.ObjectScopeGlobal)
@@ -36,8 +36,8 @@ func (h *Handler) ListNode(ctx *gin.Context) {
 // @Id      getClusterNode
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} nodedto.GetNodeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/nodes/{itemID} [get]
 func (h *Handler) GetNode(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeClusterNode, base.ObjectScopeGlobal)
@@ -52,8 +52,8 @@ func (h *Handler) GetNode(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body nodedto.UpdateNodeReq true "request data"
 // @Success 200 {object} nodedto.UpdateNodeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/nodes/{itemID} [put]
 func (h *Handler) UpdateNode(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeClusterNode, base.ObjectScopeGlobal)
@@ -67,8 +67,8 @@ func (h *Handler) UpdateNode(ctx *gin.Context) {
 // @Id      deleteClusterNode
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} nodedto.DeleteNodeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/nodes/{itemID} [delete]
 func (h *Handler) DeleteNode(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeClusterNode, base.ObjectScopeGlobal)
@@ -82,8 +82,8 @@ func (h *Handler) DeleteNode(ctx *gin.Context) {
 // @Id      joinClusterNode
 // @Param   body body nodedto.JoinNodeReq true "request data"
 // @Success 200 {object} nodedto.JoinNodeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/nodes/join [post]
 func (h *Handler) JoinNode(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, base.ResourceTypeClusterNode, base.ActionTypeWrite, "")
@@ -115,8 +115,8 @@ func (h *Handler) JoinNode(ctx *gin.Context) {
 // @Id      getClusterNodeJoinCommand
 // @Param   joinAsManager query string false "joinAsManager=true/false"
 // @Success 200 {object} nodedto.GetNodeJoinCommandResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/nodes/join-command [get]
 func (h *Handler) GetNodeJoinCommand(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, base.ResourceTypeClusterNode, base.ActionTypeWrite, "")
@@ -148,8 +148,8 @@ func (h *Handler) GetNodeJoinCommand(ctx *gin.Context) {
 // @Id      setClusterManagerNodes
 // @Param   body body nodedto.SetManagerNodesReq true "request data"
 // @Success 200 {object} nodedto.SetManagerNodesResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/nodes/set-managers [post]
 func (h *Handler) SetManagerNodes(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, base.ResourceTypeClusterNode, base.ActionTypeWrite, "")

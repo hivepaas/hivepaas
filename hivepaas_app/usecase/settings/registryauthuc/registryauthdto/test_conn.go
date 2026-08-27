@@ -4,8 +4,8 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type TestRegistryAuthConnReq struct {
@@ -19,7 +19,7 @@ func NewTestRegistryAuthConnReq() *TestRegistryAuthConnReq {
 func (req *TestRegistryAuthConnReq) ModifyRequest() error {
 	err := req.modifyRequest()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	// NOTE: make sure req.Name is not empty to not fail the validation
 	req.Name = gofn.Coalesce(req.Name, "x")
@@ -27,10 +27,10 @@ func (req *TestRegistryAuthConnReq) ModifyRequest() error {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *TestRegistryAuthConnReq) Validate() apperrors.ValidationErrors {
+func (req *TestRegistryAuthConnReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.validate("")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type TestRegistryAuthConnResp struct {

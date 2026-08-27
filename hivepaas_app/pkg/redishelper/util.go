@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
@@ -46,7 +46,7 @@ func marshalSlice[T any](values []T) ([]any, error) {
 	for i := range values {
 		value, err := jsonMarshal(values[i])
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		result = append(result, reflectutil.UnsafeBytesToStr(value))
 	}
@@ -56,13 +56,13 @@ func marshalSlice[T any](values []T) ([]any, error) {
 func marshalKVSlices[T any](keys []string, values []T) ([]any, error) {
 	length := len(keys)
 	if length != len(values) {
-		return nil, apperrors.Wrap(apperrors.ErrArgumentInvalid)
+		return nil, hperrors.Wrap(hperrors.ErrArgumentInvalid)
 	}
 	data := make([]any, 0, length*2) //nolint:mnd
 	for i := range length {
 		value, err := jsonMarshal(values[i])
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		data = append(data, keys[i], reflectutil.UnsafeBytesToStr(value))
 	}
@@ -75,7 +75,7 @@ func unmarshalStr[T any](data string) (value T, err error) {
 	}
 	err = jsonUnmarshal(reflectutil.UnsafeStrToBytes(data), &value)
 	if err != nil {
-		return value, apperrors.Wrap(err)
+		return value, hperrors.Wrap(err)
 	}
 	return value, nil
 }
@@ -90,7 +90,7 @@ func unmarshalSlice[T any](data ...any) ([]T, error) {
 		}
 		err := jsonUnmarshal(ParseBytes(item), &value)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		result = append(result, value)
 	}
@@ -107,7 +107,7 @@ func unmarshalStrSlice[T any](data ...string) ([]T, error) {
 		}
 		err := jsonUnmarshal(reflectutil.UnsafeStrToBytes(item), &value)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		result = append(result, value)
 	}
@@ -120,7 +120,7 @@ func unmarshalStrMap[T any](data map[string]string) (map[string]T, error) {
 		var value T
 		err := jsonUnmarshal(reflectutil.UnsafeStrToBytes(item), &value)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		result[k] = value
 	}

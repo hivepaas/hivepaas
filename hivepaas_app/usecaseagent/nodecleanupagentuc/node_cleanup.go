@@ -3,8 +3,8 @@ package nodecleanupagentuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc/nodecleanupagentdto"
 )
@@ -27,7 +27,7 @@ func (uc *UC) NodeCleanup(
 
 	resp, err := uc.clusterCleanupService.Cleanup(ctx, &req.ClusterCleanupReq)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	out := resp.Output

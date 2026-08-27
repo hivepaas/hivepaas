@@ -3,9 +3,9 @@ package commandpipedto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -23,10 +23,10 @@ func NewListCommandPipeReq() *ListCommandPipeReq {
 	}
 }
 
-func (req *ListCommandPipeReq) Validate() apperrors.ValidationErrors {
+func (req *ListCommandPipeReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.ListSettingReq.Validate()...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListCommandPipeResp struct {
@@ -42,7 +42,7 @@ func TransformCommandPipes(
 	for _, setting := range settings {
 		item, err := TransformCommandPipe(setting, refObjects)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

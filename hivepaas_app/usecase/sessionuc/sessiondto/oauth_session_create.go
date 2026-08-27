@@ -3,7 +3,7 @@ package sessiondto
 import (
 	"github.com/markbates/goth"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type CreateOAuthSessionReq struct {
@@ -15,7 +15,7 @@ func NewCreateOAuthSessionReq() *CreateOAuthSessionReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *CreateOAuthSessionReq) Validate() apperrors.ValidationErrors {
+func (req *CreateOAuthSessionReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

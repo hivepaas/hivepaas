@@ -6,10 +6,10 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
 )
 
@@ -21,10 +21,10 @@ func NewGetUserAccessesReq() *GetUserAccessesReq {
 	return &GetUserAccessesReq{}
 }
 
-func (req *GetUserAccessesReq) Validate() apperrors.ValidationErrors {
+func (req *GetUserAccessesReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetUserAccessesResp struct {

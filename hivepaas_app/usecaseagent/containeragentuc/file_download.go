@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
 )
@@ -21,7 +21,7 @@ func (uc *UC) DownloadFile(
 ) error {
 	res, err := uc.dockerManager.ContainerCopyFrom(ctx, input.ContainerID, input.Path)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	resp, err := uc.containerFileService.PrepareDownloadStream(ctx, &containerfileservice.PrepareDownloadStreamReq{
@@ -33,7 +33,7 @@ func (uc *UC) DownloadFile(
 	})
 	if err != nil {
 		_ = res.Content.Close()
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer resp.Reader.Close()
 
@@ -53,14 +53,14 @@ func (uc *UC) DownloadFile(
 				isFirst = false
 			}
 			if sendErr := stream.Send(out); sendErr != nil {
-				return apperrors.Wrap(sendErr)
+				return hperrors.Wrap(sendErr)
 			}
 		}
 		if readErr != nil {
 			if errors.Is(readErr, io.EOF) {
 				break
 			}
-			return apperrors.Wrap(readErr)
+			return hperrors.Wrap(readErr)
 		}
 	}
 

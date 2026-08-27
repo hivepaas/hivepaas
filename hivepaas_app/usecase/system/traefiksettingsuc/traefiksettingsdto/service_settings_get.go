@@ -3,9 +3,9 @@ package traefiksettingsdto
 import (
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -17,7 +17,7 @@ func NewGetServiceSettingsReq() *GetServiceSettingsReq {
 	return &GetServiceSettingsReq{}
 }
 
-func (req *GetServiceSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetServiceSettingsReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 
@@ -45,11 +45,11 @@ func TransformServiceSettings(
 ) (resp *ServiceSettingsResp, err error) {
 	config := input.Setting.MustAsTraefikService()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp.BaseSettingResp, err = settings.TransformSettingBase(input.Setting)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Some dynamic info retrieved from the infra

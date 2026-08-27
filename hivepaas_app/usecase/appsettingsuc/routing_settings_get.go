@@ -3,10 +3,10 @@ package appsettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -27,7 +27,7 @@ func (uc *UC) GetAppRoutingSettings(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	settings, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
@@ -36,7 +36,7 @@ func (uc *UC) GetAppRoutingSettings(
 		bunex.SelectWhere("setting.object_id = ?", app.ID),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	input := &appsettingsdto.AppRoutingSettingsTransformInput{
@@ -46,12 +46,12 @@ func (uc *UC) GetAppRoutingSettings(
 
 	err = uc.loadAppRoutingSettingsRefData(ctx, uc.db, input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp, err := appsettingsdto.TransformRoutingSettings(input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.GetAppRoutingSettingsResp{
@@ -71,7 +71,7 @@ func (uc *UC) loadAppRoutingSettingsRefData(
 	app := input.App
 	routingSettings, err := input.RoutingSettings.AsAppRoutingSettings()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	settingIDs := routingSettings.GetRefObjectIDs().RefSettingIDs
 
@@ -79,7 +79,7 @@ func (uc *UC) loadAppRoutingSettingsRefData(
 		bunex.SelectWhere("setting.id IN (?)", bunex.List(settingIDs)),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, setting := range settings {
 		setting.CurrentObjectID = app.ID

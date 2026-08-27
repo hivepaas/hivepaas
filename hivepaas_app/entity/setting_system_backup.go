@@ -3,8 +3,8 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -70,7 +70,7 @@ func (s *SystemBackup) GetResourceLinks(setting *Setting) []*ResLink {
 func (s *SystemBackup) Decrypt() error {
 	_, err := s.Encryption.Secret.GetPlain()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accesstokenuc/accesstokendto"
 )
@@ -22,8 +22,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} accesstokendto.ListAccessTokenResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/access-tokens [get]
 func (h *Handler) ListAccessToken(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
@@ -37,8 +37,8 @@ func (h *Handler) ListAccessToken(ctx *gin.Context) {
 // @Id      getSettingAccessToken
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} accesstokendto.GetAccessTokenResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/access-tokens/{itemID} [get]
 func (h *Handler) GetAccessToken(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
@@ -52,8 +52,8 @@ func (h *Handler) GetAccessToken(ctx *gin.Context) {
 // @Id      createSettingAccessToken
 // @Param   body body accesstokendto.CreateAccessTokenReq true "request data"
 // @Success 201 {object} accesstokendto.CreateAccessTokenResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/access-tokens [post]
 func (h *Handler) CreateAccessToken(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
@@ -68,8 +68,8 @@ func (h *Handler) CreateAccessToken(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body accesstokendto.UpdateAccessTokenReq true "request data"
 // @Success 200 {object} accesstokendto.UpdateAccessTokenResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/access-tokens/{itemID} [put]
 func (h *Handler) UpdateAccessToken(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
@@ -84,8 +84,8 @@ func (h *Handler) UpdateAccessToken(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body accesstokendto.UpdateAccessTokenStatusReq true "request data"
 // @Success 200 {object} accesstokendto.UpdateAccessTokenStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/access-tokens/{itemID}/status [put]
 func (h *Handler) UpdateAccessTokenStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
@@ -99,8 +99,8 @@ func (h *Handler) UpdateAccessTokenStatus(ctx *gin.Context) {
 // @Id      deleteSettingAccessToken
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} accesstokendto.DeleteAccessTokenResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/access-tokens/{itemID} [delete]
 func (h *Handler) DeleteAccessToken(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeAccessToken, base.ObjectScopeGlobal)
@@ -114,8 +114,8 @@ func (h *Handler) DeleteAccessToken(ctx *gin.Context) {
 // @Id      testAccessTokenConn
 // @Param   body body accesstokendto.TestAccessTokenConnReq true "request data"
 // @Success 200 {object} accesstokendto.TestAccessTokenConnResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/access-tokens/test-conn [post]
 func (h *Handler) TestAccessTokenConn(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)

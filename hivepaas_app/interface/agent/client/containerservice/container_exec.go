@@ -11,7 +11,7 @@ import (
 	"github.com/moby/moby/client"
 	"google.golang.org/grpc"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -145,7 +145,7 @@ func (s *ContainerExecStream) SendResize(width, height uint) error {
 		},
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -226,7 +226,7 @@ func (s *ContainerExecStream) Read(b []byte) (int, error) {
 
 	if s.readBuf.Len() > 0 {
 		n, err := s.readBuf.Read(b)
-		return n, apperrors.Wrap(err)
+		return n, hperrors.Wrap(err)
 	}
 
 	return 0, s.readErr
@@ -239,7 +239,7 @@ func (s *ContainerExecStream) Write(b []byte) (int, error) {
 		Stdin: b,
 	})
 	if err != nil {
-		return 0, apperrors.Wrap(err)
+		return 0, hperrors.Wrap(err)
 	}
 	return len(b), nil
 }

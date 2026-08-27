@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -45,10 +45,10 @@ func (repo *sysErrorRepo) GetByID(ctx context.Context, db database.IDB, id strin
 
 	err := query.Scan(ctx)
 	if sysError == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("SysError").WithCause(err)
+		return nil, hperrors.NewNotFound("SysError").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return sysError, nil
 }
@@ -66,7 +66,7 @@ func (repo *sysErrorRepo) List(ctx context.Context, db database.IDB, paging *bas
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -96,7 +96,7 @@ func (repo *sysErrorRepo) InsertMulti(ctx context.Context, db database.IDB, sysE
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -116,7 +116,7 @@ func (repo *sysErrorRepo) DeleteMulti(ctx context.Context, db database.IDB, sysE
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -124,14 +124,14 @@ func (repo *sysErrorRepo) DeleteMulti(ctx context.Context, db database.IDB, sysE
 func (repo *sysErrorRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
-		return apperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
 	}
 	query := db.NewDelete().Model((*entity.SysError)(nil)).ForceDelete() /* No soft delete */
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

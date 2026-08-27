@@ -3,10 +3,10 @@ package appdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListAppReq struct {
@@ -29,14 +29,14 @@ func NewListAppReq() *ListAppReq {
 	}
 }
 
-func (req *ListAppReq) Validate() apperrors.ValidationErrors {
+func (req *ListAppReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, false, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.ParentID, false, "parentId")...)
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
 		base.AllAppStatuses, "status")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListAppResp struct {
@@ -49,7 +49,7 @@ func TransformApps(apps []*entity.App, input *AppTransformationInput) ([]*AppRes
 	for _, app := range apps {
 		appResp, err := TransformApp(app, input)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp = append(resp, appResp)
 	}

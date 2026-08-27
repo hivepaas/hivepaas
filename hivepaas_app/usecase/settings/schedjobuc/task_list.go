@@ -3,8 +3,8 @@ package schedjobuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc/taskdto"
@@ -18,7 +18,7 @@ func (uc *UC) ListSchedJobTask(
 	req.Type = currentSettingType
 	jobSetting, err := uc.GetSettingByID(ctx, uc.DB, &req.BaseSettingReq, req.JobID, false)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	listResp, err := uc.taskService.ListTask(ctx, uc.DB, &taskservice.ListTaskReq{
@@ -28,12 +28,12 @@ func (uc *UC) ListSchedJobTask(
 		Paging:    req.Paging,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp, err := taskdto.TransformTasks(listResp.Tasks, listResp.TaskInfoMap)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &schedjobdto.ListSchedJobTaskResp{

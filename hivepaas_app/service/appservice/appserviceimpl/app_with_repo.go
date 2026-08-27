@@ -3,9 +3,9 @@ package appserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -35,7 +35,7 @@ func (s *service) FindAppsMatchingRepository(
 
 	settings, _, err := s.settingRepo.List(ctx, db, nil, nil, settingListOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(settings) == 0 {
 		return nil, nil
@@ -65,7 +65,7 @@ func (s *service) FindAppsMatchingRepository(
 
 	apps, _, err := s.appRepo.List(ctx, db, "", nil, appListOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(apps) == 0 {
 		return nil, nil

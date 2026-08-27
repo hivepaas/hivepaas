@@ -6,8 +6,8 @@ import (
 
 	gogitea "code.gitea.io/sdk/gitea"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListPullRequestOption func(options *gogitea.ListPullRequestsOptions)
@@ -33,7 +33,7 @@ func (c *Client) ListPullRequest(
 
 	output, resp, err := c.client.ListRepoPullRequests(owner, repo, listOpts)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 	return output, &basedto.PagingMeta{
 		Offset: opts.Page * opts.PageSize,
@@ -62,7 +62,7 @@ func (c *Client) ListAllPullRequests(
 	for {
 		result, resp, err := client.ListRepoPullRequests(owner, repo, listOpts)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		output = append(output, result...)
 		if resp.NextPage <= 0 || listOpts.Page == resp.NextPage {
@@ -92,10 +92,10 @@ func (c *Client) GetPullRequestByNumber(
 ) (*gogitea.PullRequest, error) {
 	output, resp, err := c.client.GetPullRequest(owner, repo, int64(number))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, apperrors.Wrap(apperrors.ErrPullRequestNotFound).WithParam("PullRequest", number)
+		return nil, hperrors.Wrap(hperrors.ErrPullRequestNotFound).WithParam("PullRequest", number)
 	}
 	return output, nil
 }
@@ -110,7 +110,7 @@ func (c *Client) CreatePullRequestComment(
 	comment, _, err := c.client.CreateIssueComment(owner, repo, int64(number),
 		gogitea.CreateIssueCommentOption{Body: body})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return comment, nil
 }

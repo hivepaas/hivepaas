@@ -6,11 +6,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func Test_CheckPasswordStrength(t *testing.T) {
-	errFail := apperrors.ErrPasswordNotMeetRequirements
+	errFail := hperrors.ErrPasswordNotMeetRequirements
 	tests := []struct {
 		name     string
 		password string

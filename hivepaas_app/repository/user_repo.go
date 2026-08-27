@@ -9,9 +9,9 @@ import (
 	"github.com/tiendc/gofn"
 	"github.com/uptrace/bun"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -58,10 +58,10 @@ func (repo *userRepo) GetByID(ctx context.Context, db database.IDB, id string,
 
 	err := query.Scan(ctx)
 	if user == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("User").WithCause(err).WithMsgLog("user id: %s", id)
+		return nil, hperrors.NewNotFound("User").WithCause(err).WithMsgLog("user id: %s", id)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return user, nil
 }
@@ -77,11 +77,11 @@ func (repo *userRepo) GetByUsernameOrEmail(ctx context.Context, db database.IDB,
 
 	err := query.Scan(ctx)
 	if user == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("User").WithCause(err).
+		return nil, hperrors.NewNotFound("User").WithCause(err).
 			WithMsgLog("user name: %s, email: %s", username, email)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return user, nil
 }
@@ -94,10 +94,10 @@ func (repo *userRepo) GetByUsername(ctx context.Context, db database.IDB, userna
 
 	err := query.Scan(ctx)
 	if user == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("User").WithCause(err).WithMsgLog("user name: %s", username)
+		return nil, hperrors.NewNotFound("User").WithCause(err).WithMsgLog("user name: %s", username)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return user, nil
 }
@@ -110,10 +110,10 @@ func (repo *userRepo) GetByEmail(ctx context.Context, db database.IDB, email str
 
 	err := query.Scan(ctx)
 	if user == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("User").WithCause(err).WithMsgLog("user email: %s", email)
+		return nil, hperrors.NewNotFound("User").WithCause(err).WithMsgLog("user email: %s", email)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return user, nil
 }
@@ -131,7 +131,7 @@ func (repo *userRepo) List(ctx context.Context, db database.IDB, paging *basedto
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -159,7 +159,7 @@ func (repo *userRepo) ListByEmails(ctx context.Context, db database.IDB, emails 
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("user emails: %v", emails)
+		return nil, hperrors.Wrap(err).WithMsgLog("user emails: %v", emails)
 	}
 	return users, nil
 }
@@ -175,7 +175,7 @@ func (repo *userRepo) ListByIDs(ctx context.Context, db database.IDB, ids []stri
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("user ids: %v", ids)
+		return nil, hperrors.Wrap(err).WithMsgLog("user ids: %v", ids)
 	}
 	return users, nil
 }
@@ -185,7 +185,7 @@ func (repo *userRepo) Insert(ctx context.Context, db database.IDB, user *entity.
 	if user.ID == "" {
 		newID, err := ulid.NewStringULID()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		user.ID = newID
 	}
@@ -195,7 +195,7 @@ func (repo *userRepo) Insert(ctx context.Context, db database.IDB, user *entity.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -216,7 +216,7 @@ func (repo *userRepo) UpsertMulti(ctx context.Context, db database.IDB, users []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -228,7 +228,7 @@ func (repo *userRepo) Update(ctx context.Context, db database.IDB, user *entity.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -236,14 +236,14 @@ func (repo *userRepo) Update(ctx context.Context, db database.IDB, user *entity.
 func (repo *userRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
-		return apperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
 	}
 	query := db.NewDelete().Model((*entity.User)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

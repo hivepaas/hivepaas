@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -28,7 +28,7 @@ func (client *Client) Upload(
 		ContentType: aws.String(defaultContentType),
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -56,7 +56,7 @@ func (client *Client) UploadEx(
 		ContentType: aws.String(defaultContentType),
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

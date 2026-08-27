@@ -5,10 +5,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
@@ -26,7 +26,7 @@ func (uc *UC) UpdateUserAccesses(
 		data := &updateUserAccessesData{}
 		err := uc.loadUserAccessesForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingProjectData{}
@@ -34,13 +34,13 @@ func (uc *UC) UpdateUserAccesses(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &projectsettingsdto.UpdateUserAccessesResp{}, nil
@@ -62,17 +62,17 @@ func (uc *UC) loadUserAccessesForUpdate(
 		bunex.SelectFor("UPDATE OF project"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if project.UpdateVer != req.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 	data.Project = project
 
 	// Loads all current accesses
 	currAccesses, err := uc.permissionManager.LoadProjectRawAccesses(ctx, db, project.ID, nil)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	data.CurrentAccesses = make(map[string]*entity.ACLPermission, len(currAccesses))

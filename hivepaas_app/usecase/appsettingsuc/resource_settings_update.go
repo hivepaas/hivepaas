@@ -8,10 +8,10 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -31,17 +31,17 @@ func (uc *UC) UpdateAppResourceSettings(
 		data := &updateAppResourceSettingsData{}
 		err := uc.loadAppResourceSettingsForUpdate(ctx, db, auth, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		err = uc.applyAppResourceSettings(ctx, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.UpdateAppResourceSettingsResp{}, nil
@@ -68,18 +68,18 @@ func (uc *UC) loadAppResourceSettingsForUpdate(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.App = app
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Service = service
 
 	if data.Service == nil || data.Service.Version.Index != uint64(req.UpdateVer) { //nolint:gosec
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
 	currCaps := appsettingsdto.TransformCapabilities(service.Spec.TaskTemplate.ContainerSpec)
@@ -89,10 +89,10 @@ func (uc *UC) loadAppResourceSettingsForUpdate(
 			Module:          base.ResourceModuleCluster,
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if !hasPerm {
-			return apperrors.Wrap(apperrors.ErrUnauthorized).WithMsgLog(
+			return hperrors.Wrap(hperrors.ErrUnauthorized).WithMsgLog(
 				"changing capabilities requires Write permission on Cluster module")
 		}
 	}
@@ -244,7 +244,7 @@ func (uc *UC) applyAppResourceSettings(
 			return true, nil
 		}, defaultServiceRetryMax, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

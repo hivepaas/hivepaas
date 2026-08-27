@@ -7,10 +7,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
@@ -35,13 +35,13 @@ func (uc *UC) CreateCommandPipeFromTemplate(
 		) error {
 			srcCmd, tgtCmd, pipeName, err := uc.createTemplatedCommands(ctx, db, req)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			if req.Name == "" {
 				pipeName, err = uc.calcCommandPipeName(ctx, db, req.Scope, currentSettingType, pipeName)
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 			}
 
@@ -52,13 +52,13 @@ func (uc *UC) CreateCommandPipeFromTemplate(
 			pData.Setting.Name = gofn.Coalesce(req.Name, pipeName)
 			err = pData.Setting.SetData(commandPipe)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &commandpipedto.CreateCommandPipeFromTemplateResp{
@@ -137,11 +137,11 @@ func (uc *UC) createTemplatedCommands(
 
 	default:
 		return nil, nil, "",
-			apperrors.NewUnsupported(fmt.Sprintf("Argument '%s'", req.CommandKind))
+			hperrors.NewUnsupported(fmt.Sprintf("Argument '%s'", req.CommandKind))
 	}
 	err = errors.Join(e1, e2)
 	if err != nil {
-		return nil, nil, "", apperrors.Wrap(err)
+		return nil, nil, "", hperrors.Wrap(err)
 	}
 
 	if req.Scope != nil {
@@ -156,17 +156,17 @@ func (uc *UC) createTemplatedCommands(
 	// Prevent repeated names by adding suffix
 	srcCmd.Name, err = uc.calcCommandPipeName(ctx, db, req.Scope, base.SettingTypeCommandTemplate, srcCmd.Name)
 	if err != nil {
-		return nil, nil, "", apperrors.Wrap(err)
+		return nil, nil, "", hperrors.Wrap(err)
 	}
 	tgtCmd.Name, err = uc.calcCommandPipeName(ctx, db, req.Scope, base.SettingTypeCommandTemplate, tgtCmd.Name)
 	if err != nil {
-		return nil, nil, "", apperrors.Wrap(err)
+		return nil, nil, "", hperrors.Wrap(err)
 	}
 
 	err = uc.SettingRepo.UpsertMulti(ctx, db, []*entity.Setting{srcCmd, tgtCmd},
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return nil, nil, "", apperrors.Wrap(err)
+		return nil, nil, "", hperrors.Wrap(err)
 	}
 
 	return srcCmd, tgtCmd, pipeName, nil
@@ -189,7 +189,7 @@ func (uc *UC) calcCommandPipeName(
 			return name, nil
 		}
 	}
-	return "", apperrors.Wrap(apperrors.ErrUnavailable).
+	return "", hperrors.Wrap(hperrors.ErrUnavailable).
 		WithParam("Name", "Command pipe name space")
 }
 
@@ -206,11 +206,11 @@ func (uc *UC) checkNameConflict(
 	setting, err := uc.SettingRepo.GetByName(ctx, db, scope, settingType, name, false,
 		bunex.SelectColumns("id", "name"),
 	)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if setting != nil {
-		return apperrors.NewAlreadyExist(strutil.ToPascalCase(string(settingType))).
+		return hperrors.NewAlreadyExist(strutil.ToPascalCase(string(settingType))).
 			WithMsgLog("%s '%s' already exists", settingType, setting.Name)
 	}
 	return nil

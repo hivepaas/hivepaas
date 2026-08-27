@@ -3,8 +3,8 @@ package projectenvsettingsdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ImportSettingsToProjectEnvReq struct {
@@ -19,12 +19,12 @@ func NewImportSettingsToProjectEnvReq() *ImportSettingsToProjectEnvReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *ImportSettingsToProjectEnvReq) Validate() apperrors.ValidationErrors {
+func (req *ImportSettingsToProjectEnvReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateObjectIDSliceReq(req.Settings, true, 1, "settings")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ImportSettingsToProjectEnvResp struct {

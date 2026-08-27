@@ -7,8 +7,8 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -23,25 +23,25 @@ func (s *service) commandPipeExec(
 ) (err error) {
 	cmdPipe, err := pipeSetting.AsCommandPipe()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	var srcCmdSetting, destCmdSetting *entity.Setting
 	if cmdPipe.SourceCommand.ID != "" {
 		srcCmdSetting = data.RefObjects.RefSettings[cmdPipe.SourceCommand.ID]
 		if srcCmdSetting == nil {
-			return apperrors.NewNotFound("Source command template")
+			return hperrors.NewNotFound("Source command template")
 		}
 	}
 	if cmdPipe.TargetCommand.ID != "" {
 		destCmdSetting = data.RefObjects.RefSettings[cmdPipe.TargetCommand.ID]
 		if destCmdSetting == nil {
-			return apperrors.NewNotFound("Target command template")
+			return hperrors.NewNotFound("Target command template")
 		}
 	}
 
 	if srcCmdSetting == nil && destCmdSetting == nil {
-		return apperrors.NewArgumentInvalid("source or target command")
+		return hperrors.NewArgumentInvalid("source or target command")
 	}
 	if destCmdSetting == nil {
 		return s.singleCommandExec(ctx, db, data.SrcApp, srcCmdSetting, data)
@@ -63,12 +63,12 @@ func (s *service) singleCommandExec(
 
 	cmd, err := s.calcCommand(ctx, cmdTemplate, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	env, err := s.calcCommandEnv(ctx, db, app, cmdTemplate, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
@@ -92,7 +92,7 @@ func (s *service) singleCommandExec(
 		},
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
@@ -114,22 +114,22 @@ func (s *service) doCommandPipeExec(
 
 	srcCmd, err := s.calcCommand(ctx, srcCmdTemplate, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	destCmd, err := s.calcCommand(ctx, destCmdTemplate, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	srcEnv, err := s.calcCommandEnv(ctx, db, data.SrcApp, srcCmdTemplate, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	destEnv, err := s.calcCommandEnv(ctx, db, data.DestApp, destCmdTemplate, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
@@ -192,10 +192,10 @@ func (s *service) doCommandPipeExec(
 	err2 := <-errChan
 
 	if err1 != nil {
-		return apperrors.Wrap(err1)
+		return hperrors.Wrap(err1)
 	}
 	if err2 != nil {
-		return apperrors.Wrap(err2)
+		return hperrors.Wrap(err2)
 	}
 
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(

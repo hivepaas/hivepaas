@@ -3,11 +3,11 @@ package appdeploymentdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListDeploymentReq struct {
@@ -29,14 +29,14 @@ func NewListDeploymentReq() *ListDeploymentReq {
 	}
 }
 
-func (req *ListDeploymentReq) Validate() apperrors.ValidationErrors {
+func (req *ListDeploymentReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
 		base.AllDeploymentStatuses, "status")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListDeploymentResp struct {
@@ -57,7 +57,7 @@ func TransformDeployments(
 	for _, deployment := range deployments {
 		item, err := TransformDeployment(deployment, input)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

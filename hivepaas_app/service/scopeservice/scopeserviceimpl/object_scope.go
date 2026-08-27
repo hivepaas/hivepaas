@@ -3,9 +3,9 @@ package scopeserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -22,7 +22,7 @@ func (s *service) LoadObjectScopeData(
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 	case base.ObjectScopeProjectEnv:
@@ -33,7 +33,7 @@ func (s *service) LoadObjectScopeData(
 			),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		scope.Project = scope.ProjectEnv.Project
 
@@ -50,7 +50,7 @@ func (s *service) LoadObjectScopeData(
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		scope.Project = scope.App.Project
 		scope.ProjectEnv = scope.App.ProjectEnv
@@ -61,7 +61,7 @@ func (s *service) LoadObjectScopeData(
 	case base.ObjectScopeUser:
 		scope.User, err = s.userService.LoadUser(ctx, db, scope.UserID, requireActive)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
@@ -96,7 +96,7 @@ func (s *service) LoadObjectScope(
 
 	err := s.LoadObjectScopeData(ctx, db, scope)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return scope, nil

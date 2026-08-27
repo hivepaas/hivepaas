@@ -3,7 +3,7 @@ package gitlab
 import (
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (c *Client) GetCurrentUser() (*gogitlab.User, error) {
@@ -12,7 +12,7 @@ func (c *Client) GetCurrentUser() (*gogitlab.User, error) {
 	}
 	user, _, err := c.client.Users.CurrentUser()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	c.currentUser = user
 	return user, nil

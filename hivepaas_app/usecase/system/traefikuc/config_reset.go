@@ -3,8 +3,8 @@ package traefikuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefikuc/traefikdto"
 )
 
@@ -15,7 +15,7 @@ func (uc *UC) ResetTraefikConfig(
 ) (*traefikdto.ResetTraefikConfigResp, error) {
 	err := uc.traefikService.ResetTraefikConfig(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &traefikdto.ResetTraefikConfigResp{}, nil

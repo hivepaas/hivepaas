@@ -9,8 +9,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	goslack "github.com/slack-go/slack"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 	"github.com/hivepaas/hivepaas/services/im/lark"
 	"github.com/hivepaas/hivepaas/services/im/telegram"
@@ -37,7 +37,7 @@ func retryExecute(
 
 	for attempt := 0; attempt <= retryMax; attempt++ {
 		if ctx.Err() != nil {
-			return apperrors.Wrap(ctx.Err())
+			return hperrors.Wrap(ctx.Err())
 		}
 
 		err := op()
@@ -61,7 +61,7 @@ func retryExecute(
 		select {
 		case <-ctx.Done():
 			timer.Stop()
-			return apperrors.Wrap(ctx.Err())
+			return hperrors.Wrap(ctx.Err())
 		case <-timer.C:
 		}
 	}

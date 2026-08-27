@@ -5,10 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
 )
 
@@ -32,7 +32,7 @@ func (h *Handler) SSLCertRenew(ctx *gin.Context, scopeType base.ObjectScopeType)
 	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeSSLCert, base.ActionTypeWrite, "itemID")
 	default:
-		err = apperrors.NewUnsupported("Setting scope 'none'")
+		err = hperrors.NewUnsupported("Setting scope 'none'")
 	}
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -77,7 +77,7 @@ func (h *Handler) SSLCertBundleDownload(ctx *gin.Context, scopeType base.ObjectS
 	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, base.ResourceTypeSSLCert, base.ActionTypeRead, "itemID")
 	default:
-		err = apperrors.NewUnsupported("Setting scope 'none'")
+		err = hperrors.NewUnsupported("Setting scope 'none'")
 	}
 	if err != nil {
 		h.RenderError(ctx, err)

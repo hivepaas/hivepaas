@@ -3,8 +3,8 @@ package projectsettingsdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -22,11 +22,11 @@ func NewCreateProjectTagReq() *CreateProjectTagReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *CreateProjectTagReq) Validate() apperrors.ValidationErrors {
+func (req *CreateProjectTagReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateStr(&req.Tag, true, minTagLen, maxTagLen, "tag")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type CreateProjectTagResp struct {

@@ -8,9 +8,9 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -26,12 +26,12 @@ func NewGetAppStorageSettingsReq() *GetAppStorageSettingsReq {
 	return &GetAppStorageSettingsReq{}
 }
 
-func (req *GetAppStorageSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetAppStorageSettingsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetAppStorageSettingsResp struct {
@@ -102,7 +102,7 @@ func TransformStorageSettings(
 
 	resp.Mounts, err = TransformStorageMounts(input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return resp, nil
@@ -116,7 +116,7 @@ func TransformStorageMounts(
 	for i := range mounts {
 		itemResp, err := TransformStorageMount(&mounts[i], input)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp = append(resp, itemResp)
 	}
@@ -128,7 +128,7 @@ func TransformStorageMount(
 	input *StorageSettingsTransformInput,
 ) (resp *Mount, err error) {
 	if err = copier.Copy(&resp, mnt); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp.Key = input.MountKeyCalculator(mnt)
 

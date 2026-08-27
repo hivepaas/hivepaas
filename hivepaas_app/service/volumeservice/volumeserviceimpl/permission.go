@@ -11,7 +11,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 // EnsureVolumePermissions guarantees that a volume root and any requested subpaths
@@ -76,10 +76,10 @@ func (s *service) EnsureVolumePermissions(
 		},
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if statusCode != 0 {
-		return apperrors.Wrap(apperrors.ErrActionFailed).WithMsgLog(
+		return hperrors.Wrap(hperrors.ErrActionFailed).WithMsgLog(
 			"volume init swarm task exited with status code %d", statusCode)
 	}
 	return nil
@@ -90,10 +90,10 @@ func (s *service) ensurePermissionsOnDirectHostPath(
 	subpaths ...string,
 ) (err error) {
 	if err = os.MkdirAll(baseHostPath, fullFileMode); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err = os.Chmod(baseHostPath, fullFileMode); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, sub := range subpaths {
 		if sub == "" {
@@ -101,10 +101,10 @@ func (s *service) ensurePermissionsOnDirectHostPath(
 		}
 		subDir := filepath.Join(baseHostPath, sub)
 		if err = os.MkdirAll(subDir, fullFileMode); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if err = os.Chmod(subDir, fullFileMode); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil

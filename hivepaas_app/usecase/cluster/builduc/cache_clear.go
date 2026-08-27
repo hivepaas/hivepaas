@@ -3,10 +3,10 @@ package builduc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
@@ -40,7 +40,7 @@ func (uc *UC) ClearBuildCache(
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		resp, err := uc.sysCleanupService.Cleanup(ctx, db, cleanupReq)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if resp.TaskOutput.ClusterCleanup == nil {
 			resp.TaskOutput.ClusterCleanup = &entity.ClusterCleanupOutput{}
@@ -52,7 +52,7 @@ func (uc *UC) ClearBuildCache(
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &builddto.ClearBuildCacheResp{

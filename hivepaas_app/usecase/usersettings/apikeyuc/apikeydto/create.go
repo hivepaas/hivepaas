@@ -5,9 +5,9 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -28,14 +28,14 @@ func NewCreateAPIKeyReq() *CreateAPIKeyReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *CreateAPIKeyReq) Validate() apperrors.ValidationErrors {
+func (req *CreateAPIKeyReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	timeNow := timeutil.NowUTC()
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1,
 		base.SettingNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateTime(&req.ExpireAt, true, timeNow,
 		timeNow.AddDate(expirationYearMax, 0, 0), "expireAt")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type CreateAPIKeyResp struct {

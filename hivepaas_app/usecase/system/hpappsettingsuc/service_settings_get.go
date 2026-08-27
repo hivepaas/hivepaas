@@ -3,9 +3,9 @@ package hpappsettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
 
@@ -16,16 +16,16 @@ func (uc *UC) GetServiceSettings(
 ) (*hpappsettingsdto.GetServiceSettingsResp, error) {
 	setting, err := uc.settingRepo.GetSingle(ctx, uc.db, nil, base.SettingTypeHivePaaSService, true)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	mainSvc, err := uc.hpAppService.GetHpAppSwarmService(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	workerSvc, err := uc.hpAppService.GetHpWorkerSwarmService(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	respData, err := hpappsettingsdto.TransformServiceSettings(&hpappsettingsdto.ServiceSettingsTransformInput{
@@ -34,7 +34,7 @@ func (uc *UC) GetServiceSettings(
 		WorkerService: workerSvc,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &hpappsettingsdto.GetServiceSettingsResp{

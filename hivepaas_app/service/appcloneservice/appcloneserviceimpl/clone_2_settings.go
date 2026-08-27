@@ -5,10 +5,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -29,7 +29,7 @@ func (s *service) cloneAppSettings(
 		bunex.SelectWhere("setting.object_id = ?", srcApp.ID),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	cloneFunc := data.OnCloneSetting
@@ -42,7 +42,7 @@ func (s *service) cloneAppSettings(
 	for _, setting := range appSettings {
 		cpSetting, err := setting.Clone(true)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		cpSetting.ObjectID = destApp.ID
 		cpSetting.CreatedAt = data.TimeNow
@@ -50,7 +50,7 @@ func (s *service) cloneAppSettings(
 		cpSetting.UpdateVer = 0
 		st, err := cloneFunc(destApp, srcApp, cpSetting)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if st != nil {
 			data.ClonedSettings = append(data.ClonedSettings, st)
@@ -76,13 +76,13 @@ func (s *service) cloneAppSettings(
 		// Verify domains are allowed in project
 		err = s.domainService.VerifyProjectDomains(ctx, db, destApp.ProjectID, activeDomains)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		// Make sure all domains used by the app are not hold by any other app
 		err = s.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{destApp.ID})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

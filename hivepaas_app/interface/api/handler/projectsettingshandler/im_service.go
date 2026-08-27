@@ -3,8 +3,8 @@ package projectsettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imserviceuc/imservicedto"
 )
 
@@ -20,8 +20,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} imservicedto.ListIMServiceResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services [get]
 func (h *Handler) ListIMService(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
@@ -36,8 +36,8 @@ func (h *Handler) ListIMService(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} imservicedto.GetIMServiceResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services/{itemID} [get]
 func (h *Handler) GetIMService(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
@@ -52,8 +52,8 @@ func (h *Handler) GetIMService(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body imservicedto.CreateIMServiceReq true "request data"
 // @Success 201 {object} imservicedto.CreateIMServiceResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services [post]
 func (h *Handler) CreateIMService(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
@@ -69,8 +69,8 @@ func (h *Handler) CreateIMService(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body imservicedto.UpdateIMServiceReq true "request data"
 // @Success 200 {object} imservicedto.UpdateIMServiceResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services/{itemID} [put]
 func (h *Handler) UpdateIMService(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
@@ -86,8 +86,8 @@ func (h *Handler) UpdateIMService(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body imservicedto.UpdateIMServiceStatusReq true "request data"
 // @Success 200 {object} imservicedto.UpdateIMServiceStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services/{itemID}/status [put]
 func (h *Handler) UpdateIMServiceStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)
@@ -102,8 +102,8 @@ func (h *Handler) UpdateIMServiceStatus(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} imservicedto.DeleteIMServiceResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/im-services/{itemID} [delete]
 func (h *Handler) DeleteIMService(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeIMService, base.ObjectScopeProject)

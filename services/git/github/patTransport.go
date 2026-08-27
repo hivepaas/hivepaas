@@ -3,7 +3,7 @@ package github
 import (
 	"net/http"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type PatTransport struct {
@@ -25,7 +25,7 @@ func (t *PatTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	resp, err := t.tr.RoundTrip(req)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }

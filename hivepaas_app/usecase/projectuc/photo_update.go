@@ -6,10 +6,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
@@ -28,19 +28,19 @@ func (uc *UC) UpdateProjectPhoto(
 		profileData := &updateProjectPhotoData{}
 		err := uc.loadProjectPhotoDataForUpdate(ctx, db, req, profileData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingProjectPhotoData{}
 		err = uc.preparePersistingProjectPhoto(ctx, db, req.ProjectPhotoReq, profileData.Project, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return uc.persistProjectPhotoData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &projectdto.UpdateProjectPhotoResp{}, nil
@@ -68,7 +68,7 @@ func (uc *UC) loadProjectPhotoDataForUpdate(
 		bunex.SelectRelation("PhotoData"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Project = project
 
@@ -97,7 +97,7 @@ func (uc *UC) preparePersistingProjectPhoto(
 			bunex.SelectColumns("id"),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if len(projects) == 0 {
 			persistingData.HardDeletingBinObjectIDs = append(persistingData.HardDeletingBinObjectIDs, photoData.ID)
@@ -135,19 +135,19 @@ func (uc *UC) persistProjectPhotoData(
 		bunex.UpdateColumns("updated_at", "photo"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = uc.binObjectRepo.UpsertMulti(ctx, db, persistingData.UpsertingBinObjects,
 		entity.BinObjectUpsertingConflictCols, entity.BinObjectUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = uc.binObjectRepo.DeleteByIDs(ctx, db, persistingData.HardDeletingBinObjectIDs,
 		bunex.DeleteWithForceDelete())
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

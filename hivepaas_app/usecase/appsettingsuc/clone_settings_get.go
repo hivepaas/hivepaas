@@ -6,10 +6,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
@@ -28,7 +28,7 @@ func (uc *UC) GetAppCloneSettings(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	settings, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
@@ -37,7 +37,7 @@ func (uc *UC) GetAppCloneSettings(
 		bunex.SelectWhere("setting.object_id = ?", app.ID),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	app.Settings = settings
 
@@ -47,17 +47,17 @@ func (uc *UC) GetAppCloneSettings(
 
 	err = uc.initDefaultAppCloneSettings(ctx, uc.db, input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = uc.loadAppCloneSettingsRefData(ctx, uc.db, input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp, err := appsettingsdto.TransformAppCloneSettings(input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.GetAppCloneSettingsResp{
@@ -112,7 +112,7 @@ func (uc *UC) initDefaultAppCloneSettings(
 		err = uc.settingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, app.GetObjectScope(),
 			true, routingSetting)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	} else {
 		routingSettings = &entity.AppRoutingSettings{}
@@ -160,7 +160,7 @@ func (uc *UC) loadAppCloneSettingsRefData(
 	err = uc.settingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &input.RefObjects, app.GetObjectScope(),
 		true, refIDs)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, settingID := range refIDs.RefSettingIDs {
 		setting := input.RefObjects.RefSettings[settingID]

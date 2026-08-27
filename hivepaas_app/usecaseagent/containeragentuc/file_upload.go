@@ -3,7 +3,7 @@ package containeragentuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -22,7 +22,7 @@ func (uc *UC) UploadFile(
 
 	_, err := uc.dockerManager.ContainerCopyTo(ctx, input.ContainerID, input.DstPath, input.TarReader, opts...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

@@ -3,8 +3,8 @@ package settinghandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/oauthuc/oauthdto"
 )
 
@@ -19,8 +19,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} oauthdto.ListOAuthResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/oauth [get]
 func (h *Handler) ListOAuth(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
@@ -34,8 +34,8 @@ func (h *Handler) ListOAuth(ctx *gin.Context) {
 // @Id      getSettingOAuth
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} oauthdto.GetOAuthResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/oauth/{itemID} [get]
 func (h *Handler) GetOAuth(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
@@ -49,8 +49,8 @@ func (h *Handler) GetOAuth(ctx *gin.Context) {
 // @Id      createSettingOAuth
 // @Param   body body oauthdto.CreateOAuthReq true "request data"
 // @Success 201 {object} oauthdto.CreateOAuthResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/oauth [post]
 func (h *Handler) CreateOAuth(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
@@ -65,8 +65,8 @@ func (h *Handler) CreateOAuth(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body oauthdto.UpdateOAuthReq true "request data"
 // @Success 200 {object} oauthdto.UpdateOAuthResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/oauth/{itemID} [put]
 func (h *Handler) UpdateOAuth(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
@@ -81,8 +81,8 @@ func (h *Handler) UpdateOAuth(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body oauthdto.UpdateOAuthStatusReq true "request data"
 // @Success 200 {object} oauthdto.UpdateOAuthStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/oauth/{itemID}/status [put]
 func (h *Handler) UpdateOAuthStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)
@@ -96,8 +96,8 @@ func (h *Handler) UpdateOAuthStatus(ctx *gin.Context) {
 // @Id      deleteSettingOAuth
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} oauthdto.DeleteOAuthResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/oauth/{itemID} [delete]
 func (h *Handler) DeleteOAuth(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeOAuth, base.ObjectScopeGlobal)

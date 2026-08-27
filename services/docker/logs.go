@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -150,7 +150,7 @@ func parseLogs(
 				break
 			}
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -166,7 +166,7 @@ func parseLogs(
 		case Stderr, Systemerr:
 			logType = tasklog.LogTypeErr
 		default:
-			return fmt.Errorf("%w: Unrecognized input header: %d", apperrors.ErrInfraInternal, stream)
+			return fmt.Errorf("%w: Unrecognized input header: %d", hperrors.ErrInfraInternal, stream)
 		}
 
 		// Retrieve the size of the frame
@@ -191,7 +191,7 @@ func parseLogs(
 				break
 			}
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -201,11 +201,11 @@ func parseLogs(
 			// Write the retrieved frame (without header)
 			nw, err := dstOfStdout.Write(frameData)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			// If the frame has not been fully written: error
 			if nw != frameSize {
-				return apperrors.Wrap(io.ErrShortWrite)
+				return hperrors.Wrap(io.ErrShortWrite)
 			}
 		} else {
 			logFrame := &tasklog.LogFrame{
@@ -224,7 +224,7 @@ func parseLogs(
 		nr -= frameSize + stdWriterPrefixLen
 
 		if err = ctx.Err(); err != nil { // Context is done
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 }

@@ -10,10 +10,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
@@ -43,7 +43,7 @@ func (s *service) notifyPRForDeploymentResult(
 
 	parsedURL, err := vcsurl.Parse(repoSource.RepoURL)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	owner := parsedURL.Username
@@ -200,12 +200,12 @@ func (s *service) dispatchPRComment(
 			credSetting, err = s.settingRepo.GetByID(ctx, db, data.App.GetObjectScope(), "",
 				repoSource.Credentials.ID, true)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 		if credSetting != nil {
 			err = gitapi.CreatePullRequestCommentWithRetry(ctx, credSetting, owner, repo, pullNumber, message)
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -215,11 +215,11 @@ func (s *service) dispatchPRComment(
 		data.Deployment.Trigger.SourceID != "" {
 		webhookSetting, err := s.settingRepo.GetByID(ctx, db, nil, "", data.Deployment.Trigger.SourceID, true)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if webhookSetting != nil {
 			err = gitapi.CreatePullRequestCommentWithRetry(ctx, webhookSetting, owner, repo, pullNumber, message)
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

@@ -5,10 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
 )
@@ -32,7 +32,7 @@ func (h *Handler) GithubAppManifestFlowBegin(ctx *gin.Context, scopeType base.Ob
 	case base.ObjectScopeApp, base.ObjectScopeUser:
 		fallthrough
 	default:
-		h.RenderError(ctx, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
+		h.RenderError(ctx, hperrors.Wrap(hperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
 		return
 	}
 	if err != nil {
@@ -140,7 +140,7 @@ func (h *Handler) GithubAppBeginReprovision(ctx *gin.Context, scopeType base.Obj
 	case base.ObjectScopeApp, base.ObjectScopeUser, base.ObjectScopeHivepaas:
 		fallthrough
 	default:
-		h.RenderError(ctx, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
+		h.RenderError(ctx, hperrors.Wrap(hperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
 		return
 	}
 	if err != nil {

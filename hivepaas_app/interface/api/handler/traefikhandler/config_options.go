@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc/traefiksettingsdto"
 )
@@ -18,8 +18,8 @@ import (
 // @Produce json
 // @Id      getTraefikConfigOptions
 // @Success 200 {object} traefiksettingsdto.GetConfigOptionsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/traefik/config-options [get]
 func (h *Handler) GetConfigOptions(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -31,7 +31,7 @@ func (h *Handler) GetConfigOptions(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Get config options").
+		h.RenderError(ctx, hperrors.NewForbidden("Get config options").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}
@@ -59,8 +59,8 @@ func (h *Handler) GetConfigOptions(ctx *gin.Context) {
 // @Id      updateTraefikConfigOptions
 // @Param   body body traefiksettingsdto.UpdateConfigOptionsReq true "request data"
 // @Success 200 {object} traefiksettingsdto.UpdateConfigOptionsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/traefik/config-options [put]
 func (h *Handler) UpdateConfigOptions(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -72,7 +72,7 @@ func (h *Handler) UpdateConfigOptions(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Update config options").
+		h.RenderError(ctx, hperrors.NewForbidden("Update config options").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}

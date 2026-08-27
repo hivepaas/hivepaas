@@ -10,10 +10,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/filearchiver"
@@ -42,7 +42,7 @@ func (s *service) loadRepoCache(
 		if err != nil || recover() != nil {
 			data.RepoCacheLoaded = false
 			if err = s.resetCheckoutDir(data); err != nil {
-				err = apperrors.Wrap(err)
+				err = hperrors.Wrap(err)
 			} else {
 				err = nil
 			}
@@ -63,8 +63,8 @@ func (s *service) loadRepoCache(
 			bunex.SelectWhere("file.status = ?", base.FileStatusActive),
 			bunex.SelectWhere("file.object_id = ?", data.App.ProjectID),
 		)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if file == nil || file.StorageType != base.FileStorageLocal {
 			return nil
@@ -79,7 +79,7 @@ func (s *service) loadRepoCache(
 
 		errStr, err := filearchiver.Decompress(filePath, data.CheckoutDir, filearchiver.ArchiveFormatAuto)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		s.addCmdOutToLogs(ctx, errStr, err != nil, data.LogStore)
 
@@ -87,7 +87,7 @@ func (s *service) loadRepoCache(
 		return nil
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -164,13 +164,13 @@ func (s *service) saveRepoCache(
 	errStr, err := filearchiver.Compress(data.CheckoutDir, newFilePath,
 		repoCacheArchiveFormat, repoCacheArchiveCompressionLevel)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	s.addCmdOutToLogs(ctx, errStr, err != nil, data.LogStore)
 
 	newCacheFileInfo, err := os.Stat(newFilePath)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	newCacheFile.Size = newCacheFileInfo.Size()
 
@@ -183,8 +183,8 @@ func (s *service) saveRepoCache(
 			bunex.SelectWhere("file.status = ?", base.FileStatusActive),
 			bunex.SelectWhere("file.object_id = ?", data.App.ProjectID),
 		)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if file != nil && (file.ID != newCacheFile.ID || file.UpdateVer != newCacheFile.UpdateVer) {
 			return nil
@@ -194,14 +194,14 @@ func (s *service) saveRepoCache(
 		err = s.fileRepo.Upsert(ctx, db, newCacheFile,
 			entity.FileUpsertingConflictCols, entity.FileUpsertingUpdateCols)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		fileEntitySaved = true
 		return nil
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

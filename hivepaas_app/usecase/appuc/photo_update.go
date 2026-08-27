@@ -8,11 +8,11 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/assets"
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
@@ -31,19 +31,19 @@ func (uc *UC) UpdateAppPhoto(
 		appData := &updateAppPhotoData{}
 		err := uc.loadAppPhotoDataForUpdate(ctx, db, req, appData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppPhotoData{}
 		err = uc.preparePersistingAppPhoto(ctx, db, req.AppPhotoReq, appData.App, appData, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return uc.persistAppPhotoData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appdto.UpdateAppPhotoResp{}, nil
@@ -72,14 +72,14 @@ func (uc *UC) loadAppPhotoDataForUpdate(
 		bunex.SelectRelation("PhotoData"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.App = app
 
 	if req.IsPresetIcon {
 		data.PresetIcon, err = uc.parseAndVerifyPresetIcon(req.FileName)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -93,7 +93,7 @@ func (uc *UC) parseAndVerifyPresetIcon(fileName string) (string, error) {
 	}
 	stat, err := fs.Stat(assets.GetIconsFS(), presetIcon)
 	if err != nil || stat.IsDir() {
-		return "", apperrors.NewNotFound("Preset icon")
+		return "", hperrors.NewNotFound("Preset icon")
 	}
 	return presetIcon, nil
 }
@@ -121,7 +121,7 @@ func (uc *UC) preparePersistingAppPhoto(
 			bunex.SelectColumns("id"),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if len(apps) == 0 {
 			persistingData.HardDeletingBinObjectIDs = append(persistingData.HardDeletingBinObjectIDs, photoData.ID)
@@ -162,19 +162,19 @@ func (uc *UC) persistAppPhotoData(
 		bunex.UpdateColumns("updated_at", "photo"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = uc.binObjectRepo.UpsertMulti(ctx, db, persistingData.UpsertingBinObjects,
 		entity.BinObjectUpsertingConflictCols, entity.BinObjectUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = uc.binObjectRepo.DeleteByIDs(ctx, db, persistingData.HardDeletingBinObjectIDs,
 		bunex.DeleteWithForceDelete())
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

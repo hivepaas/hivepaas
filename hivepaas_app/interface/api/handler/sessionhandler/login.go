@@ -8,9 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tiendc/gofn"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
@@ -30,8 +30,8 @@ const (
 // @Produce json
 // @Id      getLoginOptions
 // @Success 200 {object} sessiondto.GetLoginOptionsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /auth/login-options [get]
 func (h *Handler) LoginGetOptions(ctx *gin.Context) {
 	req := sessiondto.NewGetLoginOptionsReq()
@@ -58,8 +58,8 @@ func (h *Handler) LoginGetOptions(ctx *gin.Context) {
 // @Id      loginWithPassword
 // @Param   body body sessiondto.LoginWithPasswordReq true "request data"
 // @Success 200 {object} sessiondto.LoginWithPasswordResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /auth/login-with-password [post]
 func (h *Handler) LoginWithPassword(ctx *gin.Context) {
 	req := sessiondto.NewLoginWithPasswordReq()
@@ -91,8 +91,8 @@ func (h *Handler) LoginWithPassword(ctx *gin.Context) {
 // @Id      loginWithPasscode
 // @Param   body body sessiondto.LoginWithPasscodeReq true "request data"
 // @Success 200 {object} sessiondto.LoginWithPasscodeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /auth/login-with-passcode [post]
 func (h *Handler) LoginWithPasscode(ctx *gin.Context) {
 	req := sessiondto.NewLoginWithPasscodeReq()
@@ -123,8 +123,8 @@ func (h *Handler) LoginWithPasscode(ctx *gin.Context) {
 // @Id      loginWithAPIKey
 // @Param   body body sessiondto.LoginWithAPIKeyReq true "request data"
 // @Success 200 {object} sessiondto.LoginWithAPIKeyResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /auth/login-with-api-key [post]
 func (h *Handler) LoginWithAPIKey(ctx *gin.Context) {
 	req := sessiondto.NewLoginWithAPIKeyReq()
@@ -181,8 +181,8 @@ func (h *Handler) clearSessionDataFromCookies(ctx *gin.Context) {
 // @Produce json
 // @Id      refreshSession
 // @Success 200 {object} sessiondto.RefreshSessionResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /sessions/refresh [post]
 func (h *Handler) RefreshSession(ctx *gin.Context) {
 	var user *basedto.User

@@ -7,10 +7,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -24,7 +24,7 @@ func (s *service) InitAdminUser(
 	email := accCfg.Email
 	password := accCfg.Password
 	if email == "" || password == "" {
-		return apperrors.NewMissing("Email or password is missing")
+		return hperrors.NewMissing("Email or password is missing")
 	}
 	username := gofn.Coalesce(accCfg.Username, strings.Split(email, "@")[0])
 
@@ -47,7 +47,7 @@ func (s *service) InitAdminUser(
 
 	err = s.userRepo.Upsert(ctx, db, user, entity.UserUpsertingConflictCols, entity.UserUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

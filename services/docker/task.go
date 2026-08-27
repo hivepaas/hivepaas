@@ -8,7 +8,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type TaskListOption func(*client.TaskListOptions)
@@ -23,7 +23,7 @@ func (m *manager) TaskList(
 	}
 	resp, err := m.client.TaskList(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -56,7 +56,7 @@ func (m *manager) TaskInspect(
 	}
 	resp, err := m.client.TaskInspect(ctx, taskID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -78,7 +78,7 @@ func (m *manager) TaskLogs(
 	}
 	resp, err := m.client.TaskLogs(ctx, containerID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return resp, nil
 }
@@ -109,7 +109,7 @@ func (m *manager) serviceTaskGetRunning(
 	}
 	listResp, err := m.ServiceTaskList(ctx, serviceID, []swarm.TaskState{swarm.TaskStateRunning})
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	timeNow := time.Now()

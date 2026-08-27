@@ -3,8 +3,8 @@ package schedjobuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
@@ -23,7 +23,7 @@ func (uc *UC) UpdateSchedJobStatus(
 			data *settings.UpdateSettingStatusData,
 		) error {
 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -35,13 +35,13 @@ func (uc *UC) UpdateSchedJobStatus(
 		) error {
 			err := uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, data.Setting, true)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &schedjobdto.UpdateSchedJobStatusResp{}, nil

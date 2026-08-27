@@ -8,9 +8,9 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -24,8 +24,8 @@ func (s *service) InitRootProject(
 	project, err := s.projectRepo.GetByKey(ctx, db, base.HivepaasProjectKey,
 		bunex.SelectRelation("ProjectEnvs"),
 	)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
 	}
 	if project == nil {
 		timeNow := timeutil.NowUTC()
@@ -47,7 +47,7 @@ func (s *service) InitRootProject(
 			bunex.SelectLimit(1),
 		)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		if len(users) > 0 {
 			project.OwnerID = users[0].ID
@@ -57,12 +57,12 @@ func (s *service) InitRootProject(
 	err = s.projectRepo.Upsert(ctx, db, project,
 		entity.ProjectUpsertingConflictCols, entity.ProjectUpsertingUpdateCols)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	newApps, _, services, err := s.SyncProject(ctx, db, project)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	var updatingServices []*swarm.Service
@@ -82,7 +82,7 @@ func (s *service) InitRootProject(
 			shouldUpdateService, err = s.initRootProjectTraefikApp(ctx, db, app, svc)
 		}
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		if shouldUpdateService {
 			updatingServices = append(updatingServices, svc)
@@ -93,10 +93,10 @@ func (s *service) InitRootProject(
 		for _, svc := range updatingServices {
 			err := gofn.ExecRetry(func() error {
 				_, err := s.dockerManager.ServiceUpdate(ctx, svc.ID, &svc.Version, &svc.Spec)
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}, 2, time.Second*5) //nolint
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 		return nil

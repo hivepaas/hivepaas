@@ -5,9 +5,9 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type CreateAppReq struct {
@@ -44,12 +44,12 @@ func NewCreateAppReq() *CreateAppReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *CreateAppReq) Validate() apperrors.ValidationErrors {
+func (req *CreateAppReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, req.validate("")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 func (req *CreateAppReq) ModifyRequest() error {

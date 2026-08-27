@@ -5,9 +5,9 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/traefik/traefikhelper"
 )
 
@@ -18,7 +18,7 @@ func NewGetConfigOptionsReq() *GetConfigOptionsReq {
 	return &GetConfigOptionsReq{}
 }
 
-func (req *GetConfigOptionsReq) Validate() apperrors.ValidationErrors {
+func (req *GetConfigOptionsReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

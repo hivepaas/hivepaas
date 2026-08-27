@@ -3,7 +3,7 @@ package projectenvsettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 )
@@ -19,7 +19,7 @@ func (uc *UC) persistData(
 ) error {
 	err := uc.projectService.PersistProjectData(ctx, db, &persistingData.PersistingProjectData)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

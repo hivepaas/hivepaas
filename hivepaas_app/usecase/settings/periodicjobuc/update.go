@@ -3,8 +3,8 @@ package periodicjobuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc/periodicjobdto"
@@ -28,13 +28,13 @@ func (uc *UC) UpdatePeriodicJob(
 		) error {
 			pData.Setting.Kind = string(req.Kind)
 			if err := pData.Setting.SetData(periodicJob); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &periodicjobdto.UpdatePeriodicJobResp{}, nil

@@ -3,9 +3,9 @@ package sessiondto
 import (
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
@@ -29,7 +29,7 @@ type UserResp struct {
 
 func TransformUser(user *entity.User) (resp *UserResp, err error) {
 	if err = copier.Copy(&resp, &user); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if user.TotpSecret != "" {
 		resp.MfaSecret = "********"

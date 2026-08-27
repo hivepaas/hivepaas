@@ -7,7 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func ScanKeys(
@@ -20,7 +20,7 @@ func ScanKeys(
 		var keys []string
 		keys, cursor, err = cmder.Scan(ctx, cursor, pattern, 100).Result() //nolint:mnd
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		allKeys = append(allKeys, keys...)
 		if cursor == 0 {
@@ -38,9 +38,9 @@ func Get[T any](
 	valueStr, err := cmder.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return value, apperrors.NewNotFoundNT(key)
+			return value, hperrors.NewNotFoundNT(key)
 		}
-		return value, apperrors.NewNotFoundNT(key)
+		return value, hperrors.NewNotFoundNT(key)
 	}
 	return unmarshalStr[T](valueStr)
 }
@@ -58,7 +58,7 @@ func MGet[T any](
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
 		}
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return unmarshalSlice[T](slice...)
 }
@@ -72,11 +72,11 @@ func Set[T any](
 ) (err error) {
 	data, err := jsonMarshal(value)
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to marshal value")
+		return hperrors.Wrap(err).WithMsgLog("failed to marshal value")
 	}
 	_, err = cmder.Set(ctx, key, data, expiration).Result()
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to set value in redis")
+		return hperrors.Wrap(err).WithMsgLog("failed to set value in redis")
 	}
 	return nil
 }
@@ -90,11 +90,11 @@ func SetXX[T any](
 ) (err error) {
 	data, err := jsonMarshal(value)
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to marshal value")
+		return hperrors.Wrap(err).WithMsgLog("failed to marshal value")
 	}
 	_, err = cmder.SetXX(ctx, key, data, expiration).Result()
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to set value in redis")
+		return hperrors.Wrap(err).WithMsgLog("failed to set value in redis")
 	}
 	return nil
 }
@@ -108,11 +108,11 @@ func SetNX[T any](
 ) (err error) {
 	data, err := jsonMarshal(value)
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to marshal value")
+		return hperrors.Wrap(err).WithMsgLog("failed to marshal value")
 	}
 	_, err = cmder.SetNX(ctx, key, data, expiration).Result()
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to set value in redis")
+		return hperrors.Wrap(err).WithMsgLog("failed to set value in redis")
 	}
 	return nil
 }
@@ -131,7 +131,7 @@ func MSet[T any](
 		for i, key := range keys {
 			data, err := jsonMarshal(values[i])
 			if err != nil {
-				return apperrors.Wrap(err).WithMsgLog("failed to marshal value")
+				return hperrors.Wrap(err).WithMsgLog("failed to marshal value")
 			}
 			if expiration == redis.KeepTTL {
 				_, err = p.SetXX(ctx, key, data, expiration).Result()
@@ -139,13 +139,13 @@ func MSet[T any](
 				_, err = p.Set(ctx, key, data, expiration).Result()
 			}
 			if err != nil {
-				return apperrors.Wrap(err).WithMsgLog("failed to set value in redis")
+				return hperrors.Wrap(err).WithMsgLog("failed to set value in redis")
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -157,7 +157,7 @@ func Del(
 ) (err error) {
 	_, err = cmder.Del(ctx, keys...).Result()
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to delete value in redis")
+		return hperrors.Wrap(err).WithMsgLog("failed to delete value in redis")
 	}
 	return nil
 }
@@ -169,7 +169,7 @@ func Exists(
 ) (bool, error) {
 	count, err := cmder.Exists(ctx, key).Result()
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	if count == 0 {
 		return false, nil
@@ -185,7 +185,7 @@ func Expire(
 ) (err error) {
 	_, err = cmder.Expire(ctx, key, expiration).Result()
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to expire key")
+		return hperrors.Wrap(err).WithMsgLog("failed to expire key")
 	}
 	return nil
 }
@@ -198,7 +198,7 @@ func ExpireXX(
 ) (err error) {
 	_, err = cmder.ExpireXX(ctx, key, expiration).Result()
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to expire key")
+		return hperrors.Wrap(err).WithMsgLog("failed to expire key")
 	}
 	return nil
 }
@@ -211,7 +211,7 @@ func Publish(
 ) (err error) {
 	_, err = cmder.Publish(ctx, channel, message).Result()
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to publish message to redis channel")
+		return hperrors.Wrap(err).WithMsgLog("failed to publish message to redis channel")
 	}
 	return nil
 }

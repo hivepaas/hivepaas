@@ -7,7 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func HGet[T any](
@@ -18,9 +18,9 @@ func HGet[T any](
 	data, err := cmder.HGet(ctx, key, field).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return value, apperrors.NewNotFoundNT(key).WithCause(err)
+			return value, hperrors.NewNotFoundNT(key).WithCause(err)
 		}
-		return value, apperrors.Wrap(err)
+		return value, hperrors.Wrap(err)
 	}
 	return unmarshalStr[T](data)
 }
@@ -36,7 +36,7 @@ func HMGet[T any](
 	}
 	data, err := cmder.HMGet(ctx, key, fields...).Result()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return unmarshalSlice[T](data...)
 }
@@ -49,9 +49,9 @@ func HGetAll[T any](
 	data, err := cmder.HGetAll(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, apperrors.NewNotFoundNT(key).WithCause(err)
+			return nil, hperrors.NewNotFoundNT(key).WithCause(err)
 		}
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return unmarshalStrMap[T](data)
 }
@@ -79,15 +79,15 @@ func HMSet[T any](
 	}
 	data, err := marshalKVSlices(fields, values)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if _, err := cmder.HSet(ctx, key, data...).Result(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if expiration > 0 {
 		if _, err := cmder.HExpire(ctx, key, expiration, fields...).Result(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -104,7 +104,7 @@ func HDel(
 	}
 	_, err := cmder.HDel(ctx, key, fields...).Result()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -118,7 +118,7 @@ func HExpire(
 ) error {
 	_, err := cmder.HExpire(ctx, key, exp, fields...).Result()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 var (
@@ -49,7 +49,7 @@ func (rl *lock) Do(
 
 	mutex := rl.redsync.NewMutex(name, opts...)
 	if err := mutex.LockContext(ctx); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer mutex.UnlockContext(ctx) //nolint:errcheck
 

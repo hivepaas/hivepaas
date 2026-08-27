@@ -7,10 +7,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
@@ -35,7 +35,7 @@ func (uc *UC) CreateCommandTemplateFromTemplate(
 		) error {
 			cmdSetting, cmdTpl, err := uc.createTemplatedCommand(ctx, req)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			// Calculate upserting script objects if the script is too long
@@ -46,7 +46,7 @@ func (uc *UC) CreateCommandTemplateFromTemplate(
 			if cmdName == "" {
 				cmdName, err = uc.calcCommandTemplateName(ctx, db, req.Scope, currentSettingType, cmdSetting.Name)
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 			}
 
@@ -54,13 +54,13 @@ func (uc *UC) CreateCommandTemplateFromTemplate(
 			pData.Setting.Name = gofn.Coalesce(req.Name, cmdName)
 			err = pData.Setting.SetData(cmdTpl)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &commandtemplatedto.CreateCommandTemplateFromTemplateResp{
@@ -74,12 +74,12 @@ func (uc *UC) createTemplatedCommand(
 ) (cmdSetting *entity.Setting, cmdTpl *entity.CommandTemplate, err error) {
 	cmdSetting, err = uc.commandService.GetCommand(ctx, req.CommandType, req.CommandKind)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	cmdTpl, err = cmdSetting.AsCommandTemplate()
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	cmdSetting.Inheritable = req.Inheritable
@@ -104,7 +104,7 @@ func (uc *UC) calcCommandTemplateName(
 			return name, nil
 		}
 	}
-	return "", apperrors.Wrap(apperrors.ErrUnavailable).
+	return "", hperrors.Wrap(hperrors.ErrUnavailable).
 		WithParam("Name", "Command template name space")
 }
 
@@ -121,11 +121,11 @@ func (uc *UC) checkNameConflict(
 	setting, err := uc.SettingRepo.GetByName(ctx, db, scope, settingType, name, false,
 		bunex.SelectColumns("id", "name"),
 	)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if setting != nil {
-		return apperrors.NewAlreadyExist(strutil.ToPascalCase(string(settingType))).
+		return hperrors.NewAlreadyExist(strutil.ToPascalCase(string(settingType))).
 			WithMsgLog("%s '%s' already exists", settingType, setting.Name)
 	}
 	return nil

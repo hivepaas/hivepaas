@@ -5,8 +5,8 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -29,7 +29,7 @@ func (uc *UC) UpdateNode(
 			nodeID := data.Setting.MustAsClusterNode().RefID
 			inspect, err := uc.dockerManager.NodeInspect(ctx, nodeID)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			node := &inspect.Node
 			spec := &node.Spec
@@ -47,13 +47,13 @@ func (uc *UC) UpdateNode(
 
 			_, err = uc.dockerManager.NodeUpdate(ctx, nodeID, &node.Version, spec)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &nodedto.UpdateNodeResp{}, nil

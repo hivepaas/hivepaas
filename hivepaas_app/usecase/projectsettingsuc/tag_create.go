@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -22,7 +22,7 @@ func (uc *UC) CreateProjectTag(
 		tagData := &createProjectTagData{}
 		err := uc.loadProjectTagDataForAddNew(ctx, db, req, tagData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingProjectData{}
@@ -31,7 +31,7 @@ func (uc *UC) CreateProjectTag(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &projectsettingsdto.CreateProjectTagResp{}, nil
@@ -54,14 +54,14 @@ func (uc *UC) loadProjectTagDataForAddNew(
 		bunex.SelectRelation("Tags", bunex.SelectOrder("index")),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Project = project
 
 	nextIndex := 0
 	for _, projectTag := range project.Tags {
 		if projectTag.DeletedAt.IsZero() && strings.EqualFold(projectTag.Tag, req.Tag) {
-			return apperrors.NewAlreadyExist("Project tag")
+			return hperrors.NewAlreadyExist("Project tag")
 		}
 		nextIndex = max(nextIndex, projectTag.Index+1)
 	}

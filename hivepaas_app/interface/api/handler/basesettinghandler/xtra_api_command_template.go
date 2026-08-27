@@ -5,10 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandpipeuc/commandpipedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
 )
@@ -33,7 +33,7 @@ func (h *Handler) CreateCommandPipeFromTemplate(ctx *gin.Context, scopeType base
 	case base.ObjectScopeUser:
 		fallthrough
 	default:
-		h.RenderError(ctx, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
+		h.RenderError(ctx, hperrors.Wrap(hperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
 		return
 	}
 	if err != nil {
@@ -78,7 +78,7 @@ func (h *Handler) CreateCommandTemplateFromTemplate(ctx *gin.Context, scopeType 
 	case base.ObjectScopeUser:
 		fallthrough
 	default:
-		h.RenderError(ctx, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
+		h.RenderError(ctx, hperrors.Wrap(hperrors.ErrObjectScopeInvalid).WithParam("Scope", scopeType))
 		return
 	}
 	if err != nil {

@@ -13,8 +13,8 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/nanoid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
 )
@@ -35,7 +35,7 @@ func (s *service) SelectBuildWorkerNode(
 ) (resp imagebuildservice.BuildNodeResp, err error) {
 	candidates, currNodeID, err := s.findBuildNodeCandidates(ctx, buildSetting)
 	if err != nil {
-		return resp, apperrors.Wrap(err)
+		return resp, hperrors.Wrap(err)
 	}
 	resp.CurrentNodeID = currNodeID
 
@@ -49,7 +49,7 @@ func (s *service) SelectBuildWorkerNode(
 	pipe.ZRemRangeByScore(ctx, redisKeyBuildNodesSlots, "-inf", fmt.Sprint(now))
 	membersCmd := pipe.ZRange(ctx, redisKeyBuildNodesSlots, 0, -1)
 	if _, err = pipe.Exec(ctx); err != nil && !errors.Is(err, redis.Nil) {
-		return resp, apperrors.Wrap(err)
+		return resp, hperrors.Wrap(err)
 	}
 
 	activeCounts := make(map[string]int)
@@ -99,7 +99,7 @@ func (s *service) SelectBuildWorkerNode(
 		Score:  expireAt,
 		Member: slotMember,
 	}).Err(); err != nil {
-		return resp, apperrors.Wrap(err)
+		return resp, hperrors.Wrap(err)
 	}
 
 	var once sync.Once
@@ -122,12 +122,12 @@ func (s *service) findBuildNodeCandidates(
 ) (candidates []*candidateNode, currNodeID string, err error) {
 	currNodeID, err = s.dockerManager.NodeCurrentID(ctx)
 	if err != nil {
-		return nil, "", apperrors.Wrap(err)
+		return nil, "", hperrors.Wrap(err)
 	}
 
 	nodesResp, err := s.dockerManager.NodeList(ctx)
 	if err != nil {
-		return nil, "", apperrors.Wrap(err)
+		return nil, "", hperrors.Wrap(err)
 	}
 	nodeList := nodesResp.Items
 

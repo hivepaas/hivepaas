@@ -6,8 +6,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
@@ -23,13 +23,13 @@ func (s *service) BuildEnvVarsInApp(
 	// Merge with inherited envs and secrets
 	inheritedVars, inheritedSecrets, err := s.loadInheritedVarDataInApp(ctx, db, req, envStore, secretStore)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Merge with envs of the current app
 	err = s.loadVarDataInApp(ctx, db, req, envStore, secretStore)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	refsData := &processRefsData{
@@ -40,7 +40,7 @@ func (s *service) BuildEnvVarsInApp(
 			resp, err := s.buildSharedEnvVarsInApp(ctx, db, req.App.ProjectID, req.App.ProjectEnvID,
 				refName, req.BuildOptions)
 			if err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 			respMap := make(map[string]*envvarservice.EnvVar, len(resp))
 			for _, envVar := range resp {
@@ -69,7 +69,7 @@ func (s *service) BuildEnvVarsInApp(
 		}
 		if !env.IsLiteral {
 			if err = s.processRefs(env, refsData); err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 		}
 		resultVars = append(resultVars, env)
@@ -105,7 +105,7 @@ func (s *service) loadVarDataInApp(
 	req.LoadOptions.BuildPhase = req.BuildOptions.BuildPhaseOnly
 	loadedVars, loadedSecrets, err := dataLoadFunc(ctx, db, app.GetObjectScope(), req.LoadOptions)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, aVar := range loadedVars {
@@ -125,7 +125,7 @@ func (s *service) loadVarDataInApp(
 		App: app,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, aVar := range sysVars {
 		envStore[aVar.Key] = aVar
@@ -154,7 +154,7 @@ func (s *service) loadInheritedVarDataInApp(
 				BuildOptions: req.BuildOptions,
 			})
 			if err != nil {
-				return nil, nil, apperrors.Wrap(err)
+				return nil, nil, hperrors.Wrap(err)
 			}
 			return resp.EnvVars, resp.Secrets, nil
 		}
@@ -168,7 +168,7 @@ func (s *service) loadInheritedVarDataInApp(
 			BuildOptions: req.BuildOptions,
 		})
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		return resp.EnvVars, resp.Secrets, nil
 	}
@@ -180,7 +180,7 @@ func (s *service) loadInheritedVarDataInApp(
 
 	inheritedVars, inheritedSecrets, err = loadFunc(ctx, db, app.GetObjectScope(), req.LoadOptions)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	for _, aVar := range inheritedVars {

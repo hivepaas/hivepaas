@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type startupData struct {
@@ -37,7 +37,7 @@ func (s *service) LoadHivePaaSServiceSetting(
 
 	setting, err := s.settingRepo.GetSingle(ctx, s.db, nil, base.SettingTypeHivePaaSService, true)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	gStartupData.HivePaaSServiceSetting = setting
 

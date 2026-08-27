@@ -3,9 +3,9 @@ package appdeploymentserviceimpl
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 )
@@ -45,7 +45,7 @@ func (s *service) CreateDeploymentAndTask(
 		Deployment: entity.ObjectID{ID: deployment.ID},
 	})
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	return deployment, deploymentTask, nil

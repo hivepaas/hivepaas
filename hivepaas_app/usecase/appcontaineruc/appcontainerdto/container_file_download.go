@@ -5,9 +5,9 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -30,7 +30,7 @@ func NewDownloadFileFromContainerReq() *DownloadFileFromContainerReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *DownloadFileFromContainerReq) Validate() apperrors.ValidationErrors {
+func (req *DownloadFileFromContainerReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 7) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
@@ -39,7 +39,7 @@ func (req *DownloadFileFromContainerReq) Validate() apperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateStr(&req.Path, true, 1, filePathMaxLen, "path")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.CompressionFormat, false,
 		base.AllFileCompressionFormats, "compressionFormat")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type DownloadFileFromContainerResp struct {

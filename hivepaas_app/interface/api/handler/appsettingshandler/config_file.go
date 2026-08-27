@@ -3,8 +3,8 @@ package appsettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc/configfiledto"
 )
 
@@ -18,8 +18,8 @@ import (
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} configfiledto.ListConfigFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/config-files [get]
 func (h *Handler) ListConfigFile(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
@@ -36,8 +36,8 @@ func (h *Handler) ListConfigFile(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} configfiledto.GetConfigFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID} [get]
 func (h *Handler) GetConfigFile(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
@@ -54,8 +54,8 @@ func (h *Handler) GetConfigFile(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} configfiledto.GetDownloadTokenResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/download-token [get]
 func (h *Handler) GetConfigFileDownloadToken(ctx *gin.Context) {
 	h.GetDownloadToken(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp, "", 0)
@@ -72,8 +72,8 @@ func (h *Handler) GetConfigFileDownloadToken(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} configfiledto.DownloadConfigFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/download [get]
 func (h *Handler) DownloadConfigFile(ctx *gin.Context) {
 	h.Download(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp, "")
@@ -90,8 +90,8 @@ func (h *Handler) DownloadConfigFile(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   body body configfiledto.CreateConfigFileReq true "request data"
 // @Success 201 {object} configfiledto.CreateConfigFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/config-files [post]
 func (h *Handler) CreateConfigFile(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
@@ -109,8 +109,8 @@ func (h *Handler) CreateConfigFile(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body configfiledto.UpdateConfigFileReq true "request data"
 // @Success 200 {object} configfiledto.UpdateConfigFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID} [put]
 func (h *Handler) UpdateConfigFile(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
@@ -128,8 +128,8 @@ func (h *Handler) UpdateConfigFile(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body configfiledto.UpdateConfigFileStatusReq true "request data"
 // @Success 200 {object} configfiledto.UpdateConfigFileStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID}/status [put]
 func (h *Handler) UpdateConfigFileStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)
@@ -146,8 +146,8 @@ func (h *Handler) UpdateConfigFileStatus(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} configfiledto.DeleteConfigFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/config-files/{itemID} [delete]
 func (h *Handler) DeleteConfigFile(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeConfigFile, base.ObjectScopeApp)

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httputil"
 )
 
@@ -19,18 +19,18 @@ func VerifyToken(
 			httpReq.Header.Set("Content-Type", "application/json")
 		})
 	if err != nil {
-		return apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
+		return hperrors.Wrap(hperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	var cloudflareResp struct {
 		Success bool `json:"success"`
 	}
 	if err := json.Unmarshal(data, &cloudflareResp); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if !cloudflareResp.Success {
-		return apperrors.Wrap(apperrors.ErrTokenInvalid).WithMsgLog(
+		return hperrors.Wrap(hperrors.ErrTokenInvalid).WithMsgLog(
 			"Cloudflare token verification response success was false")
 	}
 

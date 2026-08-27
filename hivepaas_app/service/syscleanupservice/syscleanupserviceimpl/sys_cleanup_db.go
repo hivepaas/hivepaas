@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -180,7 +180,7 @@ func (s *service) sysCleanupDBDeleteOrphanedTasksAndDeployments(
 		err = errors.Join(err, e)
 	}
 
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }
 
 func (s *service) sysCleanupDBOldDeletedObjects(
@@ -210,7 +210,7 @@ func (s *service) sysCleanupDBOldDeletedObjects(
 	}
 	err = errors.Join(errs...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -233,14 +233,14 @@ func (s *service) sysCleanupDBOldTasks(
 		//	"tasks.updated_at < ?)", oldestTs),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = s.taskRepo.DeleteHard(ctx, db,
 		bunex.DeleteWhere("updated_at < ?", oldestTs),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -262,7 +262,7 @@ func (s *service) sysCleanupDBOldDeployments(
 		bunex.DeleteWhere("updated_at < ?", oldestTs),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -284,7 +284,7 @@ func (s *service) sysCleanupDBOldSysErrors(
 		bunex.DeleteWhere("created_at < ?", oldestTs),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -303,12 +303,12 @@ func (s *service) sysCleanupDBOldLocks(
 		bunex.SelectFor("UPDATE SKIP LOCKED"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = s.lockRepo.DeleteByIDs(ctx, db, entityutil.ExtractIDs(deletingLocks))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

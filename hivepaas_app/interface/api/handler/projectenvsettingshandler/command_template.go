@@ -3,8 +3,8 @@ package projectenvsettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
 )
 
@@ -21,8 +21,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} commandtemplatedto.ListCommandTemplateResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/command-templates [get]
 func (h *Handler) ListCommandTemplate(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeCommandTemplate, base.ObjectScopeProjectEnv)
@@ -38,8 +38,8 @@ func (h *Handler) ListCommandTemplate(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} commandtemplatedto.GetCommandTemplateResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/command-templates/{itemID} [get]
 func (h *Handler) GetCommandTemplate(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeCommandTemplate, base.ObjectScopeProjectEnv)
@@ -55,8 +55,8 @@ func (h *Handler) GetCommandTemplate(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   body body commandtemplatedto.CreateCommandTemplateReq true "request data"
 // @Success 201 {object} commandtemplatedto.CreateCommandTemplateResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/command-templates [post]
 func (h *Handler) CreateCommandTemplate(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeCommandTemplate, base.ObjectScopeProjectEnv)
@@ -72,8 +72,8 @@ func (h *Handler) CreateCommandTemplate(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   body body commandtemplatedto.CreateCommandTemplateFromTemplateReq true "request data"
 // @Success 201 {object} commandtemplatedto.CreateCommandTemplateFromTemplateResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/command-templates/from-template [post]
 func (h *Handler) CreateCommandTemplateFromTemplate(ctx *gin.Context) {
 	h.Handler.CreateCommandTemplateFromTemplate(ctx, base.ObjectScopeProjectEnv)
@@ -90,8 +90,8 @@ func (h *Handler) CreateCommandTemplateFromTemplate(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body commandtemplatedto.UpdateCommandTemplateReq true "request data"
 // @Success 200 {object} commandtemplatedto.UpdateCommandTemplateResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/command-templates/{itemID} [put]
 func (h *Handler) UpdateCommandTemplate(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeCommandTemplate, base.ObjectScopeProjectEnv)
@@ -108,8 +108,8 @@ func (h *Handler) UpdateCommandTemplate(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body commandtemplatedto.UpdateCommandTemplateStatusReq true "request data"
 // @Success 200 {object} commandtemplatedto.UpdateCommandTemplateStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/command-templates/{itemID}/status [put]
 func (h *Handler) UpdateCommandTemplateStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeCommandTemplate, base.ObjectScopeProjectEnv)
@@ -125,8 +125,8 @@ func (h *Handler) UpdateCommandTemplateStatus(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} commandtemplatedto.DeleteCommandTemplateResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/command-templates/{itemID} [delete]
 func (h *Handler) DeleteCommandTemplate(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeCommandTemplate, base.ObjectScopeProjectEnv)

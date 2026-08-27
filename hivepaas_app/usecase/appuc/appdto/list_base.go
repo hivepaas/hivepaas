@@ -3,9 +3,9 @@ package appdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListAppBaseReq struct {
@@ -30,14 +30,14 @@ func NewListAppBaseReq() *ListAppBaseReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *ListAppBaseReq) Validate() apperrors.ValidationErrors {
+func (req *ListAppBaseReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, false, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.ParentID, false, "parentId")...)
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
 		base.AllAppStatuses, "status")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListAppBaseResp struct {

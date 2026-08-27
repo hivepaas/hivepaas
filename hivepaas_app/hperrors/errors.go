@@ -1,4 +1,4 @@
-package apperrors
+package hperrors
 
 import (
 	"errors"
@@ -63,129 +63,129 @@ func GetErrorStackTrace(err error) string {
 	return ""
 }
 
-// NewInternal return AppError for error Internal
-func NewInternal() AppError {
+// NewInternal return HPError for error Internal
+func NewInternal() HPError {
 	return Wrap(ErrInternal)
 }
 
-// NewPanic return AppError for error Panic
-func NewPanic(err any) AppError {
+// NewPanic return HPError for error Panic
+func NewPanic(err any) HPError {
 	return Wrap(ErrPanic).WithNTParam("Error", err)
 }
 
-// NewNotFound return AppError for error NotFound
-func NewNotFound(name any) AppError {
+// NewNotFound return HPError for error NotFound
+func NewNotFound(name any) HPError {
 	return Wrap(ErrNotFound).WithParam("Name", name)
 }
-func NewNotFoundNT(name any) AppError { // NT: non translation param
+func NewNotFoundNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrNotFound).WithNTParam("Name", name)
 }
 
-// NewAlreadyExist return AppError for error AlreadyExist
-func NewAlreadyExist(name any) AppError {
+// NewAlreadyExist return HPError for error AlreadyExist
+func NewAlreadyExist(name any) HPError {
 	return Wrap(ErrAlreadyExist).WithParam("Name", name)
 }
-func NewAlreadyExistNT(name any) AppError { // NT: non translation param
+func NewAlreadyExistNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrAlreadyExist).WithNTParam("Name", name)
 }
 
-// NewConflict return AppError for error Conflict
-func NewConflict(name any) AppError {
+// NewConflict return HPError for error Conflict
+func NewConflict(name any) HPError {
 	return Wrap(ErrConflict).WithParam("Name", name)
 }
-func NewConflictNT(name any) AppError { // NT: non translation param
+func NewConflictNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrConflict).WithNTParam("Name", name)
 }
 
-// NewArgumentInvalid return AppError for error ErrArgumentInvalid
-func NewArgumentInvalid(name any) AppError {
+// NewArgumentInvalid return HPError for error ErrArgumentInvalid
+func NewArgumentInvalid(name any) HPError {
 	return Wrap(ErrArgumentInvalid).WithParam("Name", name)
 }
-func NewArgumentInvalidNT(name any) AppError { // NT: non translation param
+func NewArgumentInvalidNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrArgumentInvalid).WithNTParam("Name", name)
 }
 
-// NewUnavailable return AppError for error Unavailable
-func NewUnavailable(name any) AppError {
+// NewUnavailable return HPError for error Unavailable
+func NewUnavailable(name any) HPError {
 	return Wrap(ErrUnavailable).WithParam("Name", name)
 }
-func NewUnavailableNT(name any) AppError { // NT: non translation param
+func NewUnavailableNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrUnavailable).WithNTParam("Name", name)
 }
 
-// NewForbidden return AppError for error Forbidden
-func NewForbidden(name any) AppError {
+// NewForbidden return HPError for error Forbidden
+func NewForbidden(name any) HPError {
 	return Wrap(ErrForbidden).WithParam("Name", name)
 }
-func NewForbiddenNT(name any) AppError { // NT: non translation param
+func NewForbiddenNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrForbidden).WithNTParam("Name", name)
 }
 
-// NewNonEditable return AppError for error NonEditable
-func NewNonEditable(name any) AppError {
+// NewNonEditable return HPError for error NonEditable
+func NewNonEditable(name any) HPError {
 	return Wrap(ErrNonEditable).WithParam("Name", name)
 }
-func NewNonEditableNT(name any) AppError { // NT: non translation param
+func NewNonEditableNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrNonEditable).WithNTParam("Name", name)
 }
 
-// NewNonDeletable return AppError for error NonDeletable
-func NewNonDeletable(name any) AppError {
+// NewNonDeletable return HPError for error NonDeletable
+func NewNonDeletable(name any) HPError {
 	return Wrap(ErrNonDeletable).WithParam("Name", name)
 }
-func NewNonDeletableNT(name any) AppError { // NT: non translation param
+func NewNonDeletableNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrNonDeletable).WithNTParam("Name", name)
 }
 
-// NewInUse return AppError for error ResourceInUse
-func NewInUse(name any) AppError {
+// NewInUse return HPError for error ResourceInUse
+func NewInUse(name any) HPError {
 	return Wrap(ErrInUse).WithParam("Name", name)
 }
-func NewInUseNT(name any) AppError { // NT: non translation param
+func NewInUseNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrInUse).WithNTParam("Name", name)
 }
 
-// NewInactive return AppError for error ResourceInactive
-func NewInactive(name any) AppError {
+// NewInactive return HPError for error ResourceInactive
+func NewInactive(name any) HPError {
 	return Wrap(ErrInactive).WithParam("Name", name)
 }
-func NewInactiveNT(name any) AppError { // NT: non translation param
+func NewInactiveNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrInactive).WithNTParam("Name", name)
 }
 
-// NewMissing return AppError for error ResourceMissing
-func NewMissing(name any) AppError {
+// NewMissing return HPError for error ResourceMissing
+func NewMissing(name any) HPError {
 	return Wrap(ErrMissing).WithParam("Name", name)
 }
-func NewMissingNT(name any) AppError { // NT: non translation param
+func NewMissingNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrMissing).WithNTParam("Name", name)
 }
 
-// NewMismatch return AppError for error Mismatch
-func NewMismatch(left, right any) AppError {
+// NewMismatch return HPError for error Mismatch
+func NewMismatch(left, right any) HPError {
 	return Wrap(ErrMismatch).WithParam("Left", left).WithParam("Right", right)
 }
-func NewMismatchNT(left, right any) AppError { // NT: non translation param
+func NewMismatchNT(left, right any) HPError { // NT: non translation param
 	return Wrap(ErrMismatch).WithNTParam("Left", left).WithNTParam("Right", right)
 }
 
-// NewUnsupported return AppError for error Unsupported
-func NewUnsupported(name any) AppError {
+// NewUnsupported return HPError for error Unsupported
+func NewUnsupported(name any) HPError {
 	return Wrap(ErrUnsupported).WithParam("Name", name)
 }
-func NewUnsupportedNT(name any) AppError { // NT: non translation param
+func NewUnsupportedNT(name any) HPError { // NT: non translation param
 	return Wrap(ErrUnsupported).WithNTParam("Name", name)
 }
 
-// NewNotImplemented return AppError for error NotImplemented
-func NewNotImplemented() AppError {
+// NewNotImplemented return HPError for error NotImplemented
+func NewNotImplemented() HPError {
 	return Wrap(ErrNotImplemented)
 }
-func NewNotImplementedNT() AppError { // NT: non translation param
+func NewNotImplementedNT() HPError { // NT: non translation param
 	return Wrap(ErrNotImplemented)
 }
 
-// ToGRPCError converts any error (including AppError) to a gRPC status error.
+// ToGRPCError converts any error (including HPError) to a gRPC status error.
 func ToGRPCError(err error) error {
 	if err == nil {
 		return nil
@@ -196,7 +196,7 @@ func ToGRPCError(err error) error {
 		return err
 	}
 
-	if appErr, ok := errors.AsType[AppError](err); ok {
+	if appErr, ok := errors.AsType[HPError](err); ok {
 		grpcCode := grpcErrorStatusMap[getBaseError(appErr)]
 
 		// Translate the error message using Default English Language

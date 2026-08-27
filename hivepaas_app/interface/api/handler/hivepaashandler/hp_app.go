@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc/hpappdto"
 )
@@ -19,8 +19,8 @@ import (
 // @Id      reloadHivePaaSAppConfig
 // @Param   body body hpappdto.ReloadHpAppConfigReq true "request data"
 // @Success 200 {object} hpappdto.ReloadHpAppConfigResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/hivepaas/config/reload [post]
 func (h *Handler) ReloadHivePaaSAppConfig(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -32,7 +32,7 @@ func (h *Handler) ReloadHivePaaSAppConfig(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Reload hivepaas config").
+		h.RenderError(ctx, hperrors.NewForbidden("Reload hivepaas config").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}
@@ -60,8 +60,8 @@ func (h *Handler) ReloadHivePaaSAppConfig(ctx *gin.Context) {
 // @Id      restartHivePaaSApp
 // @Param   body body hpappdto.RestartHpAppReq true "request data"
 // @Success 200 {object} hpappdto.RestartHpAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/hivepaas/restart [post]
 func (h *Handler) RestartHivePaaSApp(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -73,7 +73,7 @@ func (h *Handler) RestartHivePaaSApp(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Restart hivepaas service").
+		h.RenderError(ctx, hperrors.NewForbidden("Restart hivepaas service").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}

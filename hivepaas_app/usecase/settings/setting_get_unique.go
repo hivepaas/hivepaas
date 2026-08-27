@@ -5,9 +5,9 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
 
@@ -39,13 +39,13 @@ func (uc *BaseUC) GetUniqueSetting(
 	db := uc.DB
 
 	if err = uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	setting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, req.Type, false,
 		data.ExtraLoadOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if setting != nil {
 		setting.CurrentObjectID = req.Scope.ScopeObjectID()
@@ -54,7 +54,7 @@ func (uc *BaseUC) GetUniqueSetting(
 	refObjects := entity.NewRefObjects()
 	err = uc.SettingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, req.Scope, false, setting)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &GetUniqueSettingResp{

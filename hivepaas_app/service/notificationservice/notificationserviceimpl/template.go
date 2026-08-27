@@ -8,7 +8,7 @@ import (
 	texttemplate "text/template"
 
 	"github.com/hivepaas/hivepaas/assets"
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 )
@@ -63,7 +63,7 @@ func (s *service) GetTemplate(
 		tpl, err = s.loadLarkTemplate(ctx, db, name)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	mapTplByName[name] = tpl
 
@@ -90,7 +90,7 @@ func (s *service) loadEmailTemplate(
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), emailTemplateDir+"system_update_notification.html")
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return tpl, nil
@@ -116,7 +116,7 @@ func (s *service) loadSlackTemplate(
 		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), slackTemplateDir+"system_update_notification.tpl")
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return tpl, nil
@@ -142,7 +142,7 @@ func (s *service) loadDiscordTemplate(
 		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), discordTemplateDir+"system_update_notification.tpl")
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return tpl, nil
@@ -168,7 +168,7 @@ func (s *service) loadTelegramTemplate(
 		tpl, err = htmltemplate.ParseFS(assets.GetTemplatesFS(), telegramTemplateDir+"system_update_notification.tpl")
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return tpl, nil
@@ -194,7 +194,7 @@ func (s *service) loadLarkTemplate(
 		tpl, err = texttemplate.ParseFS(assets.GetTemplatesFS(), larkTemplateDir+"system_update_notification.tpl")
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return tpl, nil

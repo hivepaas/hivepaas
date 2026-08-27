@@ -7,8 +7,8 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/nodecleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc/nodecleanupagentdto"
@@ -41,7 +41,7 @@ func (s *service) sysCleanupCluster(
 		CleanupBuildCache: data.CleanupClusterBuildCache,
 	})
 	if e != nil {
-		err = errors.Join(err, apperrors.Wrap(e))
+		err = errors.Join(err, hperrors.Wrap(e))
 	}
 	if resp != nil && resp.Output != nil {
 		if resp.Output.NodeID == "" {
@@ -56,7 +56,7 @@ func (s *service) sysCleanupCluster(
 	// 2. Scan all Swarm nodes and run cleanup via gRPC for other nodes
 	nodesResp, listErr := s.dockerManager.NodeList(ctx)
 	if listErr != nil {
-		return errors.Join(err, apperrors.Wrap(listErr))
+		return errors.Join(err, hperrors.Wrap(listErr))
 	}
 
 	for i := range nodesResp.Items {
@@ -123,7 +123,7 @@ func (s *service) sysCleanupCluster(
 				ContainersPruneError: fmt.Sprintf("Remote node cleanup error: %v", cleanupErr),
 			}
 			data.TaskOutput.ClusterCleanup.Nodes = append(data.TaskOutput.ClusterCleanup.Nodes, nodeOutput)
-			err = errors.Join(err, apperrors.Wrap(cleanupErr))
+			err = errors.Join(err, hperrors.Wrap(cleanupErr))
 			continue
 		}
 
@@ -139,5 +139,5 @@ func (s *service) sysCleanupCluster(
 		}
 	}
 
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }

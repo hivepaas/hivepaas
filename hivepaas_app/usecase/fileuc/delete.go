@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -39,7 +39,7 @@ func (uc *UC) DeleteFile(
 
 		file, err := uc.fileRepo.GetByID(ctx, db, req.ID, opts...)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		deletePhysicalFile := false
@@ -50,7 +50,7 @@ func (uc *UC) DeleteFile(
 				RetryMax: 2, //nolint:mnd
 			})
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -58,12 +58,12 @@ func (uc *UC) DeleteFile(
 		file.Deleted = deletePhysicalFile
 		err = uc.fileRepo.Update(ctx, db, file, bunex.UpdateColumns("deleted", "deleted_at"))
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &filedto.DeleteFileResp{}, nil

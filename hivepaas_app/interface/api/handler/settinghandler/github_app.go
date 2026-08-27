@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
 )
@@ -22,8 +22,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} githubappdto.ListGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps [get]
 func (h *Handler) ListGithubApp(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
@@ -37,8 +37,8 @@ func (h *Handler) ListGithubApp(ctx *gin.Context) {
 // @Id      getSettingGithubApp
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} githubappdto.GetGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID} [get]
 func (h *Handler) GetGithubApp(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
@@ -52,8 +52,8 @@ func (h *Handler) GetGithubApp(ctx *gin.Context) {
 // @Id      createSettingGithubApp
 // @Param   body body githubappdto.CreateGithubAppReq true "request data"
 // @Success 201 {object} githubappdto.CreateGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps [post]
 func (h *Handler) CreateGithubApp(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
@@ -68,8 +68,8 @@ func (h *Handler) CreateGithubApp(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body githubappdto.UpdateGithubAppReq true "request data"
 // @Success 200 {object} githubappdto.UpdateGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID} [put]
 func (h *Handler) UpdateGithubApp(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
@@ -84,8 +84,8 @@ func (h *Handler) UpdateGithubApp(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body githubappdto.UpdateGithubAppStatusReq true "request data"
 // @Success 200 {object} githubappdto.UpdateGithubAppStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID}/status [put]
 func (h *Handler) UpdateGithubAppStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
@@ -99,8 +99,8 @@ func (h *Handler) UpdateGithubAppStatus(ctx *gin.Context) {
 // @Id      deleteSettingGithubApp
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} githubappdto.DeleteGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID} [delete]
 func (h *Handler) DeleteGithubApp(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeGlobal)
@@ -114,8 +114,8 @@ func (h *Handler) DeleteGithubApp(ctx *gin.Context) {
 // @Id      testGithubAppConn
 // @Param   body body githubappdto.TestGithubAppConnReq true "request data"
 // @Success 200 {object} githubappdto.TestGithubAppConnResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps/test-conn [post]
 func (h *Handler) TestGithubAppConn(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
@@ -147,8 +147,8 @@ func (h *Handler) TestGithubAppConn(ctx *gin.Context) {
 // @Id      listAppInstallation
 // @Param   body body githubappdto.ListAppInstallationReq true "request data"
 // @Success 200 {object} githubappdto.ListAppInstallationResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps/installations/list [post]
 func (h *Handler) ListAppInstallation(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
@@ -184,8 +184,8 @@ func (h *Handler) ListAppInstallation(ctx *gin.Context) {
 // @Id      beginGithubAppManifestFlow
 // @Param   body body githubappdto.BeginGithubAppManifestFlowReq true "request data"
 // @Success 200 {object} githubappdto.BeginGithubAppManifestFlowResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps/manifest-flow/begin [post]
 func (h *Handler) BeginGithubAppManifestFlow(ctx *gin.Context) {
 	h.GithubAppManifestFlowBegin(ctx, base.ObjectScopeGlobal)
@@ -199,8 +199,8 @@ func (h *Handler) BeginGithubAppManifestFlow(ctx *gin.Context) {
 // @Id      beginGithubAppManifestFlowCreation
 // @Param   itemID path string true "setting ID"
 // @Success 200 "html page to redirect to github app creation page"
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID}/manifest-flow/begin [get]
 func (h *Handler) BeginGithubAppManifestFlowCreation(ctx *gin.Context) {
 	h.GithubAppManifestFlowBeginCreation(ctx, base.ObjectScopeGlobal)
@@ -214,8 +214,8 @@ func (h *Handler) BeginGithubAppManifestFlowCreation(ctx *gin.Context) {
 // @Id      handleGithubAppManifestFlowProgress
 // @Param   itemID path string true "setting ID"
 // @Success 200 "html page to redirect to github app creation page"
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID}/manifest-flow/progress [get]
 func (h *Handler) HandleGithubAppManifestFlowProgress(ctx *gin.Context) {
 	h.GithubAppManifestFlowProgress(ctx, base.ObjectScopeGlobal)
@@ -230,8 +230,8 @@ func (h *Handler) HandleGithubAppManifestFlowProgress(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body githubappdto.BeginReprovisionGithubAppReq true "request data"
 // @Success 200 {object} githubappdto.BeginReprovisionGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/github-apps/{itemID}/begin-reprovision [post]
 func (h *Handler) BeginReprovisionGithubApp(ctx *gin.Context) {
 	h.GithubAppBeginReprovision(ctx, base.ObjectScopeGlobal)

@@ -3,10 +3,10 @@ package acmednsproviderdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -23,10 +23,10 @@ func NewGetAcmeDnsProviderReq() *GetAcmeDnsProviderReq {
 	return &GetAcmeDnsProviderReq{}
 }
 
-func (req *GetAcmeDnsProviderReq) Validate() apperrors.ValidationErrors {
+func (req *GetAcmeDnsProviderReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.GetSettingReq.Validate()...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetAcmeDnsProviderResp struct {
@@ -194,13 +194,13 @@ func TransformAcmeDnsProvider(
 ) (resp *AcmeDnsProviderResp, err error) {
 	config := setting.MustAsAcmeDnsProvider()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp.Kind = base.AcmeDnsProvider(setting.Kind)
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	switch {

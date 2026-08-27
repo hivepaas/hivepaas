@@ -7,9 +7,9 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -42,12 +42,12 @@ func (s *service) CloneApp(
 	}
 	err = s.loadAppCloneData(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			err = errors.Join(err, apperrors.NewPanic(r))
+			err = errors.Join(err, hperrors.NewPanic(r))
 		}
 		_ = s.cleanupOnFail(ctx, data, err)
 	}()
@@ -57,70 +57,70 @@ func (s *service) CloneApp(
 	if data.OnCloneStart != nil {
 		err = data.OnCloneStart(req)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	err = s.cloneApp(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.cloneAppSettings(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.cloneSwarmService(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.cloneVolumes(ctx, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.persistAppData(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Post cloning steps
 
 	err = s.applyEnvVars(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.applySwarmConfigFiles(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.applySwarmSecrets(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.applyAppRoutingSettings(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.applySchedJobSettings(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.applyFinalContainerSettings(ctx, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.runCommands(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp.TargetApp = data.DestApp
@@ -143,7 +143,7 @@ func (s *service) loadAppCloneData(
 	if data.SrcApp == nil {
 		taskArgs, err := data.Task.ArgsAsAppClone()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		app, err := s.appService.LoadApp(ctx, db, "", taskArgs.SrcApp.ID, true, true,
@@ -157,7 +157,7 @@ func (s *service) loadAppCloneData(
 			),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.SrcApp = app
 	}
@@ -170,7 +170,7 @@ func (s *service) loadAppCloneData(
 	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, data.SrcApp.GetObjectScope(),
 		true, data.CloneSettings.GetRefObjectIDs())
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -185,20 +185,20 @@ func (s *service) persistAppData(
 	err = s.appRepo.Upsert(ctx, db, destApp,
 		entity.AppUpsertingConflictCols, entity.AppUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = s.settingRepo.UpsertMulti(ctx, db, data.ClonedSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Loads all ref objects of the settings
 	err = s.settingService.LoadRefObjectsSkipMissing(ctx, db, &data.RefObjects, destApp.GetObjectScope(),
 		false, destApp.Settings...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

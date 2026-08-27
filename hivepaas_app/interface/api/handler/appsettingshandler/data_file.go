@@ -6,9 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
 )
@@ -24,8 +24,8 @@ import (
 // @Param   appID path string true "app ID"
 // @Param   body body filedto.CreateFileReq true "request data"
 // @Success 201 {object} filedto.CreateFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files [post]
 func (h *Handler) CreateDataFile(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, _, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "")
@@ -60,8 +60,8 @@ func (h *Handler) CreateDataFile(ctx *gin.Context) {
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} filedto.ListFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files [get]
 func (h *Handler) ListDataFile(ctx *gin.Context) {
 	auth, _, _, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
@@ -97,8 +97,8 @@ func (h *Handler) ListDataFile(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "file ID"
 // @Success 200 {object} filedto.GetFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files/{itemID} [get]
 func (h *Handler) GetDataFile(ctx *gin.Context) {
 	auth, _, _, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "itemID")
@@ -135,8 +135,8 @@ func (h *Handler) GetDataFile(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "file ID"
 // @Success 200 {object} filedto.GetFileDownloadURLResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files/{itemID}/download-url [get]
 func (h *Handler) GetDataFileDownloadURL(ctx *gin.Context) {
 	auth, _, _, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "itemID")
@@ -175,8 +175,8 @@ func (h *Handler) GetDataFileDownloadURL(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "file ID"
 // @Success 200 {object} filedto.DeleteFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/data-files/{itemID} [delete]
 func (h *Handler) DeleteDataFile(ctx *gin.Context) {
 	auth, _, _, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "itemID")

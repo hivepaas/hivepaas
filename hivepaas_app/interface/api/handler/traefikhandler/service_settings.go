@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc/traefiksettingsdto"
 )
@@ -18,8 +18,8 @@ import (
 // @Produce json
 // @Id      getTraefikServiceSettings
 // @Success 200 {object} traefiksettingsdto.GetServiceSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/traefik/service-settings [get]
 func (h *Handler) GetServiceSettings(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -31,7 +31,7 @@ func (h *Handler) GetServiceSettings(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Get service settings").
+		h.RenderError(ctx, hperrors.NewForbidden("Get service settings").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}
@@ -59,8 +59,8 @@ func (h *Handler) GetServiceSettings(ctx *gin.Context) {
 // @Id      updateTraefikServiceSettings
 // @Param   body body traefiksettingsdto.UpdateServiceSettingsReq true "request data"
 // @Success 200 {object} traefiksettingsdto.UpdateServiceSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/traefik/service-settings [put]
 func (h *Handler) UpdateServiceSettings(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -72,7 +72,7 @@ func (h *Handler) UpdateServiceSettings(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Update service settings").
+		h.RenderError(ctx, hperrors.NewForbidden("Update service settings").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}

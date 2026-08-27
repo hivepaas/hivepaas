@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/markbates/goth/gothic"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
 
@@ -18,8 +18,8 @@ import (
 // @Produce json
 // @Id      ssoOAuthBegin
 // @Success 302 "on success redirect to provider OAuth URL"
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /auth/sso/{provider} [get]
 func (h *Handler) SSOOAuthBegin(ctx *gin.Context) {
 	provider, err := h.ParseStringParam(ctx, "provider")
@@ -48,8 +48,8 @@ func (h *Handler) SSOOAuthBegin(ctx *gin.Context) {
 // @Id      ssoOAuthCallback
 // @Param   provider path string true "provider name"
 // @Success 302 "on success redirect to the dashboard page"
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /auth/sso/callback/{provider} [get]
 // @Router  /auth/sso/callback/{provider} [post]
 func (h *Handler) SSOOAuthCallback(ctx *gin.Context) {

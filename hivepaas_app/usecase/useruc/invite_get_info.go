@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
 )
 
@@ -15,8 +15,8 @@ func (uc *UC) GetUserInviteInfo(
 	_ *userdto.GetUserInviteInfoReq,
 ) (*userdto.GetUserInviteInfoResp, error) {
 	emailSetting, err := uc.emailService.GetDefaultSystemEmail(ctx, uc.db)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &userdto.GetUserInviteInfoResp{

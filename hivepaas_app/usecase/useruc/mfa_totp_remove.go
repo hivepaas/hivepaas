@@ -3,9 +3,9 @@ package useruc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -20,7 +20,7 @@ func (uc *UC) RemoveMFATotp(
 	req *userdto.RemoveMFATotpReq,
 ) (*userdto.RemoveMFATotpResp, error) {
 	if auth.User.IsDemoUser() {
-		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+		return nil, hperrors.Wrap(hperrors.ErrUserDemoUnauthorized)
 	}
 
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
@@ -28,23 +28,23 @@ func (uc *UC) RemoveMFATotp(
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if user.TotpSecret == "" {
 			return nil
 		}
 		if user.SecurityOption == base.UserSecurityEnforceSSO {
-			return apperrors.Wrap(apperrors.ErrActionNotAllowed).
+			return hperrors.Wrap(hperrors.ErrActionNotAllowed).
 				WithMsgLog("user authentication method is enforce-sso")
 		}
 		if user.SecurityOption == base.UserSecurityPassword2FA {
-			return apperrors.Wrap(apperrors.ErrActionNotAllowed).
+			return hperrors.Wrap(hperrors.ErrActionNotAllowed).
 				WithMsgLog("2FA is required by admin")
 		}
 
 		// Verify passcode
 		if !totp.VerifyPasscode(req.Passcode, user.TotpSecret) {
-			return apperrors.Wrap(apperrors.ErrPasscodeMismatched)
+			return hperrors.Wrap(hperrors.ErrPasscodeMismatched)
 		}
 
 		user.TotpSecret = ""
@@ -53,13 +53,13 @@ func (uc *UC) RemoveMFATotp(
 			bunex.UpdateColumns("updated_at", "totp_secret"),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &userdto.RemoveMFATotpResp{}, nil

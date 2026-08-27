@@ -6,8 +6,8 @@ import (
 	"net/textproto"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/email/http"
 	"github.com/hivepaas/hivepaas/services/email/smtp"
 )
@@ -31,7 +31,7 @@ func SendMail(
 		err = http.SendMail(ctx, email.HTTP, recipients, subject, content)
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -58,7 +58,7 @@ func SendMailRetry(
 			select {
 			case <-ctx.Done():
 				timer.Stop()
-				return apperrors.Wrap(ctx.Err())
+				return hperrors.Wrap(ctx.Err())
 			case <-timer.C:
 			}
 		}
@@ -69,11 +69,11 @@ func SendMailRetry(
 		}
 
 		if !isRetryableEmailError(email, err) {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }
 
 func isRetryableEmailError(email *entity.Email, err error) bool {

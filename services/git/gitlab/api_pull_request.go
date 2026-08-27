@@ -6,8 +6,8 @@ import (
 
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListPullRequestOption func(*gogitlab.ListProjectMergeRequestsOptions)
@@ -32,7 +32,7 @@ func (c *Client) ListPullRequest(
 
 	output, resp, err := c.client.MergeRequests.ListProjectMergeRequests(pid, listOpts, gogitlab.WithContext(ctx))
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 	return output, &basedto.PagingMeta{
 		Offset: int(opts.Page * opts.PerPage),
@@ -60,7 +60,7 @@ func (c *Client) ListAllPullRequests(
 	for {
 		result, resp, err := client.MergeRequests.ListProjectMergeRequests(pid, listOpts, gogitlab.WithContext(ctx))
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		output = append(output, result...)
 		if resp.NextPage <= 0 || listOpts.Page == resp.NextPage {
@@ -89,10 +89,10 @@ func (c *Client) GetPullRequestByNumber(
 ) (*gogitlab.MergeRequest, error) {
 	output, resp, err := c.client.MergeRequests.GetMergeRequest(pid, int64(number), nil, gogitlab.WithContext(ctx))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if resp.StatusCode == http.StatusNotFound {
-		return nil, apperrors.Wrap(apperrors.ErrPullRequestNotFound).WithParam("PullRequest", number)
+		return nil, hperrors.Wrap(hperrors.ErrPullRequestNotFound).WithParam("PullRequest", number)
 	}
 	return output, nil
 }
@@ -106,7 +106,7 @@ func (c *Client) CreatePullRequestComment(
 	note, _, err := c.client.Notes.CreateMergeRequestNote(pid, int64(number),
 		&gogitlab.CreateMergeRequestNoteOptions{Body: &body}, gogitlab.WithContext(ctx))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return note, nil
 }

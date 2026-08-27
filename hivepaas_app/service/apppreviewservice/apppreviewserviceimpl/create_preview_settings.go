@@ -7,9 +7,9 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -94,7 +94,7 @@ func (s *service) onCloneRoutingSetting(
 	// Make sure all domains used by the app are not hold by any other app
 	err := s.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{data.PreviewApp.ID})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	setting.MustSetData(routingSettings)

@@ -1,8 +1,8 @@
 package userdto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type GetUserInviteInfoReq struct {
@@ -12,7 +12,7 @@ func NewGetUserInviteInfoReq() *GetUserInviteInfoReq {
 	return &GetUserInviteInfoReq{}
 }
 
-func (req *GetUserInviteInfoReq) Validate() apperrors.ValidationErrors {
+func (req *GetUserInviteInfoReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

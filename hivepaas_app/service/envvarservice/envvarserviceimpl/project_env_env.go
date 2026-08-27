@@ -6,8 +6,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
@@ -24,13 +24,13 @@ func (s *service) BuildEnvVarsInProjectEnv(
 	inheritedVars, inheritedSecrets, err := s.loadInheritedVarDataInProjectEnv(ctx, db, req,
 		envStore, secretStore)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Merge with envs and secrets of the current scope
 	err = s.loadVarDataInProjectEnv(ctx, db, req, envStore, secretStore)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	refsData := &processRefsData{
@@ -58,7 +58,7 @@ func (s *service) BuildEnvVarsInProjectEnv(
 		}
 		if !env.IsLiteral {
 			if err = s.processRefs(env, refsData); err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 		}
 		resultVars = append(resultVars, env)
@@ -93,7 +93,7 @@ func (s *service) loadVarDataInProjectEnv(
 
 	loadedVars, loadedSecrets, err := dataLoadFunc(ctx, db, projectEnv.GetObjectScope(), req.LoadOptions)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, aVar := range loadedVars {
@@ -113,7 +113,7 @@ func (s *service) loadVarDataInProjectEnv(
 		ProjectEnv: projectEnv,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, aVar := range sysVars {
 		envStore[aVar.Key] = aVar
@@ -138,7 +138,7 @@ func (s *service) loadInheritedVarDataInProjectEnv(
 			BuildOptions: req.BuildOptions,
 		})
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		return resp.EnvVars, resp.Secrets, nil
 	}
@@ -150,7 +150,7 @@ func (s *service) loadInheritedVarDataInProjectEnv(
 
 	inheritedVars, inheritedSecrets, err = loadFunc(ctx, db, projectEnv.GetObjectScope(), req.LoadOptions)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	for _, aVar := range inheritedVars {

@@ -3,9 +3,9 @@ package secretdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -19,10 +19,10 @@ func NewGetSecretReq() *GetSecretReq {
 	return &GetSecretReq{}
 }
 
-func (req *GetSecretReq) Validate() apperrors.ValidationErrors {
+func (req *GetSecretReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.GetSettingReq.Validate()...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetSecretResp struct {
@@ -54,13 +54,13 @@ func TransformSecret(
 ) (resp *SecretResp, err error) {
 	secret := setting.MustAsSecret()
 	if err = copier.Copy(&resp, &secret); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp.Key = setting.Name
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }

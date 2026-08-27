@@ -3,8 +3,8 @@ package imagedto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -21,11 +21,11 @@ func NewCreateImageReq() *CreateImageReq {
 	return &CreateImageReq{}
 }
 
-func (req *CreateImageReq) Validate() apperrors.ValidationErrors {
+func (req *CreateImageReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1, imageNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateObjectIDReq(&req.RegistryAuth, false, "registryAuth")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type CreateImageResp struct {

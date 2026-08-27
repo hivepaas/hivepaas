@@ -7,10 +7,10 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -66,10 +66,10 @@ func (repo *taskRepo) GetByID(ctx context.Context, db database.IDB, typ base.Tas
 
 	err := query.Scan(ctx)
 	if task == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("Task").WithCause(err)
+		return nil, hperrors.NewNotFound("Task").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return task, nil
 }
@@ -90,7 +90,7 @@ func (repo *taskRepo) List(ctx context.Context, db database.IDB, targetID string
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -116,7 +116,7 @@ func (repo *taskRepo) ListByIDs(ctx context.Context, db database.IDB, ids []stri
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return tasks, nil
 }
@@ -136,7 +136,7 @@ func (repo *taskRepo) InsertMulti(ctx context.Context, db database.IDB, tasks []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -157,7 +157,7 @@ func (repo *taskRepo) UpsertMulti(ctx context.Context, db database.IDB, tasks []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -169,7 +169,7 @@ func (repo *taskRepo) Update(ctx context.Context, db database.IDB, task *entity.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -182,7 +182,7 @@ func (repo *taskRepo) UpdateMulti(ctx context.Context, db database.IDB, tasks []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -198,7 +198,7 @@ func (repo *taskRepo) DeleteByIDs(ctx context.Context, db database.IDB, ids []st
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -220,7 +220,7 @@ func (repo *taskRepo) DeleteAllByApps(ctx context.Context, db database.IDB, appI
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -236,7 +236,7 @@ func (repo *taskRepo) DeleteAllByProjects(ctx context.Context, db database.IDB, 
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -252,7 +252,7 @@ func (repo *taskRepo) DeleteAllByProjectEnvs(ctx context.Context, db database.ID
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -268,7 +268,7 @@ func (repo *taskRepo) DeleteAllByUsers(ctx context.Context, db database.IDB, use
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -276,14 +276,14 @@ func (repo *taskRepo) DeleteAllByUsers(ctx context.Context, db database.IDB, use
 func (repo *taskRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
-		return apperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
 	}
 	query := db.NewDelete().Model((*entity.Task)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

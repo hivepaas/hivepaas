@@ -9,10 +9,10 @@ import (
 	"github.com/tiendc/gofn"
 	"github.com/uptrace/bun"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -100,7 +100,7 @@ func (repo *settingRepo) get(ctx context.Context, db database.IDB, scope *entity
 	theOpts := opts
 	if scope != nil {
 		if err := repo.loadScopeData(ctx, db, scope); err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		switch scope.ScopeType {
 		case base.ObjectScopeApp:
@@ -124,10 +124,10 @@ func (repo *settingRepo) get(ctx context.Context, db database.IDB, scope *entity
 
 	err := query.Scan(ctx)
 	if setting == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("Setting").WithCause(err)
+		return nil, hperrors.NewNotFound("Setting").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if hasChange, _ := repo.updateExpiredSetting(ctx, db, setting); hasChange {
@@ -150,7 +150,7 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 		}
 		setting, err := repo.get(ctx, db, scope, opts...)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		return setting, nil
 	}
@@ -159,10 +159,10 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 	// then return the first matching one in the order of the scope upto global.
 	settings, _, err := repo.List(ctx, db, scope, nil, opts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(settings) == 0 {
-		return nil, apperrors.NewNotFound("Setting")
+		return nil, hperrors.NewNotFound("Setting")
 	}
 	if len(settings) == 1 || scope == nil {
 		return settings[0], nil
@@ -216,7 +216,7 @@ func (repo *settingRepo) GetSingle(ctx context.Context, db database.IDB, scope *
 	if setting != nil {
 		return setting, nil
 	}
-	return nil, apperrors.NewNotFound("Setting")
+	return nil, hperrors.NewNotFound("Setting")
 }
 
 func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *entity.ObjectScope,
@@ -224,7 +224,7 @@ func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *entit
 	theOpts := opts
 	if scope != nil {
 		if err := repo.loadScopeData(ctx, db, scope); err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		switch scope.ScopeType {
 		case base.ObjectScopeApp:
@@ -253,7 +253,7 @@ func (repo *settingRepo) List(ctx context.Context, db database.IDB, scope *entit
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -280,7 +280,7 @@ func (repo *settingRepo) ListByIDs(ctx context.Context, db database.IDB, scope *
 	opts = append(opts, bunex.SelectWhere("setting.id IN (?)", bun.List(ids)))
 	opts = repo.applyFilter(opts, "", "", requireActive)
 	settings, _, err := repo.List(ctx, db, scope, nil, opts...)
-	return settings, apperrors.Wrap(err)
+	return settings, hperrors.Wrap(err)
 }
 
 func (repo *settingRepo) applyFilter(opts []bunex.SelectQueryOption, typ base.SettingType, id string,
@@ -405,7 +405,7 @@ func (repo *settingRepo) loadScopeData(ctx context.Context, db database.IDB, sco
 		app, err := repo.appRepo.GetByID(ctx, db, "", scope.AppID,
 			bunex.SelectColumns("project_id", "project_env_id", "parent_id"))
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		scope.ProjectID = app.ProjectID
 		scope.ProjectEnvID = app.ProjectEnvID
@@ -435,10 +435,10 @@ func (repo *settingRepo) EnsureUnique(ctx context.Context, db database.IDB, scop
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil
 		}
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if count > 1 {
-		return apperrors.NewAlreadyExist("Setting")
+		return hperrors.NewAlreadyExist("Setting")
 	}
 	return nil
 }
@@ -458,13 +458,13 @@ func (repo *settingRepo) InsertMulti(ctx context.Context, db database.IDB, setti
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Update res links for the settings
 	err = repo.updateSettingResLinks(ctx, db, settings)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -486,13 +486,13 @@ func (repo *settingRepo) UpsertMulti(ctx context.Context, db database.IDB, setti
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Update res links for the settings
 	err = repo.updateSettingResLinks(ctx, db, settings)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -505,13 +505,13 @@ func (repo *settingRepo) Update(ctx context.Context, db database.IDB, setting *e
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Update res links for the setting
 	err = repo.updateSettingResLinks(ctx, db, []*entity.Setting{setting})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -545,7 +545,7 @@ func (repo *settingRepo) UpdateClearDefaultFlag(ctx context.Context, db database
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -575,7 +575,7 @@ func (repo *settingRepo) updateExpiredSettings(ctx context.Context, db database.
 
 	_, err = query.Exec(ctx)
 	if err != nil {
-		return hasChange, apperrors.Wrap(err)
+		return hasChange, hperrors.Wrap(err)
 	}
 	return hasChange, nil
 }
@@ -593,7 +593,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 	for _, setting := range settings {
 		links, err := setting.GetResourceLinks()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		newLinks = append(newLinks, links...)
 	}
@@ -605,7 +605,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 
 		_, err := query.Exec(ctx)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	}
@@ -616,7 +616,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 		Where("res_link.src_id IN (?)", bun.List(settingIDs))
 	err := selQuery.Scan(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	mapCurrLinks := make(map[string]*entity.ResLink, len(currLinks))
@@ -652,7 +652,7 @@ func (repo *settingRepo) updateSettingResLinks(ctx context.Context, db database.
 
 		_, err = upsertQuery.Exec(ctx)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -671,7 +671,7 @@ func (repo *settingRepo) DeleteAllByObjects(ctx context.Context, db database.IDB
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -679,14 +679,14 @@ func (repo *settingRepo) DeleteAllByObjects(ctx context.Context, db database.IDB
 func (repo *settingRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
-		return apperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
 	}
 	query := db.NewDelete().Model((*entity.Setting)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

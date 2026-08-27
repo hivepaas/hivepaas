@@ -6,9 +6,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 )
@@ -21,7 +21,7 @@ func (s *service) notifyForSystemUpdate(
 	notification, err := s.notificationService.GetDefaultNotification(ctx, db, entity.NewObjectScopeGlobal(),
 		data.RefObjects, false)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if notification == nil {
 		return nil
@@ -36,7 +36,7 @@ func (s *service) notifyForSystemUpdate(
 		TemplateData:    data.NotifMsgData,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

@@ -3,8 +3,8 @@ package sessionuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 )
 
@@ -14,14 +14,14 @@ func (uc *UC) VerifyAuth(
 	accessCheck permission.AccessCheck,
 ) error {
 	if auth.User.AuthClaims.IsRefresh {
-		return apperrors.Wrap(apperrors.ErrForbidden).
+		return hperrors.Wrap(hperrors.ErrForbidden).
 			WithMsgLog("refresh token is not allowed")
 	}
 	if accessCheck == nil {
 		return nil
 	}
 	if !accessCheck.IsValid() {
-		return apperrors.NewArgumentInvalid("Either 'Action' or 'AllOf' or 'AnyOf'")
+		return hperrors.NewArgumentInvalid("Either 'Action' or 'AllOf' or 'AnyOf'")
 	}
 
 	// Requested action is higher than the one limited within the session settings
@@ -39,19 +39,19 @@ func (uc *UC) VerifyAuth(
 		}
 		if !allowed {
 			if auth.User.IsDemoUser() { // Special case: demo user
-				return apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+				return hperrors.Wrap(hperrors.ErrUserDemoUnauthorized)
 			}
-			return apperrors.Wrap(apperrors.ErrUnauthorized).
+			return hperrors.Wrap(hperrors.ErrUnauthorized).
 				WithMsgLog("requested action is not allowed by session settings")
 		}
 	}
 
 	hasPerm, err := uc.permissionManager.CheckAccess(ctx, uc.db, auth, accessCheck)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if !hasPerm {
-		return apperrors.Wrap(apperrors.ErrUnauthorized)
+		return hperrors.Wrap(hperrors.ErrUnauthorized)
 	}
 	return nil
 }

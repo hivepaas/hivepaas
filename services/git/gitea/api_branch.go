@@ -5,8 +5,8 @@ import (
 
 	gogitea "code.gitea.io/sdk/gitea"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListBranchOption func(options *gogitea.ListRepoBranchesOptions)
@@ -32,7 +32,7 @@ func (c *Client) ListBranch(
 
 	output, resp, err := c.client.ListRepoBranches(owner, repo, listOpts)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 	return output, &basedto.PagingMeta{
 		Offset: opts.Page * opts.PageSize,
@@ -61,7 +61,7 @@ func (c *Client) ListAllBranches(
 	for {
 		result, resp, err := client.ListRepoBranches(owner, repo, listOpts)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		output = append(output, result...)
 		if resp.NextPage <= 0 || listOpts.Page == resp.NextPage {

@@ -3,10 +3,10 @@ package appsettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
@@ -28,7 +28,7 @@ func (uc *UC) GetAppEnvVars(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	settings, _, err := uc.settingRepo.List(ctx, uc.db, app.GetObjectScope(), nil,
@@ -36,7 +36,7 @@ func (uc *UC) GetAppEnvVars(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	input := &appsettingsdto.EnvVarsTransformationInput{
@@ -46,7 +46,7 @@ func (uc *UC) GetAppEnvVars(
 	input.SystemVars, err = uc.envVarService.BuildSystemEnvVarsInApp(ctx, uc.db,
 		&envvarservice.BuildSystemEnvVarsInAppReq{App: app})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if app.ParentApp != nil {
@@ -57,7 +57,7 @@ func (uc *UC) GetAppEnvVars(
 		input.ParentSystemVars, err = uc.envVarService.BuildSystemEnvVarsInApp(ctx, uc.db,
 			&envvarservice.BuildSystemEnvVarsInAppReq{App: parentApp})
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -66,18 +66,18 @@ func (uc *UC) GetAppEnvVars(
 	input.EnvSystemVars, err = uc.envVarService.BuildSystemEnvVarsInProjectEnv(ctx, uc.db,
 		&envvarservice.BuildSystemEnvVarsInProjectEnvReq{ProjectEnv: projectEnv})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	input.ProjectSystemVars, err = uc.envVarService.BuildSystemEnvVarsInProject(ctx, uc.db,
 		&envvarservice.BuildSystemEnvVarsInProjectReq{Project: app.Project})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp, err := appsettingsdto.TransformEnvVars(input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.GetAppEnvVarsResp{

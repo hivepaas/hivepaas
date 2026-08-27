@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectsettingsuc/projectsettingsdto"
 )
 
@@ -19,8 +19,8 @@ import (
 // @Param   projectID path string true "project ID"
 // @Param   body body projectsettingsdto.ImportSettingsToProjectReq true "request data"
 // @Success 200 {object} projectsettingsdto.ImportSettingsToProjectResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/settings-import [post]
 func (h *Handler) ImportSettings(ctx *gin.Context) {
 	auth, projectID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)

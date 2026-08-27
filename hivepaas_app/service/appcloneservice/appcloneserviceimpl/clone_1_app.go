@@ -6,9 +6,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
@@ -44,7 +44,7 @@ func (s *service) cloneApp(
 
 	err = cloneFunc(destApp, srcApp)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if destApp.ProjectEnv == nil {
@@ -59,18 +59,18 @@ func (s *service) cloneApp(
 
 	// App global key must be unique globally
 	conflictApp, err := s.appRepo.GetByGlobalKey(ctx, db, "", destApp.GlobalKey, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if conflictApp != nil {
-		return apperrors.NewAlreadyExist("App").
+		return hperrors.NewAlreadyExist("App").
 			WithMsgLog("app unique key '%s' already exists", destApp.GlobalKey)
 	}
 
 	// Create local network for the app to attach
 	_, _, err = s.networkService.GetOrCreateProjectNetwork(ctx, db, destApp.Project, destEnv)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -97,7 +97,7 @@ func (s *service) onCloneAppDefault(
 	}
 	projectEnv := srcApp.Project.GetEnv(destEnv)
 	if projectEnv == nil {
-		return apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", destEnv)
+		return hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", destEnv)
 	}
 	destApp.ProjectEnvID = projectEnv.ID
 	destApp.ProjectEnv = projectEnv

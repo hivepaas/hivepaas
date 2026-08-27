@@ -7,7 +7,7 @@ import (
 
 	"github.com/slack-go/slack"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
@@ -33,7 +33,7 @@ func (c *Client) PostWebhook(ctx context.Context, webhookURL, channel, text stri
 	}
 	err := slack.PostWebhookCustomHTTPContext(ctx, webhookURL, c.getHttpClient(), msg)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

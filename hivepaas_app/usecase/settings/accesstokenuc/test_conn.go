@@ -3,9 +3,9 @@ package accesstokenuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accesstokenuc/accesstokendto"
 	"github.com/hivepaas/hivepaas/services/cloudflare/cfutil"
 	"github.com/hivepaas/hivepaas/services/git/gitapi"
@@ -26,10 +26,10 @@ func (uc *UC) TestAccessTokenConn(
 		err = cfutil.VerifyToken(ctx, req.Token)
 
 	default:
-		err = apperrors.Wrap(apperrors.ErrTokenTypeUnsupported).WithParam("Type", req.Kind)
+		err = hperrors.Wrap(hperrors.ErrTokenTypeUnsupported).WithParam("Type", req.Kind)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &accesstokendto.TestAccessTokenConnResp{}, nil

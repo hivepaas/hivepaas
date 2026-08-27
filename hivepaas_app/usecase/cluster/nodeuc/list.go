@@ -5,9 +5,9 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -21,25 +21,25 @@ func (uc *UC) ListNode(
 	if req.Scope.IsGlobalScope() {
 		currNodes, err = uc.clusterService.SyncNodes(ctx, uc.DB)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
 	err = uc.listNodesInDocker(ctx, resp.Data, currNodes, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	respData, err := nodedto.TransformNodes(resp.Data, resp.RefObjects, refClusterObjects, false)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &nodedto.ListNodeResp{
@@ -65,7 +65,7 @@ func (uc *UC) listNodesInDocker(
 
 		res, err := uc.dockerManager.NodeListByIDs(ctx, nodes)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		currNodes = res.Items
 	}

@@ -1,9 +1,9 @@
 package syserrordto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListSysErrorReq struct {
@@ -23,7 +23,7 @@ func NewListSysErrorReq() *ListSysErrorReq {
 	}
 }
 
-func (req *ListSysErrorReq) Validate() apperrors.ValidationErrors {
+func (req *ListSysErrorReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 
@@ -32,12 +32,12 @@ type ListSysErrorResp struct {
 	Data []*SysErrorResp   `json:"data"`
 }
 
-func TransformSysErrors(appErrors []*entity.SysError) (resp []*SysErrorResp, err error) {
-	resp = make([]*SysErrorResp, 0, len(appErrors))
-	for _, appError := range appErrors {
+func TransformSysErrors(sysErrors []*entity.SysError) (resp []*SysErrorResp, err error) {
+	resp = make([]*SysErrorResp, 0, len(sysErrors))
+	for _, appError := range sysErrors {
 		item, err := TransformSysError(appError)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

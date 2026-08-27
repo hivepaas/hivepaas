@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
@@ -45,7 +45,7 @@ func GenSign(secret string, timestamp int64) (string, error) {
 	h := hmac.New(sha256.New, []byte(stringToSign))
 	_, err := h.Write([]byte{})
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	return base64.StdEncoding.EncodeToString(h.Sum(nil)), nil
 }
@@ -77,7 +77,7 @@ func (c *Client) PostWebhook(ctx context.Context, webhookURL, secret, text strin
 		timestamp := time.Now().Unix()
 		sign, err := GenSign(secret, timestamp)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		payload["timestamp"] = strconv.FormatInt(timestamp, 10)
 		payload["sign"] = sign
@@ -85,18 +85,18 @@ func (c *Client) PostWebhook(ctx context.Context, webhookURL, secret, text strin
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, webhookURL, bytes.NewReader(body))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.getHttpClient().Do(req)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer resp.Body.Close()
 

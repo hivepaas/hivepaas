@@ -7,7 +7,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -25,7 +25,7 @@ func (s *service) cleanupTempContainers(ctx context.Context, data *clusterCleanu
 		*o = opts
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	timeNow := time.Now().UTC()
@@ -69,7 +69,7 @@ func (s *service) cleanupTempServices(ctx context.Context, data *clusterCleanupD
 		*o = opts
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	timeNow := time.Now().UTC()

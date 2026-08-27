@@ -1,8 +1,8 @@
 package traefikdto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ResetTraefikConfigReq struct {
@@ -13,7 +13,7 @@ func NewResetTraefikConfigReq() *ResetTraefikConfigReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *ResetTraefikConfigReq) Validate() apperrors.ValidationErrors {
+func (req *ResetTraefikConfigReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

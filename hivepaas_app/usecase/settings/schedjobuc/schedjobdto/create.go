@@ -7,10 +7,10 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
@@ -88,14 +88,14 @@ func (req *SchedJobBaseReq) modifyRequest() error {
 		req.Command.Name = "-"
 		req.Command.Kind = ""
 		if err := req.Command.ModifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	if req.CommandOutput != nil && req.CommandOutput.PipeToApp != nil {
 		req.CommandOutput.PipeToApp.Command.Name = "-"
 		req.CommandOutput.PipeToApp.Command.Kind = ""
 		if err := req.CommandOutput.PipeToApp.Command.ModifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -289,10 +289,10 @@ func (req *CreateSchedJobReq) ModifyRequest() error {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *CreateSchedJobReq) Validate() apperrors.ValidationErrors {
+func (req *CreateSchedJobReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.validate("")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type CreateSchedJobResp struct {

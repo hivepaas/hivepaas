@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/binobjectuc/binobjectdto"
 )
 
@@ -18,8 +18,8 @@ import (
 // @Id      getPublicImage
 // @Param   imageID path string true "image ID"
 // @Success 200
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /images/{imageID} [get]
 func (h *Handler) GetPublicImage(ctx *gin.Context) {
 	imageID, err := h.ParseStringParam(ctx, "imageID")

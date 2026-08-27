@@ -7,8 +7,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
@@ -32,7 +32,7 @@ func (s *service) NotifyForTaskResult(
 
 	err = s.loadDefaultNotificationSourceSettings(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	currEvent := gofn.If(data.ActionSucceeded, "success", "failure")
@@ -99,7 +99,7 @@ func (s *service) NotifyForTaskResult(
 
 	err = gofn.ExecTasks(ctx, 0, execFuncs...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -134,7 +134,7 @@ func (s *service) loadDefaultNotificationSourceSettings(
 		bunex.SelectWhere("setting.is_default IS TRUE"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if needLoadEmail {
@@ -188,13 +188,13 @@ func (s *service) notifyForTaskResultViaEmail(
 	viaEmail := data.Notification.ViaEmail
 	emailSetting := data.RefObjects.RefSettings[viaEmail.Sender.ID]
 	if emailSetting == nil {
-		return apperrors.NewMissing("Sender email account")
+		return hperrors.NewMissing("Sender email account")
 	}
 
 	userMap, err := s.userService.LoadNotificationUsers(ctx, db, data.Scope.Project,
 		viaEmail.ToProjectMembers, viaEmail.ToProjectOwners, viaEmail.ToAllAdmins)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	userEmails := make([]string, 0, len(userMap))
@@ -215,7 +215,7 @@ func (s *service) notifyForTaskResultViaEmail(
 
 	err = s.emailSendMsg(ctx, db, emailSetting, userEmails, subject, data.TemplateName, data.TemplateData)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

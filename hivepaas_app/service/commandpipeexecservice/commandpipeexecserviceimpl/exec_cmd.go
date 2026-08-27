@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -21,7 +21,7 @@ func (s *service) calcCommand(
 	if command == nil || (command.Command == "" && !command.Script.IsValid()) {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(
 			"Execution command/script is empty, aborted", tasklog.TsNow))
-		return nil, apperrors.Wrap(apperrors.ErrInternal).WithMsgLog("command/script is empty")
+		return nil, hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("command/script is empty")
 	}
 
 	if command.Script.IsValid() {
@@ -29,7 +29,7 @@ func (s *service) calcCommand(
 		if script == "" && command.Script.ID != "" {
 			scriptSetting := data.RefObjects.RefSettings[command.Script.ID]
 			if scriptSetting == nil {
-				return nil, apperrors.NewNotFound("Script object")
+				return nil, hperrors.NewNotFound("Script object")
 			}
 			script = scriptSetting.MustAsScript().Data
 		}
@@ -55,7 +55,7 @@ func (s *service) calcCommand(
 	} else {
 		cmd, err = executil.CmdSplit(command.Command)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	return cmd, nil

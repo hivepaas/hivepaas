@@ -9,8 +9,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
@@ -31,7 +31,7 @@ func (s *service) sendNotification(
 	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,
 		data.Scope, notifConfig.BaseEventNotification, data.Task.IsDone(), data.RefObjects)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if notification == nil {
 		return nil
@@ -57,7 +57,7 @@ func (s *service) sendNotification(
 
 	resp, err := s.notificationService.NotifyForTaskResult(ctx, db, req)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if resp.HasSend() {
 		data.LastNotifSendTs = resp.SendTs

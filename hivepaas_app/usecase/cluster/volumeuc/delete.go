@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -26,15 +26,15 @@ func (uc *UC) DeleteVolume(
 			if data.Setting.ObjectID == req.Scope.ScopeObjectID() {
 				volEnt := data.Setting.MustAsClusterVolume()
 				_, err := uc.dockerManager.VolumeRemove(ctx, volEnt.RefID, true)
-				if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-					return apperrors.Wrap(err)
+				if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+					return hperrors.Wrap(err)
 				}
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &volumedto.DeleteVolumeResp{}, nil

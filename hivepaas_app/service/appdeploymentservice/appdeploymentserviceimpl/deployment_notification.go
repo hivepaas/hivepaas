@@ -6,9 +6,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 )
@@ -28,7 +28,7 @@ func (s *service) notifyForDeployment(
 	// Reload app to verify it hasn't been soft-deleted or removed during deployment
 	err = s.reloadApp(ctx, db, true, true, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	notifConfig := data.Deployment.Settings.Notification
@@ -39,7 +39,7 @@ func (s *service) notifyForDeployment(
 	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,
 		data.App.GetObjectScope(), notifConfig, data.Deployment.IsDone(), data.RefObjects)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if notification == nil {
 		return nil
@@ -55,7 +55,7 @@ func (s *service) notifyForDeployment(
 		TemplateData:    data.NotifMsgData,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

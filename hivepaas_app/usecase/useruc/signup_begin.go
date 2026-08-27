@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/totp"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
@@ -18,18 +18,18 @@ func (uc *UC) BeginUserSignup(
 ) (*userdto.BeginUserSignupResp, error) {
 	inviteToken, err := uc.userService.ParseUserInviteToken(req.InviteToken)
 	if err != nil {
-		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	user, err := uc.userRepo.GetByID(ctx, uc.db, inviteToken.UserID,
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if user.Status != base.UserStatusPending {
-		return nil, apperrors.Wrap(apperrors.ErrUserStatusNotAllowAction).
+		return nil, hperrors.Wrap(hperrors.ErrUserStatusNotAllowAction).
 			WithMsgLog("user '%s' is not required to signup", user.Email)
 	}
 
@@ -47,7 +47,7 @@ func (uc *UC) BeginUserSignup(
 	if user.SecurityOption == base.UserSecurityPassword2FA {
 		secret, qrCode, err := totp.GenerateSecretAndQRCode(qrCodeImageSize)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp.MFATotpSecret = secret
 		resp.QRCode = &userdto.MFATotpQRCodeResp{

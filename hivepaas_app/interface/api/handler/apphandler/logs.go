@@ -19,8 +19,8 @@ import (
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appdto.GetAppLogsInfoResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/logs/info [get]
 func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
@@ -62,8 +62,8 @@ func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
 // @Param   duration query int false "`duration=` logs within the period"
 // @Param   tail query int false "`tail=1000` to get last 1000 lines of logs"
 // @Success 200 {object} appdto.GetAppLogsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/logs [get]
 func (h *Handler) GetAppLogs(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)

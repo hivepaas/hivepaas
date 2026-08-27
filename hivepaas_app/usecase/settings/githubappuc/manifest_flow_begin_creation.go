@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"html/template"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
 )
 
@@ -32,12 +32,12 @@ func (uc *UC) BeginGithubAppManifestFlowCreation(
 ) (*githubappdto.BeginGithubAppManifestFlowCreationResp, error) {
 	manifestCache, err := uc.cacheAppManifestRepo.Get(ctx, req.SettingID)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	manifestJSON, err := json.Marshal(manifestCache.Manifest)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	githubApp := manifestCache.GithubApp.MustAsGithubApp()
@@ -59,7 +59,7 @@ func (uc *UC) BeginGithubAppManifestFlowCreation(
 	tmpl := template.Must(template.New("redirect").Parse(redirectPage))
 	err = tmpl.Execute(buf, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &githubappdto.BeginGithubAppManifestFlowCreationResp{

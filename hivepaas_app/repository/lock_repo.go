@@ -7,9 +7,9 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -46,10 +46,10 @@ func (repo *lockRepo) GetByID(ctx context.Context, db database.IDB, id string,
 
 	err := query.Scan(ctx)
 	if lock == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("Lock").WithCause(err)
+		return nil, hperrors.NewNotFound("Lock").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return lock, nil
 }
@@ -67,7 +67,7 @@ func (repo *lockRepo) List(ctx context.Context, db database.IDB, paging *basedto
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -90,7 +90,7 @@ func (repo *lockRepo) Insert(ctx context.Context, db database.IDB, lock *entity.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -111,7 +111,7 @@ func (repo *lockRepo) UpsertMulti(ctx context.Context, db database.IDB, locks []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -127,7 +127,7 @@ func (repo *lockRepo) DeleteByIDs(ctx context.Context, db database.IDB, ids []st
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

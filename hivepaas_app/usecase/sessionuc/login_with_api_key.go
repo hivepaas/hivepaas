@@ -3,8 +3,8 @@ package sessionuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
 
@@ -17,12 +17,12 @@ func (uc *UC) LoginWithAPIKey(
 		return nil, uc.wrapSensitiveError(err)
 	}
 	if !apiKeySetting.IsActive() {
-		return nil, uc.wrapSensitiveError(apperrors.ErrAPIKeyInvalid)
+		return nil, uc.wrapSensitiveError(hperrors.ErrAPIKeyInvalid)
 	}
 
 	apiKey := apiKeySetting.MustAsAPIKey()
 	if apiKey == nil {
-		return nil, uc.wrapSensitiveError(apperrors.ErrAPIKeyInvalid)
+		return nil, uc.wrapSensitiveError(hperrors.ErrAPIKeyInvalid)
 	}
 	if err = apiKey.SecretKey.VerifyHash(req.SecretKey); err != nil {
 		return nil, uc.wrapSensitiveError(err)
@@ -31,7 +31,7 @@ func (uc *UC) LoginWithAPIKey(
 
 	dbUser, err := uc.userService.LoadUser(ctx, uc.db, actingUserID, true)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Create a new session as login succeeds
@@ -41,7 +41,7 @@ func (uc *UC) LoginWithAPIKey(
 		AccessAction: apiKey.AccessAction,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &sessiondto.LoginWithAPIKeyResp{

@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc/appdeploymentdto"
 )
 
@@ -22,8 +22,8 @@ import (
 // @Param   deploymentID path string true "deployment ID"
 // @Param   body body appdeploymentdto.CancelDeploymentReq true "request data"
 // @Success 200 {object} appdeploymentdto.CancelDeploymentResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}/cancel [post]
 func (h *Handler) CancelAppDeployment(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, itemID, err := h.GetAuthForItem(ctx, base.ActionTypeWrite, "deploymentID")

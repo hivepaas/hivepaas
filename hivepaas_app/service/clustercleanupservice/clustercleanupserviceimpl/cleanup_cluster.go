@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (s *service) cleanupCluster(
@@ -37,7 +37,7 @@ func (s *service) cleanupCluster(
 		err = errors.Join(err, e)
 	}
 
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }
 
 func (s *service) cleanupContainersAndServices(
@@ -68,7 +68,7 @@ func (s *service) cleanupContainersAndServices(
 		err = errors.Join(err, e)
 	}
 
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }
 
 func (s *service) cleanupImages(
@@ -89,7 +89,7 @@ func (s *service) cleanupImages(
 		}
 	}
 
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }
 
 func (s *service) cleanupVolumes(
@@ -108,7 +108,7 @@ func (s *service) cleanupVolumes(
 		}
 	}
 
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }
 
 func (s *service) cleanupNetworks(
@@ -128,5 +128,5 @@ func (s *service) cleanupNetworks(
 		}
 	}
 
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }

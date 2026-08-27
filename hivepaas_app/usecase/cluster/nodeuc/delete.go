@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -30,15 +30,15 @@ func (uc *UC) DeleteNode(
 					options = append(options, docker.NodeRemoveForce(true))
 				}
 				_, err := uc.dockerManager.NodeRemove(ctx, data.Setting.MustAsClusterNode().RefID, options...)
-				if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-					return apperrors.Wrap(err)
+				if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+					return hperrors.Wrap(err)
 				}
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &nodedto.DeleteNodeResp{}, nil

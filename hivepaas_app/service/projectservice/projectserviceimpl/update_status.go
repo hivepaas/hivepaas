@@ -3,9 +3,9 @@ package projectserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -42,12 +42,12 @@ func (s *service) SetProjectEnvStatus(
 		err := s.ExecuteEnvInTx(ctx, projectEnv, true, func(db database.Tx) error {
 			err := s.appService.SetAppStatus(ctx, db, app, targetAppStatus, recursive)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -58,7 +58,7 @@ func (s *service) SetProjectEnvStatus(
 	err := s.projectEnvRepo.Update(ctx, db, projectEnv,
 		bunex.UpdateColumns("status", "updated_at", "update_ver"))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

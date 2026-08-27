@@ -6,9 +6,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
@@ -49,7 +49,7 @@ func (uc *UC) processWebhookEventPRComment(
 ) (err error) {
 	parsedURL, err := vcsurl.Parse(prCommentEvent.RepoURL)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	isHivepaasCmd, success, rawCmd, _ := uc.parsePRCommentCommand(prCommentEvent)
@@ -75,7 +75,7 @@ func (uc *UC) processWebhookEventPRComment(
 		bunex.SelectWhereIf(prCommentEvent.previewCmd == previewCmdCancel, "app.parent_id IS NOT NULL"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	var firstApp *entity.App
@@ -206,7 +206,7 @@ func (uc *UC) parsePRCommentCommand(
 			}
 			boolVal, parseErr := strconv.ParseBool(v)
 			if parseErr != nil {
-				return true, false, rawCmd, apperrors.Wrap(parseErr)
+				return true, false, rawCmd, hperrors.Wrap(parseErr)
 			}
 			commentEvent.previewDeployNoStart = boolVal
 		case (k == previewCmdDeployArgNoWait || k == "no-wait") && commentEvent.previewCmd == previewCmdDeploy:
@@ -216,7 +216,7 @@ func (uc *UC) parsePRCommentCommand(
 			}
 			boolVal, parseErr := strconv.ParseBool(v)
 			if parseErr != nil {
-				return true, false, rawCmd, apperrors.Wrap(parseErr)
+				return true, false, rawCmd, hperrors.Wrap(parseErr)
 			}
 			commentEvent.previewDeployNoWait = boolVal
 		case (k == previewCmdDeployArgCloneDb || k == "clone-db") && commentEvent.previewCmd == previewCmdDeploy:
@@ -226,7 +226,7 @@ func (uc *UC) parsePRCommentCommand(
 			}
 			boolVal, parseErr := strconv.ParseBool(v)
 			if parseErr != nil {
-				return true, false, rawCmd, apperrors.Wrap(parseErr)
+				return true, false, rawCmd, hperrors.Wrap(parseErr)
 			}
 			commentEvent.previewDeployCloneDB = boolVal
 		case (k == previewCmdDeployArgNoCloneDb || k == "no-clone-db") && commentEvent.previewCmd == previewCmdDeploy:
@@ -236,7 +236,7 @@ func (uc *UC) parsePRCommentCommand(
 			}
 			boolVal, parseErr := strconv.ParseBool(v)
 			if parseErr != nil {
-				return true, false, rawCmd, apperrors.Wrap(parseErr)
+				return true, false, rawCmd, hperrors.Wrap(parseErr)
 			}
 			commentEvent.previewDeployNoCloneDB = boolVal
 		case k == previewCmdDeployArgSubdomain && commentEvent.previewCmd == previewCmdDeploy:

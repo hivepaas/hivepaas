@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
@@ -20,13 +20,13 @@ func CreateTempDir(baseDir, pattern string, perm os.FileMode) (dir string, err e
 
 	err = os.MkdirAll(dir, perm)
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 
 	if pattern != "" {
 		dir, err = os.MkdirTemp(dir, pattern)
 		if err != nil {
-			return "", apperrors.Wrap(err)
+			return "", hperrors.Wrap(err)
 		}
 	}
 
@@ -41,13 +41,13 @@ func CreateTempDirInAppPath(baseDir, pattern string, perm os.FileMode) (dir stri
 
 	err = os.MkdirAll(dir, perm)
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 
 	if pattern != "" {
 		dir, err = os.MkdirTemp(dir, pattern)
 		if err != nil {
-			return "", apperrors.Wrap(err)
+			return "", hperrors.Wrap(err)
 		}
 	}
 

@@ -7,10 +7,10 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 )
@@ -24,7 +24,7 @@ const (
 func (s *service) GetHpAppSwarmService(ctx context.Context) (*swarm.Service, error) {
 	service, err := s.dockerManager.ServiceGetByName(ctx, base.HivepaasAppServiceName, false)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return service, nil
 }
@@ -32,13 +32,13 @@ func (s *service) GetHpAppSwarmService(ctx context.Context) (*swarm.Service, err
 func (s *service) RestartHpAppSwarmService(ctx context.Context) error {
 	service, err := s.GetHpAppSwarmService(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	service.Spec.TaskTemplate.ForceUpdate++
 	_, err = s.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -46,12 +46,12 @@ func (s *service) RestartHpAppSwarmService(ctx context.Context) error {
 func (s *service) GetHpAppTasks(ctx context.Context) ([]swarm.Task, error) {
 	service, err := s.GetHpAppSwarmService(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp, err := s.dockerManager.ServiceTaskList(ctx, service.ID, nil)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp.Items, nil
 }

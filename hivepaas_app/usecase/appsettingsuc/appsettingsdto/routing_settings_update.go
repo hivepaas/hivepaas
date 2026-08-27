@@ -8,10 +8,10 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/services/traefik"
@@ -100,35 +100,35 @@ func (req *DomainReq) modifyRequest() error {
 	req.Domain = strings.ToLower(strings.TrimSpace(req.Domain))
 	if req.Protocol == base.NetworkProtocolHTTP {
 		if err := req.LBConfig.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if err := req.BasicAuth.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if err := req.CircuitBreakerConfig.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if err := req.ClientConfig.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if err := req.CompressionConfig.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if err := req.HeaderConfig.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if err := req.PathRewriteConfig.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if err := req.RateLimitConfig.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if err := req.WebsocketConfig.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		for _, pathReq := range req.Paths {
 			if err := pathReq.modifyRequest(); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 	}
@@ -544,28 +544,28 @@ func (r *HTTPPathConfigReq) ToEntity() *entity.HTTPPathConfig {
 //nolint:unparam
 func (r *HTTPPathConfigReq) modifyRequest() error {
 	if err := r.BasicAuth.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err := r.CircuitBreakerConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err := r.ClientConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err := r.CompressionConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err := r.HeaderConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err := r.PathRewriteConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err := r.RateLimitConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err := r.WebsocketConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -601,7 +601,7 @@ func (req *UpdateAppRoutingSettingsReq) ModifyRequest() error {
 			activePort = domainReq.ContainerPort
 		}
 		if err := domainReq.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	if req.Port == 0 {
@@ -611,7 +611,7 @@ func (req *UpdateAppRoutingSettingsReq) ModifyRequest() error {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateAppRoutingSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateAppRoutingSettingsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
@@ -621,7 +621,7 @@ func (req *UpdateAppRoutingSettingsReq) Validate() apperrors.ValidationErrors {
 		func(r *DomainReq, index int, elemValidator vld.ItemValidator) {
 			elemValidator.Validate(r.validate(fmt.Sprintf("domains[%d]", index))...)
 		}))
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type UpdateAppRoutingSettingsResp struct {

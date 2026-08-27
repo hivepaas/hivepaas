@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvsettingsuc/projectenvsettingsdto"
 )
 
@@ -19,8 +19,8 @@ import (
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project Env"
 // @Success 200 {object} projectenvsettingsdto.GetProjectEnvEnvVarsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/env-vars [get]
 func (h *Handler) GetEnvVars(ctx *gin.Context) {
 	auth, projectID, projectEnvID, err := h.GetAuth(ctx, base.ActionTypeRead)
@@ -56,8 +56,8 @@ func (h *Handler) GetEnvVars(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   body body projectenvsettingsdto.UpdateProjectEnvEnvVarsReq true "request data"
 // @Success 200 {object} projectenvsettingsdto.UpdateProjectEnvEnvVarsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/env-vars [put]
 func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 	auth, projectID, projectEnvID, err := h.GetAuth(ctx, base.ActionTypeWrite)
@@ -93,8 +93,8 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   body body projectenvsettingsdto.ComputeProjectEnvEnvVarsReq true "request data"
 // @Success 200 {object} projectenvsettingsdto.ComputeProjectEnvEnvVarsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/env-vars/compute [post]
 func (h *Handler) BuildEnvVars(ctx *gin.Context) {
 	auth, projectID, projectEnvID, err := h.GetAuth(ctx, base.ActionTypeWrite)

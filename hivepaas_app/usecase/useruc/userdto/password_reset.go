@@ -3,8 +3,8 @@ package userdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ResetPasswordReq struct {
@@ -17,11 +17,11 @@ func NewResetPasswordReq() *ResetPasswordReq {
 	return &ResetPasswordReq{}
 }
 
-func (req *ResetPasswordReq) Validate() apperrors.ValidationErrors {
+func (req *ResetPasswordReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	validators = append(validators, basedto.ValidateStr(&req.Password, true, nameMinLen, nameMaxLen, "password")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ResetPasswordResp struct {

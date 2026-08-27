@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
@@ -34,7 +34,7 @@ func ExecuteCommand(
 
 	resp, err := uc.ExecuteCommand(ctx, dtoReq)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if resp == nil {
 		return &agentproto.ExecCommandResp{}, nil

@@ -7,10 +7,10 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/apphelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
@@ -25,7 +25,7 @@ func (s *service) cloneSwarmService(
 	destApp, srcApp := data.DestApp, data.SrcApp
 	srcSvcRes, err := s.dockerManager.ServiceInspect(ctx, srcApp.ServiceID)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	srcSvc := &srcSvcRes.Service
 	data.SrcService = srcSvc
@@ -87,17 +87,17 @@ func (s *service) cloneSwarmService(
 	// Update network attachments
 	globalNetID, err := s.networkService.GetGlobalRoutingNetworkID(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	_, oldLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, db, srcApp.Project,
 		srcApp.ProjectEnv.Name)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	_, newLocalNet, err := s.networkService.GetOrCreateProjectNetwork(ctx, db, destApp.Project,
 		data.DestApp.ProjectEnv.Name)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	var newNetAttachments []swarm.NetworkAttachmentConfig
 	localNetAdded := false
@@ -134,7 +134,7 @@ func (s *service) cloneSwarmService(
 
 	err = cloneFunc(destApp, srcApp, destSvc, srcSvc)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Re-update labels to make them correct
@@ -143,7 +143,7 @@ func (s *service) cloneSwarmService(
 	// Create a service in docker
 	err = s.createSwarmService(ctx, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -188,10 +188,10 @@ func (s *service) createSwarmService(
 	// Create a service in docker for the app
 	res, err := s.dockerManager.ServiceCreate(ctx, &createSpec)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if res.ID == "" { // should never happen
-		return apperrors.Wrap(apperrors.ErrInfraInternal).
+		return hperrors.Wrap(hperrors.ErrInfraInternal).
 			WithNTParam("Error", "empty service ID returned")
 	}
 	data.DestApp.ServiceID = res.ID
@@ -205,7 +205,7 @@ func (s *service) applyFinalContainerSettings(
 ) (err error) {
 	inspect, err := s.dockerManager.ServiceInspect(ctx, data.DestApp.ServiceID)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	destService := &inspect.Service
 	updatingSpec := &destService.Spec
@@ -217,7 +217,7 @@ func (s *service) applyFinalContainerSettings(
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, destService.ID, &destService.Version, updatingSpec)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

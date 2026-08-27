@@ -6,7 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc/nodeagentdto"
@@ -25,7 +25,7 @@ type grpcNodeServiceClient struct {
 func NewNodeServiceClient(agentAddr string) (NodeServiceClient, error) {
 	conn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return &grpcNodeServiceClient{
 		conn:        conn,
@@ -36,7 +36,7 @@ func NewNodeServiceClient(agentAddr string) (NodeServiceClient, error) {
 func (c *grpcNodeServiceClient) Close() error {
 	if c.conn != nil {
 		if err := c.conn.Close(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -56,7 +56,7 @@ func (c *grpcNodeServiceClient) ExecuteCommand(
 
 	resp, err := c.protoClient.ExecuteCommand(authCtx, protoReq)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if req.Stdout != nil && len(resp.GetStdout()) > 0 {

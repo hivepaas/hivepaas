@@ -5,9 +5,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -21,7 +21,7 @@ func (s *service) InitDefaults(
 		bunex.SelectColumns("id", "type", "status"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	timeNow := timeutil.NowUTC()
@@ -32,7 +32,7 @@ func (s *service) InitDefaults(
 	}) {
 		err = s.initDefaultAppPlacementSettings(ctx, db, timeNow)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -42,7 +42,7 @@ func (s *service) InitDefaults(
 	}) {
 		err = s.initDefaultImageBuildSettings(ctx, db, timeNow)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -52,7 +52,7 @@ func (s *service) InitDefaults(
 	}) {
 		err = s.initDefaultNotificationSettings(ctx, db, timeNow)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -62,7 +62,7 @@ func (s *service) InitDefaults(
 	}) {
 		err = s.initDefaultDomainSettings(ctx, db, timeNow)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -72,7 +72,7 @@ func (s *service) InitDefaults(
 	}) {
 		err = s.initDefaultStorageSettings(ctx, db, timeNow)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -82,7 +82,7 @@ func (s *service) InitDefaults(
 	}) {
 		err = s.initDefaultSystemCleanup(ctx, db, timeNow)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -92,7 +92,7 @@ func (s *service) InitDefaults(
 	}) {
 		err = s.initDefaultSystemBackup(ctx, db, timeNow)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -102,14 +102,14 @@ func (s *service) InitDefaults(
 	}) {
 		err = s.initDefaultSSLRenewal(ctx, db, timeNow)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
 	// Default self-signed SSL cert
 	err = s.initDefaultSSLSelfSigned(ctx, db, timeNow)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

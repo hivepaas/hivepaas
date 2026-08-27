@@ -3,8 +3,8 @@ package acmednsprovideruc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/acmednsprovideruc/acmednsproviderdto"
 	"github.com/hivepaas/hivepaas/services/ssl/acme"
 )
@@ -16,7 +16,7 @@ func (uc *UC) TestProviderAccess(
 ) (*acmednsproviderdto.TestProviderAccessResp, error) {
 	err := acme.DNS01ProviderTestAccess(ctx, req.Kind, req.ToEntity(), req.TestDomain)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return &acmednsproviderdto.TestProviderAccessResp{}, nil
 }

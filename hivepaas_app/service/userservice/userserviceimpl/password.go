@@ -11,8 +11,8 @@ import (
 	"github.com/tiendc/gofn"
 	"golang.org/x/crypto/argon2"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -88,7 +88,7 @@ func (s *service) createPasswordHash(password string) (string, error) {
 func (s *service) VerifyPassword(user *entity.User, password string) error {
 	// We don't allow empty password
 	if password == "" || len(user.Password) == 0 {
-		return apperrors.Wrap(apperrors.ErrPasswordMismatched)
+		return hperrors.Wrap(hperrors.ErrPasswordMismatched)
 	}
 
 	b64Salt, b64Pass, _ := strings.Cut(user.Password, " ")
@@ -98,7 +98,7 @@ func (s *service) VerifyPassword(user *entity.User, password string) error {
 	passHash := argon2.IDKey([]byte(password), saltBytes, hashingIteration, hashingMemory,
 		hashingThreads, hashingKeyLength)
 	if !bytes.Equal(passHash, passBytes) {
-		return apperrors.Wrap(apperrors.ErrPasswordMismatched)
+		return hperrors.Wrap(hperrors.ErrPasswordMismatched)
 	}
 	return nil
 }
@@ -109,7 +109,7 @@ func (s *service) VerifyPassword(user *entity.User, password string) error {
 func (s *service) CheckPasswordStrength(password string) error {
 	chars := []rune(password)
 	if len(chars) < passwordMinLen || len(chars) > passwordMaxLen {
-		return apperrors.Wrap(apperrors.ErrPasswordNotMeetRequirements).
+		return hperrors.Wrap(hperrors.ErrPasswordNotMeetRequirements).
 			WithParams(errNotMeetRequirementParams).
 			WithMsgLog("incorrect length: %d", len(chars))
 	}
@@ -131,7 +131,7 @@ func (s *service) CheckPasswordStrength(password string) error {
 	}
 	if lowers < passwordMustHaveLowercases || uppers < passwordMustHaveUppercases ||
 		digits < passwordMustHaveDigits || specials < passwordMustHaveSymbols {
-		return apperrors.Wrap(apperrors.ErrPasswordNotMeetRequirements).
+		return hperrors.Wrap(hperrors.ErrPasswordNotMeetRequirements).
 			WithParams(errNotMeetRequirementParams).
 			WithMsgLog("lowers %d, uppers %d, digits %d, specials %d", lowers, uppers, digits, specials)
 	}

@@ -15,7 +15,7 @@ import (
 	gogithub "github.com/google/go-github/v85/github"
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 )
 
@@ -33,7 +33,7 @@ func retryExecute(ctx context.Context, op func() error) error {
 
 	for attempt := 1; attempt <= defaultMaxRetryAttempts; attempt++ {
 		if ctx.Err() != nil {
-			return apperrors.Wrap(ctx.Err())
+			return hperrors.Wrap(ctx.Err())
 		}
 
 		err := op()
@@ -65,7 +65,7 @@ func retryExecute(ctx context.Context, op func() error) error {
 		select {
 		case <-ctx.Done():
 			timer.Stop()
-			return apperrors.Wrap(ctx.Err())
+			return hperrors.Wrap(ctx.Err())
 		case <-timer.C:
 		}
 	}

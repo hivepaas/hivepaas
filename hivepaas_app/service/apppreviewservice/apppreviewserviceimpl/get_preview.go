@@ -3,9 +3,9 @@ package apppreviewserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -28,7 +28,7 @@ func (s *service) GetPreview(
 
 	apps, _, err := s.appRepo.List(ctx, db, "", nil, listOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	for _, app := range apps {
@@ -36,7 +36,7 @@ func (s *service) GetPreview(
 			return app, nil
 		}
 	}
-	return nil, apperrors.NewNotFound("App")
+	return nil, hperrors.NewNotFound("App")
 }
 
 func (s *service) GetPreviews(
@@ -52,7 +52,7 @@ func (s *service) GetPreviews(
 
 	apps, _, err := s.appRepo.List(ctx, db, "", nil, listOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return apps, nil
 }

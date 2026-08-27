@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -23,7 +23,7 @@ func (s *service) LockAllPendingTasks(
 	if maxWait > 0 {
 		_, err := db.Exec(fmt.Sprintf("SET LOCAL lock_timeout = '%vs';", int64(maxWait.Seconds())))
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -41,7 +41,7 @@ func (s *service) LockAllPendingTasks(
 			return tasks, nil
 		}
 		if maxWait > 0 || !transaction.IsErrorDeadLock(err) {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 }

@@ -3,9 +3,9 @@ package gitcredentialdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -24,10 +24,10 @@ func NewListGitCredentialReq() *ListGitCredentialReq {
 	}
 }
 
-func (req *ListGitCredentialReq) Validate() apperrors.ValidationErrors {
+func (req *ListGitCredentialReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.ListSettingReq.Validate()...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListGitCredentialResp struct {
@@ -47,7 +47,7 @@ func TransformGitCredentials(
 	for _, setting := range settings {
 		item, err := TransformGitCredential(setting, refObjects)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}
@@ -61,7 +61,7 @@ func TransformGitCredential(
 	resp = &GitCredentialResp{}
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }

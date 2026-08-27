@@ -8,11 +8,11 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/apphelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -41,7 +41,7 @@ func (uc *UC) CreateApp(
 
 	defer func() {
 		if rec := recover(); rec != nil {
-			err = errors.Join(err, apperrors.ErrPanic)
+			err = errors.Join(err, hperrors.ErrPanic)
 		}
 		if err != nil && createdApp != nil && createdApp.ServiceID != "" {
 			_ = uc.clusterService.ServiceRemove(ctx, createdApp.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
@@ -52,13 +52,13 @@ func (uc *UC) CreateApp(
 		appData := &createAppData{}
 		err := uc.loadAppData(ctx, db, req, appData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
 		err = uc.preparePersistingApp(ctx, db, req, appData, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		createdApp = persistingData.UpsertingApps[0]
@@ -67,10 +67,10 @@ func (uc *UC) CreateApp(
 		// Create a service in docker for the app
 		res, err := uc.dockerManager.ServiceCreate(ctx, appData.ServiceSpec)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if res.ID == "" { // should never happen
-			return apperrors.Wrap(apperrors.ErrInfraInternal).
+			return hperrors.Wrap(hperrors.ErrInfraInternal).
 				WithNTParam("Error", "empty service ID returned")
 		}
 		createdApp.ServiceID = res.ID
@@ -78,7 +78,7 @@ func (uc *UC) CreateApp(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return resp, nil
@@ -106,17 +106,17 @@ func (uc *UC) loadAppData(
 		),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if project.Status != base.ProjectStatusActive {
-		return apperrors.Wrap(apperrors.ErrProjectInactive).WithNTParam("Name", project.Name)
+		return hperrors.Wrap(hperrors.ErrProjectInactive).WithNTParam("Name", project.Name)
 	}
 	if len(project.ProjectEnvs) == 0 {
-		return apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", req.ProjectEnvID)
+		return hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", req.ProjectEnvID)
 	}
 	projectEnv := project.ProjectEnvs[0]
 	if projectEnv.Status != base.ProjectStatusActive {
-		return apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithNTParam("Project", project.Name).
+		return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithNTParam("Project", project.Name).
 			WithNTParam("Env", projectEnv.Name)
 	}
 
@@ -127,18 +127,18 @@ func (uc *UC) loadAppData(
 
 	// App keys must be unique globally
 	conflictApp, err := uc.appRepo.GetByGlobalKey(ctx, db, "", data.AppGlobalKey, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if conflictApp != nil {
-		return apperrors.NewAlreadyExist("App").
+		return hperrors.NewAlreadyExist("App").
 			WithMsgLog("app unique key '%s' already exists", data.AppGlobalKey)
 	}
 
 	// Create local network for the app to attach
 	_, _, err = uc.networkService.GetOrCreateProjectNetwork(ctx, db, project, projectEnv.Key)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -172,7 +172,7 @@ func (uc *UC) preparePersistingApp(
 
 	err := uc.preparePersistingAppService(ctx, db, app, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -270,7 +270,7 @@ func (uc *UC) preparePersistingAppService(
 		SkipSavingToDocker: true,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	data.ServiceSpec = &service.Spec
@@ -321,7 +321,7 @@ func (uc *UC) persistData(
 ) error {
 	err := uc.appService.PersistAppData(ctx, db, &persistingData.PersistingAppData)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

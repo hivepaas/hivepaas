@@ -3,9 +3,9 @@ package gitapi
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/git/gitea"
 	"github.com/hivepaas/hivepaas/services/git/github"
 	"github.com/hivepaas/hivepaas/services/git/gitlab"
@@ -27,10 +27,10 @@ func TestAccessTokenConn(
 	case base.AccessTokenKindBitbucket, base.AccessTokenKindGogs:
 		fallthrough
 	default:
-		err = apperrors.Wrap(apperrors.ErrTokenTypeUnsupported).WithParam("Type", kind)
+		err = hperrors.Wrap(hperrors.ErrTokenTypeUnsupported).WithParam("Type", kind)
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -42,11 +42,11 @@ func testGithubTokenConn(
 ) error {
 	client, err := github.NewFromToken(token)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	_, _, err = client.ListUserRepos(ctx, &basedto.Paging{Limit: 1})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -58,11 +58,11 @@ func testGitlabTokenConn(
 ) error {
 	client, err := gitlab.NewFromToken(token, baseURL)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	_, _, err = client.ListAllProjects(ctx, &basedto.Paging{Limit: 1})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -74,11 +74,11 @@ func testGiteaTokenConn(
 ) error {
 	client, err := gitea.NewFromToken(token, baseURL)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	_, _, err = client.ListAllRepos(ctx, &basedto.Paging{Limit: 1})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

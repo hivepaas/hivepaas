@@ -3,9 +3,9 @@ package appuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -21,7 +21,7 @@ func (uc *UC) UpdateAppStatus(
 		appData := &updateAppData{}
 		err := uc.loadAppDataForUpdateStatus(ctx, db, req, appData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if !appData.HasChanges {
 			return nil
@@ -29,12 +29,12 @@ func (uc *UC) UpdateAppStatus(
 
 		err = uc.appService.SetAppStatus(ctx, db, appData.App, req.Status, true)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appdto.UpdateAppStatusResp{}, nil
@@ -54,10 +54,10 @@ func (uc *UC) loadAppDataForUpdateStatus(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if app.UpdateVer != req.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 	data.App = app
 	data.HasChanges = app.Status != req.Status

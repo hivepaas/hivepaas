@@ -5,8 +5,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 )
@@ -29,7 +29,7 @@ func (s *service) applyRoutingSettings(
 		}
 		err = s.sslService.WriteCertFiles(data.ForceRecreateSslCertFiles, gofn.MapValues(mapSslSettings)...)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -40,13 +40,13 @@ func (s *service) applyRoutingSettings(
 		RefObjects:      data.RefObjects,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if !data.SkipApplyingNetworks {
 		err = s.networkService.UpdateAppGlobalRoutingNetwork(ctx, app, appSvc, data.RoutingSettings)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -54,7 +54,7 @@ func (s *service) applyRoutingSettings(
 		// NOTE: don't use ServiceUpdateFunc in this context
 		_, err = s.dockerManager.ServiceUpdate(ctx, appSvc.ID, &appSvc.Version, &appSvc.Spec)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

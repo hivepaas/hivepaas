@@ -3,8 +3,8 @@ package sessiondto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -21,13 +21,13 @@ func NewLoginWithPasscodeReq() *LoginWithPasscodeReq {
 	return &LoginWithPasscodeReq{}
 }
 
-func (req *LoginWithPasscodeReq) Validate() apperrors.ValidationErrors {
+func (req *LoginWithPasscodeReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.Passcode, true, 1,
 		maxPasscodeLen, "passcode")...)
 	validators = append(validators, basedto.ValidateStr(&req.MFAToken, true, 1,
 		maxMFATokenLen, "mfaToken")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type LoginWithPasscodeResp struct {

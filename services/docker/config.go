@@ -5,7 +5,7 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ConfigListOption func(*client.ConfigListOptions)
@@ -20,7 +20,7 @@ func (m *manager) ConfigList(
 	}
 	resp, err := m.client.ConfigList(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -38,7 +38,7 @@ func (m *manager) ConfigInspect(
 	}
 	resp, err := m.client.ConfigInspect(ctx, configID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -59,7 +59,7 @@ func (m *manager) ConfigCreate(
 	}
 	resp, err := m.client.ConfigCreate(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -77,7 +77,7 @@ func (m *manager) ConfigRemove(
 	}
 	resp, err := m.client.ConfigRemove(ctx, configID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }

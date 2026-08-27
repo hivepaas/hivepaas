@@ -6,9 +6,9 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
@@ -29,14 +29,14 @@ func (uc *UC) OpenTerminal(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if app.ServiceID == "" {
-		return nil, apperrors.NewUnavailable("App service").
+		return nil, hperrors.NewUnavailable("App service").
 			WithMsgLog("service not exist for app")
 	}
 	if featureSettings.TerminalSettings != nil && !featureSettings.TerminalSettings.Enabled {
-		return nil, apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app terminal")
+		return nil, hperrors.Wrap(hperrors.ErrFeatureDisabled).WithParam("Name", "app terminal")
 	}
 
 	execResp, err := uc.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
@@ -53,7 +53,7 @@ func (uc *UC) OpenTerminal(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appdto.OpenTerminalResp{

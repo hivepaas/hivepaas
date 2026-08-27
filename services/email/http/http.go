@@ -11,9 +11,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httpclient"
 )
 
@@ -40,7 +40,7 @@ func SendMail(
 ) (err error) {
 	password, err := conf.Password.GetPlain()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	var req *http.Request
@@ -75,12 +75,12 @@ func SendMail(
 
 			dataBytes, err := json.Marshal(bodyMap)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			req, err = http.NewRequestWithContext(ctx, string(conf.Method), conf.Endpoint, bytes.NewBuffer(dataBytes))
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		} else {
 			contentType = gofn.Coalesce(contentType, "application/x-www-form-urlencoded")
@@ -98,7 +98,7 @@ func SendMail(
 			req, err = http.NewRequestWithContext(ctx, string(conf.Method), conf.Endpoint,
 				strings.NewReader(formValues.Encode()))
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -107,7 +107,7 @@ func SendMail(
 	case base.HTTPMethodGet:
 		req, err = http.NewRequestWithContext(ctx, string(conf.Method), conf.Endpoint, nil)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		q := req.URL.Query()
@@ -129,7 +129,7 @@ func SendMail(
 		req.URL.RawQuery = q.Encode()
 
 	default:
-		return fmt.Errorf("%w: unsupported method: %s", apperrors.ErrUnsupported, conf.Method)
+		return fmt.Errorf("%w: unsupported method: %s", hperrors.ErrUnsupported, conf.Method)
 	}
 
 	// TODO: support secrets within the header values?
@@ -139,7 +139,7 @@ func SendMail(
 
 	resp, err := httpclient.DefaultClient.Do(req)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer resp.Body.Close()
 

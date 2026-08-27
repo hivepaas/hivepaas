@@ -3,7 +3,7 @@ package commandpipeexecserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -33,18 +33,18 @@ func (s *service) CommandPipeExec(
 	}
 	err = s.loadCommandPipeData(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.waitUntilAppsRunning(ctx, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	for _, pipeSetting := range req.CommandPipes {
 		err = s.commandPipeExec(ctx, db, pipeSetting, data)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -58,7 +58,7 @@ func (s *service) loadCommandPipeData(
 ) (err error) {
 	err = s.settingService.LoadRefObjects(ctx, db, &data.RefObjects, nil, true, data.CommandPipes...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

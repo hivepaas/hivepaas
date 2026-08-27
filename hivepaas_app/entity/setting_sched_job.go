@@ -6,8 +6,8 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
@@ -66,18 +66,18 @@ func (s *SchedJobSchedule) Equal(oldSched *SchedJobSchedule) bool {
 func (s *SchedJobSchedule) IsValid() error {
 	if s.CronExpr != "" {
 		if s.Interval > 0 {
-			return apperrors.NewArgumentInvalid("Schedule")
+			return hperrors.NewArgumentInvalid("Schedule")
 		}
 		_, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	}
 	if s.Interval > 0 {
 		return nil
 	}
-	return apperrors.NewArgumentInvalid("Schedule")
+	return hperrors.NewArgumentInvalid("Schedule")
 }
 
 func (s *SchedJobSchedule) GetLastSchedTime() time.Time {
@@ -105,18 +105,18 @@ func (s *SchedJobSchedule) SetLastSchedTime(lastSchedTime time.Time) bool {
 
 func (s *SchedJobSchedule) ParseCronExpr() (cron.Schedule, error) {
 	if s.CronExpr == "" {
-		return nil, apperrors.NewInactive("Cron expression")
+		return nil, hperrors.NewInactive("Cron expression")
 	}
 	sched, err := cronParser.Parse(s.CronExpr)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return sched, nil
 }
 
 func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []time.Time, err error) {
 	if count == 0 {
-		return nil, apperrors.NewArgumentInvalid("count")
+		return nil, hperrors.NewArgumentInvalid("count")
 	}
 
 	nextRunAt := s.GetLastSchedTime()
@@ -145,7 +145,7 @@ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []ti
 	if s.CronExpr != "" {
 		cronSched, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		for {
 			nextRunAt = cronSched.Next(nextRunAt)
@@ -163,12 +163,12 @@ func (s *SchedJobSchedule) CalcNextRuns(fromTime time.Time, count int) (res []ti
 		return res, nil
 	}
 
-	return nil, apperrors.NewArgumentInvalid("Schedule")
+	return nil, hperrors.NewArgumentInvalid("Schedule")
 }
 
 func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res []time.Time, err error) {
 	if toTime.IsZero() {
-		return nil, apperrors.NewArgumentInvalid("toTime")
+		return nil, hperrors.NewArgumentInvalid("toTime")
 	}
 	nextRunAt := s.GetLastSchedTime()
 
@@ -197,7 +197,7 @@ func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res 
 	if s.CronExpr != "" {
 		cronSched, err := cronParser.Parse(s.CronExpr)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		for {
 			nextRunAt = cronSched.Next(nextRunAt)
@@ -215,7 +215,7 @@ func (s *SchedJobSchedule) CalcNextRunsInRange(fromTime, toTime time.Time) (res 
 		return res, nil
 	}
 
-	return nil, apperrors.NewArgumentInvalid("Schedule")
+	return nil, hperrors.NewArgumentInvalid("Schedule")
 }
 
 type SchedJobCommandOutput struct {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -33,7 +33,7 @@ func (s *service) deployFromImage(
 	// 1. Pull image from the registry
 	err = s.imageDeployStepImagePull(ctx, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if data.IsTaskCanceled() {
@@ -46,7 +46,7 @@ func (s *service) deployFromImage(
 
 	shouldContinue, err := s.lockDockerServiceForDeployment(ctx, db, data.appDeploymentData)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if !shouldContinue {
 		data.DeploymentCanceled = true
@@ -56,19 +56,19 @@ func (s *service) deployFromImage(
 	// 2. Pre-deployment command execution
 	err = s.deployStepExecCmd(ctx, data.appDeploymentData, true)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// 3. Apply image to service
 	err = s.imageDeployStepServiceApply(ctx, db, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// 4. Post-deployment command execution
 	err = s.deployStepExecCmd(ctx, data.appDeploymentData, false)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

@@ -7,7 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func RPush[T any](
@@ -21,11 +21,11 @@ func RPush[T any](
 	}
 	data, err := marshalSlice(values)
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to marshal value")
+		return hperrors.Wrap(err).WithMsgLog("failed to marshal value")
 	}
 	_, err = cmder.RPush(ctx, key, data...).Result()
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to push values to a list")
+		return hperrors.Wrap(err).WithMsgLog("failed to push values to a list")
 	}
 	return nil
 }
@@ -41,7 +41,7 @@ func LRange[T any](
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
 		}
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return unmarshalStrSlice[T](data...)
 }
@@ -57,7 +57,7 @@ func BLPop(
 		if errors.Is(err, redis.Nil) {
 			return nil, nil
 		}
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	result := make(map[string]string, len(strSlice)/2) //nolint:mnd
 	i := 0
@@ -77,9 +77,9 @@ func BLPopOne[T any](
 	strSlice, err := cmder.BLPop(ctx, timeout, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return val, apperrors.NewNotFoundNT(key)
+			return val, hperrors.NewNotFoundNT(key)
 		}
-		return val, apperrors.Wrap(err)
+		return val, hperrors.Wrap(err)
 	}
 	return unmarshalStr[T](strSlice[1])
 }

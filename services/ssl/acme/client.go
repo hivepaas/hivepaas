@@ -15,8 +15,8 @@ import (
 	"github.com/go-acme/lego/v5/lego"
 	"github.com/go-acme/lego/v5/registration"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type Client struct {
@@ -58,7 +58,7 @@ func (u *User) GetPrivateKey() crypto.Signer {
 func NewClient(cfg *ACMEConfig) (client *Client, err error) {
 	userPrivKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to generate private key for user")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to generate private key for user")
 	}
 
 	user := &User{
@@ -70,29 +70,29 @@ func NewClient(cfg *ACMEConfig) (client *Client, err error) {
 	if cfg.CACode != "" {
 		legoCfg.CADirURL, err = lego.GetDirectoryURL(cfg.CACode)
 		if err != nil {
-			return nil, apperrors.Wrap(err).
+			return nil, hperrors.Wrap(err).
 				WithMsgLog("failed to get directory URL for CA code '%s'", cfg.CACode)
 		}
 	}
 
 	c, err := lego.NewClient(legoCfg)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to create lego client")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to create lego client")
 	}
 
 	switch {
 	case cfg.HTTP01Provider != nil:
 		err = c.Challenge.SetHTTP01Provider(cfg.HTTP01Provider)
 		if err != nil {
-			return nil, apperrors.Wrap(err).WithMsgLog("failed to set http-01 challenge")
+			return nil, hperrors.Wrap(err).WithMsgLog("failed to set http-01 challenge")
 		}
 	case cfg.DNS01Provider != nil:
 		err = c.Challenge.SetDNS01Provider(cfg.DNS01Provider)
 		if err != nil {
-			return nil, apperrors.Wrap(err).WithMsgLog("failed to set dns-01 challenge")
+			return nil, hperrors.Wrap(err).WithMsgLog("failed to set dns-01 challenge")
 		}
 	default:
-		return nil, apperrors.NewMissing("ACME challenge provider")
+		return nil, hperrors.NewMissing("ACME challenge provider")
 	}
 
 	return &Client{
@@ -122,7 +122,7 @@ func (client *Client) registerUser(ctx context.Context) (err error) {
 		})
 	}
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to register user")
+		return hperrors.Wrap(err).WithMsgLog("failed to register user")
 	}
 	client.user.Registration = reg
 
@@ -137,12 +137,12 @@ func (client *Client) ObtainCertificate(
 	// New users will need to register
 	err := client.registerUser(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	certKeyType, err := client.getKeyType(keyType)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	certificates, err := client.client.Certificate.Obtain(ctx, certificate.ObtainRequest{
@@ -151,7 +151,7 @@ func (client *Client) ObtainCertificate(
 		Bundle:  true,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to obtain certificate")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to obtain certificate")
 	}
 
 	return certificates, nil
@@ -164,17 +164,17 @@ func (client *Client) GetRenewalInfo(
 	// New users will need to register
 	err := client.registerUser(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	x509Cert, err := certcrypto.ParsePEMCertificate(cert)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to parse certificate as x509")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to parse certificate as x509")
 	}
 
 	renewalInfo, err := client.client.Certificate.GetRenewalInfo(ctx, x509Cert)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to query renewal info")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to query renewal info")
 	}
 
 	return renewalInfo, nil
@@ -187,12 +187,12 @@ func (client *Client) ObtainCertificateWithDetails(
 ) (*certificate.Resource, *certificate.RenewalInfo, error) {
 	certificates, err := client.ObtainCertificate(ctx, domains, keyType)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err).WithMsgLog("failed to obtain certificate")
+		return nil, nil, hperrors.Wrap(err).WithMsgLog("failed to obtain certificate")
 	}
 
 	renewalInfo, err := client.GetRenewalInfo(ctx, certificates.Certificate)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err).WithMsgLog("failed to query renewal info")
+		return nil, nil, hperrors.Wrap(err).WithMsgLog("failed to query renewal info")
 	}
 
 	return certificates, renewalInfo, nil
@@ -217,6 +217,6 @@ func (client *Client) getKeyType(
 	case base.SSLKeyTypeECP521:
 		fallthrough
 	default:
-		return "", apperrors.NewUnsupported(fmt.Sprintf("Key type '%v'", keyType))
+		return "", hperrors.NewUnsupported(fmt.Sprintf("Key type '%v'", keyType))
 	}
 }

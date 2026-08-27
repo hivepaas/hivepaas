@@ -8,10 +8,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
@@ -27,14 +27,14 @@ func (uc *UC) UpdateProfile(
 	req *userdto.UpdateProfileReq,
 ) (*userdto.UpdateProfileResp, error) {
 	if auth.User.IsDemoUser() {
-		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+		return nil, hperrors.Wrap(hperrors.ErrUserDemoUnauthorized)
 	}
 
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		profileData := &userProfileData{}
 		err := uc.loadUserProfileData(ctx, db, auth, req, profileData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingUserProfileData{}
@@ -43,7 +43,7 @@ func (uc *UC) UpdateProfile(
 		return uc.persistUserProfileData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &userdto.UpdateProfileResp{}, nil
@@ -71,11 +71,11 @@ func (uc *UC) loadUserProfileData(
 		bunex.SelectRelationIf(req.Photo.IsChanged(), "PhotoData"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if user.Status != base.UserStatusActive {
-		return apperrors.Wrap(apperrors.ErrActionNotAllowed).
+		return hperrors.Wrap(hperrors.ErrActionNotAllowed).
 			WithMsgLog("user '%s' not active", user.Email)
 	}
 	data.User = user
@@ -83,11 +83,11 @@ func (uc *UC) loadUserProfileData(
 	// If username changes, need to verify the uniqueness
 	if req.Username != "" && req.Username != user.Username {
 		conflictUser, err := uc.userRepo.GetByUsername(ctx, db, req.Username)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.Wrap(apperrors.ErrUsernameUnavailable).
+			return hperrors.Wrap(hperrors.ErrUsernameUnavailable).
 				WithMsgLog("user '%s' already exists", req.Username)
 		}
 	}
@@ -96,14 +96,14 @@ func (uc *UC) loadUserProfileData(
 	if req.Email != "" && req.Email != user.Email {
 		if user.Email != "" {
 			// When email of user exists, we don't allow changing
-			return apperrors.Wrap(apperrors.ErrEmailChangeUnallowed)
+			return hperrors.Wrap(hperrors.ErrEmailChangeUnallowed)
 		}
 		conflictUser, err := uc.userRepo.GetByEmail(ctx, db, req.Email)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.Wrap(apperrors.ErrEmailUnavailable).
+			return hperrors.Wrap(hperrors.ErrEmailUnavailable).
 				WithMsgLog("email '%s' already exists", req.Email)
 		}
 	}
@@ -185,19 +185,19 @@ func (uc *UC) persistUserProfileData(
 ) error {
 	err := uc.userRepo.Update(ctx, db, persistingData.UpdatingUser)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = uc.binObjectRepo.UpsertMulti(ctx, db, persistingData.UpsertingBinObjects,
 		entity.BinObjectUpsertingConflictCols, entity.BinObjectUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = uc.binObjectRepo.DeleteByIDs(ctx, db, persistingData.HardDeletingBinObjectIDs,
 		bunex.DeleteWithForceDelete())
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

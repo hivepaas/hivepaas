@@ -11,7 +11,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -31,7 +31,7 @@ func (m *manager) ServiceList(
 	}
 	resp, err := m.client.ServiceList(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -46,7 +46,7 @@ func (m *manager) ServiceListByStack(
 	})
 	resp, err := m.ServiceList(ctx, options...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -62,10 +62,10 @@ func (m *manager) ServiceGetByName(
 	}
 	resp, err := m.ServiceList(ctx, option)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(resp.Items) == 0 {
-		return nil, apperrors.Wrap(apperrors.ErrInfraNotFound).
+		return nil, hperrors.Wrap(hperrors.ErrInfraNotFound).
 			WithMsgLog("service '%s' not found", serviceName)
 	}
 	return &resp.Items[0], nil
@@ -88,7 +88,7 @@ func (m *manager) ServiceInspect(
 	}
 	resp, err := m.client.ServiceInspect(ctx, serviceID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -119,7 +119,7 @@ func (m *manager) ServiceCreate(
 	}
 	resp, err := m.client.ServiceCreate(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -146,7 +146,7 @@ func (m *manager) ServiceUpdate(
 	if version == nil {
 		inspectResp, err := m.ServiceInspect(ctx, serviceID)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		version = &inspectResp.Service.Version
 	}
@@ -154,7 +154,7 @@ func (m *manager) ServiceUpdate(
 
 	resp, err := m.client.ServiceUpdate(ctx, serviceID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -182,7 +182,7 @@ func (m *manager) ServiceUpdateFunc(
 				select {
 				case <-ctx.Done():
 					timer.Stop()
-					return apperrors.Wrap(ctx.Err())
+					return hperrors.Wrap(ctx.Err())
 				case <-timer.C:
 				}
 			}
@@ -191,8 +191,8 @@ func (m *manager) ServiceUpdateFunc(
 		if i > 0 || service == nil {
 			inspect, e := m.ServiceInspect(ctx, serviceID)
 			if e != nil { // error, need to retry
-				err = apperrors.Wrap(e)
-				if errors.Is(e, apperrors.ErrNotFound) {
+				err = hperrors.Wrap(e)
+				if errors.Is(e, hperrors.ErrNotFound) {
 					return err
 				}
 				continue
@@ -202,7 +202,7 @@ func (m *manager) ServiceUpdateFunc(
 
 		success, e := fn(i, service)
 		if e != nil { // error from user function, no retry
-			err = apperrors.Wrap(e)
+			err = hperrors.Wrap(e)
 			return err
 		}
 		if !success { // the user doesn't want to continue the update
@@ -211,14 +211,14 @@ func (m *manager) ServiceUpdateFunc(
 
 		_, e = m.ServiceUpdate(ctx, serviceID, &service.Version, &service.Spec, options...)
 		if e != nil { // error, need to retry
-			err = apperrors.Wrap(e)
+			err = hperrors.Wrap(e)
 			continue
 		}
 
 		return nil // successful, no need to retry
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -240,13 +240,13 @@ func (m *manager) ServiceRollback(
 
 	inspectResp, err := m.ServiceInspect(ctx, serviceID)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	opts.Version = inspectResp.Service.Version
 
 	resp, err := m.client.ServiceUpdate(ctx, serviceID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -257,13 +257,13 @@ func (m *manager) ServiceForceUpdate(ctx context.Context, serviceID string) erro
 	}
 	resp, err := m.client.ServiceInspect(ctx, serviceID, client.ServiceInspectOptions{})
 	if err != nil {
-		return apperrors.NewInfra(err)
+		return hperrors.NewInfra(err)
 	}
 
 	resp.Service.Spec.TaskTemplate.ForceUpdate++
 	_, err = m.ServiceUpdate(ctx, serviceID, &resp.Service.Version, &resp.Service.Spec)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -285,7 +285,7 @@ func (m *manager) ServiceRemove(
 
 	resp, err := m.client.ServiceRemove(ctx, serviceID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -307,7 +307,7 @@ func (m *manager) ServiceLogs(
 	}
 	resp, err := m.client.ServiceLogs(ctx, serviceID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return resp, nil
 }
@@ -323,14 +323,14 @@ func (m *manager) ServiceUpdateWait(
 	for {
 		// Check context cancellation
 		if err := ctx.Err(); err != nil {
-			return nil, apperrors.NewInfra(err)
+			return nil, hperrors.NewInfra(err)
 		}
 
 		inspectResp, err := gofn.ExecRetryCtx2(ctx, func() (*client.ServiceInspectResult, error) {
 			return m.ServiceInspect(ctx, serviceID)
 		}, retry2Times, defaultRetryDelay)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		service := &inspectResp.Service
@@ -342,7 +342,7 @@ func (m *manager) ServiceUpdateWait(
 
 		select {
 		case <-ctx.Done():
-			return nil, apperrors.Wrap(ctx.Err())
+			return nil, hperrors.Wrap(ctx.Err())
 		case <-time.After(inspectInterval):
 		}
 	}
@@ -363,7 +363,7 @@ func (m *manager) ServiceWaitUntilRunning(
 		return m.ServiceInspect(ctx, serviceID)
 	}, retry2Times, defaultRetryDelay)
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	// Service must be a replicated one
 	service := &inspectResp.Service
@@ -378,14 +378,14 @@ func (m *manager) ServiceWaitUntilRunning(
 	for {
 		// Check context cancellation
 		if err := ctx.Err(); err != nil {
-			return false, apperrors.NewInfra(err)
+			return false, hperrors.NewInfra(err)
 		}
 
 		taskListResp, err := gofn.ExecRetry2(func() (*client.TaskListResult, error) {
 			return m.ServiceTaskList(ctx, serviceID, []swarm.TaskState{swarm.TaskStateRunning})
 		}, retry2Times, defaultRetryDelay)
 		if err != nil {
-			return false, apperrors.Wrap(err)
+			return false, hperrors.Wrap(err)
 		}
 
 		satisfiedTasks := 0
@@ -400,7 +400,7 @@ func (m *manager) ServiceWaitUntilRunning(
 		if (requireAllReplicas && satisfiedTasks < desiredTasks) || (!requireAllReplicas && satisfiedTasks == 0) {
 			select {
 			case <-ctx.Done():
-				return false, apperrors.Wrap(ctx.Err())
+				return false, hperrors.Wrap(ctx.Err())
 			case <-time.After(checkInterval):
 			}
 			continue
@@ -421,17 +421,17 @@ func (m *manager) ServiceWaitUntilStopped(
 	for {
 		// Check context cancellation
 		if err := ctx.Err(); err != nil {
-			return false, apperrors.NewInfra(err)
+			return false, hperrors.NewInfra(err)
 		}
 
 		taskListResp, err := gofn.ExecRetry2(func() (*client.TaskListResult, error) {
 			return m.ServiceTaskList(ctx, serviceID, nil)
 		}, retry2Times, defaultRetryDelay)
 		if err != nil {
-			if errors.Is(err, apperrors.ErrNotFound) {
+			if errors.Is(err, hperrors.ErrNotFound) {
 				return true, nil
 			}
-			return false, apperrors.Wrap(err)
+			return false, hperrors.Wrap(err)
 		}
 
 		activeTasks := 0
@@ -448,7 +448,7 @@ func (m *manager) ServiceWaitUntilStopped(
 
 		select {
 		case <-ctx.Done():
-			return false, apperrors.Wrap(ctx.Err())
+			return false, hperrors.Wrap(ctx.Err())
 		case <-time.After(checkInterval):
 		}
 	}
@@ -528,7 +528,7 @@ func (m *manager) ServiceCreateToExec(
 
 	createRes, err := m.ServiceCreate(ctx, &createOpts.Spec)
 	if err != nil {
-		return nil, 0, apperrors.Wrap(err)
+		return nil, 0, hperrors.Wrap(err)
 	}
 	svcID := createRes.ID
 
@@ -553,7 +553,7 @@ func (m *manager) ServiceCreateToExec(
 	for {
 		select {
 		case <-timeoutCtx.Done():
-			return createRes, 0, apperrors.Wrap(timeoutCtx.Err())
+			return createRes, 0, hperrors.Wrap(timeoutCtx.Err())
 		case <-ticker.C:
 			tasksRes, err := m.ServiceTaskList(timeoutCtx, svcID, nil)
 			if err != nil || len(tasksRes.Items) == 0 {
@@ -579,7 +579,7 @@ func (m *manager) ServiceCreateToExec(
 				if errMsg == "" {
 					errMsg = fmt.Sprintf("task finished with state %s", state)
 				}
-				return createRes, taskExitCode, apperrors.Wrap(errors.New(errMsg)) //nolint:err113
+				return createRes, taskExitCode, hperrors.Wrap(errors.New(errMsg)) //nolint:err113
 			}
 		}
 	}

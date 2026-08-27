@@ -1,8 +1,8 @@
 package entity
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type WorkflowStep struct {
@@ -21,7 +21,7 @@ type WorkflowArgs struct {
 
 func (t *Task) ArgsAsWorkflow() (*WorkflowArgs, error) {
 	if t.Type != base.TaskTypeWorkflow {
-		return nil, apperrors.NewMismatch("Task type", base.TaskTypeWorkflow)
+		return nil, hperrors.NewMismatch("Task type", base.TaskTypeWorkflow)
 	}
 	return parseTaskArgsAs(t, func() *WorkflowArgs {
 		return &WorkflowArgs{}

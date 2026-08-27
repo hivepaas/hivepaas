@@ -5,7 +5,7 @@ import (
 
 	"github.com/kballard/go-shellquote"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func IsSingleQuoted(s string) bool {
@@ -34,7 +34,7 @@ func ArgQuote(arg string) string {
 func CmdSplit(cmd string) ([]string, error) {
 	res, err := shellquote.Split(cmd)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return res, nil
 }

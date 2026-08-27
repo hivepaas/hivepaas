@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
 )
@@ -19,12 +19,12 @@ import (
 // @Id      beginMFATotpSetup
 // @Param   body body userdto.BeginMFATotpSetupReq true "request data"
 // @Success 200 {object} userdto.BeginMFATotpSetupResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/current/mfa/totp-begin-setup [post]
 func (h *Handler) BeginMFATotpSetup(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
-	if err != nil && !errors.Is(err, apperrors.ErrUserNotCompleteMFASetup) {
+	if err != nil && !errors.Is(err, hperrors.ErrUserNotCompleteMFASetup) {
 		h.RenderError(ctx, err)
 		return
 	}
@@ -52,12 +52,12 @@ func (h *Handler) BeginMFATotpSetup(ctx *gin.Context) {
 // @Id      completeMFATotpSetup
 // @Param   body body userdto.CompleteMFATotpSetupReq true "request data"
 // @Success 200 {object} userdto.CompleteMFATotpSetupResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/current/mfa/totp-complete-setup [post]
 func (h *Handler) CompleteMFATotpSetup(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
-	if err != nil && !errors.Is(err, apperrors.ErrUserNotCompleteMFASetup) {
+	if err != nil && !errors.Is(err, hperrors.ErrUserNotCompleteMFASetup) {
 		h.RenderError(ctx, err)
 		return
 	}
@@ -85,8 +85,8 @@ func (h *Handler) CompleteMFATotpSetup(ctx *gin.Context) {
 // @Id      removeMFATotp
 // @Param   body body userdto.RemoveMFATotpReq true "request data"
 // @Success 200 {object} userdto.RemoveMFATotpResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/current/mfa/totp-remove [post]
 func (h *Handler) RemoveMFATotp(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)

@@ -1,8 +1,8 @@
 package devhelperdto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ExecuteCmdReq struct {
@@ -16,7 +16,7 @@ func NewExecuteCmdReq() *ExecuteCmdReq {
 	return &ExecuteCmdReq{}
 }
 
-func (req *ExecuteCmdReq) Validate() apperrors.ValidationErrors {
+func (req *ExecuteCmdReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

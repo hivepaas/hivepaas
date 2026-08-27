@@ -7,7 +7,7 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -26,11 +26,11 @@ func (s *service) imagePush(
 
 	regAuth := data.RefObjects.RefSettings[data.PushToRegistry.ID]
 	if regAuth == nil {
-		return apperrors.NewMissing("Registry auth setting")
+		return hperrors.NewMissing("Registry auth setting")
 	}
 	regAuthHeader, err := regAuth.MustAsRegistryAuth().GenerateAuthHeader()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, tag := range data.Resp.ImageTags {
@@ -41,7 +41,7 @@ func (s *service) imagePush(
 			options.RegistryAuth = regAuthHeader
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		logsChan, _ := docker.StartScanningJSONMsg(ctx, logsReader, batchrecvchan.Options{})
@@ -58,7 +58,7 @@ func (s *service) imagePush(
 			}
 		}
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
@@ -31,7 +31,7 @@ func (s *service) notifyPRForPreviewFailure(
 		var err error
 		taskArgs, err = data.Task.ArgsAsAppPreview()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if taskArgs == nil {
 			return nil
@@ -49,7 +49,7 @@ func (s *service) notifyPRForPreviewFailure(
 		var err error
 		app, err = s.appService.LoadApp(ctx, db, "", taskArgs.ParentApp.ID, true, false)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.App = app
 	}
@@ -64,7 +64,7 @@ func (s *service) notifyPRForPreviewFailure(
 
 	deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo ||
 		deploymentSettings.RepoSource == nil {
@@ -74,7 +74,7 @@ func (s *service) notifyPRForPreviewFailure(
 	repoSource := deploymentSettings.RepoSource
 	parsedURL, err := vcsurl.Parse(repoSource.RepoURL)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	owner := parsedURL.Username
@@ -149,12 +149,12 @@ func (s *service) dispatchPRComment(
 			credSetting, err = s.settingRepo.GetByID(ctx, db, data.App.GetObjectScope(), "",
 				repoSource.Credentials.ID, true)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 		if credSetting != nil {
 			err = gitapi.CreatePullRequestCommentWithRetry(ctx, credSetting, owner, repo, pullNumber, message)
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -164,11 +164,11 @@ func (s *service) dispatchPRComment(
 		data.Args.Trigger.SourceID != "" {
 		webhookSetting, err := s.settingRepo.GetByID(ctx, db, nil, "", data.Args.Trigger.SourceID, true)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if webhookSetting != nil {
 			err = gitapi.CreatePullRequestCommentWithRetry(ctx, webhookSetting, owner, repo, pullNumber, message)
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

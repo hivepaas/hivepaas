@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -29,7 +29,7 @@ func (uc *UC) UpdateSecretStatus(
 			// Rebuild affected env vars using the active transaction (inTx = true)
 			appEnvVarData, err = uc.buildAppEnvVarsForScope(ctx, db, req.Scope, true)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			if req.Scope.IsAppScope() {
@@ -42,19 +42,19 @@ func (uc *UC) UpdateSecretStatus(
 					err = uc.ClusterSecretService.RemoveSecretForApp(ctx, db, req.Scope.App, secret)
 				}
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 				// Need to re-persist the setting as its content may change
 				pData.Setting.MustSetData(secret)
 				if err = uc.SettingRepo.Update(ctx, db, pData.Setting); err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp := &secretdto.UpdateSecretStatusResp{Meta: &basedto.Meta{}}

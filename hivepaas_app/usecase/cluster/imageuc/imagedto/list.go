@@ -5,8 +5,8 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListImageReq struct {
@@ -24,9 +24,9 @@ func NewListImageReq() *ListImageReq {
 	}
 }
 
-func (req *ListImageReq) Validate() apperrors.ValidationErrors {
+func (req *ListImageReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListImageResp struct {

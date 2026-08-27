@@ -15,8 +15,8 @@ import (
 
 	"github.com/klauspost/compress/zstd"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 )
 
@@ -30,7 +30,7 @@ func (s *service) PrepareUploadTarStream(
 	req *containerfileservice.PrepareUploadTarStreamReq,
 ) (_ *containerfileservice.PrepareUploadTarStreamResp, err error) {
 	if req.Content == nil {
-		return nil, apperrors.NewArgumentInvalid("content").WithMsgLog("upload content is required")
+		return nil, hperrors.NewArgumentInvalid("content").WithMsgLog("upload content is required")
 	}
 
 	cleanPath := filepath.Clean(req.Path)
@@ -60,7 +60,7 @@ func (s *service) PrepareUploadTarStream(
 		tarStream, err := createSingleFileTarStream(req.Content, entryName, req.FileSize)
 		if err != nil {
 			_ = req.Content.Close()
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		return &containerfileservice.PrepareUploadTarStreamResp{
@@ -79,14 +79,14 @@ func (s *service) PrepareUploadTarStream(
 		tarStream, err = convertZipToTarStream(req.Content, req.FileSize)
 		if err != nil {
 			_ = req.Content.Close()
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 	case base.FileCompressionFormatGzip:
 		gzReader, err := gzip.NewReader(req.Content)
 		if err != nil {
 			_ = req.Content.Close()
-			return nil, apperrors.NewArgumentInvalid("file").WithMsgLog("failed to decompress gzip: %v", err)
+			return nil, hperrors.NewArgumentInvalid("file").WithMsgLog("failed to decompress gzip: %v", err)
 		}
 		tarStream = sanitizeTarStream(gzReader, req.Content)
 
@@ -94,7 +94,7 @@ func (s *service) PrepareUploadTarStream(
 		zstdReader, err := zstd.NewReader(req.Content)
 		if err != nil {
 			_ = req.Content.Close()
-			return nil, apperrors.NewArgumentInvalid("file").WithMsgLog("failed to decompress zstd: %v", err)
+			return nil, hperrors.NewArgumentInvalid("file").WithMsgLog("failed to decompress zstd: %v", err)
 		}
 		tarStream = sanitizeTarStream(zstdReader.IOReadCloser(), req.Content)
 
@@ -152,7 +152,7 @@ func createSingleFileTarStream(
 		n, err := io.Copy(buf, content)
 		_ = content.Close()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		fileSize = n
 		content = io.NopCloser(buf)
@@ -218,7 +218,7 @@ func sanitizeTarStream(
 					_ = pw.Close()
 					return
 				}
-				_ = pw.CloseWithError(apperrors.NewArgumentInvalid("tar_stream").
+				_ = pw.CloseWithError(hperrors.NewArgumentInvalid("tar_stream").
 					WithMsgLog("invalid tar stream: %v", err))
 				return
 			}
@@ -231,7 +231,7 @@ func sanitizeTarStream(
 			header.Name = sanitizedName
 
 			if err := tarWriter.WriteHeader(header); err != nil {
-				_ = pw.CloseWithError(apperrors.Wrap(err))
+				_ = pw.CloseWithError(hperrors.Wrap(err))
 				return
 			}
 
@@ -239,7 +239,7 @@ func sanitizeTarStream(
 				limitedReader := io.LimitReader(tarReader, maxDecompressEntrySize)
 				//nolint:gosec // G110: Decompression bomb mitigated via LimitReader
 				if _, err := io.Copy(tarWriter, limitedReader); err != nil {
-					_ = pw.CloseWithError(apperrors.Wrap(err))
+					_ = pw.CloseWithError(hperrors.Wrap(err))
 					return
 				}
 			}
@@ -267,7 +267,7 @@ func convertZipToTarStream(content io.ReadCloser, size int64) (io.ReadCloser, er
 	// Create a temp file to store zip content since zip.Reader requires io.ReaderAt
 	tempFile, err := os.CreateTemp("", "hivepaas-upload-zip-*")
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	written, err := io.Copy(tempFile, content)
@@ -275,7 +275,7 @@ func convertZipToTarStream(content io.ReadCloser, size int64) (io.ReadCloser, er
 	if err != nil {
 		_ = tempFile.Close()
 		_ = os.Remove(tempFile.Name())
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if size <= 0 {
@@ -286,7 +286,7 @@ func convertZipToTarStream(content io.ReadCloser, size int64) (io.ReadCloser, er
 	if err != nil {
 		_ = tempFile.Close()
 		_ = os.Remove(tempFile.Name())
-		return nil, apperrors.NewArgumentInvalid("zip").WithMsgLog("invalid zip file: %v", err)
+		return nil, hperrors.NewArgumentInvalid("zip").WithMsgLog("invalid zip file: %v", err)
 	}
 
 	pr, pw := io.Pipe()
@@ -309,20 +309,20 @@ func convertZipToTarStream(content io.ReadCloser, size int64) (io.ReadCloser, er
 			fileInfo := f.FileInfo()
 			header, err := tar.FileInfoHeader(fileInfo, "")
 			if err != nil {
-				_ = pw.CloseWithError(apperrors.Wrap(err))
+				_ = pw.CloseWithError(hperrors.Wrap(err))
 				return
 			}
 			header.Name = sanitizedName
 
 			if err := tarWriter.WriteHeader(header); err != nil {
-				_ = pw.CloseWithError(apperrors.Wrap(err))
+				_ = pw.CloseWithError(hperrors.Wrap(err))
 				return
 			}
 
 			if !fileInfo.IsDir() {
 				rc, err := f.Open()
 				if err != nil {
-					_ = pw.CloseWithError(apperrors.Wrap(err))
+					_ = pw.CloseWithError(hperrors.Wrap(err))
 					return
 				}
 
@@ -330,7 +330,7 @@ func convertZipToTarStream(content io.ReadCloser, size int64) (io.ReadCloser, er
 				//nolint:gosec // G110: Decompression bomb mitigated via LimitReader
 				if _, err := io.Copy(tarWriter, limitedReader); err != nil {
 					_ = rc.Close()
-					_ = pw.CloseWithError(apperrors.Wrap(err))
+					_ = pw.CloseWithError(hperrors.Wrap(err))
 					return
 				}
 				_ = rc.Close()
@@ -338,7 +338,7 @@ func convertZipToTarStream(content io.ReadCloser, size int64) (io.ReadCloser, er
 		}
 
 		if err := tarWriter.Close(); err != nil {
-			_ = pw.CloseWithError(apperrors.Wrap(err))
+			_ = pw.CloseWithError(hperrors.Wrap(err))
 			return
 		}
 		_ = pw.Close()

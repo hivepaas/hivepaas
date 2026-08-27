@@ -5,9 +5,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -23,11 +23,11 @@ func (s *service) LoadUser(
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if errorIfUnavailable {
 		if err = s.checkUserAvailable(user); err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	return user, nil
@@ -48,19 +48,19 @@ func (s *service) LoadUsers(
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	userMap := entityutil.SliceToIDMap(users)
 
 	for _, userID := range userIDs {
 		if _, ok := userMap[userID]; !ok {
-			return nil, apperrors.Wrap(apperrors.ErrUserNotFound).WithParam("Name", userID)
+			return nil, hperrors.Wrap(hperrors.ErrUserNotFound).WithParam("Name", userID)
 		}
 	}
 
 	resultMap, err := s.collectAvailUsers(userMap, userIDs, errorIfUnavailable)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return resultMap, nil
@@ -81,13 +81,13 @@ func (s *service) LoadUsersSkipMissing(
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	userMap := entityutil.SliceToIDMap(users)
 
 	resultMap, err := s.collectAvailUsers(userMap, userIDs, errorIfUnavailable)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return resultMap, nil
@@ -114,18 +114,18 @@ func (s *service) collectAvailUsers(
 
 func (s *service) checkUserAvailable(user *entity.User) error {
 	if user == nil {
-		return apperrors.NewNotFound("User")
+		return hperrors.NewNotFound("User")
 	}
 	if user.Status != base.UserStatusActive {
-		return apperrors.Wrap(apperrors.ErrUserUnavailable).
+		return hperrors.Wrap(hperrors.ErrUserUnavailable).
 			WithMsgLog("user '%s' is not active", user.Username)
 	}
 	if user.IsAccessExpired() {
-		return apperrors.Wrap(apperrors.ErrUserUnavailable).
+		return hperrors.Wrap(hperrors.ErrUserUnavailable).
 			WithMsgLog("user '%s' has access expired at: %v", user.Username, user.AccessExpireAt)
 	}
 	if user.SecurityOption == base.UserSecurityPassword2FA && user.TotpSecret == "" {
-		return apperrors.Wrap(apperrors.ErrUserNotCompleteMFASetup).
+		return hperrors.Wrap(hperrors.ErrUserNotCompleteMFASetup).
 			WithMsgLog("user '%s' hasn't completed the MFA setup", user.Username)
 	}
 	return nil
@@ -138,13 +138,13 @@ func (s *service) LoadUsersCustomConds(
 	conds ...bunex.SelectQueryOption,
 ) (map[string]*entity.User, error) {
 	if len(conds) == 0 {
-		return nil, apperrors.NewArgumentInvalid("conds").
+		return nil, hperrors.NewArgumentInvalid("conds").
 			WithMsgLog("LoadUsersCustomConds requires at least one condition")
 	}
 
 	users, _, err := s.userRepo.List(ctx, db, nil, conds...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	userMap := entityutil.SliceToIDMap(users)
@@ -152,7 +152,7 @@ func (s *service) LoadUsersCustomConds(
 
 	resultMap, err := s.collectAvailUsers(userMap, userIDs, errorIfUnavailable)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return resultMap, nil

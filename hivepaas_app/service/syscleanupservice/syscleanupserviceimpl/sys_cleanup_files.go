@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (s *service) sysCleanupFiles(
@@ -53,7 +53,7 @@ func (s *service) sysCleanupTempFiles(
 			if os.IsNotExist(err) {
 				return nil
 			}
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		for _, entry := range entries {

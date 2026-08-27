@@ -7,9 +7,9 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -26,7 +26,7 @@ func (uc *UC) UpdateApp(
 		appData := &updateAppData{}
 		err := uc.loadAppDataForUpdate(ctx, db, req, appData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if !appData.HasChanges {
 			return nil
@@ -38,7 +38,7 @@ func (uc *UC) UpdateApp(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appdto.UpdateAppResp{}, nil
@@ -64,10 +64,10 @@ func (uc *UC) loadAppDataForUpdate(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if app.UpdateVer != req.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 	data.App = app
 
@@ -77,11 +77,11 @@ func (uc *UC) loadAppDataForUpdate(
 	// If name changes, need to verify its uniqueness
 	if !strings.EqualFold(req.Name, app.Name) {
 		conflictApp, err := uc.appRepo.GetByName(ctx, db, req.ProjectID, req.Name, bunex.SelectColumns("id"))
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if conflictApp != nil {
-			return apperrors.NewAlreadyExist("App").
+			return hperrors.NewAlreadyExist("App").
 				WithMsgLog("app name '%s' already exists", req.Name)
 		}
 	}

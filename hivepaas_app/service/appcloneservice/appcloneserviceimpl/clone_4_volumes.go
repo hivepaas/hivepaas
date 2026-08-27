@@ -11,8 +11,8 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
@@ -41,7 +41,7 @@ func (s *service) cloneVolumes(
 
 	destMounts, err := cloneFunc(destApp, srcApp, srcService.Spec.TaskTemplate.ContainerSpec.Mounts)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	destService.Spec.TaskTemplate.ContainerSpec.Mounts = destMounts
@@ -93,7 +93,7 @@ func (s *service) onCloneVolumesDefault(
 	if len(mountsToCopyData) > 0 && !settings.LiveVolumeClone {
 		restoreFunc, err := s.stopSrcAppBeforeCloningVolumes(ctx, data)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		if restoreFunc != nil {
 			defer restoreFunc()
@@ -131,7 +131,7 @@ func (s *service) onCloneVolumesDefault(
 
 		err = s.volumeService.Rsync(ctx, srcMount, destMount, rsyncOpts...)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -164,7 +164,7 @@ func (s *service) stopSrcAppBeforeCloningVolumes(
 
 	_, updateErr := s.dockerManager.ServiceUpdate(ctx, srcService.ID, &srcService.Version, &stopSpec)
 	if updateErr != nil {
-		return nil, apperrors.Wrap(updateErr)
+		return nil, hperrors.Wrap(updateErr)
 	}
 
 	// Always restore original replicas count on finish, regardless of success or error
@@ -196,10 +196,10 @@ func (s *service) stopSrcAppBeforeCloningVolumes(
 	// Wait until all source containers stop completely
 	_, err = s.dockerManager.ServiceWaitUntilStopped(ctx, srcService.ID, 2*time.Second) //nolint:mnd
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
-	return restoreReplicasFunc, apperrors.Wrap(err)
+	return restoreReplicasFunc, hperrors.Wrap(err)
 }
 
 func (s *service) calcVolumeMountSubpath(

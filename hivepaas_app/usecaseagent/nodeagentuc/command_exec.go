@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc/nodeagentdto"
 )
 
@@ -21,7 +21,7 @@ func (uc *UC) ExecuteCommand(
 	req *nodeagentdto.ExecCommandReq,
 ) (*nodeagentdto.ExecCommandResp, error) {
 	if req == nil || req.CommandExecOpts == nil || len(req.Command) == 0 {
-		return nil, apperrors.Wrap(apperrors.ErrBadRequest).WithExtraDetail("command cannot be empty")
+		return nil, hperrors.Wrap(hperrors.ErrBadRequest).WithExtraDetail("command cannot be empty")
 	}
 
 	uc.logger.Infof("ExecuteCommand started: %v, workingDir: %s", req.Command, req.WorkingDir)
@@ -46,7 +46,7 @@ func (uc *UC) ExecuteCommand(
 
 	if err := cmd.Start(); err != nil {
 		uc.logger.Errorf("Failed to start command %v: %v", req.Command, err)
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	doneChan := make(chan struct{})
@@ -87,14 +87,14 @@ func (uc *UC) ExecuteCommand(
 	if waitErr != nil {
 		if ctx.Err() != nil {
 			uc.logger.Warnf("ExecuteCommand context canceled: %v", ctx.Err())
-			return resp, apperrors.Wrap(ctx.Err())
+			return resp, hperrors.Wrap(ctx.Err())
 		}
 		var exitErr *exec.ExitError
 		if errors.As(waitErr, &exitErr) {
 			// Normal process exit with non-zero status
 			return resp, nil
 		}
-		return resp, apperrors.Wrap(waitErr)
+		return resp, hperrors.Wrap(waitErr)
 	}
 
 	return resp, nil

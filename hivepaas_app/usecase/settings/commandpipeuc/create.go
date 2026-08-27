@@ -3,9 +3,9 @@ package commandpipeuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -32,17 +32,17 @@ func (uc *UC) CreateCommandPipe(
 			// Validate that the command templates exist
 			_, err := uc.validateCommandTemplates(ctx, db, req.Scope, req.CommandPipeBaseReq)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			err = pData.Setting.SetData(commandPipe)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &commandpipedto.CreateCommandPipeResp{
@@ -68,12 +68,12 @@ func (uc *UC) validateCommandTemplates(
 
 	settings, err := uc.SettingRepo.ListByIDs(ctx, db, scope, commandTplIDs, true)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	for _, commandTplID := range commandTplIDs {
 		setting := entityutil.FindByID(settings, commandTplID)
 		if setting == nil {
-			return nil, apperrors.Wrap(apperrors.ErrSettingNotFound).WithParam("Name", commandTplID)
+			return nil, hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", commandTplID)
 		}
 	}
 	return settings, nil

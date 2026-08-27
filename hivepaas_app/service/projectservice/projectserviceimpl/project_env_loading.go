@@ -3,9 +3,9 @@ package projectserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -19,10 +19,10 @@ func (s *service) LoadProjectEnv(
 ) (*entity.ProjectEnv, error) {
 	env, err := s.projectEnvRepo.GetByID(ctx, db, projectID, projectEnvID, extraOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if err = s.validateProjectEnvStatus(env, requireProjectActive, requireAppActive); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return env, nil
 }
@@ -36,11 +36,11 @@ func (s *service) validateProjectEnvStatus(
 		projectName = env.Project.Name
 	}
 	if requireProjectActive && (env.Project == nil || env.Project.Status != base.ProjectStatusActive) {
-		return apperrors.Wrap(apperrors.ErrProjectInactive).WithNTParam("Name", projectName)
+		return hperrors.Wrap(hperrors.ErrProjectInactive).WithNTParam("Name", projectName)
 	}
 	if requireEnvActive {
 		if env.Status != base.ProjectStatusActive {
-			return apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithNTParam("Project", projectName).
+			return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithNTParam("Project", projectName).
 				WithNTParam("Env", env.Name)
 		}
 	}

@@ -1,8 +1,8 @@
 package devhelperdto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
@@ -14,7 +14,7 @@ func NewLongRequestReq() *LongRequestReq {
 	return &LongRequestReq{}
 }
 
-func (req *LongRequestReq) Validate() apperrors.ValidationErrors {
+func (req *LongRequestReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

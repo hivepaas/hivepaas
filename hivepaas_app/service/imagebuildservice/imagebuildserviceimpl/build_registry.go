@@ -9,8 +9,8 @@ import (
 
 	"github.com/moby/moby/api/types/registry"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -25,7 +25,7 @@ func (s *service) calcBuildRegistryAuths(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	result := make(map[string]registry.AuthConfig, len(settings))
@@ -33,11 +33,11 @@ func (s *service) calcBuildRegistryAuths(
 	for _, setting := range settings {
 		regAuth, err := setting.AsRegistryAuth()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		password, err := regAuth.Password.GetPlain()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		if password != "" {
 			secrets = append(secrets, password)
@@ -65,7 +65,7 @@ func (s *service) prepareDockerConfigDir(
 
 	configDir, err := os.MkdirTemp(data.TempDir, "docker-config-*")
 	if err != nil {
-		return "", func() {}, apperrors.Wrap(err)
+		return "", func() {}, hperrors.Wrap(err)
 	}
 	cleanup := func() {
 		_ = os.RemoveAll(configDir)
@@ -95,13 +95,13 @@ func (s *service) prepareDockerConfigDir(
 	content, err := json.Marshal(cfg)
 	if err != nil {
 		cleanup()
-		return "", func() {}, apperrors.Wrap(err)
+		return "", func() {}, hperrors.Wrap(err)
 	}
 
 	err = os.WriteFile(filepath.Join(configDir, "config.json"), content, 0600) //nolint:mnd
 	if err != nil {
 		cleanup()
-		return "", func() {}, apperrors.Wrap(err)
+		return "", func() {}, hperrors.Wrap(err)
 	}
 
 	// Symlink host docker directories into temporary configDir so plugins,

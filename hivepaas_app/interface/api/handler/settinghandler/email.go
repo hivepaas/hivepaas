@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/emailuc/emaildto"
 )
@@ -22,8 +22,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} emaildto.ListEmailResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/emails [get]
 func (h *Handler) ListEmail(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
@@ -37,8 +37,8 @@ func (h *Handler) ListEmail(ctx *gin.Context) {
 // @Id      getSettingEmail
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} emaildto.GetEmailResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/emails/{itemID} [get]
 func (h *Handler) GetEmail(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
@@ -52,8 +52,8 @@ func (h *Handler) GetEmail(ctx *gin.Context) {
 // @Id      createSettingEmail
 // @Param   body body emaildto.CreateEmailReq true "request data"
 // @Success 201 {object} emaildto.CreateEmailResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/emails [post]
 func (h *Handler) CreateEmail(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
@@ -68,8 +68,8 @@ func (h *Handler) CreateEmail(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body emaildto.UpdateEmailReq true "request data"
 // @Success 200 {object} emaildto.UpdateEmailResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/emails/{itemID} [put]
 func (h *Handler) UpdateEmail(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
@@ -84,8 +84,8 @@ func (h *Handler) UpdateEmail(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body emaildto.UpdateEmailStatusReq true "request data"
 // @Success 200 {object} emaildto.UpdateEmailStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/emails/{itemID}/status [put]
 func (h *Handler) UpdateEmailStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
@@ -99,8 +99,8 @@ func (h *Handler) UpdateEmailStatus(ctx *gin.Context) {
 // @Id      deleteSettingEmail
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} emaildto.DeleteEmailResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/emails/{itemID} [delete]
 func (h *Handler) DeleteEmail(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeEmail, base.ObjectScopeGlobal)
@@ -114,8 +114,8 @@ func (h *Handler) DeleteEmail(ctx *gin.Context) {
 // @Id      testSendMail
 // @Param   body body emaildto.TestSendMailReq true "request data"
 // @Success 200 {object} emaildto.TestSendMailResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/emails/test-send-mail [post]
 func (h *Handler) TestSendMail(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)

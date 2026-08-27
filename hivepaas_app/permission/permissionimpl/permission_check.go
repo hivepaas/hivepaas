@@ -4,9 +4,9 @@ import (
 	"context"
 	"maps"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 )
@@ -36,7 +36,7 @@ func (p *manager) CheckAccess(
 		hasPerm, allowedResources, err = p.checkProjectAccess(ctx, db, chk)
 	}
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 
 	if len(allowedResources) > 0 {

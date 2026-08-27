@@ -21,8 +21,8 @@ import (
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appdto.GetTerminalInfoResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/terminal/info [get]
 func (h *Handler) GetAppTerminalInfo(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
@@ -59,8 +59,8 @@ func (h *Handler) GetAppTerminalInfo(ctx *gin.Context) {
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appdto.OpenTerminalResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/terminal [get]
 func (h *Handler) OpenAppTerminal(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeExecute)

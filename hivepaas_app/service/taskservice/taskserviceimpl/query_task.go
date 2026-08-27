@@ -6,9 +6,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
@@ -27,14 +27,14 @@ func (s *service) GetTask(
 
 	task, err := s.taskRepo.GetByID(ctx, db, req.Type, req.ID, getOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	var taskInfo *cacheentity.TaskInfo
 	if !req.SkipQueryCache && !task.IsDone() && !task.IsCanceled() && !task.IsFailedCompletely() {
 		taskInfo, err = s.taskInfoRepo.Get(ctx, task.ID)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -54,7 +54,7 @@ func (s *service) ListTask(
 	if !req.SkipQueryCache {
 		taskInfoMap, err = s.taskInfoRepo.GetAll(ctx)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		inprogressTaskIDs = make([]string, 0, len(taskInfoMap))
 		for id, info := range taskInfoMap {
@@ -111,7 +111,7 @@ func (s *service) ListTask(
 
 	tasks, paging, err := s.taskRepo.List(ctx, db, "", &req.Paging, listOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &taskservice.ListTaskResp{

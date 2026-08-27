@@ -6,9 +6,9 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -56,12 +56,12 @@ func (uc *BaseUC) DeleteSetting(
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadSettingForDeletion(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		if data.AfterLoading != nil {
 			if err := data.AfterLoading(ctx, db, data); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -69,18 +69,18 @@ func (uc *BaseUC) DeleteSetting(
 		uc.prepareSettingDeletion(req, data, persistingData)
 		if data.BeforePersisting != nil {
 			if err := data.BeforePersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
 		err = uc.persistSettingDeletion(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		if data.AfterPersisting != nil {
 			if err := data.AfterPersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -90,13 +90,13 @@ func (uc *BaseUC) DeleteSetting(
 			Setting: gofn.Coalesce(persistingData.Setting, data.Setting),
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &DeleteSettingResp{}, nil
@@ -109,7 +109,7 @@ func (uc *BaseUC) loadSettingForDeletion(
 	data *DeleteSettingData,
 ) (err error) {
 	if err = uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	loadOpts := []bunex.SelectQueryOption{
@@ -120,7 +120,7 @@ func (uc *BaseUC) loadSettingForDeletion(
 	setting, err := uc.loadSettingByID(ctx, db, &req.BaseSettingReq, req.ID,
 		false, loadOpts...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Setting = setting
 
@@ -128,7 +128,7 @@ func (uc *BaseUC) loadSettingForDeletion(
 	if setting.ObjectID != req.Scope.ScopeObjectID() {
 		data.SharedSetting, err = uc.SharedSettingRepo.Get(ctx, db, req.Scope.ScopeObjectID(), req.ID)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -161,7 +161,7 @@ func (uc *BaseUC) persistSettingDeletion(
 			bunex.UpdateColumns("deleted_at"),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	}
@@ -170,20 +170,20 @@ func (uc *BaseUC) persistSettingDeletion(
 		bunex.UpdateColumns("deleted_at"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = uc.SettingRepo.UpsertMulti(ctx, db, persistingData.UpsertingSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If deleted item is global, delete all references from projects
 	if persistingData.Setting.ObjectID == "" {
 		err = uc.SharedSettingRepo.DeleteAllBySetting(ctx, db, persistingData.Setting.ID)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil

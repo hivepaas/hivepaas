@@ -9,9 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type Client struct {
@@ -36,7 +36,7 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 		),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	s3Client := s3.NewFromConfig(awsCfg, func(opts *s3.Options) {
@@ -57,15 +57,15 @@ func NewClient(ctx context.Context, cfg *Config) (*Client, error) {
 
 func NewClientFromSetting(ctx context.Context, storageSetting *entity.Setting) (*Client, error) {
 	if storageSetting.Type != base.SettingTypeCloudStorage || storageSetting.Kind != string(base.CloudStorageKindS3) {
-		return nil, apperrors.Wrap(apperrors.ErrSettingTypeUnsupported).WithParam("Name", storageSetting.Type)
+		return nil, hperrors.Wrap(hperrors.ErrSettingTypeUnsupported).WithParam("Name", storageSetting.Type)
 	}
 	storage, err := storageSetting.AsCloudStorage()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	secretKey, err := storage.S3.SecretKey.GetPlain()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return NewClient(ctx, &Config{
 		AccessKeyID:     storage.S3.AccessKeyID,
@@ -81,7 +81,7 @@ func (client *Client) HeadBucket(ctx context.Context) (*s3.HeadBucketOutput, err
 		Bucket: aws.String(client.Config.Bucket),
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return result, nil
 }

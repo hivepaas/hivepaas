@@ -7,10 +7,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/envvarhelper"
@@ -31,7 +31,7 @@ func (uc *UC) UpdateProjectEnvEnvVars(
 		data := &updateProjectEnvVarsData{}
 		err := uc.loadProjectEnvEnvVarsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingProjectEnvData{}
@@ -43,19 +43,19 @@ func (uc *UC) UpdateProjectEnvEnvVars(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		// Build and validate the env var changes
 		buildData, err = uc.buildProjectEnvEnvVars(ctx, db, data, true)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp := &projectenvsettingsdto.UpdateProjectEnvEnvVarsResp{
@@ -104,12 +104,12 @@ func (uc *UC) loadProjectEnvEnvVarsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.ProjectEnv = projectEnv
 	setting := projectEnv.GetSettingByType(base.SettingTypeEnvVar)
 	if setting != nil && setting.UpdateVer != req.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
 	data.EnvVarsSetting = setting
@@ -117,7 +117,7 @@ func (uc *UC) loadProjectEnvEnvVarsForUpdate(
 		// Calculate current data to detect changes
 		envVars, err := setting.AsEnvVars()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.CurrVars = envVars.Data
 	}
@@ -186,7 +186,7 @@ func (uc *UC) buildProjectEnvEnvVars(
 		appEnvVarData, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, false, nil,
 			transaction, concurrency)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	if data.BuildVarsChange {
@@ -194,7 +194,7 @@ func (uc *UC) buildProjectEnvEnvVars(
 		_, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, true, nil,
 			transaction, concurrency)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	return appEnvVarData, nil

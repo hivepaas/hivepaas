@@ -3,8 +3,8 @@ package systembackupdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -16,10 +16,10 @@ func NewExecuteSystemBackupReq() *ExecuteSystemBackupReq {
 	return &ExecuteSystemBackupReq{}
 }
 
-func (req *ExecuteSystemBackupReq) Validate() apperrors.ValidationErrors {
+func (req *ExecuteSystemBackupReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.GetUniqueSettingReq.Validate()...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ExecuteSystemBackupResp struct {

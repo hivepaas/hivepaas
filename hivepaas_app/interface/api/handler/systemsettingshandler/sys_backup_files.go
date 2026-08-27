@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
 )
@@ -27,8 +27,8 @@ const (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} filedto.ListFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/backup/files [get]
 func (h *Handler) ListBackupFiles(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
@@ -66,8 +66,8 @@ func (h *Handler) ListBackupFiles(ctx *gin.Context) {
 // @Id      getSystemBackupFile
 // @Param   fileID path string true "file setting ID"
 // @Success 200 {object} filedto.GetFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/backup/files/{fileID} [get]
 func (h *Handler) GetBackupFile(ctx *gin.Context) {
 	fileID, err := h.ParseStringParam(ctx, "fileID")
@@ -112,8 +112,8 @@ func (h *Handler) GetBackupFile(ctx *gin.Context) {
 // @Id      downloadSystemBackupFile
 // @Param   fileID path string true "file setting ID"
 // @Success 200
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/backup/files/{fileID}/download [get]
 func (h *Handler) DownloadBackupFile(ctx *gin.Context) {
 	fileID, err := h.ParseStringParam(ctx, "fileID")
@@ -164,8 +164,8 @@ func (h *Handler) DownloadBackupFile(ctx *gin.Context) {
 // @Id      deleteSystemBackupFile
 // @Param   fileID path string true "file setting ID"
 // @Success 200 {object} filedto.DeleteFileResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/backup/files/{fileID} [delete]
 func (h *Handler) DeleteBackupFile(ctx *gin.Context) {
 	fileID, err := h.ParseStringParam(ctx, "fileID")

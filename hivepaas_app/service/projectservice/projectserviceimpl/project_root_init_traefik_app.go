@@ -7,9 +7,9 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -82,7 +82,7 @@ func (s *service) initRootProjectTraefikApp(
 	// Insert the settings into DB
 	err = s.settingRepo.InsertMulti(ctx, db, []*entity.Setting{dbServiceSetting, dbEnvVarsSetting})
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 
 	return shouldUpdateService, nil

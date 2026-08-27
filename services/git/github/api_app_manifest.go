@@ -5,7 +5,7 @@ import (
 
 	gogithub "github.com/google/go-github/v85/github"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httpclient"
 )
 
@@ -38,7 +38,7 @@ func AppManifestFlowComplete(
 	client := gogithub.NewClient(httpclient.DefaultClient)
 	appConfig, _, err := client.Apps.CompleteAppManifest(ctx, code)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return appConfig, nil
 }

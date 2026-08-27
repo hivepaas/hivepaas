@@ -5,10 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
@@ -77,7 +77,7 @@ func (h *Handler) UpdateSetting(
 	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		auth, itemID, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeWrite, "itemID")
 	default:
-		err = apperrors.NewUnsupported("Setting scope 'none'")
+		err = hperrors.NewUnsupported("Setting scope 'none'")
 	}
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -101,7 +101,7 @@ func (h *Handler) UpdateSetting(
 
 	case base.ResourceTypeAPIKey:
 		// NOTE: not implemented
-		err = apperrors.NewNotImplementedNT()
+		err = hperrors.NewNotImplementedNT()
 
 	case base.ResourceTypeBasicAuth:
 		r := basicauthdto.NewUpdateBasicAuthReq()

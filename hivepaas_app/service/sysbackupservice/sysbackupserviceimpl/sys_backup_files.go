@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
@@ -47,7 +47,7 @@ func (s *service) sysBackupFiles(
 		targetDirPath := model.TargetDirPath
 		entries, err := os.ReadDir(dirPath)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		for _, entry := range entries {
 			if entry.IsDir() {
@@ -56,27 +56,27 @@ func (s *service) sysBackupFiles(
 			fileName := entry.Name()
 			fileInfo, err := entry.Info()
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			header, err := tar.FileInfoHeader(fileInfo, "")
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			header.Name = filepath.ToSlash(filepath.Join(targetDirPath, fileName))
 
 			if err := tarW.WriteHeader(header); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			file, err := os.Open(filepath.Join(dirPath, fileName))
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			if _, err := io.Copy(tarW, file); err != nil {
 				file.Close()
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			file.Close()
 		}

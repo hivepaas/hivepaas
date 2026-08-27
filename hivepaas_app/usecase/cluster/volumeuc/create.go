@@ -9,10 +9,10 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
@@ -42,20 +42,20 @@ func (uc *UC) CreateVolume(
 			}
 			createResp, err := uc.createVolumeInDocker(ctx, req)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			vol := &createResp.Volume
 			volEntity.RefID = dockerhelper.GetVolumeID(vol)
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = vol.Driver
 			if err := pData.Setting.SetData(volEntity); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &volumedto.CreateVolumeResp{
@@ -69,11 +69,11 @@ func (uc *UC) createVolumeInDocker(
 	req *volumedto.CreateVolumeReq,
 ) (*client.VolumeCreateResult, error) {
 	_, err := uc.dockerManager.VolumeInspect(ctx, req.Name)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
 	}
 	if err == nil {
-		return nil, apperrors.NewAlreadyExist("Cluster volume")
+		return nil, hperrors.NewAlreadyExist("Cluster volume")
 	}
 
 	driverOpts := map[string]string{}
@@ -82,7 +82,7 @@ func (uc *UC) createVolumeInDocker(
 		case req.BindOptions != nil:
 			directory, err := uc.calcBindDirectory(ctx, req, req.BindOptions.Directory)
 			if err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 			driverOpts["type"] = "none"
 			driverOpts["device"] = directory
@@ -140,7 +140,7 @@ func (uc *UC) createVolumeInDocker(
 		opts.Name = req.Name
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return createResp, nil
 }
@@ -154,7 +154,7 @@ func (uc *UC) calcBindDirectory(
 	if directory == "" {
 		storageInHost := config.Current.Storage.BindSource
 		if storageInHost == "" {
-			return "", apperrors.Wrap(apperrors.ErrUnconfigured).
+			return "", hperrors.Wrap(hperrors.ErrUnconfigured).
 				WithParam("Name", "HP_STORAGE_BIND_SOURCE")
 		}
 		directory = storageInHost
@@ -172,13 +172,13 @@ func (uc *UC) calcBindDirectory(
 		case base.ObjectScopeUser:
 			fallthrough
 		default:
-			return "", apperrors.Wrap(apperrors.ErrObjectScopeInvalid)
+			return "", hperrors.Wrap(hperrors.ErrObjectScopeInvalid)
 		}
 	}
 
 	err := uc.volumeService.MakeSubDirInHost(ctx, directory, subpath, false)
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 
 	directory = filepath.Join(directory, subpath)

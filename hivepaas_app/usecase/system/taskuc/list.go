@@ -3,10 +3,10 @@ package taskuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc/taskdto"
@@ -29,13 +29,13 @@ func (uc *UC) ListTask(
 		case base.SystemJobNameSslRenewal:
 			settingType = base.SettingTypeSSLRenewal
 		default:
-			return nil, apperrors.Wrap(apperrors.ErrArgumentInvalid).WithParam("Param", "Job name")
+			return nil, hperrors.Wrap(hperrors.ErrArgumentInvalid).WithParam("Param", "Job name")
 		}
 		setting, err := uc.settingRepo.GetSingle(ctx, uc.db, entity.NewObjectScopeGlobal(), settingType, false,
 			bunex.SelectColumns("id"),
 		)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		targetIDs = append(targetIDs, setting.ID)
 	}
@@ -53,12 +53,12 @@ func (uc *UC) ListTask(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp, err := taskdto.TransformTasks(listResp.Tasks, listResp.TaskInfoMap)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &taskdto.ListTaskResp{

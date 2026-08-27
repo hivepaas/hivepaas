@@ -1,8 +1,8 @@
 package nodedto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type GetNodeJoinCommandReq struct {
@@ -14,7 +14,7 @@ func NewGetNodeJoinCommandReq() *GetNodeJoinCommandReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *GetNodeJoinCommandReq) Validate() apperrors.ValidationErrors {
+func (req *GetNodeJoinCommandReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

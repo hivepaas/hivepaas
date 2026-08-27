@@ -3,10 +3,10 @@ package oauthdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -26,11 +26,11 @@ func NewListOAuthReq() *ListOAuthReq {
 	}
 }
 
-func (req *ListOAuthReq) Validate() apperrors.ValidationErrors {
+func (req *ListOAuthReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.ListSettingReq.Validate()...)
 	validators = append(validators, basedto.ValidateSlice(req.Kind, true, 0, base.AllOAuthKinds, "kind")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListOAuthResp struct {
@@ -46,7 +46,7 @@ func TransformOAuths(
 	for _, setting := range settings {
 		item, err := TransformOAuth(setting, input)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

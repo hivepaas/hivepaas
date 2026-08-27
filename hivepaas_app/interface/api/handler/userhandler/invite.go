@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
 )
 
@@ -17,8 +17,8 @@ import (
 // @Produce json
 // @Id      getUserInviteInfo
 // @Success 200 {object} userdto.GetUserInviteInfoResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/invite/info [get]
 func (h *Handler) GetUserInviteInfo(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, "", base.ActionTypeWrite, false)
@@ -50,8 +50,8 @@ func (h *Handler) GetUserInviteInfo(ctx *gin.Context) {
 // @Id      inviteUser
 // @Param   body body userdto.InviteUserReq true "request data"
 // @Success 200 {object} userdto.InviteUserResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/invite [post]
 func (h *Handler) InviteUser(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, "", base.ActionTypeWrite, false)
@@ -83,8 +83,8 @@ func (h *Handler) InviteUser(ctx *gin.Context) {
 // @Id      beginUserSignup
 // @Param   body body userdto.BeginUserSignupReq true "request data"
 // @Success 200 {object} userdto.BeginUserSignupResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/signup-begin [post]
 func (h *Handler) BeginUserSignup(ctx *gin.Context) {
 	req := userdto.NewBeginUserSignupReq()
@@ -110,8 +110,8 @@ func (h *Handler) BeginUserSignup(ctx *gin.Context) {
 // @Id      completeUserSignup
 // @Param   body body userdto.CompleteUserSignupReq true "request data"
 // @Success 200 {object} userdto.CompleteUserSignupResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/signup-complete [post]
 func (h *Handler) CompleteUserSignup(ctx *gin.Context) {
 	req := userdto.NewCompleteUserSignupReq()

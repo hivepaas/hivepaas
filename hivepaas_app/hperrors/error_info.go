@@ -1,4 +1,4 @@
-package apperrors
+package hperrors
 
 // ErrorInfo error info designed for JSON api.
 type ErrorInfo struct {

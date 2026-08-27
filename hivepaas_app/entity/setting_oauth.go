@@ -3,8 +3,8 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -46,7 +46,7 @@ func (s *OAuth) GetResourceLinks(setting *Setting) []*ResLink {
 func (s *OAuth) Decrypt() error {
 	_, err := s.ClientSecret.GetPlain()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -56,7 +56,7 @@ func (s *Setting) AsOAuth() (*OAuth, error) {
 	if s.Type == base.SettingTypeGithubApp {
 		ghApp, err := s.AsGithubApp()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		return ghApp.ConvertAsOAuth(), nil
 	}

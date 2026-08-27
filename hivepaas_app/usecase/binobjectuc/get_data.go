@@ -7,9 +7,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/binobjectuc/binobjectdto"
 )
@@ -27,7 +27,7 @@ func (uc *UC) GetBinObjectData(
 		bunex.SelectWhere("bin_object.status = ?", base.BinObjectStatusActive),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	extraHeaders := map[string]string{}

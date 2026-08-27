@@ -8,9 +8,9 @@ import (
 	"os/exec"
 	"sync"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
@@ -32,12 +32,12 @@ func (s *service) buildImageWithDocker(
 	}
 
 	if err := s.ensureCustomBuilder(ctx, builderName, res); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	dockerConfigDir, cleanup, err := s.prepareDockerConfigDir(data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer cleanup()
 
@@ -84,15 +84,15 @@ func (s *service) buildImageWithDocker(
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if err := cmd.Start(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	var wg sync.WaitGroup
@@ -105,7 +105,7 @@ func (s *service) buildImageWithDocker(
 	wg.Wait()
 
 	if err := cmd.Wait(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/imageuc/imagedto"
 )
 
@@ -22,8 +22,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} imagedto.ListImageResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/images [get]
 func (h *Handler) ListImage(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, base.ResourceTypeImage, base.ActionTypeRead, "")
@@ -55,8 +55,8 @@ func (h *Handler) ListImage(ctx *gin.Context) {
 // @Id      getClusterImage
 // @Param   imageID path string true "image ID"
 // @Success 200 {object} imagedto.GetImageResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/images/{imageID} [get]
 func (h *Handler) GetImage(ctx *gin.Context) {
 	auth, imageID, err := h.getAuth(ctx, base.ResourceTypeImage, base.ActionTypeRead, "imageID")
@@ -89,8 +89,8 @@ func (h *Handler) GetImage(ctx *gin.Context) {
 // @Id      getClusterImageInspection
 // @Param   imageID path string true "image ID"
 // @Success 200 {object} imagedto.GetImageInspectionResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/images/{imageID}/inspect [get]
 func (h *Handler) GetImageInspection(ctx *gin.Context) {
 	auth, imageID, err := h.getAuth(ctx, base.ResourceTypeImage, base.ActionTypeRead, "imageID")
@@ -123,8 +123,8 @@ func (h *Handler) GetImageInspection(ctx *gin.Context) {
 // @Id      createClusterImage
 // @Param   body body imagedto.CreateImageReq true "request data"
 // @Success 200 {object} imagedto.CreateImageResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/images [post]
 func (h *Handler) CreateImage(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, base.ResourceTypeImage, base.ActionTypeWrite, "")
@@ -156,8 +156,8 @@ func (h *Handler) CreateImage(ctx *gin.Context) {
 // @Id      deleteClusterImage
 // @Param   imageID path string true "image ID"
 // @Success 200 {object} imagedto.DeleteImageResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/images/{imageID} [delete]
 func (h *Handler) DeleteImage(ctx *gin.Context) {
 	auth, imageID, err := h.getAuth(ctx, base.ResourceTypeImage, base.ActionTypeDelete, "imageID")

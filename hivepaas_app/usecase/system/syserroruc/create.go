@@ -5,9 +5,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -23,7 +23,7 @@ func (uc *UC) CreateSysError(
 
 	err := uc.persistData(ctx, uc.db, persistingData)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	createdItem := persistingData.InsertingSysErrors[0]
@@ -62,11 +62,11 @@ func (uc *UC) persistData(
 ) error {
 	err := uc.appErrorRepo.DeleteMulti(ctx, db, persistingData.DeletingSysErrors)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	err = uc.appErrorRepo.InsertMulti(ctx, db, persistingData.InsertingSysErrors)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

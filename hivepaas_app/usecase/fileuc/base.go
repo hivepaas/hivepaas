@@ -3,9 +3,9 @@ package fileuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -38,7 +38,7 @@ func (uc *UC) loadScopeData(
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.ScopeProject = data.ScopeApp.Project
 
@@ -50,7 +50,7 @@ func (uc *UC) loadScopeData(
 			),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.ScopeProject = data.ScopeProjectEnv.Project
 
@@ -59,13 +59,13 @@ func (uc *UC) loadScopeData(
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 	case base.ObjectScopeUser:
 		data.ScopeUser, err = uc.userService.LoadUser(ctx, db, scope.UserID, requireActive)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:

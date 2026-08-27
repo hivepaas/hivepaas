@@ -3,10 +3,10 @@ package apppreviewuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apppreviewuc/apppreviewdto"
 )
@@ -28,7 +28,7 @@ func (uc *UC) PrepareCreatePreview(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp := &apppreviewdto.PrepareCreatePreviewResp{
@@ -50,18 +50,18 @@ func (uc *UC) PrepareCreatePreview(
 
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
 	if deploymentSetting == nil {
-		return nil, apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
+		return nil, hperrors.Wrap(hperrors.ErrDeploymentMethodRepoRequired)
 	}
 	deploymentSettings := deploymentSetting.MustAsAppDeploymentSettings()
 	repoSource := deploymentSettings.RepoSource
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo || repoSource == nil {
-		return nil, apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
+		return nil, hperrors.Wrap(hperrors.ErrDeploymentMethodRepoRequired)
 	}
 
 	refObjects := entity.NewRefObjects()
 	err = uc.settingService.LoadRefObjects(ctx, uc.db, &refObjects, app.GetObjectScope(), true, app.Settings...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp.Data.RepoURL = repoSource.RepoURL

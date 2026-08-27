@@ -5,10 +5,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc/appdeploymentdto"
@@ -21,7 +21,7 @@ func (uc *UC) ListDeployment(
 ) (*appdeploymentdto.ListDeploymentResp, error) {
 	deploymentInfoMap, err := uc.deploymentInfoRepo.GetAll(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	inprogressDeploymentIDs := make([]string, 0, len(deploymentInfoMap))
 	for id, info := range deploymentInfoMap {
@@ -68,12 +68,12 @@ func (uc *UC) ListDeployment(
 
 	deployments, paging, err := uc.deploymentRepo.List(ctx, uc.db, req.AppID, &req.Paging, listOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	triggerUserMap, err := uc.loadDeploymentTriggerUsers(ctx, uc.db, deployments)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	input := &appdeploymentdto.DeploymentTransformInput{
@@ -82,7 +82,7 @@ func (uc *UC) ListDeployment(
 	}
 	resp, err := appdeploymentdto.TransformDeployments(deployments, input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appdeploymentdto.ListDeploymentResp{
@@ -108,7 +108,7 @@ func (uc *UC) loadDeploymentTriggerUsers(
 	}
 	userMap, err := uc.userService.LoadUsersSkipMissing(ctx, db, userIDs, false)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return userMap, nil
 }

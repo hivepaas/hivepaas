@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
@@ -15,7 +15,7 @@ func (cli *checkoutCli) clone(
 ) (err error) {
 	err = os.MkdirAll(cli.opts.CheckoutDir, base.DirModeDefault)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	var cmd *exec.Cmd
@@ -34,7 +34,7 @@ func (cli *checkoutCli) clone(
 	out, err := cmd.CombinedOutput()
 	addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/domainhelper"
@@ -21,8 +21,8 @@ func (s *service) VerifyProjectDomains(
 	// Load domain settings in project
 	domainSetting, err := s.settingRepo.GetSingle(ctx, db, entity.NewObjectScopeProject(projectID),
 		base.SettingTypeDomainSettings, true)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if domainSetting == nil {
 		return nil
@@ -33,7 +33,7 @@ func (s *service) VerifyProjectDomains(
 	}
 	for _, domain := range domains {
 		if !domainhelper.IsDomainAllowed(domain, domainSettings.AllowedDomains) {
-			return apperrors.Wrap(apperrors.ErrDomainUnallowed).WithParam("Domain", domain)
+			return hperrors.Wrap(hperrors.ErrDomainUnallowed).WithParam("Domain", domain)
 		}
 	}
 
@@ -62,10 +62,10 @@ func (s *service) VerifyDomainsAvailable(
 	}
 	conflictDomains, _, err := s.resLinkRepo.List(ctx, db, nil, listOpts...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if len(conflictDomains) > 0 {
-		return apperrors.Wrap(apperrors.ErrDomainInUse).WithParam("Domain", conflictDomains[0].DstID)
+		return hperrors.Wrap(hperrors.ErrDomainInUse).WithParam("Domain", conflictDomains[0].DstID)
 	}
 	return nil
 }

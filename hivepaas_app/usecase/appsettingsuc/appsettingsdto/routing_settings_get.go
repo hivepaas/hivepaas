@@ -5,11 +5,11 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -28,12 +28,12 @@ func NewGetAppRoutingSettingsReq() *GetAppRoutingSettingsReq {
 	return &GetAppRoutingSettingsReq{}
 }
 
-func (req *GetAppRoutingSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetAppRoutingSettingsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetAppRoutingSettingsResp struct {
@@ -165,11 +165,11 @@ func TransformRoutingSettings(input *AppRoutingSettingsTransformInput) (resp *Ro
 	}
 
 	if err = copier.Copy(&resp, input.RoutingSettings); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	routingSettings := input.RoutingSettings.MustAsAppRoutingSettings()
 	if err = copier.Copy(&resp, routingSettings); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	for _, domain := range resp.Domains {

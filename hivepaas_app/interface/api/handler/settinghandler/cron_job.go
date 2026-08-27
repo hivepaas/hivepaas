@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
@@ -22,8 +22,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} schedjobdto.ListSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/sched-jobs [get]
 func (h *Handler) ListSchedJob(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeGlobal)
@@ -37,8 +37,8 @@ func (h *Handler) ListSchedJob(ctx *gin.Context) {
 // @Id      getSettingSchedJob
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} schedjobdto.GetSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/sched-jobs/{itemID} [get]
 func (h *Handler) GetSchedJob(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeGlobal)
@@ -52,8 +52,8 @@ func (h *Handler) GetSchedJob(ctx *gin.Context) {
 // @Id      createSettingSchedJob
 // @Param   body body schedjobdto.CreateSchedJobReq true "request data"
 // @Success 201 {object} schedjobdto.CreateSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/sched-jobs [post]
 func (h *Handler) CreateSchedJob(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeGlobal)
@@ -68,8 +68,8 @@ func (h *Handler) CreateSchedJob(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body schedjobdto.UpdateSchedJobReq true "request data"
 // @Success 200 {object} schedjobdto.UpdateSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/sched-jobs/{itemID} [put]
 func (h *Handler) UpdateSchedJob(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeGlobal)
@@ -84,8 +84,8 @@ func (h *Handler) UpdateSchedJob(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body schedjobdto.UpdateSchedJobStatusReq true "request data"
 // @Success 200 {object} schedjobdto.UpdateSchedJobStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/sched-jobs/{itemID}/status [put]
 func (h *Handler) UpdateSchedJobStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeSchedJob, base.ObjectScopeGlobal)
@@ -99,8 +99,8 @@ func (h *Handler) UpdateSchedJobStatus(ctx *gin.Context) {
 // @Id      deleteSettingSchedJob
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} schedjobdto.DeleteSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/sched-jobs/{itemID} [delete]
 func (h *Handler) DeleteSchedJob(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeGlobal)
@@ -114,8 +114,8 @@ func (h *Handler) DeleteSchedJob(ctx *gin.Context) {
 // @Id      schedJobCalcNextRuns
 // @Param   body body schedjobdto.CalcNextRunsReq true "request data"
 // @Success 200 {object} schedjobdto.CalcNextRunsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/sched-jobs/calc-next-runs [post]
 func (h *Handler) SchedJobCalcNextRuns(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)

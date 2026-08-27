@@ -6,8 +6,8 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -38,20 +38,20 @@ func (uc *UC) CreateNetwork(
 			}
 			createResp, err := uc.createNetworkInDocker(ctx, req.CreateNetworkBaseReq)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			netEntity.RefID = createResp.ID
 
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = req.Driver
 			if err := pData.Setting.SetData(netEntity); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &networkdto.CreateNetworkResp{
@@ -64,11 +64,11 @@ func (uc *UC) createNetworkInDocker(
 	req *networkdto.CreateNetworkBaseReq,
 ) (*client.NetworkCreateResult, error) {
 	_, err := uc.dockerManager.NetworkInspect(ctx, req.Name)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
 	}
 	if err == nil {
-		return nil, apperrors.NewAlreadyExist("Cluster network")
+		return nil, hperrors.NewAlreadyExist("Cluster network")
 	}
 
 	createResp, err := uc.dockerManager.NetworkCreate(ctx, req.Name, func(opts *client.NetworkCreateOptions) {
@@ -82,7 +82,7 @@ func (uc *UC) createNetworkInDocker(
 		opts.Labels = req.Labels
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return createResp, nil

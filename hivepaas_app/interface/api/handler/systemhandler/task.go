@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc/taskdto"
 )
@@ -25,8 +25,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} taskdto.ListTaskResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/tasks [get]
 func (h *Handler) ListTask(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
@@ -62,8 +62,8 @@ func (h *Handler) ListTask(ctx *gin.Context) {
 // @Id      getTask
 // @Param   taskID path string true "task ID"
 // @Success 200 {object} taskdto.GetTaskResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /tasks/{taskID} [get]
 func (h *Handler) GetTask(ctx *gin.Context) {
 	taskID, err := h.ParseStringParam(ctx, "taskID")
@@ -108,8 +108,8 @@ func (h *Handler) GetTask(ctx *gin.Context) {
 // @Id      getTaskStatus
 // @Param   taskID path string true "task ID"
 // @Success 200 {object} taskdto.GetTaskStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /tasks/{taskID}/status [get]
 func (h *Handler) GetTaskStatus(ctx *gin.Context) {
 	taskID, err := h.ParseStringParam(ctx, "taskID")
@@ -159,8 +159,8 @@ func (h *Handler) GetTaskStatus(ctx *gin.Context) {
 // @Param   taskID path string true "task ID"
 // @Param   body body taskdto.CancelTaskReq true "request data"
 // @Success 200 {object} taskdto.CancelTaskResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/tasks/{taskID}/cancel [post]
 func (h *Handler) CancelTask(ctx *gin.Context) {
 	taskID, err := h.ParseStringParam(ctx, "taskID")
@@ -204,8 +204,8 @@ func (h *Handler) CancelTask(ctx *gin.Context) {
 // @Id      getTaskLogs
 // @Param   taskID path string true "task ID"
 // @Success 200 {object} taskdto.GetTaskLogsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/tasks/{taskID}/logs [get]
 func (h *Handler) GetTaskLogs(ctx *gin.Context) {
 	taskID, err := h.ParseStringParam(ctx, "taskID")

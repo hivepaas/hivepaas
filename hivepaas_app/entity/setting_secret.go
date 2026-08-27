@@ -5,8 +5,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
@@ -59,7 +59,7 @@ func (s *Secret) GetResourceLinks(setting *Setting) []*ResLink {
 func (s *Secret) Decrypt() error {
 	_, err := s.Value.GetPlain()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -67,12 +67,12 @@ func (s *Secret) Decrypt() error {
 func (s *Secret) ValueAsBytes() ([]byte, error) {
 	plain, err := s.Value.GetPlain()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if s.Base64 {
 		plainBytes, err := base64.StdEncoding.DecodeString(plain)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		return plainBytes, nil
 	}
@@ -82,7 +82,7 @@ func (s *Secret) ValueAsBytes() ([]byte, error) {
 func (s *Secret) ValueSize() (int64, error) {
 	plain, err := s.Value.GetPlain()
 	if err != nil {
-		return 0, apperrors.Wrap(err)
+		return 0, hperrors.Wrap(err)
 	}
 	return int64(len(plain)), nil //nolint:gosec
 }

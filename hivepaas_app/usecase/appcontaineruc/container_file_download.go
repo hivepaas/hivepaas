@@ -4,9 +4,9 @@ import (
 	"context"
 	"io"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/containerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
@@ -27,10 +27,10 @@ func (uc *UC) DownloadFileFromContainer(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if app.ServiceID == "" {
-		return nil, apperrors.NewUnavailable("App service").
+		return nil, hperrors.NewUnavailable("App service").
 			WithMsgLog("service not exist for app")
 	}
 
@@ -38,10 +38,10 @@ func (uc *UC) DownloadFileFromContainer(
 		task, _, taskErr := uc.dockerManager.ServiceTaskGetRunning(ctx, app.ServiceID,
 			0, 0, 0, nil)
 		if taskErr != nil {
-			return nil, apperrors.Wrap(taskErr)
+			return nil, hperrors.Wrap(taskErr)
 		}
 		if task == nil || task.Status.ContainerStatus == nil || task.Status.ContainerStatus.ContainerID == "" {
-			return nil, apperrors.Wrap(apperrors.ErrActiveContainerNotFound).WithParam("App", app.Name)
+			return nil, hperrors.Wrap(hperrors.ErrActiveContainerNotFound).WithParam("App", app.Name)
 		}
 
 		req.ContainerID = task.Status.ContainerStatus.ContainerID
@@ -57,19 +57,19 @@ func (uc *UC) DownloadFileFromContainer(
 
 	currNodeID, err := uc.dockerManager.NodeCurrentID(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	isRemote := req.NodeID != "" && req.NodeID != currNodeID
 	if isRemote {
 		agentAddr, err := uc.agentService.GetAgentAddrForNode(ctx, req.NodeID)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		agentClient, err := containerservice.NewContainerServiceClient(agentAddr)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		remoteRes, err := agentClient.ContainerCopyFrom(ctx, &containeragentdto.DownloadFileInput{
@@ -80,7 +80,7 @@ func (uc *UC) DownloadFileFromContainer(
 		})
 		if err != nil {
 			_ = agentClient.Close()
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		resultFileName = remoteRes.FileName
@@ -93,7 +93,7 @@ func (uc *UC) DownloadFileFromContainer(
 	} else {
 		res, err := uc.dockerManager.ContainerCopyFrom(ctx, req.ContainerID, req.Path)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		resp, err := uc.containerFileService.PrepareDownloadStream(ctx, &containerfileservice.PrepareDownloadStreamReq{
@@ -105,7 +105,7 @@ func (uc *UC) DownloadFileFromContainer(
 		})
 		if err != nil {
 			_ = res.Content.Close()
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		resultFileName = resp.FileName
@@ -133,7 +133,7 @@ func (r *clientReadCloser) Read(p []byte) (int, error) {
 		if err == io.EOF {
 			return n, io.EOF
 		}
-		return n, apperrors.Wrap(err)
+		return n, hperrors.Wrap(err)
 	}
 	return n, nil
 }
@@ -151,7 +151,7 @@ func (r *clientReadCloser) Close() error {
 		}
 	}
 	if len(errs) > 0 {
-		return apperrors.Wrap(errs[0])
+		return hperrors.Wrap(errs[0])
 	}
 	return nil
 }

@@ -6,10 +6,10 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 )
 
@@ -32,16 +32,16 @@ type DeployAppReq struct {
 func (req *DeployAppReq) ApplyTo(setting *entity.AppDeploymentSettings) error {
 	setting.ActiveMethod = gofn.Coalesce(req.ActiveMethod, setting.ActiveMethod)
 	if setting.ActiveMethod == "" {
-		return apperrors.Wrap(apperrors.ErrSettingMissing).WithNTParam("Name", "activeMethod")
+		return hperrors.Wrap(hperrors.ErrSettingMissing).WithNTParam("Name", "activeMethod")
 	}
 	switch setting.ActiveMethod {
 	case base.DeploymentMethodImage:
 		if err := req.ImageSource.ApplyTo(setting.ImageSource); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	case base.DeploymentMethodRepo:
 		if err := req.RepoSource.ApplyTo(setting.RepoSource); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -53,7 +53,7 @@ type DeploymentImageSourceReq struct {
 
 func (req *DeploymentImageSourceReq) ApplyTo(setting *entity.DeploymentImageSource) error {
 	if setting == nil || setting.Image == "" {
-		return apperrors.Wrap(apperrors.ErrSettingMissing).WithNTParam("Name", "imageSource.image")
+		return hperrors.Wrap(hperrors.ErrSettingMissing).WithNTParam("Name", "imageSource.image")
 	}
 	if req != nil {
 		if req.ImageTag != "" {
@@ -84,7 +84,7 @@ type DeploymentRepoSourceReq struct {
 
 func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource) error {
 	if setting == nil || setting.RepoURL == "" {
-		return apperrors.Wrap(apperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoURL")
+		return hperrors.Wrap(hperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoURL")
 	}
 	if req != nil {
 		setting.RepoRef = gofn.Coalesce(req.RepoRef, setting.RepoRef)
@@ -101,7 +101,7 @@ func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource
 		}
 	}
 	if setting.RepoRef == "" {
-		return apperrors.Wrap(apperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoRef")
+		return hperrors.Wrap(hperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoRef")
 	}
 	return nil
 }
@@ -122,7 +122,7 @@ func NewDeployAppReq() *DeployAppReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *DeployAppReq) Validate() apperrors.ValidationErrors {
+func (req *DeployAppReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
@@ -131,7 +131,7 @@ func (req *DeployAppReq) Validate() apperrors.ValidationErrors {
 		base.AllDeploymentMethods, "activeMethod")...)
 	validators = append(validators, req.ImageSource.validate("imageSource")...)
 	validators = append(validators, req.RepoSource.validate("repoSource")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type DeployAppResp struct {

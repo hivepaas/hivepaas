@@ -7,10 +7,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -28,7 +28,7 @@ func (uc *UC) CreateFile(
 		baseFileData: &baseFileData{},
 	}
 	if err := uc.loadCreateFileData(ctx, uc.db, req, createData); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	timeNow := timeutil.NowUTC()
@@ -38,16 +38,16 @@ func (uc *UC) CreateFile(
 	storageSetting, err := uc.settingRepo.GetByID(ctx, uc.db, req.Scope, base.SettingTypeCloudStorage,
 		req.StorageID, true)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to get storage setting")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to get storage setting")
 	}
 	s3Client, err := s3.NewClientFromSetting(ctx, storageSetting)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	s3Object, err := s3Client.HeadObject(ctx, req.Bucket, req.FilePath)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to head object from S3")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to head object from S3")
 	}
 	if s3Object.ContentLength != nil {
 		fileSize = *s3Object.ContentLength
@@ -74,7 +74,7 @@ func (uc *UC) CreateFile(
 
 	err = uc.fileRepo.Insert(ctx, uc.db, file)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to insert file")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to insert file")
 	}
 
 	return &filedto.CreateFileResp{
@@ -94,7 +94,7 @@ func (uc *UC) loadCreateFileData(
 ) (err error) {
 	err = uc.loadScopeData(ctx, db, req.Scope, data.baseFileData)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

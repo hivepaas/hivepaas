@@ -3,9 +3,9 @@ package webhookuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc/webhookdto"
@@ -19,11 +19,11 @@ func (uc *UC) HandleRepoWebhook(
 
 	data := &handleRepoWebhookData{}
 	if err := uc.loadWebhookSettings(ctx, db, req, data); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if err := uc.processRepoWebhook(ctx, db, req, data); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &webhookdto.HandleRepoWebhookResp{}, nil
@@ -51,11 +51,11 @@ func (uc *UC) loadWebhookSettings(
 		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeRepoWebhook, base.SettingTypeGithubApp),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	_, err = setting.AsRepoWebhook()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.WebhookSetting = setting
 	return nil
@@ -81,10 +81,10 @@ func (uc *UC) processRepoWebhook(
 	case base.WebhookKindGogs:
 		err = uc.parseGogsWebhook(req.Request, webhook.Secret, eventData)
 	default:
-		return apperrors.Wrap(apperrors.ErrWebhookTypeUnsupported).WithParam("Type", webhook.Kind)
+		return hperrors.Wrap(hperrors.ErrWebhookTypeUnsupported).WithParam("Type", webhook.Kind)
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	switch {
@@ -98,7 +98,7 @@ func (uc *UC) processRepoWebhook(
 		err = uc.processWebhookEventPRSynchronized(ctx, db, eventData.PRSynchronized, data)
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

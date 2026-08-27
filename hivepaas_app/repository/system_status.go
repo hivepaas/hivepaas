@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -33,10 +33,10 @@ func (repo *systemStatusRepo) Get(ctx context.Context, db database.IDB,
 
 	err := query.Scan(ctx)
 	if systemStatus == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("SystemStatus").WithCause(err)
+		return nil, hperrors.NewNotFound("SystemStatus").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return systemStatus, nil
 }
@@ -49,7 +49,7 @@ func (repo *systemStatusRepo) Upsert(ctx context.Context, db database.IDB, syste
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

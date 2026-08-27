@@ -3,9 +3,9 @@ package syserroruc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -21,7 +21,7 @@ func (uc *UC) DeleteSysError(
 		errData := &deleteSysErrorData{}
 		err := uc.loadSysErrorDataForDelete(ctx, db, req, errData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingSysErrorData{}
@@ -30,7 +30,7 @@ func (uc *UC) DeleteSysError(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &syserrordto.DeleteSysErrorResp{}, nil
@@ -50,7 +50,7 @@ func (uc *UC) loadSysErrorDataForDelete(
 		bunex.SelectFor("UPDATE"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.SysError = appError
 

@@ -3,8 +3,8 @@ package configfileuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc/configfiledto"
@@ -33,7 +33,7 @@ func (uc *UC) UpdateConfigFileStatus(
 					err = uc.ClusterSecretService.RemoveConfigForApp(ctx, db, req.Scope.App, configFile)
 				}
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 				pData.Setting.MustSetData(configFile)
 			}
@@ -41,7 +41,7 @@ func (uc *UC) UpdateConfigFileStatus(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &configfiledto.UpdateConfigFileStatusResp{}, nil

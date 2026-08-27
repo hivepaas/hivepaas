@@ -5,9 +5,9 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (s *service) UpdateAppGlobalRoutingNetwork(
@@ -18,7 +18,7 @@ func (s *service) UpdateAppGlobalRoutingNetwork(
 ) error {
 	globalNetworkID, err := s.GetGlobalRoutingNetworkID(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	spec := &service.Spec

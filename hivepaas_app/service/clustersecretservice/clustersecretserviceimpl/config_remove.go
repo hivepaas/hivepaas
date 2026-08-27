@@ -8,8 +8,8 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -26,10 +26,10 @@ func (s *service) ConfigRemove(
 	fn := func() error {
 		_, err := s.dockerManager.ConfigRemove(ctx, configID)
 		if err != nil {
-			if errors.Is(err, apperrors.ErrNotFound) {
+			if errors.Is(err, hperrors.ErrNotFound) {
 				return nil
 			}
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	}
@@ -43,7 +43,7 @@ func (s *service) ConfigRemove(
 	}
 	if err != nil {
 		// TODO: create a cleanup task
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -90,7 +90,7 @@ func (s *service) RemoveConfigForApp(
 	// Remove the config items from the swarm service of the app
 	err = s.removeSwarmConfigFromService(ctx, app.ServiceID, configRefs...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If this app is parent of some other apps, also remove the config from the child apps
@@ -99,12 +99,12 @@ func (s *service) RemoveConfigForApp(
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
 			err = s.removeSwarmConfigFromService(ctx, childApp.ServiceID, configRefs...)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 	}
@@ -112,8 +112,8 @@ func (s *service) RemoveConfigForApp(
 	// Now delete the config items from docker
 	for _, configRef := range configRefs {
 		err = s.ConfigRemove(ctx, configRef.ConfigID, itemRemovalRetryMax, itemRemovalRetryDelay)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		configRef.ConfigID = ""
 		configRef.ConfigName = ""
@@ -154,7 +154,7 @@ func (s *service) removeSwarmConfigFromService(
 			return true, nil
 		}, itemRemovalRetryMax, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -171,10 +171,10 @@ func (s *service) deleteOrphanSwarmConfig(
 
 	inspect, err := s.dockerManager.ConfigInspect(ctx, configNameOrID)
 	if err != nil {
-		if errors.Is(err, apperrors.ErrNotFound) {
+		if errors.Is(err, hperrors.ErrNotFound) {
 			return nil
 		}
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	orphanSwarmConfig := &inspect.Config
 
@@ -187,7 +187,7 @@ func (s *service) deleteOrphanSwarmConfig(
 	// Remove the config from the swarm service of the app
 	err = s.removeSwarmConfigFromService(ctx, app.ServiceID, orphanSwarmRef)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If this app is parent of some other apps, also remove the config from the child apps
@@ -196,20 +196,20 @@ func (s *service) deleteOrphanSwarmConfig(
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
 			err = s.removeSwarmConfigFromService(ctx, childApp.ServiceID, orphanSwarmRef)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 	}
 
 	// Now delete the config
 	_, err = s.dockerManager.ConfigRemove(ctx, orphanSwarmConfig.ID)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 
 	return nil

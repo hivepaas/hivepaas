@@ -3,8 +3,8 @@ package schedjobuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc/taskdto"
@@ -18,7 +18,7 @@ func (uc *UC) GetSchedJobTask(
 	req.Type = currentSettingType
 	jobSetting, err := uc.GetSettingByID(ctx, uc.DB, &req.BaseSettingReq, req.JobID, false)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	getResp, err := uc.taskService.GetTask(ctx, uc.DB, &taskservice.GetTaskReq{
@@ -26,12 +26,12 @@ func (uc *UC) GetSchedJobTask(
 		TargetID: jobSetting.ID,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp, err := taskdto.TransformTask(getResp.Task, getResp.TaskInfo)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &schedjobdto.GetSchedJobTaskResp{

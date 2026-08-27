@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/builduc/builddto"
 )
 
@@ -18,8 +18,8 @@ import (
 // @Id      clearClusterBuildCache
 // @Param   body body builddto.ClearBuildCacheReq true "request data"
 // @Success 200 {object} builddto.ClearBuildCacheResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/build/cache-clear [post]
 func (h *Handler) ClearBuildCache(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, base.ResourceTypeCluster, base.ActionTypeWrite, "")

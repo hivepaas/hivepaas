@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (s *service) CreateRedisLock(
@@ -14,7 +14,7 @@ func (s *service) CreateRedisLock(
 ) (success bool, releaser func(), err error) {
 	success, err = s.redisClient.SetNX(ctx, key, "1", exp).Result()
 	if err != nil {
-		return false, nil, apperrors.Wrap(err)
+		return false, nil, hperrors.Wrap(err)
 	}
 	return success, func() {
 		_, _ = s.redisClient.Del(ctx, key).Result()

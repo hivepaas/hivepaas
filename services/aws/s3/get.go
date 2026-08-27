@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 )
 
@@ -24,7 +24,7 @@ func (client *Client) GetObject(
 		Key:    aws.String(objectKey),
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return result, nil
 }
@@ -53,7 +53,7 @@ func (client *Client) PresignGetObject(
 		opts.Expires = expiration
 	})
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	return request.URL, nil
 }
@@ -68,7 +68,7 @@ func (client *Client) HeadObject(
 		Key:    aws.String(objectKey),
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return result, nil
 }

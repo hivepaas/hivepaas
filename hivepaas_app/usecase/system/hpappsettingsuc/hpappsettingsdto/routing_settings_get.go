@@ -1,9 +1,9 @@
 package hpappsettingsdto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
@@ -16,7 +16,7 @@ func NewGetRoutingSettingsReq() *GetRoutingSettingsReq {
 	return &GetRoutingSettingsReq{}
 }
 
-func (req *GetRoutingSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetRoutingSettingsReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 
@@ -64,11 +64,11 @@ func TransformRoutingSettings(input *RoutingSettingsTransformInput) (resp *Routi
 	}
 
 	if err = copier.Copy(&resp, input.RoutingSettings); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	routingSettings := input.RoutingSettings.MustAsAppRoutingSettings()
 	if err = copier.Copy(&resp, routingSettings); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	for _, domain := range resp.Domains {

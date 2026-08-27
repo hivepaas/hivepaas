@@ -3,8 +3,8 @@ package settinghandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc/basicauthdto"
 )
 
@@ -19,8 +19,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} basicauthdto.ListBasicAuthResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/basic-auth [get]
 func (h *Handler) ListBasicAuth(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
@@ -34,8 +34,8 @@ func (h *Handler) ListBasicAuth(ctx *gin.Context) {
 // @Id      getSettingBasicAuth
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} basicauthdto.GetBasicAuthResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/basic-auth/{itemID} [get]
 func (h *Handler) GetBasicAuth(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
@@ -49,8 +49,8 @@ func (h *Handler) GetBasicAuth(ctx *gin.Context) {
 // @Id      createSettingBasicAuth
 // @Param   body body basicauthdto.CreateBasicAuthReq true "request data"
 // @Success 201 {object} basicauthdto.CreateBasicAuthResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/basic-auth [post]
 func (h *Handler) CreateBasicAuth(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
@@ -65,8 +65,8 @@ func (h *Handler) CreateBasicAuth(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body basicauthdto.UpdateBasicAuthReq true "request data"
 // @Success 200 {object} basicauthdto.UpdateBasicAuthResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/basic-auth/{itemID} [put]
 func (h *Handler) UpdateBasicAuth(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
@@ -81,8 +81,8 @@ func (h *Handler) UpdateBasicAuth(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body basicauthdto.UpdateBasicAuthStatusReq true "request data"
 // @Success 200 {object} basicauthdto.UpdateBasicAuthStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/basic-auth/{itemID}/status [put]
 func (h *Handler) UpdateBasicAuthStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)
@@ -96,8 +96,8 @@ func (h *Handler) UpdateBasicAuthStatus(ctx *gin.Context) {
 // @Id      deleteSettingBasicAuth
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} basicauthdto.DeleteBasicAuthResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/basic-auth/{itemID} [delete]
 func (h *Handler) DeleteBasicAuth(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeBasicAuth, base.ObjectScopeGlobal)

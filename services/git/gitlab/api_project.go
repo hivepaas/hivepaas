@@ -5,8 +5,8 @@ import (
 
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListProjectOption func(*gogitlab.ListProjectsOptions)
@@ -31,7 +31,7 @@ func (c *Client) ListProjects(
 
 	output, resp, err := c.client.Projects.ListProjects(listOpts)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 	return output, &basedto.PagingMeta{
 		Offset: int(opts.Page * opts.PerPage),
@@ -59,7 +59,7 @@ func (c *Client) ListAllProjects(
 	for {
 		result, resp, err := client.Projects.ListProjects(projOpts)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		output = append(output, result...)
 		if resp.NextPage <= 0 || opts.Page == resp.NextPage {

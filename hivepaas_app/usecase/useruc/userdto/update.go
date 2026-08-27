@@ -6,9 +6,9 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
 )
 
@@ -38,7 +38,7 @@ func (req *UpdateUserReq) ModifyRequest() error {
 	return nil
 }
 
-func (req *UpdateUserReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateUserReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
 	validators = append(validators, validateUsername(&req.Username, false, "username")...)
@@ -59,7 +59,7 @@ func (req *UpdateUserReq) Validate() apperrors.ValidationErrors {
 		0, base.AllResourceModules, "moduleAccesses")...)
 	validators = append(validators, basedto.ValidateObjectAccessSliceReq(req.ProjectAccesses, true,
 		0, "projectAccesses")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type UpdateUserResp struct {

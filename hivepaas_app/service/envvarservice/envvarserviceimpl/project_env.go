@@ -6,8 +6,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
@@ -22,7 +22,7 @@ func (s *service) BuildEnvVarsInProject(
 
 	err := s.loadVarDataInProject(ctx, db, req, envStore, secretStore)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	refsData := &processRefsData{
@@ -50,7 +50,7 @@ func (s *service) BuildEnvVarsInProject(
 		}
 		if !env.IsLiteral {
 			if err = s.processRefs(env, refsData); err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 		}
 		resultVars = append(resultVars, env)
@@ -83,7 +83,7 @@ func (s *service) loadVarDataInProject(
 
 	loadedVars, loadedSecrets, err := dataLoadFunc(ctx, db, project.GetObjectScope(), req.LoadOptions)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, aVar := range loadedVars {
@@ -103,7 +103,7 @@ func (s *service) loadVarDataInProject(
 		Project: project,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, aVar := range sysVars {
 		envStore[aVar.Key] = aVar

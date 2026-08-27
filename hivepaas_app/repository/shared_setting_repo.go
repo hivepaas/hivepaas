@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -45,10 +45,10 @@ func (repo *sharedSettingRepo) Get(ctx context.Context, db database.IDB, objectI
 
 	err := query.Scan(ctx)
 	if sharedSetting == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("SharedSetting").WithCause(err)
+		return nil, hperrors.NewNotFound("SharedSetting").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return sharedSetting, nil
 }
@@ -66,7 +66,7 @@ func (repo *sharedSettingRepo) List(ctx context.Context, db database.IDB, paging
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -94,7 +94,7 @@ func (repo *sharedSettingRepo) UpsertMulti(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -106,7 +106,7 @@ func (repo *sharedSettingRepo) Update(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -119,7 +119,7 @@ func (repo *sharedSettingRepo) DeleteAllBySetting(ctx context.Context, db databa
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -127,14 +127,14 @@ func (repo *sharedSettingRepo) DeleteAllBySetting(ctx context.Context, db databa
 func (repo *sharedSettingRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
-		return apperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
 	}
 	query := db.NewDelete().Model((*entity.SharedSetting)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

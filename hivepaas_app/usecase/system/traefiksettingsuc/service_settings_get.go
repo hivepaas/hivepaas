@@ -3,9 +3,9 @@ package traefiksettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc/traefiksettingsdto"
 )
 
@@ -16,12 +16,12 @@ func (uc *UC) GetServiceSettings(
 ) (*traefiksettingsdto.GetServiceSettingsResp, error) {
 	setting, err := uc.settingRepo.GetSingle(ctx, uc.db, nil, base.SettingTypeTraefikService, true)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	traefikSvc, err := uc.traefikService.GetTraefikSwarmService(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	respData, err := traefiksettingsdto.TransformServiceSettings(&traefiksettingsdto.ServiceSettingsTransformInput{
@@ -29,7 +29,7 @@ func (uc *UC) GetServiceSettings(
 		TraefikService: traefikSvc,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &traefiksettingsdto.GetServiceSettingsResp{

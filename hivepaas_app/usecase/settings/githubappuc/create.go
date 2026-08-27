@@ -6,11 +6,11 @@ import (
 	gogithub "github.com/google/go-github/v85/github"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -38,17 +38,17 @@ func (uc *UC) CreateGithubApp(
 			pData.Setting.Kind = string(base.SettingTypeGithubApp)
 			err := uc.installGithubAppWebhook(ctx, pData.Setting.ID, githubApp, false)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			err = pData.Setting.SetData(githubApp)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &githubappdto.CreateGithubAppResp{
@@ -78,20 +78,20 @@ func (uc *UC) installGithubAppWebhook(
 
 	privateKey, err := githubApp.PrivateKey.GetPlain()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	client, err := github.NewFromApp(githubApp.AppID, githubApp.InstallationID,
 		reflectutil.UnsafeStrToBytes(privateKey))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	shouldSet := true
 	if !update {
 		hook, err := client.GetAppHookConfig(ctx)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		shouldSet = gofn.PtrValueOrEmpty(hook.URL) != githubApp.WebhookURL
 	}
@@ -102,7 +102,7 @@ func (uc *UC) installGithubAppWebhook(
 			opts.URL = &githubApp.WebhookURL
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil

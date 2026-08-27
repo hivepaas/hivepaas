@@ -7,7 +7,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
@@ -40,7 +40,7 @@ func (s *service) updateTraefikService(
 
 	traefikSvc, err := s.traefikService.GetTraefikSwarmService(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	traefikSvc.Spec.TaskTemplate.ContainerSpec.Image = args.TargetVersion.TraefikImage
@@ -52,18 +52,18 @@ func (s *service) updateTraefikService(
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, traefikSvc.ID, &traefikSvc.Version, &traefikSvc.Spec)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Wait for the update to finish
 	traefikSvc, err = s.dockerManager.ServiceUpdateWait(ctx, traefikSvc.ID, traefikServiceUpdateCheckInterval)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if traefikSvc.UpdateStatus != nil && traefikSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
 		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("service traefik is rolled back",
 			tasklog.TsNow))
-		return apperrors.Wrap(apperrors.ErrActionFailed)
+		return hperrors.Wrap(hperrors.ErrActionFailed)
 	}
 
 	return nil

@@ -9,7 +9,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type VolumeDriver string
@@ -52,7 +52,7 @@ func (m *manager) VolumeList(
 	}
 	resp, err := m.client.VolumeList(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -69,8 +69,8 @@ func (m *manager) VolumeListByIDs(
 
 	if len(volumeIDOrNames) == 1 {
 		inspect, err := m.VolumeInspect(ctx, volumeIDOrNames[0])
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return nil, hperrors.Wrap(err)
 		}
 		if inspect != nil {
 			resp.Items = []volume.Volume{inspect.Volume}
@@ -80,7 +80,7 @@ func (m *manager) VolumeListByIDs(
 
 	listResp, err := m.VolumeList(ctx, options...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	for i := range listResp.Items {
 		vol := &listResp.Items[i]
@@ -109,7 +109,7 @@ func (m *manager) VolumeCreate(
 	}
 	resp, err := m.client.VolumeCreate(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -131,7 +131,7 @@ func (m *manager) VolumeUpdate(
 	if version == nil {
 		resp, err := m.VolumeInspect(ctx, volumeID)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		version = &resp.Volume.ClusterVolume.Version
 	}
@@ -139,7 +139,7 @@ func (m *manager) VolumeUpdate(
 
 	resp, err := m.client.VolumeUpdate(ctx, volumeID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -159,7 +159,7 @@ func (m *manager) VolumeRemove(
 	}
 	resp, err := m.client.VolumeRemove(ctx, volumeID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -177,7 +177,7 @@ func (m *manager) VolumeInspect(
 	}
 	resp, err := m.client.VolumeInspect(ctx, volumeID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -198,7 +198,7 @@ func (m *manager) VolumePrune(
 	}
 	resp, err := m.client.VolumePrune(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }

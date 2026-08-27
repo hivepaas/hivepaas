@@ -7,9 +7,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
@@ -105,7 +105,7 @@ func (e *Executor) execute(
 
 	err = e.loadSchedJobData(ctx, db, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	defer func() {
@@ -122,14 +122,14 @@ func (e *Executor) execute(
 			DestApp:         data.RefObjects.RefApps[schedJob.App.ID],
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.SkipResultNotification = resp.SkipResultNotification
 
 	case base.SchedJobTypeSystemCleanup:
 		setting := data.RefObjects.RefSettings[schedJob.TargetSetting.ID]
 		if setting == nil {
-			return apperrors.NewNotFound("System cleanup settings")
+			return hperrors.NewNotFound("System cleanup settings")
 		}
 		cleanupReq := &syscleanupservice.SysCleanupReq{
 			TaskExecData:       data.TaskExecData,
@@ -138,28 +138,28 @@ func (e *Executor) execute(
 		cleanupReq.SetCleanupFlagsDefault()
 		resp, err := e.sysCleanupService.Cleanup(ctx, db, cleanupReq)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.SkipResultNotification = resp.SkipResultNotification
 
 	case base.SchedJobTypeSystemBackup:
 		setting := data.RefObjects.RefSettings[schedJob.TargetSetting.ID]
 		if setting == nil {
-			return apperrors.NewNotFound("System backup settings")
+			return hperrors.NewNotFound("System backup settings")
 		}
 		resp, err := e.sysBackupService.Backup(ctx, db, &sysbackupservice.SysBackupReq{
 			TaskExecData:      data.TaskExecData,
 			SysBackupSettings: setting.MustAsSystemBackup(),
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.SkipResultNotification = resp.SkipResultNotification
 
 	case base.SchedJobTypeSSLRenewal:
 		setting := data.RefObjects.RefSettings[schedJob.TargetSetting.ID]
 		if setting == nil {
-			return apperrors.NewNotFound("SSL renewal settings")
+			return hperrors.NewNotFound("SSL renewal settings")
 		}
 		resp, err := e.sslRenewalService.SSLRenew(ctx, db, &sslrenewalservice.SSLRenewalReq{
 			TaskExecData:      data.TaskExecData,
@@ -167,7 +167,7 @@ func (e *Executor) execute(
 			RenewalSettings:   setting.MustAsSSLRenewal(),
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.SkipResultNotification = resp.SkipResultNotification
 	}
@@ -182,7 +182,7 @@ func (e *Executor) loadSchedJobData(
 ) (err error) {
 	scope, err := e.scopeService.LoadObjectScope(ctx, db, data.SchedJob.Scope, data.SchedJob.ObjectID, true)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Scope = scope
 
@@ -194,7 +194,7 @@ func (e *Executor) loadSchedJobData(
 	// Load reference objects
 	err = e.settingService.LoadRefObjectsSkipMissing(ctx, db, &data.RefObjects, scope, true, data.SchedJob)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -226,7 +226,7 @@ func (e *Executor) saveLogs(
 
 	logFrames, err := logStore.GetData(ctx, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	_ = logStore.Reset() //nolint
 
@@ -253,7 +253,7 @@ func (e *Executor) saveLogFramesToDB(
 		}
 		err := e.taskLogRepo.InsertMulti(ctx, db, taskLogs)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil

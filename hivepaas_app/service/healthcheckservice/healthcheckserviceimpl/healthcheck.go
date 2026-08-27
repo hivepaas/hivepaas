@@ -8,10 +8,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice"
@@ -44,7 +44,7 @@ func (s *service) Healthcheck(
 			_ = data.Task.AddRun(&entity.TaskRun{
 				StartedAt: data.Task.StartedAt,
 				EndedAt:   data.Task.EndedAt,
-				Error:     apperrors.GetErrorDetail(testErr, ""),
+				Error:     hperrors.GetErrorDetail(testErr, ""),
 			})
 		}
 		data.Task.MustSetOutput(&entity.TaskPeriodicOutput{Healthcheck: data.Output})
@@ -66,7 +66,7 @@ func (s *service) Healthcheck(
 		case base.HealthcheckTypeGRPC:
 			testErr = s.doHealthcheckGRPC(ctx, data)
 		default:
-			testErr = apperrors.NewUnsupported(
+			testErr = hperrors.NewUnsupported(
 				fmt.Sprintf("Healthcheck type '%v'", data.Healthcheck.HealthcheckType))
 		}
 		if testErr != nil {
@@ -95,8 +95,8 @@ func (s *service) calculateStateTransition(
 	data *healthcheckData,
 ) (err error) {
 	lastState, err := s.healthcheckStateRepo.Get(ctx, data.PeriodicSetting.ID)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	data.LastHealthcheckState = lastState
 
@@ -134,7 +134,7 @@ func (s *service) saveStateInCache(
 	}
 	err = s.healthcheckStateRepo.Set(ctx, data.PeriodicSetting.ID, state, exp)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

@@ -6,8 +6,8 @@ import (
 	"github.com/moby/moby/api/types/image"
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type GetImageReq struct {
@@ -18,11 +18,11 @@ func NewGetImageReq() *GetImageReq {
 	return &GetImageReq{}
 }
 
-func (req *GetImageReq) Validate() apperrors.ValidationErrors {
+func (req *GetImageReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	// NOTE: image id is docker id, it's not ULID
 	validators = append(validators, basedto.ValidateStr(&req.ImageID, true, 1, imageIDMaxLen, "imageId")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetImageResp struct {

@@ -10,9 +10,9 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
@@ -67,7 +67,7 @@ func (s *service) CreatePreview(
 	var cloneResp *appcloneservice.AppCloneResp
 	defer func() {
 		if rev := recover(); rev != nil {
-			err = errors.Join(err, apperrors.ErrPanic)
+			err = errors.Join(err, hperrors.ErrPanic)
 		}
 		if cloneResp != nil && cloneResp.OnCleanup != nil { // Run the cleanup function
 			_ = cloneResp.OnCleanup(err)
@@ -77,13 +77,13 @@ func (s *service) CreatePreview(
 
 	err = s.loadAppDataForCreatingPreview(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// When related DB apps are configured to clone for the previews
 	err = s.cloneDBApps(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Preview app will be cloned from the current app
@@ -114,23 +114,23 @@ func (s *service) CreatePreview(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Run custom commands
 	err = s.runCommands(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.createDeploymentAndTask(ctx, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.persistAppPreviewData(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if s.taskQueue != nil && data.DeploymentTask != nil {
@@ -149,7 +149,7 @@ func (s *service) CreatePreview(
 		Deployment:     data.Deployment,
 		DeploymentTask: data.DeploymentTask,
 		OnCleanup:      cloneResp.OnCleanup,
-	}, apperrors.Wrap(err)
+	}, hperrors.Wrap(err)
 }
 
 func (s *service) loadAppDataForCreatingPreview(
@@ -163,10 +163,10 @@ func (s *service) loadAppDataForCreatingPreview(
 
 	taskArgs, err := data.Task.ArgsAsAppPreview()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if taskArgs == nil || taskArgs.ParentApp.ID == "" {
-		return apperrors.NewNotFound("Parent app ID in task args")
+		return hperrors.NewNotFound("Parent app ID in task args")
 	}
 	data.Args = taskArgs
 	if taskArgs.Trigger != nil {
@@ -189,11 +189,11 @@ func (s *service) loadAppDataForCreatingPreview(
 		),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	// The app must not be a child app
 	if app.IsChildApp() {
-		return apperrors.Wrap(apperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
+		return hperrors.Wrap(hperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
 	}
 	data.App = app
 
@@ -204,7 +204,7 @@ func (s *service) loadAppDataForCreatingPreview(
 	if data.FeatureSettings != nil && data.FeatureSettings.PreviewSettings != nil {
 		previewSettings := data.FeatureSettings.PreviewSettings
 		if !previewSettings.Enabled {
-			return apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
+			return hperrors.Wrap(hperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
 		}
 		var cloningAppIDs []string
 		if taskArgs.CloneDBApps {
@@ -218,18 +218,18 @@ func (s *service) loadAppDataForCreatingPreview(
 			bunex.SelectRelation("ProjectEnv"),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.CloneDBApps = cloningApps
 	}
 
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
 	if deploymentSetting == nil {
-		return apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
+		return hperrors.Wrap(hperrors.ErrDeploymentMethodRepoRequired)
 	}
 	deploymentSettings := deploymentSetting.MustAsAppDeploymentSettings()
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo || deploymentSettings.RepoSource == nil {
-		return apperrors.Wrap(apperrors.ErrDeploymentMethodRepoRequired)
+		return hperrors.Wrap(hperrors.ErrDeploymentMethodRepoRequired)
 	}
 
 	data.RandSuffix = gofn.RandTokenAsHex(4) //nolint:mnd
@@ -253,11 +253,11 @@ func (s *service) loadAppDataForCreatingPreview(
 	}
 
 	previewApp, err := s.GetPreview(ctx, db, app.ID, data.CalcRepoRef, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if previewApp != nil {
-		return apperrors.NewAlreadyExist("Preview app")
+		return hperrors.NewAlreadyExist("Preview app")
 	}
 
 	return nil
@@ -271,17 +271,17 @@ func (s *service) createDeploymentAndTask(
 	deployment, deploymentTask, err := s.appDeploymentService.CreateDeploymentAndTask(
 		previewApp, data.DeploymentSettings)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if data.OnInitDeployment != nil {
 		if err = data.OnInitDeployment(deployment); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	if data.OnDeploymentTask != nil {
 		if err = data.OnDeploymentTask(deploymentTask); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -298,13 +298,13 @@ func (s *service) persistAppPreviewData(
 	err = s.deploymentRepo.Upsert(ctx, db, data.Deployment,
 		entity.DeploymentUpsertingConflictCols, entity.DeploymentUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = s.taskRepo.Upsert(ctx, db, data.DeploymentTask,
 		entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If there are cloned db apps, we will add some res-links for them as logical-child-apps
@@ -323,7 +323,7 @@ func (s *service) persistAppPreviewData(
 	err = s.resLinkRepo.UpsertMulti(ctx, db, resLinks,
 		entity.ResLinkUpsertingConflictCols, entity.ResLinkUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -355,7 +355,7 @@ func (s *service) saveLogs(
 
 	logFrames, err := logStore.GetData(ctx, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	_ = logStore.Close() //nolint
 
@@ -383,7 +383,7 @@ func (s *service) saveLogFramesToDB(
 		}
 		err := s.taskLogRepo.InsertMulti(ctx, db, taskLogs)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil

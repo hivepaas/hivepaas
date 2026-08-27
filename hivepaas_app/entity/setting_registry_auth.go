@@ -4,8 +4,8 @@ import (
 	"github.com/moby/moby/api/types/registry"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -44,7 +44,7 @@ func (s *RegistryAuth) GetResourceLinks(setting *Setting) []*ResLink {
 func (s *RegistryAuth) Decrypt() error {
 	_, err := s.Password.GetPlain()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -52,7 +52,7 @@ func (s *RegistryAuth) Decrypt() error {
 func (s *RegistryAuth) GenerateAuthHeader() (string, error) {
 	password, err := s.Password.GetPlain()
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	h, err := docker.GenerateAuthHeader(&registry.AuthConfig{
 		Username:      s.Username,
@@ -60,7 +60,7 @@ func (s *RegistryAuth) GenerateAuthHeader() (string, error) {
 		ServerAddress: s.Address,
 	})
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	return h, nil
 }

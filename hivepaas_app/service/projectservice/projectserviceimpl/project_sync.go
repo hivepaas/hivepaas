@@ -6,9 +6,9 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/apphelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
@@ -26,7 +26,7 @@ func (s *service) SyncProject(
 	// Loads all apps in project
 	apps, _, err := s.appRepo.List(ctx, db, project.ID, nil)
 	if err != nil {
-		return nil, nil, nil, apperrors.Wrap(err)
+		return nil, nil, nil, hperrors.Wrap(err)
 	}
 
 	appMapByKey := make(map[string]*entity.App, len(apps))
@@ -37,7 +37,7 @@ func (s *service) SyncProject(
 	// Loads all swarm services from docker having the namespace label as project key
 	listResp, err := s.dockerManager.ServiceListByStack(ctx, project.Key)
 	if err != nil {
-		return nil, nil, nil, apperrors.Wrap(err)
+		return nil, nil, nil, hperrors.Wrap(err)
 	}
 	services = listResp.Items
 
@@ -48,7 +48,7 @@ func (s *service) SyncProject(
 		appInfoLabel := svc.Spec.Labels[appservice.LabelAppInfo]
 		appInfo, err := apphelper.ParseAppInfoLabel(appInfoLabel)
 		if err != nil {
-			return nil, nil, nil, apperrors.Wrap(err)
+			return nil, nil, nil, hperrors.Wrap(err)
 		}
 
 		appKey := appInfo.Key
@@ -87,13 +87,13 @@ func (s *service) SyncProject(
 	err = s.projectEnvRepo.UpsertMulti(ctx, db, project.ProjectEnvs,
 		entity.ProjectEnvUpsertingConflictCols, entity.ProjectEnvUpsertingUpdateCols)
 	if err != nil {
-		return nil, nil, nil, apperrors.Wrap(err)
+		return nil, nil, nil, hperrors.Wrap(err)
 	}
 
 	err = s.appRepo.UpsertMulti(ctx, db, gofn.Concat(newApps, updateApps),
 		entity.AppUpsertingConflictCols, entity.AppUpsertingUpdateCols)
 	if err != nil {
-		return nil, nil, nil, apperrors.Wrap(err)
+		return nil, nil, nil, hperrors.Wrap(err)
 	}
 
 	return newApps, updateApps, services, nil

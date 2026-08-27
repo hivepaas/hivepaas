@@ -1,12 +1,12 @@
 package syserrordto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type CreateSysErrorReq struct {
-	ErrorInfo *apperrors.ErrorInfo `json:"-"`
+	ErrorInfo *hperrors.ErrorInfo `json:"-"`
 }
 
 func NewCreateSysErrorReq() *CreateSysErrorReq {
@@ -14,7 +14,7 @@ func NewCreateSysErrorReq() *CreateSysErrorReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *CreateSysErrorReq) Validate() apperrors.ValidationErrors {
+func (req *CreateSysErrorReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

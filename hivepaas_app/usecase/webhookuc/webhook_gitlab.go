@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-playground/webhooks/v6/gitlab"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -21,14 +21,14 @@ func (uc *UC) parseGitlabWebhook(
 ) error {
 	hook, err := gitlab.New(gitlab.Options.Secret(secret))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	payload, err := hook.Parse(req, gitlab.PushEvents, gitlab.CommentEvents, gitlab.MergeRequestEvents)
 	if err != nil {
 		if errors.Is(err, gitlab.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
 		}
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	switch p := payload.(type) { //nolint

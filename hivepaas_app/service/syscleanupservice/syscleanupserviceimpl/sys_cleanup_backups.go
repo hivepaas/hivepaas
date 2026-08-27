@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -68,7 +68,7 @@ func (s *service) sysCleanupLocalBackupFiles(
 		bunex.SelectWhere("file.created_at < ?", timeNow.Add(-retention)),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, file := range deletingFiles {
@@ -78,7 +78,7 @@ func (s *service) sysCleanupLocalBackupFiles(
 	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.FileUpsertingConflictCols,
 		[]string{"deleted_at"}) //nolint:goconst
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Delete real files in local
@@ -125,7 +125,7 @@ func (s *service) sysCleanupCloudBackupFiles(
 		bunex.SelectRelation("Storage"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, file := range deletingFiles {
@@ -135,7 +135,7 @@ func (s *service) sysCleanupCloudBackupFiles(
 	err = s.fileRepo.UpsertMulti(ctx, db, deletingFiles, entity.SettingUpsertingConflictCols,
 		[]string{"deleted_at"})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Delete real files in cloud
@@ -147,14 +147,14 @@ func (s *service) sysCleanupCloudBackupFiles(
 			return delFunc, nil
 		}
 		if file.Storage == nil {
-			return nil, apperrors.NewNotFound("Storage setting")
+			return nil, hperrors.NewNotFound("Storage setting")
 		}
 
 		switch base.CloudStorageKind(file.Storage.Kind) { //nolint:gocritic
 		case base.CloudStorageKindS3:
 			s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
 			if err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 			delFunc = func(file *entity.File) error {
 				return s3Client.DeleteObject(ctx, file.Bucket, file.Path)

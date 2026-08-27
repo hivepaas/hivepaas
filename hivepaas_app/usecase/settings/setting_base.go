@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
@@ -54,7 +54,7 @@ func (uc *BaseUC) loadSettingByID(
 	}
 	setting, err = uc.SettingRepo.GetByID(ctx, db, req.Scope, req.Type, id, requireActive, opts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return setting, nil
 }
@@ -71,11 +71,11 @@ func (uc *BaseUC) checkNameConflict(
 	setting, err := uc.SettingRepo.GetByName(ctx, db, req.Scope, req.Type, name, false,
 		bunex.SelectColumns("id", "name"),
 	)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if setting != nil {
-		return apperrors.NewAlreadyExist(strutil.ToPascalCase(string(req.Type))).
+		return hperrors.NewAlreadyExist(strutil.ToPascalCase(string(req.Type))).
 			WithMsgLog("%s '%s' already exists", req.Type, setting.Name)
 	}
 	return nil
@@ -93,15 +93,15 @@ func (uc *BaseUC) checkRefObjectsExistence(
 	}
 	err = uc.checkRefSettingsExistence(ctx, db, req, refIDs.RefSettingIDs, requireActive)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	err = uc.checkRefAppsExistence(ctx, db, refIDs.RefAppIDs, requireActive)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	err = uc.checkRefUsersExistence(ctx, db, refIDs.RefUserIDs, requireActive)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -121,12 +121,12 @@ func (uc *BaseUC) checkRefSettingsExistence(
 		bunex.SelectWhereIf(requireActive, "setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, refSettingID := range refSettingIDs {
 		found := entityutil.FindByID(settings, refSettingID)
 		if found == nil {
-			return apperrors.Wrap(apperrors.ErrSettingNotFound).WithParam("Name", refSettingID)
+			return hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", refSettingID)
 		}
 	}
 	return nil
@@ -148,7 +148,7 @@ func (uc *BaseUC) checkRefAppsExistence(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -164,7 +164,7 @@ func (uc *BaseUC) checkRefUsersExistence(
 	}
 	_, err = uc.UserService.LoadUsers(ctx, db, refUserIDs, requireActive)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -179,7 +179,7 @@ func (uc *BaseUC) ensureSettingDefaultUniqueness(
 		bunex.UpdateWithDeleted(),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -189,7 +189,7 @@ func TransformSettingBase(setting *entity.Setting) (resp *BaseSettingResp, err e
 		return nil, nil
 	}
 	if err = copier.Copy(&resp, setting); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if setting.ObjectID != setting.CurrentObjectID {
 		resp.Inherited = true

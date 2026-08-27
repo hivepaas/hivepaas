@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -25,15 +25,15 @@ func (uc *UC) DeleteNetwork(
 		) error {
 			if data.Setting.ObjectID == req.Scope.ScopeObjectID() {
 				_, err := uc.dockerManager.NetworkRemove(ctx, data.Setting.MustAsClusterNetwork().RefID)
-				if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-					return apperrors.Wrap(err)
+				if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+					return hperrors.Wrap(err)
 				}
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &networkdto.DeleteNetworkResp{}, nil

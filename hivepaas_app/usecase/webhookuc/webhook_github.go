@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-playground/webhooks/v6/github"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -22,14 +22,14 @@ func (uc *UC) parseGithubWebhook(
 ) error {
 	hook, err := github.New(github.Options.Secret(secret))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	payload, err := hook.Parse(req, github.PushEvent, github.IssueCommentEvent, github.PullRequestEvent)
 	if err != nil {
 		if errors.Is(err, github.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
 		}
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	switch p := payload.(type) { //nolint

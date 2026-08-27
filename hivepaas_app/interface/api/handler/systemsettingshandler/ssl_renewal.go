@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc/sslrenewaldto"
 )
@@ -19,8 +19,8 @@ import (
 // @Produce json
 // @Id      getSSLRenewalSettings
 // @Success 200 {object} sslrenewaldto.GetSSLRenewalResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/ssl-renewal [get]
 func (h *Handler) GetSSLRenewalSettings(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
@@ -57,8 +57,8 @@ func (h *Handler) GetSSLRenewalSettings(ctx *gin.Context) {
 // @Id      updateSSLRenewalSettings
 // @Param   body body sslrenewaldto.UpdateSSLRenewalReq true "request data"
 // @Success 200 {object} sslrenewaldto.UpdateSSLRenewalResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/ssl-renewal [put]
 func (h *Handler) UpdateSSLRenewalSettings(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
@@ -95,8 +95,8 @@ func (h *Handler) UpdateSSLRenewalSettings(ctx *gin.Context) {
 // @Id      executeSSLRenewal
 // @Param   body body sslrenewaldto.ExecuteSSLRenewalReq true "request data"
 // @Success 200 {object} sslrenewaldto.ExecuteSSLRenewalResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/ssl-renewal/exec [post]
 func (h *Handler) ExecuteSSLRenewal(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{

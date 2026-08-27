@@ -3,11 +3,11 @@ package taskdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type GetTaskStatusReq struct {
@@ -18,10 +18,10 @@ func NewGetTaskStatusReq() *GetTaskStatusReq {
 	return &GetTaskStatusReq{}
 }
 
-func (req *GetTaskStatusReq) Validate() apperrors.ValidationErrors {
+func (req *GetTaskStatusReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetTaskStatusResp struct {

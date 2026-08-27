@@ -6,12 +6,12 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
@@ -53,7 +53,7 @@ func (uc *UC) BeginGithubAppManifestFlow(
 	// Loads and validates object scope data
 	err := uc.ScopeService.LoadObjectScopeData(ctx, uc.DB, req.Scope)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	cfg := config.Current
@@ -111,7 +111,7 @@ func (uc *UC) BeginGithubAppManifestFlow(
 	case base.ObjectScopeApp, base.ObjectScopeUser, base.ObjectScopeHivepaas:
 		fallthrough
 	default:
-		return nil, apperrors.Wrap(apperrors.ErrObjectScopeInvalid).
+		return nil, hperrors.Wrap(hperrors.ErrObjectScopeInvalid).
 			WithParam("Scope", req.Scope.ScopeType)
 	}
 
@@ -124,7 +124,7 @@ func (uc *UC) BeginGithubAppManifestFlow(
 
 	err = uc.cacheAppManifestRepo.Set(ctx, appSetting.ID, manifestCache, appManifestCacheExp)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &githubappdto.BeginGithubAppManifestFlowResp{

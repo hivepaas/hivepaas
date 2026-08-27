@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
@@ -35,7 +35,7 @@ func (uc *UC) UpdateSecret(
 		) (err error) {
 			oldSecret, err = data.Setting.AsSecret()
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			updatedSecret.Key = oldSecret.Key // when update, keep the old KEY of the secret
 			if req.Value == "" {
@@ -43,11 +43,11 @@ func (uc *UC) UpdateSecret(
 				secretValueChanged = false
 			}
 			if err = pData.Setting.SetData(updatedSecret); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			pData.Setting.Size, err = updatedSecret.ValueSize()
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -61,19 +61,19 @@ func (uc *UC) UpdateSecret(
 			if secretValueChanged {
 				appEnvVarData, err = uc.buildAppEnvVarsForScope(ctx, db, req.Scope, true)
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 			}
 			if req.Scope.IsAppScope() {
 				err = uc.ClusterSecretService.UpdateSecretForApp(ctx, db, req.Scope.App, oldSecret, updatedSecret)
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 				// Need to re-persist the setting as its content may change
 				if updatedSecret.SwarmRef != nil && updatedSecret.SwarmRef.SecretID != "" {
 					pData.Setting.MustSetData(updatedSecret)
 					if err = uc.SettingRepo.Update(ctx, db, pData.Setting); err != nil {
-						return apperrors.Wrap(err)
+						return hperrors.Wrap(err)
 					}
 				}
 			}
@@ -81,7 +81,7 @@ func (uc *UC) UpdateSecret(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp := &secretdto.UpdateSecretResp{Meta: &basedto.Meta{}}
@@ -121,7 +121,7 @@ func (uc *UC) buildAppEnvVarsForScope(
 	_, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, true,
 		nil, transaction, concurrency)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Runtime env vars
@@ -129,7 +129,7 @@ func (uc *UC) buildAppEnvVarsForScope(
 		appEnvVarData, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope, false,
 			nil, transaction, concurrency)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		return appEnvVarData, nil
 	}
@@ -143,7 +143,7 @@ func (uc *UC) buildAppEnvVarsForScope(
 			bunex.SelectWhere("app.project_env_id = ?", scope.App.ProjectEnvID),
 		)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		projectEnv := scope.App.ProjectEnv
@@ -153,7 +153,7 @@ func (uc *UC) buildAppEnvVarsForScope(
 		appEnvVarData, err = uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db,
 			projectEnv.GetObjectScope(), false, nil, transaction, concurrency)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		return appEnvVarData, nil

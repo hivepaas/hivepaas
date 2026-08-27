@@ -3,8 +3,8 @@ package appcloneserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 )
@@ -21,7 +21,7 @@ func (s *service) applyAppRoutingSettings(
 	}
 	routingSettings, err := routingSetting.AsAppRoutingSettings()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	_, err = s.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
@@ -30,7 +30,7 @@ func (s *service) applyAppRoutingSettings(
 		RefObjects:      data.RefObjects,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

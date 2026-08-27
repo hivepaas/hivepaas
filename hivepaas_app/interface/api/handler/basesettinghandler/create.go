@@ -5,10 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accesstokenuc/accesstokendto"
@@ -74,7 +74,7 @@ func (h *Handler) CreateSetting(
 	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 		auth, _, err = h.GetAuthGlobalSettings(ctx, resType, base.ActionTypeWrite, "")
 	default:
-		err = apperrors.NewUnsupported("Setting scope 'none'")
+		err = hperrors.NewUnsupported("Setting scope 'none'")
 	}
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -118,7 +118,7 @@ func (h *Handler) CreateSetting(
 
 	case base.ResourceTypeClusterNode:
 		// NOTE: not implemented
-		err = apperrors.NewNotImplementedNT()
+		err = hperrors.NewNotImplementedNT()
 
 	case base.ResourceTypeClusterVolume:
 		r := volumedto.NewCreateVolumeReq()
@@ -207,7 +207,7 @@ func (h *Handler) CreateSetting(
 
 	default:
 		// NOTE: not implemented
-		err = apperrors.NewNotImplementedNT()
+		err = hperrors.NewNotImplementedNT()
 	}
 	if err != nil {
 		h.RenderError(ctx, err)

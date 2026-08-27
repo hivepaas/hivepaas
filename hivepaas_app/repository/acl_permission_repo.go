@@ -6,10 +6,10 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -76,7 +76,7 @@ func (repo *aclPermissionRepo) ListByResources(ctx context.Context, db database.
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return permissions, nil
 }
@@ -92,7 +92,7 @@ func (repo *aclPermissionRepo) ListByUsers(ctx context.Context, db database.IDB,
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return permissions, nil
 }
@@ -110,7 +110,7 @@ func (repo *aclPermissionRepo) List(ctx context.Context, db database.IDB, paging
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -137,7 +137,7 @@ func (repo *aclPermissionRepo) UpsertMulti(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -178,7 +178,7 @@ func (repo *aclPermissionRepo) DeleteByResources(ctx context.Context, db databas
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -195,7 +195,7 @@ func (repo *aclPermissionRepo) DeleteBySubjects(ctx context.Context, db database
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -211,7 +211,7 @@ func (repo *aclPermissionRepo) DeleteByObjects(ctx context.Context, db database.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -219,14 +219,14 @@ func (repo *aclPermissionRepo) DeleteByObjects(ctx context.Context, db database.
 func (repo *aclPermissionRepo) Delete(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
-		return apperrors.NewArgumentInvalid("opts").WithMsgLog("Delete requires at least one condition")
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("Delete requires at least one condition")
 	}
 	query := db.NewDelete().Model((*entity.ACLPermission)(nil))
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -234,14 +234,14 @@ func (repo *aclPermissionRepo) Delete(ctx context.Context, db database.IDB,
 func (repo *aclPermissionRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
-		return apperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
 	}
 	query := db.NewDelete().Model((*entity.ACLPermission)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

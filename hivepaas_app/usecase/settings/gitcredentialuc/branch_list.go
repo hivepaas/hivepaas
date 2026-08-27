@@ -3,9 +3,9 @@ package gitcredentialuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/gitcredentialuc/gitcredentialdto"
 	"github.com/hivepaas/hivepaas/services/git/gitapi"
@@ -20,7 +20,7 @@ func (uc *UC) ListBranch(
 		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeGithubApp, base.SettingTypeAccessToken),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	gitResp, err := gitapi.ListBranch(ctx, setting, &gitapi.ListBranchReq{
@@ -29,7 +29,7 @@ func (uc *UC) ListBranch(
 		Paging: &req.Paging,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	var branchResp []*gitcredentialdto.BranchResp
@@ -43,7 +43,7 @@ func (uc *UC) ListBranch(
 	case base.GitSourceBitbucket, base.GitSourceGogs:
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &gitcredentialdto.ListBranchResp{

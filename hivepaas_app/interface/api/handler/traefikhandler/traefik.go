@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefikuc/traefikdto"
 )
@@ -19,8 +19,8 @@ import (
 // @Id      reloadTraefikConfig
 // @Param   body body traefikdto.ReloadTraefikConfigReq true "request data"
 // @Success 200 {object} traefikdto.ReloadTraefikConfigResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/traefik/config/reload [post]
 func (h *Handler) ReloadTraefikConfig(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -32,7 +32,7 @@ func (h *Handler) ReloadTraefikConfig(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Reload traefik config").
+		h.RenderError(ctx, hperrors.NewForbidden("Reload traefik config").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}
@@ -60,8 +60,8 @@ func (h *Handler) ReloadTraefikConfig(ctx *gin.Context) {
 // @Id      resetTraefikConfig
 // @Param   body body traefikdto.ResetTraefikConfigReq true "request data"
 // @Success 200 {object} traefikdto.ResetTraefikConfigResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/traefik/config/reset [post]
 func (h *Handler) ResetTraefikConfig(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -73,7 +73,7 @@ func (h *Handler) ResetTraefikConfig(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Reset traefik config").
+		h.RenderError(ctx, hperrors.NewForbidden("Reset traefik config").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}
@@ -101,8 +101,8 @@ func (h *Handler) ResetTraefikConfig(ctx *gin.Context) {
 // @Id      restartTraefik
 // @Param   body body traefikdto.RestartTraefikReq true "request data"
 // @Success 200 {object} traefikdto.RestartTraefikResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/traefik/restart [post]
 func (h *Handler) RestartTraefik(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -114,7 +114,7 @@ func (h *Handler) RestartTraefik(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Restart traefik service").
+		h.RenderError(ctx, hperrors.NewForbidden("Restart traefik service").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}

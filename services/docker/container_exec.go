@@ -9,7 +9,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
@@ -38,16 +38,16 @@ func (m *manager) ContainerExec(
 
 	_, err := m.ContainerInspect(ctx, containerID)
 	if err != nil {
-		return nil, nil, nil, apperrors.Wrap(err)
+		return nil, nil, nil, hperrors.Wrap(err)
 	}
 
 	createResp, err := m.client.ExecCreate(ctx, containerID, opts)
 	if err != nil {
-		return nil, nil, nil, apperrors.NewInfra(err)
+		return nil, nil, nil, hperrors.NewInfra(err)
 	}
 	execID := createResp.ID
 	if execID == "" {
-		return nil, nil, nil, apperrors.Wrap(apperrors.ErrInfraInternal)
+		return nil, nil, nil, hperrors.Wrap(hperrors.ErrInfraInternal)
 	}
 
 	attachResp, err := m.client.ExecAttach(ctx, execID, client.ExecAttachOptions{
@@ -55,7 +55,7 @@ func (m *manager) ContainerExec(
 		ConsoleSize: opts.ConsoleSize,
 	})
 	if err != nil {
-		return nil, nil, nil, apperrors.NewInfra(err)
+		return nil, nil, nil, hperrors.NewInfra(err)
 	}
 
 	startResp, err := m.client.ExecStart(ctx, execID, client.ExecStartOptions{
@@ -64,7 +64,7 @@ func (m *manager) ContainerExec(
 		ConsoleSize: opts.ConsoleSize,
 	})
 	if err != nil {
-		return nil, nil, nil, apperrors.NewInfra(err)
+		return nil, nil, nil, hperrors.NewInfra(err)
 	}
 
 	return &createResp, &attachResp, &startResp, nil
@@ -77,7 +77,7 @@ func (m *manager) ContainerExecWait(
 ) (*client.ExecInspectResult, []*tasklog.LogFrame, error) {
 	createResp, attachResp, _, err := m.ContainerExec(ctx, containerID, options...)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	logChan, _ := StartScanningLog(ctx, io.NopCloser(attachResp.Reader), WithParseLogHeader(false))
@@ -90,7 +90,7 @@ func (m *manager) ContainerExecWait(
 
 	inspectResp, err := m.ContainerExecInspect(ctx, createResp.ID)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	return inspectResp, logs, nil
@@ -106,7 +106,7 @@ func (m *manager) ContainerExecResize(
 		Height: height,
 	})
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -124,7 +124,7 @@ func (m *manager) ContainerExecInspect(
 	}
 	resp, err := m.client.ExecInspect(ctx, execID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -167,7 +167,7 @@ func (m *manager) ContainerCreateToExec(
 		*opts = createOpts
 	})
 	if err != nil {
-		return nil, 0, apperrors.Wrap(err)
+		return nil, 0, hperrors.Wrap(err)
 	}
 
 	defer func() { //nolint:contextcheck
@@ -182,7 +182,7 @@ func (m *manager) ContainerCreateToExec(
 
 	_, err = m.ContainerStart(ctx, createResp.ID)
 	if err != nil {
-		return createResp, 0, apperrors.Wrap(err)
+		return createResp, 0, hperrors.Wrap(err)
 	}
 
 	waitRes := m.ContainerWait(ctx, createResp.ID, func(opts *client.ContainerWaitOptions) {
@@ -190,13 +190,13 @@ func (m *manager) ContainerCreateToExec(
 	})
 	select {
 	case waitErr := <-waitRes.Error:
-		if waitErr != nil && apperrors.IsInfraNotFound(waitErr) {
+		if waitErr != nil && hperrors.IsInfraNotFound(waitErr) {
 			waitErr = nil
 		}
-		return createResp, 0, apperrors.Wrap(waitErr)
+		return createResp, 0, hperrors.Wrap(waitErr)
 	case waitResp := <-waitRes.Result:
 		return createResp, waitResp.StatusCode, nil
 	case <-ctx.Done():
-		return createResp, 0, apperrors.Wrap(ctx.Err())
+		return createResp, 0, hperrors.Wrap(ctx.Err())
 	}
 }

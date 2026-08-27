@@ -8,9 +8,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -35,13 +35,13 @@ func (q *taskQueue) doPeriodicJob(
 	ctx context.Context,
 ) error {
 	if q.periodicExecutor == nil {
-		return apperrors.NewUnavailable("Task executor function for periodic jobs")
+		return hperrors.NewUnavailable("Task executor function for periodic jobs")
 	}
 
 	baseData := &queue.PeriodicExecData{}
 	jobSettings, err := q.loadPeriodicJobData(ctx, q.db, baseData)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if len(jobSettings) == 0 {
 		return nil
@@ -56,7 +56,7 @@ func (q *taskQueue) doPeriodicJob(
 		periodicJob := jobSetting.MustAsPeriodicJob()
 		scope, err := baseData.RefObjects.GetObjectScope(jobSetting.Scope, jobSetting.ObjectID, false)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		periodicData := &queue.PeriodicExecData{
 			PeriodicSetting: jobSetting,
@@ -93,7 +93,7 @@ func (q *taskQueue) doPeriodicJob(
 	err = q.taskRepo.UpsertMulti(ctx, q.db, savingTasks,
 		entity.TaskUpsertingConflictColsByUK, nil)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -108,7 +108,7 @@ func (q *taskQueue) doPeriodicTask(
 	lockKey := fmt.Sprintf(taskPeriodicLockKey, periodicData.PeriodicSetting.ID)
 	success, releaser, err := q.taskService.CreateRedisLock(ctx, lockKey, time.Minute)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if !success {
 		return nil
@@ -122,7 +122,7 @@ func (q *taskQueue) doPeriodicTask(
 		mu.Unlock()
 	}
 
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }
 
 type periodicCache struct {
@@ -156,7 +156,7 @@ func (q *taskQueue) loadPeriodicJobData(
 		var err error
 		cache, err = q.loadPeriodicJobDataFromDB(ctx, db)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		q.periodicCacheMu.Lock()
 		q.periodicCache = cache
@@ -174,7 +174,7 @@ func (q *taskQueue) loadPeriodicJobData(
 	}
 	dueJobIDs, err := q.periodicSettingsRepo.GetDueJobIDs(ctx, timeNowSecs, int64(batchSize))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(dueJobIDs) == 0 {
 		return nil, nil
@@ -218,7 +218,7 @@ func (q *taskQueue) loadPeriodicJobDataFromDB(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	refIDs := &entity.RefObjectIDs{}
@@ -226,7 +226,7 @@ func (q *taskQueue) loadPeriodicJobDataFromDB(
 		refIDs.AddScopeObjectIDOfSettings(setting)
 		rIDs, err := setting.GetRefObjectIDs()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		refIDs.AddRefIDs(rIDs)
 	}
@@ -235,7 +235,7 @@ func (q *taskQueue) loadPeriodicJobDataFromDB(
 	refObjects := entity.NewRefObjects()
 	err = q.settingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &refObjects, nil, true, refIDs)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	settingsMap := make(map[string]*entity.Setting, len(dbSettings))

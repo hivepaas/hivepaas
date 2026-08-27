@@ -5,10 +5,10 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 )
@@ -45,7 +45,7 @@ type DeploymentSettingsReq struct {
 func (req *DeploymentSettingsReq) ToEntity() (*entity.AppDeploymentSettings, error) {
 	repoSourceEntity, err := req.RepoSource.ToEntity()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return &entity.AppDeploymentSettings{
 		ImageSource:  req.ImageSource.ToEntity(),
@@ -114,7 +114,7 @@ func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, er
 	}
 	parsedRepoURL, err := vcsurl.Parse(req.RepoURL)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	repoID := parsedRepoURL.ID
 
@@ -202,7 +202,7 @@ func NewUpdateAppDeploymentSettingsReq() *UpdateAppDeploymentSettingsReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateAppDeploymentSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateAppDeploymentSettingsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
@@ -213,7 +213,7 @@ func (req *UpdateAppDeploymentSettingsReq) Validate() apperrors.ValidationErrors
 		base.AllDeploymentMethods, "activeMethod")...)
 	validators = append(validators, req.Notification.Validate("notification")...)
 	// TODO: add validation for deployment settings input
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type UpdateAppDeploymentSettingsResp struct {

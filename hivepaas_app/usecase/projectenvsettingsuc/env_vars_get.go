@@ -3,9 +3,9 @@ package projectenvsettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvsettingsuc/projectenvsettingsdto"
 )
@@ -17,7 +17,7 @@ func (uc *UC) GetProjectEnvEnvVars(
 ) (*projectenvsettingsdto.GetProjectEnvEnvVarsResp, error) {
 	projectEnv, err := uc.projectEnvRepo.GetByID(ctx, uc.db, req.ProjectID, req.ProjectEnvID)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	settings, _, err := uc.settingRepo.List(ctx, uc.db, projectEnv.GetObjectScope(), nil,
@@ -25,7 +25,7 @@ func (uc *UC) GetProjectEnvEnvVars(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	input := &projectenvsettingsdto.EnvVarsTransformationInput{
@@ -34,7 +34,7 @@ func (uc *UC) GetProjectEnvEnvVars(
 	}
 	resp, err := projectenvsettingsdto.TransformEnvVars(input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &projectenvsettingsdto.GetProjectEnvEnvVarsResp{

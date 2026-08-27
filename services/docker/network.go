@@ -9,7 +9,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -34,7 +34,7 @@ func (m *manager) NetworkList(
 	}
 	resp, err := m.client.NetworkList(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -51,8 +51,8 @@ func (m *manager) NetworkListByIDs(
 
 	if len(networkIDOrNames) == 1 {
 		inspect, err := m.NetworkInspect(ctx, networkIDOrNames[0])
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return nil, hperrors.Wrap(err)
 		}
 		if inspect != nil {
 			resp.Items = append(resp.Items, network.Summary{Network: inspect.Network.Network})
@@ -62,7 +62,7 @@ func (m *manager) NetworkListByIDs(
 
 	listResp, err := m.NetworkList(ctx, options...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	for i := range listResp.Items {
 		net := &listResp.Items[i]
@@ -88,7 +88,7 @@ func (m *manager) NetworkCreate(
 	}
 	resp, err := m.client.NetworkCreate(ctx, name, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -106,7 +106,7 @@ func (m *manager) NetworkRemove(
 	}
 	resp, err := m.client.NetworkRemove(ctx, idOrName, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -124,7 +124,7 @@ func (m *manager) NetworkInspect(
 	}
 	resp, err := m.client.NetworkInspect(ctx, name, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -150,7 +150,7 @@ func (m *manager) NetworkPrune(
 	}
 	resp, err := m.client.NetworkPrune(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }

@@ -5,11 +5,11 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 )
 
@@ -21,10 +21,10 @@ func NewGetTaskReq() *GetTaskReq {
 	return &GetTaskReq{}
 }
 
-func (req *GetTaskReq) Validate() apperrors.ValidationErrors {
+func (req *GetTaskReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetTaskResp struct {
@@ -60,7 +60,7 @@ type TaskTargetJobResp struct {
 
 func TransformTask(task *entity.Task, taskInfo *cacheentity.TaskInfo) (resp *TaskResp, err error) {
 	if err = copier.Copy(&resp, &task); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if taskInfo != nil {
 		resp.Status = taskInfo.Status

@@ -3,7 +3,7 @@ package approutingserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 )
@@ -24,12 +24,12 @@ func (s *service) ApplyRoutingSettings(
 
 	err = s.loadAppRoutingData(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.applyRoutingSettings(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp.Service = data.Service
@@ -47,13 +47,13 @@ func (s *service) loadAppRoutingData(
 	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, data.App.GetObjectScope(),
 		true, refObjectIDs)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if data.Service == nil {
 		inspect, err := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.Service = &inspect.Service
 	}

@@ -7,9 +7,9 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/services/git/github"
 )
@@ -50,11 +50,11 @@ func calcGitAuthMethod(
 	case base.SettingTypeGithubApp:
 		client, err := github.NewFromSetting(gitCreds)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		token, err := client.CreateAppToken(ctx)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		auth = &authBasic{
 			Username: "default", // this can be anything except an empty string
@@ -64,7 +64,7 @@ func calcGitAuthMethod(
 	case base.SettingTypeAccessToken:
 		token, err := gitCreds.MustAsAccessToken().Token.GetPlain()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		auth = &authBasic{
 			Username: "default", // this can be anything except an empty string
@@ -75,22 +75,22 @@ func calcGitAuthMethod(
 		sshKey := gitCreds.MustAsSSHKey()
 		privateKey, err := sshKey.PrivateKey.GetPlain()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		passphrase, err := sshKey.Passphrase.GetPlain()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		pemBytes := reflectutil.UnsafeStrToBytes(privateKey)
 		if passphrase != "" {
 			rawKey, err := ssh.ParseRawPrivateKeyWithPassphrase(pemBytes, reflectutil.UnsafeStrToBytes(passphrase))
 			if err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 			pemBlock, err := ssh.MarshalPrivateKey(rawKey, "")
 			if err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 			pemBytes = pem.EncodeToMemory(pemBlock)
 		}
@@ -105,7 +105,7 @@ func calcGitAuthMethod(
 func writeSshKeyFile(baseDir string, pemBytes []byte) (sshKeyFile string, err error) {
 	fh, err := os.CreateTemp(baseDir, "git-ssh-*")
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	defer fh.Close()
 
@@ -113,16 +113,16 @@ func writeSshKeyFile(baseDir string, pemBytes []byte) (sshKeyFile string, err er
 	sshKeyFile = fh.Name()
 
 	if err := os.Chmod(sshKeyFile, sshKeyFileMode); err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 
 	if _, err := fh.Write(pemBytes); err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 
 	if len(pemBytes) > 0 && pemBytes[len(pemBytes)-1] != '\n' {
 		if _, err := fh.Write([]byte("\n")); err != nil {
-			return "", apperrors.Wrap(err)
+			return "", hperrors.Wrap(err)
 		}
 	}
 

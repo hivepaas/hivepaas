@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 // Decompress extracts the archive file based on the specified format.
@@ -18,7 +18,7 @@ func Decompress(filename, dirPath string, format ArchiveFormat) (errStr string, 
 	if format == "" {
 		format = DetectArchiveFormat(filename)
 		if format == "" {
-			err = apperrors.Wrap(apperrors.ErrUnrecognized).WithParam("Name", "Archive format")
+			err = hperrors.Wrap(hperrors.ErrUnrecognized).WithParam("Name", "Archive format")
 			return err.Error(), err
 		}
 	}
@@ -47,7 +47,7 @@ func Decompress(filename, dirPath string, format ArchiveFormat) (errStr string, 
 		fallthrough
 
 	default:
-		err = apperrors.Wrap(apperrors.ErrArchiveFormatUnsupported).WithParam("Format", format)
+		err = hperrors.Wrap(hperrors.ErrArchiveFormatUnsupported).WithParam("Format", format)
 		return err.Error(), err
 	}
 }

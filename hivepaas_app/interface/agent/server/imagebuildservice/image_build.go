@@ -1,9 +1,9 @@
 package imagebuildservice
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -86,7 +86,7 @@ func ImageBuild(
 					},
 				}
 				if err := stream.Send(resp); err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 			}
 			return nil
@@ -95,7 +95,7 @@ func ImageBuild(
 
 	resp, err := uc.ImageBuild(stream.Context(), dtoReq)
 	if err != nil {
-		return apperrors.ToGRPCError(err) //nolint:wrapcheck
+		return hperrors.ToGRPCError(err) //nolint:wrapcheck
 	}
 
 	if resp != nil {
@@ -107,7 +107,7 @@ func ImageBuild(
 			},
 		}
 		if err := stream.Send(resultResp); err != nil {
-			return apperrors.ToGRPCError(err) //nolint:wrapcheck
+			return hperrors.ToGRPCError(err) //nolint:wrapcheck
 		}
 	}
 

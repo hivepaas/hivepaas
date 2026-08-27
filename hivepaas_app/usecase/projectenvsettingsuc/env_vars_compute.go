@@ -3,9 +3,9 @@ package projectenvsettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvsettingsuc/projectenvsettingsdto"
 )
@@ -17,7 +17,7 @@ func (uc *UC) ComputeProjectEnvEnvVars(
 ) (*projectenvsettingsdto.ComputeProjectEnvEnvVarsResp, error) {
 	projectEnv, err := uc.projectEnvRepo.GetByID(ctx, uc.db, req.ProjectID, req.ProjectEnvID)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	envVars := make([]*envvarservice.EnvVar, 0, 30) //nolint:mnd
@@ -44,7 +44,7 @@ func (uc *UC) ComputeProjectEnvEnvVars(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	respEnvs := make([]*basedto.EnvVarResp, 0, len(computedVars.EnvVars))

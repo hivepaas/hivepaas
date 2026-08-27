@@ -3,7 +3,7 @@ package basedto
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -93,7 +93,7 @@ type ReqModifier interface {
 // ReqValidator any request struct implements this interface will have method `Validate()`
 // to be called when request is parsed.
 type ReqValidator interface {
-	Validate() apperrors.ValidationErrors
+	Validate() hperrors.ValidationErrors
 }
 
 // ReqParsingErrorHandler any request struct implements this interface will have method `HandleParsingError()`

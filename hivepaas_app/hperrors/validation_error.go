@@ -1,4 +1,4 @@
-package apperrors
+package hperrors
 
 import (
 	"net/http"

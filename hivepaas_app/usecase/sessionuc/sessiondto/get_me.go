@@ -1,9 +1,9 @@
 package sessiondto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
 )
 
@@ -28,7 +28,7 @@ type GetMeDataResp struct {
 func TransformUserDetails(user *entity.User) (resp *userdto.UserDetailsResp, err error) {
 	resp, err = userdto.TransformUserDetails(user)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }

@@ -3,8 +3,8 @@ package emailuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/emailuc/emaildto"
 	"github.com/hivepaas/hivepaas/services/email"
 )
@@ -17,7 +17,7 @@ func (uc *UC) TestSendMail(
 	conf := req.ToEntity()
 	err = email.SendMail(ctx, conf, []string{req.TestRecipient}, req.TestSubject, req.TestContent)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return &emaildto.TestSendMailResp{}, nil
 }

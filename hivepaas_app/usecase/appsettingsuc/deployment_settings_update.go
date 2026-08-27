@@ -6,10 +6,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
@@ -30,29 +30,29 @@ func (uc *UC) UpdateAppDeploymentSettings(
 		data := &updateAppDeploymentSettingsData{}
 		err := uc.loadAppDeploymentSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData = &persistingAppData{}
 		err = uc.prepareUpdatingAppDeploymentSettings(ctx, auth, data, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = uc.postTransactionAppDeploymentSettings(ctx, persistingData)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.UpdateAppDeploymentSettingsResp{}, nil
@@ -83,19 +83,19 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.App = app
 	data.DeploymentSetting = app.GetSettingByType(base.SettingTypeAppDeployment)
 
 	deploymentSettings := data.DeploymentSetting
 	if deploymentSettings != nil && deploymentSettings.UpdateVer != req.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
 	newDeploymentSettings, err := req.ToEntity()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.NewDeploymentSettings = newDeploymentSettings
 
@@ -104,7 +104,7 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &refObjects, app.GetObjectScope(),
 		true, newDeploymentSettings.GetRefObjectIDs())
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if newDeploymentSettings.ActiveMethod == base.DeploymentMethodRepo {
@@ -114,10 +114,10 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 		// that can be accessed by all the nodes in the cluster.
 		isMultiNode, err := uc.clusterService.IsMultiNode(ctx)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if isMultiNode && repoSource.PushToRegistry.ID == "" {
-			return apperrors.Wrap(apperrors.ErrMultiNodeClusterRequireRegistryForImages)
+			return hperrors.Wrap(hperrors.ErrMultiNodeClusterRequireRegistryForImages)
 		}
 
 		// Validate existence of repo and ref
@@ -130,7 +130,7 @@ func (uc *UC) loadAppDeploymentSettingsForUpdate(
 				ReferenceName: githelper.ReferenceName(repoSource.RepoRef),
 			})
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 	}
@@ -170,7 +170,7 @@ func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	// Create a deployment and a task for it
 	deployment, deploymentTask, err := uc.appDeploymentService.CreateDeploymentAndTask(app, data.NewDeploymentSettings)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	// Set trigger for the deployment
 	deployment.Trigger = &entity.AppDeploymentTrigger{
@@ -190,7 +190,7 @@ func (uc *UC) postTransactionAppDeploymentSettings(
 	for _, task := range persistingData.UpsertingTasks {
 		err := uc.taskQueue.ScheduleTask(ctx, task)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil

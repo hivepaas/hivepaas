@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc/syserrordto"
 )
@@ -24,8 +24,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} syserrordto.ListSysErrorResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/errors [get]
 func (h *Handler) ListSysError(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
@@ -61,8 +61,8 @@ func (h *Handler) ListSysError(ctx *gin.Context) {
 // @Id      getSysError
 // @Param   errorID path string true "error ID"
 // @Success 200 {object} syserrordto.GetSysErrorResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/errors/{errorID} [get]
 func (h *Handler) GetSysError(ctx *gin.Context) {
 	errorID, err := h.ParseStringParam(ctx, "errorID")
@@ -106,8 +106,8 @@ func (h *Handler) GetSysError(ctx *gin.Context) {
 // @Id      deleteSysError
 // @Param   errorID path string true "error ID"
 // @Success 200 {object} syserrordto.DeleteSysErrorResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/errors/{errorID} [delete]
 func (h *Handler) DeleteSysError(ctx *gin.Context) {
 	errorID, err := h.ParseStringParam(ctx, "errorID")

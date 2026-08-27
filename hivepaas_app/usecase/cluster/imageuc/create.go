@@ -6,10 +6,10 @@ import (
 	"github.com/moby/moby/api/types/registry"
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/imageuc/imagedto"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -23,14 +23,14 @@ func (uc *UC) CreateImage(
 	data := &createImageData{}
 	err := uc.loadImageData(ctx, uc.db, req, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	_, err = uc.dockerManager.ImagePull(ctx, req.Name, func(opts *client.ImagePullOptions) {
 		opts.RegistryAuth = data.AuthHeader
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &imagedto.CreateImageResp{
@@ -53,20 +53,20 @@ func (uc *UC) loadImageData(
 		regAuth, err := uc.settingRepo.GetByID(ctx, db, entity.NewObjectScopeGlobal(), base.SettingTypeRegistryAuth,
 			req.RegistryAuth.ID, true)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		data.RegistryAuth = regAuth.MustAsRegistryAuth()
 		password, err := data.RegistryAuth.Password.GetPlain()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.AuthHeader, err = docker.GenerateAuthHeader(&registry.AuthConfig{
 			Username: data.RegistryAuth.Username,
 			Password: password,
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

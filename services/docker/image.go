@@ -6,7 +6,7 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ImageListOption func(*client.ImageListOptions)
@@ -21,7 +21,7 @@ func (m *manager) ImageList(
 	}
 	resp, err := m.client.ImageList(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -39,7 +39,7 @@ func (m *manager) ImagePull(
 	}
 	resp, err := m.client.ImagePull(ctx, name, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return resp, nil
 }
@@ -57,7 +57,7 @@ func (m *manager) ImagePush(
 	}
 	resp, err := m.client.ImagePush(ctx, name, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return resp, nil
 }
@@ -75,7 +75,7 @@ func (m *manager) ImageRemove(
 	}
 	resp, err := m.client.ImageRemove(ctx, imageID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -93,7 +93,7 @@ func (m *manager) ImageInspect(
 	}
 	resp, err := m.client.ImageInspect(ctx, imageID, opts...)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -118,7 +118,7 @@ func (m *manager) ImagePrune(
 	}
 	resp, err := m.client.ImagePrune(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -140,7 +140,7 @@ func (m *manager) ImageTag(
 	}
 	resp, err := m.client.ImageTag(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }

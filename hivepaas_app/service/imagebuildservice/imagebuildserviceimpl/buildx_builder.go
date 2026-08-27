@@ -8,8 +8,8 @@ import (
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -28,14 +28,14 @@ func (s *service) ensureCustomBuilder(
 			"--driver", "docker-container",
 		)
 		if out, err := createCmd.CombinedOutput(); err != nil {
-			return apperrors.Wrap(err).WithMsgLog("%s", reflectutil.UnsafeBytesToStr(out))
+			return hperrors.Wrap(err).WithMsgLog("%s", reflectutil.UnsafeBytesToStr(out))
 		}
 	}
 
 	// Bootstrap builder to ensure the buildkit container is running
 	bootstrapCmd := exec.CommandContext(ctx, "docker", "buildx", "inspect", "--bootstrap", builderName)
 	if out, err := bootstrapCmd.CombinedOutput(); err != nil {
-		return apperrors.Wrap(err).WithMsgLog("%s", reflectutil.UnsafeBytesToStr(out))
+		return hperrors.Wrap(err).WithMsgLog("%s", reflectutil.UnsafeBytesToStr(out))
 	}
 
 	// Update container resource limits (CPUs, Memory) dynamically if settings are provided

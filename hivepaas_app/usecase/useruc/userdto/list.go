@@ -3,10 +3,10 @@ package userdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 )
 
@@ -27,13 +27,13 @@ func NewListUserReq() *ListUserReq {
 	}
 }
 
-func (req *ListUserReq) Validate() apperrors.ValidationErrors {
+func (req *ListUserReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateSlice(req.Status, true, 0,
 		base.AllUserStatuses, "status")...)
 	validators = append(validators, basedto.ValidateSlice(req.Role, true, 0,
 		base.AllUserRoles, "role")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListUserResp struct {
@@ -43,7 +43,7 @@ type ListUserResp struct {
 
 func TransformUser(user *entity.User) (resp *UserResp, err error) {
 	if err = copier.Copy(&resp, user); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp.MfaTotpActivated = user.TotpSecret != ""
 	resp.Photo = basedto.TransformObjectIcon(user.Photo)

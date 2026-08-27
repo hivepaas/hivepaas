@@ -13,8 +13,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (s *service) GenerateCertAsPEM(
@@ -41,10 +41,10 @@ func (s *service) GenerateCertAsPEM(
 		priv, err = rsa.GenerateKey(rand.Reader, 8192) //nolint:mnd
 	default:
 		return nil, nil, fmt.Errorf("%w: unrecognized key type '%v'",
-			apperrors.ErrUnsupported, keyType)
+			hperrors.ErrUnsupported, keyType)
 	}
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	// ECDSA, ED25519 and RSA subject keys should have the DigitalSignature

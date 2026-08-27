@@ -7,10 +7,10 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type GetUserReq struct {
@@ -22,8 +22,8 @@ func NewGetUserReq() *GetUserReq {
 	return &GetUserReq{}
 }
 
-func (req *GetUserReq) Validate() apperrors.ValidationErrors {
-	return apperrors.NewValidationErrors(vld.Validate(basedto.ValidateID(&req.ID, true, "id")...))
+func (req *GetUserReq) Validate() hperrors.ValidationErrors {
+	return hperrors.NewValidationErrors(vld.Validate(basedto.ValidateID(&req.ID, true, "id")...))
 }
 
 type GetUserResp struct {
@@ -59,7 +59,7 @@ type UserResp struct {
 func TransformUserDetails(user *entity.User) (resp *UserDetailsResp, err error) {
 	userResp, err := TransformUser(user)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp = &UserDetailsResp{
 		UserResp: userResp,

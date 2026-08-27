@@ -5,7 +5,7 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type RegistryLoginOption func(*client.RegistryLoginOptions)
@@ -20,7 +20,7 @@ func (m *manager) RegistryLogin(
 	}
 	resp, err := m.client.RegistryLogin(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }

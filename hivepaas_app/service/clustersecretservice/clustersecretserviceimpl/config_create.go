@@ -9,8 +9,8 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -29,7 +29,7 @@ func (s *service) CreateConfigsForApp(
 		}
 		ref, err := s.createSwarmConfig(ctx, db, app, cfg)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		refs = append(refs, ref)
 	}
@@ -47,7 +47,7 @@ func (s *service) CreateConfigForApp(
 	}
 	refs, err := s.CreateConfigsForApp(ctx, db, app, []*entity.ConfigFile{config})
 	ref, _ := gofn.First(refs)
-	return ref, apperrors.Wrap(err)
+	return ref, hperrors.Wrap(err)
 }
 
 func (s *service) createSwarmConfig(
@@ -76,13 +76,13 @@ func (s *service) createSwarmConfig(
 			}
 		})
 	if err != nil {
-		if errors.Is(err, apperrors.ErrInfraConflict) || errors.Is(err, apperrors.ErrInfraAlreadyExists) {
+		if errors.Is(err, hperrors.ErrInfraConflict) || errors.Is(err, hperrors.ErrInfraAlreadyExists) {
 			// Delete the orphan config, then retry this action
 			if err := s.deleteOrphanSwarmConfig(ctx, db, app, configName); err == nil {
 				return s.createSwarmConfig(ctx, db, app, config)
 			}
 		}
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	swarmRef.ConfigID = configResp.ID
 	swarmRef.ConfigName = configName
@@ -127,7 +127,7 @@ func (s *service) addSwarmConfigsToService(
 			return true, nil
 		}, itemRemovalRetryMax, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If this app is parent of some other apps
@@ -136,12 +136,12 @@ func (s *service) addSwarmConfigsToService(
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
 			err = s.addSwarmConfigsToService(ctx, db, childApp, refs...)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 	}

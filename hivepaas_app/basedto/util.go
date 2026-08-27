@@ -1,6 +1,6 @@
 package basedto
 
-import "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+import "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 
 // TransformObjectSlice transforms a slice of objects
 func TransformObjectSlice[T, U any, TS ~[]T](objects TS, singleTransformFn func(T) (U, error)) ([]U, error) {
@@ -8,7 +8,7 @@ func TransformObjectSlice[T, U any, TS ~[]T](objects TS, singleTransformFn func(
 	for _, obj := range objects {
 		itemResp, err := singleTransformFn(obj)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp = append(resp, itemResp)
 	}

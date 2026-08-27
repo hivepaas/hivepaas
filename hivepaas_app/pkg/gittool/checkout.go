@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
@@ -61,44 +61,44 @@ func (cli *checkoutCli) checkout(
 ) (commit *CommitInfo, err error) {
 	// 1. Prepare args
 	if err = cli.processCheckoutOpts(ctx); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// 2. Clone repository if source cache is not there
 	if !cli.opts.CacheLoaded {
 		if err = cli.clone(ctx); err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// 3. Checkout target commit
 	if commit, err = cli.checkoutTargetCommit(ctx); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// 4. Fetch submodules if needed
 	if err = cli.fetchSubmodules(ctx); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// 5. Pull LFS files if configured
@@ -107,7 +107,7 @@ func (cli *checkoutCli) checkout(
 	// 6. Cleanup orphaned data
 	if cli.needCleanup {
 		if err = cli.cleanup(ctx); err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -128,17 +128,17 @@ func (cli *checkoutCli) processCheckoutOpts(
 
 	cli.opts.refType, cli.opts.refShort = githelper.GetRefShort(string(cli.opts.ReferenceName))
 	if !cli.opts.refType.CanCheckout() {
-		return apperrors.NewUnsupported("Repository ref type")
+		return hperrors.NewUnsupported("Repository ref type")
 	}
 
 	authMethod, err := calcGitAuthMethod(ctx, cli.opts.Credentials)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if authMethod != nil {
 		parseURL, err := vcsurl.Parse(cli.opts.URL)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		switch auth := authMethod.(type) {
@@ -150,7 +150,7 @@ func (cli *checkoutCli) processCheckoutOpts(
 			// Add user info to the url
 			u, err := url.Parse(cli.opts.URL)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			u.User = url.UserPassword(auth.Username, auth.Password)
 			cli.opts.URL = u.String()
@@ -165,7 +165,7 @@ func (cli *checkoutCli) processCheckoutOpts(
 			if err != nil {
 				addLog(ctx, fmt.Sprintf("Failed to write SSH key file: %v error: %v",
 					sshKeyFile, err.Error()), true, cli.opts.LogStore)
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			sshCmd := "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i " + sshKeyFile
 			cli.sharedEnv = append(cli.sharedEnv, "GIT_SSH_COMMAND="+sshCmd)
@@ -173,7 +173,7 @@ func (cli *checkoutCli) processCheckoutOpts(
 		default:
 			addLog(ctx, fmt.Sprintf("Git auth method '%v' is unsupported", auth.Name()),
 				true, cli.opts.LogStore)
-			return apperrors.Wrap(apperrors.ErrGitAuthMethodUnsupported).WithParam("AuthMethod", auth.Name())
+			return hperrors.Wrap(hperrors.ErrGitAuthMethodUnsupported).WithParam("AuthMethod", auth.Name())
 		}
 	}
 

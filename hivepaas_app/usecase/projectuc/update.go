@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -28,7 +28,7 @@ func (uc *UC) UpdateProject(
 		projectData := &updateProjectData{}
 		err := uc.loadProjectDataForUpdate(ctx, db, auth, req, projectData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if !projectData.HasChanges {
 			return nil
@@ -40,7 +40,7 @@ func (uc *UC) UpdateProject(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &projectdto.UpdateProjectResp{}, nil
@@ -64,10 +64,10 @@ func (uc *UC) loadProjectDataForUpdate(
 		bunex.SelectRelation("ProjectEnvs"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if project.UpdateVer != req.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 	data.Project = project
 
@@ -77,11 +77,11 @@ func (uc *UC) loadProjectDataForUpdate(
 	// If name changes, need to verify it uniqueness
 	if !strings.EqualFold(req.Name, project.Name) {
 		conflictProject, err := uc.projectRepo.GetByName(ctx, db, req.Name, bunex.SelectColumns("id"))
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if conflictProject != nil {
-			return apperrors.NewAlreadyExist("Project").
+			return hperrors.NewAlreadyExist("Project").
 				WithMsgLog("project name '%s' already exists", req.Name)
 		}
 	}
@@ -93,10 +93,10 @@ func (uc *UC) loadProjectDataForUpdate(
 			Module:          base.ResourceModuleProject,
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if !hasPerm {
-			return apperrors.Wrap(apperrors.ErrUnauthorized)
+			return hperrors.Wrap(hperrors.ErrUnauthorized)
 		}
 	}
 
@@ -104,7 +104,7 @@ func (uc *UC) loadProjectDataForUpdate(
 	if req.Owner.ID != "" && req.Owner.ID != project.OwnerID {
 		_, err = uc.userService.LoadUser(ctx, db, req.Owner.ID, true)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -138,7 +138,7 @@ func (uc *UC) loadProjectDataForUpdate(
 	}
 	// We don't allow deleting envs via this API
 	for _, env := range currEnvs {
-		return apperrors.Wrap(apperrors.ErrProjectEnvRemovalUnallowed).WithParam("Name", env.Name)
+		return hperrors.Wrap(hperrors.ErrProjectEnvRemovalUnallowed).WithParam("Name", env.Name)
 	}
 
 	data.HasChanges = true

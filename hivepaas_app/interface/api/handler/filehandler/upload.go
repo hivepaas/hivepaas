@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
 )
@@ -26,8 +26,8 @@ import (
 // @Param   appId formData string false "target app id if scope=app"
 // @Param   userId formData string false "target app id if scope=user"
 // @Success 200 {object} filedto.UploadResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /files/upload [post]
 func (h *Handler) UploadFiles(ctx *gin.Context) {
 	req := filedto.NewUploadReq()
@@ -77,7 +77,7 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 		case base.ObjectScopeUser, base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
 			fallthrough
 		default:
-			return nil, apperrors.Wrap(apperrors.ErrUnsupported).WithParam("Name", "Scope")
+			return nil, hperrors.Wrap(hperrors.ErrUnsupported).WithParam("Name", "Scope")
 		}
 	case base.FileTypeTmp:
 		accessCheck = &permission.AppAccessCheck{
@@ -90,13 +90,13 @@ func (h *Handler) checkUploadPermission(ctx *gin.Context, req *filedto.UploadReq
 	case base.FileTypeSchedJobOutput:
 		fallthrough
 	default:
-		return nil, apperrors.Wrap(apperrors.ErrFileTypeNotSupported).
+		return nil, hperrors.Wrap(hperrors.ErrFileTypeNotSupported).
 			WithParam("SupportedTypes", []base.FileType{base.FileTypeDataFile, base.FileTypeTmp})
 	}
 
 	auth, err = h.authHandler.GetCurrentAuth(ctx, accessCheck)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return auth, nil
 }

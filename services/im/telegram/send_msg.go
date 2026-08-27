@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type StatusCodeError struct {
@@ -40,18 +40,18 @@ func (c *Client) SendMessage(ctx context.Context, botToken, chatID, text, parseM
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.getHttpClient().Do(req)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer resp.Body.Close()
 

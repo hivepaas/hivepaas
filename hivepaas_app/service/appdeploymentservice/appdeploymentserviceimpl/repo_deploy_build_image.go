@@ -7,8 +7,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	imagebuildserviceclient "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/imagebuildservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -56,7 +56,7 @@ func (s *service) repoDeployStepImageBuild(
 
 	buildNode, err := s.repoDeployStepGetBuildNode(ctx, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer func() {
 		buildNode.ReleaseNode()
@@ -120,7 +120,7 @@ func (s *service) repoDeployStepImageBuild(
 				buildNode.ReleaseNode()
 				break
 			}
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		data.Deployment.Output.ImageTags = buildResp.ImageTags
@@ -129,7 +129,7 @@ func (s *service) repoDeployStepImageBuild(
 
 	buildResp, err := s.imageBuildService.ImageBuild(ctx, db, buildReq)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	data.Deployment.Output.ImageTags = buildResp.ImageTags
@@ -143,7 +143,7 @@ func (s *service) repoDeployStepGetBuildNode(
 ) (buildNode imagebuildservice.BuildNodeResp, err error) {
 	buildNode, err = s.imageBuildService.SelectBuildWorkerNode(ctx, data.ImageBuildSettings)
 	if err != nil {
-		return buildNode, apperrors.Wrap(err)
+		return buildNode, hperrors.Wrap(err)
 	}
 	defer func() {
 		if err != nil {
@@ -175,15 +175,15 @@ func (s *service) repoDeployStepGetBuildNode(
 	for {
 		select {
 		case <-ctx.Done():
-			return buildNode, apperrors.Wrap(ctx.Err())
+			return buildNode, hperrors.Wrap(ctx.Err())
 
 		case <-waitTimer.C:
-			return buildNode, apperrors.NewUnavailable("Build worker node (timed out waiting for available slot)")
+			return buildNode, hperrors.NewUnavailable("Build worker node (timed out waiting for available slot)")
 
 		case <-pollTicker.C:
 			buildNode, err = s.imageBuildService.SelectBuildWorkerNode(ctx, data.ImageBuildSettings)
 			if err != nil {
-				return buildNode, apperrors.Wrap(err)
+				return buildNode, hperrors.Wrap(err)
 			}
 			if buildNode.Node != nil {
 				_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(

@@ -7,10 +7,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -41,10 +41,10 @@ func (uc *UC) CreateSchedJob(
 			pData *settings.PersistingSettingCreationData,
 		) error {
 			if err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, schedJob); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			// Calculate upserting script objects if the scripts are too long
 			upsertingScripts := uc.calcUpsertingScriptSettings(pData.Setting, schedJob, nil)
@@ -52,7 +52,7 @@ func (uc *UC) CreateSchedJob(
 
 			pData.Setting.Kind = string(schedJob.JobType)
 			if err := pData.Setting.SetData(schedJob); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -64,13 +64,13 @@ func (uc *UC) CreateSchedJob(
 		) error {
 			err := uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, pData.Setting, false)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &schedjobdto.CreateSchedJobResp{
@@ -98,7 +98,7 @@ func (uc *UC) checkPermissionPipeToApp(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If command output is piped to another app, need to check permission
@@ -110,10 +110,10 @@ func (uc *UC) checkPermissionPipeToApp(
 		ProjectEnv:      targetApp.ProjectEnvID,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if !hasPerm {
-		return apperrors.Wrap(apperrors.ErrUnauthorized)
+		return hperrors.Wrap(hperrors.ErrUnauthorized)
 	}
 	return nil
 }
@@ -128,8 +128,8 @@ func (uc *UC) isSchedJobFeatureEnabledInApp(
 	}
 	featureSetting, err := uc.SettingRepo.GetSingle(ctx, db, app.GetObjectScope(),
 		base.SettingTypeAppFeatures, true)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	var featureSettings *entity.AppFeatureSettings
 	if featureSetting != nil {
@@ -139,7 +139,7 @@ func (uc *UC) isSchedJobFeatureEnabledInApp(
 		entity.InitAppFeatureSettingsDefault(featureSettings)
 	}
 	if featureSettings.SchedJobSettings != nil && !featureSettings.SchedJobSettings.Enabled {
-		return apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "scheduled-job")
+		return hperrors.Wrap(hperrors.ErrFeatureDisabled).WithParam("Name", "scheduled-job")
 	}
 	return nil
 }

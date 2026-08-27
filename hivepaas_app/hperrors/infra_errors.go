@@ -1,4 +1,4 @@
-package apperrors
+package hperrors
 
 import (
 	"errors"
@@ -25,7 +25,7 @@ var (
 	IsInfraUnauthorized       = errdefs.IsUnauthorized
 )
 
-func NewInfra(err error) AppError {
+func NewInfra(err error) HPError {
 	if err == nil {
 		return nil
 	}

@@ -3,9 +3,9 @@ package projectuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
@@ -28,7 +28,7 @@ func (uc *UC) GetProject(
 		),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Loads all accesses on the project
@@ -36,13 +36,13 @@ func (uc *UC) GetProject(
 		project.Accesses, err = uc.permissionManager.LoadProjectAccessUsers(ctx, uc.db, project.ID,
 			entityutil.ExtractIDs(project.ProjectEnvs))
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	resp, err := projectdto.TransformProject(project)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &projectdto.GetProjectResp{

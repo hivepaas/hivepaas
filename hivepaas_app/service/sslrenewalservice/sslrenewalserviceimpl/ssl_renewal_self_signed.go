@@ -4,9 +4,9 @@ import (
 	"context"
 	"crypto/x509/pkix"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
@@ -27,7 +27,7 @@ func (s *service) sslRenewSelfSignedCert(
 	certBytes, keyBytes, err := s.sslService.GenerateCertAsPEM(&pkix.Name{CommonName: sslCert.Domain}, sslCert.KeyType,
 		notBefore, notAfter, false)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	sslCert.Certificate = reflectutil.UnsafeBytesToStr(certBytes)
@@ -38,7 +38,7 @@ func (s *service) sslRenewSelfSignedCert(
 
 	err = sslSetting.SetData(sslCert)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

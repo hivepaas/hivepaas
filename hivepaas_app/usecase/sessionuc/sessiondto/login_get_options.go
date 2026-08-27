@@ -1,9 +1,9 @@
 package sessiondto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type GetLoginOptionsReq struct {
@@ -13,7 +13,7 @@ func NewGetLoginOptionsReq() *GetLoginOptionsReq {
 	return &GetLoginOptionsReq{}
 }
 
-func (req *GetLoginOptionsReq) Validate() apperrors.ValidationErrors {
+func (req *GetLoginOptionsReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

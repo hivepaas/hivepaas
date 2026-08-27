@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -24,15 +24,15 @@ func (uc *UC) createAppDeployment(
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		err := uc.appService.EnsureAppActive(ctx, db, app, false, true)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		err = uc.createAppDeploymentByChangeID(ctx, db, app, changeID, webhookID, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		err = uc.appService.PersistAppData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
@@ -40,7 +40,7 @@ func (uc *UC) createAppDeployment(
 		_ = uc.taskQueue.ScheduleTask(ctx, persistingData.UpsertingTasks...)
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -55,7 +55,7 @@ func (uc *UC) createAppDeploymentByChangeID(
 ) error {
 	hasDeployment, err := uc.hasAppDeploymentByChangeID(ctx, db, app, changeID)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if hasDeployment {
 		return nil
@@ -64,7 +64,7 @@ func (uc *UC) createAppDeploymentByChangeID(
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
 	deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if deploymentSettings.RepoSource != nil && deploymentSettings.RepoSource.CommitHash != "" {
 		deploymentSettings.RepoSource.CommitHash = ""
@@ -76,7 +76,7 @@ func (uc *UC) createAppDeploymentByChangeID(
 
 	deployment, task, err := uc.appDeploymentService.CreateDeploymentAndTask(app, deploymentSettings)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	// Override target commit hash
 	deployment.Settings.RepoSource.CommitHash = changeID
@@ -109,7 +109,7 @@ func (uc *UC) getAppDeploymentByChangeID(
 		bunex.SelectWhere("deployment.trigger->>'changeId' = ?", changeID),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(deployments) == 0 {
 		return nil, nil
@@ -125,7 +125,7 @@ func (uc *UC) hasAppDeploymentByChangeID(
 ) (bool, error) {
 	deployment, err := uc.getAppDeploymentByChangeID(ctx, db, app, changeID)
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	return deployment != nil, nil
 }

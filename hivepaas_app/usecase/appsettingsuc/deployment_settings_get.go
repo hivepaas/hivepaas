@@ -3,10 +3,10 @@ package appsettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
@@ -26,7 +26,7 @@ func (uc *UC) GetAppDeploymentSettings(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	settings, _, err := uc.settingRepo.List(ctx, uc.db, nil, nil,
@@ -35,7 +35,7 @@ func (uc *UC) GetAppDeploymentSettings(
 		bunex.SelectWhere("setting.object_id = ?", app.ID), // load app direct settings
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	input := &appsettingsdto.AppDeploymentSettingsTransformInput{
@@ -44,12 +44,12 @@ func (uc *UC) GetAppDeploymentSettings(
 	}
 	err = uc.loadAppDeploymentSettingsRefData(ctx, uc.db, input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp, err := appsettingsdto.TransformDeploymentSettings(input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.GetAppDeploymentSettingsResp{
@@ -65,7 +65,7 @@ func (uc *UC) loadAppDeploymentSettingsRefData(
 	app := input.App
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, true)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	input.ServiceSpec = &service.Spec
 
@@ -77,7 +77,7 @@ func (uc *UC) loadAppDeploymentSettingsRefData(
 	err = uc.settingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &input.RefObjects, app.GetObjectScope(),
 		true, refIDs)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, settingID := range refIDs.RefSettingIDs {
 		setting := input.RefObjects.RefSettings[settingID]

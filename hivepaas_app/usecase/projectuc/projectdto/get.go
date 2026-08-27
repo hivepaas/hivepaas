@@ -8,10 +8,10 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 )
 
@@ -24,10 +24,10 @@ func NewGetProjectReq() *GetProjectReq {
 	return &GetProjectReq{}
 }
 
-func (req *GetProjectReq) Validate() apperrors.ValidationErrors {
+func (req *GetProjectReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetProjectResp struct {
@@ -80,12 +80,12 @@ type ProjectBaseResp struct {
 
 func TransformProject(project *entity.Project) (resp *ProjectResp, err error) {
 	if err = copier.Copy(&resp, &project); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp.Photo = basedto.TransformObjectIcon(project.Photo)
 	resp.Envs, err = TransformProjectEnvs(project.ProjectEnvs)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp.Tags = gofn.MapSlice(project.Tags, func(t *entity.Tag) string { return t.Tag })
 	resp.UserAccesses = TransformUserAccesses(project)
@@ -102,7 +102,7 @@ func TransformProjectOwner(project *entity.Project) *basedto.UserBaseResp {
 
 func TransformProjectEnvs(envs []*entity.ProjectEnv) (resp []*ProjectEnvResp, err error) {
 	if err = copier.Copy(&resp, &envs); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }

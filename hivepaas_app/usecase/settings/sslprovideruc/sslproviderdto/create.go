@@ -3,10 +3,10 @@ package sslproviderdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -129,10 +129,10 @@ func NewCreateSSLProviderReq() *CreateSSLProviderReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *CreateSSLProviderReq) Validate() apperrors.ValidationErrors {
+func (req *CreateSSLProviderReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.validate("")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type CreateSSLProviderResp struct {

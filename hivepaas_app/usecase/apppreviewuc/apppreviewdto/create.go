@@ -3,8 +3,8 @@ package apppreviewdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -27,7 +27,7 @@ func NewCreatePreviewReq() *CreatePreviewReq {
 	return &CreatePreviewReq{}
 }
 
-func (req *CreatePreviewReq) Validate() apperrors.ValidationErrors {
+func (req *CreatePreviewReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
@@ -36,7 +36,7 @@ func (req *CreatePreviewReq) Validate() apperrors.ValidationErrors {
 		"repoRef")...)
 	validators = append(validators, basedto.ValidateStr(&req.CustomSubdomain, false, 1, subdomainMaxLen,
 		"customSubdomain")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type CreatePreviewResp struct {

@@ -7,9 +7,9 @@ import (
 	"github.com/moby/moby/api/types/network"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -24,7 +24,7 @@ func (s *service) ListProjectNetworks(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 	if len(settings) == 0 {
 		return nil, nil, nil
@@ -37,7 +37,7 @@ func (s *service) ListProjectNetworks(
 
 	netList, err := s.dockerManager.NetworkListByIDs(ctx, netIDs)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	networks = make(map[string]*network.Summary, len(settings))
@@ -60,7 +60,7 @@ func (s *service) RemoveAllProjectNetworks(
 ) error {
 	settings, networks, err := s.ListProjectNetworks(ctx, db, project)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, setting := range settings {
@@ -72,12 +72,12 @@ func (s *service) RemoveAllProjectNetworks(
 			continue
 		}
 		_, e := s.dockerManager.NetworkRemove(ctx, net.ID)
-		if e != nil && !errors.Is(e, apperrors.ErrNotFound) {
+		if e != nil && !errors.Is(e, hperrors.ErrNotFound) {
 			err = errors.Join(err, e)
 		}
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

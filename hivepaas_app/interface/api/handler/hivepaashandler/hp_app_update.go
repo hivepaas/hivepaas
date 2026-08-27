@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc/hpappdto"
 )
@@ -18,8 +18,8 @@ import (
 // @Produce json
 // @Id      getHivePaaSReleaseInfo
 // @Success 200 {object} hpappdto.GetHpAppReleaseInfoResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/hivepaas/release-info [get]
 func (h *Handler) GetAppReleaseInfo(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -31,7 +31,7 @@ func (h *Handler) GetAppReleaseInfo(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Getting release info").
+		h.RenderError(ctx, hperrors.NewForbidden("Getting release info").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}
@@ -59,8 +59,8 @@ func (h *Handler) GetAppReleaseInfo(ctx *gin.Context) {
 // @Id      updateHivePaaSAppVersion
 // @Param   body body hpappdto.UpdateHpAppReq true "request data"
 // @Success 201 {object} hpappdto.UpdateHpAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/hivepaas/update-version [post]
 func (h *Handler) UpdateAppVersion(ctx *gin.Context) {
 	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -72,7 +72,7 @@ func (h *Handler) UpdateAppVersion(ctx *gin.Context) {
 		return
 	}
 	if auth.User.Role != base.UserRoleAdmin {
-		h.RenderError(ctx, apperrors.NewForbidden("Update app version").
+		h.RenderError(ctx, hperrors.NewForbidden("Update app version").
 			WithMsgLog("only admin can perform this action"))
 		return
 	}

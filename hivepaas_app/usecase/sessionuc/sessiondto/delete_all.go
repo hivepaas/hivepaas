@@ -1,8 +1,8 @@
 package sessiondto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type DeleteAllSessionsReq struct {
@@ -13,7 +13,7 @@ func NewDeleteAllSessionsReq() *DeleteAllSessionsReq {
 	return &DeleteAllSessionsReq{}
 }
 
-func (req *DeleteAllSessionsReq) Validate() apperrors.ValidationErrors {
+func (req *DeleteAllSessionsReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

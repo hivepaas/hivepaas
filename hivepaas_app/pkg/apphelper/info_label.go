@@ -3,7 +3,7 @@ package apphelper
 import (
 	"encoding/json"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
@@ -28,7 +28,7 @@ func ParseAppInfoLabel(label string) (*AppInfo, error) {
 	}
 	err := json.Unmarshal(reflectutil.UnsafeStrToBytes(label), &res)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return res, nil
 }

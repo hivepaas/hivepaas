@@ -3,8 +3,8 @@ package syserroruc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc/syserrordto"
 )
 
@@ -15,12 +15,12 @@ func (uc *UC) GetSysError(
 ) (*syserrordto.GetSysErrorResp, error) {
 	appErr, err := uc.appErrorRepo.GetByID(ctx, uc.db, req.ID)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp, err := syserrordto.TransformSysError(appErr)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &syserrordto.GetSysErrorResp{

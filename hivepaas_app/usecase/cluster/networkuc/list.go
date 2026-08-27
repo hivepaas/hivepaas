@@ -5,9 +5,9 @@ import (
 
 	"github.com/moby/moby/api/types/network"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -21,25 +21,25 @@ func (uc *UC) ListNetwork(
 	if req.Scope.IsGlobalScope() {
 		currNets, err = uc.networkService.SyncNetworks(ctx, uc.DB)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
 	err = uc.listNetworksInDocker(ctx, resp.Data, currNets, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	respData, err := networkdto.TransformNetworks(resp.Data, resp.RefObjects, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &networkdto.ListNetworkResp{
@@ -65,7 +65,7 @@ func (uc *UC) listNetworksInDocker(
 
 		res, err := uc.dockerManager.NetworkListByIDs(ctx, networks)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		currNets = res.Items
 	}

@@ -13,7 +13,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
@@ -39,7 +39,7 @@ func (s *service) Rsync(
 	}
 
 	if source == nil || target == nil {
-		return apperrors.Wrap(apperrors.ErrBadRequest).WithParam("Name", "source/target mount")
+		return hperrors.Wrap(hperrors.ErrBadRequest).WithParam("Name", "source/target mount")
 	}
 
 	// Try Fast-Path: Direct Host Rsync if both source and target volumes are accessible on Host OS
@@ -146,7 +146,7 @@ func (s *service) execDirectHostRsync(
 
 	// Ensure target directory exists on host
 	if err := os.MkdirAll(destPath, fileModeFull); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	args := []string{"-aHAX", "--info=progress2"}
@@ -169,7 +169,7 @@ func (s *service) execDirectHostRsync(
 				tasklog.TsNow,
 			))
 		}
-		return apperrors.Wrap(err).WithParam("Output", string(output))
+		return hperrors.Wrap(err).WithParam("Output", string(output))
 	}
 
 	if opts.LogStore != nil {
@@ -269,14 +269,14 @@ func (s *service) execContainerRsync(
 		if opts.LogStore != nil {
 			_ = opts.LogStore.Add(ctx, tasklog.NewErrFrame(err.Error(), tasklog.TsNow))
 		}
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if statusCode != 0 {
 		errMsg := fmt.Sprintf("rsync swarm task exited with status code %d", statusCode)
 		if opts.LogStore != nil {
 			_ = opts.LogStore.Add(ctx, tasklog.NewErrFrame(errMsg, tasklog.TsNow))
 		}
-		return apperrors.Wrap(apperrors.ErrInternal).WithParam("Reason", errMsg)
+		return hperrors.Wrap(hperrors.ErrInternal).WithParam("Reason", errMsg)
 	}
 
 	if opts.LogStore != nil {

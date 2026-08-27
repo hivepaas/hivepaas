@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -25,19 +25,19 @@ func (s *service) LoadApps(
 	}
 	apps, err := s.appRepo.ListByIDs(ctx, db, projectID, appIDs, extraOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	appMap := entityutil.SliceToIDMap(apps)
 	for _, appID := range appIDs {
 		if _, exists := appMap[appID]; !exists {
-			return nil, apperrors.Wrap(apperrors.ErrAppNotFound).WithParam("Name", appID)
+			return nil, hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", appID)
 		}
 	}
 
 	for _, app := range apps {
 		if err = s.validateAppStatus(app, requireProjectActive, requireAppsActive); err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	return apps, nil
@@ -56,11 +56,11 @@ func (s *service) LoadAppsSkipMissing(
 	}
 	apps, err := s.appRepo.ListByIDs(ctx, db, projectID, appIDs, extraOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	for _, app := range apps {
 		if err = s.validateAppStatus(app, requireProjectActive, requireAppsActive); err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	return apps, nil
@@ -75,10 +75,10 @@ func (s *service) LoadApp(
 ) (*entity.App, error) {
 	app, err := s.appRepo.GetByID(ctx, db, projectID, appID, extraOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if err = s.validateAppStatus(app, requireProjectActive, requireAppActive); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return app, nil
 }
@@ -93,10 +93,10 @@ func (s *service) LoadAppByKey(
 	// NOTE: make sure to add SelectRelation("Project") into extraOpts
 	app, err := s.appRepo.GetByGlobalKey(ctx, db, projectID, appKey, extraOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if err = s.validateAppStatus(app, requireProjectActive, requireAppActive); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return app, nil
 }
@@ -110,22 +110,22 @@ func (s *service) validateAppStatus(
 		projectName = app.Project.Name
 	}
 	if requireProjectActive && (app.Project == nil || app.Project.Status != base.ProjectStatusActive) {
-		return apperrors.Wrap(apperrors.ErrProjectInactive).WithNTParam("Name", projectName)
+		return hperrors.Wrap(hperrors.ErrProjectInactive).WithNTParam("Name", projectName)
 	}
 	if requireProjectActive && (app.ProjectEnv == nil || app.ProjectEnv.Status != base.ProjectStatusActive) {
 		projectEnv := app.ProjectEnvID
 		if app.ProjectEnv != nil {
 			projectEnv = app.ProjectEnv.Name
 		}
-		return apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithNTParam("Project", projectName).
+		return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithNTParam("Project", projectName).
 			WithNTParam("Env", projectEnv)
 	}
 	if requireAppActive {
 		if app.Status != base.AppStatusActive {
-			return apperrors.Wrap(apperrors.ErrAppInactive).WithNTParam("Name", app.Name)
+			return hperrors.Wrap(hperrors.ErrAppInactive).WithNTParam("Name", app.Name)
 		}
 		if app.ParentApp != nil && app.ParentApp.Status != base.AppStatusActive {
-			return apperrors.Wrap(apperrors.ErrAppInactive).WithNTParam("Name", app.ParentApp.Name)
+			return hperrors.Wrap(hperrors.ErrAppInactive).WithNTParam("Name", app.ParentApp.Name)
 		}
 	}
 	return nil
@@ -140,13 +140,13 @@ func (s *service) LoadAppWithFeatureSettings(
 ) (app *entity.App, featureSettings *entity.AppFeatureSettings, err error) {
 	app, err = s.LoadApp(ctx, db, projectID, appID, requireProjectActive, requireAppActive, extraOpts...)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	featureSetting, err := s.settingRepo.GetSingle(ctx, db, app.GetObjectScope(),
 		base.SettingTypeAppFeatures, true)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, nil, hperrors.Wrap(err)
 	}
 	if featureSetting != nil {
 		featureSettings = featureSetting.MustAsAppFeatureSettings()
@@ -174,7 +174,7 @@ func (s *service) EnsureAppActive(
 		bunex.SelectWhereIf(checkUpdateVer, "app.update_ver = ?", app.UpdateVer),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

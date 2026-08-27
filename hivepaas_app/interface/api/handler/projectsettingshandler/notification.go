@@ -3,8 +3,8 @@ package projectsettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/notificationuc/notificationdto"
 )
 
@@ -20,8 +20,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} notificationdto.ListNotificationResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications [get]
 func (h *Handler) ListNotification(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
@@ -36,8 +36,8 @@ func (h *Handler) ListNotification(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} notificationdto.GetNotificationResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications/{itemID} [get]
 func (h *Handler) GetNotification(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
@@ -52,8 +52,8 @@ func (h *Handler) GetNotification(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body notificationdto.CreateNotificationReq true "request data"
 // @Success 201 {object} notificationdto.CreateNotificationResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications [post]
 func (h *Handler) CreateNotification(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
@@ -69,8 +69,8 @@ func (h *Handler) CreateNotification(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body notificationdto.UpdateNotificationReq true "request data"
 // @Success 200 {object} notificationdto.UpdateNotificationResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications/{itemID} [put]
 func (h *Handler) UpdateNotification(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
@@ -86,8 +86,8 @@ func (h *Handler) UpdateNotification(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body notificationdto.UpdateNotificationStatusReq true "request data"
 // @Success 200 {object} notificationdto.UpdateNotificationStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications/{itemID}/status [put]
 func (h *Handler) UpdateNotificationStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)
@@ -102,8 +102,8 @@ func (h *Handler) UpdateNotificationStatus(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} notificationdto.DeleteNotificationResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/notifications/{itemID} [delete]
 func (h *Handler) DeleteNotification(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeNotification, base.ObjectScopeProject)

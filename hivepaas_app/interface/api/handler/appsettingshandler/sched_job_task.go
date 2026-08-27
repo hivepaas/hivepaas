@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
 
@@ -26,8 +26,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} schedjobdto.ListSchedJobTaskResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks [get]
 func (h *Handler) ListAppSchedJobTask(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
@@ -65,8 +65,8 @@ func (h *Handler) ListAppSchedJobTask(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   taskID path string true "task ID"
 // @Success 200 {object} schedjobdto.GetSchedJobTaskResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID} [get]
 func (h *Handler) GetAppSchedJobTask(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")
@@ -112,8 +112,8 @@ func (h *Handler) GetAppSchedJobTask(ctx *gin.Context) {
 // @Param   taskID path string true "task ID"
 // @Param   body body schedjobdto.CancelSchedJobTaskReq true "request data"
 // @Success 200 {object} schedjobdto.CancelSchedJobTaskResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}/cancel [post]
 func (h *Handler) CancelAppSchedJobTask(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeExecute, "itemID")
@@ -158,8 +158,8 @@ func (h *Handler) CancelAppSchedJobTask(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   taskID path string true "task ID"
 // @Success 200 {object} schedjobdto.GetSchedJobTaskLogsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}/logs [get]
 func (h *Handler) GetAppSchedJobTaskLogs(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")

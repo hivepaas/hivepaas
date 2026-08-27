@@ -3,8 +3,8 @@ package imageuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/imageuc/imagedto"
 )
 
@@ -15,7 +15,7 @@ func (uc *UC) GetImage(
 ) (*imagedto.GetImageResp, error) {
 	inspect, err := uc.dockerManager.ImageInspect(ctx, req.ImageID)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &imagedto.GetImageResp{

@@ -3,8 +3,8 @@ package commandtemplateuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
@@ -25,7 +25,7 @@ func (uc *UC) DeleteCommandTemplate(
 		) error {
 			currCmd, err := data.Setting.AsCommandTemplate()
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			// Calculate deleting script objects if there is any
 			upsertingScripts := uc.calcUpsertingScriptSettings(data.Setting, nil, currCmd)
@@ -34,7 +34,7 @@ func (uc *UC) DeleteCommandTemplate(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &commandtemplatedto.DeleteCommandTemplateResp{}, nil

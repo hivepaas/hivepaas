@@ -10,9 +10,9 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -71,7 +71,7 @@ func NewServer(config *Config) (*Server, error) {
 		gocron.WithLimitConcurrentJobs(uint(config.Concurrency), gocron.LimitModeWait),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return &Server{
 		scheduler: scheduler,
@@ -249,7 +249,7 @@ func (s *Server) ScheduleTask(ctx context.Context, tasks ...*entity.Task) error 
 	for _, task := range tasks {
 		err := s.scheduleTask(task, task.ShouldRunAt())
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -279,7 +279,7 @@ func (s *Server) scheduleTask(task *entity.Task, runAt time.Time) error {
 	)
 	if err != nil {
 		s.config.Logger.Errorf("failed to schedule task %s: %v", task.ID, err)
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	s.addJob(task, job, runAt)
 	return nil
@@ -312,7 +312,7 @@ func (s *Server) executeTask(task *entity.Task, priorityCheck bool) error {
 		if priorityJob != nil {
 			err := s.scheduleTask(task, priorityJob.RunAt.Add(taskLowPriorityDelay))
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		}
@@ -337,7 +337,7 @@ func (s *Server) executeTask(task *entity.Task, priorityCheck bool) error {
 			rescheduled = true
 		}
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -401,7 +401,7 @@ func (s *Server) Shutdown() error {
 	if s.scheduler != nil {
 		err := s.scheduler.Shutdown()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -417,7 +417,7 @@ func (s *Server) StartScheduler() error {
 func (s *Server) StopScheduler() error {
 	if s.scheduler != nil {
 		if err := s.scheduler.StopJobs(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil

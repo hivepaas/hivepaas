@@ -6,8 +6,8 @@ import (
 	"github.com/darkrockmountain/gomail"
 	"github.com/darkrockmountain/gomail/providers/smtp"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type SendMailOption2 func(*gomail.EmailMessage)
@@ -32,17 +32,17 @@ func SendMail2(
 
 	password, err := conf.Password.GetPlain()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	sender, err := smtp.NewSmtpEmailSender(conf.Host, conf.Port, conf.Username, password, "")
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = sender.SendEmail(message)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
@@ -33,7 +33,7 @@ func (e *Executor) execute(
 	task := execData.Task
 	wfArgs, err := task.ArgsAsWorkflow()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if wfArgs == nil || len(wfArgs.Steps) == 0 {
@@ -70,7 +70,7 @@ func (e *Executor) execute(
 	err = e.taskQueue.ExecuteTaskType(ctx, db, step.Type, subTaskExecData)
 	if err != nil {
 		if !step.IgnoreError {
-			return apperrors.Wrap(err).WithMsgLog("workflow %s failed at step %d (%s)",
+			return hperrors.Wrap(err).WithMsgLog("workflow %s failed at step %d (%s)",
 				task.ID, wfArgs.CurrentStep, step.Name)
 		}
 	}
@@ -78,7 +78,7 @@ func (e *Executor) execute(
 	// Advance to next step
 	wfArgs.CurrentStep++
 	if err := task.SetArgs(wfArgs); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If there are remaining steps, re-enqueue workflow task for next step

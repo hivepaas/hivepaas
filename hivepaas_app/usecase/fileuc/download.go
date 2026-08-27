@@ -9,11 +9,11 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
 	"github.com/hivepaas/hivepaas/services/aws/s3"
@@ -32,13 +32,13 @@ func (uc *UC) DownloadFile(
 	if needParseToken {
 		tokenClaims, err := uc.fileService.ParseDownloadToken(req.Token)
 		if err != nil {
-			return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
+			return nil, hperrors.Wrap(hperrors.ErrTokenInvalid).WithCause(err)
 		}
 		if tokenClaims.FileID != req.ID {
-			return nil, apperrors.Wrap(apperrors.ErrUnauthorized).WithMsgLog("file ID not match")
+			return nil, hperrors.Wrap(hperrors.ErrUnauthorized).WithMsgLog("file ID not match")
 		}
 		if tokenClaims.RequireLogin && (auth == nil || auth.User.ID != tokenClaims.UserID) {
-			return nil, apperrors.Wrap(apperrors.ErrUnauthorized).WithMsgLog("user ID not match")
+			return nil, hperrors.Wrap(hperrors.ErrUnauthorized).WithMsgLog("user ID not match")
 		}
 	}
 
@@ -47,11 +47,11 @@ func (uc *UC) DownloadFile(
 		bunex.SelectWhere("file.status = ?", base.FileStatusActive),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if !file.IsActive() || file.Deleted {
-		return nil, apperrors.NewNotFound("File")
+		return nil, hperrors.NewNotFound("File")
 	}
 
 	switch file.StorageType {
@@ -60,7 +60,7 @@ func (uc *UC) DownloadFile(
 	case base.FileStorageCloud:
 		return uc.downloadCloudFile(ctx, req, file)
 	default:
-		return nil, apperrors.NewUnsupported("Storage type")
+		return nil, hperrors.NewUnsupported("Storage type")
 	}
 }
 
@@ -81,7 +81,7 @@ func (uc *UC) downloadLocalFile(
 	filePath := filepath.Join(config.Current.AppPath, file.Path)
 	reader, err := os.Open(filePath)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	defer func() {
 		if err != nil {
@@ -98,7 +98,7 @@ func (uc *UC) downloadCloudFile(
 	file *entity.File,
 ) (_ *filedto.DownloadFileResp, err error) {
 	if file.Storage == nil {
-		return nil, apperrors.NewInactive("Storage setting")
+		return nil, hperrors.NewInactive("Storage setting")
 	}
 
 	respData := &filedto.DownloadFileDataResp{}
@@ -115,14 +115,14 @@ func (uc *UC) downloadCloudFile(
 	case base.CloudStorageKindS3:
 		s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		objectKey := file.Path
 		if !usePresignURL {
 			s3Object, err := s3Client.GetObject(ctx, file.Bucket, objectKey)
 			if err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 			defer func() {
 				if err != nil {
@@ -144,12 +144,12 @@ func (uc *UC) downloadCloudFile(
 		presignURL, err := s3Client.PresignGetObject(ctx, file.Bucket, objectKey, file.Name, file.Mimetype,
 			req.ViewInline, expiration)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		respData.RedirectURL = presignURL
 		return &filedto.DownloadFileResp{Data: respData}, nil
 
 	default:
-		return nil, apperrors.NewUnsupported("Storage type")
+		return nil, hperrors.NewUnsupported("Storage type")
 	}
 }

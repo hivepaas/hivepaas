@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
 
@@ -23,8 +23,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} appdto.ListAppBaseResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps/base [get]
 func (h *Handler) ListAppBaseInProject(ctx *gin.Context) {
 	auth, projectID, err := h.GetAuthInProject(ctx, base.ActionTypeRead)
@@ -62,8 +62,8 @@ func (h *Handler) ListAppBaseInProject(ctx *gin.Context) {
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} appdto.ListAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/apps [get]
 func (h *Handler) ListAppInProject(ctx *gin.Context) {
 	auth, projectID, err := h.GetAuthInProject(ctx, base.ActionTypeRead)

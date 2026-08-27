@@ -6,10 +6,10 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -62,12 +62,12 @@ func (uc *BaseUC) UpdateSettingStatus(
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadSettingForUpdateStatus(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		if data.AfterLoading != nil {
 			if err := data.AfterLoading(ctx, db, data); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -75,18 +75,18 @@ func (uc *BaseUC) UpdateSettingStatus(
 		uc.prepareSettingStatusUpdate(req, data, persistingData)
 		if data.BeforePersisting != nil {
 			if err := data.BeforePersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
 		err = uc.persistSettingStatusUpdate(ctx, db, req, data, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		if data.AfterPersisting != nil {
 			if err := data.AfterPersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -96,13 +96,13 @@ func (uc *BaseUC) UpdateSettingStatus(
 			OldSetting: data.Setting,
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &UpdateSettingStatusResp{}, nil
@@ -115,13 +115,13 @@ func (uc *BaseUC) loadSettingForUpdateStatus(
 	data *UpdateSettingStatusData,
 ) (err error) {
 	if err = uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if data.Load != nil {
 		err = data.Load(ctx, db, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	} else {
 		loadOpts := []bunex.SelectQueryOption{
@@ -132,18 +132,18 @@ func (uc *BaseUC) loadSettingForUpdateStatus(
 		setting, err := uc.loadSettingByID(ctx, db, &req.BaseSettingReq, req.ID,
 			false, loadOpts...)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.Setting = setting
 	}
 
 	setting := data.Setting
 	if req.UpdateVer != setting.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
 	if setting.ObjectID != req.Scope.ScopeObjectID() {
-		return apperrors.Wrap(apperrors.ErrInheritedSettingNonUpdatable)
+		return hperrors.Wrap(hperrors.ErrInheritedSettingNonUpdatable)
 	}
 
 	return nil
@@ -185,13 +185,13 @@ func (uc *BaseUC) persistSettingStatusUpdate(
 ) error {
 	err := uc.SettingRepo.Update(ctx, db, persistingData.Setting)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if !data.MultiDefaultAllowed && !data.Setting.Default && persistingData.Setting.Default {
 		err = uc.ensureSettingDefaultUniqueness(ctx, db, &req.BaseSettingReq, persistingData.Setting)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

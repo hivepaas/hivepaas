@@ -7,7 +7,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
@@ -40,7 +40,7 @@ func (s *service) updateRedisService(
 
 	redisSvc, err := s.hpAppService.GetHpCacheSwarmService(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	redisSvc.Spec.TaskTemplate.ContainerSpec.Image = args.TargetVersion.RedisImage
@@ -53,18 +53,18 @@ func (s *service) updateRedisService(
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, redisSvc.ID, &redisSvc.Version, &redisSvc.Spec)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Wait for the update to finish
 	redisSvc, err = s.dockerManager.ServiceUpdateWait(ctx, redisSvc.ID, redisServiceUpdateCheckInterval)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if redisSvc.UpdateStatus != nil && redisSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
 		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("service redis is rolled back",
 			tasklog.TsNow))
-		return apperrors.Wrap(apperrors.ErrActionFailed)
+		return hperrors.Wrap(hperrors.ErrActionFailed)
 	}
 
 	return nil

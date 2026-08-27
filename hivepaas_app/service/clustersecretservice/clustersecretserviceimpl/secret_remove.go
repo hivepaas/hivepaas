@@ -8,8 +8,8 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -26,10 +26,10 @@ func (s *service) SecretRemove(
 	fn := func() error {
 		_, err := s.dockerManager.SecretRemove(ctx, secretID)
 		if err != nil {
-			if errors.Is(err, apperrors.ErrNotFound) {
+			if errors.Is(err, hperrors.ErrNotFound) {
 				return nil
 			}
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	}
@@ -43,7 +43,7 @@ func (s *service) SecretRemove(
 	}
 	if err != nil {
 		// TODO: create a cleanup task
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -90,7 +90,7 @@ func (s *service) RemoveSecretForApp(
 	// Remove the secret items from the swarm service of the app
 	err = s.removeSwarmSecretFromService(ctx, app.ServiceID, secretRefs...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If this app is parent of some other apps, also remove the secrets from the child apps
@@ -99,12 +99,12 @@ func (s *service) RemoveSecretForApp(
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
 			err = s.removeSwarmSecretFromService(ctx, childApp.ServiceID, secretRefs...)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 	}
@@ -112,8 +112,8 @@ func (s *service) RemoveSecretForApp(
 	// Now delete the secret items from docker
 	for _, secretRef := range secretRefs {
 		err = s.SecretRemove(ctx, secretRef.SecretID, itemRemovalRetryMax, itemRemovalRetryDelay)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		secretRef.SecretID = ""
 		secretRef.SecretName = ""
@@ -153,7 +153,7 @@ func (s *service) removeSwarmSecretFromService(
 			return true, nil
 		}, itemRemovalRetryMax, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -170,10 +170,10 @@ func (s *service) deleteOrphanSwarmSecret(
 
 	inspect, err := s.dockerManager.SecretInspect(ctx, secretNameOrID)
 	if err != nil {
-		if errors.Is(err, apperrors.ErrNotFound) {
+		if errors.Is(err, hperrors.ErrNotFound) {
 			return nil
 		}
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	orphanSwarmSec := &inspect.Secret
 
@@ -186,7 +186,7 @@ func (s *service) deleteOrphanSwarmSecret(
 	// Remove the secret from the swarm service of the app
 	err = s.removeSwarmSecretFromService(ctx, app.ServiceID, orphanSwarmRef)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If this app is parent of some other apps, also remove the secret from the child apps
@@ -195,20 +195,20 @@ func (s *service) deleteOrphanSwarmSecret(
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
 			err = s.removeSwarmSecretFromService(ctx, childApp.ServiceID, orphanSwarmRef)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 	}
 
 	// Now delete the secret
 	_, err = s.dockerManager.SecretRemove(ctx, orphanSwarmSec.ID)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 
 	return nil

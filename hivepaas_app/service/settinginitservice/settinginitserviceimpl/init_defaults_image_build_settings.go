@@ -7,9 +7,9 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -62,7 +62,7 @@ func (s *service) initDefaultImageBuildSettings(
 	// Calculate the best values for resource settings
 	listResp, err := s.dockerManager.NodeManagerList(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	//nolint
 	if leaderNode, found := gofn.FindPtr(listResp.Items, func(n *swarm.Node) bool {
@@ -81,7 +81,7 @@ func (s *service) initDefaultImageBuildSettings(
 
 	err = s.settingRepo.Insert(ctx, db, imageBuildSetting)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

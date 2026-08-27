@@ -10,11 +10,11 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -32,7 +32,7 @@ func (uc *UC) InviteUser(
 	inviteData := &userInviteData{}
 	err := uc.loadUserInviteData(ctx, uc.db, req, inviteData)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	persistingData := &userservice.PersistingUserData{}
@@ -42,7 +42,7 @@ func (uc *UC) InviteUser(
 		return uc.userService.PersistUserData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if req.SendInviteEmail {
@@ -56,7 +56,7 @@ func (uc *UC) InviteUser(
 			UserSignupLink: inviteData.InviteLink,
 		})
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -81,22 +81,22 @@ func (uc *UC) loadUserInviteData(
 	data *userInviteData,
 ) error {
 	user, err := uc.userRepo.GetByEmail(ctx, db, req.Email)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if user != nil && user.Status != base.UserStatusPending {
-		return apperrors.NewAlreadyExist("User").
+		return hperrors.NewAlreadyExist("User").
 			WithMsgLog("user '%s' already exists", req.Email)
 	}
 
 	if req.SendInviteEmail {
 		emailSetting, err := uc.emailService.GetDefaultSystemEmail(ctx, uc.db)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		email, err := emailSetting.AsEmail()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.SystemEmail = email
 	}
@@ -105,8 +105,8 @@ func (uc *UC) loadUserInviteData(
 	username := strings.SplitN(req.Email, "@", 2)[0] //nolint:mnd
 	// If the username is not available, append some random chars
 	conflictUser, err := uc.userRepo.GetByUsername(ctx, db, username)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if conflictUser != nil {
 		username += fmt.Sprintf("-%d", 1000+rand.Intn(9000)) //nolint
@@ -129,7 +129,7 @@ func (uc *UC) loadUserInviteData(
 	// Generate invite token
 	inviteToken, err := uc.userService.GenerateUserInviteToken(user.ID)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.InviteLink = config.Current.DashboardUserSignupURL(inviteToken)
 

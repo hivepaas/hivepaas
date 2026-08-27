@@ -8,10 +8,10 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -60,10 +60,10 @@ func (repo *fileRepo) GetByID(ctx context.Context, db database.IDB, id string,
 
 	err := query.Scan(ctx)
 	if file == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("File").WithCause(err)
+		return nil, hperrors.NewNotFound("File").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return file, nil
 }
@@ -76,10 +76,10 @@ func (repo *fileRepo) GetByName(ctx context.Context, db database.IDB, name strin
 
 	err := query.Scan(ctx)
 	if file == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("File").WithCause(err)
+		return nil, hperrors.NewNotFound("File").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return file, nil
 }
@@ -92,10 +92,10 @@ func (repo *fileRepo) GetByKey(ctx context.Context, db database.IDB, key string,
 
 	err := query.Scan(ctx)
 	if file == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("File").WithCause(err)
+		return nil, hperrors.NewNotFound("File").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return file, nil
 }
@@ -113,7 +113,7 @@ func (repo *fileRepo) List(ctx context.Context, db database.IDB, paging *basedto
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -140,7 +140,7 @@ func (repo *fileRepo) ListByIDs(ctx context.Context, db database.IDB, ids []stri
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return files, nil
 }
@@ -160,7 +160,7 @@ func (repo *fileRepo) InsertMulti(ctx context.Context, db database.IDB, files []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -181,7 +181,7 @@ func (repo *fileRepo) UpsertMulti(ctx context.Context, db database.IDB, files []
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -193,7 +193,7 @@ func (repo *fileRepo) Update(ctx context.Context, db database.IDB, file *entity.
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -210,7 +210,7 @@ func (repo *fileRepo) DeleteAllByObjects(ctx context.Context, db database.IDB,
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -218,14 +218,14 @@ func (repo *fileRepo) DeleteAllByObjects(ctx context.Context, db database.IDB,
 func (repo *fileRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
-		return apperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
 	}
 	query := db.NewDelete().Model((*entity.File)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

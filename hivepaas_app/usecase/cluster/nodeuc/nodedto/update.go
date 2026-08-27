@@ -3,8 +3,8 @@ package nodedto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -23,14 +23,14 @@ func NewUpdateNodeReq() *UpdateNodeReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateNodeReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateNodeReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.UpdateSettingReq.Validate()...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, false, 1, nodeNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.Role, false, docker.AllNodeRoles, "role")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.Availability, false, docker.AllNodeAvailabilities,
 		"availability")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type UpdateNodeResp struct {

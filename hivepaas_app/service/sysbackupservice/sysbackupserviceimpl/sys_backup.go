@@ -13,10 +13,10 @@ import (
 	"filippo.io/age"
 	"github.com/klauspost/compress/zstd"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
@@ -57,7 +57,7 @@ func (s *service) Backup(
 	// Backup DB
 	err = s.sysBackup(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Assign back the result output
@@ -79,13 +79,13 @@ func (s *service) sysBackup(
 
 	data.TempDir, err = fileutil.CreateTempDirInAppPath("", "sys-backup-*", 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer os.RemoveAll(data.TempDir)
 
 	bakTmpFile, tarW, closer, err := s.sysBackupCreateWriter(data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer func() {
 		if closer != nil {
@@ -96,12 +96,12 @@ func (s *service) sysBackup(
 	// Start the data backup
 	err = s.sysBackupDB(ctx, tarW, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = s.sysBackupFiles(ctx, tarW, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	_ = closer() // Flush data in writers
@@ -110,13 +110,13 @@ func (s *service) sysBackup(
 	// Save the result in a local file
 	err = s.sysBackupSaveResultInLocal(ctx, db, bakTmpFile, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Upload backup file to cloud storage if configured
 	err = s.sysBackupSaveResultInStorage(ctx, db, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -131,13 +131,13 @@ func (s *service) sysBackupCreateWriter(
 
 	err = os.MkdirAll(data.BackupSaveDir, base.DirModeDefault)
 	if err != nil {
-		return "", nil, nil, apperrors.Wrap(err)
+		return "", nil, nil, hperrors.Wrap(err)
 	}
 
 	tmpFileName = filepath.Join(data.TempDir, "sys-backup")
 	tmpFile, err := os.Create(tmpFileName)
 	if err != nil {
-		return "", nil, nil, apperrors.Wrap(err)
+		return "", nil, nil, hperrors.Wrap(err)
 	}
 
 	var w io.Writer
@@ -149,23 +149,23 @@ func (s *service) sysBackupCreateWriter(
 	case base.FileEncryptionFormatAge:
 		encSecret, err := data.SysBackupSettings.Encryption.Secret.GetPlain()
 		if err != nil {
-			return "", nil, nil, apperrors.Wrap(err)
+			return "", nil, nil, hperrors.Wrap(err)
 		}
 		if encSecret == "" {
-			return "", nil, nil, apperrors.NewMissing("Encryption secret")
+			return "", nil, nil, hperrors.NewMissing("Encryption secret")
 		}
 		recipient, err := age.NewScryptRecipient(encSecret)
 		if err != nil {
-			return "", nil, nil, apperrors.Wrap(err)
+			return "", nil, nil, hperrors.Wrap(err)
 		}
 		encW, err = age.Encrypt(w, recipient)
 		if err != nil {
-			return "", nil, nil, apperrors.Wrap(err)
+			return "", nil, nil, hperrors.Wrap(err)
 		}
 		w = encW
 	case base.FileEncryptionNone: // Do nothing
 	default:
-		return "", nil, nil, apperrors.Wrap(apperrors.ErrEncryptionFormatUnsupported).
+		return "", nil, nil, hperrors.Wrap(hperrors.ErrEncryptionFormatUnsupported).
 			WithParam("Format", data.SysBackupSettings.Encryption.Format)
 	}
 
@@ -176,14 +176,14 @@ func (s *service) sysBackupCreateWriter(
 	case base.FileCompressionFormatZstd:
 		zstdW, err = zstd.NewWriter(w)
 		if err != nil {
-			return "", nil, nil, apperrors.Wrap(err)
+			return "", nil, nil, hperrors.Wrap(err)
 		}
 		w = zstdW
 	case base.FileCompressionNone: // Do nothing
 	case base.FileCompressionFormatZip, base.FileCompressionFormatTar:
 		fallthrough
 	default:
-		return "", nil, nil, apperrors.Wrap(apperrors.ErrArchiveFormatUnsupported).
+		return "", nil, nil, hperrors.Wrap(hperrors.ErrArchiveFormatUnsupported).
 			WithParam("Format", data.SysBackupSettings.Compression.Format)
 	}
 

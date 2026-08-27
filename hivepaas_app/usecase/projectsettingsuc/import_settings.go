@@ -3,10 +3,10 @@ package projectsettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -24,7 +24,7 @@ func (uc *UC) ImportSettingsToProject(
 		data := &settingImportData{}
 		err := uc.loadSettingsForImport(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingSettingImportData{}
@@ -32,13 +32,13 @@ func (uc *UC) ImportSettingsToProject(
 
 		err = uc.persistSettingImports(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &projectsettingsdto.ImportSettingsToProjectResp{}, nil
@@ -65,14 +65,14 @@ func (uc *UC) loadSettingsForImport(
 		bunex.SelectRelation("ProjectEnvs"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Project = project
 
 	settingIDs := req.Settings.ToIDStringSlice()
 	settings, err := uc.settingRepo.ListByIDs(ctx, db, nil, settingIDs, false)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, setting := range settings {
 		// Ignore if the setting belongs to the project already
@@ -84,7 +84,7 @@ func (uc *UC) loadSettingsForImport(
 	settingMap := entityutil.SliceToIDMap(settings)
 	for _, id := range settingIDs {
 		if _, exists := settingMap[id]; !exists {
-			return apperrors.Wrap(apperrors.ErrSettingNotFound).WithParam("Name", id)
+			return hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", id)
 		}
 	}
 
@@ -117,7 +117,7 @@ func (uc *UC) persistSettingImports(
 	err := uc.sharedSettingRepo.UpsertMulti(ctx, db, persistingData.SharedSettings,
 		entity.SharedSettingUpsertingConflictCols, entity.SharedSettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

@@ -5,19 +5,19 @@ import (
 
 	gogithub "github.com/google/go-github/v85/github"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (c *Client) GetAppHookConfig(
 	ctx context.Context,
 ) (*gogithub.HookConfig, error) {
 	if !c.IsAppClient() {
-		return nil, apperrors.Wrap(ErrGithubAppClientRequired)
+		return nil, hperrors.Wrap(ErrGithubAppClientRequired)
 	}
 
 	output, _, err := c.appClient.Apps.GetHookConfig(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return output, nil
 }
@@ -29,7 +29,7 @@ func (c *Client) UpdateAppHookConfig(
 	options ...UpdateAppHookOption,
 ) error {
 	if !c.IsAppClient() {
-		return apperrors.Wrap(ErrGithubAppClientRequired)
+		return hperrors.Wrap(ErrGithubAppClientRequired)
 	}
 
 	opts := &gogithub.HookConfig{}
@@ -39,7 +39,7 @@ func (c *Client) UpdateAppHookConfig(
 
 	_, _, err := c.appClient.Apps.UpdateHookConfig(ctx, opts)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

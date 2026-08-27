@@ -9,7 +9,7 @@ import (
 	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/services/traefik/traefikhelper"
 )
@@ -21,7 +21,7 @@ func (s *service) OpenPorts(
 	if req.Service == nil {
 		svc, err := s.GetTraefikSwarmService(ctx)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		req.Service = svc
 	}
@@ -71,7 +71,7 @@ func (s *service) OpenPorts(
 			defaultServiceUpdateRetryMax, 0)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return resp, nil

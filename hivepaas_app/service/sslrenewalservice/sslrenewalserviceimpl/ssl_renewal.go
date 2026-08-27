@@ -8,9 +8,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -63,7 +63,7 @@ func (s *service) SSLRenew(
 	// Load all SSL providers in the system
 	err = s.loadSSLProviders(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	renewalArgs := gofn.Coalesce(gofn.Must(data.Task.ArgsAsSSLRenewal()), &entity.TaskSSLRenewalArgs{})
@@ -72,7 +72,7 @@ func (s *service) SSLRenew(
 	for {
 		taskItems, err := s.loadSSLCerts(ctx, db, renewalArgs, offset, limit, timeNow)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		if len(taskItems) == 0 {
 			break
@@ -89,7 +89,7 @@ func (s *service) SSLRenew(
 					taskItem.Renewal = true
 					taskItem.RenewalError = s.sslRenew(ctx, taskItem.Setting, data)
 					if taskItem.RenewalError != nil {
-						return apperrors.Wrap(taskItem.RenewalError)
+						return hperrors.Wrap(taskItem.RenewalError)
 					}
 				}
 				return nil
@@ -128,7 +128,7 @@ func (s *service) loadSSLProviders(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, setting := range providerSettings {
@@ -171,7 +171,7 @@ func (s *service) loadSSLCerts(
 
 	sslCertSettings, _, err := s.settingRepo.List(ctx, db, nil, nil, listOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(sslCertSettings) == 0 {
 		return nil, nil
@@ -183,7 +183,7 @@ func (s *service) loadSSLCerts(
 	refObjects := entity.NewRefObjects()
 	err = s.settingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &refObjects, nil, true, refIDs)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	taskItems := make([]*sslRenewalDataItem, 0, len(sslCertSettings))
@@ -237,10 +237,10 @@ func (s *service) sslRenew(
 	case base.SSLCertTypeCustom:
 		return nil // treat as no error
 	default:
-		return apperrors.Wrap(apperrors.ErrSSLTypeUnsupported).WithParam("Type", sslCert.CertType)
+		return hperrors.Wrap(hperrors.ErrSSLTypeUnsupported).WithParam("Type", sslCert.CertType)
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -277,7 +277,7 @@ func (s *service) sslSaveUpdatedSettings(
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		reloadedSettingMap := entityutil.SliceToIDMap(reloadedSettings)
@@ -298,17 +298,17 @@ func (s *service) sslSaveUpdatedSettings(
 		err = s.settingRepo.UpsertMulti(ctx, db, persistingSettings,
 			entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = s.sslService.WriteCertFiles(true, persistingSettings...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, sslSetting := range persistingSettings {
@@ -333,7 +333,7 @@ func (s *service) sslNotifyOfResult(
 					_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf(
 						"Notification of expiring SSL %v failed with error: %v",
 						item.Setting.ID, err.Error()), tasklog.TsNow))
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 				return nil
 			}
@@ -343,7 +343,7 @@ func (s *service) sslNotifyOfResult(
 					_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf(
 						"Notification of renewed SSL %v failed with error: %v",
 						item.Setting.ID, err.Error()), tasklog.TsNow))
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 				return nil
 			}

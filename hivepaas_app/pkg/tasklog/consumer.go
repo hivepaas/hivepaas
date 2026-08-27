@@ -7,7 +7,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
 )
@@ -88,7 +88,7 @@ func (c *Consumer) getData(
 ) (frames []*LogFrame, err error) {
 	frames, err = redishelper.LRange[*LogFrame](ctx, c.redisClient, c.key, *frameIndex, -1)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	*frameIndex += int64(len(frames))
 	return frames, nil
@@ -100,7 +100,7 @@ func (c *Consumer) GetAllData(
 	frameIndex := int64(0)
 	frames, err := c.getData(ctx, &frameIndex)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return frames, nil
 }

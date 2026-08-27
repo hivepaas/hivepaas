@@ -3,9 +3,9 @@ package gitapi
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/git/gitea"
 	"github.com/hivepaas/hivepaas/services/git/github"
 	"github.com/hivepaas/hivepaas/services/git/gitlab"
@@ -39,10 +39,10 @@ func CreatePullRequestComment(
 	case base.SettingTypeGithubApp:
 		client, err := github.NewFromSetting(setting)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if _, err = client.CreatePullRequestComment(ctx, owner, repo, pullNumber, message); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 	case base.SettingTypeAccessToken:
@@ -50,40 +50,40 @@ func CreatePullRequestComment(
 		case base.GitSourceGithub:
 			client, err := github.NewFromSetting(setting)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			if _, err = client.CreatePullRequestComment(ctx, owner, repo, pullNumber, message); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 		case base.GitSourceGitlab:
 			client, err := gitlab.NewFromSetting(setting)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			projectID := owner + "/" + repo
 			if _, err = client.CreatePullRequestComment(ctx, projectID, pullNumber, message); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 		case base.GitSourceGitea:
 			client, err := gitea.NewFromSetting(setting)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			if _, err = client.CreatePullRequestComment(ctx, owner, repo, pullNumber, message); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 		case base.GitSourceBitbucket, base.GitSourceGogs:
 			fallthrough
 
 		default:
-			return apperrors.Wrap(apperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
+			return hperrors.Wrap(hperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
 		}
 
 	default:
-		return apperrors.Wrap(apperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
+		return hperrors.Wrap(hperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
 	}
 	return nil
 }

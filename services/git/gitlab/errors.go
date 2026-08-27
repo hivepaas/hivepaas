@@ -1,9 +1,9 @@
 package gitlab
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 var (
-	ErrAccessProviderInvalid = apperrors.NewErr(apperrors.ErrArgumentInvalid, "access provider invalid")
+	ErrAccessProviderInvalid = hperrors.NewErr(hperrors.ErrArgumentInvalid, "access provider invalid")
 )

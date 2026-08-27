@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/devhelperuc/devhelperdto"
 )
 
@@ -17,8 +17,8 @@ import (
 // @Id      devLockTask
 // @Param   body body devhelperdto.LockTaskReq true "request data"
 // @Success 200 {object} devhelperdto.LockTaskResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /dev-helper/lock-task [post]
 func (h *Handler) LockTask(ctx *gin.Context) {
 	req := devhelperdto.NewLockTaskReq()

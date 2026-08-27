@@ -5,8 +5,8 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -23,11 +23,11 @@ func NewHandleRepoWebhookReq() *HandleRepoWebhookReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *HandleRepoWebhookReq) Validate() apperrors.ValidationErrors {
+func (req *HandleRepoWebhookReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.ID, true,
 		1, idMaxLen, "id")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type HandleRepoWebhookResp struct {

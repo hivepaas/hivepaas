@@ -3,8 +3,8 @@ package settinghandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 )
 
@@ -15,8 +15,8 @@ import (
 // @Produce json
 // @Id      getSettingDomainSettings
 // @Success 200 {object} domainsettingsdto.GetDomainSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/domain-settings [get]
 func (h *Handler) GetDomainSettings(ctx *gin.Context) {
 	h.GetUniqueSetting(ctx, base.ResourceTypeDomainSettings, base.ObjectScopeGlobal)
@@ -30,8 +30,8 @@ func (h *Handler) GetDomainSettings(ctx *gin.Context) {
 // @Id      updateSettingDomainSettings
 // @Param   body body domainsettingsdto.UpdateDomainSettingsReq true "request data"
 // @Success 200 {object} domainsettingsdto.UpdateDomainSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/domain-settings [put]
 func (h *Handler) UpdateDomainSettings(ctx *gin.Context) {
 	h.UpdateUniqueSetting(ctx, base.ResourceTypeDomainSettings, base.ObjectScopeGlobal)
@@ -45,8 +45,8 @@ func (h *Handler) UpdateDomainSettings(ctx *gin.Context) {
 // @Id      updateSettingDomainSettingsStatus
 // @Param   body body domainsettingsdto.UpdateDomainSettingsStatusReq true "request data"
 // @Success 200 {object} domainsettingsdto.UpdateDomainSettingsStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/domain-settings/status [put]
 func (h *Handler) UpdateDomainSettingsStatus(ctx *gin.Context) {
 	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeDomainSettings, base.ObjectScopeGlobal)
@@ -59,8 +59,8 @@ func (h *Handler) UpdateDomainSettingsStatus(ctx *gin.Context) {
 // @Produce json
 // @Id      deleteSettingDomainSettings
 // @Success 200 {object} domainsettingsdto.DeleteDomainSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/domain-settings [delete]
 func (h *Handler) DeleteDomainSettings(ctx *gin.Context) {
 	h.DeleteUniqueSetting(ctx, base.ResourceTypeDomainSettings, base.ObjectScopeGlobal)

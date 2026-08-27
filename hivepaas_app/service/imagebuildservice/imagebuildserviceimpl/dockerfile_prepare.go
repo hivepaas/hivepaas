@@ -9,8 +9,8 @@ import (
 	dockerfile "github.com/hivepaas/dockerfile-generator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
@@ -39,19 +39,19 @@ func (s *service) prepareDockerfileManual(
 
 	if data.Dockerfile.Content != "" {
 		if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil { //nolint:mnd
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if err := os.WriteFile(targetPath, []byte(data.Dockerfile.Content), 0644); err != nil { //nolint:mnd,gosec
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	}
 
 	if _, err := os.Stat(targetPath); err != nil {
 		if os.IsNotExist(err) {
-			return apperrors.NewNotFound("Dockerfile").WithMsgLog("Dockerfile not found at %s", targetPath)
+			return hperrors.NewNotFound("Dockerfile").WithMsgLog("Dockerfile not found at %s", targetPath)
 		}
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -74,17 +74,17 @@ func (s *service) prepareDockerfileAuto(
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to auto-generate Dockerfile with error: "+
 			err.Error(), tasklog.TsNow))
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	data.Dockerfile.Content = reflectutil.UnsafeBytesToStr(contents)
 
 	targetPath := filepath.Join(data.CheckoutDir, data.Dockerfile.Path)
 	if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil { //nolint:mnd
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err := os.WriteFile(targetPath, contents, 0644); err != nil { //nolint:mnd,gosec
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(

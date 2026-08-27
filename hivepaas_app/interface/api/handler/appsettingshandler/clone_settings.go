@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -20,8 +20,8 @@ import (
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appsettingsdto.GetAppCloneSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/clone-settings [get]
 func (h *Handler) GetAppCloneSettings(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
@@ -59,8 +59,8 @@ func (h *Handler) GetAppCloneSettings(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   body body appsettingsdto.UpdateAppCloneSettingsReq true "request data"
 // @Success 200 {object} appsettingsdto.UpdateAppCloneSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/clone-settings [put]
 func (h *Handler) UpdateAppCloneSettings(ctx *gin.Context) {
 	// NOTE: clone an app means creating a new one, so need WRITE on the current env
@@ -99,8 +99,8 @@ func (h *Handler) UpdateAppCloneSettings(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   body body appsettingsdto.ExecuteAppCloneReq true "request data"
 // @Success 200 {object} appsettingsdto.ExecuteAppCloneResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/clone-execute [post]
 func (h *Handler) ExecuteAppClone(ctx *gin.Context) {
 	// NOTE: clone an app means creating a new one, so need WRITE on the current env

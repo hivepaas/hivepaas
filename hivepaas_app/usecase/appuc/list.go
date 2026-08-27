@@ -6,10 +6,10 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -26,10 +26,10 @@ func (uc *UC) ListApp(
 		_, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID,
 			req.ParentID, false, false)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		if featureSettings.PreviewSettings != nil && !featureSettings.PreviewSettings.Enabled {
-			return nil, apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
+			return nil, hperrors.Wrap(hperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
 		}
 	}
 
@@ -93,7 +93,7 @@ func (uc *UC) ListApp(
 
 	apps, paging, err := uc.appRepo.List(ctx, uc.db, req.ProjectID, &req.Paging, listOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// NOTE: make sure we init the project env and project for the parent app
@@ -109,14 +109,14 @@ func (uc *UC) ListApp(
 	if req.GetStats && len(apps) > 0 {
 		serviceMap, err := uc.loadAppSwarmServices(ctx, apps[0].Project.Key, apps)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		transformationInput.SwarmServiceMap = serviceMap
 	}
 
 	resp, err := appdto.TransformApps(apps, transformationInput)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appdto.ListAppResp{
@@ -138,7 +138,7 @@ func (uc *UC) loadAppSwarmServices(
 		}
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	services := listResp.Items

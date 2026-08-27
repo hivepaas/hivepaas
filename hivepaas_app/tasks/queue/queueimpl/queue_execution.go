@@ -8,10 +8,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/gocronqueue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -53,7 +53,7 @@ func (q *taskQueue) ExecuteTaskType(
 ) error {
 	execFunc, exists := q.rawExecutors[typ]
 	if !exists {
-		return apperrors.Wrap(apperrors.ErrNotFound).WithMsgLog("executor for task type %s not found", typ)
+		return hperrors.Wrap(hperrors.ErrNotFound).WithMsgLog("executor for task type %s not found", typ)
 	}
 	return execFunc(ctx, db, execData)
 }
@@ -69,7 +69,7 @@ func (q *taskQueue) executeTask(
 	err := transaction.Execute(ctx, q.db, func(db database.Tx) (err error) {
 		task, err := q.loadTask(ctx, db, taskID)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if task == nil {
 			return nil
@@ -106,7 +106,7 @@ func (q *taskQueue) executeTask(
 		}
 		err = q.taskInfoRepo.Set(ctx, task.ID, taskInfo, taskInfoCacheExp)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		var execErr error
@@ -130,8 +130,8 @@ func (q *taskQueue) executeTask(
 				_ = task.AddRun(&entity.TaskRun{
 					StartedAt:  task.StartedAt,
 					EndedAt:    task.EndedAt,
-					Error:      apperrors.GetErrorDetail(execErr, ""),
-					StackTrace: apperrors.GetErrorStackTrace(execErr),
+					Error:      hperrors.GetErrorDetail(execErr, ""),
+					StackTrace: hperrors.GetErrorStackTrace(execErr),
 				})
 			} else {
 				task.Status = gofn.If(taskData.TaskCanceled, base.TaskStatusCanceled, base.TaskStatusDone)
@@ -175,10 +175,10 @@ func (q *taskQueue) loadTask(
 		bunex.SelectRelation("TargetJob"),
 	)
 	if err != nil {
-		if errors.Is(err, apperrors.ErrNotFound) { // task not found, it's not error
+		if errors.Is(err, hperrors.ErrNotFound) { // task not found, it's not error
 			return nil, nil
 		}
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Task's target object must be active

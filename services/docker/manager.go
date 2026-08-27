@@ -10,8 +10,8 @@ import (
 	"github.com/moby/moby/api/types/volume"
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
@@ -233,7 +233,7 @@ func New() (Manager, error) {
 		client.WithAPIVersion(minAPIVersion),
 	)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	mgr.client = c
 	return mgr, nil
@@ -246,7 +246,7 @@ func (m *manager) Close() error {
 func (m *manager) NewClientForNode(ctx context.Context, nodeID string) (Manager, error) {
 	currNodeID, err := m.NodeCurrentID(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if currNodeID == nodeID {
 		return m, nil
@@ -258,10 +258,10 @@ func (m *manager) NewClientForNode(ctx context.Context, nodeID string) (Manager,
 		FilterAdd(&opts.Filters, "desired-state", string(swarm.TaskStateRunning))
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(resp.Items) == 0 {
-		return nil, apperrors.Wrap(apperrors.ErrInfraNotFound).
+		return nil, hperrors.Wrap(hperrors.ErrInfraNotFound).
 			WithMsgLog("no running docker proxy task found on node %s", nodeID)
 	}
 
@@ -279,7 +279,7 @@ func (m *manager) NewClientForNode(ctx context.Context, nodeID string) (Manager,
 	}
 
 	if targetIP == "" {
-		return nil, apperrors.Wrap(apperrors.ErrInfraNotFound).
+		return nil, hperrors.Wrap(hperrors.ErrInfraNotFound).
 			WithMsgLog("docker proxy task on node %s is not connected to network %s", nodeID, base.NetworkDockerProxy)
 	}
 
@@ -289,7 +289,7 @@ func (m *manager) NewClientForNode(ctx context.Context, nodeID string) (Manager,
 		client.WithAPIVersion(minAPIVersion),
 	)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 
 	return &manager{client: c}, nil

@@ -10,7 +10,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (s *service) MakeSubDirInHost(
@@ -45,7 +45,7 @@ func (s *service) MakeSubDirInHost(
 			opts.HostConfig.Mounts = []mount.Mount{targetMnt}
 		})
 	if err != nil || statusCode != 0 {
-		return apperrors.Wrap(apperrors.ErrDirNotCreated).
+		return hperrors.Wrap(hperrors.ErrDirNotCreated).
 			WithParam("Name", filepath.Join(baseDirInHost, subpath))
 	}
 	return nil

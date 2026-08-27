@@ -3,8 +3,8 @@ package storagesettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
 )
@@ -17,7 +17,7 @@ func (uc *UC) GetStorageSettings(
 	req.Type = currentSettingType
 	resp, err := uc.GetUniqueSetting(ctx, auth, &req.GetUniqueSettingReq, &settings.GetUniqueSettingData{})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	input := &storagesettingsdto.StorageSettingsTransformInput{
@@ -31,7 +31,7 @@ func (uc *UC) GetStorageSettings(
 		volResp, err := uc.dockerManager.VolumeListByIDs(ctx,
 			storageSetting.ClusterVolumeSettings.Volumes.ToIDStringSlice())
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		for i := range volResp.Items {
 			input.Volumes = append(input.Volumes, &volResp.Items[i])
@@ -40,7 +40,7 @@ func (uc *UC) GetStorageSettings(
 
 	respData, err := storagesettingsdto.TransformStorageSettings(input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &storagesettingsdto.GetStorageSettingsResp{

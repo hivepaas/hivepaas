@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/devhelperuc/devhelperdto"
 )
 
@@ -17,8 +17,8 @@ import (
 // @Id      devSimulateCrash
 // @Param   body body devhelperdto.SimulateCrashReq true "request data"
 // @Success 200 {object} devhelperdto.SimulateCrashResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /dev-helper/crash-simulate [post]
 func (h *Handler) SimulateCrash(ctx *gin.Context) {
 	req := devhelperdto.NewSimulateCrashReq()

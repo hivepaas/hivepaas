@@ -9,8 +9,8 @@ import (
 
 	"github.com/klauspost/compress/zstd"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 )
 
@@ -49,7 +49,7 @@ func (s *service) PrepareDownloadStream(
 		header, err := tarReader.Next()
 		if err != nil {
 			_ = reader.Close()
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		if header.Typeflag == tar.TypeDir {
@@ -81,7 +81,7 @@ func (s *service) PrepareDownloadStream(
 		compressedReader, err := compressStream(resultReader, req.CompressionFormat)
 		if err != nil {
 			_ = resultReader.Close()
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resultReader = compressedReader
 		resultFileName += ".gz"
@@ -91,7 +91,7 @@ func (s *service) PrepareDownloadStream(
 		compressedReader, err := compressStream(resultReader, req.CompressionFormat)
 		if err != nil {
 			_ = resultReader.Close()
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resultReader = compressedReader
 		resultFileName += ".zst"
@@ -118,7 +118,7 @@ func (r *tarReadCloser) Read(p []byte) (int, error) {
 		if err == io.EOF {
 			return n, io.EOF
 		}
-		return n, apperrors.Wrap(err)
+		return n, hperrors.Wrap(err)
 	}
 	return n, nil
 }
@@ -126,7 +126,7 @@ func (r *tarReadCloser) Read(p []byte) (int, error) {
 func (r *tarReadCloser) Close() error {
 	if r.underlying != nil {
 		if err := r.underlying.Close(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -153,7 +153,7 @@ func compressStream(
 		if err != nil {
 			_ = pr.Close()
 			_ = pw.Close()
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		compWriter = zstdW
 	default:

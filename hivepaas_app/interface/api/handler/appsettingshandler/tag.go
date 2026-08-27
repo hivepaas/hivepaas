@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -21,8 +21,8 @@ import (
 // @Param   appID path string true "app ID"
 // @Param   body body appsettingsdto.CreateAppTagReq true "request data"
 // @Success 201 {object} appsettingsdto.CreateAppTagResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/tags [post]
 func (h *Handler) CreateAppTag(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
@@ -60,8 +60,8 @@ func (h *Handler) CreateAppTag(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   body body appsettingsdto.DeleteAppTagsReq true "request data"
 // @Success 200 {object} appsettingsdto.DeleteAppTagsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/tags/delete [post]
 func (h *Handler) DeleteAppTags(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)

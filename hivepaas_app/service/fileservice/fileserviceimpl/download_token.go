@@ -3,8 +3,8 @@ package fileserviceimpl
 import (
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/appentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/jwtsession"
 )
 
@@ -20,7 +20,7 @@ func (s *service) GenerateDownloadToken(
 		RequireLogin: requireLogin,
 	}, expiration)
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	return fileToken, nil
 }
@@ -28,7 +28,7 @@ func (s *service) GenerateDownloadToken(
 func (s *service) ParseDownloadToken(token string) (*appentity.FileDownloadTokenClaims, error) {
 	tokenClaims := &appentity.FileDownloadTokenClaims{}
 	if err := jwtsession.ParseToken(token, tokenClaims); err != nil {
-		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrTokenInvalid).WithCause(err)
 	}
 	return tokenClaims, nil
 }

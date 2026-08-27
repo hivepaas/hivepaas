@@ -3,10 +3,10 @@ package filedto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListFileReq struct {
@@ -30,10 +30,10 @@ func NewListFileReq() *ListFileReq {
 	}
 }
 
-func (req *ListFileReq) Validate() apperrors.ValidationErrors {
+func (req *ListFileReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	// TODO: add validation
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListFileResp struct {
@@ -46,7 +46,7 @@ func TransformFiles(files []*entity.File) (resp []*FileResp, err error) {
 	for _, file := range files {
 		item, err := TransformFile(file)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp = append(resp, item)
 	}

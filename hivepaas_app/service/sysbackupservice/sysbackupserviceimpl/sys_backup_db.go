@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -41,7 +41,7 @@ func (s *service) sysBackupDB(
 
 	pgDumpBin, err := exec.LookPath("pg_dump")
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	cmd := exec.CommandContext(ctx, pgDumpBin,
@@ -57,32 +57,32 @@ func (s *service) sysBackupDB(
 	out, err := cmd.CombinedOutput()
 	logCmdOutput(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, data.LogStore)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	fileInfo, err := os.Stat(dumpFilePath)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	header, err := tar.FileInfoHeader(fileInfo, "")
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	header.Name = dumpFileName
 
 	if err := tarW.WriteHeader(header); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	file, err := os.Open(dumpFilePath)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer file.Close()
 
 	if _, err := io.Copy(tarW, file); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

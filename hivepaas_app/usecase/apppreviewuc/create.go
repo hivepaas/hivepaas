@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
@@ -25,7 +25,7 @@ func (uc *UC) CreatePreview(
 		data := &createPreviewData{}
 		err := uc.loadAppForCreatePreview(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		cloneDBApps := data.PreviewSettings.AutoCloneApps
@@ -45,25 +45,25 @@ func (uc *UC) CreatePreview(
 			},
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		err = uc.taskRepo.Upsert(ctx, db, previewTask,
 			entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if previewTask != nil {
 		err = uc.taskQueue.ScheduleTask(ctx, previewTask)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -92,17 +92,17 @@ func (uc *UC) loadAppForCreatePreview(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	// The app must not be a child app
 	if app.IsChildApp() {
-		return apperrors.Wrap(apperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
+		return hperrors.Wrap(hperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
 	}
 	data.App = app
 
 	previewSettings := featureSettings.PreviewSettings
 	if previewSettings == nil || !previewSettings.Enabled {
-		return apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
+		return hperrors.Wrap(hperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
 	}
 
 	// Check if preview already exists for this repo ref
@@ -111,11 +111,11 @@ func (uc *UC) loadAppForCreatePreview(
 		calcRepoRef = string(githelper.NormalizeRepoRef(req.RepoRef))
 	}
 	existingPreview, err := uc.appPreviewService.GetPreview(ctx, db, app.ID, calcRepoRef, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if existingPreview != nil {
-		return apperrors.NewAlreadyExist("Preview app")
+		return hperrors.NewAlreadyExist("Preview app")
 	}
 	data.PreviewSettings = previewSettings
 

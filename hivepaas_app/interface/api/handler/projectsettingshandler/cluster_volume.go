@@ -3,8 +3,8 @@ package projectsettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 )
 
@@ -20,8 +20,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} volumedto.ListVolumeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/cluster-volumes [get]
 func (h *Handler) ListClusterVolume(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeClusterVolume, base.ObjectScopeProject)
@@ -36,8 +36,8 @@ func (h *Handler) ListClusterVolume(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} volumedto.GetVolumeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/cluster-volumes/{itemID} [get]
 func (h *Handler) GetClusterVolume(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeClusterVolume, base.ObjectScopeProject)
@@ -52,8 +52,8 @@ func (h *Handler) GetClusterVolume(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body volumedto.CreateVolumeReq true "request data"
 // @Success 201 {object} volumedto.CreateVolumeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/cluster-volumes [post]
 func (h *Handler) CreateClusterVolume(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeClusterVolume, base.ObjectScopeProject)
@@ -69,8 +69,8 @@ func (h *Handler) CreateClusterVolume(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body volumedto.UpdateVolumeReq true "request data"
 // @Success 200 {object} volumedto.UpdateVolumeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/cluster-volumes/{itemID} [put]
 func (h *Handler) UpdateClusterVolume(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeClusterVolume, base.ObjectScopeProject)
@@ -86,8 +86,8 @@ func (h *Handler) UpdateClusterVolume(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body volumedto.UpdateVolumeStatusReq true "request data"
 // @Success 200 {object} volumedto.UpdateVolumeStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/cluster-volumes/{itemID}/status [put]
 func (h *Handler) UpdateClusterVolumeStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeClusterVolume, base.ObjectScopeProject)
@@ -102,8 +102,8 @@ func (h *Handler) UpdateClusterVolumeStatus(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} volumedto.DeleteVolumeResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/cluster-volumes/{itemID} [delete]
 func (h *Handler) DeleteClusterVolume(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeClusterVolume, base.ObjectScopeProject)

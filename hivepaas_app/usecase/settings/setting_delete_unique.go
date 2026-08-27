@@ -5,9 +5,9 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -47,12 +47,12 @@ func (uc *BaseUC) DeleteUniqueSetting(
 	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
 		err := uc.loadUniqueSettingForDeletion(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		if data.AfterLoading != nil {
 			if err := data.AfterLoading(ctx, db, data); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -60,18 +60,18 @@ func (uc *BaseUC) DeleteUniqueSetting(
 		uc.prepareUniqueSettingDeletion(req, data, persistingData)
 		if data.BeforePersisting != nil {
 			if err := data.BeforePersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
 		err = uc.persistSettingDeletion(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		if data.AfterPersisting != nil {
 			if err := data.AfterPersisting(ctx, db, data, persistingData); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -80,13 +80,13 @@ func (uc *BaseUC) DeleteUniqueSetting(
 			Setting: persistingData.Setting,
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &DeleteUniqueSettingResp{}, nil
@@ -99,7 +99,7 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 	data *DeleteUniqueSettingData,
 ) (err error) {
 	if err = uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	loadOpts := []bunex.SelectQueryOption{
@@ -109,7 +109,7 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 
 	setting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, req.Type, false, loadOpts...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Setting = setting
 
@@ -117,7 +117,7 @@ func (uc *BaseUC) loadUniqueSettingForDeletion(
 	if setting.ObjectID != req.Scope.ScopeObjectID() {
 		data.SharedSetting, err = uc.SharedSettingRepo.Get(ctx, db, req.Scope.ScopeObjectID(), setting.ID)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

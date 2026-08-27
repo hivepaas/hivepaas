@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvuc/projectenvdto"
 )
 
@@ -19,8 +19,8 @@ import (
 // @Param   projectID path string true "project ID"
 // @Param   projectEnv path string true "project Env"
 // @Success 200 {object} projectenvdto.DeleteProjectEnvResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv} [delete]
 func (h *Handler) DeleteProjectEnv(ctx *gin.Context) {
 	auth, projectID, projectEnvID, err := h.GetEnvAuth(ctx, base.ActionTypeDelete, true)

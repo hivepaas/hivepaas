@@ -7,10 +7,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc/appfeaturesettingsdto"
@@ -23,8 +23,8 @@ func (uc *UC) GetAppFeatureSettings(
 ) (*appfeaturesettingsdto.GetAppFeatureSettingsResp, error) {
 	req.Type = currentSettingType
 	resp, err := uc.GetUniqueSetting(ctx, auth, &req.GetUniqueSettingReq, &settings.GetUniqueSettingData{})
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
 	}
 
 	// If setting not found or a field of the settings not found, init default value for it
@@ -51,7 +51,7 @@ func (uc *UC) GetAppFeatureSettings(
 	refObjects := entity.NewRefObjects()
 	err = uc.SettingService.LoadRefObjectsSkipMissing(ctx, uc.DB, &refObjects, req.Scope, false, setting)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	input := &appfeaturesettingsdto.AppFeatureSettingsTransformInput{
@@ -61,7 +61,7 @@ func (uc *UC) GetAppFeatureSettings(
 
 	respData, err := appfeaturesettingsdto.TransformAppFeatureSettings(input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appfeaturesettingsdto.GetAppFeatureSettingsResp{

@@ -24,8 +24,8 @@ import (
 // @Param   duration query string false "`duration=24h` logs within the period"
 // @Param   tail query int false "`tail=1000` to get last 1000 lines of logs"
 // @Success 200 {object} appdeploymentdto.GetDeploymentLogsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}/logs [get]
 func (h *Handler) GetAppDeploymentLogs(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")

@@ -11,10 +11,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -83,13 +83,13 @@ func (s *service) Upload(
 			return err
 		}, requests...)
 	if err := errors.Join(gofn.MapValues(errMap)...); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp := &fileservice.UploadResp{Files: files}
 	if req.SaveToDB {
 		if err := s.fileRepo.InsertMulti(ctx, db, files); err != nil {
-			return resp, apperrors.Wrap(err)
+			return resp, hperrors.Wrap(err)
 		}
 	}
 	return resp, nil
@@ -111,7 +111,7 @@ func (s *service) uploadItem(
 	if req.file.StorageType == base.FileStorageLocal {
 		return s.uploadItemToLocal(req)
 	}
-	return nil, apperrors.NewNotImplemented()
+	return nil, hperrors.NewNotImplemented()
 }
 
 func (s *service) uploadItemToLocal(

@@ -3,8 +3,8 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -61,30 +61,30 @@ func (s *IMService) Decrypt() error {
 	if s.Slack != nil {
 		_, err := s.Slack.Webhook.GetPlain()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	if s.Discord != nil {
 		_, err := s.Discord.Webhook.GetPlain()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	if s.Telegram != nil {
 		_, err := s.Telegram.BotToken.GetPlain()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	if s.Lark != nil {
 		_, err := s.Lark.Webhook.GetPlain()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if s.Lark.Secret.IsEncrypted() {
 			_, err = s.Lark.Secret.GetPlain()
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 	}

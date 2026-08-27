@@ -3,8 +3,8 @@ package permissionimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 )
@@ -25,7 +25,7 @@ func (p *manager) checkModuleAccess(
 
 	perms, err := p.aclPermissionRepo.ListByResources(ctx, db, resources)
 	if err != nil || len(perms) == 0 {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 
 	for _, res := range resources {

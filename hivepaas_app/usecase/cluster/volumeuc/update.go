@@ -3,8 +3,8 @@ package volumeuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -18,7 +18,7 @@ func (uc *UC) UpdateVolume(
 	// NOTE: only allow updating `inheritable` and `default`
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &volumedto.UpdateVolumeResp{}, nil

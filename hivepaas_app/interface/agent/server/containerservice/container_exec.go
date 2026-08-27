@@ -3,7 +3,7 @@ package containerservice
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
@@ -79,5 +79,5 @@ func ContainerExec(
 ) error {
 	wrappedStream := &grpcExecStream{stream: stream}
 	err := containerAgentUC.ExecuteCommand(wrappedStream)
-	return apperrors.ToGRPCError(err) //nolint:wrapcheck
+	return hperrors.ToGRPCError(err) //nolint:wrapcheck
 }

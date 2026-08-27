@@ -6,9 +6,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
@@ -29,7 +29,7 @@ func (s *service) BuildCommand(
 	refObjectIDs := commandTpl.GetRefObjectIDs()
 	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &req.RefObjects, req.Scope, false, refObjectIDs)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Get command/script value from the command template
@@ -37,7 +37,7 @@ func (s *service) BuildCommand(
 	if resp.CommandString == "" && commandTpl.Script.ID != "" {
 		scriptSetting := req.RefObjects.RefSettings[commandTpl.Script.ID]
 		if scriptSetting == nil {
-			return nil, apperrors.NewNotFound("Command script")
+			return nil, hperrors.NewNotFound("Command script")
 		}
 		resp.CommandString = scriptSetting.MustAsScript().Data
 	}
@@ -93,7 +93,7 @@ func (s *service) BuildCommand(
 			},
 		})
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		resp.EnvVars = envResp.EnvVars
 	} else {
@@ -126,7 +126,7 @@ func (s *service) loadAppEnvsAndSecrets(
 	if !scope.IsAppScope() || app.ServiceID == "" {
 		envVars, secrets, err = s.envVarService.DefaultEnvLoad(ctx, db, scope, options)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		return envVars, secrets, nil
 	}
@@ -134,7 +134,7 @@ func (s *service) loadAppEnvsAndSecrets(
 	// Gets envs from swarm service for consistency and performance
 	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	envs := inspect.Service.Spec.TaskTemplate.ContainerSpec.Env
@@ -157,7 +157,7 @@ func (s *service) loadAppEnvsAndSecrets(
 			bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 		)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		secretMap := make(map[string]*entity.Setting, len(settings))
 		for _, setting := range settings { // project secrets

@@ -7,8 +7,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
@@ -24,12 +24,12 @@ func (s *service) waitUntilAppsRunning(
 ) error {
 	if data.SrcApp != nil && data.SrcApp.ServiceID != "" {
 		if err := s.waitUntilAppRunning(ctx, data.SrcApp, data); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	if data.DestApp != nil && data.DestApp.ServiceID != "" && (data.SrcApp == nil || data.DestApp.ID != data.SrcApp.ID) {
 		if err := s.waitUntilAppRunning(ctx, data.DestApp, data); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -58,14 +58,14 @@ func (s *service) waitUntilAppRunning(
 		nil,
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if task == nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
 			fmt.Sprintf("No running task found for app '%s', execution aborted", app.Name),
 			tasklog.TsNow,
 		))
-		return apperrors.NewNotFound(fmt.Sprintf("Running task of app '%s'", app.Name))
+		return hperrors.NewNotFound(fmt.Sprintf("Running task of app '%s'", app.Name))
 	}
 
 	return nil

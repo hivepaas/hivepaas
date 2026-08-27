@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -30,7 +30,7 @@ func (s *service) lockDockerServiceForDeployment(
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("failed to create a lock for the app service",
 			tasklog.TsNow))
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 
 	// Now, we have the lock, need to check either this deployment should continue or stop.
@@ -43,7 +43,7 @@ func (s *service) lockDockerServiceForDeployment(
 		bunex.SelectColumns("id"),
 	)
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 
 	return len(newerDeployments) == 0, nil

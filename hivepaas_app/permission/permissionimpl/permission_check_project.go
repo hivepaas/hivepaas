@@ -6,9 +6,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -25,8 +25,8 @@ func (p *manager) checkProjectAccess(
 		project, err := p.projectRepo.GetByIDAndOwner(ctx, db, check.ProjectID, check.SubjectID,
 			bunex.SelectColumns("id"),
 		)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return false, nil, apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return false, nil, hperrors.Wrap(err)
 		}
 		if project != nil {
 			return true, nil, nil
@@ -84,7 +84,7 @@ func (p *manager) LoadProjectAccesses(
 		// bunex.SelectWhere("(users.access_expire_at IS NULL OR users.access_expire_at > NOW())"),
 	)
 	if err != nil {
-		return nil, nil, nil, apperrors.Wrap(err)
+		return nil, nil, nil, hperrors.Wrap(err)
 	}
 
 	mapModPerms := make(map[string]*entity.ACLPermission, 10)           //nolint:mnd
@@ -146,7 +146,7 @@ func (p *manager) LoadProjectAccessUsers(
 		// bunex.SelectWhere("(users.access_expire_at IS NULL OR users.access_expire_at > NOW())"),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	mapPerms := make(map[string]*entity.ACLPermission, len(perms))
 	for _, perm := range perms {
@@ -193,7 +193,7 @@ func (p *manager) LoadProjectRawAccesses(
 
 	perms, _, err := p.aclPermissionRepo.List(ctx, db, nil, loadOpts...)
 	if err != nil || len(perms) == 0 {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return perms, nil
 }

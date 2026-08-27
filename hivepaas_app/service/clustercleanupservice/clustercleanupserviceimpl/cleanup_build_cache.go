@@ -10,8 +10,8 @@ import (
 	"github.com/docker/go-units"
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -69,7 +69,7 @@ func (s *service) cleanupBuildCache(
 	if pruneErr != nil {
 		if !strings.Contains(outStr, "no builder") && !strings.Contains(outStr, "not found") {
 			data.Output.BuildCachesPruneError = outStr
-			err = errors.Join(err, apperrors.Wrap(pruneErr).WithMsgLog("%s", outStr))
+			err = errors.Join(err, hperrors.Wrap(pruneErr).WithMsgLog("%s", outStr))
 		}
 	} else {
 		deletedCount, spaceReclaimed := parseBuildxPruneOutput(outStr)
@@ -77,7 +77,7 @@ func (s *service) cleanupBuildCache(
 		data.Output.SpaceReclaimed += spaceReclaimed
 	}
 
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }
 
 func parseBuildxPruneOutput(outStr string) (int, uint64) {

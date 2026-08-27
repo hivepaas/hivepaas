@@ -7,8 +7,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 )
@@ -107,7 +107,7 @@ func (s *Setting) parseData(structPtr SettingData) error {
 	}
 	err := json.Unmarshal(reflectutil.UnsafeStrToBytes(s.Data), structPtr)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	s.parsedData = structPtr
 	return nil
@@ -115,11 +115,11 @@ func (s *Setting) parseData(structPtr SettingData) error {
 
 func (s *Setting) SetData(data SettingData) error {
 	if data.GetType() != s.Type {
-		return apperrors.NewMismatch("Setting type", s.Type)
+		return hperrors.NewMismatch("Setting type", s.Type)
 	}
 	b, err := json.Marshal(data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	s.Data = reflectutil.UnsafeBytesToStr(b)
 	s.Size = int64(len(s.Data))
@@ -138,7 +138,7 @@ func (s *Setting) Parse() (SettingData, error) {
 func (s *Setting) GetRefObjectIDs() (*RefObjectIDs, error) {
 	settingData, err := s.Parse()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if settingData == nil {
 		return nil, nil
@@ -154,17 +154,17 @@ func parseSettingAs[T SettingData](s *Setting) (res T, err error) {
 	if s.parsedData != nil {
 		res, ok := s.parsedData.(T)
 		if !ok {
-			return res, apperrors.NewMismatch("Setting type", reflect.TypeFor[T]())
+			return res, hperrors.NewMismatch("Setting type", reflect.TypeFor[T]())
 		}
 		return res, nil
 	}
 	if s.Data != "" {
 		res = settingParserMap[s.Type].New().(T) //nolint:forcetypeassert
 		if res.GetType() != s.Type {
-			return res, apperrors.NewMismatch("Setting type", s.Type)
+			return res, hperrors.NewMismatch("Setting type", s.Type)
 		}
 		if err := s.parseData(res); err != nil {
-			return res, apperrors.Wrap(err)
+			return res, hperrors.Wrap(err)
 		}
 	}
 	return res, nil
@@ -176,7 +176,7 @@ func (s *Setting) GetResourceLinks() ([]*ResLink, error) {
 	}
 	settingData, err := s.Parse()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if settingData == nil {
 		return nil, nil
@@ -187,14 +187,14 @@ func (s *Setting) GetResourceLinks() ([]*ResLink, error) {
 func (s *Setting) Migrate() (hasChange bool, err error) {
 	settingData, err := s.Parse()
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	if settingData == nil {
 		return false, nil
 	}
 	hasChange, err = settingData.Migrate(s)
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	return hasChange, nil
 }
@@ -207,7 +207,7 @@ func (s *Setting) Clone(genID bool) (*Setting, error) {
 	}
 	_, err := cp.Parse()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return cp, nil
 }

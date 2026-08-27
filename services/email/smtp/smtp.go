@@ -6,8 +6,8 @@ import (
 	"github.com/tiendc/gofn"
 	"gopkg.in/gomail.v2"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type SendMailOption func(*gomail.Message)
@@ -35,7 +35,7 @@ func SendMail(
 
 	password, err := conf.Password.GetPlain()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	dialer := gomail.NewDialer(conf.Host, conf.Port, conf.Username, password)
@@ -43,7 +43,7 @@ func SendMail(
 
 	err = dialer.DialAndSend(message)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

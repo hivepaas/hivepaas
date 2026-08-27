@@ -5,7 +5,7 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type SecretListOption func(*client.SecretListOptions)
@@ -20,7 +20,7 @@ func (m *manager) SecretList(
 	}
 	resp, err := m.client.SecretList(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -38,7 +38,7 @@ func (m *manager) SecretInspect(
 	}
 	resp, err := m.client.SecretInspect(ctx, configID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -59,7 +59,7 @@ func (m *manager) SecretCreate(
 	}
 	resp, err := m.client.SecretCreate(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -77,7 +77,7 @@ func (m *manager) SecretRemove(
 	}
 	resp, err := m.client.SecretRemove(ctx, configID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }

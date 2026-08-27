@@ -6,8 +6,8 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -67,7 +67,7 @@ func (req *CompleteUserSignupReq) ModifyRequest() error {
 	return req.Photo.modifyRequest()
 }
 
-func (req *CompleteUserSignupReq) Validate() apperrors.ValidationErrors {
+func (req *CompleteUserSignupReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.InviteToken, true,
 		1, inviteTokenMaxLen, "inviteToken")...)
@@ -75,7 +75,7 @@ func (req *CompleteUserSignupReq) Validate() apperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateStr(&req.FullName, true,
 		nameMinLen, nameMaxLen, "fullName")...)
 	validators = append(validators, validateUserPhoto(req.Photo, "photo")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type CompleteUserSignupResp struct {

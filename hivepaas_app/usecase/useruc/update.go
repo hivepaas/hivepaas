@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -22,14 +22,14 @@ func (uc *UC) UpdateUser(
 	req *userdto.UpdateUserReq,
 ) (*userdto.UpdateUserResp, error) {
 	if auth.User.IsDemoUser() {
-		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+		return nil, hperrors.Wrap(hperrors.ErrUserDemoUnauthorized)
 	}
 
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		userData := &userUpdateData{}
 		err := uc.loadUserDataForUpdate(ctx, db, auth, req, userData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &userservice.PersistingUserData{}
@@ -38,13 +38,13 @@ func (uc *UC) UpdateUser(
 		// Revoke target user's JWT, user needs to re-login
 		err = uc.userTokenRepo.DelAll(ctx, req.ID)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return uc.userService.PersistUserData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &userdto.UpdateUserResp{}, nil
@@ -65,18 +65,18 @@ func (uc *UC) loadUserDataForUpdate(
 		bunex.SelectFor("UPDATE"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.User = user
 
 	// If username changes, need to verify the uniqueness
 	if req.Username != "" && req.Username != user.Username {
 		conflictUser, err := uc.userRepo.GetByUsername(ctx, db, req.Username)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.Wrap(apperrors.ErrUsernameUnavailable).
+			return hperrors.Wrap(hperrors.ErrUsernameUnavailable).
 				WithMsgLog("user '%s' already exists", req.Username)
 		}
 	}
@@ -84,18 +84,18 @@ func (uc *UC) loadUserDataForUpdate(
 	// If email changes, need to verify the uniqueness
 	if req.Email != "" && req.Email != user.Email {
 		conflictUser, err := uc.userRepo.GetByEmail(ctx, db, req.Email)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.Wrap(apperrors.ErrEmailUnavailable).
+			return hperrors.Wrap(hperrors.ErrEmailUnavailable).
 				WithMsgLog("email '%s' already exists", req.Email)
 		}
 	}
 
 	if req.Role != nil {
 		if base.RoleCmp(auth.User.Role, *req.Role) < 0 {
-			return apperrors.Wrap(apperrors.ErrForbidden).
+			return hperrors.Wrap(hperrors.ErrForbidden).
 				WithMsgLog("you are not allowed to set a role higher than yours")
 		}
 	}

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -24,7 +24,7 @@ func (uc *UC) CompleteUserSignup(
 		signupData := &userSignupData{}
 		err := uc.loadUserSignupData(ctx, db, req, signupData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingUserSignupData{}
@@ -35,7 +35,7 @@ func (uc *UC) CompleteUserSignup(
 		return uc.persistUserSignupData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &userdto.CompleteUserSignupResp{}, nil
@@ -57,7 +57,7 @@ func (uc *UC) loadUserSignupData(
 ) error {
 	inviteToken, err := uc.userService.ParseUserInviteToken(req.InviteToken)
 	if err != nil {
-		return apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
+		return hperrors.Wrap(hperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	user, err := uc.userRepo.GetByID(ctx, db, inviteToken.UserID,
@@ -65,11 +65,11 @@ func (uc *UC) loadUserSignupData(
 		bunex.SelectRelationIf(req.Photo.IsChanged(), "PhotoData"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if user.Status != base.UserStatusPending {
-		return apperrors.Wrap(apperrors.ErrActionNotAllowed).
+		return hperrors.Wrap(hperrors.ErrActionNotAllowed).
 			WithMsgLog("user '%s' not require signup", user.Email)
 	}
 	data.User = user
@@ -77,11 +77,11 @@ func (uc *UC) loadUserSignupData(
 	// If username changes, need to verify the uniqueness
 	if req.Username != "" && req.Username != user.Username {
 		conflictUser, err := uc.userRepo.GetByUsername(ctx, db, req.Username)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if conflictUser != nil {
-			return apperrors.Wrap(apperrors.ErrUsernameUnavailable).
+			return hperrors.Wrap(hperrors.ErrUsernameUnavailable).
 				WithMsgLog("user '%s' already exists", req.Username)
 		}
 	}
@@ -106,21 +106,21 @@ func (uc *UC) preparePersistingUserSignupData(
 		user.Password = ""
 	} else {
 		if req.Password == "" {
-			return apperrors.NewArgumentInvalid("Password").
+			return hperrors.NewArgumentInvalid("Password").
 				WithMsgLog("password is required")
 		}
 		err := uc.userService.ChangePassword(user, req.Password, userservice.SkipCheckingCurrentPassword)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	if user.SecurityOption == base.UserSecurityPassword2FA {
 		if req.Passcode == "" || req.MFATotpSecret == "" {
-			return apperrors.NewArgumentInvalid("Passcode").
+			return hperrors.NewArgumentInvalid("Passcode").
 				WithMsgLog("passcode and totp secret are required")
 		}
 		if !totp.VerifyPasscode(req.Passcode, req.MFATotpSecret) {
-			return apperrors.Wrap(apperrors.ErrPasscodeMismatched)
+			return hperrors.Wrap(hperrors.ErrPasscodeMismatched)
 		}
 		user.TotpSecret = req.MFATotpSecret
 	}

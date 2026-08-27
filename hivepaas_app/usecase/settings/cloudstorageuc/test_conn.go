@@ -5,9 +5,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 	"github.com/hivepaas/hivepaas/services/aws/s3"
 )
@@ -21,7 +21,7 @@ func (uc *UC) TestCloudStorageConn(
 	case base.CloudStorageKindS3:
 		return uc.testCloudStorageS3Conn(ctx, req)
 	default:
-		return nil, apperrors.NewUnsupported("Storage kind")
+		return nil, hperrors.NewUnsupported("Storage kind")
 	}
 }
 
@@ -32,7 +32,7 @@ func (uc *UC) testCloudStorageS3Conn(
 	storage := req.ToEntity()
 	secretKey, err := storage.S3.SecretKey.GetPlain()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	s3Client, err := s3.NewClient(ctx, &s3.Config{
 		AccessKeyID:     storage.S3.AccessKeyID,
@@ -42,12 +42,12 @@ func (uc *UC) testCloudStorageS3Conn(
 		Bucket:          req.S3.Bucket,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	_, err = s3Client.HeadBucket(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &cloudstoragedto.TestCloudStorageConnResp{}, nil

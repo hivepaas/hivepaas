@@ -3,11 +3,11 @@ package useruc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/emailservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
@@ -21,24 +21,24 @@ func (uc *UC) RequestResetPassword(
 	req *userdto.RequestResetPasswordReq,
 ) (*userdto.RequestResetPasswordResp, error) {
 	if auth.User.IsDemoUser() {
-		return nil, apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+		return nil, hperrors.Wrap(hperrors.ErrUserDemoUnauthorized)
 	}
 
 	user, err := uc.userRepo.GetByID(ctx, uc.db, req.ID,
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if user.SecurityOption == base.UserSecurityEnforceSSO {
-		return nil, apperrors.Wrap(apperrors.ErrActionNotAllowed).
+		return nil, hperrors.Wrap(hperrors.ErrActionNotAllowed).
 			WithMsgLog("user authentication method is enforce-sso")
 	}
 
 	token, err := uc.userService.GeneratePasswordResetToken(user.ID)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to generate password reset token")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to generate password reset token")
 	}
 
 	resetLink := config.Current.DashboardPasswordResetURL(user.ID, token)
@@ -46,12 +46,12 @@ func (uc *UC) RequestResetPassword(
 	if req.SendResettingEmail {
 		emailSetting, err := uc.emailService.GetDefaultSystemEmail(ctx, uc.db)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		email, err := emailSetting.AsEmail()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		err = uc.emailService.SendMailPasswordReset(ctx, uc.db, &emailservice.EmailDataPasswordReset{
@@ -63,7 +63,7 @@ func (uc *UC) RequestResetPassword(
 			ResetPasswordLink: resetLink,
 		})
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 
 		// When send the link via email, we don't return it via the response

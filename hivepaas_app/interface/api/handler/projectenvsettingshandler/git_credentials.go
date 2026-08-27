@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc/basicauthdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/gitcredentialuc/gitcredentialdto"
 )
@@ -25,8 +25,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} gitcredentialdto.ListGitCredentialResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/git-credentials [get]
 func (h *Handler) ListGitCredentials(ctx *gin.Context) {
 	auth, projectID, projectEnvID, _, err := h.GetAuthProjectEnvSettings(ctx, base.ActionTypeRead, "")
@@ -65,8 +65,8 @@ func (h *Handler) ListGitCredentials(ctx *gin.Context) {
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} gitcredentialdto.ListRepoResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/git-credentials/{itemID}/repositories [get]
 func (h *Handler) ListGitRepository(ctx *gin.Context) {
 	auth, projectID, projectEnvID, itemID, err := h.GetAuthProjectEnvSettings(ctx, base.ActionTypeRead, "itemID")
@@ -108,8 +108,8 @@ func (h *Handler) ListGitRepository(ctx *gin.Context) {
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} gitcredentialdto.ListBranchResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/git-credentials/{itemID}/repository/branches [get]
 func (h *Handler) ListGitBranch(ctx *gin.Context) {
 	auth, projectID, projectEnvID, itemID, err := h.GetAuthProjectEnvSettings(ctx, base.ActionTypeRead, "itemID")
@@ -151,8 +151,8 @@ func (h *Handler) ListGitBranch(ctx *gin.Context) {
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} gitcredentialdto.ListPullRequestResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/git-credentials/{itemID}/repository/pull-requests [get]
 func (h *Handler) ListGitPullRequest(ctx *gin.Context) {
 	auth, projectID, projectEnvID, itemID, err := h.GetAuthProjectEnvSettings(ctx, base.ActionTypeRead, "itemID")

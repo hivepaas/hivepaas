@@ -3,8 +3,8 @@ package settinghandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appplacementsettingsuc/appplacementsettingsdto"
 )
 
@@ -15,8 +15,8 @@ import (
 // @Produce json
 // @Id      getSettingAppPlacementSettings
 // @Success 200 {object} appplacementsettingsdto.GetAppPlacementSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/app-placement-settings [get]
 func (h *Handler) GetAppPlacementSettings(ctx *gin.Context) {
 	h.GetUniqueSetting(ctx, base.ResourceTypeAppPlacement, base.ObjectScopeGlobal)
@@ -30,8 +30,8 @@ func (h *Handler) GetAppPlacementSettings(ctx *gin.Context) {
 // @Id      updateSettingAppPlacementSettings
 // @Param   body body appplacementsettingsdto.UpdateAppPlacementSettingsReq true "request data"
 // @Success 200 {object} appplacementsettingsdto.UpdateAppPlacementSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/app-placement-settings [put]
 func (h *Handler) UpdateAppPlacementSettings(ctx *gin.Context) {
 	h.UpdateUniqueSetting(ctx, base.ResourceTypeAppPlacement, base.ObjectScopeGlobal)
@@ -45,8 +45,8 @@ func (h *Handler) UpdateAppPlacementSettings(ctx *gin.Context) {
 // @Id      updateSettingAppPlacementSettingsStatus
 // @Param   body body appplacementsettingsdto.UpdateAppPlacementSettingsStatusReq true "request data"
 // @Success 200 {object} appplacementsettingsdto.UpdateAppPlacementSettingsStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/app-placement-settings/status [put]
 func (h *Handler) UpdateAppPlacementSettingsStatus(ctx *gin.Context) {
 	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeAppPlacement, base.ObjectScopeGlobal)
@@ -59,8 +59,8 @@ func (h *Handler) UpdateAppPlacementSettingsStatus(ctx *gin.Context) {
 // @Produce json
 // @Id      deleteSettingAppPlacementSettings
 // @Success 200 {object} appplacementsettingsdto.DeleteAppPlacementSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/app-placement-settings [delete]
 func (h *Handler) DeleteAppPlacementSettings(ctx *gin.Context) {
 	h.DeleteUniqueSetting(ctx, base.ResourceTypeAppPlacement, base.ObjectScopeGlobal)

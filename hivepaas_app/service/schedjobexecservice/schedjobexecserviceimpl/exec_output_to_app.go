@@ -6,8 +6,8 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 )
@@ -19,13 +19,13 @@ func (s *service) initOutputWriterToApp(
 	pipeToApp := data.SchedJob.CommandOutput.PipeToApp
 	targetApp := data.RefObjects.RefApps[pipeToApp.TargetApp.ID]
 	if targetApp == nil {
-		return nil, apperrors.NewNotFound("Target app")
+		return nil, hperrors.NewNotFound("Target app")
 	}
 	if targetApp.Status != base.AppStatusActive {
-		return nil, apperrors.Wrap(apperrors.ErrAppInactive)
+		return nil, hperrors.Wrap(hperrors.ErrAppInactive)
 	}
 	if targetApp.Project.Status != base.ProjectStatusActive {
-		return nil, apperrors.Wrap(apperrors.ErrProjectInactive)
+		return nil, hperrors.Wrap(hperrors.ErrProjectInactive)
 	}
 
 	pr, pw := io.Pipe()

@@ -9,8 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc/appcontainerdto"
 )
 
@@ -29,8 +29,8 @@ import (
 // @Param   isDir query boolean false "is directory"
 // @Param   compressionFormat query string false "compression format (gzip, zstd)"
 // @Success 200 {file} binary
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/container/file-download [get]
 func (h *Handler) DownloadFileFromContainer(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeExecute)
@@ -86,8 +86,8 @@ func (h *Handler) DownloadFileFromContainer(ctx *gin.Context) {
 // @Param   overwrite formData boolean false "allow overwrite (default: true)"
 // @Param   file formData file true "file to upload"
 // @Success 200 {object} appcontainerdto.UploadFileToContainerResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/container/file-upload [post]
 func (h *Handler) UploadFileToContainer(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
@@ -112,13 +112,13 @@ func (h *Handler) UploadFileToContainer(ctx *gin.Context) {
 
 	fileHeader, err := ctx.FormFile("file")
 	if err != nil {
-		h.RenderError(ctx, apperrors.NewArgumentInvalid("file").WithMsgLog("file is required: %v", err))
+		h.RenderError(ctx, hperrors.NewArgumentInvalid("file").WithMsgLog("file is required: %v", err))
 		return
 	}
 
 	file, err := fileHeader.Open()
 	if err != nil {
-		h.RenderError(ctx, apperrors.Wrap(err))
+		h.RenderError(ctx, hperrors.Wrap(err))
 		return
 	}
 	defer file.Close()

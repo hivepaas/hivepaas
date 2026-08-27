@@ -3,9 +3,9 @@ package appuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
@@ -21,10 +21,10 @@ func (uc *UC) ListAppBase(
 		_, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID,
 			req.ParentID, false, false)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		if featureSettings.PreviewSettings != nil && !featureSettings.PreviewSettings.Enabled {
-			return nil, apperrors.Wrap(apperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
+			return nil, hperrors.Wrap(hperrors.ErrFeatureDisabled).WithParam("Name", "app preview")
 		}
 	}
 
@@ -76,7 +76,7 @@ func (uc *UC) ListAppBase(
 
 	apps, pagingMeta, err := uc.appRepo.List(ctx, uc.db, req.ProjectID, &req.Paging, listOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// NOTE: make sure we init the project env and project for the parent app

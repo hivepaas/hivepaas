@@ -3,9 +3,9 @@ package appcloneserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -25,7 +25,7 @@ func (s *service) applySwarmConfigFiles(
 	}
 	data.DestConfig, err = s.clusterSecretService.CreateConfigsForApp(ctx, db, app, configItems)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

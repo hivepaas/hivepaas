@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (s *SSHKey) Migrate(setting *Setting) (hasChange bool, err error) {
@@ -9,7 +9,7 @@ func (s *SSHKey) Migrate(setting *Setting) (hasChange bool, err error) {
 		return false, nil
 	}
 	if setting.Version > CurrentSSHKeyVersion {
-		return false, apperrors.Wrap(apperrors.ErrDataVerNewerThanSystemVer)
+		return false, hperrors.Wrap(hperrors.ErrDataVerNewerThanSystemVer)
 	}
 
 	// TODO: add migration if we make any change

@@ -3,8 +3,8 @@ package settinghandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/repowebhookuc/repowebhookdto"
 )
 
@@ -19,8 +19,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} repowebhookdto.ListRepoWebhookResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/repo-webhooks [get]
 func (h *Handler) ListRepoWebhook(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeGlobal)
@@ -34,8 +34,8 @@ func (h *Handler) ListRepoWebhook(ctx *gin.Context) {
 // @Id      getSettingRepoWebhook
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} repowebhookdto.GetRepoWebhookResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/repo-webhooks/{itemID} [get]
 func (h *Handler) GetRepoWebhook(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeGlobal)
@@ -49,8 +49,8 @@ func (h *Handler) GetRepoWebhook(ctx *gin.Context) {
 // @Id      createSettingRepoWebhook
 // @Param   body body repowebhookdto.CreateRepoWebhookReq true "request data"
 // @Success 201 {object} repowebhookdto.CreateRepoWebhookResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/repo-webhooks [post]
 func (h *Handler) CreateRepoWebhook(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeGlobal)
@@ -65,8 +65,8 @@ func (h *Handler) CreateRepoWebhook(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body repowebhookdto.UpdateRepoWebhookReq true "request data"
 // @Success 200 {object} repowebhookdto.UpdateRepoWebhookResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/repo-webhooks/{itemID} [put]
 func (h *Handler) UpdateRepoWebhook(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeGlobal)
@@ -81,8 +81,8 @@ func (h *Handler) UpdateRepoWebhook(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body repowebhookdto.UpdateRepoWebhookStatusReq true "request data"
 // @Success 200 {object} repowebhookdto.UpdateRepoWebhookStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/repo-webhooks/{itemID}/status [put]
 func (h *Handler) UpdateRepoWebhookStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeGlobal)
@@ -96,8 +96,8 @@ func (h *Handler) UpdateRepoWebhookStatus(ctx *gin.Context) {
 // @Id      deleteSettingRepoWebhook
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} repowebhookdto.DeleteRepoWebhookResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/repo-webhooks/{itemID} [delete]
 func (h *Handler) DeleteRepoWebhook(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeRepoWebhook, base.ObjectScopeGlobal)

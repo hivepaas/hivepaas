@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -20,8 +20,8 @@ import (
 // @Param   projectEnv path string true "project env"
 // @Param   appID path string true "app ID"
 // @Success 200 {object} appsettingsdto.GetAppDeploymentSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployment-settings [get]
 func (h *Handler) GetAppDeploymentSettings(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
@@ -59,8 +59,8 @@ func (h *Handler) GetAppDeploymentSettings(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   body body appsettingsdto.UpdateAppDeploymentSettingsReq true "request data"
 // @Success 200 {object} appsettingsdto.UpdateAppDeploymentSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployment-settings [put]
 func (h *Handler) UpdateAppDeploymentSettings(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
@@ -98,8 +98,8 @@ func (h *Handler) UpdateAppDeploymentSettings(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   type query string true "template type: e.g. go, java, java/maven..."
 // @Success 200 {object} appsettingsdto.GetDockerfileTemplateResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployment-settings/dockerfile-template [get]
 func (h *Handler) GetBuildDockerfileTemplate(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)

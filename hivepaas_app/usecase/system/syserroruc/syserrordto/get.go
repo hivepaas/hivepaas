@@ -5,9 +5,9 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 )
 
@@ -19,10 +19,10 @@ func NewGetSysErrorReq() *GetSysErrorReq {
 	return &GetSysErrorReq{}
 }
 
-func (req *GetSysErrorReq) Validate() apperrors.ValidationErrors {
+func (req *GetSysErrorReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetSysErrorResp struct {
@@ -45,7 +45,7 @@ type SysErrorResp struct {
 
 func TransformSysError(appErr *entity.SysError) (resp *SysErrorResp, err error) {
 	if err = copier.Copy(&resp, &appErr); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }

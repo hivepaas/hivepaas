@@ -8,8 +8,8 @@ import (
 	vld "github.com/tiendc/go-validator"
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -23,9 +23,9 @@ func NewListRepoReq() *ListRepoReq {
 	return &ListRepoReq{}
 }
 
-func (req *ListRepoReq) Validate() apperrors.ValidationErrors {
+func (req *ListRepoReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListRepoResp struct {
@@ -44,7 +44,7 @@ type RepoResp struct {
 
 func TransformGithubRepo(repo *github.Repository) (resp *RepoResp, err error) {
 	if err = copier.Copy(&resp, repo); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp.ID = strconv.FormatInt(*repo.ID, 10)
 	return resp, nil
@@ -53,7 +53,7 @@ func TransformGithubRepo(repo *github.Repository) (resp *RepoResp, err error) {
 func TransformGithubRepos(repos []*github.Repository) ([]*RepoResp, error) {
 	resp, err := basedto.TransformObjectSlice(repos, TransformGithubRepo)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -73,7 +73,7 @@ func TransformGitlabProject(project *gogitlab.Project) (resp *RepoResp, err erro
 func TransformGitlabProjects(projects []*gogitlab.Project) ([]*RepoResp, error) {
 	resp, err := basedto.TransformObjectSlice(projects, TransformGitlabProject)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -93,7 +93,7 @@ func TransformGiteaRepo(repo *gogitea.Repository) (resp *RepoResp, err error) {
 func TransformGiteaRepos(repos []*gogitea.Repository) ([]*RepoResp, error) {
 	resp, err := basedto.TransformObjectSlice(repos, TransformGiteaRepo)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }

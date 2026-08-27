@@ -6,9 +6,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -25,7 +25,7 @@ func (uc *UC) DeleteAppTags(
 		tagData := &deleteAppTagData{}
 		err := uc.loadAppTagDataForDelete(ctx, db, req, tagData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
@@ -34,7 +34,7 @@ func (uc *UC) DeleteAppTags(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.DeleteAppTagsResp{}, nil
@@ -62,7 +62,7 @@ func (uc *UC) loadAppTagDataForDelete(
 		bunex.SelectRelation("Tags", bunex.SelectOrder("index")),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.App = app
 
@@ -75,7 +75,7 @@ func (uc *UC) loadAppTagDataForDelete(
 		}
 	}
 	if len(data.DeletingAppTags) != len(req.Tags) {
-		return apperrors.NewNotFound("App tag").
+		return hperrors.NewNotFound("App tag").
 			WithMsgLog("one or more tags not found in app")
 	}
 

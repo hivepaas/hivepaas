@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 	"github.com/hivepaas/hivepaas/services/git/gitapi"
@@ -96,7 +96,7 @@ func (uc *UC) sendPRComment(
 
 	parsedURL, err := vcsurl.Parse(prCommentEvent.RepoURL)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	owner := parsedURL.Username
@@ -106,7 +106,7 @@ func (uc *UC) sendPRComment(
 	// Case 1: Webhook setting is directly a Github App
 	if data.WebhookSetting != nil && data.WebhookSetting.Type == base.SettingTypeGithubApp {
 		err = gitapi.CreatePullRequestCommentWithRetry(ctx, data.WebhookSetting, owner, repo, prNumber, message)
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Case 2: Resolve credentials from the app's deployment settings
@@ -121,7 +121,7 @@ func (uc *UC) sendPRComment(
 
 	deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if deploymentSettings.RepoSource == nil || deploymentSettings.RepoSource.Credentials.ID == "" {
 		return nil
@@ -130,11 +130,11 @@ func (uc *UC) sendPRComment(
 	credSetting, err := uc.settingRepo.GetByID(ctx, db, app.GetObjectScope(), "",
 		deploymentSettings.RepoSource.Credentials.ID, true)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if credSetting == nil {
 		return nil
 	}
 	err = gitapi.CreatePullRequestCommentWithRetry(ctx, credSetting, owner, repo, prNumber, message)
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }

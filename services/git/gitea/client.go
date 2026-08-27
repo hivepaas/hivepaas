@@ -3,9 +3,9 @@ package gitea
 import (
 	gogitea "code.gitea.io/sdk/gitea"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type Client struct {
@@ -18,7 +18,7 @@ type Client struct {
 func NewFromToken(token string, baseURL string) (*Client, error) {
 	client, err := gogitea.NewClient(baseURL, gogitea.SetToken(token))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return &Client{
 		token:   token,
@@ -33,19 +33,19 @@ func NewFromSetting(setting *entity.Setting) (*Client, error) {
 		gitToken, err := setting.AsAccessToken()
 		tokenKind := base.AccessTokenKind(setting.Kind)
 		if tokenKind != base.AccessTokenKindGitea {
-			return nil, apperrors.Wrap(ErrAccessProviderInvalid).
+			return nil, hperrors.Wrap(ErrAccessProviderInvalid).
 				WithMsgLog("token kind '%s' is unsupported", tokenKind)
 		}
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		token, err := gitToken.Token.GetPlain()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		return NewFromToken(token, gitToken.BaseURL)
 
 	default:
-		return nil, apperrors.Wrap(ErrAccessProviderInvalid)
+		return nil, hperrors.Wrap(ErrAccessProviderInvalid)
 	}
 }

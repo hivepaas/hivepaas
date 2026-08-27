@@ -6,8 +6,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc/nodecleanupagentdto"
@@ -26,7 +26,7 @@ type grpcNodeCleanupServiceClient struct {
 func NewNodeCleanupServiceClient(agentAddr string) (NodeCleanupServiceClient, error) {
 	conn, err := grpc.NewClient(agentAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return &grpcNodeCleanupServiceClient{
 		conn:        conn,
@@ -37,7 +37,7 @@ func NewNodeCleanupServiceClient(agentAddr string) (NodeCleanupServiceClient, er
 func (c *grpcNodeCleanupServiceClient) Close() error {
 	if c.conn != nil {
 		if err := c.conn.Close(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
@@ -75,7 +75,7 @@ func (c *grpcNodeCleanupServiceClient) NodeCleanup(
 
 	resp, err := c.protoClient.NodeCleanup(authCtx, protoReq)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &nodecleanupagentdto.NodeCleanupResp{

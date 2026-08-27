@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
 )
 
@@ -22,8 +22,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} userdto.ListUserBaseResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/base [get]
 func (h *Handler) ListUserBase(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, base.ResourceTypeUser, base.ActionTypeRead, false)
@@ -56,8 +56,8 @@ func (h *Handler) ListUserBase(ctx *gin.Context) {
 // @Param   userID path string true "user ID"
 // @Param   getAccesses query string false "`getAccesses=true/false`"
 // @Success 200 {object} userdto.GetUserResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/{userID} [get]
 func (h *Handler) GetUser(ctx *gin.Context) {
 	auth, userID, err := h.getAuth(ctx, base.ResourceTypeUser, base.ActionTypeRead, true)
@@ -94,8 +94,8 @@ func (h *Handler) GetUser(ctx *gin.Context) {
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} userdto.ListUserResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users [get]
 func (h *Handler) ListUser(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, base.ResourceTypeUser, base.ActionTypeRead, false)

@@ -5,8 +5,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/cryptoutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/randtoken"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
@@ -25,7 +25,7 @@ type HashField struct {
 func (s *HashField) MarshalJSON() ([]byte, error) {
 	hashedSecret, err := s.hash()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return reflectutil.UnsafeStrToBytes(gofn.StringWrap(hashedSecret, "\"")), nil
 }
@@ -49,7 +49,7 @@ func (s *HashField) IsHashed() bool {
 func (s *HashField) Get() (string, error) {
 	hashedSecret, err := s.hash()
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	return hashedSecret, nil
 }
@@ -78,7 +78,7 @@ func (s *HashField) VerifyHash(secret string) error {
 			hashingKeyLen, hashingIteration)
 	}
 	if !matched {
-		return apperrors.Wrap(apperrors.ErrAPIKeyInvalid)
+		return hperrors.Wrap(hperrors.ErrAPIKeyInvalid)
 	}
 	return nil
 }
@@ -90,7 +90,7 @@ func (s *HashField) hash() (string, error) {
 	hashedSecret, salt, err := randtoken.HashAsHex(s.secret, defaultSaltLen,
 		hashingKeyLen, hashingIteration)
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	s.hashedSecret = cryptoutil.PackSecret(hashedSecret, salt)
 	return s.hashedSecret, nil

@@ -11,10 +11,10 @@ import (
 	"github.com/markbates/goth/providers/microsoftonline"
 	"github.com/markbates/goth/providers/openidConnect"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
 
@@ -24,13 +24,13 @@ func (uc *UC) InitOAuthProvider(
 ) error {
 	setting, err := uc.settingRepo.GetByID(ctx, uc.db, entity.NewObjectScopeGlobal(), "", req.Provider, true)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	oauth := setting.MustAsOAuth()
 	clientSecret, err := oauth.ClientSecret.GetPlain()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	callbackURL := config.Current.SsoCallbackURL(req.Provider)
 
@@ -60,7 +60,7 @@ func (uc *UC) InitOAuthProvider(
 		provider, err = openidConnect.New(oauth.ClientID, clientSecret, callbackURL,
 			oauth.AutoDiscoveryURL, oauth.Scopes...)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	provider.SetName(req.Provider)

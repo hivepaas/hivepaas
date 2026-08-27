@@ -3,10 +3,10 @@ package sessionuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
@@ -14,7 +14,7 @@ import (
 func (uc *UC) GetCurrentAuthByJWT(ctx context.Context, jwt string) (*basedto.Auth, error) {
 	user, err := uc.GetCurrentUserByJWT(ctx, jwt)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	auth := &basedto.Auth{User: user}
 	return auth, uc.verifyAuth(ctx, auth)
@@ -23,7 +23,7 @@ func (uc *UC) GetCurrentAuthByJWT(ctx context.Context, jwt string) (*basedto.Aut
 func (uc *UC) GetCurrentAuthByAPIKey(ctx context.Context, keyID, secret string) (*basedto.Auth, error) {
 	user, err := uc.GetCurrentUserByAPIKey(ctx, keyID, secret)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	auth := &basedto.Auth{User: user}
 	return auth, uc.verifyAuth(ctx, auth)
@@ -34,19 +34,19 @@ func (uc *UC) verifyAuth(ctx context.Context, auth *basedto.Auth) error {
 
 	// User must have access permission
 	if user.IsAccessExpired() {
-		return apperrors.Wrap(apperrors.ErrUserUnavailable).
+		return hperrors.Wrap(hperrors.ErrUserUnavailable).
 			WithMsgLog("user access expired at: %v", user.AccessExpireAt)
 	}
 
 	// Use must complete MFA requirement
 	if user.SecurityOption == base.UserSecurityPassword2FA && user.TotpSecret == "" {
-		return apperrors.Wrap(apperrors.ErrUserNotCompleteMFASetup).
+		return hperrors.Wrap(hperrors.ErrUserNotCompleteMFASetup).
 			WithMsgLog("user hasn't completed the MFA setup")
 	}
 
 	// User status is not active
 	if user.Status != base.UserStatusActive {
-		return apperrors.Wrap(apperrors.ErrUserUnavailable).
+		return hperrors.Wrap(hperrors.ErrUserUnavailable).
 			WithMsgLog("user status: %s", user.Status)
 	}
 

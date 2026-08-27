@@ -5,9 +5,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/sshutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -32,17 +32,17 @@ func (uc *UC) CreateSSHKey(
 			pData *settings.PersistingSettingCreationData,
 		) error {
 			if err := generateKey(sshKey); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			pData.Setting.Kind = string(req.Kind)
 			if err := pData.Setting.SetData(sshKey); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &sshkeydto.CreateSSHKeyResp{
@@ -54,16 +54,16 @@ func generateKey(sshKey *entity.SSHKey) error {
 	if sshKey.PublicKey == "" {
 		privateKey, err := sshKey.PrivateKey.GetPlain()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		passphrase, err := sshKey.Passphrase.GetPlain()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		keyType, pubKey, err := sshutil.GeneratePublicKey(privateKey, passphrase)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		sshKey.PublicKey = pubKey
 		sshKey.KeyType = gofn.Coalesce(keyType, sshKey.KeyType)

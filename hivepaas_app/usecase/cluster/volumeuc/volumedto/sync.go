@@ -1,8 +1,8 @@
 package volumedto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type SyncVolumeReq struct {
@@ -13,7 +13,7 @@ func NewSyncVolumeReq() *SyncVolumeReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *SyncVolumeReq) Validate() apperrors.ValidationErrors {
+func (req *SyncVolumeReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

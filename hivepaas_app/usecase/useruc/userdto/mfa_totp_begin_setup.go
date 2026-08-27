@@ -3,8 +3,8 @@ package userdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type BeginMFATotpSetupReq struct {
@@ -15,11 +15,11 @@ func NewBeginMFATotpSetupReq() *BeginMFATotpSetupReq {
 	return &BeginMFATotpSetupReq{}
 }
 
-func (req *BeginMFATotpSetupReq) Validate() apperrors.ValidationErrors {
+func (req *BeginMFATotpSetupReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.CurrentPasscode, false,
 		minPasscodeLen, maxPasscodeLen, "passcode")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type BeginMFATotpSetupResp struct {

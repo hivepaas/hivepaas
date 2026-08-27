@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -29,14 +29,14 @@ func (uc *UC) DeleteSecret(
 			// Rebuild affected env vars using the active transaction (inTx = true)
 			appEnvVarData, err = uc.buildAppEnvVarsForScope(ctx, db, req.Scope, true)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			if req.Scope.IsAppScope() {
 				// Delete the related secret in docker swarm
 				err := uc.ClusterSecretService.RemoveSecretForApp(ctx, db, req.Scope.App, data.Setting.MustAsSecret())
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 			}
 
@@ -44,7 +44,7 @@ func (uc *UC) DeleteSecret(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp := &secretdto.DeleteSecretResp{Meta: &basedto.Meta{}}

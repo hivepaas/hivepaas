@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func TestValidateWithGitCli(t *testing.T) {
@@ -115,7 +115,7 @@ func TestValidateWithGitCli(t *testing.T) {
 		ReferenceName: "refs/heads/main",
 		TempDir:       tempWorkDir,
 	})
-	if !errors.Is(err, apperrors.ErrNotFound) {
+	if !errors.Is(err, hperrors.ErrNotFound) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 
@@ -125,7 +125,7 @@ func TestValidateWithGitCli(t *testing.T) {
 		ReferenceName: "refs/heads/invalid-branch",
 		TempDir:       tempWorkDir,
 	})
-	if !errors.Is(err, apperrors.ErrNotFound) {
+	if !errors.Is(err, hperrors.ErrNotFound) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 
@@ -136,7 +136,7 @@ func TestValidateWithGitCli(t *testing.T) {
 		CommitHash:    "0123456789abcdef0123456789abcdef01234567",
 		TempDir:       tempWorkDir,
 	})
-	if !errors.Is(err, apperrors.ErrNotFound) {
+	if !errors.Is(err, hperrors.ErrNotFound) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 
@@ -147,7 +147,7 @@ func TestValidateWithGitCli(t *testing.T) {
 		CommitHash:    commitHash3,
 		TempDir:       tempWorkDir,
 	})
-	if !errors.Is(err, apperrors.ErrNotFound) {
+	if !errors.Is(err, hperrors.ErrNotFound) {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}
 
@@ -167,7 +167,7 @@ func TestValidateWithGitCli(t *testing.T) {
 		ReferenceName: "HEAD",
 		TempDir:       tempWorkDir,
 	})
-	if !errors.Is(err, apperrors.ErrUnsupported) {
+	if !errors.Is(err, hperrors.ErrUnsupported) {
 		t.Errorf("expected ErrUnsupported for HEAD, got %v", err)
 	}
 }

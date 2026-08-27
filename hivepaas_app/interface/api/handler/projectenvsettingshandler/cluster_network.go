@@ -3,8 +3,8 @@ package projectenvsettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 )
 
@@ -21,8 +21,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} networkdto.ListNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/cluster-networks [get]
 func (h *Handler) ListClusterNetwork(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeProjectEnv)
@@ -38,8 +38,8 @@ func (h *Handler) ListClusterNetwork(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} networkdto.GetNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/cluster-networks/{itemID} [get]
 func (h *Handler) GetClusterNetwork(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeProjectEnv)
@@ -54,8 +54,8 @@ func (h *Handler) GetClusterNetwork(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body networkdto.CreateNetworkReq true "request data"
 // @Success 201 {object} networkdto.CreateNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/cluster-networks [post]
 func (h *Handler) CreateClusterNetwork(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeProjectEnv)
@@ -72,8 +72,8 @@ func (h *Handler) CreateClusterNetwork(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body networkdto.UpdateNetworkReq true "request data"
 // @Success 200 {object} networkdto.UpdateNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/cluster-networks/{itemID} [put]
 func (h *Handler) UpdateClusterNetwork(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeProjectEnv)
@@ -90,8 +90,8 @@ func (h *Handler) UpdateClusterNetwork(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body networkdto.UpdateNetworkStatusReq true "request data"
 // @Success 200 {object} networkdto.UpdateNetworkStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/cluster-networks/{itemID}/status [put]
 func (h *Handler) UpdateClusterNetworkStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeProjectEnv)
@@ -107,8 +107,8 @@ func (h *Handler) UpdateClusterNetworkStatus(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} networkdto.DeleteNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/cluster-networks/{itemID} [delete]
 func (h *Handler) DeleteClusterNetwork(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeProjectEnv)

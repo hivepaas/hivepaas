@@ -7,9 +7,9 @@ import (
 	"github.com/moby/moby/api/types/volume"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -23,7 +23,7 @@ func (s *service) SyncVolumes(
 	// 1. Scan docker to get list of volumes
 	volList, err := s.dockerManager.VolumeList(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	currentSettingType := base.SettingTypeClusterVolume
@@ -34,7 +34,7 @@ func (s *service) SyncVolumes(
 		bunex.SelectWhere("setting.type = ?", currentSettingType),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	existingVols := make(map[string]*entity.Setting, len(dbSettings)) // map docker-id -> *Setting
@@ -63,7 +63,7 @@ func (s *service) SyncVolumes(
 				RefID: volID,
 			}
 			if err := setting.SetData(volEntity); err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 			updatingSettings = append(updatingSettings, setting)
 			continue
@@ -95,7 +95,7 @@ func (s *service) SyncVolumes(
 	err = s.settingRepo.UpsertMulti(ctx, db, updatingSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return volList.Items, nil

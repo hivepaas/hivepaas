@@ -3,9 +3,9 @@ package sslcertuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
@@ -28,7 +28,7 @@ func (uc *UC) CreateSSLCert(
 			data *settings.CreateSettingData,
 		) error {
 			if err := uc.verifyDomainInProject(ctx, db, req.Scope, sslCert); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -41,31 +41,31 @@ func (uc *UC) CreateSSLCert(
 			pData.Setting.Kind = string(req.CertType)
 			err := pData.Setting.SetData(sslCert)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			refObjects := entity.NewRefObjects()
 			err = uc.SettingService.LoadRefObjects(ctx, db, &refObjects, req.Scope, true, pData.Setting)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			_, err = uc.sslService.ObtainCert(ctx, pData.Setting, refObjects, false)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			// Save SSL cert/key files in a directory with forceRecreate=true (for using later)
 			err = uc.sslService.WriteCertFiles(true, pData.Setting)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &sslcertdto.CreateSSLCertResp{
@@ -84,7 +84,7 @@ func (uc *UC) verifyDomainInProject(
 	}
 	err := uc.domainService.VerifyProjectDomains(ctx, db, scope.ProjectID, []string{sslCert.Domain})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

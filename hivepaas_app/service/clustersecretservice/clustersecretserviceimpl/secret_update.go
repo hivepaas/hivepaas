@@ -3,8 +3,8 @@ package clustersecretserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -21,13 +21,13 @@ func (s *service) UpdateSecretForApp(
 	// Remove the old secret from the service then delete it from the swarm
 	err = s.RemoveSecretForApp(ctx, db, app, oldSecret)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Create a secret in the swarm then add it to the service
 	_, err = s.CreateSecretForApp(ctx, db, app, newSecret)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -40,7 +40,7 @@ func (s *service) UpdateSecretsForApp(
 	oldSecrets, newSecrets []*entity.Secret,
 ) (err error) {
 	if len(oldSecrets) != len(newSecrets) {
-		return apperrors.Wrap(apperrors.ErrArgumentInvalid).WithParam("Name", "Slice length")
+		return hperrors.Wrap(hperrors.ErrArgumentInvalid).WithParam("Name", "Slice length")
 	}
 
 	removingSecrets := make([]*entity.Secret, 0, len(oldSecrets))
@@ -62,7 +62,7 @@ func (s *service) UpdateSecretsForApp(
 	if len(removingSecrets) > 0 {
 		err = s.RemoveSecretForApp(ctx, db, app, removingSecrets...)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -70,7 +70,7 @@ func (s *service) UpdateSecretsForApp(
 	if len(creatingSecrets) > 0 {
 		_, err = s.CreateSecretsForApp(ctx, db, app, creatingSecrets)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

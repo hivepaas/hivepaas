@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto"
 )
@@ -19,8 +19,8 @@ import (
 // @Produce json
 // @Id      getSystemBackupSettings
 // @Success 200 {object} systembackupdto.GetSystemBackupResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/backup [get]
 func (h *Handler) GetBackupSettings(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
@@ -57,8 +57,8 @@ func (h *Handler) GetBackupSettings(ctx *gin.Context) {
 // @Id      updateSystemBackupSettings
 // @Param   body body systembackupdto.UpdateSystemBackupReq true "request data"
 // @Success 200 {object} systembackupdto.UpdateSystemBackupResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/backup [put]
 func (h *Handler) UpdateBackupSettings(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
@@ -95,8 +95,8 @@ func (h *Handler) UpdateBackupSettings(ctx *gin.Context) {
 // @Id      executeSystemBackup
 // @Param   body body systembackupdto.ExecuteSystemBackupReq true "request data"
 // @Success 200 {object} systembackupdto.ExecuteSystemBackupResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/backup/exec [post]
 func (h *Handler) ExecuteBackup(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{

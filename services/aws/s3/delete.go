@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (client *Client) DeleteObject(ctx context.Context, bucketName string, objectKey string) error {
@@ -22,10 +22,10 @@ func (client *Client) DeleteObject(ctx context.Context, bucketName string, objec
 		// this code is similar to the official sample in the above page.
 		var noKey *types.NoSuchKey
 		if errors.As(err, &noKey) {
-			return apperrors.Wrap(apperrors.ErrNotFound).
+			return hperrors.Wrap(hperrors.ErrNotFound).
 				WithMsgLog("object %s does not exist in bucket %s", objectKey, bucketName)
 		}
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

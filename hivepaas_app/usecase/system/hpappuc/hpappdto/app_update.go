@@ -1,8 +1,8 @@
 package hpappdto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type UpdateHpAppReq struct {
@@ -14,7 +14,7 @@ func NewUpdateHpAppReq() *UpdateHpAppReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateHpAppReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateHpAppReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

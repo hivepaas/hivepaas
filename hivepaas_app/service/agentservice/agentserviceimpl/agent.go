@@ -8,9 +8,9 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -26,10 +26,10 @@ func (s *service) GetAgentAddrForNode(ctx context.Context, nodeID string) (strin
 		docker.FilterAdd(&opts.Filters, "desired-state", string(swarm.TaskStateRunning))
 	})
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	if len(resp.Items) == 0 {
-		return "", apperrors.Wrap(apperrors.ErrInfraNotFound).
+		return "", hperrors.Wrap(hperrors.ErrInfraNotFound).
 			WithMsgLog("no running agent task found on node %s", nodeID)
 	}
 
@@ -47,7 +47,7 @@ func (s *service) GetAgentAddrForNode(ctx context.Context, nodeID string) (strin
 	}
 
 	if targetIP == "" {
-		return "", apperrors.Wrap(apperrors.ErrInfraNotFound).
+		return "", hperrors.Wrap(hperrors.ErrInfraNotFound).
 			WithMsgLog("agent task on node %s is not connected to network %s", nodeID, base.NetworkHivepaasLocal)
 	}
 
@@ -57,7 +57,7 @@ func (s *service) GetAgentAddrForNode(ctx context.Context, nodeID string) (strin
 func (s *service) GetAgentAddrForNodeLabel(ctx context.Context, nodeLabel string) (string, error) {
 	nodeLabel = strings.TrimSpace(nodeLabel)
 	if nodeLabel == "" {
-		return "", apperrors.Wrap(apperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
+		return "", hperrors.Wrap(hperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
 	}
 
 	parts := strings.SplitN(nodeLabel, "=", 2) //nolint:mnd
@@ -70,7 +70,7 @@ func (s *service) GetAgentAddrForNodeLabel(ctx context.Context, nodeLabel string
 
 	nodesResp, err := s.dockerManager.NodeList(ctx)
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 
 	var nodeID string
@@ -87,7 +87,7 @@ func (s *service) GetAgentAddrForNodeLabel(ctx context.Context, nodeLabel string
 		}
 	}
 	if nodeID == "" {
-		return "", apperrors.Wrap(apperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
+		return "", hperrors.Wrap(hperrors.ErrNodeWithLabelNotAvailable).WithParam("Label", nodeLabel)
 	}
 	return s.GetAgentAddrForNode(ctx, nodeID)
 }

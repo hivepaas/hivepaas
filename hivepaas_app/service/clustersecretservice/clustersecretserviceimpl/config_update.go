@@ -3,8 +3,8 @@ package clustersecretserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -21,13 +21,13 @@ func (s *service) UpdateConfigForApp(
 	// Remove the old config from the service then delete it from the swarm
 	err = s.RemoveConfigForApp(ctx, db, app, oldConfig)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Create a config in the swarm then add it to the service
 	_, err = s.CreateConfigForApp(ctx, db, app, newConfig)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -40,7 +40,7 @@ func (s *service) UpdateConfigsForApp(
 	oldConfigs, newConfigs []*entity.ConfigFile,
 ) (err error) {
 	if len(oldConfigs) != len(newConfigs) {
-		return apperrors.Wrap(apperrors.ErrArgumentInvalid).WithParam("Name", "Slice length")
+		return hperrors.Wrap(hperrors.ErrArgumentInvalid).WithParam("Name", "Slice length")
 	}
 
 	removingConfigs := make([]*entity.ConfigFile, 0, len(oldConfigs))
@@ -62,7 +62,7 @@ func (s *service) UpdateConfigsForApp(
 	if len(removingConfigs) > 0 {
 		err = s.RemoveConfigForApp(ctx, db, app, removingConfigs...)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -70,7 +70,7 @@ func (s *service) UpdateConfigsForApp(
 	if len(creatingConfigs) > 0 {
 		_, err = s.CreateConfigsForApp(ctx, db, app, creatingConfigs)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandservice"
 )
@@ -22,7 +22,7 @@ func (s *service) calcCommandEnv(
 		RefObjects: data.RefObjects,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	env = make([]string, 0, len(resp.EnvVars))
@@ -36,7 +36,7 @@ func (s *service) calcCommandEnv(
 			for secret := range env.RefSecrets {
 				plainSecret, err := secret.Value.GetPlain()
 				if err != nil {
-					return nil, apperrors.Wrap(err)
+					return nil, hperrors.Wrap(err)
 				}
 				secrets[plainSecret] = struct{}{}
 			}

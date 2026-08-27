@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -39,7 +39,7 @@ func (uc *UC) ImageBuild(
 			bunex.SelectRelation("ProjectEnv"),
 		)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		req.App = app
 	}
@@ -80,7 +80,7 @@ func (uc *UC) ImageBuild(
 	}
 
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &imagebuildagentdto.ImageBuildResp{

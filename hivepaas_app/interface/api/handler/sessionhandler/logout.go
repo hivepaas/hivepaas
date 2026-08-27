@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
 
@@ -16,8 +16,8 @@ import (
 // @Produce json
 // @Id      deleteSession
 // @Success 200 {object} sessiondto.DeleteSessionResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /sessions [delete]
 func (h *Handler) DeleteSession(ctx *gin.Context) {
 	user, err := h.authHandler.GetCurrentUser(ctx)
@@ -52,8 +52,8 @@ func (h *Handler) DeleteSession(ctx *gin.Context) {
 // @Produce json
 // @Id      deleteAllSessions
 // @Success 200 {object} sessiondto.DeleteAllSessionsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /sessions/delete-all [post]
 func (h *Handler) DeleteAllSessions(ctx *gin.Context) {
 	user, err := h.authHandler.GetCurrentUser(ctx)

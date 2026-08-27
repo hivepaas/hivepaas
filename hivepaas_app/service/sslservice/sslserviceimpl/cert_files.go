@@ -8,9 +8,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
@@ -29,7 +29,7 @@ func (s *service) WriteCertFiles(
 	certDir := config.Current.DataPathSslCerts().AbsPath()
 	err := os.MkdirAll(certDir, certDirFileMode)
 	if err != nil {
-		return apperrors.Wrap(err).WithMsgLog("failed to create directory to save cert files")
+		return hperrors.Wrap(err).WithMsgLog("failed to create directory to save cert files")
 	}
 
 	for _, setting := range settings {
@@ -52,13 +52,13 @@ func (s *service) WriteCertFiles(
 		certBytes := reflectutil.UnsafeStrToBytes(certStr)
 		privateKey, err := sslCert.PrivateKey.GetPlain()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		keyBytes := reflectutil.UnsafeStrToBytes(privateKey)
 
 		err = fileutil.WriteCerts(certBytes, keyBytes, certDir, certFile, keyFile, true)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -81,12 +81,12 @@ func (s *service) DeleteCertFiles(
 
 		err := os.Remove(filepath.Join(certDir, certFile))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		err = os.Remove(filepath.Join(certDir, keyFile))
 		if err != nil && !errors.Is(err, os.ErrNotExist) {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil

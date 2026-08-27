@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc/appdeploymentdto"
 )
 
@@ -21,8 +21,8 @@ import (
 // @Param   appID path string true "app ID"
 // @Param   deploymentID path string true "deployment ID"
 // @Success 200 {object} appdeploymentdto.GetDeploymentResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID} [get]
 func (h *Handler) GetAppDeployment(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")
@@ -62,8 +62,8 @@ func (h *Handler) GetAppDeployment(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   deploymentID path string true "deployment ID"
 // @Success 200 {object} appdeploymentdto.GetDeploymentStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/deployments/{deploymentID}/status [get]
 func (h *Handler) GetAppDeploymentStatus(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, deploymentID, err := h.GetAuthForItem(ctx, base.ActionTypeRead, "deploymentID")

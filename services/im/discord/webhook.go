@@ -7,7 +7,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
@@ -17,12 +17,12 @@ func (c *Client) WebhookExecute(_ context.Context, webhookURL string, wait bool,
 	options ...WebhookMessageOption) (*discordgo.Message, error) {
 	webhookID, token, err := parseWebhookURL(webhookURL)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	discord, err := discordgo.New("Bot " + token)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	msg := &discordgo.WebhookParams{}
@@ -42,7 +42,7 @@ func (c *Client) WebhookExecute(_ context.Context, webhookURL string, wait bool,
 		cfg.Client = c.getHttpClient()
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }

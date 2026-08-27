@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func NormalizePullRef(ref string) (pullRef string, pullNumber uint64, err error) {
@@ -34,7 +34,7 @@ func NormalizePullRef(ref string) (pullRef string, pullNumber uint64, err error)
 
 	pullNumber, err = strconv.ParseUint(pullNumStr, 10, 64)
 	if err != nil || pullNumber == 0 {
-		return "", 0, apperrors.Wrap(apperrors.ErrPullRequestInvalid).
+		return "", 0, hperrors.Wrap(hperrors.ErrPullRequestInvalid).
 			WithParam("PullRequest", ref)
 	}
 
@@ -51,7 +51,7 @@ func GetPullNumberAsStr(ref string) (string, error) {
 		after, ok = strings.CutPrefix(ref, refMergeRequestsPrefix)
 	}
 	if !ok {
-		return "", apperrors.Wrap(apperrors.ErrPullRequestInvalid).WithParam("PullRequest", ref)
+		return "", hperrors.Wrap(hperrors.ErrPullRequestInvalid).WithParam("PullRequest", ref)
 	}
 	return strings.TrimSuffix(after, "/head"), nil
 }
@@ -59,11 +59,11 @@ func GetPullNumberAsStr(ref string) (string, error) {
 func GetPullNumber(ref string) (uint64, error) {
 	pullNumberStr, err := GetPullNumberAsStr(ref)
 	if err != nil {
-		return 0, apperrors.Wrap(apperrors.ErrPullRequestInvalid).WithParam("PullRequest", ref)
+		return 0, hperrors.Wrap(hperrors.ErrPullRequestInvalid).WithParam("PullRequest", ref)
 	}
 	number, err := strconv.ParseUint(pullNumberStr, 10, 64)
 	if err != nil {
-		return 0, apperrors.Wrap(apperrors.ErrPullRequestInvalid).WithParam("PullRequest", ref)
+		return 0, hperrors.Wrap(hperrors.ErrPullRequestInvalid).WithParam("PullRequest", ref)
 	}
 	return number, nil
 }
@@ -79,6 +79,6 @@ func GetPullNumberRef(prNumber int64, gitSource base.GitSource) (string, error) 
 	case base.GitSourceBitbucket:
 		fallthrough
 	default:
-		return "", apperrors.Wrap(apperrors.ErrGitTypeUnsupported).WithParam("Type", gitSource)
+		return "", hperrors.Wrap(hperrors.ErrGitTypeUnsupported).WithParam("Type", gitSource)
 	}
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc/webhookdto"
 )
 
@@ -18,8 +18,8 @@ import (
 // @Param   webhookID path string true "ID of repo-webhook or github-app"
 // @Param   body body webhookdto.HandleRepoWebhookReq true "request data"
 // @Success 200 {object} webhookdto.HandleRepoWebhookResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /webhooks/{webhookID} [post]
 func (h *Handler) HandleRepoWebhook(ctx *gin.Context) {
 	webhookID, err := h.ParseStringParam(ctx, "webhookID")

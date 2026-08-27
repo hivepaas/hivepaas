@@ -5,9 +5,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -29,7 +29,7 @@ func (s *service) SetLinks(
 		bunex.SelectWhere("res_link.dst_type = ?", dstType),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Calculate links update
@@ -70,7 +70,7 @@ func (s *service) SetLinks(
 	err = s.resLinkRepo.UpsertMulti(ctx, db, upsertingLinks,
 		entity.ResLinkUpsertingConflictCols, entity.ResLinkUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -112,7 +112,7 @@ func (s *service) AddLinks(
 	err := s.resLinkRepo.UpsertMulti(ctx, db, newLinks,
 		entity.ResLinkUpsertingConflictCols, entity.ResLinkUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -135,7 +135,7 @@ func (s *service) RemoveLinks(
 		bunex.DeleteWhereIn("res_link.dst_id IN (?)", dstIDs...),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

@@ -3,10 +3,10 @@ package sslcertuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
@@ -25,12 +25,12 @@ func (uc *UC) UpdateSSLCert(
 		VerifyingRefIDs: newCert.GetRefObjectIDs(),
 		AfterLoading: func(ctx context.Context, db database.Tx, data *settings.UpdateSettingData) error {
 			if err := uc.verifyDomainInProject(ctx, db, req.Scope, newCert); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			currCert, err := data.Setting.AsSSLCert()
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			switch newCert.CertType {
 			case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTrust:
@@ -52,7 +52,7 @@ func (uc *UC) UpdateSSLCert(
 		) error {
 			err := pData.Setting.SetData(newCert)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			if reObtainCert {
@@ -60,26 +60,26 @@ func (uc *UC) UpdateSSLCert(
 				err = uc.SettingService.LoadRefObjects(ctx, db, &refObjects, req.Scope,
 					true, pData.Setting)
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 
 				_, err = uc.sslService.ObtainCert(ctx, pData.Setting, refObjects, false)
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 			}
 
 			// Save SSL cert/key files in a directory with forceRecreate=true
 			err = uc.sslService.WriteCertFiles(true, pData.Setting)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &sslcertdto.UpdateSSLCertResp{}, nil

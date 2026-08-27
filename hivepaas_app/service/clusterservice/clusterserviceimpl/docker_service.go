@@ -9,7 +9,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -31,7 +31,7 @@ func (s *service) ServiceInspect(
 
 	resp, err := s.dockerManager.ServiceInspect(ctx, serviceID)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &resp.Service, nil
@@ -49,7 +49,7 @@ func (s *service) ServiceUpdate(
 	}
 	resp, err := s.dockerManager.ServiceUpdate(ctx, serviceID, version, service, options...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -66,10 +66,10 @@ func (s *service) ServiceRemove(
 	fn := func() error {
 		_, err := s.dockerManager.ServiceRemove(ctx, serviceID)
 		if err != nil {
-			if errors.Is(err, apperrors.ErrNotFound) {
+			if errors.Is(err, hperrors.ErrNotFound) {
 				return nil
 			}
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	}
@@ -83,7 +83,7 @@ func (s *service) ServiceRemove(
 	}
 	if err != nil {
 		// TODO: create a cleanup task
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

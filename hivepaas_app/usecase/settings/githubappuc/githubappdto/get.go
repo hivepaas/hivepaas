@@ -3,9 +3,9 @@ package githubappdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -22,10 +22,10 @@ func NewGetGithubAppReq() *GetGithubAppReq {
 	return &GetGithubAppReq{}
 }
 
-func (req *GetGithubAppReq) Validate() apperrors.ValidationErrors {
+func (req *GetGithubAppReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.GetSettingReq.Validate()...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetGithubAppResp struct {
@@ -69,12 +69,12 @@ func TransformGithubApp(
 ) (resp *GithubAppResp, err error) {
 	config := setting.MustAsGithubApp()
 	if err = copier.Copy(&resp, config); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Recalculate callbackURL for the github-app as it depends on the actual server address

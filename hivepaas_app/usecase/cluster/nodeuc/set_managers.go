@@ -7,9 +7,9 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
@@ -25,13 +25,13 @@ func (uc *UC) SetManagerNodes(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	dbNodeMap := entityutil.SliceToIDMap(dbNodeSettings)
 
 	listResp, err := uc.dockerManager.NodeList(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	nodes := listResp.Items
 
@@ -48,7 +48,7 @@ func (uc *UC) SetManagerNodes(
 			dockerNode = existingNodes[dbNode.MustAsClusterNode().RefID]
 		}
 		if dockerNode == nil {
-			return nil, apperrors.NewNotFound(fmt.Sprintf("Node %v", nodeReq.ID))
+			return nil, hperrors.NewNotFound(fmt.Sprintf("Node %v", nodeReq.ID))
 		}
 		targetManagerIDs[dockerNode.ID] = true
 	}
@@ -72,14 +72,14 @@ func (uc *UC) SetManagerNodes(
 	for _, node := range promoteNodes {
 		inspect, err := uc.dockerManager.NodeInspect(ctx, node.ID)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		latestNode := &inspect.Node
 		spec := latestNode.Spec
 		spec.Role = swarm.NodeRoleManager
 		_, err = uc.dockerManager.NodeUpdate(ctx, latestNode.ID, &latestNode.Version, &spec)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -87,21 +87,21 @@ func (uc *UC) SetManagerNodes(
 	for _, node := range uc.sortNodesToDemote(ctx, demoteNodes) {
 		inspect, err := uc.dockerManager.NodeInspect(ctx, node.ID)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		latestNode := &inspect.Node
 		spec := latestNode.Spec
 		spec.Role = swarm.NodeRoleWorker
 		_, err = uc.dockerManager.NodeUpdate(ctx, latestNode.ID, &latestNode.Version, &spec)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	// 3. Sync nodes back to the database
 	_, err = uc.clusterService.SyncNodes(ctx, uc.db)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &nodedto.SetManagerNodesResp{}, nil

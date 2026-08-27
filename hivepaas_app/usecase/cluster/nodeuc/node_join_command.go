@@ -7,8 +7,8 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 )
 
@@ -20,7 +20,7 @@ func (uc *UC) GetNodeJoinCommand(
 	data := &joinNodeCommandData{}
 	err := uc.loadGetNodeJoinCommandData(ctx, req, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	command := fmt.Sprintf("docker swarm join --token %s %s", data.JoinToken, data.PreferManagerAddr)
@@ -44,13 +44,13 @@ func (uc *UC) loadGetNodeJoinCommandData(
 	// Find join token from the cluster
 	inspect, err := uc.dockerManager.SwarmInspect(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	theSwarm := &inspect.Swarm
 
 	joinToken := gofn.If(req.JoinAsManager, theSwarm.JoinTokens.Manager, theSwarm.JoinTokens.Worker)
 	if joinToken == "" {
-		return apperrors.Wrap(apperrors.ErrInfraInternal).
+		return hperrors.Wrap(hperrors.ErrInfraInternal).
 			WithNTParam("Error", "join token is not found")
 	}
 	data.JoinToken = joinToken
@@ -58,7 +58,7 @@ func (uc *UC) loadGetNodeJoinCommandData(
 	// List all manager nodes to get the addr to join new node
 	listResp, err := uc.dockerManager.NodeManagerList(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	var leaderAddr, managerAddr string
@@ -73,7 +73,7 @@ func (uc *UC) loadGetNodeJoinCommandData(
 	}
 	data.PreferManagerAddr = gofn.Coalesce(leaderAddr, managerAddr)
 	if data.PreferManagerAddr == "" {
-		return apperrors.Wrap(apperrors.ErrInfraInternal).
+		return hperrors.Wrap(hperrors.ErrInfraInternal).
 			WithNTParam("Error", "active manager node not found")
 	}
 

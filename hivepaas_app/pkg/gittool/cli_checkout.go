@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
@@ -22,7 +22,7 @@ func (cli *checkoutCli) checkoutTargetCommit(
 		out, err := cmd.CombinedOutput()
 		addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	} else {
 		//nolint:gosec
@@ -34,7 +34,7 @@ func (cli *checkoutCli) checkoutTargetCommit(
 		out, err := cmd.CombinedOutput()
 		addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -51,12 +51,12 @@ func (cli *checkoutCli) checkoutTargetCommit(
 	out, err := cmd.CombinedOutput()
 	addLog(ctx, reflectutil.UnsafeBytesToStr(out), err != nil, cli.opts.LogStore)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	commit, err = cli.getHeadCommit(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return commit, nil
 }
@@ -70,14 +70,14 @@ func (cli *checkoutCli) getHeadCommit(
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	outStr := string(out)
 	const noParts = 3
 	parts := strings.SplitN(outStr, "\x1f", noParts)
 	if len(parts) < noParts {
-		return nil, apperrors.Wrap(apperrors.ErrGitLogOutputUnexpected).WithParam("Output", outStr)
+		return nil, hperrors.Wrap(hperrors.ErrGitLogOutputUnexpected).WithParam("Output", outStr)
 	}
 
 	return &CommitInfo{

@@ -8,10 +8,10 @@ import (
 	"github.com/tiendc/gofn"
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/git/gitea"
 	"github.com/hivepaas/hivepaas/services/git/github"
 	"github.com/hivepaas/hivepaas/services/git/gitlab"
@@ -52,14 +52,14 @@ func ListPullRequest(
 		case base.GitSourceBitbucket, base.GitSourceGogs:
 			fallthrough
 		default:
-			return nil, apperrors.Wrap(apperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
+			return nil, hperrors.Wrap(hperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
 		}
 
 	default:
-		return nil, apperrors.Wrap(apperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
+		return nil, hperrors.Wrap(hperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -73,7 +73,7 @@ func listGithubPullRequest(
 	resp.GitSource = base.GitSourceGithub
 	client, err := github.NewFromSetting(setting)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If setting is a github-app, we get `owner` from the setting
@@ -81,14 +81,14 @@ func listGithubPullRequest(
 	if setting.Type == base.SettingTypeGithubApp {
 		githubApp := setting.MustAsGithubApp()
 		if githubApp.Organization != "" && req.Owner != "" && githubApp.Organization != req.Owner {
-			return apperrors.NewMismatch("owner", "organization")
+			return hperrors.NewMismatch("owner", "organization")
 		}
 		owner = gofn.Coalesce(owner, githubApp.Organization)
 	}
 
 	resp.GithubPullRequests, resp.PagingMeta, err = client.ListPullRequest(ctx, owner, req.Repo, req.Paging)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -102,11 +102,11 @@ func listGitlabPullRequest(
 	resp.GitSource = base.GitSourceGitlab
 	client, err := gitlab.NewFromSetting(setting)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	resp.GitlabMergeRequests, resp.PagingMeta, err = client.ListPullRequest(ctx, req.Owner+"/"+req.Repo, req.Paging)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -120,11 +120,11 @@ func listGiteaPullRequest(
 	resp.GitSource = base.GitSourceGitea
 	client, err := gitea.NewFromSetting(setting)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	resp.GiteaPullRequests, resp.PagingMeta, err = client.ListPullRequest(ctx, req.Owner, req.Repo, req.Paging)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

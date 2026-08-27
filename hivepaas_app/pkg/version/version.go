@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 var (
@@ -70,11 +70,11 @@ func Cmp(v1, v2 *Version) int {
 func CmpStr(s1, s2 string) (int, error) {
 	v1, err := Parse(s1)
 	if err != nil {
-		return 0, apperrors.Wrap(err)
+		return 0, hperrors.Wrap(err)
 	}
 	v2, err := Parse(s2)
 	if err != nil {
-		return 0, apperrors.Wrap(err)
+		return 0, hperrors.Wrap(err)
 	}
 	return Cmp(v1, v2), nil
 }

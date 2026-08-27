@@ -6,8 +6,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
@@ -24,12 +24,12 @@ func (uc *UC) CreateOAuthSession(
 	oauthUser := req.User
 	email := oauthUser.Email
 	if email == "" {
-		return nil, apperrors.Wrap(apperrors.ErrOAuthUserEmailNotReturned)
+		return nil, hperrors.Wrap(hperrors.ErrOAuthUserEmailNotReturned)
 	}
 
 	dbUser, err := uc.userRepo.GetByEmail(ctx, uc.db, email)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Make synchronization as info of user may be changed in the IdP system
@@ -51,12 +51,12 @@ func (uc *UC) CreateOAuthSession(
 	// Saves the user
 	err = uc.userRepo.Update(ctx, uc.db, dbUser, bunex.UpdateColumns(gofn.MapKeys(updateCols)...))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	sessionResp, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: dbUser})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &sessiondto.CreateOAuthSessionResp{

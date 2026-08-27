@@ -5,9 +5,9 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -45,19 +45,19 @@ func (uc *BaseUC) GetSetting(
 	db := uc.DB
 
 	if err = uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if data.AfterLoading != nil {
 		if err = data.AfterLoading(ctx, db, data); err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	setting, err := uc.loadSettingByID(ctx, db, &req.BaseSettingReq, req.ID,
 		false, data.ExtraLoadOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if setting != nil {
 		setting.CurrentObjectID = req.Scope.ScopeObjectID()
@@ -67,7 +67,7 @@ func (uc *BaseUC) GetSetting(
 	if !data.SkipLoadingRefObjects {
 		err = uc.SettingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, req.Scope, false, setting)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -87,7 +87,7 @@ func (uc *BaseUC) GetSettingByID(
 ) (*entity.Setting, error) {
 	setting, err := uc.loadSettingByID(ctx, db, req, id, requireActive, extraLoadOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if setting != nil {
 		setting.CurrentObjectID = req.Scope.ScopeObjectID()

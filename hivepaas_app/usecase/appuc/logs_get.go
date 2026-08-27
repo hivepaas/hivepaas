@@ -8,9 +8,9 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -39,14 +39,14 @@ func (uc *UC) GetAppLogs(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if app.ServiceID == "" {
-		return nil, apperrors.NewUnavailable("App service").
+		return nil, hperrors.NewUnavailable("App service").
 			WithMsgLog("service not exist for app")
 	}
 	if featureSettings.LoggingSettings != nil && !featureSettings.LoggingSettings.Enabled {
-		return nil, apperrors.NewUnavailable("App logs")
+		return nil, hperrors.NewUnavailable("App logs")
 	}
 	serviceID := app.ServiceID
 
@@ -73,10 +73,10 @@ func (uc *UC) GetAppLogs(
 		// Validate task belongs to the service
 		taskInspect, err := uc.dockerManager.TaskInspect(ctx, req.TaskID)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		if taskInspect.Task.ServiceID != serviceID {
-			return nil, apperrors.Wrap(apperrors.ErrUnavailable).
+			return nil, hperrors.Wrap(hperrors.ErrUnavailable).
 				WithMsgLog("task doesn't belong to service")
 		}
 
@@ -96,7 +96,7 @@ func (uc *UC) GetAppLogs(
 			}
 		})
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	} else {
 		logsReader, err = uc.dockerManager.ServiceLogs(ctx, serviceID, func(opts *client.ServiceLogsOptions) {
@@ -115,7 +115,7 @@ func (uc *UC) GetAppLogs(
 			}
 		})
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 

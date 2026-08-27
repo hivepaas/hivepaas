@@ -5,7 +5,7 @@ import (
 	"github.com/moby/moby/api/types/registry"
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func GenerateAuthHeader(auth *registry.AuthConfig) (string, error) {
@@ -14,7 +14,7 @@ func GenerateAuthHeader(auth *registry.AuthConfig) (string, error) {
 	}
 	h, err := authconfig.Encode(*auth)
 	if err != nil {
-		return "", apperrors.NewInfra(err)
+		return "", hperrors.NewInfra(err)
 	}
 	return h, nil
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
 )
@@ -18,8 +18,8 @@ import (
 // @Id      downloadFile
 // @Param   fileID path string true "file ID"
 // @Success 200
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /files/{fileID}/download [get]
 func (h *Handler) DownloadFile(ctx *gin.Context) {
 	fileID, err := h.ParseStringParam(ctx, "fileID")

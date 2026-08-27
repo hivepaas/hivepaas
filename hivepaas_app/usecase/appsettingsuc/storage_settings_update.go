@@ -10,10 +10,10 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/api/types/volume"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -32,19 +32,19 @@ func (uc *UC) UpdateAppStorageSettings(
 		data := &updateAppStorageSettingsData{}
 		err := uc.loadAppStorageSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		uc.prepareUpdatingAppStorageSettings(ctx, data)
 
 		err = uc.applyAppStorageSettings(ctx, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.UpdateAppStorageSettingsResp{}, nil
@@ -74,18 +74,18 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.App = app
 
 	service, err := uc.clusterService.ServiceInspect(ctx, app.ServiceID, false)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Service = service
 
 	if data.Service == nil || data.Service.Version.Index != uint64(req.UpdateVer) { //nolint:gosec
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
 	// Calculate mount keys of existing mounts to distinguish new changes
@@ -106,7 +106,7 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 
 		// For custom mounts, only support type Volume and Cluster
 		if reqMnt.Type != mount.TypeVolume && reqMnt.Type != mount.TypeCluster {
-			return apperrors.Wrap(apperrors.ErrUnsupported).
+			return hperrors.Wrap(hperrors.ErrUnsupported).
 				WithParam("Name", fmt.Sprintf("Mount type '%v'", reqMnt.Type))
 		}
 		dbVolID := reqMnt.Source
@@ -119,13 +119,13 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	dbVolMap := entityutil.SliceToIDMap(dbVols)
 	for _, dbVolID := range newDBVolIDs {
 		dbVol, ok := dbVolMap[dbVolID]
 		if !ok {
-			return apperrors.NewNotFound("Volume").WithMsgLog("volume %v not found", dbVolID)
+			return hperrors.NewNotFound("Volume").WithMsgLog("volume %v not found", dbVolID)
 		}
 		newDockerVolIDs = append(newDockerVolIDs, dbVol.MustAsClusterVolume().RefID)
 	}
@@ -134,7 +134,7 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	// Loads docker volumes
 	listRes, err := uc.dockerManager.VolumeListByIDs(ctx, newDockerVolIDs)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.DockerVolumes = make(map[string]*volume.Volume, len(dbVolMap))
 	for i := range listRes.Items {
@@ -264,7 +264,7 @@ func (uc *UC) applyAppStorageSettings(
 			return true, nil
 		}, defaultServiceRetryMax, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

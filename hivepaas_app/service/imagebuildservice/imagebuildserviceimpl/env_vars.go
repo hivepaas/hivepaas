@@ -7,7 +7,7 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
@@ -27,7 +27,7 @@ func (s *service) calcBuildEnvVars(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if len(envResp.EnvVars) > 0 {
@@ -36,7 +36,7 @@ func (s *service) calcBuildEnvVars(
 			for secret := range env.RefSecrets {
 				plainSecret, err := secret.Value.GetPlain()
 				if err != nil {
-					return nil, apperrors.Wrap(err)
+					return nil, hperrors.Wrap(err)
 				}
 				secrets[plainSecret] = struct{}{}
 			}

@@ -7,8 +7,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -30,18 +30,18 @@ func (s *service) GetTaskLogs(
 
 	task, err := s.taskRepo.GetByID(ctx, db, "", req.TaskID)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp := &taskservice.GetTaskLogsResp{}
 	err = s.queryLogsInDB(ctx, db, task, req, resp)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	err = s.queryRealtimeLogs(ctx, task, req, resp)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return resp, nil
@@ -58,8 +58,8 @@ func (s *service) queryRealtimeLogs(
 	}
 
 	taskInfo, err := s.taskInfoRepo.Get(ctx, task.ID)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if taskInfo == nil {
 		return nil
@@ -78,7 +78,7 @@ func (s *service) queryRealtimeLogs(
 		})
 		if err != nil {
 			cancel()
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		resp.LogsStream = logsStream
 		resp.LogsStreamCloser = func() error {
@@ -88,7 +88,7 @@ func (s *service) queryRealtimeLogs(
 	} else {
 		frames, err := consumer.GetAllData(ctx)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		resp.StaticLogs = append(resp.StaticLogs, frames...)
 	}
@@ -124,7 +124,7 @@ func (s *service) queryLogsInDB(
 
 	logs, _, err := s.taskLogRepo.List(ctx, db, task.ID, "", nil, listOpts...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Reverse the data

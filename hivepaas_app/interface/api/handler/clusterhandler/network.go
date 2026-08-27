@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc/networkdto"
 )
 
@@ -21,8 +21,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} networkdto.ListNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/networks [get]
 func (h *Handler) ListNetwork(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeGlobal)
@@ -36,8 +36,8 @@ func (h *Handler) ListNetwork(ctx *gin.Context) {
 // @Id      getClusterNetwork
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} networkdto.GetNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/networks/{itemID} [get]
 func (h *Handler) GetNetwork(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeGlobal)
@@ -51,8 +51,8 @@ func (h *Handler) GetNetwork(ctx *gin.Context) {
 // @Id      createClusterNetwork
 // @Param   body body networkdto.CreateNetworkReq true "request data"
 // @Success 201 {object} networkdto.CreateNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/networks [post]
 func (h *Handler) CreateNetwork(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeGlobal)
@@ -67,8 +67,8 @@ func (h *Handler) CreateNetwork(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body networkdto.UpdateNetworkReq true "request data"
 // @Success 200 {object} networkdto.UpdateNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/networks/{itemID} [put]
 func (h *Handler) UpdateNetwork(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeGlobal)
@@ -83,8 +83,8 @@ func (h *Handler) UpdateNetwork(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body networkdto.UpdateNetworkStatusReq true "request data"
 // @Success 200 {object} networkdto.UpdateNetworkStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/networks/{itemID}/status [put]
 func (h *Handler) UpdateNetworkStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeGlobal)
@@ -98,8 +98,8 @@ func (h *Handler) UpdateNetworkStatus(ctx *gin.Context) {
 // @Id      deleteClusterNetwork
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} networkdto.DeleteNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/networks/{itemID} [delete]
 func (h *Handler) DeleteNetwork(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeClusterNetwork, base.ObjectScopeGlobal)
@@ -113,8 +113,8 @@ func (h *Handler) DeleteNetwork(ctx *gin.Context) {
 // @Id      syncClusterNetwork
 // @Param   body body networkdto.SyncNetworkReq true "request data"
 // @Success 201 {object} networkdto.SyncNetworkResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /cluster/networks/sync [post]
 func (h *Handler) SyncNetwork(ctx *gin.Context) {
 	auth, _, err := h.getAuth(ctx, base.ResourceTypeClusterNetwork, base.ActionTypeWrite, "")

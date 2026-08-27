@@ -6,8 +6,8 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/gocache"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -26,14 +26,14 @@ func (s *service) GetGlobalRoutingNetworkID(ctx context.Context) (string, error)
 		docker.FilterAdd(&opts.Filters, "name", base.NetworkGlobalRouting)
 	})
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 
 	var netID string
 	if len(listResp.Items) == 0 {
 		netID, err = s.createGlobalRoutingNetwork(ctx)
 		if err != nil {
-			return "", apperrors.Wrap(err).WithMsgLog("failed to create global routing network")
+			return "", hperrors.Wrap(err).WithMsgLog("failed to create global routing network")
 		}
 	} else {
 		netID = listResp.Items[0].ID
@@ -56,7 +56,7 @@ func (s *service) createGlobalRoutingNetwork(ctx context.Context) (string, error
 			}
 		})
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	return resp.ID, nil
 }

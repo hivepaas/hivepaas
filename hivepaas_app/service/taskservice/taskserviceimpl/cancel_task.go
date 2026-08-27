@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -21,16 +21,16 @@ func (s *service) CancelTask(
 	task, err := s.taskRepo.GetByID(ctx, db, "", taskID,
 		bunex.SelectFor("UPDATE OF task SKIP LOCKED"),
 	)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return false, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return false, hperrors.Wrap(err)
 	}
 
 	if task != nil {
 		if validatingTargetID != nil && *validatingTargetID != task.TargetID {
-			return false, apperrors.NewNotFound("Task").WithMsgLog("unmatched task target id")
+			return false, hperrors.NewNotFound("Task").WithMsgLog("unmatched task target id")
 		}
 		if !task.CanCancel() {
-			return false, apperrors.Wrap(apperrors.ErrActionNotAllowedByStatus)
+			return false, hperrors.Wrap(hperrors.ErrActionNotAllowedByStatus)
 		}
 		task.Status = base.TaskStatusCanceled
 		task.UpdatedAt = timeutil.NowUTC()
@@ -38,7 +38,7 @@ func (s *service) CancelTask(
 			bunex.UpdateColumns("status", "updated_at"),
 		)
 		if err != nil {
-			return false, apperrors.Wrap(err)
+			return false, hperrors.Wrap(err)
 		}
 		return true, nil
 	}
@@ -46,7 +46,7 @@ func (s *service) CancelTask(
 	// Task is in-progress, send `cancel` command to the task executor
 	err = s.CancelInProgressTask(ctx, taskID)
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 
 	return false, nil
@@ -59,15 +59,15 @@ func (s *service) CancelInProgressTask(
 	// Get task info stored in redis
 	taskInfo, err := s.taskInfoRepo.Get(ctx, taskID)
 	if err != nil {
-		if errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(apperrors.ErrUnavailable).
+		if errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(hperrors.ErrUnavailable).
 				WithMsgLog("task info not found, please try again later")
 		}
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if taskInfo.ControlDisabled {
-		return apperrors.Wrap(apperrors.ErrActionNotAllowed).
+		return hperrors.Wrap(hperrors.ErrActionNotAllowed).
 			WithMsgLog("task controlling is disabled")
 	}
 
@@ -76,7 +76,7 @@ func (s *service) CancelInProgressTask(
 		Cmd: base.TaskCommandCancel,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

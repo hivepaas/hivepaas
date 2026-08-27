@@ -3,8 +3,8 @@ package entity
 import (
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
@@ -79,7 +79,7 @@ func (r *RefObjects) GetObjectScope(
 	case base.ObjectScopeApp:
 		app := r.RefApps[objectID]
 		if app == nil {
-			return nil, apperrors.Wrap(apperrors.ErrAppNotFound).WithParam("Name", objectID)
+			return nil, hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", objectID)
 		}
 		if app.ProjectEnv == nil {
 			app.ProjectEnv = r.RefProjectEnvs[app.ProjectEnvID]
@@ -89,19 +89,19 @@ func (r *RefObjects) GetObjectScope(
 		}
 		if requireActive {
 			if app.Status != base.AppStatusActive {
-				return nil, apperrors.Wrap(apperrors.ErrAppInactive).WithParam("Name", app.Name)
+				return nil, hperrors.Wrap(hperrors.ErrAppInactive).WithParam("Name", app.Name)
 			}
 			if app.ProjectEnv == nil {
-				return nil, apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", app.ProjectEnvID)
+				return nil, hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", app.ProjectEnvID)
 			}
 			if app.ProjectEnv.Status != base.ProjectStatusActive {
-				return nil, apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithParam("Name", app.ProjectEnv.Name)
+				return nil, hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithParam("Name", app.ProjectEnv.Name)
 			}
 			if app.Project == nil {
-				return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", app.ProjectID)
+				return nil, hperrors.Wrap(hperrors.ErrProjectNotFound).WithParam("Name", app.ProjectID)
 			}
 			if app.Project.Status != base.ProjectStatusActive {
-				return nil, apperrors.Wrap(apperrors.ErrProjectInactive).WithParam("Name", app.Project.Name)
+				return nil, hperrors.Wrap(hperrors.ErrProjectInactive).WithParam("Name", app.Project.Name)
 			}
 		}
 		return app.GetObjectScope(), nil
@@ -109,11 +109,11 @@ func (r *RefObjects) GetObjectScope(
 	case base.ObjectScopeProject:
 		project := r.RefProjects[objectID]
 		if project == nil {
-			return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", objectID)
+			return nil, hperrors.Wrap(hperrors.ErrProjectNotFound).WithParam("Name", objectID)
 		}
 		if requireActive {
 			if project.Status != base.ProjectStatusActive {
-				return nil, apperrors.Wrap(apperrors.ErrProjectInactive).WithParam("Name", project.Name)
+				return nil, hperrors.Wrap(hperrors.ErrProjectInactive).WithParam("Name", project.Name)
 			}
 		}
 		return project.GetObjectScope(), nil
@@ -121,20 +121,20 @@ func (r *RefObjects) GetObjectScope(
 	case base.ObjectScopeProjectEnv:
 		projectEnv := r.RefProjectEnvs[objectID]
 		if projectEnv == nil {
-			return nil, apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", objectID)
+			return nil, hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", objectID)
 		}
 		if projectEnv.Project == nil {
 			projectEnv.Project = r.RefProjects[projectEnv.ProjectID]
 		}
 		if requireActive {
 			if projectEnv.Status != base.ProjectStatusActive {
-				return nil, apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithParam("Name", projectEnv.Name)
+				return nil, hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithParam("Name", projectEnv.Name)
 			}
 			if projectEnv.Project == nil {
-				return nil, apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", projectEnv.ProjectID)
+				return nil, hperrors.Wrap(hperrors.ErrProjectNotFound).WithParam("Name", projectEnv.ProjectID)
 			}
 			if projectEnv.Project.Status != base.ProjectStatusActive {
-				return nil, apperrors.Wrap(apperrors.ErrProjectInactive).WithParam("Name", projectEnv.Project.Name)
+				return nil, hperrors.Wrap(hperrors.ErrProjectInactive).WithParam("Name", projectEnv.Project.Name)
 			}
 		}
 		return projectEnv.GetObjectScope(), nil
@@ -142,11 +142,11 @@ func (r *RefObjects) GetObjectScope(
 	case base.ObjectScopeUser:
 		user := r.RefUsers[objectID]
 		if user == nil {
-			return nil, apperrors.Wrap(apperrors.ErrUserNotFound).WithParam("Name", objectID)
+			return nil, hperrors.Wrap(hperrors.ErrUserNotFound).WithParam("Name", objectID)
 		}
 		if requireActive {
 			if user.Status != base.UserStatusActive || user.IsAccessExpired() {
-				return nil, apperrors.Wrap(apperrors.ErrUserUnavailable).
+				return nil, hperrors.Wrap(hperrors.ErrUserUnavailable).
 					WithParam("Name", gofn.Coalesce(user.FullName, user.Username))
 			}
 		}

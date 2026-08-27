@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
@@ -56,7 +56,7 @@ func (s *service) processRefsRecursively(
 
 	// Prevent infinite loop due to circular references (Call-stack based cycle detection)
 	if _, exists := visitingMap[env.Key]; exists {
-		return apperrors.Wrap(apperrors.ErrEnvVarCircularReference).WithParam("Name", env.Key)
+		return hperrors.Wrap(hperrors.ErrEnvVarCircularReference).WithParam("Name", env.Key)
 	}
 	visitingMap[env.Key] = struct{}{}
 	defer delete(visitingMap, env.Key)
@@ -101,18 +101,18 @@ func (s *service) processRefsRecursively(
 
 		if refName != "" { // external ref: e.g. reference another app env such as `db.HOST`
 			if sharedEnv != "" {
-				gErr = apperrors.Wrap(apperrors.ErrSharedEnvVarContainExternalReference).
+				gErr = hperrors.Wrap(hperrors.ErrSharedEnvVarContainExternalReference).
 					WithParam("Name", sharedEnv)
 				return match
 			}
 			if data.ExternalRefsLoadFunc == nil {
-				gErr = apperrors.Wrap(apperrors.ErrEnvVarExternalReferenceIsNotAllowed).
+				gErr = hperrors.Wrap(hperrors.ErrEnvVarExternalReferenceIsNotAllowed).
 					WithParam("Name", env.Key)
 				return match
 			}
 			externalVars, err := s.loadExternalRefEnvData(refName, data)
 			if err != nil {
-				gErr = apperrors.Wrap(err)
+				gErr = hperrors.Wrap(err)
 				return match
 			}
 			val, exists := externalVars[varName]
@@ -135,7 +135,7 @@ func (s *service) processRefsRecursively(
 			return match
 		}
 		if err := s.processRefsRecursively(refEnv, data, sharedEnv, visitingMap); err != nil {
-			gErr = apperrors.Wrap(err)
+			gErr = hperrors.Wrap(err)
 			return ""
 		}
 		if len(refEnv.Errors) > 0 {
@@ -150,7 +150,7 @@ func (s *service) processRefsRecursively(
 
 	value := reEnvOrSecretRef.ReplaceAllStringFunc(env.Value, replFunc)
 	if gErr != nil {
-		return apperrors.Wrap(gErr)
+		return hperrors.Wrap(gErr)
 	}
 	env.Value = value
 	return nil
@@ -174,7 +174,7 @@ func (s *service) loadExternalRefEnvData(
 	}
 	refData, err := data.ExternalRefsLoadFunc(appKey)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if data.ExternalRefsData == nil {
 		data.ExternalRefsData = make(map[string]map[string]*envvarservice.EnvVar)

@@ -3,8 +3,8 @@ package sslrenewalserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -27,7 +27,7 @@ func (s *service) sslGetNotification(
 	notification, err := s.notificationService.GetNotificationForEvent(ctx, db,
 		scope, sslCert.Notification, eventIsSuccess, data.RefObjects)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if notification == nil {
 		return nil, nil

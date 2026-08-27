@@ -1,8 +1,8 @@
 package hpappdto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 )
 
@@ -14,7 +14,7 @@ func NewGetHpAppReleaseInfoReq() *GetHpAppReleaseInfoReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *GetHpAppReleaseInfoReq) Validate() apperrors.ValidationErrors {
+func (req *GetHpAppReleaseInfoReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

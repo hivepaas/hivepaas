@@ -3,7 +3,7 @@ package appcloneserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
@@ -15,13 +15,13 @@ func (s *service) applyEnvVars(
 ) (err error) {
 	appEnvData, err := s.buildAppEnvVars(ctx, db, true, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Apply the changes to the app and child apps
 	errMap := s.envVarService.ApplyEnvVarsForApps(ctx, db, appEnvData, false, false)
 	for _, e := range errMap {
-		return apperrors.Wrap(e)
+		return hperrors.Wrap(e)
 	}
 	return nil
 }
@@ -39,7 +39,7 @@ func (s *service) buildAppEnvVars(
 	appEnvVarData, err = s.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope,
 		false, nil, transaction, concurrency)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// TODO (high): check this
@@ -48,7 +48,7 @@ func (s *service) buildAppEnvVars(
 	//	_, err = s.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db, scope,
 	//		true, transaction, concurrency)
 	//	if err != nil {
-	//		return nil, apperrors.Wrap(err)
+	//		return nil, hperrors.Wrap(err)
 	//	}
 	// }
 

@@ -6,10 +6,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -36,10 +36,10 @@ func (s *service) UpdateSystemVersion(
 		bunex.SelectColumns("id"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if len(tasks) > 0 {
-		return apperrors.Wrap(apperrors.ErrTooMany).WithParam("Name", "Update requests").
+		return hperrors.Wrap(hperrors.ErrTooMany).WithParam("Name", "Update requests").
 			WithNTParam("MaxItem", 1)
 	}
 
@@ -63,17 +63,17 @@ func (s *service) UpdateSystemVersion(
 
 	err = s.taskRepo.Insert(ctx, db, task)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Start the updater service
 	updaterSvc, err := s.GetHpUpdaterSwarmService(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	appSvc, err := s.GetHpAppSwarmService(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	updaterSvc.Spec.TaskTemplate.ContainerSpec.Image = targetVersion.AppImage
@@ -84,7 +84,7 @@ func (s *service) UpdateSystemVersion(
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, updaterSvc.ID, &updaterSvc.Version, &updaterSvc.Spec)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

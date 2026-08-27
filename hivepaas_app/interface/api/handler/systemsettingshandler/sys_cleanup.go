@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systemcleanupuc/systemcleanupdto"
 )
@@ -19,8 +19,8 @@ import (
 // @Produce json
 // @Id      getSystemCleanupSettings
 // @Success 200 {object} systemcleanupdto.GetSystemCleanupResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/cleanup [get]
 func (h *Handler) GetCleanupSettings(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
@@ -57,8 +57,8 @@ func (h *Handler) GetCleanupSettings(ctx *gin.Context) {
 // @Id      updateSystemCleanupSettings
 // @Param   body body systemcleanupdto.UpdateSystemCleanupReq true "request data"
 // @Success 200 {object} systemcleanupdto.UpdateSystemCleanupResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/cleanup [put]
 func (h *Handler) UpdateCleanupSettings(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
@@ -95,8 +95,8 @@ func (h *Handler) UpdateCleanupSettings(ctx *gin.Context) {
 // @Id      executeSystemCleanup
 // @Param   body body systemcleanupdto.ExecuteSystemCleanupReq true "request data"
 // @Success 200 {object} systemcleanupdto.ExecuteSystemCleanupResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /system/settings/cleanup/exec [post]
 func (h *Handler) ExecuteCleanup(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{

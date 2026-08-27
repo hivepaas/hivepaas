@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
@@ -25,7 +25,7 @@ func (c *grpcContainerServiceClient) ContainerCopyTo(
 
 	stream, err := c.protoClient.ContainerCopyTo(authCtx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// 1. Send metadata
@@ -39,7 +39,7 @@ func (c *grpcContainerServiceClient) ContainerCopyTo(
 			},
 		},
 	}); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// 2. Stream chunks
@@ -52,7 +52,7 @@ func (c *grpcContainerServiceClient) ContainerCopyTo(
 					Chunk: buf[:n],
 				},
 			}); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -60,18 +60,18 @@ func (c *grpcContainerServiceClient) ContainerCopyTo(
 			if errors.Is(readErr, io.EOF) {
 				break
 			}
-			return apperrors.Wrap(readErr)
+			return hperrors.Wrap(readErr)
 		}
 	}
 
 	// 3. Close and receive response
 	resp, err := stream.CloseAndRecv()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if !resp.GetSuccess() {
-		return apperrors.NewInternal().WithMsgLog("failed to copy to container: %s", resp.GetMessage())
+		return hperrors.NewInternal().WithMsgLog("failed to copy to container: %s", resp.GetMessage())
 	}
 
 	return nil

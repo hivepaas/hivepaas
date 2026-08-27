@@ -4,8 +4,8 @@ import (
 	"github.com/google/go-github/v85/github"
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 )
 
@@ -19,10 +19,10 @@ func NewListAppInstallationReq() *ListAppInstallationReq {
 	return &ListAppInstallationReq{}
 }
 
-func (req *ListAppInstallationReq) Validate() apperrors.ValidationErrors {
+func (req *ListAppInstallationReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.validate("")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type ListAppInstallationResp struct {
@@ -39,7 +39,7 @@ type AppInstallationResp struct {
 
 func TransformAppInstallation(installation *github.Installation) (resp *AppInstallationResp, err error) {
 	if err = copier.Copy(&resp, &installation); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -47,7 +47,7 @@ func TransformAppInstallation(installation *github.Installation) (resp *AppInsta
 func TransformAppInstallations(installations []*github.Installation) ([]*AppInstallationResp, error) {
 	resp, err := basedto.TransformObjectSlice(installations, TransformAppInstallation)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }

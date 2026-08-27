@@ -3,8 +3,8 @@ package appsettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/periodicjobuc/periodicjobdto"
 )
 
@@ -22,8 +22,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} periodicjobdto.ListPeriodicJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs [get]
 func (h *Handler) ListAppPeriodicJob(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypePeriodicJob, base.ObjectScopeApp)
@@ -40,8 +40,8 @@ func (h *Handler) ListAppPeriodicJob(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} periodicjobdto.GetPeriodicJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs/{itemID} [get]
 func (h *Handler) GetAppPeriodicJob(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypePeriodicJob, base.ObjectScopeApp)
@@ -58,8 +58,8 @@ func (h *Handler) GetAppPeriodicJob(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   body body periodicjobdto.CreatePeriodicJobReq true "request data"
 // @Success 201 {object} periodicjobdto.CreatePeriodicJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs [post]
 func (h *Handler) CreateAppPeriodicJob(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypePeriodicJob, base.ObjectScopeApp)
@@ -77,8 +77,8 @@ func (h *Handler) CreateAppPeriodicJob(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body periodicjobdto.UpdatePeriodicJobReq true "request data"
 // @Success 200 {object} periodicjobdto.UpdatePeriodicJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs/{itemID} [put]
 func (h *Handler) UpdateAppPeriodicJob(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypePeriodicJob, base.ObjectScopeApp)
@@ -96,8 +96,8 @@ func (h *Handler) UpdateAppPeriodicJob(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body periodicjobdto.UpdatePeriodicJobStatusReq true "request data"
 // @Success 200 {object} periodicjobdto.UpdatePeriodicJobStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs/{itemID}/status [put]
 func (h *Handler) UpdateAppPeriodicJobStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypePeriodicJob, base.ObjectScopeApp)
@@ -114,8 +114,8 @@ func (h *Handler) UpdateAppPeriodicJobStatus(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} periodicjobdto.DeletePeriodicJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs/{itemID} [delete]
 func (h *Handler) DeleteAppPeriodicJob(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypePeriodicJob, base.ObjectScopeApp)

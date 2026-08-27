@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 )
 
@@ -19,8 +19,8 @@ import (
 // @Id      getProjectImageBuildSettings
 // @Param   projectID path string true "project ID"
 // @Success 200 {object} imagebuildsettingsdto.GetImageBuildSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/image-build-settings [get]
 func (h *Handler) GetImageBuildSettings(ctx *gin.Context) {
 	h.GetUniqueSetting(ctx, base.ResourceTypeImageBuild, base.ObjectScopeProject)
@@ -35,8 +35,8 @@ func (h *Handler) GetImageBuildSettings(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body imagebuildsettingsdto.UpdateImageBuildSettingsReq true "request data"
 // @Success 200 {object} imagebuildsettingsdto.UpdateImageBuildSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/image-build-settings [put]
 func (h *Handler) UpdateImageBuildSettings(ctx *gin.Context) {
 	h.UpdateUniqueSetting(ctx, base.ResourceTypeImageBuild, base.ObjectScopeProject)
@@ -51,8 +51,8 @@ func (h *Handler) UpdateImageBuildSettings(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq true "request data"
 // @Success 200 {object} imagebuildsettingsdto.UpdateImageBuildSettingsStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/image-build-settings/status [put]
 func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
 	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeImageBuild, base.ObjectScopeProject)
@@ -66,8 +66,8 @@ func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
 // @Id      deleteProjectImageBuildSettings
 // @Param   projectID path string true "project ID"
 // @Success 200 {object} imagebuildsettingsdto.DeleteImageBuildSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/image-build-settings [delete]
 func (h *Handler) DeleteImageBuildSettings(ctx *gin.Context) {
 	h.DeleteUniqueSetting(ctx, base.ResourceTypeImageBuild, base.ObjectScopeProject)
@@ -81,8 +81,8 @@ func (h *Handler) DeleteImageBuildSettings(ctx *gin.Context) {
 // @Id      getProjectRepoCacheInfo
 // @Param   projectID path string true "project ID"
 // @Success 200 {object} imagebuildsettingsdto.GetRepoCacheInfoResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/image-build-settings/repo-cache [get]
 func (h *Handler) GetRepoCacheInfo(ctx *gin.Context) {
 	auth, projectID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
@@ -116,8 +116,8 @@ func (h *Handler) GetRepoCacheInfo(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body imagebuildsettingsdto.ClearRepoCacheReq true "request data"
 // @Success 200 {object} imagebuildsettingsdto.ClearRepoCacheResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/image-build-settings/repo-cache/clear [post]
 func (h *Handler) ClearRepoCache(ctx *gin.Context) {
 	auth, projectID, err := h.GetAuth(ctx, base.ActionTypeExecute, true)

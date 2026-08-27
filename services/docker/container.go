@@ -8,7 +8,7 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ContainerCreateOption func(*client.ContainerCreateOptions)
@@ -23,7 +23,7 @@ func (m *manager) ContainerCreate(
 	}
 	resp, err := m.client.ContainerCreate(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -41,7 +41,7 @@ func (m *manager) ContainerStart(
 	}
 	resp, err := m.client.ContainerStart(ctx, containerID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -74,7 +74,7 @@ func (m *manager) ContainerRemove(
 	}
 	resp, err := m.client.ContainerRemove(ctx, containerID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -91,7 +91,7 @@ func (m *manager) ContainerList(
 	}
 	resp, err := m.client.ContainerList(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -120,7 +120,7 @@ func (m *manager) ContainerInspect(
 	}
 	resp, err := m.client.ContainerInspect(ctx, containerID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -133,7 +133,7 @@ func (m *manager) ContainerInspectMulti(
 	if len(containerIDs) == 1 {
 		resp, err := m.ContainerInspect(ctx, containerIDs[0], options...)
 		if err != nil {
-			return nil, map[string]error{containerIDs[0]: apperrors.Wrap(err)}
+			return nil, map[string]error{containerIDs[0]: hperrors.Wrap(err)}
 		}
 		return map[string]*client.ContainerInspectResult{containerIDs[0]: resp}, nil
 	}
@@ -147,7 +147,7 @@ func (m *manager) ContainerInspectMulti(
 			resp, err := m.ContainerInspect(ctx, containerID, options...)
 			mu.Lock()
 			if err != nil {
-				allErrors[containerID] = apperrors.Wrap(err)
+				allErrors[containerID] = hperrors.Wrap(err)
 			} else {
 				allResults[containerID] = resp
 			}
@@ -175,7 +175,7 @@ func (m *manager) ContainerLogs(
 	}
 	resp, err := m.client.ContainerLogs(ctx, containerID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return resp, nil
 }
@@ -193,7 +193,7 @@ func (m *manager) ContainerRestart(
 	}
 	resp, err := m.client.ContainerRestart(ctx, containerID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -206,7 +206,7 @@ func (m *manager) ContainerRestartMulti(
 	if len(containerIDs) == 1 {
 		_, err := m.ContainerRestart(ctx, containerIDs[0], options...)
 		if err != nil {
-			return map[string]error{containerIDs[0]: apperrors.Wrap(err)}
+			return map[string]error{containerIDs[0]: hperrors.Wrap(err)}
 		}
 		return nil
 	}
@@ -219,7 +219,7 @@ func (m *manager) ContainerRestartMulti(
 			_, err := m.ContainerRestart(ctx, containerID, options...)
 			if err != nil {
 				mu.Lock()
-				allErrors[containerID] = apperrors.Wrap(err)
+				allErrors[containerID] = hperrors.Wrap(err)
 				mu.Unlock()
 			}
 		})
@@ -243,7 +243,7 @@ func (m *manager) ContainerKill(
 	}
 	resp, err := m.client.ContainerKill(ctx, containerID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -257,7 +257,7 @@ func (m *manager) ContainerKillMulti(
 	if len(containerIDs) == 1 {
 		_, err := m.ContainerKill(ctx, containerIDs[0], signal, options...)
 		if err != nil {
-			return map[string]error{containerIDs[0]: apperrors.Wrap(err)}
+			return map[string]error{containerIDs[0]: hperrors.Wrap(err)}
 		}
 		return nil
 	}
@@ -270,7 +270,7 @@ func (m *manager) ContainerKillMulti(
 			_, err := m.ContainerKill(ctx, containerID, signal, options...)
 			if err != nil {
 				mu.Lock()
-				allErrors[containerID] = apperrors.Wrap(err)
+				allErrors[containerID] = hperrors.Wrap(err)
 				mu.Unlock()
 			}
 		})
@@ -295,7 +295,7 @@ func (m *manager) ContainerPrune(
 	}
 	resp, err := m.client.ContainerPrune(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -313,7 +313,7 @@ func (m *manager) ContainerUpdate(
 	}
 	resp, err := m.client.ContainerUpdate(ctx, containerID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -327,7 +327,7 @@ func (m *manager) ContainerCopyFrom(
 		SourcePath: srcPath,
 	})
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -362,7 +362,7 @@ func (m *manager) ContainerCopyTo(
 	}
 	resp, err := m.client.CopyToContainer(ctx, containerID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }

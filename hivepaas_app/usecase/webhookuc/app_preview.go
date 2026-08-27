@@ -4,9 +4,9 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 )
@@ -28,7 +28,7 @@ func (uc *UC) createAppPreview(
 		if previewSettings == nil {
 			previewSettings, err = uc.loadAppPreviewSettings(ctx, db, app)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
@@ -49,7 +49,7 @@ func (uc *UC) createAppPreview(
 			},
 		})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		if !commentEvent.previewDeployNoWait && previewSettings.CreationDelay > 0 {
@@ -59,13 +59,13 @@ func (uc *UC) createAppPreview(
 		err = uc.taskRepo.Upsert(ctx, db, previewTask,
 			entity.TaskUpsertingConflictCols, entity.TaskUpsertingUpdateCols)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if previewTask != nil {
 		_ = uc.taskQueue.ScheduleTask(ctx, previewTask)
@@ -81,11 +81,11 @@ func (uc *UC) loadAppPreviewSettings(
 	_, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, db, app.ProjectID, app.ID,
 		false, false)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	previewSettings = featureSettings.PreviewSettings
 	if previewSettings == nil || !previewSettings.Enabled {
-		return nil, apperrors.Wrap(apperrors.ErrFeatureDisabled).
+		return nil, hperrors.Wrap(hperrors.ErrFeatureDisabled).
 			WithParam("Name", "app preview")
 	}
 
@@ -106,7 +106,7 @@ func (uc *UC) deleteAppPreview(
 	}
 	deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if deploymentSettings.ActiveMethod != base.DeploymentMethodRepo ||
 		deploymentSettings.RepoSource == nil || deploymentSettings.RepoSource.RepoRef != expectedRef {
@@ -115,12 +115,12 @@ func (uc *UC) deleteAppPreview(
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		if err = uc.appService.DeleteApp(ctx, db, app); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

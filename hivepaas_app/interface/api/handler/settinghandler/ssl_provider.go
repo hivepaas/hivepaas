@@ -3,8 +3,8 @@ package settinghandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc/sslproviderdto"
 )
 
@@ -19,8 +19,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} sslproviderdto.ListSSLProviderResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/ssl-providers [get]
 func (h *Handler) ListSSLProvider(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeSSLProvider, base.ObjectScopeGlobal)
@@ -34,8 +34,8 @@ func (h *Handler) ListSSLProvider(ctx *gin.Context) {
 // @Id      getSettingSSLProvider
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} sslproviderdto.GetSSLProviderResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/ssl-providers/{itemID} [get]
 func (h *Handler) GetSSLProvider(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeSSLProvider, base.ObjectScopeGlobal)
@@ -49,8 +49,8 @@ func (h *Handler) GetSSLProvider(ctx *gin.Context) {
 // @Id      createSettingSSLProvider
 // @Param   body body sslproviderdto.CreateSSLProviderReq true "request data"
 // @Success 201 {object} sslproviderdto.CreateSSLProviderResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/ssl-providers [post]
 func (h *Handler) CreateSSLProvider(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeSSLProvider, base.ObjectScopeGlobal)
@@ -65,8 +65,8 @@ func (h *Handler) CreateSSLProvider(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body sslproviderdto.UpdateSSLProviderReq true "request data"
 // @Success 200 {object} sslproviderdto.UpdateSSLProviderResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/ssl-providers/{itemID} [put]
 func (h *Handler) UpdateSSLProvider(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeSSLProvider, base.ObjectScopeGlobal)
@@ -81,8 +81,8 @@ func (h *Handler) UpdateSSLProvider(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body sslproviderdto.UpdateSSLProviderStatusReq true "request data"
 // @Success 200 {object} sslproviderdto.UpdateSSLProviderStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/ssl-providers/{itemID}/status [put]
 func (h *Handler) UpdateSSLProviderStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeSSLProvider, base.ObjectScopeGlobal)
@@ -96,8 +96,8 @@ func (h *Handler) UpdateSSLProviderStatus(ctx *gin.Context) {
 // @Id      deleteSettingSSLProvider
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} sslproviderdto.DeleteSSLProviderResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/ssl-providers/{itemID} [delete]
 func (h *Handler) DeleteSSLProvider(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeSSLProvider, base.ObjectScopeGlobal)

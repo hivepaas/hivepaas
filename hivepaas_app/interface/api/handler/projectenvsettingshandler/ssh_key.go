@@ -3,8 +3,8 @@ package projectenvsettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc/sshkeydto"
 )
 
@@ -21,8 +21,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} sshkeydto.ListSSHKeyResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/ssh-keys [get]
 func (h *Handler) ListSSHKey(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProjectEnv)
@@ -38,8 +38,8 @@ func (h *Handler) ListSSHKey(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} sshkeydto.GetSSHKeyResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/ssh-keys/{itemID} [get]
 func (h *Handler) GetSSHKey(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProjectEnv)
@@ -55,8 +55,8 @@ func (h *Handler) GetSSHKey(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   body body sshkeydto.CreateSSHKeyReq true "request data"
 // @Success 201 {object} sshkeydto.CreateSSHKeyResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/ssh-keys [post]
 func (h *Handler) CreateSSHKey(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProjectEnv)
@@ -73,8 +73,8 @@ func (h *Handler) CreateSSHKey(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body sshkeydto.UpdateSSHKeyReq true "request data"
 // @Success 200 {object} sshkeydto.UpdateSSHKeyResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/ssh-keys/{itemID} [put]
 func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProjectEnv)
@@ -91,8 +91,8 @@ func (h *Handler) UpdateSSHKey(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body sshkeydto.UpdateSSHKeyStatusReq true "request data"
 // @Success 200 {object} sshkeydto.UpdateSSHKeyStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/ssh-keys/{itemID}/status [put]
 func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProjectEnv)
@@ -108,8 +108,8 @@ func (h *Handler) UpdateSSHKeyStatus(ctx *gin.Context) {
 // @Param   projectEnv path string true "project Env"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} sshkeydto.DeleteSSHKeyResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/ssh-keys/{itemID} [delete]
 func (h *Handler) DeleteSSHKey(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeSSHKey, base.ObjectScopeProjectEnv)

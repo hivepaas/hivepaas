@@ -8,9 +8,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
@@ -50,7 +50,7 @@ func (cli *validationCli) validate(
 ) (err error) {
 	// 1. Prepare args
 	if err = cli.processValidationOpts(ctx); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer cli.cleanup()
 
@@ -59,7 +59,7 @@ func (cli *validationCli) validate(
 	cmd.Env = cli.sharedEnv
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return apperrors.Wrap(apperrors.ErrRepoNotFound).WithParam("Repo", cli.opts.URL)
+		return hperrors.Wrap(hperrors.ErrRepoNotFound).WithParam("Repo", cli.opts.URL)
 	}
 
 	// 3. Validate reference
@@ -75,11 +75,11 @@ func (cli *validationCli) validate(
 	switch {
 	case cli.refType.IsBranch():
 		if !refsMap["refs/heads/"+cli.refShort] {
-			return apperrors.Wrap(apperrors.ErrRepoRefNotFound).WithParam("RepoRef", cli.opts.ReferenceName)
+			return hperrors.Wrap(hperrors.ErrRepoRefNotFound).WithParam("RepoRef", cli.opts.ReferenceName)
 		}
 	case cli.refType.IsTag():
 		if !refsMap["refs/tags/"+cli.refShort] {
-			return apperrors.Wrap(apperrors.ErrRepoRefNotFound).WithParam("RepoRef", cli.opts.ReferenceName)
+			return hperrors.Wrap(hperrors.ErrRepoRefNotFound).WithParam("RepoRef", cli.opts.ReferenceName)
 		}
 	default: // Pull request
 		// TODO: add validation
@@ -87,7 +87,7 @@ func (cli *validationCli) validate(
 
 	// 4. Validate commit hash
 	if err = cli.validateCommit(ctx); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -100,12 +100,12 @@ func (cli *validationCli) validateCommit(
 		return nil
 	}
 	if !githelper.IsCommitHash(cli.opts.CommitHash) {
-		return apperrors.NewArgumentInvalid("Repository commit hash")
+		return hperrors.NewArgumentInvalid("Repository commit hash")
 	}
 
 	cloneDir, err := os.MkdirTemp(cli.opts.TempDir, "git-clone-*")
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	defer os.RemoveAll(cloneDir)
 
@@ -114,7 +114,7 @@ func (cli *validationCli) validateCommit(
 		"--single-branch", "--branch", cli.refShort, "--", cli.opts.URL, cloneDir)
 	cloneCmd.Env = cli.sharedEnv
 	if cloneOut, err := cloneCmd.CombinedOutput(); err != nil {
-		return apperrors.Wrap(fmt.Errorf("clone failed: %w (output: %s)", err, string(cloneOut)))
+		return hperrors.Wrap(fmt.Errorf("clone failed: %w (output: %s)", err, string(cloneOut)))
 	}
 
 	//nolint:gosec
@@ -132,7 +132,7 @@ func (cli *validationCli) validateCommit(
 		}
 	}
 
-	return apperrors.NewNotFound("Repository commit")
+	return hperrors.NewNotFound("Repository commit")
 }
 
 func (cli *validationCli) processValidationOpts(
@@ -142,7 +142,7 @@ func (cli *validationCli) processValidationOpts(
 	if cli.opts.TempDir == "" {
 		cli.opts.TempDir, err = fileutil.CreateTempDir(base.BaseTempDirDefault, "*", 0)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		cli.cleanupTempDir = true
 	}
@@ -154,17 +154,17 @@ func (cli *validationCli) processValidationOpts(
 
 	cli.refType, cli.refShort = githelper.GetRefShort(string(cli.opts.ReferenceName))
 	if !cli.refType.CanCheckout() {
-		return apperrors.NewUnsupported("Repository ref type")
+		return hperrors.NewUnsupported("Repository ref type")
 	}
 
 	authMethod, err := calcGitAuthMethod(ctx, cli.opts.Credentials)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if authMethod != nil {
 		parseURL, err := vcsurl.Parse(cli.opts.URL)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		switch auth := authMethod.(type) {
@@ -176,7 +176,7 @@ func (cli *validationCli) processValidationOpts(
 			// Add user info to the url
 			u, err := url.Parse(cli.opts.URL)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			u.User = url.UserPassword(auth.Username, auth.Password)
 			cli.opts.URL = u.String()
@@ -189,13 +189,13 @@ func (cli *validationCli) processValidationOpts(
 
 			sshKeyFile, err := writeSshKeyFile(cli.opts.TempDir, auth.PEMBytes)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			sshCmd := "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i " + sshKeyFile
 			cli.sharedEnv = append(cli.sharedEnv, "GIT_SSH_COMMAND="+sshCmd)
 
 		default:
-			return apperrors.Wrap(apperrors.ErrGitAuthMethodUnsupported).WithParam("AuthMethod", auth.Name())
+			return hperrors.Wrap(hperrors.ErrGitAuthMethodUnsupported).WithParam("AuthMethod", auth.Name())
 		}
 	}
 

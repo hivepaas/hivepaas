@@ -3,8 +3,8 @@ package permissionimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -25,7 +25,7 @@ func (p *manager) checkAppAccess(
 			bunex.SelectRelation("ProjectEnv", bunex.SelectColumns("id", "key")),
 		)
 		if err != nil {
-			return false, nil, apperrors.Wrap(err)
+			return false, nil, hperrors.Wrap(err)
 		}
 		check.ProjectID = app.ProjectID
 		check.ParentID = app.ParentID
@@ -38,7 +38,7 @@ func (p *manager) checkAppAccess(
 		ProjectEnv:      &check.ProjectEnv,
 	})
 	if err != nil {
-		return false, nil, apperrors.Wrap(err)
+		return false, nil, hperrors.Wrap(err)
 	}
 	return hasPerm, allowedResources, nil
 }

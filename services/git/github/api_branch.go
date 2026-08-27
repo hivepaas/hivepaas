@@ -5,8 +5,8 @@ import (
 
 	gogithub "github.com/google/go-github/v85/github"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListBranchOption func(options *gogithub.BranchListOptions)
@@ -32,7 +32,7 @@ func (c *Client) ListBranch(
 
 	output, _, err := c.client.Repositories.ListBranches(ctx, owner, repo, listOpts)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 	return output, &basedto.PagingMeta{
 		Offset: opts.Page * opts.PerPage,
@@ -61,7 +61,7 @@ func (c *Client) ListAllBranches(
 	for {
 		result, resp, err := client.Repositories.ListBranches(ctx, owner, repo, listOpts)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		output = append(output, result...)
 		if resp.NextPage <= 0 || listOpts.Page == resp.NextPage || resp.Rate.Remaining <= 0 {

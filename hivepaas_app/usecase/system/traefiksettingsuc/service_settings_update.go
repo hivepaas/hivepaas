@@ -7,10 +7,10 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -33,7 +33,7 @@ func (uc *UC) UpdateServiceSettings(
 		data = &updateServiceSettingsData{}
 		err := uc.loadServiceSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingSettingsData{}
@@ -41,7 +41,7 @@ func (uc *UC) UpdateServiceSettings(
 
 		err = uc.persistSettingsData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		if data.traefikSvcChanges {
@@ -49,14 +49,14 @@ func (uc *UC) UpdateServiceSettings(
 				return uc.applyServiceSettingsToTraefikService(ctx, data)
 			}, serviceUpdateMaxRetry, serviceUpdateRetryInterval)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &traefiksettingsdto.UpdateServiceSettingsResp{}, nil
@@ -80,12 +80,12 @@ func (uc *UC) loadServiceSettingsForUpdate(
 		bunex.SelectFor("UPDATE"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Setting = setting
 
 	if setting != nil && setting.UpdateVer != req.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
 	newSettings := req.ToEntity()
@@ -93,12 +93,12 @@ func (uc *UC) loadServiceSettingsForUpdate(
 
 	currSettings, err := data.Setting.AsTraefikService()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	traefikSvc, err := uc.traefikService.GetTraefikSwarmService(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.TraefikService = traefikSvc
 
@@ -128,7 +128,7 @@ func (uc *UC) applyServiceSettingsToTraefikService(
 
 	_, err := uc.dockerManager.ServiceUpdate(ctx, traefikService.ID, &traefikService.Version, &traefikService.Spec)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -157,7 +157,7 @@ func (uc *UC) persistSettingsData(
 	err := uc.settingRepo.UpsertMulti(ctx, db, persistingData.Settings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

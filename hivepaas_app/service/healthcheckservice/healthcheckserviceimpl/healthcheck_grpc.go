@@ -8,9 +8,9 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (s *service) doHealthcheckGRPC(
@@ -37,23 +37,23 @@ func (s *service) doHealthcheckGRPC(
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		defer conn.Close()
 
 		healthClient := grpc_health_v1.NewHealthClient(conn)
 		resp, err := healthClient.Check(reqCtx, &grpc_health_v1.HealthCheckRequest{Service: healthchk.Service})
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		data.Output.GRPC.ReturnStatus = base.HealthcheckGRPCStatus(resp.Status)
 		if healthchk.ReturnStatus != base.HealthcheckGRPCStatus(resp.Status) {
-			return apperrors.Wrap(apperrors.ErrActionFailed)
+			return hperrors.Wrap(hperrors.ErrActionFailed)
 		}
 
 	default:
-		return apperrors.NewUnsupported(fmt.Sprintf("gRPC health version '%v'", healthchk.Version))
+		return hperrors.NewUnsupported(fmt.Sprintf("gRPC health version '%v'", healthchk.Version))
 	}
 
 	return nil

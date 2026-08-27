@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
 )
 
@@ -25,8 +25,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} schedjobdto.ListSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs [get]
 func (h *Handler) ListAppSchedJob(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeApp)
@@ -43,8 +43,8 @@ func (h *Handler) ListAppSchedJob(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} schedjobdto.GetSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID} [get]
 func (h *Handler) GetAppSchedJob(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeApp)
@@ -61,8 +61,8 @@ func (h *Handler) GetAppSchedJob(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   body body schedjobdto.CreateSchedJobReq true "request data"
 // @Success 201 {object} schedjobdto.CreateSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs [post]
 func (h *Handler) CreateAppSchedJob(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeApp)
@@ -80,8 +80,8 @@ func (h *Handler) CreateAppSchedJob(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body schedjobdto.UpdateSchedJobReq true "request data"
 // @Success 200 {object} schedjobdto.UpdateSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID} [put]
 func (h *Handler) UpdateAppSchedJob(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeApp)
@@ -99,8 +99,8 @@ func (h *Handler) UpdateAppSchedJob(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body schedjobdto.UpdateSchedJobStatusReq true "request data"
 // @Success 200 {object} schedjobdto.UpdateSchedJobStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/status [put]
 func (h *Handler) UpdateAppSchedJobStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeSchedJob, base.ObjectScopeApp)
@@ -117,8 +117,8 @@ func (h *Handler) UpdateAppSchedJobStatus(ctx *gin.Context) {
 // @Param   appID path string true "app ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} schedjobdto.DeleteSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID} [delete]
 func (h *Handler) DeleteAppSchedJob(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeSchedJob, base.ObjectScopeApp)
@@ -136,8 +136,8 @@ func (h *Handler) DeleteAppSchedJob(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body schedjobdto.ExecuteSchedJobReq true "request data"
 // @Success 200 {object} schedjobdto.ExecuteSchedJobResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/exec [post]
 func (h *Handler) ExecuteAppSchedJob(ctx *gin.Context) {
 	auth, projectID, projectEnvID, appID, jobID, err := h.GetAuthAppSettings(ctx, base.ActionTypeRead, "itemID")

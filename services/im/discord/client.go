@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httpclient"
 )
 
@@ -35,12 +35,12 @@ func (c *Client) getHttpClient() *http.Client {
 func parseWebhookURL(webhook string) (webhookID, token string, err error) {
 	dcUrl, err := url.Parse(webhook)
 	if err != nil {
-		return "", "", apperrors.Wrap(err)
+		return "", "", hperrors.Wrap(err)
 	}
 	parts := strings.Split(dcUrl.Path, "/")
 	if len(parts) > 2 { //nolint:mnd
 		return parts[len(parts)-2], parts[len(parts)-1], nil
 	}
-	return "", "", apperrors.Wrap(apperrors.ErrArgumentInvalid).
+	return "", "", hperrors.Wrap(hperrors.ErrArgumentInvalid).
 		WithMsgLog("unabled to parse webhook URL")
 }

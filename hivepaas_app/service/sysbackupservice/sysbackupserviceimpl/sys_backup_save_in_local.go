@@ -10,10 +10,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -41,7 +41,7 @@ func (s *service) sysBackupSaveResultInLocal(
 	case base.FileCompressionFormatZip, base.FileCompressionFormatTar:
 		fallthrough
 	default:
-		return apperrors.Wrap(apperrors.ErrArchiveFormatUnsupported).
+		return hperrors.Wrap(hperrors.ErrArchiveFormatUnsupported).
 			WithParam("Format", data.SysBackupSettings.Compression.Format)
 	}
 
@@ -50,7 +50,7 @@ func (s *service) sysBackupSaveResultInLocal(
 		data.OutFileName += ".age"
 	case base.FileEncryptionNone: // Do nothing
 	default:
-		return apperrors.Wrap(apperrors.ErrEncryptionFormatUnsupported).
+		return hperrors.Wrap(hperrors.ErrEncryptionFormatUnsupported).
 			WithParam("Format", data.SysBackupSettings.Encryption.Format)
 	}
 
@@ -59,7 +59,7 @@ func (s *service) sysBackupSaveResultInLocal(
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(
 			"Failed to save backup data in file with error: "+err.Error(), tasklog.TsNow))
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Save file details in to DB
@@ -78,7 +78,7 @@ func (s *service) sysBackupSaveResultInLocal(
 	}
 	localFileInfo, err := os.Stat(data.OutFilePath)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	localFile.Size = localFileInfo.Size()
 	data.LocalOutFile = localFile
@@ -87,7 +87,7 @@ func (s *service) sysBackupSaveResultInLocal(
 	if err != nil {
 		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Failed to save file into DB with error: "+
 			err.Error(), tasklog.TsNow))
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Backup data saved into file: "+data.OutFileName,

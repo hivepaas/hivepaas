@@ -15,8 +15,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
 
@@ -75,7 +75,7 @@ func InitGrpcServer(
 			grpcPort := strconv.Itoa(cfg.Agent.Port)
 			lis, err := net.Listen("tcp", ":"+grpcPort)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			logger.Infof("gRPC Server listening on port %s ...", grpcPort)
 			go func() {
@@ -116,13 +116,13 @@ func unaryLoggingAndRecoveryInterceptor(logger logging.Logger) grpc.UnaryServerI
 
 		duration := time.Since(startTime)
 		if err != nil {
-			err = apperrors.ToGRPCError(err)
+			err = hperrors.ToGRPCError(err)
 			logger.Errorf("[gRPC Request] Fail - Method: %s, Duration: %s, Error: %v", info.FullMethod, duration, err)
 		} else {
 			logger.Infof("[gRPC Request] Success - Method: %s, Duration: %s", info.FullMethod, duration)
 		}
 
-		return resp, apperrors.Wrap(err)
+		return resp, hperrors.Wrap(err)
 	}
 }
 

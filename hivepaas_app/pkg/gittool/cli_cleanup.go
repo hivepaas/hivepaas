@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os/exec"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
@@ -31,7 +31,7 @@ func (cli *checkoutCli) cleanup(
 	err = errors.Join(err, err2)
 
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

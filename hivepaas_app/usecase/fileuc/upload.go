@@ -3,8 +3,8 @@ package fileuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
@@ -19,7 +19,7 @@ func (uc *UC) Upload(
 		baseFileData: &baseFileData{},
 	}
 	if err := uc.loadUploadData(ctx, uc.db, req, uploadData); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	uploadReq := &fileservice.UploadReq{
@@ -43,7 +43,7 @@ func (uc *UC) Upload(
 	for _, file := range req.Files {
 		f, err := file.Open()
 		if err != nil {
-			return nil, apperrors.Wrap(err).WithMsgLog("failed to open file: %s", file.Filename)
+			return nil, hperrors.Wrap(err).WithMsgLog("failed to open file: %s", file.Filename)
 		}
 		uploadReq.Items = append(uploadReq.Items, &fileservice.UploadItemReq{
 			FilePath: file.Filename,
@@ -54,12 +54,12 @@ func (uc *UC) Upload(
 
 	uploadResp, err := uc.fileService.Upload(ctx, uc.db, uploadReq)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to upload files")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to upload files")
 	}
 
 	resp, err := filedto.TransformFiles(uploadResp.Files)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &filedto.UploadResp{
@@ -79,7 +79,7 @@ func (uc *UC) loadUploadData(
 ) (err error) {
 	err = uc.loadScopeData(ctx, db, req.Scope, data.baseFileData)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

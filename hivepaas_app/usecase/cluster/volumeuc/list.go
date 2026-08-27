@@ -5,9 +5,9 @@ import (
 
 	"github.com/moby/moby/api/types/volume"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
@@ -22,25 +22,25 @@ func (uc *UC) ListVolume(
 	if req.Scope.IsGlobalScope() {
 		currVols, err = uc.volumeService.SyncVolumes(ctx, uc.DB)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	req.Type = currentSettingType
 	resp, err := uc.ListSetting(ctx, auth, &req.ListSettingReq, &settings.ListSettingData{})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	refClusterObjects := entity.NewRefClusterObjects()
 	err = uc.listVolumesInDocker(ctx, resp.Data, currVols, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	respData, err := volumedto.TransformVolumes(resp.Data, resp.RefObjects, refClusterObjects)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &volumedto.ListVolumeResp{
@@ -67,7 +67,7 @@ func (uc *UC) listVolumesInDocker(
 
 		res, err := uc.dockerManager.VolumeListByIDs(ctx, volumes)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		currVols = res.Items
 	}

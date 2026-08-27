@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
 )
 
@@ -18,8 +18,8 @@ import (
 // @Id      createProject
 // @Param   body body projectdto.CreateProjectReq true "request data"
 // @Success 201 {object} projectdto.CreateProjectResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects [post]
 func (h *Handler) CreateProject(ctx *gin.Context) {
 	auth, _, err := h.GetAuth(ctx, base.ActionTypeWrite, false)

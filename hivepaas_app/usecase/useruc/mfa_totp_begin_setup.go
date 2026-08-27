@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/base64"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/totp"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
 )
@@ -23,27 +23,27 @@ func (uc *UC) BeginMFATotpSetup(
 ) (*userdto.BeginMFATotpSetupResp, error) {
 	user, err := uc.userRepo.GetByID(ctx, uc.db, auth.User.ID)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if user.SecurityOption == base.UserSecurityEnforceSSO {
-		return nil, apperrors.Wrap(apperrors.ErrActionNotAllowed).
+		return nil, hperrors.Wrap(hperrors.ErrActionNotAllowed).
 			WithMsgLog("user authentication method is enforce-sso")
 	}
 
 	// Verify current passcode if 2FA is enabled on user
 	if user.TotpSecret != "" && !totp.VerifyPasscode(req.CurrentPasscode, user.TotpSecret) {
-		return nil, apperrors.Wrap(apperrors.ErrPasscodeMismatched)
+		return nil, hperrors.Wrap(hperrors.ErrPasscodeMismatched)
 	}
 
 	secret, qrCode, err := totp.GenerateSecretAndQRCode(qrCodeImageSize)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	totpToken, err := uc.userService.GenerateMFATotpSetupToken(user.ID, secret)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &userdto.BeginMFATotpSetupResp{

@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/totp"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
@@ -24,38 +24,38 @@ func (uc *UC) LoginWithPasscode(
 ) (resp *sessiondto.LoginWithPasscodeResp, err error) {
 	mfaTokenClaims, err := uc.userService.ParseMFAToken(req.MFAToken)
 	if err != nil {
-		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	dbUser, err := uc.userRepo.GetByID(ctx, uc.db, mfaTokenClaims.UserID)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Verify passcode TOTP
 	if !totp.VerifyPasscode(req.Passcode, dbUser.TotpSecret) {
 		passcode, err := uc.cacheMfaPasscodeRepo.Get(ctx, mfaTokenClaims.UserID)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return nil, hperrors.Wrap(err)
 		}
 		if passcode == nil {
 			passcode = &cacheentity.MFAPasscode{Attempts: 1}
 			_ = uc.cacheMfaPasscodeRepo.Set(ctx, mfaTokenClaims.UserID, passcode, mfaPasscodeDuration)
-			return nil, apperrors.Wrap(apperrors.ErrPasscodeMismatched)
+			return nil, hperrors.Wrap(hperrors.ErrPasscodeMismatched)
 		}
 		if passcode.Attempts >= passcodeMaxAttempts {
 			_ = uc.cacheMfaPasscodeRepo.Del(ctx, mfaTokenClaims.UserID)
-			return nil, apperrors.Wrap(apperrors.ErrTooManyPasscodeAttempts).
+			return nil, hperrors.Wrap(hperrors.ErrTooManyPasscodeAttempts).
 				WithMsgLog("too many passcode attempts: %d", passcode.Attempts)
 		}
 		// Increase the attempts
 		_ = uc.cacheMfaPasscodeRepo.IncrAttempts(ctx, mfaTokenClaims.UserID, passcode)
-		return nil, apperrors.Wrap(apperrors.ErrPasscodeMismatched)
+		return nil, hperrors.Wrap(hperrors.ErrPasscodeMismatched)
 	}
 
 	// Removes the passcode in redis
 	if err = uc.cacheMfaPasscodeRepo.Del(ctx, mfaTokenClaims.UserID); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Save trusted device if needs to
@@ -70,14 +70,14 @@ func (uc *UC) LoginWithPasscode(
 		err = uc.loginTrustedDeviceRepo.Upsert(ctx, uc.db, trustedDevice,
 			entity.LoginTrustedDeviceUpsertingConflictCols, entity.LoginTrustedDeviceUpsertingUpdateCols)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	// Create a new session as login succeeds
 	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: dbUser})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &sessiondto.LoginWithPasscodeResp{

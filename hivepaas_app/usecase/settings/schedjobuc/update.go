@@ -3,9 +3,9 @@ package schedjobuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
@@ -25,11 +25,11 @@ func (uc *UC) UpdateSchedJob(
 		AfterLoading: func(ctx context.Context, db database.Tx, data *settings.UpdateSettingData) error {
 			err := uc.isSchedJobFeatureEnabledInApp(ctx, db, req.Scope.App)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			oldJob, err = data.Setting.AsSchedJob()
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -40,7 +40,7 @@ func (uc *UC) UpdateSchedJob(
 			pData *settings.PersistingSettingData,
 		) error {
 			if err := uc.checkPermissionPipeToApp(ctx, db, auth, newJob); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			// Calculate upserting script objects if the scripts are too long
@@ -50,7 +50,7 @@ func (uc *UC) UpdateSchedJob(
 			pData.Setting.Kind = string(newJob.JobType)
 			err := pData.Setting.SetData(newJob)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -63,13 +63,13 @@ func (uc *UC) UpdateSchedJob(
 			err := uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, data.Setting,
 				!oldJob.Schedule.Equal(newJob.Schedule))
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &schedjobdto.UpdateSchedJobResp{}, nil

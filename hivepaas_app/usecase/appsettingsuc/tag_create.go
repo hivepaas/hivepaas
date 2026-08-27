@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -22,7 +22,7 @@ func (uc *UC) CreateAppTag(
 		tagData := &createAppTagData{}
 		err := uc.loadAppTagDataForAddNew(ctx, db, req, tagData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
@@ -31,7 +31,7 @@ func (uc *UC) CreateAppTag(
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appsettingsdto.CreateAppTagResp{}, nil
@@ -58,14 +58,14 @@ func (uc *UC) loadAppTagDataForAddNew(
 		bunex.SelectRelation("Tags", bunex.SelectOrder("index")),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.App = app
 
 	nextIndex := 0
 	for _, tag := range app.Tags {
 		if tag.DeletedAt.IsZero() && strings.EqualFold(tag.Tag, req.Tag) {
-			return apperrors.NewAlreadyExist("App tag")
+			return hperrors.NewAlreadyExist("App tag")
 		}
 		nextIndex = max(nextIndex, tag.Index+1)
 	}

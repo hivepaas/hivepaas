@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-playground/webhooks/v6/gitea"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (uc *UC) parseGiteaWebhook(
@@ -16,7 +16,7 @@ func (uc *UC) parseGiteaWebhook(
 ) error {
 	hook, err := gitea.New(gitea.Options.Secret(secret))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	payload, err := hook.Parse(req, gitea.PushEvent, gitea.IssueCommentEvent,
 		gitea.PullRequestCommentEvent, gitea.PullRequestEvent)
@@ -24,7 +24,7 @@ func (uc *UC) parseGiteaWebhook(
 		if errors.Is(err, gitea.ErrEventNotFound) { // ok event wasn't one of the ones asked to be parsed
 			return nil
 		}
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	switch p := payload.(type) { //nolint

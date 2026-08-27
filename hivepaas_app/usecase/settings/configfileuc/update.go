@@ -3,8 +3,8 @@ package configfileuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/configfileuc/configfiledto"
@@ -27,7 +27,7 @@ func (uc *UC) UpdateConfigFile(
 		) error {
 			oldConfigFile, err := pData.Setting.AsConfigFile()
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			if oldConfigFile != nil {
 				updatedConfigFile.Name = oldConfigFile.Name // when update, keep the old NAME of the config
@@ -40,18 +40,18 @@ func (uc *UC) UpdateConfigFile(
 				// Update the related configs in docker swarm
 				err := uc.ClusterSecretService.UpdateConfigForApp(ctx, db, req.Scope.App, oldConfigFile, updatedConfigFile)
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 			}
 
 			if err = pData.Setting.SetData(updatedConfigFile); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &configfiledto.UpdateConfigFileResp{}, nil

@@ -8,7 +8,7 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/services/traefik/traefikhelper"
 )
@@ -24,7 +24,7 @@ func (s *service) ApplyTrustedIPsToWebEntrypoints(
 ) (resp *traefikservice.ApplyTrustedIPsResp, err error) {
 	svc, err := s.GetTraefikSwarmService(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if svc == nil {
 		return nil, nil
@@ -104,7 +104,7 @@ func (s *service) ApplyTrustedIPsToWebEntrypoints(
 		err = s.dockerManager.ServiceUpdateFunc(ctx, svc.ID, svc, applyFunc, defaultServiceUpdateRetryMax, 0)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }

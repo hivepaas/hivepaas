@@ -5,7 +5,7 @@ import (
 
 	"github.com/patrickmn/go-cache"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
@@ -35,7 +35,7 @@ func NewCache() *Cache {
 func (c *Cache) Get(key string) (any, error) {
 	val, exists := c.client.Get(key)
 	if !exists {
-		return nil, apperrors.NewNotFoundNT(key)
+		return nil, hperrors.NewNotFoundNT(key)
 	}
 	return val, nil
 }
@@ -43,11 +43,11 @@ func (c *Cache) Get(key string) (any, error) {
 func (c *Cache) GetStr(key string) (string, error) {
 	val, err := c.Get(key)
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	v, ok := val.(string)
 	if !ok {
-		return "", apperrors.NewMismatch("Value type", "string type")
+		return "", hperrors.NewMismatch("Value type", "string type")
 	}
 	return v, nil
 }
@@ -55,11 +55,11 @@ func (c *Cache) GetStr(key string) (string, error) {
 func (c *Cache) GetInt(key string) (int, error) {
 	val, err := c.Get(key)
 	if err != nil {
-		return 0, apperrors.Wrap(err)
+		return 0, hperrors.Wrap(err)
 	}
 	v, ok := val.(int)
 	if !ok {
-		return 0, apperrors.NewMismatch("Value type", "int type")
+		return 0, hperrors.NewMismatch("Value type", "int type")
 	}
 	return v, nil
 }
@@ -67,11 +67,11 @@ func (c *Cache) GetInt(key string) (int, error) {
 func (c *Cache) GetBool(key string) (bool, error) {
 	val, err := c.Get(key)
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	v, ok := val.(bool)
 	if !ok {
-		return false, apperrors.NewMismatch("Value type", "bool type")
+		return false, hperrors.NewMismatch("Value type", "bool type")
 	}
 	return v, nil
 }

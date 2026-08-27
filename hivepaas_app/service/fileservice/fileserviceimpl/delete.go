@@ -9,9 +9,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
 	"github.com/hivepaas/hivepaas/services/aws/s3"
 )
@@ -30,7 +30,7 @@ func (s *service) DeleteFileData(
 		err = s.deleteCloudFile(ctx, req)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return &fileservice.DeleteDataResp{}, nil
 }
@@ -44,12 +44,12 @@ func (s *service) deleteLocalFile(
 	err := gofn.ExecRetryCtx(ctx, func() error {
 		err := os.Remove(filePath)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	}, req.RetryMax, req.RetryDelay)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -60,31 +60,31 @@ func (s *service) deleteCloudFile(
 ) (err error) {
 	file := req.File
 	if file.Storage == nil {
-		return apperrors.NewInactive("Storage setting")
+		return hperrors.NewInactive("Storage setting")
 	}
 
 	switch base.CloudStorageKind(file.Storage.Kind) {
 	case base.CloudStorageKindS3:
 		s3Client, err := s3.NewClientFromSetting(ctx, file.Storage)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		// TODO: create an async task for deleting the file later
 		err = gofn.ExecRetryCtx(ctx, func() error {
 			err = s3Client.DeleteObject(ctx, file.Bucket, file.Path)
-			if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-				return apperrors.Wrap(err)
+			if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+				return hperrors.Wrap(err)
 			}
 			return nil
 		}, req.RetryMax, req.RetryDelay)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 
 	default:
-		return apperrors.NewUnsupported("Storage type")
+		return hperrors.NewUnsupported("Storage type")
 	}
 }

@@ -5,9 +5,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/cryptoutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
@@ -26,7 +26,7 @@ func (s *EncryptedField) MarshalJSON() (res []byte, err error) {
 	if config.Current.Secret != "" {
 		encrypted, err = s.encrypt()
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	} else {
 		encrypted = s.encrypted
@@ -53,7 +53,7 @@ func (s *EncryptedField) IsEncrypted() bool {
 func (s *EncryptedField) GetPlain() (string, error) {
 	decrypted, err := s.decrypt()
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	return decrypted, nil
 }
@@ -61,7 +61,7 @@ func (s *EncryptedField) GetPlain() (string, error) {
 func (s *EncryptedField) GetEncrypted() (string, error) {
 	encrypted, err := s.encrypt()
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	return encrypted, nil
 }
@@ -79,11 +79,11 @@ func (s *EncryptedField) Set(value string) {
 func (s *EncryptedField) Equal(enc *EncryptedField) (bool, error) {
 	v1, err := s.GetPlain()
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	v2, err := enc.GetPlain()
 	if err != nil {
-		return false, apperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	return v1 == v2, nil
 }
@@ -94,11 +94,11 @@ func (s *EncryptedField) encrypt() (string, error) {
 		return s.encrypted, nil
 	}
 	if config.Current.Secret == "" {
-		return "", apperrors.NewMissing("Encryption secret")
+		return "", hperrors.NewMissing("Encryption secret")
 	}
 	encrypted, err := cryptoutil.EncryptBase64(s.decrypted, defaultSaltLen, config.Current.Secret)
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	s.encrypted = encrypted
 	return encrypted, nil
@@ -110,11 +110,11 @@ func (s *EncryptedField) decrypt() (string, error) {
 		return s.decrypted, nil
 	}
 	if config.Current.Secret == "" {
-		return "", apperrors.NewMissing("Encryption secret")
+		return "", hperrors.NewMissing("Encryption secret")
 	}
 	decrypted, err := cryptoutil.DecryptBase64(s.encrypted, config.Current.Secret)
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	s.decrypted = decrypted
 	return decrypted, nil

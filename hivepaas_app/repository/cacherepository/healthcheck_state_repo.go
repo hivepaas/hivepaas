@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
 )
@@ -35,7 +35,7 @@ func (repo *healthcheckStateRepo) Get(
 ) (*cacheentity.HealthcheckState, error) {
 	resp, err := redishelper.HGet[*cacheentity.HealthcheckState](ctx, repo.client, healthCheckStateMapKey, id)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -45,7 +45,7 @@ func (repo *healthcheckStateRepo) GetAll(
 ) (map[string]*cacheentity.HealthcheckState, error) {
 	resp, err := redishelper.HGetAll[*cacheentity.HealthcheckState](ctx, repo.client, healthCheckStateMapKey)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -58,7 +58,7 @@ func (repo *healthcheckStateRepo) Set(
 ) error {
 	err := redishelper.HSet(ctx, repo.client, healthCheckStateMapKey, id, notifEvent, exp)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -69,7 +69,7 @@ func (repo *healthcheckStateRepo) Del(
 ) error {
 	err := redishelper.Del(ctx, repo.client, id)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

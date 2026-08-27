@@ -7,8 +7,8 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
 )
@@ -35,7 +35,7 @@ func (repo *mfaPasscodeRepo) Get(
 ) (*cacheentity.MFAPasscode, error) {
 	resp, err := redishelper.Get[*cacheentity.MFAPasscode](ctx, repo.client, repo.formatKey(userID))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -46,7 +46,7 @@ func (repo *mfaPasscodeRepo) TTL(
 ) (time.Duration, error) {
 	d, err := repo.client.TTL(ctx, repo.formatKey(userID)).Result()
 	if err != nil {
-		return 0, apperrors.Wrap(err)
+		return 0, hperrors.Wrap(err)
 	}
 	return d, nil
 }
@@ -59,7 +59,7 @@ func (repo *mfaPasscodeRepo) Set(
 ) error {
 	err := redishelper.Set(ctx, repo.client, repo.formatKey(userID), passcode, exp)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -73,7 +73,7 @@ func (repo *mfaPasscodeRepo) IncrAttempts(
 	// Only set value, not set expiration to keep the current expiration value
 	err := redishelper.Set(ctx, repo.client, repo.formatKey(userID), passcode, redis.KeepTTL)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -81,7 +81,7 @@ func (repo *mfaPasscodeRepo) IncrAttempts(
 func (repo *mfaPasscodeRepo) Del(ctx context.Context, userID string) error {
 	err := redishelper.Del(ctx, repo.client, repo.formatKey(userID))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -31,7 +31,7 @@ func (s *service) tryCreateDBLock(
 	try int,
 ) (*entity.Lock, error) {
 	if try >= maxTryLock {
-		return nil, apperrors.Wrap(apperrors.ErrActionFailed)
+		return nil, hperrors.Wrap(hperrors.ErrActionFailed)
 	}
 	if selectFor == "" {
 		selectFor = "UPDATE"
@@ -39,8 +39,8 @@ func (s *service) tryCreateDBLock(
 	lock, err := s.lockRepo.GetByID(ctx, db, id,
 		bunex.SelectFor(selectFor),
 	)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
 	}
 
 	if lock != nil {
@@ -51,7 +51,7 @@ func (s *service) tryCreateDBLock(
 	lock = &entity.Lock{ID: id}
 	err = s.lockRepo.Upsert(ctx, s.db, lock, entity.LockUpsertingConflictCols, entity.LockUpsertingUpdateCols)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	try++

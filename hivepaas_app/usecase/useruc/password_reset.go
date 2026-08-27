@@ -3,7 +3,7 @@ package useruc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -18,7 +18,7 @@ func (uc *UC) ResetPassword(
 ) (*userdto.ResetPasswordResp, error) {
 	tokenClaims, err := uc.userService.ParsePasswordResetToken(req.Token)
 	if err != nil {
-		return nil, apperrors.Wrap(apperrors.ErrTokenInvalid).WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrTokenInvalid).WithCause(err)
 	}
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
@@ -26,15 +26,15 @@ func (uc *UC) ResetPassword(
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if user.IsDemoUser() {
-			return apperrors.Wrap(apperrors.ErrUserDemoUnauthorized)
+			return hperrors.Wrap(hperrors.ErrUserDemoUnauthorized)
 		}
 
 		err = uc.userService.ChangePassword(user, req.Password, userservice.SkipCheckingCurrentPassword)
 		if err != nil {
-			return apperrors.Wrap(err).WithMsgLog("failed to change password")
+			return hperrors.Wrap(err).WithMsgLog("failed to change password")
 		}
 
 		user.UpdatedAt = timeutil.NowUTC()
@@ -42,13 +42,13 @@ func (uc *UC) ResetPassword(
 			bunex.UpdateColumns("updated_at", "password"),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &userdto.ResetPasswordResp{}, nil

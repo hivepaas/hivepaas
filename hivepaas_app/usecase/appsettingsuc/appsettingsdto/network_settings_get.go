@@ -6,10 +6,10 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type GetAppNetworkSettingsReq struct {
@@ -22,12 +22,12 @@ func NewGetAppNetworkSettingsReq() *GetAppNetworkSettingsReq {
 	return &GetAppNetworkSettingsReq{}
 }
 
-func (req *GetAppNetworkSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *GetAppNetworkSettingsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetAppNetworkSettingsResp struct {
@@ -89,7 +89,7 @@ func TransformNetworkSettings(
 
 	resp.NetworkAttachments, err = TransformNetworkAttachments(spec.TaskTemplate.Networks, input)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp.HostsFileEntries = TransformHostsFileEntries(spec.TaskTemplate.ContainerSpec.Hosts)
 	resp.DNSConfig = TransformDNSConfig(spec.TaskTemplate.ContainerSpec.DNSConfig)

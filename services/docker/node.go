@@ -8,7 +8,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type NodeState string
@@ -60,7 +60,7 @@ func (m *manager) NodeList(
 	}
 	resp, err := m.client.NodeList(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -87,8 +87,8 @@ func (m *manager) NodeListByIDs(
 
 	if len(nodeIDOrNames) == 1 {
 		inspect, err := m.NodeInspect(ctx, nodeIDOrNames[0])
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return nil, apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return nil, hperrors.Wrap(err)
 		}
 		if inspect != nil {
 			resp.Items = []swarm.Node{inspect.Node}
@@ -98,7 +98,7 @@ func (m *manager) NodeListByIDs(
 
 	listResp, err := m.NodeList(ctx, options...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	for i := range listResp.Items {
 		node := &listResp.Items[i]
@@ -124,7 +124,7 @@ func (m *manager) NodeInspect(
 	}
 	resp, err := m.client.NodeInspect(ctx, nodeID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -145,7 +145,7 @@ func (m *manager) NodeUpdate(
 	if version == nil {
 		resp, err := m.NodeInspect(ctx, nodeID)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		version = &resp.Node.Version
 	}
@@ -153,7 +153,7 @@ func (m *manager) NodeUpdate(
 
 	resp, err := m.client.NodeUpdate(ctx, nodeID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -177,7 +177,7 @@ func (m *manager) NodeRemove(
 	}
 	resp, err := m.client.NodeRemove(ctx, nodeID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -192,7 +192,7 @@ func (m *manager) NodeCurrentID(ctx context.Context) (string, error) {
 	}
 	resp, err := m.SystemInfo(ctx)
 	if err != nil {
-		return "", apperrors.Wrap(err)
+		return "", hperrors.Wrap(err)
 	}
 	currentNodeID = resp.Info.Swarm.NodeID
 	return currentNodeID, nil

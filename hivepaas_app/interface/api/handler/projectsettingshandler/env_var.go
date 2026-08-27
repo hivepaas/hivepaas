@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectsettingsuc/projectsettingsdto"
 )
 
@@ -18,8 +18,8 @@ import (
 // @Id      getProjectEnvVars
 // @Param   projectID path string true "project ID"
 // @Success 200 {object} projectsettingsdto.GetProjectEnvVarsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/env-vars [get]
 func (h *Handler) GetEnvVars(ctx *gin.Context) {
 	auth, projectID, err := h.GetAuth(ctx, base.ActionTypeRead, true)
@@ -53,8 +53,8 @@ func (h *Handler) GetEnvVars(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body projectsettingsdto.UpdateProjectEnvVarsReq true "request data"
 // @Success 200 {object} projectsettingsdto.UpdateProjectEnvVarsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/env-vars [put]
 func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 	auth, projectID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)
@@ -88,8 +88,8 @@ func (h *Handler) UpdateEnvVars(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body projectsettingsdto.ComputeProjectEnvVarsReq true "request data"
 // @Success 200 {object} projectsettingsdto.ComputeProjectEnvVarsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/env-vars/compute [post]
 func (h *Handler) BuildEnvVars(ctx *gin.Context) {
 	auth, projectID, err := h.GetAuth(ctx, base.ActionTypeWrite, true)

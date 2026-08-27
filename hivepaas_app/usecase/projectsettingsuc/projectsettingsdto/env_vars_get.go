@@ -3,9 +3,9 @@ package projectsettingsdto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type GetProjectEnvVarsReq struct {
@@ -16,10 +16,10 @@ func NewGetProjectEnvVarsReq() *GetProjectEnvVarsReq {
 	return &GetProjectEnvVarsReq{}
 }
 
-func (req *GetProjectEnvVarsReq) Validate() apperrors.ValidationErrors {
+func (req *GetProjectEnvVarsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetProjectEnvVarsResp struct {
@@ -45,7 +45,7 @@ func TransformEnvVars(setting *entity.Setting) (resp *EnvVarsResp, err error) {
 
 	envVars, err := setting.AsEnvVars()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if envVars != nil {
 		for _, v := range envVars.Data {

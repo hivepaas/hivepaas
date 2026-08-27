@@ -7,10 +7,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -30,7 +30,7 @@ func (uc *UC) UpdateAppRoutingSettings(
 		data = &updateAppRoutingSettingsData{}
 		err := uc.loadAppRoutingSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
@@ -38,17 +38,17 @@ func (uc *UC) UpdateAppRoutingSettings(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		err = uc.applyAppRoutingSettings(ctx, db, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp := &appsettingsdto.UpdateAppRoutingSettingsResp{
@@ -92,13 +92,13 @@ func (uc *UC) loadAppRoutingSettingsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.App = app
 	data.RoutingSetting = app.GetSettingByType(base.SettingTypeAppRouting)
 
 	if data.RoutingSetting != nil && data.RoutingSetting.UpdateVer != req.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
 	newRoutingSettings := req.ToEntity()
@@ -108,7 +108,7 @@ func (uc *UC) loadAppRoutingSettingsForUpdate(
 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, app.GetObjectScope(),
 		true, newRoutingSettings.GetRefObjectIDs())
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Active domains of the app need to validate
@@ -117,13 +117,13 @@ func (uc *UC) loadAppRoutingSettingsForUpdate(
 	// Verify domains are allowed in project
 	err = uc.domainService.VerifyProjectDomains(ctx, db, app.ProjectID, activeDomains)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Make sure all domains used by the app are not hold by any other app
 	err = uc.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{app.ID})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Detect some changes
@@ -184,7 +184,7 @@ func (uc *UC) applyAppRoutingSettings(
 ) error {
 	routingSettings, err := data.RoutingSetting.AsAppRoutingSettings()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	_, err = uc.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
@@ -193,7 +193,7 @@ func (uc *UC) applyAppRoutingSettings(
 		RefObjects:      data.RefObjects,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -219,7 +219,7 @@ func (uc *UC) applyAppEnvVars(
 		bunex.SelectWhere("app.project_env_id = ?", data.App.ProjectEnvID),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	projectEnv := data.App.ProjectEnv
@@ -229,7 +229,7 @@ func (uc *UC) applyAppEnvVars(
 	affectingAppEnvData, err := uc.envVarService.BuildEnvVarsForAllAppsInScope(ctx, db,
 		projectEnv.GetObjectScope(), false, nil, transaction, concurrency)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Apply the changes of env vars to the related apps
@@ -243,5 +243,5 @@ func (uc *UC) applyAppEnvVars(
 		warning += fmt.Sprintf("\nApp '%v': %v", affectingAppEnvData[i].App.Name, e.Error())
 	}
 
-	return apperrors.Wrap(apperrors.ErrActionFailed).WithExtraDetail("%s", warning)
+	return hperrors.Wrap(hperrors.ErrActionFailed).WithExtraDetail("%s", warning)
 }

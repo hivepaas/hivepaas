@@ -9,9 +9,9 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
@@ -34,8 +34,8 @@ func (s *service) GetOrCreateProjectNetwork(
 ) (*entity.Setting, *network.Inspect, error) {
 	netName := s.GetProjectNetworkName(project, env)
 	inspect, err := s.dockerManager.NetworkInspect(ctx, netName)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	if inspect == nil { // not found, create one
@@ -49,20 +49,20 @@ func (s *service) GetOrCreateProjectNetwork(
 				}
 			})
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		// Inspect again
 		inspect, err = s.dockerManager.NetworkInspect(ctx, netName)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 	}
 
 	setting, err := s.settingRepo.GetByName(ctx, db, project.GetObjectScope(),
 		base.SettingTypeClusterNetwork, netName, true,
 	)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, nil, hperrors.Wrap(err)
 	}
 	hasChange := false
 	if setting == nil {
@@ -92,14 +92,14 @@ func (s *service) GetOrCreateProjectNetwork(
 		RefID: inspect.Network.ID,
 	}
 	if err = setting.SetData(netEntity); err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	if hasChange {
 		err = s.settingRepo.Upsert(ctx, db, setting,
 			entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -116,7 +116,7 @@ func (s *service) ListProjectEnvNetworks(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 	if len(settings) == 0 {
 		return nil, nil, nil
@@ -129,7 +129,7 @@ func (s *service) ListProjectEnvNetworks(
 
 	netList, err := s.dockerManager.NetworkListByIDs(ctx, netIDs)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	networks = make(map[string]*network.Summary, len(settings))
@@ -152,7 +152,7 @@ func (s *service) RemoveAllProjectEnvNetworks(
 ) error {
 	settings, networks, err := s.ListProjectEnvNetworks(ctx, db, projectEnv)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, setting := range settings {
@@ -164,12 +164,12 @@ func (s *service) RemoveAllProjectEnvNetworks(
 			continue
 		}
 		_, e := s.dockerManager.NetworkRemove(ctx, net.ID)
-		if e != nil && !errors.Is(e, apperrors.ErrNotFound) {
+		if e != nil && !errors.Is(e, hperrors.ErrNotFound) {
 			err = errors.Join(err, e)
 		}
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

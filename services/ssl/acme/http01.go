@@ -4,13 +4,13 @@ import (
 	"github.com/go-acme/lego/v5/challenge"
 	"github.com/go-acme/lego/v5/providers/http/webroot"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func NewHTTP01Provider(webrootDir string) (provider challenge.Provider, err error) {
 	http01Provider, err := webroot.NewHTTPProvider(webrootDir)
 	if err != nil {
-		return nil, apperrors.Wrap(err).WithMsgLog("failed to create http-01 provider for webroot")
+		return nil, hperrors.Wrap(err).WithMsgLog("failed to create http-01 provider for webroot")
 	}
 	return http01Provider, nil
 }

@@ -8,10 +8,10 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
@@ -37,13 +37,13 @@ func (uc *UC) CreateProject(
 	projectData := &createProjectData{}
 	err = uc.loadProjectData(ctx, uc.db, auth, req, projectData)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	persistingData := &persistingProjectData{}
 	err = uc.preparePersistingProject(ctx, req, projectData, persistingData)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	defer func() {
@@ -55,12 +55,12 @@ func (uc *UC) CreateProject(
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &projectdto.CreateProjectResp{
@@ -83,26 +83,26 @@ func (uc *UC) loadProjectData(
 ) error {
 	data.ProjectKey = projecthelper.CalcProjectKey(req.Name)
 	if gofn.Contain(base.UnallowedProjectKeys, data.ProjectKey) {
-		return apperrors.Wrap(apperrors.ErrProjectNameNotAllowed).WithParam("Name", req.Name)
+		return hperrors.Wrap(hperrors.ErrProjectNameNotAllowed).WithParam("Name", req.Name)
 	}
 
 	// Project key must be unique
 	conflictProject, err := uc.projectRepo.GetByKey(ctx, db, data.ProjectKey, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if conflictProject != nil {
-		return apperrors.NewAlreadyExist("Project").
+		return hperrors.NewAlreadyExist("Project").
 			WithMsgLog("project key '%s' already exists", data.ProjectKey)
 	}
 
 	// Project name must be unique
 	conflictProject, err = uc.projectRepo.GetByName(ctx, db, req.Name, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if conflictProject != nil {
-		return apperrors.NewAlreadyExist("Project").
+		return hperrors.NewAlreadyExist("Project").
 			WithMsgLog("project name '%s' already exists", req.Name)
 	}
 
@@ -110,7 +110,7 @@ func (uc *UC) loadProjectData(
 	if req.Owner.ID != "" {
 		_, err = uc.userService.LoadUser(ctx, db, req.Owner.ID, true)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	} else {
 		req.Owner.ID = auth.User.ID
@@ -140,7 +140,7 @@ func (uc *UC) preparePersistingProject(
 	uc.preparePersistingProjectNotificationDefault(project, timeNow, persistingData)
 	err = uc.preparePersistingProjectDefaultVolume(ctx, project, data, persistingData)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -257,7 +257,7 @@ func (uc *UC) preparePersistingProjectDefaultVolume(
 ) error {
 	setting, createRes, err := uc.volumeService.CreateProjectDefaultVolume(ctx, project)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.CreatedVolume = createRes
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)

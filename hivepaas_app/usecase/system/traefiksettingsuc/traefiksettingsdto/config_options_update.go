@@ -5,9 +5,9 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/traefik/traefikhelper"
 )
 
@@ -76,10 +76,10 @@ func (req *UpdateConfigOptionsReq) ModifyRequest() error {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateConfigOptionsReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateConfigOptionsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.StartupCommand.validate("startupCommand")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type UpdateConfigOptionsResp struct {

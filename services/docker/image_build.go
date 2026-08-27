@@ -6,7 +6,7 @@ import (
 
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ImageBuildOption func(options *client.ImageBuildOptions)
@@ -22,7 +22,7 @@ func (m *manager) ImageBuild(
 	}
 	resp, err := m.client.ImageBuild(ctx, buildContext, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -40,7 +40,7 @@ func (m *manager) ImageBuildCancel(
 	}
 	resp, err := m.client.BuildCancel(ctx, buildID, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }
@@ -57,7 +57,7 @@ func (m *manager) BuildCachePrune(
 	}
 	resp, err := m.client.BuildCachePrune(ctx, opts)
 	if err != nil {
-		return nil, apperrors.NewInfra(err)
+		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
 }

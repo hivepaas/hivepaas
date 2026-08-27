@@ -9,8 +9,8 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -29,7 +29,7 @@ func (s *service) CreateSecretsForApp(
 		}
 		ref, err := s.createSwarmSecret(ctx, db, app, secret)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		refs = append(refs, ref)
 	}
@@ -47,7 +47,7 @@ func (s *service) CreateSecretForApp(
 	}
 	refs, err := s.CreateSecretsForApp(ctx, db, app, []*entity.Secret{secret})
 	ref, _ := gofn.First(refs)
-	return ref, apperrors.Wrap(err)
+	return ref, hperrors.Wrap(err)
 }
 
 func (s *service) createSwarmSecret(
@@ -71,7 +71,7 @@ func (s *service) createSwarmSecret(
 	secretName := app.GlobalKey + "_" + strings.ToLower(secret.Key)
 	secretBytes, err := secret.ValueAsBytes()
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	secretResp, err := s.dockerManager.SecretCreate(ctx, secretName, secretBytes,
@@ -81,13 +81,13 @@ func (s *service) createSwarmSecret(
 			}
 		})
 	if err != nil {
-		if errors.Is(err, apperrors.ErrInfraConflict) || errors.Is(err, apperrors.ErrInfraAlreadyExists) {
+		if errors.Is(err, hperrors.ErrInfraConflict) || errors.Is(err, hperrors.ErrInfraAlreadyExists) {
 			// Delete the orphan secret, then retry this action
 			if err := s.deleteOrphanSwarmSecret(ctx, db, app, secretName); err == nil {
 				return s.createSwarmSecret(ctx, db, app, secret)
 			}
 		}
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	swarmRef.SecretID = secretResp.ID
 	swarmRef.SecretName = secretName
@@ -132,7 +132,7 @@ func (s *service) addSwarmSecretsToService(
 			return true, nil
 		}, itemRemovalRetryMax, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// If this app is parent of some other apps
@@ -141,12 +141,12 @@ func (s *service) addSwarmSecretsToService(
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
 			err = s.addSwarmSecretsToService(ctx, db, childApp, refs...)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 	}

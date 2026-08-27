@@ -6,7 +6,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
 )
@@ -46,7 +46,7 @@ func (repo *periodicSettingsRepo) GetDueJobIDs(
 		Count:  limit,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return members, nil
 }
@@ -61,7 +61,7 @@ func (repo *periodicSettingsRepo) ScheduleJob(
 		Member: jobID,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -72,7 +72,7 @@ func (repo *periodicSettingsRepo) RemoveJob(
 ) error {
 	err := redishelper.ZRem(ctx, repo.client, periodicScheduleKey, jobID)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -82,7 +82,7 @@ func (repo *periodicSettingsRepo) ResetSchedule(
 ) error {
 	err := redishelper.Del(ctx, repo.client, periodicScheduleKey)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

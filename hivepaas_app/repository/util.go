@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
 
@@ -18,7 +18,7 @@ func newPagingMeta(paging *basedto.Paging) *basedto.PagingMeta {
 
 func wrapPaginationError(err error, paging *basedto.Paging) error {
 	if paging != nil && len(paging.Sort) > 0 && bunex.IsErrorColumnNotExist(err) {
-		return apperrors.NewArgumentInvalidNT("sort").WithCause(err)
+		return hperrors.NewArgumentInvalidNT("sort").WithCause(err)
 	}
-	return apperrors.Wrap(err)
+	return hperrors.Wrap(err)
 }

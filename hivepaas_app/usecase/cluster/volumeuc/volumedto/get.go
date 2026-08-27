@@ -10,9 +10,9 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -28,10 +28,10 @@ func NewGetVolumeReq() *GetVolumeReq {
 	return &GetVolumeReq{}
 }
 
-func (req *GetVolumeReq) Validate() apperrors.ValidationErrors {
+func (req *GetVolumeReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.GetSettingReq.Validate()...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type GetVolumeResp struct {
@@ -91,12 +91,12 @@ func TransformVolume(
 ) (resp *VolumeResp, err error) {
 	volEnt := setting.MustAsClusterVolume()
 	if err = copier.Copy(&resp, volEnt); err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	vol := refClusterObjects.RefVolumes[volEnt.RefID]

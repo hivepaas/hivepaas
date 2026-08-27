@@ -1,8 +1,8 @@
 package builddto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ClearBuildCacheReq struct {
@@ -12,7 +12,7 @@ func NewClearBuildCacheReq() *ClearBuildCacheReq {
 	return &ClearBuildCacheReq{}
 }
 
-func (req *ClearBuildCacheReq) Validate() apperrors.ValidationErrors {
+func (req *ClearBuildCacheReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

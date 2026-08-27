@@ -3,10 +3,10 @@ package projectsettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectsettingsuc/projectsettingsdto"
@@ -21,7 +21,7 @@ func (uc *UC) ComputeProjectEnvVars(
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	envVars := make([]*envvarservice.EnvVar, 0, 30) //nolint:mnd
@@ -48,7 +48,7 @@ func (uc *UC) ComputeProjectEnvVars(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	respEnvs := make([]*basedto.EnvVarResp, 0, len(computedVars.EnvVars))

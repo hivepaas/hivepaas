@@ -3,7 +3,7 @@ package appdeploymentserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/repocheckoutservice"
 )
 
@@ -30,7 +30,7 @@ func (s *service) repoDeployStepSourceCheckout(
 
 	checkoutResp, err := s.repoCheckoutService.Checkout(ctx, checkoutReq)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	repoSource.CommitHash = checkoutResp.CommitHash

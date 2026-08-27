@@ -3,10 +3,10 @@ package appfeaturesettingsuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -29,16 +29,16 @@ func (uc *UC) UpdateAppFeatureSettings(
 		) error {
 			featureSettings := req.ToEntity()
 			if err := uc.validateAppsToClone(ctx, db, req.Scope, featureSettings); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			if err := pData.Setting.SetData(featureSettings); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &appfeaturesettingsdto.UpdateAppFeatureSettingsResp{}, nil
@@ -61,7 +61,7 @@ func (uc *UC) validateAppsToClone(
 	currApp := scope.App
 	for _, appToValidate := range appsToValidate {
 		if appToValidate == currApp.ID {
-			return apperrors.Wrap(apperrors.ErrAppIsCurrent)
+			return hperrors.Wrap(hperrors.ErrAppIsCurrent)
 		}
 	}
 
@@ -79,16 +79,16 @@ func (uc *UC) validateAppsToClone(
 		),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, app := range apps {
 		if app.ProjectEnvID != currApp.ProjectEnvID {
-			return apperrors.Wrap(apperrors.ErrAppsNotInSameProjectEnv).WithMsgLog("app '%v'", app.ProjectEnvID)
+			return hperrors.Wrap(hperrors.ErrAppsNotInSameProjectEnv).WithMsgLog("app '%v'", app.ProjectEnvID)
 		}
 		cloneSettings := app.GetSettingByType(base.SettingTypeAppClone)
 		if cloneSettings == nil {
-			return apperrors.Wrap(apperrors.ErrAppCloneSettingsRequired).WithParam("Name", app.Name)
+			return hperrors.Wrap(hperrors.ErrAppCloneSettingsRequired).WithParam("Name", app.Name)
 		}
 	}
 

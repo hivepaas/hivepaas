@@ -9,10 +9,10 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -31,14 +31,14 @@ func (s *service) CreateProjectDefaultVolume(
 ) (_ *entity.Setting, _ *client.VolumeCreateResult, err error) {
 	storagePathInHost := config.Current.Storage.BindSource
 	if storagePathInHost == "" {
-		return nil, nil, apperrors.Wrap(apperrors.ErrUnconfigured).
+		return nil, nil, hperrors.Wrap(hperrors.ErrUnconfigured).
 			WithParam("Name", "HP_STORAGE_BIND_SOURCE")
 	}
 
 	subpath := filepath.Join("project_data", project.Key)
 	err = s.MakeSubDirInHost(ctx, storagePathInHost, subpath, true)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	driver := docker.VolumeDriverLocal
@@ -56,7 +56,7 @@ func (s *service) CreateProjectDefaultVolume(
 		opts.Name = project.Key + "_default"
 	})
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	timeNow := timeutil.NowUTC()
@@ -96,7 +96,7 @@ func (s *service) ListProjectVolumes(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 	if len(settings) == 0 {
 		return nil, nil, nil
@@ -109,7 +109,7 @@ func (s *service) ListProjectVolumes(
 
 	volList, err := s.dockerManager.VolumeListByIDs(ctx, volIDs)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 
 	volumes = make(map[string]*volume.Volume, len(settings))
@@ -133,7 +133,7 @@ func (s *service) RemoveAllProjectVolumes(
 ) error {
 	settings, volumes, err := s.ListProjectVolumes(ctx, db, project)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, setting := range settings {
@@ -149,12 +149,12 @@ func (s *service) RemoveAllProjectVolumes(
 		// remove the directory manually.
 
 		_, e := s.dockerManager.VolumeRemove(ctx, dockerhelper.GetVolumeID(vol), force)
-		if e != nil && !errors.Is(e, apperrors.ErrNotFound) {
+		if e != nil && !errors.Is(e, hperrors.ErrNotFound) {
 			err = errors.Join(err, e)
 		}
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

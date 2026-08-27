@@ -11,9 +11,9 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -46,7 +46,7 @@ func (s *service) runCommands(
 
 	app := data.App
 	if app.ServiceID == "" {
-		return apperrors.Wrap(apperrors.ErrActionNotAllowed).
+		return hperrors.Wrap(hperrors.ErrActionNotAllowed).
 			WithMsgLog("parent app [%s] container is not running to execute preview commands", app.Name)
 	}
 
@@ -56,7 +56,7 @@ func (s *service) runCommands(
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if len(cmdSettings) == 0 {
 		return nil
@@ -67,7 +67,7 @@ func (s *service) runCommands(
 	// Ensure ref objects for command templates (e.g. referenced script files) are loaded
 	err = s.settingService.LoadRefObjects(ctx, db, &data.RefObjects, app.GetObjectScope(), true, cmdSettings...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, cmdObj := range cmdObjectIDs {
@@ -81,7 +81,7 @@ func (s *service) runCommands(
 
 		err = s.runSingleCommand(ctx, db, cmdSetting, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -98,12 +98,12 @@ func (s *service) runSingleCommand(
 
 	cmd, err := s.calcCommand(ctx, cmdTemplate, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	env, err := s.calcCommandEnv(ctx, db, cmdTemplate, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
@@ -129,7 +129,7 @@ func (s *service) runSingleCommand(
 		},
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
@@ -148,7 +148,7 @@ func (s *service) calcCommand(
 	if command == nil || (command.Command == "" && !command.Script.IsValid()) {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame(
 			"Execution command/script is empty, aborted", tasklog.TsNow))
-		return nil, apperrors.Wrap(apperrors.ErrInternal).WithMsgLog("preview command/script is empty")
+		return nil, hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("preview command/script is empty")
 	}
 
 	if command.Script.IsValid() {
@@ -156,7 +156,7 @@ func (s *service) calcCommand(
 		if script == "" && command.Script.ID != "" {
 			scriptSetting := data.RefObjects.RefSettings[command.Script.ID]
 			if scriptSetting == nil {
-				return nil, apperrors.NewNotFound("Script object")
+				return nil, hperrors.NewNotFound("Script object")
 			}
 			script = scriptSetting.MustAsScript().Data
 		}
@@ -182,7 +182,7 @@ func (s *service) calcCommand(
 	} else {
 		cmd, err = executil.CmdSplit(command.Command)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	return cmd, nil
@@ -200,7 +200,7 @@ func (s *service) calcCommandEnv(
 		RefObjects: data.RefObjects,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	env = make([]string, 0, len(resp.EnvVars)+10) //nolint:mnd
@@ -230,7 +230,7 @@ func (s *service) calcCommandEnv(
 			for secret := range envVar.RefSecrets {
 				plainSecret, err := secret.Value.GetPlain()
 				if err != nil {
-					return nil, apperrors.Wrap(err)
+					return nil, hperrors.Wrap(err)
 				}
 				secrets[plainSecret] = struct{}{}
 			}

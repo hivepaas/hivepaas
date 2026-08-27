@@ -6,9 +6,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
@@ -60,7 +60,7 @@ func (s *service) BuildEnvVarsForAllAppsInScope(
 		// Do nothing
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	var errors []string
@@ -68,7 +68,7 @@ func (s *service) BuildEnvVarsForAllAppsInScope(
 		errors = append(errors, appData.Errors()...)
 	}
 	if len(errors) > 0 {
-		return nil, apperrors.Wrap(apperrors.ErrValidation).WithDisplayLevelHigh().
+		return nil, hperrors.Wrap(hperrors.ErrValidation).WithDisplayLevelHigh().
 			WithExtraDetail("%s", strings.Join(errors, "\n"))
 	}
 
@@ -85,7 +85,7 @@ func (s *service) BuildEnvVarsForAllAppsInProject(
 ) (result []*envvarservice.AppEnvVarData, err error) {
 	projectData, err := s.BuildEnvVarsInProject(ctx, db, req)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	for _, env := range req.Project.ProjectEnvs {
@@ -101,7 +101,7 @@ func (s *service) BuildEnvVarsForAllAppsInProject(
 		execFunc := func(ctx context.Context, db database.IDB) error {
 			resp, err := s.BuildEnvVarsForAllAppsInProjectEnv(ctx, db, envReq, onlyApps, transaction, concurrency)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			result = append(result, resp...)
 			return nil
@@ -115,7 +115,7 @@ func (s *service) BuildEnvVarsForAllAppsInProject(
 			err = execFunc(ctx, db)
 		}
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	return result, nil
@@ -131,7 +131,7 @@ func (s *service) BuildEnvVarsForAllAppsInProjectEnv(
 ) (result []*envvarservice.AppEnvVarData, err error) {
 	projectEnvData, err := s.BuildEnvVarsInProjectEnv(ctx, db, req)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	for _, app := range req.ProjectEnv.Apps {
@@ -155,7 +155,7 @@ func (s *service) BuildEnvVarsForAllAppsInProjectEnv(
 		execFunc := func(ctx context.Context, db database.IDB) error {
 			resp, err := s.BuildEnvVarsForAllAppsInApp(ctx, db, appReq, onlyApps, transaction, concurrency)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			result = append(result, resp...)
 			return nil
@@ -169,7 +169,7 @@ func (s *service) BuildEnvVarsForAllAppsInProjectEnv(
 			err = execFunc(ctx, db)
 		}
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	return result, nil
@@ -185,7 +185,7 @@ func (s *service) BuildEnvVarsForAllAppsInApp(
 ) (result []*envvarservice.AppEnvVarData, err error) {
 	appData, err := s.BuildEnvVarsInApp(ctx, db, req)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	app := req.App
@@ -216,7 +216,7 @@ func (s *service) BuildEnvVarsForAllAppsInApp(
 		execFunc := func(ctx context.Context, db database.IDB) error {
 			resp, err := s.BuildEnvVarsInApp(ctx, db, childAppReq)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			result = append(result, &envvarservice.AppEnvVarData{
 				App:     childApp,
@@ -234,7 +234,7 @@ func (s *service) BuildEnvVarsForAllAppsInApp(
 			err = execFunc(ctx, db)
 		}
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 	return result, nil

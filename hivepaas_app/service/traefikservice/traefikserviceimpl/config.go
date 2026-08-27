@@ -3,8 +3,8 @@ package traefikserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (s *service) ReloadTraefikConfig(ctx context.Context, restartServiceOnFailure bool) error {
@@ -15,11 +15,11 @@ func (s *service) ReloadTraefikConfig(ctx context.Context, restartServiceOnFailu
 		return nil
 	}
 	if !restartServiceOnFailure {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	err = s.RestartTraefikSwarmService(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -27,12 +27,12 @@ func (s *service) ReloadTraefikConfig(ctx context.Context, restartServiceOnFailu
 func (s *service) reloadTraefikConfig(ctx context.Context) error {
 	service, err := s.dockerManager.ServiceGetByName(ctx, base.HivepaasTraefikServiceName, false)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	resp, err := s.dockerManager.ServiceContainerList(ctx, service.ID)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	containers := resp.Items
@@ -41,12 +41,12 @@ func (s *service) reloadTraefikConfig(ctx context.Context) error {
 		containerIDs = append(containerIDs, containers[i].ID)
 	}
 	if len(containerIDs) == 0 {
-		return apperrors.NewNotFound("Traefik service")
+		return hperrors.NewNotFound("Traefik service")
 	}
 
 	errMap := s.dockerManager.ContainerKillMulti(ctx, containerIDs, "SIGHUP")
 	for _, err := range errMap {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

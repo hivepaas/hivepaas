@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/gittool"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
@@ -39,13 +39,13 @@ func (s *service) Checkout(
 
 	defer func() {
 		if r := recover(); r != nil {
-			err = errors.Join(err, apperrors.NewPanic(r))
+			err = errors.Join(err, hperrors.NewPanic(r))
 		}
 	}()
 
 	err = s.doCheckout(ctx, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return resp, err
@@ -59,14 +59,14 @@ func (s *service) doCheckout(
 
 	err = s.checkoutPrepare(data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// NOTE: currently supports repo of git type only
 	if repoSource.RepoType != base.RepoTypeGit {
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to checkout source: "+
 			"unsupported repository type: "+string(repoSource.RepoType), tasklog.TsNow))
-		return apperrors.Wrap(apperrors.ErrRepoTypeUnsupported).WithParam("Type", repoSource.RepoType)
+		return hperrors.Wrap(hperrors.ErrRepoTypeUnsupported).WithParam("Type", repoSource.RepoType)
 	}
 
 	s.addStepStartLog(ctx, data, "Start cloning Git repository...")
@@ -74,12 +74,12 @@ func (s *service) doCheckout(
 
 	err = s.loadRepoCache(ctx, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	checkoutOptions := &gittool.CheckoutOptions{
@@ -106,7 +106,7 @@ func (s *service) doCheckout(
 		}
 		if checkoutOptions.CacheLoaded {
 			if err := s.resetCheckoutDir(data); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("Failed to checkout repository with error: "+
 				err.Error()+". Try to do a fresh clone (not using cache)...", tasklog.TsNow))
@@ -116,7 +116,7 @@ func (s *service) doCheckout(
 		}
 		_ = data.LogStore.Add(ctx, tasklog.NewErrFrame("Failed to checkout repository with error: "+
 			err.Error(), tasklog.TsNow))
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	data.CheckoutDuration = time.Since(checkoutStart)
@@ -127,7 +127,7 @@ func (s *service) doCheckout(
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Cache the latest repo source if satisfied our condition
@@ -139,7 +139,7 @@ func (s *service) doCheckout(
 
 	// Check if the context was canceled
 	if err := ctx.Err(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Remove .git dir within the source dir before building image
@@ -168,7 +168,7 @@ func (s *service) checkoutPrepare(
 	}
 	err = os.MkdirAll(data.CheckoutDir, base.DirModeDefault)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

@@ -3,8 +3,8 @@ package sessiondto
 import (
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -21,11 +21,11 @@ func NewLoginWithAPIKeyReq() *LoginWithAPIKeyReq {
 	return &LoginWithAPIKeyReq{}
 }
 
-func (req *LoginWithAPIKeyReq) Validate() apperrors.ValidationErrors {
+func (req *LoginWithAPIKeyReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.KeyID, true, minKeyLen, maxKeyLen, "keyId")...)
 	validators = append(validators, basedto.ValidateStr(&req.SecretKey, true, minKeyLen, maxKeyLen, "secretKey")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type LoginWithAPIKeyResp struct {

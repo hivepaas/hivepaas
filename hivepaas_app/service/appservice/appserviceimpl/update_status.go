@@ -6,9 +6,9 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
@@ -34,11 +34,11 @@ func (s *service) SetAppStatus(
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
 			if err := s.SetAppStatus(ctx, db, childApp, status, recursive); err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 	}
@@ -52,18 +52,18 @@ func (s *service) SetAppStatus(
 
 	if app.Status == base.AppStatusDisabled {
 		if err := s.stopApp(ctx, app, nil); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	if app.Status == base.AppStatusActive {
 		if err := s.startApp(ctx, app, nil); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
 	err := s.appRepo.Update(ctx, db, app, bunex.UpdateColumns("status", "updated_at", "update_ver"))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -74,12 +74,12 @@ func (s *service) SetAppRunning(ctx context.Context, app *entity.App, running bo
 	}
 	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	service := &inspect.Service
 
 	if service.Spec.Mode.Replicated == nil {
-		return apperrors.Wrap(apperrors.ErrServiceModeReplicatedRequired)
+		return hperrors.Wrap(hperrors.ErrServiceModeReplicatedRequired)
 	}
 
 	if running {
@@ -103,7 +103,7 @@ func (s *service) stopApp(ctx context.Context, app *entity.App, service *swarm.S
 
 			prevSvcMode, err := json.Marshal(service.Spec.Mode)
 			if err != nil {
-				return false, apperrors.Wrap(err)
+				return false, hperrors.Wrap(err)
 			}
 			if service.Spec.Labels == nil {
 				service.Spec.Labels = make(map[string]string)
@@ -119,7 +119,7 @@ func (s *service) stopApp(ctx context.Context, app *entity.App, service *swarm.S
 			return true, nil
 		}, serviceStatusUpdateRetryMax, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -136,7 +136,7 @@ func (s *service) startApp(ctx context.Context, app *entity.App, service *swarm.
 				mode := swarm.ServiceMode{}
 				err := json.Unmarshal(reflectutil.UnsafeStrToBytes(prevSvcModeStr), &mode)
 				if err != nil {
-					return false, apperrors.Wrap(err)
+					return false, hperrors.Wrap(err)
 				}
 				service.Spec.Mode = mode
 				delete(service.Spec.Labels, labelHivePaaSAppPrevServiceMode)
@@ -150,7 +150,7 @@ func (s *service) startApp(ctx context.Context, app *entity.App, service *swarm.
 			return true, nil
 		}, serviceStatusUpdateRetryMax, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

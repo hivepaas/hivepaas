@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
 )
@@ -19,8 +19,8 @@ import (
 // @Produce json
 // @Id      getSettingImageBuildSettings
 // @Success 200 {object} imagebuildsettingsdto.GetImageBuildSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/image-build-settings [get]
 func (h *Handler) GetImageBuildSettings(ctx *gin.Context) {
 	h.GetUniqueSetting(ctx, base.ResourceTypeImageBuild, base.ObjectScopeGlobal)
@@ -34,8 +34,8 @@ func (h *Handler) GetImageBuildSettings(ctx *gin.Context) {
 // @Id      updateSettingImageBuildSettings
 // @Param   body body imagebuildsettingsdto.UpdateImageBuildSettingsReq true "request data"
 // @Success 200 {object} imagebuildsettingsdto.UpdateImageBuildSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/image-build-settings [put]
 func (h *Handler) UpdateImageBuildSettings(ctx *gin.Context) {
 	h.UpdateUniqueSetting(ctx, base.ResourceTypeImageBuild, base.ObjectScopeGlobal)
@@ -49,8 +49,8 @@ func (h *Handler) UpdateImageBuildSettings(ctx *gin.Context) {
 // @Id      updateSettingImageBuildSettingsStatus
 // @Param   body body imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq true "request data"
 // @Success 200 {object} imagebuildsettingsdto.UpdateImageBuildSettingsStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/image-build-settings/status [put]
 func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
 	h.UpdateUniqueSettingStatus(ctx, base.ResourceTypeImageBuild, base.ObjectScopeGlobal)
@@ -63,8 +63,8 @@ func (h *Handler) UpdateImageBuildSettingsStatus(ctx *gin.Context) {
 // @Produce json
 // @Id      deleteSettingImageBuildSettings
 // @Success 200 {object} imagebuildsettingsdto.DeleteImageBuildSettingsResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/image-build-settings [delete]
 func (h *Handler) DeleteImageBuildSettings(ctx *gin.Context) {
 	h.DeleteUniqueSetting(ctx, base.ResourceTypeImageBuild, base.ObjectScopeGlobal)
@@ -77,8 +77,8 @@ func (h *Handler) DeleteImageBuildSettings(ctx *gin.Context) {
 // @Produce json
 // @Id      getSettingRepoCacheInfo
 // @Success 200 {object} imagebuildsettingsdto.GetRepoCacheInfoResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/image-build-settings/repo-cache [get]
 func (h *Handler) GetRepoCacheInfo(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{
@@ -114,8 +114,8 @@ func (h *Handler) GetRepoCacheInfo(ctx *gin.Context) {
 // @Id      clearSettingRepoCache
 // @Param   body body imagebuildsettingsdto.ClearRepoCacheReq true "request data"
 // @Success 200 {object} imagebuildsettingsdto.ClearRepoCacheResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/image-build-settings/repo-cache/clear [post]
 func (h *Handler) ClearRepoCache(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, &permission.ModuleAccessCheck{

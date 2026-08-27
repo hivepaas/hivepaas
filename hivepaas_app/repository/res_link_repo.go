@@ -7,10 +7,10 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -58,10 +58,10 @@ func (repo *resLinkRepo) Get(ctx context.Context, db database.IDB, srcType base.
 
 	err := query.Scan(ctx)
 	if resLink == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("ResLink").WithCause(err)
+		return nil, hperrors.NewNotFound("ResLink").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resLink, nil
 }
@@ -79,7 +79,7 @@ func (repo *resLinkRepo) List(ctx context.Context, db database.IDB, paging *base
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -109,7 +109,7 @@ func (repo *resLinkRepo) InsertMulti(ctx context.Context, db database.IDB, resLi
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -130,7 +130,7 @@ func (repo *resLinkRepo) UpsertMulti(ctx context.Context, db database.IDB, resLi
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -147,7 +147,7 @@ func (repo *resLinkRepo) DeleteAllBySourceIDs(ctx context.Context, db database.I
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -155,14 +155,14 @@ func (repo *resLinkRepo) DeleteAllBySourceIDs(ctx context.Context, db database.I
 func (repo *resLinkRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
-		return apperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
 	}
 	query := db.NewDelete().Model((*entity.ResLink)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

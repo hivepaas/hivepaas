@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
@@ -17,13 +17,13 @@ func ContainerCopyTo(
 ) error {
 	firstReq, err := stream.Recv()
 	if err != nil {
-		return apperrors.ToGRPCError(apperrors.Wrap(err)) //nolint:wrapcheck
+		return hperrors.ToGRPCError(hperrors.Wrap(err)) //nolint:wrapcheck
 	}
 
 	metadata := firstReq.GetMetadata()
 	if metadata == nil {
 		//nolint:wrapcheck
-		return apperrors.ToGRPCError(apperrors.NewArgumentInvalid("metadata").
+		return hperrors.ToGRPCError(hperrors.NewArgumentInvalid("metadata").
 			WithMsgLog("first message must contain metadata"))
 	}
 
@@ -62,7 +62,7 @@ func ContainerCopyTo(
 	)
 	if uploadErr != nil {
 		_ = pr.Close()
-		return apperrors.ToGRPCError(uploadErr) //nolint:wrapcheck
+		return hperrors.ToGRPCError(uploadErr) //nolint:wrapcheck
 	}
 
 	return stream.SendAndClose(&agentproto.ContainerCopyToResp{ //nolint:wrapcheck

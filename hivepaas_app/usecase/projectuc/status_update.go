@@ -3,8 +3,8 @@ package projectuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -21,7 +21,7 @@ func (uc *UC) UpdateProjectStatus(
 		projectData := &updateProjectData{}
 		err := uc.loadProjectDataForUpdateStatus(ctx, db, req, projectData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if !projectData.HasChanges {
 			return nil
@@ -37,19 +37,19 @@ func (uc *UC) UpdateProjectStatus(
 			err = uc.projectService.ExecuteEnvInTx(ctx, env, true, func(db database.Tx) error {
 				err := uc.projectService.SetProjectEnvStatus(ctx, db, env, project.Status, true)
 				if err != nil {
-					return apperrors.Wrap(err)
+					return hperrors.Wrap(err)
 				}
 				return nil
 			})
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 		}
 
 		return uc.persistData(ctx, db, persistingData)
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &projectdto.UpdateProjectStatusResp{}, nil
@@ -66,10 +66,10 @@ func (uc *UC) loadProjectDataForUpdateStatus(
 		bunex.SelectRelation("ProjectEnvs.Apps"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if project.UpdateVer != req.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 	data.Project = project
 	data.HasChanges = project.Status != req.Status

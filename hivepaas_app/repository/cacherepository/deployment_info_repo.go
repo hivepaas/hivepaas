@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
 )
@@ -34,7 +34,7 @@ func (repo *deploymentInfoRepo) Get(
 ) (*cacheentity.DeploymentInfo, error) {
 	resp, err := redishelper.Get[*cacheentity.DeploymentInfo](ctx, repo.client, repo.formatKey(deploymentID))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -59,14 +59,14 @@ func (repo *deploymentInfoRepo) GetAllOfApp(
 ) (map[string]*cacheentity.DeploymentInfo, error) {
 	keys, err := redishelper.ScanKeys(ctx, repo.client, repo.formatKey("*"))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(keys) == 0 {
 		return nil, nil
 	}
 	deployments, err := repo.mGet(ctx, keys)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	appDeployments := make(map[string]*cacheentity.DeploymentInfo, len(deployments))
 	for k, deployment := range deployments {
@@ -83,7 +83,7 @@ func (repo *deploymentInfoRepo) GetAll(
 ) (map[string]*cacheentity.DeploymentInfo, error) {
 	keys, err := redishelper.ScanKeys(ctx, repo.client, repo.formatKey("*"))
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(keys) == 0 {
 		return nil, nil
@@ -95,7 +95,7 @@ func (repo *deploymentInfoRepo) mGet(ctx context.Context, keys []string) (
 	map[string]*cacheentity.DeploymentInfo, error) {
 	resp, err := redishelper.MGet[*cacheentity.DeploymentInfo](ctx, repo.client, keys...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	result := make(map[string]*cacheentity.DeploymentInfo, len(resp))
 	for _, info := range resp {
@@ -114,7 +114,7 @@ func (repo *deploymentInfoRepo) Set(
 ) error {
 	err := redishelper.Set(ctx, repo.client, repo.formatKey(deploymentID), deploymentInfo, exp)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -122,7 +122,7 @@ func (repo *deploymentInfoRepo) Set(
 func (repo *deploymentInfoRepo) Del(ctx context.Context, deploymentID string) error {
 	err := redishelper.Del(ctx, repo.client, repo.formatKey(deploymentID))
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

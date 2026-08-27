@@ -3,8 +3,8 @@ package projectsettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
 )
 
@@ -20,8 +20,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} githubappdto.ListGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/github-apps [get]
 func (h *Handler) ListGithubApp(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeProject)
@@ -36,8 +36,8 @@ func (h *Handler) ListGithubApp(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} githubappdto.GetGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/github-apps/{itemID} [get]
 func (h *Handler) GetGithubApp(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeProject)
@@ -52,8 +52,8 @@ func (h *Handler) GetGithubApp(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body githubappdto.CreateGithubAppReq true "request data"
 // @Success 201 {object} githubappdto.CreateGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/github-apps [post]
 func (h *Handler) CreateGithubApp(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeProject)
@@ -69,8 +69,8 @@ func (h *Handler) CreateGithubApp(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body githubappdto.UpdateGithubAppReq true "request data"
 // @Success 200 {object} githubappdto.UpdateGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/github-apps/{itemID} [put]
 func (h *Handler) UpdateGithubApp(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeProject)
@@ -86,8 +86,8 @@ func (h *Handler) UpdateGithubApp(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body githubappdto.UpdateGithubAppStatusReq true "request data"
 // @Success 200 {object} githubappdto.UpdateGithubAppStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/github-apps/{itemID}/status [put]
 func (h *Handler) UpdateGithubAppStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeGithubApp, base.ObjectScopeProject)
@@ -102,8 +102,8 @@ func (h *Handler) UpdateGithubAppStatus(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} githubappdto.DeleteGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/github-apps/{itemID} [delete]
 func (h *Handler) DeleteGithubApp(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeGithubApp, base.ObjectScopeProject)
@@ -118,8 +118,8 @@ func (h *Handler) DeleteGithubApp(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   body body githubappdto.BeginGithubAppManifestFlowReq true "request data"
 // @Success 200 {object} githubappdto.BeginGithubAppManifestFlowResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/github-apps/manifest-flow/begin [post]
 func (h *Handler) BeginProjectGithubAppManifestFlow(ctx *gin.Context) {
 	h.GithubAppManifestFlowBegin(ctx, base.ObjectScopeProject)
@@ -134,8 +134,8 @@ func (h *Handler) BeginProjectGithubAppManifestFlow(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 "html page to redirect to github app creation page"
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/github-apps/{itemID}/manifest-flow/begin [get]
 func (h *Handler) BeginProjectGithubAppManifestFlowCreation(ctx *gin.Context) {
 	h.GithubAppManifestFlowBeginCreation(ctx, base.ObjectScopeProject)
@@ -150,8 +150,8 @@ func (h *Handler) BeginProjectGithubAppManifestFlowCreation(ctx *gin.Context) {
 // @Param   projectID path string true "project ID"
 // @Param   itemID path string true "setting ID"
 // @Success 200 "html page to redirect to github app creation page"
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/github-apps/itemID}/manifest-flow/progress [get]
 func (h *Handler) HandleProjectGithubAppManifestFlowProgress(ctx *gin.Context) {
 	h.GithubAppManifestFlowProgress(ctx, base.ObjectScopeProject)
@@ -167,8 +167,8 @@ func (h *Handler) HandleProjectGithubAppManifestFlowProgress(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body githubappdto.BeginReprovisionGithubAppReq true "request data"
 // @Success 200 {object} githubappdto.BeginReprovisionGithubAppResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/github-apps/{itemID}/begin-reprovision [post]
 func (h *Handler) BeginReprovisionProjectGithubApp(ctx *gin.Context) {
 	h.GithubAppBeginReprovision(ctx, base.ObjectScopeProject)

@@ -1,8 +1,8 @@
 package networkdto
 
 import (
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type SyncNetworkReq struct {
@@ -13,7 +13,7 @@ func NewSyncNetworkReq() *SyncNetworkReq {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *SyncNetworkReq) Validate() apperrors.ValidationErrors {
+func (req *SyncNetworkReq) Validate() hperrors.ValidationErrors {
 	return nil
 }
 

@@ -5,9 +5,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -74,7 +74,7 @@ func (s *service) loadRefObjectsByIDs(
 	refIDs *entity.RefObjectIDs,
 ) (err error) {
 	if pRefObjects == nil {
-		return apperrors.NewArgumentInvalid("refObjects")
+		return hperrors.NewArgumentInvalid("refObjects")
 	}
 	if *pRefObjects == nil {
 		*pRefObjects = entity.NewRefObjects()
@@ -89,7 +89,7 @@ func (s *service) loadRefObjectsByIDs(
 	if len(refIDs.RefUserIDs) > 0 {
 		err = s.loadReferenceUsers(ctx, db, pRefObjects, requireExistence, requireActive, refIDs.RefUserIDs)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -97,7 +97,7 @@ func (s *service) loadRefObjectsByIDs(
 	if len(refIDs.RefAppIDs) > 0 {
 		err = s.loadReferenceApps(ctx, db, pRefObjects, requireExistence, requireActive, refIDs.RefAppIDs)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -105,7 +105,7 @@ func (s *service) loadRefObjectsByIDs(
 	if len(refIDs.RefProjectIDs) > 0 {
 		err = s.loadReferenceProjects(ctx, db, pRefObjects, requireExistence, requireActive, refIDs.RefProjectIDs)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -113,7 +113,7 @@ func (s *service) loadRefObjectsByIDs(
 	if len(refIDs.RefProjectEnvIDs) > 0 {
 		err = s.loadReferenceProjectEnvs(ctx, db, pRefObjects, requireExistence, requireActive, refIDs.RefProjectEnvIDs)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -121,7 +121,7 @@ func (s *service) loadRefObjectsByIDs(
 	if len(refIDs.RefSettingIDs) > 0 {
 		err = s.loadReferenceSettings(ctx, db, pRefObjects, scope, requireExistence, requireActive, refIDs.RefSettingIDs)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -133,7 +133,7 @@ func (s *service) loadRefObjectsByIDs(
 
 	err = s.loadRefObjectsByIDs(ctx, db, pRefObjects, scope, requireExistence, requireActive, newRecursiveRefIDs)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -170,7 +170,7 @@ func (s *service) loadReferenceSettings(
 
 	settings, _, err := s.settingRepo.List(ctx, db, scope, nil, listOpts...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, setting := range settings {
 		refObjects.RefSettings[setting.ID] = setting
@@ -180,7 +180,7 @@ func (s *service) loadReferenceSettings(
 		setting := refObjects.RefSettings[id]
 		if setting == nil {
 			if requireExistence {
-				return apperrors.Wrap(apperrors.ErrSettingNotFound).WithParam("Name", id)
+				return hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", id)
 			}
 			continue
 		}
@@ -223,7 +223,7 @@ func (s *service) loadReferenceApps(
 
 	apps, err := s.appRepo.ListByIDs(ctx, db, "", loadAppIDs, opts...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, app := range apps {
 		refObjects.RefApps[app.ID] = app
@@ -233,19 +233,19 @@ func (s *service) loadReferenceApps(
 		app := refObjects.RefApps[id]
 		if app == nil {
 			if requireExistence {
-				return apperrors.Wrap(apperrors.ErrAppNotFound).WithParam("Name", id)
+				return hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", id)
 			}
 			continue
 		}
 		if requireActive {
 			if app.Status != base.AppStatusActive {
-				return apperrors.Wrap(apperrors.ErrAppInactive).WithParam("Name", app.Name)
+				return hperrors.Wrap(hperrors.ErrAppInactive).WithParam("Name", app.Name)
 			}
 			if app.Project == nil || app.Project.Status != base.ProjectStatusActive {
-				return apperrors.Wrap(apperrors.ErrProjectInactive).WithParam("Name", app.ProjectID)
+				return hperrors.Wrap(hperrors.ErrProjectInactive).WithParam("Name", app.ProjectID)
 			}
 			if app.ProjectEnv == nil || app.ProjectEnv.Status != base.ProjectStatusActive {
-				return apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithParam("Name", app.ProjectEnvID)
+				return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithParam("Name", app.ProjectEnvID)
 			}
 		}
 	}
@@ -283,7 +283,7 @@ func (s *service) loadReferenceProjects(
 
 	projects, err := s.projectRepo.ListByIDs(ctx, db, loadProjectIDs, opts...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, project := range projects {
 		refObjects.RefProjects[project.ID] = project
@@ -292,7 +292,7 @@ func (s *service) loadReferenceProjects(
 	for _, id := range loadProjectIDs {
 		project := refObjects.RefProjects[id]
 		if project == nil && requireExistence {
-			return apperrors.Wrap(apperrors.ErrProjectNotFound).WithParam("Name", id)
+			return hperrors.Wrap(hperrors.ErrProjectNotFound).WithParam("Name", id)
 		}
 	}
 	return nil
@@ -330,7 +330,7 @@ func (s *service) loadReferenceProjectEnvs(
 
 	projectEnvs, err := s.projectEnvRepo.ListByIDs(ctx, db, loadProjectEnvIDs, opts...)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, projectEnv := range projectEnvs {
 		refObjects.RefProjectEnvs[projectEnv.ID] = projectEnv
@@ -340,16 +340,16 @@ func (s *service) loadReferenceProjectEnvs(
 		projectEnv := refObjects.RefProjectEnvs[id]
 		if projectEnv == nil {
 			if requireExistence {
-				return apperrors.Wrap(apperrors.ErrProjectEnvNotFound).WithParam("Name", id)
+				return hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", id)
 			}
 			continue
 		}
 		if requireActive {
 			if projectEnv.Status != base.ProjectStatusActive {
-				return apperrors.Wrap(apperrors.ErrProjectEnvInactive).WithParam("Name", projectEnv.Name)
+				return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithParam("Name", projectEnv.Name)
 			}
 			if projectEnv.Project == nil || projectEnv.Project.Status != base.ProjectStatusActive {
-				return apperrors.Wrap(apperrors.ErrProjectInactive).WithParam("Name", projectEnv.ProjectID)
+				return hperrors.Wrap(hperrors.ErrProjectInactive).WithParam("Name", projectEnv.ProjectID)
 			}
 		}
 	}
@@ -380,7 +380,7 @@ func (s *service) loadReferenceUsers(
 	loadUsersFunc := gofn.If(requireExistence, s.userService.LoadUsers, s.userService.LoadUsersSkipMissing)
 	userMap, err := loadUsersFunc(ctx, db, loadUserIDs, errorIfUnavailable)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	for _, user := range userMap {
 		refObjects.RefUsers[user.ID] = user

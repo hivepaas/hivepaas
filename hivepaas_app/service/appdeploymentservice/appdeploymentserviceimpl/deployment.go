@@ -8,10 +8,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
@@ -48,14 +48,14 @@ func (s *service) Deploy(
 
 	err = s.loadDeploymentData(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	resp.Deployment = data.Deployment
 
 	defer func() {
 		ctx = context.WithoutCancel(ctx) // the outer context can be canceled at this point
 		if r := recover(); r != nil {
-			err = errors.Join(err, apperrors.NewPanic(r))
+			err = errors.Join(err, hperrors.NewPanic(r))
 		}
 		data.Deployment.UpdatedAt = timeutil.NowUTC()
 		data.Deployment.EndedAt = data.Deployment.UpdatedAt
@@ -92,7 +92,7 @@ func (s *service) loadDeploymentData(
 	task := data.Task
 	args, err := task.ArgsAsAppDeploy()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	deployment, err := s.deploymentRepo.GetByID(ctx, db, "", args.Deployment.ID,
@@ -111,8 +111,8 @@ func (s *service) loadDeploymentData(
 		),
 		bunex.SelectFor("UPDATE OF deployment"),
 	)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if deployment == nil || deployment.Status == base.DeploymentStatusCanceled || deployment.App == nil ||
 		deployment.App.Project == nil || deployment.App.ProjectEnv == nil { // no active deployment, return
@@ -133,7 +133,7 @@ func (s *service) loadDeploymentData(
 		StartedAt: deployment.StartedAt,
 	}, deploymentInfoCacheExp)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	data.App = deployment.App
@@ -147,7 +147,7 @@ func (s *service) loadDeploymentData(
 	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, data.App.GetObjectScope(),
 		true, refObjectIDs)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -181,7 +181,7 @@ func (s *service) saveLogs(
 
 	logFrames, err := logStore.GetData(ctx, 0)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	_ = logStore.Close() //nolint
 
@@ -208,7 +208,7 @@ func (s *service) saveLogFramesToDB(
 		}
 		err := s.taskLogRepo.InsertMulti(ctx, db, taskLogs)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil

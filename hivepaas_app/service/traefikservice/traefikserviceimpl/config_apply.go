@@ -13,10 +13,10 @@ import (
 	"github.com/tiendc/gofn"
 	"gopkg.in/yaml.v3"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/htpasswd"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
@@ -66,7 +66,7 @@ func (s *service) ApplyAppConfig(
 	}
 	err := s.loadAppConfigData(ctx, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	routingSettings := data.RoutingSettings
 
@@ -81,7 +81,7 @@ func (s *service) ApplyAppConfig(
 
 		for i, domain := range routingSettings.Domains {
 			if err := s.collectDomainConfig(domain, i, labels, traefikConfig, data); err != nil {
-				return nil, apperrors.Wrap(err)
+				return nil, hperrors.Wrap(err)
 			}
 		}
 	}
@@ -93,7 +93,7 @@ func (s *service) ApplyAppConfig(
 	if data.hasCerts {
 		err := s.writeAppConfigFile(data)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	} else if data.App != nil && config.Current != nil {
 		// Ensure file does not exist if no certs are needed
@@ -108,7 +108,7 @@ func (s *service) ApplyAppConfig(
 			OpenPorts: data.tcpPortsNeedOpen,
 		})
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -123,7 +123,7 @@ func (s *service) loadAppConfigData(
 ) error {
 	traefikSvc, err := s.GetTraefikSwarmService(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.traefikSvc = traefikSvc
 
@@ -134,7 +134,7 @@ func (s *service) loadAppConfigData(
 	if data.Service == nil {
 		inspect, err := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.Service = &inspect.Service
 	}
@@ -235,7 +235,7 @@ func (s *service) collectDomainConfig(
 
 	// Basic auth config
 	if err := s.createBasicAuthConfig(domain.BasicAuth, data.RefObjects, routerName, labels, &middlewares); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// CircuitBreaker config
@@ -265,7 +265,7 @@ func (s *service) collectDomainConfig(
 	for pathIdx, pathCfg := range domain.Paths {
 		if err := s.collectPathConfig(domain, pathCfg, pathIdx, routerName, serviceName, middlewares,
 			labels, data); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -313,7 +313,7 @@ func (s *service) collectPathConfig(
 	// Basic auth config for path
 	if err := s.createBasicAuthConfig(pathCfg.BasicAuth, data.RefObjects, pathRouterName,
 		labels, &pathMiddlewares); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// CircuitBreaker config for path
@@ -404,7 +404,7 @@ func (s *service) createBasicAuthConfig(
 		basicAuthConfig := s.MustAsBasicAuth()
 		password, err := basicAuthConfig.Password.GetPlain()
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		hashedPasswd, err := htpasswd.HashPassword(password)
 		if err == nil {
@@ -713,12 +713,12 @@ func (s *service) writeAppConfigFile(
 ) error {
 	yamlData, err := yaml.Marshal(data.confData)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = os.WriteFile(data.App.TraefikConfigPath(), yamlData, defaultConfFileMode)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil

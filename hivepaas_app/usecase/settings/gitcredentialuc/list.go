@@ -3,10 +3,10 @@ package gitcredentialuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/gitcredentialuc/gitcredentialdto"
 )
@@ -56,7 +56,7 @@ func (uc *UC) ListGitCredential(
 
 	settings, pagingMeta, err := uc.SettingRepo.List(ctx, uc.DB, req.Scope, &req.Paging, listOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	for _, setting := range settings {
@@ -66,12 +66,12 @@ func (uc *UC) ListGitCredential(
 	refObjects := entity.NewRefObjects()
 	err = uc.SettingService.LoadRefObjectsSkipMissing(ctx, uc.DB, &refObjects, req.Scope, false, settings...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	respData, err := gitcredentialdto.TransformGitCredentials(settings, refObjects)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &gitcredentialdto.ListGitCredentialResp{

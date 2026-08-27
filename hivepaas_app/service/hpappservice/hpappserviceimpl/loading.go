@@ -3,9 +3,9 @@ package hpappserviceimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -25,10 +25,10 @@ func (s *service) LoadAppByKey(
 	opts = append(opts, extraOpts...)
 	apps, _, err := s.appRepo.List(ctx, db, "", nil, opts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if len(apps) == 0 {
-		return nil, apperrors.NewNotFound("App")
+		return nil, hperrors.NewNotFound("App")
 	}
 	return apps[0], nil
 }

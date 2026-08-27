@@ -7,9 +7,9 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -49,8 +49,8 @@ func (s *service) GetNotificationForEvent(
 				notifSettingID, true)
 		}
 	}
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
 	}
 	if setting == nil {
 		return nil, nil
@@ -59,7 +59,7 @@ func (s *service) GetNotificationForEvent(
 	// Load ref objects of the setting (otherwise we will have error of missing ref objects)
 	err = s.settingService.LoadRefObjectsSkipMissing(ctx, db, &refObjects, scope, true, setting)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	refObjects.RefSettings[setting.ID] = setting
 
@@ -76,8 +76,8 @@ func (s *service) GetDefaultNotification(
 	setting, err := s.settingRepo.GetSingle(ctx, db, scope, base.SettingTypeNotification, true,
 		bunex.SelectWhere("setting.is_default = TRUE"),
 	)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return nil, apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
 	}
 	if setting == nil {
 		return nil, nil
@@ -88,7 +88,7 @@ func (s *service) GetDefaultNotification(
 		loadFunc := gofn.If(skipMissing, s.settingService.LoadRefObjectsSkipMissing, s.settingService.LoadRefObjects)
 		err = loadFunc(ctx, db, &refObjects, scope, true, setting)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		refObjects.RefSettings[setting.ID] = setting
 	}

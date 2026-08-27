@@ -5,9 +5,9 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -29,7 +29,7 @@ func (req *CreateCommandPipeFromTemplateReq) ModifyRequest() error {
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *CreateCommandPipeFromTemplateReq) Validate() apperrors.ValidationErrors {
+func (req *CreateCommandPipeFromTemplateReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.Name, false, 1,
 		base.SettingNameMaxLen, "name")...)
@@ -37,7 +37,7 @@ func (req *CreateCommandPipeFromTemplateReq) Validate() apperrors.ValidationErro
 		base.SettingNameMaxLen, "commandType")...)
 	validators = append(validators, basedto.ValidateStr(&req.CommandKind, true, 1,
 		base.SettingNameMaxLen, "commandKind")...)
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type CreateCommandPipeFromTemplateResp struct {

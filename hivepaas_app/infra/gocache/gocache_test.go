@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func TestNewCache(t *testing.T) {
@@ -24,7 +24,7 @@ func TestCache_GetSetDel(t *testing.T) {
 	// Get non-existent
 	_, err := c.Get(key)
 	assert.Error(t, err)
-	assert.True(t, errors.Is(err, apperrors.ErrNotFound))
+	assert.True(t, errors.Is(err, hperrors.ErrNotFound))
 
 	// Set
 	err = c.Set(key, val, NoExpiration)
@@ -42,7 +42,7 @@ func TestCache_GetSetDel(t *testing.T) {
 	// Get deleted
 	_, err = c.Get(key)
 	assert.Error(t, err)
-	assert.True(t, errors.Is(err, apperrors.ErrNotFound))
+	assert.True(t, errors.Is(err, hperrors.ErrNotFound))
 }
 
 func TestCache_TypeSpecificGetters(t *testing.T) {
@@ -61,7 +61,7 @@ func TestCache_TypeSpecificGetters(t *testing.T) {
 		_ = c.Set(key, 123, NoExpiration)
 		_, err = c.GetStr(key)
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, apperrors.ErrMismatch))
+		assert.True(t, errors.Is(err, hperrors.ErrMismatch))
 	})
 
 	t.Run("Int", func(t *testing.T) {
@@ -77,7 +77,7 @@ func TestCache_TypeSpecificGetters(t *testing.T) {
 		_ = c.Set(key, "not-an-int", NoExpiration)
 		_, err = c.GetInt(key)
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, apperrors.ErrMismatch))
+		assert.True(t, errors.Is(err, hperrors.ErrMismatch))
 	})
 
 	t.Run("Bool", func(t *testing.T) {
@@ -93,7 +93,7 @@ func TestCache_TypeSpecificGetters(t *testing.T) {
 		_ = c.Set(key, "not-a-bool", NoExpiration)
 		_, err = c.GetBool(key)
 		assert.Error(t, err)
-		assert.True(t, errors.Is(err, apperrors.ErrMismatch))
+		assert.True(t, errors.Is(err, hperrors.ErrMismatch))
 	})
 }
 

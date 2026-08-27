@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 )
@@ -22,8 +22,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} cloudstoragedto.ListCloudStorageResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/cloud-storages [get]
 func (h *Handler) ListCloudStorage(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeGlobal)
@@ -37,8 +37,8 @@ func (h *Handler) ListCloudStorage(ctx *gin.Context) {
 // @Id      getSettingCloudStorage
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} cloudstoragedto.GetCloudStorageResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/cloud-storages/{itemID} [get]
 func (h *Handler) GetCloudStorage(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeGlobal)
@@ -52,8 +52,8 @@ func (h *Handler) GetCloudStorage(ctx *gin.Context) {
 // @Id      createSettingCloudStorage
 // @Param   body body cloudstoragedto.CreateCloudStorageReq true "request data"
 // @Success 201 {object} cloudstoragedto.CreateCloudStorageResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/cloud-storages [post]
 func (h *Handler) CreateCloudStorage(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeGlobal)
@@ -68,8 +68,8 @@ func (h *Handler) CreateCloudStorage(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body cloudstoragedto.UpdateCloudStorageReq true "request data"
 // @Success 200 {object} cloudstoragedto.UpdateCloudStorageResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/cloud-storages/{itemID} [put]
 func (h *Handler) UpdateCloudStorage(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeGlobal)
@@ -84,8 +84,8 @@ func (h *Handler) UpdateCloudStorage(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body cloudstoragedto.UpdateCloudStorageStatusReq true "request data"
 // @Success 200 {object} cloudstoragedto.UpdateCloudStorageStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/cloud-storages/{itemID}/status [put]
 func (h *Handler) UpdateCloudStorageStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeGlobal)
@@ -99,8 +99,8 @@ func (h *Handler) UpdateCloudStorageStatus(ctx *gin.Context) {
 // @Id      deleteSettingCloudStorage
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} cloudstoragedto.DeleteCloudStorageResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/cloud-storages/{itemID} [delete]
 func (h *Handler) DeleteCloudStorage(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeCloudStorage, base.ObjectScopeGlobal)
@@ -114,8 +114,8 @@ func (h *Handler) DeleteCloudStorage(ctx *gin.Context) {
 // @Id      testCloudStorageConn
 // @Param   body body cloudstoragedto.TestCloudStorageConnReq true "request data"
 // @Success 200 {object} cloudstoragedto.TestCloudStorageConnResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /settings/cloud-storages/test-conn [post]
 func (h *Handler) TestCloudStorageConn(ctx *gin.Context) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)

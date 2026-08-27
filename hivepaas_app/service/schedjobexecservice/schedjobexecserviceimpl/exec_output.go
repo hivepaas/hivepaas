@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -53,7 +53,7 @@ func (s *service) initOutputWriter(
 	if cmdOutput.PipeToApp != nil {
 		return s.initOutputWriterToApp(ctx, data)
 	}
-	return nil, apperrors.Wrap(apperrors.ErrSettingMissing).
+	return nil, hperrors.Wrap(hperrors.ErrSettingMissing).
 		WithParam("Name", "command output")
 }
 
@@ -74,12 +74,12 @@ func (s *service) finalize(
 		}
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if data.File != nil {
 		if err = s.fileRepo.Insert(ctx, db, data.File); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 

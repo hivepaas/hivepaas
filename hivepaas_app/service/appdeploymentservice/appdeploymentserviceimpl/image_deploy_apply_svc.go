@@ -6,7 +6,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
@@ -44,7 +44,7 @@ func (s *service) imageDeployStepServiceApply(
 			placementReq.Service = svc
 			_, err := s.placementService.ApplyPlacementSettings(ctx, db, placementReq)
 			if err != nil {
-				return false, apperrors.Wrap(err)
+				return false, hperrors.Wrap(err)
 			}
 			return true, nil
 		}, dockerServiceApplyRetryMax, 0,
@@ -53,7 +53,7 @@ func (s *service) imageDeployStepServiceApply(
 			options.QueryRegistry = queryRegistry
 		})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Save the used image in the output

@@ -3,9 +3,9 @@ package permissionimpl
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 )
@@ -45,7 +45,7 @@ func (p *manager) checkAccess(
 ) (hasPerm bool, allowedResources map[base.ResourceType][]string, err error) {
 	perms, err := p.aclPermissionRepo.ListByResources(ctx, db, resources)
 	if err != nil || len(perms) == 0 {
-		return false, nil, apperrors.Wrap(err)
+		return false, nil, hperrors.Wrap(err)
 	}
 
 	// Check permission on a specific resource (ResourceID must be not empty)

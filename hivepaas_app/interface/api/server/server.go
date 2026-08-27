@@ -8,8 +8,8 @@ import (
 	ginlogger "github.com/gin-contrib/logger"
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/cors"
 	loggermiddleware "github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/logger"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/recovery"
@@ -92,7 +92,7 @@ func (s *HTTPServer) Start() error {
 
 	err := s.ListenAndServe()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -103,7 +103,7 @@ func (s *HTTPServer) Stop(ctx context.Context) error {
 	}
 	err := s.Shutdown(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

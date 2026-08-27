@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -34,10 +34,10 @@ func (repo *dataMigrationRepo) GetLatest(ctx context.Context, db database.IDB,
 
 	err := query.Scan(ctx)
 	if dataMigration == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("DataMigration").WithCause(err)
+		return nil, hperrors.NewNotFound("DataMigration").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return dataMigration, nil
 }
@@ -49,7 +49,7 @@ func (repo *dataMigrationRepo) Insert(ctx context.Context, db database.IDB, data
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

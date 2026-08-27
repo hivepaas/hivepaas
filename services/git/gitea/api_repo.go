@@ -5,8 +5,8 @@ import (
 
 	gogitea "code.gitea.io/sdk/gitea"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 type ListReposOption func(options *gogitea.ListReposOptions)
@@ -30,7 +30,7 @@ func (c *Client) ListRepos(
 
 	output, resp, err := c.client.ListMyRepos(listOpts)
 	if err != nil {
-		return nil, nil, apperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
 	return output, &basedto.PagingMeta{
 		Offset: opts.Page * opts.PageSize,
@@ -57,7 +57,7 @@ func (c *Client) ListAllRepos(
 	for {
 		result, resp, err := client.ListMyRepos(listOpts)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		output = append(output, result...)
 		if resp.NextPage <= 0 || opts.Page == resp.NextPage {

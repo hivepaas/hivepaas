@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 )
@@ -28,7 +28,7 @@ func (s *service) ApplyPlacementSettings(
 	}
 	err = s.loadPlacementSettingsData(ctx, db, data)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	s.applyPlacementSettings(data)
@@ -36,7 +36,7 @@ func (s *service) ApplyPlacementSettings(
 	if data.HasChanges && !data.SkipSavingToDocker && data.Service.ID != "" {
 		_, err = s.dockerManager.ServiceUpdate(ctx, data.Service.ID, &data.Service.Version, &data.Service.Spec)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -52,18 +52,18 @@ func (s *service) loadPlacementSettingsData(
 ) error {
 	if data.Service == nil {
 		if data.App == nil || data.App.ServiceID == "" {
-			return apperrors.NewArgumentInvalid("App.ServiceID")
+			return hperrors.NewArgumentInvalid("App.ServiceID")
 		}
 		inspect, err := s.dockerManager.ServiceInspect(ctx, data.App.ServiceID)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		data.Service = &inspect.Service
 	}
 
 	isMultiNode, err := s.clusterService.IsMultiNode(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.IsMultiNode = isMultiNode
 
@@ -86,8 +86,8 @@ func (s *service) loadPlacementSettingsData(
 	if data.PlacementSettings == nil {
 		placementSetting, err := s.settingRepo.GetSingle(ctx, db, scope,
 			base.SettingTypeAppPlacement, false)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if placementSetting != nil && !placementSetting.IsExpired() {
 			data.PlacementSettings = placementSetting.MustAsAppPlacementSettings()
@@ -98,8 +98,8 @@ func (s *service) loadPlacementSettingsData(
 	if data.BuildSettings == nil {
 		buildSetting, err := s.settingRepo.GetSingle(ctx, db, scope,
 			base.SettingTypeImageBuild, false)
-		if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-			return apperrors.Wrap(err)
+		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+			return hperrors.Wrap(err)
 		}
 		if buildSetting != nil && !buildSetting.IsExpired() {
 			data.BuildSettings = buildSetting.MustAsImageBuildSettings()

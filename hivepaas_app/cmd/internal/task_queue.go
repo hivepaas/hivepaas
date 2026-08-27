@@ -5,7 +5,7 @@ import (
 
 	"go.uber.org/fx"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/initializer"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
@@ -22,7 +22,7 @@ func InitTaskQueue(
 			logger.Infof("initializing task queue...")
 			if err := taskQueue.Start(); err != nil {
 				logger.Errorf("failed to initialize task queue: %v", err)
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},
@@ -30,7 +30,7 @@ func InitTaskQueue(
 			logger.Info("stopping task queue ...")
 			if err := taskQueue.Shutdown(); err != nil {
 				logger.Errorf("failed to stop task queue: %v", err)
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			return nil
 		},

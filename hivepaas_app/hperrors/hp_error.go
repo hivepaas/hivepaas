@@ -1,4 +1,4 @@
-package apperrors
+package hperrors
 
 import (
 	"errors"
@@ -26,34 +26,34 @@ const (
 	errDetailsConsiderLong = 200
 )
 
-// AppError represents an error type to be used for any issue within the app.
+// HPError represents an error type to be used for any issue within the app.
 // This error type is designed to be able to carry much extra information
 // and ability to translate the error message into a specific language.
-type AppError interface {
+type HPError interface {
 	error
 
 	// WithCause sets cause of the error
-	WithCause(cause error) AppError
+	WithCause(cause error) HPError
 	// WithParam sets a custom param (the param will be translated when build message)
-	WithParam(k string, v any) AppError
+	WithParam(k string, v any) HPError
 	// WithParams sets custom params
-	WithParams(map[string]any) AppError
+	WithParams(map[string]any) HPError
 	// WithNTParam sets a custom but non-translation param
-	WithNTParam(k string, v any) AppError
+	WithNTParam(k string, v any) HPError
 	// WithExtraDetail sets extra detail
-	WithExtraDetail(string, ...any) AppError
+	WithExtraDetail(string, ...any) HPError
 	// WithMsgLog sets log message (used for debug purpose)
-	WithMsgLog(string, ...any) AppError
+	WithMsgLog(string, ...any) HPError
 
 	// DisplayLevel get/set display level
 	DisplayLevel() DisplayLevel
-	WithDisplayLevel(DisplayLevel) AppError
-	WithDisplayLevelHigh() AppError
-	WithDisplayLevelMedium() AppError
+	WithDisplayLevel(DisplayLevel) HPError
+	WithDisplayLevelHigh() HPError
+	WithDisplayLevelMedium() HPError
 
 	// FallbackToErrorMsg get/set fallback mode when translation missing
 	FallbackToErrorMsg() bool
-	WithFallbackToErrorMsg(flag bool) AppError
+	WithFallbackToErrorMsg(flag bool) HPError
 
 	// StatusCode gets status code of error
 	StatusCode() int
@@ -63,8 +63,8 @@ type AppError interface {
 	Build(lang translation.Lang) *ErrorInfo
 }
 
-// appError implements AppError interface
-type appError struct {
+// hpError implements HPError interface
+type hpError struct {
 	err                error
 	cause              error
 	params             map[string]any
@@ -76,31 +76,31 @@ type appError struct {
 }
 
 // Error implements `error` interface
-func (e *appError) Error() string {
+func (e *hpError) Error() string {
 	return e.err.Error()
 }
 
-func (e *appError) WithCause(cause error) AppError {
+func (e *hpError) WithCause(cause error) HPError {
 	e.cause = cause
 	return e
 }
 
-func (e *appError) WithParam(k string, v any) AppError {
+func (e *hpError) WithParam(k string, v any) HPError {
 	e.params[k] = v
 	return e
 }
 
-func (e *appError) WithParams(m map[string]any) AppError {
+func (e *hpError) WithParams(m map[string]any) HPError {
 	maps.Copy(e.params, m)
 	return e
 }
 
-func (e *appError) WithNTParam(k string, v any) AppError {
+func (e *hpError) WithNTParam(k string, v any) HPError {
 	e.ntParams[k] = v
 	return e
 }
 
-func (e *appError) WithExtraDetail(format string, args ...any) AppError {
+func (e *hpError) WithExtraDetail(format string, args ...any) HPError {
 	in := fmt.Sprintf(format, args...)
 	if e.extraDetail == "" {
 		e.extraDetail = in
@@ -110,7 +110,7 @@ func (e *appError) WithExtraDetail(format string, args ...any) AppError {
 	return e
 }
 
-func (e *appError) WithMsgLog(format string, args ...any) AppError {
+func (e *hpError) WithMsgLog(format string, args ...any) HPError {
 	in := fmt.Sprintf(format, args...)
 	if e.msgLog == "" {
 		e.msgLog = in
@@ -120,36 +120,36 @@ func (e *appError) WithMsgLog(format string, args ...any) AppError {
 	return e
 }
 
-func (e *appError) DisplayLevel() DisplayLevel {
+func (e *hpError) DisplayLevel() DisplayLevel {
 	return e.displayLevel
 }
 
-func (e *appError) WithDisplayLevel(level DisplayLevel) AppError {
+func (e *hpError) WithDisplayLevel(level DisplayLevel) HPError {
 	e.displayLevel = level
 	return e
 }
 
-func (e *appError) WithDisplayLevelHigh() AppError {
+func (e *hpError) WithDisplayLevelHigh() HPError {
 	e.displayLevel = DisplayLevelHigh
 	return e
 }
 
-func (e *appError) WithDisplayLevelMedium() AppError {
+func (e *hpError) WithDisplayLevelMedium() HPError {
 	e.displayLevel = DisplayLevelMedium
 	return e
 }
 
-func (e *appError) FallbackToErrorMsg() bool {
+func (e *hpError) FallbackToErrorMsg() bool {
 	return e.fallbackToErrorMsg
 }
 
-func (e *appError) WithFallbackToErrorMsg(flag bool) AppError {
+func (e *hpError) WithFallbackToErrorMsg(flag bool) HPError {
 	e.fallbackToErrorMsg = flag
 	return e
 }
 
 // Build - builder (status, code, title, detail)
-func (e *appError) Build(lang translation.Lang) *ErrorInfo {
+func (e *hpError) Build(lang translation.Lang) *ErrorInfo {
 	errInfo := &ErrorInfo{}
 
 	errInfo.Status = e.getMappingStatus()
@@ -189,15 +189,15 @@ func (e *appError) Build(lang translation.Lang) *ErrorInfo {
 	return errInfo
 }
 
-func (e *appError) StatusCode() int {
+func (e *hpError) StatusCode() int {
 	return e.getMappingStatus()
 }
 
-func (e *appError) Message(lang translation.Lang) (msg string, transErr error) {
+func (e *hpError) Message(lang translation.Lang) (msg string, transErr error) {
 	return e.getMessage("", lang)
 }
 
-func (e *appError) getMessage(msgID string, lang translation.Lang) (msg string, transErr error) {
+func (e *hpError) getMessage(msgID string, lang translation.Lang) (msg string, transErr error) {
 	params := make(map[string]any, len(e.params)+len(e.ntParams))
 	maps.Copy(params, e.ntParams)
 	for k, v := range e.params {
@@ -242,7 +242,7 @@ func (e *appError) getMessage(msgID string, lang translation.Lang) (msg string, 
 
 // Is - implements errors.Is.
 // This returns true if either the inner error or the cause satisfies.
-func (e *appError) Is(err error) bool {
+func (e *hpError) Is(err error) bool {
 	if errors.Is(e.err, err) {
 		return true
 	}
@@ -253,15 +253,15 @@ func (e *appError) Is(err error) bool {
 }
 
 // Unwrap - implements errors.Unwrap
-func (e *appError) Unwrap() error {
+func (e *hpError) Unwrap() error {
 	return e.err
 }
 
-func (e *appError) StackTrace() string {
+func (e *hpError) StackTrace() string {
 	return GetErrorStackTrace(e.err)
 }
 
-func (e *appError) getMappingStatus() int {
+func (e *hpError) getMappingStatus() int {
 	baseErr := getBaseError(e.err)
 	if baseErr != nil {
 		return errorStatusMap[baseErr]
@@ -346,14 +346,14 @@ func notifyTranslationMissing(e error, _ translation.Lang) {
 	logging.Errorf("%s", errMsg)
 }
 
-func Wrap(err error) AppError {
+func Wrap(err error) HPError {
 	if err == nil {
 		return nil
 	}
-	if e, ok := errors.AsType[*appError](err); ok {
+	if e, ok := errors.AsType[*hpError](err); ok {
 		return e // already is a AppError, no need to wrap
 	}
-	return &appError{
+	return &hpError{
 		ntParams:           map[string]any{},
 		params:             map[string]any{},
 		fallbackToErrorMsg: true,

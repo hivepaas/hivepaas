@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/devhelperuc/devhelperdto"
 )
 
@@ -17,8 +17,8 @@ import (
 // @Id      devSimulateLongRequest
 // @Param   body body devhelperdto.LongRequestReq true "request data"
 // @Success 200 {object} devhelperdto.LongRequestResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /dev-helper/long-req [post]
 func (h *Handler) SimulateLongRequest(ctx *gin.Context) {
 	req := devhelperdto.NewLongRequestReq()

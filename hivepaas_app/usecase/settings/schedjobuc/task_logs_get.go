@@ -6,8 +6,8 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/schedjobuc/schedjobdto"
@@ -29,12 +29,12 @@ func (uc *UC) GetSchedJobTaskLogs(
 		bunex.SelectRelation("Tasks", bunex.SelectWhere("task.id = ?", req.TaskID)),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	task := gofn.FirstOr(jobSetting.Tasks, nil)
 	if task == nil {
-		return nil, apperrors.NewNotFound("Task")
+		return nil, hperrors.NewNotFound("Task")
 	}
 
 	resp, err := uc.taskService.GetTaskLogs(ctx, uc.DB, &taskservice.GetTaskLogsReq{
@@ -48,7 +48,7 @@ func (uc *UC) GetSchedJobTaskLogs(
 		LogSessionTimeout:       taskLogSessionTimeout,
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &schedjobdto.GetSchedJobTaskLogsResp{

@@ -6,11 +6,11 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -30,7 +30,7 @@ func (uc *UC) UpdateRoutingSettings(
 		data = &updateRoutingSettingsData{}
 		err := uc.loadRoutingSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
@@ -38,17 +38,17 @@ func (uc *UC) UpdateRoutingSettings(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		err = uc.applyRoutingSettings(ctx, db, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if data != nil && data.DomainChanged {
@@ -89,13 +89,13 @@ func (uc *UC) loadRoutingSettingsForUpdate(
 		),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.App = app
 	data.RoutingSetting = app.GetSettingByType(base.SettingTypeAppRouting)
 
 	if data.RoutingSetting != nil && data.RoutingSetting.UpdateVer != req.UpdateVer {
-		return apperrors.Wrap(apperrors.ErrUpdateVerMismatched)
+		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
 	routingSettings := data.RoutingSetting.MustAsAppRoutingSettings()
@@ -105,7 +105,7 @@ func (uc *UC) loadRoutingSettingsForUpdate(
 	}
 
 	if err := req.ApplyTo(routingSettings); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.NewRoutingSettings = routingSettings
 
@@ -113,7 +113,7 @@ func (uc *UC) loadRoutingSettingsForUpdate(
 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, app.GetObjectScope(),
 		true, routingSettings.GetRefObjectIDs())
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Active domains of the app need to validate
@@ -122,13 +122,13 @@ func (uc *UC) loadRoutingSettingsForUpdate(
 	// Verify domains are allowed in project
 	err = uc.domainService.VerifyProjectDomains(ctx, db, app.ProjectID, activeDomains)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Make sure all domains used by the app are not hold by any other app
 	err = uc.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{app.ID})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	if len(activeDomains) > 0 && activeDomains[0] != currDomain {
@@ -163,7 +163,7 @@ func (uc *UC) applyRoutingSettings(
 ) error {
 	routingSettings, err := data.RoutingSetting.AsAppRoutingSettings()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	resp, err := uc.appRoutingService.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
@@ -173,7 +173,7 @@ func (uc *UC) applyRoutingSettings(
 		SkipUpdatingService: true,
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	service := resp.Service
@@ -185,7 +185,7 @@ func (uc *UC) applyRoutingSettings(
 
 	_, err = uc.dockerManager.ServiceUpdate(ctx, service.ID, &service.Version, &service.Spec)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	return nil
@@ -198,7 +198,7 @@ func (uc *UC) persistData(
 ) error {
 	err := uc.appService.PersistAppData(ctx, db, &persistingData.PersistingAppData)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

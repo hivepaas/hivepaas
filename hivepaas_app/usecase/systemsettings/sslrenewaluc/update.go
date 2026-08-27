@@ -7,10 +7,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -67,7 +67,7 @@ func (uc *UC) UpdateSSLRenewal(
 		},
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &sslrenewaldto.UpdateSSLRenewalResp{}, nil
@@ -95,13 +95,13 @@ func (uc *UC) loadSettingData(
 		bunex.SelectFor("UPDATE OF setting"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.Setting = renewalSetting
 
 	renewal, err := renewalSetting.AsSSLRenewal()
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.JobScheduleChanges = !renewal.Schedule.Equal(&data.NewRenewal.Schedule)
 
@@ -111,8 +111,8 @@ func (uc *UC) loadSettingData(
 		bunex.SelectWhere("setting.data->'targetSetting'->>'id' = ?", renewalSetting.ID),
 		bunex.SelectFor("UPDATE OF setting"),
 	)
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if jobSetting == nil {
 		timeNow := timeutil.NowUTC()
@@ -151,7 +151,7 @@ func (uc *UC) preparePersistingData(
 	persistingData.Setting.Status = req.Status
 	err := persistingData.Setting.SetData(updateData.NewRenewal)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Update renewal job
@@ -178,12 +178,12 @@ func (uc *UC) postPersisting(
 	// Persist the sched job updates
 	err := uc.SettingRepo.Update(ctx, db, persistingData.JobSetting)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	err = uc.taskQueue.ScheduleTasksForSchedJob(ctx, db, updateData.JobSetting, updateData.JobScheduleChanges)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

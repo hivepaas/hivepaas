@@ -9,9 +9,9 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -43,7 +43,7 @@ func (s *service) cloneDBApps(
 
 	defer func() {
 		if rev := recover(); rev != nil {
-			err = errors.Join(err, apperrors.ErrPanic)
+			err = errors.Join(err, hperrors.ErrPanic)
 		}
 		for _, cloneData := range cloneDBAppsData {
 			if cloneData.CloneResp != nil && cloneData.CloneResp.OnCleanup != nil {
@@ -74,13 +74,13 @@ func (s *service) cloneDBApps(
 
 	orderedDBApps, err := s.calcCloneOrderOfDBApps(ctx, db, data)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	for _, srcDBApp := range orderedDBApps {
 		err = s.cloneDBApp(ctx, db, srcDBApp, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -108,7 +108,7 @@ func (s *service) cloneDBApp(
 	var cloneResp *appcloneservice.AppCloneResp
 	defer func() {
 		if rev := recover(); rev != nil {
-			err = errors.Join(err, apperrors.ErrPanic)
+			err = errors.Join(err, hperrors.ErrPanic)
 		}
 		if cloneResp != nil && cloneResp.OnCleanup != nil { // Run the cleanup function
 			_ = cloneResp.OnCleanup(err)
@@ -143,7 +143,7 @@ func (s *service) cloneDBApp(
 		},
 	})
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	// Save the cloned app response
@@ -172,7 +172,7 @@ func (s *service) calcCloneOrderOfDBApps(
 		bunex.SelectWhereIn("setting.object_id IN (?)", dbAppIDs...),
 	)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	// Priority levels:

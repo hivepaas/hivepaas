@@ -3,7 +3,7 @@ package fileutil
 import (
 	"os"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const (
@@ -19,12 +19,12 @@ func WriteTempFile(dir, pattern string, perm os.FileMode, data []byte) (
 	if dir == "" {
 		dir, err = CreateTempDir("", "", defaultDirMode)
 		if err != nil {
-			return "", nil, apperrors.Wrap(err)
+			return "", nil, hperrors.Wrap(err)
 		}
 	}
 	fh, err := os.CreateTemp(dir, pattern)
 	if err != nil {
-		return "", nil, apperrors.Wrap(err)
+		return "", nil, hperrors.Wrap(err)
 	}
 	path = fh.Name()
 
@@ -41,13 +41,13 @@ func WriteTempFile(dir, pattern string, perm os.FileMode, data []byte) (
 	// Set the permissions
 	if perm != 0o600 { //nolint:mnd
 		if err = os.Chmod(path, perm); err != nil {
-			return "", nil, apperrors.Wrap(err)
+			return "", nil, hperrors.Wrap(err)
 		}
 	}
 
 	_, err = fh.Write(data)
 	if err != nil {
-		return "", nil, apperrors.Wrap(err)
+		return "", nil, hperrors.Wrap(err)
 	}
 
 	return path, func() error { return os.Remove(path) }, nil

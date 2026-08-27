@@ -5,8 +5,8 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
@@ -22,10 +22,10 @@ func NewDownloadFileReq() *DownloadFileReq {
 	return &DownloadFileReq{}
 }
 
-func (req *DownloadFileReq) Validate() apperrors.ValidationErrors {
+func (req *DownloadFileReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	// TODO: add validation
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type DownloadFileResp struct {

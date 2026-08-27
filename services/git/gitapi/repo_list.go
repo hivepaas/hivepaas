@@ -7,10 +7,10 @@ import (
 	gogithub "github.com/google/go-github/v85/github"
 	gogitlab "gitlab.com/gitlab-org/api/client-go"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/git/gitea"
 	"github.com/hivepaas/hivepaas/services/git/github"
 	"github.com/hivepaas/hivepaas/services/git/gitlab"
@@ -49,14 +49,14 @@ func ListRepo(
 		case base.GitSourceBitbucket, base.GitSourceGogs:
 			fallthrough
 		default:
-			return nil, apperrors.Wrap(apperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
+			return nil, hperrors.Wrap(hperrors.ErrGitTypeUnsupported).WithParam("Type", setting.Kind)
 		}
 
 	default:
-		return nil, apperrors.Wrap(apperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
+		return nil, hperrors.Wrap(hperrors.ErrSettingTypeUnsupported).WithParam("Name", setting.Type)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
 }
@@ -70,7 +70,7 @@ func listGithubRepo(
 	resp.GitSource = base.GitSourceGithub
 	client, err := github.NewFromSetting(setting)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if client.IsAppClient() {
 		resp.GithubRepos, resp.PagingMeta, err = client.ListAppRepos(ctx, req.Paging)
@@ -78,7 +78,7 @@ func listGithubRepo(
 		resp.GithubRepos, resp.PagingMeta, err = client.ListUserRepos(ctx, req.Paging)
 	}
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -92,11 +92,11 @@ func listGitlabRepo(
 	resp.GitSource = base.GitSourceGitlab
 	client, err := gitlab.NewFromSetting(setting)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	resp.GitlabProjects, resp.PagingMeta, err = client.ListProjects(ctx, req.Paging)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -110,11 +110,11 @@ func listGiteaRepo(
 	resp.GitSource = base.GitSourceGitea
 	client, err := gitea.NewFromSetting(setting)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	resp.GiteaRepos, resp.PagingMeta, err = client.ListRepos(ctx, req.Paging)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

@@ -8,11 +8,11 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
@@ -37,7 +37,7 @@ func (req *UpdateRoutingSettingsReq) ApplyTo(setting *entity.AppRoutingSettings)
 			}
 		}
 		if err := domain.ApplyTo(targetDomain); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		setting.Domains = append(setting.Domains, targetDomain)
 	}
@@ -62,7 +62,7 @@ func (req *DomainReq) ApplyTo(targetDomain *entity.AppDomain) error {
 			targetDomain.ClientConfig = &entity.HTTPClientConfig{}
 		}
 		if err := req.ClientConfig.ApplyTo(targetDomain.ClientConfig); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	} else {
 		targetDomain.ClientConfig = nil
@@ -73,7 +73,7 @@ func (req *DomainReq) ApplyTo(targetDomain *entity.AppDomain) error {
 			targetDomain.RateLimitConfig = &entity.HTTPRateLimitConfig{}
 		}
 		if err := req.RateLimitConfig.ApplyTo(targetDomain.RateLimitConfig); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	} else {
 		targetDomain.RateLimitConfig = nil
@@ -89,10 +89,10 @@ func (req *DomainReq) modifyRequest() error {
 	}
 	req.Domain = strings.ToLower(strings.TrimSpace(req.Domain))
 	if err := req.ClientConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	if err := req.RateLimitConfig.modifyRequest(); err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -182,20 +182,20 @@ func NewUpdateRoutingSettingsReq() *UpdateRoutingSettingsReq {
 func (req *UpdateRoutingSettingsReq) ModifyRequest() error {
 	for _, domainReq := range req.Domains {
 		if err := domainReq.modifyRequest(); err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 	return nil
 }
 
 // Validate implements interface basedto.ReqValidator
-func (req *UpdateRoutingSettingsReq) Validate() apperrors.ValidationErrors {
+func (req *UpdateRoutingSettingsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, vld.Slice(req.Domains).ForEach(
 		func(r *DomainReq, index int, elemValidator vld.ItemValidator) {
 			elemValidator.Validate(r.validate(fmt.Sprintf("domains[%d]", index))...)
 		}))
-	return apperrors.NewValidationErrors(vld.Validate(validators...))
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 
 type UpdateRoutingSettingsResp struct {

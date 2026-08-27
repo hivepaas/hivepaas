@@ -7,10 +7,10 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
@@ -58,10 +58,10 @@ func (repo *binObjectRepo) GetByID(ctx context.Context, db database.IDB, typ bas
 
 	err := query.Scan(ctx)
 	if binObject == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, apperrors.NewNotFound("BinObject").WithCause(err)
+		return nil, hperrors.NewNotFound("BinObject").WithCause(err)
 	}
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return binObject, nil
 }
@@ -79,7 +79,7 @@ func (repo *binObjectRepo) List(ctx context.Context, db database.IDB, paging *ba
 		// Counts the total first
 		total, err := query.Count(ctx)
 		if err != nil {
-			return nil, nil, apperrors.Wrap(err)
+			return nil, nil, hperrors.Wrap(err)
 		}
 		pagingMeta.Total = total
 
@@ -105,7 +105,7 @@ func (repo *binObjectRepo) ListByIDs(ctx context.Context, db database.IDB, ids [
 
 	err := query.Scan(ctx)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	return binObjects, nil
 }
@@ -125,7 +125,7 @@ func (repo *binObjectRepo) InsertMulti(ctx context.Context, db database.IDB, bin
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -146,7 +146,7 @@ func (repo *binObjectRepo) UpsertMulti(ctx context.Context, db database.IDB, bin
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -158,7 +158,7 @@ func (repo *binObjectRepo) Update(ctx context.Context, db database.IDB, binObjec
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -171,7 +171,7 @@ func (repo *binObjectRepo) UpdateMulti(ctx context.Context, db database.IDB, bin
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -187,7 +187,7 @@ func (repo *binObjectRepo) DeleteByIDs(ctx context.Context, db database.IDB, ids
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }
@@ -195,14 +195,14 @@ func (repo *binObjectRepo) DeleteByIDs(ctx context.Context, db database.IDB, ids
 func (repo *binObjectRepo) DeleteHard(ctx context.Context, db database.IDB,
 	opts ...bunex.DeleteQueryOption) error {
 	if len(opts) == 0 {
-		return apperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteHard requires at least one condition")
 	}
 	query := db.NewDelete().Model((*entity.BinObject)(nil)).ForceDelete().WhereAllWithDeleted()
 	query = bunex.ApplyDelete(query, opts...)
 
 	_, err := query.Exec(ctx)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

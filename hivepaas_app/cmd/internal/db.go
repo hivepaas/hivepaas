@@ -5,7 +5,7 @@ import (
 
 	"go.uber.org/fx"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
@@ -17,7 +17,7 @@ func InitDBConnection(lc fx.Lifecycle, db *database.DB, logger logging.Logger) {
 			if err := db.Ping(); err != nil {
 				logger.Errorf("failed to use connection %v", err.Error())
 
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 
 			return nil

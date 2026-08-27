@@ -3,10 +3,10 @@ package useruc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -22,17 +22,17 @@ func (uc *UC) DeleteUser(
 		userData := &deleteUserData{}
 		err := uc.loadUserDataForDelete(ctx, db, auth, req, userData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		err = uc.userService.DeleteUser(ctx, db, userData.User)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	return &userdto.DeleteUserResp{}, nil
@@ -53,13 +53,13 @@ func (uc *UC) loadUserDataForDelete(
 		bunex.SelectFor("UPDATE"),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.User = user
 
 	if user.Role == base.UserRoleAdmin {
 		if auth.User.Role != base.UserRoleAdmin {
-			return apperrors.Wrap(apperrors.ErrActionNotAllowed).
+			return hperrors.Wrap(hperrors.ErrActionNotAllowed).
 				WithMsgLog("member user cannot delete admin user")
 		}
 
@@ -72,10 +72,10 @@ func (uc *UC) loadUserDataForDelete(
 			bunex.SelectLimit(1),
 		)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 		if len(otherAdmins) == 0 {
-			return apperrors.Wrap(apperrors.ErrActionNotAllowed).
+			return hperrors.Wrap(hperrors.ErrActionNotAllowed).
 				WithMsgLog("cannot delete the last admin user")
 		}
 	}

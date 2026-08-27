@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 func (s *service) calcBuildImageTags(
@@ -19,7 +19,7 @@ func (s *service) calcBuildImageTags(
 	if data.PushToRegistry.ID != "" {
 		regAuthSetting := data.RefObjects.RefSettings[data.PushToRegistry.ID]
 		if regAuthSetting == nil {
-			return nil, apperrors.NewMissing("Registry auth to push image")
+			return nil, hperrors.NewMissing("Registry auth to push image")
 		}
 		regAuth = regAuthSetting.MustAsRegistryAuth()
 	}

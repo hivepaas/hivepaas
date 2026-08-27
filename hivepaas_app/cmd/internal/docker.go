@@ -8,8 +8,8 @@ import (
 	"github.com/moby/moby/client"
 	"go.uber.org/fx"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
@@ -40,7 +40,7 @@ func InitDockerManager(
 			logger.Info("initializing docker manager ...")
 			err := syncSwarmObjects(ctx, db, clusterService, networkService, volumeService)
 			if err != nil {
-				return apperrors.Wrap(err)
+				return hperrors.Wrap(err)
 			}
 			if cfg.RunMode == config.RunModeApp || cfg.RunMode == config.RunModeAppAndWorker {
 				go registerSwarmNodeEvents(ctx, manager, clusterService, logger)

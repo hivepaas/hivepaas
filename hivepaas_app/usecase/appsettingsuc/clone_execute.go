@@ -6,10 +6,10 @@ import (
 
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
@@ -27,7 +27,7 @@ func (uc *UC) ExecuteAppClone(
 		data = &executeAppCloneData{}
 		err := uc.loadAppCloneSettingsForExecute(ctx, db, req, data)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		persistingData := &persistingAppData{}
@@ -35,18 +35,18 @@ func (uc *UC) ExecuteAppClone(
 
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
-			return apperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		return nil
 	})
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	if data != nil && data.AppCloneTask != nil {
 		if err = uc.taskQueue.ScheduleTask(ctx, data.AppCloneTask); err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 	}
 
@@ -76,13 +76,13 @@ func (uc *UC) loadAppCloneSettingsForExecute(
 		),
 	)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.App = app
 	cloneSetting := app.GetSettingByType(base.SettingTypeAppClone)
 
 	if cloneSetting == nil {
-		return apperrors.NewNotFound("App clone settings")
+		return hperrors.NewNotFound("App clone settings")
 	}
 	cloneSettings := cloneSetting.MustAsAppCloneSettings()
 
@@ -92,18 +92,18 @@ func (uc *UC) loadAppCloneSettingsForExecute(
 	appGlobalKey := projecthelper.CalcAppGlobalKey(app.Project.Key, appKey, targetEnv)
 	// App keys must be unique globally
 	conflictApp, err := uc.appRepo.GetByGlobalKey(ctx, db, "", appGlobalKey, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, apperrors.ErrNotFound) {
-		return apperrors.Wrap(err)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	if conflictApp != nil {
-		return apperrors.NewAlreadyExist("App").
+		return hperrors.NewAlreadyExist("App").
 			WithMsgLog("app unique key '%s' already exists", appGlobalKey)
 	}
 
 	// Create a task for cloning the app
 	cloneTask, err := uc.appCloneService.CreateAppCloneTask(data.App)
 	if err != nil {
-		return apperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 	data.AppCloneTask = cloneTask
 

@@ -3,9 +3,9 @@ package usersettingshandler
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/basesettinghandler"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/usersettings/apikeyuc/apikeydto"
 )
@@ -21,8 +21,8 @@ import (
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
 // @Success 200 {object} apikeydto.ListAPIKeyResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/current/settings/api-keys [get]
 func (h *Handler) ListAPIKey(ctx *gin.Context) {
 	h.ListSetting(ctx, base.ResourceTypeAPIKey, base.ObjectScopeUser)
@@ -36,8 +36,8 @@ func (h *Handler) ListAPIKey(ctx *gin.Context) {
 // @Id      getUserAPIKey
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} apikeydto.GetAPIKeyResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/current/settings/api-keys/{itemID} [get]
 func (h *Handler) GetAPIKey(ctx *gin.Context) {
 	h.GetSetting(ctx, base.ResourceTypeAPIKey, base.ObjectScopeUser)
@@ -51,15 +51,15 @@ func (h *Handler) GetAPIKey(ctx *gin.Context) {
 // @Id      createUserAPIKey
 // @Param   body body apikeydto.CreateAPIKeyReq true "request data"
 // @Success 201 {object} apikeydto.CreateAPIKeyResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/current/settings/api-keys [post]
 func (h *Handler) CreateAPIKey(ctx *gin.Context) {
 	h.CreateSetting(ctx, base.ResourceTypeAPIKey, base.ObjectScopeUser,
 		basesettinghandler.CreateSettingPreRequestHandler(func(auth *basedto.Auth, req any) error {
 			// Not allow to use API key to create API key (TODO: improve this behavior?)
 			if auth.User.AuthClaims.IsAPIKey {
-				return apperrors.Wrap(apperrors.ErrForbidden).
+				return hperrors.Wrap(hperrors.ErrForbidden).
 					WithMsgLog("not allow to create API key by using API key session")
 			}
 			return nil
@@ -75,15 +75,15 @@ func (h *Handler) CreateAPIKey(ctx *gin.Context) {
 // @Param   itemID path string true "setting ID"
 // @Param   body body apikeydto.UpdateAPIKeyStatusReq true "request data"
 // @Success 200 {object} apikeydto.UpdateAPIKeyStatusResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/current/settings/api-keys/{itemID}/status [put]
 func (h *Handler) UpdateAPIKeyStatus(ctx *gin.Context) {
 	h.UpdateSettingStatus(ctx, base.ResourceTypeAPIKey, base.ObjectScopeUser,
 		basesettinghandler.UpdateSettingPreRequestHandler(func(auth *basedto.Auth, req any) error {
 			// Not allow to use API key to update API key (TODO: improve this behavior?)
 			if auth.User.AuthClaims.IsAPIKey {
-				return apperrors.Wrap(apperrors.ErrForbidden).
+				return hperrors.Wrap(hperrors.ErrForbidden).
 					WithMsgLog("not allow to update API key by using API key session")
 			}
 			return nil
@@ -98,15 +98,15 @@ func (h *Handler) UpdateAPIKeyStatus(ctx *gin.Context) {
 // @Id      deleteUserAPIKey
 // @Param   itemID path string true "setting ID"
 // @Success 200 {object} apikeydto.DeleteAPIKeyResp
-// @Failure 400 {object} apperrors.ErrorInfo
-// @Failure 500 {object} apperrors.ErrorInfo
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /users/current/settings/api-keys/{itemID} [delete]
 func (h *Handler) DeleteAPIKey(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeAPIKey, base.ObjectScopeUser,
 		basesettinghandler.DeleteSettingPreRequestHandler(func(auth *basedto.Auth, req any) error {
 			// Not allow to use API key to delete API key (TODO: improve this behavior?)
 			if auth.User.AuthClaims.IsAPIKey {
-				return apperrors.Wrap(apperrors.ErrForbidden).
+				return hperrors.Wrap(hperrors.ErrForbidden).
 					WithMsgLog("not allow to delete API key by using API key session")
 			}
 			return nil

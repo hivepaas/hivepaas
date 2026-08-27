@@ -3,11 +3,11 @@ package sessionuc
 import (
 	"context"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
@@ -28,12 +28,12 @@ func (uc *UC) GetMe(
 
 	dbUser, err := uc.userRepo.GetByID(ctx, uc.db, user.ID, loadOpts...)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	userResp, err := sessiondto.TransformUserDetails(dbUser)
 	if err != nil {
-		return nil, apperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
 	respData := &sessiondto.GetMeDataResp{User: userResp}
@@ -41,7 +41,7 @@ func (uc *UC) GetMe(
 	if config.Current.SystemInfo.NextStep != "" && user.IsAdmin() {
 		sysStatus, err := uc.systemStatusRepo.Get(ctx, uc.db)
 		if err != nil {
-			return nil, apperrors.Wrap(err)
+			return nil, hperrors.Wrap(err)
 		}
 		config.Current.SystemInfo.NextStep = sysStatus.NextStep
 		respData.NextStep = string(sysStatus.NextStep)

@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/apperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
@@ -133,7 +133,7 @@ func TestProcessRefs_CircularReference(t *testing.T) {
 
 	err := s.processRefs(envA, data)
 	assert.Error(t, err)
-	assert.True(t, errors.Is(err, apperrors.ErrEnvVarCircularReference))
+	assert.True(t, errors.Is(err, hperrors.ErrEnvVarCircularReference))
 }
 
 func TestProcessRefs_SelfReference(t *testing.T) {
@@ -149,7 +149,7 @@ func TestProcessRefs_SelfReference(t *testing.T) {
 
 	err := s.processRefs(envA, data)
 	assert.Error(t, err)
-	assert.True(t, errors.Is(err, apperrors.ErrEnvVarCircularReference))
+	assert.True(t, errors.Is(err, hperrors.ErrEnvVarCircularReference))
 }
 
 func TestProcessRefs_MissingVar(t *testing.T) {
@@ -258,7 +258,7 @@ func TestProcessRefs_ExternalRefs(t *testing.T) {
 	}
 	err = s.processRefs(envShared, dataShared)
 	assert.Error(t, err)
-	assert.True(t, errors.Is(err, apperrors.ErrSharedEnvVarContainExternalReference))
+	assert.True(t, errors.Is(err, hperrors.ErrSharedEnvVarContainExternalReference))
 }
 
 func TestProcessRefs_LiteralAndNoRef(t *testing.T) {

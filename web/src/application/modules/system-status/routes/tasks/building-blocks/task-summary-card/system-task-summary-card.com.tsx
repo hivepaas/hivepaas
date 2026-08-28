@@ -9,7 +9,7 @@ import ReactTimeAgo from "react-time-ago";
 import type { SystemTask } from "~/system-status/domain";
 import { SystemTaskStatus } from "~/system-status/domain";
 
-import { LogViewerActionButtons } from "@application/shared/components";
+import { LogViewerActionButtons, PopConfirm } from "@application/shared/components";
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import { Button, Checkbox, Skeleton } from "@/components/ui";
@@ -100,10 +100,12 @@ export function SystemTaskSummaryCard({
     variant = "list",
     isCancelling = false,
     isFullscreen = false,
+    isFullView = false,
     fontSize,
     onCancel,
     onClick,
     onToggleFullscreen,
+    onToggleFullView,
     onCycleFontSize,
 }: SystemTaskSummaryCardProps) {
     const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(false);
@@ -147,18 +149,28 @@ export function SystemTaskSummaryCard({
                         <div className="flex flex-wrap items-center gap-3">
                             <StatusBadge status={task.status} />
                             {onCancel && canCancelTask(task) && (
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    className="h-auto p-0 text-primary"
-                                    isLoading={isCancelling}
-                                    onClick={event => {
-                                        event.stopPropagation();
+                                <PopConfirm
+                                    title="Cancel task"
+                                    description="Are you sure you want to cancel this task?"
+                                    confirmText="Cancel task"
+                                    cancelText="Cancel"
+                                    variant="destructive"
+                                    onConfirm={() => {
                                         onCancel(task.id);
                                     }}
                                 >
-                                    Cancel Task
-                                </Button>
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        className="h-auto p-0 text-primary"
+                                        isLoading={isCancelling}
+                                        onClick={event => {
+                                            event.stopPropagation();
+                                        }}
+                                    >
+                                        Cancel Task
+                                    </Button>
+                                </PopConfirm>
                             )}
                             {variant === "details" && (
                                 <Button
@@ -187,8 +199,10 @@ export function SystemTaskSummaryCard({
                         {variant === "details" && onToggleFullscreen && (
                             <LogViewerActionButtons
                                 isFullscreen={isFullscreen}
+                                isFullView={isFullView}
                                 fontSize={fontSize}
                                 onToggleFullscreen={onToggleFullscreen}
+                                onToggleFullView={onToggleFullView}
                                 onCycleFontSize={onCycleFontSize}
                             />
                         )}
@@ -308,9 +322,11 @@ interface SystemTaskSummaryCardProps {
     variant?: SystemTaskCardVariant;
     isCancelling?: boolean;
     isFullscreen?: boolean;
+    isFullView?: boolean;
     fontSize?: number;
     onCancel?: (taskID: string) => void;
     onClick?: () => void;
     onToggleFullscreen?: () => void;
+    onToggleFullView?: () => void;
     onCycleFontSize?: () => void;
 }

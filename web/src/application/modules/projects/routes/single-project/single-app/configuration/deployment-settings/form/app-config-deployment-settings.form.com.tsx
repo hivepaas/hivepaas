@@ -64,6 +64,7 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
                           id: data.repoSource.credentials.id,
                           name: data.repoSource.credentials.name,
                           type: data.repoSource.credentials.type,
+                          kind: data.repoSource.credentials.kind,
                       }
                     : undefined,
                 dockerfile: {

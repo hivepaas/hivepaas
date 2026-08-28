@@ -11,19 +11,21 @@ import "@xterm/xterm/css/xterm.css";
 import { LogsViewerToolbar } from "./building-blocks";
 import {
     DEFAULT_DOWNLOAD_FILE_NAME,
-    DEFAULT_LOG_VIEWER_HEIGHT,
     LOG_FONT_SIZES,
+    LOG_SEARCH_DECORATIONS,
     TERMINAL_SCROLLBACK,
 } from "./logs-viewer.constants";
 import styles from "./logs-viewer.module.scss";
 import type { LogsViewerProps, LogsViewerSearchResult } from "./logs-viewer.types";
 import { buildDisplayedLogFrames, formatFramesForXterm, getPlainLogLines } from "./logs-viewer.utils";
+import { useFullViewHeight } from "./use-full-view-height";
 
 export function LogsViewer({
     frames,
     isStreaming = false,
     isRefreshPending = false,
-    height = DEFAULT_LOG_VIEWER_HEIGHT,
+    height,
+    isFullView = false,
     fontSize: controlledFontSize,
     downloadFileName = DEFAULT_DOWNLOAD_FILE_NAME,
     defaultShowDebugLogs = false,
@@ -93,10 +95,16 @@ export function LogsViewer({
     }, [isTextWrapped, longestLineLength]);
 
     useEffect(() => {
-        if (terminalRef.current) {
-            terminalRef.current.options.fontSize = currentFontSize;
-            updateDimensions();
+        if (!terminalRef.current) {
+            return undefined;
         }
+
+        terminalRef.current.options.fontSize = currentFontSize;
+        updateDimensions();
+        const timer = setTimeout(updateDimensions, 50);
+        return () => {
+            clearTimeout(timer);
+        };
     }, [currentFontSize, updateDimensions]);
 
     // Initialize xterm
@@ -122,7 +130,9 @@ export function LogsViewer({
             theme: {
                 background: "#0f172a",
                 foreground: "#e5e7eb",
-                selectionBackground: "#334155",
+                selectionBackground: "#f59e0b",
+                selectionForeground: "#000000",
+                selectionInactiveBackground: "#d97706",
                 scrollbarSliderBackground: "#334155",
                 scrollbarSliderHoverBackground: "#475569",
                 scrollbarSliderActiveBackground: "#64748b",
@@ -270,14 +280,7 @@ export function LogsViewer({
                 incremental: true,
                 regex: false,
                 caseSensitive: false,
-                decorations: {
-                    matchBackground: "#4338ca",
-                    activeMatchBackground: "#eab308",
-                    matchBorder: "#6366f1",
-                    activeMatchBorder: "#fde047",
-                    matchOverviewRuler: "transparent",
-                    activeMatchColorOverviewRuler: "transparent",
-                },
+                decorations: LOG_SEARCH_DECORATIONS,
             });
         } catch {
             try {
@@ -301,14 +304,7 @@ export function LogsViewer({
                 incremental: false,
                 regex: false,
                 caseSensitive: false,
-                decorations: {
-                    matchBackground: "#4338ca",
-                    activeMatchBackground: "#eab308",
-                    matchBorder: "#6366f1",
-                    activeMatchBorder: "#fde047",
-                    matchOverviewRuler: "transparent",
-                    activeMatchColorOverviewRuler: "transparent",
-                },
+                decorations: LOG_SEARCH_DECORATIONS,
             });
         } catch {
             try {
@@ -331,14 +327,7 @@ export function LogsViewer({
             searchAddonRef.current?.findPrevious(searchTerm, {
                 regex: false,
                 caseSensitive: false,
-                decorations: {
-                    matchBackground: "#4338ca",
-                    activeMatchBackground: "#eab308",
-                    matchBorder: "#6366f1",
-                    activeMatchBorder: "#fde047",
-                    matchOverviewRuler: "transparent",
-                    activeMatchColorOverviewRuler: "transparent",
-                },
+                decorations: LOG_SEARCH_DECORATIONS,
             });
         } catch {
             try {
@@ -390,17 +379,32 @@ export function LogsViewer({
         }
     }, [isTextWrapped]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // Refit when fullscreen toggles
+    const { containerRef: frameContainerRef, fullViewHeight } = useFullViewHeight({
+        enabled: !isFullscreen,
+        minHeight: 250,
+    });
+
+    // Refit when fullscreen or fullViewHeight toggles
     useEffect(() => {
         updateDimensions();
         const timer = setTimeout(updateDimensions, 50);
         return () => {
             clearTimeout(timer);
         };
-    }, [isFullscreen, updateDimensions]);
+    }, [fullViewHeight, isFullscreen, updateDimensions]);
 
-    const frameHeight = typeof height === "number" ? `${height}px` : height;
     const isFlexibleHeight = isFullscreen || height === "100%";
+    const frameHeight = isFlexibleHeight
+        ? undefined
+        : isFullView && fullViewHeight !== null
+          ? `${fullViewHeight}px`
+          : height !== undefined
+            ? typeof height === "number"
+                ? `${height}px`
+                : height
+            : fullViewHeight !== null
+              ? `${fullViewHeight}px`
+              : undefined;
 
     return (
         <div
@@ -447,6 +451,7 @@ export function LogsViewer({
             />
 
             <div
+                ref={frameContainerRef}
                 className={cn("flex min-h-0", isFlexibleHeight ? "flex-1 w-full" : "w-full")}
                 style={isFlexibleHeight ? undefined : { height: frameHeight }}
             >

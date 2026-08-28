@@ -13,7 +13,7 @@ import {
     EAppDeploymentTriggerSource,
 } from "~/projects/module-shared/enums";
 
-import { LogViewerActionButtons } from "@application/shared/components";
+import { LogViewerActionButtons, PopConfirm } from "@application/shared/components";
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import type { OpenApiConstant } from "@infrastructure/api";
@@ -229,10 +229,12 @@ export function DeploymentSummaryCard({
     variant = "list",
     isCancelling = false,
     isFullscreen = false,
+    isFullView = false,
     fontSize,
     onCancel,
     onClick,
     onToggleFullscreen,
+    onToggleFullView,
     onCycleFontSize,
 }: DeploymentSummaryCardProps) {
     const { output } = deployment;
@@ -277,18 +279,28 @@ export function DeploymentSummaryCard({
                         <div className="flex flex-wrap items-center gap-3">
                             <StatusBadge status={deployment.status} />
                             {onCancel && canCancelDeployment(deployment.status) && (
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    className="h-auto p-0 text-primary"
-                                    isLoading={isCancelling}
-                                    onClick={event => {
-                                        event.stopPropagation();
+                                <PopConfirm
+                                    title="Cancel deployment"
+                                    description="Are you sure you want to cancel this deployment?"
+                                    confirmText="Cancel deployment"
+                                    cancelText="Cancel"
+                                    variant="destructive"
+                                    onConfirm={() => {
                                         onCancel(deployment.id);
                                     }}
                                 >
-                                    Cancel Deployment
-                                </Button>
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        className="h-auto p-0 text-primary"
+                                        isLoading={isCancelling}
+                                        onClick={event => {
+                                            event.stopPropagation();
+                                        }}
+                                    >
+                                        Cancel Deployment
+                                    </Button>
+                                </PopConfirm>
                             )}
                             {variant === "details" && (
                                 <Button
@@ -319,8 +331,10 @@ export function DeploymentSummaryCard({
                         {variant === "details" && onToggleFullscreen && (
                             <LogViewerActionButtons
                                 isFullscreen={isFullscreen}
+                                isFullView={isFullView}
                                 fontSize={fontSize}
                                 onToggleFullscreen={onToggleFullscreen}
+                                onToggleFullView={onToggleFullView}
                                 onCycleFontSize={onCycleFontSize}
                             />
                         )}
@@ -449,9 +463,11 @@ interface DeploymentSummaryCardProps {
     variant?: DeploymentSummaryCardVariant;
     isCancelling?: boolean;
     isFullscreen?: boolean;
+    isFullView?: boolean;
     fontSize?: number;
     onCancel?: (deploymentID: string) => void;
     onClick?: () => void;
     onToggleFullscreen?: () => void;
+    onToggleFullView?: () => void;
     onCycleFontSize?: () => void;
 }

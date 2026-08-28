@@ -18,6 +18,7 @@ export function ScheduledJobTaskLogsViewer({
     status,
     fontSize,
     height,
+    isFullView,
     onStreamClosedWhileInProgress,
 }: ScheduledJobTaskLogsViewerProps) {
     const { streams } = useAppScheduledJobTaskLogsWsApi();
@@ -36,6 +37,7 @@ export function ScheduledJobTaskLogsViewer({
             downloadFileName={`scheduled-job-task-${taskID}-logs.txt`}
             fontSize={fontSize}
             height={height}
+            isFullView={isFullView}
             onStreamClosedWhileInProgress={onStreamClosedWhileInProgress}
         />
     );
@@ -50,6 +52,7 @@ interface ScheduledJobTaskLogsScope {
     status: OpenApiConstant<EAppScheduledJobTaskStatus>;
     fontSize?: number;
     height?: number | string;
+    isFullView?: boolean;
     onStreamClosedWhileInProgress: () => void;
 }
 

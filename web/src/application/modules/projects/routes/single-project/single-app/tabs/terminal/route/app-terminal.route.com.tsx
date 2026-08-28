@@ -14,6 +14,7 @@ import { AppTerminalPanel } from "../building-blocks";
 export function AppTerminalRoute() {
     const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
     const [selectedShell, setSelectedShell] = useState("");
+    const [isFullView, setIsFullView] = useState(false);
 
     invariant(projectID, "projectID must be defined");
     invariant(env, "env must be defined");
@@ -41,7 +42,7 @@ export function AppTerminalRoute() {
     }, [supportedShells]);
 
     return (
-        <section className={cn(listBox)}>
+        <section className={cn(listBox, isFullView && "max-w-none")}>
             {isInfoLoading ? (
                 <AppLoader />
             ) : isTerminalEnabled ? (
@@ -51,6 +52,10 @@ export function AppTerminalRoute() {
                     appID={appID}
                     supportedShells={supportedShells}
                     selectedShell={selectedShell}
+                    isFullView={isFullView}
+                    onToggleFullView={() => {
+                        setIsFullView(current => !current);
+                    }}
                     onSelectedShellChange={setSelectedShell}
                 />
             ) : (

@@ -59,7 +59,8 @@ export function AppDeploymentDetailsRoute() {
     invariant(deploymentId, "deploymentId must be defined");
 
     const [shouldPollAfterStreamClose, setShouldPollAfterStreamClose] = useState(false);
-    const { isFullscreen, toggleFullscreen, fontSize, cycleFontSize } = useLogViewerControls();
+    const { isFullscreen, toggleFullscreen, isFullView, toggleFullView, fontSize, cycleFontSize } =
+        useLogViewerControls();
 
     const {
         data: deploymentResponse,
@@ -108,6 +109,7 @@ export function AppDeploymentDetailsRoute() {
         <section
             className={cn(
                 listBox,
+                isFullView && "max-w-none",
                 isFullscreen &&
                     "!max-w-none !w-auto fixed inset-4 z-50 min-h-0 rounded-lg border bg-background p-4 shadow-2xl flex flex-col",
             )}
@@ -122,8 +124,10 @@ export function AppDeploymentDetailsRoute() {
                         variant="details"
                         isCancelling={isCancelling}
                         isFullscreen={isFullscreen}
+                        isFullView={isFullView}
                         fontSize={fontSize}
                         onToggleFullscreen={toggleFullscreen}
+                        onToggleFullView={toggleFullView}
                         onCycleFontSize={cycleFontSize}
                         onCancel={id => {
                             cancelDeployment({
@@ -142,6 +146,7 @@ export function AppDeploymentDetailsRoute() {
                             status={deployment.status}
                             fontSize={fontSize}
                             height={isFullscreen ? "100%" : undefined}
+                            isFullView={isFullView}
                             onStreamClosedWhileInProgress={handleStreamClosedWhileInProgress}
                         />
                     </DeploymentSummaryCard>

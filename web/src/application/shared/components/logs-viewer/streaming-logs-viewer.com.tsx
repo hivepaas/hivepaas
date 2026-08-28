@@ -6,8 +6,6 @@ import { LogsViewer } from "./logs-viewer.com";
 import { parseLogsViewerFrames } from "./logs-viewer.utils";
 import { useBufferedLogFrames } from "./use-buffered-log-frames";
 
-const DEFAULT_STREAMING_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 340px), 2000px)";
-
 export interface StreamingLogsViewerProps {
     subscribe: (handlers: WebSocketHandlers, signal?: AbortSignal) => Promise<WebSocketSubscription>;
     isNotStarted?: boolean;
@@ -16,6 +14,7 @@ export interface StreamingLogsViewerProps {
     defaultShowDebugLogs?: boolean;
     fontSize?: number;
     height?: number | string;
+    isFullView?: boolean;
     onStreamClosedWhileInProgress?: () => void;
 }
 
@@ -26,7 +25,8 @@ export function StreamingLogsViewer({
     downloadFileName = "logs.txt",
     defaultShowDebugLogs = false,
     fontSize,
-    height = DEFAULT_STREAMING_LOG_VIEWER_HEIGHT,
+    height,
+    isFullView = false,
     onStreamClosedWhileInProgress,
 }: StreamingLogsViewerProps) {
     const { frames: logs, appendFrames, reset } = useBufferedLogFrames();
@@ -156,6 +156,7 @@ export function StreamingLogsViewer({
         <LogsViewer
             frames={logs}
             height={height}
+            isFullView={isFullView}
             isStreaming={isStreaming}
             onRefresh={!isConnectionActive && showRefresh ? handleRefresh : undefined}
             isRefreshPending={isRefreshPending}

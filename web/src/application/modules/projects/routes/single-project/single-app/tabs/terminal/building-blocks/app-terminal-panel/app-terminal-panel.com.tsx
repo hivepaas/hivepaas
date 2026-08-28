@@ -6,22 +6,35 @@ import type { WebSocketReadyState, WebSocketSubscription } from "@infrastructure
 import { cn } from "@lib/utils";
 import { ClipboardAddon } from "@xterm/addon-clipboard";
 import { FitAddon } from "@xterm/addon-fit";
+import { SearchAddon } from "@xterm/addon-search";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
-import { Download, Maximize2, Minimize2, TextCursorInputIcon, Upload } from "lucide-react";
+import {
+    ChevronDown,
+    ChevronUp,
+    Download,
+    Maximize2,
+    Minimize2,
+    Search,
+    TextCursorInputIcon,
+    Upload,
+    X,
+} from "lucide-react";
 import { useAppTerminalWsApi } from "~/projects/api";
 import { type AppTerminalInitMessage, buildAppTerminalResizeMessage } from "~/projects/api/services";
 import { useExportContainerFilesDialog } from "~/projects/dialogs/export-container-files";
 import { useImportFilesToContainerDialog } from "~/projects/dialogs/import-files-to-container";
 
-import { TextZoomIcon } from "@assets/icons";
+import { FullViewIcon, TextZoomIcon } from "@assets/icons";
+
+import { LOG_SEARCH_DECORATIONS, useFullViewHeight } from "@application/shared/components/logs-viewer";
 
 import { AppTerminalCommandTemplatePanel } from "./app-terminal-command-template-panel.com";
 import styles from "./app-terminal-panel.module.scss";
 
-const TERMINAL_HEIGHT = "clamp(700px, calc(100vh - 330px), 2000px)";
+const TERMINAL_HEIGHT = "clamp(350px, calc(100vh - 400px), 2000px)";
 const TERMINAL_FONT_SIZES = [14, 16, 18, 20] as const;
 const TERMINAL_SCROLLBACK = 10_000;
 
@@ -31,12 +44,17 @@ export function AppTerminalPanel({
     appID,
     supportedShells,
     selectedShell,
+    isFullView: controlledFullView,
+    onToggleFullView,
     onSelectedShellChange,
 }: AppTerminalPanelProps) {
     const terminalElementRef = useRef<HTMLDivElement | null>(null);
     const terminalFrameRef = useRef<HTMLDivElement | null>(null);
     const terminalRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
+    const searchAddonRef = useRef<SearchAddon | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [searchResult, setSearchResult] = useState<{ resultIndex: number; resultCount: number } | null>(null);
     const subscriptionRef = useRef<WebSocketSubscription | null>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
     const resizeFrameRef = useRef<number | null>(null);
@@ -44,8 +62,19 @@ export function AppTerminalPanel({
     const lastSentTerminalSizeRef = useRef({ cols: 0, rows: 0 });
     const inputEncoderRef = useRef(new TextEncoder());
     const [fontSizeIndex, setFontSizeIndex] = useState(0);
+    const [internalFullView, setInternalFullView] = useState(false);
+    const isFullView = controlledFullView ?? internalFullView;
+    const handleToggleFullView =
+        onToggleFullView ??
+        (() => {
+            setInternalFullView(current => !current);
+        });
     const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const { containerRef: terminalContainerRef, fullViewHeight } = useFullViewHeight({
+        enabled: !isFullscreen,
+        minHeight: 250,
+    });
     const [isCommandTemplatePanelOpen, setIsCommandTemplatePanelOpen] = useState(false);
     const [connectedInfo, setConnectedInfo] = useState<AppTerminalInitMessage | null>(null);
     const { streams } = useAppTerminalWsApi();
@@ -113,7 +142,7 @@ export function AppTerminalPanel({
         targetSocket.send(JSON.stringify(buildAppTerminalResizeMessage(cols, rows)));
     }, []);
 
-    const fitTerminal = useCallback(() => {
+    const fitTerminal = useCallback((force = false) => {
         const frame = terminalFrameRef.current;
         const fitAddon = fitAddonRef.current;
         const terminal = terminalRef.current;
@@ -129,7 +158,7 @@ export function AppTerminalPanel({
         }
 
         const lastObserved = lastObservedFrameSizeRef.current;
-        if (lastObserved.clientWidth === clientWidth && lastObserved.clientHeight === clientHeight) {
+        if (!force && lastObserved.clientWidth === clientWidth && lastObserved.clientHeight === clientHeight) {
             return;
         }
 
@@ -142,40 +171,55 @@ export function AppTerminalPanel({
         }
     }, []);
 
-    const fitAndSendResize = useCallback(() => {
-        const terminal = terminalRef.current;
-        const previousCols = terminal?.cols ?? 0;
-        const previousRows = terminal?.rows ?? 0;
+    const fitAndSendResize = useCallback(
+        (force = false) => {
+            const terminal = terminalRef.current;
+            const previousCols = terminal?.cols ?? 0;
+            const previousRows = terminal?.rows ?? 0;
 
-        fitTerminal();
+            fitTerminal(force);
 
-        const nextCols = terminal?.cols ?? 0;
-        const nextRows = terminal?.rows ?? 0;
+            const nextCols = terminal?.cols ?? 0;
+            const nextRows = terminal?.rows ?? 0;
 
-        if (previousCols === nextCols && previousRows === nextRows) {
-            return;
-        }
+            if (previousCols === nextCols && previousRows === nextRows && !force) {
+                return;
+            }
 
-        sendCurrentResize();
-    }, [fitTerminal, sendCurrentResize]);
+            sendCurrentResize();
+        },
+        [fitTerminal, sendCurrentResize],
+    );
 
-    const scheduleFitAndResize = useCallback(() => {
-        if (resizeFrameRef.current !== null) {
-            window.cancelAnimationFrame(resizeFrameRef.current);
-        }
+    const scheduleFitAndResize = useCallback(
+        (force = false) => {
+            if (resizeFrameRef.current !== null) {
+                window.cancelAnimationFrame(resizeFrameRef.current);
+            }
 
-        resizeFrameRef.current = window.requestAnimationFrame(() => {
-            resizeFrameRef.current = null;
-            fitAndSendResize();
-        });
-    }, [fitAndSendResize]);
+            resizeFrameRef.current = window.requestAnimationFrame(() => {
+                resizeFrameRef.current = null;
+                fitAndSendResize(force);
+            });
+        },
+        [fitAndSendResize],
+    );
 
     useEffect(() => {
-        if (terminalRef.current) {
-            terminalRef.current.options.fontSize = currentFontSize;
-            scheduleFitAndResize();
+        if (!terminalRef.current) {
+            return undefined;
         }
-    }, [currentFontSize, scheduleFitAndResize]);
+
+        terminalRef.current.options.fontSize = currentFontSize;
+        lastObservedFrameSizeRef.current = { clientWidth: 0, clientHeight: 0 };
+        scheduleFitAndResize(true);
+        const timer = setTimeout(() => {
+            fitAndSendResize(true);
+        }, 50);
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [currentFontSize, fitAndSendResize, scheduleFitAndResize]);
 
     const closeConnection = useCallback(() => {
         abortControllerRef.current?.abort();
@@ -280,77 +324,93 @@ export function AppTerminalPanel({
     }, [appID, canConnect, closeConnection, env, fitTerminal, projectID, selectedShell, sendCurrentResize, streams]);
 
     useEffect(() => {
-        const element = terminalElementRef.current;
-        const frame = terminalFrameRef.current;
+        const frameElement = terminalFrameRef.current;
+        const terminalElement = terminalElementRef.current;
 
-        if (!element || !frame) {
+        if (!frameElement || !terminalElement) {
             return;
         }
 
-        lastObservedFrameSizeRef.current = { clientWidth: 0, clientHeight: 0 };
-        lastSentTerminalSizeRef.current = { cols: 0, rows: 0 };
-
         const terminal = new Terminal({
-            convertEol: true,
             cursorBlink: true,
-            fontFamily: "Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-            fontSize: TERMINAL_FONT_SIZES[0],
+            cursorStyle: "bar",
+            fontSize: currentFontSize,
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
             scrollback: TERMINAL_SCROLLBACK,
             theme: {
                 background: "#0f172a",
-                foreground: "#e5e7eb",
-                cursor: "#f8fafc",
-                selectionBackground: "#334155",
-                scrollbarSliderBackground: "#334155",
-                scrollbarSliderHoverBackground: "#475569",
-                scrollbarSliderActiveBackground: "#64748b",
+                foreground: "#e2e8f0",
+                cursor: "#38bdf8",
+                selectionBackground: "#f59e0b",
+                selectionForeground: "#000000",
+                selectionInactiveBackground: "#d97706",
             },
         });
+
         const fitAddon = new FitAddon();
         const webLinksAddon = new WebLinksAddon();
         const clipboardAddon = new ClipboardAddon();
+        const searchAddon = new SearchAddon();
+
         terminal.loadAddon(fitAddon);
         terminal.loadAddon(webLinksAddon);
         terminal.loadAddon(clipboardAddon);
-        terminal.open(element);
-        terminalRef.current = terminal;
-        fitAddonRef.current = fitAddon;
+        terminal.loadAddon(searchAddon);
 
         let webglAddon: WebglAddon | null = null;
+
         try {
             webglAddon = new WebglAddon();
-            webglAddon.onContextLoss(() => {
-                webglAddon?.dispose();
-                webglAddon = null;
-            });
             terminal.loadAddon(webglAddon);
-        } catch (error) {
-            console.warn("WebGL addon not supported or failed to initialize, fallback to default renderer", error);
+        } catch {
             webglAddon = null;
         }
+
+        terminal.open(terminalElement);
+        terminalRef.current = terminal;
+        fitAddonRef.current = fitAddon;
+        searchAddonRef.current = searchAddon;
+
+        const searchDisposable = searchAddon.onDidChangeResults(event => {
+            setSearchResult({ resultIndex: event.resultIndex, resultCount: event.resultCount });
+        });
 
         const dataDisposable = terminal.onData(data => {
             const socket = subscriptionRef.current?.socket;
 
-            if (socket?.readyState !== WebSocket.OPEN) {
-                return;
+            if (socket?.readyState === WebSocket.OPEN) {
+                socket.send(inputEncoderRef.current.encode(data));
             }
-
-            socket.send(inputEncoderRef.current.encode(data));
         });
-        const resizeDisposable = terminal.onResize(size => {
-            sendResizeToSocket(subscriptionRef.current?.socket, size.cols, size.rows);
-        });
-        const resizeObserver = new ResizeObserver(scheduleFitAndResize);
 
-        resizeObserver.observe(frame);
-        window.addEventListener("resize", scheduleFitAndResize);
+        const resizeDisposable = terminal.onResize(({ cols, rows }) => {
+            const socket = subscriptionRef.current?.socket;
+
+            if (socket) {
+                sendResizeToSocket(socket, cols, rows);
+            }
+        });
+
+        function handleWindowResize() {
+            scheduleFitAndResize();
+        }
+
+        const resizeObserver = new ResizeObserver(() => {
+            scheduleFitAndResize();
+        });
+
+        resizeObserver.observe(frameElement);
+        window.addEventListener("resize", handleWindowResize);
+
         scheduleFitAndResize();
 
         return () => {
             closeConnection();
+            searchDisposable.dispose();
+            searchAddon.dispose();
+            searchAddonRef.current = null;
             resizeObserver.disconnect();
-            window.removeEventListener("resize", scheduleFitAndResize);
+            window.removeEventListener("resize", handleWindowResize);
             dataDisposable.dispose();
             resizeDisposable.dispose();
             webglAddon?.dispose();
@@ -365,12 +425,100 @@ export function AppTerminalPanel({
                 resizeFrameRef.current = null;
             }
         };
-    }, [closeConnection, scheduleFitAndResize, sendResizeToSocket]);
+    }, [closeConnection, scheduleFitAndResize, sendResizeToSocket]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handleFindNext = useCallback(() => {
+        if (!searchTerm.trim()) {
+            return;
+        }
+        try {
+            searchAddonRef.current?.findNext(searchTerm, {
+                incremental: false,
+                regex: false,
+                caseSensitive: false,
+                decorations: LOG_SEARCH_DECORATIONS,
+            });
+        } catch {
+            try {
+                searchAddonRef.current?.findNext(searchTerm, {
+                    incremental: false,
+                    regex: false,
+                    caseSensitive: false,
+                });
+            } catch {
+                // Ignore search error
+            }
+        }
+    }, [searchTerm]);
+
+    const handleFindPrevious = useCallback(() => {
+        if (!searchTerm.trim()) {
+            return;
+        }
+        try {
+            searchAddonRef.current?.findPrevious(searchTerm, {
+                regex: false,
+                caseSensitive: false,
+                decorations: LOG_SEARCH_DECORATIONS,
+            });
+        } catch {
+            try {
+                searchAddonRef.current?.findPrevious(searchTerm, {
+                    regex: false,
+                    caseSensitive: false,
+                });
+            } catch {
+                // Ignore search error
+            }
+        }
+    }, [searchTerm]);
+
+    useEffect(() => {
+        const searchAddon = searchAddonRef.current;
+        if (!searchAddon) {
+            return;
+        }
+
+        if (!searchTerm.trim()) {
+            try {
+                searchAddon.clearDecorations();
+            } catch {
+                // Ignore clear error
+            }
+            setSearchResult(null);
+            return;
+        }
+
+        try {
+            searchAddon.findNext(searchTerm, {
+                incremental: true,
+                regex: false,
+                caseSensitive: false,
+                decorations: LOG_SEARCH_DECORATIONS,
+            });
+        } catch {
+            try {
+                searchAddon.findNext(searchTerm, {
+                    incremental: true,
+                    regex: false,
+                    caseSensitive: false,
+                });
+            } catch {
+                setSearchResult(null);
+            }
+        }
+    }, [searchTerm]);
 
     useEffect(() => {
         lastObservedFrameSizeRef.current = { clientWidth: 0, clientHeight: 0 };
-        scheduleFitAndResize();
-    }, [isCommandTemplatePanelOpen, isFullscreen, scheduleFitAndResize]);
+        scheduleFitAndResize(true);
+        const timer = setTimeout(() => {
+            fitAndSendResize(true);
+        }, 50);
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [fullViewHeight, isCommandTemplatePanelOpen, isFullscreen, isFullView, fitAndSendResize, scheduleFitAndResize]);
 
     useEffect(() => {
         if (!isFullscreen) {
@@ -454,6 +602,22 @@ export function AppTerminalPanel({
                                 type="button"
                                 variant="ghost"
                                 size="icon-sm"
+                                aria-label={isFullView ? "Exit full view" : "Full view"}
+                                className={cn(isFullView && "text-primary bg-accent")}
+                                onClick={handleToggleFullView}
+                            >
+                                <FullViewIcon className="size-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isFullView ? "Exit full view" : "Full view"}</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
                                 aria-label={isFullscreen ? "Exit fullscreen terminal" : "Fullscreen terminal"}
                                 onClick={() => {
                                     setIsFullscreen(current => !current);
@@ -481,48 +645,118 @@ export function AppTerminalPanel({
                             className="h-auto px-0 py-0 text-xs sm:text-sm"
                             onClick={closeConnection}
                         >
-                            Stop
+                            Disconnect
                         </Button>
                     )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <Button
-                        type="button"
-                        variant="link"
-                        className="h-auto py-0 text-xs sm:text-sm gap-1"
-                        aria-pressed={isCommandTemplatePanelOpen}
-                        onClick={() => {
-                            setIsCommandTemplatePanelOpen(current => !current);
-                        }}
-                    >
-                        <TextCursorInputIcon className="size-3.5 sm:size-4" />
-                        Insert Command
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="link"
-                        className="h-auto py-0 text-xs sm:text-sm gap-1"
-                        onClick={openImportDialog}
-                    >
-                        <Upload className="size-3.5 sm:size-4" />
-                        Upload
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="link"
-                        className="h-auto py-0 text-xs sm:text-sm gap-1"
-                        onClick={openExportDialog}
-                    >
-                        <Download className="size-3.5 sm:size-4" />
-                        Download
-                    </Button>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
+                    <div className="relative flex items-center min-w-0 w-full sm:w-56 max-w-full">
+                        <Search className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none" />
+                        <input
+                            type="text"
+                            placeholder="Find in terminal..."
+                            value={searchTerm}
+                            onChange={e => {
+                                setSearchTerm(e.target.value);
+                            }}
+                            onKeyDown={e => {
+                                if (e.key === "Enter") {
+                                    if (e.shiftKey) {
+                                        handleFindPrevious();
+                                    } else {
+                                        handleFindNext();
+                                    }
+                                }
+                            }}
+                            className="w-full h-8 sm:h-9 pl-8 pr-16 text-xs sm:text-sm rounded-md border border-input bg-background/50 focus:bg-background px-3 py-1 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                        {searchTerm && (
+                            <div className="absolute right-1.5 flex items-center gap-0.5 text-muted-foreground">
+                                {searchResult && (
+                                    <span className="text-[10px] sm:text-xs font-mono mr-1 text-muted-foreground">
+                                        {searchResult.resultCount > 0
+                                            ? `${searchResult.resultIndex + 1}/${searchResult.resultCount}`
+                                            : "0/0"}
+                                    </span>
+                                )}
+                                <button
+                                    type="button"
+                                    aria-label="Previous match"
+                                    onClick={handleFindPrevious}
+                                    className="p-1 hover:text-foreground rounded hover:bg-muted"
+                                >
+                                    <ChevronUp className="size-3 sm:size-3.5" />
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label="Next match"
+                                    onClick={handleFindNext}
+                                    className="p-1 hover:text-foreground rounded hover:bg-muted"
+                                >
+                                    <ChevronDown className="size-3 sm:size-3.5" />
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-label="Clear search"
+                                    onClick={() => {
+                                        setSearchTerm("");
+                                    }}
+                                    className="p-1 hover:text-foreground rounded hover:bg-muted"
+                                >
+                                    <X className="size-3 sm:size-3.5" />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+                        <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto py-0 text-xs sm:text-sm gap-1"
+                            aria-pressed={isCommandTemplatePanelOpen}
+                            onClick={() => {
+                                setIsCommandTemplatePanelOpen(current => !current);
+                            }}
+                        >
+                            <TextCursorInputIcon className="size-3.5 sm:size-4" />
+                            Insert Command
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="link"
+                            disabled={!isConnectionActive}
+                            className="h-auto py-0 text-xs sm:text-sm gap-1"
+                            onClick={openImportDialog}
+                        >
+                            <Upload className="size-3.5 sm:size-4" />
+                            Upload
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="link"
+                            disabled={!isConnectionActive}
+                            className="h-auto py-0 text-xs sm:text-sm gap-1"
+                            onClick={openExportDialog}
+                        >
+                            <Download className="size-3.5 sm:size-4" />
+                            Download
+                        </Button>
+                    </div>
                 </div>
             </div>
 
             <div
+                ref={terminalContainerRef}
                 className={cn("flex min-h-0 gap-4", isFullscreen ? "flex-1" : "w-full")}
-                style={isFullscreen ? undefined : { height: TERMINAL_HEIGHT }}
+                style={
+                    isFullscreen
+                        ? undefined
+                        : fullViewHeight !== null
+                          ? { height: `${fullViewHeight}px` }
+                          : { height: TERMINAL_HEIGHT }
+                }
             >
                 <div
                     ref={terminalFrameRef}
@@ -583,6 +817,8 @@ interface AppTerminalPanelProps {
     appID: string;
     supportedShells: string[];
     selectedShell: string;
+    isFullView?: boolean;
+    onToggleFullView?: () => void;
     onSelectedShellChange: (shell: string) => void;
 }
 

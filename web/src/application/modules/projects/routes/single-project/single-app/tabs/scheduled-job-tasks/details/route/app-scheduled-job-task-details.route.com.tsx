@@ -62,7 +62,8 @@ export function AppScheduledJobTaskDetailsRoute() {
     invariant(taskId, "taskId must be defined");
 
     const [shouldPollAfterStreamClose, setShouldPollAfterStreamClose] = useState(false);
-    const { isFullscreen, toggleFullscreen, fontSize, cycleFontSize } = useLogViewerControls();
+    const { isFullscreen, toggleFullscreen, isFullView, toggleFullView, fontSize, cycleFontSize } =
+        useLogViewerControls();
 
     const {
         data: taskResponse,
@@ -112,6 +113,7 @@ export function AppScheduledJobTaskDetailsRoute() {
         <section
             className={cn(
                 listBox,
+                isFullView && "max-w-none",
                 isFullscreen &&
                     "!max-w-none !w-auto fixed inset-4 z-50 min-h-0 rounded-lg border bg-background p-4 shadow-2xl flex flex-col",
             )}
@@ -126,8 +128,10 @@ export function AppScheduledJobTaskDetailsRoute() {
                         variant="details"
                         isCancelling={isCancelling}
                         isFullscreen={isFullscreen}
+                        isFullView={isFullView}
                         fontSize={fontSize}
                         onToggleFullscreen={toggleFullscreen}
+                        onToggleFullView={toggleFullView}
                         onCycleFontSize={cycleFontSize}
                         onCancel={id => {
                             cancelTask({
@@ -148,6 +152,7 @@ export function AppScheduledJobTaskDetailsRoute() {
                             status={task.status}
                             fontSize={fontSize}
                             height={isFullscreen ? "100%" : undefined}
+                            isFullView={isFullView}
                             onStreamClosedWhileInProgress={handleStreamClosedWhileInProgress}
                         />
                     </ScheduledJobTaskSummaryCard>

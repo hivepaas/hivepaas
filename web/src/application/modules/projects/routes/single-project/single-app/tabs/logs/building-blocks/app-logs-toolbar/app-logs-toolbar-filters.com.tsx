@@ -8,7 +8,7 @@ import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { InputNumber } from "@/components/ui/input-number";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-const DURATION_OPTIONS = ["5m", "15m", "30m", "1h", "2h", "4h", "1d", "2d", "4d"] as const;
+const DURATION_OPTIONS = ["5m", "15m", "30m", "1h", "2h", "4h", "8h", "1d", "2d", "4d", "7d"] as const;
 
 export function AppLogsToolbarFilters({
     lines,

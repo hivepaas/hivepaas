@@ -10,6 +10,9 @@ export interface UseLogViewerControlsReturn {
     isFullscreen: boolean;
     setIsFullscreen: Dispatch<SetStateAction<boolean>>;
     toggleFullscreen: () => void;
+    isFullView: boolean;
+    setIsFullView: Dispatch<SetStateAction<boolean>>;
+    toggleFullView: () => void;
     fontSizeIndex: number;
     fontSize: number;
     cycleFontSize: () => void;
@@ -17,12 +20,17 @@ export interface UseLogViewerControlsReturn {
 
 export function useLogViewerControls(options: UseLogViewerControlsOptions = {}): UseLogViewerControlsReturn {
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isFullView, setIsFullView] = useState(false);
     const [fontSizeIndex, setFontSizeIndex] = useState(options.initialFontSizeIndex ?? 0);
 
     const fontSize = LOG_FONT_SIZES[fontSizeIndex] ?? 14;
 
     const toggleFullscreen = useCallback(() => {
         setIsFullscreen(current => !current);
+    }, []);
+
+    const toggleFullView = useCallback(() => {
+        setIsFullView(current => !current);
     }, []);
 
     const cycleFontSize = useCallback(() => {
@@ -51,6 +59,9 @@ export function useLogViewerControls(options: UseLogViewerControlsOptions = {}):
         isFullscreen,
         setIsFullscreen,
         toggleFullscreen,
+        isFullView,
+        setIsFullView,
+        toggleFullView,
         fontSizeIndex,
         fontSize,
         cycleFontSize,

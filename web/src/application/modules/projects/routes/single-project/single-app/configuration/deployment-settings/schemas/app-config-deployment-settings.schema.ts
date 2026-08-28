@@ -5,6 +5,7 @@ const SettingsRefSchema = z.object({
     id: z.string(),
     name: z.string(),
     type: z.string().optional(),
+    kind: z.string().optional(),
 });
 
 const OptionalSettingsRefSchema = SettingsRefSchema.nullish();

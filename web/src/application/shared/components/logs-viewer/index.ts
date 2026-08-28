@@ -7,3 +7,4 @@ export * from "./streaming-logs-viewer.com";
 export * from "./use-buffered-log-frames";
 export * from "./use-displayed-log-lines";
 export * from "./use-log-viewer-controls";
+export * from "./use-full-view-height";

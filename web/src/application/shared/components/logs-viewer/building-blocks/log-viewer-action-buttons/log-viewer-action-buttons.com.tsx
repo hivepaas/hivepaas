@@ -1,20 +1,25 @@
+import { cn } from "@lib/utils";
 import { Maximize2, Minimize2 } from "lucide-react";
 
-import { TextZoomIcon } from "@assets/icons";
+import { FullViewIcon, TextZoomIcon } from "@assets/icons";
 
 import { Button, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
 
 export interface LogViewerActionButtonsProps {
     isFullscreen?: boolean;
+    isFullView?: boolean;
     fontSize?: number;
     onToggleFullscreen?: () => void;
+    onToggleFullView?: () => void;
     onCycleFontSize?: () => void;
 }
 
 export function LogViewerActionButtons({
     isFullscreen,
+    isFullView,
     fontSize,
     onToggleFullscreen,
+    onToggleFullView,
     onCycleFontSize,
 }: LogViewerActionButtonsProps) {
     return (
@@ -36,6 +41,27 @@ export function LogViewerActionButtons({
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>{`Text size: ${fontSize}px`}</TooltipContent>
+                </Tooltip>
+            )}
+
+            {onToggleFullView && (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={isFullView ? "Exit full view" : "Full view"}
+                            className={cn(isFullView && "text-primary bg-accent")}
+                            onClick={event => {
+                                event.stopPropagation();
+                                onToggleFullView();
+                            }}
+                        >
+                            <FullViewIcon className="size-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{isFullView ? "Exit full view" : "Full view"}</TooltipContent>
                 </Tooltip>
             )}
 

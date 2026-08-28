@@ -14,8 +14,6 @@ import {
 
 import { AppLogsToolbarFilters, AppLogsToolbarStart } from "../app-logs-toolbar";
 
-const APP_LOG_VIEWER_HEIGHT = "clamp(700px, calc(100vh - 330px), 2000px)";
-
 export function AppLogsViewer({
     tabID,
     projectID,
@@ -32,6 +30,7 @@ export function AppLogsViewer({
     shouldAutoStream,
     fontSize,
     height,
+    isFullView,
     onLogsChange,
     onLinesChange,
     onSinceChange,
@@ -216,7 +215,8 @@ export function AppLogsViewer({
             isStreaming={isStreaming}
             isRefreshPending={isRefreshPending}
             hasLineNumbers={false}
-            height={height ?? APP_LOG_VIEWER_HEIGHT}
+            height={height}
+            isFullView={isFullView}
             fontSize={fontSize}
             downloadFileName={taskId ? `app-logs-${tabLabel}.txt` : "app-logs-aggregation.txt"}
             toolbarStart={
@@ -277,6 +277,7 @@ interface AppLogsViewerProps {
     shouldAutoStream: boolean;
     fontSize?: number;
     height?: number | string;
+    isFullView?: boolean;
     onLogsChange: (tabID: string, action: SetStateAction<LogsViewerFrame[]>) => void;
     onLinesChange: (tabID: string, action: SetStateAction<number | undefined>) => void;
     onSinceChange: (tabID: string, action: SetStateAction<Date | undefined>) => void;

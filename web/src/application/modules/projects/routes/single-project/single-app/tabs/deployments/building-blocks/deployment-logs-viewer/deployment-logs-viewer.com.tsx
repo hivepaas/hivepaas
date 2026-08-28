@@ -17,6 +17,7 @@ export function DeploymentLogsViewer({
     status,
     fontSize,
     height,
+    isFullView,
     onStreamClosedWhileInProgress,
 }: DeploymentLogsViewerProps) {
     const { streams } = useAppDeploymentLogsWsApi();
@@ -36,6 +37,7 @@ export function DeploymentLogsViewer({
             defaultShowDebugLogs
             fontSize={fontSize}
             height={height}
+            isFullView={isFullView}
             onStreamClosedWhileInProgress={onStreamClosedWhileInProgress}
         />
     );
@@ -49,6 +51,7 @@ interface DeploymentLogsScope {
     status: OpenApiConstant<EAppDeploymentStatus>;
     fontSize?: number;
     height?: number | string;
+    isFullView?: boolean;
     onStreamClosedWhileInProgress: () => void;
 }
 

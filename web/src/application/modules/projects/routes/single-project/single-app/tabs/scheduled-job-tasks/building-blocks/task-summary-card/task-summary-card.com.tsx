@@ -9,7 +9,7 @@ import ReactTimeAgo from "react-time-ago";
 import type { AppScheduledJobTask } from "~/projects/domain";
 import { EAppScheduledJobTaskStatus } from "~/projects/module-shared/enums";
 
-import { LogViewerActionButtons } from "@application/shared/components";
+import { LogViewerActionButtons, PopConfirm } from "@application/shared/components";
 import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import type { OpenApiConstant } from "@infrastructure/api";
@@ -114,10 +114,12 @@ export function ScheduledJobTaskSummaryCard({
     variant = "list",
     isCancelling = false,
     isFullscreen = false,
+    isFullView = false,
     fontSize,
     onCancel,
     onClick,
     onToggleFullscreen,
+    onToggleFullView,
     onCycleFontSize,
 }: ScheduledJobTaskSummaryCardProps) {
     const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(false);
@@ -160,18 +162,28 @@ export function ScheduledJobTaskSummaryCard({
                         <div className="flex flex-wrap items-center gap-3">
                             <StatusBadge status={task.status} />
                             {onCancel && canCancelTask(task) && (
-                                <Button
-                                    type="button"
-                                    variant="link"
-                                    className="h-auto p-0 text-primary"
-                                    isLoading={isCancelling}
-                                    onClick={event => {
-                                        event.stopPropagation();
+                                <PopConfirm
+                                    title="Cancel task"
+                                    description="Are you sure you want to cancel this task?"
+                                    confirmText="Cancel task"
+                                    cancelText="Cancel"
+                                    variant="destructive"
+                                    onConfirm={() => {
                                         onCancel(task.id);
                                     }}
                                 >
-                                    Cancel Task
-                                </Button>
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        className="h-auto p-0 text-primary"
+                                        isLoading={isCancelling}
+                                        onClick={event => {
+                                            event.stopPropagation();
+                                        }}
+                                    >
+                                        Cancel Task
+                                    </Button>
+                                </PopConfirm>
                             )}
                             {variant === "details" && (
                                 <Button
@@ -200,8 +212,10 @@ export function ScheduledJobTaskSummaryCard({
                         {variant === "details" && onToggleFullscreen && (
                             <LogViewerActionButtons
                                 isFullscreen={isFullscreen}
+                                isFullView={isFullView}
                                 fontSize={fontSize}
                                 onToggleFullscreen={onToggleFullscreen}
+                                onToggleFullView={onToggleFullView}
                                 onCycleFontSize={onCycleFontSize}
                             />
                         )}
@@ -320,9 +334,11 @@ interface ScheduledJobTaskSummaryCardProps {
     variant?: ScheduledJobTaskCardVariant;
     isCancelling?: boolean;
     isFullscreen?: boolean;
+    isFullView?: boolean;
     fontSize?: number;
     onCancel?: (taskID: string) => void;
     onClick?: () => void;
     onToggleFullscreen?: () => void;
+    onToggleFullView?: () => void;
     onCycleFontSize?: () => void;
 }

@@ -1,6 +1,6 @@
 import { type PaginationState, type SortingState } from "@infrastructure/data";
 import { type NodeBase, type NodeDetails } from "~/cluster/domain";
-import { type ENodeAvailability, type ENodeRole } from "~/cluster/module-shared/enums";
+import { type ENodeAvailability } from "~/cluster/module-shared/enums";
 
 import { type ApiRequestBase, type ApiResponseBase, type ApiResponsePaginated } from "@infrastructure/api";
 
@@ -43,7 +43,6 @@ export type Nodes_UpdateOne_Req = ApiRequestBase<{
     id: string;
     name: string;
     labels: { key: string; value: string }[];
-    role: ENodeRole;
     availability: ENodeAvailability;
     updateVer: number;
 }>;

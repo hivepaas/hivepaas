@@ -44,7 +44,7 @@ const NodeSchema = z.object({
             plugins: z.array(z.object({ name: z.string(), type: z.string() })).optional(),
         })
         .nullable(),
-    updateVer: z.number(),
+    updateVer: z.number().optional().default(0),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date().nullable(),
 });

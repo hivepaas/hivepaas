@@ -3,14 +3,15 @@ import { type PropsWithChildren, useImperativeHandle } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useController, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { type NodeDetails } from "~/cluster/domain";
-import { ENodeAvailability, ENodeRole } from "~/cluster/module-shared/enums";
+import { ENodeAvailability } from "~/cluster/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
 import { getFriendlyDataSize } from "@application/shared/utils/data-size";
 
-import { NodeStateBadge } from "@application/modules/cluster/module-shared/components";
+import { NodeRoleBadge, NodeStateBadge } from "@application/modules/cluster/module-shared/components";
 
 import { FieldError, Input, Separator } from "@/components/ui";
 
@@ -21,7 +22,6 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
     const methods = useForm<SingleNodeFormSchemaInput, unknown, SingleNodeFormSchemaOutput>({
         defaultValues: {
             name: defaultValues.name,
-            role: defaultValues.role,
             availability: defaultValues.availability,
             labels: Object.entries(defaultValues.labels).map(([key, value]) => ({ key, value })),
         },
@@ -58,6 +58,11 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
         name: "name",
     });
 
+    const { field: availability } = useController({
+        control,
+        name: "availability",
+    });
+
     return (
         <div className="pt-2">
             <FormProvider {...methods}>
@@ -69,7 +74,16 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                             return;
                         }
 
-                        void methods.handleSubmit(onSubmit)(event);
+                        void methods.handleSubmit(onSubmit, formErrors => {
+                            console.error("SingleNodeForm validation errors:", formErrors);
+                            const firstError = Object.values(formErrors)[0];
+                            const message = firstError?.message;
+                            if (typeof message === "string" && message.length > 0) {
+                                toast.error(message);
+                            } else {
+                                toast.error("Please check the form for errors");
+                            }
+                        })(event);
                     }}
                     className="flex flex-col gap-6"
                 >
@@ -121,28 +135,10 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
 
                         {/* Role */}
                         <InfoBlock title="Role">
-                            <Tabs
-                                value={methods.watch("role")}
-                                onValueChange={v => {
-                                    methods.setValue("role", v as ENodeRole);
-                                }}
-                                className="w-fit"
-                            >
-                                <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
-                                    <TabsTrigger
-                                        disabled={defaultValues.isLeader}
-                                        value={ENodeRole.Manager}
-                                    >
-                                        Manager
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        disabled={defaultValues.isLeader}
-                                        value={ENodeRole.Worker}
-                                    >
-                                        Worker
-                                    </TabsTrigger>
-                                </TabsList>
-                            </Tabs>
+                            <NodeRoleBadge
+                                role={defaultValues.role}
+                                isLeader={defaultValues.isLeader}
+                            />
                         </InfoBlock>
 
                         <Separator className="opacity-50" />
@@ -150,9 +146,9 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                         {/* Availability */}
                         <InfoBlock title="Availability">
                             <Tabs
-                                value={methods.watch("availability")}
+                                value={availability.value}
                                 onValueChange={v => {
-                                    methods.setValue("availability", v as ENodeAvailability);
+                                    availability.onChange(v as ENodeAvailability);
                                 }}
                                 className="w-fit"
                             >

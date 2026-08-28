@@ -48,27 +48,6 @@ export function LogViewerActionButtons({
                 </Tooltip>
             )}
 
-            {onToggleFullView && (
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            aria-label={isFullView ? "Exit full view" : "Full view"}
-                            className={cn("hidden md:inline-flex", isFullView && "text-primary bg-accent")}
-                            onClick={event => {
-                                event.stopPropagation();
-                                onToggleFullView();
-                            }}
-                        >
-                            <FullViewIcon className="size-4" />
-                        </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{isFullView ? "Exit full view" : "Full view"}</TooltipContent>
-                </Tooltip>
-            )}
-
             {onToggleFullHeight && (
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -87,6 +66,27 @@ export function LogViewerActionButtons({
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>{isFullHeight ? "Exit full height" : "Full height"}</TooltipContent>
+                </Tooltip>
+            )}
+
+            {onToggleFullView && (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={isFullView ? "Exit full view" : "Full view"}
+                            className={cn("hidden md:inline-flex", isFullView && "text-primary bg-accent")}
+                            onClick={event => {
+                                event.stopPropagation();
+                                onToggleFullView();
+                            }}
+                        >
+                            <FullViewIcon className="size-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{isFullView ? "Exit full view" : "Full view"}</TooltipContent>
                 </Tooltip>
             )}
 

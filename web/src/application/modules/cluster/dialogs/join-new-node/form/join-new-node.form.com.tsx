@@ -1,192 +1,101 @@
-import { type PropsWithChildren, useEffect, useState } from "react";
+import React from "react";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { type FieldErrors, FormProvider, useController, useForm, useWatch } from "react-hook-form";
-import { EJoinNodeMethod } from "~/cluster/module-shared/enums";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
+import { Copy } from "lucide-react";
+import { toast } from "sonner";
+import { NodesCommands } from "~/cluster/data/commands/nodes";
 
-import { InfoBlock } from "@application/shared/components";
+import { MODULE_IDS } from "@application/shared/constants";
+import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { Button } from "@/components/ui/button";
 import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Field } from "@/components/ui/field";
 
-import { ManualMethod, SshMethod } from "../building-blocks";
-import { type JoinNewNodeFormInput, type JoinNewNodeFormOutput, JoinNewNodeFormSchema } from "../schemas";
+export function JoinNewNodeForm({ readOnly = false }: Props) {
+    const { canWrite } = useConditionalModule({ id: MODULE_IDS.Cluster });
+    const isReadOnly = readOnly || !canWrite;
 
-export function JoinNewNodeForm({ readOnly = false, onSubmit, onMethodChange, onHasChanges, children }: Props) {
-    const [manualCompleted, setManualCompleted] = useState<boolean>(false);
-    const methods = useForm<JoinNewNodeFormInput, unknown, JoinNewNodeFormOutput>({
-        defaultValues: {
-            method: EJoinNodeMethod.RunCommandManually,
-            joinAsManager: true,
-        },
-        resolver: zodResolver(JoinNewNodeFormSchema),
-        mode: "onSubmit",
-    });
+    const { mutate: getJoinCommand, data: commandData, isPending: isGettingCommand } = NodesCommands.useGetJoinNode({});
 
-    const {
-        handleSubmit,
-        control,
-        formState: { errors, isDirty },
-    } = methods;
+    const command = commandData?.data.command ?? null;
 
-    useEffect(() => {
-        onHasChanges?.(readOnly ? false : isDirty);
-    }, [isDirty, onHasChanges, readOnly]);
-
-    const method = useWatch({ control, name: "method" });
-    const joinAsManager = useWatch({ control, name: "joinAsManager" });
-
-    const {
-        field: methodField,
-        fieldState: { invalid: isMethodInvalid },
-    } = useController({
-        name: "method",
-        control,
-    });
-
-    const {
-        field: joinAsManagerField,
-        fieldState: { invalid: isJoinAsManagerInvalid },
-    } = useController({
-        name: "joinAsManager",
-        control,
-    });
-
-    function onValid(values: JoinNewNodeFormOutput) {
-        if (readOnly) {
+    function handleGetCommand() {
+        if (isReadOnly) {
             return;
         }
 
-        void onSubmit(values);
+        getJoinCommand({ joinAsManager: false });
     }
 
-    function onInvalid(_errors: FieldErrors<JoinNewNodeFormOutput>) {
-        console.log("Invalid", _errors);
-        // Optional: log errors or show notification
+    function handleCopyCommand() {
+        if (!command) {
+            return;
+        }
+
+        void navigator.clipboard
+            .writeText(command)
+            .then(() => {
+                toast.success("Command copied to clipboard");
+            })
+            .catch(() => {
+                toast.error("Failed to copy command");
+            });
     }
 
     return (
-        <FormProvider {...methods}>
-            <form
-                onSubmit={event => {
-                    event.preventDefault();
-                    void handleSubmit(onValid, onInvalid)(event);
-                }}
-                className="min-h-0 flex flex-1 flex-col"
-            >
-                <DialogBody>
-                    <FieldGroup>
-                        {/* Method Selection */}
-                        <Field>
-                            <FieldLabel>Choose the method to join a new node</FieldLabel>
-                            <Tabs
-                                value={methodField.value}
-                                onValueChange={value => {
-                                    if (readOnly) {
-                                        return;
-                                    }
-
-                                    const newMethod = value as EJoinNodeMethod;
-                                    methodField.onChange(newMethod);
-                                    onMethodChange?.(newMethod);
-                                }}
-                            >
-                                <TabsList className="w-full">
-                                    <TabsTrigger
-                                        value={EJoinNodeMethod.RunCommandManually}
-                                        className="flex-1"
-                                        aria-invalid={isMethodInvalid}
-                                        disabled={readOnly || manualCompleted}
-                                    >
-                                        Run command manually
-                                    </TabsTrigger>
-                                    <TabsTrigger
-                                        value={EJoinNodeMethod.RunCommandViaSSH}
-                                        className="flex-1"
-                                        aria-invalid={isMethodInvalid}
-                                        disabled={readOnly || manualCompleted}
-                                    >
-                                        Run command via SSH
-                                    </TabsTrigger>
-                                </TabsList>
-                            </Tabs>
-                            <FieldError errors={[errors.method]} />
-                        </Field>
-
-                        {/* Role Selection */}
-                        <Field>
-                            <InfoBlock
-                                title="Join node as"
-                                titleWidth={150}
-                            >
-                                <Tabs
-                                    value={joinAsManager ? "manager" : "worker"}
-                                    onValueChange={value => {
-                                        if (readOnly) {
-                                            return;
-                                        }
-
-                                        joinAsManagerField.onChange(value === "manager");
-                                    }}
+        <>
+            <DialogBody>
+                <Field>
+                    <div className={cn(dashedBorderBox)}>
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="text-sm text-foreground text-center flex-1">
+                                {command ? (
+                                    <p className="break-all font-mono text-left">{command}</p>
+                                ) : (
+                                    <>
+                                        Click the button below to get the command, then run it on the server you want to
+                                        join the system
+                                    </>
+                                )}
+                            </div>
+                            {command && (
+                                <Button
+                                    type="button"
+                                    variant="link"
+                                    size="icon"
+                                    className="shrink-0"
+                                    onClick={handleCopyCommand}
                                 >
-                                    <TabsList>
-                                        <TabsTrigger
-                                            value="manager"
-                                            className="flex-1"
-                                            aria-invalid={isJoinAsManagerInvalid}
-                                            disabled={readOnly || manualCompleted}
-                                        >
-                                            Manager
-                                        </TabsTrigger>
-                                        <TabsTrigger
-                                            value="worker"
-                                            className="flex-1"
-                                            aria-invalid={isJoinAsManagerInvalid}
-                                            disabled={readOnly || manualCompleted}
-                                        >
-                                            Worker
-                                        </TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
-                                <FieldError errors={[errors.joinAsManager]} />
-                            </InfoBlock>
-                        </Field>
-
-                        {/* Manual Method: Command Display */}
-                        {method === EJoinNodeMethod.RunCommandManually && (
-                            <ManualMethod
-                                readOnly={readOnly}
-                                onComplete={() => {
-                                    setManualCompleted(true);
-                                }}
-                            />
-                        )}
-
-                        {/* SSH Method: SSH Fields */}
-                        {method === EJoinNodeMethod.RunCommandViaSSH && <SshMethod readOnly={readOnly} />}
-                    </FieldGroup>
-                    {children}
-                </DialogBody>
-                {method === EJoinNodeMethod.RunCommandViaSSH ? (
-                    <DialogActionFooter className="flex justify-end">
+                                    <Copy className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </Field>
+            </DialogBody>
+            <DialogActionFooter className="flex justify-end">
+                <PermissionTooltipAction
+                    id={MODULE_IDS.Cluster}
+                    action="write"
+                >
+                    {({ isDenied }) => (
                         <Button
-                            type="submit"
-                            disabled={readOnly}
+                            type="button"
+                            onClick={handleGetCommand}
+                            isLoading={isGettingCommand}
+                            disabled={isDenied || readOnly || isGettingCommand}
                         >
-                            Join Node
+                            Get Join Command
                         </Button>
-                    </DialogActionFooter>
-                ) : null}
-            </form>
-        </FormProvider>
+                    )}
+                </PermissionTooltipAction>
+            </DialogActionFooter>
+        </>
     );
 }
 
-interface Props extends PropsWithChildren {
+interface Props {
     readOnly?: boolean;
-    onSubmit: (values: JoinNewNodeFormOutput) => Promise<void> | void;
-    onMethodChange?: (method: EJoinNodeMethod) => void;
-    onHasChanges?: (dirty: boolean) => void;
 }

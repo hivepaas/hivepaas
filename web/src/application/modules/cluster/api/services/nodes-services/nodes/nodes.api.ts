@@ -100,13 +100,12 @@ export class NodesApi extends BaseApi {
      * Update a node
      */
     async updateOne(request: Nodes_UpdateOne_Req, signal?: AbortSignal): Promise<Result<Nodes_UpdateOne_Res, Error>> {
-        const { id, name, role, availability, updateVer, labels } = request.data;
+        const { id, name, availability, updateVer, labels } = request.data;
 
         const json = {
             name: JsonTransformer.string({
                 data: name,
             }),
-            role,
             availability,
             updateVer,
             labels: labels.reduce<Record<string, string>>(

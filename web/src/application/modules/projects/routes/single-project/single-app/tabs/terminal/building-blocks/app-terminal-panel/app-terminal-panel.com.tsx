@@ -625,22 +625,6 @@ export function AppTerminalPanel({
                                 type="button"
                                 variant="ghost"
                                 size="icon-sm"
-                                aria-label={isFullView ? "Exit full view" : "Full view"}
-                                className={cn("hidden md:inline-flex", isFullView && "text-primary bg-accent")}
-                                onClick={handleToggleFullView}
-                            >
-                                <FullViewIcon className="size-4" />
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>{isFullView ? "Exit full view" : "Full view"}</TooltipContent>
-                    </Tooltip>
-
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
                                 aria-label={isFullHeight ? "Exit full height" : "Full height"}
                                 className={cn(isFullHeight && "text-primary bg-accent")}
                                 onClick={handleToggleFullHeight}
@@ -649,6 +633,22 @@ export function AppTerminalPanel({
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>{isFullHeight ? "Exit full height" : "Full height"}</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={isFullView ? "Exit full view" : "Full view"}
+                                className={cn("hidden md:inline-flex", isFullView && "text-primary bg-accent")}
+                                onClick={handleToggleFullView}
+                            >
+                                <FullViewIcon className="size-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isFullView ? "Exit full view" : "Full view"}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>

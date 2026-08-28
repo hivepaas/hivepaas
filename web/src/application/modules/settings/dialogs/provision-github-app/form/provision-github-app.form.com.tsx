@@ -219,27 +219,23 @@ export function ProvisionGithubAppForm({
             </DialogBody>
             {!isReadOnly && (
                 <DialogActionFooter>
-                    <div className="flex justify-end">
-                        <Button
-                            type="submit"
-                            isLoading={isPending}
-                        >
-                            Begin Creation Flow
-                        </Button>
-                    </div>
+                    <Button
+                        type="submit"
+                        isLoading={isPending}
+                    >
+                        Begin Creation Flow
+                    </Button>
                 </DialogActionFooter>
             )}
             {isReadOnly && (
                 <DialogActionFooter>
-                    <div className="flex justify-end">
-                        <Button
-                            type="button"
-                            onClick={onClose}
-                            className="min-w-[100px]"
-                        >
-                            Close
-                        </Button>
-                    </div>
+                    <Button
+                        type="button"
+                        onClick={onClose}
+                        className="min-w-[100px]"
+                    >
+                        Close
+                    </Button>
                 </DialogActionFooter>
             )}
         </form>

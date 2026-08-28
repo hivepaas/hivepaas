@@ -92,7 +92,6 @@ function RepoWebhookTableView({ scope }: Props) {
                 isLoading={isFetching}
                 onPaginationChange={setPagination}
                 onSortingChange={setSorting}
-                showPageSizeSelector={false}
             />
         </div>
     );

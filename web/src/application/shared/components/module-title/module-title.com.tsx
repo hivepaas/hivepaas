@@ -8,7 +8,11 @@ export function ModuleTitle({ title, children }: Props) {
         <div className="flex flex-col gap-2 sm:gap-4">
             <div className={cn(moduleHeaderBox)}>
                 <div className="flex items-center justify-between py-0.5 sm:py-1.5">
-                    <h1 className="text-base sm:text-lg font-bold text-foreground">{title}</h1>
+                    <h1 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-1.5 tracking-tight">
+                        <span className="text-muted-foreground/40 font-mono font-normal select-none">/</span>
+                        <span>{title}</span>
+                        <span className="text-muted-foreground/40 font-mono font-normal select-none">/</span>
+                    </h1>
                 </div>
             </div>
             {children}

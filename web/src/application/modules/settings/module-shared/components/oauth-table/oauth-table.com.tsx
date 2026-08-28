@@ -7,10 +7,9 @@ import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
+import { PermissionTooltipAction } from "@application/shared/permissions";
 
 import { Button, DataTable } from "@/components/ui";
-
-import { PermissionTooltipAction } from "@application/shared/permissions";
 
 import { OAuthTableDefs } from "./oauth-table.defs";
 
@@ -58,7 +57,6 @@ export function SettingsOAuthTable() {
                 isLoading={isFetching}
                 onPaginationChange={setPagination}
                 onSortingChange={setSorting}
-                showPageSizeSelector={false}
             />
         </div>
     );

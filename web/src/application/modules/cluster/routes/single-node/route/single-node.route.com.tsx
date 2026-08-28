@@ -8,8 +8,9 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { NodesCommands, NodesQueries } from "~/cluster/data";
 
-import { AppLoader, FormActionBar } from "@application/shared/components";
-import { MODULE_IDS } from "@application/shared/constants";
+import { AppLoader, FormActionBar, RouteFormHeader } from "@application/shared/components";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
 import { isValidationException } from "@infrastructure/api";
@@ -22,16 +23,22 @@ import { type SingleNodeFormRef } from "../types";
 
 export function SingleNodeRoute() {
     const { id: nodeId } = useParams<{ id: string }>();
+    const { navigate } = useAppNavigate();
     const formRef = useRef<SingleNodeFormRef>(null);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Cluster });
 
     invariant(nodeId, "nodeId must be defined");
+
+    function navigateToList() {
+        navigate.modules(ROUTE.cluster.nodes.$route, { ignorePrevPath: true });
+    }
 
     const { data, isLoading, error } = NodesQueries.useFindOneById({ id: nodeId });
 
     const { mutate: update, isPending } = NodesCommands.useUpdateOne({
         onSuccess: () => {
             toast.success("Node information updated");
+            navigateToList();
         },
         onError: err => {
             if (isValidationException(err)) {
@@ -68,30 +75,52 @@ export function SingleNodeRoute() {
     const { data: node } = data;
 
     return (
-        <div className={cn(listBox)}>
+        <div className={cn(listBox, "flex w-full flex-col")}>
+            <RouteFormHeader title="Update node" />
             <SingleNodeForm
                 ref={formRef}
                 defaultValues={node}
                 onSubmit={handleSubmit}
                 readOnly={!canWrite}
             >
-                <FormActionBar>
-                    <PermissionTooltipAction
-                        id={MODULE_IDS.Cluster}
-                        action="write"
-                    >
-                        {({ isDenied }) => (
-                            <Button
-                                type="submit"
-                                className="min-w-[100px]"
-                                disabled={isPending || isDenied}
-                                isLoading={isPending}
-                            >
-                                Save
-                            </Button>
-                        )}
-                    </PermissionTooltipAction>
-                </FormActionBar>
+                {!canWrite ? (
+                    <FormActionBar>
+                        <Button
+                            type="button"
+                            onClick={navigateToList}
+                            className="min-w-[100px]"
+                        >
+                            Close
+                        </Button>
+                    </FormActionBar>
+                ) : (
+                    <FormActionBar>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-w-[100px]"
+                            disabled={isPending}
+                            onClick={navigateToList}
+                        >
+                            Cancel
+                        </Button>
+                        <PermissionTooltipAction
+                            id={MODULE_IDS.Cluster}
+                            action="write"
+                        >
+                            {({ isDenied }) => (
+                                <Button
+                                    type="submit"
+                                    className="min-w-[100px]"
+                                    disabled={isPending || isDenied}
+                                    isLoading={isPending}
+                                >
+                                    Save
+                                </Button>
+                            )}
+                        </PermissionTooltipAction>
+                    </FormActionBar>
+                )}
             </SingleNodeForm>
         </div>
     );

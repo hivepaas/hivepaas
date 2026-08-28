@@ -12,11 +12,12 @@ import { Button, DataTable } from "@/components/ui";
 
 export function ProjectsTable() {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const { data: { data: projects } = DEFAULT_PAGINATED_DATA, isFetching } = ProjectsQueries.useFindManyPaginated({
-        pagination,
-        sorting,
-        search,
-    });
+    const { data: { data: projects, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
+        ProjectsQueries.useFindManyPaginated({
+            pagination,
+            sorting,
+            search,
+        });
 
     const { actions } = useCreateProjectDialog({
         onClose: () => {
@@ -51,6 +52,8 @@ export function ProjectsTable() {
                 data={projects}
                 pageSize={pagination.size}
                 enablePagination
+                manualPagination
+                totalCount={meta.page.total}
                 manualSorting
                 enableSorting
                 isLoading={isFetching}

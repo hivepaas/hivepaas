@@ -57,7 +57,7 @@ export function NetworkManagementTable({ scope }: Props) {
         },
     });
 
-    const { data: { data: networks } = DEFAULT_PAGINATED_DATA, isFetching } =
+    const { data: { data: networks, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
         scope.type === "cluster" ? clusterNetworksQuery : projectNetworksQuery;
 
     const columns = useMemo(() => NetworksTableDefs.columns(scope), [scope]);
@@ -132,6 +132,8 @@ export function NetworkManagementTable({ scope }: Props) {
                 data={networks}
                 pageSize={pagination.size}
                 enablePagination
+                manualPagination
+                totalCount={meta.page.total}
                 manualSorting
                 enableSorting
                 isLoading={isFetching}

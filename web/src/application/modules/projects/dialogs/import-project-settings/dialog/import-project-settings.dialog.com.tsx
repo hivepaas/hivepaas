@@ -59,7 +59,7 @@ import { SslProviderTableDefs } from "~/settings/module-shared/components/ssl-pr
 import { TableActions } from "@application/shared/components";
 import { useTableState } from "@application/shared/hooks/table";
 
-import { Button, Checkbox, DataTable } from "@/components/ui";
+import { Button, Checkbox, DataTable, Separator } from "@/components/ui";
 import {
     Dialog,
     DialogActionFooter,
@@ -598,6 +598,9 @@ export function ImportProjectSettingsDialog() {
                 <DialogHeader>
                     <DialogTitle>Import {title}</DialogTitle>
                 </DialogHeader>
+                <div className="px-6">
+                    <Separator className="opacity-50" />
+                </div>
 
                 <DialogBody>
                     {hasError ? (

@@ -152,7 +152,6 @@ export function AppPreviewDeploymentsRoute() {
                     manualSorting
                     onSortingChange={setSorting}
                     enablePagination
-                    showPageSizeSelector={false}
                 />
             </div>
         </section>

@@ -8,6 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@components/ui/dialog";
+import { Separator } from "@components/ui/separator";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 
@@ -40,6 +41,9 @@ export function DetectAppIconDialog({
                 <DialogHeader>
                     <DialogTitle>Detect app icon</DialogTitle>
                 </DialogHeader>
+                <div className="px-6">
+                    <Separator className="opacity-50" />
+                </div>
 
                 <DialogBody>
                     {hasIcon ? (
@@ -50,7 +54,7 @@ export function DetectAppIconDialog({
                             <Avatar
                                 name={appName}
                                 src={iconUrl}
-                                className="size-24 text-2xl"
+                                className="size-24 text-2xl rounded-2xl"
                             />
                         </div>
                     ) : (

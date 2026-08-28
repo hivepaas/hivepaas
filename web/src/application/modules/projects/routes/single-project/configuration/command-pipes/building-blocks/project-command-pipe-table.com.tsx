@@ -66,7 +66,6 @@ export function ProjectCommandPipeTable({ projectId, env }: Props) {
                 isLoading={isFetching}
                 onPaginationChange={setPagination}
                 onSortingChange={setSorting}
-                showPageSizeSelector={false}
             />
         </div>
     );

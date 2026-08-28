@@ -27,6 +27,7 @@ import {
     DialogHeader,
     DialogTitle,
     Input,
+    Separator,
     Table,
     TableBody,
     TableCell,
@@ -187,10 +188,18 @@ export function SetManagerNodesDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="h-[800px] w-[1000px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)]">
+            <DialogFixedContent
+                className="h-[800px] w-[1000px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)]"
+                onOpenAutoFocus={event => {
+                    event.preventDefault();
+                }}
+            >
                 <DialogHeader>
                     <DialogTitle>Set Manager Nodes</DialogTitle>
                 </DialogHeader>
+                <div className="px-6">
+                    <Separator className="opacity-50" />
+                </div>
                 <DialogBody className="flex min-h-0 flex-col gap-5">
                     <div className={cn(dashedBorderBox, "text-sm leading-6")}>
                         <span className="font-semibold text-orange-500">Note:</span> Docker Swarm uses the Raft

@@ -104,7 +104,6 @@ function GithubAppTableView({ scope }: Props) {
                 isLoading={isFetching}
                 onPaginationChange={setPagination}
                 onSortingChange={setSorting}
-                showPageSizeSelector={false}
             />
         </div>
     );

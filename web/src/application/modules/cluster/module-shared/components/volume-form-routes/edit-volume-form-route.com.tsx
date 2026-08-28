@@ -94,7 +94,7 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
 
     return (
         <div className="flex w-full flex-col">
-            <RouteFormHeader title="Edit volume" />
+            <RouteFormHeader title="Update volume" />
 
             {isFetching ? (
                 <div className="flex min-h-[220px] items-center justify-center">

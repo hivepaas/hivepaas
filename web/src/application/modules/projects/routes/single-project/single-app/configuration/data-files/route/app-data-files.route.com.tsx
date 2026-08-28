@@ -79,7 +79,6 @@ export function AppDataFilesRoute() {
                 manualSorting
                 onSortingChange={setSorting}
                 enablePagination
-                showPageSizeSelector={false}
             />
         </div>
     );

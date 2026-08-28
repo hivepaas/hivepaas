@@ -88,7 +88,6 @@ export function AppConfigSecretsRoute() {
                 manualSorting
                 onSortingChange={setSorting}
                 enablePagination
-                showPageSizeSelector={false}
             />
         </div>
     );

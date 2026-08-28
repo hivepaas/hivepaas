@@ -115,9 +115,11 @@ export function AppDeploymentsRoute() {
                         pageSize={pagination.size}
                         pageCount={pageCount}
                         totalCount={meta.page.total}
-                        showPageSizeSelector={false}
                         onPageChange={pageIndex => {
                             setPagination(prev => ({ ...prev, page: pageIndex + 1 }));
+                        }}
+                        onPageSizeChange={pageSize => {
+                            setPagination(prev => ({ ...prev, size: pageSize, page: 1 }));
                         }}
                     />
                 )}

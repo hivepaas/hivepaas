@@ -314,6 +314,22 @@ function DataTable<TData, TValue>({
                                     const titleAlign = meta?.titleAlign || meta?.align;
                                     const verticalAlign = meta?.verticalAlign;
                                     const sticky = meta?.sticky;
+                                    const colId = header.column.id;
+                                    const isActionCol = colId === "actions" || colId === "view";
+                                    const hasExplicitSize = columnsWithExplicitSize.has(colId);
+                                    const size = header.getSize();
+
+                                    const headerStyle: React.CSSProperties | undefined = hasExplicitSize
+                                        ? isActionCol
+                                            ? ({
+                                                  "--col-width": `${size}px`,
+                                                  "--col-mobile-width": `${Math.round(size * 0.6)}px`,
+                                              } as React.CSSProperties)
+                                            : {
+                                                  width: `${size}px`,
+                                                  minWidth: `${size}px`,
+                                              }
+                                        : undefined;
 
                                     return (
                                         <TableHead
@@ -323,15 +339,10 @@ function DataTable<TData, TValue>({
                                                 getTextAlignClass(titleAlign),
                                                 getVerticalAlignClass(verticalAlign),
                                                 getStickyClass(sticky),
+                                                isActionCol &&
+                                                    "max-sm:px-1 max-sm:w-[var(--col-mobile-width)] max-sm:min-w-[var(--col-mobile-width)] max-sm:max-w-[var(--col-mobile-width)] sm:w-[var(--col-width)] sm:min-w-[var(--col-width)]",
                                             )}
-                                            style={
-                                                columnsWithExplicitSize.has(header.column.id)
-                                                    ? {
-                                                          width: `${header.getSize()}px`,
-                                                          minWidth: `${header.getSize()}px`,
-                                                      }
-                                                    : undefined
-                                            }
+                                            style={headerStyle}
                                         >
                                             {header.isPlaceholder ? null : canSort && enableSorting ? (
                                                 <DataTableColumnHeader
@@ -352,11 +363,39 @@ function DataTable<TData, TValue>({
                             // Show skeleton rows when loading
                             Array.from({ length: table.getRowModel().rows?.length ?? pageSize }).map((_, index) => (
                                 <TableRow key={`skeleton-${index}`}>
-                                    {columns.map((_, colIndex) => (
-                                        <TableCell key={`skeleton-cell-${index}-${colIndex}`}>
-                                            <Skeleton className="h-4 w-full" />
-                                        </TableCell>
-                                    ))}
+                                    {columns.map((col, colIndex) => {
+                                        const colId =
+                                            ("accessorKey" in col && col.accessorKey
+                                                ? String(col.accessorKey)
+                                                : col.id) ?? "";
+                                        const isActionCol = colId === "actions" || colId === "view";
+                                        const hasExplicitSize = col.size !== undefined;
+                                        const size = col.size ?? 0;
+                                        const skeletonStyle: React.CSSProperties | undefined = hasExplicitSize
+                                            ? isActionCol
+                                                ? ({
+                                                      "--col-width": `${size}px`,
+                                                      "--col-mobile-width": `${Math.round(size * 0.6)}px`,
+                                                  } as React.CSSProperties)
+                                                : {
+                                                      width: `${size}px`,
+                                                      minWidth: `${size}px`,
+                                                  }
+                                            : undefined;
+
+                                        return (
+                                            <TableCell
+                                                key={`skeleton-cell-${index}-${colIndex}`}
+                                                className={cn(
+                                                    isActionCol &&
+                                                        "max-sm:px-1 max-sm:w-[var(--col-mobile-width)] max-sm:min-w-[var(--col-mobile-width)] max-sm:max-w-[var(--col-mobile-width)] sm:w-[var(--col-width)] sm:min-w-[var(--col-width)]",
+                                                )}
+                                                style={skeletonStyle}
+                                            >
+                                                <Skeleton className="h-4 w-full" />
+                                            </TableCell>
+                                        );
+                                    })}
                                 </TableRow>
                             ))
                         ) : table.getRowModel().rows?.length ? (
@@ -372,6 +411,22 @@ function DataTable<TData, TValue>({
                                         const align = meta?.align;
                                         const verticalAlign = meta?.verticalAlign;
                                         const sticky = meta?.sticky;
+                                        const colId = cell.column.id;
+                                        const isActionCol = colId === "actions" || colId === "view";
+                                        const hasExplicitSize = columnsWithExplicitSize.has(colId);
+                                        const size = cell.column.getSize();
+
+                                        const cellStyle: React.CSSProperties | undefined = hasExplicitSize
+                                            ? isActionCol
+                                                ? ({
+                                                      "--col-width": `${size}px`,
+                                                      "--col-mobile-width": `${Math.round(size * 0.6)}px`,
+                                                  } as React.CSSProperties)
+                                                : {
+                                                      width: `${size}px`,
+                                                      minWidth: `${size}px`,
+                                                  }
+                                            : undefined;
 
                                         return (
                                             <TableCell
@@ -380,15 +435,10 @@ function DataTable<TData, TValue>({
                                                     getTextAlignClass(align),
                                                     getVerticalAlignClass(verticalAlign),
                                                     getStickyClass(sticky),
+                                                    isActionCol &&
+                                                        "max-sm:px-1 max-sm:w-[var(--col-mobile-width)] max-sm:min-w-[var(--col-mobile-width)] max-sm:max-w-[var(--col-mobile-width)] sm:w-[var(--col-width)] sm:min-w-[var(--col-width)]",
                                                 )}
-                                                style={
-                                                    columnsWithExplicitSize.has(cell.column.id)
-                                                        ? {
-                                                              width: `${cell.column.getSize()}px`,
-                                                              minWidth: `${cell.column.getSize()}px`,
-                                                          }
-                                                        : undefined
-                                                }
+                                                style={cellStyle}
                                             >
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                             </TableCell>
@@ -414,7 +464,7 @@ function DataTable<TData, TValue>({
                     pageIndex={table.getState().pagination.pageIndex}
                     pageSize={table.getState().pagination.pageSize}
                     pageCount={table.getPageCount()}
-                    totalCount={totalCount}
+                    totalCount={totalCount !== undefined ? totalCount : manualPagination ? undefined : data.length}
                     onPageChange={handlePageChange}
                     onPageSizeChange={handlePageSizeChange}
                     pageSizeOptions={pageSizeOptions}

@@ -36,15 +36,14 @@ export function ProjectSecretsTable({ projectId }: Props) {
     const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
     const projectEnvs = projectData?.data.envs ?? [];
 
-    const { data: { data: secrets } = DEFAULT_PAGINATED_DATA, isFetching } = ProjectSecretsQueries.useFindManyPaginated(
-        {
+    const { data: { data: secrets, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
+        ProjectSecretsQueries.useFindManyPaginated({
             projectID: projectId,
             env: scopedEnv,
             pagination,
             sorting,
             search,
-        },
-    );
+        });
 
     const columns = useMemo(() => ProjectSecretsTableDefs.columns(projectId, scopedEnv), [projectId, scopedEnv]);
 
@@ -102,6 +101,8 @@ export function ProjectSecretsTable({ projectId }: Props) {
                 data={secrets}
                 pageSize={pagination.size}
                 enablePagination
+                manualPagination
+                totalCount={meta.page.total}
                 manualSorting
                 enableSorting
                 isLoading={isFetching}

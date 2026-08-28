@@ -80,7 +80,6 @@ export function AppConfigFilesRoute() {
                 manualSorting
                 onSortingChange={setSorting}
                 enablePagination
-                showPageSizeSelector={false}
             />
         </div>
     );

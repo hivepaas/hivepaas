@@ -106,7 +106,6 @@ export function AppScheduledJobsRoute() {
                 manualSorting
                 onSortingChange={setSorting}
                 enablePagination
-                showPageSizeSelector={false}
             />
         </div>
     );

@@ -42,7 +42,6 @@ export function SystemSettingsDataBackupBackupFilesRoute() {
                 enablePagination
                 manualPagination
                 totalCount={meta.page.total}
-                showPageSizeSelector={false}
                 enableSorting
                 manualSorting
                 isLoading={isFetching}

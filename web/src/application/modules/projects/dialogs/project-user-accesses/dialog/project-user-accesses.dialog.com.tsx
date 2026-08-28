@@ -640,6 +640,9 @@ export function ProjectUserAccessesDialog() {
                 <DialogHeader>
                     <DialogTitle>User accesses on project {projectName}</DialogTitle>
                 </DialogHeader>
+                <div className="px-6">
+                    <Separator className="opacity-50" />
+                </div>
 
                 <DialogBody>
                     {accessQuery.isFetching && !accessQuery.data ? (

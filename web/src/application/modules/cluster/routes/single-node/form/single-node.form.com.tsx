@@ -1,7 +1,5 @@
-import * as React from "react";
 import { type PropsWithChildren, useImperativeHandle } from "react";
 
-import { FieldError, Input } from "@components/ui";
 import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useController, useForm } from "react-hook-form";
@@ -13,6 +11,8 @@ import { KeyValueList } from "@application/shared/form";
 import { getFriendlyDataSize } from "@application/shared/utils/data-size";
 
 import { NodeStateBadge } from "@application/modules/cluster/module-shared/components";
+
+import { FieldError, Input, Separator } from "@/components/ui";
 
 import { SingleNodeFormSchema, type SingleNodeFormSchemaInput, type SingleNodeFormSchemaOutput } from "../schemas";
 import { type SingleNodeFormRef } from "../types";
@@ -145,7 +145,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                             </Tabs>
                         </InfoBlock>
 
-                        <div className="h-px bg-zinc-100" />
+                        <Separator className="opacity-50" />
 
                         {/* Availability */}
                         <InfoBlock title="Availability">
@@ -179,7 +179,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                             </Tabs>
                         </InfoBlock>
 
-                        <div className="h-px bg-zinc-100" />
+                        <Separator className="opacity-50" />
 
                         {/* Labels */}
                         <InfoBlock

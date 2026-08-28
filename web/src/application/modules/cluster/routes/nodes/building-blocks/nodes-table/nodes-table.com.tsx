@@ -13,7 +13,7 @@ import { Button, DataTable } from "@/components/ui";
 
 export function NodesTable() {
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const { data: { data: nodes } = DEFAULT_PAGINATED_DATA, isFetching } = NodesQueries.useFindManyPaginated({
+    const { data: { data: nodes, meta } = DEFAULT_PAGINATED_DATA, isFetching } = NodesQueries.useFindManyPaginated({
         pagination,
         sorting,
         search,
@@ -65,6 +65,8 @@ export function NodesTable() {
                 data={nodes}
                 pageSize={pagination.size}
                 enablePagination
+                manualPagination
+                totalCount={meta.page.total}
                 manualSorting
                 enableSorting
                 isLoading={isFetching}

@@ -28,6 +28,7 @@ const columns: ColumnDef<ProjectBaseEntity>[] = [
                 <Avatar
                     name={original.name}
                     src={original.photo}
+                    className="rounded-lg"
                 />
                 <span>{original.name}</span>
             </div>

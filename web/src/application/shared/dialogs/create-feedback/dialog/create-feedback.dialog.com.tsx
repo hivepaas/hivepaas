@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Separator } from "@components/ui/separator";
 import { toast } from "sonner";
 
 import { useProfileContext } from "@application/shared/context";
@@ -56,8 +57,11 @@ export function CreateFeedbackDialog() {
         >
             <DialogFixedContent className="sm:max-w-[780px]">
                 <DialogHeader>
-                    <DialogTitle className="text-2xl">Create your feedback</DialogTitle>
+                    <DialogTitle>Create your feedback</DialogTitle>
                 </DialogHeader>
+                <div className="px-6">
+                    <Separator className="opacity-50" />
+                </div>
                 <CreateFeedbackForm
                     defaultValues={defaultValues}
                     isPending={isPending}

@@ -14,6 +14,7 @@ import {
     SidebarMenuSub,
     SidebarMenuSubButton,
     SidebarMenuSubItem,
+    useSidebar,
 } from "@/components/ui/sidebar";
 
 import styles from "./nav-main.module.scss";
@@ -72,11 +73,18 @@ function findActiveNavigationKey(items: NavigationItem[], pathname: string) {
 }
 
 function NavigationLink({ route, label, Icon, isActive, isTopLevel = false }: NavigationLinkProps) {
+    const { isMobile, setOpenMobile } = useSidebar();
+
     return (
         <AppNavLink.Modules
             to={route}
             aria-current={isActive ? "page" : undefined}
             className={cx("link")}
+            onClick={() => {
+                if (isMobile) {
+                    setOpenMobile(false);
+                }
+            }}
         >
             {({ isPending }) => {
                 return (

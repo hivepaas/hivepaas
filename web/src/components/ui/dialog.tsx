@@ -118,8 +118,10 @@ function DialogActionFooter({ className, children, ...props }: React.ComponentPr
             className="shrink-0 bg-background"
             {...props}
         >
-            <Separator className="opacity-50" />
-            <div className={cn("px-6 pt-4 pb-6 flex items-center justify-end gap-3", className)}>{children}</div>
+            <div className="px-6">
+                <Separator className="opacity-50" />
+            </div>
+            <div className={cn("px-6 py-4 flex items-center justify-end gap-3", className)}>{children}</div>
         </div>
     );
 }

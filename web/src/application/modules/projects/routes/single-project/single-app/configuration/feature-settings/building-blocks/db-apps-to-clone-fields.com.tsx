@@ -126,6 +126,7 @@ export function DbAppsToCloneFields({ projectID, env, appID, readOnly = false }:
                                     <Avatar
                                         name={field.name}
                                         src={field.photo}
+                                        className="rounded-lg"
                                     />
                                     <span className="truncate text-sm">{field.name}</span>
                                 </div>

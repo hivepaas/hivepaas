@@ -90,11 +90,11 @@ function TablePagination({
     );
 
     return (
-        <div className={cn("flex items-center justify-between px-2 py-4", className)}>
-            <div className="flex items-center gap-4">
+        <div className={cn("flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between px-2 py-4", className)}>
+            <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-start">
                 {showPageSizeSelector && onPageSizeChange && (
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">Rows per page:</span>
+                        <span className="text-sm text-muted-foreground whitespace-nowrap">Rows per page:</span>
                         <Select
                             value={pageSize.toString()}
                             onValueChange={value => {
@@ -103,7 +103,7 @@ function TablePagination({
                         >
                             <SelectTrigger
                                 size="sm"
-                                className="h-8 w-[70px]"
+                                className="h-8 w-[70px] shrink-0"
                             >
                                 <SelectValue />
                             </SelectTrigger>
@@ -121,13 +121,13 @@ function TablePagination({
                     </div>
                 )}
                 {showTotalCount && totalCount !== undefined && (
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
                         {startRow}-{endRow} of {totalCount}
                     </span>
                 )}
             </div>
 
-            <Pagination>
+            <Pagination className="justify-center sm:justify-end">
                 <PaginationContent>
                     <PaginationItem>
                         <PaginationPrevious

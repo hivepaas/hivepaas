@@ -46,14 +46,16 @@ export function ProjectAppsTable({ projectId }: Props) {
         setPagination(prev => ({ ...prev, page: 1 }));
     }, [env, setPagination]);
 
-    const { data: { data: apps } = DEFAULT_PAGINATED_DATA, isFetching } = ProjectAppsQueries.useFindManyPaginated({
-        projectID: projectId,
-        pagination,
-        sorting,
-        search,
-        env,
-        getStats: true,
-    });
+    const { data: { data: apps, meta } = DEFAULT_PAGINATED_DATA, isFetching } = ProjectAppsQueries.useFindManyPaginated(
+        {
+            projectID: projectId,
+            pagination,
+            sorting,
+            search,
+            env,
+            getStats: true,
+        },
+    );
     const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
 
     const project = projectData?.data;
@@ -129,6 +131,8 @@ export function ProjectAppsTable({ projectId }: Props) {
                 data={apps}
                 pageSize={pagination.size}
                 enablePagination
+                manualPagination
+                totalCount={meta.page.total}
                 manualSorting
                 enableSorting
                 isLoading={isFetching}

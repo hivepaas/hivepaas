@@ -83,7 +83,6 @@ export function AppPeriodicJobsRoute() {
                     manualSorting
                     onSortingChange={setSorting}
                     enablePagination
-                    showPageSizeSelector={false}
                 />
             </section>
         </div>

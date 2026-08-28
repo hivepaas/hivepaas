@@ -80,10 +80,10 @@ export function CreateFeedbackForm({ defaultValues, isPending = false, onSubmit 
                     </a>
                 </div>
 
-                <Field className="grid grid-cols-[190px_minmax(0,1fr)] items-start gap-4">
+                <Field className="grid grid-cols-1 gap-1.5 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-start sm:gap-4">
                     <label
                         htmlFor="feedback-category"
-                        className="pt-2 font-medium"
+                        className="pt-0 sm:pt-2 font-medium"
                     >
                         Category
                     </label>
@@ -145,10 +145,10 @@ export function CreateFeedbackForm({ defaultValues, isPending = false, onSubmit 
                     registration={register("subject")}
                 />
 
-                <Field className="grid grid-cols-[190px_minmax(0,1fr)] items-start gap-4">
+                <Field className="grid grid-cols-1 gap-1.5 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-start sm:gap-4">
                     <label
                         htmlFor="feedback-description"
-                        className="pt-2 font-medium"
+                        className="pt-0 sm:pt-2 font-medium"
                     >
                         Description <span className="text-destructive">*</span>
                     </label>
@@ -156,7 +156,7 @@ export function CreateFeedbackForm({ defaultValues, isPending = false, onSubmit 
                         <Textarea
                             id="feedback-description"
                             aria-invalid={Boolean(errors.description)}
-                            className="min-h-[220px]"
+                            className="min-h-[160px] sm:min-h-[220px]"
                             minRows={3}
                             maxRows={6}
                             {...register("description")}
@@ -170,7 +170,8 @@ export function CreateFeedbackForm({ defaultValues, isPending = false, onSubmit 
                 <Button
                     type="submit"
                     disabled={isPending}
-                    className="min-w-[130px]"
+                    isLoading={isPending}
+                    className="min-w-[100px]"
                 >
                     Submit
                 </Button>
@@ -181,10 +182,10 @@ export function CreateFeedbackForm({ defaultValues, isPending = false, onSubmit 
 
 function FeedbackInput({ error, label, placeholder, registration, required = false }: FeedbackInputProps) {
     return (
-        <Field className="grid grid-cols-[190px_minmax(0,1fr)] items-start gap-4">
+        <Field className="grid grid-cols-1 gap-1.5 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-start sm:gap-4">
             <label
                 htmlFor={`feedback-${registration.name}`}
-                className="pt-2 font-medium"
+                className="pt-0 sm:pt-2 font-medium"
             >
                 {label} {required ? <span className="text-destructive">*</span> : null}
             </label>

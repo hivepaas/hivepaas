@@ -17,7 +17,7 @@ export function UsersTable() {
         },
     });
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
-    const { data: { data: users } = DEFAULT_PAGINATED_DATA, isFetching } = UsersQueries.useFindManyPaginated({
+    const { data: { data: users, meta } = DEFAULT_PAGINATED_DATA, isFetching } = UsersQueries.useFindManyPaginated({
         pagination,
         sorting,
         search,
@@ -48,6 +48,8 @@ export function UsersTable() {
                 data={users}
                 pageSize={pagination.size}
                 enablePagination
+                manualPagination
+                totalCount={meta.page.total}
                 manualSorting
                 enableSorting
                 isLoading={isFetching}

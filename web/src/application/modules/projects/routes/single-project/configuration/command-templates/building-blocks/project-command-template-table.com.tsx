@@ -68,7 +68,6 @@ export function ProjectCommandTemplateTable({ projectId, env }: Props) {
                 isLoading={isFetching}
                 onPaginationChange={setPagination}
                 onSortingChange={setSorting}
-                showPageSizeSelector={false}
             />
         </div>
     );

@@ -285,11 +285,11 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                     >
                         {/* Photo */}
                         <InfoBlock title="Photo">
-                            <div className="relative size-24 rounded-full border">
+                            <div className="relative size-24 rounded-2xl border">
                                 <Avatar
                                     key={photoPreviewUrl ?? "no-photo"}
                                     name={defaultValues.name}
-                                    className="size-full text-2xl"
+                                    className="size-full text-2xl rounded-2xl"
                                     src={photoPreviewUrl}
                                 />
                                 <Button

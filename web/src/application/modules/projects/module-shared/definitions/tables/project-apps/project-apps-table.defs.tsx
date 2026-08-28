@@ -39,6 +39,7 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
                     <Avatar
                         name={original.name}
                         src={original.photo}
+                        className="rounded-lg"
                     />
                     <span>{original.name}</span>
                 </div>

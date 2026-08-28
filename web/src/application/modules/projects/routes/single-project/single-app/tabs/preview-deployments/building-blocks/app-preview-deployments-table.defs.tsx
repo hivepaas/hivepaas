@@ -7,7 +7,7 @@ import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 
-import { Button } from "@/components/ui";
+import { Avatar, Button } from "@/components/ui";
 
 import { getExternalPreviewUrl, getPreviewSubdomain } from "../utils";
 
@@ -88,6 +88,16 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
         {
             accessorKey: "name",
             header: "Name",
+            cell: ({ row: { original } }) => (
+                <div className="flex items-center gap-2">
+                    <Avatar
+                        name={original.name}
+                        src={original.photo}
+                        className="rounded-lg"
+                    />
+                    <span>{original.name}</span>
+                </div>
+            ),
         },
         {
             id: "subdomain",

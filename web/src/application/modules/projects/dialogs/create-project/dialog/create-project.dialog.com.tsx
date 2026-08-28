@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectsCommands } from "~/projects/data/commands";
 
 import { MODULE_IDS } from "@application/shared/constants";
 import { useConditionalModule } from "@application/shared/permissions";
+
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle, Separator } from "@/components/ui";
 
 import { CreateProjectForm } from "../form";
 import { useCreateProjectDialogState } from "../hooks";
@@ -66,6 +67,9 @@ export function CreateProjectDialog() {
                 <DialogHeader>
                     <DialogTitle>Create Project</DialogTitle>
                 </DialogHeader>
+                <div className="px-6">
+                    <Separator className="opacity-50" />
+                </div>
                 <CreateProjectForm
                     isPending={isPending}
                     readOnly={!canWrite}

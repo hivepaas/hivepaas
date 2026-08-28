@@ -13,12 +13,20 @@ import {
     User,
     Users,
 } from "lucide-react";
+import { useLocation } from "react-router";
 
 import { MODULE_IDS, ROUTE, type ResourceModuleId } from "@application/shared/constants";
 import { useProfileContext } from "@application/shared/context";
 import { type ModuleId, type ModulePermission, useConditionalModuleCollections } from "@application/shared/permissions";
 
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarHeader,
+    SidebarRail,
+    useSidebar,
+} from "@/components/ui/sidebar";
 
 import { NavMain } from "../nav-main";
 import { NavUser } from "../nav-user";
@@ -282,6 +290,15 @@ function filterSidebarItems(items: readonly SidebarItem[], permissions: Readonly
 export function ModuleSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { profile } = useProfileContext();
     const { map: modulePermissionMap } = useConditionalModuleCollections();
+    const { isMobile, setOpenMobile } = useSidebar();
+    const location = useLocation();
+
+    React.useEffect(() => {
+        if (isMobile) {
+            setOpenMobile(false);
+        }
+    }, [location.pathname, isMobile, setOpenMobile]);
+
     const navigationItems = React.useMemo(
         () => filterSidebarItems(navMain, modulePermissionMap),
         [modulePermissionMap],

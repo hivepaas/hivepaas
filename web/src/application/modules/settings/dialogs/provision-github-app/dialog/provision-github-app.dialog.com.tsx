@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { ProjectGithubAppCommands } from "~/projects/data/commands";
 import { GithubAppCommands } from "~/settings/data/commands";
 import { EGithubAppOwnerType } from "~/settings/module-shared/enums";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle, Separator } from "@/components/ui";
 
 import { ProvisionGithubAppForm } from "../form";
 import { useProvisionGithubAppDialogState } from "../hooks";
@@ -93,6 +94,9 @@ export function ProvisionGithubAppDialog() {
                 <DialogHeader>
                     <DialogTitle>Provision Github app</DialogTitle>
                 </DialogHeader>
+                <div className="px-6">
+                    <Separator className="opacity-50" />
+                </div>
                 {state.mode === "open" && (
                     <ProvisionGithubAppForm
                         isPending={isPending}

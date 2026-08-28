@@ -6,6 +6,7 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
@@ -52,7 +53,9 @@ func (req *UserPhotoReq) modifyRequest() error {
 		if strings.HasPrefix(dataBase64, "data:") {
 			dataBase64 = dataBase64[strings.Index(dataBase64, ",")+1:]
 		}
-		req.DataBytes, _ = base64.StdEncoding.DecodeString(dataBase64)
+		if len(dataBase64) <= base.PhotoDataBase64MaxLen {
+			req.DataBytes, _ = base64.StdEncoding.DecodeString(dataBase64)
+		}
 	}
 	return nil
 }

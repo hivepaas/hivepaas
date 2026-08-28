@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultImageCacheMaxAge = time.Hour * 24 * 10 // 10 days
+	defaultImageCacheMaxAge = time.Hour * 24 * 365 // a year
 )
 
 func (uc *UC) GetBinObjectData(

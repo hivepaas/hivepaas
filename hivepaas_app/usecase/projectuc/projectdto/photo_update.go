@@ -13,10 +13,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
-const (
-	projectPhotoMaxSize = 300 * 1024 // 300KB
-)
-
 type UpdateProjectPhotoReq struct {
 	ID string `json:"-"`
 	*ProjectPhotoReq
@@ -45,7 +41,9 @@ func (req *ProjectPhotoReq) modifyRequest() error {
 		if strings.HasPrefix(dataBase64, "data:") {
 			dataBase64 = dataBase64[strings.Index(dataBase64, ",")+1:]
 		}
-		req.DataBytes, _ = base64.StdEncoding.DecodeString(dataBase64)
+		if len(dataBase64) <= base.PhotoDataBase64MaxLen {
+			req.DataBytes, _ = base64.StdEncoding.DecodeString(dataBase64)
+		}
 	}
 	return nil
 }
@@ -63,12 +61,12 @@ func (req *ProjectPhotoReq) validate(field string) []vld.Validator {
 			vld.SetField(field+"fileName", nil),
 			vld.SetCustomKey("ERR_VLD_USER_PHOTO_FILE_EXT_UNSUPPORTED"),
 		),
-		vld.Must(len(req.DataBytes) > 0).OnError(
+		vld.Must(len(req.DataBytes) > 0 && base.IsValidPhotoContent(req.DataBytes, fileExt)).OnError(
 			vld.SetField(field+"dataBase64", nil),
 			vld.SetCustomKey("ERR_VLD_USER_PHOTO_FILE_INVALID"),
 		),
 		vld.When(len(req.DataBytes) > 0).Then(
-			vld.Must(len(req.DataBytes) <= projectPhotoMaxSize).OnError(
+			vld.Must(len(req.DataBytes) <= base.PhotoMaxSize).OnError(
 				vld.SetField(field+"dataBase64", nil),
 				vld.SetCustomKey("ERR_VLD_USER_PHOTO_FILE_TOO_BIG"),
 			),

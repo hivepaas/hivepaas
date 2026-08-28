@@ -1,7 +1,6 @@
 package userdto
 
 import (
-	"encoding/base64"
 	"strings"
 
 	vld "github.com/tiendc/go-validator"
@@ -28,16 +27,7 @@ func (req *UpdateProfileReq) ModifyRequest() error {
 	req.Username = strings.TrimSpace(req.Username)
 	req.Email = strutil.NormalizeEmail(req.Email)
 	req.FullName = strings.TrimSpace(req.FullName)
-	// Parse photo
-	if req.Photo != nil && req.Photo.DataBase64 != "" {
-		dataBase64 := req.Photo.DataBase64
-		// Image base64 from FE can be in form: `data:image/png;base64,<data-in-base64>`
-		if strings.HasPrefix(dataBase64, "data:") {
-			dataBase64 = dataBase64[strings.Index(dataBase64, ",")+1:]
-		}
-		req.Photo.DataBytes, _ = base64.StdEncoding.DecodeString(dataBase64)
-	}
-	return nil
+	return req.Photo.modifyRequest()
 }
 
 func (req *UpdateProfileReq) Validate() hperrors.ValidationErrors {

@@ -16,8 +16,6 @@ const (
 	nameMinLen = 1
 	nameMaxLen = 100
 
-	photoMaxSize = 300 * 1024 // 300KB
-
 	notesMinLen = 1
 	notesMaxLen = 10000
 )
@@ -46,12 +44,12 @@ func validateUserPhoto(photo *UserPhotoReq, field string) (res []vld.Validator) 
 			vld.SetField(field+".fileName", nil),
 			vld.SetCustomKey("ERR_VLD_USER_PHOTO_FILE_EXT_UNSUPPORTED"),
 		),
-		vld.Must(len(photo.DataBytes) > 0).OnError(
+		vld.Must(len(photo.DataBytes) > 0 && base.IsValidPhotoContent(photo.DataBytes, fileExt)).OnError(
 			vld.SetField(field+".dataBase64", nil),
 			vld.SetCustomKey("ERR_VLD_USER_PHOTO_FILE_INVALID"),
 		),
 		vld.When(len(photo.DataBytes) > 0).Then(
-			vld.Must(len(photo.DataBytes) <= photoMaxSize).OnError(
+			vld.Must(len(photo.DataBytes) <= base.PhotoMaxSize).OnError(
 				vld.SetField(field+".dataBase64", nil),
 				vld.SetCustomKey("ERR_VLD_USER_PHOTO_FILE_TOO_BIG"),
 			),

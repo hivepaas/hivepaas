@@ -31,6 +31,7 @@ export function AppLogsViewer({
     fontSize,
     height,
     isFullView,
+    isFullHeight,
     onLogsChange,
     onLinesChange,
     onSinceChange,
@@ -218,6 +219,7 @@ export function AppLogsViewer({
             height={height}
             isFullView={isFullView}
             fontSize={fontSize}
+            isFullHeight={isFullHeight}
             downloadFileName={taskId ? `app-logs-${tabLabel}.txt` : "app-logs-aggregation.txt"}
             toolbarStart={
                 <AppLogsToolbarStart
@@ -278,6 +280,7 @@ interface AppLogsViewerProps {
     fontSize?: number;
     height?: number | string;
     isFullView?: boolean;
+    isFullHeight?: boolean;
     onLogsChange: (tabID: string, action: SetStateAction<LogsViewerFrame[]>) => void;
     onLinesChange: (tabID: string, action: SetStateAction<number | undefined>) => void;
     onSinceChange: (tabID: string, action: SetStateAction<Date | undefined>) => void;

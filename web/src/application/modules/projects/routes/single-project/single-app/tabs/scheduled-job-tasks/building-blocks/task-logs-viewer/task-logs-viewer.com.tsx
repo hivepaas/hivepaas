@@ -19,6 +19,7 @@ export function ScheduledJobTaskLogsViewer({
     fontSize,
     height,
     isFullView,
+    isFullHeight,
     onStreamClosedWhileInProgress,
 }: ScheduledJobTaskLogsViewerProps) {
     const { streams } = useAppScheduledJobTaskLogsWsApi();
@@ -38,6 +39,7 @@ export function ScheduledJobTaskLogsViewer({
             fontSize={fontSize}
             height={height}
             isFullView={isFullView}
+            isFullHeight={isFullHeight}
             onStreamClosedWhileInProgress={onStreamClosedWhileInProgress}
         />
     );
@@ -53,6 +55,7 @@ interface ScheduledJobTaskLogsScope {
     fontSize?: number;
     height?: number | string;
     isFullView?: boolean;
+    isFullHeight?: boolean;
     onStreamClosedWhileInProgress: () => void;
 }
 

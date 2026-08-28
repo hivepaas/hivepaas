@@ -26,6 +26,7 @@ export function LogsViewer({
     isRefreshPending = false,
     height,
     isFullView = false,
+    isFullHeight = false,
     fontSize: controlledFontSize,
     downloadFileName = DEFAULT_DOWNLOAD_FILE_NAME,
     defaultShowDebugLogs = false,
@@ -384,14 +385,14 @@ export function LogsViewer({
         minHeight: 250,
     });
 
-    // Refit when fullscreen or fullViewHeight toggles
+    // Refit when fullscreen, fullViewHeight, or isFullHeight toggles
     useEffect(() => {
         updateDimensions();
         const timer = setTimeout(updateDimensions, 50);
         return () => {
             clearTimeout(timer);
         };
-    }, [fullViewHeight, isFullscreen, updateDimensions]);
+    }, [fullViewHeight, isFullscreen, isFullHeight, updateDimensions]);
 
     const isFlexibleHeight = isFullscreen || height === "100%";
     const frameHeight = isFlexibleHeight
@@ -415,40 +416,42 @@ export function LogsViewer({
                 isFullscreen && [styles["fullscreen"], "bg-background border border-border shadow-2xl"],
             )}
         >
-            <LogsViewerToolbar
-                isStreaming={isStreaming}
-                isRefreshPending={isRefreshPending}
-                displayedPlainLines={displayedPlainLines}
-                downloadFileName={downloadFileName}
-                isTextWrapped={isTextWrapped}
-                showTimestamps={showTimestamps}
-                showDebugLogs={showDebugLogs}
-                followLogs={followLogs}
-                searchTerm={searchTerm}
-                searchResult={searchResult}
-                toolbarStart={toolbarStart}
-                toolbarFilters={toolbarFilters}
-                onSearchTermChange={setSearchTerm}
-                onFindNext={handleFindNext}
-                onFindPrevious={handleFindPrevious}
-                onToggleTextWrap={() => {
-                    setIsTextWrapped(current => !current);
-                }}
-                onToggleTimestamps={() => {
-                    setShowTimestamps(current => !current);
-                }}
-                onToggleDebugLogs={() => {
-                    setShowDebugLogs(current => !current);
-                }}
-                onToggleFollowLogs={() => {
-                    const next = !followLogs;
-                    setFollowLogs(next);
-                    if (next) {
-                        terminalRef.current?.scrollToBottom();
-                    }
-                }}
-                onRefresh={onRefresh}
-            />
+            {!isFullHeight && (
+                <LogsViewerToolbar
+                    isStreaming={isStreaming}
+                    isRefreshPending={isRefreshPending}
+                    displayedPlainLines={displayedPlainLines}
+                    downloadFileName={downloadFileName}
+                    isTextWrapped={isTextWrapped}
+                    showTimestamps={showTimestamps}
+                    showDebugLogs={showDebugLogs}
+                    followLogs={followLogs}
+                    searchTerm={searchTerm}
+                    searchResult={searchResult}
+                    toolbarStart={toolbarStart}
+                    toolbarFilters={toolbarFilters}
+                    onSearchTermChange={setSearchTerm}
+                    onFindNext={handleFindNext}
+                    onFindPrevious={handleFindPrevious}
+                    onToggleTextWrap={() => {
+                        setIsTextWrapped(current => !current);
+                    }}
+                    onToggleTimestamps={() => {
+                        setShowTimestamps(current => !current);
+                    }}
+                    onToggleDebugLogs={() => {
+                        setShowDebugLogs(current => !current);
+                    }}
+                    onToggleFollowLogs={() => {
+                        const next = !followLogs;
+                        setFollowLogs(next);
+                        if (next) {
+                            terminalRef.current?.scrollToBottom();
+                        }
+                    }}
+                    onRefresh={onRefresh}
+                />
+            )}
 
             <div
                 ref={frameContainerRef}

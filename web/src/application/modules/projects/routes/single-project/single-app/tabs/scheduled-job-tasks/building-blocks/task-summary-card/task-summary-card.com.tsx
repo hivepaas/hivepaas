@@ -115,16 +115,18 @@ export function ScheduledJobTaskSummaryCard({
     isCancelling = false,
     isFullscreen = false,
     isFullView = false,
+    isFullHeight = false,
     fontSize,
     onCancel,
     onClick,
     onToggleFullscreen,
     onToggleFullView,
+    onToggleFullHeight,
     onCycleFontSize,
 }: ScheduledJobTaskSummaryCardProps) {
     const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(false);
     const isClickable = Boolean(onClick);
-    const shouldShowDetailsContent = variant === "list" || isDetailsContentOpen;
+    const shouldShowDetailsContent = !isFullHeight && (variant === "list" || isDetailsContentOpen);
     const { priority } = task.config;
     const controlEnabled = !task.config.controlDisabled;
 
@@ -213,9 +215,11 @@ export function ScheduledJobTaskSummaryCard({
                             <LogViewerActionButtons
                                 isFullscreen={isFullscreen}
                                 isFullView={isFullView}
+                                isFullHeight={isFullHeight}
                                 fontSize={fontSize}
                                 onToggleFullscreen={onToggleFullscreen}
                                 onToggleFullView={onToggleFullView}
+                                onToggleFullHeight={onToggleFullHeight}
                                 onCycleFontSize={onCycleFontSize}
                             />
                         )}
@@ -335,10 +339,12 @@ interface ScheduledJobTaskSummaryCardProps {
     isCancelling?: boolean;
     isFullscreen?: boolean;
     isFullView?: boolean;
+    isFullHeight?: boolean;
     fontSize?: number;
     onCancel?: (taskID: string) => void;
     onClick?: () => void;
     onToggleFullscreen?: () => void;
     onToggleFullView?: () => void;
+    onToggleFullHeight?: () => void;
     onCycleFontSize?: () => void;
 }

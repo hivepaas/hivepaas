@@ -26,8 +26,16 @@ const DEFAULT_LOG_LINES = 100;
 export function AppLogsRoute() {
     const { id: projectID, env, appId: appID } = useParams<{ id: string; env: string; appId: string }>();
     const [activeTab, setActiveTab] = useState(AGGREGATION_TAB_ID);
-    const { isFullscreen, toggleFullscreen, isFullView, toggleFullView, fontSize, cycleFontSize } =
-        useLogViewerControls();
+    const {
+        isFullscreen,
+        toggleFullscreen,
+        isFullView,
+        toggleFullView,
+        isFullHeight,
+        toggleFullHeight,
+        fontSize,
+        cycleFontSize,
+    } = useLogViewerControls();
     const [tabStates, setTabStates] = useState<AppLogTabStates>(() => ({
         [AGGREGATION_TAB_ID]: createDefaultAppLogTabState(),
     }));
@@ -155,7 +163,7 @@ export function AppLogsRoute() {
                 listBox,
                 isFullView && "max-w-none",
                 isFullscreen &&
-                    "!max-w-none !w-auto fixed inset-4 z-50 min-h-0 rounded-lg border bg-background p-4 shadow-2xl flex flex-col",
+                    "!max-w-none !w-auto fixed inset-1.5 md:inset-4 z-50 min-h-0 rounded-lg border bg-background p-2.5 md:p-4 shadow-2xl flex flex-col",
             )}
         >
             {isInfoLoading ? (
@@ -193,9 +201,11 @@ export function AppLogsRoute() {
                             <LogViewerActionButtons
                                 isFullscreen={isFullscreen}
                                 isFullView={isFullView}
+                                isFullHeight={isFullHeight}
                                 fontSize={fontSize}
                                 onToggleFullscreen={toggleFullscreen}
                                 onToggleFullView={toggleFullView}
+                                onToggleFullHeight={toggleFullHeight}
                                 onCycleFontSize={cycleFontSize}
                             />
                         </div>
@@ -231,6 +241,7 @@ export function AppLogsRoute() {
                                     fontSize={fontSize}
                                     height={isFullscreen ? "100%" : undefined}
                                     isFullView={isFullView}
+                                    isFullHeight={isFullHeight}
                                     onLogsChange={handleTabLogsChange}
                                     onLinesChange={handleTabLinesChange}
                                     onSinceChange={handleTabSinceChange}

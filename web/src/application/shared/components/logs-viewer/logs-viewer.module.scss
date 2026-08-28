@@ -7,7 +7,7 @@
 
 .fullscreen {
   position: fixed;
-  inset: 1rem;
+  inset: 0.375rem;
   width: auto !important;
   height: auto !important;
   z-index: 50;
@@ -16,9 +16,14 @@
   min-height: 0;
   min-width: 0;
   border-radius: 0.5rem;
-  padding: 1rem;
+  padding: 0.625rem;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   box-sizing: border-box;
+
+  @media (min-width: 768px) {
+    inset: 1rem;
+    padding: 1rem;
+  }
 }
 
 .terminalFrame {

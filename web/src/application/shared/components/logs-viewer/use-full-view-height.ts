@@ -35,7 +35,7 @@ export function useFullViewHeight({
         // If window is scrolled, account for scroll to measure base layout top
         const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
         const elementTopInDocument = rect.top + scrollTop;
-        const currentBottomOffset = bottomOffset ?? (window.innerWidth >= 640 ? 32 : 20);
+        const currentBottomOffset = bottomOffset ?? (window.innerWidth >= 768 ? 32 : 20);
         const available = window.innerHeight - elementTopInDocument - currentBottomOffset;
         const computed = Math.max(minHeight, Math.floor(available));
         setFullViewHeight(computed);
@@ -44,29 +44,79 @@ export function useFullViewHeight({
     useEffect(() => {
         if (!enabled) {
             setFullViewHeight(null);
-            return;
+            return undefined;
         }
 
         recalculate();
 
+        let animFrameId: number | null = null;
+        let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+        const scheduleRecalculate = () => {
+            if (animFrameId !== null) {
+                window.cancelAnimationFrame(animFrameId);
+            }
+            animFrameId = window.requestAnimationFrame(() => {
+                animFrameId = null;
+                recalculate();
+            });
+
+            if (timeoutId !== null) {
+                clearTimeout(timeoutId);
+            }
+            timeoutId = setTimeout(() => {
+                timeoutId = null;
+                recalculate();
+            }, 60);
+        };
+
         const handleResize = () => {
-            recalculate();
+            scheduleRecalculate();
         };
 
         window.addEventListener("resize", handleResize);
 
-        const observer = new ResizeObserver(() => {
-            recalculate();
+        const resizeObserver = new ResizeObserver(() => {
+            scheduleRecalculate();
         });
 
-        observer.observe(document.body);
+        const element = containerRef.current;
+        if (element) {
+            resizeObserver.observe(element);
+            if (element.parentElement) {
+                resizeObserver.observe(element.parentElement);
+                if (element.parentElement.parentElement) {
+                    resizeObserver.observe(element.parentElement.parentElement);
+                }
+            }
+        }
 
-        const timer = setTimeout(recalculate, 60);
+        const mainElement = document.querySelector("main") ?? document.body;
+        resizeObserver.observe(mainElement);
+
+        const mutationObserver = new MutationObserver(() => {
+            scheduleRecalculate();
+        });
+
+        mutationObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ["style", "class", "aria-expanded", "hidden"],
+        });
+
+        scheduleRecalculate();
 
         return () => {
             window.removeEventListener("resize", handleResize);
-            observer.disconnect();
-            clearTimeout(timer);
+            resizeObserver.disconnect();
+            mutationObserver.disconnect();
+            if (animFrameId !== null) {
+                window.cancelAnimationFrame(animFrameId);
+            }
+            if (timeoutId !== null) {
+                clearTimeout(timeoutId);
+            }
         };
     }, [enabled, recalculate]);
 

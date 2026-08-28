@@ -27,7 +27,7 @@ import { type AppTerminalInitMessage, buildAppTerminalResizeMessage } from "~/pr
 import { useExportContainerFilesDialog } from "~/projects/dialogs/export-container-files";
 import { useImportFilesToContainerDialog } from "~/projects/dialogs/import-files-to-container";
 
-import { FullViewIcon, TextZoomIcon } from "@assets/icons";
+import { FullHeightIcon, FullViewIcon, TextZoomIcon } from "@assets/icons";
 
 import { LOG_SEARCH_DECORATIONS, useFullViewHeight } from "@application/shared/components/logs-viewer";
 
@@ -45,7 +45,9 @@ export function AppTerminalPanel({
     supportedShells,
     selectedShell,
     isFullView: controlledFullView,
+    isFullHeight: controlledFullHeight,
     onToggleFullView,
+    onToggleFullHeight,
     onSelectedShellChange,
 }: AppTerminalPanelProps) {
     const terminalElementRef = useRef<HTMLDivElement | null>(null);
@@ -68,6 +70,18 @@ export function AppTerminalPanel({
         onToggleFullView ??
         (() => {
             setInternalFullView(current => !current);
+        });
+    const [internalFullHeight, setInternalFullHeight] = useState(() => {
+        if (typeof window !== "undefined") {
+            return window.innerWidth < 768;
+        }
+        return false;
+    });
+    const isFullHeight = controlledFullHeight ?? internalFullHeight;
+    const handleToggleFullHeight =
+        onToggleFullHeight ??
+        (() => {
+            setInternalFullHeight(current => !current);
         });
     const [webSocketReadyState, setWebSocketReadyState] = useState<WebSocketReadyState>(WebSocket.CLOSED);
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -518,7 +532,15 @@ export function AppTerminalPanel({
         return () => {
             clearTimeout(timer);
         };
-    }, [fullViewHeight, isCommandTemplatePanelOpen, isFullscreen, isFullView, fitAndSendResize, scheduleFitAndResize]);
+    }, [
+        fullViewHeight,
+        isCommandTemplatePanelOpen,
+        isFullscreen,
+        isFullView,
+        isFullHeight,
+        fitAndSendResize,
+        scheduleFitAndResize,
+    ]);
 
     useEffect(() => {
         if (!isFullscreen) {
@@ -542,7 +564,8 @@ export function AppTerminalPanel({
         <div
             className={cn(
                 "flex min-w-0 flex-col gap-3",
-                isFullscreen && "fixed inset-4 z-50 min-h-0 rounded-lg border bg-background p-4 shadow-2xl",
+                isFullscreen &&
+                    "fixed inset-1.5 md:inset-4 z-50 min-h-0 rounded-lg border bg-background p-2.5 md:p-4 shadow-2xl",
             )}
         >
             <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
@@ -603,13 +626,29 @@ export function AppTerminalPanel({
                                 variant="ghost"
                                 size="icon-sm"
                                 aria-label={isFullView ? "Exit full view" : "Full view"}
-                                className={cn(isFullView && "text-primary bg-accent")}
+                                className={cn("hidden md:inline-flex", isFullView && "text-primary bg-accent")}
                                 onClick={handleToggleFullView}
                             >
                                 <FullViewIcon className="size-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>{isFullView ? "Exit full view" : "Full view"}</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={isFullHeight ? "Exit full height" : "Full height"}
+                                className={cn(isFullHeight && "text-primary bg-accent")}
+                                onClick={handleToggleFullHeight}
+                            >
+                                <FullHeightIcon className="size-4" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isFullHeight ? "Exit full height" : "Full height"}</TooltipContent>
                     </Tooltip>
 
                     <Tooltip>
@@ -631,121 +670,123 @@ export function AppTerminalPanel({
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                    <span
-                        aria-label={status.label}
-                        className={cn("size-3.5 sm:size-4 rounded-full border-2", status.indicatorClassName)}
-                    />
-                    <span className={cn("text-xs sm:text-sm", status.textClassName)}>{status.label}</span>
-                    {isConnectionActive && (
-                        <Button
-                            type="button"
-                            variant="link"
-                            className="h-auto px-0 py-0 text-xs sm:text-sm"
-                            onClick={closeConnection}
-                        >
-                            Disconnect
-                        </Button>
-                    )}
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
-                    <div className="relative flex items-center min-w-0 w-full sm:w-56 max-w-full">
-                        <Search className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none" />
-                        <input
-                            type="text"
-                            placeholder="Find in terminal..."
-                            value={searchTerm}
-                            onChange={e => {
-                                setSearchTerm(e.target.value);
-                            }}
-                            onKeyDown={e => {
-                                if (e.key === "Enter") {
-                                    if (e.shiftKey) {
-                                        handleFindPrevious();
-                                    } else {
-                                        handleFindNext();
-                                    }
-                                }
-                            }}
-                            className="w-full h-8 sm:h-9 pl-8 pr-16 text-xs sm:text-sm rounded-md border border-input bg-background/50 focus:bg-background px-3 py-1 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            {!isFullHeight && (
+                <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <span
+                            aria-label={status.label}
+                            className={cn("size-3.5 sm:size-4 rounded-full border-2", status.indicatorClassName)}
                         />
-                        {searchTerm && (
-                            <div className="absolute right-1.5 flex items-center gap-0.5 text-muted-foreground">
-                                {searchResult && (
-                                    <span className="text-[10px] sm:text-xs font-mono mr-1 text-muted-foreground">
-                                        {searchResult.resultCount > 0
-                                            ? `${searchResult.resultIndex + 1}/${searchResult.resultCount}`
-                                            : "0/0"}
-                                    </span>
-                                )}
-                                <button
-                                    type="button"
-                                    aria-label="Previous match"
-                                    onClick={handleFindPrevious}
-                                    className="p-1 hover:text-foreground rounded hover:bg-muted"
-                                >
-                                    <ChevronUp className="size-3 sm:size-3.5" />
-                                </button>
-                                <button
-                                    type="button"
-                                    aria-label="Next match"
-                                    onClick={handleFindNext}
-                                    className="p-1 hover:text-foreground rounded hover:bg-muted"
-                                >
-                                    <ChevronDown className="size-3 sm:size-3.5" />
-                                </button>
-                                <button
-                                    type="button"
-                                    aria-label="Clear search"
-                                    onClick={() => {
-                                        setSearchTerm("");
-                                    }}
-                                    className="p-1 hover:text-foreground rounded hover:bg-muted"
-                                >
-                                    <X className="size-3 sm:size-3.5" />
-                                </button>
-                            </div>
+                        <span className={cn("text-xs sm:text-sm", status.textClassName)}>{status.label}</span>
+                        {isConnectionActive && (
+                            <Button
+                                type="button"
+                                variant="link"
+                                className="h-auto px-0 py-0 text-xs sm:text-sm"
+                                onClick={closeConnection}
+                            >
+                                Disconnect
+                            </Button>
                         )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
-                        <Button
-                            type="button"
-                            variant="link"
-                            className="h-auto py-0 text-xs sm:text-sm gap-1"
-                            aria-pressed={isCommandTemplatePanelOpen}
-                            onClick={() => {
-                                setIsCommandTemplatePanelOpen(current => !current);
-                            }}
-                        >
-                            <TextCursorInputIcon className="size-3.5 sm:size-4" />
-                            Insert Command
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="link"
-                            disabled={!isConnectionActive}
-                            className="h-auto py-0 text-xs sm:text-sm gap-1"
-                            onClick={openImportDialog}
-                        >
-                            <Upload className="size-3.5 sm:size-4" />
-                            Upload
-                        </Button>
-                        <Button
-                            type="button"
-                            variant="link"
-                            disabled={!isConnectionActive}
-                            className="h-auto py-0 text-xs sm:text-sm gap-1"
-                            onClick={openExportDialog}
-                        >
-                            <Download className="size-3.5 sm:size-4" />
-                            Download
-                        </Button>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
+                        <div className="relative flex items-center min-w-0 w-full sm:w-56 max-w-full">
+                            <Search className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none" />
+                            <input
+                                type="text"
+                                placeholder="Find in terminal..."
+                                value={searchTerm}
+                                onChange={e => {
+                                    setSearchTerm(e.target.value);
+                                }}
+                                onKeyDown={e => {
+                                    if (e.key === "Enter") {
+                                        if (e.shiftKey) {
+                                            handleFindPrevious();
+                                        } else {
+                                            handleFindNext();
+                                        }
+                                    }
+                                }}
+                                className="w-full h-8 sm:h-9 pl-8 pr-16 text-xs sm:text-sm rounded-md border border-input bg-background/50 focus:bg-background px-3 py-1 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                            />
+                            {searchTerm && (
+                                <div className="absolute right-1.5 flex items-center gap-0.5 text-muted-foreground">
+                                    {searchResult && (
+                                        <span className="text-[10px] sm:text-xs font-mono mr-1 text-muted-foreground">
+                                            {searchResult.resultCount > 0
+                                                ? `${searchResult.resultIndex + 1}/${searchResult.resultCount}`
+                                                : "0/0"}
+                                        </span>
+                                    )}
+                                    <button
+                                        type="button"
+                                        aria-label="Previous match"
+                                        onClick={handleFindPrevious}
+                                        className="p-1 hover:text-foreground rounded hover:bg-muted"
+                                    >
+                                        <ChevronUp className="size-3 sm:size-3.5" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-label="Next match"
+                                        onClick={handleFindNext}
+                                        className="p-1 hover:text-foreground rounded hover:bg-muted"
+                                    >
+                                        <ChevronDown className="size-3 sm:size-3.5" />
+                                    </button>
+                                    <button
+                                        type="button"
+                                        aria-label="Clear search"
+                                        onClick={() => {
+                                            setSearchTerm("");
+                                        }}
+                                        className="p-1 hover:text-foreground rounded hover:bg-muted"
+                                    >
+                                        <X className="size-3 sm:size-3.5" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+                            <Button
+                                type="button"
+                                variant="link"
+                                className="h-auto py-0 text-xs sm:text-sm gap-1"
+                                aria-pressed={isCommandTemplatePanelOpen}
+                                onClick={() => {
+                                    setIsCommandTemplatePanelOpen(current => !current);
+                                }}
+                            >
+                                <TextCursorInputIcon className="size-3.5 sm:size-4" />
+                                Insert Command
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="link"
+                                disabled={!isConnectionActive}
+                                className="h-auto py-0 text-xs sm:text-sm gap-1"
+                                onClick={openImportDialog}
+                            >
+                                <Upload className="size-3.5 sm:size-4" />
+                                Upload
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="link"
+                                disabled={!isConnectionActive}
+                                className="h-auto py-0 text-xs sm:text-sm gap-1"
+                                onClick={openExportDialog}
+                            >
+                                <Download className="size-3.5 sm:size-4" />
+                                Download
+                            </Button>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             <div
                 ref={terminalContainerRef}
@@ -818,7 +859,9 @@ interface AppTerminalPanelProps {
     supportedShells: string[];
     selectedShell: string;
     isFullView?: boolean;
+    isFullHeight?: boolean;
     onToggleFullView?: () => void;
+    onToggleFullHeight?: () => void;
     onSelectedShellChange: (shell: string) => void;
 }
 

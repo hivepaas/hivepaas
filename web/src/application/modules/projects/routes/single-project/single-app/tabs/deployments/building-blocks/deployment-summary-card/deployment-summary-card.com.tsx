@@ -230,11 +230,13 @@ export function DeploymentSummaryCard({
     isCancelling = false,
     isFullscreen = false,
     isFullView = false,
+    isFullHeight = false,
     fontSize,
     onCancel,
     onClick,
     onToggleFullscreen,
     onToggleFullView,
+    onToggleFullHeight,
     onCycleFontSize,
 }: DeploymentSummaryCardProps) {
     const { output } = deployment;
@@ -243,7 +245,7 @@ export function DeploymentSummaryCard({
     const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(false);
     const isRepo = isRepoDeployment(deployment);
     const isClickable = Boolean(onClick);
-    const shouldShowDetailsContent = variant === "list" || isDetailsContentOpen;
+    const shouldShowDetailsContent = !isFullHeight && (variant === "list" || isDetailsContentOpen);
 
     function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
         if (!onClick || (event.key !== "Enter" && event.key !== " ")) {
@@ -332,9 +334,11 @@ export function DeploymentSummaryCard({
                             <LogViewerActionButtons
                                 isFullscreen={isFullscreen}
                                 isFullView={isFullView}
+                                isFullHeight={isFullHeight}
                                 fontSize={fontSize}
                                 onToggleFullscreen={onToggleFullscreen}
                                 onToggleFullView={onToggleFullView}
+                                onToggleFullHeight={onToggleFullHeight}
                                 onCycleFontSize={onCycleFontSize}
                             />
                         )}
@@ -464,10 +468,12 @@ interface DeploymentSummaryCardProps {
     isCancelling?: boolean;
     isFullscreen?: boolean;
     isFullView?: boolean;
+    isFullHeight?: boolean;
     fontSize?: number;
     onCancel?: (deploymentID: string) => void;
     onClick?: () => void;
     onToggleFullscreen?: () => void;
     onToggleFullView?: () => void;
+    onToggleFullHeight?: () => void;
     onCycleFontSize?: () => void;
 }

@@ -1,25 +1,29 @@
 import { cn } from "@lib/utils";
 import { Maximize2, Minimize2 } from "lucide-react";
 
-import { FullViewIcon, TextZoomIcon } from "@assets/icons";
+import { FullHeightIcon, FullViewIcon, TextZoomIcon } from "@assets/icons";
 
 import { Button, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
 
 export interface LogViewerActionButtonsProps {
     isFullscreen?: boolean;
     isFullView?: boolean;
+    isFullHeight?: boolean;
     fontSize?: number;
     onToggleFullscreen?: () => void;
     onToggleFullView?: () => void;
+    onToggleFullHeight?: () => void;
     onCycleFontSize?: () => void;
 }
 
 export function LogViewerActionButtons({
     isFullscreen,
     isFullView,
+    isFullHeight,
     fontSize,
     onToggleFullscreen,
     onToggleFullView,
+    onToggleFullHeight,
     onCycleFontSize,
 }: LogViewerActionButtonsProps) {
     return (
@@ -52,7 +56,7 @@ export function LogViewerActionButtons({
                             variant="ghost"
                             size="icon-sm"
                             aria-label={isFullView ? "Exit full view" : "Full view"}
-                            className={cn(isFullView && "text-primary bg-accent")}
+                            className={cn("hidden md:inline-flex", isFullView && "text-primary bg-accent")}
                             onClick={event => {
                                 event.stopPropagation();
                                 onToggleFullView();
@@ -62,6 +66,27 @@ export function LogViewerActionButtons({
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>{isFullView ? "Exit full view" : "Full view"}</TooltipContent>
+                </Tooltip>
+            )}
+
+            {onToggleFullHeight && (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={isFullHeight ? "Exit full height" : "Full height"}
+                            className={cn(isFullHeight && "text-primary bg-accent")}
+                            onClick={event => {
+                                event.stopPropagation();
+                                onToggleFullHeight();
+                            }}
+                        >
+                            <FullHeightIcon className="size-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{isFullHeight ? "Exit full height" : "Full height"}</TooltipContent>
                 </Tooltip>
             )}
 

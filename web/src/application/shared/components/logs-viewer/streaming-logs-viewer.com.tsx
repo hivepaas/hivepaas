@@ -15,6 +15,7 @@ export interface StreamingLogsViewerProps {
     fontSize?: number;
     height?: number | string;
     isFullView?: boolean;
+    isFullHeight?: boolean;
     onStreamClosedWhileInProgress?: () => void;
 }
 
@@ -27,6 +28,7 @@ export function StreamingLogsViewer({
     fontSize,
     height,
     isFullView = false,
+    isFullHeight = false,
     onStreamClosedWhileInProgress,
 }: StreamingLogsViewerProps) {
     const { frames: logs, appendFrames, reset } = useBufferedLogFrames();
@@ -157,6 +159,7 @@ export function StreamingLogsViewer({
             frames={logs}
             height={height}
             isFullView={isFullView}
+            isFullHeight={isFullHeight}
             isStreaming={isStreaming}
             onRefresh={!isConnectionActive && showRefresh ? handleRefresh : undefined}
             isRefreshPending={isRefreshPending}

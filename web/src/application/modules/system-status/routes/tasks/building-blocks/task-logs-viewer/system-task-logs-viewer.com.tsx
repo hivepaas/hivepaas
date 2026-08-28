@@ -12,6 +12,7 @@ export function SystemTaskLogsViewer({
     fontSize,
     height,
     isFullView,
+    isFullHeight,
     onStreamClosedWhileInProgress,
 }: SystemTaskLogsViewerProps) {
     const { streams } = useSystemTaskLogsWsApi();
@@ -30,6 +31,7 @@ export function SystemTaskLogsViewer({
             fontSize={fontSize}
             height={height}
             isFullView={isFullView}
+            isFullHeight={isFullHeight}
             onStreamClosedWhileInProgress={onStreamClosedWhileInProgress}
         />
     );
@@ -41,5 +43,6 @@ interface SystemTaskLogsViewerProps {
     fontSize?: number;
     height?: number | string;
     isFullView?: boolean;
+    isFullHeight?: boolean;
     onStreamClosedWhileInProgress: () => void;
 }

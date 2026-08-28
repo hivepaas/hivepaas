@@ -18,6 +18,7 @@ export function DeploymentLogsViewer({
     fontSize,
     height,
     isFullView,
+    isFullHeight,
     onStreamClosedWhileInProgress,
 }: DeploymentLogsViewerProps) {
     const { streams } = useAppDeploymentLogsWsApi();
@@ -38,6 +39,7 @@ export function DeploymentLogsViewer({
             fontSize={fontSize}
             height={height}
             isFullView={isFullView}
+            isFullHeight={isFullHeight}
             onStreamClosedWhileInProgress={onStreamClosedWhileInProgress}
         />
     );
@@ -52,6 +54,7 @@ interface DeploymentLogsScope {
     fontSize?: number;
     height?: number | string;
     isFullView?: boolean;
+    isFullHeight?: boolean;
     onStreamClosedWhileInProgress: () => void;
 }
 

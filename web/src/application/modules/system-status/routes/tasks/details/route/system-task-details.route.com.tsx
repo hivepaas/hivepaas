@@ -39,8 +39,16 @@ export function SystemTaskDetailsRoute() {
     invariant(taskId, "taskId must be defined");
 
     const [shouldPollAfterStreamClose, setShouldPollAfterStreamClose] = useState(false);
-    const { isFullscreen, toggleFullscreen, isFullView, toggleFullView, fontSize, cycleFontSize } =
-        useLogViewerControls();
+    const {
+        isFullscreen,
+        toggleFullscreen,
+        isFullView,
+        toggleFullView,
+        isFullHeight,
+        toggleFullHeight,
+        fontSize,
+        cycleFontSize,
+    } = useLogViewerControls();
 
     const {
         data: taskResponse,
@@ -88,7 +96,7 @@ export function SystemTaskDetailsRoute() {
                 listBox,
                 isFullView && "max-w-none",
                 isFullscreen &&
-                    "!max-w-none !w-auto fixed inset-4 z-50 min-h-0 rounded-lg border bg-background p-4 shadow-2xl flex flex-col",
+                    "!max-w-none !w-auto fixed inset-1.5 md:inset-4 z-50 min-h-0 rounded-lg border bg-background p-2.5 md:p-4 shadow-2xl flex flex-col",
             )}
         >
             <div className={cn("flex flex-col gap-5", isFullscreen && "flex-1 min-h-0")}>
@@ -102,9 +110,11 @@ export function SystemTaskDetailsRoute() {
                         isCancelling={isCancelling}
                         isFullscreen={isFullscreen}
                         isFullView={isFullView}
+                        isFullHeight={isFullHeight}
                         fontSize={fontSize}
                         onToggleFullscreen={toggleFullscreen}
                         onToggleFullView={toggleFullView}
+                        onToggleFullHeight={toggleFullHeight}
                         onCycleFontSize={cycleFontSize}
                         onCancel={id => {
                             cancelTask({ taskID: id });
@@ -116,6 +126,7 @@ export function SystemTaskDetailsRoute() {
                             fontSize={fontSize}
                             height={isFullscreen ? "100%" : undefined}
                             isFullView={isFullView}
+                            isFullHeight={isFullHeight}
                             onStreamClosedWhileInProgress={handleStreamClosedWhileInProgress}
                         />
                     </SystemTaskSummaryCard>

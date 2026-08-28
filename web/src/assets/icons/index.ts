@@ -17,6 +17,7 @@ export { default as DropdownSuffixIcon } from "./common/dropdown-suffix.icon.svg
 export { default as UploadImageIcon } from "./common/upload-image.icon.svg?react";
 export { default as TextZoomIcon } from "./common/text-zoom.icon.svg?react";
 export { default as FullViewIcon } from "./common/full-view.icon.svg?react";
+export { default as FullHeightIcon } from "./common/full-height.icon.svg?react";
 
 /**
  * Authentication icons

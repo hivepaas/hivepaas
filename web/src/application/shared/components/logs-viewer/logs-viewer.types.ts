@@ -26,6 +26,7 @@ export interface LogsViewerProps {
     height?: number | string;
     fullscreenHeight?: number | string;
     isFullView?: boolean;
+    isFullHeight?: boolean;
     fontSize?: number;
     downloadFileName?: string;
     defaultShowDebugLogs?: boolean;

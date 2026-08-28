@@ -35,12 +35,9 @@ func (uc *UC) UpdateNode(
 			spec := &node.Spec
 
 			if req.Name != "" {
-				spec.Annotations.Name = req.Name //nolint
+				spec.Name = req.Name
 			}
 			spec.Labels = dockerhelper.ApplyUserLabels(spec.Labels, req.Labels)
-			if req.Role != "" {
-				spec.Role = swarm.NodeRole(req.Role)
-			}
 			if req.Availability != "" {
 				spec.Availability = swarm.NodeAvailability(req.Availability)
 			}

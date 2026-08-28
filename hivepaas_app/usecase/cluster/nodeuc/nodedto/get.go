@@ -51,6 +51,7 @@ type NodeResp struct {
 	Platform     *NodePlatformResp       `json:"platform"`
 	Resources    *NodeResources          `json:"resources"`
 	EngineDesc   *NodeEngineDescResp     `json:"engineDesc"`
+	UpdateVer    int                     `json:"updateVer"`
 }
 
 type NodeBaseResp struct {
@@ -97,6 +98,7 @@ func TransformNode(
 	if err = copier.Copy(&resp, nodeEnt); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	resp.UpdateVer = setting.UpdateVer
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {

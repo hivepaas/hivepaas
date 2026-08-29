@@ -129,7 +129,7 @@ export function SystemTaskSummaryCard({
     return (
         <div
             className={cn(
-                "rounded-lg border bg-background shadow-xs",
+                "rounded-[8px] border bg-background shadow-xs",
                 variant === "list"
                     ? ["p-5", STATUS_BORDER_CLASS_NAMES[task.status]]
                     : "border-0 p-0 shadow-none bg-transparent",
@@ -301,7 +301,7 @@ export function SystemTaskSummaryCardSkeleton({ variant = "list" }: { variant?: 
     return (
         <div
             className={cn(
-                "rounded-lg border border-border bg-background p-5",
+                "rounded-[8px] border border-border bg-background p-5",
                 variant === "list" && "border-l-4 border-l-purple-200",
             )}
         >

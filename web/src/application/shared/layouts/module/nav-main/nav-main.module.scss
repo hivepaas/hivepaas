@@ -86,17 +86,21 @@
     }
 
     &.is-pending {
-      background-color: var(--primary);
+      background-color: rgba(245, 158, 11, 0.12);
+
+      .active-indicator {
+        opacity: 0.8;
+      }
 
       &::after {
         position: absolute;
 
         background-image: linear-gradient(
           90deg,
-          rgba(#fff, 0) 0,
-          rgba(#fff, 0.6) 40%,
-          rgba(#fff, 0.8) 50%,
-          rgba(#fff, 0)
+          rgba(245, 158, 11, 0) 0,
+          rgba(245, 158, 11, 0.25) 40%,
+          rgba(255, 255, 255, 0.6) 50%,
+          rgba(245, 158, 11, 0) 100%
         );
         transform: translateX(-100%);
 

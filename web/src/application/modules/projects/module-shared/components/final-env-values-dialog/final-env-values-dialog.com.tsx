@@ -45,7 +45,7 @@ export function FinalEnvValuesDialog({ open, onOpenChange, items, sectionTitle, 
                 onOpenChange(nextOpen);
             }}
         >
-            <DialogFixedContent className="flex h-[80vh] w-[1000px] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-2rem)] flex-col">
+            <DialogFixedContent className="flex h-[75vh] sm:h-[80vh] w-[1000px] max-w-[calc(100vw-1rem)] max-h-[calc(100svh-2.5rem)] sm:max-h-[85vh] flex-col">
                 <DialogHeader>
                     <DialogTitle>Final Env Values</DialogTitle>
                 </DialogHeader>

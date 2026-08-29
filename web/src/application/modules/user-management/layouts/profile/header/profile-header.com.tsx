@@ -45,7 +45,7 @@ function View() {
                                 </span>
                             </div>
                         </div>
-                        <span className="hidden sm:inline text-amber-500/70 dark:text-amber-400/70 select-none">•</span>
+                        <span className="hidden sm:inline text-amber-500/50 dark:text-amber-400/50 select-none">•</span>
                         <div className="flex gap-1.5 items-center">
                             <BadgeCheck className="size-3.5 sm:size-4 text-blue-500 shrink-0" />
                             <div className="flex gap-1 items-center">
@@ -55,7 +55,7 @@ function View() {
                         </div>
                         {profile.lastAccess && (
                             <>
-                                <span className="hidden sm:inline text-amber-500/70 dark:text-amber-400/70 select-none">
+                                <span className="hidden sm:inline text-amber-500/50 dark:text-amber-400/50 select-none">
                                     •
                                 </span>
                                 <div className="flex items-center gap-1.5">

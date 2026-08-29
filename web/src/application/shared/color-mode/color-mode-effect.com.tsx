@@ -12,19 +12,27 @@ const DARK_READER_THEME = {
 const DARK_READER_FIXES: DarkReader.DynamicThemeFix = {
     invert: [],
     css: `
-        .hivepaas-logo-hex {
-            fill: #f3f4f6 !important;
-            stroke: #f3f4f6 !important;
+        svg.hivepaas-logo,
+        svg.hivepaas-logo * {
+            filter: none !important;
         }
-        .hivepaas-logo-inner,
-        .hivepaas-logo-inner rect,
-        .hivepaas-logo-inner polygon {
-            fill: #181a1b !important;
-            stroke: #181a1b !important;
+        .hivepaas-logo .hivepaas-logo-hex {
+            fill: #111827 !important;
+            stroke: #374151 !important;
+        }
+        .hivepaas-logo .hivepaas-logo-inner,
+        .hivepaas-logo .hivepaas-logo-inner rect,
+        .hivepaas-logo .hivepaas-logo-inner polygon {
+            fill: #fef7eb !important;
+            stroke: #fef7eb !important;
+        }
+        .tab-active-indicator,
+        .active-indicator {
+            background-color: #f59e0b !important;
         }
     `,
-    ignoreInlineStyle: [".x-logo", ".hivepaas-logo"],
-    ignoreImageAnalysis: [".x-logo", ".hivepaas-logo"],
+    ignoreInlineStyle: [".x-logo", ".hivepaas-logo", "svg.hivepaas-logo", "svg.hivepaas-logo *"],
+    ignoreImageAnalysis: [".x-logo", ".hivepaas-logo", "svg.hivepaas-logo", "svg.hivepaas-logo *"],
     disableStyleSheetsProxy: false,
     ignoreCSSUrl: [],
 };

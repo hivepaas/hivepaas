@@ -206,7 +206,7 @@ function EnvStatusActionButton({
                 <Button
                     variant={buttonVariant}
                     disabled={isDenied || !isEnvStatusActionable || isEnvDeleting}
-                    className="min-w-[160px]"
+                    className="min-w-[120px]"
                     onClick={() => {
                         if (isDenied || !isEnvStatusActionable || isEnvDeleting) {
                             return;
@@ -243,7 +243,7 @@ function EnvDeleteActionButton({
                 <Button
                     variant="destructive"
                     disabled={isDenied || isEnvDeleting}
-                    className="min-w-[160px]"
+                    className="min-w-[120px]"
                     onClick={() => {
                         if (isDenied || isEnvDeleting) {
                             return;

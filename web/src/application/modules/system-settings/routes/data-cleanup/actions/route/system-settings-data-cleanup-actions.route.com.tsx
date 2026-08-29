@@ -164,7 +164,7 @@ export function SystemSettingsDataCleanupActionsRoute() {
                                     {({ isDenied }) => (
                                         <Button
                                             type="button"
-                                            className="min-w-[220px]"
+                                            className="min-w-[120px]"
                                             disabled={isDenied}
                                             isLoading={isClearingRepoCache}
                                             onClick={handleClearRepoCache}
@@ -202,7 +202,7 @@ export function SystemSettingsDataCleanupActionsRoute() {
                             {({ isDenied }) => (
                                 <Button
                                     type="button"
-                                    className="min-w-[220px]"
+                                    className="min-w-[120px]"
                                     disabled={isDenied}
                                     isLoading={isClearingBuildCache}
                                     onClick={handleClearBuildCache}

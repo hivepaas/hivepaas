@@ -95,7 +95,7 @@ export function GitRepositoriesDialog({
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogFixedContent className="h-[800px] w-[1000px] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-2rem)]">
+            <DialogFixedContent className="h-[800px] w-[1000px] max-w-[calc(100vw-1rem)] max-h-[calc(100svh-2.5rem)] sm:max-h-[85vh]">
                 <DialogHeader>
                     <DialogTitle>Repositories</DialogTitle>
                 </DialogHeader>
@@ -252,7 +252,7 @@ export function PullRequestsDialog({
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogFixedContent className="h-[800px] w-[1200px] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-2rem)]">
+            <DialogFixedContent className="h-[800px] w-[1200px] max-w-[calc(100vw-1rem)] max-h-[calc(100svh-2.5rem)] sm:max-h-[85vh]">
                 <DialogHeader>
                     <DialogTitle>Pull requests</DialogTitle>
                 </DialogHeader>
@@ -423,7 +423,10 @@ export function BranchesDialog({
             onOpenChange={onOpenChange}
         >
             <DialogFixedContent
-                className={cn("h-[800px] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-2rem)]", dialogWidthClassName)}
+                className={cn(
+                    "h-[800px] max-w-[calc(100vw-1rem)] max-h-[calc(100svh-2.5rem)] sm:max-h-[85vh]",
+                    dialogWidthClassName,
+                )}
             >
                 <DialogHeader>
                     <DialogTitle>Branches</DialogTitle>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { dashedBorderBox } from "@lib/styles";
@@ -183,30 +183,31 @@ export function SetManagerNodesDialog() {
         });
     }
 
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
     return (
         <Dialog
             open={open}
             onOpenChange={handleClose}
         >
             <DialogFixedContent
-                className="h-[800px] w-[1000px] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-2rem)]"
+                className="h-[800px] w-[1000px] max-w-[calc(100vw-1rem)] max-h-[calc(100svh-2.5rem)] sm:max-h-[85vh]"
                 onOpenAutoFocus={event => {
                     event.preventDefault();
+                    searchInputRef.current?.focus();
                 }}
             >
                 <DialogHeader>
-                    <DialogTitle>Set Manager Nodes</DialogTitle>
+                    <DialogTitle>Set manager nodes</DialogTitle>
                 </DialogHeader>
                 <div className="px-4 sm:px-6">
                     <Separator className="opacity-50" />
                 </div>
-                <DialogBody className="flex min-h-0 flex-col gap-5">
-                    <div className={cn(dashedBorderBox, "text-sm leading-6")}>
-                        <span className="font-semibold text-orange-500">Note:</span> Docker Swarm uses the Raft
-                        consensus algorithm. It is highly recommended to configure an odd number of managers (e.g., 1, 3
-                        or 5) to optimize fault tolerance and avoid split-brain scenarios. Configuring an even number of
-                        managers (e.g., 2, 4 or 6) does not increase the cluster&apos;s fault tolerance compared to the
-                        odd number below it (1, 3 or 5). It only increases synchronization overhead and resource
+                <DialogBody className="flex min-h-0 flex-1 flex-col gap-4">
+                    <div className={cn(dashedBorderBox, "text-sm")}>
+                        <span className="font-semibold text-orange-500">Notice:</span> A 3-node cluster can tolerate the
+                        loss of 1 manager, but a 4-node cluster can ALSO only tolerate the loss of 1 manager. So having
+                        even number of managers does not make sense in terms of HA, and causes unnecessary resource
                         consumption without any reliability benefit.
                     </div>
 
@@ -216,6 +217,7 @@ export function SetManagerNodesDialog() {
                             <span className="sr-only">Search</span>
                         </div>
                         <Input
+                            ref={searchInputRef}
                             value={search}
                             type="search"
                             placeholder="Search"

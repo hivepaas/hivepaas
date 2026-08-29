@@ -7,7 +7,7 @@ export function ActionExecutePanel({ message, buttonLabel, isLoading, permission
     const button = ({ isDenied = false }: { isDenied?: boolean } = {}) => (
         <Button
             type="button"
-            className="min-w-[180px]"
+            className="min-w-[120px]"
             disabled={isLoading || isDenied}
             isLoading={isLoading}
             onClick={() => {

@@ -60,7 +60,7 @@ function View() {
                                 : type === "warning"
                                   ? "text-yellow-500"
                                   : "text-gray-500",
-                            "px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm min-w-0 max-w-full max-h-[min(50vh,24rem)] overflow-y-auto whitespace-pre-wrap break-words break-all",
+                            "px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm min-w-0 max-w-full max-h-[min(50svh,24rem)] overflow-y-auto whitespace-pre-wrap break-words break-all",
                         )}
                     >
                         {description}

@@ -217,7 +217,7 @@ function View({ projectId, env, appId }: Props) {
                             isLoading={isDeploying}
                             disabled={isAppActionPending && !isDeploying}
                         >
-                            <RefreshCw className="size-3.5 text-orange-600 mr-1 sm:mr-1.5" />
+                            <RefreshCw className="size-3.5 text-amber-500 dark:text-amber-400 mr-1 sm:mr-1.5" />
                             Re-deploy
                         </Button>
                     </PopConfirm>
@@ -239,7 +239,7 @@ function View({ projectId, env, appId }: Props) {
                             isLoading={isRestarting}
                             disabled={isAppActionPending && !isRestarting}
                         >
-                            <Power className="size-3.5 text-orange-600 mr-1 sm:mr-1.5" />
+                            <Power className="size-3.5 text-amber-500 dark:text-amber-400 mr-1 sm:mr-1.5" />
                             Restart
                         </Button>
                     </PopConfirm>
@@ -262,7 +262,7 @@ function View({ projectId, env, appId }: Props) {
                                 isLoading={isSettingRunning}
                                 disabled={isAppActionPending && !isSettingRunning}
                             >
-                                <Power className="size-3.5 text-orange-600 mr-1 sm:mr-1.5" />
+                                <Power className="size-3.5 text-amber-500 dark:text-amber-400 mr-1 sm:mr-1.5" />
                                 {startStopText}
                             </Button>
                         </PopConfirm>
@@ -278,7 +278,7 @@ function View({ projectId, env, appId }: Props) {
                                 setRunning({ projectID: projectId, env, appID: appId, running: true });
                             }}
                         >
-                            <Power className="size-3.5 text-orange-600 mr-1 sm:mr-1.5" />
+                            <Power className="size-3.5 text-amber-500 dark:text-amber-400 mr-1 sm:mr-1.5" />
                             {startStopText}
                         </Button>
                     )}

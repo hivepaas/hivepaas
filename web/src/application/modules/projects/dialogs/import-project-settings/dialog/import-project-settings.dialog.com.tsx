@@ -616,7 +616,7 @@ export function ImportProjectSettingsDialog() {
                         </div>
                     ) : (
                         <div className="flex flex-col gap-4">
-                            <TableActions search={{ value: search, onChange: setSearch }} />
+                            <TableActions search={{ value: search, onChange: setSearch, autoFocus: true }} />
                             <DataTable
                                 columns={columns}
                                 data={importableSettings}

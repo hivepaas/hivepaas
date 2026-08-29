@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren, useState } from "react";
+import React, { type PropsWithChildren, useEffect, useRef, useState } from "react";
 
 import { Input } from "@components/ui/input";
 import { SearchIcon } from "lucide-react";
@@ -6,6 +6,13 @@ import { useDebounce } from "react-use";
 
 export function TableActions({ children, search, renderActions = null }: Props) {
     const [internalSearch, setInternalSearch] = useState(search?.value ?? "");
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (search?.autoFocus) {
+            inputRef.current?.focus();
+        }
+    }, [search?.autoFocus]);
 
     useDebounce(
         () => {
@@ -27,12 +34,13 @@ export function TableActions({ children, search, renderActions = null }: Props) 
                             <span className="sr-only">Search</span>
                         </div>
                         <Input
+                            ref={inputRef}
                             value={internalSearch}
                             onChange={e => {
                                 setInternalSearch(e.target.value);
                             }}
                             type="search"
-                            placeholder="Search"
+                            placeholder={search.placeholder ?? "Search"}
                             className="peer px-9 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none w-full"
                         />
                     </div>
@@ -52,6 +60,8 @@ type Props = PropsWithChildren<{
     search?: {
         value: string;
         onChange: (search: string) => void;
+        autoFocus?: boolean;
+        placeholder?: string;
     };
     renderActions?: React.ReactNode;
 }>;

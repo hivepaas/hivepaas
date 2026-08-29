@@ -49,9 +49,8 @@ function findActiveRoute(links: TabItem[], pathname: string) {
 
 function tabClassName(isActive: boolean, isDisabled: boolean | undefined) {
     return cn(
-        "inline-flex h-full flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-none border-0 border-b-2 border-transparent bg-background p-3 text-md font-medium text-foreground transition-[color,box-shadow]",
+        "relative inline-flex h-full flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-none bg-background p-3 text-md font-medium text-foreground transition-[color,box-shadow]",
         "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring focus-visible:ring-[3px] focus-visible:outline-1",
-        isActive && "border-amber-500 dark:border-amber-400",
         isDisabled && "pointer-events-none opacity-50",
     );
 }
@@ -78,6 +77,12 @@ function TabLink({ link, isActive }: { link: TabItem; isActive: boolean }) {
             className={className}
         >
             {link.label}
+            {isActive && (
+                <span
+                    aria-hidden="true"
+                    className="tab-active-indicator absolute bottom-0 left-0 right-0 h-[2px] bg-amber-500 z-10"
+                />
+            )}
         </AppLink.Modules>
     );
 }
@@ -93,7 +98,7 @@ function View({ links }: Props) {
                 aria-label="Tabs"
                 className="gap-4"
             >
-                <div className="bg-background inline-flex h-12 w-fit min-w-max items-center justify-center rounded-none border-b p-0">
+                <div className="bg-background inline-flex h-12 w-fit min-w-max items-center justify-center rounded-none p-0">
                     {links.map(link => (
                         <TabLink
                             key={link.route}

@@ -97,7 +97,7 @@ export function ConfirmEnvDangerActionForm({ action, envName, isPending = false,
                     variant={copy.buttonVariant}
                     disabled={readOnly || isPending || !isConfirmed}
                     isLoading={isPending}
-                    className="min-w-[180px]"
+                    className="min-w-[120px]"
                 >
                     {copy.buttonLabel}
                 </Button>

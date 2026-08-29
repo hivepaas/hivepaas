@@ -87,7 +87,7 @@ export function AppsPickerDialog({ open, onOpenChange, projectID, excludeAppId, 
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogFixedContent className="h-[800px] w-[800px] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-2rem)]">
+            <DialogFixedContent className="h-[800px] w-[800px] max-w-[calc(100vw-1rem)] max-h-[calc(100svh-2.5rem)] sm:max-h-[85vh]">
                 <DialogHeader>
                     <DialogTitle>Apps</DialogTitle>
                 </DialogHeader>

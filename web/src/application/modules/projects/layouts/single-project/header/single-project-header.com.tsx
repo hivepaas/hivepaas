@@ -122,7 +122,7 @@ function View({ projectId }: Props) {
                             </span>
                         </div>
 
-                        <span className="hidden sm:inline text-amber-500/70 dark:text-amber-400/70 select-none">•</span>
+                        <span className="hidden sm:inline text-amber-500/50 dark:text-amber-400/50 select-none">•</span>
 
                         <div className="flex items-center gap-1.5">
                             <span>Access:</span>

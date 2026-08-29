@@ -97,7 +97,7 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
                     variant={copy.buttonVariant}
                     disabled={readOnly || isPending || !isConfirmed}
                     isLoading={isPending}
-                    className="min-w-[160px]"
+                    className="min-w-[120px]"
                 >
                     {copy.buttonLabel}
                 </Button>

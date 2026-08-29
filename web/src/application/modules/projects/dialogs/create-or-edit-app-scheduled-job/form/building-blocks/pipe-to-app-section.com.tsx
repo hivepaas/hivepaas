@@ -61,7 +61,7 @@ export function PipeToAppSection({ projectId, appId, readOnly = false }: Props) 
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            className="min-w-[130px]"
+                                            className="min-w-[120px]"
                                             onClick={() => {
                                                 setProjectsDialogOpen(true);
                                             }}
@@ -98,7 +98,7 @@ export function PipeToAppSection({ projectId, appId, readOnly = false }: Props) 
                                         <Button
                                             type="button"
                                             variant="outline"
-                                            className="min-w-[130px]"
+                                            className="min-w-[120px]"
                                             onClick={() => {
                                                 setAppsDialogOpen(true);
                                             }}

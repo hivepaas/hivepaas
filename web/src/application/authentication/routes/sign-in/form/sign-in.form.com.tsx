@@ -76,12 +76,12 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                     >
                         <FieldGroup>
                             <Field>
-                                <FieldLabel htmlFor="email">Username or Email</FieldLabel>
+                                <FieldLabel htmlFor="email">Username</FieldLabel>
                                 <Input
                                     id="email"
                                     value={email.value}
                                     onChange={email.onChange}
-                                    placeholder="m@example.com"
+                                    placeholder="username or email"
                                     aria-invalid={isEmailInvalid}
                                     required
                                 />

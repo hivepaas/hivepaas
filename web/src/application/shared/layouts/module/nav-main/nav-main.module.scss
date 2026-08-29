@@ -1,6 +1,6 @@
 .link {
   display: block;
-  height: 32px;
+  height: 36px;
 
   .link-content {
     position: relative;
@@ -22,7 +22,7 @@
       left: 1px;
 
       width: 2px;
-      height: 30px;
+      height: 34px;
 
       background-color: #f59e0b;
 
@@ -78,6 +78,22 @@
 
       .label {
         font-weight: 500;
+      }
+
+      .icon {
+        color: #f59e0b;
+      }
+
+      :global(.dark) & {
+        background-color: rgba(251, 191, 36, 0.1);
+
+        .icon {
+          color: #fbbf24;
+        }
+
+        .active-indicator {
+          background-color: #fbbf24;
+        }
       }
 
       .active-indicator {

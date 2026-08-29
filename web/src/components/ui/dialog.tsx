@@ -69,7 +69,7 @@ function DialogContent({
             <DialogPrimitive.Content
                 data-slot="dialog-content"
                 className={cn(
-                    "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-1rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-4 sm:p-6 shadow-lg duration-200 sm:max-w-[1024px] max-h-[calc(100svh-2.5rem)] sm:max-h-[85vh] overflow-y-auto",
+                    "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-1rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-4 shadow-lg duration-200 sm:max-w-[1024px] max-h-[calc(100svh-2.5rem)] sm:max-h-[85vh] overflow-y-auto",
                     className,
                 )}
                 {...props}
@@ -93,7 +93,7 @@ function DialogFixedContent({ className, ...props }: React.ComponentProps<typeof
     return (
         <DialogContent
             className={cn(
-                "max-h-[calc(100svh-2.5rem)] sm:max-h-[85vh] overflow-hidden flex flex-col gap-0 sm:gap-0 p-0 sm:p-0 [&>[data-slot=dialog-header]]:shrink-0 [&>[data-slot=dialog-header]]:px-3.5 sm:[&>[data-slot=dialog-header]]:px-6 [&>[data-slot=dialog-header]]:pt-3.5 sm:[&>[data-slot=dialog-header]]:pt-6 [&>[data-slot=dialog-header]]:pb-2.5 sm:[&>[data-slot=dialog-header]]:pb-4",
+                "max-h-[calc(100svh-2.5rem)] sm:max-h-[85vh] overflow-hidden flex flex-col gap-0 p-0 [&>[data-slot=dialog-header]]:shrink-0 [&>[data-slot=dialog-header]]:p-4",
                 className,
             )}
             {...props}
@@ -105,7 +105,7 @@ function DialogBody({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
             data-slot="dialog-body"
-            className={cn("min-h-0 flex-1 overflow-y-auto px-3.5 py-2.5 sm:px-6 sm:py-4", className)}
+            className={cn("min-h-0 flex-1 overflow-y-auto p-4", className)}
             {...props}
         />
     );
@@ -118,12 +118,10 @@ function DialogActionFooter({ className, children, ...props }: React.ComponentPr
             className="shrink-0 bg-background"
             {...props}
         >
-            <div className="px-3.5 sm:px-6">
+            <div className="px-4">
                 <Separator className="opacity-50" />
             </div>
-            <div className={cn("px-3.5 py-2.5 sm:px-6 sm:py-4 flex items-center justify-end gap-3", className)}>
-                {children}
-            </div>
+            <div className={cn("p-4 flex items-center justify-end gap-3", className)}>{children}</div>
         </div>
     );
 }

@@ -72,7 +72,7 @@ export function DetectAppIconDialog({
                 </DialogBody>
 
                 {hasIcon && (
-                    <DialogActionFooter className="px-3 py-2.5 sm:px-4.5 sm:py-3.5 flex justify-end gap-3 sm:gap-4 [&>div:first-child]:px-3 sm:[&>div:first-child]:px-4.5">
+                    <DialogActionFooter className="flex justify-end gap-3">
                         <Button
                             type="button"
                             variant="outline"

@@ -94,7 +94,7 @@ export function ProvisionGithubAppDialog() {
                 <DialogHeader>
                     <DialogTitle>Provision Github app</DialogTitle>
                 </DialogHeader>
-                <div className="px-4 sm:px-6">
+                <div className="px-4">
                     <Separator className="opacity-50" />
                 </div>
                 {state.mode === "open" && (

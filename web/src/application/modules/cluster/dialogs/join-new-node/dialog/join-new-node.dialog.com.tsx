@@ -24,7 +24,7 @@ export function JoinNewNodeDialog() {
                 <DialogHeader>
                     <DialogTitle>Join new node to the swarm cluster</DialogTitle>
                 </DialogHeader>
-                <div className="px-4 sm:px-6">
+                <div className="px-4">
                     <Separator className="opacity-50" />
                 </div>
                 <JoinNewNodeForm readOnly={!canWrite} />

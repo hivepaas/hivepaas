@@ -200,7 +200,7 @@ export function SetManagerNodesDialog() {
                 <DialogHeader>
                     <DialogTitle>Set manager nodes</DialogTitle>
                 </DialogHeader>
-                <div className="px-4 sm:px-6">
+                <div className="px-4">
                     <Separator className="opacity-50" />
                 </div>
                 <DialogBody className="flex min-h-0 flex-1 flex-col gap-4">

@@ -81,7 +81,7 @@ export function TestAcmeDnsProviderAccessDialog({ open, onOpenChange, isPending,
                             </FieldGroup>
                         </InfoBlock>
                     </DialogBody>
-                    <div className="shrink-0 px-4 py-3 sm:px-6 sm:py-4 flex justify-end">
+                    <div className="shrink-0 p-4 flex justify-end">
                         <Button
                             type="submit"
                             isLoading={isPending}

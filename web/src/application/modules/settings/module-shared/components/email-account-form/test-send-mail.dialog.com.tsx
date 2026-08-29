@@ -149,7 +149,7 @@ export function TestSendMailDialog({ open, isPending, testStatus, onOpenChange, 
                             </InfoBlock>
                         </FieldGroup>
                     </DialogBody>
-                    <div className="shrink-0 px-4 py-3 sm:px-6 sm:py-4 flex justify-end items-center gap-3">
+                    <div className="shrink-0 p-4 flex justify-end items-center gap-3">
                         <Button
                             type="submit"
                             isLoading={isPending}

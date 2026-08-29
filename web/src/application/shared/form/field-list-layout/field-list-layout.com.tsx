@@ -35,14 +35,14 @@ export function FieldListLayout({
 }: Props) {
     return (
         <div className={cn("flex flex-col gap-3", className)}>
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
                 {inputsClassName ? <div className={inputsClassName}>{inputRow}</div> : inputRow}
                 <Button
                     type="button"
                     variant="outline"
                     onClick={onAdd}
                     disabled={disabled || addDisabled}
-                    className="h-9 px-4"
+                    className="h-9 px-4 shrink-0 w-full sm:w-auto"
                 >
                     <Plus className="size-4" /> Add
                 </Button>

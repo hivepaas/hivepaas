@@ -35,7 +35,7 @@ export function EditCommandArgDialog({ open, onOpenChange, name, value, onSave, 
             onOpenChange={onOpenChange}
         >
             <DialogFixedContent
-                className="flex w-[700px] max-w-[calc(100%-2rem)] flex-col"
+                className="flex sm:max-w-[700px] flex-col"
                 onEscapeKeyDown={event => {
                     event.stopPropagation();
                 }}

@@ -65,7 +65,7 @@ export function ExportContainerFilesDialog() {
                 }
             }}
         >
-            <DialogFixedContent className="min-w-[390px] w-[680px]">
+            <DialogFixedContent className="sm:max-w-[680px]">
                 <DialogHeader>
                     <DialogTitle>Export Container Files</DialogTitle>
                     <DialogDescription>

@@ -52,13 +52,13 @@ export function RunNowTaskCreatedDialog() {
                 }
             }}
         >
-            <DialogFixedContent className="min-w-[390px] w-[680px]">
+            <DialogFixedContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>Task created</DialogTitle>
                 </DialogHeader>
 
                 <DialogBody>
-                    <div className={cn(dashedBorderBox, "text-base leading-7")}>
+                    <div className={cn(dashedBorderBox, "text-xs sm:text-sm leading-5 sm:leading-6")}>
                         <p>The task has been added to the execution queue.</p>
                         <p>
                             You can view the execution details via the job&apos;s{" "}

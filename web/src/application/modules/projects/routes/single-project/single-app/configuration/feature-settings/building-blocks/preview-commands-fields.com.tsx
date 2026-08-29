@@ -95,7 +95,7 @@ export function PreviewCommandsFields({ projectID, env, readOnly = false }: Prop
             titleWidth={FEATURE_SETTINGS_TITLE_WIDTH}
         >
             <div className="flex max-w-[545px] flex-col gap-2">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                     <ComboboxWithAddon<CommandOption>
                         addonLeft="Command"
                         value={selectedCommand?.id}
@@ -109,7 +109,7 @@ export function PreviewCommandsFields({ projectID, env, readOnly = false }: Prop
                         valueKey="id"
                         options={options}
                         placeholder="select command template to add"
-                        classNameContainer="max-w-[460px]"
+                        classNameContainer="w-full sm:max-w-[460px] min-w-0 flex-1"
                         disabled={readOnly}
                     />
 
@@ -118,6 +118,7 @@ export function PreviewCommandsFields({ projectID, env, readOnly = false }: Prop
                         variant="outline"
                         onClick={handleAdd}
                         disabled={readOnly || !selectedCommand}
+                        className="h-9 shrink-0 w-full sm:w-auto"
                     >
                         <Plus className="size-4" /> Add
                     </Button>

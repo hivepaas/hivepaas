@@ -146,7 +146,7 @@ function View({ domainIndex, readOnly = false }: ContainerPortProps) {
                 open={modalOpen}
                 onOpenChange={setModalOpen}
             >
-                <DialogFixedContent className="min-w-[390px] w-[410px]">
+                <DialogFixedContent className="sm:max-w-[410px]">
                     <DialogHeader>
                         <DialogTitle>Port checking result</DialogTitle>
                     </DialogHeader>

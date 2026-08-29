@@ -172,7 +172,7 @@ export function CreateOrEditAppConfigFileDialog() {
                 }
             }}
         >
-            <DialogFixedContent className="min-w-[390px] w-[820px]">
+            <DialogFixedContent className="sm:max-w-[820px]">
                 <DialogHeader>
                     <DialogTitle>Create or update a config file</DialogTitle>
                 </DialogHeader>

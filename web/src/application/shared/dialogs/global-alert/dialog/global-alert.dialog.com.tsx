@@ -47,9 +47,11 @@ function View() {
             open={mode === "open"}
             onOpenChange={onOpenChange}
         >
-            <AlertDialogContent className="min-w-[390px] w-[680px] max-w-[680px] sm:max-w-[680px] overflow-hidden">
-                <AlertDialogHeader className="min-w-0">
-                    <AlertDialogTitle>{title}</AlertDialogTitle>
+            <AlertDialogContent className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-[500px] p-2.5 sm:p-4.5 gap-2 sm:gap-3.5 overflow-hidden">
+                <AlertDialogHeader className="min-w-0 gap-1.5 sm:gap-2.5">
+                    <AlertDialogTitle className="pr-7 sm:pr-8 text-base sm:text-lg text-center">
+                        {title}
+                    </AlertDialogTitle>
                     <AlertDialogDescription
                         className={cn(
                             dashedBorderBox,
@@ -58,7 +60,7 @@ function View() {
                                 : type === "warning"
                                   ? "text-yellow-500"
                                   : "text-gray-500",
-                            "min-w-0 max-w-full max-h-[min(50vh,24rem)] overflow-y-auto whitespace-pre-wrap break-all",
+                            "px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm min-w-0 max-w-full max-h-[min(50vh,24rem)] overflow-y-auto whitespace-pre-wrap break-words break-all",
                         )}
                     >
                         {description}
@@ -67,14 +69,14 @@ function View() {
                         variant="ghost"
                         size="icon-sm"
                         onClick={close}
-                        className="absolute right-4 top-4"
+                        className="absolute right-2 top-2 sm:right-3.5 sm:top-3.5 size-7 sm:size-8"
                     >
-                        <X />
+                        <X className="size-4" />
                     </Button>
                 </AlertDialogHeader>
 
                 {showFooter ? (
-                    <AlertDialogFooter>
+                    <AlertDialogFooter className="gap-2 sm:gap-3">
                         {cancelText && <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>}
                         <AlertDialogAction onClick={onAction}>{actionText}</AlertDialogAction>
                     </AlertDialogFooter>

@@ -202,7 +202,7 @@ export function CreateOrEditAppScheduledJobDialog() {
                 }
             }}
         >
-            <DialogFixedContent className="min-w-[390px] w-[860px]">
+            <DialogFixedContent className="sm:max-w-[860px]">
                 <DialogHeader>
                     <DialogTitle>Create or update a scheduled job</DialogTitle>
                 </DialogHeader>

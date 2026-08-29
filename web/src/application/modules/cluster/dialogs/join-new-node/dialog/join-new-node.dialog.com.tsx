@@ -20,11 +20,11 @@ export function JoinNewNodeDialog() {
             open={open}
             onOpenChange={actions.close}
         >
-            <DialogFixedContent className="min-w-[390px] w-[650px]">
+            <DialogFixedContent className="sm:max-w-[650px]">
                 <DialogHeader>
                     <DialogTitle>Join new node to the swarm cluster</DialogTitle>
                 </DialogHeader>
-                <div className="px-6">
+                <div className="px-4 sm:px-6">
                     <Separator className="opacity-50" />
                 </div>
                 <JoinNewNodeForm readOnly={!canWrite} />

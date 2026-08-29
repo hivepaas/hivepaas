@@ -43,7 +43,7 @@ function View({ open, onOpenChange, sslCert, isLoading = false }: SslInfoProps) 
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogFixedContent className="min-w-[390px] w-[460px]">
+            <DialogFixedContent className="sm:max-w-[460px]">
                 <DialogHeader>
                     <DialogTitle>SSL certificate info</DialogTitle>
                 </DialogHeader>

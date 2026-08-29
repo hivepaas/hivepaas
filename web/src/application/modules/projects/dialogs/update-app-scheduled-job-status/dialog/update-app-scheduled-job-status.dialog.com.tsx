@@ -102,7 +102,7 @@ export function UpdateAppScheduledJobStatusDialog() {
                 }
             }}
         >
-            <DialogFixedContent className="min-w-[390px] w-[720px]">
+            <DialogFixedContent className="sm:max-w-[720px]">
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>

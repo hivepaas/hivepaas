@@ -14,10 +14,10 @@ function View<T extends Record<string, unknown> = Record<string, unknown>>({
     ...comboboxProps
 }: ComboboxWithAddonProps<T>) {
     return (
-        <div className={cn("w-full space-y-2", classNameContainer)}>
+        <div className={cn("w-full min-w-0 space-y-2", classNameContainer)}>
             <div className="flex min-w-0 rounded-md shadow-xs">
                 {addonLeft && (
-                    <span className="border-input bg-background inline-flex items-center rounded-l-md border px-3 text-sm">
+                    <span className="border-input bg-background inline-flex items-center rounded-l-md border px-2.5 sm:px-3 text-xs sm:text-sm shrink-0">
                         {addonLeft}
                     </span>
                 )}
@@ -33,7 +33,7 @@ function View<T extends Record<string, unknown> = Record<string, unknown>>({
                 />
 
                 {addonRight && (
-                    <span className="border-input bg-background inline-flex items-center rounded-r-md border px-3 text-sm">
+                    <span className="border-input bg-background inline-flex items-center rounded-r-md border px-2.5 sm:px-3 text-xs sm:text-sm shrink-0">
                         {addonRight}
                     </span>
                 )}

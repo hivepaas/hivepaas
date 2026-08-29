@@ -91,9 +91,9 @@ export function View({ userId }: Props) {
 
     return (
         <div className="bg-background py-3 sm:py-4 px-4 sm:px-5 rounded-lg">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3">
                 <UserBreadcrumbs user={user} />
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                     {shouldShowToggleButtons && showDisable && canWrite && (
                         <PopConfirm
                             title="Disable User"
@@ -107,8 +107,9 @@ export function View({ userId }: Props) {
                                 variant="outline"
                                 size="sm"
                                 isLoading={isUpdating}
+                                className="h-8 px-2 sm:px-3 text-xs sm:text-sm shrink-0"
                             >
-                                <Lock className="mr-1.5 size-3.5" />
+                                <Lock className="hidden sm:inline-block mr-1.5 size-3.5" />
                                 Disable
                             </Button>
                         </PopConfirm>
@@ -123,8 +124,9 @@ export function View({ userId }: Props) {
                                     variant="outline"
                                     size="sm"
                                     disabled={isDenied}
+                                    className="h-8 px-2 sm:px-3 text-xs sm:text-sm shrink-0"
                                 >
-                                    <Lock className="mr-1.5 size-3.5" />
+                                    <Lock className="hidden sm:inline-block mr-1.5 size-3.5" />
                                     Disable
                                 </Button>
                             )}
@@ -142,8 +144,9 @@ export function View({ userId }: Props) {
                                     onClick={handleActivate}
                                     disabled={isDenied}
                                     isLoading={isUpdating}
+                                    className="h-8 px-2 sm:px-3 text-xs sm:text-sm shrink-0"
                                 >
-                                    <Check className="mr-1.5 size-3.5" />
+                                    <Check className="hidden sm:inline-block mr-1.5 size-3.5" />
                                     Activate
                                 </Button>
                             )}
@@ -165,8 +168,9 @@ export function View({ userId }: Props) {
                                     resetUserPasswordDialog.actions.open(user);
                                 }}
                                 disabled={isDenied}
+                                className="h-8 px-2 sm:px-3 text-xs sm:text-sm shrink-0"
                             >
-                                <KeyRound className="mr-1.5 size-3.5" />
+                                <KeyRound className="hidden sm:inline-block mr-1.5 size-3.5" />
                                 Reset password
                             </Button>
                         )}
@@ -184,8 +188,9 @@ export function View({ userId }: Props) {
                                 variant="outline"
                                 size="sm"
                                 disabled={isDeleting}
+                                className="h-8 px-2 sm:px-3 text-xs sm:text-sm shrink-0"
                             >
-                                <Trash2 className="mr-1.5 size-3.5" />
+                                <Trash2 className="hidden sm:inline-block mr-1.5 size-3.5" />
                                 Remove
                             </Button>
                         </PopConfirm>
@@ -199,8 +204,9 @@ export function View({ userId }: Props) {
                                     variant="outline"
                                     size="sm"
                                     disabled={isDenied}
+                                    className="h-8 px-2 sm:px-3 text-xs sm:text-sm shrink-0"
                                 >
-                                    <Trash2 className="mr-1.5 size-3.5" />
+                                    <Trash2 className="hidden sm:inline-block mr-1.5 size-3.5" />
                                     Remove
                                 </Button>
                             )}

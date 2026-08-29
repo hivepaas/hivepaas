@@ -36,7 +36,7 @@ export function ModuleLayout({ children }: PropsWithChildren) {
             <ModuleSidebar />
             <SidebarInset>
                 {/* Mobile Header: only visible on mobile screens (below md breakpoint) */}
-                <header className="flex md:hidden items-center justify-between px-4 py-2.5 border-b bg-background sticky top-0 z-20 shadow-xs">
+                <header className="flex md:hidden items-center justify-between px-4 py-2.5 border-b bg-background sticky top-0 z-30 shadow-xs">
                     <div className="flex items-center gap-2.5">
                         <SidebarTrigger className="h-8 w-8 text-foreground" />
                         <div className="flex items-center gap-2">

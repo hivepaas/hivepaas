@@ -132,7 +132,7 @@ export function CreateOrEditProjectSecretDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="min-w-[390px] w-[760px]">
+            <DialogFixedContent className="sm:max-w-[760px]">
                 <DialogHeader>
                     <DialogTitle>Create or update a secret</DialogTitle>
                 </DialogHeader>

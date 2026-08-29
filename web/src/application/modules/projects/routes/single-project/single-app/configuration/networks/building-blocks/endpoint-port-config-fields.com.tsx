@@ -12,7 +12,8 @@ import { FieldListLayout } from "@application/shared/form";
 
 import { type AppConfigNetworksFormSchemaInput, type AppConfigNetworksFormSchemaOutput } from "../schemas";
 
-const portFieldsGridClass = "grid flex-1 min-w-0 w-full grid-cols-4 gap-3 items-center";
+const portFieldsGridClass =
+    "grid flex-1 min-w-0 w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 items-center";
 
 export function EndpointPortConfigFields({ readOnly = false }: Props) {
     const { control, watch, setValue } = useFormContext<
@@ -174,7 +175,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                                 disabled={readOnly}
                             />
                             <div className="flex min-w-0 items-center rounded-md border border-input h-9">
-                                <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
+                                <span className="px-2.5 sm:px-3 text-xs sm:text-sm border-r border-input bg-muted/50 h-full flex items-center shrink-0">
                                     Protocol
                                 </span>
                                 <Select
@@ -188,7 +189,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                                     }}
                                     disabled={readOnly}
                                 >
-                                    <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
+                                    <SelectTrigger className="min-w-0 flex-1 border-0 shadow-none rounded-l-none focus:ring-0 text-xs sm:text-sm">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -199,7 +200,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                                 </Select>
                             </div>
                             <div className="flex min-w-0 items-center rounded-md border border-input h-9">
-                                <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
+                                <span className="px-2.5 sm:px-3 text-xs sm:text-sm border-r border-input bg-muted/50 h-full flex items-center shrink-0">
                                     Mode
                                 </span>
                                 <Select
@@ -213,7 +214,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                                     }}
                                     disabled={readOnly}
                                 >
-                                    <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
+                                    <SelectTrigger className="min-w-0 flex-1 border-0 shadow-none rounded-l-none focus:ring-0 text-xs sm:text-sm">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -266,8 +267,8 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                                                 placeholder="80"
                                                 classNameContainer="min-w-0"
                                             />
-                                            <div className="flex min-w-0 items-center rounded-md border border-input">
-                                                <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
+                                            <div className="flex min-w-0 items-center rounded-md border border-input h-9">
+                                                <span className="px-2.5 sm:px-3 text-xs sm:text-sm border-r border-input bg-muted/50 h-full flex items-center shrink-0">
                                                     Protocol
                                                 </span>
                                                 <Select
@@ -276,7 +277,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                                                         setDraftProtocol(value as EPortConfigProtocol);
                                                     }}
                                                 >
-                                                    <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
+                                                    <SelectTrigger className="min-w-0 flex-1 border-0 shadow-none rounded-l-none focus:ring-0 text-xs sm:text-sm">
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -286,8 +287,8 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-                                            <div className="flex min-w-0 items-center rounded-md border border-input">
-                                                <span className="px-3 text-sm border-r border-input bg-muted/50 h-full flex items-center">
+                                            <div className="flex min-w-0 items-center rounded-md border border-input h-9">
+                                                <span className="px-2.5 sm:px-3 text-xs sm:text-sm border-r border-input bg-muted/50 h-full flex items-center shrink-0">
                                                     Mode
                                                 </span>
                                                 <Select
@@ -296,7 +297,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                                                         setDraftPublishMode(value as EPortConfigPublishMode);
                                                     }}
                                                 >
-                                                    <SelectTrigger className="w-[80px] flex-1 border-0 shadow-none rounded-l-none focus:ring-0">
+                                                    <SelectTrigger className="min-w-0 flex-1 border-0 shadow-none rounded-l-none focus:ring-0 text-xs sm:text-sm">
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -312,10 +313,30 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                                         </>
                                     ) : (
                                         <>
-                                            <span className="text-sm wrap-break-word min-w-0">{field.published}</span>
-                                            <span className="text-sm wrap-break-word min-w-0">{field.target}</span>
-                                            <span className="text-sm wrap-break-word min-w-0">{field.protocol}</span>
-                                            <span className="text-sm wrap-break-word min-w-0">{field.publishMode}</span>
+                                            <div className="text-sm wrap-break-word min-w-0 flex items-center gap-1.5">
+                                                <span className="text-xs text-muted-foreground md:hidden font-normal">
+                                                    Host:
+                                                </span>
+                                                <span className="font-medium">{field.published}</span>
+                                            </div>
+                                            <div className="text-sm wrap-break-word min-w-0 flex items-center gap-1.5">
+                                                <span className="text-xs text-muted-foreground md:hidden font-normal">
+                                                    Container:
+                                                </span>
+                                                <span className="font-medium">{field.target}</span>
+                                            </div>
+                                            <div className="text-sm wrap-break-word min-w-0 flex items-center gap-1.5">
+                                                <span className="text-xs text-muted-foreground md:hidden font-normal">
+                                                    Proto:
+                                                </span>
+                                                <span>{field.protocol}</span>
+                                            </div>
+                                            <div className="text-sm wrap-break-word min-w-0 flex items-center gap-1.5">
+                                                <span className="text-xs text-muted-foreground md:hidden font-normal">
+                                                    Mode:
+                                                </span>
+                                                <span>{field.publishMode}</span>
+                                            </div>
                                         </>
                                     )}
                                 </div>

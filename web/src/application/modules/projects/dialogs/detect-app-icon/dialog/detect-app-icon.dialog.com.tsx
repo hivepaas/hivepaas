@@ -37,28 +37,33 @@ export function DetectAppIconDialog({
             onOpenChange={onOpenChange}
             modal
         >
-            <DialogFixedContent className="min-w-[390px] w-[680px]">
+            <DialogFixedContent className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-[500px] [&>[data-slot=dialog-header]]:px-3 sm:[&>[data-slot=dialog-header]]:px-4.5 [&>[data-slot=dialog-header]]:pt-3 sm:[&>[data-slot=dialog-header]]:pt-4.5 [&>[data-slot=dialog-header]]:pb-2 sm:[&>[data-slot=dialog-header]]:pb-3">
                 <DialogHeader>
-                    <DialogTitle>Detect app icon</DialogTitle>
+                    <DialogTitle className="text-center sm:text-left text-base sm:text-lg">Detect app icon</DialogTitle>
                 </DialogHeader>
-                <div className="px-6">
+                <div className="px-3 sm:px-4.5">
                     <Separator className="opacity-50" />
                 </div>
 
-                <DialogBody>
+                <DialogBody className="p-3 sm:p-4.5">
                     {hasIcon ? (
-                        <div className="flex flex-col items-center gap-6">
-                            <p className="text-center text-base leading-7">
+                        <div className="flex flex-col items-center gap-4 sm:gap-6">
+                            <p className="text-center text-sm sm:text-base leading-6 sm:leading-7">
                                 Based on your app name and Docker image, we found a matching icon for your app.
                             </p>
                             <Avatar
                                 name={appName}
                                 src={iconUrl}
-                                className="size-24 text-2xl rounded-2xl"
+                                className="size-20 sm:size-24 text-xl sm:text-2xl rounded-2xl"
                             />
                         </div>
                     ) : (
-                        <div className={cn(dashedBorderBox, "text-base leading-7")}>
+                        <div
+                            className={cn(
+                                dashedBorderBox,
+                                "px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm leading-5 sm:leading-6",
+                            )}
+                        >
                             <p className="text-destructive">
                                 We couldn&apos;t find a matching icon for your app name or Docker image.
                             </p>
@@ -67,7 +72,7 @@ export function DetectAppIconDialog({
                 </DialogBody>
 
                 {hasIcon && (
-                    <DialogActionFooter className="flex justify-end gap-4">
+                    <DialogActionFooter className="px-3 py-2.5 sm:px-4.5 sm:py-3.5 flex justify-end gap-3 sm:gap-4 [&>div:first-child]:px-3 sm:[&>div:first-child]:px-4.5">
                         <Button
                             type="button"
                             variant="outline"

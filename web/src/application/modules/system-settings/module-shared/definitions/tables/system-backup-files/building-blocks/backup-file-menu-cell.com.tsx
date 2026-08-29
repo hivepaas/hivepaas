@@ -137,7 +137,7 @@ function View({ file }: Props) {
                     }
                 }}
             >
-                <DialogFixedContent className="w-[560px] max-w-[calc(100vw-2rem)]">
+                <DialogFixedContent className="sm:max-w-[560px]">
                     <DialogHeader>
                         <DialogTitle>Delete file: {file.name}</DialogTitle>
                     </DialogHeader>

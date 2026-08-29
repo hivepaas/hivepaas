@@ -117,7 +117,7 @@ function View({ children }: PropsWithChildren) {
     return (
         <div className="flex flex-col gap-2 md:flex-row md:gap-5 w-full max-w-[1400px] mx-auto min-w-0">
             {/* Mobile Dropdown Navigation (< md) */}
-            <div className="md:hidden w-full bg-background rounded-lg p-2.5 shadow-xs">
+            <div className="md:hidden w-full bg-background/95 backdrop-blur-md rounded-xl p-2 shadow-xs sticky top-[53px] z-20 border border-amber-500/25">
                 <Select
                     value={activeKey}
                     onValueChange={val => {
@@ -126,7 +126,7 @@ function View({ children }: PropsWithChildren) {
                         }
                     }}
                 >
-                    <SelectTrigger className="w-full bg-muted/40 font-medium">
+                    <SelectTrigger className="w-full bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20 border-amber-500/40 dark:border-amber-400/40 text-foreground font-semibold shadow-xs h-10 px-3.5 rounded-lg focus:ring-amber-400/40">
                         <SelectValue placeholder="Select section..." />
                     </SelectTrigger>
                     <SelectContent>

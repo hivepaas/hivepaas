@@ -74,7 +74,7 @@ export function CreateProjectAppDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="min-w-[390px] w-[650px]">
+            <DialogFixedContent className="sm:max-w-[650px]">
                 <DialogHeader>
                     <DialogTitle>Create App</DialogTitle>
                 </DialogHeader>

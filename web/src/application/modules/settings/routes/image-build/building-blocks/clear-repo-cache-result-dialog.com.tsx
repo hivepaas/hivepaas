@@ -27,7 +27,7 @@ export function ClearRepoCacheResultDialog({ open, result, onOpenChange }: Clear
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogFixedContent className="w-[400px] max-w-[calc(100vw-2rem)]">
+            <DialogFixedContent className="sm:max-w-[400px]">
                 <DialogHeader>
                     <DialogTitle>Repo cache cleared</DialogTitle>
                 </DialogHeader>

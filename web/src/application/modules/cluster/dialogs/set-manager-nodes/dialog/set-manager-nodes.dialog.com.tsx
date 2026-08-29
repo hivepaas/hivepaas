@@ -189,7 +189,7 @@ export function SetManagerNodesDialog() {
             onOpenChange={handleClose}
         >
             <DialogFixedContent
-                className="h-[800px] w-[1000px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)]"
+                className="h-[800px] w-[1000px] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-2rem)]"
                 onOpenAutoFocus={event => {
                     event.preventDefault();
                 }}
@@ -197,7 +197,7 @@ export function SetManagerNodesDialog() {
                 <DialogHeader>
                     <DialogTitle>Set Manager Nodes</DialogTitle>
                 </DialogHeader>
-                <div className="px-6">
+                <div className="px-4 sm:px-6">
                     <Separator className="opacity-50" />
                 </div>
                 <DialogBody className="flex min-h-0 flex-col gap-5">

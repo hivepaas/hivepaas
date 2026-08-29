@@ -136,7 +136,7 @@ function View({ projectId, env, appId, dataFile }: Props) {
                     }
                 }}
             >
-                <DialogFixedContent className="w-[560px] max-w-[calc(100vw-2rem)]">
+                <DialogFixedContent className="sm:max-w-[560px]">
                     <DialogHeader>
                         <DialogTitle>Delete file: {dataFile.name}</DialogTitle>
                     </DialogHeader>

@@ -636,11 +636,11 @@ export function ProjectUserAccessesDialog() {
                 }
             }}
         >
-            <DialogFixedContent className="min-w-[390px] w-[1000px]">
+            <DialogFixedContent className="sm:max-w-[1000px]">
                 <DialogHeader>
                     <DialogTitle>User accesses on project {projectName}</DialogTitle>
                 </DialogHeader>
-                <div className="px-6">
+                <div className="px-4 sm:px-6">
                     <Separator className="opacity-50" />
                 </div>
 

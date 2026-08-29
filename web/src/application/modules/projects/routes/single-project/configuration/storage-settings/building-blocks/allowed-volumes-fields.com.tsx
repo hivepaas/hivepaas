@@ -90,7 +90,7 @@ export function AllowedVolumesFields({ name, type, readOnly = false }: Props) {
             }
         >
             <div className={`flex flex-col gap-2 ${STORAGE_SETTINGS_CONTROL_CLASS_NAME}`}>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                     <ComboboxWithAddon<VolumeOption>
                         addonLeft="Volume"
                         value={selectedVolume?.id}
@@ -104,7 +104,7 @@ export function AllowedVolumesFields({ name, type, readOnly = false }: Props) {
                         valueKey="id"
                         options={options}
                         placeholder="volume"
-                        classNameContainer="max-w-[460px]"
+                        classNameContainer="w-full sm:max-w-[460px] min-w-0 flex-1"
                         disabled={readOnly}
                     />
 
@@ -113,6 +113,7 @@ export function AllowedVolumesFields({ name, type, readOnly = false }: Props) {
                         variant="outline"
                         onClick={handleAdd}
                         disabled={readOnly || !selectedVolume}
+                        className="h-9 shrink-0 w-full sm:w-auto"
                     >
                         <Plus className="size-4" /> Add
                     </Button>

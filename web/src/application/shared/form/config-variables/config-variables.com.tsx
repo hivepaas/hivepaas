@@ -217,127 +217,135 @@ function View<T>({
                         return (
                             <div
                                 key={field.id}
-                                className="flex items-start gap-3"
+                                className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-0 rounded-lg sm:rounded-none bg-muted/20 sm:bg-transparent border sm:border-0"
                             >
-                                {/* Key Input */}
-                                <div className="min-w-0 flex-1">
-                                    <Field>
-                                        <Input
-                                            id={`${name}-${index}-key`}
-                                            {...register(`${name}.${index}.key`)}
-                                            placeholder="Key"
-                                            aria-invalid={!!get(errors, `${name}.${index}.key`)}
-                                            disabled={rowReadOnly}
-                                        />
-                                        <FieldError errors={[get(errors, `${name}.${index}.key`)]} />
-                                    </Field>
-                                </div>
-
-                                {/* Value Input */}
-                                <div className="min-w-0 flex-1">
-                                    <Field>
-                                        {isMultiline ? (
-                                            <Textarea
-                                                id={`${name}-${index}-value`}
-                                                {...register(`${name}.${index}.value`)}
-                                                placeholder="Value"
-                                                aria-invalid={!!get(errors, `${name}.${index}.value`)}
-                                                disabled={rowReadOnly}
-                                                minRows={4}
-                                                maxRows={0}
-                                                className={cn(
-                                                    "min-h-24 resize-y",
-                                                    !isRevealed && "[-webkit-text-security:disc]",
-                                                )}
-                                            />
-                                        ) : (
+                                {/* Key & Value Inputs */}
+                                <div className="flex flex-1 items-start gap-2 sm:gap-3 min-w-0 w-full">
+                                    {/* Key Input */}
+                                    <div className="min-w-0 flex-1">
+                                        <Field>
                                             <Input
-                                                id={`${name}-${index}-value`}
-                                                type={isRevealed ? "text" : "password"}
-                                                {...register(`${name}.${index}.value`)}
-                                                placeholder="Value"
-                                                aria-invalid={!!get(errors, `${name}.${index}.value`)}
+                                                id={`${name}-${index}-key`}
+                                                {...register(`${name}.${index}.key`)}
+                                                placeholder="Key"
+                                                aria-invalid={!!get(errors, `${name}.${index}.key`)}
                                                 disabled={rowReadOnly}
                                             />
-                                        )}
-                                        <FieldError errors={[get(errors, `${name}.${index}.value`)]} />
-                                    </Field>
+                                            <FieldError errors={[get(errors, `${name}.${index}.key`)]} />
+                                        </Field>
+                                    </div>
+
+                                    {/* Value Input */}
+                                    <div className="min-w-0 flex-1">
+                                        <Field>
+                                            {isMultiline ? (
+                                                <Textarea
+                                                    id={`${name}-${index}-value`}
+                                                    {...register(`${name}.${index}.value`)}
+                                                    placeholder="Value"
+                                                    aria-invalid={!!get(errors, `${name}.${index}.value`)}
+                                                    disabled={rowReadOnly}
+                                                    minRows={4}
+                                                    maxRows={0}
+                                                    className={cn(
+                                                        "min-h-24 resize-y",
+                                                        !isRevealed && "[-webkit-text-security:disc]",
+                                                    )}
+                                                />
+                                            ) : (
+                                                <Input
+                                                    id={`${name}-${index}-value`}
+                                                    type={isRevealed ? "text" : "password"}
+                                                    {...register(`${name}.${index}.value`)}
+                                                    placeholder="Value"
+                                                    aria-invalid={!!get(errors, `${name}.${index}.value`)}
+                                                    disabled={rowReadOnly}
+                                                />
+                                            )}
+                                            <FieldError errors={[get(errors, `${name}.${index}.value`)]} />
+                                        </Field>
+                                    </div>
                                 </div>
 
-                                {/* Multi-line Toggle */}
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button
-                                            type="button"
-                                            variant={isMultiline ? "secondary" : "ghost"}
-                                            size="icon"
-                                            onClick={() => {
-                                                handleMultilineToggle(field.id, record.value, rowReadOnly);
+                                {/* Controls: Literal Checkbox & Actions */}
+                                <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto">
+                                    {/* Literal Checkbox */}
+                                    <div className="flex h-9 items-center gap-2">
+                                        <Checkbox
+                                            id={`${name}-${index}-literal`}
+                                            checked={record.isLiteral}
+                                            onCheckedChange={checked => {
+                                                if (rowReadOnly) {
+                                                    return;
+                                                }
+
+                                                update(index, {
+                                                    ...record,
+                                                    isLiteral: checked === true,
+                                                    isSystem: record.isSystem ?? false,
+                                                    isReadOnly: record.isReadOnly ?? false,
+                                                });
                                             }}
                                             disabled={rowReadOnly}
-                                            aria-label="Toggle multi-line mode"
-                                            aria-pressed={isMultiline}
-                                            aria-disabled={rowReadOnly || cannotDisableMultiline || undefined}
-                                            className={cn(
-                                                "size-9 text-muted-foreground",
-                                                isMultiline && "text-foreground",
-                                                cannotDisableMultiline && "cursor-not-allowed opacity-50",
-                                            )}
+                                        />
+                                        <label
+                                            htmlFor={`${name}-${index}-literal`}
+                                            className="text-sm cursor-pointer select-none text-muted-foreground sm:text-foreground"
                                         >
-                                            <WrapText className="size-4" />
-                                        </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="top">Toggle multi-line mode</TooltipContent>
-                                </Tooltip>
+                                            Literal
+                                        </label>
+                                    </div>
 
-                                {/* Literal Checkbox */}
-                                <div className="flex h-9 items-center gap-2">
-                                    <Checkbox
-                                        id={`${name}-${index}-literal`}
-                                        checked={record.isLiteral}
-                                        onCheckedChange={checked => {
-                                            if (rowReadOnly) {
-                                                return;
-                                            }
+                                    <div className="flex items-center gap-1">
+                                        {/* Multi-line Toggle */}
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant={isMultiline ? "secondary" : "ghost"}
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        handleMultilineToggle(field.id, record.value, rowReadOnly);
+                                                    }}
+                                                    disabled={rowReadOnly}
+                                                    aria-label="Toggle multi-line mode"
+                                                    aria-pressed={isMultiline}
+                                                    aria-disabled={rowReadOnly || cannotDisableMultiline || undefined}
+                                                    className={cn(
+                                                        "size-9 text-muted-foreground",
+                                                        isMultiline && "text-foreground",
+                                                        cannotDisableMultiline && "cursor-not-allowed opacity-50",
+                                                    )}
+                                                >
+                                                    <WrapText className="size-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top">Toggle multi-line mode</TooltipContent>
+                                        </Tooltip>
 
-                                            update(index, {
-                                                ...record,
-                                                isLiteral: checked === true,
-                                                isSystem: record.isSystem ?? false,
-                                                isReadOnly: record.isReadOnly ?? false,
-                                            });
-                                        }}
-                                        disabled={rowReadOnly}
-                                    />
-                                    <label
-                                        htmlFor={`${name}-${index}-literal`}
-                                        className="text-sm cursor-pointer"
-                                    >
-                                        Literal
-                                    </label>
+                                        {/* Delete Button */}
+                                        {rowReadOnly && !readOnly ? (
+                                            <div className="size-9" />
+                                        ) : (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    if (rowReadOnly) {
+                                                        return;
+                                                    }
+
+                                                    remove(index);
+                                                }}
+                                                disabled={rowReadOnly}
+                                                className="size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
-
-                                {/* Delete Button */}
-                                {rowReadOnly && !readOnly ? (
-                                    <div className="size-9" />
-                                ) : (
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => {
-                                            if (rowReadOnly) {
-                                                return;
-                                            }
-
-                                            remove(index);
-                                        }}
-                                        disabled={rowReadOnly}
-                                        className="size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                    >
-                                        <Trash2 className="size-4" />
-                                    </Button>
-                                )}
                             </div>
                         );
                     })}

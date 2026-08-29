@@ -51,59 +51,63 @@ function View({ title, items, isRevealed = false, search = "" }: Props) {
                                     return (
                                         <div
                                             key={index}
-                                            className="flex items-start gap-3"
+                                            className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-2.5 sm:p-0 rounded-lg sm:rounded-none bg-muted/20 sm:bg-transparent border sm:border-0"
                                         >
-                                            {/* Key */}
-                                            <div className="min-w-0 flex-1">
-                                                <Input
-                                                    value={item.key}
-                                                    readOnly
-                                                    disabled
-                                                    placeholder="Key"
-                                                    className="bg-muted cursor-default"
-                                                />
-                                            </div>
-
-                                            {/* Value */}
-                                            <div className="min-w-0 flex-1">
-                                                {isRevealed && isMultilineValue ? (
-                                                    <Textarea
-                                                        value={item.value}
-                                                        readOnly
-                                                        disabled
-                                                        placeholder="Value"
-                                                        minRows={4}
-                                                        maxRows={0}
-                                                        className="bg-muted cursor-default resize-y"
-                                                    />
-                                                ) : (
+                                            {/* Key & Value */}
+                                            <div className="flex flex-1 items-start gap-2 sm:gap-3 min-w-0 w-full">
+                                                {/* Key */}
+                                                <div className="min-w-0 flex-1">
                                                     <Input
-                                                        type={isRevealed ? "text" : "password"}
-                                                        value={item.value}
+                                                        value={item.key}
                                                         readOnly
                                                         disabled
-                                                        placeholder="Value"
+                                                        placeholder="Key"
                                                         className="bg-muted cursor-default"
                                                     />
-                                                )}
+                                                </div>
+
+                                                {/* Value */}
+                                                <div className="min-w-0 flex-1">
+                                                    {isRevealed && isMultilineValue ? (
+                                                        <Textarea
+                                                            value={item.value}
+                                                            readOnly
+                                                            disabled
+                                                            placeholder="Value"
+                                                            minRows={4}
+                                                            maxRows={0}
+                                                            className="bg-muted cursor-default resize-y"
+                                                        />
+                                                    ) : (
+                                                        <Input
+                                                            type={isRevealed ? "text" : "password"}
+                                                            value={item.value}
+                                                            readOnly
+                                                            disabled
+                                                            placeholder="Value"
+                                                            className="bg-muted cursor-default"
+                                                        />
+                                                    )}
+                                                </div>
                                             </div>
 
-                                            {/* Spacer to align with editable rows that have a multi-line toggle */}
-                                            <div className="size-9" />
+                                            {/* Controls: Literal checkbox & spacers */}
+                                            <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0 w-full sm:w-auto">
+                                                {/* Literal checkbox */}
+                                                <div className="flex h-9 items-center gap-2">
+                                                    <Checkbox
+                                                        checked={item.isLiteral}
+                                                        disabled
+                                                    />
+                                                    <span className="text-sm text-muted-foreground cursor-default select-none">
+                                                        Literal
+                                                    </span>
+                                                </div>
 
-                                            {/* Literal checkbox */}
-                                            <div className="flex h-9 items-center gap-2">
-                                                <Checkbox
-                                                    checked={item.isLiteral}
-                                                    disabled
-                                                />
-                                                <span className="text-sm text-muted-foreground cursor-default">
-                                                    Literal
-                                                </span>
+                                                {/* Hidden Spacers on mobile, visible on desktop */}
+                                                <div className="hidden sm:block size-9" />
+                                                <div className="hidden sm:block size-9" />
                                             </div>
-
-                                            {/* Spacer to align with editable rows that have row action buttons */}
-                                            <div className="size-9" />
                                         </div>
                                     );
                                 })}

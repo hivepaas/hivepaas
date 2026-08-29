@@ -33,8 +33,6 @@ import type { CommandArgGroupsFormValue } from "./command-arg-groups-section.typ
 type SchemaInput = CommandArgGroupsFormValue;
 type SchemaOutput = CommandArgGroupsFormValue;
 
-const CONTENT_COLUMN_OFFSET = 120 + 12;
-
 function isQuoted(value: unknown): boolean {
     if (typeof value !== "string" || value.length < 2) {
         return false;
@@ -106,10 +104,10 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName =
     const argValueFirstLine = getFirstLine(argValue);
 
     return (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 max-w-full">
             <div
                 className={cn(
-                    "flex w-fit max-w-full items-center gap-2 rounded-md border bg-background px-2 py-1",
+                    "flex w-fit max-w-full items-center gap-1.5 sm:gap-2 rounded-md border bg-background px-2 py-1 flex-wrap sm:flex-nowrap",
                     useArg.value === true && "border-green-200 bg-green-50 dark:bg-green-950/20",
                 )}
             >
@@ -129,12 +127,12 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName =
                     value={nameValue}
                     onChange={name.onChange}
                     placeholder="--arg"
-                    className="h-8 min-w-[8ch] max-w-[28ch]"
-                    style={{ width: getInputWidth(nameValue, "--arg", 8, 28) }}
+                    className="h-8 min-w-[6ch] max-w-[28ch] text-xs sm:text-sm px-2"
+                    style={{ width: getInputWidth(nameValue, "--arg", 6, 28) }}
                     aria-invalid={!!get(errors, `${basePath}.name`)}
                     disabled={readOnly}
                 />
-                <span className="text-sm text-muted-foreground">=</span>
+                <span className="text-xs sm:text-sm text-muted-foreground">=</span>
                 <Textarea
                     {...value}
                     value={argValue}
@@ -147,34 +145,36 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName =
                     placeholder="value"
                     minRows={1}
                     maxRows={1}
-                    className="h-8 min-h-8 max-h-8 min-w-[8ch] max-w-[34ch] resize-none overflow-hidden py-1 leading-normal"
-                    style={{ width: getInputWidth(argValueFirstLine, "value", 8, 34) }}
+                    className="h-8 min-h-8 max-h-8 min-w-[6ch] max-w-[34ch] resize-none overflow-hidden py-1 px-2 text-xs sm:text-sm leading-normal"
+                    style={{ width: getInputWidth(argValueFirstLine, "value", 6, 34) }}
                     disabled={readOnly}
                 />
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 shrink-0 text-muted-foreground"
-                    onClick={() => {
-                        setEditOpen(true);
-                    }}
-                    disabled={readOnly}
-                >
-                    <FilePen className="size-4" />
-                    <span className="sr-only">Edit arg</span>
-                </Button>
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 shrink-0 text-muted-foreground"
-                    onClick={onRemove}
-                    disabled={readOnly}
-                >
-                    <X className="size-4" />
-                    <span className="sr-only">Remove arg</span>
-                </Button>
+                <div className="flex items-center gap-0.5 shrink-0">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                            setEditOpen(true);
+                        }}
+                        disabled={readOnly}
+                    >
+                        <FilePen className="size-3.5" />
+                        <span className="sr-only">Edit arg</span>
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        onClick={onRemove}
+                        disabled={readOnly}
+                    >
+                        <X className="size-3.5" />
+                        <span className="sr-only">Remove arg</span>
+                    </Button>
+                </div>
             </div>
             <FieldError errors={[nameError]} />
 
@@ -319,10 +319,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                                 </Select>
                             </InfoBlock>
 
-                            <div
-                                className="flex flex-col gap-3"
-                                style={{ marginLeft: CONTENT_COLUMN_OFFSET }}
-                            >
+                            <div className="flex flex-col gap-3 ml-0 sm:ml-[132px]">
                                 <div className="flex flex-wrap gap-3">
                                     {fields.map((field, argIndex) => (
                                         <ArgItem
@@ -357,8 +354,10 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                             </div>
 
                             <div
-                                className={cn(dashedBorderBox, "text-sm")}
-                                style={{ marginLeft: CONTENT_COLUMN_OFFSET }}
+                                className={cn(
+                                    dashedBorderBox,
+                                    "text-xs sm:text-sm ml-0 sm:ml-[132px] min-h-7 h-auto py-1.5 px-3 leading-normal",
+                                )}
                             >
                                 <div className="break-all">
                                     <span className="text-orange-500">{exportEnvValue}</span>

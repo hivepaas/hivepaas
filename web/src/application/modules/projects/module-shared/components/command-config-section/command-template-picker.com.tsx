@@ -106,7 +106,7 @@ export function CommandTemplatePicker({ open, projectId, env, onClose, onSelect 
             open={open}
             onOpenChange={onClose}
         >
-            <DialogFixedContent className="h-[800px] w-[800px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-2rem)]">
+            <DialogFixedContent className="h-[800px] w-[800px] max-w-[calc(100vw-1rem)] max-h-[calc(100vh-2rem)]">
                 <DialogHeader>
                     <DialogTitle>Command Templates</DialogTitle>
                 </DialogHeader>

@@ -70,7 +70,7 @@ export function BackupFileInfoDialog({ fileID, open, onOpenChange }: Props) {
             open={open}
             onOpenChange={onOpenChange}
         >
-            <DialogFixedContent className="w-[640px] max-w-[calc(100vw-2rem)]">
+            <DialogFixedContent className="sm:max-w-[640px]">
                 <DialogHeader>
                     <DialogTitle>Backup file info</DialogTitle>
                 </DialogHeader>

@@ -184,7 +184,7 @@ export function CreateOrEditAppHealthCheckDialog() {
                 }
             }}
         >
-            <DialogFixedContent className="min-w-[390px] w-[800px]">
+            <DialogFixedContent className="sm:max-w-[800px]">
                 <DialogHeader>
                     <DialogTitle>Create or update a health check</DialogTitle>
                 </DialogHeader>

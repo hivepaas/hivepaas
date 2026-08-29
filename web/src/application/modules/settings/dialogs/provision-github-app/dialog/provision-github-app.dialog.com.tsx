@@ -90,11 +90,11 @@ export function ProvisionGithubAppDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="min-w-[390px] w-[750px]">
+            <DialogFixedContent className="sm:max-w-[750px]">
                 <DialogHeader>
                     <DialogTitle>Provision Github app</DialogTitle>
                 </DialogHeader>
-                <div className="px-6">
+                <div className="px-4 sm:px-6">
                     <Separator className="opacity-50" />
                 </div>
                 {state.mode === "open" && (

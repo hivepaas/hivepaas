@@ -63,11 +63,11 @@ export function CreateProjectDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="min-w-[390px] w-[650px]">
+            <DialogFixedContent className="sm:max-w-[650px]">
                 <DialogHeader>
                     <DialogTitle>Create Project</DialogTitle>
                 </DialogHeader>
-                <div className="px-6">
+                <div className="px-4 sm:px-6">
                     <Separator className="opacity-50" />
                 </div>
                 <CreateProjectForm

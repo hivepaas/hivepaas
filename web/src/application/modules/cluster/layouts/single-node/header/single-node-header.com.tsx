@@ -121,7 +121,7 @@ function View({ nodeId }: Props) {
                                 <span className="text-foreground font-medium truncate">{node.hostname || "-"}</span>
                             </div>
                         </div>
-                        <span className="text-muted-foreground/60 select-none hidden sm:inline">•</span>
+                        <span className="text-amber-500/70 dark:text-amber-400/70 select-none hidden sm:inline">•</span>
                         <div className="flex items-center gap-1.5 min-w-0">
                             <Network className="size-3.5 sm:size-4 text-blue-500 shrink-0" />
                             <div className="flex gap-1 min-w-0">
@@ -129,7 +129,7 @@ function View({ nodeId }: Props) {
                                 <span className="text-foreground font-medium truncate">{node.addr || "-"}</span>
                             </div>
                         </div>
-                        <span className="text-muted-foreground/60 select-none hidden sm:inline">•</span>
+                        <span className="text-amber-500/70 dark:text-amber-400/70 select-none hidden sm:inline">•</span>
                         <div className="flex items-center gap-1.5 min-w-0">
                             <ShieldCheck className="size-3.5 sm:size-4 text-blue-500 shrink-0" />
                             <div className="flex gap-1 min-w-0">

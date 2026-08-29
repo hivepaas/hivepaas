@@ -51,7 +51,7 @@ function tabClassName(isActive: boolean, isDisabled: boolean | undefined) {
     return cn(
         "inline-flex h-full flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-none border-0 border-b-2 border-transparent bg-background p-3 text-md font-medium text-foreground transition-[color,box-shadow]",
         "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring focus-visible:ring-[3px] focus-visible:outline-1",
-        isActive && "border-primary text-primary dark:border-primary",
+        isActive && "border-amber-500 dark:border-amber-400",
         isDisabled && "pointer-events-none opacity-50",
     );
 }

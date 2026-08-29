@@ -208,7 +208,7 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
                                         value={tab.route}
                                         asChild
                                         disabled={tab.disabled}
-                                        className="py-3 pl-4 cursor-pointer bg-background data-[state=active]:border-primary data-[state=active]:bg-primary/10 dark:data-[state=active]:border-primary h-full w-full justify-start rounded-none border-0 border-l-2 border-transparent data-[state=active]:shadow-none"
+                                        className="py-3 pl-4 cursor-pointer bg-background data-[state=active]:border-amber-500 dark:data-[state=active]:border-amber-400 data-[state=active]:bg-amber-500/[0.08] dark:data-[state=active]:bg-amber-400/[0.1] data-[state=active]:text-foreground font-medium h-full w-full justify-start rounded-none border-0 border-l-2 border-transparent data-[state=active]:shadow-none"
                                     >
                                         <AppLink.Basic
                                             className="w-full text-left"

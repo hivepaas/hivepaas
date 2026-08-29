@@ -24,7 +24,7 @@
       width: 2px;
       height: 30px;
 
-      background-color: var(--primary);
+      background-color: #f59e0b;
 
       border-top-right-radius: 5px;
       border-bottom-right-radius: 5px;
@@ -74,7 +74,7 @@
     }
 
     &.is-active {
-      background-color: var(--sidebar-accent);
+      background-color: rgba(245, 158, 11, 0.08);
 
       .label {
         font-weight: 500;

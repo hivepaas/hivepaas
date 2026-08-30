@@ -1,7 +1,5 @@
 import { useRef } from "react";
 
-import { dashedBorderBox } from "@lib/styles";
-import { cn } from "@lib/utils";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -143,18 +141,6 @@ export function AppConfigResourcesRoute() {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className={cn(dashedBorderBox, "text-sm leading-6 text-muted-foreground")}>
-                For configuration details, see{" "}
-                <a
-                    href="https://docs.docker.com/reference/api/engine/version/v1.52/#tag/Service/operation/ServiceUpdate"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 underline underline-offset-2"
-                >
-                    docs
-                </a>
-            </div>
-
             <AppConfigResourcesForm
                 ref={formRef}
                 defaultValues={data?.data}

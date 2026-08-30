@@ -1,6 +1,7 @@
-import { GiteaIcon, GithubIcon, GitlabIcon, GoogleIcon } from "@/assets/icons";
+import { GiteaIcon, GoogleIcon } from "@/assets/icons";
 import { Checkbox } from "@components/ui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Github, Gitlab } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 
 import { AppLink } from "@application/shared/components";
@@ -135,8 +136,10 @@ export function SignInForm({ loginOptions, isPending, onSubmit }: Props) {
                                             handleLoginWithProvider(option);
                                         }}
                                     >
-                                        {option.icon === "github" && <GithubIcon />}
-                                        {option.icon === "gitlab" && <GitlabIcon />}
+                                        {/* eslint-disable-next-line @typescript-eslint/no-deprecated -- lucide's Github brand icon is deprecated, kept intentionally here. */}
+                                        {option.icon === "github" && <Github />}
+                                        {/* eslint-disable-next-line @typescript-eslint/no-deprecated -- lucide's Gitlab brand icon is deprecated, kept intentionally here. */}
+                                        {option.icon === "gitlab" && <Gitlab />}
                                         {option.icon === "gitea" && <GiteaIcon />}
                                         {option.icon === "google" && <GoogleIcon />}
                                         Continue with {option.name}

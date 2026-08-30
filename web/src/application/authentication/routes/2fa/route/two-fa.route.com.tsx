@@ -1,8 +1,7 @@
 import { useState } from "react";
 
+import { CircleX } from "lucide-react";
 import { useSearchParams } from "react-router";
-
-import { ErrorAuthenticationIcon } from "@assets/icons";
 
 import { AppNavigate } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -76,7 +75,7 @@ function View({ email, mfaToken }: ViewProps) {
             <Card className="w-full max-w-sm mx-auto">
                 <CardContent className="flex flex-col items-center gap-4 text-center">
                     <div className="rounded-full bg-red-50 p-3 text-red-600">
-                        <ErrorAuthenticationIcon className="h-6 w-6" />
+                        <CircleX className="h-6 w-6" />
                     </div>
                     <CardTitle className="text-base">Your Authentication Failed</CardTitle>
                     <CardDescription>Check your code and try again.</CardDescription>

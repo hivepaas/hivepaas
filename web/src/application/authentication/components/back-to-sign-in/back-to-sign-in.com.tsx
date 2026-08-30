@@ -1,6 +1,5 @@
+import { ArrowLeft } from "lucide-react";
 import { useSearchParams } from "react-router";
-
-import { ArrowBackIcon } from "@assets/icons";
 
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -22,7 +21,7 @@ export function BackToSignIn() {
             replace
             className="flex items-center gap-2 text-sm text-primary hover:text-gray-700"
         >
-            <ArrowBackIcon />
+            <ArrowLeft />
             Back to Login
         </AppLink.Basic>
     );

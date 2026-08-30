@@ -2,9 +2,8 @@ import { useDeferredValue, useMemo } from "react";
 
 import classnames from "classnames/bind";
 
+import { CircleCheck } from "lucide-react";
 import { useMount, useUpdateEffect } from "react-use";
-
-import { CheckCircleIcon } from "@assets/icons";
 
 import styles from "./password-strength-meter.module.scss";
 
@@ -88,7 +87,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: Props) {
                         })}
                     >
                         <div className={cx("icon")}>
-                            <CheckCircleIcon />
+                            <CircleCheck size={14} />
                         </div>
                         <div className={cx("title")}>{rule.title}</div>
                     </div>

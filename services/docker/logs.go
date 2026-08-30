@@ -13,6 +13,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
+const (
+	rawLogBufSize = 32 * 1024
+)
+
 type ScanningLogOptions struct {
 	BatchRecvOptions  batchrecvchan.Options
 	StdoutWriter      io.Writer
@@ -79,7 +83,7 @@ func StartScanningLog(
 			// Ref: https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Container/operation/ContainerAttach
 			_ = parseLogs(ctx, reader, batchChan, opts.StdoutWriter, opts.ParseLogTimestamp)
 		} else {
-			r := bufio.NewReader(reader)
+			r := bufio.NewReaderSize(reader, rawLogBufSize)
 			for {
 				lineBytes, err := r.ReadBytes('\n')
 				if len(lineBytes) > 0 {

@@ -626,7 +626,10 @@ export function AppTerminalPanel({
                                 variant="ghost"
                                 size="icon-sm"
                                 aria-label={isFullHeight ? "Exit full height" : "Full height"}
-                                className={cn(isFullHeight && "text-primary bg-accent")}
+                                className={cn(
+                                    isFullHeight &&
+                                        "text-amber-500 dark:text-amber-400 bg-amber-500/[0.08] dark:bg-amber-400/[0.1] hover:bg-amber-500/15 dark:hover:bg-amber-400/20 hover:text-amber-500 dark:hover:text-amber-400",
+                                )}
                                 onClick={handleToggleFullHeight}
                             >
                                 <FullHeightIcon className="size-4" />
@@ -642,7 +645,11 @@ export function AppTerminalPanel({
                                 variant="ghost"
                                 size="icon-sm"
                                 aria-label={isFullView ? "Exit full view" : "Full view"}
-                                className={cn("hidden md:inline-flex", isFullView && "text-primary bg-accent")}
+                                className={cn(
+                                    "hidden md:inline-flex",
+                                    isFullView &&
+                                        "text-amber-500 dark:text-amber-400 bg-amber-500/[0.08] dark:bg-amber-400/[0.1] hover:bg-amber-500/15 dark:hover:bg-amber-400/20 hover:text-amber-500 dark:hover:text-amber-400",
+                                )}
                                 onClick={handleToggleFullView}
                             >
                                 <FullViewIcon className="size-4" />
@@ -658,6 +665,10 @@ export function AppTerminalPanel({
                                 variant="ghost"
                                 size="icon-sm"
                                 aria-label={isFullscreen ? "Exit fullscreen terminal" : "Fullscreen terminal"}
+                                className={cn(
+                                    isFullscreen &&
+                                        "text-amber-500 dark:text-amber-400 bg-amber-500/[0.08] dark:bg-amber-400/[0.1] hover:bg-amber-500/15 dark:hover:bg-amber-400/20 hover:text-amber-500 dark:hover:text-amber-400",
+                                )}
                                 onClick={() => {
                                     setIsFullscreen(current => !current);
                                 }}

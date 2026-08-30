@@ -1,21 +1,33 @@
 .terminalFrame {
-  background-color: #0f172a;
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  border-radius: 0.375rem;
+  overflow: hidden;
 }
 
 .terminalHost {
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  background-color: #0f172a;
+  background-color: transparent !important;
 
   :global(.xterm) {
     height: 100%;
-    padding: 6px 8px;
-    background-color: #0f172a !important;
+    padding: 6px 0 6px 8px;
+    background: transparent !important;
+    background-color: transparent !important;
   }
 
   :global(.xterm-screen) {
-    background-color: #0f172a !important;
+    background: transparent !important;
+    background-color: transparent !important;
+
+    canvas {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
   }
 
   :global(.xterm-scrollable-element) {
@@ -30,30 +42,46 @@
     }
 
     :global(.scrollbar.vertical) {
-      width: 6px !important;
-      right: 4px !important;
+      width: 28px !important;
+      right: 0 !important;
       background: transparent !important;
       border: none !important;
+      z-index: 20 !important;
+      touch-action: none !important;
+      pointer-events: auto !important;
     }
 
     :global(.scrollbar > .slider) {
-      width: 6px !important;
+      width: 9px !important;
+      left: auto !important;
+      right: 2px !important;
       border-radius: 9999px !important;
       background-color: #334155 !important;
       border: none !important;
+      touch-action: none !important;
+      pointer-events: auto !important;
 
-      &:hover {
+      &::before {
+        content: "";
+        position: absolute;
+        inset: -10px -14px;
+      }
+
+      &:hover,
+      &:active {
         background-color: #475569 !important;
       }
     }
   }
 
   :global(.xterm-viewport) {
-    background-color: #0f172a !important;
+    background-color: transparent !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch !important;
 
     &::-webkit-scrollbar {
-      width: 4px !important;
-      height: 4px !important;
+      width: 9px !important;
+      height: 9px !important;
       background-color: transparent !important;
     }
 
@@ -65,8 +93,29 @@
       background-color: #334155 !important;
       border-radius: 9999px !important;
 
-      &:hover {
+      &:hover,
+      &:active {
         background-color: #475569 !important;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    :global(.xterm-scrollable-element) {
+      :global(.scrollbar.vertical) {
+        width: 36px !important;
+      }
+
+      :global(.scrollbar > .slider) {
+        width: 10px !important;
+        right: 2px !important;
+      }
+    }
+
+    :global(.xterm-viewport) {
+      &::-webkit-scrollbar {
+        width: 10px !important;
+        height: 10px !important;
       }
     }
   }

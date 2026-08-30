@@ -103,12 +103,14 @@ export function SystemTaskSummaryCard({
     isFullView = false,
     isFullHeight = false,
     fontSize,
+    themeId,
     onCancel,
     onClick,
     onToggleFullscreen,
     onToggleFullView,
     onToggleFullHeight,
     onCycleFontSize,
+    onSelectTheme,
 }: SystemTaskSummaryCardProps) {
     const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(false);
     const isClickable = Boolean(onClick);
@@ -204,10 +206,12 @@ export function SystemTaskSummaryCard({
                                 isFullView={isFullView}
                                 isFullHeight={isFullHeight}
                                 fontSize={fontSize}
+                                themeId={themeId}
                                 onToggleFullscreen={onToggleFullscreen}
                                 onToggleFullView={onToggleFullView}
                                 onToggleFullHeight={onToggleFullHeight}
                                 onCycleFontSize={onCycleFontSize}
+                                onSelectTheme={onSelectTheme}
                             />
                         )}
                     </div>
@@ -329,10 +333,12 @@ interface SystemTaskSummaryCardProps {
     isFullView?: boolean;
     isFullHeight?: boolean;
     fontSize?: number;
+    themeId?: string;
     onCancel?: (taskID: string) => void;
     onClick?: () => void;
     onToggleFullscreen?: () => void;
     onToggleFullView?: () => void;
     onToggleFullHeight?: () => void;
     onCycleFontSize?: () => void;
+    onSelectTheme?: (themeId: string) => void;
 }

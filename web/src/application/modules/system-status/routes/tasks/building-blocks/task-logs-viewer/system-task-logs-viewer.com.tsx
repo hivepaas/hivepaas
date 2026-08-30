@@ -10,6 +10,7 @@ export function SystemTaskLogsViewer({
     taskID,
     status,
     fontSize,
+    themeId,
     height,
     isFullView,
     isFullHeight,
@@ -29,6 +30,7 @@ export function SystemTaskLogsViewer({
             isInProgress={status === SystemTaskStatus.InProgress}
             downloadFileName={`system-task-${taskID}-logs.txt`}
             fontSize={fontSize}
+            themeId={themeId}
             height={height}
             isFullView={isFullView}
             isFullHeight={isFullHeight}
@@ -41,6 +43,7 @@ interface SystemTaskLogsViewerProps {
     taskID: string;
     status: SystemTaskStatusValue;
     fontSize?: number;
+    themeId?: string;
     height?: number | string;
     isFullView?: boolean;
     isFullHeight?: boolean;

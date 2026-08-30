@@ -55,12 +55,12 @@ export function LogsViewerToolbar({
     const textContent = displayedPlainLines.join("\n");
 
     return (
-        <div className="flex flex-col gap-2.5 pb-2.5 min-w-0 w-full">
-            <div className="flex flex-wrap items-center justify-between gap-2.5 min-w-0">
+        <div className="flex flex-col gap-2 sm:gap-2.5 pb-2 sm:pb-2.5 min-w-0 w-full">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-2.5 min-w-0">
                 {/* Left group: Stream/Stop */}
-                <div className="flex flex-wrap items-center gap-2.5 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 min-w-0">
                     {toolbarStart ?? (
-                        <div className="flex min-w-0 items-center gap-2.5">
+                        <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
                             <span className="text-xs sm:text-sm font-semibold text-foreground">Logs</span>
                             {isStreaming && (
                                 <span className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-emerald-500">

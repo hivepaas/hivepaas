@@ -4,4 +4,4 @@ export const dashedBorderBox =
 export const moduleHeaderBox = "bg-background py-2 sm:py-4 px-3 sm:px-5 rounded-lg";
 
 export const listBox =
-    "bg-background rounded-lg p-3 sm:p-4 max-w-[1400px] w-full mx-auto has-[[data-form-action-bar]]:pb-0";
+    "bg-background rounded-lg p-2 sm:p-4 max-w-[1400px] w-full mx-auto has-[[data-form-action-bar]]:pb-0";

@@ -158,7 +158,7 @@ function View({ projectId, env, appId }: Props) {
             : []),
     ];
     return (
-        <div className="bg-background pt-3 sm:pt-4 px-3 sm:px-5 rounded-lg">
+        <div className="bg-background pt-2 sm:pt-2.5 px-3 sm:px-5 rounded-lg">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5">
                 <SingleAppBreadcrumbs
                     app={appData}

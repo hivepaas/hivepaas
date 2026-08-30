@@ -1,19 +1,21 @@
 import { cn } from "@lib/utils";
-import { Maximize2, Minimize2 } from "lucide-react";
-
-import { FullHeightIcon, FullViewIcon, TextZoomIcon } from "@assets/icons";
+import { ALargeSmall, ChevronsLeftRight, ChevronsUpDown, Maximize2, Minimize2 } from "lucide-react";
 
 import { Button, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
+
+import { TerminalThemePicker } from "../terminal-theme-picker";
 
 export interface LogViewerActionButtonsProps {
     isFullscreen?: boolean;
     isFullView?: boolean;
     isFullHeight?: boolean;
     fontSize?: number;
+    themeId?: string;
     onToggleFullscreen?: () => void;
     onToggleFullView?: () => void;
     onToggleFullHeight?: () => void;
     onCycleFontSize?: () => void;
+    onSelectTheme?: (themeId: string) => void;
 }
 
 export function LogViewerActionButtons({
@@ -21,13 +23,22 @@ export function LogViewerActionButtons({
     isFullView,
     isFullHeight,
     fontSize,
+    themeId,
     onToggleFullscreen,
     onToggleFullView,
     onToggleFullHeight,
     onCycleFontSize,
+    onSelectTheme,
 }: LogViewerActionButtonsProps) {
     return (
         <div className="flex items-center gap-1">
+            {onSelectTheme && (
+                <TerminalThemePicker
+                    currentThemeId={themeId}
+                    onSelectTheme={onSelectTheme}
+                />
+            )}
+
             {onCycleFontSize && fontSize && (
                 <Tooltip>
                     <TooltipTrigger asChild>
@@ -41,7 +52,7 @@ export function LogViewerActionButtons({
                                 onCycleFontSize();
                             }}
                         >
-                            <TextZoomIcon className="size-4" />
+                            <ALargeSmall className="size-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>{`Text size: ${fontSize}px`}</TooltipContent>
@@ -65,7 +76,7 @@ export function LogViewerActionButtons({
                                 onToggleFullHeight();
                             }}
                         >
-                            <FullHeightIcon className="size-4" />
+                            <ChevronsUpDown className="size-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>{isFullHeight ? "Exit full height" : "Full height"}</TooltipContent>
@@ -90,7 +101,7 @@ export function LogViewerActionButtons({
                                 onToggleFullView();
                             }}
                         >
-                            <FullViewIcon className="size-4" />
+                            <ChevronsLeftRight className="size-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>{isFullView ? "Exit full view" : "Full view"}</TooltipContent>

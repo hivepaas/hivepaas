@@ -35,6 +35,8 @@ export function AppLogsRoute() {
         toggleFullHeight,
         fontSize,
         cycleFontSize,
+        themeId,
+        changeTheme,
     } = useLogViewerControls();
     const [tabStates, setTabStates] = useState<AppLogTabStates>(() => ({
         [AGGREGATION_TAB_ID]: createDefaultAppLogTabState(),
@@ -172,7 +174,7 @@ export function AppLogsRoute() {
                 <Tabs
                     value={activeTab}
                     onValueChange={setActiveTab}
-                    className={cn("gap-4", isFullscreen && "flex-1 min-h-0 flex flex-col")}
+                    className={cn("gap-2 sm:gap-4", isFullscreen && "flex-1 min-h-0 flex flex-col")}
                 >
                     <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
                         <TabsList className="h-auto flex-wrap gap-1.5 sm:gap-2 p-0 justify-start">
@@ -203,10 +205,12 @@ export function AppLogsRoute() {
                                 isFullView={isFullView}
                                 isFullHeight={isFullHeight}
                                 fontSize={fontSize}
+                                themeId={themeId}
                                 onToggleFullscreen={toggleFullscreen}
                                 onToggleFullView={toggleFullView}
                                 onToggleFullHeight={toggleFullHeight}
                                 onCycleFontSize={cycleFontSize}
+                                onSelectTheme={changeTheme}
                             />
                         </div>
                     </div>
@@ -239,6 +243,7 @@ export function AppLogsRoute() {
                                     isActive={activeTab === tab.id}
                                     shouldAutoStream={tab.id === AGGREGATION_TAB_ID}
                                     fontSize={fontSize}
+                                    themeId={themeId}
                                     height={isFullscreen ? "100%" : undefined}
                                     isFullView={isFullView}
                                     isFullHeight={isFullHeight}

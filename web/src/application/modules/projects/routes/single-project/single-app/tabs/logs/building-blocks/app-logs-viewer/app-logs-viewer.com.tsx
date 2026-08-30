@@ -29,6 +29,7 @@ export function AppLogsViewer({
     isActive,
     shouldAutoStream,
     fontSize,
+    themeId,
     height,
     isFullView,
     isFullHeight,
@@ -219,6 +220,7 @@ export function AppLogsViewer({
             height={height}
             isFullView={isFullView}
             fontSize={fontSize}
+            themeId={themeId}
             isFullHeight={isFullHeight}
             downloadFileName={taskId ? `app-logs-${tabLabel}.txt` : "app-logs-aggregation.txt"}
             toolbarStart={
@@ -278,6 +280,7 @@ interface AppLogsViewerProps {
     isActive: boolean;
     shouldAutoStream: boolean;
     fontSize?: number;
+    themeId?: string;
     height?: number | string;
     isFullView?: boolean;
     isFullHeight?: boolean;

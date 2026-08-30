@@ -28,6 +28,7 @@ export interface LogsViewerProps {
     isFullView?: boolean;
     isFullHeight?: boolean;
     fontSize?: number;
+    themeId?: string;
     downloadFileName?: string;
     defaultShowDebugLogs?: boolean;
     defaultShowTimestamps?: boolean;

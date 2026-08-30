@@ -1,6 +1,7 @@
 export * from "./building-blocks";
 export * from "./logs-viewer.com";
 export * from "./logs-viewer.constants";
+export * from "./logs-viewer.themes";
 export * from "./logs-viewer.types";
 export * from "./logs-viewer.utils";
 export * from "./streaming-logs-viewer.com";

@@ -13,6 +13,7 @@ export interface StreamingLogsViewerProps {
     downloadFileName?: string;
     defaultShowDebugLogs?: boolean;
     fontSize?: number;
+    themeId?: string;
     height?: number | string;
     isFullView?: boolean;
     isFullHeight?: boolean;
@@ -26,6 +27,7 @@ export function StreamingLogsViewer({
     downloadFileName = "logs.txt",
     defaultShowDebugLogs = false,
     fontSize,
+    themeId,
     height,
     isFullView = false,
     isFullHeight = false,
@@ -165,6 +167,7 @@ export function StreamingLogsViewer({
             isRefreshPending={isRefreshPending}
             hasLineNumbers={false}
             fontSize={fontSize}
+            themeId={themeId}
             downloadFileName={downloadFileName}
             defaultShowDebugLogs={defaultShowDebugLogs}
         />

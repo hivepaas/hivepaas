@@ -16,6 +16,7 @@ export function DeploymentLogsViewer({
     deploymentID,
     status,
     fontSize,
+    themeId,
     height,
     isFullView,
     isFullHeight,
@@ -37,6 +38,7 @@ export function DeploymentLogsViewer({
             downloadFileName={`deployment-${deploymentID}-logs.txt`}
             defaultShowDebugLogs
             fontSize={fontSize}
+            themeId={themeId}
             height={height}
             isFullView={isFullView}
             isFullHeight={isFullHeight}
@@ -52,6 +54,7 @@ interface DeploymentLogsScope {
     deploymentID: string;
     status: OpenApiConstant<EAppDeploymentStatus>;
     fontSize?: number;
+    themeId?: string;
     height?: number | string;
     isFullView?: boolean;
     isFullHeight?: boolean;

@@ -16,6 +16,7 @@ import {
     TERMINAL_SCROLLBACK,
 } from "./logs-viewer.constants";
 import styles from "./logs-viewer.module.scss";
+import { useTerminalTheme } from "./logs-viewer.themes";
 import type { LogsViewerProps, LogsViewerSearchResult } from "./logs-viewer.types";
 import { buildDisplayedLogFrames, formatFramesForXterm, getPlainLogLines } from "./logs-viewer.utils";
 import { useFullViewHeight } from "./use-full-view-height";
@@ -28,6 +29,7 @@ export function LogsViewer({
     isFullView = false,
     isFullHeight = false,
     fontSize: controlledFontSize,
+    themeId,
     downloadFileName = DEFAULT_DOWNLOAD_FILE_NAME,
     defaultShowDebugLogs = false,
     defaultShowTimestamps = false,
@@ -37,6 +39,7 @@ export function LogsViewer({
     className,
     onRefresh,
 }: LogsViewerProps) {
+    const { currentTheme } = useTerminalTheme(themeId);
     const terminalElementRef = useRef<HTMLDivElement | null>(null);
     const terminalFrameRef = useRef<HTMLDivElement | null>(null);
     const terminalRef = useRef<Terminal | null>(null);
@@ -108,6 +111,13 @@ export function LogsViewer({
         };
     }, [currentFontSize, updateDimensions]);
 
+    // Update theme when currentTheme changes
+    useEffect(() => {
+        if (terminalRef.current) {
+            terminalRef.current.options.theme = currentTheme.theme;
+        }
+    }, [currentTheme]);
+
     // Initialize xterm
     useEffect(() => {
         const element = terminalElementRef.current;
@@ -120,6 +130,7 @@ export function LogsViewer({
         renderedFramesCountRef.current = 0;
 
         const terminal = new Terminal({
+            allowTransparency: true,
             convertEol: true,
             disableStdin: true,
             cursorBlink: false,
@@ -128,16 +139,7 @@ export function LogsViewer({
             fontFamily: "Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
             fontSize: LOG_FONT_SIZES[0],
             scrollback: TERMINAL_SCROLLBACK,
-            theme: {
-                background: "#0f172a",
-                foreground: "#e5e7eb",
-                selectionBackground: "#f59e0b",
-                selectionForeground: "#000000",
-                selectionInactiveBackground: "#d97706",
-                scrollbarSliderBackground: "#334155",
-                scrollbarSliderHoverBackground: "#475569",
-                scrollbarSliderActiveBackground: "#64748b",
-            },
+            theme: currentTheme.theme,
         });
 
         const fitAddon = new FitAddon();
@@ -465,10 +467,12 @@ export function LogsViewer({
                         !isTextWrapped && styles["unwrapped"],
                         "border border-border/60 flex-1 min-h-0 h-full w-full",
                     )}
+                    style={{ background: currentTheme.background }}
                 >
                     <div
                         ref={terminalElementRef}
                         className={cn(styles["terminalHost"], !isTextWrapped && styles["unwrapped"])}
+                        style={{ background: currentTheme.background }}
                     />
                 </div>
             </div>

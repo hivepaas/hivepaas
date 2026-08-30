@@ -17,6 +17,7 @@ export function ScheduledJobTaskLogsViewer({
     taskID,
     status,
     fontSize,
+    themeId,
     height,
     isFullView,
     isFullHeight,
@@ -37,6 +38,7 @@ export function ScheduledJobTaskLogsViewer({
             isInProgress={status === TaskStatus.InProgress}
             downloadFileName={`scheduled-job-task-${taskID}-logs.txt`}
             fontSize={fontSize}
+            themeId={themeId}
             height={height}
             isFullView={isFullView}
             isFullHeight={isFullHeight}
@@ -53,6 +55,7 @@ interface ScheduledJobTaskLogsScope {
     taskID: string;
     status: OpenApiConstant<EAppScheduledJobTaskStatus>;
     fontSize?: number;
+    themeId?: string;
     height?: number | string;
     isFullView?: boolean;
     isFullHeight?: boolean;

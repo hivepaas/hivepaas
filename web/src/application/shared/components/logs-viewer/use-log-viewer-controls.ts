@@ -1,9 +1,11 @@
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useState } from "react";
 
 import { LOG_FONT_SIZES } from "./logs-viewer.constants";
+import { type TerminalThemeDefinition, useTerminalTheme } from "./logs-viewer.themes";
 
 export interface UseLogViewerControlsOptions {
     initialFontSizeIndex?: number;
+    initialThemeId?: string;
 }
 
 export interface UseLogViewerControlsReturn {
@@ -19,9 +21,13 @@ export interface UseLogViewerControlsReturn {
     fontSizeIndex: number;
     fontSize: number;
     cycleFontSize: () => void;
+    themeId: string;
+    currentTheme: TerminalThemeDefinition;
+    changeTheme: (themeId: string) => void;
 }
 
 export function useLogViewerControls(options: UseLogViewerControlsOptions = {}): UseLogViewerControlsReturn {
+    const { themeId, currentTheme, changeTheme } = useTerminalTheme(options.initialThemeId);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isFullView, setIsFullView] = useState(false);
     const [isFullHeight, setIsFullHeight] = useState(() => {
@@ -81,5 +87,8 @@ export function useLogViewerControls(options: UseLogViewerControlsOptions = {}):
         fontSizeIndex,
         fontSize,
         cycleFontSize,
+        themeId,
+        currentTheme,
+        changeTheme,
     };
 }

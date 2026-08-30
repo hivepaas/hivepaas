@@ -12,8 +12,11 @@ import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import {
+    ALargeSmall,
     ChevronDown,
     ChevronUp,
+    ChevronsLeftRight,
+    ChevronsUpDown,
     Download,
     Maximize2,
     Minimize2,
@@ -27,9 +30,12 @@ import { type AppTerminalInitMessage, buildAppTerminalResizeMessage } from "~/pr
 import { useExportContainerFilesDialog } from "~/projects/dialogs/export-container-files";
 import { useImportFilesToContainerDialog } from "~/projects/dialogs/import-files-to-container";
 
-import { FullHeightIcon, FullViewIcon, TextZoomIcon } from "@assets/icons";
-
-import { LOG_SEARCH_DECORATIONS, useFullViewHeight } from "@application/shared/components/logs-viewer";
+import {
+    LOG_SEARCH_DECORATIONS,
+    TerminalThemePicker,
+    useFullViewHeight,
+    useTerminalTheme,
+} from "@application/shared/components/logs-viewer";
 
 import { AppTerminalCommandTemplatePanel } from "./app-terminal-command-template-panel.com";
 import styles from "./app-terminal-panel.module.scss";
@@ -63,6 +69,7 @@ export function AppTerminalPanel({
     const lastObservedFrameSizeRef = useRef({ clientWidth: 0, clientHeight: 0 });
     const lastSentTerminalSizeRef = useRef({ cols: 0, rows: 0 });
     const inputEncoderRef = useRef(new TextEncoder());
+    const { themeId, currentTheme, changeTheme } = useTerminalTheme();
     const [fontSizeIndex, setFontSizeIndex] = useState(0);
     const [internalFullView, setInternalFullView] = useState(false);
     const isFullView = controlledFullView ?? internalFullView;
@@ -235,6 +242,12 @@ export function AppTerminalPanel({
         };
     }, [currentFontSize, fitAndSendResize, scheduleFitAndResize]);
 
+    useEffect(() => {
+        if (terminalRef.current) {
+            terminalRef.current.options.theme = currentTheme.theme;
+        }
+    }, [currentTheme]);
+
     const closeConnection = useCallback(() => {
         abortControllerRef.current?.abort();
         abortControllerRef.current = null;
@@ -346,19 +359,13 @@ export function AppTerminalPanel({
         }
 
         const terminal = new Terminal({
+            allowTransparency: true,
             cursorBlink: true,
             cursorStyle: "bar",
             fontSize: currentFontSize,
             fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
             scrollback: TERMINAL_SCROLLBACK,
-            theme: {
-                background: "#0f172a",
-                foreground: "#e2e8f0",
-                cursor: "#38bdf8",
-                selectionBackground: "#f59e0b",
-                selectionForeground: "#000000",
-                selectionInactiveBackground: "#d97706",
-            },
+            theme: currentTheme.theme,
         });
 
         const fitAddon = new FitAddon();
@@ -563,7 +570,7 @@ export function AppTerminalPanel({
     return (
         <div
             className={cn(
-                "flex min-w-0 flex-col gap-3",
+                "flex min-w-0 flex-col gap-2 sm:gap-3",
                 isFullscreen &&
                     "fixed inset-1.5 md:inset-4 z-50 min-h-0 rounded-lg border bg-background p-2.5 md:p-4 shadow-2xl",
             )}
@@ -604,6 +611,11 @@ export function AppTerminalPanel({
                 </div>
 
                 <div className="flex items-center gap-1">
+                    <TerminalThemePicker
+                        currentThemeId={themeId}
+                        onSelectTheme={changeTheme}
+                    />
+
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button
@@ -613,7 +625,7 @@ export function AppTerminalPanel({
                                 aria-label={`Text size: ${currentFontSize}px`}
                                 onClick={cycleFontSize}
                             >
-                                <TextZoomIcon className="size-4" />
+                                <ALargeSmall className="size-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>{`Text size: ${currentFontSize}px`}</TooltipContent>
@@ -632,7 +644,7 @@ export function AppTerminalPanel({
                                 )}
                                 onClick={handleToggleFullHeight}
                             >
-                                <FullHeightIcon className="size-4" />
+                                <ChevronsUpDown className="size-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>{isFullHeight ? "Exit full height" : "Full height"}</TooltipContent>
@@ -652,7 +664,7 @@ export function AppTerminalPanel({
                                 )}
                                 onClick={handleToggleFullView}
                             >
-                                <FullViewIcon className="size-4" />
+                                <ChevronsLeftRight className="size-4" />
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>{isFullView ? "Exit full view" : "Full view"}</TooltipContent>
@@ -801,7 +813,7 @@ export function AppTerminalPanel({
 
             <div
                 ref={terminalContainerRef}
-                className={cn("flex min-h-0 gap-4", isFullscreen ? "flex-1" : "w-full")}
+                className={cn("flex min-h-0 gap-2 sm:gap-4", isFullscreen ? "flex-1" : "w-full")}
                 style={
                     isFullscreen
                         ? undefined
@@ -812,7 +824,8 @@ export function AppTerminalPanel({
             >
                 <div
                     ref={terminalFrameRef}
-                    className={cn(styles["terminalFrame"], "min-h-0 flex-1 overflow-hidden border border-slate-800")}
+                    className={cn(styles["terminalFrame"], "min-h-0 flex-1 overflow-hidden border border-border/60")}
+                    style={{ background: currentTheme.background }}
                 >
                     <div
                         ref={terminalElementRef}

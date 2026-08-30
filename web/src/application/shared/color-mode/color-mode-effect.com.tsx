@@ -31,8 +31,22 @@ const DARK_READER_FIXES: DarkReader.DynamicThemeFix = {
             background-color: #f59e0b !important;
         }
     `,
-    ignoreInlineStyle: [".x-logo", ".hivepaas-logo", "svg.hivepaas-logo", "svg.hivepaas-logo *"],
-    ignoreImageAnalysis: [".x-logo", ".hivepaas-logo", "svg.hivepaas-logo", "svg.hivepaas-logo *"],
+    ignoreInlineStyle: [
+        ".x-logo",
+        ".hivepaas-logo",
+        "svg.hivepaas-logo",
+        "svg.hivepaas-logo *",
+        "[class*='terminalFrame']",
+        "[class*='terminalHost']",
+    ],
+    ignoreImageAnalysis: [
+        ".x-logo",
+        ".hivepaas-logo",
+        "svg.hivepaas-logo",
+        "svg.hivepaas-logo *",
+        "[class*='terminalFrame']",
+        "[class*='terminalHost']",
+    ],
     disableStyleSheetsProxy: false,
     ignoreCSSUrl: [],
 };

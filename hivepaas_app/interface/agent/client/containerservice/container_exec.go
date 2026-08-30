@@ -44,6 +44,7 @@ type ContainerExecResp struct {
 	Stdout   []byte
 	Stderr   []byte
 	ExitCode *int32
+	CanRetry *bool
 }
 
 type ContainerExecStream struct {
@@ -60,6 +61,10 @@ type ContainerExecStream struct {
 	// Exit code captured from stream
 	exitCode int32
 	hasExit  bool
+
+	// CanRetry captured from stream
+	canRetry    bool
+	hasCanRetry bool
 }
 
 func (s *ContainerExecStream) start() {
@@ -164,6 +169,9 @@ func (s *ContainerExecStream) Recv() (*ContainerExecResp, error) {
 	} else if exitCodeVal, ok := resp.GetValue().(*agentproto.ContainerExecResp_ExitCode); ok {
 		code := exitCodeVal.ExitCode
 		out.ExitCode = &code
+	} else if canRetryVal, ok := resp.GetValue().(*agentproto.ContainerExecResp_CanRetry); ok {
+		canRetry := canRetryVal.CanRetry
+		out.CanRetry = &canRetry
 	}
 	return out, nil
 }
@@ -209,6 +217,10 @@ func (s *ContainerExecStream) readStreamLoop() {
 		case resp.ExitCode != nil:
 			s.exitCode = *resp.ExitCode
 			s.hasExit = true
+			s.cond.Broadcast()
+		case resp.CanRetry != nil:
+			s.canRetry = *resp.CanRetry
+			s.hasCanRetry = true
 			s.cond.Broadcast()
 		}
 		s.readMutex.Unlock()
@@ -279,4 +291,10 @@ func (s *ContainerExecStream) GetExitCode() (int32, bool) {
 	s.readMutex.Lock()
 	defer s.readMutex.Unlock()
 	return s.exitCode, s.hasExit
+}
+
+func (s *ContainerExecStream) GetCanRetry() (bool, bool) {
+	s.readMutex.Lock()
+	defer s.readMutex.Unlock()
+	return s.canRetry, s.hasCanRetry
 }

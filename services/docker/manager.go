@@ -79,6 +79,7 @@ type Manager interface {
 		*client.ExecResizeResult, error)
 	ContainerExecInspect(ctx context.Context, execID string, options ...ExecInspectOption) (
 		*client.ExecInspectResult, error)
+	CanRetryExec(ctx context.Context, execID string) (bool, error)
 	ContainerCreateToExec(ctx context.Context, image string, cmd []string, options ...ContainerCreateOption) (
 		*client.ContainerCreateResult, int64 /*status code*/, error)
 	ContainerUpdate(ctx context.Context, containerID string, options ...ContainerUpdateOption) (

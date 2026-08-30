@@ -36,6 +36,7 @@ type ExecOutput struct {
 	Stdout   []byte `json:"stdout"`
 	Stderr   []byte `json:"stderr"`
 	ExitCode *int32 `json:"exitCode"`
+	CanRetry *bool  `json:"canRetry"`
 }
 
 // ExecStream represents the bidirectional stream interface for container execution

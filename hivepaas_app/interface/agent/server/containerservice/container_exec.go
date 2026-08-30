@@ -67,6 +67,8 @@ func (s *grpcExecStream) Send(out *containeragentdto.ExecOutput) error {
 		resp.Value = &agentproto.ContainerExecResp_Stderr{Stderr: out.Stderr}
 	case out.ExitCode != nil:
 		resp.Value = &agentproto.ContainerExecResp_ExitCode{ExitCode: *out.ExitCode}
+	case out.CanRetry != nil:
+		resp.Value = &agentproto.ContainerExecResp_CanRetry{CanRetry: *out.CanRetry}
 	}
 
 	return s.stream.Send(resp) //nolint:wrapcheck

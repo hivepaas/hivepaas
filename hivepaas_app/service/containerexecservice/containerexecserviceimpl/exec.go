@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/containerservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -21,24 +22,42 @@ import (
 
 const (
 	taskFindRetryMax           = 5
-	taskFindRetryDelay         = time.Second * 3
+	taskFindRetryDelay         = time.Second * 2
 	taskFindMinRunningDuration = time.Second * 10
 
-	containerExecRetryMax = 1
+	containerExecRetryMax   = 2
+	containerExecRetryDelay = 2 * time.Second
 )
 
 func (s *service) ContainerExec(
 	ctx context.Context,
 	req *containerexecservice.ContainerExecReq,
-) (resp *containerexecservice.ContainerExecResp, err error) {
-	return s.containerExec(ctx, req, 0)
+) (resp *containerexecservice.ContainerExecResp, lastErr error) {
+	for i := range containerExecRetryMax + 1 {
+		var retryable bool
+		resp, retryable, lastErr = s.containerExec(ctx, req)
+		if lastErr == nil {
+			return resp, nil
+		}
+		if i >= containerExecRetryMax || !retryable {
+			break
+		}
+		if req.LogStore != nil {
+			_ = req.LogStore.Add(ctx, tasklog.NewOutFrame("Retrying command execution for service "+
+				req.App.ServiceID, tasklog.TsNow))
+		}
+		delay := containerExecRetryDelay + time.Duration(i)*time.Second
+		if sleepErr := timeutil.SleepCtx(ctx, delay); sleepErr != nil {
+			return nil, hperrors.Wrap(sleepErr)
+		}
+	}
+	return nil, hperrors.Wrap(lastErr)
 }
 
 func (s *service) containerExec(
 	ctx context.Context,
 	req *containerexecservice.ContainerExecReq,
-	retry int,
-) (resp *containerexecservice.ContainerExecResp, err error) {
+) (resp *containerexecservice.ContainerExecResp, retryable bool, err error) {
 	defer funcutil.EnsureNoPanic(&err)
 
 	logStore := req.LogStore
@@ -48,16 +67,16 @@ func (s *service) containerExec(
 
 	serviceID := req.App.ServiceID
 	if serviceID == "" {
-		return nil, hperrors.NewNotFound("Swarm service")
+		return nil, false, hperrors.NewNotFound("Swarm service")
 	}
 
 	inspectResp, err := s.dockerManager.ServiceInspect(ctx, serviceID)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, true, hperrors.Wrap(err)
 	}
 	svcMode := &inspectResp.Service.Spec.Mode
 	if svcMode.Replicated != nil && (svcMode.Replicated.Replicas == nil || *svcMode.Replicated.Replicas == 0) {
-		return &containerexecservice.ContainerExecResp{ExecStarted: false}, nil
+		return &containerexecservice.ContainerExecResp{ExecStarted: false}, false, nil
 	}
 
 	task, _, err := s.dockerManager.ServiceTaskGetRunning(ctx, serviceID,
@@ -66,17 +85,17 @@ func (s *service) containerExec(
 		gofn.Coalesce(req.TaskFindRetryDelay, taskFindRetryDelay),
 		nil)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, false, hperrors.Wrap(err)
 	}
 	if task == nil {
-		_ = logStore.Add(ctx, tasklog.NewWarnFrame(
-			"No running task found, execution aborted", tasklog.TsNow))
-		return nil, hperrors.NewNotFound("Running task of service")
+		_ = logStore.Add(ctx, tasklog.NewWarnFrame("No running task found for service: "+serviceID,
+			tasklog.TsNow))
+		return nil, false, hperrors.NewNotFound("Running task of service")
 	}
 
 	currNodeID, err := s.dockerManager.NodeCurrentID(ctx)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, true, hperrors.Wrap(err)
 	}
 
 	isRemote := task.NodeID != "" && task.NodeID != currNodeID
@@ -106,52 +125,47 @@ func (s *service) containerExec(
 		}
 	}()
 
-	createResp, attachResp, startResp, err := execHelper.ExecCreate(ctx, containerID, req)
-
+	err = execHelper.ExecCreateAndStart(ctx, containerID, req)
 	if err != nil {
-		// retry one more time with excluding the current node from the list
-		if execHelper.retryable && retry < containerExecRetryMax {
-			_ = logStore.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf(
-				"Execution failed to start in node %s, retrying...", execHelper.targetNodeID), tasklog.TsNow))
-			return s.containerExec(ctx, req, retry+1)
-		}
-		return nil, hperrors.Wrap(err)
+		_ = logStore.Add(ctx, tasklog.NewWarnFrame(fmt.Sprintf("Execution failed to start in node %s",
+			execHelper.targetNodeID), tasklog.TsNow))
+		return nil, execHelper.retryable, hperrors.Wrap(err)
 	}
 
 	resp.ExecStarted = true
-	resp.ExecCreateResult = createResp
-	resp.ExecAttachResult = attachResp
-	resp.ExecStartResult = startResp
+	resp.ExecCreateResult = execHelper.createResult
+	resp.ExecAttachResult = execHelper.attachResult
+	resp.ExecStartResult = execHelper.startResult
 
 	if req.StdinReader != nil {
 		go func() {
 			defer funcutil.EnsureNoPanic(nil)
-			_, _ = io.Copy(attachResp.Conn, req.StdinReader)
-			_ = attachResp.CloseWrite()
+			_, _ = io.Copy(execHelper.attachResult.Conn, req.StdinReader)
+			_ = execHelper.attachResult.CloseWrite()
 		}()
 	}
 
 	if req.TerminalMode {
-		return resp, nil
+		return resp, false, nil
 	}
 
-	logChan, _ := docker.StartScanningLog(ctx, io.NopCloser(attachResp.Reader),
+	logChan, _ := docker.StartScanningLog(ctx, io.NopCloser(execHelper.attachResult.Reader),
 		docker.WithParseLogHeader(!execHelper.isTTY), docker.WithStdoutWriter(req.StdoutWriter))
 	for msgs := range logChan {
 		_ = logStore.AddRedacted(ctx, msgs...)
 	}
 
-	exitCode, err := execHelper.GetExecExitCode(ctx)
+	exitCode, retryable, err := execHelper.GetExecExitCode(ctx)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return nil, retryable, hperrors.Wrap(err)
 	}
 	if exitCode != 0 {
 		_ = logStore.AddRedacted(ctx, tasklog.NewErrFrame(fmt.Sprintf(
 			"Command execution failed with exit code: %v", exitCode), tasklog.TsNow))
-		return nil, hperrors.Wrap(hperrors.ErrInfraActionFailed)
+		return nil, false, hperrors.Wrap(hperrors.ErrInfraActionFailed)
 	}
 
-	return resp, nil
+	return resp, false, nil
 }
 
 type containerExecHelper struct {
@@ -163,6 +177,7 @@ type containerExecHelper struct {
 
 	createResult *client.ExecCreateResult
 	attachResult *client.ExecAttachResult
+	startResult  *client.ExecStartResult
 	isTTY        bool
 
 	retryable    bool
@@ -170,13 +185,14 @@ type containerExecHelper struct {
 	logStore     *tasklog.Store
 }
 
-func (h *containerExecHelper) ExecCreate(
+func (h *containerExecHelper) ExecCreateAndStart(
 	ctx context.Context,
 	containerID string,
 	req *containerexecservice.ContainerExecReq,
-) (_ *client.ExecCreateResult, _ *client.ExecAttachResult, _ *client.ExecStartResult, err error) {
+) (err error) {
 	defer func() {
 		if err != nil {
+			_ = h.calcIsRetryable(ctx)
 			h.Close()
 		} else {
 			h.retryable = false // Exec created, not allow to retry when a subsequence step fails
@@ -185,7 +201,7 @@ func (h *containerExecHelper) ExecCreate(
 
 	// Local exec
 	if h.dockerClient != nil {
-		createRes, attachRes, startRes, err := h.dockerClient.ContainerExec(ctx, containerID,
+		h.createResult, h.attachResult, h.startResult, err = h.dockerClient.ContainerExec(ctx, containerID,
 			func(opts *client.ExecCreateOptions) {
 				req.ExecOptions(opts)
 				if req.StdinReader != nil {
@@ -194,11 +210,9 @@ func (h *containerExecHelper) ExecCreate(
 				h.isTTY = opts.TTY
 			})
 		if err != nil {
-			return nil, nil, nil, hperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
-		h.createResult = createRes
-		h.attachResult = attachRes
-		return createRes, attachRes, startRes, nil
+		return nil
 	}
 
 	// Remote exec
@@ -207,19 +221,19 @@ func (h *containerExecHelper) ExecCreate(
 		if err != nil {
 			_ = h.logStore.Add(ctx, tasklog.NewWarnFrame(
 				fmt.Sprintf("Failed to get IP of agent for node %s: %v", h.targetNodeID, err), tasklog.TsNow))
-			return nil, nil, nil, hperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		h.agentClient, err = containerservice.NewContainerServiceClient(agentAddr)
 		if err != nil {
 			_ = h.logStore.Add(ctx, tasklog.NewWarnFrame(
 				fmt.Sprintf("Failed to connect to agent at %s: %v", agentAddr, err), tasklog.TsNow))
-			return nil, nil, nil, hperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 
 		h.remoteStream, err = h.agentClient.ContainerExec(ctx)
 		if err != nil {
-			return nil, nil, nil, hperrors.Wrap(err)
+			return hperrors.Wrap(err)
 		}
 	}
 
@@ -229,12 +243,13 @@ func (h *containerExecHelper) ExecCreate(
 
 	err = h.remoteStream.SendExecCreate(containerID, req.ExecOptions)
 	if err != nil {
-		return nil, nil, nil, hperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
 
 	h.createResult = &client.ExecCreateResult{ID: "remote"}
 	h.attachResult = h.remoteStream.ToExecAttachResult()
-	return h.createResult, h.attachResult, &client.ExecStartResult{}, nil
+	h.startResult = &client.ExecStartResult{}
+	return nil
 }
 
 func (h *containerExecHelper) ExecResize(
@@ -253,23 +268,24 @@ func (h *containerExecHelper) ExecResize(
 
 func (h *containerExecHelper) GetExecExitCode(
 	ctx context.Context,
-) (int, error) {
+) (code int, retryable bool, err error) {
 	// Local exec
 	if h.dockerClient != nil {
 		execInfo, err := h.dockerClient.ContainerExecInspect(ctx, h.createResult.ID)
 		if err != nil {
-			return 0, hperrors.Wrap(err)
+			return 0, false, hperrors.Wrap(err)
 		}
-		return execInfo.ExitCode, nil
+		return execInfo.ExitCode, false, nil
 	}
 
 	// Remote exec
 	exitCode, ok := h.remoteStream.GetExitCode()
 	if !ok {
-		return 0, hperrors.Wrap(hperrors.ErrGRPCRequestFailed).
+		_ = h.calcIsRetryable(ctx)
+		return 0, h.retryable, hperrors.Wrap(hperrors.ErrGRPCRequestFailed).
 			WithParam("Error", "stream closed without exit code")
 	}
-	return int(exitCode), nil
+	return int(exitCode), false, nil
 }
 
 func (h *containerExecHelper) Close() {
@@ -282,4 +298,30 @@ func (h *containerExecHelper) Close() {
 	if h.agentClient != nil {
 		_ = h.agentClient.Close()
 	}
+}
+
+func (h *containerExecHelper) calcIsRetryable(
+	ctx context.Context,
+) error {
+	if h.dockerClient != nil {
+		var execID string
+		if h.createResult != nil {
+			execID = h.createResult.ID
+		}
+		canRetry, err := h.dockerClient.CanRetryExec(ctx, execID)
+		if err != nil {
+			h.retryable = false
+			return hperrors.Wrap(err)
+		}
+		h.retryable = canRetry
+		return nil
+	}
+
+	if h.remoteStream != nil {
+		if canRetry, ok := h.remoteStream.GetCanRetry(); ok {
+			h.retryable = canRetry
+			return nil
+		}
+	}
+	return nil
 }

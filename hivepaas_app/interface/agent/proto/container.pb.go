@@ -262,6 +262,7 @@ type ContainerExecResp struct {
 	//	*ContainerExecResp_Stdout
 	//	*ContainerExecResp_Stderr
 	//	*ContainerExecResp_ExitCode
+	//	*ContainerExecResp_CanRetry
 	Value         isContainerExecResp_Value `protobuf_oneof:"value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -331,6 +332,15 @@ func (x *ContainerExecResp) GetExitCode() int32 {
 	return 0
 }
 
+func (x *ContainerExecResp) GetCanRetry() bool {
+	if x != nil {
+		if x, ok := x.Value.(*ContainerExecResp_CanRetry); ok {
+			return x.CanRetry
+		}
+	}
+	return false
+}
+
 type isContainerExecResp_Value interface {
 	isContainerExecResp_Value()
 }
@@ -347,11 +357,17 @@ type ContainerExecResp_ExitCode struct {
 	ExitCode int32 `protobuf:"varint,3,opt,name=exit_code,json=exitCode,proto3,oneof"`
 }
 
+type ContainerExecResp_CanRetry struct {
+	CanRetry bool `protobuf:"varint,4,opt,name=can_retry,json=canRetry,proto3,oneof"`
+}
+
 func (*ContainerExecResp_Stdout) isContainerExecResp_Value() {}
 
 func (*ContainerExecResp_Stderr) isContainerExecResp_Value() {}
 
 func (*ContainerExecResp_ExitCode) isContainerExecResp_Value() {}
+
+func (*ContainerExecResp_CanRetry) isContainerExecResp_Value() {}
 
 type ContainerCopyFromReq struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
@@ -711,11 +727,12 @@ const file_container_proto_rawDesc = "" +
 	"\fconsole_size\x18\x06 \x01(\v2\x13.agent.TerminalSizeR\vconsoleSize\"<\n" +
 	"\fTerminalSize\x12\x14\n" +
 	"\x05width\x18\x01 \x01(\rR\x05width\x12\x16\n" +
-	"\x06height\x18\x02 \x01(\rR\x06height\"o\n" +
+	"\x06height\x18\x02 \x01(\rR\x06height\"\x8e\x01\n" +
 	"\x11ContainerExecResp\x12\x18\n" +
 	"\x06stdout\x18\x01 \x01(\fH\x00R\x06stdout\x12\x18\n" +
 	"\x06stderr\x18\x02 \x01(\fH\x00R\x06stderr\x12\x1d\n" +
-	"\texit_code\x18\x03 \x01(\x05H\x00R\bexitCodeB\a\n" +
+	"\texit_code\x18\x03 \x01(\x05H\x00R\bexitCode\x12\x1d\n" +
+	"\tcan_retry\x18\x04 \x01(\bH\x00R\bcanRetryB\a\n" +
 	"\x05value\"\x93\x01\n" +
 	"\x14ContainerCopyFromReq\x12!\n" +
 	"\fcontainer_id\x18\x01 \x01(\tR\vcontainerId\x12\x12\n" +
@@ -801,6 +818,7 @@ func file_container_proto_init() {
 		(*ContainerExecResp_Stdout)(nil),
 		(*ContainerExecResp_Stderr)(nil),
 		(*ContainerExecResp_ExitCode)(nil),
+		(*ContainerExecResp_CanRetry)(nil),
 	}
 	file_container_proto_msgTypes[6].OneofWrappers = []any{
 		(*ContainerCopyToReq_Metadata)(nil),

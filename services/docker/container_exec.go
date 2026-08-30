@@ -15,8 +15,8 @@ import (
 
 var (
 	DefaultConsoleSize = client.ConsoleSize{
-		Height: 40,  //nolint
-		Width:  120, //nolint
+		Height: 40,  //nolint:mnd
+		Width:  120, //nolint:mnd
 	}
 )
 
@@ -55,7 +55,7 @@ func (m *manager) ContainerExec(
 		ConsoleSize: opts.ConsoleSize,
 	})
 	if err != nil {
-		return nil, nil, nil, hperrors.NewInfra(err)
+		return &createResp, &attachResp, nil, hperrors.NewInfra(err)
 	}
 
 	startResp, err := m.client.ExecStart(ctx, execID, client.ExecStartOptions{
@@ -64,7 +64,7 @@ func (m *manager) ContainerExec(
 		ConsoleSize: opts.ConsoleSize,
 	})
 	if err != nil {
-		return nil, nil, nil, hperrors.NewInfra(err)
+		return &createResp, &attachResp, &startResp, hperrors.NewInfra(err)
 	}
 
 	return &createResp, &attachResp, &startResp, nil
@@ -83,7 +83,7 @@ func (m *manager) ContainerExecWait(
 	logChan, _ := StartScanningLog(ctx, io.NopCloser(attachResp.Reader), WithParseLogHeader(false))
 	defer attachResp.Close()
 
-	logs := make([]*tasklog.LogFrame, 0, 20) //nolint
+	logs := make([]*tasklog.LogFrame, 0, 20) //nolint:mnd
 	for msgs := range logChan {
 		logs = append(logs, msgs...)
 	}
@@ -127,6 +127,34 @@ func (m *manager) ContainerExecInspect(
 		return nil, hperrors.NewInfra(err)
 	}
 	return &resp, nil
+}
+
+func (m *manager) CanRetryExec(
+	ctx context.Context,
+	execID string,
+) (bool, error) {
+	if execID == "" {
+		return true, nil
+	}
+
+	inspectResp, err := m.ContainerExecInspect(ctx, execID)
+	if err != nil {
+		if hperrors.IsInfraNotFound(err) {
+			return true, nil
+		}
+		return false, hperrors.Wrap(err)
+	}
+	if inspectResp == nil {
+		return true, nil
+	}
+
+	// If the process is currently running or was already started (PID > 0),
+	// it should not be retried to prevent duplicate execution.
+	if inspectResp.Running || inspectResp.PID > 0 {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 func (m *manager) ContainerCreateToExec(

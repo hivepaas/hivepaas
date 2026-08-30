@@ -17,10 +17,18 @@ func (uc *UC) ExecuteCommand(
 	// 1. Receive the initial configuration message
 	req, err := stream.Recv()
 	if err != nil {
+		canRetry := true
+		_ = stream.Send(&containeragentdto.ExecOutput{
+			CanRetry: &canRetry,
+		})
 		return hperrors.Wrap(err)
 	}
 	cfgMsg := req.Config
 	if cfgMsg == nil {
+		canRetry := false
+		_ = stream.Send(&containeragentdto.ExecOutput{
+			CanRetry: &canRetry,
+		})
 		return hperrors.Wrap(hperrors.ErrBadRequest).WithExtraDetail("first message must be ContainerCommandExecConfig")
 	}
 
@@ -49,6 +57,17 @@ func (uc *UC) ExecuteCommand(
 		cfgMsg.ContainerID, execOptions)
 	if err != nil {
 		uc.logger.Errorf("Failed to initialize container exec: %v", err)
+		var execID string
+		if createResp != nil {
+			execID = createResp.ID
+		}
+		canRetry, checkErr := uc.dockerManager.CanRetryExec(stream.Context(), execID)
+		if checkErr != nil {
+			uc.logger.Warnf("Failed to check if container exec can be retried: %v", checkErr)
+		}
+		_ = stream.Send(&containeragentdto.ExecOutput{
+			CanRetry: &canRetry,
+		})
 		return hperrors.Wrap(hperrors.ErrInternal).WithCause(err).WithExtraDetail("Docker exec failed")
 	}
 	defer attachResp.Close()

@@ -53,7 +53,7 @@ export function ProjectCommandTemplateScriptEditorField({ value, onChange, inval
                 onOpenChange={setOpen}
             >
                 <DialogContent
-                    className="fixed inset-4 top-4 left-4 z-50 flex max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-lg border bg-background p-0 shadow-2xl sm:max-w-none w-[inherit]"
+                    className="!fixed !inset-2 sm:!inset-4 !z-50 !flex !max-w-none !max-h-none !w-auto !h-auto !translate-x-0 !translate-y-0 flex-col gap-0 overflow-hidden rounded-lg border bg-background p-0 shadow-2xl"
                     onEscapeKeyDown={event => {
                         event.stopPropagation();
                     }}

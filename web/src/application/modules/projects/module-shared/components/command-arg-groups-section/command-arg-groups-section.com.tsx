@@ -26,6 +26,7 @@ import {
 } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 
+import { type ArgViewMode, ArgViewModeSwitch, getStoredArgViewMode, setStoredArgViewMode } from "./building-blocks";
 import { EditCommandArgDialog } from "./building-blocks/edit-command-arg.dialog.com";
 import { createDefaultCommandArg, createDefaultCommandArgGroup } from "./command-arg-groups-section.helpers";
 import type { CommandArgGroupsFormValue } from "./command-arg-groups-section.types";
@@ -85,7 +86,15 @@ function getFirstLine(value: string) {
     return value.split("\n")[0] ?? "";
 }
 
-function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName = "argGroups" }: ArgItemProps) {
+function ArgItem({
+    groupIndex,
+    argIndex,
+    viewMode = "grid",
+    separator = "=",
+    onRemove,
+    readOnly = false,
+    fieldName = "argGroups",
+}: ArgItemProps) {
     const [editOpen, setEditOpen] = useState(false);
     const {
         control,
@@ -103,11 +112,14 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName =
     const argValue = typeof value.value === "string" ? value.value : "";
     const argValueFirstLine = getFirstLine(argValue);
 
+    const isListMode = viewMode === "list";
+
     return (
-        <div className="flex flex-col gap-1 max-w-full">
+        <div className={cn("flex flex-col gap-1", isListMode ? "w-full" : "max-w-full")}>
             <div
                 className={cn(
-                    "flex w-fit max-w-full items-center gap-1.5 sm:gap-2 rounded-md border bg-background px-2 py-1 flex-wrap sm:flex-nowrap",
+                    "flex items-center gap-1.5 sm:gap-2 rounded-md border bg-background px-2.5 py-1 transition-colors",
+                    isListMode ? "w-full" : "w-fit max-w-full flex-wrap sm:flex-nowrap",
                     useArg.value === true && "border-green-200 bg-green-50 dark:bg-green-950/20",
                 )}
             >
@@ -121,18 +133,22 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName =
                         useArg.onChange(checked === true);
                     }}
                     disabled={readOnly}
+                    className="shrink-0"
                 />
                 <Input
                     {...name}
                     value={nameValue}
                     onChange={name.onChange}
                     placeholder="--arg"
-                    className="h-8 min-w-[6ch] max-w-[28ch] text-xs sm:text-sm px-2"
-                    style={{ width: getInputWidth(nameValue, "--arg", 6, 28) }}
+                    className={cn(
+                        "h-8 text-xs sm:text-sm px-2 font-mono shrink-0",
+                        isListMode ? "w-[140px] sm:w-[220px]" : "min-w-[6ch] max-w-[28ch]",
+                    )}
+                    style={isListMode ? undefined : { width: getInputWidth(nameValue, "--arg", 6, 28) }}
                     aria-invalid={!!get(errors, `${basePath}.name`)}
                     disabled={readOnly}
                 />
-                <span className="text-xs sm:text-sm text-muted-foreground">=</span>
+                <span className="text-xs sm:text-sm text-muted-foreground shrink-0 font-mono">{separator || "="}</span>
                 <Textarea
                     {...value}
                     value={argValue}
@@ -145,11 +161,14 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName =
                     placeholder="value"
                     minRows={1}
                     maxRows={1}
-                    className="h-8 min-h-8 max-h-8 min-w-[6ch] max-w-[34ch] resize-none overflow-hidden py-1 px-2 text-xs sm:text-sm leading-normal"
-                    style={{ width: getInputWidth(argValueFirstLine, "value", 6, 34) }}
+                    className={cn(
+                        "h-8 min-h-8 max-h-8 resize-none overflow-hidden py-1 px-2 text-xs sm:text-sm leading-normal font-mono",
+                        isListMode ? "flex-1 min-w-0 w-full" : "min-w-[6ch] max-w-[34ch]",
+                    )}
+                    style={isListMode ? undefined : { width: getInputWidth(argValueFirstLine, "value", 6, 34) }}
                     disabled={readOnly}
                 />
-                <div className="flex items-center gap-0.5 shrink-0">
+                <div className="flex items-center gap-0.5 shrink-0 ml-auto sm:ml-0">
                     <Button
                         type="button"
                         variant="ghost"
@@ -195,6 +214,13 @@ function ArgItem({ groupIndex, argIndex, onRemove, readOnly = false, fieldName =
 
 function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argGroups" }: ArgGroupRowProps) {
     const [open, setOpen] = useState(true);
+    const [viewMode, setViewMode] = useState<ArgViewMode>(getStoredArgViewMode);
+
+    const handleViewModeChange = (mode: ArgViewMode) => {
+        setViewMode(mode);
+        setStoredArgViewMode(mode);
+    };
+
     const {
         control,
         formState: { errors },
@@ -319,44 +345,62 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                                 </Select>
                             </InfoBlock>
 
-                            <div className="flex flex-col gap-3 ml-0 sm:ml-[132px]">
-                                <div className="flex flex-wrap gap-3">
-                                    {fields.map((field, argIndex) => (
-                                        <ArgItem
-                                            key={field.id}
-                                            groupIndex={groupIndex}
-                                            argIndex={argIndex}
-                                            onRemove={() => {
-                                                if (readOnly) {
-                                                    return;
-                                                }
-
-                                                remove(argIndex);
-                                            }}
-                                            readOnly={readOnly}
-                                            fieldName={fieldName}
-                                        />
-                                    ))}
+                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start">
+                                <div className="w-full sm:w-[120px] shrink-0 flex items-center pt-0.5">
+                                    <ArgViewModeSwitch
+                                        value={viewMode}
+                                        onChange={handleViewModeChange}
+                                        disabled={readOnly}
+                                    />
                                 </div>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    disabled={readOnly}
-                                    onClick={() => {
-                                        append(createDefaultCommandArg() as never);
-                                    }}
-                                >
-                                    <Plus className="size-4" />
-                                    <span className="sr-only">Add arg</span>
-                                </Button>
+
+                                <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
+                                    <div
+                                        className={cn(
+                                            viewMode === "list"
+                                                ? "flex flex-col gap-2.5 w-full"
+                                                : "flex flex-wrap gap-2.5 sm:gap-3",
+                                        )}
+                                    >
+                                        {fields.map((field, argIndex) => (
+                                            <ArgItem
+                                                key={field.id}
+                                                groupIndex={groupIndex}
+                                                argIndex={argIndex}
+                                                viewMode={viewMode}
+                                                separator={separator.value}
+                                                onRemove={() => {
+                                                    if (readOnly) {
+                                                        return;
+                                                    }
+
+                                                    remove(argIndex);
+                                                }}
+                                                readOnly={readOnly}
+                                                fieldName={fieldName}
+                                            />
+                                        ))}
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        disabled={readOnly}
+                                        onClick={() => {
+                                            append(createDefaultCommandArg() as never);
+                                        }}
+                                    >
+                                        <Plus className="size-4" />
+                                        <span className="sr-only">Add arg</span>
+                                    </Button>
+                                </div>
                             </div>
 
                             <div
                                 className={cn(
                                     dashedBorderBox,
-                                    "text-xs sm:text-sm ml-0 sm:ml-[132px] min-h-7 h-auto py-1.5 px-3 leading-normal",
+                                    "text-xs sm:text-sm ml-0 sm:ml-[136px] min-h-7 h-auto py-1.5 px-3 leading-normal",
                                 )}
                             >
                                 <div className="break-all">
@@ -415,6 +459,8 @@ function View({ readOnly = false, fieldName = "argGroups" }: Props) {
 interface ArgItemProps {
     groupIndex: number;
     argIndex: number;
+    viewMode?: ArgViewMode;
+    separator?: string;
     onRemove: () => void;
     readOnly?: boolean;
     fieldName?: string;

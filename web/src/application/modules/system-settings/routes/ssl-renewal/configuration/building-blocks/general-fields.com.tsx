@@ -1,7 +1,8 @@
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 
-import { NextRunsField } from "./next-runs-field.com";
+import { NextRunsField } from "@application/shared/components";
+
 import { ScheduleFields } from "./schedule-fields.com";
 import { SchedulingModeField } from "./scheduling-mode-field.com";
 import { SectionHeader } from "./section-header.com";

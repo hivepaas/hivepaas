@@ -1,6 +1,8 @@
 import React, { useMemo } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
 import { useToggle, useUpdateEffect } from "react-use";
 import type { AppScheduledJob } from "~/projects/domain";
@@ -9,13 +11,12 @@ import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/c
 import { EAppScheduledJobCommandOutputMode, EAppScheduledJobScheduleMode } from "~/projects/module-shared/enums";
 import { useProjectNotificationSettingsSources } from "~/projects/module-shared/hooks";
 
-import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ContentBlock, FormActionBar, InfoBlock, LabelWithInfo, NextRunsField } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { NotificationSettings } from "@application/shared/form";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import { InputNumber } from "@/components/ui/input-number";
 
 import type { CreateOrEditAppScheduledJobFormInput, CreateOrEditAppScheduledJobFormOutput } from "../schemas";
 import { CreateOrEditAppScheduledJobFormSchema } from "../schemas";
@@ -23,7 +24,6 @@ import { CreateOrEditAppScheduledJobFormSchema } from "../schemas";
 import {
     CommandRunInTargetApp,
     INFO_BLOCK_TITLE_WIDTH,
-    NextRunsField,
     PipeToAppSection,
     PriorityTabsField,
     SaveToFileSection,
@@ -306,7 +306,10 @@ export function CreateOrEditAppScheduledJobForm({
                                         </div>
                                     </InfoBlock>
 
-                                    <NextRunsField nextRuns={initialValues?.nextRuns ?? []} />
+                                    <NextRunsField
+                                        nextRuns={initialValues?.nextRuns ?? []}
+                                        titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                    />
 
                                     <InfoBlock
                                         title="Timeout"
@@ -338,7 +341,7 @@ export function CreateOrEditAppScheduledJobForm({
                                                 Show Configuration
                                             </Button>
                                         ) : (
-                                            <div className="flex w-full max-w-[1180px] gap-3">
+                                            <div className="flex w-full flex-col gap-2.5">
                                                 <Button
                                                     type="button"
                                                     variant="link"
@@ -347,68 +350,81 @@ export function CreateOrEditAppScheduledJobForm({
                                                 >
                                                     Hide Configuration
                                                 </Button>
-                                                <div className="flex w-full flex-wrap items-start gap-x-5 gap-y-3">
-                                                    <div className="flex min-w-[130px] flex-col gap-1.5">
-                                                        <div className="flex min-w-0 items-center gap-2">
+
+                                                <div
+                                                    className={cn(
+                                                        dashedBorderBox,
+                                                        "w-fit text-sm text-muted-foreground leading-normal",
+                                                    )}
+                                                >
+                                                    <span className="font-semibold text-orange-500">Note:</span>{" "}
+                                                    Recommended to enable retry only for idempotent commands.
+                                                </div>
+
+                                                <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-2.5 pt-0.5">
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-1.5">
                                                             <label
                                                                 htmlFor={retryMaxInputId}
-                                                                className="shrink-0 text-sm font-medium"
+                                                                className="shrink-0 text-xs sm:text-sm font-medium"
                                                             >
                                                                 Max
                                                             </label>
-                                                            <InputNumber
+                                                            <Input
                                                                 id={retryMaxInputId}
                                                                 ref={maxRetry.ref}
                                                                 name={maxRetry.name}
-                                                                value={maxRetry.value}
-                                                                onBlur={maxRetry.onBlur}
-                                                                onValueChange={value => {
-                                                                    const nextValue =
-                                                                        value !== undefined && Number.isFinite(value)
-                                                                            ? value
-                                                                            : undefined;
-
-                                                                    maxRetry.onChange(nextValue);
-                                                                }}
+                                                                type="number"
+                                                                inputMode="numeric"
                                                                 min={0}
-                                                                useGrouping={false}
-                                                                showControls={false}
+                                                                value={maxRetry.value ?? ""}
+                                                                onBlur={maxRetry.onBlur}
+                                                                onChange={event => {
+                                                                    const rawValue = event.target.value;
+                                                                    const nextValue =
+                                                                        rawValue === "" ? undefined : Number(rawValue);
+
+                                                                    maxRetry.onChange(
+                                                                        nextValue !== undefined &&
+                                                                            Number.isFinite(nextValue)
+                                                                            ? nextValue
+                                                                            : undefined,
+                                                                    );
+                                                                }}
                                                                 placeholder="0"
                                                                 aria-invalid={isMaxRetryInvalid}
-                                                                className="w-[92px]"
+                                                                className="w-14 h-8 text-xs sm:text-sm px-2"
                                                                 disabled={readOnly}
                                                             />
                                                         </div>
                                                         <FieldError errors={[errors.maxRetry]} />
                                                     </div>
 
-                                                    <div className="flex min-w-[0] flex-col gap-1.5">
-                                                        <div className="flex min-w-0 items-center gap-2">
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-1.5">
                                                             <label
                                                                 htmlFor={retryDelayInputId}
-                                                                className="shrink-0 text-sm font-medium"
+                                                                className="shrink-0 text-xs sm:text-sm font-medium"
                                                             >
                                                                 Delay
                                                             </label>
-                                                            <div className="">
-                                                                <Input
-                                                                    id={retryDelayInputId}
-                                                                    {...retryDelay}
-                                                                    placeholder="10s"
-                                                                    className="w-[110px]"
-                                                                    aria-invalid={isRetryDelayInvalid}
-                                                                    disabled={readOnly}
-                                                                />
-                                                                <FieldError errors={[errors.retryDelay]} />
-                                                            </div>
+                                                            <Input
+                                                                id={retryDelayInputId}
+                                                                {...retryDelay}
+                                                                placeholder="10s"
+                                                                className="w-14 h-8 text-xs sm:text-sm px-2"
+                                                                aria-invalid={isRetryDelayInvalid}
+                                                                disabled={readOnly}
+                                                            />
                                                         </div>
+                                                        <FieldError errors={[errors.retryDelay]} />
                                                     </div>
 
-                                                    <div className="flex min-w-0 flex-col gap-1.5">
-                                                        <div className="flex min-w-0 items-center gap-2">
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-1.5">
                                                             <label
                                                                 htmlFor={retryDelayIncrInputId}
-                                                                className="shrink-0 text-sm font-medium"
+                                                                className="shrink-0 text-xs sm:text-sm font-medium"
                                                             >
                                                                 Delay Incr
                                                             </label>
@@ -416,7 +432,7 @@ export function CreateOrEditAppScheduledJobForm({
                                                                 id={retryDelayIncrInputId}
                                                                 {...retryDelayIncr}
                                                                 placeholder="5s"
-                                                                className="w-[110px]"
+                                                                className="w-14 h-8 text-xs sm:text-sm px-2"
                                                                 aria-invalid={isRetryDelayIncrInvalid}
                                                                 disabled={readOnly}
                                                             />
@@ -424,8 +440,33 @@ export function CreateOrEditAppScheduledJobForm({
                                                         <FieldError errors={[errors.retryDelayIncr]} />
                                                     </div>
 
-                                                    <div className="flex h-9 items-center gap-3 text-sm font-medium">
-                                                        <label htmlFor={retryBackoffInputId}>Expo Backoff</label>
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <label
+                                                                htmlFor={retryDelayMaxInputId}
+                                                                className="shrink-0 text-xs sm:text-sm font-medium"
+                                                            >
+                                                                Delay Max
+                                                            </label>
+                                                            <Input
+                                                                id={retryDelayMaxInputId}
+                                                                {...retryDelayMax}
+                                                                placeholder="24h"
+                                                                className="w-14 h-8 text-xs sm:text-sm px-2"
+                                                                aria-invalid={isRetryDelayMaxInvalid}
+                                                                disabled={readOnly}
+                                                            />
+                                                        </div>
+                                                        <FieldError errors={[errors.retryDelayMax]} />
+                                                    </div>
+
+                                                    <div className="flex h-8 items-center gap-2 text-xs sm:text-sm font-medium">
+                                                        <label
+                                                            htmlFor={retryBackoffInputId}
+                                                            className="cursor-pointer"
+                                                        >
+                                                            Expo Backoff
+                                                        </label>
                                                         <Checkbox
                                                             id={retryBackoffInputId}
                                                             checked={retryBackoff.value}
@@ -435,26 +476,6 @@ export function CreateOrEditAppScheduledJobForm({
                                                             aria-label="Expo Backoff"
                                                             disabled={readOnly}
                                                         />
-                                                    </div>
-
-                                                    <div className="flex min-w-0 flex-col gap-1.5">
-                                                        <div className="flex min-w-0 items-center gap-2">
-                                                            <label
-                                                                htmlFor={retryDelayMaxInputId}
-                                                                className="shrink-0 text-sm font-medium"
-                                                            >
-                                                                Delay Max
-                                                            </label>
-                                                            <Input
-                                                                id={retryDelayMaxInputId}
-                                                                {...retryDelayMax}
-                                                                placeholder="24h"
-                                                                className="w-[110px]"
-                                                                aria-invalid={isRetryDelayMaxInvalid}
-                                                                disabled={readOnly}
-                                                            />
-                                                        </div>
-                                                        <FieldError errors={[errors.retryDelayMax]} />
                                                     </div>
                                                 </div>
                                             </div>

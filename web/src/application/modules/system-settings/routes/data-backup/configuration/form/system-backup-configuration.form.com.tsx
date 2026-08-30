@@ -4,33 +4,19 @@ import { PasswordInput } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { format } from "date-fns";
-import { ChevronDown } from "lucide-react";
 import { type FieldPath, FormProvider, useController, useForm, useFormContext, useWatch } from "react-hook-form";
 import { CloudStorageQueries } from "~/settings/data";
 import { useNotificationSettingsSources } from "~/settings/module-shared/hooks";
 import type { SystemBackupSettings } from "~/system-settings/domain";
 
-import { AppLink, Combobox, InfoBlock } from "@application/shared/components";
+import { AppLink, Combobox, InfoBlock, NextRunsField } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 import { ESettingStatus } from "@application/shared/enums";
 import { NotificationSettings } from "@application/shared/form";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
-import {
-    Checkbox,
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
-    Field,
-    FieldError,
-    FieldGroup,
-    Input,
-    Tabs,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui";
+import { Checkbox, Field, FieldError, FieldGroup, Input, Tabs, TabsList, TabsTrigger } from "@/components/ui";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Separator } from "@/components/ui/separator";
 
@@ -69,53 +55,6 @@ function EnabledField() {
                     status.onChange(checked ? ESettingStatus.Active : ESettingStatus.Disabled);
                 }}
             />
-        </InfoBlock>
-    );
-}
-
-function NextRunsField({ nextRuns }: { nextRuns: Date[] }) {
-    const [open, setOpen] = useState(true);
-
-    return (
-        <InfoBlock title="Next Runs">
-            <Collapsible
-                open={open}
-                onOpenChange={setOpen}
-                className="max-w-[400px]"
-            >
-                <div className={cn(dashedBorderBox, "text-sm text-center leading-6 p-2")}>
-                    <CollapsibleTrigger asChild>
-                        <button
-                            type="button"
-                            aria-label={open ? "Collapse next runs" : "Expand next runs"}
-                            className="flex w-full items-center justify-end"
-                        >
-                            <ChevronDown
-                                className={cn(
-                                    "size-4 text-muted-foreground transition-transform duration-200",
-                                    open && "rotate-180",
-                                )}
-                            />
-                        </button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                        {nextRuns.length > 0 ? (
-                            <div className="flex flex-col gap-1 pt-3 text-sm">
-                                {nextRuns.map(runAt => (
-                                    <span
-                                        key={runAt.toISOString()}
-                                        className="text-orange-500"
-                                    >
-                                        {format(runAt, "yyyy-MM-dd HH:mm:ss")}
-                                    </span>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="pt-3 text-sm text-muted-foreground">No next runs available</div>
-                        )}
-                    </CollapsibleContent>
-                </div>
-            </Collapsible>
         </InfoBlock>
     );
 }

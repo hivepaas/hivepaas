@@ -72,6 +72,16 @@ const LEGACY_PROJECT_PROVIDER_SETTINGS_SOURCE_PATTERNS = {
 
 const LEGACY_PROJECT_PROVIDER_SETTINGS_SPLAT_PATTERN = "projects/:id/provider-settings/*";
 
+const LEGACY_PROJECT_SOURCES_PATTERNS = {
+    root: "projects/:id/sources",
+    githubApps: "projects/:id/sources/github-apps",
+    githubAppCreate: "projects/:id/sources/github-apps/create",
+    githubAppEdit: "projects/:id/sources/github-apps/:githubAppId/edit",
+    webhooks: "projects/:id/sources/webhooks",
+    webhookCreate: "projects/:id/sources/webhooks/create",
+    webhookEdit: "projects/:id/sources/webhooks/:repoWebhookId/edit",
+} as const;
+
 // eslint-disable-next-line react-refresh/only-export-components
 function SingleAppRouteRedirect() {
     const { id, env, appId } = useParams<{ id: string; env: string; appId: string }>();
@@ -103,10 +113,10 @@ function ProjectGithubAppSourcesRouteRedirect({ target }: ProjectGithubAppSource
 
     const to =
         target === "create"
-            ? ROUTE.projects.single.sources.githubApps.create.$route(id)
+            ? ROUTE.projects.single.providerConfiguration.githubApps.create.$route(id)
             : target === "edit" && githubAppId
-              ? ROUTE.projects.single.sources.githubApps.edit.$route(id, githubAppId)
-              : ROUTE.projects.single.sources.githubApps.$route(id);
+              ? ROUTE.projects.single.providerConfiguration.githubApps.edit.$route(id, githubAppId)
+              : ROUTE.projects.single.providerConfiguration.githubApps.$route(id);
 
     return (
         <Navigate
@@ -131,10 +141,10 @@ function ProjectWebhookSourcesRouteRedirect({ target }: ProjectWebhookSourcesRou
 
     const to =
         target === "create"
-            ? ROUTE.projects.single.sources.webhooks.create.$route(id)
+            ? ROUTE.projects.single.providerConfiguration.webhooks.create.$route(id)
             : target === "edit" && repoWebhookId
-              ? ROUTE.projects.single.sources.webhooks.edit.$route(id, repoWebhookId)
-              : ROUTE.projects.single.sources.webhooks.$route(id);
+              ? ROUTE.projects.single.providerConfiguration.webhooks.edit.$route(id, repoWebhookId)
+              : ROUTE.projects.single.providerConfiguration.webhooks.$route(id);
 
     return (
         <Navigate
@@ -238,7 +248,7 @@ export const projectsRouter: RouteObject = {
     children: [
         {
             path: "projects/:id/github-apps",
-            element: <ProjectRouteRedirect to={ROUTE.projects.single.sources.githubApps.$route} />,
+            element: <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.githubApps.$route} />,
         },
         {
             lazy: async () => {
@@ -321,8 +331,34 @@ export const projectsRouter: RouteObject = {
                     ),
                 },
                 {
-                    path: ROUTE.projects.single.sources.$pattern,
-                    element: <ProjectRouteRedirect to={ROUTE.projects.single.sources.githubApps.$route} />,
+                    path: LEGACY_PROJECT_SOURCES_PATTERNS.root,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.githubApps.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_SOURCES_PATTERNS.githubApps,
+                    element: <ProjectGithubAppSourcesRouteRedirect target="list" />,
+                },
+                {
+                    path: LEGACY_PROJECT_SOURCES_PATTERNS.githubAppCreate,
+                    element: <ProjectGithubAppSourcesRouteRedirect target="create" />,
+                },
+                {
+                    path: LEGACY_PROJECT_SOURCES_PATTERNS.githubAppEdit,
+                    element: <ProjectGithubAppSourcesRouteRedirect target="edit" />,
+                },
+                {
+                    path: LEGACY_PROJECT_SOURCES_PATTERNS.webhooks,
+                    element: <ProjectWebhookSourcesRouteRedirect target="list" />,
+                },
+                {
+                    path: LEGACY_PROJECT_SOURCES_PATTERNS.webhookCreate,
+                    element: <ProjectWebhookSourcesRouteRedirect target="create" />,
+                },
+                {
+                    path: LEGACY_PROJECT_SOURCES_PATTERNS.webhookEdit,
+                    element: <ProjectWebhookSourcesRouteRedirect target="edit" />,
                 },
                 {
                     path: LEGACY_PROJECT_PROVIDER_CONFIGURATION_PATTERNS.root,
@@ -1070,23 +1106,8 @@ export const projectsRouter: RouteObject = {
                                 };
                             },
                         },
-                    ],
-                },
-                {
-                    lazy: async () => {
-                        const { ProjectWithSidebar } = await getLazyComponents();
-
-                        return {
-                            element: (
-                                <ProjectWithSidebar section="sources">
-                                    <Outlet />
-                                </ProjectWithSidebar>
-                            ),
-                        };
-                    },
-                    children: [
                         {
-                            path: ROUTE.projects.single.sources.githubApps.$pattern,
+                            path: ROUTE.projects.single.providerConfiguration.githubApps.$pattern,
                             lazy: async () => {
                                 const { ProjectGithubAppsRoute } = await getLazyComponents();
 
@@ -1096,7 +1117,7 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.sources.githubApps.create.$pattern,
+                            path: ROUTE.projects.single.providerConfiguration.githubApps.create.$pattern,
                             lazy: async () => {
                                 const { ProjectGithubAppCreateRoute } = await getLazyComponents();
 
@@ -1106,7 +1127,7 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.sources.githubApps.edit.$pattern,
+                            path: ROUTE.projects.single.providerConfiguration.githubApps.edit.$pattern,
                             lazy: async () => {
                                 const { ProjectGithubAppEditRoute } = await getLazyComponents();
 
@@ -1116,7 +1137,7 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.sources.webhooks.$pattern,
+                            path: ROUTE.projects.single.providerConfiguration.webhooks.$pattern,
                             lazy: async () => {
                                 const { ProjectWebhooksRoute } = await getLazyComponents();
 
@@ -1126,7 +1147,7 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.sources.webhooks.create.$pattern,
+                            path: ROUTE.projects.single.providerConfiguration.webhooks.create.$pattern,
                             lazy: async () => {
                                 const { ProjectWebhookCreateRoute } = await getLazyComponents();
 
@@ -1136,7 +1157,7 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.sources.webhooks.edit.$pattern,
+                            path: ROUTE.projects.single.providerConfiguration.webhooks.edit.$pattern,
                             lazy: async () => {
                                 const { ProjectWebhookEditRoute } = await getLazyComponents();
 

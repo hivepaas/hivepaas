@@ -19,9 +19,9 @@ export { default as UploadImageIcon } from "./common/upload-image.icon.svg?react
 /**
  * Authentication icons
  */
-export { default as SuccessAuthenticationIcon } from "./authnetication/success.authentication.icon.svg?react";
-export { default as WarningAuthenticationIcon } from "./authnetication/warning.authentication.icon.svg?react";
-export { default as ErrorAuthenticationIcon } from "./authnetication/error.authentication.icon.svg?react";
+export { default as SuccessAuthenticationIcon } from "./authentication/success.authentication.icon.svg?react";
+export { default as WarningAuthenticationIcon } from "./authentication/warning.authentication.icon.svg?react";
+export { default as ErrorAuthenticationIcon } from "./authentication/error.authentication.icon.svg?react";
 
 /**
  * Modules icons

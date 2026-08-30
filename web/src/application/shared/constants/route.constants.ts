@@ -867,6 +867,22 @@ export const ROUTE = {
                     $route: (id: string) => `/projects/${id}/providers-and-keys/env-variables/`,
                 },
 
+                githubApps: {
+                    $pattern: "projects/:id/providers-and-keys/github-apps",
+                    $route: (id: string) => `/projects/${id}/providers-and-keys/github-apps/`,
+
+                    create: {
+                        $pattern: "projects/:id/providers-and-keys/github-apps/create",
+                        $route: (id: string) => `/projects/${id}/providers-and-keys/github-apps/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/providers-and-keys/github-apps/:githubAppId/edit",
+                        $route: (id: string, githubAppId: string) =>
+                            `/projects/${id}/providers-and-keys/github-apps/${githubAppId}/edit/`,
+                    },
+                },
+
                 imPlatforms: {
                     $pattern: "projects/:id/providers-and-keys/im-platforms",
                     $route: (id: string) => `/projects/${id}/providers-and-keys/im-platforms/`,
@@ -978,41 +994,20 @@ export const ROUTE = {
                             `/projects/${id}/providers-and-keys/ssl-certificates/${sslCertId}/edit/`,
                     },
                 },
-            },
-
-            sources: {
-                $pattern: "projects/:id/sources",
-                $route: (id: string) => `/projects/${id}/sources/`,
-
-                githubApps: {
-                    $pattern: "projects/:id/sources/github-apps",
-                    $route: (id: string) => `/projects/${id}/sources/github-apps/`,
-
-                    create: {
-                        $pattern: "projects/:id/sources/github-apps/create",
-                        $route: (id: string) => `/projects/${id}/sources/github-apps/create/`,
-                    },
-
-                    edit: {
-                        $pattern: "projects/:id/sources/github-apps/:githubAppId/edit",
-                        $route: (id: string, githubAppId: string) =>
-                            `/projects/${id}/sources/github-apps/${githubAppId}/edit/`,
-                    },
-                },
 
                 webhooks: {
-                    $pattern: "projects/:id/sources/webhooks",
-                    $route: (id: string) => `/projects/${id}/sources/webhooks/`,
+                    $pattern: "projects/:id/providers-and-keys/webhooks",
+                    $route: (id: string) => `/projects/${id}/providers-and-keys/webhooks/`,
 
                     create: {
-                        $pattern: "projects/:id/sources/webhooks/create",
-                        $route: (id: string) => `/projects/${id}/sources/webhooks/create/`,
+                        $pattern: "projects/:id/providers-and-keys/webhooks/create",
+                        $route: (id: string) => `/projects/${id}/providers-and-keys/webhooks/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/sources/webhooks/:repoWebhookId/edit",
+                        $pattern: "projects/:id/providers-and-keys/webhooks/:repoWebhookId/edit",
                         $route: (id: string, repoWebhookId: string) =>
-                            `/projects/${id}/sources/webhooks/${repoWebhookId}/edit/`,
+                            `/projects/${id}/providers-and-keys/webhooks/${repoWebhookId}/edit/`,
                     },
                 },
             },

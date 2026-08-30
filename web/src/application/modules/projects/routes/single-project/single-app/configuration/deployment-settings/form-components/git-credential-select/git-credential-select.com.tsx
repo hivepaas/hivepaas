@@ -137,7 +137,7 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
                     <div className="text-xs">
                         Configure{" "}
                         <AppLink.Basic
-                            to={ROUTE.projects.single.sources.githubApps.$route(projectId)}
+                            to={ROUTE.projects.single.providerConfiguration.githubApps.$route(projectId)}
                             className="text-link"
                             target="_blank"
                             rel="noopener noreferrer"

@@ -14,16 +14,17 @@ function getScopeTooltip(selectedEnv: string): string {
     return `These settings are scoped to env "${selectedEnv}". Switch environments in the top right to change scope.`;
 }
 
-export function ProjectProviderSettingsScopeHeader({ projectId }: Props) {
+export function ProjectProviderSettingsScopeHeader({ projectId, forceAllEnvs = false }: Props) {
     const selectedEnv = useSelectedProjectEnv(projectId);
     const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
     const envs = projectData?.data.envs ?? [];
-    const isAll = !selectedEnv || selectedEnv === PROJECT_ENV_FILTER_ALL;
+    const scopedEnv = forceAllEnvs ? PROJECT_ENV_FILTER_ALL : selectedEnv;
+    const isAll = !scopedEnv || scopedEnv === PROJECT_ENV_FILTER_ALL;
 
     return (
         <div className="flex flex-wrap items-center gap-2">
             <ProjectEnvScopeBadge
-                selectedEnv={selectedEnv}
+                selectedEnv={scopedEnv}
                 envs={envs}
             />
             {!isAll && (
@@ -38,7 +39,7 @@ export function ProjectProviderSettingsScopeHeader({ projectId }: Props) {
                                 <CircleHelp className="size-4" />
                             </button>
                         </TooltipTrigger>
-                        <TooltipContent side="right">{getScopeTooltip(selectedEnv)}</TooltipContent>
+                        <TooltipContent side="right">{getScopeTooltip(scopedEnv)}</TooltipContent>
                     </Tooltip>
 
                     <div
@@ -59,4 +60,9 @@ export function ProjectProviderSettingsScopeHeader({ projectId }: Props) {
 
 interface Props {
     projectId: string;
+    /**
+     * Always render the "All environments" scope, ignoring the header env filter.
+     * For settings that only exist at project scope (github apps, repo webhooks).
+     */
+    forceAllEnvs?: boolean;
 }

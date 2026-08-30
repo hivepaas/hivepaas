@@ -1,5 +1,6 @@
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
+import { ProjectProviderSettingsScopeHeader } from "~/projects/module-shared/components";
 import { ProjectRepoWebhookTable } from "~/settings/module-shared/components";
 
 export function ProjectWebhooksRoute() {
@@ -7,5 +8,13 @@ export function ProjectWebhooksRoute() {
 
     invariant(projectId, "projectId must be defined");
 
-    return <ProjectRepoWebhookTable projectId={projectId} />;
+    return (
+        <div className="flex flex-col gap-4">
+            <ProjectProviderSettingsScopeHeader
+                projectId={projectId}
+                forceAllEnvs
+            />
+            <ProjectRepoWebhookTable projectId={projectId} />
+        </div>
+    );
 }

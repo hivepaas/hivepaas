@@ -34,7 +34,7 @@ func (h *Handler) GetBackupSettings(ctx *gin.Context) {
 	}
 
 	req := systembackupdto.NewGetSystemBackupReq()
-	req.Scope = entity.NewObjectScopeHivepaas()
+	req.Scope = entity.NewObjectScopeGlobal()
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -72,7 +72,7 @@ func (h *Handler) UpdateBackupSettings(ctx *gin.Context) {
 	}
 
 	req := systembackupdto.NewUpdateSystemBackupReq()
-	req.Scope = entity.NewObjectScopeHivepaas()
+	req.Scope = entity.NewObjectScopeGlobal()
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -110,7 +110,7 @@ func (h *Handler) ExecuteBackup(ctx *gin.Context) {
 	}
 
 	req := systembackupdto.NewExecuteSystemBackupReq()
-	req.Scope = entity.NewObjectScopeHivepaas()
+	req.Scope = entity.NewObjectScopeGlobal()
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

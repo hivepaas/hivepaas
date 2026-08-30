@@ -33,7 +33,6 @@ func (s *service) initDefaultSystemBackup(
 	// Backup settings
 	backupSetting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
-		Scope:       base.HivepaasScope,
 		Type:        base.SettingTypeSystemBackup,
 		Status:      sysBackupDefaultStatus,
 		Name:        sysBackupSettingName,
@@ -66,7 +65,6 @@ func (s *service) initDefaultSystemBackup(
 	// Backup job
 	jobSetting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
-		Scope:       base.HivepaasScope,
 		Type:        base.SettingTypeSchedJob,
 		Kind:        string(base.SchedJobTypeSystemBackup),
 		Status:      sysBackupDefaultStatus,

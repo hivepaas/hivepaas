@@ -31,7 +31,6 @@ func (s *service) initDefaultSSLRenewal(
 	// Renewal settings
 	renewalSetting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
-		Scope:       base.HivepaasScope,
 		Type:        base.SettingTypeSSLRenewal,
 		Status:      sslRenewalDefaultStatus,
 		Name:        sslRenewalSettingName,
@@ -55,7 +54,6 @@ func (s *service) initDefaultSSLRenewal(
 	// Renewal job
 	jobSetting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
-		Scope:       base.HivepaasScope,
 		Type:        base.SettingTypeSchedJob,
 		Kind:        string(base.SchedJobTypeSSLRenewal),
 		Status:      sslRenewalDefaultStatus,

@@ -3,6 +3,11 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 import type { ProjectAppDetails, ProjectEnvEntity } from "~/projects/domain";
 import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
+import {
+    APP_REPLICAS_STATUS_DOT_CLASS,
+    getAppReplicasStatusLabel,
+    resolveAppReplicasStatus,
+} from "~/projects/module-shared/utils";
 
 import { AppLink } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -24,14 +29,22 @@ function ReplicasCell({ stats }: Pick<ProjectAppDetails, "stats">) {
         return <span className="text-muted-foreground">-</span>;
     }
 
-    const replicaDotClass = runningTasks < desiredTasks ? "bg-orange-500" : "bg-green-500";
+    const replicasStatus = resolveAppReplicasStatus(runningTasks, desiredTasks);
+    const replicasLabel = getAppReplicasStatusLabel(runningTasks, desiredTasks);
 
     return (
-        <div className="flex items-center justify-center gap-2">
+        <div
+            className="flex items-center justify-center gap-2"
+            title={replicasLabel}
+        >
             <span>
                 {runningTasks}/{desiredTasks}
             </span>
-            <span className={cn("size-2 rounded-full", replicaDotClass)} />
+            <span
+                className={cn("size-2 rounded-full", APP_REPLICAS_STATUS_DOT_CLASS[replicasStatus])}
+                role="img"
+                aria-label={replicasLabel}
+            />
         </div>
     );
 }

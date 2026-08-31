@@ -30,6 +30,7 @@ export function ServiceModeFields() {
     return (
         <div className="flex flex-col gap-6 px-2">
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Service Mode"
@@ -55,6 +56,7 @@ export function ServiceModeFields() {
 
             {mode === EServiceMode.Replicated && (
                 <InfoBlock
+                    titleWidth={220}
                     title={
                         <LabelWithInfo
                             label="Replicas"
@@ -77,6 +79,7 @@ export function ServiceModeFields() {
             {mode === EServiceMode.ReplicatedJob && (
                 <>
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Max Concurrent"
@@ -96,6 +99,7 @@ export function ServiceModeFields() {
                     </InfoBlock>
 
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Total Completions"

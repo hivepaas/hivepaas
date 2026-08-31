@@ -120,7 +120,10 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
 
     return (
         <>
-            <InfoBlock title="Dockerfile Source">
+            <InfoBlock
+                titleWidth={220}
+                title="Dockerfile Source"
+            >
                 <Tabs
                     value={
                         sourceField.value === EDockerfileSource.Auto ? EDockerfileSource.Auto : EDockerfileSource.Manual
@@ -150,7 +153,10 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
                 </Tabs>
             </InfoBlock>
 
-            <InfoBlock title="Dockerfile Path">
+            <InfoBlock
+                titleWidth={220}
+                title="Dockerfile Path"
+            >
                 <Input
                     {...dockerfilePath}
                     value={dockerfilePath.value ?? ""}
@@ -164,7 +170,10 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
             </InfoBlock>
 
             {isManualSource && (
-                <InfoBlock title="Dockerfile Content">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Dockerfile Content"
+                >
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
                         <Textarea
                             {...dockerfileContent}
@@ -216,7 +225,10 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
             )}
 
             {isAutoSource && (
-                <InfoBlock title="Dockerfile Gen Scan Path">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Dockerfile Gen Scan Path"
+                >
                     <Input
                         {...dockerfileScanPath}
                         value={dockerfileScanPath.value ?? ""}
@@ -230,7 +242,10 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
                 </InfoBlock>
             )}
 
-            <InfoBlock title="Registry Credentials">
+            <InfoBlock
+                titleWidth={220}
+                title="Registry Credentials"
+            >
                 <p className="text-sm">
                     Need to add private registries for this building?{" "}
                     <AppLink.Basic
@@ -252,7 +267,10 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
 
             <PushToRegistrySelect readOnly={readOnly} />
 
-            <InfoBlock title="Image Repository Name">
+            <InfoBlock
+                titleWidth={220}
+                title="Image Repository Name"
+            >
                 <Input
                     {...imageName}
                     value={imageName.value ?? ""}

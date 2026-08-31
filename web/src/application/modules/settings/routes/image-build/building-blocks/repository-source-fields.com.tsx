@@ -21,6 +21,7 @@ export function RepositorySourceFields({ cacheNote }: RepositorySourceFieldsProp
             {cacheNote}
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Source Cache"

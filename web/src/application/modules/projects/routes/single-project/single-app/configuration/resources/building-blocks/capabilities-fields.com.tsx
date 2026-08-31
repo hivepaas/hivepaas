@@ -41,6 +41,7 @@ export function CapabilitiesFields() {
             <UlimitsFields />
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Capabilities Add"
@@ -59,6 +60,7 @@ export function CapabilitiesFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Capabilities Drop"
@@ -76,7 +78,10 @@ export function CapabilitiesFields() {
                 />
             </InfoBlock>
 
-            <InfoBlock title="Enable GPU">
+            <InfoBlock
+                titleWidth={220}
+                title="Enable GPU"
+            >
                 <div className="flex items-center gap-2">
                     <Checkbox
                         checked={enableGPUField.value}
@@ -99,6 +104,7 @@ export function CapabilitiesFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Out-of-Mem Score Adjustment"
@@ -116,6 +122,7 @@ export function CapabilitiesFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Sysctls"

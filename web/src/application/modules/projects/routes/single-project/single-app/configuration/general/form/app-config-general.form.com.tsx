@@ -218,7 +218,10 @@ export function AppConfigGeneralForm({
                         className="contents"
                     >
                         {/* Photo */}
-                        <InfoBlock title="Photo">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Photo"
+                        >
                             <div className="flex items-center gap-4">
                                 <div className="relative size-24 rounded-2xl border">
                                     <Avatar
@@ -258,7 +261,10 @@ export function AppConfigGeneralForm({
                         </InfoBlock>
 
                         {parentAppName && (
-                            <InfoBlock title="Parent App">
+                            <InfoBlock
+                                titleWidth={220}
+                                title="Parent App"
+                            >
                                 <Input
                                     value={parentAppName}
                                     type="text"
@@ -270,7 +276,10 @@ export function AppConfigGeneralForm({
                         )}
 
                         {/* ID - Read Only */}
-                        <InfoBlock title="ID">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="ID"
+                        >
                             <Input
                                 value={defaultValues.id}
                                 type="text"
@@ -281,7 +290,10 @@ export function AppConfigGeneralForm({
                         </InfoBlock>
 
                         {/* Name */}
-                        <InfoBlock title="Name">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Name"
+                        >
                             <Input
                                 {...name}
                                 value={name.value}
@@ -295,7 +307,10 @@ export function AppConfigGeneralForm({
                         </InfoBlock>
 
                         {/* Key - Read Only */}
-                        <InfoBlock title="Key">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Key"
+                        >
                             <Input
                                 value={defaultValues.key}
                                 type="text"
@@ -306,12 +321,18 @@ export function AppConfigGeneralForm({
                         </InfoBlock>
 
                         {/* Status - Show Label */}
-                        <InfoBlock title="Status">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Status"
+                        >
                             <ProjectAppStatusBadge status={defaultValues.status} />
                         </InfoBlock>
 
                         {/* Environment - Read Only */}
-                        <InfoBlock title="Environment">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Environment"
+                        >
                             <ProjectEnvBadge
                                 name={defaultValues.env}
                                 color={selectedEnv?.color}
@@ -319,7 +340,10 @@ export function AppConfigGeneralForm({
                         </InfoBlock>
 
                         {/* Tags */}
-                        <InfoBlock title="Tags">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Tags"
+                        >
                             <div className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
                                 <TagInput
                                     tags={tags}
@@ -333,7 +357,10 @@ export function AppConfigGeneralForm({
                         </InfoBlock>
 
                         {/* Notes */}
-                        <InfoBlock title="Notes">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Notes"
+                        >
                             <Textarea
                                 {...note}
                                 value={note.value}

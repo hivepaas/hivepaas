@@ -278,7 +278,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-3 pb-3 ml-3">
                     <InfoBlock
                         title="Enabled"
-                        titleWidth={120}
+                        titleWidth={220}
                     >
                         <Checkbox
                             checked={enabled.value === true}
@@ -302,7 +302,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                                         isRequired
                                     />
                                 }
-                                titleWidth={120}
+                                titleWidth={220}
                             >
                                 <Field>
                                     <Input
@@ -320,7 +320,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
 
                             <InfoBlock
                                 title="Arg Separator"
-                                titleWidth={120}
+                                titleWidth={220}
                             >
                                 <Select
                                     value={separator.value}
@@ -346,7 +346,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                             </InfoBlock>
 
                             <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start">
-                                <div className="w-full sm:w-[120px] shrink-0 flex items-center pt-0.5">
+                                <div className="w-full sm:w-[220px] shrink-0 flex items-center pt-0.5">
                                     <ArgViewModeSwitch
                                         value={viewMode}
                                         onChange={handleViewModeChange}
@@ -400,7 +400,7 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                             <div
                                 className={cn(
                                     dashedBorderBox,
-                                    "text-xs sm:text-sm ml-0 sm:ml-[136px] min-h-7 h-auto py-1.5 px-3 leading-normal",
+                                    "text-xs sm:text-sm ml-0 sm:ml-[236px] min-h-7 h-auto py-1.5 px-3 leading-normal",
                                 )}
                             >
                                 <div className="break-all">

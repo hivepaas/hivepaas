@@ -201,6 +201,7 @@ export function DomainSelector({ activeDomainIndex, setActiveDomainIndex, readOn
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label="Domains"

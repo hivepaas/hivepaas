@@ -89,6 +89,7 @@ export function UlimitsFields() {
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label="Ulimits"

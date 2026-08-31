@@ -75,6 +75,7 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
     return (
         <>
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="SSL Certificate"

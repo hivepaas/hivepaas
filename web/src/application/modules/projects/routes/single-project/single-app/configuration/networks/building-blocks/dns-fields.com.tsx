@@ -31,6 +31,7 @@ export function DNSFields({ readOnly = false }: Props) {
                 ] as const
             ).map(({ listName, label, placeholder, content }) => (
                 <InfoBlock
+                    titleWidth={220}
                     key={listName}
                     title={
                         <LabelWithInfo

@@ -110,7 +110,10 @@ export function CompressionConfigSection({
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {
@@ -125,7 +128,10 @@ export function CompressionConfigSection({
                     </InfoBlock>
                     {isEnabled && (
                         <>
-                            <InfoBlock title="Default Encoding">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Default Encoding"
+                            >
                                 <Select
                                     value={defaultEncoding.value}
                                     onValueChange={value => {
@@ -152,7 +158,10 @@ export function CompressionConfigSection({
                                 <FieldError errors={[defaultEncodingError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Included Content Types">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Included Content Types"
+                            >
                                 <Textarea
                                     {...includedContentTypes}
                                     value={includedContentTypes.value}
@@ -165,7 +174,10 @@ export function CompressionConfigSection({
                                 />
                                 <FieldError errors={[includedContentTypesError]} />
                             </InfoBlock>
-                            <InfoBlock title="Excluded Content Types">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Excluded Content Types"
+                            >
                                 <Textarea
                                     {...excludedContentTypes}
                                     value={excludedContentTypes.value}
@@ -179,7 +191,10 @@ export function CompressionConfigSection({
                                 <FieldError errors={[excludedContentTypesError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Min Response Body Size">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Min Response Body Size"
+                            >
                                 <Input
                                     value={minResponseBody.value}
                                     onChange={minResponseBody.onChange}

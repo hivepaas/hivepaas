@@ -64,7 +64,10 @@ export function RateLimitConfigSection({ prefix, readOnly = false }: RateLimitCo
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {
@@ -79,7 +82,10 @@ export function RateLimitConfigSection({ prefix, readOnly = false }: RateLimitCo
                     </InfoBlock>
                     {isEnabled && (
                         <>
-                            <InfoBlock title="Average">
+                            <InfoBlock
+                                titleWidth={220}
+                                title="Average"
+                            >
                                 <InputNumber
                                     value={average.value}
                                     onValueChange={average.onChange}
@@ -92,7 +98,10 @@ export function RateLimitConfigSection({ prefix, readOnly = false }: RateLimitCo
                                 <FieldError errors={[averageError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Burst">
+                            <InfoBlock
+                                titleWidth={220}
+                                title="Burst"
+                            >
                                 <InputNumber
                                     value={burst.value}
                                     onValueChange={burst.onChange}
@@ -105,7 +114,10 @@ export function RateLimitConfigSection({ prefix, readOnly = false }: RateLimitCo
                                 <FieldError errors={[burstError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Period">
+                            <InfoBlock
+                                titleWidth={220}
+                                title="Period"
+                            >
                                 <Input
                                     value={period.value}
                                     onChange={period.onChange}
@@ -117,7 +129,10 @@ export function RateLimitConfigSection({ prefix, readOnly = false }: RateLimitCo
                                 <FieldError errors={[periodError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Max InFlight Requests">
+                            <InfoBlock
+                                titleWidth={220}
+                                title="Max InFlight Requests"
+                            >
                                 <InputNumber
                                     value={maxInFlightReq.value}
                                     onValueChange={maxInFlightReq.onChange}

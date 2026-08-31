@@ -7,6 +7,7 @@ export function LabelsFields() {
     return (
         <div className="flex flex-col gap-6">
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Service Labels"
@@ -23,6 +24,7 @@ export function LabelsFields() {
                 />
             </InfoBlock>
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Container Labels"

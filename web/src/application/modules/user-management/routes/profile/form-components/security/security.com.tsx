@@ -46,7 +46,10 @@ export function Security({ defaultValues }: Props) {
     return (
         <>
             <Separator className="opacity-50" />
-            <InfoBlock title="Security">
+            <InfoBlock
+                titleWidth={220}
+                title="Security"
+            >
                 <div className="flex flex-col gap-4">
                     {/* Password Set Row */}
                     <div className="flex items-center flex-wrap gap-4">

@@ -106,7 +106,10 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {
@@ -121,7 +124,10 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                     </InfoBlock>
                     {isEnabled && (
                         <>
-                            <InfoBlock title="Auto Detect Content Type">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Auto Detect Content Type"
+                            >
                                 <Checkbox
                                     checked={Boolean(autoContentType.value)}
                                     onCheckedChange={value => {
@@ -135,6 +141,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                 />
                             </InfoBlock>
                             <InfoBlock
+                                titleWidth={240}
                                 title={
                                     <LabelWithInfo
                                         label="To Add To Requests"
@@ -150,6 +157,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                 />
                             </InfoBlock>
                             <InfoBlock
+                                titleWidth={240}
                                 title={
                                     <LabelWithInfo
                                         label="To Remove From Requests"
@@ -166,6 +174,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                 />
                             </InfoBlock>
                             <InfoBlock
+                                titleWidth={240}
                                 title={
                                     <LabelWithInfo
                                         label="To Add To Responses"
@@ -181,6 +190,7 @@ export function HeaderConfigSection({ prefix, autoExpandToken, readOnly = false,
                                 />
                             </InfoBlock>
                             <InfoBlock
+                                titleWidth={240}
                                 title={
                                     <LabelWithInfo
                                         label="To Remove From Responses"

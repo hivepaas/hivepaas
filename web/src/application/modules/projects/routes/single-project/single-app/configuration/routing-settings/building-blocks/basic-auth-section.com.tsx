@@ -116,7 +116,10 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {
@@ -130,7 +133,10 @@ export function BasicAuthSection({ prefix, readOnly = false, onRemove }: BasicAu
                         />
                     </InfoBlock>
                     {isEnabled && (
-                        <InfoBlock title="Basic Auth">
+                        <InfoBlock
+                            titleWidth={240}
+                            title="Basic Auth"
+                        >
                             <Field className="">
                                 <Combobox
                                     options={comboboxOptions}

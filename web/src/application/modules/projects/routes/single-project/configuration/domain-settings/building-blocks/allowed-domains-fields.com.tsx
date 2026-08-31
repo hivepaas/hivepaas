@@ -11,6 +11,7 @@ export function AllowedDomainsFields({ readOnly = false }: Props) {
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label="Allowed Domains"

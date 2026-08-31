@@ -79,7 +79,7 @@ export function CommandTemplateSelectField({
 
     return (
         <InfoBlock
-            titleWidth={150}
+            titleWidth={220}
             title={<LabelWithInfo label={label} />}
         >
             <Field>

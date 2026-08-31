@@ -132,7 +132,7 @@ export function CommandConfigSection({
 
                     <InfoBlock
                         title="Type"
-                        titleWidth={150}
+                        titleWidth={220}
                     >
                         <Tabs
                             value={commandMode.value as string}
@@ -162,7 +162,7 @@ export function CommandConfigSection({
                                 isRequired
                             />
                         }
-                        titleWidth={150}
+                        titleWidth={220}
                     >
                         {commandMode.value === COMMAND_MODE.Script ? (
                             <Field>
@@ -193,7 +193,7 @@ export function CommandConfigSection({
 
                     <InfoBlock
                         title="Working Dir"
-                        titleWidth={150}
+                        titleWidth={220}
                     >
                         <Field>
                             <Input
@@ -212,7 +212,7 @@ export function CommandConfigSection({
 
                     <InfoBlock
                         title="Terminal"
-                        titleWidth={150}
+                        titleWidth={220}
                     >
                         <div className="flex w-full max-w-[430px] flex-wrap items-start gap-x-4 gap-y-3">
                             <div className="flex h-9 items-center gap-3 text-sm font-medium">
@@ -315,7 +315,7 @@ export function CommandConfigSection({
 
                     <InfoBlock
                         title={envLabel}
-                        titleWidth={150}
+                        titleWidth={220}
                     >
                         <FieldGroup>
                             <KeyValueList
@@ -335,7 +335,7 @@ export function CommandConfigSection({
                     {showArgGroups && (
                         <InfoBlock
                             title="Arg Groups"
-                            titleWidth={150}
+                            titleWidth={220}
                         >
                             <CommandArgGroupsSection
                                 readOnly={readOnly}

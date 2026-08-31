@@ -79,7 +79,10 @@ export function WebsocketConfigSection({
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-3 pb-3 ml-3">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {

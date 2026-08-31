@@ -33,7 +33,10 @@ export function DomainGeneralFields({ domainIndex, readOnly = false }: DomainGen
 
     return (
         <div className="flex flex-col gap-6">
-            <InfoBlock title="Protocol">
+            <InfoBlock
+                titleWidth={240}
+                title="Protocol"
+            >
                 <Tabs
                     value={currentProtocol}
                     onValueChange={value => {
@@ -86,7 +89,10 @@ export function DomainGeneralFields({ domainIndex, readOnly = false }: DomainGen
                         readOnly={readOnly}
                     />
 
-                    <InfoBlock title="TLS Passthrough">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="TLS Passthrough"
+                    >
                         <Checkbox
                             checked={tlsPassthrough.value}
                             onCheckedChange={value => {
@@ -100,7 +106,10 @@ export function DomainGeneralFields({ domainIndex, readOnly = false }: DomainGen
                     </InfoBlock>
 
                     {isHttp && (
-                        <InfoBlock title="Force HTTPS">
+                        <InfoBlock
+                            titleWidth={240}
+                            title="Force HTTPS"
+                        >
                             <Checkbox
                                 checked={forceHttps.value}
                                 onCheckedChange={value => {

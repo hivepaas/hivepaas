@@ -79,7 +79,7 @@ function MappingRow({
 }) {
     return (
         <InfoBlock
-            // titleWidth={200}
+            titleWidth={220}
             title={<LabelWithInfo label={label} />}
         >
             <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1.25fr)] items-start gap-3">
@@ -103,7 +103,10 @@ function SectionEnabledField({ name }: { name: FieldPath<SchemaInput> }) {
     const { field } = useController({ control, name });
 
     return (
-        <InfoBlock title="Enabled">
+        <InfoBlock
+            titleWidth={220}
+            title="Enabled"
+        >
             <Checkbox
                 checked={field.value === true}
                 onCheckedChange={value => {
@@ -119,7 +122,10 @@ function BooleanFlagField({ name, label }: { name: FieldPath<SchemaInput>; label
     const { field } = useController({ control, name });
 
     return (
-        <InfoBlock title={label}>
+        <InfoBlock
+            titleWidth={220}
+            title={label}
+        >
             <Checkbox
                 checked={field.value === true}
                 onCheckedChange={value => {
@@ -154,7 +160,10 @@ function TargetEnvSelect({
     const selectedEnv = targetEnv ? envOptions.find(env => env.name === targetEnv) : null;
 
     return (
-        <InfoBlock title="Target Environment">
+        <InfoBlock
+            titleWidth={220}
+            title="Target Environment"
+        >
             <Select
                 value={targetEnv}
                 disabled={readOnly || envOptions.length === 0}
@@ -199,7 +208,10 @@ function TargetStatusSelect({ readOnly, error }: { readOnly: boolean; error?: Ho
     const { field } = useController({ control, name: "targetStatus" });
 
     return (
-        <InfoBlock title="Target Status">
+        <InfoBlock
+            titleWidth={220}
+            title="Target Status"
+        >
             <Select
                 value={field.value}
                 disabled={readOnly}
@@ -427,7 +439,10 @@ function CommandPipesSection({ projectId, env, readOnly }: { projectId: string; 
 
     return (
         <>
-            <InfoBlock title="Enabled">
+            <InfoBlock
+                titleWidth={220}
+                title="Enabled"
+            >
                 <Checkbox
                     checked={enabledField.value}
                     disabled={readOnly}
@@ -457,6 +472,7 @@ function CommandPipesSection({ projectId, env, readOnly }: { projectId: string; 
                     </div>
 
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Command Pipes"
@@ -652,7 +668,10 @@ export function AppCloneSettingsForm({
                     >
                         <ContentBlock label="General">
                             <div className="flex flex-col gap-6">
-                                <InfoBlock title="Target Name">
+                                <InfoBlock
+                                    titleWidth={220}
+                                    title="Target Name"
+                                >
                                     <Input
                                         {...methods.register("targetName")}
                                         className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
@@ -701,7 +720,10 @@ export function AppCloneSettingsForm({
                             <div className="flex flex-col gap-6">
                                 <SectionEnabledField name="cloneDeploymentSettings" />
                                 <ConditionalSection enabled={cloneDeploymentSettings}>
-                                    <InfoBlock title="Target Replicas">
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title="Target Replicas"
+                                    >
                                         <div className="flex flex-wrap items-center gap-3">
                                             <Input
                                                 type="number"

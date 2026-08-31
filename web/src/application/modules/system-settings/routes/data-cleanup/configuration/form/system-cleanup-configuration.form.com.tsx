@@ -43,7 +43,10 @@ function EnabledField() {
     const { field: status } = useController({ control, name: "status" });
 
     return (
-        <InfoBlock title="Enabled">
+        <InfoBlock
+            titleWidth={220}
+            title="Enabled"
+        >
             <Checkbox
                 checked={status.value === ESettingStatus.Active}
                 onCheckedChange={checked => {
@@ -83,7 +86,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                     </span>
                 </div>
 
-                <InfoBlock title="Scheduling Mode">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Scheduling Mode"
+                >
                     <Tabs
                         value={scheduleMode.value}
                         onValueChange={scheduleMode.onChange}
@@ -96,7 +102,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                 </InfoBlock>
 
                 {scheduleMode.value === SystemCleanupScheduleMode.Interval && (
-                    <InfoBlock title="Scheduling Interval">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Scheduling Interval"
+                    >
                         <FieldGroup>
                             <Field>
                                 <Input
@@ -112,7 +121,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                 )}
 
                 {scheduleMode.value === SystemCleanupScheduleMode.Cron && (
-                    <InfoBlock title="Cron Expression">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Cron Expression"
+                    >
                         <FieldGroup>
                             <Field>
                                 <Input
@@ -127,7 +139,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                     </InfoBlock>
                 )}
 
-                <InfoBlock title="Schedule From">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Schedule From"
+                >
                     <FieldGroup>
                         <Field>
                             <DateTimePicker
@@ -146,7 +161,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                     </FieldGroup>
                 </InfoBlock>
 
-                <NextRunsField nextRuns={nextRuns} />
+                <NextRunsField
+                    nextRuns={nextRuns}
+                    titleWidth={220}
+                />
             </div>
         </>
     );
@@ -176,7 +194,10 @@ function DBCleanupOptionsFields() {
         <>
             <SectionHeader>DB Cleanup Options</SectionHeader>
             <div className="flex flex-col gap-6 px-3">
-                <InfoBlock title="Enabled">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Enabled"
+                >
                     <Checkbox
                         checked={enabled.value}
                         onCheckedChange={enabled.onChange}
@@ -185,7 +206,10 @@ function DBCleanupOptionsFields() {
 
                 {enabled.value && (
                     <>
-                        <InfoBlock title="Task Object Retention">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Task Object Retention"
+                        >
                             <FieldGroup>
                                 <Field>
                                     <Input
@@ -199,7 +223,10 @@ function DBCleanupOptionsFields() {
                             </FieldGroup>
                         </InfoBlock>
 
-                        <InfoBlock title="Deployment Object Retention">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Deployment Object Retention"
+                        >
                             <FieldGroup>
                                 <Field>
                                     <Input
@@ -213,7 +240,10 @@ function DBCleanupOptionsFields() {
                             </FieldGroup>
                         </InfoBlock>
 
-                        <InfoBlock title="Sys Error Object Retention">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Sys Error Object Retention"
+                        >
                             <FieldGroup>
                                 <Field>
                                     <Input
@@ -227,7 +257,10 @@ function DBCleanupOptionsFields() {
                             </FieldGroup>
                         </InfoBlock>
 
-                        <InfoBlock title="Deleted Object Retention">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Deleted Object Retention"
+                        >
                             <FieldGroup>
                                 <Field>
                                     <Input
@@ -268,7 +301,10 @@ function DockerSwarmCleanupOptionsFields() {
         <>
             <SectionHeader>Docker Swarm Cleanup Options</SectionHeader>
             <div className="flex flex-col gap-6 px-3">
-                <InfoBlock title="Enabled">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Enabled"
+                >
                     <Checkbox
                         checked={enabled.value}
                         onCheckedChange={enabled.onChange}
@@ -277,35 +313,50 @@ function DockerSwarmCleanupOptionsFields() {
 
                 {enabled.value && (
                     <>
-                        <InfoBlock title="Prune Images">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Prune Images"
+                        >
                             <Checkbox
                                 checked={pruneImages.value}
                                 onCheckedChange={pruneImages.onChange}
                             />
                         </InfoBlock>
 
-                        <InfoBlock title="Prune Volumes">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Prune Volumes"
+                        >
                             <Checkbox
                                 checked={pruneVolumes.value}
                                 onCheckedChange={pruneVolumes.onChange}
                             />
                         </InfoBlock>
 
-                        <InfoBlock title="Prune Networks">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Prune Networks"
+                        >
                             <Checkbox
                                 checked={pruneNetworks.value}
                                 onCheckedChange={pruneNetworks.onChange}
                             />
                         </InfoBlock>
 
-                        <InfoBlock title="Prune Containers">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Prune Containers"
+                        >
                             <Checkbox
                                 checked={pruneContainers.value}
                                 onCheckedChange={pruneContainers.onChange}
                             />
                         </InfoBlock>
 
-                        <InfoBlock title="Object Retention">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Object Retention"
+                        >
                             <FieldGroup>
                                 <Field>
                                     <Input
@@ -319,14 +370,20 @@ function DockerSwarmCleanupOptionsFields() {
                             </FieldGroup>
                         </InfoBlock>
 
-                        <InfoBlock title="Prune Build Cache">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Prune Build Cache"
+                        >
                             <Checkbox
                                 checked={pruneBuildCache.value}
                                 onCheckedChange={pruneBuildCache.onChange}
                             />
                         </InfoBlock>
 
-                        <InfoBlock title="Build Cache Retention">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Build Cache Retention"
+                        >
                             <FieldGroup>
                                 <Field>
                                     <Input
@@ -362,7 +419,10 @@ function BackupCleanupOptionsFields() {
         <>
             <SectionHeader>Backup Cleanup Options</SectionHeader>
             <div className="flex flex-col gap-6 px-3">
-                <InfoBlock title="Enabled">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Enabled"
+                >
                     <Checkbox
                         checked={enabled.value}
                         onCheckedChange={enabled.onChange}
@@ -371,7 +431,10 @@ function BackupCleanupOptionsFields() {
 
                 {enabled.value && (
                     <>
-                        <InfoBlock title="Local Backup Retention">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Local Backup Retention"
+                        >
                             <FieldGroup>
                                 <Field>
                                     <Input
@@ -385,7 +448,10 @@ function BackupCleanupOptionsFields() {
                             </FieldGroup>
                         </InfoBlock>
 
-                        <InfoBlock title="Cloud Backup Retention">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Cloud Backup Retention"
+                        >
                             <FieldGroup>
                                 <Field>
                                     <Input
@@ -417,7 +483,10 @@ function CacheCleanupOptionsFields() {
         <>
             <SectionHeader>Cache Cleanup Options</SectionHeader>
             <div className="flex flex-col gap-6 px-3">
-                <InfoBlock title="Enabled">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Enabled"
+                >
                     <Checkbox
                         checked={enabled.value}
                         onCheckedChange={enabled.onChange}
@@ -425,7 +494,10 @@ function CacheCleanupOptionsFields() {
                 </InfoBlock>
 
                 {enabled.value && (
-                    <InfoBlock title="Repo Cache Retention">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Repo Cache Retention"
+                    >
                         <FieldGroup>
                             <Field>
                                 <Input
@@ -452,7 +524,10 @@ function FileCleanupOptionsFields() {
         <>
             <SectionHeader>File Cleanup Options</SectionHeader>
             <div className="flex flex-col gap-6 px-3">
-                <InfoBlock title="Enabled">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Enabled"
+                >
                     <Checkbox
                         checked={enabled.value}
                         onCheckedChange={enabled.onChange}
@@ -480,6 +555,7 @@ function NotificationFields({ readOnly = false }: { readOnly?: boolean }) {
                     sources={sources}
                     manageLink={manageLink}
                     readOnly={readOnly}
+                    titleWidth={220}
                 />
             </div>
         </>

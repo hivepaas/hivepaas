@@ -71,6 +71,7 @@ export function GitSourceFields({ readOnly = false }: Props) {
             <GitRepositoryInput readOnly={readOnly} />
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Branch"
@@ -105,7 +106,10 @@ export function GitSourceFields({ readOnly = false }: Props) {
                 </Field>
             </InfoBlock>
 
-            <InfoBlock title="Commit Hash">
+            <InfoBlock
+                titleWidth={220}
+                title="Commit Hash"
+            >
                 <Input
                     {...commitHash}
                     value={commitHash.value ?? ""}
@@ -118,7 +122,10 @@ export function GitSourceFields({ readOnly = false }: Props) {
                 <FieldError errors={[commitHashError]} />
             </InfoBlock>
 
-            <InfoBlock title="Repository Options">
+            <InfoBlock
+                titleWidth={220}
+                title="Repository Options"
+            >
                 <div className="flex flex-wrap items-center gap-8">
                     <div className="flex items-center gap-3">
                         <Checkbox

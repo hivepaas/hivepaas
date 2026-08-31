@@ -24,6 +24,7 @@ export function AppCloneNotificationFields({ readOnly = false }: Props) {
             sources={sources}
             manageLink={manageLink}
             readOnly={readOnly}
+            titleWidth={220}
         />
     );
 }

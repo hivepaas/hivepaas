@@ -75,6 +75,7 @@ function View({ domainIndex, readOnly = false }: ContainerPortProps) {
     return (
         <>
             <InfoBlock
+                titleWidth={240}
                 title={
                     <LabelWithInfo
                         label="Container Port"

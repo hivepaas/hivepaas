@@ -123,7 +123,10 @@ export function RateLimitConfigSection({
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {
@@ -138,7 +141,10 @@ export function RateLimitConfigSection({
                     </InfoBlock>
                     {isEnabled && (
                         <>
-                            <InfoBlock title="Average">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Average"
+                            >
                                 <InputNumber
                                     value={average.value}
                                     onValueChange={average.onChange}
@@ -151,7 +157,10 @@ export function RateLimitConfigSection({
                                 <FieldError errors={[averageError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Period">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Period"
+                            >
                                 <Input
                                     value={period.value}
                                     onChange={v => {
@@ -165,7 +174,10 @@ export function RateLimitConfigSection({
                                 <FieldError errors={[periodError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Burst">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Burst"
+                            >
                                 <InputNumber
                                     value={burst.value}
                                     onValueChange={burst.onChange}
@@ -178,7 +190,10 @@ export function RateLimitConfigSection({
                                 <FieldError errors={[burstError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Max In-Flight Requests">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Max In-Flight Requests"
+                            >
                                 <InputNumber
                                     value={maxInFlightReq.value}
                                     onValueChange={maxInFlightReq.onChange}

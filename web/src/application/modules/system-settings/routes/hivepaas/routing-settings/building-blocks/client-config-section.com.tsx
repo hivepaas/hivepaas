@@ -40,7 +40,10 @@ export function ClientConfigSection({ prefix, readOnly = false }: ClientConfigSe
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {
@@ -54,7 +57,10 @@ export function ClientConfigSection({ prefix, readOnly = false }: ClientConfigSe
                         />
                     </InfoBlock>
                     {isEnabled && (
-                        <InfoBlock title="Allowed IPs">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Allowed IPs"
+                        >
                             <div className={`flex flex-col gap-2 ${HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}`}>
                                 <Textarea
                                     {...allowedIPs}

@@ -112,7 +112,10 @@ export function CircuitBreakerConfigSection({
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {
@@ -127,7 +130,10 @@ export function CircuitBreakerConfigSection({
                     </InfoBlock>
                     {isEnabled && (
                         <>
-                            <InfoBlock title="Expression">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Expression"
+                            >
                                 <Input
                                     value={expression.value}
                                     onChange={v => {
@@ -141,7 +147,10 @@ export function CircuitBreakerConfigSection({
                                 <FieldError errors={[expressionError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Check Period">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Check Period"
+                            >
                                 <Input
                                     value={checkPeriod.value}
                                     onChange={v => {
@@ -155,7 +164,10 @@ export function CircuitBreakerConfigSection({
                                 <FieldError errors={[checkPeriodError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Fallback Duration">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Fallback Duration"
+                            >
                                 <Input
                                     value={fallbackDuration.value}
                                     onChange={v => {
@@ -169,7 +181,10 @@ export function CircuitBreakerConfigSection({
                                 <FieldError errors={[fallbackDurationError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Recovery Duration">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Recovery Duration"
+                            >
                                 <Input
                                     value={recoveryDuration.value}
                                     onChange={v => {
@@ -183,7 +198,10 @@ export function CircuitBreakerConfigSection({
                                 <FieldError errors={[recoveryDurationError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Response Code">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Response Code"
+                            >
                                 <InputNumber
                                     value={responseCode.value}
                                     onValueChange={responseCode.onChange}

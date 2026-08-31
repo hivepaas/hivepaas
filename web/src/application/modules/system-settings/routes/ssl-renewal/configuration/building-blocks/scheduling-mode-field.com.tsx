@@ -18,7 +18,10 @@ export function SchedulingModeField() {
     const { field: scheduleMode } = useController({ control, name: "scheduleMode" });
 
     return (
-        <InfoBlock title="Scheduling Mode">
+        <InfoBlock
+            titleWidth={220}
+            title="Scheduling Mode"
+        >
             <Tabs
                 value={scheduleMode.value}
                 onValueChange={scheduleMode.onChange}

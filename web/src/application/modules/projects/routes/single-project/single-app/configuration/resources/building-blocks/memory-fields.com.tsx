@@ -20,6 +20,7 @@ export function MemoryFields() {
     return (
         <div className="flex flex-col gap-6">
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Swap Memory"
@@ -36,6 +37,7 @@ export function MemoryFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Swappiness"
@@ -55,6 +57,7 @@ export function MemoryFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Shm Size"

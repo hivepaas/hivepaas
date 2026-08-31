@@ -103,7 +103,7 @@ export function UpdateVolumeStatusForm({
                         <Field>
                             <InfoBlock
                                 title="Status"
-                                titleWidth={160}
+                                titleWidth={220}
                             >
                                 <Tabs
                                     value={status.value}
@@ -128,7 +128,7 @@ export function UpdateVolumeStatusForm({
                         <Field>
                             <InfoBlock
                                 title="Access expiration"
-                                titleWidth={160}
+                                titleWidth={220}
                             >
                                 <DateTimePicker
                                     value={expireAt.value ?? undefined}
@@ -148,7 +148,7 @@ export function UpdateVolumeStatusForm({
                             <Field>
                                 <InfoBlock
                                     title={<LabelWithInfo label="Available in Projects" />}
-                                    titleWidth={160}
+                                    titleWidth={220}
                                 >
                                     <Checkbox
                                         checked={inheritable.value}
@@ -163,7 +163,7 @@ export function UpdateVolumeStatusForm({
                         <Field>
                             <InfoBlock
                                 title={<LabelWithInfo label="Default" />}
-                                titleWidth={160}
+                                titleWidth={220}
                             >
                                 <Checkbox
                                     checked={defaultField.value}

@@ -116,7 +116,10 @@ export function BuildWorkerFields({ readOnly = false }: { readOnly?: boolean }) 
 
     return (
         <div className="flex flex-col gap-6">
-            <InfoBlock title="Build Node IDs">
+            <InfoBlock
+                titleWidth={220}
+                title="Build Node IDs"
+            >
                 <div className="flex flex-col gap-2">
                     <div className="flex gap-2">
                         <ComboboxWithAddon<NodeOption>
@@ -184,7 +187,10 @@ export function BuildWorkerFields({ readOnly = false }: { readOnly?: boolean }) 
                 </div>
             </InfoBlock>
 
-            <InfoBlock title="Build Node Labels">
+            <InfoBlock
+                titleWidth={220}
+                title="Build Node Labels"
+            >
                 <div className="flex flex-col gap-2">
                     <div className="flex gap-2">
                         <InputWithAddOn
@@ -253,6 +259,7 @@ export function BuildWorkerFields({ readOnly = false }: { readOnly?: boolean }) 
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Max Parallelism"

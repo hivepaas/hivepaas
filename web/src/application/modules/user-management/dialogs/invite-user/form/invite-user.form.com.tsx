@@ -84,7 +84,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                         >
                             {/* Email */}
                             <InfoBlock
-                                titleWidth={150}
+                                titleWidth={220}
                                 title="Email"
                             >
                                 <FieldGroup>
@@ -104,7 +104,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
 
                             {/* Role */}
                             <InfoBlock
-                                titleWidth={150}
+                                titleWidth={220}
                                 title="Role"
                             >
                                 <UserInput.Role<InviteUserFormInput>
@@ -115,7 +115,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
 
                             {/* Access Expiration */}
                             <InfoBlock
-                                titleWidth={150}
+                                titleWidth={220}
                                 title="Access Expiration"
                             >
                                 <UserInput.AccessExpiration<InviteUserFormInput>
@@ -127,7 +127,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
 
                             {/* Security Option */}
                             <InfoBlock
-                                titleWidth={150}
+                                titleWidth={220}
                                 title="Security Option"
                             >
                                 <UserInput.SecurityOption<InviteUserFormInput>
@@ -144,7 +144,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                                         content="Project access description"
                                     />
                                 }
-                                titleWidth={150}
+                                titleWidth={220}
                             >
                                 <UserInput.ProjectAccess<InviteUserFormInput>
                                     name="projectAccesses"
@@ -161,7 +161,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                                         content="Module access description"
                                     />
                                 }
-                                titleWidth={150}
+                                titleWidth={220}
                             >
                                 <UserInput.ModuleAccess<InviteUserFormInput>
                                     name="moduleAccesses"

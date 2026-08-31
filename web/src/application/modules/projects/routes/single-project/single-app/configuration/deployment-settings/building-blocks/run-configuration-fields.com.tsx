@@ -38,7 +38,10 @@ export function RunConfigurationFields() {
 
     return (
         <>
-            <InfoBlock title="Command">
+            <InfoBlock
+                titleWidth={220}
+                title="Command"
+            >
                 <Input
                     {...command}
                     value={command.value ?? ""}
@@ -49,7 +52,10 @@ export function RunConfigurationFields() {
                 <FieldError errors={[commandError]} />
             </InfoBlock>
 
-            <InfoBlock title="Working Directory">
+            <InfoBlock
+                titleWidth={220}
+                title="Working Directory"
+            >
                 <Input
                     {...workingDir}
                     value={workingDir.value ?? ""}
@@ -60,7 +66,10 @@ export function RunConfigurationFields() {
                 <FieldError errors={[workingDirError]} />
             </InfoBlock>
 
-            <InfoBlock title="Pre-deployment Command">
+            <InfoBlock
+                titleWidth={220}
+                title="Pre-deployment Command"
+            >
                 <Input
                     {...preDeploymentCommand}
                     value={preDeploymentCommand.value ?? ""}
@@ -71,7 +80,10 @@ export function RunConfigurationFields() {
                 <FieldError errors={[preDeploymentCommandError]} />
             </InfoBlock>
 
-            <InfoBlock title="Post-deployment Command">
+            <InfoBlock
+                titleWidth={220}
+                title="Post-deployment Command"
+            >
                 <Input
                     {...postDeploymentCommand}
                     value={postDeploymentCommand.value ?? ""}

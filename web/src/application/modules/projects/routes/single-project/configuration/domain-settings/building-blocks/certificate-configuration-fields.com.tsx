@@ -83,6 +83,7 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
     return (
         <div className="flex flex-col gap-6">
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Default Cert Type"
@@ -114,6 +115,7 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Default Registration Email"
@@ -135,6 +137,7 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Default Key Type"

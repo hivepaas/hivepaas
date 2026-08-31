@@ -18,6 +18,7 @@ export function AppPlacementFields() {
     return (
         <div className="flex flex-col gap-6">
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Exclude Manager Nodes"
@@ -34,6 +35,7 @@ export function AppPlacementFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Exclude Build Nodes"

@@ -23,7 +23,10 @@ export function GeneralFields({ nextRuns }: Props) {
 
                 <SchedulingModeField />
                 <ScheduleFields />
-                <NextRunsField nextRuns={nextRuns} />
+                <NextRunsField
+                    nextRuns={nextRuns}
+                    titleWidth={220}
+                />
             </div>
         </>
     );

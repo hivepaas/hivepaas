@@ -6,6 +6,7 @@ import { type AppConfigNetworksFormSchemaInput } from "../schemas";
 export function HostsFileEntriesFields({ readOnly = false }: Props) {
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label="Hosts file entries"

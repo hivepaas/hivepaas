@@ -35,7 +35,7 @@ import {
     mapProjectCommandTemplateToFormInput,
 } from "./project-command-template.form-mappers";
 
-const INFO_BLOCK_TITLE_WIDTH = 150;
+const INFO_BLOCK_TITLE_WIDTH = 220;
 
 const COMMAND_TEMPLATE_KIND_OPTIONS = Object.values(ECommandTemplateKind);
 

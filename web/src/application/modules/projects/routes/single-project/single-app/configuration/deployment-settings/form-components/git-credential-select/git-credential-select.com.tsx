@@ -105,7 +105,10 @@ export function GitCredentialSelect({ readOnly = false }: Props) {
     };
 
     return (
-        <InfoBlock title="Git Credentials">
+        <InfoBlock
+            titleWidth={220}
+            title="Git Credentials"
+        >
             <FieldGroup>
                 <Field>
                     <Combobox

@@ -87,6 +87,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
     return (
         <>
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Resolution Mode"
@@ -133,6 +134,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
             </div>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Port Config"

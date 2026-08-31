@@ -203,7 +203,10 @@ export function PathRewriteConfigSection({
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {
@@ -218,7 +221,10 @@ export function PathRewriteConfigSection({
                     </InfoBlock>
                     {isEnabled && (
                         <>
-                            <InfoBlock title="Path Rewrite Mode">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Path Rewrite Mode"
+                            >
                                 <Tabs
                                     value={mode}
                                     onValueChange={value => {
@@ -250,7 +256,10 @@ export function PathRewriteConfigSection({
                             </InfoBlock>
 
                             {mode === "addPrefix" && (
-                                <InfoBlock title="Add Prefix">
+                                <InfoBlock
+                                    titleWidth={240}
+                                    title="Add Prefix"
+                                >
                                     <Input
                                         value={prefixAdd.value}
                                         onChange={v => {
@@ -264,7 +273,10 @@ export function PathRewriteConfigSection({
                             )}
 
                             {mode === "stripPrefix" && (
-                                <InfoBlock title="Strip Prefix">
+                                <InfoBlock
+                                    titleWidth={240}
+                                    title="Strip Prefix"
+                                >
                                     <div className="flex flex-wrap items-center gap-4">
                                         <Input
                                             value={prefixStrip.value}
@@ -299,7 +311,10 @@ export function PathRewriteConfigSection({
 
                             {mode === "replace" && (
                                 <>
-                                    <InfoBlock title="Replace Path">
+                                    <InfoBlock
+                                        titleWidth={240}
+                                        title="Replace Path"
+                                    >
                                         <div className="flex flex-wrap items-center gap-4">
                                             <Input
                                                 value={pathReplace.value}
@@ -330,7 +345,10 @@ export function PathRewriteConfigSection({
                                             </label>
                                         </div>
                                     </InfoBlock>
-                                    <InfoBlock title="Replace Path With">
+                                    <InfoBlock
+                                        titleWidth={240}
+                                        title="Replace Path With"
+                                    >
                                         <Input
                                             value={pathReplaceWith.value}
                                             onChange={v => {

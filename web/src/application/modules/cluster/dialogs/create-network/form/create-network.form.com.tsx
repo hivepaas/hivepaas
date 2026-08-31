@@ -89,7 +89,7 @@ export function CreateNetworkForm({
                     >
                         <InfoBlock
                             title="Name"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             <Input
                                 {...name}
@@ -130,7 +130,7 @@ export function CreateNetworkForm({
                         />
                         <InfoBlock
                             title="Labels"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             <KeyValueList<CreateNetworkFormInput>
                                 name="labels"
@@ -145,7 +145,7 @@ export function CreateNetworkForm({
                         </InfoBlock>
                         <InfoBlock
                             title="Options"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             <KeyValueList<CreateNetworkFormInput>
                                 name="options"
@@ -186,7 +186,7 @@ function CheckboxField({ title, checked, onCheckedChange }: CheckboxFieldProps) 
     return (
         <InfoBlock
             title={title}
-            titleWidth={190}
+            titleWidth={220}
         >
             <Checkbox
                 checked={checked}

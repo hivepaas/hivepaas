@@ -136,7 +136,10 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
                     }}
                     className="flex flex-col gap-6"
                 >
-                    <InfoBlock title="Photo">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Photo"
+                    >
                         <div className="relative size-24 rounded-full border">
                             <Avatar
                                 key={photoUrl ?? "no-photo"}
@@ -163,19 +166,28 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
 
                     {/* Role */}
                     <Separator className="opacity-50" />
-                    <InfoBlock title="Role">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Role"
+                    >
                         <UserRoleBadge role={defaultValues.role} />
                     </InfoBlock>
 
                     {/* Joining date */}
                     <Separator className="opacity-50" />
-                    <InfoBlock title={<LabelWithInfo label="Joining Date" />}>
+                    <InfoBlock
+                        titleWidth={220}
+                        title={<LabelWithInfo label="Joining Date" />}
+                    >
                         <span className="text-sm">{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
                     </InfoBlock>
 
                     {/* Access Expiration */}
                     <Separator className="opacity-50" />
-                    <InfoBlock title="Access Expiration">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Access Expiration"
+                    >
                         {defaultValues.accessExpireAt
                             ? format(defaultValues.accessExpireAt, "yyyy-MM-dd HH:mm:ss")
                             : "-"}
@@ -183,7 +195,10 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
 
                     {/* Security Option */}
                     <Separator className="opacity-50" />
-                    <InfoBlock title="Security Option">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Security Option"
+                    >
                         <UserSecurityBadge securityOption={defaultValues.securityOption} />
                     </InfoBlock>
 
@@ -193,6 +208,7 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
                     {/* Project Access */}
                     <Separator className="opacity-50" />
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Project Access"
@@ -210,6 +226,7 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
                     {/* Module Access */}
                     <Separator className="opacity-50" />
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Module Access"

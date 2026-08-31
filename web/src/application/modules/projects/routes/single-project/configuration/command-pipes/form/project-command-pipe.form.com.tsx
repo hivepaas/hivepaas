@@ -114,7 +114,7 @@ export function ProjectCommandPipeForm({
                     >
                         <FieldGroup className="gap-6">
                             <InfoBlock
-                                titleWidth={150}
+                                titleWidth={220}
                                 title={
                                     <LabelWithInfo
                                         label="Name"
@@ -158,7 +158,7 @@ export function ProjectCommandPipeForm({
                             />
 
                             <InfoBlock
-                                titleWidth={150}
+                                titleWidth={220}
                                 title={<LabelWithInfo label="Default" />}
                             >
                                 <Checkbox

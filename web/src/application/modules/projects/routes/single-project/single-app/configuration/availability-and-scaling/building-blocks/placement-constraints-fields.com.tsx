@@ -99,6 +99,7 @@ export function PlacementConstraintsFields() {
     return (
         <div className="flex flex-col gap-6 px-2">
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Placement Constraints"

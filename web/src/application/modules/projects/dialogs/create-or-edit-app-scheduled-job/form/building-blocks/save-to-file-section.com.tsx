@@ -71,7 +71,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
 
     const storageOptions = (storageData?.data ?? []).map(s => ({
         value: { id: s.id, name: s.name } satisfies StorageOption,
-        label: s.name,
+        label: s.kind ? `${s.kind} ${s.name}` : s.name,
     }));
 
     const cloudStoragesRoute = ROUTE.projects.single.providerConfiguration.cloudStorages.$route(projectId);
@@ -81,7 +81,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
             <div className="flex flex-col gap-6">
                 <InfoBlock
                     title={<LabelWithInfo label="File Name" />}
-                    titleWidth={160}
+                    titleWidth={220}
                 >
                     <Field>
                         <Input
@@ -97,7 +97,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
 
                 <InfoBlock
                     title="Compress Data"
-                    titleWidth={160}
+                    titleWidth={220}
                 >
                     <Tabs
                         value={compressionFormat.value}
@@ -119,7 +119,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
 
                 <InfoBlock
                     title="Encrypt Data"
-                    titleWidth={160}
+                    titleWidth={220}
                 >
                     <Tabs
                         value={encryptionFormat.value}
@@ -147,7 +147,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
                                 isRequired
                             />
                         }
-                        titleWidth={160}
+                        titleWidth={220}
                     >
                         <FieldGroup>
                             <Field className="max-w-[400px]">
@@ -168,7 +168,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
 
                 <InfoBlock
                     title="Save File in Cloud Storage"
-                    titleWidth={160}
+                    titleWidth={220}
                 >
                     <FieldGroup>
                         <Field>
@@ -190,6 +190,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
                                 isRefreshing={isStorageRefetching}
                                 aria-invalid={isStorageInvalid}
                                 disabled={readOnly}
+                                splitLabelBadge
                             />
                             <AppLink.Modules
                                 to={cloudStoragesRoute}
@@ -205,7 +206,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
                     <>
                         <InfoBlock
                             title="Bucket"
-                            titleWidth={160}
+                            titleWidth={220}
                         >
                             <Field>
                                 <Input
@@ -219,7 +220,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
 
                         <InfoBlock
                             title="Destination Directory"
-                            titleWidth={160}
+                            titleWidth={220}
                         >
                             <Field>
                                 <Input

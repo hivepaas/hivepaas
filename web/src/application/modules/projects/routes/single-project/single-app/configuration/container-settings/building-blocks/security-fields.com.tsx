@@ -63,6 +63,7 @@ export function SecurityFields() {
     return (
         <div className="flex flex-col gap-6">
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="No New Privileges"
@@ -81,6 +82,7 @@ export function SecurityFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="SE Linux Context"
@@ -103,6 +105,7 @@ export function SecurityFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="SE Linux Context Settings"
@@ -148,6 +151,7 @@ export function SecurityFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Seccomp Mode"
@@ -172,6 +176,7 @@ export function SecurityFields() {
 
             {seccompModeValue === ESeccompMode.Custom && (
                 <InfoBlock
+                    titleWidth={220}
                     title={
                         <LabelWithInfo
                             label="Seccomp Profile"
@@ -191,6 +196,7 @@ export function SecurityFields() {
             )}
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="AppArmor Mode"

@@ -56,6 +56,7 @@ function NumberField({ name, label, content, min, max }: NumberFieldProps) {
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label={label}
@@ -91,6 +92,7 @@ function DurationField({ name, label, content, placeholder }: DurationFieldProps
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label={label}
@@ -122,6 +124,7 @@ function RunWorkerInMainAppField() {
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label="Run Worker in Main App"
@@ -149,6 +152,7 @@ function ProxyProviderField({ readOnly }: { readOnly: boolean }) {
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label="Proxy Provider"
@@ -186,6 +190,7 @@ function TrustedIPsField({ readOnly }: { readOnly: boolean }) {
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label="Trusted IPs"

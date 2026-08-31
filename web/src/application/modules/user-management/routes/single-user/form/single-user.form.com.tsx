@@ -105,19 +105,28 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false,
 
                         {/* Role */}
                         <Separator className="opacity-50" />
-                        <InfoBlock title="Role">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Role"
+                        >
                             <UserInput.Role<SingleUserFormSchemaInput> name="role" />
                         </InfoBlock>
 
                         {/* Joining date */}
                         <Separator className="opacity-50" />
-                        <InfoBlock title={<LabelWithInfo label="Joining Date" />}>
+                        <InfoBlock
+                            titleWidth={220}
+                            title={<LabelWithInfo label="Joining Date" />}
+                        >
                             <span className="text-sm">{format(defaultValues.createdAt, "yyyy-MM-dd HH:mm:ss")}</span>
                         </InfoBlock>
 
                         {/* Access Expiration */}
                         <Separator className="opacity-50" />
-                        <InfoBlock title="Access Expiration">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Access Expiration"
+                        >
                             <UserInput.AccessExpiration<SingleUserFormSchemaInput>
                                 className="md:min-w-[400px] w-fit"
                                 name="accessExpireAt"
@@ -126,13 +135,17 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false,
 
                         {/* Security Option */}
                         <Separator className="opacity-50" />
-                        <InfoBlock title="Security Option">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Security Option"
+                        >
                             <UserInput.SecurityOption<SingleUserFormSchemaInput> name="securityOption" />
                         </InfoBlock>
 
                         {/* Project Access */}
                         <Separator className="opacity-50" />
                         <InfoBlock
+                            titleWidth={220}
                             title={
                                 <LabelWithInfo
                                     label="Project Access"
@@ -149,6 +162,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false,
                         {/* Module Access */}
                         <Separator className="opacity-50" />
                         <InfoBlock
+                            titleWidth={220}
                             title={
                                 <LabelWithInfo
                                     label="Module Access"

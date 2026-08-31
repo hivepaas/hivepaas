@@ -51,7 +51,10 @@ export function Information() {
     });
 
     return (
-        <InfoBlock title="Information">
+        <InfoBlock
+            titleWidth={220}
+            title="Information"
+        >
             <FieldGroup>
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <Field>

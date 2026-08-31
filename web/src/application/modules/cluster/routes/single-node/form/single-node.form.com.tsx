@@ -92,7 +92,10 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                         className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                     >
                         {/* Name */}
-                        <InfoBlock title="Name">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Name"
+                        >
                             <Input
                                 {...name}
                                 value={name.value}
@@ -106,7 +109,10 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                         </InfoBlock>
 
                         {/* Resources */}
-                        <InfoBlock title="Resources">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Resources"
+                        >
                             <span className="text-sm font-normal">
                                 {defaultValues.resources
                                     ? `${defaultValues.resources.cpus} CPU, ${
@@ -117,24 +123,36 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                         </InfoBlock>
 
                         {/* Platform */}
-                        <InfoBlock title="Platform">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Platform"
+                        >
                             <span className="text-sm font-normal">
                                 {defaultValues.platform?.os} {defaultValues.platform?.architecture}
                             </span>
                         </InfoBlock>
 
                         {/* Docker Engine Version */}
-                        <InfoBlock title="Docker Engine Version">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Docker Engine Version"
+                        >
                             <span className="text-sm font-normal">28.0.0</span>
                         </InfoBlock>
 
                         {/* Node State */}
-                        <InfoBlock title="Node State">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Node State"
+                        >
                             <NodeStateBadge state={defaultValues.state} />
                         </InfoBlock>
 
                         {/* Role */}
-                        <InfoBlock title="Role">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Role"
+                        >
                             <NodeRoleBadge
                                 role={defaultValues.role}
                                 isLeader={defaultValues.isLeader}
@@ -144,7 +162,10 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                         <Separator className="opacity-50" />
 
                         {/* Availability */}
-                        <InfoBlock title="Availability">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Availability"
+                        >
                             <Tabs
                                 value={availability.value}
                                 onValueChange={v => {
@@ -179,6 +200,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
 
                         {/* Labels */}
                         <InfoBlock
+                            titleWidth={220}
                             title={
                                 <LabelWithInfo
                                     label="Labels"

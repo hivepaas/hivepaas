@@ -41,6 +41,7 @@ export function RestartPolicyFields() {
     return (
         <div className="flex flex-col gap-6">
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Condition"
@@ -64,6 +65,7 @@ export function RestartPolicyFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Restart Delay"
@@ -82,6 +84,7 @@ export function RestartPolicyFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Restart Max Attempts"
@@ -103,6 +106,7 @@ export function RestartPolicyFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Restart Window"

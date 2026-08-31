@@ -54,7 +54,10 @@ export function DockerRegistryAuth({ readOnly = false }: Props) {
     }, [registryAuths]);
 
     return (
-        <InfoBlock title="Registry Credentials">
+        <InfoBlock
+            titleWidth={220}
+            title="Registry Credentials"
+        >
             <FieldGroup>
                 <Field>
                     <Combobox

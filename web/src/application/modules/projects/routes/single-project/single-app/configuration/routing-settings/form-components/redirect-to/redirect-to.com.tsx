@@ -36,7 +36,10 @@ function View({ domainIndex, readOnly = false }: RedirectToProps) {
     }, [currentDomain, domains]);
 
     return (
-        <InfoBlock title="Redirect To">
+        <InfoBlock
+            titleWidth={240}
+            title="Redirect To"
+        >
             <EditableCombobox
                 options={options}
                 value={domainRedirect.value}

@@ -284,7 +284,10 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                         className="contents"
                     >
                         {/* Photo */}
-                        <InfoBlock title="Photo">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Photo"
+                        >
                             <div className="relative size-24 rounded-2xl border">
                                 <Avatar
                                     key={photoPreviewUrl ?? "no-photo"}
@@ -313,7 +316,10 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                         </InfoBlock>
 
                         {/* ID - Read Only */}
-                        <InfoBlock title="ID">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="ID"
+                        >
                             <Input
                                 value={defaultValues.id}
                                 type="text"
@@ -324,7 +330,10 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                         </InfoBlock>
 
                         {/* Name */}
-                        <InfoBlock title="Name">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Name"
+                        >
                             <Input
                                 {...name}
                                 value={name.value}
@@ -338,7 +347,10 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                         </InfoBlock>
 
                         {/* Key - Read Only */}
-                        <InfoBlock title="Key">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Key"
+                        >
                             <Input
                                 value={defaultValues.key}
                                 type="text"
@@ -349,12 +361,18 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                         </InfoBlock>
 
                         {/* Status - Show Label */}
-                        <InfoBlock title="Status">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Status"
+                        >
                             <ProjectStatusBadge status={defaultValues.status} />
                         </InfoBlock>
 
                         {/* Owner */}
-                        <InfoBlock title="Owner">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Owner"
+                        >
                             <div className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
                                 <Combobox
                                     options={ownerComboboxOptions}
@@ -383,7 +401,10 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                         </InfoBlock>
 
                         {/* Environments */}
-                        <InfoBlock title="Environments">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Environments"
+                        >
                             <div className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
                                 <ProjectEnvInput
                                     envs={envs}
@@ -398,7 +419,10 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                         </InfoBlock>
 
                         {/* Tags */}
-                        <InfoBlock title="Tags">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Tags"
+                        >
                             <div className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
                                 <TagInput
                                     tags={tags}
@@ -412,7 +436,10 @@ export function ProjectGeneralForm({ ref, defaultValues, onSubmit, readOnly = fa
                         </InfoBlock>
 
                         {/* Notes */}
-                        <InfoBlock title="Notes">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Notes"
+                        >
                             <Textarea
                                 {...note}
                                 value={note.value}

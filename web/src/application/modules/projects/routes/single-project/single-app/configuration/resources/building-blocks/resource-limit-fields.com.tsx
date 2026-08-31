@@ -20,6 +20,7 @@ export function ResourceLimitFields() {
     return (
         <div className="flex flex-col gap-6">
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="CPUs"
@@ -41,6 +42,7 @@ export function ResourceLimitFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Memory"
@@ -57,6 +59,7 @@ export function ResourceLimitFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Pids"

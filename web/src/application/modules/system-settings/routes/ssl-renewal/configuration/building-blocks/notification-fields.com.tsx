@@ -23,6 +23,7 @@ export function NotificationFields({ readOnly = false }: Props) {
                     sources={sources}
                     manageLink={manageLink}
                     readOnly={readOnly}
+                    titleWidth={220}
                 />
             </div>
         </>

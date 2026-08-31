@@ -38,6 +38,7 @@ function LogLevelField() {
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label="Log Level"
@@ -68,7 +69,10 @@ function AccessLogField() {
     const { field } = useController({ control, name: "startupCommand.accessLog" });
 
     return (
-        <InfoBlock title="Access Log">
+        <InfoBlock
+            titleWidth={220}
+            title="Access Log"
+        >
             <Checkbox
                 checked={field.value}
                 onCheckedChange={value => {
@@ -84,7 +88,10 @@ function Http3Field() {
     const { field } = useController({ control, name: "startupCommand.http3" });
 
     return (
-        <InfoBlock title="Enable HTTP3">
+        <InfoBlock
+            titleWidth={220}
+            title="Enable HTTP3"
+        >
             <Checkbox
                 checked={field.value}
                 onCheckedChange={value => {
@@ -100,7 +107,10 @@ function FastProxyField() {
     const { field } = useController({ control, name: "startupCommand.fastProxy" });
 
     return (
-        <InfoBlock title="Fast Proxy (experimental)">
+        <InfoBlock
+            titleWidth={220}
+            title="Fast Proxy (experimental)"
+        >
             <Checkbox
                 checked={field.value}
                 onCheckedChange={value => {
@@ -117,6 +127,7 @@ function OpenPortsField() {
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label="Open Ports"
@@ -150,6 +161,7 @@ function ArgsField() {
 
     return (
         <InfoBlock
+            titleWidth={220}
             title={
                 <LabelWithInfo
                     label="Args"

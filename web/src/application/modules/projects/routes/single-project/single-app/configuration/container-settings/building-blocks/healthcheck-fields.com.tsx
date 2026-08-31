@@ -50,7 +50,10 @@ export function HealthcheckFields() {
 
     return (
         <div className="flex flex-col gap-6">
-            <InfoBlock title="Enabled">
+            <InfoBlock
+                titleWidth={220}
+                title="Enabled"
+            >
                 <Checkbox
                     checked={enabled.value}
                     onCheckedChange={v => {
@@ -62,6 +65,7 @@ export function HealthcheckFields() {
             {isEnabled && (
                 <>
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Mode"
@@ -85,6 +89,7 @@ export function HealthcheckFields() {
                     </InfoBlock>
 
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Command"
@@ -103,6 +108,7 @@ export function HealthcheckFields() {
                     </InfoBlock>
 
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Interval"
@@ -121,6 +127,7 @@ export function HealthcheckFields() {
                     </InfoBlock>
 
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Timeout"
@@ -139,6 +146,7 @@ export function HealthcheckFields() {
                     </InfoBlock>
 
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Start Period"
@@ -157,6 +165,7 @@ export function HealthcheckFields() {
                     </InfoBlock>
 
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Start Interval"
@@ -175,6 +184,7 @@ export function HealthcheckFields() {
                     </InfoBlock>
 
                     <InfoBlock
+                        titleWidth={220}
                         title={
                             <LabelWithInfo
                                 label="Retries"

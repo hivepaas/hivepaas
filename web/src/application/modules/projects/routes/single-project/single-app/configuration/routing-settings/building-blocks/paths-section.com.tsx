@@ -106,7 +106,10 @@ function PathRow({
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-3 pb-3 ml-3">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {
@@ -122,6 +125,7 @@ function PathRow({
                     {isEnabled && (
                         <>
                             <InfoBlock
+                                titleWidth={240}
                                 title={
                                     <LabelWithInfo
                                         label="Path"
@@ -140,7 +144,10 @@ function PathRow({
                                 <FieldError errors={[pathError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Match Mode">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Match Mode"
+                            >
                                 <Tabs
                                     value={mode.value}
                                     onValueChange={value => {
@@ -221,6 +228,7 @@ export function PathsSection({ domainIndex, readOnly = false }: PathsSectionProp
     return (
         <>
             <InfoBlock
+                titleWidth={240}
                 title={
                     <LabelWithInfo
                         label="Path"

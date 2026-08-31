@@ -45,7 +45,7 @@ export function PipeToAppSection({ projectId, appId, readOnly = false }: Props) 
                 <div className="flex flex-col gap-6">
                     <InfoBlock
                         title={<LabelWithInfo label="Target Project" />}
-                        titleWidth={160}
+                        titleWidth={220}
                     >
                         <FieldGroup>
                             <Field>
@@ -81,7 +81,7 @@ export function PipeToAppSection({ projectId, appId, readOnly = false }: Props) 
                                 isRequired
                             />
                         }
-                        titleWidth={160}
+                        titleWidth={220}
                     >
                         <FieldGroup>
                             <Field>

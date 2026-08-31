@@ -33,7 +33,10 @@ export function ScheduleFields() {
     return (
         <>
             {scheduleMode.value === SystemSslRenewalScheduleMode.Interval && (
-                <InfoBlock title="Scheduling Interval">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Scheduling Interval"
+                >
                     <FieldGroup>
                         <Field>
                             <Input
@@ -49,7 +52,10 @@ export function ScheduleFields() {
             )}
 
             {scheduleMode.value === SystemSslRenewalScheduleMode.Cron && (
-                <InfoBlock title="Cron Expression">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Cron Expression"
+                >
                     <FieldGroup>
                         <Field>
                             <Input
@@ -64,7 +70,10 @@ export function ScheduleFields() {
                 </InfoBlock>
             )}
 
-            <InfoBlock title="Schedule From">
+            <InfoBlock
+                titleWidth={220}
+                title="Schedule From"
+            >
                 <FieldGroup>
                     <Field>
                         <DateTimePicker

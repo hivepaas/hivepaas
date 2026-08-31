@@ -11,7 +11,7 @@ function View({ title, description, children, titleWidth = 270 }: Props) {
         <div className={cx("info-block")}>
             <div
                 className={cx("info")}
-                style={{ minWidth: titleWidth }}
+                style={{ width: titleWidth, minWidth: titleWidth }}
             >
                 <div className={cx("title")}>{title}</div>
 

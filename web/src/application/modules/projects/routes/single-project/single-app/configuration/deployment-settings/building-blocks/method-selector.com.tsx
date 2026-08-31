@@ -4,7 +4,10 @@ import { EAppDeploymentMethod } from "~/projects/module-shared/enums";
 
 import { InfoBlock } from "@application/shared/components";
 
-import { type AppConfigDeploymentSettingsFormSchemaInput, type AppConfigDeploymentSettingsFormSchemaOutput } from "../schemas";
+import {
+    type AppConfigDeploymentSettingsFormSchemaInput,
+    type AppConfigDeploymentSettingsFormSchemaOutput,
+} from "../schemas";
 
 export function MethodSelector({ readOnly = false }: Props) {
     const { control } = useFormContext<
@@ -16,7 +19,10 @@ export function MethodSelector({ readOnly = false }: Props) {
     const { field } = useController({ control, name: "activeMethod" });
 
     return (
-        <InfoBlock title="Method">
+        <InfoBlock
+            titleWidth={220}
+            title="Method"
+        >
             <Tabs
                 value={field.value}
                 onValueChange={value => {

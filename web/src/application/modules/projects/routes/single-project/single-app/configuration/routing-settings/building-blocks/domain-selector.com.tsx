@@ -236,6 +236,7 @@ export function DomainSelector({
     return (
         <div className="flex flex-col gap-4">
             <InfoBlock
+                titleWidth={240}
                 title={
                     <LabelWithInfo
                         label="Container Port"
@@ -283,6 +284,7 @@ export function DomainSelector({
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={240}
                 title={
                     <LabelWithInfo
                         label="Expose The App To The Internet"
@@ -302,6 +304,7 @@ export function DomainSelector({
 
             {exposePublicly.value && (
                 <InfoBlock
+                    titleWidth={240}
                     title={
                         <LabelWithInfo
                             label="Domains"

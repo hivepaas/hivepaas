@@ -104,7 +104,10 @@ export function ClientConfigSection({ prefix, autoExpandToken, readOnly = false,
             </div>
             <CollapsibleContent>
                 <div className="flex flex-col gap-4 border-l-2 border-accent pl-4 pt-4">
-                    <InfoBlock title="Enabled">
+                    <InfoBlock
+                        titleWidth={240}
+                        title="Enabled"
+                    >
                         <Checkbox
                             checked={isEnabled}
                             onCheckedChange={value => {
@@ -119,7 +122,10 @@ export function ClientConfigSection({ prefix, autoExpandToken, readOnly = false,
                     </InfoBlock>
                     {isEnabled && (
                         <>
-                            <InfoBlock title="Max Request Body Size">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Max Request Body Size"
+                            >
                                 <Input
                                     value={maxRequestBody.value}
                                     onChange={maxRequestBody.onChange}
@@ -130,7 +136,10 @@ export function ClientConfigSection({ prefix, autoExpandToken, readOnly = false,
                                 <FieldError errors={[maxRequestBodyError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Mem Request Body Size">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Mem Request Body Size"
+                            >
                                 <Input
                                     value={memRequestBody.value}
                                     onChange={memRequestBody.onChange}
@@ -141,7 +150,10 @@ export function ClientConfigSection({ prefix, autoExpandToken, readOnly = false,
                                 <FieldError errors={[memRequestBodyError]} />
                             </InfoBlock>
 
-                            <InfoBlock title="Allowed IPs">
+                            <InfoBlock
+                                titleWidth={240}
+                                title="Allowed IPs"
+                            >
                                 <div className={`flex flex-col gap-2 ${HTTP_SETTINGS_TEXT_CONTROL_MAX_WIDTH_CLASS}`}>
                                     <Textarea
                                         {...allowedIPs}

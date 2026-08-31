@@ -34,7 +34,7 @@ export type AppFeatureSettingsFormSchemaInput = z.input<typeof AppFeatureSetting
 export type AppFeatureSettingsFormSchemaOutput = z.output<typeof AppFeatureSettingsFormSchema>;
 
 export const DEFAULT_PREVIEW_CREATION_DELAY = "30s";
-export const FEATURE_SETTINGS_TITLE_WIDTH = 295;
+export const FEATURE_SETTINGS_TITLE_WIDTH = 220;
 
 export const emptyAppFeatureSettingsFormDefaults: AppFeatureSettingsFormSchemaInput = {
     loggingSettings: {

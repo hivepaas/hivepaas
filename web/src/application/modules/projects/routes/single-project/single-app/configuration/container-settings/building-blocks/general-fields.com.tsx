@@ -83,7 +83,10 @@ export function GeneralFields() {
 
     return (
         <div className="flex flex-col gap-6">
-            <InfoBlock title="Image">
+            <InfoBlock
+                titleWidth={220}
+                title="Image"
+            >
                 <Input
                     {...image}
                     value={image.value}
@@ -93,7 +96,10 @@ export function GeneralFields() {
                 />
             </InfoBlock>
 
-            <InfoBlock title="Command">
+            <InfoBlock
+                titleWidth={220}
+                title="Command"
+            >
                 <Input
                     {...command}
                     value={command.value}
@@ -104,7 +110,10 @@ export function GeneralFields() {
                 <FieldError errors={[commandError]} />
             </InfoBlock>
 
-            <InfoBlock title="Working Directory">
+            <InfoBlock
+                titleWidth={220}
+                title="Working Directory"
+            >
                 <Input
                     {...workingDir}
                     value={workingDir.value}
@@ -115,7 +124,10 @@ export function GeneralFields() {
                 <FieldError errors={[workingDirError]} />
             </InfoBlock>
 
-            <InfoBlock title="Hostname">
+            <InfoBlock
+                titleWidth={220}
+                title="Hostname"
+            >
                 <Input
                     {...hostname}
                     value={hostname.value}
@@ -126,7 +138,10 @@ export function GeneralFields() {
                 <FieldError errors={[hostnameError]} />
             </InfoBlock>
 
-            <InfoBlock title="User">
+            <InfoBlock
+                titleWidth={220}
+                title="User"
+            >
                 <Input
                     {...user}
                     value={user.value}
@@ -137,7 +152,10 @@ export function GeneralFields() {
                 <FieldError errors={[userError]} />
             </InfoBlock>
 
-            <InfoBlock title="Groups">
+            <InfoBlock
+                titleWidth={220}
+                title="Groups"
+            >
                 <Input
                     {...groups}
                     value={groups.value}
@@ -149,6 +167,7 @@ export function GeneralFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Docker Init"
@@ -167,6 +186,7 @@ export function GeneralFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Allocate TTY"
@@ -185,6 +205,7 @@ export function GeneralFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Keep Stdin Open"
@@ -203,6 +224,7 @@ export function GeneralFields() {
             </InfoBlock>
 
             <InfoBlock
+                titleWidth={220}
                 title={
                     <LabelWithInfo
                         label="Read-only Root Filesystem"
@@ -220,7 +242,10 @@ export function GeneralFields() {
                 </div>
             </InfoBlock>
 
-            <InfoBlock title="Stop Signal">
+            <InfoBlock
+                titleWidth={220}
+                title="Stop Signal"
+            >
                 <Input
                     {...stopSignal}
                     value={stopSignal.value}
@@ -231,7 +256,10 @@ export function GeneralFields() {
                 <FieldError errors={[stopSignalError]} />
             </InfoBlock>
 
-            <InfoBlock title="Stop Grace Period">
+            <InfoBlock
+                titleWidth={220}
+                title="Stop Grace Period"
+            >
                 <Input
                     {...stopGracePeriod}
                     value={stopGracePeriod.value}

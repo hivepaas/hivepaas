@@ -61,7 +61,10 @@ export function PushToRegistrySelect({ readOnly = false }: Props) {
     }, [registryAuths]);
 
     return (
-        <InfoBlock title="Registry To Push Image To">
+        <InfoBlock
+            titleWidth={220}
+            title="Registry To Push Image To"
+        >
             <Field>
                 <Combobox
                     options={comboboxOptions}

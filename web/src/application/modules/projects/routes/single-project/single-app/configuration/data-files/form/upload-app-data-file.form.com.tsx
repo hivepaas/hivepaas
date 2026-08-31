@@ -40,7 +40,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onC
         () =>
             cloudStorages.map(item => ({
                 value: { id: item.id, name: item.name } satisfies StorageOption,
-                label: item.name,
+                label: item.kind ? `${item.kind} ${item.name}` : item.name,
             })),
         [cloudStorages],
     );
@@ -261,6 +261,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onC
                                         loading={isStorageFetching}
                                         onRefresh={() => void refetchStorage()}
                                         isRefreshing={isStorageRefetching}
+                                        splitLabelBadge
                                     />
                                     <FieldError errors={[localErrors["storage"]]} />
                                     <AppLink.Modules

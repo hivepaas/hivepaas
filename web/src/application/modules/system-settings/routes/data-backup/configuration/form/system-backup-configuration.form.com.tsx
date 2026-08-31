@@ -48,7 +48,10 @@ function EnabledField() {
     const { field: status } = useController({ control, name: "status" });
 
     return (
-        <InfoBlock title="Enabled">
+        <InfoBlock
+            titleWidth={220}
+            title="Enabled"
+        >
             <Checkbox
                 checked={status.value === ESettingStatus.Active}
                 onCheckedChange={checked => {
@@ -108,7 +111,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
     const cloudStorageOptions = useMemo(() => {
         return cloudStorages.map(item => ({
             value: { id: item.id, name: item.name },
-            label: item.name,
+            label: item.kind ? `${item.kind} ${item.name}` : item.name,
         }));
     }, [cloudStorages]);
 
@@ -125,7 +128,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                     </span>
                 </div>
 
-                <InfoBlock title="Scheduling Mode">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Scheduling Mode"
+                >
                     <Tabs
                         value={scheduleMode.value}
                         onValueChange={scheduleMode.onChange}
@@ -138,7 +144,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                 </InfoBlock>
 
                 {scheduleMode.value === SystemBackupScheduleMode.Interval && (
-                    <InfoBlock title="Scheduling Interval">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Scheduling Interval"
+                    >
                         <FieldGroup>
                             <Field>
                                 <Input
@@ -154,7 +163,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                 )}
 
                 {scheduleMode.value === SystemBackupScheduleMode.Cron && (
-                    <InfoBlock title="Cron Expression">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Cron Expression"
+                    >
                         <FieldGroup>
                             <Field>
                                 <Input
@@ -169,7 +181,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                     </InfoBlock>
                 )}
 
-                <InfoBlock title="Schedule From">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Schedule From"
+                >
                     <FieldGroup>
                         <Field>
                             <DateTimePicker
@@ -188,11 +203,17 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                     </FieldGroup>
                 </InfoBlock>
 
-                <NextRunsField nextRuns={nextRuns} />
+                <NextRunsField
+                    nextRuns={nextRuns}
+                    titleWidth={220}
+                />
 
                 <Separator className="opacity-50" />
 
-                <InfoBlock title="Compress Backups">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Compress Backups"
+                >
                     <Tabs
                         value={compressionFormat.value}
                         onValueChange={compressionFormat.onChange}
@@ -205,7 +226,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                     </Tabs>
                 </InfoBlock>
 
-                <InfoBlock title="Encrypt Backups">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Encrypt Backups"
+                >
                     <Tabs
                         value={encryptionFormat.value}
                         onValueChange={encryptionFormat.onChange}
@@ -218,7 +242,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                 </InfoBlock>
 
                 {encryptionFormat.value !== ESystemBackupEncryptionFormat.None && (
-                    <InfoBlock title="Encryption Secret">
+                    <InfoBlock
+                        titleWidth={220}
+                        title="Encryption Secret"
+                    >
                         <FieldGroup>
                             <Field className="max-w-[400px]">
                                 <PasswordInput
@@ -236,7 +263,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
 
                 <Separator className="opacity-50" />
 
-                <InfoBlock title="Save Backups in Cloud Storage">
+                <InfoBlock
+                    titleWidth={220}
+                    title="Save Backups in Cloud Storage"
+                >
                     <FieldGroup>
                         <Field>
                             <Combobox
@@ -256,6 +286,7 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                                 onRefresh={() => void refetch()}
                                 isRefreshing={isRefetching}
                                 aria-invalid={isCloudStorageInvalid}
+                                splitLabelBadge
                             />
                             <FieldError errors={[cloudStorageError]} />
                             <AppLink.Basic
@@ -272,7 +303,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
 
                 {cloudStorage.value && (
                     <>
-                        <InfoBlock title="Bucket">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Bucket"
+                        >
                             <Field>
                                 <Input
                                     {...cloudStorageBucket}
@@ -282,7 +316,10 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                             </Field>
                         </InfoBlock>
 
-                        <InfoBlock title="Destination Directory">
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Destination Directory"
+                        >
                             <Field>
                                 <Input
                                     {...cloudStorageDestinationDir}
@@ -333,6 +370,7 @@ function NotificationFields({ readOnly = false }: { readOnly?: boolean }) {
                     sources={sources}
                     manageLink={manageLink}
                     readOnly={readOnly}
+                    titleWidth={220}
                 />
             </div>
         </>

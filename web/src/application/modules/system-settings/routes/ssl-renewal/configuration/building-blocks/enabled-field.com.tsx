@@ -15,7 +15,10 @@ export function EnabledField() {
     const { field: status } = useController({ control, name: "status" });
 
     return (
-        <InfoBlock title="Enabled">
+        <InfoBlock
+            titleWidth={220}
+            title="Enabled"
+        >
             <Checkbox
                 checked={status.value === ESettingStatus.Active}
                 onCheckedChange={checked => {

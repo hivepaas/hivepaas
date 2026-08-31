@@ -27,7 +27,10 @@ export function RepoCacheInfoFields({
     const canClear = hasQueried && totalFiles > 0;
 
     return (
-        <InfoBlock title="Source Cache Info">
+        <InfoBlock
+            titleWidth={220}
+            title="Source Cache Info"
+        >
             <div className="flex min-h-9 flex-wrap items-center gap-10">
                 {hasQueried && (
                     <>

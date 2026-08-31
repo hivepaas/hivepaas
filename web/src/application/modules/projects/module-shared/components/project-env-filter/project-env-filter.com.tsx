@@ -41,7 +41,7 @@ function View({ projectId, envs, className, showAll = true, interactive = true }
         >
             <TabsList
                 aria-label={interactive ? "Project environment filter" : "App environment"}
-                className="h-9 max-w-full justify-start gap-1 overflow-x-auto rounded-lg bg-amber-500/[0.08] p-1 dark:bg-amber-400/[0.1]"
+                className="h-9 max-w-full justify-start gap-1 overflow-x-auto rounded-lg bg-muted p-1"
             >
                 {envs.map(env => (
                     <TabsTrigger

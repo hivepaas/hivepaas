@@ -23,6 +23,10 @@ import { CreateOrEditCloudStorageFormSchema } from "./create-or-edit-cloud-stora
 
 const providerOptions = Object.values(ECloudStorageKind);
 
+const PROVIDER_LABELS: Record<ECloudStorageKind, string> = {
+    [ECloudStorageKind.AWSS3]: "S3 (S3 Compatible)",
+};
+
 export function CreateOrEditCloudStorageForm({
     isPending,
     isTesting,
@@ -175,7 +179,7 @@ export function CreateOrEditCloudStorageForm({
                                                 key={option}
                                                 value={option}
                                             >
-                                                {option}
+                                                {PROVIDER_LABELS[option]}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>

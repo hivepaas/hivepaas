@@ -1,1 +1,1 @@
-export const INFO_BLOCK_TITLE_WIDTH = 150;
+export const INFO_BLOCK_TITLE_WIDTH = 220;

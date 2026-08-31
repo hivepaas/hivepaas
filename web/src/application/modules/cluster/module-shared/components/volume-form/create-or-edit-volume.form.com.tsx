@@ -156,7 +156,7 @@ export function CreateOrEditVolumeForm({
                     >
                         <InfoBlock
                             title="Name"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             <Input
                                 {...name}
@@ -170,7 +170,7 @@ export function CreateOrEditVolumeForm({
 
                         <InfoBlock
                             title="Driver"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             <Tabs
                                 value={driverMode.value}
@@ -188,7 +188,7 @@ export function CreateOrEditVolumeForm({
                         {currentDriverMode === EClusterVolumeDriverMode.Custom && (
                             <InfoBlock
                                 title="Driver Name"
-                                titleWidth={190}
+                                titleWidth={220}
                             >
                                 <Input
                                     {...customDriverName}
@@ -205,7 +205,7 @@ export function CreateOrEditVolumeForm({
                             <>
                                 <InfoBlock
                                     title="Volume Type"
-                                    titleWidth={190}
+                                    titleWidth={220}
                                 >
                                     <Tabs
                                         value={localType.value}
@@ -225,7 +225,7 @@ export function CreateOrEditVolumeForm({
                                     <FieldGroup>
                                         <InfoBlock
                                             title="Directory"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...bindDirectory}
@@ -242,7 +242,7 @@ export function CreateOrEditVolumeForm({
 
                                         <InfoBlock
                                             title="Node"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Select
                                                 value={bindNodeId.value || "__none__"}
@@ -275,7 +275,7 @@ export function CreateOrEditVolumeForm({
                                         </InfoBlock>
                                         <InfoBlock
                                             title="Node Label"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...bindNodeLabel}
@@ -286,7 +286,7 @@ export function CreateOrEditVolumeForm({
                                         </InfoBlock>
                                         <InfoBlock
                                             title="Propagation"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Select
                                                 value={bindPropagation.value || "__default__"}
@@ -322,7 +322,7 @@ export function CreateOrEditVolumeForm({
                                         />
                                         <InfoBlock
                                             title="Extra Options"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...bindExtraOptions}
@@ -338,7 +338,7 @@ export function CreateOrEditVolumeForm({
                                     <FieldGroup>
                                         <InfoBlock
                                             title="Address"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...nfsAddr}
@@ -351,7 +351,7 @@ export function CreateOrEditVolumeForm({
                                         </InfoBlock>
                                         <InfoBlock
                                             title="Device"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...nfsDevice}
@@ -364,7 +364,7 @@ export function CreateOrEditVolumeForm({
                                         </InfoBlock>
                                         <InfoBlock
                                             title="Version"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...nfsVersion}
@@ -382,7 +382,7 @@ export function CreateOrEditVolumeForm({
                                         />
                                         <InfoBlock
                                             title="Extra Options"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...nfsExtraOptions}
@@ -398,7 +398,7 @@ export function CreateOrEditVolumeForm({
                                     <FieldGroup>
                                         <InfoBlock
                                             title="Device"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...tmpfsDevice}
@@ -409,7 +409,7 @@ export function CreateOrEditVolumeForm({
                                         </InfoBlock>
                                         <InfoBlock
                                             title="Size"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...tmpfsSize}
@@ -422,7 +422,7 @@ export function CreateOrEditVolumeForm({
                                         </InfoBlock>
                                         <InfoBlock
                                             title="UID"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...tmpfsUid}
@@ -433,7 +433,7 @@ export function CreateOrEditVolumeForm({
                                         </InfoBlock>
                                         <InfoBlock
                                             title="Extra Options"
-                                            titleWidth={190}
+                                            titleWidth={220}
                                         >
                                             <Input
                                                 {...tmpfsExtraOptions}
@@ -449,7 +449,7 @@ export function CreateOrEditVolumeForm({
 
                         <InfoBlock
                             title="Labels"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             <KeyValueList<CreateOrEditVolumeFormInput>
                                 name="labels"
@@ -464,7 +464,7 @@ export function CreateOrEditVolumeForm({
                         </InfoBlock>
                         <InfoBlock
                             title="Options"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             <KeyValueList<CreateOrEditVolumeFormInput>
                                 name="options"
@@ -517,7 +517,7 @@ function CheckboxField({ title, checked, onCheckedChange }: CheckboxFieldProps) 
     return (
         <InfoBlock
             title={title}
-            titleWidth={190}
+            titleWidth={220}
         >
             <Checkbox
                 checked={checked}

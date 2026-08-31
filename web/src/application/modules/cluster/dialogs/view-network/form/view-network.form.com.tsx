@@ -87,7 +87,7 @@ export function ViewNetworkForm({
                     >
                         <InfoBlock
                             title="Name"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             <Input
                                 value={network.name}
@@ -97,7 +97,7 @@ export function ViewNetworkForm({
                         </InfoBlock>
                         <InfoBlock
                             title="Driver"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             {isKnownDriver ? (
                                 <Tabs
@@ -149,7 +149,7 @@ export function ViewNetworkForm({
                         />
                         <InfoBlock
                             title="Labels"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             <KeyValueList<ViewNetworkFormValues>
                                 name="labels"
@@ -161,7 +161,7 @@ export function ViewNetworkForm({
                         </InfoBlock>
                         <InfoBlock
                             title="Options"
-                            titleWidth={190}
+                            titleWidth={220}
                         >
                             <KeyValueList<ViewNetworkFormValues>
                                 name="options"
@@ -211,7 +211,7 @@ function CheckboxField({ title, checked, onCheckedChange }: CheckboxFieldProps) 
     return (
         <InfoBlock
             title={title}
-            titleWidth={190}
+            titleWidth={220}
         >
             <Checkbox
                 checked={checked}
@@ -227,7 +227,7 @@ function ReadonlyCheckbox({ title, checked }: ReadonlyCheckboxProps) {
     return (
         <InfoBlock
             title={title}
-            titleWidth={190}
+            titleWidth={220}
         >
             <Checkbox
                 checked={checked}

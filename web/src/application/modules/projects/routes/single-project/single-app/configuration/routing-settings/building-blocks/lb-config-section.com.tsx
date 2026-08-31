@@ -44,7 +44,10 @@ export function LBConfigSection({ prefix, readOnly = false }: LBConfigSectionPro
             }
         >
             <div className="flex flex-col gap-6">
-                <InfoBlock title="Strategy">
+                <InfoBlock
+                    titleWidth={240}
+                    title="Strategy"
+                >
                     <Select
                         value={strategy.value === "" ? DEFAULT_STRATEGY_VALUE : strategy.value}
                         onValueChange={value => {

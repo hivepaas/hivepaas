@@ -69,7 +69,7 @@ export function LogDriverFields() {
             >
                 <KeyValueList<AppConfigContainerSettingsFormSchemaInput>
                     name="logDriver.options"
-                    className="max-w-[600px]"
+                    className="max-w-[800px]"
                     checkDuplicates
                     enableValueEditing
                 />

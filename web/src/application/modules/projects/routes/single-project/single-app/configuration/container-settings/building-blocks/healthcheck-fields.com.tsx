@@ -121,7 +121,7 @@ export function HealthcheckFields() {
                             value={interval.value}
                             onChange={interval.onChange}
                             placeholder="30s"
-                            className="max-w-[400px]"
+                            className="max-w-[600px]"
                         />
                         <FieldError errors={[intervalError]} />
                     </InfoBlock>
@@ -140,7 +140,7 @@ export function HealthcheckFields() {
                             value={timeout.value}
                             onChange={timeout.onChange}
                             placeholder="5s"
-                            className="max-w-[400px]"
+                            className="max-w-[600px]"
                         />
                         <FieldError errors={[timeoutError]} />
                     </InfoBlock>
@@ -159,7 +159,7 @@ export function HealthcheckFields() {
                             value={startPeriod.value}
                             onChange={startPeriod.onChange}
                             placeholder="3s"
-                            className="max-w-[400px]"
+                            className="max-w-[600px]"
                         />
                         <FieldError errors={[startPeriodError]} />
                     </InfoBlock>
@@ -178,7 +178,7 @@ export function HealthcheckFields() {
                             value={startInterval.value}
                             onChange={startInterval.onChange}
                             placeholder="3s"
-                            className="max-w-[400px]"
+                            className="max-w-[600px]"
                         />
                         <FieldError errors={[startIntervalError]} />
                     </InfoBlock>
@@ -198,7 +198,7 @@ export function HealthcheckFields() {
                                 retries.onChange(value);
                             }}
                             placeholder="3"
-                            className="max-w-[400px]"
+                            className="max-w-[600px]"
                             min={0}
                             useGrouping={false}
                         />

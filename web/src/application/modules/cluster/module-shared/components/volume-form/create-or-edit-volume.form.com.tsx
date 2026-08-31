@@ -162,7 +162,7 @@ export function CreateOrEditVolumeForm({
                                 {...name}
                                 value={name.value}
                                 placeholder="my-volume"
-                                className="max-w-[420px]"
+                                className="max-w-[600px]"
                                 aria-invalid={Boolean(errors.name)}
                             />
                             <FieldError errors={[errors.name]} />
@@ -194,7 +194,7 @@ export function CreateOrEditVolumeForm({
                                     {...customDriverName}
                                     value={customDriverName.value}
                                     placeholder="driver"
-                                    className="max-w-[420px]"
+                                    className="max-w-[600px]"
                                     aria-invalid={Boolean(errors.customDriverName)}
                                 />
                                 <FieldError errors={[errors.customDriverName]} />
@@ -231,7 +231,7 @@ export function CreateOrEditVolumeForm({
                                                 {...bindDirectory}
                                                 value={bindDirectory.value}
                                                 placeholder="auto"
-                                                className="max-w-[420px]"
+                                                className="max-w-[600px]"
                                             />
                                         </InfoBlock>
 
@@ -250,7 +250,7 @@ export function CreateOrEditVolumeForm({
                                                     bindNodeId.onChange(value === "__none__" ? "" : value);
                                                 }}
                                             >
-                                                <SelectTrigger className="max-w-[420px]">
+                                                <SelectTrigger className="max-w-[600px]">
                                                     <SelectValue placeholder="Select node (optional)" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -281,7 +281,7 @@ export function CreateOrEditVolumeForm({
                                                 {...bindNodeLabel}
                                                 value={bindNodeLabel.value}
                                                 placeholder="key=value or key"
-                                                className="max-w-[420px]"
+                                                className="max-w-[600px]"
                                             />
                                         </InfoBlock>
                                         <InfoBlock
@@ -298,7 +298,7 @@ export function CreateOrEditVolumeForm({
                                                     );
                                                 }}
                                             >
-                                                <SelectTrigger className="max-w-[240px]">
+                                                <SelectTrigger className="max-w-[600px]">
                                                     <SelectValue placeholder="select propagation" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -328,7 +328,7 @@ export function CreateOrEditVolumeForm({
                                                 {...bindExtraOptions}
                                                 value={bindExtraOptions.value}
                                                 placeholder="noexec,nosuid,nodev"
-                                                className="max-w-[420px]"
+                                                className="max-w-[600px]"
                                             />
                                         </InfoBlock>
                                     </FieldGroup>
@@ -344,7 +344,7 @@ export function CreateOrEditVolumeForm({
                                                 {...nfsAddr}
                                                 value={nfsAddr.value}
                                                 placeholder="1.2.3.4"
-                                                className="max-w-[420px]"
+                                                className="max-w-[600px]"
                                                 aria-invalid={Boolean(errors.nfsOptions?.addr)}
                                             />
                                             <FieldError errors={[errors.nfsOptions?.addr]} />
@@ -357,7 +357,7 @@ export function CreateOrEditVolumeForm({
                                                 {...nfsDevice}
                                                 value={nfsDevice.value}
                                                 placeholder=":/mnt/shared/data"
-                                                className="max-w-[420px]"
+                                                className="max-w-[600px]"
                                                 aria-invalid={Boolean(errors.nfsOptions?.device)}
                                             />
                                             <FieldError errors={[errors.nfsOptions?.device]} />
@@ -370,7 +370,7 @@ export function CreateOrEditVolumeForm({
                                                 {...nfsVersion}
                                                 value={nfsVersion.value}
                                                 placeholder="4"
-                                                className="max-w-[420px]"
+                                                className="max-w-[600px]"
                                             />
                                         </InfoBlock>
                                         <CheckboxField
@@ -388,7 +388,7 @@ export function CreateOrEditVolumeForm({
                                                 {...nfsExtraOptions}
                                                 value={nfsExtraOptions.value}
                                                 placeholder="nolock,soft"
-                                                className="max-w-[420px]"
+                                                className="max-w-[600px]"
                                             />
                                         </InfoBlock>
                                     </FieldGroup>
@@ -404,7 +404,7 @@ export function CreateOrEditVolumeForm({
                                                 {...tmpfsDevice}
                                                 value={tmpfsDevice.value}
                                                 placeholder="device"
-                                                className="max-w-[420px]"
+                                                className="max-w-[600px]"
                                             />
                                         </InfoBlock>
                                         <InfoBlock
@@ -415,7 +415,7 @@ export function CreateOrEditVolumeForm({
                                                 {...tmpfsSize}
                                                 value={tmpfsSize.value}
                                                 placeholder="1gb"
-                                                className="max-w-[180px]"
+                                                className="max-w-[600px]"
                                                 aria-invalid={Boolean(errors.tmpfsOptions?.size)}
                                             />
                                             <FieldError errors={[errors.tmpfsOptions?.size]} />
@@ -428,7 +428,7 @@ export function CreateOrEditVolumeForm({
                                                 {...tmpfsUid}
                                                 value={tmpfsUid.value}
                                                 placeholder="0"
-                                                className="max-w-[180px]"
+                                                className="max-w-[600px]"
                                             />
                                         </InfoBlock>
                                         <InfoBlock
@@ -439,7 +439,7 @@ export function CreateOrEditVolumeForm({
                                                 {...tmpfsExtraOptions}
                                                 value={tmpfsExtraOptions.value}
                                                 placeholder="noexec,nosuid,nodev"
-                                                className="max-w-[420px]"
+                                                className="max-w-[600px]"
                                             />
                                         </InfoBlock>
                                     </FieldGroup>
@@ -456,7 +456,7 @@ export function CreateOrEditVolumeForm({
                                 checkDuplicates
                                 keyPlaceholder="name"
                                 valuePlaceholder="value"
-                                className="max-w-[560px]"
+                                className="max-w-[800px]"
                                 disabled={coreDisabled}
                                 enableValueEditing
                             />
@@ -471,7 +471,7 @@ export function CreateOrEditVolumeForm({
                                 checkDuplicates
                                 keyPlaceholder="name"
                                 valuePlaceholder="value"
-                                className="max-w-[560px]"
+                                className="max-w-[800px]"
                                 disabled={coreDisabled}
                                 enableValueEditing
                             />

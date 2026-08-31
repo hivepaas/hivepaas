@@ -78,7 +78,7 @@ export function RestartPolicyFields() {
                     value={delay.value}
                     onChange={delay.onChange}
                     placeholder="5s"
-                    className="max-w-[400px]"
+                    className="max-w-[600px]"
                 />
                 <FieldError errors={[delayError]} />
             </InfoBlock>
@@ -98,7 +98,7 @@ export function RestartPolicyFields() {
                         maxAttempts.onChange(value);
                     }}
                     placeholder="3"
-                    className="max-w-[400px]"
+                    className="max-w-[600px]"
                     min={0}
                     useGrouping={false}
                 />
@@ -119,7 +119,7 @@ export function RestartPolicyFields() {
                     value={window.value}
                     onChange={window.onChange}
                     placeholder="5s"
-                    className="max-w-[400px]"
+                    className="max-w-[600px]"
                 />
                 <FieldError errors={[windowError]} />
             </InfoBlock>

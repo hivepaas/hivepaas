@@ -74,7 +74,7 @@ export function ResourceReservationFields() {
                     keyPlaceholder="SSD"
                     valuePlaceholder="sda1 (string or integer)"
                     enableValueEditing
-                    className="max-w-[590px]"
+                    className="max-w-[800px]"
                 />
             </InfoBlock>
         </div>

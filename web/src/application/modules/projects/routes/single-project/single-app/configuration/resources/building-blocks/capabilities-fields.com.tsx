@@ -137,7 +137,7 @@ export function CapabilitiesFields() {
                     keyPlaceholder="net.core.somaxconn"
                     valuePlaceholder="1024"
                     enableValueEditing
-                    className="max-w-[590px]"
+                    className="max-w-[800px]"
                 />
             </InfoBlock>
         </div>

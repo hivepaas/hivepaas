@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { ChevronDown, ChevronRight, FilePen, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Trash2, X } from "lucide-react";
 import { get, useController, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EAppScheduledJobArgSeparator } from "~/projects/module-shared/enums";
@@ -26,8 +26,6 @@ import {
 } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 
-import { type ArgViewMode, ArgViewModeSwitch, getStoredArgViewMode, setStoredArgViewMode } from "./building-blocks";
-import { EditCommandArgDialog } from "./building-blocks/edit-command-arg.dialog.com";
 import { createDefaultCommandArg, createDefaultCommandArgGroup } from "./command-arg-groups-section.helpers";
 import type { CommandArgGroupsFormValue } from "./command-arg-groups-section.types";
 
@@ -75,27 +73,14 @@ function buildArgGroupPreview(group: SchemaInput["argGroups"][number] | undefine
     return `${group.exportEnv}=${args.join(" ")}`;
 }
 
-function getInputWidth(value: string, placeholder: string, min: number, max: number) {
-    const length = Math.max(value.length, placeholder.length) + 2;
-    const width = Math.min(Math.max(length, min), max);
-
-    return `${width}ch`;
-}
-
-function getFirstLine(value: string) {
-    return value.split("\n")[0] ?? "";
-}
-
 function ArgItem({
     groupIndex,
     argIndex,
-    viewMode = "grid",
     separator = "=",
     onRemove,
     readOnly = false,
     fieldName = "argGroups",
 }: ArgItemProps) {
-    const [editOpen, setEditOpen] = useState(false);
     const {
         control,
         formState: { errors },
@@ -110,78 +95,51 @@ function ArgItem({
     const { field: value } = useController({ control, name: `${basePath}.value` as never });
     const nameValue = typeof name.value === "string" ? name.value : "";
     const argValue = typeof value.value === "string" ? value.value : "";
-    const argValueFirstLine = getFirstLine(argValue);
-
-    const isListMode = viewMode === "list";
 
     return (
-        <div className={cn("flex flex-col gap-1", isListMode ? "w-full" : "max-w-full")}>
+        <div className="flex w-full flex-col gap-1">
             <div
                 className={cn(
-                    "flex items-center gap-1.5 sm:gap-2 rounded-md border bg-background px-2.5 py-1 transition-colors",
-                    isListMode ? "w-full" : "w-fit max-w-full flex-wrap sm:flex-nowrap",
+                    "flex w-full items-start gap-1.5 sm:gap-2 rounded-md border bg-background px-2.5 py-1 transition-colors",
                     useArg.value === true && "border-green-200 bg-green-50 dark:bg-green-950/20",
                 )}
             >
-                <Checkbox
-                    checked={useArg.value === true}
-                    onCheckedChange={checked => {
-                        if (readOnly) {
-                            return;
-                        }
+                <div className="flex h-8 shrink-0 items-center">
+                    <Checkbox
+                        checked={useArg.value === true}
+                        onCheckedChange={checked => {
+                            if (readOnly) {
+                                return;
+                            }
 
-                        useArg.onChange(checked === true);
-                    }}
-                    disabled={readOnly}
-                    className="shrink-0"
-                />
+                            useArg.onChange(checked === true);
+                        }}
+                        disabled={readOnly}
+                    />
+                </div>
                 <Input
                     {...name}
                     value={nameValue}
                     onChange={name.onChange}
                     placeholder="--arg"
-                    className={cn(
-                        "h-8 text-xs sm:text-sm px-2 font-mono shrink-0",
-                        isListMode ? "w-[140px] sm:w-[220px]" : "min-w-[6ch] max-w-[28ch]",
-                    )}
-                    style={isListMode ? undefined : { width: getInputWidth(nameValue, "--arg", 6, 28) }}
+                    className="h-8 w-[140px] shrink-0 px-2 font-mono text-xs sm:w-[220px] sm:text-sm"
                     aria-invalid={!!get(errors, `${basePath}.name`)}
                     disabled={readOnly}
                 />
-                <span className="text-xs sm:text-sm text-muted-foreground shrink-0 font-mono">{separator || "="}</span>
+                <div className="flex h-8 shrink-0 items-center">
+                    <span className="text-xs sm:text-sm text-muted-foreground font-mono">{separator || "="}</span>
+                </div>
                 <Textarea
                     {...value}
                     value={argValue}
                     onChange={value.onChange}
-                    onKeyDown={event => {
-                        if (event.key === "Enter") {
-                            event.preventDefault();
-                        }
-                    }}
                     placeholder="value"
                     minRows={1}
                     maxRows={1}
-                    className={cn(
-                        "h-8 min-h-8 max-h-8 resize-none overflow-hidden py-1 px-2 text-xs sm:text-sm leading-normal font-mono",
-                        isListMode ? "flex-1 min-w-0 w-full" : "min-w-[6ch] max-w-[34ch]",
-                    )}
-                    style={isListMode ? undefined : { width: getInputWidth(argValueFirstLine, "value", 6, 34) }}
+                    className="min-h-8 w-full min-w-0 flex-1 resize-y overflow-y-auto py-1 px-2 text-xs sm:text-sm leading-normal font-mono"
                     disabled={readOnly}
                 />
-                <div className="flex items-center gap-0.5 shrink-0 ml-auto sm:ml-0">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="size-6 text-muted-foreground hover:text-foreground"
-                        onClick={() => {
-                            setEditOpen(true);
-                        }}
-                        disabled={readOnly}
-                    >
-                        <FilePen className="size-3.5" />
-                        <span className="sr-only">Edit arg</span>
-                    </Button>
+                <div className="flex h-8 shrink-0 items-center gap-0.5 ml-auto sm:ml-0">
                     <Button
                         type="button"
                         variant="ghost"
@@ -196,30 +154,12 @@ function ArgItem({
                 </div>
             </div>
             <FieldError errors={[nameError]} />
-
-            <EditCommandArgDialog
-                open={editOpen}
-                onOpenChange={setEditOpen}
-                name={nameValue}
-                value={argValue}
-                readOnly={readOnly}
-                onSave={nextValues => {
-                    name.onChange(nextValues.name);
-                    value.onChange(nextValues.value);
-                }}
-            />
         </div>
     );
 }
 
 function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argGroups" }: ArgGroupRowProps) {
     const [open, setOpen] = useState(true);
-    const [viewMode, setViewMode] = useState<ArgViewMode>(getStoredArgViewMode);
-
-    const handleViewModeChange = (mode: ArgViewMode) => {
-        setViewMode(mode);
-        setStoredArgViewMode(mode);
-    };
 
     const {
         control,
@@ -345,29 +285,17 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                                 </Select>
                             </InfoBlock>
 
-                            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-start">
-                                <div className="w-full sm:w-[220px] shrink-0 flex items-center pt-0.5">
-                                    <ArgViewModeSwitch
-                                        value={viewMode}
-                                        onChange={handleViewModeChange}
-                                        disabled={readOnly}
-                                    />
-                                </div>
-
-                                <div className="flex-1 min-w-0 w-full flex flex-col gap-3">
-                                    <div
-                                        className={cn(
-                                            viewMode === "list"
-                                                ? "flex flex-col gap-2.5 w-full"
-                                                : "flex flex-wrap gap-2.5 sm:gap-3",
-                                        )}
-                                    >
+                            <InfoBlock
+                                title=""
+                                titleWidth={220}
+                            >
+                                <div className="flex w-full min-w-0 flex-1 flex-col gap-3">
+                                    <div className="flex w-full flex-col gap-2.5">
                                         {fields.map((field, argIndex) => (
                                             <ArgItem
                                                 key={field.id}
                                                 groupIndex={groupIndex}
                                                 argIndex={argIndex}
-                                                viewMode={viewMode}
                                                 separator={separator.value}
                                                 onRemove={() => {
                                                     if (readOnly) {
@@ -384,26 +312,26 @@ function ArgGroupRow({ groupIndex, onRemove, readOnly = false, fieldName = "argG
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        size="icon"
-                                        className="h-8 w-8"
+                                        className="w-fit"
                                         disabled={readOnly}
                                         onClick={() => {
                                             append(createDefaultCommandArg() as never);
                                         }}
                                     >
                                         <Plus className="size-4" />
-                                        <span className="sr-only">Add arg</span>
+                                        Add Arg
                                     </Button>
                                 </div>
-                            </div>
+                            </InfoBlock>
 
                             <div
                                 className={cn(
                                     dashedBorderBox,
-                                    "text-xs sm:text-sm ml-0 sm:ml-[236px] min-h-7 h-auto py-1.5 px-3 leading-normal",
+                                    "w-full text-xs sm:text-sm min-h-7 h-auto py-1.5 px-3 leading-normal",
                                 )}
                             >
                                 <div className="break-all">
+                                    <span>(Illustration only) </span>
                                     <span className="text-orange-500">{exportEnvValue}</span>
                                     {preview ? preview.slice(exportEnvValue.length) : "="}
                                 </div>
@@ -459,7 +387,6 @@ function View({ readOnly = false, fieldName = "argGroups" }: Props) {
 interface ArgItemProps {
     groupIndex: number;
     argIndex: number;
-    viewMode?: ArgViewMode;
     separator?: string;
     onRemove: () => void;
     readOnly?: boolean;

@@ -265,7 +265,7 @@ export function GeneralFields() {
                     value={stopGracePeriod.value}
                     onChange={stopGracePeriod.onChange}
                     placeholder="5s"
-                    className="max-w-[400px]"
+                    className="max-w-[600px]"
                 />
                 <FieldError errors={[stopGracePeriodError]} />
             </InfoBlock>

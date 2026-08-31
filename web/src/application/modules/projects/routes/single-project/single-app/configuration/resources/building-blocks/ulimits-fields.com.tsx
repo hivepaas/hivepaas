@@ -98,7 +98,7 @@ export function UlimitsFields() {
             }
         >
             <FieldListLayout
-                className="max-w-[590px]"
+                className="max-w-[800px]"
                 inputsClassName={ulimitsGridClass}
                 inputRow={
                     <>

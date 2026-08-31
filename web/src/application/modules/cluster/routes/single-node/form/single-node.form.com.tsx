@@ -211,7 +211,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                             <KeyValueList<SingleNodeFormSchemaInput>
                                 name="labels"
                                 keyLabel="Label"
-                                className="max-w-[660px]"
+                                className="max-w-[800px]"
                                 checkDuplicates
                                 enableValueEditing
                             />

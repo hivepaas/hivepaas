@@ -131,6 +131,11 @@ func (s *service) startApp(ctx context.Context, app *entity.App, service *swarm.
 
 	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID, service,
 		func(_ int, service *swarm.Service) (bool, error) {
+			// App is not stopped before can't be started
+			if service.Spec.Mode.Replicated == nil ||
+				(service.Spec.Mode.Replicated.Replicas != nil && *service.Spec.Mode.Replicated.Replicas > 0) {
+				return false, nil
+			}
 			prevSvcModeStr := service.Spec.Labels[labelHivePaaSAppPrevServiceMode]
 			if prevSvcModeStr != "" {
 				mode := swarm.ServiceMode{}

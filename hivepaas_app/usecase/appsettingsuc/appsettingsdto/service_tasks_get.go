@@ -66,7 +66,12 @@ func TransformServiceTask(task *swarm.Task, nodeMap map[string]*swarm.Node) (res
 	}
 
 	// Transform node details
-	resp.Node = nodedto.TransformNodeBase(nodeMap[task.NodeID])
+	if task.NodeID != "" {
+		resp.Node = nodedto.TransformNodeBase(nodeMap[task.NodeID])
+		if resp.Node == nil {
+			resp.Node = nodedto.NewMissingNode(task.NodeID)
+		}
+	}
 
 	return resp, nil
 }

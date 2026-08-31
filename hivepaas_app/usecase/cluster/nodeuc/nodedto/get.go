@@ -160,3 +160,16 @@ func TransformNodeBase(node *swarm.Node) *NodeBaseResp {
 		Addr:         node.Status.Addr,
 	}
 }
+
+func NewMissingNode(nodeID string) *NodeBaseResp {
+	const unknown = "<unknown>"
+	return &NodeBaseResp{
+		RefID:        nodeID,
+		Name:         unknown,
+		State:        unknown,
+		Availability: unknown,
+		Role:         unknown,
+		Hostname:     unknown,
+		Addr:         unknown,
+	}
+}

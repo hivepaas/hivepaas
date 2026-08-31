@@ -187,6 +187,12 @@ var (
 	ErrMountTypeUnsupported          = NewErr(ErrUnsupported, "ERR_MOUNT_TYPE_UNSUPPORTED")
 	ErrServiceModeReplicatedRequired = NewErr(ErrPreconditionFailed, "ERR_SERVICE_MODE_REPLICATED_REQUIRED")
 	ErrActiveContainerNotFound       = NewErr(ErrNotFound, "ERR_ACTIVE_CONTAINER_NOT_FOUND")
+	// Swarm forbids changing the service mode variant in place, so HivePaaS has to recreate the
+	// service. That is refused while the app is stopped: a stopped app is a replicated service
+	// scaled to 0, and global mode has no such notion, so converting it would silently start the
+	// app on every node.
+	ErrServiceModeChangeRequiresRunningApp = NewErr(ErrPreconditionFailed,
+		"ERR_SERVICE_MODE_CHANGE_REQUIRES_RUNNING_APP")
 )
 
 // Errors for files

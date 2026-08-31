@@ -3,6 +3,8 @@ package appservice
 import (
 	"context"
 
+	"github.com/moby/moby/api/types/swarm"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -35,6 +37,11 @@ type Service interface {
 	DeleteApp(ctx context.Context, db database.IDB, app *entity.App) error
 	SetAppStatus(ctx context.Context, db database.IDB, app *entity.App, status base.AppStatus, recursive bool) error
 	SetAppRunning(ctx context.Context, app *entity.App, running bool) error
+	// RecreateServiceWithSpec deletes and recreates the app swarm service, which is the only way to
+	// change its mode variant. It causes downtime and returns the new service ID for the caller to
+	// persist. See the implementation for the failure/rollback behavior.
+	RecreateServiceWithSpec(ctx context.Context, app *entity.App,
+		oldSpec, newSpec *swarm.ServiceSpec) (string, error)
 
 	ExecuteInTx(ctx context.Context, app *entity.App, requireUpdateVerMatch bool, fn func(database.Tx) error) error
 }

@@ -13,10 +13,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 )
 
 const (
-	labelHivePaaSAppPrevServiceMode = "hivepaas.app.prevServiceMode"
+	labelHivePaaSAppPrevServiceMode = appservice.LabelAppPrevServiceMode
 	serviceStatusUpdateRetryMax     = 2
 )
 

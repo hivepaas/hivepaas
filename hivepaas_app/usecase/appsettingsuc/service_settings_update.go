@@ -10,7 +10,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -20,20 +23,26 @@ func (uc *UC) UpdateAppServiceSettings(
 	auth *basedto.Auth,
 	req *appsettingsdto.UpdateAppServiceSettingsReq,
 ) (*appsettingsdto.UpdateAppServiceSettingsResp, error) {
+	data := &updateAppServiceSettingsData{}
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		data := &updateAppServiceSettingsData{}
 		err := uc.loadAppServiceSettingsForUpdate(ctx, db, req, data)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 
-		err = uc.applyAppServiceSettings(ctx, req, data)
+		err = uc.applyAppServiceSettings(ctx, db, req, data)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 		return nil
 	})
 	if err != nil {
+		// A failed mode change rolls the swarm service back, but under a new ID. The transaction is
+		// rolled back too, so that ID has to be stored outside of it or the app would keep pointing
+		// at the service that was deleted.
+		if data.RestoredServiceID != "" && data.App != nil {
+			_ = uc.persistAppServiceID(ctx, uc.db, data.App, data.RestoredServiceID)
+		}
 		return nil, hperrors.Wrap(err)
 	}
 
@@ -43,6 +52,11 @@ func (uc *UC) UpdateAppServiceSettings(
 type updateAppServiceSettingsData struct {
 	App     *entity.App
 	Service *swarm.Service
+
+	// RestoredServiceID is set when a mode change failed and the previous service had to be
+	// recreated, which gives it a new ID that must be persisted outside the rolled back
+	// transaction.
+	RestoredServiceID string
 }
 
 func (uc *UC) loadAppServiceSettingsForUpdate(
@@ -156,17 +170,108 @@ func (uc *UC) prepareUpdatingAppServicePlacement(
 	}
 }
 
+// isChangingServiceMode reports whether the request switches the service to another mode variant
+// (replicated <-> global <-> jobs). Swarm rejects such a change on an existing service, so it can
+// only be applied by recreating the service.
+func isChangingServiceMode(
+	req *appsettingsdto.UpdateAppServiceSettingsReq,
+	service *swarm.Service,
+) bool {
+	if req.ModeSpec == nil || service == nil {
+		return false
+	}
+	currMode := appsettingsdto.TransformServiceMode(&service.Spec)
+	if currMode == nil || currMode.Mode == "" {
+		return false
+	}
+	return currMode.Mode != req.ModeSpec.Mode
+}
+
+// isAppStopped reports whether the service is a replicated one scaled down to 0, which is how
+// HivePaaS represents a stopped app.
+func isAppStopped(service *swarm.Service) bool {
+	if service == nil || service.Spec.Mode.Replicated == nil {
+		return false
+	}
+	replicas := service.Spec.Mode.Replicated.Replicas
+	return replicas == nil || *replicas == 0
+}
+
 func (uc *UC) applyAppServiceSettings(
 	ctx context.Context,
+	db database.Tx,
 	req *appsettingsdto.UpdateAppServiceSettingsReq,
 	data *updateAppServiceSettingsData,
 ) error {
+	if isChangingServiceMode(req, data.Service) {
+		if isAppStopped(data.Service) {
+			return hperrors.Wrap(hperrors.ErrServiceModeChangeRequiresRunningApp)
+		}
+		return uc.recreateAppServiceWithNewMode(ctx, db, req, data)
+	}
+
 	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID, data.Service,
 		func(_ int, service *swarm.Service) (bool, error) {
 			data.Service = service
 			uc.prepareUpdatingAppServiceSettings(req, data)
 			return true, nil
 		}, defaultServiceRetryMax, 0)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	return nil
+}
+
+// recreateAppServiceWithNewMode applies the settings by deleting and recreating the swarm service,
+// which is the only way to switch its mode variant. This stops the app while it runs.
+func (uc *UC) recreateAppServiceWithNewMode(
+	ctx context.Context,
+	db database.Tx,
+	req *appsettingsdto.UpdateAppServiceSettingsReq,
+	data *updateAppServiceSettingsData,
+) error {
+	// Keep an untouched copy to restore if the new service cannot be created. It must be a deep
+	// copy: the spec shares its Labels map and Placement pointer with the live service, so the
+	// updates below would otherwise leak into the copy meant for the rollback.
+	oldSpec, err := copier.CopyAs(data.Service.Spec)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
+	uc.prepareUpdatingAppServiceSettings(req, data)
+	newSpec := data.Service.Spec
+
+	// The stored mode belongs to the mode being replaced, so starting the app later must not
+	// restore it.
+	delete(newSpec.Labels, appservice.LabelAppPrevServiceMode)
+
+	previousServiceID := data.App.ServiceID
+
+	newServiceID, err := uc.appService.RecreateServiceWithSpec(ctx, data.App, &oldSpec, &newSpec)
+	if err != nil {
+		// A rollback recreated the previous service under a new ID. Hand it to the caller: this
+		// transaction is about to be rolled back, so it cannot be persisted here.
+		if data.App.ServiceID != previousServiceID {
+			data.RestoredServiceID = data.App.ServiceID
+		}
+		return hperrors.Wrap(err)
+	}
+
+	return uc.persistAppServiceID(ctx, db, data.App, newServiceID)
+}
+
+func (uc *UC) persistAppServiceID(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	serviceID string,
+) error {
+	app.ServiceID = serviceID
+	app.UpdateVer++
+	app.UpdatedAt = timeutil.NowUTC()
+
+	err := uc.appRepo.Update(ctx, db, app,
+		bunex.UpdateColumns("service_id", "update_ver", "updated_at"))
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

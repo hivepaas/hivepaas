@@ -30,7 +30,7 @@ export function SingleUserLayout({ children }: PropsWithChildren) {
         );
     }
     return (
-        <div className="flex flex-col gap-2 sm:gap-5">
+        <div className="flex flex-col gap-2 sm:gap-4">
             <SingleUserHeader userId={userId} />
             {children}
         </div>

@@ -249,7 +249,7 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
         const activeKey = findActiveTab(allTabs, location.pathname);
 
         return (
-            <div className="flex flex-col gap-2 md:flex-row md:gap-5 w-full max-w-[1400px] mx-auto min-w-0">
+            <div className="flex flex-col gap-2 md:flex-row md:gap-4 w-full max-w-[1400px] mx-auto min-w-0">
                 {/* Mobile Dropdown Navigation (< md) */}
                 <div className="md:hidden w-full bg-background/95 backdrop-blur-md rounded-xl p-2 shadow-xs sticky top-[53px] z-20 border border-amber-500/25">
                     <Select
@@ -352,7 +352,7 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
 
     const activeKey = findActiveTab(tabs, location.pathname);
     return (
-        <div className="flex flex-col gap-2 md:flex-row md:gap-5 w-full max-w-[1400px] mx-auto min-w-0">
+        <div className="flex flex-col gap-2 md:flex-row md:gap-4 w-full max-w-[1400px] mx-auto min-w-0">
             {/* Mobile Dropdown Navigation (< md) */}
             <div className="md:hidden w-full bg-background/95 backdrop-blur-md rounded-xl p-2 shadow-xs sticky top-[53px] z-20 border border-amber-500/25">
                 <Select

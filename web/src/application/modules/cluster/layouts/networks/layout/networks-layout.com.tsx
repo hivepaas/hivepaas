@@ -4,7 +4,7 @@ import { NetworksHeader } from "../header";
 
 export function NetworksLayout({ children }: PropsWithChildren) {
     return (
-        <div className="flex flex-col gap-2 sm:gap-5">
+        <div className="flex flex-col gap-2 sm:gap-4">
             <NetworksHeader />
             {children}
         </div>

@@ -21,6 +21,11 @@ type SchemaInput = AppConfigAvailabilitySchemaInput;
 type SchemaOutput = AppConfigAvailabilitySchemaOutput;
 
 export function AppConfigAvailabilityForm({ ref, defaultValues, onSubmit, readOnly = false, children }: Props) {
+    // A stopped app is a replicated service scaled to 0. The backend refuses to switch mode in that
+    // state, so the UI must not offer it either.
+    const isAppStopped =
+        defaultValues?.modeSpec.mode === EServiceMode.Replicated && (defaultValues.modeSpec.serviceReplicas ?? 0) === 0;
+
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: {
             mode: defaultValues?.modeSpec.mode ?? EServiceMode.Replicated,
@@ -109,7 +114,10 @@ export function AppConfigAvailabilityForm({ ref, defaultValues, onSubmit, readOn
                         disabled={readOnly}
                         className="contents"
                     >
-                        <ServiceModeFields />
+                        <ServiceModeFields
+                            savedMode={defaultValues?.modeSpec.mode}
+                            isAppStopped={isAppStopped}
+                        />
                         <div className="h-px bg-zinc-200" />
                         <PlacementConstraintsFields />
                         <div className="h-px bg-zinc-200" />

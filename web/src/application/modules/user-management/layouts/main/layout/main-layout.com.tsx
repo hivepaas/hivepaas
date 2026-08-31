@@ -4,7 +4,7 @@ import { MainHeader } from "../header";
 
 export function MainLayout({ children }: PropsWithChildren) {
     return (
-        <div className="flex flex-col gap-2 sm:gap-5">
+        <div className="flex flex-col gap-2 sm:gap-4">
             <MainHeader />
             {children}
         </div>

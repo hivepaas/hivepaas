@@ -2,6 +2,7 @@ import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/
 
 import { useAppServiceSettingsApi } from "../../../api/hooks/project-apps";
 import { type AppServiceSettings_UpdateOne_Req, type AppServiceSettings_UpdateOne_Res } from "../../../api/services";
+import { QK } from "../../constants/projects.query-keys";
 
 import { invalidateSingleAppConfigurationQueries } from "./app-configuration-cache.helpers";
 
@@ -19,6 +20,10 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
             invalidateSingleAppConfigurationQueries(queryClient, {
                 projectID: request.projectID,
                 appID: request.appID,
+            });
+            // Changing the service mode recreates the swarm service, so the instance list is stale.
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.service-tasks.$.find-many"]],
             });
             onSuccess?.(response, request, ...rest);
         },

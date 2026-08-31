@@ -14,6 +14,7 @@ import {
     ProjectsQueries,
 } from "~/projects/data";
 import { AppInstancesCountBadge, ProjectAppStatusBadge, ProjectEnvFilter } from "~/projects/module-shared/components";
+import { EProjectAppStatus } from "~/projects/module-shared/enums";
 import { APP_SERVICE_TASKS_REFETCH_INTERVAL_MS, computeAppInstancesHealth } from "~/projects/module-shared/utils";
 
 import { PopConfirm, TabNavigation } from "@application/shared/components";
@@ -89,8 +90,18 @@ function View({ projectId, env, appId }: Props) {
     const { data: project } = data;
     const { data: appData } = app;
     const isChildApp = Boolean(appData.parentApp);
-    const isAppRunning = (appData.stats?.runningTasks ?? 0) > 0;
-    const startStopText = isAppRunning ? "Stop" : "Start";
+
+    // "Stopped" means the service is scaled to 0, NOT that every task happens to be down.
+    // An app whose replicas all crashed is broken, not stopped: it must offer Stop (and Re-deploy/
+    // Restart), because Start on it would make the backend reset the replica count.
+    // Prefer the polled task data; fall back to the app summary until the first poll lands.
+    const desiredReplicas = instancesHealth?.total ?? appData.stats?.desiredTasks ?? 0;
+    const isAppStopped = desiredReplicas === 0;
+    const startStopText = isAppStopped ? "Start" : "Stop";
+
+    // Nothing can be acted on while the app is being torn down. Other statuses stay actionable on
+    // purpose - `missing` in particular is exactly when Re-deploy is needed to recreate the service.
+    const isAppDeleting = appData.status === EProjectAppStatus.Deleting;
     const appEnv = project.envs.find(projectEnv => projectEnv.name === appData.env);
     const appRoute = ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId);
     const scheduledJobName = scheduledJobResponse?.data.name.trim();
@@ -243,7 +254,7 @@ function View({ projectId, env, appId }: Props) {
                             size="sm"
                             className="h-8 text-xs sm:text-sm"
                             isLoading={isDeploying}
-                            disabled={isAppActionPending && !isDeploying}
+                            disabled={isAppDeleting || (isAppActionPending && !isDeploying)}
                         >
                             <RefreshCw className="size-3.5 text-amber-500 dark:text-amber-400 mr-1 sm:mr-1.5" />
                             Re-deploy
@@ -265,13 +276,28 @@ function View({ projectId, env, appId }: Props) {
                             size="sm"
                             className="h-8 text-xs sm:text-sm"
                             isLoading={isRestarting}
-                            disabled={isAppActionPending && !isRestarting}
+                            disabled={isAppDeleting || (isAppActionPending && !isRestarting)}
                         >
                             <Power className="size-3.5 text-amber-500 dark:text-amber-400 mr-1 sm:mr-1.5" />
                             Restart
                         </Button>
                     </PopConfirm>
-                    {isAppRunning ? (
+                    {isAppStopped ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs sm:text-sm"
+                            isLoading={isSettingRunning}
+                            disabled={isAppDeleting || (isAppActionPending && !isSettingRunning)}
+                            onClick={() => {
+                                setRunning({ projectID: projectId, env, appID: appId, running: true });
+                            }}
+                        >
+                            <Power className="size-3.5 text-amber-500 dark:text-amber-400 mr-1 sm:mr-1.5" />
+                            {startStopText}
+                        </Button>
+                    ) : (
                         <PopConfirm
                             title="Stop app"
                             description="Are you sure you want to stop this app?"
@@ -288,27 +314,12 @@ function View({ projectId, env, appId }: Props) {
                                 size="sm"
                                 className="h-8 text-xs sm:text-sm"
                                 isLoading={isSettingRunning}
-                                disabled={isAppActionPending && !isSettingRunning}
+                                disabled={isAppDeleting || (isAppActionPending && !isSettingRunning)}
                             >
                                 <Power className="size-3.5 text-amber-500 dark:text-amber-400 mr-1 sm:mr-1.5" />
                                 {startStopText}
                             </Button>
                         </PopConfirm>
-                    ) : (
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="h-8 text-xs sm:text-sm"
-                            isLoading={isSettingRunning}
-                            disabled={isAppActionPending && !isSettingRunning}
-                            onClick={() => {
-                                setRunning({ projectID: projectId, env, appID: appId, running: true });
-                            }}
-                        >
-                            <Power className="size-3.5 text-amber-500 dark:text-amber-400 mr-1 sm:mr-1.5" />
-                            {startStopText}
-                        </Button>
                     )}
                 </div>
             </div>

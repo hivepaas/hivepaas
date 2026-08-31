@@ -20,6 +20,7 @@ export interface AppServiceTaskStatus {
 export interface AppServiceTask {
     id: string;
     slot: number;
+    desiredState: string;
     node: AppServiceTaskNode | null;
     status: AppServiceTaskStatus | null;
 }

@@ -7,6 +7,7 @@ import { useParams } from "react-router";
 import invariant from "tiny-invariant";
 import { AppServiceTasksQueries } from "~/projects/data";
 import type { AppServiceTask, AppServiceTaskNode } from "~/projects/domain";
+import { APP_SERVICE_TASKS_REFETCH_INTERVAL_MS } from "~/projects/module-shared/utils";
 
 import { AppLink, TableActions } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -14,7 +15,6 @@ import { timeAgoFormatter } from "@application/shared/utils/time-ago";
 
 import { Button, Skeleton, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui";
 
-const APP_INSTANCES_REFETCH_INTERVAL_MS = 5_000;
 const APP_INSTANCES_DURATION_TICK_MS = 5_000;
 const TABLE_COLUMN_COUNT = 7;
 const EMPTY_INSTANCES: AppServiceTask[] = [];
@@ -203,7 +203,7 @@ export function AppInstancesRoute() {
             appID: appId,
         },
         {
-            refetchInterval: APP_INSTANCES_REFETCH_INTERVAL_MS,
+            refetchInterval: APP_SERVICE_TASKS_REFETCH_INTERVAL_MS,
         },
     );
     const instances = data?.data ?? EMPTY_INSTANCES;

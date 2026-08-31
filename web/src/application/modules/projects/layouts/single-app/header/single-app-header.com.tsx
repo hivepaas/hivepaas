@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 
 import { Button } from "@components/ui";
 import { Avatar } from "@components/ui/avatar";
@@ -6,8 +6,15 @@ import { Power, RefreshCw } from "lucide-react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import { AppScheduledJobsQueries, ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
-import { ProjectAppStatusBadge, ProjectEnvFilter } from "~/projects/module-shared/components";
+import {
+    AppScheduledJobsQueries,
+    AppServiceTasksQueries,
+    ProjectAppsCommands,
+    ProjectAppsQueries,
+    ProjectsQueries,
+} from "~/projects/data";
+import { AppInstancesCountBadge, ProjectAppStatusBadge, ProjectEnvFilter } from "~/projects/module-shared/components";
+import { APP_SERVICE_TASKS_REFETCH_INTERVAL_MS, computeAppInstancesHealth } from "~/projects/module-shared/utils";
 
 import { PopConfirm, TabNavigation } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
@@ -41,6 +48,17 @@ function View({ projectId, env, appId }: Props) {
             enabled: Boolean(scheduledJobId),
         },
     );
+    // Mounted for the whole app detail scope, so polling starts on entering the app and stops on leaving it.
+    const { data: serviceTasksResponse, isSuccess: isServiceTasksLoaded } = AppServiceTasksQueries.useFindMany(
+        { projectID: projectId, env, appID: appId },
+        { refetchInterval: APP_SERVICE_TASKS_REFETCH_INTERVAL_MS },
+    );
+    const serviceTasks = serviceTasksResponse?.data;
+    const instancesHealth = useMemo(
+        () => (serviceTasks ? computeAppInstancesHealth(serviceTasks) : null),
+        [serviceTasks],
+    );
+
     const { mutate: deploy, isPending: isDeploying } = ProjectAppsCommands.useDeploy({
         onSuccess: () => {
             toast.success("Re-deploy started");
@@ -132,7 +150,17 @@ function View({ projectId, env, appId }: Props) {
         },
         {
             route: ROUTE.projects.single.apps.single.instances.$route(projectId, env, appId),
-            label: "Instances",
+            label: (
+                <span className="inline-flex items-center gap-1.5">
+                    Instances
+                    {instancesHealth && isServiceTasksLoaded && (
+                        <AppInstancesCountBadge
+                            current={instancesHealth.current}
+                            total={instancesHealth.total}
+                        />
+                    )}
+                </span>
+            ),
             activePathPrefixes: [ROUTE.projects.single.apps.single.instances.$route(projectId, env, appId)],
         },
         {

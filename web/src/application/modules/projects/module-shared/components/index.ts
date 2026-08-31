@@ -2,6 +2,7 @@ export * from "./project-status-badge";
 export * from "./project-permission-submit-button";
 export * from "./project-permission-tooltip-action";
 export * from "./project-app-status-badge";
+export * from "./app-instances-count-badge";
 export * from "./project-secret-status-badge";
 export * from "./project-sidebar";
 export * from "./env-vars-form-header";

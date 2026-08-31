@@ -50,6 +50,7 @@ const ServiceTaskStatusSchema = z
 const ServiceTaskSchema = z.object({
     id: z.string(),
     slot: z.number(),
+    desiredState: OptionalStringSchema,
     node: ServiceTaskNodeSchema,
     status: ServiceTaskStatusSchema,
 });

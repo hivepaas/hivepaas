@@ -24,7 +24,7 @@ func (uc *UC) DeleteNetwork(
 			data *settings.DeleteSettingData,
 		) error {
 			if data.Setting.ObjectID == req.Scope.ScopeObjectID() {
-				_, err := uc.dockerManager.NetworkRemove(ctx, data.Setting.MustAsClusterNetwork().RefID)
+				_, err := uc.dockerManager.NetworkRemove(ctx, data.Setting.RefID)
 				if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 					return hperrors.Wrap(err)
 				}

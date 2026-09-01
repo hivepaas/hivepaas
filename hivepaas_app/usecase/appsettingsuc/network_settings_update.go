@@ -118,7 +118,7 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 				WithParam("Name", gofn.Coalesce(netReq.Name, netReq.ID))
 		}
 		data.FinalNetworks = append(data.FinalNetworks, swarm.NetworkAttachmentConfig{
-			Target:  dbNet.MustAsClusterNetwork().RefID,
+			Target:  dbNet.RefID,
 			Aliases: netReq.Aliases,
 		})
 	}

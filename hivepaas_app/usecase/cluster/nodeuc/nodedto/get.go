@@ -105,7 +105,7 @@ func TransformNode(
 		return nil, hperrors.Wrap(err)
 	}
 
-	node := refClusterObjects.RefNodes[nodeEnt.RefID]
+	node := refClusterObjects.RefNodes[setting.RefID]
 
 	resp.RefID = node.ID
 	resp.Name = gofn.Coalesce(node.Spec.Name, "<unset>")

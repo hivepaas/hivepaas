@@ -68,6 +68,7 @@ func (s *service) CreateProjectDefaultVolume(
 		Kind:            string(driver),
 		Status:          base.SettingStatusActive,
 		Name:            "default",
+		RefID:           dockerhelper.GetVolumeID(&createResp.Volume),
 		Inheritable:     true,
 		Default:         true,
 		Version:         entity.CurrentClusterVolumeVersion,
@@ -76,11 +77,7 @@ func (s *service) CreateProjectDefaultVolume(
 		UpdatedAt:       timeNow,
 		CurrentObjectID: project.ID,
 	}
-
-	clusterVolume := &entity.ClusterVolume{
-		RefID: dockerhelper.GetVolumeID(&createResp.Volume),
-	}
-	setting.MustSetData(clusterVolume)
+	setting.MustSetData(&entity.ClusterVolume{})
 
 	return setting, createResp, nil
 }
@@ -104,7 +101,7 @@ func (s *service) ListProjectVolumes(
 
 	volIDs := make([]string, 0, len(settings))
 	for _, setting := range settings {
-		volIDs = append(volIDs, setting.MustAsClusterVolume().RefID)
+		volIDs = append(volIDs, setting.RefID)
 	}
 
 	volList, err := s.dockerManager.VolumeListByIDs(ctx, volIDs)
@@ -140,7 +137,7 @@ func (s *service) RemoveAllProjectVolumes(
 		if setting.ObjectID != project.ID { // imported/inherited volume, skip it
 			continue
 		}
-		vol := volumes[setting.MustAsClusterVolume().RefID]
+		vol := volumes[setting.RefID]
 		if vol == nil {
 			continue
 		}

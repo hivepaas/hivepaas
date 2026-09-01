@@ -57,7 +57,7 @@ func TransformNetwork(
 		return nil, hperrors.Wrap(err)
 	}
 
-	net := refClusterObjects.RefNetworks[netEnt.RefID]
+	net := refClusterObjects.RefNetworks[setting.RefID]
 
 	resp.Driver = net.Driver
 	resp.Internal = net.Internal

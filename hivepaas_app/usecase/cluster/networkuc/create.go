@@ -40,8 +40,7 @@ func (uc *UC) CreateNetwork(
 			if err != nil {
 				return hperrors.Wrap(err)
 			}
-			netEntity.RefID = createResp.ID
-
+			pData.Setting.RefID = createResp.ID
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = req.Driver
 			if err := pData.Setting.SetData(netEntity); err != nil {

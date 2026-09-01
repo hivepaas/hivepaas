@@ -38,7 +38,7 @@ func (s *service) SyncNetworks(
 
 	existingNets := make(map[string]*entity.Setting, len(dbSettings))
 	for _, s := range dbSettings {
-		existingNets[s.MustAsClusterNetwork().RefID] = s // map docker-net-id -> *Setting
+		existingNets[s.RefID] = s // map docker-net-id -> *Setting
 	}
 
 	// 3. For each docker network, if not exists in DB, create new setting
@@ -55,12 +55,11 @@ func (s *service) SyncNetworks(
 				Kind:        net.Driver,
 				Status:      base.SettingStatusActive,
 				Name:        net.Name,
+				RefID:       net.ID,
 				Inheritable: net.Name == base.NetworkGlobalRouting,
 				Version:     currentSettingVersion,
 			}
-			volEntity := &entity.ClusterNetwork{
-				RefID: net.ID,
-			}
+			volEntity := &entity.ClusterNetwork{}
 			if err := setting.SetData(volEntity); err != nil {
 				return nil, hperrors.Wrap(err)
 			}

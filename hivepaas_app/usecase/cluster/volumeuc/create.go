@@ -47,11 +47,11 @@ func (uc *UC) CreateVolume(
 				return hperrors.Wrap(err)
 			}
 			vol := &createResp.Volume
-			volEntity.RefID = dockerhelper.GetVolumeID(vol)
 			if req.BindOptions != nil {
 				volEntity.NodeID = req.BindOptions.NodeID
 				volEntity.NodeLabel = req.BindOptions.NodeLabel
 			}
+			pData.Setting.RefID = dockerhelper.GetVolumeID(vol)
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = vol.Driver
 			if err := pData.Setting.SetData(volEntity); err != nil {

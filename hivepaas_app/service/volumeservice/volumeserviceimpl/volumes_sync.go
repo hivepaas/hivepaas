@@ -39,7 +39,7 @@ func (s *service) SyncVolumes(
 
 	existingVols := make(map[string]*entity.Setting, len(dbSettings)) // map docker-id -> *Setting
 	for _, s := range dbSettings {
-		existingVols[s.MustAsClusterVolume().RefID] = s
+		existingVols[s.RefID] = s
 	}
 
 	// 3. For each docker volume, if not exists in DB, create new setting
@@ -57,11 +57,10 @@ func (s *service) SyncVolumes(
 				Kind:    vol.Driver,
 				Status:  base.SettingStatusActive,
 				Name:    vol.Name,
+				RefID:   volID,
 				Version: currentSettingVersion,
 			}
-			volEntity := &entity.ClusterVolume{
-				RefID: volID,
-			}
+			volEntity := &entity.ClusterVolume{}
 			if err := setting.SetData(volEntity); err != nil {
 				return nil, hperrors.Wrap(err)
 			}

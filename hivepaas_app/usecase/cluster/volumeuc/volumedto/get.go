@@ -101,7 +101,7 @@ func TransformVolume(
 		return nil, hperrors.Wrap(err)
 	}
 
-	vol := refClusterObjects.RefVolumes[volEnt.RefID]
+	vol := refClusterObjects.RefVolumes[setting.RefID]
 
 	resp.Driver = docker.VolumeDriver(vol.Driver)
 	resp.Mountpoint = vol.Mountpoint

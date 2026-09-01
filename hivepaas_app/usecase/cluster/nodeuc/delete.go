@@ -29,7 +29,7 @@ func (uc *UC) DeleteNode(
 				if req.Force {
 					options = append(options, docker.NodeRemoveForce(true))
 				}
-				_, err := uc.dockerManager.NodeRemove(ctx, data.Setting.MustAsClusterNode().RefID, options...)
+				_, err := uc.dockerManager.NodeRemove(ctx, data.Setting.RefID, options...)
 				if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 					return hperrors.Wrap(err)
 				}

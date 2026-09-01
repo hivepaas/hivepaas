@@ -38,7 +38,7 @@ func (s *service) SyncNodes(
 
 	existingNodes := make(map[string]*entity.Setting, len(dbSettings))
 	for _, s := range dbSettings {
-		existingNodes[s.MustAsClusterNode().RefID] = s // map docker-node-id -> *Setting
+		existingNodes[s.RefID] = s // map docker-node-id -> *Setting
 	}
 
 	// 3. For each docker node, if not exists in DB, create new setting
@@ -55,11 +55,10 @@ func (s *service) SyncNodes(
 				Kind:    string(node.Spec.Role),
 				Status:  base.SettingStatusActive,
 				Name:    node.Spec.Name,
+				RefID:   node.ID,
 				Version: currentSettingVersion,
 			}
-			nodeEntity := &entity.ClusterNode{
-				RefID: node.ID,
-			}
+			nodeEntity := &entity.ClusterNode{}
 			if err := setting.SetData(nodeEntity); err != nil {
 				return nil, hperrors.Wrap(err)
 			}

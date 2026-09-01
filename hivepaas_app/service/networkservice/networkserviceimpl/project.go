@@ -32,7 +32,7 @@ func (s *service) ListProjectNetworks(
 
 	netIDs := make([]string, 0, len(settings))
 	for _, setting := range settings {
-		netIDs = append(netIDs, setting.MustAsClusterNetwork().RefID)
+		netIDs = append(netIDs, setting.RefID)
 	}
 
 	netList, err := s.dockerManager.NetworkListByIDs(ctx, netIDs)
@@ -67,7 +67,7 @@ func (s *service) RemoveAllProjectNetworks(
 		if setting.ObjectID != project.ID { // imported/inherited network, skip it
 			continue
 		}
-		net := networks[setting.MustAsClusterNetwork().RefID]
+		net := networks[setting.RefID]
 		if net == nil {
 			continue
 		}

@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS settings
     id                VARCHAR(100) PRIMARY KEY,
     scope             VARCHAR(50) NOT NULL,
     object_id         VARCHAR(100) NULL,
+    ref_id            VARCHAR(100) NULL,
     type              VARCHAR(100) NOT NULL,
     kind              VARCHAR(100) NULL,
     name              VARCHAR(100) NULL,
@@ -24,6 +25,7 @@ CREATE TABLE IF NOT EXISTS settings
 
 CREATE INDEX idx_settings_scope ON settings(scope);
 CREATE INDEX idx_settings_object_id ON settings(object_id);
+CREATE INDEX idx_settings_ref_id ON settings(ref_id);
 CREATE INDEX idx_settings_type ON settings(type);
 CREATE INDEX idx_settings_kind ON settings(kind);
 CREATE INDEX idx_settings_name ON settings(name);

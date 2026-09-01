@@ -20,7 +20,6 @@ func (s *clusterNodeParser) New() SettingData {
 }
 
 type ClusterNode struct {
-	RefID string `json:"refId"`
 }
 
 func (s *ClusterNode) GetType() base.SettingType {

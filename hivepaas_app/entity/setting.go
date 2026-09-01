@@ -15,7 +15,7 @@ import (
 
 var (
 	SettingUpsertingConflictCols = []string{"id"}
-	SettingUpsertingUpdateCols   = []string{"scope", "object_id", "type", "kind", "status", "name", "size",
+	SettingUpsertingUpdateCols   = []string{"scope", "object_id", "ref_id", "type", "kind", "status", "name", "size",
 		"data", "inheritable", "is_default", "version", "update_ver",
 		"updated_at", "expire_at", "deleted_at"}
 )
@@ -38,6 +38,7 @@ type Setting struct {
 	ID          string               `bun:",pk" json:"id"`
 	Scope       base.ObjectScopeType `json:"scope"`
 	ObjectID    string               `bun:",nullzero" json:"objectId,omitempty"`
+	RefID       string               `bun:",nullzero" json:"refId,omitempty"`
 	Type        base.SettingType     `json:"type"`
 	Kind        string               `bun:",nullzero" json:"kind,omitempty"`
 	Status      base.SettingStatus   `json:"status"`

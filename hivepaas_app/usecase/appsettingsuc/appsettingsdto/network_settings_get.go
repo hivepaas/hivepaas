@@ -105,7 +105,7 @@ func TransformNetworkAttachments(
 	resp = make([]*NetworkAttachment, 0, len(netAttachments))
 	for _, netAttach := range netAttachments {
 		dbNetwork, _ := gofn.Find(input.DBNetworks, func(s *entity.Setting) bool {
-			return s.Type == base.SettingTypeClusterNetwork && s.MustAsClusterNetwork().RefID == netAttach.Target
+			return s.Type == base.SettingTypeClusterNetwork && s.RefID == netAttach.Target
 		})
 		itemResp := &NetworkAttachment{
 			ID:      netAttach.Target,

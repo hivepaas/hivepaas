@@ -45,7 +45,7 @@ func (uc *UC) SetManagerNodes(
 		dbNode := dbNodeMap[nodeReq.ID]
 		var dockerNode *swarm.Node
 		if dbNode != nil {
-			dockerNode = existingNodes[dbNode.MustAsClusterNode().RefID]
+			dockerNode = existingNodes[dbNode.RefID]
 		}
 		if dockerNode == nil {
 			return nil, hperrors.NewNotFound(fmt.Sprintf("Node %v", nodeReq.ID))

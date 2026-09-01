@@ -57,7 +57,7 @@ func (uc *UC) listNetworksInDocker(
 	if currNets == nil {
 		networks := make([]string, 0, len(settings))
 		for _, setting := range settings {
-			networks = append(networks, setting.MustAsClusterNetwork().RefID)
+			networks = append(networks, setting.RefID)
 		}
 		if len(networks) == 0 {
 			return nil

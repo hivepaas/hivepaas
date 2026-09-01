@@ -127,7 +127,7 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		if !ok {
 			return hperrors.NewNotFound("Volume").WithMsgLog("volume %v not found", dbVolID)
 		}
-		newDockerVolIDs = append(newDockerVolIDs, dbVol.MustAsClusterVolume().RefID)
+		newDockerVolIDs = append(newDockerVolIDs, dbVol.RefID)
 	}
 	data.DBVolumes = dbVolMap
 
@@ -151,7 +151,7 @@ func (uc *UC) prepareUpdatingAppStorageSettings(
 ) {
 	for _, reqMnt := range data.NewMountReqs {
 		dbVol := data.DBVolumes[reqMnt.Source]
-		dockerVol := data.DockerVolumes[dbVol.MustAsClusterVolume().RefID]
+		dockerVol := data.DockerVolumes[dbVol.RefID]
 		dockerMnt := &mount.Mount{
 			Type:        reqMnt.Type,
 			Source:      dockerhelper.GetVolumeID(dockerVol),

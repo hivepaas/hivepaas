@@ -34,7 +34,7 @@ func (s *service) ListProjectEnvVolumes(
 
 	volIDs := make([]string, 0, len(settings))
 	for _, setting := range settings {
-		volIDs = append(volIDs, setting.MustAsClusterVolume().RefID)
+		volIDs = append(volIDs, setting.RefID)
 	}
 
 	volList, err := s.dockerManager.VolumeListByIDs(ctx, volIDs)
@@ -70,7 +70,7 @@ func (s *service) RemoveAllProjectEnvVolumes(
 		if setting.ObjectID != projectEnv.ID { // imported/inherited volume, skip it
 			continue
 		}
-		vol := volumes[setting.MustAsClusterVolume().RefID]
+		vol := volumes[setting.RefID]
 		if vol == nil {
 			continue
 		}

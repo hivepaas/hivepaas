@@ -24,8 +24,7 @@ func (uc *UC) DeleteVolume(
 			data *settings.DeleteSettingData,
 		) error {
 			if data.Setting.ObjectID == req.Scope.ScopeObjectID() {
-				volEnt := data.Setting.MustAsClusterVolume()
-				_, err := uc.dockerManager.VolumeRemove(ctx, volEnt.RefID, true)
+				_, err := uc.dockerManager.VolumeRemove(ctx, data.Setting.RefID, true)
 				if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 					return hperrors.Wrap(err)
 				}

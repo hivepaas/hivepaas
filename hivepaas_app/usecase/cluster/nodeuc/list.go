@@ -57,7 +57,7 @@ func (uc *UC) listNodesInDocker(
 	if currNodes == nil {
 		nodes := make([]string, 0, len(settings))
 		for _, setting := range settings {
-			nodes = append(nodes, setting.MustAsClusterNode().RefID)
+			nodes = append(nodes, setting.RefID)
 		}
 		if len(nodes) == 0 {
 			return nil

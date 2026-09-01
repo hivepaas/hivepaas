@@ -91,9 +91,8 @@ func (s *service) GetOrCreateProjectNetwork(
 		hasChange = true
 		setting.Name = inspect.Network.Name
 	}
-	netEntity := &entity.ClusterNetwork{
-		RefID: inspect.Network.ID,
-	}
+	setting.RefID = inspect.Network.ID
+	netEntity := &entity.ClusterNetwork{}
 	if err = setting.SetData(netEntity); err != nil {
 		return nil, nil, hperrors.Wrap(err)
 	}
@@ -127,7 +126,7 @@ func (s *service) ListProjectEnvNetworks(
 
 	netIDs := make([]string, 0, len(settings))
 	for _, setting := range settings {
-		netIDs = append(netIDs, setting.MustAsClusterNetwork().RefID)
+		netIDs = append(netIDs, setting.RefID)
 	}
 
 	netList, err := s.dockerManager.NetworkListByIDs(ctx, netIDs)
@@ -162,7 +161,7 @@ func (s *service) RemoveAllProjectEnvNetworks(
 		if setting.ObjectID != projectEnv.ID { // imported/inherited network, skip it
 			continue
 		}
-		net := networks[setting.MustAsClusterNetwork().RefID]
+		net := networks[setting.RefID]
 		if net == nil {
 			continue
 		}

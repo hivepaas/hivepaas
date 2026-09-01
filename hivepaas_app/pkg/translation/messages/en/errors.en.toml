@@ -119,6 +119,7 @@ ERR_SERVICE_NOT_RUNNING = "Service '{{.Name}}' is not running"
 ERR_MOUNT_TYPE_UNSUPPORTED = "Mount type '{{.Type}}' is not supported"
 ERR_SERVICE_MODE_REPLICATED_REQUIRED = "Service is required to be in 'replicated' mode"
 ERR_ACTIVE_CONTAINER_NOT_FOUND = "No active container found for app '{{.App}}'"
+ERR_SERVICE_MODE_CHANGE_REQUIRES_RUNNING_APP = "Changing the service mode recreates the service, which requires the app to be running"
 
 # File errors
 ERR_FILE_NOT_EXIST = "File '{{.Name}}' does not exist"
@@ -146,6 +147,21 @@ ERR_GIT_LOG_OUTPUT_UNEXPECTED = "Git log output is unexpected: {{.Output}}"
 
 # Build errors
 ERR_DOCKERFILE_NOT_FOUND = "Dockerfile is not found at '{{.Name}}'"
+
+# Backup errors
+ERR_BACKUP_STORAGE_CONFIG_REQUIRED = "Backup storage configuration is required"
+ERR_BACKUP_STORAGE_TYPE_REQUIRED = "Backup storage must be either cloud storage or a volume"
+ERR_BACKUP_ENGINE_UNSUPPORTED = "Backup engine '{{.Name}}' is not supported"
+ERR_BACKUP_COMMAND_REQUIRED = "Backup command is required"
+ERR_BACKUP_COMMAND_EXECUTOR_MISSING = "Backup command executor is not configured"
+ERR_BACKUP_COMMAND_FAILED = "Backup engine command failed"
+ERR_BACKUP_SNAPSHOT_NOT_FOUND = "Backup snapshot '{{.Name}}' is not found"
+ERR_BACKUP_SNAPSHOT_MANIFEST_INVALID = "Backup engine returned an unreadable snapshot manifest"
+ERR_BACKUP_REPO_STORAGE_REQUIRED = "Backup repository requires a cloud storage or a volume"
+ERR_BACKUP_REPO_STORAGE_AMBIGUOUS = "Backup repository accepts either a cloud storage or a volume, not both"
+ERR_BACKUP_REPO_PASSWORD_REQUIRED = "Backup repository password is required"
+ERR_BACKUP_REPO_VOLUME_PATH_UNRESOLVED = "Location of volume '{{.Name}}' on the host cannot be resolved"
+ERR_BACKUP_REPO_VOLUME_NODE_REQUIRED = "Volume '{{.Name}}' must be bound to a node to hold a backup repository"
 
 # Infra errors
 ERR_INFRA = "{{.Error}}"

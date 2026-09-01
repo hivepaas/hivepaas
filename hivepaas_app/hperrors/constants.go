@@ -195,6 +195,17 @@ var (
 		"ERR_SERVICE_MODE_CHANGE_REQUIRES_RUNNING_APP")
 )
 
+// Errors for backup repositories
+var (
+	ErrBackupRepoStorageRequired  = NewErr(ErrBadRequest, "ERR_BACKUP_REPO_STORAGE_REQUIRED")
+	ErrBackupRepoStorageAmbiguous = NewErr(ErrBadRequest, "ERR_BACKUP_REPO_STORAGE_AMBIGUOUS")
+	ErrBackupRepoPasswordRequired = NewErr(ErrBadRequest, "ERR_BACKUP_REPO_PASSWORD_REQUIRED")
+	// The repository lives on a node-local volume, so its location on the host must be resolvable
+	// before kopia can be pointed at it.
+	ErrBackupRepoVolumePathUnresolved = NewErr(ErrPreconditionFailed, "ERR_BACKUP_REPO_VOLUME_PATH_UNRESOLVED")
+	ErrBackupRepoVolumeNodeRequired   = NewErr(ErrBadRequest, "ERR_BACKUP_REPO_VOLUME_NODE_REQUIRED")
+)
+
 // Errors for files
 var (
 	ErrFileNotExist                = NewErr(ErrNotFound, "ERR_FILE_NOT_EXIST")

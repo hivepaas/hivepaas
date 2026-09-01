@@ -32,8 +32,8 @@ type GetCommandPipeResp struct {
 
 type CommandPipeResp struct {
 	*settings.BaseSettingResp
-	SourceCommand *settings.BaseSettingResp `json:"sourceCommand,omitempty"`
-	TargetCommand *settings.BaseSettingResp `json:"targetCommand,omitempty"`
+	SourceCommand *settings.BaseSettingResp `json:"sourceCommand,omitempty" copy:"-"`
+	TargetCommand *settings.BaseSettingResp `json:"targetCommand,omitempty" copy:"-"`
 }
 
 func TransformCommandPipe(

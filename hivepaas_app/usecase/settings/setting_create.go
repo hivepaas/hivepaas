@@ -49,6 +49,7 @@ type CreateSettingData struct {
 type PersistingSettingCreationData struct {
 	Setting           *entity.Setting
 	UpsertingSettings []*entity.Setting
+	UpsertingTags     []*entity.Tag
 }
 
 func (uc *BaseUC) CreateSetting(
@@ -172,6 +173,12 @@ func (uc *BaseUC) persistSettingCreation(
 	upsertingSettings = append(upsertingSettings, persistingData.Setting)
 	err := uc.SettingRepo.UpsertMulti(ctx, db, upsertingSettings,
 		entity.SettingUpsertingConflictCols, entity.SettingUpsertingUpdateCols)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
+	err = uc.TagRepo.UpsertMulti(ctx, db, persistingData.UpsertingTags,
+		entity.TagUpsertingConflictCols, entity.TagUpsertingUpdateCols)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

@@ -21,6 +21,7 @@ type ObjectScope struct {
 	Project    *Project
 	User       *User
 
+	LockScopeObject  bool
 	NotRequireActive bool
 	NoInherited      bool
 }

@@ -350,13 +350,41 @@ func Wrap(err error) HPError {
 	if err == nil {
 		return nil
 	}
-	if e, ok := errors.AsType[*hpError](err); ok {
-		return e // already is a AppError, no need to wrap
+
+	e, ok := errors.AsType[*hpError](err)
+	if !ok {
+		return &hpError{
+			ntParams:           map[string]any{},
+			params:             map[string]any{},
+			fallbackToErrorMsg: true,
+			err:                goerrors.Wrap(err, 1),
+		}
 	}
-	return &hpError{
-		ntParams:           map[string]any{},
-		params:             map[string]any{},
-		fallbackToErrorMsg: true,
-		err:                goerrors.Wrap(err, 1),
+
+	// Deliberately an identity check rather than errors.Is/As: those walk the chain and would say
+	// yes for a wrapped e too, whereas the question here is whether anything was wrapped around it
+	// at all. errors.AsType above already established that e is somewhere in the chain.
+	if err == error(e) { //nolint:err113,errorlint
+		return e // already is an HPError with nothing wrapped around it
 	}
+
+	// The caller added context around an existing HPError, typically fmt.Errorf("...: %w", err).
+	// Returning the inner HPError would throw that context away, so keep its identity - error
+	// code, status, params and stack trace all stay reachable through the chain - while adopting
+	// the outer error so the added message survives.
+	//
+	// NOTE: this has to be a copy. Assigning the outer error onto e.err would make e.Unwrap()
+	// lead back to e, and every chain walker here would loop forever.
+	wrapped := *e
+	wrapped.params = cloneErrParams(e.params)
+	wrapped.ntParams = cloneErrParams(e.ntParams)
+	wrapped.err = err
+	return &wrapped
+}
+
+func cloneErrParams(params map[string]any) map[string]any {
+	if params == nil {
+		return map[string]any{}
+	}
+	return maps.Clone(params)
 }

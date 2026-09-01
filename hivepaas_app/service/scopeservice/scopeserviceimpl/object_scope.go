@@ -20,6 +20,7 @@ func (s *service) LoadObjectScopeData(
 	case base.ObjectScopeProject:
 		scope.Project, err = s.projectService.LoadProject(ctx, db, scope.ProjectID, requireActive,
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+			bunex.SelectWhereIf(scope.LockScopeObject, "UPDATE OF project"),
 		)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -31,6 +32,7 @@ func (s *service) LoadObjectScopeData(
 			bunex.SelectRelation("Project",
 				bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 			),
+			bunex.SelectWhereIf(scope.LockScopeObject, "UPDATE OF project_env"),
 		)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -48,6 +50,7 @@ func (s *service) LoadObjectScopeData(
 				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			),
 			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+			bunex.SelectWhereIf(scope.LockScopeObject, "UPDATE OF app"),
 		)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -59,7 +62,9 @@ func (s *service) LoadObjectScopeData(
 		scope.ParentAppID = scope.App.ParentID
 
 	case base.ObjectScopeUser:
-		scope.User, err = s.userService.LoadUser(ctx, db, scope.UserID, requireActive)
+		scope.User, err = s.userService.LoadUser(ctx, db, scope.UserID, requireActive,
+			bunex.SelectWhereIf(scope.LockScopeObject, "UPDATE OF user"),
+		)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

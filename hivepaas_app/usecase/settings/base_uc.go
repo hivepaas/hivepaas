@@ -21,6 +21,7 @@ type BaseUC struct {
 	FileRepo          repository.FileRepo
 	SharedSettingRepo repository.SharedSettingRepo
 	SettingRepo       repository.SettingRepo
+	TagRepo           repository.TagRepo
 
 	AppService           appservice.Service
 	ClusterSecretService clustersecretservice.Service
@@ -40,6 +41,7 @@ func New(
 	fileRepo repository.FileRepo,
 	sharedSettingRepo repository.SharedSettingRepo,
 	settingRepo repository.SettingRepo,
+	tagRepo repository.TagRepo,
 
 	appService appservice.Service,
 	clusterSecretService clustersecretservice.Service,
@@ -58,6 +60,7 @@ func New(
 		FileRepo:          fileRepo,
 		SharedSettingRepo: sharedSettingRepo,
 		SettingRepo:       settingRepo,
+		TagRepo:           tagRepo,
 
 		AppService:           appService,
 		ClusterSecretService: clusterSecretService,

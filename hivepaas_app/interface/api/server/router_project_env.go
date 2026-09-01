@@ -37,6 +37,16 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		acmeDnsProviderGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteAcmeDnsProvider)
 	}
 
+	{ // Backup repository group
+		backupRepoGroup := projectEnvGroup.Group("/backup-repos")
+		backupRepoGroup.GET("/:itemID", projectEnvSettingsHandler.GetBackupRepo)
+		backupRepoGroup.GET("", projectEnvSettingsHandler.ListBackupRepo)
+		backupRepoGroup.POST("", projectEnvSettingsHandler.CreateBackupRepo)
+		backupRepoGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateBackupRepo)
+		backupRepoGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateBackupRepoStatus)
+		backupRepoGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteBackupRepo)
+	}
+
 	{ // Basic auth group
 		basicAuthGroup := projectEnvGroup.Group("/basic-auth")
 		basicAuthGroup.GET("/:itemID", projectEnvSettingsHandler.GetBasicAuth)

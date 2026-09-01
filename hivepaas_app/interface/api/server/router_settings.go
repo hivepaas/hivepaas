@@ -41,6 +41,16 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		appPlacementGroup.DELETE("", settingHandler.DeleteAppPlacementSettings)
 	}
 
+	{ // Backup repository group
+		backupRepoGroup := settingGroup.Group("/backup-repos")
+		backupRepoGroup.GET("/:itemID", settingHandler.GetBackupRepo)
+		backupRepoGroup.GET("", settingHandler.ListBackupRepo)
+		backupRepoGroup.POST("", settingHandler.CreateBackupRepo)
+		backupRepoGroup.PUT("/:itemID", settingHandler.UpdateBackupRepo)
+		backupRepoGroup.PUT("/:itemID/status", settingHandler.UpdateBackupRepoStatus)
+		backupRepoGroup.DELETE("/:itemID", settingHandler.DeleteBackupRepo)
+	}
+
 	{ // basic auth group
 		basicAuthGroup := settingGroup.Group("/basic-auth")
 		basicAuthGroup.GET("/:itemID", settingHandler.GetBasicAuth)

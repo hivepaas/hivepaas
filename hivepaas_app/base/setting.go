@@ -14,6 +14,8 @@ const (
 	SettingTypeAppFeatures     SettingType = "app-features"
 	SettingTypeAppPlacement    SettingType = "app-placement"
 	SettingTypeAppRouting      SettingType = "app-routing"
+	SettingTypeBackupRepo      SettingType = "backup-repo"
+	SettingTypeBackupSnapshot  SettingType = "backup-snapshot"
 	SettingTypeBasicAuth       SettingType = "basic-auth"
 	SettingTypeCloudStorage    SettingType = "cloud-storage"
 	SettingTypeClusterNetwork  SettingType = "cluster-network"

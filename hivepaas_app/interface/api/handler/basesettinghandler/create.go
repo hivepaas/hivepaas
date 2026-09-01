@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc/volumedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accesstokenuc/accesstokendto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/acmednsprovideruc/acmednsproviderdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backuprepouc/backuprepodto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc/basicauthdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc/cloudstoragedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandpipeuc/commandpipedto"
@@ -100,6 +101,11 @@ func (h *Handler) CreateSetting(
 		r := apikeydto.NewCreateAPIKeyReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.APIKeyUC.CreateAPIKey(reqCtx, auth, r) }
+
+	case base.ResourceTypeBackupRepo:
+		r := backuprepodto.NewCreateBackupRepoReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.BackupRepoUC.CreateBackupRepo(reqCtx, auth, r) }
 
 	case base.ResourceTypeBasicAuth:
 		r := basicauthdto.NewCreateBasicAuthReq()

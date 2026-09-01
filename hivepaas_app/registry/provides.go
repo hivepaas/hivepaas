@@ -47,6 +47,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice/apppreviewserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice/approutingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice/backupreposerviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice/clustercleanupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice/clustersecretserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice/clusterserviceimpl"
@@ -121,6 +122,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/acmednsprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appplacementsettingsuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backuprepouc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/basicauthuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/cloudstorageuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandpipeuc"
@@ -247,6 +249,7 @@ var Provides = []any{
 	apppreviewuc.New,
 	appsettingsuc.New,
 	appuc.New,
+	backuprepouc.New,
 	basicauthuc.New,
 	binobjectuc.New,
 	builduc.New,
@@ -303,6 +306,7 @@ var Provides = []any{
 	apppreviewserviceimpl.New,
 	approutingserviceimpl.New,
 	appserviceimpl.New,
+	backupreposerviceimpl.New,
 	clustercleanupserviceimpl.New,
 	clustersecretserviceimpl.New,
 	clusterserviceimpl.New,

@@ -55,6 +55,7 @@ type Setting struct {
 	ExpireAt  time.Time `bun:",nullzero" json:"expireAt,omitempty"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
+	Tags        []*Tag     `bun:"rel:has-many,join:id=object_id" json:"tags,omitempty"`
 	Tasks       []*Task    `bun:"rel:has-many,join:id=target_id" json:"tasks,omitempty"`
 	SrcResLinks []*ResLink `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
 	DstResLinks []*ResLink `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`

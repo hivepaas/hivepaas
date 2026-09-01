@@ -33,6 +33,22 @@ RUN apk update && \
     git lfs install --system && \
     rm -rf /var/cache/apk/*
 
+# Install kopia backup engine (statically linked binary from official releases)
+ARG KOPIA_VERSION=0.23.1
+RUN case "${TARGETARCH}" in \
+        amd64) KOPIA_ARCH="x64" ;; \
+        arm64) KOPIA_ARCH="arm64" ;; \
+        arm)   KOPIA_ARCH="arm" ;; \
+        *)     echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;; \
+    esac && \
+    wget -qO /tmp/kopia.tar.gz \
+        "https://github.com/kopia/kopia/releases/download/v${KOPIA_VERSION}/kopia-${KOPIA_VERSION}-linux-${KOPIA_ARCH}.tar.gz" && \
+    tar -xzf /tmp/kopia.tar.gz -C /tmp && \
+    mv "/tmp/kopia-${KOPIA_VERSION}-linux-${KOPIA_ARCH}/kopia" /usr/local/bin/kopia && \
+    chmod +x /usr/local/bin/kopia && \
+    rm -rf /tmp/kopia* && \
+    kopia --version
+
 # Copy compiled agent binary and base configurations
 COPY --from=builder /build/hivepaas-agent .
 COPY --from=builder /build/config ./config

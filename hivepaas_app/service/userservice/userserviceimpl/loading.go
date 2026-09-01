@@ -18,10 +18,13 @@ func (s *service) LoadUser(
 	db database.IDB,
 	userID string,
 	errorIfUnavailable bool,
+	loadOpts ...bunex.SelectQueryOption,
 ) (*entity.User, error) {
-	user, err := s.userRepo.GetByID(ctx, db, userID,
+	opts := []bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
-	)
+	}
+	opts = append(opts, loadOpts...)
+	user, err := s.userRepo.GetByID(ctx, db, userID, opts...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -38,15 +41,18 @@ func (s *service) LoadUsers(
 	db database.IDB,
 	userIDs []string,
 	errorIfUnavailable bool,
+	loadOpts ...bunex.SelectQueryOption,
 ) (map[string]*entity.User, error) {
 	if len(userIDs) == 0 {
 		return nil, nil
 	}
-
 	userIDs = gofn.ToSet(userIDs)
-	users, err := s.userRepo.ListByIDs(ctx, db, userIDs,
+
+	opts := []bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
-	)
+	}
+	opts = append(opts, loadOpts...)
+	users, err := s.userRepo.ListByIDs(ctx, db, userIDs, opts...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -71,15 +77,18 @@ func (s *service) LoadUsersSkipMissing(
 	db database.IDB,
 	userIDs []string,
 	errorIfUnavailable bool,
+	loadOpts ...bunex.SelectQueryOption,
 ) (map[string]*entity.User, error) {
 	if len(userIDs) == 0 {
 		return nil, nil
 	}
-
 	userIDs = gofn.ToSet(userIDs)
-	users, err := s.userRepo.ListByIDs(ctx, db, userIDs,
+
+	opts := []bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
-	)
+	}
+	opts = append(opts, loadOpts...)
+	users, err := s.userRepo.ListByIDs(ctx, db, userIDs, opts...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

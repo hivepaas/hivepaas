@@ -9,5 +9,7 @@ CREATE TABLE IF NOT EXISTS tags
     PRIMARY KEY (object_id, tag)
 );
 
+CREATE INDEX IF NOT EXISTS idx_tags_tag ON tags(tag);
+
 -- +migrate Down
 DROP TABLE IF EXISTS tags;

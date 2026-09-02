@@ -6,6 +6,7 @@ import { matchPath, useLocation } from "react-router";
 import { AppNavLink } from "@application/shared/components/navigation";
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
 import {
     SidebarGroup,
     SidebarMenu,
@@ -32,7 +33,7 @@ function normalizePattern(pattern: string) {
 }
 
 function isNavigationLeaf(item: NavigationItem) {
-    return !item.items || item.items.length === 0;
+    return (!item.items || item.items.length === 0) && (!item.sections || item.sections.length === 0);
 }
 
 function isMatchableItem(item: NavigationItem) {
@@ -56,7 +57,15 @@ function isPatternMatch(pattern: string, pathname: string) {
 }
 
 function getNavigationLeaves(items: NavigationItem[]): NavigationItem[] {
-    return items.flatMap(item => (item.items && item.items.length > 0 ? getNavigationLeaves(item.items) : [item]));
+    return items.flatMap(item => {
+        if (item.sections && item.sections.length > 0) {
+            return item.sections.flatMap(section => getNavigationLeaves(section.items));
+        }
+        if (item.items && item.items.length > 0) {
+            return getNavigationLeaves(item.items);
+        }
+        return [item];
+    });
 }
 
 function findActiveNavigationKey(items: NavigationItem[], pathname: string) {
@@ -119,16 +128,16 @@ interface NavigationLinkProps {
 
 interface NavigationGroupProps {
     activeKey: string | null;
-    item: NavigationItem & {
-        items: NavigationItem[];
-    };
+    item: NavigationItem;
     pathname: string;
 }
 
 function NavigationGroup({ activeKey, item, pathname }: NavigationGroupProps) {
+    const leaves = getNavigationLeaves([item]);
     const isOpen =
-        getNavigationLeaves(item.items).some(subItem => getNavigationItemKey(subItem) === activeKey) ||
-        isPatternMatch(item.pattern, pathname);
+        leaves.some(subItem => getNavigationItemKey(subItem) === activeKey) || isPatternMatch(item.pattern, pathname);
+
+    const { sections } = item;
 
     return (
         <Collapsible
@@ -149,19 +158,49 @@ function NavigationGroup({ activeKey, item, pathname }: NavigationGroupProps) {
                     </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                    <SidebarMenuSub>
-                        {item.items.map(subItem => (
-                            <SidebarMenuSubItem key={subItem.title}>
-                                <SidebarMenuSubButton asChild>
-                                    <NavigationLink
-                                        route={subItem.route}
-                                        label={subItem.title}
-                                        Icon={subItem.icon}
-                                        isActive={getNavigationItemKey(subItem) === activeKey}
-                                    />
-                                </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                        ))}
+                    <SidebarMenuSub className={sections ? "px-1.5" : undefined}>
+                        {sections
+                            ? sections.map((section, sIndex) => (
+                                  <li
+                                      key={section.title}
+                                      className="flex flex-col list-none"
+                                  >
+                                      <div className="px-2 pt-2.5 pb-1 text-[10px] font-semibold tracking-wider text-muted-foreground/70 uppercase select-none">
+                                          {section.title}
+                                      </div>
+                                      <ul className="flex flex-col gap-1 list-none p-0 m-0">
+                                          {section.items.map(subItem => (
+                                              <SidebarMenuSubItem key={subItem.title}>
+                                                  <SidebarMenuSubButton asChild>
+                                                      <NavigationLink
+                                                          route={subItem.route}
+                                                          label={subItem.title}
+                                                          Icon={subItem.icon}
+                                                          isActive={getNavigationItemKey(subItem) === activeKey}
+                                                      />
+                                                  </SidebarMenuSubButton>
+                                              </SidebarMenuSubItem>
+                                          ))}
+                                      </ul>
+                                      {sIndex < sections.length - 1 && (
+                                          <div className="py-1 px-2">
+                                              <Separator className="opacity-40" />
+                                          </div>
+                                      )}
+                                  </li>
+                              ))
+                            : item.items?.map(subItem => (
+                                  <SidebarMenuSubItem key={subItem.title}>
+                                      <SidebarMenuSubButton asChild>
+                                          <NavigationLink
+                                              route={subItem.route}
+                                              label={subItem.title}
+                                              Icon={subItem.icon}
+                                              isActive={getNavigationItemKey(subItem) === activeKey}
+                                          />
+                                      </SidebarMenuSubButton>
+                                  </SidebarMenuSubItem>
+                              ))}
                     </SidebarMenuSub>
                 </CollapsibleContent>
             </SidebarMenuItem>
@@ -169,12 +208,18 @@ function NavigationGroup({ activeKey, item, pathname }: NavigationGroupProps) {
     );
 }
 
-interface NavigationItem {
+export interface NavigationSection {
+    title: string;
+    items: NavigationItem[];
+}
+
+export interface NavigationItem {
     title: string;
     route: string;
     pattern: string;
     icon?: LucideIcon;
     items?: NavigationItem[];
+    sections?: NavigationSection[];
 }
 
 export function NavMain({ items }: { items: NavigationItem[] }) {
@@ -186,11 +231,11 @@ export function NavMain({ items }: { items: NavigationItem[] }) {
             {/* <SidebarGroupLabel>Platform</SidebarGroupLabel> */}
             <SidebarMenu>
                 {items.map(item =>
-                    item.items && item.items.length > 0 ? (
+                    (item.items && item.items.length > 0) || (item.sections && item.sections.length > 0) ? (
                         <NavigationGroup
                             key={item.title}
                             activeKey={activeKey}
-                            item={{ ...item, items: item.items }}
+                            item={item}
                             pathname={location.pathname}
                         />
                     ) : (

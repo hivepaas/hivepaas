@@ -118,7 +118,7 @@ function getGithubAppCreateRoute(scope: GithubAppTableScope) {
         return ROUTE.projects.single.providerConfiguration.githubApps.create.$route(scope.projectId);
     }
 
-    return ROUTE.sources.githubApps.create.$route;
+    return ROUTE.settings.githubApps.create.$route;
 }
 
 export function SettingsGithubAppTable() {

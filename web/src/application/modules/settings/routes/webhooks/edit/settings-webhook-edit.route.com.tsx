@@ -1,17 +1,17 @@
 import { listBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { useParams } from "react-router";
-import { GithubAppFormRoute } from "~/settings/module-shared/components/github-app-form-route";
+import { RepoWebhookFormRoute } from "~/settings/module-shared/components/repo-webhook-form-route";
 
-export function SourcesGithubAppEditRoute() {
-    const { githubAppId = "" } = useParams();
+export function SettingsWebhookEditRoute() {
+    const { repoWebhookId = "" } = useParams();
 
     return (
         <div className={cn(listBox, "min-h-64")}>
-            <GithubAppFormRoute
+            <RepoWebhookFormRoute
                 mode="edit"
                 scope={{ type: "settings" }}
-                githubAppId={githubAppId}
+                repoWebhookId={repoWebhookId}
             />
         </div>
     );

@@ -163,6 +163,36 @@ export const ROUTE = {
     settings: {
         $pattern: "providers-and-keys",
 
+        githubApps: {
+            $pattern: "providers-and-keys/github-apps",
+            $route: "/providers-and-keys/github-apps/",
+
+            create: {
+                $pattern: "providers-and-keys/github-apps/create",
+                $route: "/providers-and-keys/github-apps/create/",
+            },
+
+            edit: {
+                $pattern: "providers-and-keys/github-apps/:githubAppId/edit",
+                $route: (githubAppId: string) => `/providers-and-keys/github-apps/${githubAppId}/edit/`,
+            },
+        },
+
+        webhooks: {
+            $pattern: "providers-and-keys/webhooks",
+            $route: "/providers-and-keys/webhooks/",
+
+            create: {
+                $pattern: "providers-and-keys/webhooks/create",
+                $route: "/providers-and-keys/webhooks/create/",
+            },
+
+            edit: {
+                $pattern: "providers-and-keys/webhooks/:repoWebhookId/edit",
+                $route: (repoWebhookId: string) => `/providers-and-keys/webhooks/${repoWebhookId}/edit/`,
+            },
+        },
+
         basicAuth: {
             $pattern: "providers-and-keys/basic-auth",
             $route: "/providers-and-keys/basic-auth/",

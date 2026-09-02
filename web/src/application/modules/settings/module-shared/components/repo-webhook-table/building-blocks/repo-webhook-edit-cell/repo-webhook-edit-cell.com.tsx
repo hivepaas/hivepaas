@@ -38,5 +38,5 @@ function getRepoWebhookEditRoute(scope: RepoWebhookTableScope, id: string) {
         return ROUTE.projects.single.providerConfiguration.webhooks.edit.$route(scope.projectId, id);
     }
 
-    return ROUTE.sources.webhooks.edit.$route(id);
+    return ROUTE.settings.webhooks.edit.$route(id);
 }

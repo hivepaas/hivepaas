@@ -286,7 +286,7 @@ function getGithubAppListRoute(scope: GithubAppTableScope) {
         return ROUTE.projects.single.providerConfiguration.githubApps.$route(scope.projectId);
     }
 
-    return ROUTE.sources.githubApps.$route;
+    return ROUTE.settings.githubApps.$route;
 }
 
 interface Props {

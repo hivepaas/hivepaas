@@ -2,16 +2,28 @@ import * as React from "react";
 
 import { LogoIcon } from "@/assets/icons";
 import {
+    Bell,
     CircleDashed,
     Container,
+    FileBadge,
+    Fingerprint,
+    Github,
+    Globe,
+    HardDrive,
+    KeyRound,
     LayoutGrid,
+    Lock,
     type LucideIcon,
+    Mail,
+    MessageSquare,
     Puzzle,
     Settings,
     Settings2,
-    SlidersHorizontal,
+    ShieldCheck,
+    Terminal,
     User,
     Users,
+    Webhook,
 } from "lucide-react";
 import { useLocation } from "react-router";
 
@@ -31,6 +43,19 @@ import {
 import { NavMain } from "../nav-main";
 import { NavUser } from "../nav-user";
 
+interface SidebarSubItem {
+    title: string;
+    route: string;
+    pattern: string;
+    icon?: LucideIcon;
+    moduleId?: ResourceModuleId;
+}
+
+interface SidebarSection {
+    title: string;
+    items: SidebarSubItem[];
+}
+
 interface SidebarItem {
     title: string;
     route: string;
@@ -38,13 +63,8 @@ interface SidebarItem {
     icon?: LucideIcon;
     moduleId?: ResourceModuleId;
     alwaysVisible?: boolean;
-    items?: {
-        title: string;
-        route: string;
-        pattern: string;
-        icon?: LucideIcon;
-        moduleId?: ResourceModuleId;
-    }[];
+    items?: SidebarSubItem[];
+    sections?: SidebarSection[];
 }
 
 const navMain: SidebarItem[] = [
@@ -57,90 +77,121 @@ const navMain: SidebarItem[] = [
         alwaysVisible: true,
     },
     {
-        title: "Sources",
-        route: "#",
-        pattern: ROUTE.sources.$pattern,
-        icon: SlidersHorizontal,
-        moduleId: MODULE_IDS.Settings,
-        items: [
-            {
-                title: "Github Apps",
-                route: ROUTE.sources.githubApps.$route,
-                pattern: ROUTE.sources.githubApps.$pattern,
-            },
-            {
-                title: "Webhooks",
-                route: ROUTE.sources.webhooks.$route,
-                pattern: ROUTE.sources.webhooks.$pattern,
-            },
-        ],
-    },
-    {
         title: "Providers & Keys",
         route: "#",
         pattern: ROUTE.settings.$pattern,
         icon: Puzzle,
         moduleId: MODULE_IDS.Settings,
-        items: [
+        sections: [
             {
-                title: "Access Tokens",
-                route: ROUTE.settings.accessTokens.$route,
-                pattern: ROUTE.settings.accessTokens.$pattern,
+                title: "Sources",
+                items: [
+                    {
+                        title: "Github Apps",
+                        // eslint-disable-next-line @typescript-eslint/no-deprecated -- lucide's Github brand icon is deprecated, kept intentionally here.
+                        icon: Github,
+                        route: ROUTE.settings.githubApps.$route,
+                        pattern: ROUTE.settings.githubApps.$pattern,
+                    },
+                    {
+                        title: "Webhooks",
+                        icon: Webhook,
+                        route: ROUTE.settings.webhooks.$route,
+                        pattern: ROUTE.settings.webhooks.$pattern,
+                    },
+                ],
             },
             {
-                title: "ACME DNS Providers",
-                route: ROUTE.settings.acmeDnsProviders.$route,
-                pattern: ROUTE.settings.acmeDnsProviders.$pattern,
+                title: "Access & Authentication",
+                items: [
+                    {
+                        title: "Access Tokens",
+                        icon: Fingerprint,
+                        route: ROUTE.settings.accessTokens.$route,
+                        pattern: ROUTE.settings.accessTokens.$pattern,
+                    },
+                    {
+                        title: "Basic Auth",
+                        icon: Lock,
+                        route: ROUTE.settings.basicAuth.$route,
+                        pattern: ROUTE.settings.basicAuth.$pattern,
+                    },
+                    {
+                        title: "SSH Keys",
+                        icon: Terminal,
+                        route: ROUTE.settings.sshKeys.$route,
+                        pattern: ROUTE.settings.sshKeys.$pattern,
+                    },
+                    {
+                        title: "Registry Auth",
+                        icon: Container,
+                        route: ROUTE.settings.registryAuth.$route,
+                        pattern: ROUTE.settings.registryAuth.$pattern,
+                    },
+                    {
+                        title: "OAuth",
+                        icon: KeyRound,
+                        route: ROUTE.settings.oauth.$route,
+                        pattern: ROUTE.settings.oauth.$pattern,
+                    },
+                ],
             },
             {
-                title: "Basic Auth",
-                route: ROUTE.settings.basicAuth.$route,
-                pattern: ROUTE.settings.basicAuth.$pattern,
+                title: "Domain & TLS",
+                items: [
+                    {
+                        title: "ACME DNS Providers",
+                        icon: Globe,
+                        route: ROUTE.settings.acmeDnsProviders.$route,
+                        pattern: ROUTE.settings.acmeDnsProviders.$pattern,
+                    },
+                    {
+                        title: "SSL Certificates",
+                        icon: FileBadge,
+                        route: ROUTE.settings.sslCertificates.$route,
+                        pattern: ROUTE.settings.sslCertificates.$pattern,
+                    },
+                    {
+                        title: "SSL Providers",
+                        icon: ShieldCheck,
+                        route: ROUTE.settings.sslProviders.$route,
+                        pattern: ROUTE.settings.sslProviders.$pattern,
+                    },
+                ],
             },
             {
-                title: "Cloud Storages",
-                route: ROUTE.settings.cloudStorages.$route,
-                pattern: ROUTE.settings.cloudStorages.$pattern,
+                title: "Storages",
+                items: [
+                    {
+                        title: "Cloud Storages",
+                        icon: HardDrive,
+                        route: ROUTE.settings.cloudStorages.$route,
+                        pattern: ROUTE.settings.cloudStorages.$pattern,
+                    },
+                ],
             },
             {
-                title: "Email Accounts",
-                route: ROUTE.settings.emailAccounts.$route,
-                pattern: ROUTE.settings.emailAccounts.$pattern,
-            },
-            {
-                title: "IM Platforms",
-                route: ROUTE.settings.imPlatforms.$route,
-                pattern: ROUTE.settings.imPlatforms.$pattern,
-            },
-            {
-                title: "Notification Targets",
-                route: ROUTE.settings.notificationTargets.$route,
-                pattern: ROUTE.settings.notificationTargets.$pattern,
-            },
-            {
-                title: "OAuth",
-                route: ROUTE.settings.oauth.$route,
-                pattern: ROUTE.settings.oauth.$pattern,
-            },
-            {
-                title: "Registry Auth",
-                route: ROUTE.settings.registryAuth.$route,
-                pattern: ROUTE.settings.registryAuth.$pattern,
-            },
-            {
-                title: "SSH Keys",
-                route: ROUTE.settings.sshKeys.$route,
-                pattern: ROUTE.settings.sshKeys.$pattern,
-            },
-            {
-                title: "SSL Certificates",
-                route: ROUTE.settings.sslCertificates.$route,
-                pattern: ROUTE.settings.sslCertificates.$pattern,
-            },
-            {
-                title: "SSL Providers",
-                route: ROUTE.settings.sslProviders.$route,
-                pattern: ROUTE.settings.sslProviders.$pattern,
+                title: "Notifications",
+                items: [
+                    {
+                        title: "Email Accounts",
+                        icon: Mail,
+                        route: ROUTE.settings.emailAccounts.$route,
+                        pattern: ROUTE.settings.emailAccounts.$pattern,
+                    },
+                    {
+                        title: "IM Platforms",
+                        icon: MessageSquare,
+                        route: ROUTE.settings.imPlatforms.$route,
+                        pattern: ROUTE.settings.imPlatforms.$pattern,
+                    },
+                    {
+                        title: "Notification Targets",
+                        icon: Bell,
+                        route: ROUTE.settings.notificationTargets.$route,
+                        pattern: ROUTE.settings.notificationTargets.$pattern,
+                    },
+                ],
             },
         ],
     },
@@ -267,14 +318,48 @@ const navMain: SidebarItem[] = [
     },
 ];
 
-function hasReadableModuleAccess(item: SidebarItem, permissions: ReadonlyMap<ModuleId, ModulePermission>) {
+function hasReadableModuleAccess(
+    item: { moduleId?: ResourceModuleId; alwaysVisible?: boolean },
+    permissions: ReadonlyMap<ModuleId, ModulePermission>,
+) {
     return (item.alwaysVisible ?? false) || !item.moduleId || permissions.get(item.moduleId)?.actions.read === true;
 }
 
-function filterSidebarItems(items: readonly SidebarItem[], permissions: ReadonlyMap<ModuleId, ModulePermission>) {
-    return items.flatMap(item => {
+function filterSidebarItems(
+    items: readonly SidebarItem[],
+    permissions: ReadonlyMap<ModuleId, ModulePermission>,
+): SidebarItem[] {
+    return items.flatMap((item): SidebarItem[] => {
         if (!hasReadableModuleAccess(item, permissions)) {
             return [];
+        }
+
+        if (item.sections && item.sections.length > 0) {
+            const filteredSections = item.sections.flatMap(sec => {
+                const subItems = sec.items.filter(subItem => hasReadableModuleAccess(subItem, permissions));
+
+                if (subItems.length === 0) {
+                    return [];
+                }
+
+                return [
+                    {
+                        ...sec,
+                        items: subItems,
+                    },
+                ];
+            });
+
+            if (filteredSections.length === 0) {
+                return [];
+            }
+
+            return [
+                {
+                    ...item,
+                    sections: filteredSections,
+                },
+            ];
         }
 
         const subItems = item.items?.filter(subItem => hasReadableModuleAccess(subItem, permissions));

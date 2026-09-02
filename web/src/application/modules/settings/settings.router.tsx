@@ -107,12 +107,42 @@ export const settingsRouter: RouteObject = {
             element: (
                 <ConditionalModule id={MODULE_IDS.Settings}>
                     <Navigate
-                        to={ROUTE.sources.githubApps.$route}
+                        to={ROUTE.settings.githubApps.$route}
                         replace
                     />
                 </ConditionalModule>
             ),
         },
+        createSettingsRoute(ROUTE.settings.githubApps.$pattern, "Github Apps", async () => {
+            const { SettingsGithubAppsRoute } = await getLazyComponents();
+
+            return SettingsGithubAppsRoute;
+        }),
+        createSettingsModuleRoute(ROUTE.settings.githubApps.create.$pattern, "Github Apps", async () => {
+            const { SettingsGithubAppCreateRoute } = await getLazyComponents();
+
+            return SettingsGithubAppCreateRoute;
+        }),
+        createSettingsModuleRoute(ROUTE.settings.githubApps.edit.$pattern, "Github Apps", async () => {
+            const { SettingsGithubAppEditRoute } = await getLazyComponents();
+
+            return SettingsGithubAppEditRoute;
+        }),
+        createSettingsRoute(ROUTE.settings.webhooks.$pattern, "Webhooks", async () => {
+            const { SettingsWebhooksRoute } = await getLazyComponents();
+
+            return SettingsWebhooksRoute;
+        }),
+        createSettingsModuleRoute(ROUTE.settings.webhooks.create.$pattern, "Webhooks", async () => {
+            const { SettingsWebhookCreateRoute } = await getLazyComponents();
+
+            return SettingsWebhookCreateRoute;
+        }),
+        createSettingsModuleRoute(ROUTE.settings.webhooks.edit.$pattern, "Webhooks", async () => {
+            const { SettingsWebhookEditRoute } = await getLazyComponents();
+
+            return SettingsWebhookEditRoute;
+        }),
         createSettingsRoute(ROUTE.settings.basicAuth.$pattern, "Basic Auth", async () => {
             const { SettingsBasicAuthRoute } = await getLazyComponents();
 

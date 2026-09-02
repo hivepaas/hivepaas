@@ -13,6 +13,7 @@ import {
     UpdateNotificationTargetStatusDialog,
     UpdateOAuthStatusDialog,
     UpdateRegistryAuthStatusDialog,
+    UpdateRepoWebhookStatusDialog,
     UpdateSSHKeyStatusDialog,
     UpdateSslCertStatusDialog,
     UpdateSslProviderStatusDialog,
@@ -27,6 +28,7 @@ import {
     useUpdateNotificationTargetStatusDialogState,
     useUpdateOAuthStatusDialogState,
     useUpdateRegistryAuthStatusDialogState,
+    useUpdateRepoWebhookStatusDialogState,
     useUpdateSSHKeyStatusDialogState,
     useUpdateSslCertStatusDialogState,
     useUpdateSslProviderStatusDialogState,
@@ -48,6 +50,7 @@ function View() {
     const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
     const provisionGithubAppDialog = useProvisionGithubAppDialogState();
     const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
+    const updateRepoWebhookStatusDialog = useUpdateRepoWebhookStatusDialogState();
 
     useUpdateEffect(() => {
         updateBasicAuthStatusDialog.destroy();
@@ -64,6 +67,7 @@ function View() {
         updateNotificationTargetStatusDialog.destroy();
         provisionGithubAppDialog.destroy();
         updateGithubAppStatusDialog.destroy();
+        updateRepoWebhookStatusDialog.destroy();
     }, [location]);
 
     return (
@@ -82,6 +86,7 @@ function View() {
             <UpdateNotificationTargetStatusDialog />
             <ProvisionGithubAppDialog />
             <UpdateGithubAppStatusDialog />
+            <UpdateRepoWebhookStatusDialog />
         </>
     );
 }

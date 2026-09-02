@@ -220,7 +220,7 @@ function getRepoWebhookListRoute(scope: RepoWebhookTableScope) {
         return ROUTE.projects.single.providerConfiguration.webhooks.$route(scope.projectId);
     }
 
-    return ROUTE.sources.webhooks.$route;
+    return ROUTE.settings.webhooks.$route;
 }
 
 interface Props {

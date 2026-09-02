@@ -38,6 +38,8 @@
     .icon {
       width: 16px;
       height: 16px;
+      color: hsl(var(--muted-foreground));
+      flex-shrink: 0;
 
       transition: color 0.1s ease-in-out;
     }

@@ -106,7 +106,7 @@ function getRepoWebhookCreateRoute(scope: RepoWebhookTableScope) {
         return ROUTE.projects.single.providerConfiguration.webhooks.create.$route(scope.projectId);
     }
 
-    return ROUTE.sources.webhooks.create.$route;
+    return ROUTE.settings.webhooks.create.$route;
 }
 
 export function SettingsRepoWebhookTable() {

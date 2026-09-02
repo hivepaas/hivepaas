@@ -2,6 +2,12 @@
  * Settings
  */
 export {
+    SettingsGithubAppsRoute,
+    SettingsGithubAppCreateRoute,
+    SettingsGithubAppEditRoute,
+    SettingsWebhooksRoute,
+    SettingsWebhookCreateRoute,
+    SettingsWebhookEditRoute,
     SettingsBasicAuthRoute,
     SettingsEmailAccountsRoute,
     SettingsImPlatformsRoute,

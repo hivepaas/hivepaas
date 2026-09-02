@@ -38,5 +38,5 @@ function getGithubAppEditRoute(scope: GithubAppTableScope, id: string) {
         return ROUTE.projects.single.providerConfiguration.githubApps.edit.$route(scope.projectId, id);
     }
 
-    return ROUTE.sources.githubApps.edit.$route(id);
+    return ROUTE.settings.githubApps.edit.$route(id);
 }

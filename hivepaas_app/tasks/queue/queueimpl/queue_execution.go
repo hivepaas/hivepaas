@@ -78,8 +78,7 @@ func (q *taskQueue) executeTask(
 		taskData = &queue.TaskExecData{
 			Task: task,
 		}
-		taskTimeout := task.Config.Timeout.ToDuration()
-		ctx, cancel := context.WithTimeout(ctx, gofn.Coalesce(taskTimeout, taskDefaultTimeout))
+		ctx, cancel := context.WithTimeout(ctx, resolveTaskTimeout(task))
 		defer cancel()
 		taskData.CancelFunc = cancel
 

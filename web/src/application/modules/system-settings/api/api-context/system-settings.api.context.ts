@@ -9,6 +9,8 @@ import {
     SystemBackupApiValidator,
     SystemBackupFileApi,
     SystemBackupFileApiValidator,
+    SystemBackupRepoCleanupApi,
+    SystemBackupRepoCleanupApiValidator,
     SystemCleanupApi,
     SystemCleanupApiValidator,
     SystemSslRenewalApi,
@@ -24,6 +26,7 @@ function createApi() {
     const systemBackupFileValidator = new SystemBackupFileApiValidator();
     const systemCleanupValidator = new SystemCleanupApiValidator();
     const systemSslRenewalValidator = new SystemSslRenewalApiValidator();
+    const systemBackupRepoCleanupValidator = new SystemBackupRepoCleanupApiValidator();
     const hivePaaSServiceSettingsValidator = new HivePaaSServiceSettingsApiValidator();
     const hivePaaSRoutingSettingsValidator = new HivePaaSRoutingSettingsApiValidator();
     const traefikServiceSettingsValidator = new TraefikServiceSettingsApiValidator();
@@ -40,6 +43,7 @@ function createApi() {
             backupFiles: new SystemBackupFileApi(systemBackupFileValidator),
             cleanup: new SystemCleanupApi(systemCleanupValidator),
             sslRenewal: new SystemSslRenewalApi(systemSslRenewalValidator),
+            backupRepoCleanup: new SystemBackupRepoCleanupApi(systemBackupRepoCleanupValidator),
         },
     };
 }

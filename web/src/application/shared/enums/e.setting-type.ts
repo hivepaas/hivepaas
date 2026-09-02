@@ -33,6 +33,7 @@ export const ESettingType = {
     SystemCleanup: "system-cleanup",
     SystemBackup: "system-backup",
     SSLRenewal: "ssl-renewal",
+    BackupRepoCleanup: "backup-repo-cleanup",
     File: "file",
     ImageBuild: "image-build",
     SSLCert: "ssl-cert",

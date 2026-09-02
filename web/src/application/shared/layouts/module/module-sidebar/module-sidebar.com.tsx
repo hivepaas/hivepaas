@@ -205,6 +205,16 @@ const navMain: SidebarItem[] = [
                 pattern: ROUTE.systemSettings.traefik.$pattern,
             },
             {
+                title: "Backup Repo Cleanup",
+                route: ROUTE.systemSettings.backupRepoCleanup.configuration.$route,
+                pattern: ROUTE.systemSettings.backupRepoCleanup.$pattern,
+            },
+            {
+                title: "SSL Renewal",
+                route: ROUTE.systemSettings.sslRenewal.configuration.$route,
+                pattern: ROUTE.systemSettings.sslRenewal.$pattern,
+            },
+            {
                 title: "Data Backup",
                 route: ROUTE.systemSettings.dataBackup.configuration.$route,
                 pattern: ROUTE.systemSettings.dataBackup.$pattern,
@@ -213,11 +223,6 @@ const navMain: SidebarItem[] = [
                 title: "Data Cleanup",
                 route: ROUTE.systemSettings.dataCleanup.configuration.$route,
                 pattern: ROUTE.systemSettings.dataCleanup.$pattern,
-            },
-            {
-                title: "SSL Renewal",
-                route: ROUTE.systemSettings.sslRenewal.configuration.$route,
-                pattern: ROUTE.systemSettings.sslRenewal.$pattern,
             },
         ],
     },

@@ -20,6 +20,7 @@ export const SystemTaskJobName = {
     DataBackup: "data-backup",
     DataCleanup: "data-cleanup",
     SslRenewal: "ssl-renewal",
+    BackupRepoCleanup: "backup-repo-cleanup",
 } as const;
 
 export type SystemTaskJobName = (typeof SystemTaskJobName)[keyof typeof SystemTaskJobName];

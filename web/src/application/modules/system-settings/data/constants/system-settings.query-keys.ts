@@ -11,4 +11,5 @@ export const QK = {
     "system-settings.cleanup.find-one": "system-settings.cleanup.find-one",
     "system-settings.cleanup.repo-cache.find-one": "system-settings.cleanup.repo-cache.find-one",
     "system-settings.ssl-renewal.find-one": "system-settings.ssl-renewal.find-one",
+    "system-settings.backup-repo-cleanup.find-one": "system-settings.backup-repo-cleanup.find-one",
 } as const;

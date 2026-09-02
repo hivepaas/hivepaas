@@ -449,6 +449,21 @@ export const ROUTE = {
                 $route: "/system/ssl-renewal/actions/",
             },
         },
+
+        backupRepoCleanup: {
+            $pattern: "system/backup-repo-cleanup",
+            $route: "/system/backup-repo-cleanup/configuration/",
+
+            configuration: {
+                $pattern: "system/backup-repo-cleanup/configuration",
+                $route: "/system/backup-repo-cleanup/configuration/",
+            },
+
+            actions: {
+                $pattern: "system/backup-repo-cleanup/actions",
+                $route: "/system/backup-repo-cleanup/actions/",
+            },
+        },
     },
 
     /**

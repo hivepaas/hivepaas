@@ -14,12 +14,21 @@ export {
     SystemSettingsDataCleanupConfigurationRoute,
     SystemSettingsSslRenewalActionsRoute,
     SystemSettingsSslRenewalConfigurationRoute,
+    SystemSettingsBackupRepoCleanupActionsRoute,
+    SystemSettingsBackupRepoCleanupConfigurationRoute,
 } from "./routes";
 
 /**
  * Layouts
  */
-export { DataBackupLayout, DataCleanupLayout, HivePaaSLayout, SslRenewalLayout, TraefikLayout } from "./layouts";
+export {
+    DataBackupLayout,
+    DataCleanupLayout,
+    HivePaaSLayout,
+    SslRenewalLayout,
+    BackupRepoCleanupLayout,
+    TraefikLayout,
+} from "./layouts";
 
 /**
  * Dialogs

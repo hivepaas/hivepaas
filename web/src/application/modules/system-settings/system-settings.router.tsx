@@ -261,5 +261,51 @@ export const systemSettingsRouter: RouteObject = {
                 },
             ],
         },
+        {
+            lazy: async () => {
+                const { BackupRepoCleanupLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Backup Repo Cleanup">
+                                <BackupRepoCleanupLayout>
+                                    <Outlet />
+                                </BackupRepoCleanupLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.systemSettings.backupRepoCleanup.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.systemSettings.backupRepoCleanup.configuration.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "configuration",
+                    lazy: async () => {
+                        const { SystemSettingsBackupRepoCleanupConfigurationRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsBackupRepoCleanupConfigurationRoute };
+                    },
+                },
+                {
+                    path: "actions",
+                    lazy: async () => {
+                        const { SystemSettingsBackupRepoCleanupActionsRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsBackupRepoCleanupActionsRoute };
+                    },
+                },
+            ],
+        },
     ],
 } as const;

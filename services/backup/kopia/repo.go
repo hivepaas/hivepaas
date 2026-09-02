@@ -42,18 +42,23 @@ func (c *Client) InitRepo(
 		return hperrors.Wrap(fmt.Errorf("kopia repository create failed: %w", err))
 	}
 
-	if err := c.applyRepoOptions(ctx, opts); err != nil {
-		return hperrors.Wrap(err)
+	if opts != nil {
+		if err := c.ApplyRepoOptions(ctx, &opts.RepoOptions); err != nil {
+			return hperrors.Wrap(err)
+		}
 	}
 	return nil
 }
 
-// applyRepoOptions applies the settings that cannot be passed to `repository create` directly.
-// The repository already exists at this point, so a failure here leaves a usable repository
-// running with kopia defaults instead of the requested values.
-func (c *Client) applyRepoOptions(
+// ApplyRepoOptions applies the settings kopia keeps inside the repository rather than on the
+// command line. They cannot be passed to `repository create` directly, and they can be changed
+// later on a live repository, which is what makes them updatable.
+//
+// NOTE: kopia refuses these on a repository it is not connected to, so the caller has to connect
+// first when the connection state is not already in the config file.
+func (c *Client) ApplyRepoOptions(
 	ctx context.Context,
-	opts *backupmodel.InitRepoOptions,
+	opts *backupmodel.RepoOptions,
 ) error {
 	if opts == nil {
 		return nil
@@ -73,7 +78,7 @@ func (c *Client) applyRepoOptions(
 	if opts.Compression != "" {
 		var errBuf bytes.Buffer
 		_, err := c.execCommand(ctx,
-			[]string{"policy", "set", "--global", "--compression=" + opts.Compression},
+			[]string{cmdPolicy, "set", cmdFlagGlobal, "--compression=" + opts.Compression},
 			func(o *execOptions) { o.stderr = &errBuf })
 		if err != nil {
 			return hperrors.Wrap(fmt.Errorf("kopia policy set compression failed: %s (err: %w)",

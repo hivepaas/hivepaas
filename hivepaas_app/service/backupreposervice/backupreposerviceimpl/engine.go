@@ -35,7 +35,21 @@ func (s *service) buildEngine(
 	repoID string,
 	refObjects *entity.RefObjects,
 ) (backup.Engine, error) {
-	storage, runOnNode, err := s.buildStorage(ctx, db, scope, repo, repoID, refObjects)
+	return s.buildEngineWithPassword(ctx, db, scope, repo, repoID, refObjects, "")
+}
+
+// buildEngineWithPassword is buildEngine for the cases where the repository is not encrypted with
+// the password currently stored on it - changing the password, and rolling that change back.
+func (s *service) buildEngineWithPassword(
+	ctx context.Context,
+	db database.IDB,
+	scope *entity.ObjectScope,
+	repo *entity.BackupRepo,
+	repoID string,
+	refObjects *entity.RefObjects,
+	passwordOverride string,
+) (backup.Engine, error) {
+	storage, runOnNode, err := s.buildStorage(ctx, db, scope, repo, repoID, refObjects, passwordOverride)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -90,6 +104,7 @@ func (s *service) buildStorage(
 	repo *entity.BackupRepo,
 	repoID string,
 	refObjects *entity.RefObjects,
+	passwordOverride string,
 ) (storage *backup.Storage, runOnNode bool, err error) {
 	hasCloudStorage := repo.CloudStorage.ID != ""
 	hasVolume := repo.Volume.ID != ""
@@ -100,9 +115,12 @@ func (s *service) buildStorage(
 		return nil, false, hperrors.Wrap(hperrors.ErrBackupRepoStorageRequired)
 	}
 
-	password, err := repo.Password.GetPlain()
-	if err != nil {
-		return nil, false, hperrors.Wrap(err)
+	password := passwordOverride
+	if password == "" {
+		password, err = repo.Password.GetPlain()
+		if err != nil {
+			return nil, false, hperrors.Wrap(err)
+		}
 	}
 	if password == "" {
 		return nil, false, hperrors.Wrap(hperrors.ErrBackupRepoPasswordRequired)

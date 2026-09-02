@@ -112,17 +112,16 @@ var (
 
 // Errors for user
 var (
-	ErrUserNotFound                = NewErr(ErrNotFound, "ERR_USER_NOT_FOUND")
-	ErrUserUnavailable             = NewErr(ErrUnauthorized, "ERR_USER_UNAVAILABLE")
-	ErrUsernameUnavailable         = NewErr(ErrUnavailable, "ERR_USERNAME_UNAVAILABLE")
-	ErrUserDemoUnauthorized        = NewErr(ErrUnauthorized, "ERR_USER_DEMO_UNAUTHORIZED")
-	ErrUserStatusNotAllowAction    = NewErr(ErrNotAllowed, "ERR_USER_STATUS_NOT_ALLOW_ACTION")
-	ErrUserAlreadySignUp           = NewErr(ErrPreconditionFailed, "ERR_USER_ALREADY_SIGN_UP")
-	ErrUserNotCompleteMFASetup     = NewErr(ErrPreconditionFailed, "ERR_USER_NOT_COMPLETE_MFA_SETUP")
-	ErrPasswordNotMeetRequirements = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_NOT_MEET_REQUIREMENTS")
-	ErrPasswordResetTokenInvalid   = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_RESET_TOKEN_INVALID")
-	ErrEmailUnavailable            = NewErr(ErrUnavailable, "ERR_EMAIL_UNAVAILABLE")
-	ErrEmailChangeUnallowed        = NewErr(ErrNotAllowed, "ERR_EMAIL_CHANGE_UNALLOWED")
+	ErrUserNotFound              = NewErr(ErrNotFound, "ERR_USER_NOT_FOUND")
+	ErrUserUnavailable           = NewErr(ErrUnauthorized, "ERR_USER_UNAVAILABLE")
+	ErrUsernameUnavailable       = NewErr(ErrUnavailable, "ERR_USERNAME_UNAVAILABLE")
+	ErrUserDemoUnauthorized      = NewErr(ErrUnauthorized, "ERR_USER_DEMO_UNAUTHORIZED")
+	ErrUserStatusNotAllowAction  = NewErr(ErrNotAllowed, "ERR_USER_STATUS_NOT_ALLOW_ACTION")
+	ErrUserAlreadySignUp         = NewErr(ErrPreconditionFailed, "ERR_USER_ALREADY_SIGN_UP")
+	ErrUserNotCompleteMFASetup   = NewErr(ErrPreconditionFailed, "ERR_USER_NOT_COMPLETE_MFA_SETUP")
+	ErrPasswordResetTokenInvalid = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_RESET_TOKEN_INVALID")
+	ErrEmailUnavailable          = NewErr(ErrUnavailable, "ERR_EMAIL_UNAVAILABLE")
+	ErrEmailChangeUnallowed      = NewErr(ErrNotAllowed, "ERR_EMAIL_CHANGE_UNALLOWED")
 )
 
 // Errors for api client
@@ -153,6 +152,7 @@ var (
 	ErrTokenTypeUnsupported                 = NewErr(ErrUnsupported, "ERR_TOKEN_TYPE_UNSUPPORTED")
 	ErrWebhookTypeUnsupported               = NewErr(ErrUnsupported, "ERR_WEBHOOK_TYPE_UNSUPPORTED")
 	ErrIMServiceUnsupported                 = NewErr(ErrUnsupported, "ERR_IM_SERVICE_UNSUPPORTED")
+	ErrPasswordNotMeetRequirements          = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_NOT_MEET_REQUIREMENTS")
 	ErrDataVerNewerThanSystemVer            = NewErr(ErrValueInvalid, "ERR_DATA_VER_NEWER_THAN_SYSTEM_VER")
 )
 
@@ -204,6 +204,13 @@ var (
 	// before kopia can be pointed at it.
 	ErrBackupRepoVolumePathUnresolved = NewErr(ErrPreconditionFailed, "ERR_BACKUP_REPO_VOLUME_PATH_UNRESOLVED")
 	ErrBackupRepoVolumeNodeRequired   = NewErr(ErrBadRequest, "ERR_BACKUP_REPO_VOLUME_NODE_REQUIRED")
+	ErrBackupRepoPasswordMismatched   = NewErr(ErrBadRequest, "ERR_BACKUP_REPO_PASSWORD_MISMATCHED")
+	// The repository was re-encrypted but the new password could not be stored, and putting the
+	// old one back failed too. Only a manual password change on the repository can fix it.
+	ErrBackupRepoPasswordOutOfSync = NewErr(ErrPreconditionFailed, "ERR_BACKUP_REPO_PASSWORD_OUT_OF_SYNC")
+	// The settings were saved but the repository would not take them, so backups keep running
+	// with the previous compression and pack size until an update succeeds.
+	ErrBackupRepoOptionsNotApplied = NewErr(ErrActionFailed, "ERR_BACKUP_REPO_OPTIONS_NOT_APPLIED")
 )
 
 // Errors for files

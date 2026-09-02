@@ -76,6 +76,24 @@ func (h *Handler) UpdateBackupRepo(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeBackupRepo, base.ObjectScopeProject)
 }
 
+// ChangeBackupRepoPassword Changes a backup repository's password
+// @Summary Changes a backup repository's password
+// @Description Re-encrypts the backup repository with a new password. The repository itself is
+// @Description re-encrypted first, so the previous password stops working as soon as this succeeds.
+// @Tags    project_settings
+// @Produce json
+// @Id      changeProjectBackupRepoPassword
+// @Param   projectID path string true "project ID"
+// @Param   itemID path string true "setting ID"
+// @Param   body body backuprepodto.ChangeRepoPasswordReq true "request data"
+// @Success 200 {object} backuprepodto.ChangeRepoPasswordResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/backup-repos/{itemID}/password [put]
+func (h *Handler) ChangeBackupRepoPassword(ctx *gin.Context) {
+	h.BackupRepoChangePassword(ctx, base.ObjectScopeProject)
+}
+
 // UpdateBackupRepoStatus Updates backup repo status
 // @Summary Updates backup repo status
 // @Description Updates backup repo status

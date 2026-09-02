@@ -1,7 +1,9 @@
 package kopia
 
 import (
+	"bytes"
 	"context"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
@@ -172,4 +174,170 @@ func mustLen(t *testing.T, v any, n int) {
 	if !assert.Len(t, v, n) {
 		t.FailNow()
 	}
+}
+
+// Compression and pack size live inside the repository, so applying them has to be visible to a
+// client that was never told about them.
+func TestIntegration_ApplyRepoOptions(t *testing.T) {
+	client, baseDir := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, nil))
+
+	mustNoError(t, client.ApplyRepoOptions(ctx, &backupmodel.RepoOptions{
+		PackSizeMB:  32,
+		Compression: "zstd-fastest",
+	}))
+
+	fresh := NewClient(&backupmodel.Storage{
+		RepositoryPassword: "integration-test-password",
+		StorageLocal:       &backupmodel.StorageLocal{Path: filepath.Join(baseDir, "repo")},
+		ConfigFile:         filepath.Join(baseDir, "fresh.config"),
+	}, backupmodel.DefaultCommandExecutor)
+	mustNoError(t, fresh.ConnectRepo(ctx))
+
+	var out bytes.Buffer
+	_, err := fresh.execCommand(ctx, []string{"policy", "get", "--global"}, func(o *execOptions) {
+		o.stdout = &out
+	})
+	mustNoError(t, err)
+	assert.Contains(t, out.String(), "zstd-fastest")
+
+	out.Reset()
+	_, err = fresh.execCommand(ctx, []string{"repository", "status"}, func(o *execOptions) {
+		o.stdout = &out
+	})
+	mustNoError(t, err)
+	assert.Contains(t, out.String(), "33.6 MB")
+}
+
+// Clearing the compression must actually stop the repository compressing, which only happens
+// because an empty value is normalized to the engine's explicit "none".
+func TestIntegration_ApplyRepoOptions_ClearingCompression(t *testing.T) {
+	client, baseDir := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, nil))
+
+	opts := backupmodel.NewRepoOptions(0, "zstd-fastest")
+	mustNoError(t, client.ApplyRepoOptions(ctx, &opts))
+
+	// This is what the update path builds when the user empties the compression field.
+	cleared := backupmodel.NewRepoOptions(0, "")
+	assert.Equal(t, backupmodel.CompressionNone, cleared.Compression)
+	mustNoError(t, client.ApplyRepoOptions(ctx, &cleared))
+
+	dataDir := filepath.Join(baseDir, "data")
+	mustNoError(t, os.MkdirAll(dataDir, 0o755))
+	// Highly compressible: with compression on this would shrink by orders of magnitude.
+	mustNoError(t, os.WriteFile(filepath.Join(dataDir, "big.txt"),
+		bytes.Repeat([]byte("the quick brown fox jumps over the lazy dog. "), 20000), 0o600))
+
+	_, err := client.BackupDirectory(ctx, dataDir, nil)
+	mustNoError(t, err)
+
+	size := dirSize(t, filepath.Join(baseDir, "repo"))
+	assert.Greater(t, size, int64(500_000), "repository should hold the data uncompressed")
+}
+
+func dirSize(t *testing.T, dir string) int64 {
+	t.Helper()
+	var total int64
+	err := filepath.Walk(dir, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() {
+			total += info.Size()
+		}
+		return nil
+	})
+	mustNoError(t, err)
+	return total
+}
+
+// Importing an existing repository must adopt its settings rather than assume the request's:
+// what comes back has to be what the repository is actually running with.
+func TestIntegration_ReadRepoConfig(t *testing.T) {
+	client, baseDir := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, nil))
+
+	mustNoError(t, client.ApplyRepoOptions(ctx, &backupmodel.RepoOptions{
+		PackSizeMB:  48,
+		Compression: "zstd-better-compression",
+	}))
+
+	// This is the import path: a client that has never seen the repository.
+	importClient := NewClient(&backupmodel.Storage{
+		RepositoryPassword: "integration-test-password",
+		StorageLocal:       &backupmodel.StorageLocal{Path: filepath.Join(baseDir, "repo")},
+		ConfigFile:         filepath.Join(baseDir, "imported.config"),
+	}, backupmodel.DefaultCommandExecutor)
+	mustNoError(t, importClient.ConnectRepo(ctx))
+
+	config, err := importClient.ReadRepoConfig(ctx)
+	mustNoError(t, err)
+
+	assert.Equal(t, 48, config.PackSizeMB)
+	assert.Equal(t, "zstd-better-compression", config.Compression)
+
+	// The retention policy always has values, so an import can show what pruning will really do.
+	mustNotNil(t, config.Retention)
+	assert.Positive(t, config.Retention.KeepLast)
+	assert.Positive(t, config.Retention.KeepDaily)
+	assert.Positive(t, config.Retention.KeepWeekly)
+	assert.Positive(t, config.Retention.KeepMonthly)
+}
+
+// A repository that was never configured reports the engine defaults, not empty values, so an
+// import of one still stores something truthful.
+func TestIntegration_ReadRepoConfig_UnconfiguredRepo(t *testing.T) {
+	client, _ := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, nil))
+
+	config, err := client.ReadRepoConfig(ctx)
+	mustNoError(t, err)
+
+	assert.Equal(t, backupmodel.CompressionNone, config.Compression)
+	assert.Positive(t, config.PackSizeMB)
+	mustNotNil(t, config.Retention)
+}
+
+// Creating a repository without asking for a pack size still leaves the repository with one, so
+// reading the config back is what keeps the stored setting from claiming there is none.
+func TestIntegration_ReadRepoConfig_AfterCreateWithoutOptions(t *testing.T) {
+	client, _ := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, &backupmodel.InitRepoOptions{Description: "no options given"}))
+
+	config, err := client.ReadRepoConfig(ctx)
+	mustNoError(t, err)
+
+	// The engine defaults to 20 MiB; storing the requested 0 would misreport the repository.
+	assert.Equal(t, 20, config.PackSizeMB)
+	assert.Equal(t, backupmodel.CompressionNone, config.Compression)
+}
+
+// What ReadRepoConfig returns has to survive a round trip through ApplyRepoOptions unchanged,
+// otherwise every update would look like a change and re-apply settings forever.
+func TestIntegration_RepoConfig_RoundTripsWithoutDrift(t *testing.T) {
+	client, _ := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, nil))
+	mustNoError(t, client.ApplyRepoOptions(ctx, &backupmodel.RepoOptions{
+		PackSizeMB:  32,
+		Compression: "zstd-fastest",
+	}))
+
+	first, err := client.ReadRepoConfig(ctx)
+	mustNoError(t, err)
+
+	// Feed exactly what was read back in, the way an unchanged update would.
+	echoed := backupmodel.NewRepoOptions(first.PackSizeMB, first.Compression)
+	assert.Equal(t, first.RepoOptions, echoed, "a read-back config must compare equal to itself")
+
+	mustNoError(t, client.ApplyRepoOptions(ctx, &echoed))
+	second, err := client.ReadRepoConfig(ctx)
+	mustNoError(t, err)
+	assert.Equal(t, first.RepoOptions, second.RepoOptions)
 }

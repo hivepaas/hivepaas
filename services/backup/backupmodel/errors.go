@@ -17,6 +17,9 @@ var (
 	ErrCommandExecutorMissing = hperrors.NewErr(hperrors.ErrInternal, "ERR_BACKUP_COMMAND_EXECUTOR_MISSING")
 	ErrCommandFailed          = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_BACKUP_COMMAND_FAILED")
 
+	// Repository configuration read back from the repository
+	ErrRepoConfigUnreadable = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_BACKUP_REPO_CONFIG_UNREADABLE")
+
 	// Snapshots
 	ErrSnapshotNotFound        = hperrors.NewErr(hperrors.ErrNotFound, "ERR_BACKUP_SNAPSHOT_NOT_FOUND")
 	ErrSnapshotManifestInvalid = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_BACKUP_SNAPSHOT_MANIFEST_INVALID")

@@ -16,8 +16,10 @@ const (
 
 	cmdCreate = "create"
 	cmdList   = "list"
+	cmdPolicy = "policy"
 
-	cmdFlagJSON = "--json"
+	cmdFlagJSON   = "--json"
+	cmdFlagGlobal = "--global"
 )
 
 func (c *Client) buildStorageFlags() ([]string, error) {

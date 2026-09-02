@@ -20,25 +20,42 @@ func (s *service) InitRepo(
 		return nil, hperrors.Wrap(err)
 	}
 
+	// Create new repo
 	if !req.ImportExisting {
 		err = engine.InitRepo(ctx, &backup.InitRepoOptions{
 			Description: req.Repo.Description,
-			PackSizeMB:  int(req.Repo.PackSize.MBytes()),
-			Compression: req.Repo.Compression,
+			RepoOptions: backup.RepoOptions{
+				PackSizeMB:  int(req.Repo.PackSize.MBytes()),
+				Compression: req.Repo.Compression,
+			},
 		})
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		return &backupreposervice.InitRepoResp{}, nil
+
+		// Whatever the request left unset, the engine picked a default for. Read it back so the
+		// setting matches the repository from the start instead of storing zeroes.
+		config, err := engine.ReadRepoConfig(ctx)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		return &backupreposervice.InitRepoResp{Config: &config}, nil
 	}
 
-	// Importing: the repository is already out there, only attach to it. Its own format settings
-	// win, so the compression / pack size on the request are deliberately not applied.
+	// Importing: the repository is already out there, only attach to it. Its own settings win, so
+	// rather than pushing the request onto it, read them back and let the caller adopt them.
 	if err = engine.ConnectRepo(ctx); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
 	resp = &backupreposervice.InitRepoResp{}
+
+	config, err := engine.ReadRepoConfig(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	resp.Config = &config
+
 	if !req.SyncData {
 		return resp, nil
 	}

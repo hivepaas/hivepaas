@@ -49,6 +49,8 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		backupRepoGroup.PUT("/:itemID", settingHandler.UpdateBackupRepo)
 		backupRepoGroup.PUT("/:itemID/status", settingHandler.UpdateBackupRepoStatus)
 		backupRepoGroup.DELETE("/:itemID", settingHandler.DeleteBackupRepo)
+		// Change repository password
+		backupRepoGroup.PUT("/:itemID/password", settingHandler.ChangeBackupRepoPassword)
 	}
 
 	{ // basic auth group

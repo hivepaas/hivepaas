@@ -5,7 +5,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backuprepouc/backuprepodto"
 )
 
 // ListBackupRepo Lists backup repositories
@@ -72,6 +71,23 @@ func (h *Handler) CreateBackupRepo(ctx *gin.Context) {
 // @Router  /settings/backup-repos/{itemID} [put]
 func (h *Handler) UpdateBackupRepo(ctx *gin.Context) {
 	h.UpdateSetting(ctx, base.ResourceTypeBackupRepo, base.ObjectScopeGlobal)
+}
+
+// ChangeBackupRepoPassword Changes a backup repository's password
+// @Summary Changes a backup repository's password
+// @Description Re-encrypts the backup repository with a new password. The repository itself is
+// @Description re-encrypted first, so the previous password stops working as soon as this succeeds.
+// @Tags    settings
+// @Produce json
+// @Id      changeSettingBackupRepoPassword
+// @Param   itemID path string true "setting ID"
+// @Param   body body backuprepodto.ChangeRepoPasswordReq true "request data"
+// @Success 200 {object} backuprepodto.ChangeRepoPasswordResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /settings/backup-repos/{itemID}/password [put]
+func (h *Handler) ChangeBackupRepoPassword(ctx *gin.Context) {
+	h.BackupRepoChangePassword(ctx, base.ObjectScopeGlobal)
 }
 
 // UpdateBackupRepoStatus Updates a backup repository's status

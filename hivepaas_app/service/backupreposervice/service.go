@@ -15,4 +15,12 @@ type Service interface {
 	// ListSnapshots reads the snapshots currently stored in a backup repository.
 	ListSnapshots(ctx context.Context, db database.IDB, req *ListSnapshotsReq) (
 		resp *ListSnapshotsResp, err error)
+
+	// ChangeRepoPassword re-encrypts the repository with a new password. The repository itself is
+	// the source of truth: on success the old password stops working immediately.
+	ChangeRepoPassword(ctx context.Context, db database.IDB, req *ChangeRepoPasswordReq) error
+
+	// ApplyRepoOptions pushes the changeable repository settings onto the repository. They are
+	// stored inside it, so backups taken from any node pick them up without further work.
+	ApplyRepoOptions(ctx context.Context, db database.IDB, req *ApplyRepoOptionsReq) error
 }

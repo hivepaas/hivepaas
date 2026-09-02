@@ -6,13 +6,12 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
-	"unicode"
 
-	"github.com/tiendc/gofn"
 	"golang.org/x/crypto/argon2"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 )
 
 const (
@@ -21,31 +20,6 @@ const (
 	hashingMemory    = 64 * 1024 // 64MB
 	hashingThreads   = 4
 	hashingKeyLength = 32
-)
-
-const (
-	passwordMinLen             = 8
-	passwordMaxLen             = 32
-	passwordMustHaveLowercases = 1
-	passwordMustHaveUppercases = 1
-	passwordMustHaveDigits     = 1
-	passwordMustHaveSymbols    = 1
-)
-
-var (
-	errNotMeetRequirementParams = map[string]any{
-		"MinLen":   passwordMinLen,
-		"MaxLen":   passwordMaxLen,
-		"Lowers":   passwordMustHaveLowercases,
-		"Uppers":   passwordMustHaveUppercases,
-		"Digits":   passwordMustHaveDigits,
-		"Specials": passwordMustHaveSymbols,
-	}
-
-	specialCharset  = []rune("!@#$%^&*()_+-=[]{}|;':\",./<>?")
-	mapSpecialChars = gofn.MapSliceToMap(specialCharset, func(k rune) (rune, struct{}) {
-		return k, struct{}{}
-	})
 )
 
 // ChangePassword updates user password with the new one.
@@ -103,37 +77,10 @@ func (s *service) VerifyPassword(user *entity.User, password string) error {
 	return nil
 }
 
-// CheckPasswordStrength checks the password if it meets the strength requirements
-// TODO: consider checking password must not contain first/last name, email
-// TODO: consider checking password must not be the same as last 3 history passwords
 func (s *service) CheckPasswordStrength(password string) error {
-	chars := []rune(password)
-	if len(chars) < passwordMinLen || len(chars) > passwordMaxLen {
-		return hperrors.Wrap(hperrors.ErrPasswordNotMeetRequirements).
-			WithParams(errNotMeetRequirementParams).
-			WithMsgLog("incorrect length: %d", len(chars))
-	}
-	lowers := 0
-	uppers := 0
-	digits := 0
-	specials := 0
-	for _, r := range chars {
-		switch {
-		case unicode.IsDigit(r):
-			digits++
-		case gofn.MapContainKeys(mapSpecialChars, r):
-			specials++
-		case unicode.IsLower(r):
-			lowers++
-		default:
-			uppers++
-		}
-	}
-	if lowers < passwordMustHaveLowercases || uppers < passwordMustHaveUppercases ||
-		digits < passwordMustHaveDigits || specials < passwordMustHaveSymbols {
-		return hperrors.Wrap(hperrors.ErrPasswordNotMeetRequirements).
-			WithParams(errNotMeetRequirementParams).
-			WithMsgLog("lowers %d, uppers %d, digits %d, specials %d", lowers, uppers, digits, specials)
+	err := secrethelper.ValidateStrength(password, -1, -1, -1, -1, -1, -1)
+	if err != nil {
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

@@ -21,6 +21,10 @@ type InitRepoResp struct {
 	// Snapshots are the snapshots found in an imported repository. Always empty when creating a
 	// new repository, and when SyncData is off.
 	Snapshots []*RepoSnapshot
+
+	// Config is what an imported repository is actually configured with. Nil when creating a new
+	// repository, where the request is what decides the settings.
+	Config *backup.RepoConfig
 }
 
 // RepoSnapshot pairs a snapshot with its tags. Tags are stored in the tags table rather than
@@ -40,4 +44,24 @@ type ListSnapshotsReq struct {
 
 type ListSnapshotsResp struct {
 	Snapshots []*RepoSnapshot
+}
+
+type ChangeRepoPasswordReq struct {
+	Scope      *entity.ObjectScope
+	Repo       *entity.BackupRepo
+	RepoID     string
+	RefObjects *entity.RefObjects
+
+	// OldPassword is what the repository is encrypted with right now. It overrides the password
+	// held by Repo, which lets a failed change be rolled back by swapping the two.
+	OldPassword string
+	NewPassword string
+}
+
+type ApplyRepoOptionsReq struct {
+	Scope      *entity.ObjectScope
+	Repo       *entity.BackupRepo
+	RepoID     string
+	RefObjects *entity.RefObjects
+	Options    *backup.RepoOptions
 }

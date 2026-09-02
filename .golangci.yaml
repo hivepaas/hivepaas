@@ -94,7 +94,7 @@ linters:
 formatters:
   enable:
     - gci
-#    - gofmt # SO SLOW
+    - gofmt
 #    - goimports # SO SLOW
   settings:
     gci:

@@ -15,6 +15,8 @@ var (
 	ErrCommandExecutorMissing = backupmodel.ErrCommandExecutorMissing
 	ErrCommandFailed          = backupmodel.ErrCommandFailed
 
+	ErrRepoConfigUnreadable = backupmodel.ErrRepoConfigUnreadable
+
 	ErrSnapshotNotFound        = backupmodel.ErrSnapshotNotFound
 	ErrSnapshotManifestInvalid = backupmodel.ErrSnapshotManifestInvalid
 )

@@ -25,11 +25,45 @@ type Snapshot struct {
 	SizeBytes int64     `json:"sizeBytes,omitempty"`
 }
 
+// RepoOptions are the repository settings that can still be changed once the repository exists.
+// The engine keeps them inside the repository, not in the client config, so applying them once
+// is enough for every node that later connects to it.
+type RepoOptions struct {
+	PackSizeMB  int    `json:"packSizeMb,omitempty"`
+	Compression string `json:"compression,omitempty"`
+}
+
+// HasData reports whether there is anything to apply.
+func (o *RepoOptions) HasData() bool {
+	return o != nil && (o.PackSizeMB > 0 || o.Compression != "")
+}
+
+// CompressionNone is how the engine spells "do not compress". It is also the engine default, so
+// an unset compression and this value mean the same thing.
+const CompressionNone = "none"
+
+// NewRepoOptions normalizes raw settings into what the engine has to be told. Clearing the
+// compression has to be spelled out: leaving it empty would keep the repository compressing with
+// whatever it was set to before.
+func NewRepoOptions(packSizeMB int, compression string) RepoOptions {
+	if compression == "" {
+		compression = CompressionNone
+	}
+	return RepoOptions{PackSizeMB: packSizeMB, Compression: compression}
+}
+
+// RepoConfig is what a repository is actually configured with, read back from the repository
+// itself. Importing an existing repository must not overwrite its settings, so the app has to
+// adopt them instead of assuming whatever the request happened to carry.
+type RepoConfig struct {
+	RepoOptions
+	Retention *RetentionPolicy `json:"retention,omitempty"`
+}
+
 // InitRepoOptions contains the settings applied while creating a new repository.
 type InitRepoOptions struct {
 	Description string `json:"description,omitempty"`
-	PackSizeMB  int    `json:"packSizeMb,omitempty"`
-	Compression string `json:"compression,omitempty"`
+	RepoOptions
 }
 
 // BackupOptions contains parameters for running a backup operation.

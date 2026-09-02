@@ -19,32 +19,27 @@ type CreateBackupRepoReq struct {
 	*BackupRepoBaseReq
 }
 
+// BackupRepoBaseReq holds what can only be decided when the repository is created. Changing any
+// of it later would point at a different repository, or at one in a format it is not in.
 type BackupRepoBaseReq struct {
-	Name           string                    `json:"name"`
-	Engine         backup.EngineType         `json:"engine"`
-	ImportExisting bool                      `json:"importExisting"`
-	Description    string                    `json:"description"`
-	Password       string                    `json:"password"`
-	CloudStorage   basedto.ObjectIDReq       `json:"cloudStorage"`
-	Volume         basedto.ObjectIDReq       `json:"volume"`
-	StoragePrefix  string                    `json:"storagePrefix"`
-	Compression    string                    `json:"compression"`
-	PackSize       unit.DataSize             `json:"packSize"`
-	Retention      *BackupRetentionPolicyReq `json:"retention"`
+	BackupRepoBaseUpdateReq
+	Engine         backup.EngineType   `json:"engine"`
+	ImportExisting bool                `json:"importExisting"`
+	Password       string              `json:"password"`
+	CloudStorage   basedto.ObjectIDReq `json:"cloudStorage"`
+	Volume         basedto.ObjectIDReq `json:"volume"`
+	StoragePrefix  string              `json:"storagePrefix"`
 }
 
 func (req *BackupRepoBaseReq) ToEntity() *entity.BackupRepo {
 	res := &entity.BackupRepo{
 		Engine:        req.Engine,
-		Description:   req.Description,
 		Password:      entity.NewEncryptedField(req.Password),
 		CloudStorage:  entity.ObjectID{ID: req.CloudStorage.ID},
 		Volume:        entity.ObjectID{ID: req.Volume.ID},
 		StoragePrefix: strings.TrimSpace(req.StoragePrefix),
-		Compression:   req.Compression,
-		PackSize:      req.PackSize,
-		Retention:     req.Retention.ToEntity(),
 	}
+	req.Apply(res)
 	return res
 }
 
@@ -52,8 +47,52 @@ func (req *BackupRepoBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
+	res = append(res, req.BackupRepoBaseUpdateReq.validate(field, req.Engine)...)
 	res = append(res, basedto.ValidateStrIn(&req.Engine, true, backup.AllEngineTypes, field+"engine")...)
+	return res
+}
+
+// BackupRepoBaseUpdateReq holds what stays changeable once the repository exists.
+type BackupRepoBaseUpdateReq struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	// Compression and PackSize are stored inside the repository itself, so changing them here
+	// only takes effect once they are pushed to it. See UpdateBackupRepo.
+	Compression string                    `json:"compression"`
+	PackSize    unit.DataSize             `json:"packSize"`
+	Retention   *BackupRetentionPolicyReq `json:"retention"`
+}
+
+func (req *BackupRepoBaseUpdateReq) Apply(repo *entity.BackupRepo) {
+	repo.Description = req.Description
+	repo.Compression = req.Compression
+	repo.Retention = req.Retention.ToEntity()
+
+	// An unset pack size means "leave the repository alone" - the engine has no way to unset it,
+	// so storing zero here would leave the setting disagreeing with the repository for good.
+	if req.PackSize > 0 {
+		repo.PackSize = req.PackSize
+	}
+}
+
+// RepoOptions returns the subset that has to be pushed to the repository to take effect,
+// resolved against what the repository currently has so an omitted pack size does not read as
+// a change that can never be applied.
+func (req *BackupRepoBaseUpdateReq) RepoOptions(repo *entity.BackupRepo) backup.RepoOptions {
+	packSize := req.PackSize
+	if packSize <= 0 {
+		packSize = repo.PackSize
+	}
+	return backup.NewRepoOptions(int(packSize.MBytes()), req.Compression)
+}
+
+func (req *BackupRepoBaseUpdateReq) validate(field string, engine backup.EngineType) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
+	res = append(res, basedto.ValidateStrIn(&req.Compression, false,
+		backup.AllCompressionAlgorithms[engine], field+"compression")...)
 	res = append(res, req.Retention.validate(field+"retention")...)
 	return res
 }

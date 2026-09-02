@@ -13,6 +13,12 @@ type Engine interface {
 	// InitRepo initializes a new backup repository on the storage backend.
 	InitRepo(ctx context.Context, opts *InitRepoOptions) error
 
+	// ApplyRepoOptions applies the changeable settings to an existing repository.
+	ApplyRepoOptions(ctx context.Context, opts *RepoOptions) error
+
+	// ReadRepoConfig reads back the settings the repository is actually running with.
+	ReadRepoConfig(ctx context.Context) (RepoConfig, error)
+
 	// ConnectRepo connects to an existing backup repository on the storage backend.
 	ConnectRepo(ctx context.Context) error
 

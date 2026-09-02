@@ -16,7 +16,7 @@ func (c *Client) Prune(
 	policy *backupmodel.RetentionPolicy,
 ) (res backupmodel.PruneResult, err error) {
 	if policy != nil {
-		args := []string{"policy", "set", "--global"}
+		args := []string{cmdPolicy, "set", cmdFlagGlobal}
 		if policy.KeepLast > 0 {
 			args = append(args, "--keep-latest="+strconv.Itoa(policy.KeepLast))
 		}

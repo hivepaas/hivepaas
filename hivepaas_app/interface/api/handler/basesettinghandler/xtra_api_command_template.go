@@ -13,7 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/commandtemplateuc/commandtemplatedto"
 )
 
-func (h *Handler) CreateCommandPipeFromTemplate(ctx *gin.Context, scopeType base.ObjectScopeType) {
+func (h *Handler) CommandPipeCreateFromTemplate(ctx *gin.Context, scopeType base.ObjectScopeType) {
 	var auth *basedto.Auth
 	var err error
 
@@ -58,7 +58,7 @@ func (h *Handler) CreateCommandPipeFromTemplate(ctx *gin.Context, scopeType base
 	ctx.JSON(http.StatusCreated, resp)
 }
 
-func (h *Handler) CreateCommandTemplateFromTemplate(ctx *gin.Context, scopeType base.ObjectScopeType) {
+func (h *Handler) CommandTemplateCreateFromTemplate(ctx *gin.Context, scopeType base.ObjectScopeType) {
 	var auth *basedto.Auth
 	var err error
 

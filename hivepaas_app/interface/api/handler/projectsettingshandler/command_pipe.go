@@ -72,7 +72,7 @@ func (h *Handler) CreateCommandPipe(ctx *gin.Context) {
 // @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/command-pipes/from-template [post]
 func (h *Handler) CreateCommandPipeFromTemplate(ctx *gin.Context) {
-	h.Handler.CreateCommandPipeFromTemplate(ctx, base.ObjectScopeProject)
+	h.CommandPipeCreateFromTemplate(ctx, base.ObjectScopeProject)
 }
 
 // UpdateCommandPipe Updates command pipe

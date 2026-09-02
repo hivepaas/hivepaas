@@ -72,7 +72,7 @@ func (h *Handler) CreateCommandTemplate(ctx *gin.Context) {
 // @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /projects/{projectID}/command-templates/from-template [post]
 func (h *Handler) CreateCommandTemplateFromTemplate(ctx *gin.Context) {
-	h.Handler.CreateCommandTemplateFromTemplate(ctx, base.ObjectScopeProject)
+	h.CommandTemplateCreateFromTemplate(ctx, base.ObjectScopeProject)
 }
 
 // UpdateCommandTemplate Updates command template

@@ -113,6 +113,7 @@ func NewCreateSecretReq() *CreateSecretReq {
 // Validate implements interface basedto.ReqValidator
 func (req *CreateSecretReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate(true, "")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

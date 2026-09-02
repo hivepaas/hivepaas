@@ -134,6 +134,7 @@ func NewCreateEmailReq() *CreateEmailReq {
 // Validate implements interface basedto.ReqValidator
 func (req *CreateEmailReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

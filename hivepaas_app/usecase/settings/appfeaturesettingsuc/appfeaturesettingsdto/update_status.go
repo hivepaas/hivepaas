@@ -20,6 +20,7 @@ func NewUpdateAppFeatureSettingsStatusReq() *UpdateAppFeatureSettingsStatusReq {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateAppFeatureSettingsStatusReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, req.UpdateUniqueSettingStatusReq.Validate()...)
 	validators = append(validators, basedto.ValidateStrIn(req.Status, false,
 		base.AllSettingSettableStatuses, "status")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))

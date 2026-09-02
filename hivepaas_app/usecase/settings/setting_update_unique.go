@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -23,6 +24,10 @@ type UpdateUniqueSettingReq struct {
 	Inheritable bool `json:"inheritable"`
 	Default     bool `json:"default"`
 	UpdateVer   int  `json:"updateVer"`
+}
+
+func (req *UpdateUniqueSettingReq) Validate() (validators []vld.Validator) {
+	return
 }
 
 type UpdateUniqueSettingResp struct {

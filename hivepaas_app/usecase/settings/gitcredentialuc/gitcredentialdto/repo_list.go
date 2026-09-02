@@ -25,6 +25,7 @@ func NewListRepoReq() *ListRepoReq {
 
 func (req *ListRepoReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, req.GetSettingReq.Validate()...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

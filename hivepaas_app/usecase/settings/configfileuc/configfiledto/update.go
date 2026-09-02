@@ -20,6 +20,7 @@ func NewUpdateConfigFileReq() *UpdateConfigFileReq {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateConfigFileReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, req.UpdateSettingReq.Validate()...)
 	validators = append(validators, req.validate(false, "")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

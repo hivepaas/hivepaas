@@ -21,6 +21,7 @@ func NewUpdateBackupRepoReq() *UpdateBackupRepoReq {
 // Validate (NOTE: this doesn't implement interface basedto.ReqValidator)
 func (req *UpdateBackupRepoReq) Validate(engine backup.EngineType) hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, req.UpdateSettingReq.Validate()...)
 	validators = append(validators, req.validate("", engine)...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

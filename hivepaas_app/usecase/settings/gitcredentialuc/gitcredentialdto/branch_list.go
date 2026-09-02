@@ -24,6 +24,7 @@ func NewListBranchReq() *ListBranchReq {
 
 func (req *ListBranchReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, req.GetSettingReq.Validate()...)
 	validators = append(validators, basedto.ValidateStr(&req.Owner, false, 1, nameMaxLen, "owner")...)
 	validators = append(validators, basedto.ValidateStr(&req.Repo, true, 1, nameMaxLen, "repo")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))

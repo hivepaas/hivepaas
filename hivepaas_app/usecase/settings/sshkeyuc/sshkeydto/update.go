@@ -20,6 +20,7 @@ func NewUpdateSSHKeyReq() *UpdateSSHKeyReq {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateSSHKeyReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, req.UpdateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

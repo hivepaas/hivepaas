@@ -143,6 +143,7 @@ func (req *CreateCommandTemplateReq) ModifyRequest() error {
 
 func (req *CreateCommandTemplateReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.CommandTemplateBaseReq.Validate("")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

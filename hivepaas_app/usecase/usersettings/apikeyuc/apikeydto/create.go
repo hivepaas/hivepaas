@@ -31,6 +31,7 @@ func NewCreateAPIKeyReq() *CreateAPIKeyReq {
 func (req *CreateAPIKeyReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	timeNow := timeutil.NowUTC()
+	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1,
 		base.SettingNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateTime(&req.ExpireAt, true, timeNow,

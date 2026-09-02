@@ -13,6 +13,11 @@ type Service interface {
 	InitRepo(ctx context.Context, db database.IDB, req *InitRepoReq) (resp *InitRepoResp, err error)
 	CleanupRepo(ctx context.Context, db database.IDB, req *CleanupRepoReq) (resp *CleanupRepoResp, err error)
 
+	// SyncRepo reads a repository back: the options it is configured with, and the snapshots it
+	// holds. It writes nothing, on the repository or in the DB - it is what the caller needs to
+	// adopt changes made outside the app.
+	SyncRepo(ctx context.Context, db database.IDB, req *SyncRepoReq) (resp *SyncRepoResp, err error)
+
 	// SyncRepoSnapshots reconciles the stored snapshot records against what the repository holds.
 	// It runs on the caller's transaction.
 	SyncRepoSnapshots(ctx context.Context, db database.Tx, req *SyncRepoSnapshotsReq) (

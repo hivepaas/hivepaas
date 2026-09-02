@@ -27,7 +27,7 @@ func (uc *UC) CleanupBackupRepo(
 	// Taking it without waiting is deliberate: a queued second cleanup would only redo the work
 	// the first one just finished. The scheduled job takes the same lock, so a manual run and a
 	// scheduled one cannot collide either.
-	lock, acquired, err := dblock.TryAcquire(ctx, uc.DB, backupreposervice.CleanupLockName(req.ID))
+	lock, acquired, err := dblock.TryAcquire(ctx, uc.DB, backupreposervice.RepoLockName(req.ID))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

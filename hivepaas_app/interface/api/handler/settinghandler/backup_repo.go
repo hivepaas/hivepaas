@@ -136,3 +136,20 @@ func (h *Handler) DeleteBackupRepo(ctx *gin.Context) {
 func (h *Handler) CleanupBackupRepo(ctx *gin.Context) {
 	h.BackupRepoCleanup(ctx, base.ObjectScopeGlobal)
 }
+
+// SyncBackupRepo Syncs a backup repository back into its setting
+// @Summary Syncs a backup repository back into its setting
+// @Description Reads the repository and adopts what it finds: the options it is configured with,
+// @Description and the snapshots it holds. Use it after the repository was changed outside the
+// @Description app. Nothing in the repository is modified.
+// @Tags    settings
+// @Produce json
+// @Id      syncSettingBackupRepo
+// @Param   itemID path string true "setting ID"
+// @Success 200 {object} backuprepodto.SyncBackupRepoResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /settings/backup-repos/{itemID}/sync [post]
+func (h *Handler) SyncBackupRepo(ctx *gin.Context) {
+	h.BackupRepoSync(ctx, base.ObjectScopeGlobal)
+}

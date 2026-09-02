@@ -53,6 +53,8 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		backupRepoGroup.PUT("/:itemID/password", settingHandler.ChangeBackupRepoPassword)
 		// Apply retention and reconcile stored snapshots
 		backupRepoGroup.POST("/:itemID/cleanup", settingHandler.CleanupBackupRepo)
+		// Adopt options and snapshots changed on the repository outside the app
+		backupRepoGroup.POST("/:itemID/sync", settingHandler.SyncBackupRepo)
 	}
 
 	{ // basic auth group

@@ -5,14 +5,21 @@ import (
 	"github.com/hivepaas/hivepaas/services/backup"
 )
 
-// cleanupLockPrefix namespaces the cleanup advisory lock so it cannot collide with locks taken
-// elsewhere.
-const cleanupLockPrefix = "backup-repo:cleanup:"
+// repoLockPrefix namespaces the advisory lock so it cannot collide with locks taken elsewhere.
+//
+// NOTE: the value still says "cleanup" because it is the lock key itself. Renaming it would give
+// the same repository a different key, so a process still running the old code would not be
+// excluded from one running the new code.
+const repoLockPrefix = "backup-repo:cleanup:"
 
-// CleanupLockName is the advisory lock guarding a repository's cleanup. Both the manual endpoint
-// and the scheduled job take it, so the two can never prune the same repository at once.
-func CleanupLockName(repoSettingID string) string {
-	return cleanupLockPrefix + repoSettingID
+// RepoLockName is the advisory lock guarding everything that reconciles a repository against its
+// stored records - the cleanup endpoint, the scheduled cleanup job, and the sync endpoint.
+//
+// Sync has to take it even though it never writes to the repository: it lists the repository and
+// then reconciles, so interleaving with a cleanup would let it re-add records for snapshots the
+// cleanup had just expired, under fresh IDs.
+func RepoLockName(repoSettingID string) string {
+	return repoLockPrefix + repoSettingID
 }
 
 type InitRepoReq struct {
@@ -88,6 +95,23 @@ type ApplyRepoOptionsReq struct {
 	RepoID     string
 	RefObjects *entity.RefObjects
 	Options    *backup.RepoOptions
+}
+
+type SyncRepoReq struct {
+	Scope       *entity.ObjectScope
+	RepoSetting *entity.Setting
+	RefObjects  *entity.RefObjects
+}
+
+type SyncRepoResp struct {
+	// Config is what the repository is configured with right now. These options live inside the
+	// repository rather than in the setting, so this is the source of truth whenever they were
+	// changed outside the app.
+	Config *backup.RepoConfig
+
+	// Snapshots is everything the repository holds, for the caller to reconcile its records
+	// against. Unlike a cleanup this is a plain read: nothing in the repository is touched.
+	Snapshots []*RepoSnapshot
 }
 
 type SyncRepoSnapshotsReq struct {

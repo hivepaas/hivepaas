@@ -127,7 +127,7 @@ func (s *service) cleanupOneRepo(
 	// The same lock the manual cleanup endpoint takes, so a scheduled run and a user-triggered
 	// one can never prune the same repository at once. Being refused is a normal outcome here:
 	// the other run is doing the work, so this one moves on to the next repository.
-	lock, acquired, err := dblock.TryAcquire(ctx, s.db, backupreposervice.CleanupLockName(repoSetting.ID))
+	lock, acquired, err := dblock.TryAcquire(ctx, s.db, backupreposervice.RepoLockName(repoSetting.ID))
 	if err != nil {
 		output.Error = err.Error()
 		data.TaskOutput.ReposFailed++

@@ -14,6 +14,7 @@ const (
 	cmdSnapshot   = "snapshot"
 	cmdRepository = "repository"
 
+	cmdCache  = "cache"
 	cmdCreate = "create"
 	cmdList   = "list"
 	cmdPolicy = "policy"

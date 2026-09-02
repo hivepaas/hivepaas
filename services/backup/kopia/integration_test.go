@@ -394,3 +394,60 @@ func TestIntegration_Prune_NoPolicyKeepsSnapshots(t *testing.T) {
 	mustNoError(t, err)
 	assert.Len(t, after.Items, 3)
 }
+
+// The sync endpoint exists because a repository is shared state: anything holding its password can
+// change it, and none of that reaches the app's DB. This is that scenario end to end - a second
+// client stands in for whatever made the change - and what a sync has to be able to read back.
+func TestIntegration_SyncReadsBackOutOfBandChanges(t *testing.T) {
+	appClient, baseDir := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, appClient.InitRepo(ctx, &backupmodel.InitRepoOptions{
+		RepoOptions: backupmodel.RepoOptions{PackSizeMB: 32, Compression: "zstd-fastest"},
+	}))
+
+	dataDir := filepath.Join(baseDir, "data")
+	mustNoError(t, os.MkdirAll(dataDir, 0o755))
+	mustNoError(t, os.WriteFile(filepath.Join(dataDir, "a.txt"), []byte("first"), 0o600))
+	first, err := appClient.BackupDirectory(ctx, dataDir, nil)
+	mustNoError(t, err)
+	mustNotNil(t, first.Item)
+
+	// Somebody else, with their own config file, pointed at the same repository.
+	other := NewClient(&backupmodel.Storage{
+		RepositoryPassword: "integration-test-password",
+		StorageLocal:       &backupmodel.StorageLocal{Path: filepath.Join(baseDir, "repo")},
+		ConfigFile:         filepath.Join(baseDir, "other.config"),
+	}, backupmodel.DefaultCommandExecutor)
+	mustNoError(t, other.ConnectRepo(ctx))
+
+	// Drift in both directions the setting can hold: the options, and the snapshots.
+	mustNoError(t, other.ApplyRepoOptions(ctx, &backupmodel.RepoOptions{
+		PackSizeMB:  48,
+		Compression: "zstd-better-compression",
+	}))
+	mustNoError(t, os.WriteFile(filepath.Join(dataDir, "b.txt"), []byte("second"), 0o600))
+	added, err := other.BackupDirectory(ctx, dataDir, nil)
+	mustNoError(t, err)
+	mustNotNil(t, added.Item)
+	_, err = other.DeleteSnapshot(ctx, first.Item.ID)
+	mustNoError(t, err)
+
+	// What the app reads on sync. The refresh is not optional: a connected client answers
+	// `repository status` from its cached copy of the repository format, so without it the pack
+	// size below still reads 32 and the sync reports no drift at all.
+	mustNoError(t, appClient.RefreshCache(ctx))
+	config, err := appClient.ReadRepoConfig(ctx)
+	mustNoError(t, err)
+	assert.Equal(t, 48, config.PackSizeMB, "sync must pick up a pack size changed out of band")
+	assert.Equal(t, "zstd-better-compression", config.Compression,
+		"sync must pick up compression changed out of band")
+
+	list, err := appClient.ListSnapshots(ctx, nil)
+	mustNoError(t, err)
+	ids := make([]string, 0, len(list.Items))
+	for _, item := range list.Items {
+		ids = append(ids, item.ID)
+	}
+	assert.NotContains(t, ids, first.Item.ID, "the snapshot deleted out of band must be gone")
+	assert.Contains(t, ids, added.Item.ID, "the snapshot taken out of band must show up")
+}

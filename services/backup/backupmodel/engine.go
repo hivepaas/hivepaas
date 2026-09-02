@@ -19,6 +19,11 @@ type Engine interface {
 	// ReadRepoConfig reads back the settings the repository is actually running with.
 	ReadRepoConfig(ctx context.Context) (RepoConfig, error)
 
+	// RefreshCache drops what this client cached about the repository, so the next read goes to
+	// the repository itself. Needed before reading back a repository that something else may have
+	// reconfigured: an already-connected client otherwise keeps reporting what it cached.
+	RefreshCache(ctx context.Context) error
+
 	// ConnectRepo connects to an existing backup repository on the storage backend.
 	ConnectRepo(ctx context.Context) error
 

@@ -15,7 +15,7 @@ func (uc *UC) GetBasicAuth(
 	req *basicauthdto.GetBasicAuthReq,
 ) (*basicauthdto.GetBasicAuthResp, error) {
 	req.Type = currentSettingType
-	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
+	resp, err := uc.GetSetting(ctx, uc.DB, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

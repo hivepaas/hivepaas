@@ -33,6 +33,20 @@ func (c *Client) Prune(
 		_, _ = c.execCommand(ctx, args)
 	}
 
+	// Setting the policy does not remove anything on its own, and neither does maintenance:
+	// `snapshot expire` is what actually applies retention, and only with --delete - without it
+	// the command is a dry run that reports what it would remove and changes nothing.
+	var expireErrBuf bytes.Buffer
+	_, err = c.execCommand(ctx, []string{cmdSnapshot, "expire", "--all", "--delete"},
+		func(o *execOptions) {
+			o.stderr = &expireErrBuf
+		})
+	if err != nil {
+		return res, hperrors.Wrap(fmt.Errorf("%w: kopia snapshot expire: %s",
+			backupmodel.ErrCommandFailed, strings.TrimSpace(expireErrBuf.String())))
+	}
+
+	// Maintenance reclaims the blobs the expired snapshots were the last reference to.
 	var errBuf bytes.Buffer
 	_, err = c.execCommand(ctx, []string{"maintenance", "run", "--full"}, func(o *execOptions) {
 		o.stderr = &errBuf

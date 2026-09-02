@@ -120,3 +120,19 @@ func (h *Handler) UpdateBackupRepoStatus(ctx *gin.Context) {
 func (h *Handler) DeleteBackupRepo(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeBackupRepo, base.ObjectScopeGlobal)
 }
+
+// CleanupBackupRepo Cleans up a backup repository
+// @Summary Cleans up a backup repository
+// @Description Applies the repository's retention policy, removing the snapshots it expires, then
+// @Description reconciles the stored snapshot records against what the repository still holds.
+// @Tags    settings
+// @Produce json
+// @Id      cleanupSettingBackupRepo
+// @Param   itemID path string true "setting ID"
+// @Success 200 {object} backuprepodto.CleanupBackupRepoResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /settings/backup-repos/{itemID}/cleanup [post]
+func (h *Handler) CleanupBackupRepo(ctx *gin.Context) {
+	h.BackupRepoCleanup(ctx, base.ObjectScopeGlobal)
+}

@@ -38,12 +38,11 @@ type GetSettingData struct {
 
 func (uc *BaseUC) GetSetting(
 	ctx context.Context,
+	db database.IDB,
 	auth *basedto.Auth,
 	req *GetSettingReq,
 	data *GetSettingData,
 ) (_ *GetSettingResp, err error) {
-	db := uc.DB
-
 	if err = uc.ScopeService.LoadObjectScopeData(ctx, db, req.Scope); err != nil {
 		return nil, hperrors.Wrap(err)
 	}

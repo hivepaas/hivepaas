@@ -24,7 +24,7 @@ func (uc *UC) GetDownloadToken(
 	req *secretdto.GetDownloadTokenReq,
 ) (*secretdto.GetDownloadTokenResp, error) {
 	req.Type = currentSettingType
-	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{})
+	resp, err := uc.GetSetting(ctx, uc.DB, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

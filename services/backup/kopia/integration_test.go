@@ -341,3 +341,56 @@ func TestIntegration_RepoConfig_RoundTripsWithoutDrift(t *testing.T) {
 	mustNoError(t, err)
 	assert.Equal(t, first.RepoOptions, second.RepoOptions)
 }
+
+// Prune has to actually remove the snapshots the retention policy expires. Setting the policy and
+// running maintenance does not do that on its own - only `snapshot expire --delete` does.
+func TestIntegration_Prune_AppliesRetention(t *testing.T) {
+	client, baseDir := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, nil))
+
+	dataDir := filepath.Join(baseDir, "data")
+	mustNoError(t, os.MkdirAll(dataDir, 0o755))
+	for i := range 4 {
+		mustNoError(t, os.WriteFile(filepath.Join(dataDir, "f.txt"),
+			[]byte{byte('a' + i)}, 0o600))
+		_, err := client.BackupDirectory(ctx, dataDir, nil)
+		mustNoError(t, err)
+	}
+
+	before, err := client.ListSnapshots(ctx, nil)
+	mustNoError(t, err)
+	mustLen(t, before.Items, 4)
+
+	_, err = client.Prune(ctx, &backupmodel.RetentionPolicy{KeepLast: 2})
+	mustNoError(t, err)
+
+	after, err := client.ListSnapshots(ctx, nil)
+	mustNoError(t, err)
+	assert.Len(t, after.Items, 2, "retention keepLast=2 should have expired the 2 oldest snapshots")
+
+	// The survivors must be the newest ones, not an arbitrary pair.
+	assert.Equal(t, before.Items[len(before.Items)-1].ID, after.Items[len(after.Items)-1].ID)
+}
+
+// A prune with no policy must not remove anything: it only reclaims unreferenced blobs.
+func TestIntegration_Prune_NoPolicyKeepsSnapshots(t *testing.T) {
+	client, baseDir := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, nil))
+
+	dataDir := filepath.Join(baseDir, "data")
+	mustNoError(t, os.MkdirAll(dataDir, 0o755))
+	for i := range 3 {
+		mustNoError(t, os.WriteFile(filepath.Join(dataDir, "f.txt"), []byte{byte('a' + i)}, 0o600))
+		_, err := client.BackupDirectory(ctx, dataDir, nil)
+		mustNoError(t, err)
+	}
+
+	_, err := client.Prune(ctx, nil)
+	mustNoError(t, err)
+
+	after, err := client.ListSnapshots(ctx, nil)
+	mustNoError(t, err)
+	assert.Len(t, after.Items, 3)
+}

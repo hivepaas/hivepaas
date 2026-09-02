@@ -17,7 +17,7 @@ func (uc *UC) ExecuteSchedJob(
 	req *schedjobdto.ExecuteSchedJobReq,
 ) (*schedjobdto.ExecuteSchedJobResp, error) {
 	req.Type = currentSettingType
-	resp, err := uc.GetSetting(ctx, auth, &req.GetSettingReq, &settings.GetSettingData{
+	resp, err := uc.GetSetting(ctx, uc.DB, auth, &req.GetSettingReq, &settings.GetSettingData{
 		SkipLoadingRefObjects: true,
 		AfterLoading: func(
 			ctx context.Context,

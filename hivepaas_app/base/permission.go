@@ -63,6 +63,7 @@ const (
 	ResourceTypeSysError        ResourceType = "sys-error"
 	ResourceTypeSystemBackup    ResourceType = "system-backup"
 	ResourceTypeSystemCleanup   ResourceType = "system-cleanup"
+	ResourceTypeSystemStatus    ResourceType = "system-status"
 	ResourceTypeTask            ResourceType = "task"
 	ResourceTypeUser            ResourceType = "user"
 )

@@ -43,6 +43,7 @@ func connect(cfg *config.Config, logger logging.Logger) *bun.DB {
 	db := bun.NewDB(sqlDB, pgdialect.New())
 	db.SetMaxOpenConns(cfg.DB.MaxOpenConns)
 	db.SetMaxIdleConns(cfg.DB.MaxIdleConns)
+	db.SetConnMaxIdleTime(cfg.DB.ConnMaxIdleTime)
 	db.SetConnMaxLifetime(cfg.DB.ConnMaxLifetime)
 
 	if cfg.IsDevEnv() {

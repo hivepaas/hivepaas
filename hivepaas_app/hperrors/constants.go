@@ -211,6 +211,9 @@ var (
 	// The settings were saved but the repository would not take them, so backups keep running
 	// with the previous compression and pack size until an update succeeds.
 	ErrBackupRepoOptionsNotApplied = NewErr(ErrActionFailed, "ERR_BACKUP_REPO_OPTIONS_NOT_APPLIED")
+	// A cleanup is already running for this repository. Pruning is slow and rewrites the
+	// repository, so a second run is refused rather than queued behind the first.
+	ErrBackupRepoCleanupInProgress = NewErr(ErrConflict, "ERR_BACKUP_REPO_CLEANUP_IN_PROGRESS")
 )
 
 // Errors for files

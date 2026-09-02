@@ -149,6 +149,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefikuc"
@@ -290,6 +291,7 @@ var Provides = []any{
 	storagesettingsuc.New,
 	supportuc.New,
 	syserroruc.New,
+	sysstatusuc.New,
 	systembackupuc.New,
 	systemcleanupuc.New,
 	taskuc.New,

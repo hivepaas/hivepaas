@@ -18,6 +18,11 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		taskGroup.GET("/:taskID/logs", systemHandler.GetTaskLogs)
 	}
 
+	{ // status group
+		statusGroup := systemGroup.Group("/status")
+		statusGroup.GET("/db", systemHandler.GetDBStats)
+	}
+
 	{ // error group
 		errorGroup := systemGroup.Group("/errors")
 		errorGroup.GET("", systemHandler.ListSysError)

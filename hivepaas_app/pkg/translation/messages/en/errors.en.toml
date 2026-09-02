@@ -166,6 +166,7 @@ ERR_BACKUP_REPO_VOLUME_NODE_REQUIRED = "Volume '{{.Name}}' must be bound to a no
 ERR_BACKUP_REPO_PASSWORD_MISMATCHED = "Current backup repository password is incorrect"
 ERR_BACKUP_REPO_PASSWORD_OUT_OF_SYNC = "The backup repository was re-encrypted with the new password but it could not be saved, and restoring the previous password failed. The repository now only opens with the new password and has to be corrected manually."
 ERR_BACKUP_REPO_OPTIONS_NOT_APPLIED = "The settings were saved but the backup repository did not accept them. Backups keep using the previous compression and pack size until an update succeeds."
+ERR_BACKUP_REPO_CLEANUP_IN_PROGRESS = "A cleanup is already running for this backup repository. Wait for it to finish before starting another one."
 
 # Infra errors
 ERR_INFRA = "{{.Error}}"

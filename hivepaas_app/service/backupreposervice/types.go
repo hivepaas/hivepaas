@@ -27,6 +27,20 @@ type InitRepoResp struct {
 	Config *backup.RepoConfig
 }
 
+type CleanupRepoReq struct {
+	Scope       *entity.ObjectScope
+	RepoSetting *entity.Setting
+	RefObjects  *entity.RefObjects
+}
+
+type CleanupRepoResp struct {
+	// Remaining is what the repository holds after the prune. The engine reports only a per-source
+	// count of what it expired - no IDs, no JSON - so this list is what the caller has to
+	// reconcile its own records against. Listing the repository beforehand would add nothing: the
+	// stored records already say what the app believed was there.
+	Remaining []*RepoSnapshot
+}
+
 // RepoSnapshot pairs a snapshot with its tags. Tags are stored in the tags table rather than
 // inside the snapshot data so they can be indexed and searched, so they travel alongside it.
 type RepoSnapshot struct {

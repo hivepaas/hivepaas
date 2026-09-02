@@ -51,6 +51,7 @@ func toRetentionPolicy(retention *entity.BackupRetentionPolicy) *backup.Retentio
 	}
 	return &backup.RetentionPolicy{
 		KeepLast:    retention.KeepLast,
+		KeepHourly:  retention.KeepHourly,
 		KeepDaily:   retention.KeepDaily,
 		KeepWeekly:  retention.KeepWeekly,
 		KeepMonthly: retention.KeepMonthly,

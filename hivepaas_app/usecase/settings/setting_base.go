@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
@@ -180,6 +182,25 @@ func (uc *BaseUC) ensureSettingDefaultUniqueness(
 	)
 	if err != nil {
 		return hperrors.Wrap(err)
+	}
+	return nil
+}
+
+func (uc *BaseUC) CheckAccessOnSetting(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	setting *entity.Setting,
+	action base.ActionType,
+) error {
+	hasPerm, err := uc.PermissionManager.CheckAccessOnSetting(ctx, db, auth, &permission.BaseAccessCheck{
+		Action: action,
+	}, setting)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if !hasPerm {
+		return hperrors.Wrap(hperrors.ErrUserNotHavePermissionOnResource)
 	}
 	return nil
 }

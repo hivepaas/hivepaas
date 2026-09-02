@@ -27,6 +27,7 @@ type kopiaGlobalPolicy struct {
 	} `json:"compression"`
 	Retention struct {
 		KeepLatest  int `json:"keepLatest"`
+		KeepHourly  int `json:"keepHourly"`
 		KeepDaily   int `json:"keepDaily"`
 		KeepWeekly  int `json:"keepWeekly"`
 		KeepMonthly int `json:"keepMonthly"`
@@ -47,6 +48,7 @@ func (c *Client) ReadRepoConfig(ctx context.Context) (res backupmodel.RepoConfig
 	res.Compression = policy.Compression.CompressorName
 	res.Retention = &backupmodel.RetentionPolicy{
 		KeepLast:    policy.Retention.KeepLatest,
+		KeepHourly:  policy.Retention.KeepHourly,
 		KeepDaily:   policy.Retention.KeepDaily,
 		KeepWeekly:  policy.Retention.KeepWeekly,
 		KeepMonthly: policy.Retention.KeepMonthly,

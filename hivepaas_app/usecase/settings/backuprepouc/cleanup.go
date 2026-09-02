@@ -19,6 +19,7 @@ func (uc *UC) CleanupBackupRepo(
 	req *backuprepodto.CleanupBackupRepoReq,
 ) (*backuprepodto.CleanupBackupRepoResp, error) {
 	req.Type = currentSettingType
+	db := uc.DB
 
 	// Pruning rewrites the repository and can run for minutes, far too long to keep a transaction
 	// - and therefore a row lock - open for. An advisory lock belongs to the session instead, so
@@ -27,7 +28,7 @@ func (uc *UC) CleanupBackupRepo(
 	// Taking it without waiting is deliberate: a queued second cleanup would only redo the work
 	// the first one just finished. The scheduled job takes the same lock, so a manual run and a
 	// scheduled one cannot collide either.
-	lock, acquired, err := dblock.TryAcquire(ctx, uc.DB, backupreposervice.RepoLockName(req.ID))
+	lock, acquired, err := dblock.TryAcquire(ctx, db, backupreposervice.RepoLockName(req.ID))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -38,18 +39,19 @@ func (uc *UC) CleanupBackupRepo(
 		_ = lock.Release(ctx)
 	}()
 
-	resp, err := uc.GetSetting(ctx, uc.DB, auth, &req.GetSettingReq, &settings.GetSettingData{})
+	resp, err := uc.GetSetting(ctx, db, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	repoSetting := resp.Data
 
 	// NOTE: this prunes the repository before the DB is touched, and outside any transaction. The
 	// repository is the source of truth for what exists, so a failure while reconciling below
 	// leaves records that the next cleanup reconciles again rather than data that cannot be
 	// recovered.
-	cleanupResp, err := uc.backupRepoService.CleanupRepo(ctx, uc.DB, &backupreposervice.CleanupRepoReq{
+	cleanupResp, err := uc.backupRepoService.CleanupRepo(ctx, db, &backupreposervice.CleanupRepoReq{
 		Scope:       req.Scope,
-		RepoSetting: resp.Data,
+		RepoSetting: repoSetting,
 		RefObjects:  resp.RefObjects,
 	})
 	if err != nil {
@@ -57,11 +59,11 @@ func (uc *UC) CleanupBackupRepo(
 	}
 
 	var syncResp *backupreposervice.SyncRepoSnapshotsResp
-	err = transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
+	err = transaction.Execute(ctx, db, func(db database.Tx) error {
 		syncResp, err = uc.backupRepoService.SyncRepoSnapshots(ctx, db,
 			&backupreposervice.SyncRepoSnapshotsReq{
 				Scope:       req.Scope,
-				RepoSetting: resp.Data,
+				RepoSetting: repoSetting,
 				Remaining:   cleanupResp.Remaining,
 			})
 		return hperrors.Wrap(err)

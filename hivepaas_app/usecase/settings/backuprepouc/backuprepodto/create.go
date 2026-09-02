@@ -99,6 +99,7 @@ func (req *BackupRepoBaseUpdateReq) validate(field string, engine backup.EngineT
 
 type BackupRetentionPolicyReq struct {
 	KeepLast    int `json:"keepLast"`
+	KeepHourly  int `json:"keepHourly"`
 	KeepDaily   int `json:"keepDaily"`
 	KeepWeekly  int `json:"keepWeekly"`
 	KeepMonthly int `json:"keepMonthly"`
@@ -110,6 +111,7 @@ func (req *BackupRetentionPolicyReq) ToEntity() *entity.BackupRetentionPolicy {
 	}
 	return &entity.BackupRetentionPolicy{
 		KeepLast:    req.KeepLast,
+		KeepHourly:  req.KeepHourly,
 		KeepDaily:   req.KeepDaily,
 		KeepWeekly:  req.KeepWeekly,
 		KeepMonthly: req.KeepMonthly,

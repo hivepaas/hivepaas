@@ -112,16 +112,17 @@ var (
 
 // Errors for user
 var (
-	ErrUserNotFound              = NewErr(ErrNotFound, "ERR_USER_NOT_FOUND")
-	ErrUserUnavailable           = NewErr(ErrUnauthorized, "ERR_USER_UNAVAILABLE")
-	ErrUsernameUnavailable       = NewErr(ErrUnavailable, "ERR_USERNAME_UNAVAILABLE")
-	ErrUserDemoUnauthorized      = NewErr(ErrUnauthorized, "ERR_USER_DEMO_UNAUTHORIZED")
-	ErrUserStatusNotAllowAction  = NewErr(ErrNotAllowed, "ERR_USER_STATUS_NOT_ALLOW_ACTION")
-	ErrUserAlreadySignUp         = NewErr(ErrPreconditionFailed, "ERR_USER_ALREADY_SIGN_UP")
-	ErrUserNotCompleteMFASetup   = NewErr(ErrPreconditionFailed, "ERR_USER_NOT_COMPLETE_MFA_SETUP")
-	ErrPasswordResetTokenInvalid = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_RESET_TOKEN_INVALID")
-	ErrEmailUnavailable          = NewErr(ErrUnavailable, "ERR_EMAIL_UNAVAILABLE")
-	ErrEmailChangeUnallowed      = NewErr(ErrNotAllowed, "ERR_EMAIL_CHANGE_UNALLOWED")
+	ErrUserNotFound                    = NewErr(ErrNotFound, "ERR_USER_NOT_FOUND")
+	ErrUserUnavailable                 = NewErr(ErrUnauthorized, "ERR_USER_UNAVAILABLE")
+	ErrUsernameUnavailable             = NewErr(ErrUnavailable, "ERR_USERNAME_UNAVAILABLE")
+	ErrUserDemoUnauthorized            = NewErr(ErrUnauthorized, "ERR_USER_DEMO_UNAUTHORIZED")
+	ErrUserStatusNotAllowAction        = NewErr(ErrNotAllowed, "ERR_USER_STATUS_NOT_ALLOW_ACTION")
+	ErrUserAlreadySignUp               = NewErr(ErrPreconditionFailed, "ERR_USER_ALREADY_SIGN_UP")
+	ErrUserNotCompleteMFASetup         = NewErr(ErrPreconditionFailed, "ERR_USER_NOT_COMPLETE_MFA_SETUP")
+	ErrPasswordResetTokenInvalid       = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_RESET_TOKEN_INVALID")
+	ErrEmailUnavailable                = NewErr(ErrUnavailable, "ERR_EMAIL_UNAVAILABLE")
+	ErrEmailChangeUnallowed            = NewErr(ErrNotAllowed, "ERR_EMAIL_CHANGE_UNALLOWED")
+	ErrUserNotHavePermissionOnResource = NewErr(ErrUnauthorized, "ERR_USER_NOT_HAVE_PERMISSION_ON_RESOURCE")
 )
 
 // Errors for api client

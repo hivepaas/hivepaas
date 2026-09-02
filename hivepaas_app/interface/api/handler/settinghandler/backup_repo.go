@@ -5,6 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	_ "github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backuprepouc/backuprepodto"
 )
 
 // ListBackupRepo Lists backup repositories

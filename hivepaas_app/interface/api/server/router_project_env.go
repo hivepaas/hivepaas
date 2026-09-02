@@ -45,6 +45,12 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		backupRepoGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateBackupRepo)
 		backupRepoGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateBackupRepoStatus)
 		backupRepoGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteBackupRepo)
+		// Change repository password
+		backupRepoGroup.PUT("/:itemID/password", projectEnvSettingsHandler.ChangeBackupRepoPassword)
+		// Apply retention and reconcile stored snapshots
+		backupRepoGroup.POST("/:itemID/cleanup", projectEnvSettingsHandler.CleanupBackupRepo)
+		// Adopt options and snapshots changed on the repository outside the app
+		backupRepoGroup.POST("/:itemID/sync", projectEnvSettingsHandler.SyncBackupRepo)
 	}
 
 	{ // Basic auth group

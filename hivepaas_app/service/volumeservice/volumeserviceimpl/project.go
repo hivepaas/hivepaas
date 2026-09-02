@@ -77,7 +77,10 @@ func (s *service) CreateProjectDefaultVolume(
 		UpdatedAt:       timeNow,
 		CurrentObjectID: project.ID,
 	}
-	setting.MustSetData(&entity.ClusterVolume{})
+	nodeID, _ := s.dockerManager.NodeCurrentID(ctx)
+	setting.MustSetData(&entity.ClusterVolume{
+		NodeID: nodeID,
+	})
 
 	return setting, createResp, nil
 }

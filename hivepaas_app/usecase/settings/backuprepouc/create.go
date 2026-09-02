@@ -7,6 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice/backupreposerviceimpl"
@@ -21,6 +22,12 @@ func (uc *UC) CreateBackupRepo(
 	req *backuprepodto.CreateBackupRepoReq,
 ) (*backuprepodto.CreateBackupRepoResp, error) {
 	req.Type = currentSettingType
+	// Validate password strength on repo creation
+	if !req.ImportExisting {
+		if err := validatePasswordStrength(req.Password); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
 	backupRepo := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,
@@ -91,9 +98,17 @@ func applyRepoConfig(repo *entity.BackupRepo, config *backup.RepoConfig) {
 	if config.Retention != nil {
 		repo.Retention = &entity.BackupRetentionPolicy{
 			KeepLast:    config.Retention.KeepLast,
+			KeepHourly:  config.Retention.KeepHourly,
 			KeepDaily:   config.Retention.KeepDaily,
 			KeepWeekly:  config.Retention.KeepWeekly,
 			KeepMonthly: config.Retention.KeepMonthly,
 		}
 	}
+}
+
+func validatePasswordStrength(password string) error {
+	if err := secrethelper.ValidateStrength(password, -1, -1, -1, -1, -1, -1); err != nil {
+		return hperrors.Wrap(err)
+	}
+	return nil
 }

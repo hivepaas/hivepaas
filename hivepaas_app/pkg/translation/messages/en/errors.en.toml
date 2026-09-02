@@ -64,6 +64,7 @@ ERR_USER_NOT_COMPLETE_MFA_SETUP = "User hasn't completed the required MFA setup 
 ERR_PASSWORD_RESET_TOKEN_INVALID = "Password reset token is invalid or expired"
 ERR_EMAIL_UNAVAILABLE = "Email address is not available"
 ERR_EMAIL_CHANGE_UNALLOWED = "Email changing is not allowed"
+ERR_USER_NOT_HAVE_PERMISSION_ON_RESOURCE = "User doesn't have permission on this resource"
 
 # API client errors
 ERR_API_KEY_INVALID = "API key is invalid"

@@ -20,6 +20,9 @@ func (c *Client) Prune(
 		if policy.KeepLast > 0 {
 			args = append(args, "--keep-latest="+strconv.Itoa(policy.KeepLast))
 		}
+		if policy.KeepHourly > 0 {
+			args = append(args, "--keep-hourly="+strconv.Itoa(policy.KeepHourly))
+		}
 		if policy.KeepDaily > 0 {
 			args = append(args, "--keep-daily="+strconv.Itoa(policy.KeepDaily))
 		}

@@ -283,6 +283,7 @@ func TestIntegration_ReadRepoConfig(t *testing.T) {
 	// The retention policy always has values, so an import can show what pruning will really do.
 	mustNotNil(t, config.Retention)
 	assert.Positive(t, config.Retention.KeepLast)
+	assert.Positive(t, config.Retention.KeepHourly)
 	assert.Positive(t, config.Retention.KeepDaily)
 	assert.Positive(t, config.Retention.KeepWeekly)
 	assert.Positive(t, config.Retention.KeepMonthly)
@@ -371,6 +372,51 @@ func TestIntegration_Prune_AppliesRetention(t *testing.T) {
 
 	// The survivors must be the newest ones, not an arbitrary pair.
 	assert.Equal(t, before.Items[len(before.Items)-1].ID, after.Items[len(after.Items)-1].ID)
+}
+
+// KeepHourly buckets by hour rather than by count, so it needs its own proof: with only one hour
+// bucket active (every snapshot taken in this run falls in the current hour), keepHourly=1 must
+// collapse everything down to the single latest snapshot, the same way a bare keep-hourly=1 does
+// on the kopia CLI.
+func TestIntegration_Prune_AppliesHourlyRetention(t *testing.T) {
+	client, baseDir := newTestRepo(t, "repo")
+	ctx := context.Background()
+	mustNoError(t, client.InitRepo(ctx, nil))
+
+	dataDir := filepath.Join(baseDir, "data")
+	mustNoError(t, os.MkdirAll(dataDir, 0o755))
+	var last backupmodel.BackupResult
+	for i := range 3 {
+		mustNoError(t, os.WriteFile(filepath.Join(dataDir, "f.txt"),
+			[]byte{byte('a' + i)}, 0o600))
+		result, err := client.BackupDirectory(ctx, dataDir, nil)
+		mustNoError(t, err)
+		last = result
+	}
+
+	before, err := client.ListSnapshots(ctx, nil)
+	mustNoError(t, err)
+	mustLen(t, before.Items, 3)
+
+	// Prune only ever sends the rules a caller sets (see Prune: each --keep-* flag is conditional
+	// on being positive), so an unset rule keeps whatever the repository already has - here,
+	// kopia's defaults, every one of them comfortably above 3 and each enough on its own to retain
+	// every snapshot in this test. A zero rule means "no limit" to kopia, not "expire everything":
+	// verified directly against the CLI, an all-zero policy keeps every snapshot. So clearing every
+	// rule to zero first, keepHourly included, is what makes what happens next attributable to the
+	// value Prune actually sends rather than to whatever the repository already had.
+	_, err = client.execCommand(ctx, []string{cmdPolicy, "set", cmdFlagGlobal,
+		"--keep-latest=0", "--keep-hourly=0", "--keep-daily=0", "--keep-weekly=0",
+		"--keep-monthly=0", "--keep-annual=0"})
+	mustNoError(t, err)
+
+	_, err = client.Prune(ctx, &backupmodel.RetentionPolicy{KeepHourly: 1})
+	mustNoError(t, err)
+
+	after, err := client.ListSnapshots(ctx, nil)
+	mustNoError(t, err)
+	assert.Len(t, after.Items, 1, "keepHourly=1 should collapse same-hour snapshots to the latest")
+	assert.Equal(t, last.Item.ID, after.Items[0].ID)
 }
 
 // A prune with no policy must not remove anything: it only reclaims unreferenced blobs.

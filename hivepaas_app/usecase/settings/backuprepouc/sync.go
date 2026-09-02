@@ -29,6 +29,7 @@ func (uc *UC) SyncBackupRepo(
 	req *backuprepodto.SyncBackupRepoReq,
 ) (*backuprepodto.SyncBackupRepoResp, error) {
 	req.Type = currentSettingType
+	db := uc.DB
 
 	// Same lock a cleanup takes, and for the same records. A sync never writes to the repository,
 	// but it does reconcile: listing while a cleanup prunes and then reconciling afterwards would
@@ -36,7 +37,7 @@ func (uc *UC) SyncBackupRepo(
 	//
 	// Refused rather than queued, as with cleanup - a sync that waits for a prune to finish would
 	// only be reading a repository the prune has already reconciled.
-	lock, acquired, err := dblock.TryAcquire(ctx, uc.DB, backupreposervice.RepoLockName(req.ID))
+	lock, acquired, err := dblock.TryAcquire(ctx, db, backupreposervice.RepoLockName(req.ID))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -47,16 +48,17 @@ func (uc *UC) SyncBackupRepo(
 		_ = lock.Release(ctx)
 	}()
 
-	getResp, err := uc.GetSetting(ctx, uc.DB, auth, &req.GetSettingReq, &settings.GetSettingData{})
+	getResp, err := uc.GetSetting(ctx, db, auth, &req.GetSettingReq, &settings.GetSettingData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	repoSetting := getResp.Data
 
 	// Reading the repository happens outside any transaction: it reaches the storage backend and
 	// can take a while, and holding a transaction open across it buys nothing.
-	syncResp, err := uc.backupRepoService.SyncRepo(ctx, uc.DB, &backupreposervice.SyncRepoReq{
+	syncResp, err := uc.backupRepoService.SyncRepo(ctx, db, &backupreposervice.SyncRepoReq{
 		Scope:       req.Scope,
-		RepoSetting: getResp.Data,
+		RepoSetting: repoSetting,
 		RefObjects:  getResp.RefObjects,
 	})
 	if err != nil {
@@ -65,8 +67,8 @@ func (uc *UC) SyncBackupRepo(
 
 	var optionsChanged bool
 	var snapshotResp *backupreposervice.SyncRepoSnapshotsResp
-	err = transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
-		optionsChanged, err = uc.syncRepoOptions(ctx, db, getResp.Data, syncResp.Config)
+	err = transaction.Execute(ctx, db, func(db database.Tx) error {
+		optionsChanged, err = uc.syncRepoOptions(ctx, db, repoSetting, syncResp.Config)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -74,7 +76,7 @@ func (uc *UC) SyncBackupRepo(
 		snapshotResp, err = uc.backupRepoService.SyncRepoSnapshots(ctx, db,
 			&backupreposervice.SyncRepoSnapshotsReq{
 				Scope:       req.Scope,
-				RepoSetting: getResp.Data,
+				RepoSetting: repoSetting,
 				Remaining:   syncResp.Snapshots,
 			})
 		return hperrors.Wrap(err)
@@ -84,7 +86,7 @@ func (uc *UC) SyncBackupRepo(
 	}
 
 	return &backuprepodto.SyncBackupRepoResp{
-		Data: backuprepodto.TransformSyncBackupRepo(getResp.Data.MustAsBackupRepo(), optionsChanged,
+		Data: backuprepodto.TransformSyncBackupRepo(repoSetting.MustAsBackupRepo(), optionsChanged,
 			len(syncResp.Snapshots), snapshotResp.Removed, snapshotResp.Added),
 	}, nil
 }

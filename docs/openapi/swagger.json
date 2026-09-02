@@ -3346,6 +3346,459 @@
         "tags" : [ "apps" ]
       }
     },
+    "/projects/{projectID}/backup-repos" : {
+      "get" : {
+        "description" : "Lists backup repo settings",
+        "operationId" : "listProjectBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.ListBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists backup repo settings",
+        "tags" : [ "project_settings" ]
+      },
+      "post" : {
+        "description" : "Creates a new backup repo setting",
+        "operationId" : "createProjectBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.CreateBackupRepoReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.CreateBackupRepoResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a new backup repo setting",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/backup-repos/{itemID}" : {
+      "delete" : {
+        "description" : "Deletes backup repo setting",
+        "operationId" : "deleteProjectBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.DeleteBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes backup repo setting",
+        "tags" : [ "project_settings" ]
+      },
+      "get" : {
+        "description" : "Gets backup repo setting details",
+        "operationId" : "getProjectBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.GetBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets backup repo setting details",
+        "tags" : [ "project_settings" ]
+      },
+      "put" : {
+        "description" : "Updates backup repo",
+        "operationId" : "updateProjectBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates backup repo",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/backup-repos/{itemID}/password" : {
+      "put" : {
+        "description" : "Re-encrypts the backup repository with a new password. The repository itself is\nre-encrypted first, so the previous password stops working as soon as this succeeds.",
+        "operationId" : "changeProjectBackupRepoPassword",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.ChangeRepoPasswordReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.ChangeRepoPasswordResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Changes a backup repository's password",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/backup-repos/{itemID}/status" : {
+      "put" : {
+        "description" : "Updates backup repo status",
+        "operationId" : "updateProjectBackupRepoStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates backup repo status",
+        "tags" : [ "project_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/basic-auth" : {
       "get" : {
         "description" : "Lists basic auth settings",
@@ -19665,6 +20118,515 @@
         "tags" : [ "apps" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/backup-repos" : {
+      "get" : {
+        "description" : "Lists backup repo settings",
+        "operationId" : "listProjectEnvBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.ListBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists backup repo settings",
+        "tags" : [ "project_env_settings" ]
+      },
+      "post" : {
+        "description" : "Creates a new backup repo setting",
+        "operationId" : "createProjectEnvBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.CreateBackupRepoReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.CreateBackupRepoResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a new backup repo setting",
+        "tags" : [ "project_env_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/backup-repos/{itemID}" : {
+      "delete" : {
+        "description" : "Deletes backup repo setting",
+        "operationId" : "deleteProjectEnvBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.DeleteBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes backup repo setting",
+        "tags" : [ "project_env_settings" ]
+      },
+      "get" : {
+        "description" : "Gets backup repo setting details",
+        "operationId" : "getProjectEnvBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.GetBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets backup repo setting details",
+        "tags" : [ "project_env_settings" ]
+      },
+      "put" : {
+        "description" : "Updates backup repo",
+        "operationId" : "updateProjectEnvBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates backup repo",
+        "tags" : [ "project_env_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/backup-repos/{itemID}/password" : {
+      "put" : {
+        "description" : "Re-encrypts the backup repository with a new password. The repository itself is\nre-encrypted first, so the previous password stops working as soon as this succeeds.",
+        "operationId" : "changeProjectEnvBackupRepoPassword",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.ChangeRepoPasswordReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.ChangeRepoPasswordResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Changes a backup repository's password",
+        "tags" : [ "project_env_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/backup-repos/{itemID}/status" : {
+      "put" : {
+        "description" : "Updates backup repo status",
+        "operationId" : "updateProjectEnvBackupRepoStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates backup repo status",
+        "tags" : [ "project_env_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/basic-auth" : {
       "get" : {
         "description" : "Lists basic auth settings",
@@ -28114,6 +29076,500 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/settings/backup-repos" : {
+      "get" : {
+        "description" : "Lists backup repositories",
+        "operationId" : "listSettingBackupRepo",
+        "parameters" : [ {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.ListBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists backup repositories",
+        "tags" : [ "settings" ]
+      },
+      "post" : {
+        "description" : "Creates a new backup repository on the storage backend, or adopts an existing one\nwhen `importExisting` is set, in which case the snapshots already in the repository\nare read back and stored.",
+        "operationId" : "createSettingBackupRepo",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.CreateBackupRepoReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.CreateBackupRepoResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates a new backup repository",
+        "tags" : [ "settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/settings/backup-repos/{itemID}" : {
+      "delete" : {
+        "description" : "Deletes the backup repository setting. The data on the storage backend is kept.",
+        "operationId" : "deleteSettingBackupRepo",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.DeleteBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Deletes a backup repository",
+        "tags" : [ "settings" ]
+      },
+      "get" : {
+        "description" : "Gets backup repository details",
+        "operationId" : "getSettingBackupRepo",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.GetBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets backup repository details",
+        "tags" : [ "settings" ]
+      },
+      "put" : {
+        "description" : "Updates a backup repository",
+        "operationId" : "updateSettingBackupRepo",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates a backup repository",
+        "tags" : [ "settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/settings/backup-repos/{itemID}/cleanup" : {
+      "post" : {
+        "description" : "Applies the repository's retention policy, removing the snapshots it expires, then\nreconciles the stored snapshot records against what the repository still holds.",
+        "operationId" : "cleanupSettingBackupRepo",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.CleanupBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Cleans up a backup repository",
+        "tags" : [ "settings" ]
+      }
+    },
+    "/settings/backup-repos/{itemID}/password" : {
+      "put" : {
+        "description" : "Re-encrypts the backup repository with a new password. The repository itself is\nre-encrypted first, so the previous password stops working as soon as this succeeds.",
+        "operationId" : "changeSettingBackupRepoPassword",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.ChangeRepoPasswordReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.ChangeRepoPasswordResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Changes a backup repository's password",
+        "tags" : [ "settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/settings/backup-repos/{itemID}/status" : {
+      "put" : {
+        "description" : "Updates a backup repository's status",
+        "operationId" : "updateSettingBackupRepoStatus",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoStatusReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.UpdateBackupRepoStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates a backup repository's status",
+        "tags" : [ "settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/settings/backup-repos/{itemID}/sync" : {
+      "post" : {
+        "description" : "Reads the repository and adopts what it finds: the options it is configured with,\nand the snapshots it holds. Use it after the repository was changed outside the\napp. Nothing in the repository is modified.",
+        "operationId" : "syncSettingBackupRepo",
+        "parameters" : [ {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.SyncBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Syncs a backup repository back into its setting",
+        "tags" : [ "settings" ]
+      }
+    },
     "/settings/basic-auth" : {
       "get" : {
         "description" : "Lists basic auth settings",
@@ -34593,6 +36049,148 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/settings/backup-repo-cleanup" : {
+      "get" : {
+        "description" : "Gets backup repo cleanup settings",
+        "operationId" : "getBackupRepoCleanupSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.GetBackupRepoCleanupResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets backup repo cleanup settings",
+        "tags" : [ "system_settings" ]
+      },
+      "put" : {
+        "description" : "Updates backup repo cleanup settings",
+        "operationId" : "updateBackupRepoCleanupSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.UpdateBackupRepoCleanupReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.UpdateBackupRepoCleanupResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates backup repo cleanup settings",
+        "tags" : [ "system_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/settings/backup-repo-cleanup/exec" : {
+      "post" : {
+        "description" : "Executes the renewal",
+        "operationId" : "executeBackupRepoCleanup",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.ExecuteBackupRepoCleanupReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.ExecuteBackupRepoCleanupResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Executes the renewal",
+        "tags" : [ "system_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/settings/backup/exec" : {
       "post" : {
         "description" : "Executes the backup",
@@ -35135,6 +36733,46 @@
         "summary" : "Executes the renewal",
         "tags" : [ "system_settings" ],
         "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/status/db" : {
+      "get" : {
+        "description" : "Reports the connection pool counters of the process serving the request. WaitCount\nand waitDuration say whether the pool is a bottleneck: while they stay near zero,\nraising the pool size would change nothing.",
+        "operationId" : "getSystemDBStats",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_sysstatusdto.GetDBStatsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets database connection pool stats",
+        "tags" : [ "system" ]
       }
     },
     "/system/tasks" : {
@@ -37521,7 +39159,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -37539,7 +39177,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -44457,6 +46095,430 @@
         "type" : "object"
       },
       "settings_appplacementsettingsdto.UpdateAppPlacementSettingsStatusResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.BackupRepoResp" : {
+        "properties" : {
+          "cloudStorage" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          },
+          "compression" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "engine" : {
+            "$ref" : "#/components/schemas/services_backup.EngineType"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "packSize" : {
+            "type" : "integer"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "retention" : {
+            "$ref" : "#/components/schemas/settings_backuprepodto.BackupRetentionPolicyReq"
+          },
+          "secretMasked" : {
+            "type" : "boolean"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "storagePrefix" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          },
+          "volume" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          }
+        },
+        "required" : [ "cloudStorage", "compression", "createdAt", "default", "description", "engine", "expireAt", "id", "inheritable", "inherited", "kind", "name", "packSize", "password", "retention", "secretMasked", "size", "status", "storagePrefix", "type", "updateVer", "updatedAt", "volume" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.BackupRetentionPolicyReq" : {
+        "properties" : {
+          "keepDaily" : {
+            "type" : "integer"
+          },
+          "keepHourly" : {
+            "type" : "integer"
+          },
+          "keepLast" : {
+            "type" : "integer"
+          },
+          "keepMonthly" : {
+            "type" : "integer"
+          },
+          "keepWeekly" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "keepDaily", "keepHourly", "keepLast", "keepMonthly", "keepWeekly" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.BackupRetentionPolicyResp" : {
+        "properties" : {
+          "keepDaily" : {
+            "type" : "integer"
+          },
+          "keepHourly" : {
+            "type" : "integer"
+          },
+          "keepLast" : {
+            "type" : "integer"
+          },
+          "keepMonthly" : {
+            "type" : "integer"
+          },
+          "keepWeekly" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "keepDaily", "keepHourly", "keepLast", "keepMonthly", "keepWeekly" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.ChangeRepoPasswordReq" : {
+        "properties" : {
+          "currentPassword" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "newPassword" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "currentPassword", "default", "inheritable", "newPassword", "updateVer" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.ChangeRepoPasswordResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.CleanupBackupRepoDataResp" : {
+        "properties" : {
+          "recordsAdded" : {
+            "type" : "integer"
+          },
+          "recordsRemoved" : {
+            "description" : "RecordsRemoved / RecordsAdded are the stored snapshot records reconciled against the\nrepository. In the normal case RecordsRemoved is what the retention policy expired, but the\nengine reports no IDs for that, so this counts everything the repository no longer has -\nincluding snapshots deleted outside the app. RecordsAdded counts ones that appeared the\nsame way.",
+            "type" : "integer"
+          },
+          "removedSnapshots" : {
+            "description" : "RemovedSnapshots lists what was dropped, so the result is auditable rather than just a count.",
+            "items" : {
+              "$ref" : "#/components/schemas/settings_backuprepodto.CleanupRemovedSnapshotResp"
+            },
+            "type" : "array"
+          },
+          "snapshotsInRepo" : {
+            "description" : "SnapshotsInRepo is what the repository holds once the retention policy has been applied.",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "recordsAdded", "recordsRemoved", "removedSnapshots", "snapshotsInRepo" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.CleanupBackupRepoResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/settings_backuprepodto.CleanupBackupRepoDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.CleanupRemovedSnapshotResp" : {
+        "properties" : {
+          "hostname" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "paths" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "shortId" : {
+            "type" : "string"
+          },
+          "sizeBytes" : {
+            "type" : "integer"
+          },
+          "time" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "hostname", "id", "paths", "shortId", "sizeBytes", "time" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.CreateBackupRepoReq" : {
+        "properties" : {
+          "cloudStorage" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "compression" : {
+            "description" : "Compression and PackSize are stored inside the repository itself, so changing them here\nonly takes effect once they are pushed to it. See UpdateBackupRepo.",
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "engine" : {
+            "$ref" : "#/components/schemas/services_backup.EngineType"
+          },
+          "importExisting" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "packSize" : {
+            "type" : "integer"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "retention" : {
+            "$ref" : "#/components/schemas/settings_backuprepodto.BackupRetentionPolicyReq"
+          },
+          "storagePrefix" : {
+            "type" : "string"
+          },
+          "volume" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          }
+        },
+        "required" : [ "cloudStorage", "compression", "default", "description", "engine", "importExisting", "inheritable", "name", "packSize", "password", "retention", "storagePrefix", "volume" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.CreateBackupRepoResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.DeleteBackupRepoResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.GetBackupRepoResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/settings_backuprepodto.BackupRepoResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.ListBackupRepoResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/settings_backuprepodto.BackupRepoResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.SyncBackupRepoDataResp" : {
+        "properties" : {
+          "compression" : {
+            "description" : "Compression, PackSize and Retention are what the repository is really configured with, which\nis what every later backup will use regardless of what the setting said before this ran.",
+            "type" : "string"
+          },
+          "optionsChanged" : {
+            "description" : "OptionsChanged says whether the repository turned out to be configured differently from what\nthe setting held. When false the fields below only restate what was already stored.",
+            "type" : "boolean"
+          },
+          "packSize" : {
+            "type" : "integer"
+          },
+          "recordsAdded" : {
+            "type" : "integer"
+          },
+          "recordsRemoved" : {
+            "description" : "RecordsRemoved / RecordsAdded are the stored records reconciled against the repository, so\nthey are the drift that happened outside the app - snapshots deleted or taken by something\nelse holding the repository password.",
+            "type" : "integer"
+          },
+          "removedSnapshots" : {
+            "description" : "RemovedSnapshots lists what was dropped, so the result is auditable rather than just a count.",
+            "items" : {
+              "$ref" : "#/components/schemas/settings_backuprepodto.CleanupRemovedSnapshotResp"
+            },
+            "type" : "array"
+          },
+          "retention" : {
+            "$ref" : "#/components/schemas/settings_backuprepodto.BackupRetentionPolicyResp"
+          },
+          "snapshotsInRepo" : {
+            "description" : "SnapshotsInRepo is what the repository holds. Nothing was expired to get this number: a sync\nonly reads, so this is the repository exactly as it stands.",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "compression", "optionsChanged", "packSize", "recordsAdded", "recordsRemoved", "removedSnapshots", "retention", "snapshotsInRepo" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.SyncBackupRepoResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/settings_backuprepodto.SyncBackupRepoDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.UpdateBackupRepoReq" : {
+        "properties" : {
+          "compression" : {
+            "description" : "Compression and PackSize are stored inside the repository itself, so changing them here\nonly takes effect once they are pushed to it. See UpdateBackupRepo.",
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "packSize" : {
+            "type" : "integer"
+          },
+          "retention" : {
+            "$ref" : "#/components/schemas/settings_backuprepodto.BackupRetentionPolicyReq"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "compression", "default", "description", "inheritable", "name", "packSize", "retention", "updateVer" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.UpdateBackupRepoResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.UpdateBackupRepoStatusReq" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "settings_backuprepodto.UpdateBackupRepoStatusResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -51824,6 +53886,57 @@
         "required" : [ "cause", "code", "createdAt", "debugLog", "detail", "id", "requestId", "stackTrace", "status" ],
         "type" : "object"
       },
+      "system_sysstatusdto.DBStatsResp" : {
+        "properties" : {
+          "idle" : {
+            "type" : "integer"
+          },
+          "inUse" : {
+            "type" : "integer"
+          },
+          "maxIdleClosed" : {
+            "description" : "Connections closed by each limit, useful for spotting churn: a large MaxIdleClosed means\nthe idle pool is too small for the load.",
+            "type" : "integer"
+          },
+          "maxIdleTimeClosed" : {
+            "type" : "integer"
+          },
+          "maxLifetimeClosed" : {
+            "type" : "integer"
+          },
+          "maxOpenConnections" : {
+            "description" : "MaxOpenConnections is the configured ceiling; OpenConnections and InUse are the live usage.",
+            "type" : "integer"
+          },
+          "openConnections" : {
+            "type" : "integer"
+          },
+          "waitCount" : {
+            "description" : "WaitCount is the number of times a caller had to wait for a free connection, and\nWaitDuration the total time spent waiting. These two answer whether the pool is a\nbottleneck: a WaitCount that stays near zero means raising MaxOpenConns would change\nnothing.",
+            "type" : "integer"
+          },
+          "waitDurationHuman" : {
+            "type" : "string"
+          },
+          "waitDurationMs" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "idle", "inUse", "maxIdleClosed", "maxIdleTimeClosed", "maxLifetimeClosed", "maxOpenConnections", "openConnections", "waitCount", "waitDurationHuman", "waitDurationMs" ],
+        "type" : "object"
+      },
+      "system_sysstatusdto.GetDBStatsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_sysstatusdto.DBStatsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "system_taskdto.CancelTaskDataResp" : {
         "properties" : {
           "canceled" : {
@@ -52210,6 +54323,174 @@
         "type" : "object"
       },
       "system_traefikdto.RestartTraefikResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_backuprepocleanupdto.BackupRepoCleanupResp" : {
+        "properties" : {
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "nextRuns" : {
+            "description" : "Calculated fields",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "notification" : {
+            "$ref" : "#/components/schemas/basedto.BaseEventNotificationResp"
+          },
+          "schedule" : {
+            "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.ScheduleResp"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "systemsettings_backuprepocleanupdto.ExecuteBackupRepoCleanupDataResp" : {
+        "properties" : {
+          "task" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          }
+        },
+        "required" : [ "task" ],
+        "type" : "object"
+      },
+      "systemsettings_backuprepocleanupdto.ExecuteBackupRepoCleanupReq" : {
+        "properties" : {
+          "targetRepos" : {
+            "items" : {
+              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "targetRepos" ],
+        "type" : "object"
+      },
+      "systemsettings_backuprepocleanupdto.ExecuteBackupRepoCleanupResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.ExecuteBackupRepoCleanupDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_backuprepocleanupdto.GetBackupRepoCleanupResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.BackupRepoCleanupResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_backuprepocleanupdto.ScheduleReq" : {
+        "properties" : {
+          "cronExpr" : {
+            "description" : "cronExpr and interval are mutually exclusive",
+            "type" : "string"
+          },
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          }
+        },
+        "required" : [ "cronExpr", "initialTime", "interval" ],
+        "type" : "object"
+      },
+      "systemsettings_backuprepocleanupdto.ScheduleResp" : {
+        "properties" : {
+          "cronExpr" : {
+            "description" : "cronExpr and interval are mutually exclusive",
+            "type" : "string"
+          },
+          "initialTime" : {
+            "type" : "string"
+          },
+          "interval" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          }
+        },
+        "required" : [ "cronExpr", "initialTime", "interval" ],
+        "type" : "object"
+      },
+      "systemsettings_backuprepocleanupdto.UpdateBackupRepoCleanupReq" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "notification" : {
+            "$ref" : "#/components/schemas/basedto.BaseEventNotificationReq"
+          },
+          "schedule" : {
+            "$ref" : "#/components/schemas/systemsettings_backuprepocleanupdto.ScheduleReq"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "default", "inheritable", "notification", "schedule", "status", "updateVer" ],
+        "type" : "object"
+      },
+      "systemsettings_backuprepocleanupdto.UpdateBackupRepoCleanupResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -53843,6 +56124,11 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "services_backup.EngineType" : {
+        "enum" : [ "kopia", "kopia" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "EngineTypeKopia" ]
+      },
       "services_docker.HealthcheckMode" : {
         "enum" : [ "", "NONE", "CMD", "CMD-SHELL" ],
         "type" : "string",
@@ -53991,9 +56277,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

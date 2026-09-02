@@ -32,6 +32,9 @@ func (p *manager) checkProjectAccess(
 			return true, nil, nil
 		}
 	}
+	if check.ProjectID == "" && (check.ProjectEnv != nil && *check.ProjectEnv != "") {
+		check.ProjectID, _ = projecthelper.ParseProjectEnvID(*check.ProjectEnv)
+	}
 
 	resources := make([]*base.PermissionResource, 0, 3) //nolint:mnd
 	if check.ProjectID != "" && check.ProjectEnv != nil {

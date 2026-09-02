@@ -85,6 +85,7 @@ func TransformSyncBackupRepo(
 	if repo.Retention != nil {
 		resp.Retention = &BackupRetentionPolicyResp{
 			KeepLast:    repo.Retention.KeepLast,
+			KeepHourly:  repo.Retention.KeepHourly,
 			KeepDaily:   repo.Retention.KeepDaily,
 			KeepWeekly:  repo.Retention.KeepWeekly,
 			KeepMonthly: repo.Retention.KeepMonthly,

@@ -57,6 +57,7 @@ func (resp *BackupRepoResp) CopyPassword(field entity.EncryptedField) error {
 
 type BackupRetentionPolicyResp struct {
 	KeepLast    int `json:"keepLast,omitempty"`
+	KeepHourly  int `json:"keepHourly,omitempty"`
 	KeepDaily   int `json:"keepDaily,omitempty"`
 	KeepWeekly  int `json:"keepWeekly,omitempty"`
 	KeepMonthly int `json:"keepMonthly,omitempty"`

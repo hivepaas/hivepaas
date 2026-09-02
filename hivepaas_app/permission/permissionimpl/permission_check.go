@@ -6,6 +6,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
@@ -50,4 +51,50 @@ func (p *manager) CheckAccess(
 	}
 
 	return hasPerm, nil
+}
+
+func (p *manager) CheckAccessOnSetting(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	check permission.AccessCheck,
+	setting *entity.Setting,
+) (bool, error) {
+	// Admins have all privileges
+	if auth.User.Role == base.UserRoleAdmin {
+		return true, nil
+	}
+
+	switch setting.Scope {
+	case base.ObjectScopeProject:
+		return p.CheckAccess(ctx, db, auth, &permission.ProjectAccessCheck{
+			BaseAccessCheck: *check.GetBase(),
+			ProjectID:       setting.ObjectID,
+		})
+	case base.ObjectScopeProjectEnv:
+		return p.CheckAccess(ctx, db, auth, &permission.ProjectAccessCheck{
+			BaseAccessCheck: *check.GetBase(),
+			ProjectEnv:      &setting.ObjectID,
+		})
+	case base.ObjectScopeApp:
+		return p.CheckAccess(ctx, db, auth, &permission.AppAccessCheck{
+			BaseAccessCheck: *check.GetBase(),
+			AppID:           setting.ObjectID,
+		})
+	case base.ObjectScopeUser:
+		return p.CheckAccess(ctx, db, auth, &permission.ModuleAccessCheck{
+			BaseAccessCheck: *check.GetBase(),
+			Module:          base.ResourceModuleUser,
+		})
+	case base.ObjectScopeGlobal:
+		return p.CheckAccess(ctx, db, auth, &permission.ModuleAccessCheck{
+			BaseAccessCheck: *check.GetBase(),
+			Module:          base.ResourceModuleSettings,
+		})
+	case base.ObjectScopeHivepaas:
+		// Requires admin
+		return auth.User.Role == base.UserRoleAdmin, nil
+	default:
+		return false, hperrors.Wrap(hperrors.ErrFileScopeUnsupported).WithParam("Scope", setting.Scope)
+	}
 }

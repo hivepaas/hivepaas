@@ -3,10 +3,10 @@ package backuprepouc
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backuprepouc/backuprepodto"
@@ -27,10 +27,9 @@ func (uc *UC) ChangeRepoPassword(
 ) (*backuprepodto.ChangeRepoPasswordResp, error) {
 	req.Type = currentSettingType
 	// Validate password strength
-	if err := secrethelper.ValidateStrength(req.NewPassword, -1, -1, -1, -1, -1, -1); err != nil {
+	if err := validatePasswordStrength(req.NewPassword); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-
 	data := &changeRepoPasswordData{}
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		PrepareUpdate: func(
@@ -39,7 +38,16 @@ func (uc *UC) ChangeRepoPassword(
 			settingData *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
-			backupRepo := pData.Setting.MustAsBackupRepo()
+			repoSetting := pData.Setting
+			// If the setting is not the scope, need to check the user has access on the setting
+			if repoSetting.ObjectID != req.Scope.ScopeObjectID() {
+				err := uc.CheckAccessOnSetting(ctx, db, auth, repoSetting, base.ActionTypeWrite)
+				if err != nil {
+					return hperrors.Wrap(err)
+				}
+			}
+
+			backupRepo := repoSetting.MustAsBackupRepo()
 
 			currentPassword, err := backupRepo.Password.GetPlain()
 			if err != nil {
@@ -54,7 +62,7 @@ func (uc *UC) ChangeRepoPassword(
 			data.Req = &backupreposervice.ChangeRepoPasswordReq{
 				Scope:       req.Scope,
 				Repo:        backupRepo,
-				RepoID:      pData.Setting.ID,
+				RepoID:      repoSetting.ID,
 				OldPassword: currentPassword,
 				NewPassword: req.NewPassword,
 			}
@@ -66,7 +74,7 @@ func (uc *UC) ChangeRepoPassword(
 			data.EngineChanged = true
 
 			backupRepo.Password.Set(req.NewPassword)
-			if err := pData.Setting.SetData(backupRepo); err != nil {
+			if err := repoSetting.SetData(backupRepo); err != nil {
 				return hperrors.Wrap(err)
 			}
 			return nil

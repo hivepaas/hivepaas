@@ -13,6 +13,10 @@ import (
 type Manager interface {
 	CheckAccess(ctx context.Context, db database.IDB, auth *basedto.Auth, check AccessCheck) (bool, error)
 
+	// Check access on a specific setting
+	CheckAccessOnSetting(ctx context.Context, db database.IDB, auth *basedto.Auth, check AccessCheck,
+		setting *entity.Setting) (bool, error)
+
 	// NOTE: this func should be called within a transaction
 	UpdateACLPermissions(ctx context.Context, db database.IDB, perms []*entity.ACLPermission) error
 	DeleteACLPermissions(ctx context.Context, db database.IDB, perms []*base.PermissionResource) error

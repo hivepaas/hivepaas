@@ -133,3 +133,40 @@ func (h *Handler) UpdateBackupRepoStatus(ctx *gin.Context) {
 func (h *Handler) DeleteBackupRepo(ctx *gin.Context) {
 	h.DeleteSetting(ctx, base.ResourceTypeBackupRepo, base.ObjectScopeProjectEnv)
 }
+
+// CleanupBackupRepo Cleans up a backup repository
+// @Summary Cleans up a backup repository
+// @Description Applies the repository's retention policy, removing the snapshots it expires, then
+// @Description reconciles the stored snapshot records against what the repository still holds.
+// @Tags    project_env_settings
+// @Produce json
+// @Id      cleanupProjectEnvBackupRepo
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project Env"
+// @Param   itemID path string true "setting ID"
+// @Success 200 {object} backuprepodto.CleanupBackupRepoResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/backup-repos/{itemID}/cleanup [post]
+func (h *Handler) CleanupBackupRepo(ctx *gin.Context) {
+	h.BackupRepoCleanup(ctx, base.ObjectScopeProjectEnv)
+}
+
+// SyncBackupRepo Syncs a backup repository back into its setting
+// @Summary Syncs a backup repository back into its setting
+// @Description Reads the repository and adopts what it finds: the options it is configured with,
+// @Description and the snapshots it holds. Use it after the repository was changed outside the
+// @Description app. Nothing in the repository is modified.
+// @Tags    project_env_settings
+// @Produce json
+// @Id      syncProjectEnvBackupRepo
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project Env"
+// @Param   itemID path string true "setting ID"
+// @Success 200 {object} backuprepodto.SyncBackupRepoResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/backup-repos/{itemID}/sync [post]
+func (h *Handler) SyncBackupRepo(ctx *gin.Context) {
+	h.BackupRepoSync(ctx, base.ObjectScopeProjectEnv)
+}

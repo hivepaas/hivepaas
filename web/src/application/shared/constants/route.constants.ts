@@ -373,6 +373,11 @@ export const ROUTE = {
                     `/integrations/notification-targets/${notificationTargetId}/edit/`,
             },
         },
+
+        backupRepos: {
+            $pattern: "integrations/backup-repos",
+            $route: "/integrations/backup-repos/",
+        },
     },
 
     /**
@@ -888,6 +893,11 @@ export const ROUTE = {
                         $route: (id: string, commandTemplateId: string) =>
                             `/projects/${id}/integrations/command-templates/${commandTemplateId}/edit/`,
                     },
+                },
+
+                backupRepos: {
+                    $pattern: "projects/:id/integrations/backup-repos",
+                    $route: (id: string) => `/projects/${id}/integrations/backup-repos/`,
                 },
 
                 emailAccounts: {

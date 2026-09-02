@@ -34,4 +34,6 @@ export const QK = {
     "settings.image-build-settings.find-one": "settings.image-build-settings.find-one",
     "settings.image-build-settings.repo-cache.find-one": "settings.image-build-settings.repo-cache.find-one",
     "settings.app-placement-settings.find-one": "settings.app-placement-settings.find-one",
+    "settings.backup-repos.find-many-paginated": "settings.backup-repos.find-many-paginated",
+    "settings.backup-repos.find-one-by-id": "settings.backup-repos.find-one-by-id",
 } as const;

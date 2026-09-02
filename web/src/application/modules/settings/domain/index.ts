@@ -18,3 +18,4 @@ export * from "./cloud-storage.entity";
 export * from "./oauth.entity";
 export * from "./github-app.entity";
 export * from "./repo-webhook.entity";
+export * from "./backup-repo.entity";

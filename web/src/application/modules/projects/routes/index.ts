@@ -30,6 +30,7 @@ export {
     ProjectCommandTemplatesRoute,
     ProjectCommandTemplateCreateRoute,
     ProjectCommandTemplateEditRoute,
+    ProjectBackupReposRoute,
     ProjectNotificationTargetsRoute,
     ProjectSecretsRoute,
     ProjectSecretCreateRoute,

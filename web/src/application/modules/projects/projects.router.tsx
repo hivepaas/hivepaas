@@ -869,6 +869,16 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.providerConfiguration.backupRepos.$pattern,
+                            lazy: async () => {
+                                const { ProjectBackupReposRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectBackupReposRoute,
+                                };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.providerConfiguration.emailAccounts.$pattern,
                             lazy: async () => {
                                 const { ProjectEmailAccountsRoute } = await getLazyComponents();

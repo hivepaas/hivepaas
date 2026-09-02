@@ -24,3 +24,4 @@ export * from "./project-networks";
 export * from "./project-cluster-volumes";
 export * from "./project-command-pipe";
 export * from "./project-command-template";
+export * from "./project-backup-repo";

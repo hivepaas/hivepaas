@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { LogoIcon } from "@/assets/icons";
 import {
+    Archive,
     ArchiveX,
     Bell,
     CircleDashed,
@@ -180,6 +181,17 @@ const navMain: SidebarItem[] = [
                         icon: HardDrive,
                         route: ROUTE.settings.cloudStorages.$route,
                         pattern: ROUTE.settings.cloudStorages.$pattern,
+                    },
+                ],
+            },
+            {
+                title: "Automation",
+                items: [
+                    {
+                        title: "Backup Repos",
+                        icon: Archive,
+                        route: ROUTE.settings.backupRepos.$route,
+                        pattern: ROUTE.settings.backupRepos.$pattern,
                     },
                 ],
             },

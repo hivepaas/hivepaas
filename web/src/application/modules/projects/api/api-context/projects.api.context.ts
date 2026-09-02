@@ -45,6 +45,8 @@ import {
     ProjectAppEnvVarsApiValidator,
     ProjectAppsApi,
     ProjectAppsApiValidator,
+    ProjectBackupRepoApi,
+    ProjectBackupRepoApiValidator,
     ProjectBasicAuthApi,
     ProjectBasicAuthApiValidator,
     ProjectCloudStorageApi,
@@ -170,6 +172,7 @@ function createApi() {
     const projectCloudStorageApiValidator = new ProjectCloudStorageApiValidator();
     const projectCommandPipeApiValidator = new ProjectCommandPipeApiValidator();
     const projectCommandTemplateApiValidator = new ProjectCommandTemplateApiValidator();
+    const projectBackupRepoApiValidator = new ProjectBackupRepoApiValidator();
     const projectUserAccessesApiValidator = new ProjectUserAccessesApiValidator();
     const projectImageBuildSettingsApiValidator = new ProjectImageBuildSettingsApiValidator();
 
@@ -331,6 +334,9 @@ function createApi() {
             },
             commandTemplates: {
                 $: new ProjectCommandTemplateApi(projectCommandTemplateApiValidator),
+            },
+            backupRepo: {
+                $: new ProjectBackupRepoApi(projectBackupRepoApiValidator),
             },
         },
     };

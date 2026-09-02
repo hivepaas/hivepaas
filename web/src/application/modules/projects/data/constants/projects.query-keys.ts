@@ -160,4 +160,9 @@ export const QK = {
      * Project Docker Volumes
      */
     "projects.docker-volumes.$.list": "projects.docker-volumes.$.list",
+    /*
+     * Project Backup Repos
+     */
+    "projects.backup-repos.$.find-many-paginated": "projects.backup-repos.$.find-many-paginated",
+    "projects.backup-repos.$.find-one-by-id": "projects.backup-repos.$.find-one-by-id",
 } as const;

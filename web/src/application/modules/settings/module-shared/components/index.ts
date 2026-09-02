@@ -3,6 +3,7 @@ export * from "./acme-dns-provider-table";
 export * from "./registry-auth-table";
 export * from "./setting-status-badge";
 export * from "./ssl-cert-table";
+export * from "./backup-repo-table";
 export * from "./ssl-provider-table";
 export * from "./im-platform-table";
 export * from "./email-account-table";

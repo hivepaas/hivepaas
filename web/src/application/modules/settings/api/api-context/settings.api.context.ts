@@ -7,6 +7,8 @@ import {
     AcmeDnsProviderApiValidator,
     AppPlacementSettingsApi,
     AppPlacementSettingsApiValidator,
+    BackupRepoApi,
+    BackupRepoApiValidator,
     BasicAuthApi,
     BasicAuthApiValidator,
     CloudStorageApi,
@@ -86,6 +88,7 @@ function createApi() {
             repoWebhook: new RepoWebhookApi(repoWebhookValidator),
             imageBuildSettings: new ImageBuildSettingsApi(imageBuildSettingsValidator),
             appPlacementSettings: new AppPlacementSettingsApi(appPlacementSettingsValidator),
+            backupRepo: new BackupRepoApi(new BackupRepoApiValidator()),
         },
     };
 }

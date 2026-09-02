@@ -46,6 +46,7 @@ export {
     SettingsSSHKeyCreateRoute,
     SettingsImageBuildRoute,
     SettingsAppPlacementRoute,
+    SettingsBackupReposRoute,
 } from "./routes";
 
 /**

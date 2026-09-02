@@ -4,6 +4,7 @@ import { listBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import {
     AlertTriangle,
+    Archive,
     Bell,
     Container,
     FileBadge,
@@ -203,14 +204,19 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
             title: "Automation",
             items: [
                 {
+                    label: "Command Templates",
+                    icon: FileCode2,
+                    route: ROUTE.projects.single.providerConfiguration.commandTemplates.$route(projectId),
+                },
+                {
                     label: "Command Pipes",
                     icon: Workflow,
                     route: ROUTE.projects.single.providerConfiguration.commandPipes.$route(projectId),
                 },
                 {
-                    label: "Command Templates",
-                    icon: FileCode2,
-                    route: ROUTE.projects.single.providerConfiguration.commandTemplates.$route(projectId),
+                    label: "Backup Repos",
+                    icon: Archive,
+                    route: ROUTE.projects.single.providerConfiguration.backupRepos.$route(projectId),
                 },
             ],
         },

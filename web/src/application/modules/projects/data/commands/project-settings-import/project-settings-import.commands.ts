@@ -19,6 +19,7 @@ export const PROJECT_SETTINGS_IMPORT_KIND = {
     RepoWebhook: "repoWebhook",
     ClusterNetwork: "clusterNetwork",
     ClusterVolume: "clusterVolume",
+    BackupRepo: "backupRepo",
 } as const;
 
 export type ProjectSettingsImportKind =
@@ -40,6 +41,7 @@ const PROJECT_SETTINGS_IMPORT_LIST_QUERY_KEYS = {
     [PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook]: QK["projects.repo-webhook.$.find-many-paginated"],
     [PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork]: QK["projects.networks.$.find-many-paginated"],
     [PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume]: QK["projects.cluster-volumes.$.find-many-paginated"],
+    [PROJECT_SETTINGS_IMPORT_KIND.BackupRepo]: QK["projects.backup-repos.$.find-many-paginated"],
 } as const satisfies Record<ProjectSettingsImportKind, (typeof QK)[keyof typeof QK]>;
 
 type ImportSettingsReq = ProjectSettingsImport_Import_Req["data"] & {

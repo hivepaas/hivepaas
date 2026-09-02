@@ -16,3 +16,4 @@ export * from "./cloud-storage.entity.schema";
 export * from "./oauth.entity.schema";
 export * from "./github-app.entity.schema";
 export * from "./repo-webhook.entity.schema";
+export * from "./backup-repo.entity.schema";

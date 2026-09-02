@@ -13,6 +13,7 @@ import {
 import {
     ProjectAccessTokenQueries,
     ProjectAcmeDnsProviderQueries,
+    ProjectBackupRepoQueries,
     ProjectBasicAuthQueries,
     ProjectCloudStorageQueries,
     ProjectClusterVolumesQueries,
@@ -30,6 +31,7 @@ import {
 import {
     AccessTokenQueries,
     AcmeDnsProviderQueries,
+    BackupRepoQueries,
     BasicAuthQueries,
     CloudStorageQueries,
     EmailQueries,
@@ -44,6 +46,7 @@ import {
 } from "~/settings/data/queries";
 import { AccessTokenTableDefs } from "~/settings/module-shared/components/access-token-table/access-token-table.defs";
 import { AcmeDnsProviderTableDefs } from "~/settings/module-shared/components/acme-dns-provider-table/acme-dns-provider-table.defs";
+import { BackupRepoTableDefs } from "~/settings/module-shared/components/backup-repo-table/backup-repo-table.defs";
 import { BasicAuthTableDefs } from "~/settings/module-shared/components/basic-auth-table/basic-auth-table.defs";
 import { CloudStorageTableDefs } from "~/settings/module-shared/components/cloud-storage-table/cloud-storage-table.defs";
 import { EmailAccountTableDefs } from "~/settings/module-shared/components/email-account-table/email-account-table.defs";
@@ -96,6 +99,7 @@ const IMPORT_DIALOG_LABELS = {
     [PROJECT_SETTINGS_IMPORT_KIND.RepoWebhook]: "Webhooks",
     [PROJECT_SETTINGS_IMPORT_KIND.ClusterNetwork]: "Cluster Networks",
     [PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume]: "Cluster Volumes",
+    [PROJECT_SETTINGS_IMPORT_KIND.BackupRepo]: "Backup Repos",
 } as const satisfies Record<ProjectSettingsImportKind, string>;
 
 function castColumns<T extends ImportableSetting>(columns: ColumnDef<T>[]): ColumnDef<ImportableSetting>[] {
@@ -146,6 +150,8 @@ function getImportColumns(settingKind: ProjectSettingsImportKind | null): Column
             return castColumns(NetworksTableDefs.columns({ type: "cluster" }));
         case PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume:
             return castColumns(VolumesTableDefs.columns({ type: "cluster" }));
+        case PROJECT_SETTINGS_IMPORT_KIND.BackupRepo:
+            return castColumns(BackupRepoTableDefs.columns({ type: "settings" }));
         default:
             return [];
     }
@@ -288,6 +294,13 @@ export function ImportProjectSettingsDialog() {
     });
     const clusterVolumeProjectQuery = ProjectClusterVolumesQueries.useFindManyPaginated(projectListRequest, {
         enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.ClusterVolume,
+    });
+
+    const backupRepoSettingsQuery = BackupRepoQueries.useFindManyPaginated(queryRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.BackupRepo,
+    });
+    const backupRepoProjectQuery = ProjectBackupRepoQueries.useFindManyPaginated(projectListRequest, {
+        enabled: open && settingKind === PROJECT_SETTINGS_IMPORT_KIND.BackupRepo,
     });
 
     let settings: ImportableSetting[] = EMPTY_IMPORT_SETTINGS;
@@ -445,6 +458,16 @@ export function ImportProjectSettingsDialog() {
             refetch = () => {
                 void clusterVolumeSettingsQuery.refetch();
                 void clusterVolumeProjectQuery.refetch();
+            };
+            break;
+        case PROJECT_SETTINGS_IMPORT_KIND.BackupRepo:
+            settings = backupRepoSettingsQuery.data?.data ?? [];
+            projectSettings = backupRepoProjectQuery.data?.data ?? [];
+            isFetching = backupRepoSettingsQuery.isFetching || backupRepoProjectQuery.isFetching;
+            hasError = Boolean(backupRepoSettingsQuery.error ?? backupRepoProjectQuery.error);
+            refetch = () => {
+                void backupRepoSettingsQuery.refetch();
+                void backupRepoProjectQuery.refetch();
             };
             break;
     }

@@ -352,6 +352,11 @@ export const settingsRouter: RouteObject = {
                 return SettingsNotificationTargetEditRoute;
             },
         ),
+        createSettingsRoute(ROUTE.settings.backupRepos.$pattern, "Backup Repos", async () => {
+            const { SettingsBackupReposRoute } = await getLazyComponents();
+
+            return SettingsBackupReposRoute;
+        }),
         {
             path: "settings",
             element: (

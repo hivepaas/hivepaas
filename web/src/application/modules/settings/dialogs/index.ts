@@ -13,3 +13,4 @@ export * from "./update-notification-target-status";
 export * from "./provision-github-app";
 export * from "./update-github-app-status";
 export * from "./update-repo-webhook-status";
+export * from "./update-backup-repo-status";

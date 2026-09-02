@@ -16,3 +16,4 @@ export * from "./cloud-storage.commands";
 export * from "./oauth.commands";
 export * from "./github-app.commands";
 export * from "./repo-webhook.commands";
+export * from "./backup-repo.commands";

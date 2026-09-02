@@ -15,6 +15,7 @@ export * from "./acme-dns-providers";
 export * from "./cloud-storages";
 export * from "./command-pipes";
 export * from "./command-templates";
+export * from "./backup-repos";
 export * from "./notification-targets";
 export * from "./build-settings";
 export * from "./storage-settings";

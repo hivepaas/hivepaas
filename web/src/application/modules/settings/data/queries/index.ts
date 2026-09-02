@@ -17,3 +17,4 @@ export * from "./cloud-storage.queries";
 export * from "./oauth.queries";
 export * from "./github-app.queries";
 export * from "./repo-webhook.queries";
+export * from "./backup-repo.queries";

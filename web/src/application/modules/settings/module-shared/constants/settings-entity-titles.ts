@@ -10,4 +10,5 @@ export const SETTINGS_ENTITY_TITLES = {
     accessToken: "Access Token",
     cloudStorage: "Cloud Storage",
     notificationTarget: "Notification Target",
+    backupRepo: "Backup Repository",
 } as const;

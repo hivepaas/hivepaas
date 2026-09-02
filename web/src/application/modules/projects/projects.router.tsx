@@ -71,6 +71,8 @@ const LEGACY_PROJECT_PROVIDER_SETTINGS_SOURCE_PATTERNS = {
 } as const;
 
 const LEGACY_PROJECT_PROVIDER_SETTINGS_SPLAT_PATTERN = "projects/:id/provider-settings/*";
+const LEGACY_PROJECT_PROVIDERS_AND_KEYS_ROOT_PATTERN = "projects/:id/providers-and-keys";
+const LEGACY_PROJECT_PROVIDERS_AND_KEYS_SPLAT_PATTERN = "projects/:id/providers-and-keys/*";
 
 const LEGACY_PROJECT_SOURCES_PATTERNS = {
     root: "projects/:id/sources",
@@ -176,7 +178,7 @@ function LegacyProjectProviderSettingsRouteRedirect() {
         );
     }
 
-    const target = `/projects/${id}/providers-and-keys/${splat}`;
+    const target = `/projects/${id}/integrations/${splat}`;
     const normalizedTarget = target.endsWith("/") ? target : `${target}/`;
 
     return (
@@ -452,6 +454,16 @@ export const projectsRouter: RouteObject = {
                 },
                 {
                     path: LEGACY_PROJECT_PROVIDER_SETTINGS_SPLAT_PATTERN,
+                    element: <LegacyProjectProviderSettingsRouteRedirect />,
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDERS_AND_KEYS_ROOT_PATTERN,
+                    element: (
+                        <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.githubApps.$route} />
+                    ),
+                },
+                {
+                    path: LEGACY_PROJECT_PROVIDERS_AND_KEYS_SPLAT_PATTERN,
                     element: <LegacyProjectProviderSettingsRouteRedirect />,
                 },
                 {

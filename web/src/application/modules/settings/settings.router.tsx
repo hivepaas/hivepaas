@@ -71,13 +71,13 @@ function LegacySettingsRouteRedirect() {
     if (!splat) {
         return (
             <Navigate
-                to="/providers-and-keys/"
+                to="/integrations/"
                 replace
             />
         );
     }
 
-    const target = `/providers-and-keys/${splat}`;
+    const target = `/integrations/${splat}`;
     const normalizedTarget = target.endsWith("/") ? target : `${target}/`;
 
     return (
@@ -102,6 +102,17 @@ export const settingsRouter: RouteObject = {
         };
     },
     children: [
+        {
+            path: ROUTE.settings.$pattern,
+            element: (
+                <ConditionalModule id={MODULE_IDS.Settings}>
+                    <Navigate
+                        to={ROUTE.settings.githubApps.$route}
+                        replace
+                    />
+                </ConditionalModule>
+            ),
+        },
         {
             path: "settings/github-apps",
             element: (
@@ -354,6 +365,21 @@ export const settingsRouter: RouteObject = {
         },
         {
             path: "settings/*",
+            element: <LegacySettingsRouteRedirect />,
+        },
+        {
+            path: "providers-and-keys",
+            element: (
+                <ConditionalModule id={MODULE_IDS.Settings}>
+                    <Navigate
+                        to={ROUTE.settings.githubApps.$route}
+                        replace
+                    />
+                </ConditionalModule>
+            ),
+        },
+        {
+            path: "providers-and-keys/*",
             element: <LegacySettingsRouteRedirect />,
         },
     ],

@@ -161,217 +161,216 @@ export const ROUTE = {
      * Settings
      */
     settings: {
-        $pattern: "providers-and-keys",
+        $pattern: "integrations",
 
         githubApps: {
-            $pattern: "providers-and-keys/github-apps",
-            $route: "/providers-and-keys/github-apps/",
+            $pattern: "integrations/github-apps",
+            $route: "/integrations/github-apps/",
 
             create: {
-                $pattern: "providers-and-keys/github-apps/create",
-                $route: "/providers-and-keys/github-apps/create/",
+                $pattern: "integrations/github-apps/create",
+                $route: "/integrations/github-apps/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/github-apps/:githubAppId/edit",
-                $route: (githubAppId: string) => `/providers-and-keys/github-apps/${githubAppId}/edit/`,
+                $pattern: "integrations/github-apps/:githubAppId/edit",
+                $route: (githubAppId: string) => `/integrations/github-apps/${githubAppId}/edit/`,
             },
         },
 
         webhooks: {
-            $pattern: "providers-and-keys/webhooks",
-            $route: "/providers-and-keys/webhooks/",
+            $pattern: "integrations/webhooks",
+            $route: "/integrations/webhooks/",
 
             create: {
-                $pattern: "providers-and-keys/webhooks/create",
-                $route: "/providers-and-keys/webhooks/create/",
+                $pattern: "integrations/webhooks/create",
+                $route: "/integrations/webhooks/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/webhooks/:repoWebhookId/edit",
-                $route: (repoWebhookId: string) => `/providers-and-keys/webhooks/${repoWebhookId}/edit/`,
+                $pattern: "integrations/webhooks/:repoWebhookId/edit",
+                $route: (repoWebhookId: string) => `/integrations/webhooks/${repoWebhookId}/edit/`,
             },
         },
 
         basicAuth: {
-            $pattern: "providers-and-keys/basic-auth",
-            $route: "/providers-and-keys/basic-auth/",
+            $pattern: "integrations/basic-auth",
+            $route: "/integrations/basic-auth/",
 
             create: {
-                $pattern: "providers-and-keys/basic-auth/create",
-                $route: "/providers-and-keys/basic-auth/create/",
+                $pattern: "integrations/basic-auth/create",
+                $route: "/integrations/basic-auth/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/basic-auth/:basicAuthId/edit",
-                $route: (basicAuthId: string) => `/providers-and-keys/basic-auth/${basicAuthId}/edit/`,
+                $pattern: "integrations/basic-auth/:basicAuthId/edit",
+                $route: (basicAuthId: string) => `/integrations/basic-auth/${basicAuthId}/edit/`,
             },
         },
 
         registryAuth: {
-            $pattern: "providers-and-keys/registry-auth",
-            $route: "/providers-and-keys/registry-auth/",
+            $pattern: "integrations/registry-auth",
+            $route: "/integrations/registry-auth/",
 
             create: {
-                $pattern: "providers-and-keys/registry-auth/create",
-                $route: "/providers-and-keys/registry-auth/create/",
+                $pattern: "integrations/registry-auth/create",
+                $route: "/integrations/registry-auth/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/registry-auth/:registryAuthId/edit",
-                $route: (registryAuthId: string) => `/providers-and-keys/registry-auth/${registryAuthId}/edit/`,
+                $pattern: "integrations/registry-auth/:registryAuthId/edit",
+                $route: (registryAuthId: string) => `/integrations/registry-auth/${registryAuthId}/edit/`,
             },
         },
 
         sslProviders: {
-            $pattern: "providers-and-keys/ssl-providers",
-            $route: "/providers-and-keys/ssl-providers/",
+            $pattern: "integrations/ssl-providers",
+            $route: "/integrations/ssl-providers/",
 
             create: {
-                $pattern: "providers-and-keys/ssl-providers/create",
-                $route: "/providers-and-keys/ssl-providers/create/",
+                $pattern: "integrations/ssl-providers/create",
+                $route: "/integrations/ssl-providers/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/ssl-providers/:sslProviderId/edit",
-                $route: (sslProviderId: string) => `/providers-and-keys/ssl-providers/${sslProviderId}/edit/`,
+                $pattern: "integrations/ssl-providers/:sslProviderId/edit",
+                $route: (sslProviderId: string) => `/integrations/ssl-providers/${sslProviderId}/edit/`,
             },
         },
 
         sslCertificates: {
-            $pattern: "providers-and-keys/ssl-certificates",
-            $route: "/providers-and-keys/ssl-certificates/",
+            $pattern: "integrations/ssl-certificates",
+            $route: "/integrations/ssl-certificates/",
 
             create: {
-                $pattern: "providers-and-keys/ssl-certificates/create",
-                $route: "/providers-and-keys/ssl-certificates/create/",
+                $pattern: "integrations/ssl-certificates/create",
+                $route: "/integrations/ssl-certificates/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/ssl-certificates/:sslCertId/edit",
-                $route: (sslCertId: string) => `/providers-and-keys/ssl-certificates/${sslCertId}/edit/`,
+                $pattern: "integrations/ssl-certificates/:sslCertId/edit",
+                $route: (sslCertId: string) => `/integrations/ssl-certificates/${sslCertId}/edit/`,
             },
         },
 
         emailAccounts: {
-            $pattern: "providers-and-keys/email-accounts",
-            $route: "/providers-and-keys/email-accounts/",
+            $pattern: "integrations/email-accounts",
+            $route: "/integrations/email-accounts/",
 
             create: {
-                $pattern: "providers-and-keys/email-accounts/create",
-                $route: "/providers-and-keys/email-accounts/create/",
+                $pattern: "integrations/email-accounts/create",
+                $route: "/integrations/email-accounts/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/email-accounts/:emailAccountId/edit",
-                $route: (emailAccountId: string) => `/providers-and-keys/email-accounts/${emailAccountId}/edit/`,
+                $pattern: "integrations/email-accounts/:emailAccountId/edit",
+                $route: (emailAccountId: string) => `/integrations/email-accounts/${emailAccountId}/edit/`,
             },
         },
 
         imPlatforms: {
-            $pattern: "providers-and-keys/im-platforms",
-            $route: "/providers-and-keys/im-platforms/",
+            $pattern: "integrations/im-platforms",
+            $route: "/integrations/im-platforms/",
 
             create: {
-                $pattern: "providers-and-keys/im-platforms/create",
-                $route: "/providers-and-keys/im-platforms/create/",
+                $pattern: "integrations/im-platforms/create",
+                $route: "/integrations/im-platforms/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/im-platforms/:imPlatformId/edit",
-                $route: (imPlatformId: string) => `/providers-and-keys/im-platforms/${imPlatformId}/edit/`,
+                $pattern: "integrations/im-platforms/:imPlatformId/edit",
+                $route: (imPlatformId: string) => `/integrations/im-platforms/${imPlatformId}/edit/`,
             },
         },
 
         sshKeys: {
-            $pattern: "providers-and-keys/ssh-keys",
-            $route: "/providers-and-keys/ssh-keys/",
+            $pattern: "integrations/ssh-keys",
+            $route: "/integrations/ssh-keys/",
 
             create: {
-                $pattern: "providers-and-keys/ssh-keys/create",
-                $route: "/providers-and-keys/ssh-keys/create/",
+                $pattern: "integrations/ssh-keys/create",
+                $route: "/integrations/ssh-keys/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/ssh-keys/:sshKeyId/edit",
-                $route: (sshKeyId: string) => `/providers-and-keys/ssh-keys/${sshKeyId}/edit/`,
+                $pattern: "integrations/ssh-keys/:sshKeyId/edit",
+                $route: (sshKeyId: string) => `/integrations/ssh-keys/${sshKeyId}/edit/`,
             },
         },
 
         accessTokens: {
-            $pattern: "providers-and-keys/access-tokens",
-            $route: "/providers-and-keys/access-tokens/",
+            $pattern: "integrations/access-tokens",
+            $route: "/integrations/access-tokens/",
 
             create: {
-                $pattern: "providers-and-keys/access-tokens/create",
-                $route: "/providers-and-keys/access-tokens/create/",
+                $pattern: "integrations/access-tokens/create",
+                $route: "/integrations/access-tokens/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/access-tokens/:accessTokenId/edit",
-                $route: (accessTokenId: string) => `/providers-and-keys/access-tokens/${accessTokenId}/edit/`,
+                $pattern: "integrations/access-tokens/:accessTokenId/edit",
+                $route: (accessTokenId: string) => `/integrations/access-tokens/${accessTokenId}/edit/`,
             },
         },
 
         acmeDnsProviders: {
-            $pattern: "providers-and-keys/acme-dns-providers",
-            $route: "/providers-and-keys/acme-dns-providers/",
+            $pattern: "integrations/acme-dns-providers",
+            $route: "/integrations/acme-dns-providers/",
 
             create: {
-                $pattern: "providers-and-keys/acme-dns-providers/create",
-                $route: "/providers-and-keys/acme-dns-providers/create/",
+                $pattern: "integrations/acme-dns-providers/create",
+                $route: "/integrations/acme-dns-providers/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/acme-dns-providers/:acmeDnsProviderId/edit",
-                $route: (acmeDnsProviderId: string) =>
-                    `/providers-and-keys/acme-dns-providers/${acmeDnsProviderId}/edit/`,
+                $pattern: "integrations/acme-dns-providers/:acmeDnsProviderId/edit",
+                $route: (acmeDnsProviderId: string) => `/integrations/acme-dns-providers/${acmeDnsProviderId}/edit/`,
             },
         },
 
         cloudStorages: {
-            $pattern: "providers-and-keys/cloud-storages",
-            $route: "/providers-and-keys/cloud-storages/",
+            $pattern: "integrations/cloud-storages",
+            $route: "/integrations/cloud-storages/",
 
             create: {
-                $pattern: "providers-and-keys/cloud-storages/create",
-                $route: "/providers-and-keys/cloud-storages/create/",
+                $pattern: "integrations/cloud-storages/create",
+                $route: "/integrations/cloud-storages/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/cloud-storages/:cloudStorageId/edit",
-                $route: (cloudStorageId: string) => `/providers-and-keys/cloud-storages/${cloudStorageId}/edit/`,
+                $pattern: "integrations/cloud-storages/:cloudStorageId/edit",
+                $route: (cloudStorageId: string) => `/integrations/cloud-storages/${cloudStorageId}/edit/`,
             },
         },
 
         oauth: {
-            $pattern: "providers-and-keys/oauth",
-            $route: "/providers-and-keys/oauth/",
+            $pattern: "integrations/oauth",
+            $route: "/integrations/oauth/",
 
             create: {
-                $pattern: "providers-and-keys/oauth/create",
-                $route: "/providers-and-keys/oauth/create/",
+                $pattern: "integrations/oauth/create",
+                $route: "/integrations/oauth/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/oauth/:oauthId/edit",
-                $route: (oauthId: string) => `/providers-and-keys/oauth/${oauthId}/edit/`,
+                $pattern: "integrations/oauth/:oauthId/edit",
+                $route: (oauthId: string) => `/integrations/oauth/${oauthId}/edit/`,
             },
         },
 
         notificationTargets: {
-            $pattern: "providers-and-keys/notification-targets",
-            $route: "/providers-and-keys/notification-targets/",
+            $pattern: "integrations/notification-targets",
+            $route: "/integrations/notification-targets/",
 
             create: {
-                $pattern: "providers-and-keys/notification-targets/create",
-                $route: "/providers-and-keys/notification-targets/create/",
+                $pattern: "integrations/notification-targets/create",
+                $route: "/integrations/notification-targets/create/",
             },
 
             edit: {
-                $pattern: "providers-and-keys/notification-targets/:notificationTargetId/edit",
+                $pattern: "integrations/notification-targets/:notificationTargetId/edit",
                 $route: (notificationTargetId: string) =>
-                    `/providers-and-keys/notification-targets/${notificationTargetId}/edit/`,
+                    `/integrations/notification-targets/${notificationTargetId}/edit/`,
             },
         },
     },
@@ -792,267 +791,267 @@ export const ROUTE = {
             },
 
             providerConfiguration: {
-                $pattern: "projects/:id/providers-and-keys",
-                $route: (id: string) => `/projects/${id}/providers-and-keys/`,
+                $pattern: "projects/:id/integrations",
+                $route: (id: string) => `/projects/${id}/integrations/`,
 
                 accessTokens: {
-                    $pattern: "projects/:id/providers-and-keys/access-tokens",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/access-tokens/`,
+                    $pattern: "projects/:id/integrations/access-tokens",
+                    $route: (id: string) => `/projects/${id}/integrations/access-tokens/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/access-tokens/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/access-tokens/create/`,
+                        $pattern: "projects/:id/integrations/access-tokens/create",
+                        $route: (id: string) => `/projects/${id}/integrations/access-tokens/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/access-tokens/:accessTokenId/edit",
+                        $pattern: "projects/:id/integrations/access-tokens/:accessTokenId/edit",
                         $route: (id: string, accessTokenId: string) =>
-                            `/projects/${id}/providers-and-keys/access-tokens/${accessTokenId}/edit/`,
+                            `/projects/${id}/integrations/access-tokens/${accessTokenId}/edit/`,
                     },
                 },
 
                 acmeDnsProviders: {
-                    $pattern: "projects/:id/providers-and-keys/acme-dns-providers",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/acme-dns-providers/`,
+                    $pattern: "projects/:id/integrations/acme-dns-providers",
+                    $route: (id: string) => `/projects/${id}/integrations/acme-dns-providers/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/acme-dns-providers/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/acme-dns-providers/create/`,
+                        $pattern: "projects/:id/integrations/acme-dns-providers/create",
+                        $route: (id: string) => `/projects/${id}/integrations/acme-dns-providers/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/acme-dns-providers/:acmeDnsProviderId/edit",
+                        $pattern: "projects/:id/integrations/acme-dns-providers/:acmeDnsProviderId/edit",
                         $route: (id: string, acmeDnsProviderId: string) =>
-                            `/projects/${id}/providers-and-keys/acme-dns-providers/${acmeDnsProviderId}/edit/`,
+                            `/projects/${id}/integrations/acme-dns-providers/${acmeDnsProviderId}/edit/`,
                     },
                 },
 
                 basicAuth: {
-                    $pattern: "projects/:id/providers-and-keys/basic-auth",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/basic-auth/`,
+                    $pattern: "projects/:id/integrations/basic-auth",
+                    $route: (id: string) => `/projects/${id}/integrations/basic-auth/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/basic-auth/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/basic-auth/create/`,
+                        $pattern: "projects/:id/integrations/basic-auth/create",
+                        $route: (id: string) => `/projects/${id}/integrations/basic-auth/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/basic-auth/:basicAuthId/edit",
+                        $pattern: "projects/:id/integrations/basic-auth/:basicAuthId/edit",
                         $route: (id: string, basicAuthId: string) =>
-                            `/projects/${id}/providers-and-keys/basic-auth/${basicAuthId}/edit/`,
+                            `/projects/${id}/integrations/basic-auth/${basicAuthId}/edit/`,
                     },
                 },
 
                 cloudStorages: {
-                    $pattern: "projects/:id/providers-and-keys/cloud-storages",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/cloud-storages/`,
+                    $pattern: "projects/:id/integrations/cloud-storages",
+                    $route: (id: string) => `/projects/${id}/integrations/cloud-storages/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/cloud-storages/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/cloud-storages/create/`,
+                        $pattern: "projects/:id/integrations/cloud-storages/create",
+                        $route: (id: string) => `/projects/${id}/integrations/cloud-storages/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/cloud-storages/:cloudStorageId/edit",
+                        $pattern: "projects/:id/integrations/cloud-storages/:cloudStorageId/edit",
                         $route: (id: string, cloudStorageId: string) =>
-                            `/projects/${id}/providers-and-keys/cloud-storages/${cloudStorageId}/edit/`,
+                            `/projects/${id}/integrations/cloud-storages/${cloudStorageId}/edit/`,
                     },
                 },
 
                 commandPipes: {
-                    $pattern: "projects/:id/providers-and-keys/command-pipes",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/command-pipes/`,
+                    $pattern: "projects/:id/integrations/command-pipes",
+                    $route: (id: string) => `/projects/${id}/integrations/command-pipes/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/command-pipes/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/command-pipes/create/`,
+                        $pattern: "projects/:id/integrations/command-pipes/create",
+                        $route: (id: string) => `/projects/${id}/integrations/command-pipes/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/command-pipes/:commandPipeId/edit",
+                        $pattern: "projects/:id/integrations/command-pipes/:commandPipeId/edit",
                         $route: (id: string, commandPipeId: string) =>
-                            `/projects/${id}/providers-and-keys/command-pipes/${commandPipeId}/edit/`,
+                            `/projects/${id}/integrations/command-pipes/${commandPipeId}/edit/`,
                     },
                 },
 
                 commandTemplates: {
-                    $pattern: "projects/:id/providers-and-keys/command-templates",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/command-templates/`,
+                    $pattern: "projects/:id/integrations/command-templates",
+                    $route: (id: string) => `/projects/${id}/integrations/command-templates/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/command-templates/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/command-templates/create/`,
+                        $pattern: "projects/:id/integrations/command-templates/create",
+                        $route: (id: string) => `/projects/${id}/integrations/command-templates/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/command-templates/:commandTemplateId/edit",
+                        $pattern: "projects/:id/integrations/command-templates/:commandTemplateId/edit",
                         $route: (id: string, commandTemplateId: string) =>
-                            `/projects/${id}/providers-and-keys/command-templates/${commandTemplateId}/edit/`,
+                            `/projects/${id}/integrations/command-templates/${commandTemplateId}/edit/`,
                     },
                 },
 
                 emailAccounts: {
-                    $pattern: "projects/:id/providers-and-keys/email-accounts",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/email-accounts/`,
+                    $pattern: "projects/:id/integrations/email-accounts",
+                    $route: (id: string) => `/projects/${id}/integrations/email-accounts/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/email-accounts/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/email-accounts/create/`,
+                        $pattern: "projects/:id/integrations/email-accounts/create",
+                        $route: (id: string) => `/projects/${id}/integrations/email-accounts/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/email-accounts/:emailAccountId/edit",
+                        $pattern: "projects/:id/integrations/email-accounts/:emailAccountId/edit",
                         $route: (id: string, emailAccountId: string) =>
-                            `/projects/${id}/providers-and-keys/email-accounts/${emailAccountId}/edit/`,
+                            `/projects/${id}/integrations/email-accounts/${emailAccountId}/edit/`,
                     },
                 },
 
                 envVariables: {
-                    $pattern: "projects/:id/providers-and-keys/env-variables",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/env-variables/`,
+                    $pattern: "projects/:id/integrations/env-variables",
+                    $route: (id: string) => `/projects/${id}/integrations/env-variables/`,
                 },
 
                 githubApps: {
-                    $pattern: "projects/:id/providers-and-keys/github-apps",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/github-apps/`,
+                    $pattern: "projects/:id/integrations/github-apps",
+                    $route: (id: string) => `/projects/${id}/integrations/github-apps/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/github-apps/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/github-apps/create/`,
+                        $pattern: "projects/:id/integrations/github-apps/create",
+                        $route: (id: string) => `/projects/${id}/integrations/github-apps/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/github-apps/:githubAppId/edit",
+                        $pattern: "projects/:id/integrations/github-apps/:githubAppId/edit",
                         $route: (id: string, githubAppId: string) =>
-                            `/projects/${id}/providers-and-keys/github-apps/${githubAppId}/edit/`,
+                            `/projects/${id}/integrations/github-apps/${githubAppId}/edit/`,
                     },
                 },
 
                 imPlatforms: {
-                    $pattern: "projects/:id/providers-and-keys/im-platforms",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/im-platforms/`,
+                    $pattern: "projects/:id/integrations/im-platforms",
+                    $route: (id: string) => `/projects/${id}/integrations/im-platforms/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/im-platforms/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/im-platforms/create/`,
+                        $pattern: "projects/:id/integrations/im-platforms/create",
+                        $route: (id: string) => `/projects/${id}/integrations/im-platforms/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/im-platforms/:imPlatformId/edit",
+                        $pattern: "projects/:id/integrations/im-platforms/:imPlatformId/edit",
                         $route: (id: string, imPlatformId: string) =>
-                            `/projects/${id}/providers-and-keys/im-platforms/${imPlatformId}/edit/`,
+                            `/projects/${id}/integrations/im-platforms/${imPlatformId}/edit/`,
                     },
                 },
 
                 notificationTargets: {
-                    $pattern: "projects/:id/providers-and-keys/notification-targets",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/notification-targets/`,
+                    $pattern: "projects/:id/integrations/notification-targets",
+                    $route: (id: string) => `/projects/${id}/integrations/notification-targets/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/notification-targets/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/notification-targets/create/`,
+                        $pattern: "projects/:id/integrations/notification-targets/create",
+                        $route: (id: string) => `/projects/${id}/integrations/notification-targets/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/notification-targets/:notificationTargetId/edit",
+                        $pattern: "projects/:id/integrations/notification-targets/:notificationTargetId/edit",
                         $route: (id: string, notificationTargetId: string) =>
-                            `/projects/${id}/providers-and-keys/notification-targets/${notificationTargetId}/edit/`,
+                            `/projects/${id}/integrations/notification-targets/${notificationTargetId}/edit/`,
                     },
                 },
 
                 registryAuth: {
-                    $pattern: "projects/:id/providers-and-keys/registry-auth",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/registry-auth/`,
+                    $pattern: "projects/:id/integrations/registry-auth",
+                    $route: (id: string) => `/projects/${id}/integrations/registry-auth/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/registry-auth/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/registry-auth/create/`,
+                        $pattern: "projects/:id/integrations/registry-auth/create",
+                        $route: (id: string) => `/projects/${id}/integrations/registry-auth/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/registry-auth/:registryAuthId/edit",
+                        $pattern: "projects/:id/integrations/registry-auth/:registryAuthId/edit",
                         $route: (id: string, registryAuthId: string) =>
-                            `/projects/${id}/providers-and-keys/registry-auth/${registryAuthId}/edit/`,
+                            `/projects/${id}/integrations/registry-auth/${registryAuthId}/edit/`,
                     },
                 },
 
                 secrets: {
-                    $pattern: "projects/:id/providers-and-keys/secrets",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/secrets/`,
+                    $pattern: "projects/:id/integrations/secrets",
+                    $route: (id: string) => `/projects/${id}/integrations/secrets/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/secrets/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/secrets/create/`,
+                        $pattern: "projects/:id/integrations/secrets/create",
+                        $route: (id: string) => `/projects/${id}/integrations/secrets/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/secrets/:secretId/edit",
+                        $pattern: "projects/:id/integrations/secrets/:secretId/edit",
                         $route: (id: string, secretId: string) =>
-                            `/projects/${id}/providers-and-keys/secrets/${secretId}/edit/`,
+                            `/projects/${id}/integrations/secrets/${secretId}/edit/`,
                     },
                 },
 
                 sshKeys: {
-                    $pattern: "projects/:id/providers-and-keys/ssh-keys",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/ssh-keys/`,
+                    $pattern: "projects/:id/integrations/ssh-keys",
+                    $route: (id: string) => `/projects/${id}/integrations/ssh-keys/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/ssh-keys/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/ssh-keys/create/`,
+                        $pattern: "projects/:id/integrations/ssh-keys/create",
+                        $route: (id: string) => `/projects/${id}/integrations/ssh-keys/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/ssh-keys/:sshKeyId/edit",
+                        $pattern: "projects/:id/integrations/ssh-keys/:sshKeyId/edit",
                         $route: (id: string, sshKeyId: string) =>
-                            `/projects/${id}/providers-and-keys/ssh-keys/${sshKeyId}/edit/`,
+                            `/projects/${id}/integrations/ssh-keys/${sshKeyId}/edit/`,
                     },
                 },
 
                 sslProviders: {
-                    $pattern: "projects/:id/providers-and-keys/ssl-providers",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/ssl-providers/`,
+                    $pattern: "projects/:id/integrations/ssl-providers",
+                    $route: (id: string) => `/projects/${id}/integrations/ssl-providers/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/ssl-providers/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/ssl-providers/create/`,
+                        $pattern: "projects/:id/integrations/ssl-providers/create",
+                        $route: (id: string) => `/projects/${id}/integrations/ssl-providers/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/ssl-providers/:sslProviderId/edit",
+                        $pattern: "projects/:id/integrations/ssl-providers/:sslProviderId/edit",
                         $route: (id: string, sslProviderId: string) =>
-                            `/projects/${id}/providers-and-keys/ssl-providers/${sslProviderId}/edit/`,
+                            `/projects/${id}/integrations/ssl-providers/${sslProviderId}/edit/`,
                     },
                 },
 
                 sslCertificates: {
-                    $pattern: "projects/:id/providers-and-keys/ssl-certificates",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/ssl-certificates/`,
+                    $pattern: "projects/:id/integrations/ssl-certificates",
+                    $route: (id: string) => `/projects/${id}/integrations/ssl-certificates/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/ssl-certificates/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/ssl-certificates/create/`,
+                        $pattern: "projects/:id/integrations/ssl-certificates/create",
+                        $route: (id: string) => `/projects/${id}/integrations/ssl-certificates/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/ssl-certificates/:sslCertId/edit",
+                        $pattern: "projects/:id/integrations/ssl-certificates/:sslCertId/edit",
                         $route: (id: string, sslCertId: string) =>
-                            `/projects/${id}/providers-and-keys/ssl-certificates/${sslCertId}/edit/`,
+                            `/projects/${id}/integrations/ssl-certificates/${sslCertId}/edit/`,
                     },
                 },
 
                 webhooks: {
-                    $pattern: "projects/:id/providers-and-keys/webhooks",
-                    $route: (id: string) => `/projects/${id}/providers-and-keys/webhooks/`,
+                    $pattern: "projects/:id/integrations/webhooks",
+                    $route: (id: string) => `/projects/${id}/integrations/webhooks/`,
 
                     create: {
-                        $pattern: "projects/:id/providers-and-keys/webhooks/create",
-                        $route: (id: string) => `/projects/${id}/providers-and-keys/webhooks/create/`,
+                        $pattern: "projects/:id/integrations/webhooks/create",
+                        $route: (id: string) => `/projects/${id}/integrations/webhooks/create/`,
                     },
 
                     edit: {
-                        $pattern: "projects/:id/providers-and-keys/webhooks/:repoWebhookId/edit",
+                        $pattern: "projects/:id/integrations/webhooks/:repoWebhookId/edit",
                         $route: (id: string, repoWebhookId: string) =>
-                            `/projects/${id}/providers-and-keys/webhooks/${repoWebhookId}/edit/`,
+                            `/projects/${id}/integrations/webhooks/${repoWebhookId}/edit/`,
                     },
                 },
             },

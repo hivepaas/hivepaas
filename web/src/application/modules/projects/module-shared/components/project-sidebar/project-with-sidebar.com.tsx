@@ -1,8 +1,9 @@
-import { type PropsWithChildren, memo } from "react";
+import { type PropsWithChildren, memo, useMemo } from "react";
 
 import { listBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import {
+    AlertTriangle,
     Bell,
     Container,
     FileBadge,
@@ -10,6 +11,7 @@ import {
     Fingerprint,
     Github,
     Globe,
+    Hammer,
     HardDrive,
     KeyRound,
     Layers,
@@ -17,6 +19,8 @@ import {
     type LucideIcon,
     Mail,
     MessageSquare,
+    Network,
+    Settings,
     ShieldCheck,
     Terminal,
     Webhook,
@@ -41,16 +45,11 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-interface TabItem {
-    route: string;
-    label: string | React.ReactNode;
-    disabled?: boolean;
-}
-
 interface ProviderTabItem {
     route: string;
     label: string;
     icon: LucideIcon;
+    isDanger?: boolean;
 }
 
 interface ProviderTabSection {
@@ -71,27 +70,43 @@ function findActiveTab(tabs: { route: string }[], pathname: string) {
     return tabs.find(({ route }) => normalizedPathname.startsWith(`${normalizePath(route)}/`))?.route;
 }
 
-function createConfigurationTabs(projectId: string): TabItem[] {
+function createConfigurationSections(projectId: string): ProviderTabSection[] {
     return [
         {
-            label: "General",
-            route: ROUTE.projects.single.configuration.general.$route(projectId),
+            title: "Configuration",
+            items: [
+                {
+                    label: "General",
+                    icon: Settings,
+                    route: ROUTE.projects.single.configuration.general.$route(projectId),
+                },
+                {
+                    label: "Build Settings",
+                    icon: Hammer,
+                    route: ROUTE.projects.single.configuration.buildSettings.$route(projectId),
+                },
+                {
+                    label: "Storage Settings",
+                    icon: HardDrive,
+                    route: ROUTE.projects.single.configuration.storageSettings.$route(projectId),
+                },
+                {
+                    label: "Domain Settings",
+                    icon: Globe,
+                    route: ROUTE.projects.single.configuration.domainSettings.$route(projectId),
+                },
+            ],
         },
         {
-            label: "Build Settings",
-            route: ROUTE.projects.single.configuration.buildSettings.$route(projectId),
-        },
-        {
-            label: "Storage Settings",
-            route: ROUTE.projects.single.configuration.storageSettings.$route(projectId),
-        },
-        {
-            label: "Domain Settings",
-            route: ROUTE.projects.single.configuration.domainSettings.$route(projectId),
-        },
-        {
-            label: "Danger Zone",
-            route: ROUTE.projects.single.configuration.dangerZone.$route(projectId),
+            title: "Danger Zone",
+            items: [
+                {
+                    label: "Danger Zone",
+                    icon: AlertTriangle,
+                    isDanger: true,
+                    route: ROUTE.projects.single.configuration.dangerZone.$route(projectId),
+                },
+            ],
         },
     ];
 }
@@ -222,15 +237,22 @@ function createProviderConfigurationSections(projectId: string): ProviderTabSect
     ];
 }
 
-function createClusterResourcesTabs(projectId: string): TabItem[] {
+function createClusterResourcesSections(projectId: string): ProviderTabSection[] {
     return [
         {
-            label: "Networks",
-            route: ROUTE.projects.single.clusterResources.networks.$route(projectId),
-        },
-        {
-            label: "Volumes",
-            route: ROUTE.projects.single.clusterResources.volumes.$route(projectId),
+            title: "Cluster Resources",
+            items: [
+                {
+                    label: "Networks",
+                    icon: Network,
+                    route: ROUTE.projects.single.clusterResources.networks.$route(projectId),
+                },
+                {
+                    label: "Volumes",
+                    icon: HardDrive,
+                    route: ROUTE.projects.single.clusterResources.volumes.$route(projectId),
+                },
+            ],
         },
     ];
 }
@@ -243,114 +265,21 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
 
     invariant(projectId, "Project id must be defined");
 
-    if (section === "providerConfiguration") {
-        const sections = createProviderConfigurationSections(projectId);
-        const allTabs = sections.flatMap(sec => sec.items);
-        const activeKey = findActiveTab(allTabs, location.pathname);
+    const sections = useMemo(() => {
+        switch (section) {
+            case "providerConfiguration":
+                return createProviderConfigurationSections(projectId);
+            case "clusterResources":
+                return createClusterResourcesSections(projectId);
+            case "configuration":
+            default:
+                return createConfigurationSections(projectId);
+        }
+    }, [section, projectId]);
 
-        return (
-            <div className="flex flex-col gap-2 md:flex-row md:gap-4 w-full max-w-[1400px] mx-auto min-w-0">
-                {/* Mobile Dropdown Navigation (< md) */}
-                <div className="md:hidden w-full bg-background/95 backdrop-blur-md rounded-xl p-2 shadow-xs sticky top-[53px] z-20 border border-amber-500/25">
-                    <Select
-                        value={activeKey}
-                        onValueChange={val => {
-                            if (val) {
-                                void navigate(val);
-                            }
-                        }}
-                    >
-                        <SelectTrigger className="w-full bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20 border-amber-500/40 dark:border-amber-400/40 text-foreground font-semibold shadow-xs h-10 px-3.5 rounded-lg focus:ring-amber-400/40">
-                            <SelectValue placeholder="Select section..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {sections.map((sec, sIndex) => (
-                                <SelectGroup key={sec.title}>
-                                    <SelectLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-2 py-1.5">
-                                        {sec.title}
-                                    </SelectLabel>
-                                    {sec.items.map(tab => {
-                                        const Icon = tab.icon;
-                                        return (
-                                            <SelectItem
-                                                key={tab.route}
-                                                value={tab.route}
-                                                className="cursor-pointer"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    <Icon className="size-4 shrink-0 text-muted-foreground" />
-                                                    <span>{tab.label}</span>
-                                                </div>
-                                            </SelectItem>
-                                        );
-                                    })}
-                                    {sIndex < sections.length - 1 && <SelectSeparator />}
-                                </SelectGroup>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+    const allTabs = useMemo(() => sections.flatMap(sec => sec.items), [sections]);
+    const activeKey = findActiveTab(allTabs, location.pathname);
 
-                {/* Desktop Vertical Sidebar Navigation (>= md) */}
-                <aside className="hidden md:block w-56 shrink-0">
-                    <div className="sticky top-4">
-                        <div className="bg-background rounded-lg py-3 shadow-xs">
-                            <Tabs
-                                value={activeKey}
-                                className="flex-row"
-                            >
-                                <TabsList className="bg-background h-full flex-col w-full rounded-none p-0 gap-3">
-                                    {sections.map((sec, sIndex) => (
-                                        <div
-                                            key={sec.title}
-                                            className="w-full flex flex-col"
-                                        >
-                                            <div className="px-3.5 pb-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground/70 uppercase select-none">
-                                                {sec.title}
-                                            </div>
-                                            <div className="flex flex-col">
-                                                {sec.items.map(tab => {
-                                                    const Icon = tab.icon;
-                                                    return (
-                                                        <TabsTrigger
-                                                            key={tab.route}
-                                                            value={tab.route}
-                                                            asChild
-                                                            className="py-2 px-3.5 cursor-pointer bg-background font-medium h-auto w-full justify-start rounded-none border-0 border-l-2 border-transparent transition-colors text-foreground hover:bg-muted/40 data-[state=active]:border-amber-500 dark:data-[state=active]:border-amber-400 data-[state=active]:bg-amber-500/[0.08] dark:data-[state=active]:bg-amber-400/[0.1] data-[state=active]:shadow-none [&[data-state=active]_.tab-icon]:text-amber-500 dark:[&[data-state=active]_.tab-icon]:text-amber-400"
-                                                        >
-                                                            <AppLink.Basic
-                                                                className="w-full flex items-center gap-2.5 text-left text-sm"
-                                                                to={tab.route}
-                                                                ignorePrevPath
-                                                            >
-                                                                <Icon className="tab-icon size-4 shrink-0 transition-colors text-muted-foreground" />
-                                                                <span className="truncate">{tab.label}</span>
-                                                            </AppLink.Basic>
-                                                        </TabsTrigger>
-                                                    );
-                                                })}
-                                            </div>
-                                            {sIndex < sections.length - 1 && (
-                                                <div className="pt-2 px-3.5">
-                                                    <Separator className="opacity-40" />
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </TabsList>
-                            </Tabs>
-                        </div>
-                    </div>
-                </aside>
-                <div className={cn(listBox, "w-full min-w-0 flex-1")}>{children}</div>
-            </div>
-        );
-    }
-
-    const tabs =
-        section === "configuration" ? createConfigurationTabs(projectId) : createClusterResourcesTabs(projectId);
-
-    const activeKey = findActiveTab(tabs, location.pathname);
     return (
         <div className="flex flex-col gap-2 md:flex-row md:gap-4 w-full max-w-[1400px] mx-auto min-w-0">
             {/* Mobile Dropdown Navigation (< md) */}
@@ -367,14 +296,37 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
                         <SelectValue placeholder="Select section..." />
                     </SelectTrigger>
                     <SelectContent>
-                        {tabs.map(tab => (
-                            <SelectItem
-                                key={tab.route}
-                                value={tab.route}
-                                disabled={tab.disabled}
-                            >
-                                {tab.label}
-                            </SelectItem>
+                        {sections.map((sec, sIndex) => (
+                            <SelectGroup key={sec.title}>
+                                <SelectLabel className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 px-2 py-1.5">
+                                    {sec.title}
+                                </SelectLabel>
+                                {sec.items.map(tab => {
+                                    const Icon = tab.icon;
+                                    return (
+                                        <SelectItem
+                                            key={tab.route}
+                                            value={tab.route}
+                                            className={cn(
+                                                "cursor-pointer",
+                                                tab.isDanger &&
+                                                    "text-destructive focus:text-destructive focus:bg-destructive/10",
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Icon
+                                                    className={cn(
+                                                        "size-4 shrink-0",
+                                                        tab.isDanger ? "text-destructive" : "text-muted-foreground",
+                                                    )}
+                                                />
+                                                <span>{tab.label}</span>
+                                            </div>
+                                        </SelectItem>
+                                    );
+                                })}
+                                {sIndex < sections.length - 1 && <SelectSeparator />}
+                            </SelectGroup>
                         ))}
                     </SelectContent>
                 </Select>
@@ -383,28 +335,60 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
             {/* Desktop Vertical Sidebar Navigation (>= md) */}
             <aside className="hidden md:block w-56 shrink-0">
                 <div className="sticky top-4">
-                    <div className="bg-background rounded-lg py-4">
+                    <div className="bg-background rounded-lg py-3 shadow-xs">
                         <Tabs
                             value={activeKey}
                             className="flex-row"
                         >
-                            <TabsList className="bg-background h-full flex-col w-full rounded-none p-0">
-                                {tabs.map(tab => (
-                                    <TabsTrigger
-                                        key={tab.route}
-                                        value={tab.route}
-                                        asChild
-                                        disabled={tab.disabled}
-                                        className="py-3 pl-4 cursor-pointer bg-background data-[state=active]:border-amber-500 dark:data-[state=active]:border-amber-400 data-[state=active]:bg-amber-500/[0.08] dark:data-[state=active]:bg-amber-400/[0.1] data-[state=active]:text-foreground font-medium h-full w-full justify-start rounded-none border-0 border-l-2 border-transparent data-[state=active]:shadow-none"
+                            <TabsList className="bg-background h-full flex-col w-full rounded-none p-0 gap-3">
+                                {sections.map((sec, sIndex) => (
+                                    <div
+                                        key={sec.title}
+                                        className="w-full flex flex-col"
                                     >
-                                        <AppLink.Basic
-                                            className="w-full text-left"
-                                            to={tab.route}
-                                            ignorePrevPath
-                                        >
-                                            {tab.label}
-                                        </AppLink.Basic>
-                                    </TabsTrigger>
+                                        <div className="px-3.5 pb-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground/70 uppercase select-none">
+                                            {sec.title}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            {sec.items.map(tab => {
+                                                const Icon = tab.icon;
+                                                return (
+                                                    <TabsTrigger
+                                                        key={tab.route}
+                                                        value={tab.route}
+                                                        asChild
+                                                        className={cn(
+                                                            "py-2 px-3.5 cursor-pointer bg-background font-medium h-auto w-full justify-start rounded-none border-0 border-l-2 border-transparent transition-colors",
+                                                            tab.isDanger
+                                                                ? "text-destructive hover:bg-destructive/10 hover:text-destructive data-[state=active]:border-destructive data-[state=active]:bg-destructive/10 data-[state=active]:text-destructive data-[state=active]:shadow-none"
+                                                                : "text-foreground hover:bg-muted/40 data-[state=active]:border-amber-500 dark:data-[state=active]:border-amber-400 data-[state=active]:bg-amber-500/[0.08] dark:data-[state=active]:bg-amber-400/[0.1] data-[state=active]:shadow-none [&[data-state=active]_.tab-icon]:text-amber-500 dark:[&[data-state=active]_.tab-icon]:text-amber-400",
+                                                        )}
+                                                    >
+                                                        <AppLink.Basic
+                                                            className="w-full flex items-center gap-2.5 text-left text-sm"
+                                                            to={tab.route}
+                                                            ignorePrevPath
+                                                        >
+                                                            <Icon
+                                                                className={cn(
+                                                                    "tab-icon size-4 shrink-0 transition-colors",
+                                                                    tab.isDanger
+                                                                        ? "text-destructive"
+                                                                        : "text-muted-foreground",
+                                                                )}
+                                                            />
+                                                            <span className="truncate">{tab.label}</span>
+                                                        </AppLink.Basic>
+                                                    </TabsTrigger>
+                                                );
+                                            })}
+                                        </div>
+                                        {sIndex < sections.length - 1 && (
+                                            <div className="pt-2 px-3.5">
+                                                <Separator className="opacity-40" />
+                                            </div>
+                                        )}
+                                    </div>
                                 ))}
                             </TabsList>
                         </Tabs>

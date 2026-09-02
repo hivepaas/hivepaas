@@ -63,8 +63,11 @@ function View({ projectId }: Props) {
         },
         {
             route: ROUTE.projects.single.providerConfiguration.githubApps.$route(projectId),
-            label: "Providers & Keys",
-            activePathPrefixes: [ROUTE.projects.single.providerConfiguration.$route(projectId)],
+            label: "Integrations",
+            activePathPrefixes: [
+                ROUTE.projects.single.providerConfiguration.$route(projectId),
+                `/projects/${projectId}/providers-and-keys`,
+            ],
         },
         {
             route: ROUTE.projects.single.clusterResources.networks.$route(projectId),

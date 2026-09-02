@@ -2,25 +2,38 @@ import * as React from "react";
 
 import { LogoIcon } from "@/assets/icons";
 import {
+    ArchiveX,
     Bell,
     CircleDashed,
+    CircleUser,
     Container,
+    DatabaseBackup,
     FileBadge,
     Fingerprint,
     Github,
     Globe,
+    Hammer,
     HardDrive,
+    Key,
     KeyRound,
+    Layers,
     LayoutGrid,
+    ListTodo,
     Lock,
     type LucideIcon,
     Mail,
+    MapPin,
     MessageSquare,
+    Network,
     Puzzle,
+    RefreshCw,
+    Route,
+    Server,
     Settings,
     Settings2,
     ShieldCheck,
     Terminal,
+    Trash2,
     User,
     Users,
     Webhook,
@@ -77,7 +90,7 @@ const navMain: SidebarItem[] = [
         alwaysVisible: true,
     },
     {
-        title: "Providers & Keys",
+        title: "Integrations",
         route: "#",
         pattern: ROUTE.settings.$pattern,
         icon: Puzzle,
@@ -204,11 +217,13 @@ const navMain: SidebarItem[] = [
         items: [
             {
                 title: "Image Build",
+                icon: Hammer,
                 route: ROUTE.appSettings.imageBuild.$route,
                 pattern: ROUTE.appSettings.imageBuild.$pattern,
             },
             {
                 title: "App Placement",
+                icon: MapPin,
                 route: ROUTE.appSettings.appPlacement.$route,
                 pattern: ROUTE.appSettings.appPlacement.$pattern,
             },
@@ -223,16 +238,19 @@ const navMain: SidebarItem[] = [
         items: [
             {
                 title: "Nodes",
+                icon: Server,
                 route: ROUTE.cluster.nodes.$route,
                 pattern: ROUTE.cluster.nodes.$pattern,
             },
             {
                 title: "Networks",
+                icon: Network,
                 route: ROUTE.cluster.networks.$route,
                 pattern: ROUTE.cluster.networks.$pattern,
             },
             {
                 title: "Volumes",
+                icon: HardDrive,
                 route: ROUTE.cluster.volumes.$route,
                 pattern: ROUTE.cluster.volumes.$pattern,
             },
@@ -247,33 +265,54 @@ const navMain: SidebarItem[] = [
         items: [
             {
                 title: "HivePaaS",
+                icon: Layers,
                 route: ROUTE.systemSettings.hivepaas.general.$route,
                 pattern: ROUTE.systemSettings.hivepaas.$pattern,
             },
             {
                 title: "Traefik",
+                icon: Route,
                 route: ROUTE.systemSettings.traefik.general.$route,
                 pattern: ROUTE.systemSettings.traefik.$pattern,
             },
             {
                 title: "Backup Repo Cleanup",
+                icon: ArchiveX,
                 route: ROUTE.systemSettings.backupRepoCleanup.configuration.$route,
                 pattern: ROUTE.systemSettings.backupRepoCleanup.$pattern,
             },
             {
                 title: "SSL Renewal",
+                icon: RefreshCw,
                 route: ROUTE.systemSettings.sslRenewal.configuration.$route,
                 pattern: ROUTE.systemSettings.sslRenewal.$pattern,
             },
             {
                 title: "Data Backup",
+                icon: DatabaseBackup,
                 route: ROUTE.systemSettings.dataBackup.configuration.$route,
                 pattern: ROUTE.systemSettings.dataBackup.$pattern,
             },
             {
                 title: "Data Cleanup",
+                icon: Trash2,
                 route: ROUTE.systemSettings.dataCleanup.configuration.$route,
                 pattern: ROUTE.systemSettings.dataCleanup.$pattern,
+            },
+        ],
+    },
+    {
+        title: "System Status",
+        route: "#",
+        pattern: ROUTE.systemStatus.$pattern,
+        icon: CircleDashed,
+        moduleId: MODULE_IDS.System,
+        items: [
+            {
+                title: "Tasks",
+                icon: ListTodo,
+                route: ROUTE.systemStatus.tasks.$route,
+                pattern: ROUTE.systemStatus.tasks.$pattern,
             },
         ],
     },
@@ -285,20 +324,6 @@ const navMain: SidebarItem[] = [
         moduleId: MODULE_IDS.User,
     },
     {
-        title: "System Status",
-        route: "#",
-        pattern: ROUTE.systemStatus.$pattern,
-        icon: CircleDashed,
-        moduleId: MODULE_IDS.System,
-        items: [
-            {
-                title: "Tasks",
-                route: ROUTE.systemStatus.tasks.$route,
-                pattern: ROUTE.systemStatus.tasks.$pattern,
-            },
-        ],
-    },
-    {
         title: "Your Account",
         route: "#",
         pattern: "#",
@@ -306,11 +331,13 @@ const navMain: SidebarItem[] = [
         items: [
             {
                 title: "Account",
+                icon: CircleUser,
                 route: ROUTE.currentUser.profile.$route,
                 pattern: ROUTE.currentUser.profile.$pattern,
             },
             {
                 title: "API Keys",
+                icon: Key,
                 route: ROUTE.currentUser.profileApiKeys.$route,
                 pattern: ROUTE.currentUser.profileApiKeys.$pattern,
             },

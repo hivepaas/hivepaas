@@ -8,6 +8,7 @@ import (
 )
 
 func New(
+	lockRepo repository.LockRepo,
 	settingRepo repository.SettingRepo,
 
 	sslService sslservice.Service,
@@ -15,6 +16,7 @@ func New(
 	dockerManager docker.Manager,
 ) settinginitservice.Service {
 	return &service{
+		lockRepo:    lockRepo,
 		settingRepo: settingRepo,
 
 		sslService: sslService,
@@ -24,6 +26,7 @@ func New(
 }
 
 type service struct {
+	lockRepo    repository.LockRepo
 	settingRepo repository.SettingRepo
 
 	sslService sslservice.Service

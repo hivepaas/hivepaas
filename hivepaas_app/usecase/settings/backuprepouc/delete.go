@@ -66,6 +66,7 @@ func (uc *UC) deleteRepoSnapshots(
 	snapshotIDs := make([]string, 0, len(snapshots))
 	for _, snapshot := range snapshots {
 		snapshot.UpdateVer++
+		snapshot.UpdatedAt = timeNow
 		snapshot.DeletedAt = timeNow
 		snapshotIDs = append(snapshotIDs, snapshot.ID)
 	}

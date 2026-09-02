@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS locks
 );
 
 INSERT INTO locks (id)
-VALUES ('lock:sys:init-default-settings'),
+VALUES ('lock:sys:setting-update'),
+       ('lock:sys:task-update'),
        ('lock:sys:version-update')
 ON CONFLICT DO NOTHING;
 

@@ -11,12 +11,40 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+)
+
+const (
+	lockIDSettingUpdate = "lock:sys:setting-update"
 )
 
 func (s *service) InitDefaults(
 	ctx context.Context,
 	db database.IDB,
 ) (err error) {
+	err = transaction.Execute(ctx, db, func(db database.Tx) error {
+		err = s.InitDefaultsWithTx(ctx, db)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		return nil
+	})
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	return nil
+}
+
+func (s *service) InitDefaultsWithTx(
+	ctx context.Context,
+	db database.Tx,
+) (err error) {
+	// Acquire a lock for this process
+	_, err = s.lockRepo.GetByID(ctx, db, lockIDSettingUpdate, bunex.SelectFor("UPDATE"))
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	settings, _, err := s.settingRepo.List(ctx, db, entity.NewObjectScopeGlobal(), nil,
 		bunex.SelectColumns("id", "type", "status"),
 	)

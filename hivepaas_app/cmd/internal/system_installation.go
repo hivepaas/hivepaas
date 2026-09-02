@@ -89,7 +89,7 @@ func sysInstallationInitData(
 			return fmt.Errorf("failed to initialize admin user: %w", err)
 		}
 
-		if err = settingInitService.InitDefaults(ctx, db); err != nil {
+		if err = settingInitService.InitDefaultsWithTx(ctx, db); err != nil {
 			return fmt.Errorf("failed to initialize default settings: %w", err)
 		}
 

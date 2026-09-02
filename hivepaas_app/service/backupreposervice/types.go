@@ -5,6 +5,16 @@ import (
 	"github.com/hivepaas/hivepaas/services/backup"
 )
 
+// cleanupLockPrefix namespaces the cleanup advisory lock so it cannot collide with locks taken
+// elsewhere.
+const cleanupLockPrefix = "backup-repo:cleanup:"
+
+// CleanupLockName is the advisory lock guarding a repository's cleanup. Both the manual endpoint
+// and the scheduled job take it, so the two can never prune the same repository at once.
+func CleanupLockName(repoSettingID string) string {
+	return cleanupLockPrefix + repoSettingID
+}
+
 type InitRepoReq struct {
 	Scope *entity.ObjectScope
 	Repo  *entity.BackupRepo
@@ -78,4 +88,18 @@ type ApplyRepoOptionsReq struct {
 	RepoID     string
 	RefObjects *entity.RefObjects
 	Options    *backup.RepoOptions
+}
+
+type SyncRepoSnapshotsReq struct {
+	Scope       *entity.ObjectScope
+	RepoSetting *entity.Setting
+	// Remaining is what the repository holds now; stored records are reconciled against it.
+	Remaining []*RepoSnapshot
+}
+
+type SyncRepoSnapshotsResp struct {
+	// Removed carries the snapshots themselves, not just a count, so the caller can report which
+	// ones are gone.
+	Removed []*entity.BackupSnapshot
+	Added   int
 }

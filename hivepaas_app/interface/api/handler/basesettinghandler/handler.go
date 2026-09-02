@@ -34,6 +34,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/storagesettingsuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systemcleanupuc"
@@ -48,6 +49,7 @@ type Handler struct {
 	APIKeyUC               *apikeyuc.UC
 	AppFeatureSettingsUC   *appfeaturesettingsuc.UC
 	AppPlacementSettingsUC *appplacementsettingsuc.UC
+	BackupRepoCleanupUC    *backuprepocleanupuc.UC
 	BackupRepoUC           *backuprepouc.UC
 	BasicAuthUC            *basicauthuc.UC
 	CloudStorageUC         *cloudstorageuc.UC
@@ -88,6 +90,7 @@ func New(
 	apiKeyUC *apikeyuc.UC,
 	appFeatureSettingsUC *appfeaturesettingsuc.UC,
 	appPlacementSettingsUC *appplacementsettingsuc.UC,
+	backupRepoCleanupUC *backuprepocleanupuc.UC,
 	backupRepoUC *backuprepouc.UC,
 	basicAuthUC *basicauthuc.UC,
 	cloudStorageUC *cloudstorageuc.UC,
@@ -127,6 +130,7 @@ func New(
 		APIKeyUC:               apiKeyUC,
 		AppFeatureSettingsUC:   appFeatureSettingsUC,
 		AppPlacementSettingsUC: appPlacementSettingsUC,
+		BackupRepoCleanupUC:    backupRepoCleanupUC,
 		BackupRepoUC:           backupRepoUC,
 		BasicAuthUC:            basicAuthUC,
 		CloudStorageUC:         cloudStorageUC,

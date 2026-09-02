@@ -2,19 +2,14 @@ package backuprepouc
 
 import (
 	"context"
-	"strings"
-	"time"
 
-	"github.com/tiendc/gofn"
-
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice/backupreposerviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backuprepouc/backuprepodto"
 	"github.com/hivepaas/hivepaas/services/backup"
@@ -60,7 +55,7 @@ func (uc *UC) CreateBackupRepo(
 				// Either way the setting has to say what the repository will really do.
 				applyRepoConfig(backupRepo, initResp.Config)
 
-				snapshotSettings, snapshotTags := newSnapshotSettings(pData.Setting, initResp.Snapshots)
+				snapshotSettings, snapshotTags := backupreposerviceimpl.NewSnapshotSettings(pData.Setting, initResp.Snapshots)
 				pData.UpsertingSettings = append(pData.UpsertingSettings, snapshotSettings...)
 				pData.UpsertingTags = append(pData.UpsertingTags, snapshotTags...)
 			}
@@ -101,60 +96,4 @@ func applyRepoConfig(repo *entity.BackupRepo, config *backup.RepoConfig) {
 			KeepMonthly: config.Retention.KeepMonthly,
 		}
 	}
-}
-
-// newSnapshotSettings turns the snapshots read back from an imported repository into settings
-// linked to that repository through RefID, plus the rows for their tags. Tags go to the tags
-// table instead of into the snapshot data so they can be indexed and searched.
-func newSnapshotSettings(
-	repoSetting *entity.Setting,
-	snapshots []*backupreposervice.RepoSnapshot,
-) (settings []*entity.Setting, tags []*entity.Tag) {
-	if len(snapshots) == 0 {
-		return nil, nil
-	}
-
-	timeNow := time.Now()
-	settings = make([]*entity.Setting, 0, len(snapshots))
-	for _, item := range snapshots {
-		snapshot := item.Snapshot
-		setting := &entity.Setting{
-			ID:        gofn.Must(ulid.NewStringULID()),
-			Scope:     repoSetting.Scope,
-			ObjectID:  repoSetting.ObjectID,
-			RefID:     repoSetting.ID,
-			Type:      base.SettingTypeBackupSnapshot,
-			Kind:      repoSetting.Kind,
-			Status:    base.SettingStatusActive,
-			Name:      snapshot.ShortID,
-			Size:      snapshot.SizeBytes,
-			Version:   entity.CurrentBackupSnapshotVersion,
-			CreatedAt: timeNow,
-			UpdatedAt: timeNow,
-		}
-		setting.MustSetData(snapshot)
-		settings = append(settings, setting)
-
-		// A repository can hold the same tag on many snapshots, but the tags table is keyed by
-		// (object_id, tag), so duplicates only matter within one snapshot.
-		seen := make(map[string]struct{}, len(item.Tags))
-		index := 0
-		for _, tag := range item.Tags {
-			tag = strings.TrimSpace(tag)
-			if tag == "" {
-				continue
-			}
-			if _, ok := seen[tag]; ok {
-				continue
-			}
-			seen[tag] = struct{}{}
-			tags = append(tags, &entity.Tag{
-				ObjectID: setting.ID,
-				Tag:      tag,
-				Index:    index,
-			})
-			index++
-		}
-	}
-	return settings, tags
 }

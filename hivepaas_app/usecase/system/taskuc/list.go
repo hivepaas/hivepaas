@@ -28,6 +28,8 @@ func (uc *UC) ListTask(
 			settingType = base.SettingTypeSystemCleanup
 		case base.SystemJobNameSslRenewal:
 			settingType = base.SettingTypeSSLRenewal
+		case base.SystemJobNameBackupRepoCleanup:
+			settingType = base.SettingTypeBackupRepoCleanup
 		default:
 			return nil, hperrors.Wrap(hperrors.ErrArgumentInvalid).WithParam("Param", "Job name")
 		}

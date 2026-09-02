@@ -47,6 +47,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice/apppreviewserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice/approutingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice/backuprepocleanupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice/backupreposerviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice/clustercleanupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice/clustersecretserviceimpl"
@@ -153,6 +154,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefikuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systemcleanupuc"
@@ -250,6 +252,7 @@ var Provides = []any{
 	apppreviewuc.New,
 	appsettingsuc.New,
 	appuc.New,
+	backuprepocleanupuc.New,
 	backuprepouc.New,
 	basicauthuc.New,
 	binobjectuc.New,
@@ -308,6 +311,7 @@ var Provides = []any{
 	apppreviewserviceimpl.New,
 	approutingserviceimpl.New,
 	appserviceimpl.New,
+	backuprepocleanupserviceimpl.New,
 	backupreposerviceimpl.New,
 	clustercleanupserviceimpl.New,
 	clustersecretserviceimpl.New,

@@ -18,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/scopeservice"
@@ -35,14 +36,15 @@ type Executor struct {
 
 	taskLogRepo repository.TaskLogRepo
 
-	appService          appservice.Service
-	notificationService notificationservice.Service
-	schedJobExecService schedjobexecservice.Service
-	scopeService        scopeservice.Service
-	settingService      settingservice.Service
-	sslRenewalService   sslrenewalservice.Service
-	sysBackupService    sysbackupservice.Service
-	sysCleanupService   syscleanupservice.Service
+	appService               appservice.Service
+	backupRepoCleanupService backuprepocleanupservice.Service
+	notificationService      notificationservice.Service
+	schedJobExecService      schedjobexecservice.Service
+	scopeService             scopeservice.Service
+	settingService           settingservice.Service
+	sslRenewalService        sslrenewalservice.Service
+	sysBackupService         sysbackupservice.Service
+	sysCleanupService        syscleanupservice.Service
 }
 
 func NewExecutor(
@@ -54,6 +56,7 @@ func NewExecutor(
 	taskLogRepo repository.TaskLogRepo,
 
 	appService appservice.Service,
+	backupRepoCleanupService backuprepocleanupservice.Service,
 	notificationService notificationservice.Service,
 	schedJobExecService schedjobexecservice.Service,
 	scopeService scopeservice.Service,
@@ -69,14 +72,15 @@ func NewExecutor(
 
 		taskLogRepo: taskLogRepo,
 
-		appService:          appService,
-		notificationService: notificationService,
-		schedJobExecService: schedJobExecService,
-		scopeService:        scopeService,
-		settingService:      settingService,
-		sslRenewalService:   sslRenewalService,
-		sysBackupService:    sysBackupService,
-		sysCleanupService:   sysCleanupService,
+		appService:               appService,
+		backupRepoCleanupService: backupRepoCleanupService,
+		notificationService:      notificationService,
+		schedJobExecService:      schedJobExecService,
+		scopeService:             scopeService,
+		settingService:           settingService,
+		sslRenewalService:        sslRenewalService,
+		sysBackupService:         sysBackupService,
+		sysCleanupService:        sysCleanupService,
 	}
 	taskQueue.RegisterExecutor(base.TaskTypeSchedJobExec, e.execute)
 	return e
@@ -165,6 +169,21 @@ func (e *Executor) execute(
 			TaskExecData:      data.TaskExecData,
 			RenewalJobSetting: data.SchedJob,
 			RenewalSettings:   setting.MustAsSSLRenewal(),
+		})
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		data.SkipResultNotification = resp.SkipResultNotification
+
+	case base.SchedJobTypeBackupRepoCleanup:
+		setting := data.RefObjects.RefSettings[schedJob.TargetSetting.ID]
+		if setting == nil {
+			return hperrors.NewNotFound("Backup repo cleanup settings")
+		}
+		resp, err := e.backupRepoCleanupService.Cleanup(ctx, db, &backuprepocleanupservice.BackupRepoCleanupReq{
+			TaskExecData:      data.TaskExecData,
+			CleanupJobSetting: data.SchedJob,
+			CleanupSettings:   setting.MustAsBackupRepoCleanup(),
 		})
 		if err != nil {
 			return hperrors.Wrap(err)

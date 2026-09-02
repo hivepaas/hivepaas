@@ -61,6 +61,13 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		sslRenewalGroup.POST("/exec", systemSettingsHandler.ExecuteSSLRenewal)
 	}
 
+	{ // Backup repo cleanup group
+		backupRepoCleanupGroup := systemSettingGroup.Group("/backup-repo-cleanup")
+		backupRepoCleanupGroup.GET("", systemSettingsHandler.GetBackupRepoCleanupSettings)
+		backupRepoCleanupGroup.PUT("", systemSettingsHandler.UpdateBackupRepoCleanupSettings)
+		backupRepoCleanupGroup.POST("/exec", systemSettingsHandler.ExecuteBackupRepoCleanup)
+	}
+
 	_ = s.registerHivePaaSRoutes(systemGroup)
 	_ = s.registerTraefikRoutes(systemGroup)
 }

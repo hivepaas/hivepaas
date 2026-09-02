@@ -97,6 +97,11 @@ func (s *service) LoadObjectScope(
 	case base.ObjectScopeHivepaas:
 		scope = entity.NewObjectScopeHivepaas()
 	}
+	// An unrecognized scope type leaves scope nil, and every line below would panic on it. That is
+	// reachable whenever the type comes from stored data rather than a validated request.
+	if scope == nil {
+		return nil, hperrors.NewUnsupportedNT(scopeType)
+	}
 	scope.NotRequireActive = !requireActive
 
 	err := s.LoadObjectScopeData(ctx, db, scope)

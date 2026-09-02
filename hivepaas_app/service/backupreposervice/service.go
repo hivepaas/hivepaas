@@ -13,6 +13,11 @@ type Service interface {
 	InitRepo(ctx context.Context, db database.IDB, req *InitRepoReq) (resp *InitRepoResp, err error)
 	CleanupRepo(ctx context.Context, db database.IDB, req *CleanupRepoReq) (resp *CleanupRepoResp, err error)
 
+	// SyncRepoSnapshots reconciles the stored snapshot records against what the repository holds.
+	// It runs on the caller's transaction.
+	SyncRepoSnapshots(ctx context.Context, db database.Tx, req *SyncRepoSnapshotsReq) (
+		resp *SyncRepoSnapshotsResp, err error)
+
 	// ListSnapshots reads the snapshots currently stored in a backup repository.
 	ListSnapshots(ctx context.Context, db database.IDB, req *ListSnapshotsReq) (
 		resp *ListSnapshotsResp, err error)

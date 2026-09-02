@@ -134,6 +134,16 @@ func (s *service) InitDefaultsWithTx(
 		}
 	}
 
+	// Backup repo cleanup settings
+	if !gofn.ContainBy(settings, func(item *entity.Setting) bool {
+		return item.Type == base.SettingTypeBackupRepoCleanup
+	}) {
+		err = s.initDefaultBackupRepoCleanup(ctx, db, timeNow)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+
 	// Default self-signed SSL cert
 	err = s.initDefaultSSLSelfSigned(ctx, db, timeNow)
 	if err != nil {

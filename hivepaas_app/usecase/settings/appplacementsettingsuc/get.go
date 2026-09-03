@@ -15,7 +15,7 @@ func (uc *UC) GetAppPlacementSettings(
 	req *appplacementsettingsdto.GetAppPlacementSettingsReq,
 ) (*appplacementsettingsdto.GetAppPlacementSettingsResp, error) {
 	req.Type = currentSettingType
-	resp, err := uc.GetUniqueSetting(ctx, auth, &req.GetUniqueSettingReq, &settings.GetUniqueSettingData{})
+	resp, err := uc.GetUniqueSettingOrEmpty(ctx, auth, &req.GetUniqueSettingReq, &settings.GetUniqueSettingData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

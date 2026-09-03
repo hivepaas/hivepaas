@@ -11,6 +11,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
+const (
+	allowedDomainsMaxLen = 100
+)
+
 type UpdateDomainSettingsReq struct {
 	settings.UpdateUniqueSettingReq
 	*DomainSettingsBaseReq
@@ -28,6 +32,16 @@ func (req *DomainSettingsBaseReq) ToEntity() *entity.DomainSettings {
 		AllowedDomains: req.AllowedDomains,
 		CertSettings:   req.CertSettings.ToEntity(),
 	}
+}
+
+func (req *DomainSettingsBaseReq) validate(field string) (res []vld.Validator) {
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateSliceEx(req.AllowedDomains, true, 0, allowedDomainsMaxLen,
+		nil, field+"allowedDomains")...)
+	res = append(res, req.CertSettings.validate(field+"certSettings")...)
+	return res
 }
 
 type DomainCertSettingsReq struct {
@@ -51,12 +65,15 @@ func (req *DomainCertSettingsReq) ToEntity() *entity.DomainCertSettings {
 	}
 }
 
-// nolint
-func (req *DomainSettingsBaseReq) validate(field string) (res []vld.Validator) {
+func (req *DomainCertSettingsReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return nil
+	}
 	if field != "" {
 		field += "."
 	}
-	// TODO: add validation
+	res = append(res, basedto.ValidateStrIn(&req.CertType, false, base.AllSSLCertTypes, field+"certType")...)
+	res = append(res, basedto.ValidateStrIn(&req.KeyType, false, base.AllSSLKeyTypes, field+"keyType")...)
 	return res
 }
 

@@ -1,6 +1,8 @@
 package imagebuildsettingsdto
 
 import (
+	"math"
+
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -12,6 +14,9 @@ import (
 
 const (
 	nodeLabelMaxLen = 100
+
+	cpuMax = 1000
+	memMax = math.MaxInt64
 )
 
 type UpdateImageBuildSettingsReq struct {
@@ -65,6 +70,9 @@ func (req *ImageBuildWorkerSettingsReq) ToEntity() entity.ImageBuildWorkerSettin
 }
 
 func (req *ImageBuildWorkerSettingsReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return
+	}
 	if field != "" {
 		field += "."
 	}
@@ -93,12 +101,17 @@ func (req *ImageBuildResourceSettingsReq) ToEntity() entity.ImageBuildResourceSe
 	}
 }
 
-// nolint
 func (req *ImageBuildResourceSettingsReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return
+	}
 	if field != "" {
 		field += "."
 	}
-	// TODO: add validation
+	res = append(res, basedto.ValidateNumber(&req.CPUs, false, 0, cpuMax, field+"cpus")...)
+	res = append(res, basedto.ValidateNumber(&req.Mem, false, 0, memMax, field+"mem")...)
+	res = append(res, basedto.ValidateNumber(&req.MemSwap, false, 0, memMax, field+"memSwap")...)
+	res = append(res, basedto.ValidateNumber(&req.ShmSize, false, 0, memMax, field+"shmSize")...)
 	return res
 }
 

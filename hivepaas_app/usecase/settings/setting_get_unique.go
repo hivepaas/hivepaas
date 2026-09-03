@@ -2,13 +2,16 @@ package settings
 
 import (
 	"context"
+	"errors"
 
 	vld "github.com/tiendc/go-validator"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
 type GetUniqueSettingReq struct {
@@ -61,4 +64,43 @@ func (uc *BaseUC) GetUniqueSetting(
 		Data:       setting,
 		RefObjects: refObjects,
 	}, nil
+}
+
+func (uc *BaseUC) GetUniqueSettingOrEmpty(
+	ctx context.Context,
+	auth *basedto.Auth,
+	req *GetUniqueSettingReq,
+	data *GetUniqueSettingData,
+) (resp *GetUniqueSettingResp, err error) {
+	for i := range 2 { //nolint:mnd
+		resp, err = uc.GetUniqueSetting(ctx, auth, req, data)
+		if err == nil {
+			return resp, nil
+		}
+		if errors.Is(err, hperrors.ErrNotFound) {
+			if i == 0 {
+				if e := uc.SettingInitService.InitDefaults(ctx, uc.DB); e != nil {
+					return nil, hperrors.Wrap(err)
+				}
+				continue
+			}
+			if i == 1 {
+				timeNow := timeutil.NowUTC()
+				resp = &GetUniqueSettingResp{
+					Data: &entity.Setting{
+						Scope:     req.Scope.ScopeType,
+						ObjectID:  req.Scope.ScopeObjectID(),
+						Type:      req.Type,
+						Status:    base.SettingStatusActive,
+						CreatedAt: timeNow,
+						UpdatedAt: timeNow,
+					},
+					RefObjects: entity.NewRefObjects(),
+				}
+				return resp, nil
+			}
+		}
+		break
+	}
+	return nil, hperrors.Wrap(err)
 }

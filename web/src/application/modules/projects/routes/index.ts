@@ -2,7 +2,6 @@ export { ProjectsRoute } from "./projects";
 export {
     ProjectGeneralRoute,
     ProjectImageBuildSettingsRoute,
-    ProjectStorageSettingsRoute,
     ProjectDomainSettingsRoute,
     ProjectDangerZoneRoute,
     ProjectAppsRoute,

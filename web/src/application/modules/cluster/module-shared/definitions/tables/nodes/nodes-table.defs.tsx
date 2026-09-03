@@ -27,10 +27,12 @@ const columns: ColumnDef<NodeDetails>[] = [
     {
         accessorKey: "hostname",
         header: "Hostname",
+        cell: ({ row: { original } }) => <div className="break-all">{original.hostname || "-"}</div>,
     },
     {
         accessorKey: "addr",
         header: "Address",
+        cell: ({ row: { original } }) => <div className="break-all">{original.addr || "-"}</div>,
     },
     {
         header: "CPUs",

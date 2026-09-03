@@ -38,6 +38,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
         {
             accessorKey: "name",
             header: "Name",
+            cell: ({ row: { original } }) => <div className="break-all">{original.name}</div>,
         },
         {
             header: "Status",
@@ -64,7 +65,7 @@ function createColumns(projectId: string, env: string, appId: string): ColumnDef
         {
             header: "Mountpoint",
             cell: ({ row: { original } }) => {
-                return original.swarmRef?.file?.name ?? "-";
+                return <div className="break-all">{original.swarmRef?.file?.name ?? "-"}</div>;
             },
         },
         {

@@ -62,7 +62,7 @@ function SubdomainCell({ accessLinks }: Pick<ProjectAppDetails, "accessLinks">) 
             href={getExternalPreviewUrl(accessLink)}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-primary underline-offset-4 hover:underline"
+            className="font-medium text-primary underline-offset-4 hover:underline break-all"
         >
             {subdomain}
         </a>

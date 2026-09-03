@@ -112,10 +112,6 @@ import {
     AppStorageSettingsApi,
     AppStorageSettingsApiValidator,
 } from "~/projects/api/services/project-apps-services/storage-settings";
-import {
-    ProjectStorageSettingsApi,
-    ProjectStorageSettingsApiValidator,
-} from "~/projects/api/services/project-settings-services/storage-settings";
 
 function createApi() {
     /**
@@ -166,7 +162,6 @@ function createApi() {
     const projectSslProviderApiValidator = new ProjectSslProviderApiValidator();
     const projectImServiceApiValidator = new ProjectImServiceApiValidator();
     const projectEmailApiValidator = new ProjectEmailApiValidator();
-    const projectStorageSettingsApiValidator = new ProjectStorageSettingsApiValidator();
     const projectSSHKeyApiValidator = new ProjectSSHKeyApiValidator();
     const projectAccessTokenApiValidator = new ProjectAccessTokenApiValidator();
     const projectCloudStorageApiValidator = new ProjectCloudStorageApiValidator();
@@ -313,9 +308,6 @@ function createApi() {
             },
             sslProvider: {
                 $: new ProjectSslProviderApi(projectSslProviderApiValidator),
-            },
-            storageSettings: {
-                $: new ProjectStorageSettingsApi(projectStorageSettingsApiValidator),
             },
             imageBuildSettings: {
                 $: new ProjectImageBuildSettingsApi(projectImageBuildSettingsApiValidator),

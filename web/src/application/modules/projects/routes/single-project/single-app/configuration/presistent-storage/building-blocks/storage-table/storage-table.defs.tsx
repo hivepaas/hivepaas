@@ -94,7 +94,7 @@ export function createStorageTableColumns(
         {
             accessorKey: "source",
             header: "Source",
-            cell: ({ row }) => <div className="text-sm">{getSourceDisplay(row.original)}</div>,
+            cell: ({ row }) => <div className="text-sm break-all">{getSourceDisplay(row.original)}</div>,
             meta: {
                 align: "left",
             },
@@ -102,7 +102,7 @@ export function createStorageTableColumns(
         {
             accessorKey: "target",
             header: "Target",
-            cell: ({ row }) => <div className="text-sm">{row.original.target ?? "-"}</div>,
+            cell: ({ row }) => <div className="text-sm break-all">{row.original.target ?? "-"}</div>,
             meta: {
                 align: "left",
             },
@@ -111,7 +111,7 @@ export function createStorageTableColumns(
             accessorKey: "options",
             header: "Options",
             cell: ({ row }) => (
-                <div className="text-sm text-muted-foreground whitespace-pre-line wrap-break-word">
+                <div className="text-sm text-muted-foreground whitespace-pre-line break-all">
                     {getOptionsDisplay(row.original)}
                 </div>
             ),

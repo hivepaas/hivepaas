@@ -18,6 +18,5 @@ export * from "./command-templates";
 export * from "./backup-repos";
 export * from "./notification-targets";
 export * from "./build-settings";
-export * from "./storage-settings";
 export * from "./domain-settings";
 export * from "./danger-zone";

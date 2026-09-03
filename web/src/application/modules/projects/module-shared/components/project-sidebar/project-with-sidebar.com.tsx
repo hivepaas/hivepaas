@@ -87,11 +87,6 @@ function createConfigurationSections(projectId: string): ProviderTabSection[] {
                     route: ROUTE.projects.single.configuration.buildSettings.$route(projectId),
                 },
                 {
-                    label: "Storage Settings",
-                    icon: HardDrive,
-                    route: ROUTE.projects.single.configuration.storageSettings.$route(projectId),
-                },
-                {
                     label: "Domain Settings",
                     icon: Globe,
                     route: ROUTE.projects.single.configuration.domainSettings.$route(projectId),

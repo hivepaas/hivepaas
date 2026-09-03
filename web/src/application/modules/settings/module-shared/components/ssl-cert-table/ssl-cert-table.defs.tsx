@@ -50,6 +50,7 @@ function createColumns(scope: SslCertTableScope): ColumnDef<SettingSslCert>[] {
             accessorKey: "domain",
             header: "Domain",
             enableSorting: true,
+            cell: ({ row: { original } }) => <div className="break-all">{original.domain}</div>,
         },
         {
             accessorKey: "certType",

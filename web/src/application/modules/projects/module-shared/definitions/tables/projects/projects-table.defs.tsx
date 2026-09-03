@@ -54,7 +54,9 @@ const columns: ColumnDef<ProjectBaseEntity>[] = [
         header: "Note",
         cell: ({ row: { original } }) => {
             const { note } = original;
-            return <span className="text-muted-foreground  whitespace-pre-wrap line-clamp-2">{note || "-"}</span>;
+            return (
+                <span className="text-muted-foreground whitespace-pre-wrap break-all line-clamp-2">{note || "-"}</span>
+            );
         },
     },
     {

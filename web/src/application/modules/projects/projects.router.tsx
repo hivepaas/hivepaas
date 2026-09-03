@@ -11,7 +11,6 @@ const LEGACY_PROJECT_SETTINGS_PATTERNS = {
     root: "projects/:id/configuration",
     general: "projects/:id/configuration/general",
     buildSettings: "projects/:id/configuration/build-settings",
-    storageSettings: "projects/:id/configuration/storage-settings",
     domainSettings: "projects/:id/configuration/domain-settings",
     dangerZone: "projects/:id/configuration/danger-zone",
 } as const;
@@ -313,10 +312,6 @@ export const projectsRouter: RouteObject = {
                 {
                     path: LEGACY_PROJECT_SETTINGS_PATTERNS.buildSettings,
                     element: <ProjectRouteRedirect to={ROUTE.projects.single.configuration.buildSettings.$route} />,
-                },
-                {
-                    path: LEGACY_PROJECT_SETTINGS_PATTERNS.storageSettings,
-                    element: <ProjectRouteRedirect to={ROUTE.projects.single.configuration.storageSettings.$route} />,
                 },
                 {
                     path: LEGACY_PROJECT_SETTINGS_PATTERNS.domainSettings,
@@ -640,16 +635,6 @@ export const projectsRouter: RouteObject = {
 
                                 return {
                                     Component: ProjectImageBuildSettingsRoute,
-                                };
-                            },
-                        },
-                        {
-                            path: ROUTE.projects.single.configuration.storageSettings.$pattern,
-                            lazy: async () => {
-                                const { ProjectStorageSettingsRoute } = await getLazyComponents();
-
-                                return {
-                                    Component: ProjectStorageSettingsRoute,
                                 };
                             },
                         },

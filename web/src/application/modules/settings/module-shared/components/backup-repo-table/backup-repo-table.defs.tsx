@@ -60,7 +60,7 @@ function createColumns(scope: BackupRepoTableScope): ColumnDef<SettingBackupRepo
         {
             accessorKey: "description",
             header: "Description",
-            cell: ({ row: { original } }) => original.description ?? "-",
+            cell: ({ row: { original } }) => <div className="break-all">{original.description ?? "-"}</div>,
         },
         {
             accessorKey: "status",

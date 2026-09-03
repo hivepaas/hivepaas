@@ -42,6 +42,7 @@ function createColumns(onView: (file: SystemBackupFile) => void): ColumnDef<Syst
         {
             accessorKey: "name",
             header: "Name",
+            cell: ({ row: { original } }) => <div className="break-all">{original.name}</div>,
         },
         {
             accessorKey: "sizeBytes",

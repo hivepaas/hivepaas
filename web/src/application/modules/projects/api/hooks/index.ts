@@ -15,7 +15,6 @@ export * from "./project-notification";
 export * from "./project-registry-auth";
 export * from "./project-im-service";
 export * from "./project-email";
-export * from "./project-settings";
 export * from "./project-ssl-cert";
 export * from "./project-ssl-provider";
 export * from "./project-secrets";

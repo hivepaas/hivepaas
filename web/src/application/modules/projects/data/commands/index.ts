@@ -19,7 +19,6 @@ export * from "./project-access-token";
 export * from "./project-cloud-storage";
 export * from "./project-notification";
 export * from "./project-image-build-settings";
-export * from "./project-settings";
 export * from "./project-networks";
 export * from "./project-cluster-volumes";
 export * from "./project-command-pipe";

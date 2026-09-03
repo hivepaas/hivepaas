@@ -66,7 +66,10 @@ function View({ projectId, envs, className, showAll = true, interactive = true }
                 {showAll ? (
                     <TabsTrigger
                         value={PROJECT_ENV_FILTER_ALL}
-                        className={triggerClassName}
+                        className={cn(
+                            triggerClassName,
+                            "text-primary! data-[state=active]:text-primary! border border-amber-500/25 dark:border-amber-400/25 dark:text-primary! dark:data-[state=active]:text-primary!",
+                        )}
                         style={{
                             backgroundColor: PROJECT_ALL_ENV_COLOR,
                         }}

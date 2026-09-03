@@ -26,7 +26,7 @@ export function ProjectEnvScopeBadge({ selectedEnv, envs, className }: ProjectEn
             <ProjectEnvBadge
                 name="All environments"
                 color={PROJECT_ALL_ENV_COLOR}
-                className={cn("text-white", className)}
+                className={className}
             />
         );
     }

@@ -5,6 +5,8 @@ import { EProjectEnvStatus } from "~/projects/module-shared/enums";
 
 import { useConditionalProject } from "@application/shared/permissions";
 
+import { Separator } from "@/components/ui";
+
 import { ConfirmEnvDangerActionForm } from "../form";
 import { useConfirmEnvDangerActionDialogState } from "../hooks";
 import type { ConfirmEnvDangerActionFormOutput } from "../schemas";
@@ -96,8 +98,11 @@ export function ConfirmEnvDangerActionDialog() {
                 {action && target ? (
                     <>
                         <DialogHeader>
-                            <DialogTitle className="text-2xl">{dialogTitle[action]}</DialogTitle>
+                            <DialogTitle>{dialogTitle[action]}</DialogTitle>
                         </DialogHeader>
+                        <div className="px-4">
+                            <Separator className="opacity-50" />
+                        </div>
                         <ConfirmEnvDangerActionForm
                             action={action}
                             envName={target.envName}

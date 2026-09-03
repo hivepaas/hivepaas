@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 
-import { Dialog, DialogDescription, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 
 import { ProfileCommands } from "@application/shared/data/commands";
 import { EProfileApiKeyStatus } from "@application/shared/enums";
+
+import { Separator } from "@/components/ui";
 
 import { UpdateApiKeyStatusForm } from "../form";
 import { useUpdateApiKeyStatusDialogState } from "../hooks";
@@ -80,8 +82,10 @@ export function UpdateApiKeyStatusDialog() {
             <DialogFixedContent className="sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>Change Status</DialogTitle>
-                    <DialogDescription />
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 {isOpen && (
                     <UpdateApiKeyStatusForm
                         isPending={isUpdating}

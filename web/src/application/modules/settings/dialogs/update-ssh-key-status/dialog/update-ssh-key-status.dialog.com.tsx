@@ -11,6 +11,8 @@ import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
+import { Separator } from "@/components/ui";
+
 import { UpdateSSHKeyStatusForm } from "../form";
 import { useUpdateSSHKeyStatusDialogState } from "../hooks";
 import type { UpdateSSHKeyStatusFormOutput } from "../schemas";
@@ -125,6 +127,9 @@ export function UpdateSSHKeyStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 {isDetailLoading && (
                     <DialogBody>
                         <AppLoader />

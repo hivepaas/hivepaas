@@ -10,6 +10,8 @@ import { MODULE_IDS } from "@application/shared/constants";
 import { ESettingStatus } from "@application/shared/enums";
 import { useConditionalModule } from "@application/shared/permissions";
 
+import { Separator } from "@/components/ui";
+
 import { UpdateAppScheduledJobStatusForm } from "../form";
 import { useUpdateAppScheduledJobStatusDialogState } from "../hooks";
 import type { UpdateAppScheduledJobStatusFormOutput } from "../schemas";
@@ -106,6 +108,9 @@ export function UpdateAppScheduledJobStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 {isLoading ? (
                     <DialogBody>
                         <AppLoader />

@@ -10,6 +10,8 @@ import { MODULE_IDS } from "@application/shared/constants";
 import { ESettingStatus } from "@application/shared/enums";
 import { useConditionalModule } from "@application/shared/permissions";
 
+import { Separator } from "@/components/ui";
+
 import { UpdateOAuthStatusForm } from "../form";
 import { useUpdateOAuthStatusDialogState } from "../hooks";
 import type { UpdateOAuthStatusFormOutput } from "../schemas";
@@ -78,6 +80,9 @@ export function UpdateOAuthStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>Change status</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 {isDetailLoading && (
                     <DialogBody>
                         <AppLoader />

@@ -11,6 +11,8 @@ import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
+import { Separator } from "@/components/ui";
+
 import { UpdateAcmeDnsProviderStatusForm } from "../form";
 import { useUpdateAcmeDnsProviderStatusDialogState } from "../hooks";
 import type { UpdateAcmeDnsProviderStatusFormOutput } from "../schemas";
@@ -149,6 +151,9 @@ export function UpdateAcmeDnsProviderStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 {isDetailLoading && (
                     <DialogBody>
                         <AppLoader />

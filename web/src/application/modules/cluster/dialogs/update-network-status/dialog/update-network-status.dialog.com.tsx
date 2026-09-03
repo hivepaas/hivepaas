@@ -12,6 +12,8 @@ import { MODULE_IDS } from "@application/shared/constants";
 import { ESettingStatus } from "@application/shared/enums";
 import { useConditionalModule, useConditionalProject } from "@application/shared/permissions";
 
+import { Separator } from "@/components/ui";
+
 import { UpdateNetworkStatusForm } from "../form";
 import { useUpdateNetworkStatusDialogState } from "../hooks";
 import type { UpdateNetworkStatusFormOutput } from "../schemas";
@@ -154,6 +156,9 @@ export function UpdateNetworkStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 {isDetailLoading && (
                     <DialogBody>
                         <AppLoader />

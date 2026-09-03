@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 
-import {
-    Dialog,
-    DialogBody,
-    DialogDescription,
-    DialogFixedContent,
-    DialogHeader,
-    DialogTitle,
-} from "@components/ui/dialog";
+import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
 import { toast } from "sonner";
 import { ProjectBackupRepoCommands } from "~/projects/data/commands";
 import { ProjectBackupRepoQueries } from "~/projects/data/queries";
@@ -17,6 +10,8 @@ import { BackupRepoQueries } from "~/settings/data/queries";
 import { AppLoader } from "@application/shared/components";
 import { ChangePasswordForm } from "@application/shared/dialogs/change-password/form";
 import type { AccountPasswordFormSchemaOutput } from "@application/shared/dialogs/change-password/schemas";
+
+import { Separator } from "@/components/ui";
 
 import { useUpdateBackupRepoPasswordDialogState } from "../hooks";
 
@@ -119,8 +114,10 @@ export function UpdateBackupRepoPasswordDialog() {
             <DialogFixedContent className="min-w-[400px] w-fit">
                 <DialogHeader>
                     <DialogTitle>Change Password</DialogTitle>
-                    <DialogDescription />
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 {isDetailLoading && (
                     <DialogBody>
                         <AppLoader />

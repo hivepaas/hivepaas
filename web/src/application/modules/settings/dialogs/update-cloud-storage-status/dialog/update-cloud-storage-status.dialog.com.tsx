@@ -11,6 +11,8 @@ import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
+import { Separator } from "@/components/ui";
+
 import { UpdateCloudStorageStatusForm } from "../form";
 import { useUpdateCloudStorageStatusDialogState } from "../hooks";
 import type { UpdateCloudStorageStatusFormOutput } from "../schemas";
@@ -130,6 +132,9 @@ export function UpdateCloudStorageStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 {isDetailLoading && (
                     <DialogBody>
                         <AppLoader />

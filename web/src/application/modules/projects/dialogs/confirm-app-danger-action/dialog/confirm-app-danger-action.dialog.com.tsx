@@ -9,6 +9,8 @@ import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useConditionalModule } from "@application/shared/permissions";
 
+import { Separator } from "@/components/ui";
+
 import { ConfirmAppDangerActionForm } from "../form";
 import { useConfirmAppDangerActionDialogState } from "../hooks";
 import type { ConfirmAppDangerActionFormOutput } from "../schemas";
@@ -116,8 +118,11 @@ export function ConfirmAppDangerActionDialog() {
                 {action && target ? (
                     <>
                         <DialogHeader>
-                            <DialogTitle className="text-2xl">{dialogTitle[action]}</DialogTitle>
+                            <DialogTitle>{dialogTitle[action]}</DialogTitle>
                         </DialogHeader>
+                        <div className="px-4">
+                            <Separator className="opacity-50" />
+                        </div>
                         <ConfirmAppDangerActionForm
                             action={action}
                             appName={target.appName}

@@ -11,6 +11,8 @@ import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 import { AppLoader } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
+import { Separator } from "@/components/ui";
+
 import { UpdateNotificationTargetStatusForm } from "../form";
 import { useUpdateNotificationTargetStatusDialogState } from "../hooks";
 import type { UpdateNotificationTargetStatusFormOutput } from "../schemas";
@@ -133,6 +135,9 @@ export function UpdateNotificationTargetStatusDialog() {
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 {isDetailLoading && (
                     <DialogBody>
                         <AppLoader />

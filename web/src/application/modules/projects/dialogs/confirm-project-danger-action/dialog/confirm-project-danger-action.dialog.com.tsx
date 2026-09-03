@@ -9,6 +9,8 @@ import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useConditionalProject } from "@application/shared/permissions";
 
+import { Separator } from "@/components/ui";
+
 import { ConfirmProjectDangerActionForm } from "../form";
 import { useConfirmProjectDangerActionDialogState } from "../hooks";
 import type { ConfirmProjectDangerActionFormOutput } from "../schemas";
@@ -111,8 +113,11 @@ export function ConfirmProjectDangerActionDialog() {
                 {action && target ? (
                     <>
                         <DialogHeader>
-                            <DialogTitle className="text-2xl">{dialogTitle[action]}</DialogTitle>
+                            <DialogTitle>{dialogTitle[action]}</DialogTitle>
                         </DialogHeader>
+                        <div className="px-4">
+                            <Separator className="opacity-50" />
+                        </div>
                         <ConfirmProjectDangerActionForm
                             action={action}
                             projectName={target.projectName}

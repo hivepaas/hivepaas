@@ -1,4 +1,4 @@
-import { Button } from "@components/ui";
+import { Button, Separator } from "@components/ui";
 import {
     Dialog,
     DialogActionFooter,
@@ -31,6 +31,9 @@ export function ClearRepoCacheResultDialog({ open, result, onOpenChange }: Clear
                 <DialogHeader>
                     <DialogTitle>Repo cache cleared</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
 
                 <DialogBody className="">
                     <div className="flex flex-col gap-2">

@@ -112,6 +112,7 @@ export type ProjectApps_Deploy_Req = ApiRequestBase<{
     projectID: string;
     env: string;
     appID: string;
+    noCache?: boolean;
 }>;
 
 export type ProjectApps_Deploy_Res = ApiResponseBase<{

@@ -1,6 +1,6 @@
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 
-import { Button } from "@components/ui";
+import { Button, Checkbox } from "@components/ui";
 import { Avatar } from "@components/ui/avatar";
 import { Power, RefreshCw } from "lucide-react";
 import { useParams } from "react-router";
@@ -59,6 +59,8 @@ function View({ projectId, env, appId }: Props) {
         () => (serviceTasks ? computeAppInstancesHealth(serviceTasks) : null),
         [serviceTasks],
     );
+
+    const [noCache, setNoCache] = useState(false);
 
     const { mutate: deploy, isPending: isDeploying } = ProjectAppsCommands.useDeploy({
         onSuccess: () => {
@@ -244,8 +246,36 @@ function View({ projectId, env, appId }: Props) {
                         confirmText="Re-deploy"
                         cancelText="Cancel"
                         variant="destructive"
+                        content={
+                            <label
+                                htmlFor="re-deploy-no-cache"
+                                className="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-foreground"
+                            >
+                                <Checkbox
+                                    id="re-deploy-no-cache"
+                                    checked={noCache}
+                                    onCheckedChange={checked => {
+                                        setNoCache(checked === true);
+                                    }}
+                                />
+                                <span>
+                                    No cache <span className="text-xs text-muted-foreground font-normal">(SLOW)</span>
+                                </span>
+                            </label>
+                        }
+                        onOpenChange={open => {
+                            if (!open) {
+                                setNoCache(false);
+                            }
+                        }}
                         onConfirm={() => {
-                            deploy({ projectID: projectId, env, appID: appId });
+                            deploy({
+                                projectID: projectId,
+                                env,
+                                appID: appId,
+                                ...(noCache ? { noCache: true } : {}),
+                            });
+                            setNoCache(false);
                         }}
                     >
                         <Button

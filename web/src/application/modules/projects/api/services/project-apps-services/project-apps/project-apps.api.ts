@@ -203,10 +203,14 @@ export class ProjectAppsApi extends BaseApi {
      * Deploy a project app using existing deployment settings
      */
     async deploy(request: ProjectApps_Deploy_Req): Promise<Result<ProjectApps_Deploy_Res, Error>> {
-        const { projectID, env, appID } = request.data;
+        const { projectID, env, appID, noCache } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/deploy`, {})).pipe(
+            from(
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/deploy`, {
+                    ...(noCache ? { noCache: true } : {}),
+                }),
+            ).pipe(
                 map(this.validator.deploy),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

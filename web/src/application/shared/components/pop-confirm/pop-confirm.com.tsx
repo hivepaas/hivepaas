@@ -9,6 +9,7 @@ export function PopConfirm({
     children,
     title,
     description,
+    content,
     onConfirm,
     confirmText = "Confirm",
     cancelText = "Cancel",
@@ -17,22 +18,28 @@ export function PopConfirm({
     cancelButtonClassName,
     side,
     align,
+    onOpenChange,
 }: Props) {
     const [open, setOpen] = useState(false);
 
+    const handleOpenChange = (nextOpen: boolean) => {
+        setOpen(nextOpen);
+        onOpenChange?.(nextOpen);
+    };
+
     const handleConfirm = () => {
         onConfirm();
-        setOpen(false);
+        handleOpenChange(false);
     };
 
     const handleCancel = () => {
-        setOpen(false);
+        handleOpenChange(false);
     };
 
     return (
         <Popover
             open={open}
-            onOpenChange={setOpen}
+            onOpenChange={handleOpenChange}
         >
             <PopoverTrigger asChild>{children}</PopoverTrigger>
             <PopoverContent
@@ -47,6 +54,7 @@ export function PopConfirm({
                             {description && <p className="text-muted-foreground text-sm">{description}</p>}
                         </div>
                     )}
+                    {content}
                     <div className="flex justify-end gap-2">
                         <Button
                             variant="outline"
@@ -74,6 +82,7 @@ export function PopConfirm({
 interface Props extends React.PropsWithChildren {
     title?: string;
     description?: string;
+    content?: React.ReactNode;
     onConfirm: () => void;
     confirmText?: string;
     cancelText?: string;
@@ -82,4 +91,5 @@ interface Props extends React.PropsWithChildren {
     cancelButtonClassName?: string;
     side?: "top" | "bottom" | "left" | "right";
     align?: "start" | "center" | "end";
+    onOpenChange?: (open: boolean) => void;
 }

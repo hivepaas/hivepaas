@@ -10,8 +10,6 @@ import type {
     ProjectImageBuildSettings_FindOne_Res,
     ProjectImageBuildSettings_FindRepoCache_Req,
     ProjectImageBuildSettings_FindRepoCache_Res,
-    ProjectImageBuildSettings_UpdateOne_Req,
-    ProjectImageBuildSettings_UpdateOne_Res,
 } from "./project-image-build-settings.api.contracts";
 import type { ProjectImageBuildSettingsApiValidator } from "./project-image-build-settings.api.validator";
 
@@ -34,24 +32,6 @@ export class ProjectImageBuildSettingsApi extends BaseApi {
             ).pipe(
                 map(this.validator.findOne),
                 map(res => Ok(res)),
-                catchError(error => of(Err(parseApiError(error)))),
-            ),
-        );
-    }
-
-    async updateOne(
-        req: ProjectImageBuildSettings_UpdateOne_Req,
-        signal?: AbortSignal,
-    ): Promise<Result<ProjectImageBuildSettings_UpdateOne_Res, Error>> {
-        const { projectID, payload } = req.data;
-
-        return lastValueFrom(
-            from(
-                this.client.v1.put(`/projects/${projectID}/image-build-settings`, payload, {
-                    signal,
-                }),
-            ).pipe(
-                map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

@@ -29,9 +29,7 @@ export function RepositorySourceFields({ cacheNote }: RepositorySourceFieldsProp
             >
                 <Checkbox
                     checked={repoCacheField.value}
-                    onCheckedChange={checked => {
-                        repoCacheField.onChange(checked === true);
-                    }}
+                    disabled
                 />
             </InfoBlock>
         </div>

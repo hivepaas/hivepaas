@@ -6,7 +6,6 @@ import type {
     ProjectImageBuildSettings_ClearRepoCache_Req,
     ProjectImageBuildSettings_FindOne_Req,
     ProjectImageBuildSettings_FindRepoCache_Req,
-    ProjectImageBuildSettings_UpdateOne_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -49,17 +48,6 @@ function createHook() {
 
         const mutations = useMemo(
             () => ({
-                updateOne: async (data: ProjectImageBuildSettings_UpdateOne_Req["data"]) => {
-                    const result = await api.projects.imageBuildSettings.$.updateOne({ data });
-
-                    return match(result, {
-                        Ok: _ => _,
-                        Err: error => {
-                            notifyError({ message: "Failed to update image build settings", error });
-                            throw error;
-                        },
-                    });
-                },
                 clearRepoCache: async (data: ProjectImageBuildSettings_ClearRepoCache_Req["data"]) => {
                     const result = await api.projects.imageBuildSettings.$.clearRepoCache({ data });
 

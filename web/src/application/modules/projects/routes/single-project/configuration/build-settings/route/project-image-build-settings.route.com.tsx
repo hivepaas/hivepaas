@@ -3,24 +3,19 @@ import { useRef, useState } from "react";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { useParams } from "react-router";
-import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { ProjectImageBuildSettingsCommands, ProjectImageBuildSettingsQueries } from "~/projects/data";
 import type { ProjectImageBuildRepoCacheClearResult } from "~/projects/domain";
-import { ProjectPermissionSubmitButton } from "~/projects/module-shared/components";
 
-import { AppLoader, FormActionBar } from "@application/shared/components";
-import { MODULE_IDS } from "@application/shared/constants";
+import { AppLink, AppLoader, FormActionBar } from "@application/shared/components";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { PageError } from "@application/shared/pages";
 import { useConditionalModule } from "@application/shared/permissions";
 
-import { isValidationException } from "@infrastructure/api";
-
-import { ValidationException } from "@infrastructure/exceptions/validation";
+import { Button } from "@/components/ui";
 
 import { ClearRepoCacheResultDialog } from "../building-blocks";
 import { ProjectImageBuildSettingsForm } from "../form";
-import type { ProjectImageBuildSettingsFormSchemaOutput } from "../schemas";
 import type { ProjectImageBuildSettingsFormRef } from "../types";
 
 function NoteBox({ children }: { children: React.ReactNode }) {
@@ -52,17 +47,6 @@ export function ProjectImageBuildSettingsRoute() {
         },
     );
 
-    const { mutate: update, isPending: isUpdating } = ProjectImageBuildSettingsCommands.useUpdateOne({
-        onSuccess: () => {
-            toast.success("Image build settings updated");
-        },
-        onError: err => {
-            if (isValidationException(err)) {
-                formRef.current?.onError(ValidationException.fromHttp(err));
-            }
-        },
-    });
-
     const { mutate: clearRepoCache, isPending: isClearingRepoCache } =
         ProjectImageBuildSettingsCommands.useClearRepoCache({
             onSuccess: response => {
@@ -71,26 +55,6 @@ export function ProjectImageBuildSettingsRoute() {
                 void repoCacheQuery.refetch();
             },
         });
-
-    function handleSubmit(values: ProjectImageBuildSettingsFormSchemaOutput) {
-        if (!canWrite) {
-            return;
-        }
-
-        const settings = settingsQuery.data?.data;
-        invariant(settings, "image build settings must be defined");
-
-        update({
-            projectID: resolvedProjectId,
-            payload: {
-                updateVer: settings.updateVer,
-                resources: values.resources,
-                sources: values.sources,
-                noCache: values.noCache,
-                noVerbose: values.noVerbose,
-            },
-        });
-    }
 
     function handleQueryRepoCache() {
         void repoCacheQuery.refetch().then(result => {
@@ -134,35 +98,41 @@ export function ProjectImageBuildSettingsRoute() {
             <ProjectImageBuildSettingsForm
                 ref={formRef}
                 defaultValues={settingsQuery.data.data}
-                onSubmit={handleSubmit}
                 readOnly={!canWrite}
+                headerNote={
+                    <NoteBox>
+                        Image build configuration is only available at the global scope,{" "}
+                        <AppLink.Basic
+                            to={ROUTE.appSettings.imageBuild.$route}
+                            className="font-medium text-primary underline-offset-4 hover:underline"
+                        >
+                            view here
+                        </AppLink.Basic>
+                        .
+                    </NoteBox>
+                }
                 cacheInfo={repoCacheQuery.data?.data}
                 cacheInfoControls={{
                     hasQueried: hasQueriedCache,
                     isQuerying: repoCacheQuery.isFetching,
                     isClearing: isClearingRepoCache,
                     readOnly: !canExecute,
-                    note: (
-                        <NoteBox>
-                            Enabling the cache feature can significantly reduce the application deployment time if your
-                            repository is large. However, this will consume space on your hard drive.
-                        </NoteBox>
-                    ),
+                    note: <NoteBox>The repository sources cache information below is only for this project.</NoteBox>,
                     footer: (
                         <FormActionBar>
-                            <ProjectPermissionSubmitButton isPending={isUpdating} />
+                            <Button
+                                type="button"
+                                className="min-w-[100px]"
+                                disabled
+                            >
+                                Save
+                            </Button>
                         </FormActionBar>
                     ),
                     onQuery: handleQueryRepoCache,
                     onClear: handleClearRepoCache,
                 }}
-            >
-                <NoteBox>
-                    The image build process can consume a large amount of your system&apos;s resources and may affect
-                    running applications. It is recommended that you set resource limits for this process. The system
-                    uses a default configuration, but you can reconfigure it here.
-                </NoteBox>
-            </ProjectImageBuildSettingsForm>
+            />
 
             <ClearRepoCacheResultDialog
                 open={Boolean(clearRepoCacheResult)}

@@ -9,7 +9,7 @@ import { ContentBlock } from "@application/shared/components";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
-import { RepoCacheInfoFields, RepositorySourceFields, ResourceLimitFields } from "../building-blocks";
+import { RepoCacheInfoFields, RepositorySourceFields } from "../building-blocks";
 import {
     ProjectImageBuildSettingsFormSchema,
     type ProjectImageBuildSettingsFormSchemaInput,
@@ -30,7 +30,7 @@ export function ProjectImageBuildSettingsForm({
     cacheInfo,
     cacheInfoControls,
     readOnly = false,
-    children,
+    headerNote,
 }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
         defaultValues: defaultValues
@@ -79,7 +79,7 @@ export function ProjectImageBuildSettingsForm({
             <form
                 onSubmit={event => {
                     event.preventDefault();
-                    if (readOnly) {
+                    if (readOnly || !onSubmit) {
                         return;
                     }
 
@@ -87,17 +87,7 @@ export function ProjectImageBuildSettingsForm({
                 }}
                 className="flex flex-col gap-6"
             >
-                <ContentBlock label="Resource Limit">
-                    <fieldset
-                        disabled={readOnly}
-                        className="contents"
-                    >
-                        <div className="flex flex-col gap-6">
-                            {children}
-                            <ResourceLimitFields />
-                        </div>
-                    </fieldset>
-                </ContentBlock>
+                {headerNote}
 
                 <ContentBlock label="Repository Sources">
                     <fieldset
@@ -141,6 +131,7 @@ type Props = PropsWithChildren<{
         onQuery: () => void;
         onClear: () => void;
     };
-    onSubmit: (values: SchemaOutput) => void;
+    onSubmit?: (values: SchemaOutput) => void;
     readOnly?: boolean;
+    headerNote?: React.ReactNode;
 }>;

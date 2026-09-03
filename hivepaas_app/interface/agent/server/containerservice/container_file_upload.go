@@ -6,6 +6,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
 )
@@ -30,6 +31,7 @@ func ContainerCopyTo(
 	pr, pw := io.Pipe()
 
 	go func() {
+		defer safego.RecoverPipe("agentserver.containerCopyTo", pw)
 		for {
 			req, recvErr := stream.Recv()
 			if recvErr != nil {

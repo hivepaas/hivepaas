@@ -8,7 +8,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 )
 
@@ -32,8 +32,13 @@ func (s *service) initOutputWriterToApp(
 	data.uploadErrChan = make(chan error, 1)
 
 	go func() {
-		defer funcutil.EnsureNoPanic(nil)
+		var finalErr error
+		// NOTE: defers run LIFO. Catch a panic first so it becomes finalErr, then
+		// close the pipe and always publish the result: skipping the send would
+		// block the `<-data.uploadErrChan` read in exec_output.go forever.
+		defer func() { data.uploadErrChan <- finalErr }()
 		defer pr.Close()
+		defer safego.RecoverTo(&finalErr)
 
 		var calcErr error
 		_, execErr := s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
@@ -57,13 +62,11 @@ func (s *service) initOutputWriterToApp(
 			},
 		})
 
-		var finalErr error
 		if calcErr != nil {
 			finalErr = calcErr
 		} else if execErr != nil {
 			finalErr = execErr
 		}
-		data.uploadErrChan <- finalErr
 	}()
 
 	baseWriter := &writeCloserWrapper{

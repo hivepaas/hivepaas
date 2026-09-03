@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/tiendc/gofn"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 const (
@@ -114,6 +116,7 @@ func NewChan[T any](options Options) *Chan[T] {
 
 	if ch.thresholdPeriod > 0 {
 		go func() {
+			defer safego.Recover("batchrecvchan.flushTicker")
 			// Use NewTicker instead of time.Tick to prevent memory leaks
 			ticker := time.NewTicker(ch.thresholdPeriod)
 			defer ticker.Stop()

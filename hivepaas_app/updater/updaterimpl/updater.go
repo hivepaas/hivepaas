@@ -7,6 +7,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/updater"
 	"github.com/hivepaas/hivepaas/hivepaas_app/updater/tasksystemupdate"
@@ -35,7 +36,7 @@ func New(
 }
 
 func (upd *updaterImpl) Start() error {
-	go func() {
+	safego.GoWithLogger(upd.logger, "updater.systemUpdate", func() {
 		ctx := context.Background()
 		_ = upd.systemUpdateExecutor.Execute(ctx, upd.db)
 		// Shutdown the updater service (regardless of the update error)
@@ -43,7 +44,7 @@ func (upd *updaterImpl) Start() error {
 		// Also send SIGTERM to the current process
 		p, _ := os.FindProcess(os.Getpid())
 		_ = p.Signal(syscall.SIGTERM)
-	}()
+	})
 	return nil
 }
 

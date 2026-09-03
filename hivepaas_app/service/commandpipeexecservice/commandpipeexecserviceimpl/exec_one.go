@@ -10,7 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 )
@@ -143,8 +143,15 @@ func (s *service) doCommandPipeExec(
 
 	// 1. Source command execution (stdout written to pw)
 	go func() {
-		defer funcutil.EnsureNoPanic(nil)
-		_, execErr := s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
+		// NOTE: defers run LIFO. Catch a panic first so it becomes execErr, then
+		// close the pipe and always publish the result: skipping the send would
+		// block the `<-errChan` reads below forever.
+		var execErr error
+		defer func() { errChan <- execErr }()
+		defer func() { _ = pw.CloseWithError(execErr) }()
+		defer safego.RecoverTo(&execErr)
+
+		_, execErr = s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
 			App:                    data.SrcApp,
 			TaskMinRunningDuration: data.TaskMinRunningDuration,
 			TaskFindRetryMax:       data.TaskFindRetryMax,
@@ -160,14 +167,17 @@ func (s *service) doCommandPipeExec(
 				opts.TTY = false
 			},
 		})
-		_ = pw.CloseWithError(execErr)
-		errChan <- execErr
 	}()
 
 	// 2. Target command execution (stdin read from pr)
 	go func() {
-		defer funcutil.EnsureNoPanic(nil)
-		_, execErr := s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
+		// NOTE: see the ordering note above.
+		var execErr error
+		defer func() { errChan <- execErr }()
+		defer func() { _ = pr.CloseWithError(execErr) }()
+		defer safego.RecoverTo(&execErr)
+
+		_, execErr = s.containerExecService.ContainerExec(ctx, &containerexecservice.ContainerExecReq{
 			App:                    data.DestApp,
 			TaskMinRunningDuration: data.TaskMinRunningDuration,
 			TaskFindRetryMax:       data.TaskFindRetryMax,
@@ -184,8 +194,6 @@ func (s *service) doCommandPipeExec(
 				opts.TTY = false
 			},
 		})
-		_ = pr.CloseWithError(execErr)
-		errChan <- execErr
 	}()
 
 	err1 := <-errChan

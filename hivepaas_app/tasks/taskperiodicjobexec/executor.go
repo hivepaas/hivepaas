@@ -6,8 +6,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
@@ -47,7 +47,7 @@ func (e *Executor) execute(
 	data := &taskData{
 		PeriodicExecData: execData,
 	}
-	defer funcutil.EnsureNoPanic(&err)
+	defer safego.RecoverTo(&err)
 
 	switch base.PeriodicKind(data.PeriodicSetting.Kind) {
 	case base.PeriodicKindHealthCheck:

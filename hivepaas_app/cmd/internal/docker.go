@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/moby/moby/api/types/events"
 	"github.com/moby/moby/client"
 	"go.uber.org/fx"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -76,6 +78,10 @@ func registerSwarmNodeEvents(
 	clusterService clusterservice.Service,
 	logger logging.Logger,
 ) {
+	// Backstop: this runs in its own goroutine for the whole process lifetime,
+	// so an unrecovered panic here would take the process down.
+	defer safego.RecoverWithLogger(logger, "swarmNodeEvents")
+
 	retryInterval := dockerEventsRetryInterval
 	for {
 		if ctx.Err() != nil {
@@ -99,9 +105,7 @@ func registerSwarmNodeEvents(
 					errStreamClosed = true
 					break
 				}
-				if err := clusterService.OnNodeEvent(ctx, &msg); err != nil {
-					logger.Error("failed to process node event", "error", err)
-				}
+				handleSwarmNodeEvent(ctx, clusterService, logger, &msg)
 			case err, ok := <-res.Err:
 				if !ok {
 					logger.Warn("swarm node events error channel closed, reconnecting...")
@@ -126,5 +130,20 @@ func registerSwarmNodeEvents(
 		if retryInterval > dockerEventsRetryIntervalMax {
 			retryInterval = dockerEventsRetryIntervalMax
 		}
+	}
+}
+
+// handleSwarmNodeEvent processes a single swarm event. Panics are isolated per
+// event so one malformed event cannot kill the listener or the process.
+func handleSwarmNodeEvent(
+	ctx context.Context,
+	clusterService clusterservice.Service,
+	logger logging.Logger,
+	msg *events.Message,
+) {
+	defer safego.RecoverWithLogger(logger, "swarmNodeEvents.handleEvent")
+
+	if err := clusterService.OnNodeEvent(ctx, msg); err != nil {
+		logger.Error("failed to process node event", "error", err)
 	}
 }

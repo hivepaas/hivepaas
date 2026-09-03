@@ -11,7 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobexecservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -34,7 +34,7 @@ func (s *service) SchedJobExec(
 	db database.Tx,
 	req *schedjobexecservice.SchedJobExecReq,
 ) (_ *schedjobexecservice.SchedJobExecResp, err error) {
-	defer funcutil.EnsureNoPanic(&err)
+	defer safego.RecoverTo(&err)
 
 	schedJob := req.SchedJobSetting.MustAsSchedJob()
 	command := schedJob.Command

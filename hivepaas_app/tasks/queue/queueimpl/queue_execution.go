@@ -15,8 +15,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/gocronqueue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
@@ -146,7 +146,7 @@ func (q *taskQueue) executeTask(
 			// Save tasks in DB
 			err = q.taskRepo.Update(ctx, db, task)
 		}()
-		defer funcutil.EnsureNoPanic(&execErr) // Make sure we catch panic before the above defer
+		defer safego.RecoverTo(&execErr) // Make sure we catch panic before the above defer
 
 		execErr = executorFunc(ctx, db, taskData)
 		return err //nolint:wrapcheck
@@ -205,7 +205,9 @@ func (q *taskQueue) taskControlCheck(
 ) {
 	key := fmt.Sprintf("task:%s:ctrl", taskData.Task.ID)
 	defer func() {
-		_ = recover()
+		if r := recover(); r != nil {
+			safego.LogPanic("taskQueue.taskControlCheck", r)
+		}
 		_ = redishelper.Del(ctx, q.redisClient, key)
 	}()
 

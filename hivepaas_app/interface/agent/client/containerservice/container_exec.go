@@ -13,6 +13,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -197,33 +198,58 @@ func (s *ContainerExecStream) ToExecAttachResult() *client.ExecAttachResult {
 }
 
 func (s *ContainerExecStream) readStreamLoop() {
+	// A panic here would not only kill the process, it would also leave
+	// readMutex locked forever and hang every Read/Wait on this stream.
+	// Turn it into a terminal stream error instead.
+	defer func() {
+		if r := recover(); r != nil {
+			safego.LogPanic("agentclient.readStreamLoop", r)
+			s.setReadErr(hperrors.NewPanic(r))
+		}
+	}()
+
 	for {
 		resp, err := s.Recv()
-		s.readMutex.Lock()
 		if err != nil {
-			s.readErr = err
-			s.cond.Broadcast()
-			s.readMutex.Unlock()
+			s.setReadErr(err)
 			return
 		}
+		s.handleResp(resp)
+	}
+}
 
-		switch {
-		case resp.Stdout != nil:
-			s.readBuf.Write(resp.Stdout)
-			s.cond.Broadcast()
-		case resp.Stderr != nil:
-			s.readBuf.Write(resp.Stderr)
-			s.cond.Broadcast()
-		case resp.ExitCode != nil:
-			s.exitCode = *resp.ExitCode
-			s.hasExit = true
-			s.cond.Broadcast()
-		case resp.CanRetry != nil:
-			s.canRetry = *resp.CanRetry
-			s.hasCanRetry = true
-			s.cond.Broadcast()
-		}
-		s.readMutex.Unlock()
+// setReadErr records a terminal stream error and wakes up every blocked reader.
+func (s *ContainerExecStream) setReadErr(err error) {
+	s.readMutex.Lock()
+	defer s.readMutex.Unlock()
+
+	if s.readErr == nil {
+		s.readErr = err
+	}
+	s.cond.Broadcast()
+}
+
+// handleResp applies one stream response. It unlocks via defer so a panic
+// cannot leave readMutex held.
+func (s *ContainerExecStream) handleResp(resp *ContainerExecResp) {
+	s.readMutex.Lock()
+	defer s.readMutex.Unlock()
+
+	switch {
+	case resp.Stdout != nil:
+		s.readBuf.Write(resp.Stdout)
+		s.cond.Broadcast()
+	case resp.Stderr != nil:
+		s.readBuf.Write(resp.Stderr)
+		s.cond.Broadcast()
+	case resp.ExitCode != nil:
+		s.exitCode = *resp.ExitCode
+		s.hasExit = true
+		s.cond.Broadcast()
+	case resp.CanRetry != nil:
+		s.canRetry = *resp.CanRetry
+		s.hasCanRetry = true
+		s.cond.Broadcast()
 	}
 }
 

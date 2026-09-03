@@ -25,6 +25,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httputil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -390,6 +391,8 @@ func (h *BaseHandler) StreamAppLogs(
 	// Read loop to detect client connection close/abort
 	done := make(chan struct{})
 	go func() {
+		// gin's recovery middleware only covers the handler goroutine, not this one.
+		defer safego.Recover("basehandler.websocketReadLoop")
 		defer close(done)
 		for {
 			if _, _, err := conn.ReadMessage(); err != nil {

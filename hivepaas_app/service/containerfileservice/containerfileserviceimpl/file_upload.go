@@ -17,6 +17,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 )
 
@@ -160,6 +161,7 @@ func createSingleFileTarStream(
 
 	pr, pw := io.Pipe()
 	go func() {
+		defer safego.RecoverPipe("containerfile.buildTarStream", pw)
 		defer content.Close()
 
 		tarWriter := tar.NewWriter(pw)
@@ -200,6 +202,9 @@ func sanitizeTarStream(
 	pr, pw := io.Pipe()
 
 	go func() {
+		// The tar stream comes straight from a user upload: a malformed archive
+		// must not be able to take the process down.
+		defer safego.RecoverPipe("containerfile.sanitizeTarStream", pw)
 		defer func() {
 			if underlyingCloser != nil {
 				_ = underlyingCloser.Close()
@@ -292,6 +297,9 @@ func convertZipToTarStream(content io.ReadCloser, size int64) (io.ReadCloser, er
 	pr, pw := io.Pipe()
 
 	go func() {
+		// The zip file comes straight from a user upload: a malformed archive
+		// must not be able to take the process down.
+		defer safego.RecoverPipe("containerfile.zipToTarStream", pw)
 		defer func() {
 			_ = tempFile.Close()
 			_ = os.Remove(tempFile.Name())

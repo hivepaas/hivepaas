@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
@@ -88,6 +90,7 @@ func (s *Server) Start() error {
 
 	// Start a job to periodically check controlling messages in redis
 	s.wg.Go(func() {
+		defer safego.RecoverWithLogger(s.config.Logger, "gocronqueue.listenToCtrlMessages")
 		for {
 			if ctx.Err() != nil {
 				return
@@ -98,6 +101,7 @@ func (s *Server) Start() error {
 
 	// Start a job to periodically create new tasks from cron jobs
 	s.wg.Go(func() {
+		defer safego.RecoverWithLogger(s.config.Logger, "gocronqueue.createTasks")
 		ticker := time.NewTicker(s.config.TaskCreateInterval)
 		defer ticker.Stop()
 		s.createTasks(ctx)
@@ -113,6 +117,7 @@ func (s *Server) Start() error {
 
 	// Start a job to periodically scan for new tasks from DB
 	s.wg.Go(func() {
+		defer safego.RecoverWithLogger(s.config.Logger, "gocronqueue.scanTasks")
 		ticker := time.NewTicker(s.config.TaskCheckInterval)
 		defer ticker.Stop()
 		s.scanTasks(ctx)
@@ -128,6 +133,7 @@ func (s *Server) Start() error {
 
 	// Start a job to execute periodic tasks
 	s.wg.Go(func() {
+		defer safego.RecoverWithLogger(s.config.Logger, "gocronqueue.execPeriodicJob")
 		interval := s.config.PeriodicBaseInterval
 		if interval <= 0 {
 			interval = defaultPeriodicInterval
@@ -143,9 +149,7 @@ func (s *Server) Start() error {
 		case <-timer.C:
 		}
 
-		if err := s.config.PeriodicExecFunc(ctx); err != nil {
-			s.config.Logger.Errorf("failed to execute periodic job: %v", err)
-		}
+		s.execPeriodicJob(ctx)
 
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -155,9 +159,7 @@ func (s *Server) Start() error {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				if err := s.config.PeriodicExecFunc(ctx); err != nil {
-					s.config.Logger.Errorf("failed to execute periodic job: %v", err)
-				}
+				s.execPeriodicJob(ctx)
 			}
 		}
 	})
@@ -165,9 +167,24 @@ func (s *Server) Start() error {
 	return nil
 }
 
+// execPeriodicJob runs one round of the periodic job. A panic here used to kill
+// the whole process, unlike createTasks/scanTasks which were already guarded.
+func (s *Server) execPeriodicJob(ctx context.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			s.config.Logger.Errorf("panic when executing periodic job: %v\n%s", r, debug.Stack())
+		}
+	}()
+	if err := s.config.PeriodicExecFunc(ctx); err != nil {
+		s.config.Logger.Errorf("failed to execute periodic job: %v", err)
+	}
+}
+
 func (s *Server) listenToCtrlMessages(ctx context.Context) {
 	defer func() {
-		_ = recover()
+		if r := recover(); r != nil {
+			s.config.Logger.Errorf("panic when handling control messages: %v\n%s", r, debug.Stack())
+		}
 	}()
 
 	// TODO: use BLMOVE to handle the case we fail to process the msg?
@@ -215,7 +232,7 @@ func (s *Server) listenToCtrlMessages(ctx context.Context) {
 func (s *Server) createTasks(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			s.config.Logger.Errorf("panic when create new tasks: %v", r)
+			s.config.Logger.Errorf("panic when create new tasks: %v\n%s", r, debug.Stack())
 		}
 	}()
 	err := s.config.TaskCreateFunc(ctx)
@@ -227,7 +244,7 @@ func (s *Server) createTasks(ctx context.Context) {
 func (s *Server) scanTasks(ctx context.Context) {
 	defer func() {
 		if r := recover(); r != nil {
-			s.config.Logger.Errorf("panic when scan tasks for running: %v", r)
+			s.config.Logger.Errorf("panic when scan tasks for running: %v\n%s", r, debug.Stack())
 		}
 	}()
 

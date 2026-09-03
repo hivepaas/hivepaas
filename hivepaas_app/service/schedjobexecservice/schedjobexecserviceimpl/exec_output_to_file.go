@@ -20,7 +20,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/services/aws/s3"
 )
@@ -43,14 +43,19 @@ func (s *service) initOutputWriterToFile(
 		pr, pw := io.Pipe()
 		data.uploadErrChan = make(chan error, 1)
 		go func() {
-			defer funcutil.EnsureNoPanic(nil)
-			err := data.uploadFunc(ctx, data.File.Path, pr)
-			if err != nil {
-				data.uploadErrChan <- err
-				_ = pr.CloseWithError(err)
-			} else {
-				data.uploadErrChan <- nil
-			}
+			var uploadErr error
+			// NOTE: defers run LIFO. Catch a panic first so it becomes uploadErr,
+			// then unblock the writer and always publish the result: skipping the
+			// send would block the `<-data.uploadErrChan` read in exec_output.go.
+			defer func() { data.uploadErrChan <- uploadErr }()
+			defer func() {
+				if uploadErr != nil {
+					_ = pr.CloseWithError(uploadErr)
+				}
+			}()
+			defer safego.RecoverTo(&uploadErr)
+
+			uploadErr = data.uploadFunc(ctx, data.File.Path, pr)
 		}()
 		baseWriter = &writeCloserWrapper{
 			Writer:    &countingWriter{w: pw, n: &data.File.Size},

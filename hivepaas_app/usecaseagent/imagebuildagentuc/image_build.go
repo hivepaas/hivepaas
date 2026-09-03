@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
@@ -62,6 +63,7 @@ func (uc *UC) ImageBuild(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			defer safego.RecoverWithLogger(uc.logger, "imagebuildagent.forwardLogs")
 			for frames := range logChan.Receiver() {
 				if len(frames) > 0 {
 					if err := req.SendLog(frames); err != nil {

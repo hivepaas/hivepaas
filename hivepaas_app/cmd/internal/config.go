@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 var (
@@ -38,26 +39,33 @@ func InitConfig(lc fx.Lifecycle, cfg *config.Config, logger logging.Logger) {
 			signal.Notify(sigs, syscall.SIGHUP)
 
 			// Start a goroutine to handle incoming signals
-			go func() {
+			safego.GoWithLogger(logger, "signalHandler", func() {
 				for {
 					sig := <-sigs // Block until a signal is received
 					switch sig {
 					case syscall.SIGHUP:
-						logger.Info("SIGHUP received: Reloading configuration...")
-						_, err := config.ReloadConfig()
-						if err != nil {
-							logger.Errorf("Failed to load configuration: %s", err)
-						} else {
-							logger.Info("SIGHUP handling: Configuration reloaded.")
-						}
+						reloadConfigOnSignal(logger)
 					default:
 						// Do nothing
 					}
 				}
-			}()
+			})
 			return nil
 		},
 	})
+}
+
+// reloadConfigOnSignal reloads the config on SIGHUP. Panics are isolated per
+// signal so a bad config file cannot kill the signal handler or the process.
+func reloadConfigOnSignal(logger logging.Logger) {
+	defer safego.RecoverWithLogger(logger, "signalHandler.reloadConfig")
+
+	logger.Info("SIGHUP received: Reloading configuration...")
+	if _, err := config.ReloadConfig(); err != nil {
+		logger.Errorf("Failed to load configuration: %s", err)
+		return
+	}
+	logger.Info("SIGHUP handling: Configuration reloaded.")
 }
 
 func validateConfig(cfg *config.Config, logger logging.Logger) error {

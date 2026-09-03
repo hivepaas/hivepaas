@@ -12,10 +12,17 @@ GO_MOD_ENV=GOPRIVATE=github.com/hivepaas/*
 mod:
 	@$(GO_MOD_ENV) go mod tidy && go mod vendor && go mod verify
 
+# Reports goroutines started without a panic guard. A panic in a bare `go func()`
+# cannot be recovered by the caller and kills the whole process.
+# See tools/goroutinelint for the rules and the //safego:allow escape hatch.
+lint-goroutines:
+	@go run ./tools/goroutinelint .
+
 lint:
+	$(DEVTOOLS_CMD) go run ./tools/goroutinelint .
 	$(DEVTOOLS_CMD) golangci-lint --timeout=3m run -v ./...
 
-lint-local:
+lint-local: lint-goroutines
 	# Run this cmd locally once to install golangci-lint binary
 	# curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.13.0
 	# FASTER golangci-lint --timeout=5m run -v --new-from-rev=HEAD~1

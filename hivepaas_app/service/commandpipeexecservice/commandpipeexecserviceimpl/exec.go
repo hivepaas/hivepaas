@@ -5,7 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/commandpipeexecservice"
 )
@@ -19,7 +19,7 @@ func (s *service) CommandPipeExec(
 	db database.IDB,
 	req *commandpipeexecservice.CommandPipeExecReq,
 ) (_ *commandpipeexecservice.CommandPipeExecResp, err error) {
-	defer funcutil.EnsureNoPanic(&err)
+	defer safego.RecoverTo(&err)
 
 	if len(req.CommandPipes) == 0 {
 		return &commandpipeexecservice.CommandPipeExecResp{}, nil

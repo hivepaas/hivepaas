@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
 
@@ -119,6 +120,8 @@ func (h *Handler) OpenAppTerminal(ctx *gin.Context) {
 
 	// Pipe container stdout/stderr (resp.ExecAttachResult.Reader) to websocket
 	go func() {
+		// gin's recovery middleware only covers the handler goroutine, not this one.
+		defer safego.Recover("apphandler.terminalOutput")
 		defer wsConn.Close()
 		buf := make([]byte, 4096) //nolint:mnd
 		for {

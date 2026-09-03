@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 type Consumer struct {
@@ -49,7 +50,9 @@ func (c *Consumer) StartConsuming(
 
 	go func() {
 		defer func() {
-			_ = recover()
+			if r := recover(); r != nil {
+				safego.LogPanic("tasklog.consume", r)
+			}
 			_ = closeAllFunc()
 		}()
 

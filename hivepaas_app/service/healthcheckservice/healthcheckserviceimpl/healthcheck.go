@@ -12,7 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
@@ -55,7 +55,7 @@ func (s *service) Healthcheck(
 		// Save state in cache
 		_ = s.saveStateInCache(ctx, data)
 	}()
-	defer funcutil.EnsureNoPanic(&err)
+	defer safego.RecoverTo(&err)
 
 	retries := 0
 	startTime := time.Now()

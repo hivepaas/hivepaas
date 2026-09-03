@@ -12,8 +12,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -93,7 +93,7 @@ func (e *Executor) Execute(
 		err3 := e.saveLogs(ctx, db, data, true)
 		err = errors.Join(err, err2, err3)
 	}()
-	defer funcutil.EnsureNoPanic(&err) // Early catch panic before the above defers
+	defer safego.RecoverTo(&err) // Early catch panic before the above defers
 
 	err = transaction.Execute(ctx, db, func(db database.Tx) error {
 		// Lock all pending tasks from execution by the app and workers

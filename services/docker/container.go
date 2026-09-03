@@ -9,6 +9,7 @@ import (
 	"github.com/moby/moby/client"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 type ContainerCreateOption func(*client.ContainerCreateOptions)
@@ -144,6 +145,7 @@ func (m *manager) ContainerInspectMulti(
 	allErrors := map[string]error{}
 	for _, containerID := range containerIDs {
 		wg.Go(func() {
+			defer safego.Recover("docker.containerInspectMulti")
 			resp, err := m.ContainerInspect(ctx, containerID, options...)
 			mu.Lock()
 			if err != nil {
@@ -216,6 +218,7 @@ func (m *manager) ContainerRestartMulti(
 	allErrors := map[string]error{}
 	for _, containerID := range containerIDs {
 		wg.Go(func() {
+			defer safego.Recover("docker.containerRestartMulti")
 			_, err := m.ContainerRestart(ctx, containerID, options...)
 			if err != nil {
 				mu.Lock()
@@ -267,6 +270,7 @@ func (m *manager) ContainerKillMulti(
 	allErrors := map[string]error{}
 	for _, containerID := range containerIDs {
 		wg.Go(func() {
+			defer safego.Recover("docker.containerKillMulti")
 			_, err := m.ContainerKill(ctx, containerID, signal, options...)
 			if err != nil {
 				mu.Lock()

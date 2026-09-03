@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *entity.Project) error {
@@ -18,6 +19,7 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 	for _, env := range project.ProjectEnvs {
 		env.Project = project
 		wg.Go(func() {
+			defer safego.Recover("projectservice.deleteProjectEnv")
 			_ = s.ExecuteEnvInTx(ctx, env, true, func(db database.Tx) error {
 				if err := s.DeleteProjectEnv(ctx, db, env); err != nil {
 					return hperrors.Wrap(err)

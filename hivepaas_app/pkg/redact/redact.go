@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 const (
@@ -16,7 +18,10 @@ const (
 )
 
 // Redactor handles the masking of sensitive secrets within text data.
+// It is safe for concurrent use: AddSecrets can swap the replacer while other
+// goroutines are redacting.
 type Redactor struct {
+	mu       sync.RWMutex
 	secrets  []string
 	replacer *strings.Replacer
 }
@@ -25,10 +30,13 @@ type Redactor struct {
 // Secrets are sorted by length in descending order to prevent partial matching.
 func New(secrets []string) *Redactor {
 	r := &Redactor{secrets: secrets}
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.init()
 	return r
 }
 
+// init rebuilds the replacer from the current secrets. The caller must hold r.mu.
 func (r *Redactor) init() {
 	sorted := make([]string, len(r.secrets))
 	copy(sorted, r.secrets)
@@ -42,13 +50,24 @@ func (r *Redactor) init() {
 	r.replacer = strings.NewReplacer(pairs...)
 }
 
+// currentReplacer returns a snapshot of the replacer. Callers hold on to the
+// returned value for the whole operation, so a concurrent AddSecrets swapping
+// in a new replacer cannot race with them.
+func (r *Redactor) currentReplacer() *strings.Replacer {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.replacer
+}
+
 // String replaces secrets in a single string sequentially.
 func (r *Redactor) String(text string) string {
-	return r.replacer.Replace(text)
+	return r.currentReplacer().Replace(text)
 }
 
 func (r *Redactor) AddSecrets(secrets []string) {
-	// TODO: do we need to use mutex
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	r.secrets = append(r.secrets, secrets...)
 	r.init()
 }
@@ -58,10 +77,11 @@ func (r *Redactor) AddSecrets(secrets []string) {
 // sequential and parallel execution based on the slice size.
 func (r *Redactor) Slice(logs []string) []string {
 	numLogs := len(logs)
+	replacer := r.currentReplacer()
 	// Use sequential processing for small slices to avoid goroutine overhead.
 	if numLogs < concurrencyThreshold {
 		for idx, log := range logs {
-			logs[idx] = r.replacer.Replace(log)
+			logs[idx] = replacer.Replace(log)
 		}
 		return logs
 	}
@@ -81,9 +101,10 @@ func (r *Redactor) Slice(logs []string) []string {
 		wg.Add(1)
 		go func(s, e int) {
 			defer wg.Done()
+			defer safego.Recover("redact.sliceWorker")
 			for idx := s; idx < e; idx++ {
 				// Each worker processes a disjoint range of indices to prevent write contention.
-				logs[idx] = r.replacer.Replace(logs[idx])
+				logs[idx] = replacer.Replace(logs[idx])
 			}
 		}(start, end)
 	}

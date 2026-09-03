@@ -14,7 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
@@ -248,7 +248,7 @@ func (s *service) onPostTransaction(
 	defer func() {
 		_ = s.saveLogs(ctx, db, data, false)
 	}()
-	defer funcutil.EnsureNoPanic(nil)
+	defer safego.Recover("appdeployment.onPostTransaction")
 
 	if data.Task.IsDone() || data.Task.IsFailedCompletely() {
 		if err := s.notifyForDeployment(ctx, db, data); err != nil {

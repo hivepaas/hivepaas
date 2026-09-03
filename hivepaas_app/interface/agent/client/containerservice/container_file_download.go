@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client"
 	agentproto "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
 )
 
@@ -71,6 +72,7 @@ func (c *grpcContainerServiceClient) ContainerCopyFrom(
 	pr, pw := io.Pipe()
 
 	go func() {
+		defer safego.RecoverPipe("agentclient.containerCopyFrom", pw)
 		defer cancelFunc()
 
 		if chunk := firstResp.GetChunk(); len(chunk) > 0 {

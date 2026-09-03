@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/redishelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 const (
@@ -85,9 +86,7 @@ func (s *service) Start(ctx context.Context) error {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
-		defer func() {
-			_ = recover()
-		}()
+		defer safego.RecoverWithLogger(s.logger, "systemEventBus.subscribeLoop")
 
 		ch := s.pubSub.Channel()
 		for msg := range ch {

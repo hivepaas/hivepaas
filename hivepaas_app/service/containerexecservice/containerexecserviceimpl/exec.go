@@ -12,7 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/containerservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
@@ -58,7 +58,7 @@ func (s *service) containerExec(
 	ctx context.Context,
 	req *containerexecservice.ContainerExecReq,
 ) (resp *containerexecservice.ContainerExecResp, retryable bool, err error) {
-	defer funcutil.EnsureNoPanic(&err)
+	defer safego.RecoverTo(&err)
 
 	logStore := req.LogStore
 	if logStore == nil {
@@ -139,7 +139,7 @@ func (s *service) containerExec(
 
 	if req.StdinReader != nil {
 		go func() {
-			defer funcutil.EnsureNoPanic(nil)
+			defer safego.Recover("containerexec.copyStdin")
 			_, _ = io.Copy(execHelper.attachResult.Conn, req.StdinReader)
 			_ = execHelper.attachResult.CloseWrite()
 		}()

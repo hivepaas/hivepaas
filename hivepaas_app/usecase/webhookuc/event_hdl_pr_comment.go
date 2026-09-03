@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 )
 
@@ -104,6 +105,7 @@ func (uc *UC) processWebhookEventPRComment(
 	var wg sync.WaitGroup
 	for _, app := range apps {
 		wg.Go(func() {
+			defer safego.Recover("webhook.prComment.handleCommand")
 			switch prCommentEvent.previewCmd {
 			case previewCmdDeploy:
 				uc.handlePRCommentDeploy(ctx, db, app, prCommentEvent, repoRef, data)

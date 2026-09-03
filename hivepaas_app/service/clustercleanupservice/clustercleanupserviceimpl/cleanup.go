@@ -6,7 +6,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice"
 )
@@ -20,7 +20,7 @@ func (s *service) Cleanup(
 	ctx context.Context,
 	req *clustercleanupservice.ClusterCleanupReq,
 ) (resp *clustercleanupservice.ClusterCleanupResp, err error) {
-	defer funcutil.EnsureNoPanic(&err)
+	defer safego.RecoverTo(&err)
 
 	data := &clusterCleanupData{
 		ClusterCleanupReq: req,

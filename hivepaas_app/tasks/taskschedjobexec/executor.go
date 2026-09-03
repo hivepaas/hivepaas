@@ -12,8 +12,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
@@ -115,7 +115,7 @@ func (e *Executor) execute(
 	defer func() {
 		_ = e.saveLogs(ctx, db, data, true)
 	}()
-	defer funcutil.EnsureNoPanic(&err) // Make sure we catch panic before the above defer
+	defer safego.RecoverTo(&err) // Make sure we catch panic before the above defer
 
 	schedJob := data.SchedJob.MustAsSchedJob()
 	switch schedJob.JobType {

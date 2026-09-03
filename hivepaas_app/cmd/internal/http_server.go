@@ -25,6 +25,7 @@ func InitHTTPServer(
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
 			logger.Info("starting HTTP server ...")
+			//safego:allow deliberate fail-fast: the app cannot serve without its HTTP port
 			go func() {
 				if err := srv.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 					logger.Fatalf("start server error: %v", err.Error())

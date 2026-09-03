@@ -7,7 +7,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice"
 )
@@ -22,7 +22,7 @@ func (s *service) Cleanup(
 	db database.Tx,
 	req *syscleanupservice.SysCleanupReq,
 ) (resp *syscleanupservice.SysCleanupResp, err error) {
-	defer funcutil.EnsureNoPanic(&err)
+	defer safego.RecoverTo(&err)
 
 	data := &sysCleanupData{
 		SysCleanupReq: req,

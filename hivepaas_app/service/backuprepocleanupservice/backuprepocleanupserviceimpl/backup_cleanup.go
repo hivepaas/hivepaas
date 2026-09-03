@@ -11,7 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/dblock"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
@@ -27,7 +27,7 @@ func (s *service) Cleanup(
 	db database.Tx,
 	req *backuprepocleanupservice.BackupRepoCleanupReq,
 ) (resp *backuprepocleanupservice.BackupRepoCleanupResp, err error) {
-	defer funcutil.EnsureNoPanic(&err)
+	defer safego.RecoverTo(&err)
 
 	data := &cleanupData{
 		BackupRepoCleanupReq: req,

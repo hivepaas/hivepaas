@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc/nodeagentdto"
 )
 
@@ -54,6 +55,7 @@ func (uc *UC) ExecuteCommand(
 
 	// Watch for remote interrupt / context cancellation
 	go func() {
+		defer safego.RecoverWithLogger(uc.logger, "nodeagent.watchInterrupt")
 		select {
 		case <-ctx.Done():
 			if cmd.Process != nil && cmd.Process.Pid > 0 {

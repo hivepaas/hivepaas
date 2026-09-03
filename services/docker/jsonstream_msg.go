@@ -3,12 +3,12 @@ package docker
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 
 	"github.com/moby/moby/api/types/jsonstream"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 type JSONMsg struct {
@@ -43,7 +43,9 @@ func StartScanningJSONMsg(
 
 	go func() {
 		defer func() {
-			_ = recover()
+			if r := recover(); r != nil {
+				safego.LogPanic("docker.scanJSONMsg", r)
+			}
 			batchChan.Close()
 		}()
 
@@ -54,7 +56,9 @@ func StartScanningJSONMsg(
 		for {
 			var jm jsonstream.Message
 			err := decoder.Decode(&jm)
-			if errors.Is(err, io.EOF) {
+			if err != nil {
+				// Any decode error is terminal, not just io.EOF: retrying on a
+				// broken stream would spin forever emitting empty messages.
 				break
 			}
 			msg := &JSONMsg{Message: &jm}

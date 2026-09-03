@@ -11,6 +11,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 )
 
@@ -161,6 +162,7 @@ func compressStream(
 	}
 
 	go func() {
+		defer safego.RecoverPipe("containerfile.compressStream", pw)
 		defer func() {
 			_ = srcReader.Close()
 			_ = compWriter.Close()

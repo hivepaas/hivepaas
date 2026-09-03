@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/gocronqueue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/rediscache"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/schedjobservice"
@@ -127,11 +128,13 @@ func (q *taskQueue) Start() (err error) {
 			return hperrors.Wrap(err)
 		}
 
-		go func() {
-			if err = q.server.Start(); err != nil {
-				q.logger.Errorf("failed to start task queue worker: %v", err)
+		// NOTE: use a goroutine-local error, assigning to the outer `err` from
+		// here would race with the rest of this function.
+		safego.GoWithLogger(q.logger, "taskQueue.serverStart", func() {
+			if startErr := q.server.Start(); startErr != nil {
+				q.logger.Errorf("failed to start task queue worker: %v", startErr)
 			}
-		}()
+		})
 	}
 
 	// Initialize task queue client (always init a task queue client)

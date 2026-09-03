@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/ssh"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 const (
@@ -82,6 +83,9 @@ func Execute(ctx context.Context, input *CommandInput) (output string, err error
 
 	done := make(chan *outputStruct, 1)
 	go func() {
+		defer safego.Recover("ssh.combinedOutput")
+		// On timeout this goroutine is unblocked by the deferred client/session
+		// Close above, which makes CombinedOutput return an error.
 		outBytes, err := session.CombinedOutput(input.Command)
 		done <- &outputStruct{
 			Error:  err,

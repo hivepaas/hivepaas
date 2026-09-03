@@ -18,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 const (
@@ -78,11 +79,11 @@ func InitGrpcServer(
 				return hperrors.Wrap(err)
 			}
 			logger.Infof("gRPC Server listening on port %s ...", grpcPort)
-			go func() {
+			safego.GoWithLogger(logger, "grpcServer.serve", func() {
 				if err := server.Serve(lis); err != nil {
 					logger.Errorf("gRPC Server stopped: %v", err)
 				}
-			}()
+			})
 			return nil
 		},
 		OnStop: func(ctx context.Context) error {

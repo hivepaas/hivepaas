@@ -8,6 +8,7 @@ import (
 	"github.com/moby/moby/client"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/containeragentuc/containeragentdto"
 )
 
@@ -74,6 +75,7 @@ func (uc *UC) ExecuteCommand(
 
 	// 4. Start Goroutine B: gRPC client stdin/resize -> Docker exec input
 	go func() {
+		defer safego.RecoverWithLogger(uc.logger, "containeragent.execStdin")
 		for {
 			inReq, recvErr := stream.Recv()
 			if recvErr != nil {

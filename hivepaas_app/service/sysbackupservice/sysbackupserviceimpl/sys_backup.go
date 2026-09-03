@@ -19,7 +19,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice"
 )
@@ -43,7 +43,7 @@ func (s *service) Backup(
 	db database.Tx,
 	req *sysbackupservice.SysBackupReq,
 ) (resp *sysbackupservice.SysBackupResp, err error) {
-	defer funcutil.EnsureNoPanic(&err)
+	defer safego.RecoverTo(&err)
 
 	resp = &sysbackupservice.SysBackupResp{}
 	data := &sysBackupData{

@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
@@ -97,9 +98,11 @@ func (s *service) buildImageWithDocker(
 
 	var wg sync.WaitGroup
 	wg.Go(func() {
+		defer safego.Recover("imagebuild.streamStdout")
 		s.streamLogOutput(ctx, data.LogStore, stdout)
 	})
 	wg.Go(func() {
+		defer safego.Recover("imagebuild.streamStderr")
 		s.streamLogOutput(ctx, data.LogStore, stderr)
 	})
 	wg.Wait()

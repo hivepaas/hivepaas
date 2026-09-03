@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/vcsurl"
 )
 
@@ -53,6 +54,7 @@ func (uc *UC) processWebhookEventPRClosed(
 	var wg sync.WaitGroup
 	for _, app := range apps {
 		wg.Go(func() {
+			defer safego.Recover("webhook.prClosed.deleteAppPreview")
 			_ = uc.deleteAppPreview(ctx, app, expectedRef)
 		})
 	}

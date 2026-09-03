@@ -10,6 +10,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/batchrecvchan"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 )
 
@@ -71,7 +72,9 @@ func StartScanningLog(
 
 	go func() {
 		defer func() {
-			_ = recover()
+			if r := recover(); r != nil {
+				safego.LogPanic("docker.scanLogs", r)
+			}
 			batchChan.Close()
 		}()
 

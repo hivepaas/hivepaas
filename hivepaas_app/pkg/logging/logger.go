@@ -33,6 +33,13 @@ func InitGlobalLogger(log Logger) {
 	})
 }
 
+// GlobalLogger returns the singleton instance of Logger. It returns nil when
+// InitGlobalLogger has not been called yet, so callers running outside the
+// normal app bootstrap (tests, tools) must check the result.
+func GlobalLogger() Logger {
+	return globalLogger
+}
+
 func Info(msg string, keysAndValues ...any) {
 	globalLogger.Info(msg, keysAndValues...)
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/funcutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
@@ -58,7 +58,7 @@ func (s *service) SysUpdate(
 		// Send result notifications
 		s.sendResultNotifications(ctx, db, data)
 	}()
-	defer funcutil.EnsureNoPanic(&err) // Early catch panic before the above defers
+	defer safego.RecoverTo(&err) // Early catch panic before the above defers
 
 	// Stop only services which need to be stopped (main app and workers)
 	err = s.stopServices(ctx, data)
@@ -141,7 +141,7 @@ func (s *service) updateSystem(
 	db database.IDB,
 	data *sysUpdateData,
 ) (err error) {
-	defer funcutil.EnsureNoPanic(&err)
+	defer safego.RecoverTo(&err)
 
 	// 1. Update DB
 	err = s.updateDbService(ctx, db, data)

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/githubappuc/githubappdto"
 )
@@ -42,13 +43,8 @@ func (uc *UC) BeginGithubAppManifestFlowCreation(
 
 	githubApp := manifestCache.GithubApp.MustAsGithubApp()
 
-	var actionURL string
-	if githubApp.Organization != "" {
-		actionURL = fmt.Sprintf("https://github.com/organizations/%v/settings/apps/new?state=%v",
-			githubApp.Organization, req.State)
-	} else {
-		actionURL = fmt.Sprintf("https://github.com/settings/apps/new?state=%v", req.State)
-	}
+	actionURL := fmt.Sprintf("%s/new?state=%v",
+		entity.GithubAppOwnerSettingsBaseURL(githubApp.Organization), req.State)
 
 	data := &redirectTemplate{
 		Action:   actionURL,

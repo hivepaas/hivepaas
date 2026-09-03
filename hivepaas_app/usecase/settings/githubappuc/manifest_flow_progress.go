@@ -2,7 +2,6 @@ package githubappuc
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/tiendc/gofn"
 
@@ -53,6 +52,12 @@ func (uc *UC) handleGithubAppManifestFlowOnCreation(
 	githubApp.ClientID = gofn.PtrValueOrEmpty(appConfig.ClientID)
 	githubApp.ClientSecret = entity.NewEncryptedField(gofn.PtrValueOrEmpty(appConfig.ClientSecret))
 	githubApp.PrivateKey = entity.NewEncryptedField(gofn.PtrValueOrEmpty(appConfig.PEM))
+	// The slug and owner type are only available here, from the manifest conversion response.
+	// Persist them: they cannot be derived from the app name later,
+	// and every github.com settings link needs them.
+	githubApp.Slug = gofn.PtrValueOrEmpty(appConfig.Slug)
+	githubApp.OwnerLogin = appConfig.GetOwner().GetLogin()
+	githubApp.OwnerType = appConfig.GetOwner().GetType()
 	appSetting.MustSetData(githubApp)
 
 	err = uc.cacheAppManifestRepo.Set(ctx, appSetting.ID, manifestCache, appManifestCacheExp)
@@ -60,14 +65,11 @@ func (uc *UC) handleGithubAppManifestFlowOnCreation(
 		return nil, hperrors.Wrap(err)
 	}
 
-	var redirectURL string
 	// Redirect the user to the page where they can install the newly created app
-	if githubApp.Organization != "" {
-		redirectURL = fmt.Sprintf("https://github.com/organizations/%s/settings/apps/%s/installations",
-			githubApp.Organization, *appConfig.Slug)
-	} else {
-		redirectURL = fmt.Sprintf("https://github.com/settings/apps/%s/installations",
-			*appConfig.Slug)
+	redirectURL := githubApp.InstallationsURL()
+	if redirectURL == "" {
+		return nil, hperrors.Wrap(hperrors.ErrInternal).
+			WithMsgLog("github app '%s' was created without a slug", appSetting.ID)
 	}
 
 	return &githubappdto.HandleGithubAppManifestFlowProgressResp{

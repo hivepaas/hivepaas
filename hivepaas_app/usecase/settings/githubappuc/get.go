@@ -26,6 +26,9 @@ func (uc *UC) GetGithubApp(
 		if err := setting.MustAsGithubApp().Decrypt(); err != nil {
 			return nil, hperrors.Wrap(err)
 		}
+		// Settings created before the slug was persisted have no github.com URLs
+		// until it is read back from the API once.
+		uc.ensureAppSlug(ctx, setting)
 	}
 
 	input := &githubappdto.GithubAppTransformInput{

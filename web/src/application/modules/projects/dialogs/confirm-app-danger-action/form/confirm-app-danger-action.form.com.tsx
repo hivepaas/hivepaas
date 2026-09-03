@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 
+import { cn } from "@/lib/utils";
 import { DialogActionFooter, DialogBody } from "@components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertTriangle } from "lucide-react";
 import { type FieldErrors, useForm } from "react-hook-form";
 
 import { Button, Field, FieldError, Input } from "@/components/ui";
@@ -13,7 +15,15 @@ import {
 } from "../schemas";
 import { AppDangerAction } from "../types";
 
-const actionCopy = {
+const actionCopy: Record<
+    AppDangerAction,
+    {
+        bodyAction: string;
+        buttonLabel: string;
+        buttonVariant: "default" | "destructive";
+        warning?: string;
+    }
+> = {
     [AppDangerAction.Disable]: {
         bodyAction: "disabling",
         buttonLabel: "Disable this App",
@@ -28,8 +38,9 @@ const actionCopy = {
         bodyAction: "deleting",
         buttonLabel: "Delete this App",
         buttonVariant: "destructive",
+        warning: "This action is permanent and cannot be undone.",
     },
-} as const;
+};
 
 export function ConfirmAppDangerActionForm({ action, appName, isPending = false, readOnly = false, onSubmit }: Props) {
     const {
@@ -72,7 +83,7 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
                 void handleSubmit(onSubmit, onInvalid)(event);
             }}
         >
-            <DialogBody className="flex flex-col gap-7">
+            <DialogBody className={cn("flex flex-col", copy.warning ? "gap-4" : "gap-7")}>
                 <p className="text-sm font-medium leading-6 text-foreground">
                     To confirm {copy.bodyAction} the application, please type{" "}
                     <span className="inline-flex max-w-full items-center rounded-[4px] border border-input bg-muted/50 px-2 py-0 align-middle font-semibold text-primary break-all">
@@ -80,6 +91,13 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
                     </span>{" "}
                     into the text box below.
                 </p>
+
+                {copy.warning && (
+                    <div className="flex items-center gap-2.5 rounded-md border border-destructive bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive font-medium">
+                        <AlertTriangle className="size-4 shrink-0 text-destructive" />
+                        <span>Warning: {copy.warning}</span>
+                    </div>
+                )}
 
                 <Field>
                     <Input

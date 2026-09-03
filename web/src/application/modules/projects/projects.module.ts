@@ -34,6 +34,8 @@ export {
     ProjectCommandTemplateCreateRoute,
     ProjectCommandTemplateEditRoute,
     ProjectBackupReposRoute,
+    ProjectBackupRepoCreateRoute,
+    ProjectBackupRepoEditRoute,
     ProjectNotificationTargetsRoute,
     ProjectSecretsRoute,
     ProjectSecretCreateRoute,

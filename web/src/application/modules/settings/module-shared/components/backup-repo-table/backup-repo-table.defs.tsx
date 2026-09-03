@@ -4,7 +4,7 @@ import type { SettingBackupRepo } from "~/settings/domain";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 
 import type { BackupRepoTableScope } from "./backup-repo-table.types";
-import { BackupRepoMenuCell } from "./building-blocks";
+import { BackupRepoEditCell, BackupRepoMenuCell } from "./building-blocks";
 
 function getEngineBadgeClassName(kind?: string): string {
     if (kind?.toLowerCase() === "kopia") {
@@ -16,6 +16,25 @@ function getEngineBadgeClassName(kind?: string): string {
 
 function createColumns(scope: BackupRepoTableScope): ColumnDef<SettingBackupRepo>[] {
     return [
+        {
+            id: "view",
+            accessorKey: "inherited",
+            header: "",
+            enableSorting: false,
+            enableHiding: false,
+            minSize: 56,
+            size: 56,
+            cell: ({ row: { original } }) => (
+                <BackupRepoEditCell
+                    scope={scope}
+                    id={original.id}
+                />
+            ),
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+        },
         {
             accessorKey: "name",
             header: "Name",

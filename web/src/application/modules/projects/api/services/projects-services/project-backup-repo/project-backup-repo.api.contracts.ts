@@ -1,5 +1,12 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
-import type { BackupRepo_UpdateStatus_Payload } from "~/settings/api/services/backup-repo-services";
+import type {
+    BackupRepo_Cleanup_Res,
+    BackupRepo_CreateOne_Payload,
+    BackupRepo_Sync_Res,
+    BackupRepo_UpdateOne_Payload,
+    BackupRepo_UpdatePassword_Payload,
+    BackupRepo_UpdateStatus_Payload,
+} from "~/settings/api/services/backup-repo-services";
 import type { SettingBackupRepo } from "~/settings/domain";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
@@ -22,6 +29,23 @@ export type ProjectBackupRepo_FindOneById_Req = ApiRequestBase<{
 
 export type ProjectBackupRepo_FindOneById_Res = ApiResponseBase<SettingBackupRepo>;
 
+export type ProjectBackupRepo_CreateOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    payload: BackupRepo_CreateOne_Payload;
+}>;
+
+export type ProjectBackupRepo_CreateOne_Res = ApiResponseBase<{ id: string }>;
+
+export type ProjectBackupRepo_UpdateOne_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+    payload: BackupRepo_UpdateOne_Payload;
+}>;
+
+export type ProjectBackupRepo_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+
 export type ProjectBackupRepo_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
     env?: string;
@@ -38,3 +62,28 @@ export type ProjectBackupRepo_DeleteOne_Req = ApiRequestBase<{
 }>;
 
 export type ProjectBackupRepo_DeleteOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type ProjectBackupRepo_UpdatePassword_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+    payload: BackupRepo_UpdatePassword_Payload;
+}>;
+
+export type ProjectBackupRepo_UpdatePassword_Res = ApiResponseBase<{ type: "success" }>;
+
+export type ProjectBackupRepo_Cleanup_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+}>;
+
+export type ProjectBackupRepo_Cleanup_Res = BackupRepo_Cleanup_Res;
+
+export type ProjectBackupRepo_Sync_Req = ApiRequestBase<{
+    projectID: string;
+    env?: string;
+    id: string;
+}>;
+
+export type ProjectBackupRepo_Sync_Res = BackupRepo_Sync_Res;

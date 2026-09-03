@@ -11,7 +11,10 @@ export interface SettingBackupRepoRetention {
 export interface SettingBackupRepo extends SettingsBaseEntity {
     engine?: string;
     description?: string;
+    cloudStorage?: { id: string; name?: string } | null;
+    volume?: { id: string; name?: string } | null;
     storagePrefix?: string;
+    password?: string;
     compression?: string;
     packSize?: string;
     retention?: SettingBackupRepoRetention;

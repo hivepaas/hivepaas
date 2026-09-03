@@ -7,6 +7,7 @@ import { BackupRepoQueries } from "~/settings/data/queries";
 
 import { TableActions } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA } from "@application/shared/constants";
+import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
 
 import { DataTable } from "@/components/ui";
@@ -16,8 +17,10 @@ import { SettingsScopeCreateButton } from "../settings-scope-create-button";
 
 import { BackupRepoTableDefs } from "./backup-repo-table.defs";
 import type { BackupRepoTableScope } from "./backup-repo-table.types";
+import { getBackupRepoCreateRoute } from "./building-blocks";
 
 function BackupRepoTableView({ scope }: Props) {
+    const { navigate } = useAppNavigate();
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
 
     const settingsQuery = BackupRepoQueries.useFindManyPaginated(
@@ -64,7 +67,7 @@ function BackupRepoTableView({ scope }: Props) {
                         <SettingsScopeCreateButton
                             scope={scope}
                             onClick={() => {
-                                // Handler will be implemented in a dedicated task
+                                navigate.modules(getBackupRepoCreateRoute(scope));
                             }}
                         >
                             <Plus className="size-4" />

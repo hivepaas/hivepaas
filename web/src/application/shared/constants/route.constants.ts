@@ -377,6 +377,16 @@ export const ROUTE = {
         backupRepos: {
             $pattern: "integrations/backup-repos",
             $route: "/integrations/backup-repos/",
+
+            create: {
+                $pattern: "integrations/backup-repos/create",
+                $route: "/integrations/backup-repos/create/",
+            },
+
+            edit: {
+                $pattern: "integrations/backup-repos/:backupRepoId/edit",
+                $route: (backupRepoId: string) => `/integrations/backup-repos/${backupRepoId}/edit/`,
+            },
         },
     },
 
@@ -898,6 +908,17 @@ export const ROUTE = {
                 backupRepos: {
                     $pattern: "projects/:id/integrations/backup-repos",
                     $route: (id: string) => `/projects/${id}/integrations/backup-repos/`,
+
+                    create: {
+                        $pattern: "projects/:id/integrations/backup-repos/create",
+                        $route: (id: string) => `/projects/${id}/integrations/backup-repos/create/`,
+                    },
+
+                    edit: {
+                        $pattern: "projects/:id/integrations/backup-repos/:backupRepoId/edit",
+                        $route: (id: string, backupRepoId: string) =>
+                            `/projects/${id}/integrations/backup-repos/${backupRepoId}/edit/`,
+                    },
                 },
 
                 emailAccounts: {

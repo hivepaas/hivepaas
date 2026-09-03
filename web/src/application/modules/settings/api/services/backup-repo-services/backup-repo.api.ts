@@ -4,12 +4,22 @@ import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
 import type {
+    BackupRepo_Cleanup_Req,
+    BackupRepo_Cleanup_Res,
+    BackupRepo_CreateOne_Req,
+    BackupRepo_CreateOne_Res,
     BackupRepo_DeleteOne_Req,
     BackupRepo_DeleteOne_Res,
     BackupRepo_FindManyPaginated_Req,
     BackupRepo_FindManyPaginated_Res,
     BackupRepo_FindOneById_Req,
     BackupRepo_FindOneById_Res,
+    BackupRepo_Sync_Req,
+    BackupRepo_Sync_Res,
+    BackupRepo_UpdateOne_Req,
+    BackupRepo_UpdateOne_Res,
+    BackupRepo_UpdatePassword_Req,
+    BackupRepo_UpdatePassword_Res,
     BackupRepo_UpdateStatus_Req,
     BackupRepo_UpdateStatus_Res,
 } from "./backup-repo.api.contracts";
@@ -63,6 +73,44 @@ export class BackupRepoApi extends BaseApi {
         );
     }
 
+    async createOne(
+        request: BackupRepo_CreateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<BackupRepo_CreateOne_Res, Error>> {
+        const { payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post("/settings/backup-repos", payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.createOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async updateOne(
+        request: BackupRepo_UpdateOne_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<BackupRepo_UpdateOne_Res, Error>> {
+        const { id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/settings/backup-repos/${id}`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.updateOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
     async updateStatus(
         request: BackupRepo_UpdateStatus_Req,
         signal?: AbortSignal,
@@ -82,6 +130,25 @@ export class BackupRepoApi extends BaseApi {
         );
     }
 
+    async updatePassword(
+        request: BackupRepo_UpdatePassword_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<BackupRepo_UpdatePassword_Res, Error>> {
+        const { id, payload } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.put(`/settings/backup-repos/${id}/password`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.updatePassword),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
     async deleteOne(
         request: BackupRepo_DeleteOne_Req,
         signal?: AbortSignal,
@@ -91,6 +158,33 @@ export class BackupRepoApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.delete(`/settings/backup-repos/${id}`, { signal })).pipe(
                 map(this.validator.deleteOne),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async cleanup(
+        request: BackupRepo_Cleanup_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<BackupRepo_Cleanup_Res, Error>> {
+        const { id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`/settings/backup-repos/${id}/cleanup`, {}, { signal })).pipe(
+                map(this.validator.cleanup),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async sync(request: BackupRepo_Sync_Req, signal?: AbortSignal): Promise<Result<BackupRepo_Sync_Res, Error>> {
+        const { id } = request.data;
+
+        return lastValueFrom(
+            from(this.client.v1.post(`/settings/backup-repos/${id}/sync`, {}, { signal })).pipe(
+                map(this.validator.sync),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

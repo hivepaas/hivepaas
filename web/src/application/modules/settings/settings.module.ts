@@ -47,6 +47,8 @@ export {
     SettingsImageBuildRoute,
     SettingsAppPlacementRoute,
     SettingsBackupReposRoute,
+    SettingsBackupRepoCreateRoute,
+    SettingsBackupRepoEditRoute,
 } from "./routes";
 
 /**

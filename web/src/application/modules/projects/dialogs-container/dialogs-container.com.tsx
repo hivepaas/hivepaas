@@ -59,6 +59,7 @@ import {
     ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
     UpdateAcmeDnsProviderStatusDialog,
+    UpdateBackupRepoPasswordDialog,
     UpdateBackupRepoStatusDialog,
     UpdateBasicAuthStatusDialog,
     UpdateCloudStorageStatusDialog,
@@ -74,6 +75,7 @@ import {
     useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
     useUpdateAcmeDnsProviderStatusDialogState,
+    useUpdateBackupRepoPasswordDialogState,
     useUpdateBackupRepoStatusDialogState,
     useUpdateBasicAuthStatusDialogState,
     useUpdateCloudStorageStatusDialogState,
@@ -111,6 +113,7 @@ function View() {
     const updateCloudStorageStatusDialog = useUpdateCloudStorageStatusDialogState();
     const updateNotificationTargetStatusDialog = useUpdateNotificationTargetStatusDialogState();
     const updateBackupRepoStatusDialog = useUpdateBackupRepoStatusDialogState();
+    const updateBackupRepoPasswordDialog = useUpdateBackupRepoPasswordDialogState();
     const projectUserAccessesDialog = useProjectUserAccessesDialogState();
     const provisionGithubAppDialog = useProvisionGithubAppDialogState();
     const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
@@ -145,6 +148,7 @@ function View() {
         updateCloudStorageStatusDialog.destroy();
         updateNotificationTargetStatusDialog.destroy();
         updateBackupRepoStatusDialog.destroy();
+        updateBackupRepoPasswordDialog.destroy();
         projectUserAccessesDialog.destroy();
         provisionGithubAppDialog.destroy();
         updateGithubAppStatusDialog.destroy();
@@ -180,6 +184,7 @@ function View() {
             <UpdateAcmeDnsProviderStatusDialog />
             <UpdateCloudStorageStatusDialog />
             <UpdateBackupRepoStatusDialog />
+            <UpdateBackupRepoPasswordDialog />
             <UpdateNotificationTargetStatusDialog />
             <ProjectUserAccessesDialog />
             <ProvisionGithubAppDialog />

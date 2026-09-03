@@ -2,7 +2,7 @@ import { memo, useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { MoreVertical, SlidersHorizontal, Trash2Icon } from "lucide-react";
+import { Brush, MoreVertical, RefreshCw, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectBackupRepoCommands } from "~/projects/data/commands";
 import { BackupRepoCommands } from "~/settings/data/commands";
@@ -32,6 +32,36 @@ function View({ scope, backupRepo }: Props) {
         },
     });
 
+    const { mutate: cleanupSettingBackupRepo, isPending: isCleaningSetting } = BackupRepoCommands.useCleanup({
+        onSuccess: () => {
+            toast.success("Backup repository cleanup completed successfully");
+            setOpen(false);
+        },
+    });
+
+    const { mutate: cleanupProjectBackupRepo, isPending: isCleaningProject } = ProjectBackupRepoCommands.useCleanup({
+        onSuccess: () => {
+            toast.success("Project backup repository cleanup completed successfully");
+            setOpen(false);
+        },
+    });
+
+    const { mutate: syncSettingBackupRepo, isPending: isSyncingSetting } = BackupRepoCommands.useSync({
+        onSuccess: () => {
+            toast.success("Backup repository synced successfully");
+            setOpen(false);
+        },
+    });
+
+    const { mutate: syncProjectBackupRepo, isPending: isSyncingProject } = ProjectBackupRepoCommands.useSync({
+        onSuccess: () => {
+            toast.success("Project backup repository synced successfully");
+            setOpen(false);
+        },
+    });
+
+    const isCleaning = isCleaningSetting || isCleaningProject;
+    const isSyncing = isSyncingSetting || isSyncingProject;
     const isDeleting = isDeletingSetting || isDeletingProject;
     const isInheritedProject = isInheritedProjectSetting(scope, backupRepo.inherited);
 
@@ -46,6 +76,32 @@ function View({ scope, backupRepo }: Props) {
         }
 
         deleteSettingBackupRepo({ id: backupRepo.id });
+    }
+
+    function handleCleanup() {
+        if (scope.type === "project") {
+            cleanupProjectBackupRepo({
+                projectID: scope.projectId,
+                env: scope.env,
+                id: backupRepo.id,
+            });
+            return;
+        }
+
+        cleanupSettingBackupRepo({ id: backupRepo.id });
+    }
+
+    function handleSync() {
+        if (scope.type === "project") {
+            syncProjectBackupRepo({
+                projectID: scope.projectId,
+                env: scope.env,
+                id: backupRepo.id,
+            });
+            return;
+        }
+
+        syncSettingBackupRepo({ id: backupRepo.id });
     }
 
     function handleChangeStatus() {
@@ -88,6 +144,24 @@ function View({ scope, backupRepo }: Props) {
                     >
                         <SlidersHorizontal className="mr-2 size-4" />
                         Change Status
+                    </SettingsScopeMenuButton>
+                    <SettingsScopeMenuButton
+                        scope={scope}
+                        action="write"
+                        isLoading={isCleaning}
+                        onClick={handleCleanup}
+                    >
+                        <Brush className="mr-2 size-4" />
+                        Repo Cleanup
+                    </SettingsScopeMenuButton>
+                    <SettingsScopeMenuButton
+                        scope={scope}
+                        action="write"
+                        isLoading={isSyncing}
+                        onClick={handleSync}
+                    >
+                        <RefreshCw className="mr-2 size-4" />
+                        Repo Sync
                     </SettingsScopeMenuButton>
                     <SettingsScopePopConfirmButton
                         scope={scope}

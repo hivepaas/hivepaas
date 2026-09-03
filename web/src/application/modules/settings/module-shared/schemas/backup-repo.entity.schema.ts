@@ -12,7 +12,11 @@ const BackupRepoRetentionSchema = z.object({
 
 export const BackupRepoSettingEntitySchema = SettingsBaseEntitySchema.extend({
     engine: z.string().optional(),
+    description: z.string().optional(),
+    cloudStorage: z.object({ id: z.string(), name: z.string().optional() }).nullish(),
+    volume: z.object({ id: z.string(), name: z.string().optional() }).nullish(),
     storagePrefix: z.string().optional(),
+    password: z.string().optional(),
     compression: z.string().optional(),
     packSize: z.string().optional(),
     retention: BackupRepoRetentionSchema.nullish(),

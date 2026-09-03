@@ -49,5 +49,7 @@ export * from "./acme-dns-provider-form";
 export * from "./acme-dns-provider-form-route";
 export * from "./oauth-form";
 export * from "./oauth-form-route";
+export * from "./backup-repo-form";
+export * from "./backup-repo-form-route";
 export * from "./settings-form-cancel-action";
 export * from "./settings-form-route-header";

@@ -5,6 +5,7 @@ import {
     ProvisionGithubAppDialog,
     UpdateAccessTokenStatusDialog,
     UpdateAcmeDnsProviderStatusDialog,
+    UpdateBackupRepoPasswordDialog,
     UpdateBackupRepoStatusDialog,
     UpdateBasicAuthStatusDialog,
     UpdateCloudStorageStatusDialog,
@@ -21,6 +22,7 @@ import {
     useProvisionGithubAppDialogState,
     useUpdateAccessTokenStatusDialogState,
     useUpdateAcmeDnsProviderStatusDialogState,
+    useUpdateBackupRepoPasswordDialogState,
     useUpdateBackupRepoStatusDialogState,
     useUpdateBasicAuthStatusDialogState,
     useUpdateCloudStorageStatusDialogState,
@@ -54,6 +56,7 @@ function View() {
     const updateGithubAppStatusDialog = useUpdateGithubAppStatusDialogState();
     const updateRepoWebhookStatusDialog = useUpdateRepoWebhookStatusDialogState();
     const updateBackupRepoStatusDialog = useUpdateBackupRepoStatusDialogState();
+    const updateBackupRepoPasswordDialog = useUpdateBackupRepoPasswordDialogState();
 
     useUpdateEffect(() => {
         updateBasicAuthStatusDialog.destroy();
@@ -72,6 +75,7 @@ function View() {
         updateGithubAppStatusDialog.destroy();
         updateRepoWebhookStatusDialog.destroy();
         updateBackupRepoStatusDialog.destroy();
+        updateBackupRepoPasswordDialog.destroy();
     }, [location]);
 
     return (
@@ -92,6 +96,7 @@ function View() {
             <UpdateGithubAppStatusDialog />
             <UpdateRepoWebhookStatusDialog />
             <UpdateBackupRepoStatusDialog />
+            <UpdateBackupRepoPasswordDialog />
         </>
     );
 }

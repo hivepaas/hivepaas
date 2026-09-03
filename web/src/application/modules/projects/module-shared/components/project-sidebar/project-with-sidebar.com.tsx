@@ -82,7 +82,7 @@ function createConfigurationSections(projectId: string): ProviderTabSection[] {
                     route: ROUTE.projects.single.configuration.general.$route(projectId),
                 },
                 {
-                    label: "Build Settings",
+                    label: "Image Build",
                     icon: Hammer,
                     route: ROUTE.projects.single.configuration.buildSettings.$route(projectId),
                 },

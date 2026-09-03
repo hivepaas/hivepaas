@@ -7,21 +7,29 @@ export interface ProjectEnvBadgeProps {
     name: string;
     color?: string;
     className?: string;
+    size?: "xs" | "sm";
 }
 
-export function ProjectEnvBadge({ name, color, className }: ProjectEnvBadgeProps) {
+export function ProjectEnvBadge({ name, color, className, size = "xs" }: ProjectEnvBadgeProps) {
     if (!name) {
-        return <span className={cn("text-sm text-muted-foreground", className)}>No environment</span>;
+        return (
+            <span className={cn(size === "sm" ? "text-sm" : "text-xs", "text-muted-foreground", className)}>
+                No environment
+            </span>
+        );
     }
 
     const isAllEnv = name === "All environments" || color === PROJECT_ALL_ENV_COLOR;
+    const sizeClasses =
+        size === "sm" ? "h-7 max-w-[12rem] px-2.5 text-sm font-medium" : "h-6 max-w-[10rem] px-2 text-xs font-medium";
 
     if (isAllEnv) {
         return (
             <span
                 className={cn(
-                    "inline-flex h-7 w-fit max-w-[12rem] shrink-0 items-center justify-center rounded-md px-2.5 text-sm font-medium",
+                    "inline-flex w-fit shrink-0 items-center justify-center rounded-md",
                     "bg-[rgba(245,158,11,0.08)] text-primary border border-amber-500/25 dark:bg-[rgba(251,191,36,0.1)] dark:border-amber-400/25",
+                    sizeClasses,
                     className,
                 )}
             >
@@ -38,7 +46,8 @@ export function ProjectEnvBadge({ name, color, className }: ProjectEnvBadgeProps
                 backgroundColor,
             }}
             className={cn(
-                "inline-flex h-7 w-fit max-w-[12rem] shrink-0 items-center justify-center rounded-md px-2.5 text-sm font-medium text-white",
+                "inline-flex w-fit shrink-0 items-center justify-center rounded-md text-white",
+                sizeClasses,
                 className,
             )}
         >

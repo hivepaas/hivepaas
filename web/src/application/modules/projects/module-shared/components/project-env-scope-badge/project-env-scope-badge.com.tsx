@@ -10,6 +10,7 @@ export interface ProjectEnvScopeBadgeProps {
     selectedEnv: string;
     /** Project environments used to resolve the badge color. */
     envs: ProjectEnvEntity[];
+    size?: "xs" | "sm";
     className?: string;
 }
 
@@ -17,7 +18,7 @@ export interface ProjectEnvScopeBadgeProps {
  * Single-environment scope badge for places that mirror the header env filter
  * (concrete env color, or the shared grey for "all").
  */
-export function ProjectEnvScopeBadge({ selectedEnv, envs, className }: ProjectEnvScopeBadgeProps) {
+export function ProjectEnvScopeBadge({ selectedEnv, envs, size = "sm", className }: ProjectEnvScopeBadgeProps) {
     const isAll = !selectedEnv || selectedEnv === PROJECT_ENV_FILTER_ALL;
     const matchedEnv = isAll ? undefined : envs.find(env => env.name === selectedEnv);
 
@@ -26,6 +27,7 @@ export function ProjectEnvScopeBadge({ selectedEnv, envs, className }: ProjectEn
             <ProjectEnvBadge
                 name="All environments"
                 color={PROJECT_ALL_ENV_COLOR}
+                size={size}
                 className={className}
             />
         );
@@ -35,6 +37,7 @@ export function ProjectEnvScopeBadge({ selectedEnv, envs, className }: ProjectEn
         <ProjectEnvBadge
             name={`Env: ${selectedEnv}`}
             color={matchedEnv?.color}
+            size={size}
             className={cn("text-white", className)}
         />
     );

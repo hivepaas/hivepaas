@@ -231,12 +231,4 @@ func (s *HTTPServer) registerSettingRoutes(apiGroup *gin.RouterGroup) {
 		sslProviderGroup.PUT("/:itemID/status", settingHandler.UpdateSSLProviderStatus)
 		sslProviderGroup.DELETE("/:itemID", settingHandler.DeleteSSLProvider)
 	}
-
-	{ // storage settings group
-		storageSettingsGroup := settingGroup.Group("/storage-settings")
-		storageSettingsGroup.GET("", settingHandler.GetStorageSettings)
-		storageSettingsGroup.PUT("", settingHandler.UpdateStorageSettings)
-		storageSettingsGroup.PUT("/status", settingHandler.UpdateStorageSettingsStatus)
-		storageSettingsGroup.DELETE("", settingHandler.DeleteStorageSettings)
-	}
 }

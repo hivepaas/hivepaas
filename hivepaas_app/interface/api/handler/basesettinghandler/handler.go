@@ -33,7 +33,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/storagesettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
@@ -77,7 +76,6 @@ type Handler struct {
 	SSLCertUC              *sslcertuc.UC
 	SSLProviderUC          *sslprovideruc.UC
 	SSLRenewalUC           *sslrenewaluc.UC
-	StorageSettingsUC      *storagesettingsuc.UC
 	SystemBackupUC         *systembackupuc.UC
 	SystemCleanupUC        *systemcleanupuc.UC
 }
@@ -118,7 +116,6 @@ func New(
 	sslCertUC *sslcertuc.UC,
 	sslProviderUC *sslprovideruc.UC,
 	sslRenewalUC *sslrenewaluc.UC,
-	storageSettingsUC *storagesettingsuc.UC,
 	systemBackupUC *systembackupuc.UC,
 	systemCleanupUC *systemcleanupuc.UC,
 ) *Handler {
@@ -158,7 +155,6 @@ func New(
 		SSLCertUC:              sslCertUC,
 		SSLProviderUC:          sslProviderUC,
 		SSLRenewalUC:           sslRenewalUC,
-		StorageSettingsUC:      storageSettingsUC,
 		SystemBackupUC:         systemBackupUC,
 		SystemCleanupUC:        systemCleanupUC,
 	}

@@ -283,13 +283,5 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		sslProviderGroup.DELETE("/:itemID", projectSettingsHandler.DeleteSSLProvider)
 	}
 
-	{ // Storage settings group
-		storageSettingsGroup := projectGroup.Group("/:projectID/storage-settings")
-		storageSettingsGroup.GET("", projectSettingsHandler.GetStorageSettings)
-		storageSettingsGroup.PUT("", projectSettingsHandler.UpdateStorageSettings)
-		storageSettingsGroup.PUT("/status", projectSettingsHandler.UpdateStorageSettingsStatus)
-		storageSettingsGroup.DELETE("", projectSettingsHandler.DeleteStorageSettings)
-	}
-
 	s.registerProjectEnvRoutes(projectGroup.Group("/:projectID"))
 }

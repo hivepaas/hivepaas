@@ -60,7 +60,6 @@ const (
 	ResourceTypeSSLCert           ResourceType = "ssl-cert"
 	ResourceTypeSSLProvider       ResourceType = "ssl-provider"
 	ResourceTypeSSLRenewal        ResourceType = "ssl-renewal"
-	ResourceTypeStorageSettings   ResourceType = "storage-settings"
 	ResourceTypeSysError          ResourceType = "sys-error"
 	ResourceTypeSystemBackup      ResourceType = "system-backup"
 	ResourceTypeSystemCleanup     ResourceType = "system-cleanup"

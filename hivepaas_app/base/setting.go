@@ -45,7 +45,6 @@ const (
 	SettingTypeSSLRenewal        SettingType = "ssl-renewal"
 	SettingTypeSchedJob          SettingType = "sched-job"
 	SettingTypeSecret            SettingType = "secret"
-	SettingTypeStorageSettings   SettingType = "storage-settings"
 	SettingTypeSystemBackup      SettingType = "system-backup"
 	SettingTypeSystemCleanup     SettingType = "system-cleanup"
 	SettingTypeTraefikService    SettingType = "traefik-service"

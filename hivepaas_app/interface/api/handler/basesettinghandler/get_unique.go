@@ -13,7 +13,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appplacementsettingsuc/appplacementsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/storagesettingsuc/storagesettingsdto"
 )
 
 type GetUniqueSettingOptions struct {
@@ -86,11 +85,6 @@ func (h *Handler) GetUniqueSetting(
 		r := imagebuildsettingsdto.NewGetImageBuildSettingsReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.GetImageBuildSettings(reqCtx, auth, r) }
-
-	case base.ResourceTypeStorageSettings:
-		r := storagesettingsdto.NewGetStorageSettingsReq()
-		r.Scope = scope
-		req, ucFunc = r, func() (any, error) { return h.StorageSettingsUC.GetStorageSettings(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

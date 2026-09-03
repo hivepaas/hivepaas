@@ -3661,6 +3661,63 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/backup-repos/{itemID}/cleanup" : {
+      "post" : {
+        "description" : "Applies the repository's retention policy, removing the snapshots it expires, then\nreconciles the stored snapshot records against what the repository still holds.",
+        "operationId" : "cleanupProjectBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.CleanupBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Cleans up a backup repository",
+        "tags" : [ "project_settings" ]
+      }
+    },
     "/projects/{projectID}/backup-repos/{itemID}/password" : {
       "put" : {
         "description" : "Re-encrypts the backup repository with a new password. The repository itself is\nre-encrypted first, so the previous password stops working as soon as this succeeds.",
@@ -3797,6 +3854,63 @@
         "summary" : "Updates backup repo status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/backup-repos/{itemID}/sync" : {
+      "post" : {
+        "description" : "Reads the repository and adopts what it finds: the options it is configured with,\nand the snapshots it holds. Use it after the repository was changed outside the\napp. Nothing in the repository is modified.",
+        "operationId" : "syncProjectBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.SyncBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Syncs a backup repository back into its setting",
+        "tags" : [ "project_settings" ]
       }
     },
     "/projects/{projectID}/basic-auth" : {
@@ -11658,222 +11772,6 @@
         },
         "summary" : "Updates project status",
         "tags" : [ "projects" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/projects/{projectID}/storage-settings" : {
-      "delete" : {
-        "description" : "Deletes storage settings setting",
-        "operationId" : "deleteProjectStorageSettings",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_storagesettingsdto.DeleteStorageSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Deletes storage settings setting",
-        "tags" : [ "project_settings" ]
-      },
-      "get" : {
-        "description" : "Gets storage settings details",
-        "operationId" : "getProjectStorageSettings",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_storagesettingsdto.GetStorageSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets storage settings details",
-        "tags" : [ "project_settings" ]
-      },
-      "put" : {
-        "description" : "Updates storage settings",
-        "operationId" : "updateProjectStorageSettings",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/settings_storagesettingsdto.UpdateStorageSettingsReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_storagesettingsdto.UpdateStorageSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Updates storage settings",
-        "tags" : [ "project_settings" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/projects/{projectID}/storage-settings/status" : {
-      "put" : {
-        "description" : "Updates storage settings status",
-        "operationId" : "updateProjectStorageSettingsStatus",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/settings_storagesettingsdto.UpdateStorageSettingsStatusReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_storagesettingsdto.UpdateStorageSettingsStatusResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Updates storage settings status",
-        "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
       }
     },
@@ -20473,6 +20371,71 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/backup-repos/{itemID}/cleanup" : {
+      "post" : {
+        "description" : "Applies the repository's retention policy, removing the snapshots it expires, then\nreconciles the stored snapshot records against what the repository still holds.",
+        "operationId" : "cleanupProjectEnvBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.CleanupBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Cleans up a backup repository",
+        "tags" : [ "project_env_settings" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/backup-repos/{itemID}/password" : {
       "put" : {
         "description" : "Re-encrypts the backup repository with a new password. The repository itself is\nre-encrypted first, so the previous password stops working as soon as this succeeds.",
@@ -20625,6 +20588,71 @@
         "summary" : "Updates backup repo status",
         "tags" : [ "project_env_settings" ],
         "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/backup-repos/{itemID}/sync" : {
+      "post" : {
+        "description" : "Reads the repository and adopts what it finds: the options it is configured with,\nand the snapshots it holds. Use it after the repository was changed outside the\napp. Nothing in the repository is modified.",
+        "operationId" : "syncProjectEnvBackupRepo",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "setting ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/settings_backuprepodto.SyncBackupRepoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Syncs a backup repository back into its setting",
+        "tags" : [ "project_env_settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/basic-auth" : {
@@ -35172,186 +35200,6 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/settings/storage-settings" : {
-      "delete" : {
-        "description" : "Deletes storage settings setting",
-        "operationId" : "deleteSettingStorageSettings",
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_storagesettingsdto.DeleteStorageSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Deletes storage settings setting",
-        "tags" : [ "settings" ]
-      },
-      "get" : {
-        "description" : "Gets storage settings details",
-        "operationId" : "getSettingStorageSettings",
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_storagesettingsdto.GetStorageSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets storage settings details",
-        "tags" : [ "settings" ]
-      },
-      "put" : {
-        "description" : "Updates storage settings",
-        "operationId" : "updateSettingStorageSettings",
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/settings_storagesettingsdto.UpdateStorageSettingsReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_storagesettingsdto.UpdateStorageSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Updates storage settings",
-        "tags" : [ "settings" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/settings/storage-settings/status" : {
-      "put" : {
-        "description" : "Updates storage settings status",
-        "operationId" : "updateSettingStorageSettingsStatus",
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/settings_storagesettingsdto.UpdateStorageSettingsStatusReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_storagesettingsdto.UpdateStorageSettingsStatusResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Updates storage settings status",
-        "tags" : [ "settings" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
     "/support/feedbacks" : {
       "post" : {
         "description" : "Creates a feedback",
@@ -39159,7 +39007,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -53019,294 +52867,6 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "settings_storagesettingsdto.DeleteStorageSettingsResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.GetStorageSettingsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageSettingsResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.StorageBindSettingsReq" : {
-        "properties" : {
-          "baseDirs" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "subpathTemplate" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "baseDirs", "enabled", "subpathTemplate" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.StorageBindSettingsResp" : {
-        "properties" : {
-          "baseDirs" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "subpathRequired" : {
-            "description" : "computed field",
-            "type" : "string"
-          },
-          "subpathTemplate" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "baseDirs", "enabled", "subpathRequired", "subpathTemplate" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.StorageClusterVolumeSettingsReq" : {
-        "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "subpathTemplate" : {
-            "type" : "string"
-          },
-          "volumes" : {
-            "items" : {
-              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
-            },
-            "type" : "array"
-          }
-        },
-        "required" : [ "enabled", "subpathTemplate", "volumes" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.StorageClusterVolumeSettingsResp" : {
-        "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "subpathRequired" : {
-            "description" : "computed field",
-            "type" : "string"
-          },
-          "subpathTemplate" : {
-            "type" : "string"
-          },
-          "volumes" : {
-            "items" : {
-              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
-            },
-            "type" : "array"
-          }
-        },
-        "required" : [ "enabled", "subpathRequired", "subpathTemplate", "volumes" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.StorageSettingsResp" : {
-        "properties" : {
-          "bindSettings" : {
-            "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageBindSettingsResp"
-          },
-          "clusterVolumeSettings" : {
-            "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageClusterVolumeSettingsResp"
-          },
-          "createdAt" : {
-            "type" : "string"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "id" : {
-            "type" : "string"
-          },
-          "inheritable" : {
-            "type" : "boolean"
-          },
-          "inherited" : {
-            "type" : "boolean"
-          },
-          "kind" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "size" : {
-            "type" : "integer"
-          },
-          "status" : {
-            "type" : "string"
-          },
-          "tmpfsSettings" : {
-            "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageTmpfsSettingsResp"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          },
-          "updatedAt" : {
-            "type" : "string"
-          },
-          "volumeSettings" : {
-            "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageVolumeSettingsResp"
-          }
-        },
-        "required" : [ "bindSettings", "clusterVolumeSettings", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "size", "status", "tmpfsSettings", "type", "updateVer", "updatedAt", "volumeSettings" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.StorageTmpfsSettingsReq" : {
-        "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "maxSize" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "enabled", "maxSize" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.StorageTmpfsSettingsResp" : {
-        "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "maxSize" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "enabled", "maxSize" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.StorageVolumeSettingsReq" : {
-        "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "subpathTemplate" : {
-            "type" : "string"
-          },
-          "volumes" : {
-            "items" : {
-              "$ref" : "#/components/schemas/basedto.ObjectIDReq"
-            },
-            "type" : "array"
-          }
-        },
-        "required" : [ "enabled", "subpathTemplate", "volumes" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.StorageVolumeSettingsResp" : {
-        "properties" : {
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "subpathRequired" : {
-            "description" : "computed field",
-            "type" : "string"
-          },
-          "subpathTemplate" : {
-            "type" : "string"
-          },
-          "volumes" : {
-            "items" : {
-              "$ref" : "#/components/schemas/basedto.NamedObjectResp"
-            },
-            "type" : "array"
-          }
-        },
-        "required" : [ "enabled", "subpathRequired", "subpathTemplate", "volumes" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.UpdateStorageSettingsReq" : {
-        "properties" : {
-          "bindSettings" : {
-            "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageBindSettingsReq"
-          },
-          "clusterVolumeSettings" : {
-            "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageClusterVolumeSettingsReq"
-          },
-          "default" : {
-            "type" : "boolean"
-          },
-          "inheritable" : {
-            "type" : "boolean"
-          },
-          "tmpfsSettings" : {
-            "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageTmpfsSettingsReq"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          },
-          "volumeSettings" : {
-            "$ref" : "#/components/schemas/settings_storagesettingsdto.StorageVolumeSettingsReq"
-          }
-        },
-        "required" : [ "bindSettings", "clusterVolumeSettings", "default", "inheritable", "tmpfsSettings", "updateVer", "volumeSettings" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.UpdateStorageSettingsResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.UpdateStorageSettingsStatusReq" : {
-        "properties" : {
-          "default" : {
-            "type" : "boolean"
-          },
-          "expireAt" : {
-            "type" : "string"
-          },
-          "inheritable" : {
-            "type" : "boolean"
-          },
-          "status" : {
-            "type" : "string"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          }
-        },
-        "required" : [ "default", "expireAt", "inheritable", "status", "updateVer" ],
-        "type" : "object"
-      },
-      "settings_storagesettingsdto.UpdateStorageSettingsStatusResp" : {
-        "properties" : {
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "meta" ],
-        "type" : "object"
-      },
       "supportdto.CreateFeedbackReq" : {
         "properties" : {
           "company" : {
@@ -56277,9 +55837,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute" ]
       },
       "uploadFiles_request" : {
         "properties" : {

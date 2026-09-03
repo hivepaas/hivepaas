@@ -145,7 +145,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/storagesettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/supportuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
@@ -291,7 +290,6 @@ var Provides = []any{
 	sslcertuc.New,
 	sslprovideruc.New,
 	sslrenewaluc.New,
-	storagesettingsuc.New,
 	supportuc.New,
 	syserroruc.New,
 	sysstatusuc.New,

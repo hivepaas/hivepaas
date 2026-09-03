@@ -16,6 +16,7 @@ func (uc *UC) UpdateImageBuildSettings(
 	req *imagebuildsettingsdto.UpdateImageBuildSettingsReq,
 ) (*imagebuildsettingsdto.UpdateImageBuildSettingsResp, error) {
 	req.Type = currentSettingType
+	newSettings := req.ToEntity()
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
 		Name: string(currentSettingType),
 		PrepareUpdate: func(
@@ -24,7 +25,11 @@ func (uc *UC) UpdateImageBuildSettings(
 			data *settings.UpdateUniqueSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
-			err := pData.Setting.SetData(req.ToEntity())
+			currSettings := pData.Setting.MustAsImageBuildSettings()
+			if !newSettings.Sources.RepoCache && currSettings.Sources.RepoCache {
+				_, _ = uc.forceClearRepoCache(ctx, db, req.Scope)
+			}
+			err := pData.Setting.SetData(newSettings)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

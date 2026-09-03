@@ -19,13 +19,35 @@ func (uc *UC) ClearRepoCache(
 	auth *basedto.Auth,
 	req *imagebuildsettingsdto.ClearRepoCacheReq,
 ) (*imagebuildsettingsdto.ClearRepoCacheResp, error) {
+	var clearResp *imagebuildsettingsdto.ClearRepoCacheDataResp
+	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) (err error) {
+		clearResp, err = uc.forceClearRepoCache(ctx, db, req.Scope)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	return &imagebuildsettingsdto.ClearRepoCacheResp{
+		Data: clearResp,
+	}, nil
+}
+
+func (uc *UC) forceClearRepoCache(
+	ctx context.Context,
+	db database.Tx,
+	scope *entity.ObjectScope,
+) (*imagebuildsettingsdto.ClearRepoCacheDataResp, error) {
 	cleanupReq := &syscleanupservice.SysCleanupReq{
 		TaskExecData: &queue.TaskExecData{
 			Task: &entity.Task{
 				ID: "fake-task-id",
 			},
 		},
-		Scope: req.Scope,
+		Scope: scope,
 		SysCleanupSettings: &entity.SystemCleanup{
 			CacheCleanup: entity.SystemCacheCleanup{
 				Enabled: true,
@@ -34,25 +56,15 @@ func (uc *UC) ClearRepoCache(
 		CleanupCacheRepo: base.CleanupFlagForce,
 	}
 
-	filesDeleted := 0
-	spaceReclaimed := uint64(0)
-	err := transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
-		resp, err := uc.sysCleanupService.Cleanup(ctx, db, cleanupReq)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		filesDeleted = resp.TaskOutput.CacheCleanup.RepoCacheFilesDeleted
-		spaceReclaimed = resp.TaskOutput.CacheCleanup.RepoCacheSpaceReclaimed
-		return nil
-	})
+	resp, err := uc.sysCleanupService.Cleanup(ctx, db, cleanupReq)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	filesDeleted := resp.TaskOutput.CacheCleanup.RepoCacheFilesDeleted
+	spaceReclaimed := resp.TaskOutput.CacheCleanup.RepoCacheSpaceReclaimed
 
-	return &imagebuildsettingsdto.ClearRepoCacheResp{
-		Data: &imagebuildsettingsdto.ClearRepoCacheDataResp{
-			FilesDeleted:   filesDeleted,
-			SpaceReclaimed: spaceReclaimed,
-		},
+	return &imagebuildsettingsdto.ClearRepoCacheDataResp{
+		FilesDeleted:   filesDeleted,
+		SpaceReclaimed: spaceReclaimed,
 	}, nil
 }

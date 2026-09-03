@@ -99,8 +99,14 @@ export function QuickInstallSslCertForm({
     const defaultEmail = "";
     const defaultKeyType = ESslKeyType.ECP256;
     const defaultAutoRenew = true;
+    const defaultCertType = ESslCertType.LetsEncrypt;
+    const prefillCertType =
+        prefill?.certType && Object.values(ESslCertType).includes(prefill.certType)
+            ? prefill.certType
+            : defaultCertType;
     const prefillEmail = prefill?.email ?? defaultEmail;
-    const prefillKeyType = prefill?.keyType ?? defaultKeyType;
+    const prefillKeyType =
+        prefill?.keyType && Object.values(ESslKeyType).includes(prefill.keyType) ? prefill.keyType : defaultKeyType;
     const prefillAutoRenew = prefill?.autoRenew ?? defaultAutoRenew;
 
     const {
@@ -114,7 +120,7 @@ export function QuickInstallSslCertForm({
             name: domain,
             domain,
             wildcardDomain: false,
-            certType: ESslCertType.LetsEncrypt,
+            certType: prefillCertType,
             provider: undefined,
             acmeProvider: undefined,
             email: prefillEmail,
@@ -135,7 +141,7 @@ export function QuickInstallSslCertForm({
             name: domain,
             domain,
             wildcardDomain: false,
-            certType: ESslCertType.LetsEncrypt,
+            certType: prefillCertType,
             provider: undefined,
             acmeProvider: undefined,
             email: prefillEmail,
@@ -147,7 +153,7 @@ export function QuickInstallSslCertForm({
             expireAt: null,
             notifyFrom: null,
         });
-    }, [domain, prefillAutoRenew, prefillEmail, prefillKeyType, reset]);
+    }, [domain, prefillAutoRenew, prefillCertType, prefillEmail, prefillKeyType, reset]);
 
     useEffect(() => {
         onHasChanges?.(readOnly ? false : isDirty);
@@ -680,6 +686,7 @@ export function QuickInstallSslCertForm({
 }
 
 interface PrefillValues {
+    certType?: ESslCertType;
     email?: string;
     keyType?: ESslKeyType;
     autoRenew?: boolean;

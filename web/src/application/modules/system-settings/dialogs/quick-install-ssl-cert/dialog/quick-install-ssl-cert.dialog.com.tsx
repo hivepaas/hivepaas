@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { SslCertCommands } from "~/settings/data/commands";
 import { DomainSettingsQueries } from "~/settings/data/queries";
 
+import { AppLoader } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
 import { ESslCertType } from "@application/shared/enums";
 import { useConditionalModule } from "@application/shared/permissions";
@@ -44,6 +45,7 @@ export function QuickInstallSslCertDialog() {
     const certSettings = domainSettingsQuery.data?.data.certSettings;
     const prefill = certSettings
         ? {
+              certType: certSettings.certType,
               email: certSettings.email,
               keyType: certSettings.keyType,
               autoRenew: certSettings.autoRenew,
@@ -143,14 +145,20 @@ export function QuickInstallSslCertDialog() {
                 <DialogHeader>
                     <DialogTitle>Quick install an SSL certificate</DialogTitle>
                 </DialogHeader>
-                <QuickInstallSslCertForm
-                    domain={domain}
-                    isPending={isPending}
-                    prefill={prefill}
-                    readOnly={!canWrite}
-                    onSubmit={onSubmit}
-                    onHasChanges={setHasChanges}
-                />
+                {domainSettingsQuery.isLoading || (domainSettingsQuery.isFetching && !domainSettingsQuery.data) ? (
+                    <div className="flex h-60 items-center justify-center">
+                        <AppLoader />
+                    </div>
+                ) : (
+                    <QuickInstallSslCertForm
+                        domain={domain}
+                        isPending={isPending}
+                        prefill={prefill}
+                        readOnly={!canWrite}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                    />
+                )}
             </DialogFixedContent>
         </Dialog>
     );

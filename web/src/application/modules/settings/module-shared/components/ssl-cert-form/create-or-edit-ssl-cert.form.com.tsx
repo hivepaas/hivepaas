@@ -229,6 +229,7 @@ export function CreateOrEditSslCertForm({
 
     const certType = useWatch({ control, name: "certType" });
     const domainValue = useWatch({ control, name: "domain" });
+    const keyTypeValue = useWatch({ control, name: "keyType" });
     const providerValue = useWatch({ control, name: "provider" });
     const acmeProviderValue = useWatch({ control, name: "acmeProvider" });
     const expireAt = useWatch({ control, name: "expireAt" });
@@ -305,10 +306,12 @@ export function CreateOrEditSslCertForm({
     );
 
     useEffect(() => {
-        if (isAcme) {
-            setValue("keyType", ESslKeyType.ECP256);
+        if (!isAcme || LETS_ENCRYPT_KEY_TYPES.includes(keyTypeValue)) {
+            return;
         }
-    }, [isAcme, setValue]);
+
+        setValue("keyType", ESslKeyType.ECP256);
+    }, [isAcme, keyTypeValue, setValue]);
 
     useEffect(() => {
         if (providerKind !== undefined || !providerValue) {

@@ -40,7 +40,22 @@ function normalizeCertType(certType?: string): ESslCertType {
         case "googlets":
             return ESslCertType.GoogleTrust;
         default:
-            return ESslCertType.Custom;
+            return ESslCertType.LetsEncrypt;
+    }
+}
+
+function normalizeKeyType(keyType?: string): ESslKeyType {
+    switch (keyType) {
+        case ESslKeyType.ECP256:
+        case ESslKeyType.ECP384:
+        case ESslKeyType.ECP521:
+        case ESslKeyType.RSA2048:
+        case ESslKeyType.RSA3072:
+        case ESslKeyType.RSA4096:
+        case ESslKeyType.RSA8192:
+            return keyType;
+        default:
+            return ESslKeyType.ECP256;
     }
 }
 
@@ -219,21 +234,31 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
         navigateToList();
     }
 
+    const isDomainSettingsLoading =
+        mode === "create" &&
+        (scope.type === "project"
+            ? projectDomainSettingsQuery.isLoading ||
+              (projectDomainSettingsQuery.isFetching && !projectDomainSettingsQuery.data)
+            : settingsDomainSettingsQuery.isLoading ||
+              (settingsDomainSettingsQuery.isFetching && !settingsDomainSettingsQuery.data));
     const domainSettings =
         scope.type === "project"
             ? projectDomainSettingsQuery.data?.data.certSettings
             : settingsDomainSettingsQuery.data?.data.certSettings;
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
+    const isLoading = isDetailLoading || isDomainSettingsLoading;
     const initialValues: Partial<CreateOrEditSslCertFormInput> | undefined =
         isEditMode && sslCert
             ? {
                   domain: sslCert.domain,
                   certType: normalizeCertType(sslCert.certType),
-                  provider: sslCert.provider ?? undefined,
-                  acmeProvider: sslCert.acmeProvider ?? undefined,
+                  provider: sslCert.provider ? { id: sslCert.provider.id, name: sslCert.provider.name } : undefined,
+                  acmeProvider: sslCert.acmeProvider
+                      ? { id: sslCert.acmeProvider.id, name: sslCert.acmeProvider.name }
+                      : undefined,
                   email: sslCert.email,
-                  keyType: sslCert.keyType,
+                  keyType: normalizeKeyType(sslCert.keyType),
                   autoRenew: sslCert.autoRenew,
                   certificate: sslCert.certificate,
                   privateKey: sslCert.privateKey,
@@ -250,9 +275,11 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
                   },
               }
             : {
-                  certType: ESslCertType.LetsEncrypt,
+                  certType: domainSettings?.certType
+                      ? normalizeCertType(domainSettings.certType)
+                      : ESslCertType.LetsEncrypt,
                   email: domainSettings?.email ?? "",
-                  keyType: domainSettings?.keyType ?? ESslKeyType.ECP256,
+                  keyType: normalizeKeyType(domainSettings?.keyType),
                   autoRenew: domainSettings?.autoRenew ?? true,
                   inheritable: false,
                   default: false,
@@ -268,13 +295,13 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
         <div className="flex w-full flex-col">
             <SettingsFormRouteHeader title={title} />
 
-            {isDetailLoading && (
+            {isLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
                     <AppLoader />
                 </div>
             )}
 
-            {!isDetailLoading && shouldRenderForm && (
+            {!isLoading && shouldRenderForm && (
                 <CreateOrEditSslCertForm
                     isPending={isPending}
                     onSubmit={onSubmit}

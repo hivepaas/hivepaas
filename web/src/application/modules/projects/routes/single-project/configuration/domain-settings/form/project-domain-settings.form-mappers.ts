@@ -8,8 +8,7 @@ export function mapProjectDomainSettingsToFormInput(data: ProjectDomainSettings)
     return {
         allowedDomains: data.allowedDomains.map(value => ({ value })),
         certSettings: {
-            certType:
-                data.certSettings?.certType === ESslCertType.Custom ? ESslCertType.Custom : ESslCertType.LetsEncrypt,
+            certType: data.certSettings?.certType ?? ESslCertType.LetsEncrypt,
             email: data.certSettings?.email ?? "",
             keyType: data.certSettings
                 ? (data.certSettings.keyType ?? ProjectDomainSettingsKeyTypeUnspecified)

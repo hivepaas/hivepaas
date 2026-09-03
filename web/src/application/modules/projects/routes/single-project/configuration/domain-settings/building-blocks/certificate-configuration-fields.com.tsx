@@ -15,12 +15,17 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-    Tabs,
-    TabsList,
-    TabsTrigger,
 } from "@/components/ui";
 
 import { type ProjectDomainSettingsFormSchemaInput, ProjectDomainSettingsKeyTypeUnspecified } from "../schemas";
+
+const SSL_CERT_TYPES: { value: ESslCertType; label: string }[] = [
+    { value: ESslCertType.LetsEncrypt, label: "Let's Encrypt" },
+    { value: ESslCertType.GoogleTrust, label: "Google Trust" },
+    { value: ESslCertType.ZeroSSL, label: "Zero SSL" },
+    { value: ESslCertType.SelfSigned, label: "Self-Signed" },
+    { value: ESslCertType.Custom, label: "Custom" },
+];
 
 const SSL_KEY_TYPES: ESslKeyType[] = [
     ESslKeyType.ECP256,
@@ -55,7 +60,10 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
         control,
         formState: { errors },
     } = useFormContext<ProjectDomainSettingsFormSchemaInput>();
-    const { field: certType } = useController({ name: "certSettings.certType", control });
+    const {
+        field: certType,
+        fieldState: { invalid: isCertTypeInvalid },
+    } = useController({ name: "certSettings.certType", control });
     const {
         field: email,
         fieldState: { invalid: isEmailInvalid },
@@ -91,27 +99,33 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
                     />
                 }
             >
-                <Tabs
-                    value={certType.value}
-                    onValueChange={value => {
-                        certType.onChange(value);
-                    }}
-                >
-                    <TabsList>
-                        <TabsTrigger
-                            value={ESslCertType.LetsEncrypt}
-                            disabled={readOnly}
+                <Field>
+                    <Select
+                        value={certType.value}
+                        onValueChange={value => {
+                            certType.onChange(value as ESslCertType);
+                        }}
+                        disabled={readOnly}
+                    >
+                        <SelectTrigger
+                            aria-invalid={isCertTypeInvalid}
+                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                         >
-                            Let&apos;s Encrypt
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value={ESslCertType.Custom}
-                            disabled={readOnly}
-                        >
-                            Custom
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                            <SelectValue placeholder="Select cert type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {SSL_CERT_TYPES.map(option => (
+                                <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                >
+                                    {option.label}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FieldError errors={[errors.certSettings?.certType]} />
+                </Field>
             </InfoBlock>
 
             <InfoBlock

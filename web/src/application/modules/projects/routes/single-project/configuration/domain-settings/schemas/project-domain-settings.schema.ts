@@ -30,7 +30,7 @@ const AllowedDomainsSchema = z
         });
     });
 
-const CertTypeSchema = z.enum([ESslCertType.LetsEncrypt, ESslCertType.Custom]);
+const CertTypeSchema = z.nativeEnum(ESslCertType);
 export const ProjectDomainSettingsKeyTypeUnspecified = "__unspecified" as const;
 
 const KeyTypeSchema = z.union([z.nativeEnum(ESslKeyType), z.literal(ProjectDomainSettingsKeyTypeUnspecified)]);

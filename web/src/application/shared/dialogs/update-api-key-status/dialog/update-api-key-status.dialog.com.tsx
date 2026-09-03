@@ -77,7 +77,7 @@ export function UpdateApiKeyStatusDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="sm:max-w-[500px]">
+            <DialogFixedContent className="sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>Change Status</DialogTitle>
                     <DialogDescription />

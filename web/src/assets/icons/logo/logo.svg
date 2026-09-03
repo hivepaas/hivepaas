@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" width="36" height="36">
+  <defs>
+    <linearGradient id="amberGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded Hexagon Base -->
+  <path
+    d="M 19.73,2.5 L 30.57,8.75 Q 32.3,9.75 32.3,11.75 L 32.3,24.25 Q 32.3,26.25 30.57,27.25 L 19.73,33.5 Q 18,34.5 16.27,33.5 L 5.43,27.25 Q 3.7,26.25 3.7,24.25 L 3.7,11.75 Q 3.7,9.75 5.43,8.75 L 16.27,2.5 Q 18,1.5 19.73,2.5 Z"
+    fill="#090d16"
+    stroke="url(#amberGlow)"
+    stroke-width="2.2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <!-- Docker Container Stack & Ship Deck & Hull (Centered & White) -->
+  <g transform="translate(18, 18) scale(0.72) translate(-18, -20.5)">
+    <!-- Column 1 (Height 1) -->
+    <rect x="7.25" y="21" width="3.5" height="3.5" rx="0.8" ry="0.8" fill="#ffffff" />
+
+    <!-- Column 2 (Height 2) -->
+    <rect x="11.75" y="16.5" width="3.5" height="3.5" rx="0.8" ry="0.8" fill="#ffffff" />
+    <rect x="11.75" y="21" width="3.5" height="3.5" rx="0.8" ry="0.8" fill="#ffffff" />
+
+    <!-- Column 3 (Height 2) -->
+    <rect x="16.25" y="16.5" width="3.5" height="3.5" rx="0.8" ry="0.8" fill="#ffffff" />
+    <rect x="16.25" y="21" width="3.5" height="3.5" rx="0.8" ry="0.8" fill="#ffffff" />
+
+    <!-- Column 4 (Height 3) -->
+    <rect x="20.75" y="12" width="3.5" height="3.5" rx="0.8" ry="0.8" fill="#ffffff" />
+    <rect x="20.75" y="16.5" width="3.5" height="3.5" rx="0.8" ry="0.8" fill="#ffffff" />
+    <rect x="20.75" y="21" width="3.5" height="3.5" rx="0.8" ry="0.8" fill="#ffffff" />
+
+    <!-- Column 5 (Height 1) -->
+    <rect x="25.25" y="21" width="3.5" height="3.5" rx="0.8" ry="0.8" fill="#ffffff" />
+
+    <!-- Parallelogram Ship Deck -->
+    <polygon
+      points="5.5,25.5 30.5,25.5 28.75,29 3.75,29"
+      fill="#ffffff"
+      stroke="#ffffff"
+      stroke-width="0.6"
+      stroke-linejoin="round"
+    />
+
+    <!-- Triangle Ship Hull -->
+    <polygon
+      points="3.75,29 28.75,29 27.875,30.75"
+      fill="#ffffff"
+      stroke="#ffffff"
+      stroke-width="0.6"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>

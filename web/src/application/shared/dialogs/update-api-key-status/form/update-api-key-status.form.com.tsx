@@ -105,7 +105,7 @@ export function UpdateApiKeyStatusForm({ isPending, onSubmit, initialValues, onH
                         <FieldError errors={[errors.status]} /> */}
                         <InfoBlock
                             title="Status"
-                            titleWidth={220}
+                            titleWidth={160}
                         >
                             <Tabs
                                 value={status.value}
@@ -131,7 +131,7 @@ export function UpdateApiKeyStatusForm({ isPending, onSubmit, initialValues, onH
                     <Field>
                         <InfoBlock
                             title="Access Expiration"
-                            titleWidth={220}
+                            titleWidth={160}
                         >
                             <DateTimePicker
                                 value={expireAt.value}

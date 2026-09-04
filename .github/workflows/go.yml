@@ -49,19 +49,11 @@ jobs:
     name: Govulncheck
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup Go
-        uses: actions/setup-go@v7
-        with:
-          go-version: '1.27.x'
-
       - name: Run govulncheck
         uses: golang/govulncheck-action@v1
         with:
           go-version-input: '1.27.x'
-          package-path: './...'
+          go-package: './...'
 
   trivy:
     name: Trivy Security Scan

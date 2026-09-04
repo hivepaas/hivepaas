@@ -77,10 +77,10 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                     }}
                     className="min-h-0 flex flex-1 flex-col"
                 >
-                    <DialogBody className="flex flex-col gap-6">
+                    <DialogBody className="flex flex-col gap-6 overflow-x-hidden">
                         <fieldset
                             disabled={readOnly}
-                            className="m-0 flex min-w-0 flex-col gap-6 border-0 p-0"
+                            className="m-0 flex min-w-0 max-w-full flex-col gap-6 border-0 p-0"
                         >
                             {/* Email */}
                             <InfoBlock

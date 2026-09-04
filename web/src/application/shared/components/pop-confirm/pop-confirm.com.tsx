@@ -19,6 +19,7 @@ export function PopConfirm({
     side,
     align,
     onOpenChange,
+    className,
 }: Props) {
     const [open, setOpen] = useState(false);
 
@@ -43,7 +44,7 @@ export function PopConfirm({
         >
             <PopoverTrigger asChild>{children}</PopoverTrigger>
             <PopoverContent
-                className="w-80"
+                className={cn("w-[350px]", className)}
                 side={side}
                 align={align}
             >
@@ -92,4 +93,5 @@ interface Props extends React.PropsWithChildren {
     side?: "top" | "bottom" | "left" | "right";
     align?: "start" | "center" | "end";
     onOpenChange?: (open: boolean) => void;
+    className?: string;
 }

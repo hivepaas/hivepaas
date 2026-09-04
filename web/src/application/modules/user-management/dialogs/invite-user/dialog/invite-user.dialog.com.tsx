@@ -79,7 +79,7 @@ export function InviteUserDialog() {
             modal
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="sm:max-w-[1000px]">
+            <DialogFixedContent className="sm:max-w-[850px]">
                 <DialogHeader>
                     <DialogTitle>Invite a user</DialogTitle>
                     <DialogDescription>Enter the required details to invite a user</DialogDescription>

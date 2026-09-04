@@ -1,13 +1,10 @@
 import { useState } from "react";
 
-import { LogoIcon } from "@/assets/icons";
 import {
     Avatar,
     Button,
     Card,
     CardContent,
-    CardDescription,
-    CardHeader,
     Checkbox,
     Field,
     FieldError,
@@ -175,10 +172,6 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
         <>
             <div className="flex flex-col gap-6">
                 <Card>
-                    <CardHeader className="flex flex-col items-center text-center">
-                        <LogoIcon className="x-logo h-12 w-12 text-foreground" />
-                        <CardDescription>Sign up for HivePaaS</CardDescription>
-                    </CardHeader>
                     <CardContent>
                         <form
                             onSubmit={event => {

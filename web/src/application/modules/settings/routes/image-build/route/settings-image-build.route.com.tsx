@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 
 import { Button } from "@components/ui";
-import { dashedBorderBox, listBox } from "@lib/styles";
+import { dashedBorderBox, formBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -125,7 +125,7 @@ export function SettingsImageBuildRoute() {
     invariant(settingsQuery.data, "image build settings data must be defined");
 
     return (
-        <div className={cn(listBox)}>
+        <div className={cn(formBox)}>
             <SettingsImageBuildForm
                 ref={formRef}
                 defaultValues={settingsQuery.data.data}

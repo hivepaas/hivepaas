@@ -88,7 +88,7 @@ function UserInfo({ user }: UserInfoProps) {
 
 function AccessCheckbox({ checked, disabled, id, label, onCheckedChange }: AccessCheckboxProps) {
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 shrink-0">
             <Checkbox
                 id={id}
                 checked={checked}
@@ -97,7 +97,7 @@ function AccessCheckbox({ checked, disabled, id, label, onCheckedChange }: Acces
             />
             <label
                 htmlFor={id}
-                className="text-sm"
+                className="text-sm select-none cursor-pointer"
             >
                 {label}
             </label>
@@ -216,17 +216,22 @@ function EnvUserAccessRow({
     onChangeAccess,
     onRemove,
 }: EnvUserAccessRowProps) {
+    const allSelected = user.access.read && user.access.execute && user.access.write && user.access.delete;
+
     return (
-        <div className="flex flex-wrap items-center gap-4 py-3">
-            <div className="min-w-[220px] flex-1">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+            <div className="min-w-[180px] flex-1">
                 <UserInfo user={user} />
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-2.5 sm:gap-x-3.5 gap-y-1.5">
                 <AccessCheckbox
                     id={`${envName}-${user.id}-read`}
                     checked={user.access.read}
-                    disabled
+                    disabled={!canUpdateProjectAccess}
                     label="Read"
+                    onCheckedChange={checked => {
+                        onChangeAccess(user.id, "read", checked === true);
+                    }}
                 />
                 <AccessCheckbox
                     id={`${envName}-${user.id}-execute`}
@@ -255,7 +260,7 @@ function EnvUserAccessRow({
                         onChangeAccess(user.id, "delete", checked === true);
                     }}
                 />
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                     <PermissionTooltipAction
                         id={MODULE_IDS.Project}
                         action="write"
@@ -267,8 +272,8 @@ function EnvUserAccessRow({
                                 variant="ghost"
                                 size="icon"
                                 className="size-7 text-zinc-400 hover:text-primary hover:bg-primary/10 rounded-md"
-                                aria-label="Toggle execute, write and delete access"
-                                title="Toggle execute, write and delete access"
+                                aria-label={allSelected ? "Deselect all permissions" : "Select all permissions"}
+                                title={allSelected ? "Deselect all permissions" : "Select all permissions"}
                                 disabled={isDenied || !canUpdateProjectAccess}
                                 onClick={() => {
                                     onToggleAll(user.id);
@@ -533,12 +538,14 @@ export function ProjectUserAccessesDialog() {
                                 return user;
                             }
 
-                            const shouldCheck = !(user.access.execute && user.access.write && user.access.delete);
+                            const allChecked =
+                                user.access.read && user.access.execute && user.access.write && user.access.delete;
+                            const shouldCheck = !allChecked;
 
                             return {
                                 ...user,
                                 access: {
-                                    ...user.access,
+                                    read: shouldCheck,
                                     execute: shouldCheck,
                                     write: shouldCheck,
                                     delete: shouldCheck,
@@ -555,7 +562,7 @@ export function ProjectUserAccessesDialog() {
     function handleChangeAccess(
         envName: string,
         userId: string,
-        key: "execute" | "write" | "delete",
+        key: "read" | "execute" | "write" | "delete",
         checked: boolean,
     ) {
         if (!canUpdateProjectAccess) {
@@ -890,7 +897,12 @@ interface EnvAccessSectionProps {
     onSearchUser: (envName: string, query: string) => void;
     onAdd: (envName: string) => void;
     onToggleAll: (envName: string, userId: string) => void;
-    onChangeAccess: (envName: string, userId: string, key: "execute" | "write" | "delete", checked: boolean) => void;
+    onChangeAccess: (
+        envName: string,
+        userId: string,
+        key: "read" | "execute" | "write" | "delete",
+        checked: boolean,
+    ) => void;
     onRemoveUser: (envName: string, userId: string) => void;
 }
 
@@ -899,6 +911,6 @@ interface EnvUserAccessRowProps {
     user: ProjectUserAccessBase;
     canUpdateProjectAccess: boolean;
     onToggleAll: (userId: string) => void;
-    onChangeAccess: (userId: string, key: "execute" | "write" | "delete", checked: boolean) => void;
+    onChangeAccess: (userId: string, key: "read" | "execute" | "write" | "delete", checked: boolean) => void;
     onRemove: (userId: string) => void;
 }

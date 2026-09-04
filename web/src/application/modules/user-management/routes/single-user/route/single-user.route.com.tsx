@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { Button } from "@components/ui";
-import { listBox } from "@lib/styles";
+import { formBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -78,7 +78,7 @@ export function SingleUserRoute() {
 
     const { data: user } = data;
     return (
-        <div className={cn(listBox)}>
+        <div className={cn(formBox)}>
             <SingleUserForm
                 ref={formRef}
                 defaultValues={user}

@@ -1,4 +1,4 @@
-import { listBox } from "@lib/styles";
+import { formBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { useParams } from "react-router";
 import invariant from "tiny-invariant";
@@ -10,7 +10,7 @@ export function VolumeEditRoute() {
     invariant(volumeId, "volumeId must be defined");
 
     return (
-        <div className={cn(listBox)}>
+        <div className={cn(formBox)}>
             <EditVolumeFormRoute
                 scope={{ type: "cluster" }}
                 volumeId={volumeId}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { dashedBorderBox, listBox } from "@lib/styles";
+import { dashedBorderBox, formBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
@@ -96,7 +96,7 @@ export function ProfileApiKeyCreateRoute() {
     const showForm = !createdKey;
 
     return (
-        <div className={cn(listBox, "min-h-64")}>
+        <div className={cn(formBox, "min-h-64")}>
             <RouteFormHeader title="Create a new API key" />
 
             <div className="flex flex-col gap-6">

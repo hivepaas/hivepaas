@@ -1,7 +1,7 @@
 import { useRef } from "react";
 
 import { Button } from "@components/ui";
-import { dashedBorderBox, listBox } from "@lib/styles";
+import { dashedBorderBox, formBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -81,7 +81,7 @@ export function SettingsAppPlacementRoute() {
     invariant(settingsQuery.data, "app placement settings data must be defined");
 
     return (
-        <div className={cn(listBox)}>
+        <div className={cn(formBox)}>
             <SettingsAppPlacementForm
                 ref={formRef}
                 defaultValues={settingsQuery.data.data}

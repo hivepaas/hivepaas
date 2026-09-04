@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 
 import { Button } from "@components/ui";
-import { listBox } from "@lib/styles";
+import { formBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
@@ -68,7 +68,7 @@ export function ProfileRoute() {
     }, [profile]);
 
     return (
-        <div className={cn(listBox)}>
+        <div className={cn(formBox)}>
             <ProfileForm
                 ref={formRef}
                 defaultValues={profile}

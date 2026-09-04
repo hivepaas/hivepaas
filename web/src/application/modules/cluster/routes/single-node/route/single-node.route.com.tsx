@@ -1,7 +1,7 @@
 import { useRef } from "react";
 
 import { Button } from "@components/ui";
-import { listBox } from "@lib/styles";
+import { formBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { useParams } from "react-router";
 import { toast } from "sonner";
@@ -75,7 +75,7 @@ export function SingleNodeRoute() {
     const { data: node } = data;
 
     return (
-        <div className={cn(listBox, "flex w-full flex-col")}>
+        <div className={cn(formBox, "flex w-full flex-col")}>
             <RouteFormHeader title="Update node" />
             <SingleNodeForm
                 ref={formRef}

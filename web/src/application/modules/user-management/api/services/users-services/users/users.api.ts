@@ -20,20 +20,25 @@ import type { UserBase } from "~/user-management/domain";
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
 
 /**
- * Flattens the per-project form value into the flat per-env list the API takes.
- * The env id already encodes its project, so the grouping is presentation only.
+ * Maps the form value to the request shape, which mirrors the GET response:
+ * grants grouped by project, each carrying its per-env accesses.
+ *
+ * The form lists every env of a project so the whole matrix stays visible, but
+ * only granted envs belong in the payload - and a project left with none is
+ * dropped, since the API replaces the user's grants wholesale.
  */
-function toEnvAccessesPayload(projectAccesses: UserBase["projectAccesses"] | undefined) {
-    return (projectAccesses ?? []).flatMap(projectAccess =>
-        projectAccess.envAccesses
-            // The form lists every env of a project so the whole matrix is visible;
-            // only the ones actually granted belong in the payload.
-            .filter(({ access }) => access.read || access.execute || access.write || access.delete)
-            .map(envAccess => ({
-                id: envAccess.id,
-                access: envAccess.access,
-            })),
-    );
+function toProjectAccessesPayload(projectAccesses: UserBase["projectAccesses"] | undefined) {
+    return (projectAccesses ?? [])
+        .map(projectAccess => ({
+            project: { id: projectAccess.id },
+            envAccesses: projectAccess.envAccesses
+                .filter(({ access }) => access.read || access.execute || access.write || access.delete)
+                .map(envAccess => ({
+                    id: envAccess.id,
+                    access: envAccess.access,
+                })),
+        }))
+        .filter(projectAccess => projectAccess.envAccesses.length > 0);
 }
 
 export class UsersApi extends BaseApi {
@@ -133,10 +138,8 @@ export class UsersApi extends BaseApi {
                 data: user.accessExpireAt,
                 some: date => date.toISOString().replace(/\.\d{3}Z$/, "Z"),
             }),
-            // Permissions are granted per project env: flatten the grouped form
-            // value into the flat list the API expects.
-            envAccesses: JsonTransformer.array({
-                data: user.projectAccesses && toEnvAccessesPayload(user.projectAccesses),
+            projectAccesses: JsonTransformer.array({
+                data: user.projectAccesses && toProjectAccessesPayload(user.projectAccesses),
             }),
             moduleAccesses: JsonTransformer.array({
                 data: user.moduleAccesses,
@@ -176,8 +179,7 @@ export class UsersApi extends BaseApi {
                     "/users/invite",
                     {
                         ...user,
-                        projectAccesses: undefined,
-                        envAccesses: toEnvAccessesPayload(user.projectAccesses),
+                        projectAccesses: toProjectAccessesPayload(user.projectAccesses),
                         sendInviteEmail,
                     },
                     { signal },

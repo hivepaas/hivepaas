@@ -265,6 +265,7 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
                     onSubmit={onSubmit}
                     onTestConnection={onTestConnection}
                     onReprovision={isEditMode && !readOnlyInherited && canWrite ? onReprovision : undefined}
+                    settingsURL={githubApp?.settingsURL}
                     onHasChanges={setHasChanges}
                     savedVersion={saveRevision}
                     initialValues={initialValues}

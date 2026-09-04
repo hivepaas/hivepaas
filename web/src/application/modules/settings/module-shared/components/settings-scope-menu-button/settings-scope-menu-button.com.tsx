@@ -1,9 +1,9 @@
 import type { PropsWithChildren } from "react";
 
-import { Button } from "@/components/ui";
+import { PopConfirm } from "@application/shared/components";
 import type { ModuleAction } from "@application/shared/permissions";
 
-import { PopConfirm } from "@application/shared/components";
+import { Button } from "@/components/ui";
 
 import { useSettingsScopePermissions } from "../../hooks";
 import { SettingsScopePermissionAction } from "../settings-scope-permission-action";
@@ -17,6 +17,7 @@ interface SettingsScopeMenuButtonProps extends PropsWithChildren {
     action: ModuleAction;
     onClick?: () => void;
     isLoading?: boolean;
+    disabled?: boolean;
 }
 
 export function SettingsScopeMenuButton({
@@ -24,6 +25,7 @@ export function SettingsScopeMenuButton({
     action,
     onClick,
     isLoading = false,
+    disabled = false,
     children,
 }: SettingsScopeMenuButtonProps) {
     return (
@@ -37,7 +39,7 @@ export function SettingsScopeMenuButton({
                     className="justify-start py-1.5 w-full"
                     variant="ghost"
                     onClick={onClick}
-                    disabled={isDenied}
+                    disabled={isDenied || disabled}
                     isLoading={isLoading}
                 >
                     {children}

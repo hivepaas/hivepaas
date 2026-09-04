@@ -35,6 +35,7 @@ export function CreateOrEditGithubAppForm({
     onSubmit,
     onTestConnection,
     onReprovision,
+    settingsURL,
     onHasChanges,
     savedVersion = 0,
     initialValues,
@@ -47,6 +48,10 @@ export function CreateOrEditGithubAppForm({
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+
+    const resolvedSettingsUrl =
+        settingsURL ?? (initialValues?.appId ? `https://github.com/settings/apps/${initialValues.appId}` : "");
+    const advancedSettingsUrl = resolvedSettingsUrl ? `${resolvedSettingsUrl}/advanced` : "";
 
     const {
         handleSubmit,
@@ -158,7 +163,21 @@ export function CreateOrEditGithubAppForm({
                         <div>
                             <span className="font-semibold text-orange-500">Important:</span> It is recommended that you
                             do not manually modify the information below unless you are certain it is correct. You can
-                            use the reprovision feature to reset the GitHub App setup.
+                            use the reprovision feature to reset the GitHub App setup. If you reprovision this GitHub
+                            App, a new GitHub App will be created, and you need to manually delete the old app{" "}
+                            {advancedSettingsUrl ? (
+                                <a
+                                    href={advancedSettingsUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-primary underline underline-offset-4 hover:opacity-80"
+                                >
+                                    here
+                                </a>
+                            ) : (
+                                "here"
+                            )}
+                            .
                         </div>
 
                         <div className="flex justify-start">
@@ -451,6 +470,7 @@ interface Props {
     onSubmit: (values: CreateOrEditGithubAppFormOutput) => void;
     onTestConnection: (values: CreateOrEditGithubAppFormOutput) => void;
     onReprovision?: () => void;
+    settingsURL?: string;
     onHasChanges?: (dirty: boolean) => void;
     savedVersion?: number;
     initialValues?: Partial<CreateOrEditGithubAppFormInput>;

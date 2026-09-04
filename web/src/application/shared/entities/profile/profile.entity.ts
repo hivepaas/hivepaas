@@ -48,6 +48,10 @@ export interface Profile {
 
     createdAt: Date;
 
+    /**
+     * Access per project. `access` is the union across the project's envs; read
+     * `envAccesses` when a check must be exact for one env.
+     */
     projectAccesses: {
         id: string;
         name: string;
@@ -57,6 +61,17 @@ export interface Profile {
             write: boolean;
             delete: boolean;
         };
+        envAccesses: {
+            id: string;
+            name: string;
+            color: string;
+            access: {
+                read: boolean;
+                execute: boolean;
+                write: boolean;
+                delete: boolean;
+            };
+        }[];
     }[];
 
     moduleAccesses: {

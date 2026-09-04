@@ -40,7 +40,9 @@ export type Users_DeleteOne_Res = ApiResponseBase<{
  * Update one user
  */
 export type Users_UpdateOne_Req = ApiRequestBase<{
-    user: Partial<Omit<UserBase, "role" | "status" | "securityOption" | "createdAt" | "updatedAt" | "lastAccess" | "photo">> & {
+    user: Partial<
+        Omit<UserBase, "role" | "status" | "securityOption" | "createdAt" | "updatedAt" | "lastAccess" | "photo">
+    > & {
         role?: EUserRole;
         status?: EUserStatus;
         securityOption?: ESecuritySettings;

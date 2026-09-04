@@ -33,8 +33,10 @@ const ModuleAccessSchema = AccessSchema.extend({
     },
 }));
 
-const ProjectAccessSchema = AccessSchema.extend({
+const EnvAccessSchema = z.object({
+    id: z.string(),
     name: z.string().optional().default(""),
+    color: z.string().optional().default(""),
     access: z
         .object({
             read: z.boolean().nullable().optional(),
@@ -44,16 +46,47 @@ const ProjectAccessSchema = AccessSchema.extend({
         })
         .nullable()
         .optional(),
-}).transform(projectAccess => ({
-    id: projectAccess.id,
-    name: projectAccess.name,
-    access: {
-        read: projectAccess.access?.read === true,
-        execute: projectAccess.access?.execute === true,
-        write: projectAccess.access?.write === true,
-        delete: projectAccess.access?.delete === true,
-    },
-}));
+});
+
+/**
+ * The API reports the account's access per project env, grouped by project. The
+ * project entry itself carries no access, so the project-level actions here are
+ * the union across its envs: "can the account do this somewhere in the project".
+ * Anything that must be exact for one env has to read envAccesses instead.
+ */
+const ProjectAccessSchema = z
+    .object({
+        project: z.object({
+            id: z.string(),
+            name: z.string().optional().default(""),
+        }),
+        envAccesses: z.array(EnvAccessSchema).nullish(),
+    })
+    .transform(projectAccess => {
+        const envAccesses = (projectAccess.envAccesses ?? []).map(envAccess => ({
+            id: envAccess.id,
+            name: envAccess.name,
+            color: envAccess.color,
+            access: {
+                read: envAccess.access?.read === true,
+                execute: envAccess.access?.execute === true,
+                write: envAccess.access?.write === true,
+                delete: envAccess.access?.delete === true,
+            },
+        }));
+
+        return {
+            id: projectAccess.project.id,
+            name: projectAccess.project.name,
+            envAccesses,
+            access: {
+                read: envAccesses.some(({ access }) => access.read),
+                execute: envAccesses.some(({ access }) => access.execute),
+                write: envAccesses.some(({ access }) => access.write),
+                delete: envAccesses.some(({ access }) => access.delete),
+            },
+        };
+    });
 
 function mapModuleAccessesToModulePermissions(
     moduleAccesses: readonly z.output<typeof ModuleAccessSchema>[],

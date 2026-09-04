@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import type { SettingGithubApp } from "~/settings/domain";
 import { GithubAppStatusBadge } from "~/settings/module-shared/components";
 
-import { GithubAppEditCell, GithubAppMenuCell } from "./building-blocks";
+import { GithubAppEditCell, GithubAppMenuCell, GithubAppSetupIconCell } from "./building-blocks";
 import type { GithubAppTableScope } from "./github-app-table.types";
 
 function createColumns(scope: GithubAppTableScope): ColumnDef<SettingGithubApp>[] {
@@ -44,6 +44,16 @@ function createColumns(scope: GithubAppTableScope): ColumnDef<SettingGithubApp>[
             header: "App ID",
             enableSorting: true,
             cell: ({ row: { original } }) => (original.appId ? original.appId : "-"),
+        },
+        {
+            id: "setupIcon",
+            header: "App Icon",
+            enableSorting: false,
+            meta: {
+                align: "center",
+                titleAlign: "center",
+            },
+            cell: ({ row: { original } }) => <GithubAppSetupIconCell githubApp={original} />,
         },
         {
             accessorKey: "status",

@@ -7,6 +7,7 @@ export interface SettingGithubApp extends SettingsBaseEntity {
     callbackURL?: string;
     webhookURL?: string;
     webhookSecret?: string;
+    settingsURL?: string;
     appId: number;
     installationId: number;
     privateKey: string;

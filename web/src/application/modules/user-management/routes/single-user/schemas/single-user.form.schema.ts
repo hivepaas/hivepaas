@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AccessSchema } from "~/user-management/module-shared/schemas";
+import { AccessSchema, ProjectAccessSchema } from "~/user-management/module-shared/schemas";
 
 import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 
@@ -20,7 +20,7 @@ export const SingleUserFormSchema = z.object({
     role: z.nativeEnum(EUserRole),
     accessExpireAt: z.date().nullable(),
     securityOption: z.nativeEnum(ESecuritySettings),
-    projectAccesses: z.array(AccessSchema),
+    projectAccesses: z.array(ProjectAccessSchema),
     moduleAccesses: z.array(AccessSchema),
 });
 

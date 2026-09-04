@@ -16,15 +16,24 @@ export interface UserBase {
     updatedAt: Date | null;
     accessExpireAt: Date | null;
     lastAccess: Date | null;
+    /**
+     * Access the user has on each project, broken down per env. Permissions are
+     * granted per env only; the project level is just a grouping.
+     */
     projectAccesses: {
         id: string;
         name: string;
-        access: {
-            read: boolean;
-            execute: boolean;
-            write: boolean;
-            delete: boolean;
-        };
+        envAccesses: {
+            id: string;
+            name: string;
+            color: string;
+            access: {
+                read: boolean;
+                execute: boolean;
+                write: boolean;
+                delete: boolean;
+            };
+        }[];
     }[];
     notes?: string;
     moduleAccesses: {

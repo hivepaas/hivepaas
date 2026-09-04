@@ -161,7 +161,7 @@ function filterImportColumns(columns: ColumnDef<ImportableSetting>[]) {
     return columns.filter(column => {
         const columnId = getColumnId(column);
 
-        return columnId !== "view" && columnId !== "actions";
+        return columnId !== "view" && columnId !== "actions" && columnId !== "setupIcon";
     });
 }
 

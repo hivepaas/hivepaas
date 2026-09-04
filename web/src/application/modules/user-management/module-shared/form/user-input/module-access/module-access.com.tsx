@@ -202,8 +202,10 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                     {!disabled && (
                                         <Button
                                             type="button"
-                                            variant="link"
-                                            className="hover:opacity-80 size-6"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="size-7 text-zinc-400 hover:text-primary hover:bg-primary/10 rounded-md"
+                                            title="Toggle all permissions"
                                             onClick={() => {
                                                 handleToggleAll(index);
                                             }}
@@ -211,7 +213,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                             <CheckCheck className="size-4" />
                                         </Button>
                                     )}
-                                    <div className="size-6" />
+                                    <div className="size-7" />
                                 </div>
                             </div>
                         </div>

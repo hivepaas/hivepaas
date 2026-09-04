@@ -6,7 +6,7 @@ import {
     type Users_InviteOne_Res,
     type Users_ResetPassword_Res,
 } from "~/user-management/api/services/users-services/users/users.api.contracts";
-import { AccessSchema } from "~/user-management/module-shared/schemas";
+import { AccessSchema, ProjectEnvAccessSchema } from "~/user-management/module-shared/schemas";
 
 import { ESecuritySettings, EUserRole } from "@application/shared/enums";
 
@@ -42,9 +42,17 @@ const FindManyPaginatedSchema = z.object({
 /**
  * Find one user by id API response schema
  */
+const ProjectAccessApiSchema = z.object({
+    project: z.object({
+        id: z.string(),
+        name: z.string(),
+    }),
+    envAccesses: z.array(ProjectEnvAccessSchema).nullish(),
+});
+
 const FindOneByIdSchema = z.object({
     data: UserSchema.extend({
-        projectAccesses: z.array(AccessSchema).nullable(),
+        projectAccesses: z.array(ProjectAccessApiSchema).nullable(),
         moduleAccesses: z.array(AccessSchema).nullable(),
     }),
 });
@@ -123,7 +131,13 @@ export class UsersApiValidator {
                 accessExpireAt: data.accessExpireAt,
                 lastAccess: data.lastAccess,
                 username: data.username ?? "",
-                projectAccesses: data.projectAccesses ?? [],
+                // The API nests the project under `project`; flatten it so the form
+                // can bind the project and its envs as one field-array item.
+                projectAccesses: (data.projectAccesses ?? []).map(projectAccess => ({
+                    id: projectAccess.project.id,
+                    name: projectAccess.project.name,
+                    envAccesses: projectAccess.envAccesses ?? [],
+                })),
                 moduleAccesses: data.moduleAccesses ?? [],
             },
         };

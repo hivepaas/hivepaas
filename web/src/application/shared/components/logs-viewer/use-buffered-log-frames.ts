@@ -47,9 +47,7 @@ export function useBufferedLogFrames(options: UseBufferedLogFramesOptions = {}):
     const applyFramesUpdate = useCallback(
         (action: SetStateAction<LogsViewerFrame[]>) => {
             if (usesExternalState) {
-                onFramesChangeRef.current?.(current =>
-                    capFrames(resolveSetStateAction(action, current), maxFrames),
-                );
+                onFramesChangeRef.current?.(current => capFrames(resolveSetStateAction(action, current), maxFrames));
                 return;
             }
 

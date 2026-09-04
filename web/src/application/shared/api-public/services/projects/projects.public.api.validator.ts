@@ -13,6 +13,15 @@ const FindManyPaginatedSchema = z.object({
         z.object({
             id: z.string(),
             name: z.string(),
+            envs: z
+                .array(
+                    z.object({
+                        id: z.string(),
+                        name: z.string(),
+                        color: z.string(),
+                    }),
+                )
+                .nullish(),
         }),
     ),
     meta: PagingMetaApiSchema,
@@ -32,6 +41,7 @@ export class ProjectsPublicApiValidator {
             data: data.map(project => ({
                 id: project.id,
                 name: project.name,
+                envs: project.envs ?? [],
             })),
             meta,
         };

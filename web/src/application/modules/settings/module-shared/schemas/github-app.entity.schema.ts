@@ -10,6 +10,7 @@ export const GithubAppSettingEntitySchema = SettingsBaseEntitySchema.omit({ desc
     callbackURL: z.string().optional().default(""),
     webhookURL: z.string().optional().default(""),
     webhookSecret: z.string().optional().default(""),
+    settingsURL: z.string().optional().default(""),
     appId: z.coerce.number().default(0),
     installationId: z.coerce.number().default(0),
     privateKey: z.string().default(""),

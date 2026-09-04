@@ -138,14 +138,11 @@ function EnvAccessSection({
             <Separator className="mb-4 opacity-50" />
             <InfoBlock
                 title={
-                    <div className="flex items-center gap-2">
-                        Env:
-                        <ProjectEnvBadge
-                            name={env.name}
-                            color={env.color}
-                            className="max-w-[16ch] whitespace-normal wrap-break-word text-left"
-                        />
-                    </div>
+                    <ProjectEnvBadge
+                        name={env.name ? `Env: ${env.name}` : ""}
+                        color={env.color}
+                        className="max-w-[22ch] whitespace-normal wrap-break-word text-left"
+                    />
                 }
                 titleWidth={180}
             >
@@ -267,8 +264,9 @@ function EnvUserAccessRow({
                         {({ isDenied }) => (
                             <Button
                                 type="button"
-                                variant="link"
-                                className="size-7 p-0 text-foreground"
+                                variant="ghost"
+                                size="icon"
+                                className="size-7 text-zinc-400 hover:text-primary hover:bg-primary/10 rounded-md"
                                 aria-label="Toggle execute, write and delete access"
                                 title="Toggle execute, write and delete access"
                                 disabled={isDenied || !canUpdateProjectAccess}
@@ -288,8 +286,9 @@ function EnvUserAccessRow({
                         {({ isDenied }) => (
                             <Button
                                 type="button"
-                                variant="link"
-                                className="size-7 p-0 text-destructive"
+                                variant="ghost"
+                                size="icon"
+                                className="size-7 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 dark:hover:text-red-400 rounded-md"
                                 aria-label="Remove user access"
                                 title="Remove user access"
                                 disabled={isDenied || !canUpdateProjectAccess}

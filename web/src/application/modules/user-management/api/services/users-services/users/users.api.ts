@@ -15,8 +15,26 @@ import type {
     Users_UpdateOne_Req,
     Users_UpdateOne_Res,
 } from "~/user-management/api/services";
+import type { UserBase } from "~/user-management/domain";
 
 import { BaseApi, JsonTransformer, parseApiError } from "@infrastructure/api";
+
+/**
+ * Flattens the per-project form value into the flat per-env list the API takes.
+ * The env id already encodes its project, so the grouping is presentation only.
+ */
+function toEnvAccessesPayload(projectAccesses: UserBase["projectAccesses"] | undefined) {
+    return (projectAccesses ?? []).flatMap(projectAccess =>
+        projectAccess.envAccesses
+            // The form lists every env of a project so the whole matrix is visible;
+            // only the ones actually granted belong in the payload.
+            .filter(({ access }) => access.read || access.execute || access.write || access.delete)
+            .map(envAccess => ({
+                id: envAccess.id,
+                access: envAccess.access,
+            })),
+    );
+}
 
 export class UsersApi extends BaseApi {
     public constructor(private readonly validator: UsersApiValidator) {
@@ -115,8 +133,10 @@ export class UsersApi extends BaseApi {
                 data: user.accessExpireAt,
                 some: date => date.toISOString().replace(/\.\d{3}Z$/, "Z"),
             }),
-            projectAccesses: JsonTransformer.array({
-                data: user.projectAccesses,
+            // Permissions are granted per project env: flatten the grouped form
+            // value into the flat list the API expects.
+            envAccesses: JsonTransformer.array({
+                data: user.projectAccesses && toEnvAccessesPayload(user.projectAccesses),
             }),
             moduleAccesses: JsonTransformer.array({
                 data: user.moduleAccesses,
@@ -156,6 +176,8 @@ export class UsersApi extends BaseApi {
                     "/users/invite",
                     {
                         ...user,
+                        projectAccesses: undefined,
+                        envAccesses: toEnvAccessesPayload(user.projectAccesses),
                         sendInviteEmail,
                     },
                     { signal },

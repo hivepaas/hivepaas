@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
 import { cn } from "@/lib/utils";
+
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
 
 import { useConditionalModule } from "../../hooks";
 import type { ModuleAction, ModuleId, UseConditionalModuleResult } from "../../types";
+
 import { getModulePermissionDeniedMessage } from "./permission-tooltip-action.messages";
 
 export interface PermissionTooltipActionContext<T extends ModuleId> extends UseConditionalModuleResult<T> {

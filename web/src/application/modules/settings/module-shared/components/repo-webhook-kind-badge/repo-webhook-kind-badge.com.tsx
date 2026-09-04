@@ -2,10 +2,12 @@ import { memo } from "react";
 
 import { Badge } from "@components/ui/badge";
 import { cn } from "@lib/utils";
+import { formatRepoWebhookKind } from "~/settings/module-shared/constants";
 import { ERepoWebhookKind } from "~/settings/module-shared/enums";
 
 function View({ kind }: Props) {
     const isKnownKind = Object.values(ERepoWebhookKind).includes(kind as ERepoWebhookKind);
+    const label = formatRepoWebhookKind(kind);
 
     return (
         <Badge
@@ -18,7 +20,7 @@ function View({ kind }: Props) {
                 !isKnownKind && "bg-purple-500 text-white",
             )}
         >
-            {kind || "-"}
+            {label || "-"}
         </Badge>
     );
 }

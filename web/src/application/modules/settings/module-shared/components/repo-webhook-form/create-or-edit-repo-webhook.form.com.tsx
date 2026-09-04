@@ -7,10 +7,13 @@ import { cn } from "@lib/utils";
 import { Clipboard } from "lucide-react";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import type { RepoWebhookKindOption } from "~/settings/module-shared/constants";
 import {
+    REPO_WEBHOOK_KIND_LABELS,
+    REPO_WEBHOOK_KIND_OPTIONS,
     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
-} from "~/settings/module-shared/constants/settings-form-layout.constants";
+} from "~/settings/module-shared/constants";
 import { ERepoWebhookKind } from "~/settings/module-shared/enums";
 
 import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -27,13 +30,7 @@ import type {
 } from "./create-or-edit-repo-webhook.form.schema";
 import { CreateOrEditRepoWebhookFormSchema } from "./create-or-edit-repo-webhook.form.schema";
 
-const kindOptions = [
-    ERepoWebhookKind.Github,
-    ERepoWebhookKind.Gitlab,
-    ERepoWebhookKind.Gitea,
-    ERepoWebhookKind.Bitbucket,
-    ERepoWebhookKind.Gogs,
-] satisfies string[];
+const ANY_PROVIDER_SELECT_VALUE = "__any_provider__";
 
 const WEBHOOK_EVENT_TYPES = [
     {
@@ -111,10 +108,18 @@ export function CreateOrEditRepoWebhookForm({
     } = useController({ name: "secret", control });
     const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
-    const resolvedKindOptions =
-        typeof kind.value === "string" && kind.value.length > 0 && !kindOptions.includes(kind.value)
-            ? [...kindOptions, kind.value]
-            : kindOptions;
+    const isCustomKind =
+        typeof kind.value === "string" &&
+        kind.value.length > 0 &&
+        !REPO_WEBHOOK_KIND_OPTIONS.some(option => option.value === kind.value);
+
+    const resolvedKindOptions: readonly RepoWebhookKindOption[] = isCustomKind
+        ? [
+              ...REPO_WEBHOOK_KIND_OPTIONS.filter(option => option.value !== ""),
+              { value: kind.value, label: REPO_WEBHOOK_KIND_LABELS[kind.value] ?? kind.value },
+              { value: "", label: "Any Provider" },
+          ]
+        : REPO_WEBHOOK_KIND_OPTIONS;
 
     function onValid(values: CreateOrEditRepoWebhookFormOutput) {
         if (isReadOnly) {
@@ -222,21 +227,27 @@ export function CreateOrEditRepoWebhookForm({
                         <FieldGroup>
                             <Field>
                                 <Select
-                                    value={kind.value}
-                                    onValueChange={kind.onChange}
+                                    value={kind.value === "" ? ANY_PROVIDER_SELECT_VALUE : kind.value}
+                                    onValueChange={value => {
+                                        kind.onChange(value === ANY_PROVIDER_SELECT_VALUE ? "" : value);
+                                    }}
                                 >
                                     <SelectTrigger aria-invalid={isKindInvalid}>
                                         <SelectValue placeholder="Select type" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {resolvedKindOptions.map(option => (
-                                            <SelectItem
-                                                key={option}
-                                                value={option}
-                                            >
-                                                {option}
-                                            </SelectItem>
-                                        ))}
+                                        {resolvedKindOptions.map(option => {
+                                            const selectValue =
+                                                option.value === "" ? ANY_PROVIDER_SELECT_VALUE : option.value;
+                                            return (
+                                                <SelectItem
+                                                    key={selectValue}
+                                                    value={selectValue}
+                                                >
+                                                    {option.label}
+                                                </SelectItem>
+                                            );
+                                        })}
                                     </SelectContent>
                                 </Select>
                                 <FieldError errors={[errors.kind]} />

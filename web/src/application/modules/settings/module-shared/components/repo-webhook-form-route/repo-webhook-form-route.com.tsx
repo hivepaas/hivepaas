@@ -174,7 +174,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
     const initialValues = repoWebhook
         ? {
               name: repoWebhook.name,
-              kind: repoWebhook.kind as ERepoWebhookKind,
+              kind: repoWebhook.kind as ERepoWebhookKind | "",
               secret: matchedCreatedWebhook?.secret ?? repoWebhook.secret,
               inheritable: repoWebhook.inheritable ?? false,
               default: repoWebhook.default ?? false,

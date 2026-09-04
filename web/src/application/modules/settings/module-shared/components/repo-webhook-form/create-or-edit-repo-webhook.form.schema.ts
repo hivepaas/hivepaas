@@ -3,7 +3,7 @@ import { ERepoWebhookKind } from "~/settings/module-shared/enums";
 
 export const CreateOrEditRepoWebhookFormSchema = z.object({
     name: z.string().trim().min(1, "Name is required"),
-    kind: z.nativeEnum(ERepoWebhookKind),
+    kind: z.union([z.nativeEnum(ERepoWebhookKind), z.literal("")]),
     secret: z.string().trim().max(100, "Secret must be 100 characters or less"),
     inheritable: z.boolean(),
     default: z.boolean(),

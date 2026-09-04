@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 
 import { Dialog, DialogDescription, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Separator } from "@components/ui/separator";
 import { toast } from "sonner";
 
 import { ProfileCommands } from "@application/shared/data/commands";
@@ -50,8 +51,11 @@ export function ChangePasswordDialog() {
             <DialogFixedContent className="min-w-[400px] w-fit">
                 <DialogHeader>
                     <DialogTitle>Change Password</DialogTitle>
-                    <DialogDescription />
                 </DialogHeader>
+                <DialogDescription className="sr-only">Change your account password</DialogDescription>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 <ChangePasswordForm
                     isPending={isPending}
                     onSubmit={onSubmit}

@@ -25,7 +25,7 @@ export function ActionExecutePanel({ message, buttonLabel, isLoading, permission
     return (
         <div className="rounded-lg border bg-background p-4 ">
             <div className="flex flex-col items-start gap-6">
-                <p className="text-base text-foreground">{message}</p>
+                <p className="text-sm font-medium text-foreground">{message}</p>
                 {permissionModuleId ? (
                     <PermissionTooltipAction
                         id={permissionModuleId}

@@ -143,7 +143,7 @@ export function SystemSettingsDataCleanupActionsRoute() {
 
                 <CacheActionPanel>
                     <div className="flex flex-col items-start gap-6">
-                        <p className="text-base text-foreground">
+                        <p className="text-sm font-medium text-foreground">
                             Using the repository cache can significantly reduce your application deployment time.
                             However, it will consume system storage space.
                         </p>
@@ -190,7 +190,7 @@ export function SystemSettingsDataCleanupActionsRoute() {
 
                 <CacheActionPanel>
                     <div className="flex flex-col items-start gap-6">
-                        <p className="text-base text-foreground">
+                        <p className="text-sm font-medium text-foreground">
                             Docker uses the build cache to reduce image build time for subsequent builds. You can clear
                             this cache to reclaim storage space.
                         </p>

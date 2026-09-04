@@ -1,6 +1,6 @@
 import { type PropsWithChildren, memo } from "react";
 
-import { Globe, Settings } from "lucide-react";
+import { Globe, Settings, ShieldCheck } from "lucide-react";
 import { SystemSettingsSidebarLayout, type SystemSettingsTabSection } from "~/system-settings/module-shared";
 
 import { ROUTE } from "@application/shared/constants";
@@ -18,6 +18,11 @@ const sections: SystemSettingsTabSection[] = [
                 label: "Routing Settings",
                 route: ROUTE.systemSettings.hivepaas.routingSettings.$route,
                 icon: Globe,
+            },
+            {
+                label: "Security",
+                route: ROUTE.systemSettings.hivepaas.security.$route,
+                icon: ShieldCheck,
             },
         ],
     },

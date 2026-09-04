@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@components/ui/dialog";
+import { Separator } from "@components/ui/separator";
 
 import { useProfileContext } from "@application/shared/context";
 import { SessionCommands } from "@application/shared/data/commands";
@@ -84,6 +85,9 @@ export function MfaSetupRequiredDialog() {
                         Your admin requires you to enable 2FA before continuing.
                     </DialogDescription>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 <DialogBody>
                     <p className="text-sm text-foreground">
                         Your admin requires you to enable 2FA to enhance security. Please complete this step to access

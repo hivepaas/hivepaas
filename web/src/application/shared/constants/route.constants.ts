@@ -427,6 +427,11 @@ export const ROUTE = {
                 $pattern: "system/hivepaas/routing-settings",
                 $route: "/system/hivepaas/routing-settings/",
             },
+
+            security: {
+                $pattern: "system/hivepaas/security",
+                $route: "/system/hivepaas/security/",
+            },
         },
 
         traefik: {

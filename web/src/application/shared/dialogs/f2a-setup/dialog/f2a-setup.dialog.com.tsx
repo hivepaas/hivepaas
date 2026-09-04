@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-import { Dialog, DialogDescription, DialogFixedContent, DialogTitle } from "@components/ui/dialog";
+import { Dialog, DialogDescription, DialogFixedContent, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import { Separator } from "@components/ui/separator";
 import { useUpdateEffect } from "react-use";
 import { toast } from "sonner";
 
@@ -139,6 +140,9 @@ export function F2aSetupDialog() {
         logout();
     }
 
+    const dialogTitle =
+        state.mode === "deactivate" ? "Deactivate 2FA" : state.mode === "change" ? "Reset 2FA" : "Activate 2FA";
+
     return (
         <Dialog
             open={state.mode !== "closed"}
@@ -160,10 +164,15 @@ export function F2aSetupDialog() {
             }}
         >
             <DialogFixedContent className="min-w-[400px] w-fit">
-                <DialogTitle className="sr-only">Two-factor authentication</DialogTitle>
+                <DialogHeader>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
+                </DialogHeader>
                 <DialogDescription className="sr-only">
                     Set up, change, or deactivate two-factor authentication.
                 </DialogDescription>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
                 {showCurrentPasscodeForm && (
                     <CurrentPasscodeForm
                         isPending={state.mode === "deactivate" ? isRemoveMfaTotpPending : isGetProfile2FASetupPending}

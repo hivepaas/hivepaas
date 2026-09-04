@@ -11,17 +11,22 @@ import (
 // ValidatePlainSecret rejects a user-supplied secret that looks like an already
 // encrypted value.
 //
-// entity.EncryptedField.Set stores anything carrying the encryption prefix as
-// ciphertext without encrypting it, so such an input would be persisted verbatim
-// and could never be decrypted again - every later read of it fails.
+// entity.EncryptedField.Set stores anything carrying one of the encryption
+// prefixes as ciphertext without encrypting it, so such an input would be
+// persisted verbatim and could never be decrypted again.
 func ValidatePlainSecret(value *string, field string) []vld.Validator {
 	if value == nil {
 		return nil
 	}
-	return []vld.Validator{
-		vld.Must(!strings.HasPrefix(*value, base.EncryptionSaltPrefix)).OnError(
-			vld.SetField(field, nil),
-			vld.SetCustomKey("ERR_VLD_SECRET_INVALID"),
-		),
+	for _, prefix := range base.AllEncryptionPrefixes {
+		if strings.HasPrefix(*value, prefix) {
+			return []vld.Validator{
+				vld.Must(false).OnError(
+					vld.SetField(field, nil),
+					vld.SetCustomKey("ERR_VLD_SECRET_INVALID"),
+				),
+			}
+		}
 	}
+	return nil
 }

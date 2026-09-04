@@ -1,5 +1,6 @@
 env = "myenv"
 platform = "myplatform"
+secret = "test-app-secret-value"
 
 [db]
   host = "localhost"

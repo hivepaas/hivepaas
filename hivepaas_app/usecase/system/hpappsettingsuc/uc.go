@@ -5,6 +5,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/datakeyservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
@@ -27,6 +28,7 @@ type UC struct {
 
 	appRoutingService approutingservice.Service
 	appService        appservice.Service
+	dataKeyService    datakeyservice.Service
 	domainService     domainservice.Service
 	hpAppService      hpappservice.Service
 	networkService    networkservice.Service
@@ -47,6 +49,7 @@ func New(
 
 	appRoutingService approutingservice.Service,
 	appService appservice.Service,
+	dataKeyService datakeyservice.Service,
 	domainService domainservice.Service,
 	hpAppService hpappservice.Service,
 	networkService networkservice.Service,
@@ -67,6 +70,7 @@ func New(
 
 		appRoutingService: appRoutingService,
 		appService:        appService,
+		dataKeyService:    dataKeyService,
 		domainService:     domainService,
 		hpAppService:      hpAppService,
 		networkService:    networkService,

@@ -6,9 +6,8 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/cryptoutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/datakey"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
@@ -22,14 +21,13 @@ type EncryptedField struct {
 }
 
 func (s *EncryptedField) MarshalJSON() (res []byte, err error) {
-	var encrypted string
-	if config.Current.Secret != "" {
-		encrypted, err = s.encrypt()
-		if err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-	} else {
-		encrypted = s.encrypted
+	// Encryption is not optional. This used to fall back to writing s.encrypted
+	// when no key was configured, which for a field holding a plaintext value
+	// wrote an empty string and lost it without any error. Refuse instead:
+	// startup installs a data key, so reaching this is a bug.
+	encrypted, err := s.encrypt()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 	return reflectutil.UnsafeStrToBytes(gofn.StringWrap(encrypted, "\"")), nil
 }
@@ -71,7 +69,7 @@ func (s *EncryptedField) GetEncrypted() (string, error) {
 }
 
 func (s *EncryptedField) Set(value string) {
-	if strings.HasPrefix(value, base.EncryptionSaltPrefix) {
+	if isEncryptedValue(value) {
 		s.encrypted = value
 		s.decrypted = ""
 	} else {
@@ -93,14 +91,17 @@ func (s *EncryptedField) Equal(enc *EncryptedField) (bool, error) {
 }
 
 func (s *EncryptedField) encrypt() (string, error) {
-	// TODO: should we use Mutex?
 	if s.encrypted != "" {
 		return s.encrypted, nil
 	}
-	if config.Current.Secret == "" {
-		return "", hperrors.NewMissing("Encryption secret")
+	if s.decrypted == "" {
+		return "", nil // nothing to encrypt, the field is unset
 	}
-	encrypted, err := cryptoutil.EncryptBase64(s.decrypted, defaultSaltLen, config.Current.Secret)
+	key := datakey.Active()
+	if key == nil {
+		return "", hperrors.NewMissing("Data encryption key")
+	}
+	encrypted, err := key.Seal(s.decrypted)
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}
@@ -109,19 +110,51 @@ func (s *EncryptedField) encrypt() (string, error) {
 }
 
 func (s *EncryptedField) decrypt() (string, error) {
-	// TODO: should we use Mutex?
 	if s.decrypted != "" {
 		return s.decrypted, nil
 	}
-	if config.Current.Secret == "" {
-		return "", hperrors.NewMissing("Encryption secret")
+	if s.encrypted == "" {
+		return "", nil // nothing to decrypt, the field is unset
 	}
-	decrypted, err := cryptoutil.DecryptBase64(s.encrypted, config.Current.Secret)
+	key := datakey.Active()
+	if key == nil {
+		return "", hperrors.NewMissing("Data encryption key")
+	}
+	decrypted, err := key.Open(s.encrypted)
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}
 	s.decrypted = decrypted
 	return decrypted, nil
+}
+
+// isEncryptedValue reports whether a stored value is ciphertext rather than a
+// plaintext one that still has to be encrypted.
+func isEncryptedValue(value string) bool {
+	for _, prefix := range base.AllEncryptionPrefixes {
+		if strings.HasPrefix(value, prefix) {
+			return true
+		}
+	}
+	return false
+}
+
+// Reencrypt drops the cached ciphertext so the next marshal encrypts the value
+// again with whatever key is current.
+//
+// Marshaling normally reuses the ciphertext the value was loaded with, which is
+// exactly what re-saving an unrelated setting should do. Rotating the app secret
+// is the one case that has to bypass it.
+func (s *EncryptedField) Reencrypt() error {
+	if s.IsEmpty() {
+		return nil
+	}
+	plain, err := s.GetPlain()
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	s.Set(plain)
+	return nil
 }
 
 func NewEncryptedField(value string) EncryptedField {

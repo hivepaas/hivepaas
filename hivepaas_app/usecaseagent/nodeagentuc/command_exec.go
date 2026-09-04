@@ -3,12 +3,12 @@ package nodeagentuc
 import (
 	"context"
 	"errors"
-	"os"
 	"os/exec"
 	"syscall"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/envutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc/nodeagentdto"
 )
@@ -29,7 +29,7 @@ func (uc *UC) ExecuteCommand(
 
 	cmd := exec.Command(req.Command[0], req.Command[1:]...) //nolint:gosec
 	if len(req.Env) > 0 {
-		cmd.Env = append(os.Environ(), req.Env...)
+		cmd.Env = append(envutil.SafeEnviron(), req.Env...)
 	}
 	cmd.Dir = req.WorkingDir
 

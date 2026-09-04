@@ -7,12 +7,14 @@ import (
 	"path/filepath"
 
 	"github.com/jinzhu/configor"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tracerr"
 )
 
 const (
 	configFileName = "config.toml"
+	defaultAppPath = "/var/lib/hivepaas"
 	// envPrefix namespaces the env names configor derives on its own. Every scalar
 	// setting here carries an explicit `env:"HP_..."` tag, which configor uses
 	// verbatim, so the prefix only ever applies to the nested section structs
@@ -37,6 +39,7 @@ const (
 var (
 	ErrConfigFileUnset    = errors.New("config file unset")
 	ErrConfigFileNotFound = errors.New("config file not found")
+	ErrAppSecretUnset     = errors.New("app secret is not configured")
 )
 
 const (
@@ -59,8 +62,11 @@ type Config struct {
 
 	RootDomain string `toml:"root_domain" env:"HP_ROOT_DOMAIN"`
 	AppDomain  string `toml:"app_domain" env:"HP_APP_DOMAIN"`
-	Secret     string `toml:"secret" env:"HP_APP_SECRET" default:"abc123"`
-	AppPath    string `toml:"app_path" env:"HP_APP_PATH" default:"/var/lib/hivepaas"`
+	// Secret is the key every stored secret is encrypted with. It has no default
+	// on purpose: a well-known one would mean every zero-config install shares a
+	// publicly known key. See ensureAppSecret.
+	Secret  string `toml:"secret" env:"HP_APP_SECRET"`
+	AppPath string `toml:"app_path" env:"HP_APP_PATH" default:"/var/lib/hivepaas"`
 
 	Users      Users      `toml:"users"`
 	HTTPServer HTTPServer `toml:"http_server"`
@@ -105,14 +111,21 @@ func LoadConfig() (*Config, error) {
 	return cfg, nil
 }
 
+// resolveAppPath returns the app directory, where both the config file and the
+// managed settings live. It has to read the environment directly: the value is
+// needed to find the very file the config is loaded from.
+func resolveAppPath() string {
+	if appPath := os.Getenv("HP_APP_PATH"); appPath != "" {
+		return appPath
+	}
+	return defaultAppPath
+}
+
 func loadConfig(configFile string) (*Config, error) {
 	config := &Config{}
+	appPath := resolveAppPath()
 
 	if configFile == "" {
-		appPath := os.Getenv("HP_APP_PATH")
-		if appPath == "" {
-			appPath = "/var/lib/hivepaas"
-		}
 		configFile = filepath.Join(appPath, configFileName)
 
 		// #nosec G703
@@ -128,13 +141,32 @@ func loadConfig(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("%w: %s", ErrConfigFileNotFound, configFile)
 	}
 
+	// The environment is read from our own snapshot rather than from the process,
+	// which is cleared below so user-supplied commands cannot read the secrets out
+	// of it. Without this a reload would see an empty environment.
+	snapshotEnv()
+	restoreEnv()
+	defer clearEnv()
+
 	err := configor.New(&configor.Config{ENVPrefix: envPrefix}).Load(config, configFile)
 	if err != nil {
 		return config, tracerr.Wrap(err)
 	}
 
+	// Applied last so a setting the app rotates for itself wins over a stale value
+	// still present in the environment or the base config file.
+	managed, err := loadManagedSettings(appPath)
+	if err != nil {
+		return config, tracerr.Wrap(err)
+	}
+	managed.applyTo(config)
+
 	// Turn on dev mode for dev/local env
 	config.DevMode.Enabled = config.IsDevEnv() || config.IsLocalEnv()
+
+	if err := ensureAppSecret(config, appPath); err != nil {
+		return config, tracerr.Wrap(err)
+	}
 
 	lastConfigFile = configFile
 	return config, nil
@@ -150,4 +182,36 @@ func ReloadConfig() (*Config, error) {
 
 	Current = newConfig
 	return newConfig, nil
+}
+
+// appSecretLen is the length in bytes of a generated app secret, before hex
+// encoding doubles it.
+const appSecretLen = 32
+
+// ensureAppSecret makes sure encryption is always on.
+//
+// Storing credentials unencrypted is not an option the operator gets: the most
+// realistic way they leak is a database dump leaving the host - which this app
+// does on purpose, backing up to cloud storage - and a dump is only useless to
+// whoever finds it if the values in it are encrypted.
+//
+// Outside development the secret has to be configured explicitly. Generating one
+// here would be unsafe with more than one replica: replicas do not share the app
+// volume, so each would invent a different key and encrypt rows the others cannot
+// read. Development gets a generated one so a fresh checkout just runs.
+func ensureAppSecret(config *Config, appPath string) error {
+	if config.Secret != "" {
+		return nil
+	}
+
+	if !config.IsDevEnv() {
+		return fmt.Errorf("%w: HP_APP_SECRET must be set, e.g. %s",
+			ErrAppSecretUnset, gofn.RandTokenAsHex(appSecretLen))
+	}
+
+	config.Secret = gofn.RandTokenAsHex(appSecretLen)
+	if err := saveManagedSettings(appPath, &ManagedSettings{Secret: config.Secret}); err != nil {
+		return fmt.Errorf("failed to persist the generated app secret: %w", err)
+	}
+	return nil
 }

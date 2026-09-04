@@ -22,6 +22,11 @@ var (
 	ErrInvalidConfig = errors.New("invalid config")
 )
 
+// appSecretMinLen is the shortest app secret accepted outside development. A
+// generated one is 64 hex characters; this only rules out obviously trivial
+// values someone typed by hand.
+const appSecretMinLen = 10
+
 func InitConfig(lc fx.Lifecycle, cfg *config.Config, logger logging.Logger) {
 	lc.Append(fx.Hook{
 		OnStart: func(_ context.Context) error {
@@ -77,9 +82,11 @@ func validateConfig(cfg *config.Config, logger logging.Logger) error {
 		return fmt.Errorf("%w: invalid JWT secret for production", ErrInvalidConfig)
 	}
 
-	// App secret must not be a trivial value (it can be empty)
-	if isProdEnv && cfg.Secret != "" && len(cfg.Secret) < 10 {
-		return fmt.Errorf("%w: invalid app secret for production", ErrInvalidConfig)
+	// App secret is mandatory: everything stored as a secret is encrypted with it,
+	// and config.ensureAppSecret already refuses to start without one outside dev.
+	if isProdEnv && len(cfg.Secret) < appSecretMinLen {
+		return fmt.Errorf("%w: app secret must be at least %d characters for production",
+			ErrInvalidConfig, appSecretMinLen)
 	}
 
 	// Basic auth password must not be a trivial value (it can be empty)

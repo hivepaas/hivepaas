@@ -3,10 +3,10 @@ package backupmodel
 import (
 	"context"
 	"io"
-	"os"
 	"os/exec"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/envutil"
 )
 
 type CommandExecReq struct {
@@ -37,7 +37,7 @@ func DefaultCommandExecutor(
 
 	cmd := exec.CommandContext(ctx, req.Command[0], req.Command[1:]...) //nolint:gosec
 	if len(req.Env) > 0 {
-		cmd.Env = append(os.Environ(), req.Env...)
+		cmd.Env = append(envutil.SafeEnviron(), req.Env...)
 	}
 	if req.WorkingDir != "" {
 		cmd.Dir = req.WorkingDir

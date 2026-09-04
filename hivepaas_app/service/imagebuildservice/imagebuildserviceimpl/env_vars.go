@@ -2,13 +2,12 @@ package imagebuildserviceimpl
 
 import (
 	"context"
-	"os"
-	"strings"
 
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/envutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
@@ -53,11 +52,5 @@ func (s *service) calcBuildEnvVars(
 }
 
 func (s *service) calcSafeEnvVars() []string {
-	envs := make([]string, 0, 20) //nolint:mnd
-	for _, env := range os.Environ() {
-		if !strings.HasPrefix(env, "HP_") {
-			envs = append(envs, env)
-		}
-	}
-	return envs
+	return envutil.SafeEnviron()
 }

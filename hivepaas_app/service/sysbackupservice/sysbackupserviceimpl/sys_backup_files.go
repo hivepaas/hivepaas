@@ -12,6 +12,13 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
+// sysBackupFileModels lists the directories whose files go into a system backup,
+// alongside the database dump.
+//
+// The app path must never be added here. It holds the managed settings file, and
+// therefore the key that encrypts every secret in the dump: shipping both in the
+// same archive would make encrypting the database pointless, since whoever finds
+// the backup would hold the key too. TestSysBackupExcludesTheAppPath guards this.
 var (
 	sysBackupFileModels = []*sysBackupFileModel{}
 )

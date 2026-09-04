@@ -22,6 +22,8 @@ func main() {
 		fx.Invoke(internal.InitLogger),
 		fx.Invoke(internal.InitConfig),
 		fx.Invoke(internal.InitDBConnection),
+		// Before anything reads or writes a setting.
+		fx.Invoke(internal.InitDataKey),
 		fx.Invoke(internal.InitCache),
 		fx.Invoke(internal.InitDockerManager),
 		fx.Invoke(internal.SystemInstallation),

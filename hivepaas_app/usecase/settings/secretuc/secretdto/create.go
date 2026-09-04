@@ -44,9 +44,11 @@ func (req *SecretBaseReq) validate(valueRequired bool, field string) (res []vld.
 	if req.Base64 {
 		res = append(res, basedto.ValidateStrBase64(&req.Value, valueRequired, 1,
 			secretValueMaxLen, field+"value")...)
+		res = append(res, basedto.ValidatePlainSecret(&req.Value, field+"value")...)
 	} else {
 		res = append(res, basedto.ValidateStr(&req.Value, valueRequired, 1,
 			secretValueMaxLen, field+"value")...)
+		res = append(res, basedto.ValidatePlainSecret(&req.Value, field+"value")...)
 	}
 	res = append(res, req.SwarmRef.validate(field+"swarmRef")...)
 	return res

@@ -55,6 +55,7 @@ func (req *RegistryAuthBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateStr(&req.Address, true, 1, addressMaxLen, field+"address")...)
 	res = append(res, basedto.ValidateStr(&req.Username, true, 1, usernameMaxLen, field+"username")...)
 	res = append(res, basedto.ValidateStr(&req.Password, true, 1, passwordMaxLen, field+"password")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Password, field+"password")...)
 	return res
 }
 

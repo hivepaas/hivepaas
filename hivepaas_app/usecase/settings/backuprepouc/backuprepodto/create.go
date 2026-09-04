@@ -48,6 +48,7 @@ func (req *BackupRepoBaseReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 	res = append(res, req.BackupRepoBaseUpdateReq.validate(field, req.Engine)...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Password, field+"password")...)
 	res = append(res, basedto.ValidateStrIn(&req.Engine, true, backup.AllEngineTypes, field+"engine")...)
 	return res
 }

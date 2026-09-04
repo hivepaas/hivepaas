@@ -171,32 +171,32 @@ type HTTPLBConfigReq struct {
 	Strategy traefik.LBStrategy `json:"strategy"`
 }
 
-func (r *HTTPLBConfigReq) ToEntity() *entity.HTTPLBConfig {
-	if r == nil {
+func (req *HTTPLBConfigReq) ToEntity() *entity.HTTPLBConfig {
+	if req == nil {
 		return nil
 	}
 	return &entity.HTTPLBConfig{
-		Strategy: r.Strategy,
+		Strategy: req.Strategy,
 	}
 }
 
 //nolint:unparam
-func (r *HTTPLBConfigReq) modifyRequest() error {
-	if r == nil {
+func (req *HTTPLBConfigReq) modifyRequest() error {
+	if req == nil {
 		return nil
 	}
 	return nil
 }
 
 //nolint:unparam
-func (r *HTTPLBConfigReq) validate(field string) (res []vld.Validator) {
-	if r == nil {
+func (req *HTTPLBConfigReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
 		return
 	}
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStrIn(&r.Strategy, false, traefik.AllLBStrategies, field+"strategy")...)
+	res = append(res, basedto.ValidateStrIn(&req.Strategy, false, traefik.AllLBStrategies, field+"strategy")...)
 	return res
 }
 
@@ -205,33 +205,33 @@ type HTTPBasicAuthConfigReq struct {
 	ID      string `json:"id"`
 }
 
-func (r *HTTPBasicAuthConfigReq) ToEntity() *entity.HTTPBasicAuthConfig {
-	if r == nil {
+func (req *HTTPBasicAuthConfigReq) ToEntity() *entity.HTTPBasicAuthConfig {
+	if req == nil {
 		return nil
 	}
 	return &entity.HTTPBasicAuthConfig{
-		Enabled: r.Enabled,
-		ID:      r.ID,
+		Enabled: req.Enabled,
+		ID:      req.ID,
 	}
 }
 
 //nolint:unparam
-func (r *HTTPBasicAuthConfigReq) modifyRequest() error {
-	if r == nil {
+func (req *HTTPBasicAuthConfigReq) modifyRequest() error {
+	if req == nil {
 		return nil
 	}
 	return nil
 }
 
 //nolint:unparam
-func (r *HTTPBasicAuthConfigReq) validate(field string) (res []vld.Validator) {
-	if r == nil || !r.Enabled {
+func (req *HTTPBasicAuthConfigReq) validate(field string) (res []vld.Validator) {
+	if req == nil || !req.Enabled {
 		return
 	}
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateID(&r.ID, false, field+"id")...)
+	res = append(res, basedto.ValidateID(&req.ID, false, field+"id")...)
 	return res
 }
 
@@ -244,34 +244,34 @@ type HTTPCircuitBreakerConfigReq struct {
 	ResponseCode     int               `json:"responseCode"`
 }
 
-func (r *HTTPCircuitBreakerConfigReq) ToEntity() *entity.HTTPCircuitBreakerConfig {
-	if r == nil {
+func (req *HTTPCircuitBreakerConfigReq) ToEntity() *entity.HTTPCircuitBreakerConfig {
+	if req == nil {
 		return nil
 	}
 	return &entity.HTTPCircuitBreakerConfig{
-		Enabled:          r.Enabled,
-		Expression:       r.Expression,
-		CheckPeriod:      r.CheckPeriod,
-		FallbackDuration: r.FallbackDuration,
-		RecoveryDuration: r.RecoveryDuration,
-		ResponseCode:     r.ResponseCode,
+		Enabled:          req.Enabled,
+		Expression:       req.Expression,
+		CheckPeriod:      req.CheckPeriod,
+		FallbackDuration: req.FallbackDuration,
+		RecoveryDuration: req.RecoveryDuration,
+		ResponseCode:     req.ResponseCode,
 	}
 }
 
 //nolint:unparam
-func (r *HTTPCircuitBreakerConfigReq) modifyRequest() error {
+func (req *HTTPCircuitBreakerConfigReq) modifyRequest() error {
 	return nil
 }
 
 //nolint:unparam
-func (r *HTTPCircuitBreakerConfigReq) validate(field string) (res []vld.Validator) {
-	if r == nil || !r.Enabled {
+func (req *HTTPCircuitBreakerConfigReq) validate(field string) (res []vld.Validator) {
+	if req == nil || !req.Enabled {
 		return
 	}
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStr(&r.Expression, true, 1, 1000, //nolint:mnd
+	res = append(res, basedto.ValidateStr(&req.Expression, true, 1, 1000, //nolint:mnd
 		field+"expression")...)
 	return res
 }
@@ -283,32 +283,32 @@ type HTTPClientConfigReq struct {
 	AllowedIPs     []string      `json:"allowedIPs"`
 }
 
-func (r *HTTPClientConfigReq) ToEntity() *entity.HTTPClientConfig {
-	if r == nil {
+func (req *HTTPClientConfigReq) ToEntity() *entity.HTTPClientConfig {
+	if req == nil {
 		return nil
 	}
 	return &entity.HTTPClientConfig{
-		Enabled:        r.Enabled,
-		MaxRequestBody: r.MaxRequestBody,
-		MemRequestBody: r.MemRequestBody,
-		AllowedIPs:     r.AllowedIPs,
+		Enabled:        req.Enabled,
+		MaxRequestBody: req.MaxRequestBody,
+		MemRequestBody: req.MemRequestBody,
+		AllowedIPs:     req.AllowedIPs,
 	}
 }
 
 //nolint:unparam
-func (r *HTTPClientConfigReq) modifyRequest() error {
-	if r == nil {
+func (req *HTTPClientConfigReq) modifyRequest() error {
+	if req == nil {
 		return nil
 	}
-	r.AllowedIPs = strings.FieldsFunc(strings.Join(r.AllowedIPs, ","), func(r rune) bool {
+	req.AllowedIPs = strings.FieldsFunc(strings.Join(req.AllowedIPs, ","), func(r rune) bool {
 		return r == ',' || unicode.IsSpace(r)
 	})
 	return nil
 }
 
 //nolint:unparam
-func (r *HTTPClientConfigReq) validate(field string) (res []vld.Validator) {
-	if r == nil || !r.Enabled {
+func (req *HTTPClientConfigReq) validate(field string) (res []vld.Validator) {
+	if req == nil || !req.Enabled {
 		return
 	}
 	return res
@@ -322,36 +322,36 @@ type HTTPCompressionConfigReq struct {
 	DefaultEncoding      string        `json:"defaultEncoding"`
 }
 
-func (r *HTTPCompressionConfigReq) ToEntity() *entity.HTTPCompressionConfig {
-	if r == nil {
+func (req *HTTPCompressionConfigReq) ToEntity() *entity.HTTPCompressionConfig {
+	if req == nil {
 		return nil
 	}
 	return &entity.HTTPCompressionConfig{
-		Enabled:              r.Enabled,
-		IncludedContentTypes: r.IncludedContentTypes,
-		ExcludedContentTypes: r.ExcludedContentTypes,
-		MinResponseBody:      r.MinResponseBody,
-		DefaultEncoding:      r.DefaultEncoding,
+		Enabled:              req.Enabled,
+		IncludedContentTypes: req.IncludedContentTypes,
+		ExcludedContentTypes: req.ExcludedContentTypes,
+		MinResponseBody:      req.MinResponseBody,
+		DefaultEncoding:      req.DefaultEncoding,
 	}
 }
 
 //nolint:unparam
-func (r *HTTPCompressionConfigReq) modifyRequest() error {
-	if r == nil {
+func (req *HTTPCompressionConfigReq) modifyRequest() error {
+	if req == nil {
 		return nil
 	}
-	r.IncludedContentTypes = strings.FieldsFunc(strings.Join(r.IncludedContentTypes, ","), func(r rune) bool {
+	req.IncludedContentTypes = strings.FieldsFunc(strings.Join(req.IncludedContentTypes, ","), func(r rune) bool {
 		return r == ',' || unicode.IsSpace(r)
 	})
-	r.ExcludedContentTypes = strings.FieldsFunc(strings.Join(r.ExcludedContentTypes, ","), func(r rune) bool {
+	req.ExcludedContentTypes = strings.FieldsFunc(strings.Join(req.ExcludedContentTypes, ","), func(r rune) bool {
 		return r == ',' || unicode.IsSpace(r)
 	})
 	return nil
 }
 
 //nolint:unparam
-func (r *HTTPCompressionConfigReq) validate(field string) (res []vld.Validator) {
-	if r == nil || !r.Enabled {
+func (req *HTTPCompressionConfigReq) validate(field string) (res []vld.Validator) {
+	if req == nil || !req.Enabled {
 		return
 	}
 	return res
@@ -366,31 +366,31 @@ type HTTPHeaderConfigReq struct {
 	ToRemoveFromResponses []string          `json:"toRemoveFromResponses"`
 }
 
-func (r *HTTPHeaderConfigReq) ToEntity() *entity.HTTPHeaderConfig {
-	if r == nil {
+func (req *HTTPHeaderConfigReq) ToEntity() *entity.HTTPHeaderConfig {
+	if req == nil {
 		return nil
 	}
 	return &entity.HTTPHeaderConfig{
-		Enabled:               r.Enabled,
-		AutoContentType:       r.AutoContentType,
-		ToAddToRequests:       r.ToAddToRequests,
-		ToRemoveFromRequests:  r.ToRemoveFromRequests,
-		ToAddToResponses:      r.ToAddToResponses,
-		ToRemoveFromResponses: r.ToRemoveFromResponses,
+		Enabled:               req.Enabled,
+		AutoContentType:       req.AutoContentType,
+		ToAddToRequests:       req.ToAddToRequests,
+		ToRemoveFromRequests:  req.ToRemoveFromRequests,
+		ToAddToResponses:      req.ToAddToResponses,
+		ToRemoveFromResponses: req.ToRemoveFromResponses,
 	}
 }
 
 //nolint:unparam
-func (r *HTTPHeaderConfigReq) modifyRequest() error {
-	if r == nil {
+func (req *HTTPHeaderConfigReq) modifyRequest() error {
+	if req == nil {
 		return nil
 	}
 	return nil
 }
 
 //nolint:unparam
-func (r *HTTPHeaderConfigReq) validate(field string) (res []vld.Validator) {
-	if r == nil || !r.Enabled {
+func (req *HTTPHeaderConfigReq) validate(field string) (res []vld.Validator) {
+	if req == nil || !req.Enabled {
 		return
 	}
 	return res
@@ -406,36 +406,36 @@ type HTTPPathRewriteConfigReq struct {
 	PathReplaceWith    string `json:"pathReplaceWith"`
 }
 
-func (r *HTTPPathRewriteConfigReq) ToEntity() *entity.HTTPPathRewriteConfig {
-	if r == nil {
+func (req *HTTPPathRewriteConfigReq) ToEntity() *entity.HTTPPathRewriteConfig {
+	if req == nil {
 		return nil
 	}
 	return &entity.HTTPPathRewriteConfig{
-		Enabled:            r.Enabled,
-		PrefixAdd:          r.PrefixAdd,
-		PrefixStrip:        r.PrefixStrip,
-		PrefixStripIsRegex: r.PrefixStripIsRegex,
-		PathReplace:        r.PathReplace,
-		PathReplaceIsRegex: r.PathReplaceIsRegex,
-		PathReplaceWith:    r.PathReplaceWith,
+		Enabled:            req.Enabled,
+		PrefixAdd:          req.PrefixAdd,
+		PrefixStrip:        req.PrefixStrip,
+		PrefixStripIsRegex: req.PrefixStripIsRegex,
+		PathReplace:        req.PathReplace,
+		PathReplaceIsRegex: req.PathReplaceIsRegex,
+		PathReplaceWith:    req.PathReplaceWith,
 	}
 }
 
 //nolint:unparam
-func (r *HTTPPathRewriteConfigReq) modifyRequest() error {
-	if r == nil {
+func (req *HTTPPathRewriteConfigReq) modifyRequest() error {
+	if req == nil {
 		return nil
 	}
-	if !r.PrefixStripIsRegex {
-		prefixesStrip := strings.FieldsFunc(r.PrefixStrip, func(r rune) bool { return r == ',' || unicode.IsSpace(r) })
-		r.PrefixStrip = strings.Join(prefixesStrip, ",")
+	if !req.PrefixStripIsRegex {
+		prefixesStrip := strings.FieldsFunc(req.PrefixStrip, func(r rune) bool { return r == ',' || unicode.IsSpace(r) })
+		req.PrefixStrip = strings.Join(prefixesStrip, ",")
 	}
 	return nil
 }
 
 //nolint:unparam
-func (r *HTTPPathRewriteConfigReq) validate(field string) (res []vld.Validator) {
-	if r == nil || !r.Enabled {
+func (req *HTTPPathRewriteConfigReq) validate(field string) (res []vld.Validator) {
+	if req == nil || !req.Enabled {
 		return
 	}
 	return res
@@ -449,30 +449,30 @@ type HTTPRateLimitConfigReq struct {
 	MaxInFlightReq int               `json:"maxInFlightReq"`
 }
 
-func (r *HTTPRateLimitConfigReq) ToEntity() *entity.HTTPRateLimitConfig {
-	if r == nil {
+func (req *HTTPRateLimitConfigReq) ToEntity() *entity.HTTPRateLimitConfig {
+	if req == nil {
 		return nil
 	}
 	return &entity.HTTPRateLimitConfig{
-		Enabled:        r.Enabled,
-		Average:        r.Average,
-		Period:         r.Period,
-		Burst:          r.Burst,
-		MaxInFlightReq: r.MaxInFlightReq,
+		Enabled:        req.Enabled,
+		Average:        req.Average,
+		Period:         req.Period,
+		Burst:          req.Burst,
+		MaxInFlightReq: req.MaxInFlightReq,
 	}
 }
 
 //nolint:unparam
-func (r *HTTPRateLimitConfigReq) modifyRequest() error {
-	if r == nil {
+func (req *HTTPRateLimitConfigReq) modifyRequest() error {
+	if req == nil {
 		return nil
 	}
 	return nil
 }
 
 //nolint:unparam
-func (r *HTTPRateLimitConfigReq) validate(field string) (res []vld.Validator) {
-	if r == nil || !r.Enabled {
+func (req *HTTPRateLimitConfigReq) validate(field string) (res []vld.Validator) {
+	if req == nil || !req.Enabled {
 		return
 	}
 	return res
@@ -482,27 +482,27 @@ type HTTPWebsocketConfigReq struct {
 	Enabled bool `json:"enabled"`
 }
 
-func (r *HTTPWebsocketConfigReq) ToEntity() *entity.HTTPWebsocketConfig {
-	if r == nil {
+func (req *HTTPWebsocketConfigReq) ToEntity() *entity.HTTPWebsocketConfig {
+	if req == nil {
 		return nil
 	}
 	return &entity.HTTPWebsocketConfig{
-		Enabled: r.Enabled,
+		Enabled: req.Enabled,
 	}
 }
 
 //nolint:unparam
-func (r *HTTPWebsocketConfigReq) modifyRequest() error {
-	if r == nil {
+func (req *HTTPWebsocketConfigReq) modifyRequest() error {
+	if req == nil {
 		return nil
 	}
-	r.Enabled = true // NOTE: in BE side, websocket is always enabled
+	req.Enabled = true // NOTE: in BE side, websocket is always enabled
 	return nil
 }
 
 //nolint:unparam
-func (r *HTTPWebsocketConfigReq) validate(field string) (res []vld.Validator) {
-	if r == nil || !r.Enabled {
+func (req *HTTPWebsocketConfigReq) validate(field string) (res []vld.Validator) {
+	if req == nil || !req.Enabled {
 		return
 	}
 	return res
@@ -522,71 +522,71 @@ type HTTPPathConfigReq struct {
 	WebsocketConfig      *HTTPWebsocketConfigReq      `json:"websocketConfig"`
 }
 
-func (r *HTTPPathConfigReq) ToEntity() *entity.HTTPPathConfig {
-	if r == nil {
+func (req *HTTPPathConfigReq) ToEntity() *entity.HTTPPathConfig {
+	if req == nil {
 		return nil
 	}
 	return &entity.HTTPPathConfig{
-		Enabled:              r.Enabled,
-		Path:                 r.Path,
-		Mode:                 r.Mode,
-		BasicAuth:            r.BasicAuth.ToEntity(),
-		CircuitBreakerConfig: r.CircuitBreakerConfig.ToEntity(),
-		ClientConfig:         r.ClientConfig.ToEntity(),
-		CompressionConfig:    r.CompressionConfig.ToEntity(),
-		HeaderConfig:         r.HeaderConfig.ToEntity(),
-		PathRewriteConfig:    r.PathRewriteConfig.ToEntity(),
-		RateLimitConfig:      r.RateLimitConfig.ToEntity(),
-		WebsocketConfig:      r.WebsocketConfig.ToEntity(),
+		Enabled:              req.Enabled,
+		Path:                 req.Path,
+		Mode:                 req.Mode,
+		BasicAuth:            req.BasicAuth.ToEntity(),
+		CircuitBreakerConfig: req.CircuitBreakerConfig.ToEntity(),
+		ClientConfig:         req.ClientConfig.ToEntity(),
+		CompressionConfig:    req.CompressionConfig.ToEntity(),
+		HeaderConfig:         req.HeaderConfig.ToEntity(),
+		PathRewriteConfig:    req.PathRewriteConfig.ToEntity(),
+		RateLimitConfig:      req.RateLimitConfig.ToEntity(),
+		WebsocketConfig:      req.WebsocketConfig.ToEntity(),
 	}
 }
 
 //nolint:unparam
-func (r *HTTPPathConfigReq) modifyRequest() error {
-	if err := r.BasicAuth.modifyRequest(); err != nil {
+func (req *HTTPPathConfigReq) modifyRequest() error {
+	if err := req.BasicAuth.modifyRequest(); err != nil {
 		return hperrors.Wrap(err)
 	}
-	if err := r.CircuitBreakerConfig.modifyRequest(); err != nil {
+	if err := req.CircuitBreakerConfig.modifyRequest(); err != nil {
 		return hperrors.Wrap(err)
 	}
-	if err := r.ClientConfig.modifyRequest(); err != nil {
+	if err := req.ClientConfig.modifyRequest(); err != nil {
 		return hperrors.Wrap(err)
 	}
-	if err := r.CompressionConfig.modifyRequest(); err != nil {
+	if err := req.CompressionConfig.modifyRequest(); err != nil {
 		return hperrors.Wrap(err)
 	}
-	if err := r.HeaderConfig.modifyRequest(); err != nil {
+	if err := req.HeaderConfig.modifyRequest(); err != nil {
 		return hperrors.Wrap(err)
 	}
-	if err := r.PathRewriteConfig.modifyRequest(); err != nil {
+	if err := req.PathRewriteConfig.modifyRequest(); err != nil {
 		return hperrors.Wrap(err)
 	}
-	if err := r.RateLimitConfig.modifyRequest(); err != nil {
+	if err := req.RateLimitConfig.modifyRequest(); err != nil {
 		return hperrors.Wrap(err)
 	}
-	if err := r.WebsocketConfig.modifyRequest(); err != nil {
+	if err := req.WebsocketConfig.modifyRequest(); err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil
 }
 
 //nolint:unparam
-func (r *HTTPPathConfigReq) validate(field string) (res []vld.Validator) {
-	if r == nil || !r.Enabled {
+func (req *HTTPPathConfigReq) validate(field string) (res []vld.Validator) {
+	if req == nil || !req.Enabled {
 		return
 	}
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStrIn(&r.Mode, true, base.AllHTTPPathModes, field+"mode")...)
-	res = append(res, r.BasicAuth.validate(field+"basicAuth")...)
-	res = append(res, r.CircuitBreakerConfig.validate(field+"circuitBreakerConfig")...)
-	res = append(res, r.ClientConfig.validate(field+"clientConfig")...)
-	res = append(res, r.CompressionConfig.validate(field+"compressionConfig")...)
-	res = append(res, r.HeaderConfig.validate(field+"headerConfig")...)
-	res = append(res, r.PathRewriteConfig.validate(field+"pathRewriteConfig")...)
-	res = append(res, r.RateLimitConfig.validate(field+"rateLimitConfig")...)
-	res = append(res, r.WebsocketConfig.validate(field+"websocketConfig")...)
+	res = append(res, basedto.ValidateStrIn(&req.Mode, true, base.AllHTTPPathModes, field+"mode")...)
+	res = append(res, req.BasicAuth.validate(field+"basicAuth")...)
+	res = append(res, req.CircuitBreakerConfig.validate(field+"circuitBreakerConfig")...)
+	res = append(res, req.ClientConfig.validate(field+"clientConfig")...)
+	res = append(res, req.CompressionConfig.validate(field+"compressionConfig")...)
+	res = append(res, req.HeaderConfig.validate(field+"headerConfig")...)
+	res = append(res, req.PathRewriteConfig.validate(field+"pathRewriteConfig")...)
+	res = append(res, req.RateLimitConfig.validate(field+"rateLimitConfig")...)
+	res = append(res, req.WebsocketConfig.validate(field+"websocketConfig")...)
 	return res
 }
 

@@ -62,6 +62,7 @@ func (req *IMSlackReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.Webhook, true, 1, webhookURLMaxLen, field+"webhook")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Webhook, field+"webhook")...)
 	return res
 }
 
@@ -83,6 +84,7 @@ func (req *IMDiscordReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.Webhook, true, 1, webhookURLMaxLen, field+"webhook")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Webhook, field+"webhook")...)
 	return res
 }
 
@@ -106,6 +108,7 @@ func (req *IMTelegramReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.BotToken, true, 1, tokenMaxLen, field+"botToken")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.BotToken, field+"botToken")...)
 	res = append(res, basedto.ValidateStr(&req.ChatID, true, 1, tokenMaxLen, field+"chatId")...)
 	return res
 }
@@ -130,7 +133,9 @@ func (req *IMLarkReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.Webhook, true, 1, webhookURLMaxLen, field+"webhook")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Webhook, field+"webhook")...)
 	res = append(res, basedto.ValidateStr(&req.Secret, false, 0, tokenMaxLen, field+"secret")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Secret, field+"secret")...)
 	return res
 }
 

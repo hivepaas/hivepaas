@@ -79,6 +79,7 @@ func (req *SSLProviderZeroSSLReq) validate(field string) (res []vld.Validator) {
 	}
 	res = append(res, basedto.ValidateStr(&req.EABKid, true, 1, eabKidMaxLen, field+"eabKid")...)
 	res = append(res, basedto.ValidateStr(&req.EABHmacKey, true, 1, eabHmacKeyMaxLen, field+"eabHmacKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.EABHmacKey, field+"eabHmacKey")...)
 	return res
 }
 
@@ -103,6 +104,7 @@ func (req *SSLProviderGoogleTrustReq) validate(field string) (res []vld.Validato
 	}
 	res = append(res, basedto.ValidateStr(&req.EABKid, true, 1, eabKidMaxLen, field+"eabKid")...)
 	res = append(res, basedto.ValidateStr(&req.EABHmacKey, true, 1, eabHmacKeyMaxLen, field+"eabHmacKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.EABHmacKey, field+"eabHmacKey")...)
 	return res
 }
 

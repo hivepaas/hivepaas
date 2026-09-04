@@ -183,6 +183,7 @@ func (req *AcmeDnsProviderAzureReq) validate(field string) (res []vld.Validator)
 	}
 	res = append(res, basedto.ValidateStr(&req.ClientID, true, 1, len200, field+"clientId")...)
 	res = append(res, basedto.ValidateStr(&req.ClientSecret, true, 1, len1000, field+"clientSecret")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.ClientSecret, field+"clientSecret")...)
 	res = append(res, basedto.ValidateStr(&req.SubscriptionID, false, 1, len200, field+"subscriptionId")...)
 	res = append(res, basedto.ValidateStr(&req.TenantID, false, 1, len200, field+"tenantId")...)
 	res = append(res, basedto.ValidateStr(&req.ResourceGroupName, false, 1, len200, field+"resourceGroupName")...)
@@ -203,6 +204,7 @@ func (req *AcmeDnsProviderBaiduCloudReq) validate(field string) (res []vld.Valid
 	}
 	res = append(res, basedto.ValidateStr(&req.AccessKey, true, 1, len200, field+"accessKey")...)
 	res = append(res, basedto.ValidateStr(&req.SecretKey, true, 1, len1000, field+"secretKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.SecretKey, field+"secretKey")...)
 	return res
 }
 
@@ -218,6 +220,7 @@ func (req *AcmeDnsProviderCloudflareReq) validate(field string) (res []vld.Valid
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.AuthToken, true, 1, len1000, field+"authToken")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.AuthToken, field+"authToken")...)
 	return res
 }
 
@@ -233,6 +236,7 @@ func (req *AcmeDnsProviderDigitalOceanReq) validate(field string) (res []vld.Val
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.AuthToken, true, 1, len1000, field+"authToken")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.AuthToken, field+"authToken")...)
 	return res
 }
 
@@ -249,6 +253,7 @@ func (req *AcmeDnsProviderGCloudReq) validate(field string) (res []vld.Validator
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.ServiceAccount, true, 1, len10000, field+"serviceAccount")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.ServiceAccount, field+"serviceAccount")...)
 	res = append(res, basedto.ValidateStr(&req.ProjectID, false, 1, len200, field+"projectId")...)
 	return res
 }
@@ -266,7 +271,9 @@ func (req *AcmeDnsProviderGoDaddyReq) validate(field string) (res []vld.Validato
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.APIKey, true, 1, len200, field+"apiKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.APIKey, field+"apiKey")...)
 	res = append(res, basedto.ValidateStr(&req.APISecret, true, 1, len1000, field+"apiSecret")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.APISecret, field+"apiSecret")...)
 	return res
 }
 
@@ -282,6 +289,7 @@ func (req *AcmeDnsProviderHetznerReq) validate(field string) (res []vld.Validato
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.APIToken, true, 1, len1000, field+"apiToken")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.APIToken, field+"apiToken")...)
 	return res
 }
 
@@ -300,6 +308,7 @@ func (req *AcmeDnsProviderHuaweiCloudReq) validate(field string) (res []vld.Vali
 	}
 	res = append(res, basedto.ValidateStr(&req.AccessKey, true, 1, len200, field+"accessKey")...)
 	res = append(res, basedto.ValidateStr(&req.SecretKey, true, 1, len1000, field+"secretKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.SecretKey, field+"secretKey")...)
 	res = append(res, basedto.ValidateStr(&req.Region, false, 0, len200, field+"region")...)
 	return res
 }
@@ -318,6 +327,7 @@ func (req *AcmeDnsProviderNamecheapReq) validate(field string) (res []vld.Valida
 	}
 	res = append(res, basedto.ValidateStr(&req.APIUser, true, 1, len200, field+"apiUser")...)
 	res = append(res, basedto.ValidateStr(&req.APIKey, true, 1, len1000, field+"apiKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.APIKey, field+"apiKey")...)
 	return res
 }
 
@@ -338,6 +348,7 @@ func (req *AcmeDnsProviderRFC2136Req) validate(field string) (res []vld.Validato
 	res = append(res, basedto.ValidateStr(&req.Nameserver, true, 1, len200, field+"nameserver")...)
 	res = append(res, basedto.ValidateStr(&req.TSIGKeyName, true, 1, len200, field+"tsigKeyName")...)
 	res = append(res, basedto.ValidateStr(&req.TSIGSecret, true, 1, len1000, field+"tsigSecret")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.TSIGSecret, field+"tsigSecret")...)
 	res = append(res, basedto.ValidateStr(&req.TSIGAlgorithm, false, 1, len200, field+"tsigAlgorithm")...)
 	return res
 }
@@ -358,6 +369,7 @@ func (req *AcmeDnsProviderRoute53Req) validate(field string) (res []vld.Validato
 	}
 	res = append(res, basedto.ValidateStr(&req.AccessKeyID, true, 1, len200, field+"accessKeyId")...)
 	res = append(res, basedto.ValidateStr(&req.SecretAccessKey, true, 1, len1000, field+"secretAccessKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.SecretAccessKey, field+"secretAccessKey")...)
 	res = append(res, basedto.ValidateStr(&req.HostedZoneID, false, 0, len200, field+"hostedZoneId")...)
 	res = append(res, basedto.ValidateStr(&req.Region, false, 0, len200, field+"region")...)
 	return res
@@ -378,6 +390,7 @@ func (req *AcmeDnsProviderTencentCloudReq) validate(field string) (res []vld.Val
 	}
 	res = append(res, basedto.ValidateStr(&req.SecretID, true, 1, len200, field+"secretId")...)
 	res = append(res, basedto.ValidateStr(&req.SecretKey, true, 1, len1000, field+"secretKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.SecretKey, field+"secretKey")...)
 	res = append(res, basedto.ValidateStr(&req.Region, false, 0, len200, field+"region")...)
 	return res
 }

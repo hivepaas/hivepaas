@@ -90,6 +90,7 @@ func (req *SystemBackupEncryptionReq) validate(field string) (res []vld.Validato
 	}
 	res = append(res, basedto.ValidateStrIn(&req.Format, false,
 		base.AllFileEncryptionFormats, field+"format")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Secret, field+"secret")...)
 	return res
 }
 

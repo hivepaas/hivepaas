@@ -84,6 +84,7 @@ func (req *OAuthBaseReq) validate(field string) (res []vld.Validator) {
 		base.IDMaxLen, field+"clientId")...)
 	res = append(res, basedto.ValidateStr(&req.ClientSecret, true, base.SecretMinLen,
 		base.SecretMaxLen, field+"clientSecret")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.ClientSecret, field+"clientSecret")...)
 	res = append(res, basedto.ValidateStr(&req.Organization, false, base.IDMinLen,
 		base.IDMaxLen, field+"organization")...)
 	res = append(res, basedto.ValidateStr(&req.AuthURL, false, base.URLMinLen,

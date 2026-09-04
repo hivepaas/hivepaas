@@ -24,6 +24,7 @@ func (req *GenerateSSHKeyReq) Validate() hperrors.ValidationErrors {
 		base.AllPrivateKeyTypes, "keyType")...)
 	validators = append(validators, basedto.ValidateStr(&req.Passphrase, false, 1,
 		passphraseMaxLen, "passphrase")...)
+	validators = append(validators, basedto.ValidatePlainSecret(&req.Passphrase, "passphrase")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

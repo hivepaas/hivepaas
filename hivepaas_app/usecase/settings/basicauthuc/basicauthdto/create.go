@@ -48,6 +48,7 @@ func (req *BasicAuthBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
 	res = append(res, basedto.ValidateStr(&req.Username, true, 1, usernameMaxLen, field+"username")...)
 	res = append(res, basedto.ValidateStr(&req.Password, true, 1, passwordMaxLen, field+"password")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Password, field+"password")...)
 	return res
 }
 

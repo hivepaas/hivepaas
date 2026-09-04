@@ -127,8 +127,8 @@ type clientReadCloser struct {
 	client containerservice.ContainerServiceClient
 }
 
-func (r *clientReadCloser) Read(p []byte) (int, error) {
-	n, err := r.reader.Read(p)
+func (req *clientReadCloser) Read(p []byte) (int, error) {
+	n, err := req.reader.Read(p)
 	if err != nil {
 		if err == io.EOF {
 			return n, io.EOF
@@ -138,15 +138,15 @@ func (r *clientReadCloser) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-func (r *clientReadCloser) Close() error {
+func (req *clientReadCloser) Close() error {
 	var errs []error
-	if r.reader != nil {
-		if err := r.reader.Close(); err != nil {
+	if req.reader != nil {
+		if err := req.reader.Close(); err != nil {
 			errs = append(errs, err)
 		}
 	}
-	if r.client != nil {
-		if err := r.client.Close(); err != nil {
+	if req.client != nil {
+		if err := req.client.Close(); err != nil {
 			errs = append(errs, err)
 		}
 	}

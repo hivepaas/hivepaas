@@ -56,6 +56,7 @@ func (req *AccessTokenBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateStr(&req.Kind, true, 1, kindMaxLen, field+"kind")...)
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
 	res = append(res, basedto.ValidateStr(&req.Token, true, 1, tokenMaxLen, field+"token")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Token, field+"token")...)
 	res = append(res, basedto.ValidateStr(&req.User, false, 1, base.SettingNameMaxLen, field+"user")...)
 	res = append(res, basedto.ValidateStr(&req.BaseURL, false, 1, urlMaxLen, field+"baseURL")...)
 	return res

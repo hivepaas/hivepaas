@@ -224,6 +224,7 @@ func (req *CommandOutputSaveToFileReq) validate(field string) (res []vld.Validat
 		field+"encryptionFormat")...)
 	res = append(res, basedto.ValidateStr(&req.EncryptionSecret, req.EncryptionFormat != "",
 		encryptionMinLen, encryptionMaxLen, field+"encryptionSecret")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.EncryptionSecret, field+"encryptionSecret")...)
 	return res
 }
 

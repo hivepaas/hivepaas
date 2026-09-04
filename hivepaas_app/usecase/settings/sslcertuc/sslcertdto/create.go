@@ -97,6 +97,7 @@ func (req *SSLCertBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateDomain(&req.Domain, true, base.DomainNameMaxLen, true, field+"domain")...)
 	res = append(res, basedto.ValidateStr(&req.Certificate, requireCert, 1, keyMaxLen, field+"certificate")...)
 	res = append(res, basedto.ValidateStr(&req.PrivateKey, requireCert, 1, keyMaxLen, field+"privateKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.PrivateKey, field+"privateKey")...)
 	res = append(res, basedto.ValidateStr(&req.CACertificate, false, 1, keyMaxLen, field+"caCertificate")...)
 	res = append(res, basedto.ValidateEmail(&req.Email, false, field+"email")...)
 	res = append(res, basedto.ValidateObjectIDReq(&req.AcmeProvider, requireAcmeProvider, field+"acmeProvider")...)

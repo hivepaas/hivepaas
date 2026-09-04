@@ -49,29 +49,30 @@ type EmailSMTP struct {
 	SSL         bool   `json:"ssl"`
 }
 
-func (r *EmailSMTP) ToEntity() *entity.EmailSMTP {
+func (req *EmailSMTP) ToEntity() *entity.EmailSMTP {
 	return &entity.EmailSMTP{
-		Host:        r.Host,
-		Port:        r.Port,
-		Username:    r.Username,
-		DisplayName: r.DisplayName,
-		Password:    entity.NewEncryptedField(r.Password),
-		SSL:         r.SSL,
+		Host:        req.Host,
+		Port:        req.Port,
+		Username:    req.Username,
+		DisplayName: req.DisplayName,
+		Password:    entity.NewEncryptedField(req.Password),
+		SSL:         req.SSL,
 	}
 }
 
-func (r *EmailSMTP) validate(field string) (res []vld.Validator) {
-	if r == nil {
+func (req *EmailSMTP) validate(field string) (res []vld.Validator) {
+	if req == nil {
 		return nil
 	}
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStr(&r.Host, true, 1, urlMaxLen, field+"host")...)
-	res = append(res, basedto.ValidateNumber(&r.Port, true, 1, portMax, field+"port")...)
-	res = append(res, basedto.ValidateStr(&r.Username, true, 1, usernameMaxLen, field+"username")...)
-	res = append(res, basedto.ValidateStr(&r.DisplayName, false, 1, usernameMaxLen, field+"displayName")...)
-	res = append(res, basedto.ValidateStr(&r.Password, true, 1, passwordMaxLen, field+"password")...)
+	res = append(res, basedto.ValidateStr(&req.Host, true, 1, urlMaxLen, field+"host")...)
+	res = append(res, basedto.ValidateNumber(&req.Port, true, 1, portMax, field+"port")...)
+	res = append(res, basedto.ValidateStr(&req.Username, true, 1, usernameMaxLen, field+"username")...)
+	res = append(res, basedto.ValidateStr(&req.DisplayName, false, 1, usernameMaxLen, field+"displayName")...)
+	res = append(res, basedto.ValidateStr(&req.Password, true, 1, passwordMaxLen, field+"password")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Password, field+"password")...)
 	return res
 }
 
@@ -86,29 +87,30 @@ type EmailHTTP struct {
 	Password     string                        `json:"password"`
 }
 
-func (r *EmailHTTP) ToEntity() *entity.EmailHTTP {
+func (req *EmailHTTP) ToEntity() *entity.EmailHTTP {
 	return &entity.EmailHTTP{
-		Endpoint:     r.Endpoint,
-		Method:       r.Method,
-		ContentType:  r.ContentType,
-		Headers:      r.Headers,
-		FieldMapping: r.FieldMapping,
-		Username:     r.Username,
-		DisplayName:  r.DisplayName,
-		Password:     entity.NewEncryptedField(r.Password),
+		Endpoint:     req.Endpoint,
+		Method:       req.Method,
+		ContentType:  req.ContentType,
+		Headers:      req.Headers,
+		FieldMapping: req.FieldMapping,
+		Username:     req.Username,
+		DisplayName:  req.DisplayName,
+		Password:     entity.NewEncryptedField(req.Password),
 	}
 }
 
-func (r *EmailHTTP) validate(field string) (res []vld.Validator) {
-	if r == nil {
+func (req *EmailHTTP) validate(field string) (res []vld.Validator) {
+	if req == nil {
 		return nil
 	}
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateStr(&r.Endpoint, true, 1, urlMaxLen, field+"endpoint")...)
-	res = append(res, basedto.ValidateStrIn(&r.Method, true, base.AllHTTPMethods, field+"method")...)
-	// TODO: add validation
+	res = append(res, basedto.ValidateStr(&req.Endpoint, true, 1, urlMaxLen, field+"endpoint")...)
+	res = append(res, basedto.ValidateStrIn(&req.Method, true, base.AllHTTPMethods, field+"method")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Password, field+"password")...)
+	// TODO: add the remaining validation
 	return res
 }
 

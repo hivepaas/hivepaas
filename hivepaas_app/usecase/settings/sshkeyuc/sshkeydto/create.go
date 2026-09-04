@@ -48,7 +48,9 @@ func (req *SSHKeyBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
 	res = append(res, basedto.ValidateStr(&req.PublicKey, false, 1, pubKeyMaxLen, field+"publicKey")...)
 	res = append(res, basedto.ValidateStr(&req.PrivateKey, true, 1, privKeyMaxLen, field+"privateKey")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.PrivateKey, field+"privateKey")...)
 	res = append(res, basedto.ValidateStr(&req.Passphrase, false, 1, passphraseMaxLen, field+"passphrase")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Passphrase, field+"passphrase")...)
 	return res
 }
 

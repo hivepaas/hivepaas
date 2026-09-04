@@ -32,6 +32,13 @@ func (uc *UC) UpdateUserAccesses(
 		persistingData := &persistingProjectData{}
 		uc.prepareUpdatingUserAccesses(req, data, persistingData)
 
+		// A user must not hand out - or take away - more than they hold themselves.
+		_, err = uc.permissionManager.AuthorizeAccessChanges(ctx, db, auth,
+			persistingData.UpsertingACLPermissions, data.CurrentAccessList)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -47,8 +54,11 @@ func (uc *UC) UpdateUserAccesses(
 }
 
 type updateUserAccessesData struct {
-	Project         *entity.Project
-	CurrentAccesses map[string]*entity.ACLPermission
+	Project *entity.Project
+	// CurrentAccesses is consumed while matching the request, so CurrentAccessList
+	// keeps the untouched snapshot the authorization check needs.
+	CurrentAccesses   map[string]*entity.ACLPermission
+	CurrentAccessList []*entity.ACLPermission
 }
 
 func (uc *UC) loadUserAccessesForUpdate(
@@ -75,6 +85,7 @@ func (uc *UC) loadUserAccessesForUpdate(
 		return hperrors.Wrap(err)
 	}
 
+	data.CurrentAccessList = currAccesses
 	data.CurrentAccesses = make(map[string]*entity.ACLPermission, len(currAccesses))
 	for _, access := range currAccesses {
 		data.CurrentAccesses[access.SubjectID+"/"+access.ResourceID] = access

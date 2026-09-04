@@ -35,6 +35,13 @@ func (uc *UC) UpdateUser(
 		persistingData := &userservice.PersistingUserData{}
 		uc.prepareUpdatingUserData(req, userData, persistingData)
 
+		err = uc.authorizeAccessChanges(ctx, db, auth, userData.User,
+			accessResourceTypesToReplace(req.ModuleAccesses != nil, req.ProjectAccesses != nil),
+			persistingData)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		// Revoke target user's JWT, user needs to re-login
 		err = uc.userTokenRepo.DelAll(ctx, req.ID)
 		if err != nil {
@@ -62,7 +69,9 @@ func (uc *UC) loadUserDataForUpdate(
 	data *userUpdateData,
 ) error {
 	user, err := uc.userRepo.GetByID(ctx, db, req.ID,
-		bunex.SelectFor("UPDATE"),
+		// The current grants decide what this update may replace.
+		bunex.SelectRelation("Accesses"),
+		bunex.SelectFor("UPDATE OF \"user\""),
 	)
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -160,18 +169,9 @@ func (uc *UC) prepareUpdatingUserData(
 	persistingData.UpsertingUsers = append(persistingData.UpsertingUsers, user)
 
 	if req.ModuleAccesses != nil {
-		persistingData.DeletingAccesses = append(persistingData.DeletingAccesses,
-			&base.PermissionResource{
-				SubjectType:  base.SubjectTypeUser,
-				SubjectID:    user.ID,
-				ResourceType: base.ResourceTypeModule,
-			},
-		)
 		uc.preparePersistingUserModuleAccesses(user, req.ModuleAccesses, timeNow, persistingData)
 	}
 	if req.ProjectAccesses != nil {
-		persistingData.DeletingAccesses = append(persistingData.DeletingAccesses,
-			deletingUserProjectAccesses(user.ID)...)
 		uc.preparePersistingUserProjectAccesses(user, req.ProjectAccesses, timeNow, persistingData)
 	}
 }

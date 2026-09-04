@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -39,6 +40,11 @@ func (uc *UC) InviteUser(
 	uc.preparePersistingUserInviteData(req, inviteData, persistingData)
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
+		err := uc.authorizeAccessChanges(ctx, db, auth, inviteData.User,
+			accessResourceTypesToReplace(true, true), persistingData)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
 		return uc.userService.PersistUserData(ctx, db, persistingData)
 	})
 	if err != nil {
@@ -68,10 +74,9 @@ func (uc *UC) InviteUser(
 }
 
 type userInviteData struct {
-	User                  *entity.User
-	RemoveCurrentAccesses bool
-	InviteLink            string
-	SystemEmail           *entity.Email
+	User        *entity.User
+	InviteLink  string
+	SystemEmail *entity.Email
 }
 
 func (uc *UC) loadUserInviteData(
@@ -80,7 +85,10 @@ func (uc *UC) loadUserInviteData(
 	req *userdto.InviteUserReq,
 	data *userInviteData,
 ) error {
-	user, err := uc.userRepo.GetByEmail(ctx, db, req.Email)
+	// A pending user being re-invited has grants this invite replaces.
+	user, err := uc.userRepo.GetByEmail(ctx, db, req.Email,
+		bunex.SelectRelation("Accesses"),
+	)
 	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 		return hperrors.Wrap(err)
 	}
@@ -120,9 +128,6 @@ func (uc *UC) loadUserInviteData(
 			FullName:  username,
 			CreatedAt: time.Now(),
 		}
-	} else {
-		// Remove all current accesses
-		data.RemoveCurrentAccesses = true
 	}
 	data.User = user
 
@@ -152,17 +157,6 @@ func (uc *UC) preparePersistingUserInviteData(
 
 	persistingData.UpsertingUsers = append(persistingData.UpsertingUsers, user)
 
-	if data.RemoveCurrentAccesses {
-		persistingData.DeletingAccesses = append(persistingData.DeletingAccesses,
-			&base.PermissionResource{
-				SubjectType:  base.SubjectTypeUser,
-				SubjectID:    user.ID,
-				ResourceType: base.ResourceTypeModule,
-			},
-		)
-		persistingData.DeletingAccesses = append(persistingData.DeletingAccesses,
-			deletingUserProjectAccesses(user.ID)...)
-	}
 	uc.preparePersistingUserModuleAccesses(user, req.ModuleAccesses, timeNow, persistingData)
 	uc.preparePersistingUserProjectAccesses(user, req.ProjectAccesses, timeNow, persistingData)
 }
@@ -210,24 +204,5 @@ func (uc *UC) preparePersistingUserProjectAccesses(
 					UpdatedAt:    timeNow,
 				})
 		}
-	}
-}
-
-// deletingUserProjectAccesses lists the access rows to clear before writing the
-// requested ones. Project-level rows are included so the legacy grants of a user
-// edited after the switch to per-env permissions do not linger and keep granting
-// access to every env of the project.
-func deletingUserProjectAccesses(userID string) []*base.PermissionResource {
-	return []*base.PermissionResource{
-		{
-			SubjectType:  base.SubjectTypeUser,
-			SubjectID:    userID,
-			ResourceType: base.ResourceTypeProjectEnv,
-		},
-		{
-			SubjectType:  base.SubjectTypeUser,
-			SubjectID:    userID,
-			ResourceType: base.ResourceTypeProject,
-		},
 	}
 }

@@ -17,6 +17,13 @@ type Manager interface {
 	CheckAccessOnSetting(ctx context.Context, db database.IDB, auth *basedto.Auth, check AccessCheck,
 		setting *entity.Setting) (bool, error)
 
+	// AuthorizeAccessChanges checks the access changes the acting user wants to
+	// apply to another subject - a non-admin may only flip the action bits they
+	// hold themselves, both when granting and when revoking - and returns the
+	// subject's existing rows the operation may replace.
+	AuthorizeAccessChanges(ctx context.Context, db database.IDB, auth *basedto.Auth,
+		desired []*entity.ACLPermission, current []*entity.ACLPermission) ([]*entity.ACLPermission, error)
+
 	// NOTE: this func should be called within a transaction
 	UpdateACLPermissions(ctx context.Context, db database.IDB, perms []*entity.ACLPermission) error
 	DeleteACLPermissions(ctx context.Context, db database.IDB, perms []*base.PermissionResource) error

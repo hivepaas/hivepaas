@@ -1,6 +1,7 @@
 package useruc
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -44,21 +45,46 @@ func TestPreparePersistingUserProjectAccessesWritesEnvLevelRows(t *testing.T) {
 	}
 }
 
-// Editing a user must also clear the legacy project-level rows, otherwise they
-// would keep granting access to every env of the project.
-func TestDeletingUserProjectAccessesCoversBothLevels(t *testing.T) {
-	resources := deletingUserProjectAccesses("usr_1")
-
-	seen := map[base.ResourceType]bool{}
-	for _, res := range resources {
-		if res.SubjectType != base.SubjectTypeUser || res.SubjectID != "usr_1" {
-			t.Errorf("wrong subject: %s/%s", res.SubjectType, res.SubjectID)
-		}
-		seen[res.ResourceType] = true
+func TestAccessResourceTypesToReplace(t *testing.T) {
+	tests := []struct {
+		name             string
+		replaceModules   bool
+		replaceProjects  bool
+		wantResourceType []base.ResourceType
+	}{
+		{
+			name: "nothing to replace when the request carries no access list",
+		},
+		{
+			name:             "modules only",
+			replaceModules:   true,
+			wantResourceType: []base.ResourceType{base.ResourceTypeModule},
+		},
+		{
+			// The legacy project level must be replaced too, otherwise an old row
+			// would linger and keep granting access to every env of the project.
+			name:            "projects cover both the env and the legacy project level",
+			replaceProjects: true,
+			wantResourceType: []base.ResourceType{
+				base.ResourceTypeProject, base.ResourceTypeProjectEnv,
+			},
+		},
+		{
+			name:            "both",
+			replaceModules:  true,
+			replaceProjects: true,
+			wantResourceType: []base.ResourceType{
+				base.ResourceTypeModule, base.ResourceTypeProject, base.ResourceTypeProjectEnv,
+			},
+		},
 	}
-	for _, want := range []base.ResourceType{base.ResourceTypeProjectEnv, base.ResourceTypeProject} {
-		if !seen[want] {
-			t.Errorf("resource type %q should be cleared", want)
-		}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := accessResourceTypesToReplace(tt.replaceModules, tt.replaceProjects)
+			if !slices.Equal(got, tt.wantResourceType) {
+				t.Errorf("accessResourceTypesToReplace() = %v, want %v", got, tt.wantResourceType)
+			}
+		})
 	}
 }

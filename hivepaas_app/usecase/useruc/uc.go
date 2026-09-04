@@ -2,6 +2,7 @@ package useruc
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/emailservice"
@@ -17,6 +18,8 @@ type UC struct {
 
 	emailService emailservice.Service
 	userService  userservice.Service
+
+	permissionManager permission.Manager
 }
 
 func New(
@@ -28,6 +31,8 @@ func New(
 
 	emailService emailservice.Service,
 	userService userservice.Service,
+
+	permissionManager permission.Manager,
 ) *UC {
 	return &UC{
 		db: db,
@@ -38,5 +43,7 @@ func New(
 
 		emailService: emailService,
 		userService:  userService,
+
+		permissionManager: permissionManager,
 	}
 }

@@ -13,7 +13,16 @@ import (
 
 const (
 	configFileName = "config.toml"
-	envPrefix      = "LP"
+	// envPrefix namespaces the env names configor derives on its own. Every scalar
+	// setting here carries an explicit `env:"HP_..."` tag, which configor uses
+	// verbatim, so the prefix only ever applies to the nested section structs
+	// (HP_DB, HP_SESSION, ...) that can be fed a whole YAML blob.
+	//
+	// It cannot simply be dropped: with an empty ENVPrefix configor falls back to
+	// "Configor" and starts honoring CONFIGOR_ENV_PREFIX, and with "-" it drops
+	// the prefix entirely and would read bare names like DB or CACHE - both worse
+	// than an explicit namespace of our own.
+	envPrefix = "HP"
 )
 
 const (

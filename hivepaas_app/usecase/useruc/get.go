@@ -19,8 +19,12 @@ func (uc *UC) GetUser(
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	}
 	if req.GetAccesses {
+		// The response reports access per project env, so every env of the projects
+		// involved must be loaded, whether the user was granted the project itself
+		// or only some of its envs.
 		loadOpts = append(loadOpts,
-			bunex.SelectRelation("Accesses.ResourceProject"),
+			bunex.SelectRelation("Accesses.ResourceProject.ProjectEnvs"),
+			bunex.SelectRelation("Accesses.ResourceProjectEnv.Project.ProjectEnvs"),
 		)
 	}
 

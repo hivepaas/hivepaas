@@ -159,12 +159,9 @@ func (uc *UC) preparePersistingUserInviteData(
 				SubjectID:    user.ID,
 				ResourceType: base.ResourceTypeModule,
 			},
-			&base.PermissionResource{
-				SubjectType:  base.SubjectTypeUser,
-				SubjectID:    user.ID,
-				ResourceType: base.ResourceTypeProject,
-			},
 		)
+		persistingData.DeletingAccesses = append(persistingData.DeletingAccesses,
+			deletingUserProjectAccesses(user.ID)...)
 	}
 	uc.preparePersistingUserModuleAccesses(user, req.ModuleAccesses, timeNow, persistingData)
 	uc.preparePersistingUserProjectAccesses(user, req.ProjectAccesses, timeNow, persistingData)
@@ -190,22 +187,47 @@ func (uc *UC) preparePersistingUserModuleAccesses(
 	}
 }
 
+// preparePersistingUserProjectAccesses turns the requested grants into ACL rows.
+// The request groups grants by project for symmetry with the GET response, but
+// permissions are stored per project env only: the env IDs already carry their
+// project, and userdto.validateEnvAccesses has checked their shape.
 func (uc *UC) preparePersistingUserProjectAccesses(
 	user *entity.User,
-	projectReqs basedto.ObjectAccessSliceReq,
+	projectReqs []*userdto.ProjectAccessReq,
 	timeNow time.Time,
 	persistingData *userservice.PersistingUserData,
 ) {
 	for _, projectReq := range projectReqs {
-		persistingData.UpsertingAccesses = append(persistingData.UpsertingAccesses,
-			&entity.ACLPermission{
-				SubjectType:  base.SubjectTypeUser,
-				SubjectID:    user.ID,
-				ResourceType: base.ResourceTypeProject,
-				ResourceID:   projectReq.ID,
-				Actions:      projectReq.Access,
-				CreatedAt:    timeNow,
-				UpdatedAt:    timeNow,
-			})
+		for _, envReq := range projectReq.EnvAccesses {
+			persistingData.UpsertingAccesses = append(persistingData.UpsertingAccesses,
+				&entity.ACLPermission{
+					SubjectType:  base.SubjectTypeUser,
+					SubjectID:    user.ID,
+					ResourceType: base.ResourceTypeProjectEnv,
+					ResourceID:   envReq.ID,
+					Actions:      envReq.Access,
+					CreatedAt:    timeNow,
+					UpdatedAt:    timeNow,
+				})
+		}
+	}
+}
+
+// deletingUserProjectAccesses lists the access rows to clear before writing the
+// requested ones. Project-level rows are included so the legacy grants of a user
+// edited after the switch to per-env permissions do not linger and keep granting
+// access to every env of the project.
+func deletingUserProjectAccesses(userID string) []*base.PermissionResource {
+	return []*base.PermissionResource{
+		{
+			SubjectType:  base.SubjectTypeUser,
+			SubjectID:    userID,
+			ResourceType: base.ResourceTypeProjectEnv,
+		},
+		{
+			SubjectType:  base.SubjectTypeUser,
+			SubjectID:    userID,
+			ResourceType: base.ResourceTypeProject,
+		},
 	}
 }

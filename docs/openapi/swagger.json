@@ -39007,7 +39007,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -39025,7 +39025,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -44128,6 +44128,13 @@
       },
       "projectdto.ProjectBaseResp" : {
         "properties" : {
+          "envs" : {
+            "description" : "Envs lets a caller listing projects also offer their envs without a second\nrequest, which is what per-env permission editing needs.",
+            "items" : {
+              "$ref" : "#/components/schemas/projectdto.ProjectEnvResp"
+            },
+            "type" : "array"
+          },
           "id" : {
             "type" : "string"
           },
@@ -44144,7 +44151,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "id", "key", "name", "photo", "status" ],
+        "required" : [ "envs", "id", "key", "name", "photo", "status" ],
         "type" : "object"
       },
       "projectdto.ProjectEnvReq" : {
@@ -48698,6 +48705,9 @@
           "installationId" : {
             "type" : "integer"
           },
+          "installationsURL" : {
+            "type" : "string"
+          },
           "kind" : {
             "type" : "string"
           },
@@ -48707,14 +48717,30 @@
           "organization" : {
             "type" : "string"
           },
+          "ownerLogin" : {
+            "type" : "string"
+          },
+          "ownerType" : {
+            "type" : "string"
+          },
           "privateKey" : {
+            "type" : "string"
+          },
+          "publicURL" : {
             "type" : "string"
           },
           "secretMasked" : {
             "type" : "boolean"
           },
+          "settingsURL" : {
+            "description" : "SettingsURL / InstallationsURL / PublicURL are the github.com pages of the\napp. They are built from the slug, never from the name.",
+            "type" : "string"
+          },
           "size" : {
             "type" : "integer"
+          },
+          "slug" : {
+            "type" : "string"
           },
           "ssoEnabled" : {
             "type" : "boolean"
@@ -48738,7 +48764,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appId", "callbackURL", "clientId", "clientSecret", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "installationId", "kind", "name", "organization", "privateKey", "secretMasked", "size", "ssoEnabled", "status", "type", "updateVer", "updatedAt", "webhookSecret", "webhookURL" ],
+        "required" : [ "appId", "callbackURL", "clientId", "clientSecret", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "installationId", "installationsURL", "kind", "name", "organization", "ownerLogin", "ownerType", "privateKey", "publicURL", "secretMasked", "settingsURL", "size", "slug", "ssoEnabled", "status", "type", "updateVer", "updatedAt", "webhookSecret", "webhookURL" ],
         "type" : "object"
       },
       "settings_githubappdto.ListAppInstallationReq" : {
@@ -55201,6 +55227,24 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "userdto.EnvAccessResp" : {
+        "properties" : {
+          "access" : {
+            "$ref" : "#/components/schemas/base.AccessActions"
+          },
+          "color" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "access", "color", "id", "name" ],
+        "type" : "object"
+      },
       "userdto.GetUserInviteInfoResp" : {
         "properties" : {
           "data" : {
@@ -55250,7 +55294,7 @@
           },
           "projectAccesses" : {
             "items" : {
-              "$ref" : "#/components/schemas/basedto.ObjectAccessReq"
+              "$ref" : "#/components/schemas/userdto.ProjectAccessReq"
             },
             "type" : "array"
           },
@@ -55355,6 +55399,37 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "userdto.ProjectAccessReq" : {
+        "properties" : {
+          "envAccesses" : {
+            "description" : "EnvAccesses grants access per project env. Permissions are no longer granted\nat the project level; each ID is a project env ID (\"<projectID>:<envKey>\").",
+            "items" : {
+              "$ref" : "#/components/schemas/basedto.ObjectAccessReq"
+            },
+            "type" : "array"
+          },
+          "project" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          }
+        },
+        "required" : [ "envAccesses", "project" ],
+        "type" : "object"
+      },
+      "userdto.ProjectAccessResp" : {
+        "properties" : {
+          "envAccesses" : {
+            "items" : {
+              "$ref" : "#/components/schemas/userdto.EnvAccessResp"
+            },
+            "type" : "array"
+          },
+          "project" : {
+            "$ref" : "#/components/schemas/basedto.NamedObjectResp"
+          }
+        },
+        "required" : [ "envAccesses", "project" ],
         "type" : "object"
       },
       "userdto.RemoveMFATotpReq" : {
@@ -55505,7 +55580,7 @@
           },
           "projectAccesses" : {
             "items" : {
-              "$ref" : "#/components/schemas/basedto.ObjectAccessReq"
+              "$ref" : "#/components/schemas/userdto.ProjectAccessReq"
             },
             "type" : "array"
           },
@@ -55574,7 +55649,7 @@
           },
           "projectAccesses" : {
             "items" : {
-              "$ref" : "#/components/schemas/basedto.ObjectAccessResp"
+              "$ref" : "#/components/schemas/userdto.ProjectAccessResp"
             },
             "type" : "array"
           },
@@ -55837,9 +55912,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

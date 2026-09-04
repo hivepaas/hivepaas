@@ -76,6 +76,9 @@ type ProjectBaseResp struct {
 	Key    string             `json:"key"`
 	Photo  string             `json:"photo"`
 	Status base.ProjectStatus `json:"status"`
+	// Envs lets a caller listing projects also offer their envs without a second
+	// request, which is what per-env permission editing needs.
+	Envs []*ProjectEnvResp `json:"envs"`
 }
 
 func TransformProject(project *entity.Project) (resp *ProjectResp, err error) {
@@ -153,11 +156,15 @@ func TransformProjectBase(project *entity.Project) *ProjectBaseResp {
 	if project == nil {
 		return nil
 	}
+	// The envs of a project are a handful of small rows, and the error can only
+	// come from the copier: fall back to no envs rather than failing the listing.
+	envs, _ := TransformProjectEnvs(project.ProjectEnvs)
 	return &ProjectBaseResp{
 		ID:     project.ID,
 		Name:   project.Name,
 		Key:    project.Key,
 		Photo:  basedto.TransformObjectIcon(project.Photo),
 		Status: project.Status,
+		Envs:   envs,
 	}
 }

@@ -24,7 +24,14 @@ type UpdateUserReq struct {
 	SecurityOption  *base.UserSecurityOption     `json:"securityOption"`
 	AccessExpireAt  *time.Time                   `json:"accessExpireAt"`
 	ModuleAccesses  basedto.ModuleAccessSliceReq `json:"moduleAccesses"`
-	ProjectAccesses basedto.ObjectAccessSliceReq `json:"projectAccesses"`
+	ProjectAccesses []*ProjectAccessReq          `json:"projectAccesses"`
+}
+
+type ProjectAccessReq struct {
+	Project basedto.ObjectIDReq `json:"project"`
+	// EnvAccesses grants access per project env. Permissions are no longer granted
+	// at the project level; each ID is a project env ID ("<projectID>:<envKey>").
+	EnvAccesses basedto.ObjectAccessSliceReq `json:"envAccesses"`
 }
 
 func NewUpdateUserReq() *UpdateUserReq {
@@ -57,8 +64,7 @@ func (req *UpdateUserReq) Validate() hperrors.ValidationErrors {
 		base.AllUserSecurityOptions, "securityOption")...)
 	validators = append(validators, basedto.ValidateModuleAccessSliceReq(req.ModuleAccesses, true,
 		0, base.AllResourceModules, "moduleAccesses")...)
-	validators = append(validators, basedto.ValidateObjectAccessSliceReq(req.ProjectAccesses, true,
-		0, "projectAccesses")...)
+	validators = append(validators, validateProjectAccesses(req.ProjectAccesses, "projectAccesses")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

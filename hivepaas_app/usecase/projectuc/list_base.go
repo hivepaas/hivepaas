@@ -19,6 +19,8 @@ func (uc *UC) ListProjectBase(
 ) (*projectdto.ListProjectBaseResp, error) {
 	listOpts := []bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		// Callers editing per-env permissions need the envs alongside the project.
+		bunex.SelectRelation("ProjectEnvs"),
 	}
 
 	if len(req.Status) > 0 {

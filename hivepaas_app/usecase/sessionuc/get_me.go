@@ -21,8 +21,11 @@ func (uc *UC) GetMe(
 		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
 	}
 	if req.GetAccesses {
+		// Must match useruc.GetUser: permissions are granted per project env, so
+		// loading only the project relation would hide every env-level grant.
 		loadOpts = append(loadOpts,
-			bunex.SelectRelation("Accesses.ResourceProject"),
+			bunex.SelectRelation("Accesses.ResourceProject.ProjectEnvs"),
+			bunex.SelectRelation("Accesses.ResourceProjectEnv.Project.ProjectEnvs"),
 		)
 	}
 

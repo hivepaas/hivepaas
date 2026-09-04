@@ -171,12 +171,7 @@ func (uc *UC) prepareUpdatingUserData(
 	}
 	if req.ProjectAccesses != nil {
 		persistingData.DeletingAccesses = append(persistingData.DeletingAccesses,
-			&base.PermissionResource{
-				SubjectType:  base.SubjectTypeUser,
-				SubjectID:    user.ID,
-				ResourceType: base.ResourceTypeProject,
-			},
-		)
+			deletingUserProjectAccesses(user.ID)...)
 		uc.preparePersistingUserProjectAccesses(user, req.ProjectAccesses, timeNow, persistingData)
 	}
 }

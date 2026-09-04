@@ -221,8 +221,11 @@ func (uc *UC) preparePersistingProjectWebhook(
 		CreatedAt:   timeNow,
 		UpdatedAt:   timeNow,
 	}
+	// Kind is deliberately left unset: the provider is unknown when a project is
+	// created, and an unset kind means the webhook accepts any of them - the
+	// sender is identified per delivery, see webhookuc.detectWebhookKind.
 	setting.MustSetData(&entity.RepoWebhook{
-		Secret: gofn.RandTokenAsHex(projectWebhookSecretLen),
+		Secret: entity.NewEncryptedField(gofn.RandTokenAsHex(projectWebhookSecretLen)),
 	})
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 }

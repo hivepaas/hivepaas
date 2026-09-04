@@ -60,6 +60,11 @@ func (resp *GithubAppResp) CopyClientSecret(field entity.EncryptedField) error {
 	return nil
 }
 
+func (resp *GithubAppResp) CopyWebhookSecret(field entity.EncryptedField) error {
+	resp.WebhookSecret = field.String()
+	return nil
+}
+
 func (resp *GithubAppResp) CopyPrivateKey(field entity.EncryptedField) error {
 	resp.PrivateKey = field.String()
 	return nil

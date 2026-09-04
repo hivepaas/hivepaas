@@ -39,6 +39,20 @@ func (req *GithubAppBaseReq) ToEntity() *entity.GithubApp {
 	}
 }
 
+// KeepMaskedSecrets restores the stored values for the secrets the request only
+// carries as the masked placeholder the GET response substitutes for them.
+func (req *GithubAppBaseReq) KeepMaskedSecrets(app, current *entity.GithubApp) {
+	if current == nil {
+		return
+	}
+	if req.ClientSecret == maskedSecret {
+		app.ClientSecret = current.ClientSecret
+	}
+	if req.PrivateKey == maskedSecret {
+		app.PrivateKey = current.PrivateKey
+	}
+}
+
 func (req *GithubAppBaseReq) modifyRequest() error {
 	req.Name = strings.TrimSpace(req.Name)
 	req.ClientID = strings.TrimSpace(req.ClientID)
@@ -49,8 +63,11 @@ func (req *GithubAppBaseReq) modifyRequest() error {
 }
 
 func (req *GithubAppBaseReq) validate(_ string) []vld.Validator {
-	// TODO: add validation
-	return nil
+	// TODO: add the remaining validation
+	var res []vld.Validator
+	res = append(res, basedto.ValidatePlainSecret(&req.ClientSecret, "clientSecret")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.PrivateKey, "privateKey")...)
+	return res
 }
 
 func NewCreateGithubAppReq() *CreateGithubAppReq {

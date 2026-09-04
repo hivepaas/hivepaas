@@ -9,6 +9,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc/webhookdto"
 )
 
+// webhookMaxBodySize matches the largest payload GitHub delivers, which is the
+// most generous of the providers supported here.
+const webhookMaxBodySize = 25 * 1024 * 1024
+
 // HandleRepoWebhook Handles Repo webhook
 // @Summary Handles Repo webhook
 // @Description Handles Repo webhook
@@ -27,6 +31,12 @@ func (h *Handler) HandleRepoWebhook(ctx *gin.Context) {
 		h.RenderError(ctx, err)
 		return
 	}
+
+	// This route is unauthenticated: the body is only trusted once its signature
+	// checks out, but it has to be read in full to check that. Cap it first, or
+	// anyone who knows a webhook URL can make the process read an arbitrary body
+	// into memory.
+	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, webhookMaxBodySize)
 
 	req := webhookdto.NewHandleRepoWebhookReq()
 	req.Request = ctx.Request

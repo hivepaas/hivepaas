@@ -4,10 +4,13 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/binary"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/tiendc/gofn"
 	"golang.org/x/crypto/argon2"
@@ -22,10 +25,61 @@ const (
 	hashIteration = 1
 	hashMemory    = 64 * 1024
 	hashThread    = 2
+
+	// keyCacheMaxEntries bounds the derived-key cache. Salts come from data this
+	// app encrypted itself, so the working set is the number of stored secrets.
+	keyCacheMaxEntries = 1024
 )
+
+// keyCache memoizes key derivation. Deriving a key costs 64 MiB and several
+// milliseconds; the same salt is decrypted over and over - a repo webhook
+// decrypts its secret on every delivery, on an unauthenticated route, before any
+// signature is checked. Caching in process does not weaken the KDF, which exists
+// to protect the app secret against an offline attack on stolen ciphertext.
+var keyCache = struct {
+	sync.RWMutex
+	entries map[string][]byte
+}{entries: make(map[string][]byte, keyCacheMaxEntries)}
 
 func makeKey(secret, salt []byte) []byte {
 	return argon2.IDKey(secret, salt, hashIteration, hashMemory, hashThread, keyLen)
+}
+
+// makeKeyCached is makeKey for decryption, where the same (secret, salt) pair
+// recurs. Encryption draws a fresh salt every time, so it stays uncached.
+func makeKeyCached(secret, salt []byte) []byte {
+	cacheKey := keyCacheKey(secret, salt)
+
+	keyCache.RLock()
+	key, ok := keyCache.entries[cacheKey]
+	keyCache.RUnlock()
+	if ok {
+		return key
+	}
+
+	key = makeKey(secret, salt)
+
+	keyCache.Lock()
+	// Dropping the whole cache when it grows too large keeps the bound simple;
+	// it only ever costs a few re-derivations.
+	if len(keyCache.entries) >= keyCacheMaxEntries {
+		clear(keyCache.entries)
+	}
+	keyCache.entries[cacheKey] = key
+	keyCache.Unlock()
+
+	return key
+}
+
+// keyCacheKey binds an entry to both the salt and the app secret, so rotating the
+// secret cannot serve a stale key. The length prefix keeps the two inputs from
+// running together.
+func keyCacheKey(secret, salt []byte) string {
+	hash := sha256.New()
+	_ = binary.Write(hash, binary.BigEndian, uint64(len(secret)))
+	hash.Write(secret)
+	hash.Write(salt)
+	return string(hash.Sum(nil))
 }
 
 func Encrypt(plaintext, salt, secret []byte) ([]byte, error) {
@@ -66,7 +120,7 @@ func EncryptBase64(plaintext string, saltLen int, secret string) (ciphertext str
 }
 
 func Decrypt(ciphertext, salt, secret []byte) ([]byte, error) {
-	block, err := aes.NewCipher(makeKey(secret, salt))
+	block, err := aes.NewCipher(makeKeyCached(secret, salt))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

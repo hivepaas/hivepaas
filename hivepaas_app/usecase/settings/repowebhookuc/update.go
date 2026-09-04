@@ -26,6 +26,14 @@ func (uc *UC) UpdateRepoWebhook(
 			data *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
+			if req.IsSecretMasked() {
+				current, err := data.Setting.AsRepoWebhook()
+				if err != nil {
+					return hperrors.Wrap(err)
+				}
+				webhookData.Secret = current.Secret
+			}
+
 			pData.Setting.Kind = string(req.Kind)
 			err := pData.Setting.SetData(webhookData)
 			if err != nil {

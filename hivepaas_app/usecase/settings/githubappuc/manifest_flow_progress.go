@@ -52,6 +52,17 @@ func (uc *UC) handleGithubAppManifestFlowOnCreation(
 	githubApp.ClientID = gofn.PtrValueOrEmpty(appConfig.ClientID)
 	githubApp.ClientSecret = entity.NewEncryptedField(gofn.PtrValueOrEmpty(appConfig.ClientSecret))
 	githubApp.PrivateKey = entity.NewEncryptedField(gofn.PtrValueOrEmpty(appConfig.PEM))
+	// GitHub generates the webhook secret itself - an app manifest has no field to
+	// send one - so the placeholder put in at the start of the flow must be
+	// replaced here, or no delivery would ever pass its signature check.
+	//
+	// Local dev is the exception: deliveries are replayed through smee against the
+	// fixed secret the seed data uses, so the placeholder is kept there.
+	cfg := config.Current
+	isLocalEnv := cfg.IsDevEnv() && cfg.Platform == config.PlatformLocal
+	if webhookSecret := gofn.PtrValueOrEmpty(appConfig.WebhookSecret); webhookSecret != "" && !isLocalEnv {
+		githubApp.WebhookSecret = entity.NewEncryptedField(webhookSecret)
+	}
 	// The slug and owner type are only available here, from the manifest conversion response.
 	// Persist them: they cannot be derived from the app name later,
 	// and every github.com settings link needs them.

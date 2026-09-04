@@ -46,6 +46,10 @@ func (s *EncryptedField) String() string {
 	return s.encrypted
 }
 
+func (s *EncryptedField) IsEmpty() bool {
+	return s.encrypted == "" && s.decrypted == ""
+}
+
 func (s *EncryptedField) IsEncrypted() bool {
 	return s.encrypted != "" && s.decrypted == ""
 }

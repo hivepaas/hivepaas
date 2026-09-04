@@ -79,10 +79,12 @@ func (uc *UC) BeginGithubAppManifestFlow(
 		SSOEnabled:   req.SSOEnabled,
 	}
 	if isLocalEnv {
-		githubApp.WebhookSecret = webhookSecretLocal
+		githubApp.WebhookSecret.Set(webhookSecretLocal)
 		githubApp.WebhookURL = webhookURLLocal
 	} else {
-		githubApp.WebhookSecret = gofn.RandTokenAsHex(base.DefaultWebhookSecretByteLen)
+		// Placeholder only: an app manifest cannot carry a webhook secret, so GitHub
+		// generates one and the manifest conversion response carries it back.
+		githubApp.WebhookSecret.Set(gofn.RandTokenAsHex(base.DefaultWebhookSecretByteLen))
 		githubApp.WebhookURL = cfg.RepoWebhookURL(appSetting.ID)
 	}
 	appSetting.MustSetData(githubApp)

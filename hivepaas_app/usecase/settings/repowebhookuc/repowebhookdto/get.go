@@ -12,6 +12,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
+const (
+	maskedSecret = "****************"
+)
+
 type GetRepoWebhookReq struct {
 	settings.GetSettingReq
 }
@@ -33,9 +37,15 @@ type GetRepoWebhookResp struct {
 
 type RepoWebhookResp struct {
 	*settings.BaseSettingResp
-	Kind       base.WebhookKind `json:"kind"`
-	Secret     string           `json:"secret"`
-	WebhookURL string           `json:"webhookURL"`
+	Kind         base.WebhookKind `json:"kind"`
+	Secret       string           `json:"secret"`
+	WebhookURL   string           `json:"webhookURL"`
+	SecretMasked bool             `json:"secretMasked,omitempty"`
+}
+
+func (resp *RepoWebhookResp) CopySecret(field entity.EncryptedField) error {
+	resp.Secret = field.String()
+	return nil
 }
 
 func TransformRepoWebhook(
@@ -55,6 +65,11 @@ func TransformRepoWebhook(
 
 	// Computed field
 	resp.WebhookURL = config.Current.RepoWebhookURL(setting.ID)
+
+	resp.SecretMasked = conf.Secret.IsEncrypted() || resp.Inherited
+	if resp.SecretMasked {
+		resp.Secret = maskedSecret
+	}
 
 	return resp, nil
 }

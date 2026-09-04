@@ -26,7 +26,16 @@ func (uc *UC) UpdateGithubApp(
 			data *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
-			err := uc.installGithubAppWebhook(ctx, pData.Setting.ID, githubApp, true)
+			// data.Setting is the stored setting; the request only carries a subset
+			// of the fields, so the rest must be carried over before it is replaced.
+			current, err := data.Setting.AsGithubApp()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			githubApp.CarryOverFrom(current)
+			req.KeepMaskedSecrets(githubApp, current)
+
+			err = uc.installGithubAppWebhook(ctx, pData.Setting.ID, githubApp, true)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

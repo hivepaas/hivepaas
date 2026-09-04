@@ -29,8 +29,15 @@ type RepoWebhookBaseReq struct {
 func (req *RepoWebhookBaseReq) ToEntity() *entity.RepoWebhook {
 	return &entity.RepoWebhook{
 		Kind:   req.Kind,
-		Secret: req.Secret,
+		Secret: entity.NewEncryptedField(req.Secret),
 	}
+}
+
+// IsSecretMasked reports whether the request carries the placeholder the GET
+// response substitutes for a stored secret, rather than a real value. A form that
+// posts the response back unchanged must not overwrite the secret with the mask.
+func (req *RepoWebhookBaseReq) IsSecretMasked() bool {
+	return req.Secret == maskedSecret
 }
 
 func (req *RepoWebhookBaseReq) modifyRequest() error {
@@ -45,8 +52,9 @@ func (req *RepoWebhookBaseReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, base.SettingNameMaxLen, field+"name")...)
-	res = append(res, basedto.ValidateStrIn(&req.Kind, true, base.AllWebhookKinds, field+"kind")...)
+	res = append(res, basedto.ValidateStrIn(&req.Kind, false, base.AllWebhookKinds, field+"kind")...)
 	res = append(res, basedto.ValidateStr(&req.Secret, true, 1, webhookSecretMaxLen, field+"secret")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Secret, field+"secret")...)
 	return res
 }
 

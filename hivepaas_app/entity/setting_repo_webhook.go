@@ -22,7 +22,7 @@ func (s *repoWebhookParser) New() SettingData {
 
 type RepoWebhook struct {
 	Kind   base.WebhookKind `json:"kind"`
-	Secret string           `json:"secret"`
+	Secret EncryptedField   `json:"secret"`
 }
 
 func (s *RepoWebhook) GetType() base.SettingType {
@@ -38,6 +38,10 @@ func (s *RepoWebhook) GetResourceLinks(setting *Setting) []*ResLink {
 }
 
 func (s *RepoWebhook) Decrypt() error {
+	_, err := s.Secret.GetPlain()
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
 	return nil
 }
 

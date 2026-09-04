@@ -77,8 +77,13 @@ func validateConfig(cfg *config.Config, logger logging.Logger) error {
 		return fmt.Errorf("%w: invalid JWT secret for production", ErrInvalidConfig)
 	}
 
-	// Basic auth password must not be empty or a trivial value
-	if isProdEnv && len(cfg.Session.BasicAuthPassword) < 10 {
+	// App secret must not be a trivial value (it can be empty)
+	if isProdEnv && cfg.Secret != "" && len(cfg.Secret) < 10 {
+		return fmt.Errorf("%w: invalid app secret for production", ErrInvalidConfig)
+	}
+
+	// Basic auth password must not be a trivial value (it can be empty)
+	if isProdEnv && cfg.Session.BasicAuthPassword != "" && len(cfg.Session.BasicAuthPassword) < 10 {
 		return fmt.Errorf("%w: basic auth password is invalid for production", ErrInvalidConfig)
 	}
 

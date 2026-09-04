@@ -68,21 +68,11 @@ func (uc *UC) processRepoWebhook(
 	data *handleRepoWebhookData,
 ) (err error) {
 	webhook := data.WebhookSetting.MustAsRepoWebhook()
-	eventData := &repoEventData{}
-	switch webhook.Kind {
-	case base.WebhookKindGithub:
-		err = uc.parseGithubWebhook(req.Request, webhook.Secret, eventData)
-	case base.WebhookKindGitlab:
-		err = uc.parseGitlabWebhook(req.Request, webhook.Secret, eventData)
-	case base.WebhookKindGitea:
-		err = uc.parseGiteaWebhook(req.Request, webhook.Secret, eventData)
-	case base.WebhookKindBitbucket:
-		err = uc.parseBitbucketWebhook(req.Request, webhook.Secret, eventData)
-	case base.WebhookKindGogs:
-		err = uc.parseGogsWebhook(req.Request, webhook.Secret, eventData)
-	default:
-		return hperrors.Wrap(hperrors.ErrWebhookTypeUnsupported).WithParam("Type", webhook.Kind)
+	webhookSecret, err := webhook.Secret.GetPlain()
+	if err != nil {
+		return hperrors.Wrap(err)
 	}
+	eventData, err := uc.parseRepoWebhook(req.Request, webhook.Kind, webhookSecret)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

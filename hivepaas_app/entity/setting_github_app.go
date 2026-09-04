@@ -43,7 +43,7 @@ type GithubApp struct {
 	OwnerLogin     string         `json:"ownerLogin"`
 	OwnerType      string         `json:"ownerType"`
 	WebhookURL     string         `json:"webhookURL"`
-	WebhookSecret  string         `json:"webhookSecret"`
+	WebhookSecret  EncryptedField `json:"webhookSecret"`
 	AppID          int64          `json:"appId"`
 	InstallationID int64          `json:"installationId"`
 	PrivateKey     EncryptedField `json:"privateKey"`
@@ -122,6 +122,23 @@ func (s *GithubApp) PublicURL() string {
 	return githubBaseURL + "/apps/" + s.Slug
 }
 
+// CarryOverFrom copies the fields an update request does not carry.
+//
+// Updating a setting replaces its data wholesale, so every field absent from the
+// request is silently lost unless it is copied here. Losing WebhookSecret breaks
+// the signature check on every delivery, and losing Slug/OwnerLogin/OwnerType
+// breaks the github.com links - all without any error surfacing.
+func (s *GithubApp) CarryOverFrom(current *GithubApp) {
+	if current == nil {
+		return
+	}
+	s.WebhookURL = current.WebhookURL
+	s.WebhookSecret = current.WebhookSecret
+	s.Slug = current.Slug
+	s.OwnerLogin = current.OwnerLogin
+	s.OwnerType = current.OwnerType
+}
+
 func (s *GithubApp) GetType() base.SettingType {
 	return base.SettingTypeGithubApp
 }
@@ -136,6 +153,10 @@ func (s *GithubApp) GetResourceLinks(setting *Setting) []*ResLink {
 
 func (s *GithubApp) Decrypt() error {
 	_, err := s.ClientSecret.GetPlain()
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	_, err = s.WebhookSecret.GetPlain()
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

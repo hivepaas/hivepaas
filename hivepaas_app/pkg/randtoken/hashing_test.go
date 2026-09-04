@@ -1,69 +1,80 @@
 package randtoken
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
+const testSaltLen = 16
+
 func TestHashAndVerify(t *testing.T) {
 	token := []byte("secret-token")
-	saltLen := uint32(16)
-	keyLen := uint32(32)
-	iterations := uint32(1)
 
-	hash, salt, err := Hash(token, saltLen, keyLen, iterations)
+	hash, salt, err := HashNew(token, testSaltLen)
 	assert.NoError(t, err)
-	assert.NotNil(t, salt)
-	assert.Len(t, salt, int(saltLen))
-	assert.NotNil(t, hash)
-	assert.Len(t, hash, int(keyLen))
+	assert.Len(t, salt, testSaltLen)
+	assert.Len(t, hash, sha256.Size)
 
-	// Verify success
-	assert.True(t, VerifyHash(token, hash, salt, keyLen, iterations))
+	assert.True(t, VerifyHash(token, hash, salt))
 
-	// Verify failure - wrong token
-	assert.False(t, VerifyHash([]byte("wrong-token"), hash, salt, keyLen, iterations))
+	// Wrong token
+	assert.False(t, VerifyHash([]byte("wrong-token"), hash, salt))
 
-	// Verify failure - wrong salt
-	wrongSalt := make([]byte, saltLen)
+	// Wrong salt
+	wrongSalt := make([]byte, testSaltLen)
 	copy(wrongSalt, salt)
 	wrongSalt[0] ^= 0xFF
-	assert.False(t, VerifyHash(token, hash, wrongSalt, keyLen, iterations))
+	assert.False(t, VerifyHash(token, hash, wrongSalt))
 
-	// Verify failure - empty inputs
-	assert.False(t, VerifyHash(nil, hash, salt, keyLen, iterations))
-	assert.False(t, VerifyHash(token, nil, salt, keyLen, iterations))
+	// Empty inputs
+	assert.False(t, VerifyHash(nil, hash, salt))
+	assert.False(t, VerifyHash(token, nil, salt))
+}
+
+// Two tokens hashed separately must not collide through their salts, and the same
+// token must hash differently under different salts.
+func TestHashNewDrawsAFreshSalt(t *testing.T) {
+	token := []byte("secret-token")
+
+	firstHash, firstSalt, err := HashNew(token, testSaltLen)
+	assert.NoError(t, err)
+	secondHash, secondSalt, err := HashNew(token, testSaltLen)
+	assert.NoError(t, err)
+
+	assert.NotEqual(t, firstSalt, secondSalt)
+	assert.NotEqual(t, firstHash, secondHash)
+}
+
+// The salt has to take part in the hash, otherwise it is decoration.
+func TestHashDependsOnSalt(t *testing.T) {
+	token := []byte("secret-token")
+	assert.NotEqual(t, Hash(token, []byte("salt-a")), Hash(token, []byte("salt-b")))
 }
 
 func TestHashAndVerifyHex(t *testing.T) {
-	tokenBytes := []byte("secret-token")
-	tokenHex := hex.EncodeToString(tokenBytes)
-	saltLen := uint32(16)
-	keyLen := uint32(32)
-	iterations := uint32(1)
+	tokenHex := hex.EncodeToString([]byte("secret-token"))
 
-	hashHex, saltHex, err := HashAsHex(tokenHex, saltLen, keyLen, iterations)
+	hashHex, saltHex, err := HashNewAsHex(tokenHex, testSaltLen)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, hashHex)
 	assert.NotEmpty(t, saltHex)
 
-	// Verify success
-	assert.True(t, VerifyHashHex(tokenHex, hashHex, saltHex, keyLen, iterations))
+	assert.True(t, VerifyHashHex(tokenHex, hashHex, saltHex))
 
-	// Verify failure - wrong token
 	wrongTokenHex := hex.EncodeToString([]byte("wrong-token"))
-	assert.False(t, VerifyHashHex(wrongTokenHex, hashHex, saltHex, keyLen, iterations))
+	assert.False(t, VerifyHashHex(wrongTokenHex, hashHex, saltHex))
 
-	// Verify failure - invalid hex inputs
-	assert.False(t, VerifyHashHex("invalid-hex", hashHex, saltHex, keyLen, iterations))
-	assert.False(t, VerifyHashHex(tokenHex, "invalid-hex", saltHex, keyLen, iterations))
-	assert.False(t, VerifyHashHex(tokenHex, hashHex, "invalid-hex", keyLen, iterations))
+	// Malformed hex must be rejected, not panic
+	assert.False(t, VerifyHashHex("invalid-hex", hashHex, saltHex))
+	assert.False(t, VerifyHashHex(tokenHex, "invalid-hex", saltHex))
+	assert.False(t, VerifyHashHex(tokenHex, hashHex, "invalid-hex"))
 }
 
-func TestHashAsHex_InvalidInput(t *testing.T) {
-	_, _, err := HashAsHex("invalid-hex", 16, 32, 1)
+func TestHashNewAsHexInvalidInput(t *testing.T) {
+	_, _, err := HashNewAsHex("invalid-hex", testSaltLen)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to decode token as hex")
 }

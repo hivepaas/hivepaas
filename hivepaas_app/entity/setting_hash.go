@@ -12,11 +12,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 )
 
-const (
-	hashingKeyLen    = 32
-	hashingIteration = 1
-)
-
 type HashField struct {
 	secret       string
 	hashedSecret string
@@ -72,10 +67,12 @@ func (s *HashField) VerifyHash(secret string) error {
 	hashedSecret, salt := cryptoutil.UnpackSecret(s.hashedSecret)
 	var matched bool
 	if salt == "" {
-		matched = hashedSecret == secret
+		// The value was stored without being hashed. hash() always hashes before
+		// persisting, so this only covers data written some other way - compare in
+		// constant time anyway rather than leaking the secret through timing.
+		matched = cryptoutil.SecureCompare(hashedSecret, secret)
 	} else {
-		matched = randtoken.VerifyHashHex(secret, hashedSecret, salt,
-			hashingKeyLen, hashingIteration)
+		matched = randtoken.VerifyHashHex(secret, hashedSecret, salt)
 	}
 	if !matched {
 		return hperrors.Wrap(hperrors.ErrAPIKeyInvalid)
@@ -87,8 +84,7 @@ func (s *HashField) hash() (string, error) {
 	if s.hashedSecret != "" {
 		return s.hashedSecret, nil
 	}
-	hashedSecret, salt, err := randtoken.HashAsHex(s.secret, defaultSaltLen,
-		hashingKeyLen, hashingIteration)
+	hashedSecret, salt, err := randtoken.HashNewAsHex(s.secret, defaultSaltLen)
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}

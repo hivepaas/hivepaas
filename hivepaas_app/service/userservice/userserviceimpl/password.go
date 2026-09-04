@@ -1,7 +1,6 @@
 package userserviceimpl
 
 import (
-	"bytes"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/cryptoutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 )
 
@@ -69,9 +69,13 @@ func (s *service) VerifyPassword(user *entity.User, password string) error {
 	saltBytes, _ := base64.StdEncoding.DecodeString(b64Salt)
 	passBytes, _ := base64.StdEncoding.DecodeString(b64Pass)
 
+	// Argon2 is the right choice here and must stay: passwords are human-chosen and
+	// low entropy, which is exactly what memory-hard hashing defends against.
 	passHash := argon2.IDKey([]byte(password), saltBytes, hashingIteration, hashingMemory,
 		hashingThreads, hashingKeyLength)
-	if !bytes.Equal(passHash, passBytes) {
+	// Constant time: the caller controls the password, so it controls passHash, and
+	// a leaky comparison would expose the stored hash byte by byte.
+	if !cryptoutil.SecureCompareBytes(passHash, passBytes) {
 		return hperrors.Wrap(hperrors.ErrPasswordMismatched)
 	}
 	return nil

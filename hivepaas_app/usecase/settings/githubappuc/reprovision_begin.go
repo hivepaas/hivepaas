@@ -43,10 +43,10 @@ func (uc *UC) BeginReprovisionGithubApp(
 
 	githubApp := appSetting.MustAsGithubApp()
 	if isLocalEnv {
-		githubApp.WebhookSecret = webhookSecretLocal
+		githubApp.WebhookSecret.Set(webhookSecretLocal)
 		githubApp.WebhookURL = webhookURLLocal
 	} else {
-		githubApp.WebhookSecret = gofn.RandTokenAsHex(base.DefaultWebhookSecretByteLen)
+		githubApp.WebhookSecret.Set(gofn.RandTokenAsHex(base.DefaultWebhookSecretByteLen))
 		githubApp.WebhookURL = cfg.RepoWebhookURL(appSetting.ID)
 	}
 	appSetting.MustSetData(githubApp)

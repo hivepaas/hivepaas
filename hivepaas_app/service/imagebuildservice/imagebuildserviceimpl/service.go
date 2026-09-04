@@ -11,6 +11,7 @@ import (
 
 type service struct {
 	redisClient   rediscache.Client
+	redisLock     rediscache.Lock
 	dockerManager docker.Manager
 
 	settingRepo repository.SettingRepo
@@ -21,6 +22,7 @@ type service struct {
 
 func New(
 	redisClient rediscache.Client,
+	redisLock rediscache.Lock,
 	dockerManager docker.Manager,
 
 	settingRepo repository.SettingRepo,
@@ -30,6 +32,7 @@ func New(
 ) imagebuildservice.Service {
 	return &service{
 		redisClient:   redisClient,
+		redisLock:     redisLock,
 		dockerManager: dockerManager,
 
 		settingRepo: settingRepo,

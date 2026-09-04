@@ -32,7 +32,7 @@ func (s *service) buildImageWithDocker(
 		res = &buildSetting.Resources
 	}
 
-	if err := s.ensureCustomBuilder(ctx, builderName, res); err != nil {
+	if err := s.ensureCustomBuilder(ctx, builderName, res, data.LogStore); err != nil {
 		return hperrors.Wrap(err)
 	}
 
@@ -43,7 +43,7 @@ func (s *service) buildImageWithDocker(
 	defer cleanup()
 
 	args := []string{
-		"buildx", "build",
+		cmdBuildx, "build",
 		"--builder", builderName,
 		"--load",
 		"--progress=plain",

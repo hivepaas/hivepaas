@@ -43,17 +43,16 @@ type GithubAppResp struct {
 	OwnerType    string `json:"ownerType,omitempty"`
 	// SettingsURL / InstallationsURL / PublicURL are the github.com pages of the
 	// app. They are built from the slug, never from the name.
-	SettingsURL      string `json:"settingsURL,omitempty"`
-	InstallationsURL string `json:"installationsURL,omitempty"`
-	PublicURL        string `json:"publicURL,omitempty"`
-	CallbackURL      string `json:"callbackURL"`
-	WebhookURL       string `json:"webhookURL"`
-	WebhookSecret    string `json:"webhookSecret"`
-	AppID            int64  `json:"appId"`
-	InstallationID   int64  `json:"installationId"`
-	PrivateKey       string `json:"privateKey"`
-	SSOEnabled       bool   `json:"ssoEnabled"`
-	SecretMasked     bool   `json:"secretMasked,omitempty"`
+	SettingsURL    string `json:"settingsURL,omitempty"`
+	PublicURL      string `json:"publicURL,omitempty"`
+	CallbackURL    string `json:"callbackURL"`
+	WebhookURL     string `json:"webhookURL"`
+	WebhookSecret  string `json:"webhookSecret"`
+	AppID          int64  `json:"appId"`
+	InstallationID int64  `json:"installationId"`
+	PrivateKey     string `json:"privateKey"`
+	SSOEnabled     bool   `json:"ssoEnabled"`
+	SecretMasked   bool   `json:"secretMasked,omitempty"`
 }
 
 func (resp *GithubAppResp) CopyClientSecret(field entity.EncryptedField) error {
@@ -88,7 +87,6 @@ func TransformGithubApp(
 	// Recalculate callbackURL for the github-app as it depends on the actual server address
 	resp.CallbackURL = input.BaseCallbackURL + "/" + setting.ID
 	resp.SettingsURL = config.SettingsURL()
-	resp.InstallationsURL = config.InstallationsURL()
 	resp.PublicURL = config.PublicURL()
 	resp.SecretMasked = config.ClientSecret.IsEncrypted() || resp.Inherited
 	if resp.SecretMasked {

@@ -104,6 +104,15 @@ func (s *GithubApp) InstallationsURL() string {
 	return settingsURL + "/installations"
 }
 
+// PermissionsURL returns the page listing permissions and subscribed events of the app.
+func (s *GithubApp) PermissionsURL() string {
+	settingsURL := s.SettingsURL()
+	if settingsURL == "" {
+		return ""
+	}
+	return settingsURL + "/permissions"
+}
+
 // PublicURL returns the public page of the app, which is where a user installs
 // it. Unlike SettingsURL it does not depend on the owner type.
 func (s *GithubApp) PublicURL() string {

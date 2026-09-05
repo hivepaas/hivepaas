@@ -75,6 +75,14 @@ export const systemSettingsRouter: RouteObject = {
                         return { Component: SystemSettingsHivePaaSSecurityRoute };
                     },
                 },
+                {
+                    path: "actions",
+                    lazy: async () => {
+                        const { SystemSettingsHivePaaSActionsRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsHivePaaSActionsRoute };
+                    },
+                },
             ],
         },
         {

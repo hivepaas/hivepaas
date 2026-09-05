@@ -3,6 +3,8 @@ import { createContext } from "react";
 import {
     HivePaaSAppSecretApi,
     HivePaaSAppSecretApiValidator,
+    HivePaaSRestartApi,
+    HivePaaSRestartApiValidator,
     HivePaaSRoutingSettingsApi,
     HivePaaSRoutingSettingsApiValidator,
     HivePaaSServiceSettingsApi,
@@ -32,6 +34,7 @@ function createApi() {
     const hivePaaSServiceSettingsValidator = new HivePaaSServiceSettingsApiValidator();
     const hivePaaSRoutingSettingsValidator = new HivePaaSRoutingSettingsApiValidator();
     const hivePaaSAppSecretValidator = new HivePaaSAppSecretApiValidator();
+    const hivePaaSRestartValidator = new HivePaaSRestartApiValidator();
     const traefikServiceSettingsValidator = new TraefikServiceSettingsApiValidator();
     const traefikConfigOptionsValidator = new TraefikConfigOptionsApiValidator();
 
@@ -41,6 +44,7 @@ function createApi() {
             hivepaasRoutingSettings: new HivePaaSRoutingSettingsApi(hivePaaSRoutingSettingsValidator),
             hivepaasHttpSettings: new HivePaaSRoutingSettingsApi(hivePaaSRoutingSettingsValidator),
             hivepaasAppSecret: new HivePaaSAppSecretApi(hivePaaSAppSecretValidator),
+            hivepaasRestart: new HivePaaSRestartApi(hivePaaSRestartValidator),
             traefikServiceSettings: new TraefikServiceSettingsApi(traefikServiceSettingsValidator),
             traefikConfigOptions: new TraefikConfigOptionsApi(traefikConfigOptionsValidator),
             backup: new SystemBackupApi(systemBackupValidator),

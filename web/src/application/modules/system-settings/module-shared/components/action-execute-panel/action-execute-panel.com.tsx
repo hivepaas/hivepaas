@@ -3,10 +3,18 @@ import type { ModuleId } from "@application/shared/permissions";
 
 import { Button } from "@/components/ui";
 
-export function ActionExecutePanel({ message, buttonLabel, isLoading, permissionModuleId, onExecute }: Props) {
+export function ActionExecutePanel({
+    message,
+    buttonLabel,
+    buttonVariant = "default",
+    isLoading,
+    permissionModuleId,
+    onExecute,
+}: Props) {
     const button = ({ isDenied = false }: { isDenied?: boolean } = {}) => (
         <Button
             type="button"
+            variant={buttonVariant}
             className="min-w-[120px]"
             disabled={isLoading || isDenied}
             isLoading={isLoading}
@@ -44,6 +52,7 @@ export function ActionExecutePanel({ message, buttonLabel, isLoading, permission
 interface Props {
     message: string;
     buttonLabel: string;
+    buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
     isLoading: boolean;
     permissionModuleId?: ModuleId;
     onExecute: () => void;

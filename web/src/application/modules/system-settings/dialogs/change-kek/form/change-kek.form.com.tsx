@@ -3,6 +3,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm, useFormState } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 
+import { PasswordStrengthMeter } from "@application/shared/components";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DialogActionFooter, DialogBody } from "@/components/ui/dialog";
@@ -22,9 +24,10 @@ export function ChangeKekForm({ isPending, onSubmit, onHasChanges }: Props) {
             newSecret: "",
             confirmNewSecret: "",
             isSaved: false,
+            isStrongSecret: false,
         },
         resolver: zodResolver(ChangeKekFormSchema),
-        mode: "onChange",
+        mode: "onSubmit",
     });
 
     const { isDirty } = useFormState({ control });
@@ -54,6 +57,14 @@ export function ChangeKekForm({ isPending, onSubmit, onHasChanges }: Props) {
         fieldState: { invalid: isConfirmNewSecretInvalid },
     } = useController({
         name: "confirmNewSecret",
+        control,
+    });
+
+    const {
+        field: isStrongSecret,
+        fieldState: { invalid: isNotStrongEnough },
+    } = useController({
+        name: "isStrongSecret",
         control,
     });
 
@@ -101,12 +112,9 @@ export function ChangeKekForm({ isPending, onSubmit, onHasChanges }: Props) {
                             placeholder="New secret"
                             value={newSecret.value}
                             onChange={newSecret.onChange}
-                            aria-invalid={isNewSecretInvalid}
+                            aria-invalid={isNewSecretInvalid || isNotStrongEnough}
                         />
-                        <FieldError errors={[errors.newSecret]} />
-                        <span className="text-xs text-muted-foreground">
-                            Minimum 10 characters, at least 1 uppercase, 1 lowercase, 1 digit, and 1 symbol.
-                        </span>
+                        <FieldError errors={[errors.newSecret, errors.isStrongSecret]} />
                     </Field>
                     <Field>
                         <FieldLabel htmlFor="confirmNewSecret">Confirm New Secret</FieldLabel>
@@ -115,9 +123,18 @@ export function ChangeKekForm({ isPending, onSubmit, onHasChanges }: Props) {
                             placeholder="Confirm new secret"
                             value={confirmNewSecret.value}
                             onChange={confirmNewSecret.onChange}
-                            aria-invalid={isConfirmNewSecretInvalid}
+                            aria-invalid={isConfirmNewSecretInvalid || isNotStrongEnough}
                         />
-                        <FieldError errors={[errors.confirmNewSecret]} />
+                        <FieldError errors={[errors.confirmNewSecret, errors.isStrongSecret]} />
+                    </Field>
+                    <Field>
+                        <PasswordStrengthMeter
+                            password={newSecret.value}
+                            minLength={12}
+                            onStrengthChange={strength => {
+                                isStrongSecret.onChange(strength === "max");
+                            }}
+                        />
                     </Field>
                     <div className="flex items-center gap-2 pt-2">
                         <Checkbox
@@ -129,9 +146,9 @@ export function ChangeKekForm({ isPending, onSubmit, onHasChanges }: Props) {
                         />
                         <label
                             htmlFor="isSavedSecret"
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none text-destructive"
                         >
-                            I have saved this secret
+                            I confirm I have saved the secret
                         </label>
                     </div>
                 </FieldGroup>
@@ -143,7 +160,7 @@ export function ChangeKekForm({ isPending, onSubmit, onHasChanges }: Props) {
                     disabled={!isSavedValue || isPending}
                     className="min-w-[100px]"
                 >
-                    Save
+                    Change
                 </Button>
             </DialogActionFooter>
         </form>

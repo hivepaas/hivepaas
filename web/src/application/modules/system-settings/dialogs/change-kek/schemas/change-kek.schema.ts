@@ -3,15 +3,10 @@ import { z } from "zod";
 export const ChangeKekFormSchema = z
     .object({
         currentSecret: z.string(),
-        newSecret: z
-            .string()
-            .min(10, "New secret must be at least 10 characters long")
-            .regex(/[A-Z]/, "New secret must contain at least one uppercase letter")
-            .regex(/[a-z]/, "New secret must contain at least one lowercase letter")
-            .regex(/[0-9]/, "New secret must contain at least one digit")
-            .regex(/[^A-Za-z0-9]/, "New secret must contain at least one symbol"),
-        confirmNewSecret: z.string(),
+        newSecret: z.string().trim().nonempty("New secret is required"),
+        confirmNewSecret: z.string().trim().nonempty("Confirm new secret is required"),
         isSaved: z.boolean(),
+        isStrongSecret: z.boolean(),
     })
     .superRefine((arg, ctx) => {
         if (arg.newSecret !== arg.confirmNewSecret) {
@@ -19,6 +14,14 @@ export const ChangeKekFormSchema = z
                 code: z.ZodIssueCode.custom,
                 message: "Secrets do not match",
                 path: ["confirmNewSecret"],
+            });
+        }
+
+        if (arg.newSecret.length > 0 && !arg.isStrongSecret) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Secret is not strong enough",
+                path: ["isStrongSecret"],
             });
         }
     });

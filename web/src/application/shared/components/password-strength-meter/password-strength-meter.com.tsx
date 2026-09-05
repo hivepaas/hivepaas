@@ -18,41 +18,44 @@ interface Rule {
 
 const specialCharacters = /[!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~]/;
 
-const rules: Rule[] = [
-    {
-        title: "one lowercase character",
-        check: (input: string): boolean => {
-            return input.toUpperCase() !== input;
-        },
-    },
-    {
-        title: "one special character",
-        check: (input: string): boolean => {
-            return specialCharacters.test(input);
-        },
-    },
-    {
-        title: "one uppercase character",
-        check: (input: string): boolean => {
-            return input.toLowerCase() !== input;
-        },
-    },
-    {
-        title: "8 character minimum",
-        check: (input: string): boolean => {
-            return input.trim().length >= 8;
-        },
-    },
-    {
-        title: "one number",
-        check: (input: string): boolean => {
-            return /[0-9]/.test(input);
-        },
-    },
-];
-
-export function PasswordStrengthMeter({ password, onStrengthChange }: Props) {
+export function PasswordStrengthMeter({ password, minLength = 8, onStrengthChange }: Props) {
     const deferred = useDeferredValue(password);
+
+    const rules: Rule[] = useMemo(
+        () => [
+            {
+                title: "one lowercase character",
+                check: (input: string): boolean => {
+                    return input.toUpperCase() !== input;
+                },
+            },
+            {
+                title: "one special character",
+                check: (input: string): boolean => {
+                    return specialCharacters.test(input);
+                },
+            },
+            {
+                title: "one uppercase character",
+                check: (input: string): boolean => {
+                    return input.toLowerCase() !== input;
+                },
+            },
+            {
+                title: `${minLength} character minimum`,
+                check: (input: string): boolean => {
+                    return input.trim().length >= minLength;
+                },
+            },
+            {
+                title: "one number",
+                check: (input: string): boolean => {
+                    return /[0-9]/.test(input);
+                },
+            },
+        ],
+        [minLength],
+    );
 
     const strength: Strength = useMemo(() => {
         if (deferred.length === 0) {
@@ -64,7 +67,7 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: Props) {
         }, 0);
 
         return successCount === rules.length ? "max" : successCount;
-    }, [deferred]);
+    }, [deferred, rules]);
 
     useMount(() => {
         onStrengthChange(strength);
@@ -99,5 +102,6 @@ export function PasswordStrengthMeter({ password, onStrengthChange }: Props) {
 
 interface Props {
     password: string;
+    minLength?: number;
     onStrengthChange: (strength: Strength) => void;
 }

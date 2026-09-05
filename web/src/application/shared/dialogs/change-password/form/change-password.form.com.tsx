@@ -132,6 +132,7 @@ export function ChangePasswordForm({ isPending, onSubmit, onHasChanges }: Props)
                 <Button
                     type="submit"
                     isLoading={isPending}
+                    className="min-w-[100px]"
                 >
                     Change
                 </Button>

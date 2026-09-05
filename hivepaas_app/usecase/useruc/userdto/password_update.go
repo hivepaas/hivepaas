@@ -5,11 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-)
-
-const (
-	passwordMinLen = 8
-	passwordMaxLen = 64
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
 )
 
 type UpdatePasswordReq struct {
@@ -24,9 +20,9 @@ func NewUpdatePasswordReq() *UpdatePasswordReq {
 func (req *UpdatePasswordReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.CurrentPassword, true,
-		1, passwordMaxLen, "currentPassword")...)
+		1, userservice.PasswordRequirements.MaxLen, "currentPassword")...)
 	validators = append(validators, basedto.ValidateStr(&req.NewPassword, true,
-		passwordMinLen, passwordMaxLen, "newPassword")...)
+		userservice.PasswordRequirements.MinLen, userservice.PasswordRequirements.MaxLen, "newPassword")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

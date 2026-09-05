@@ -78,7 +78,7 @@ export function MfaSetupRequiredDialog() {
                 }
             }}
         >
-            <DialogFixedContent className="sm:max-w-[480px]">
+            <DialogFixedContent className="w-full sm:w-[450px] sm:max-w-[450px]">
                 <DialogHeader>
                     <DialogTitle>Activate 2-Factor Authentication</DialogTitle>
                     <DialogDescription className="sr-only">

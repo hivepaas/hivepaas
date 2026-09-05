@@ -163,7 +163,7 @@ export function F2aSetupDialog() {
                 }
             }}
         >
-            <DialogFixedContent className="min-w-[400px] w-fit">
+            <DialogFixedContent className="w-full sm:w-[420px] sm:max-w-[420px]">
                 <DialogHeader>
                     <DialogTitle>{dialogTitle}</DialogTitle>
                 </DialogHeader>

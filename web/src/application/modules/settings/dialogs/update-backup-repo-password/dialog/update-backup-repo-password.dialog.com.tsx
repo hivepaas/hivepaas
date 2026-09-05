@@ -111,7 +111,7 @@ export function UpdateBackupRepoPasswordDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="min-w-[400px] w-fit">
+            <DialogFixedContent className="w-full sm:w-[420px] sm:max-w-[420px]">
                 <DialogHeader>
                     <DialogTitle>Change Password</DialogTitle>
                 </DialogHeader>

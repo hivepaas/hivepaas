@@ -1,4 +1,4 @@
-import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@components/ui/input-otp";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@components/ui/input-otp";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldErrors, useController, useForm } from "react-hook-form";
 import z from "zod";
@@ -66,19 +66,31 @@ export function CurrentPasscodeForm({ isPending, onSubmit }: Props) {
                                 maxLength={CODE_LENGTH}
                                 aria-invalid={isCurrentPasscodeInvalid}
                             >
-                                <InputOTPGroup>
-                                    <InputOTPSlot index={0} />
-                                    <InputOTPSlot index={1} />
-                                </InputOTPGroup>
-                                <InputOTPSeparator />
-                                <InputOTPGroup>
-                                    <InputOTPSlot index={2} />
-                                    <InputOTPSlot index={3} />
-                                </InputOTPGroup>
-                                <InputOTPSeparator />
-                                <InputOTPGroup>
-                                    <InputOTPSlot index={4} />
-                                    <InputOTPSlot index={5} />
+                                <InputOTPGroup className="gap-2 sm:gap-2.5">
+                                    <InputOTPSlot
+                                        index={0}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                    <InputOTPSlot
+                                        index={1}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                    <InputOTPSlot
+                                        index={2}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                    <InputOTPSlot
+                                        index={3}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                    <InputOTPSlot
+                                        index={4}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
+                                    <InputOTPSlot
+                                        index={5}
+                                        className="size-10 sm:size-11 rounded-md border border-input dark:border-white/25 dark:bg-white/5 text-base sm:text-lg font-semibold shadow-xs"
+                                    />
                                 </InputOTPGroup>
                             </InputOTP>
                         </div>

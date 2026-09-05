@@ -14,7 +14,7 @@ func (uc *UC) RestartHpApp(
 	_ *basedto.Auth,
 	req *hpappdto.RestartHpAppReq,
 ) (*hpappdto.RestartHpAppResp, error) {
-	var errCache, errDb, errMain error
+	var errCache, errDb, errMain, errWorker, errAgent error
 	if req.RestartCacheApp {
 		errCache = uc.hpAppService.RestartHpCacheSwarmService(ctx)
 	}
@@ -24,8 +24,14 @@ func (uc *UC) RestartHpApp(
 	if req.RestartMainApp {
 		errMain = uc.hpAppService.RestartHpAppSwarmService(ctx)
 	}
+	if req.RestartWorkers {
+		errWorker = uc.hpAppService.RestartHpWorkerSwarmService(ctx)
+	}
+	if req.RestartAgents {
+		errAgent = uc.hpAppService.RestartHpAgentSwarmService(ctx)
+	}
 
-	err := errors.Join(errMain, errDb, errCache)
+	err := errors.Join(errMain, errDb, errCache, errAgent, errWorker)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

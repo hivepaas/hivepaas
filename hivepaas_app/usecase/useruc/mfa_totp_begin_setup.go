@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	qrCodeImageSize = 300
+	qrCodeImageSize = 400
 	qrCodeImageType = "image/png"
 )
 

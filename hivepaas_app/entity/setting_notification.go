@@ -37,23 +37,23 @@ func (s *Notification) GetRefObjectIDs() *RefObjectIDs {
 }
 
 func (s *Notification) ShouldNotifyViaEmail() bool {
-	return s.ViaEmail != nil && s.ViaEmail.Enabled
+	return s.ViaEmail != nil && s.ViaEmail.Enabled && s.ViaEmail.Sender.ID != ""
 }
 
 func (s *Notification) ShouldNotifyViaSlack() bool {
-	return s.ViaSlack != nil && s.ViaSlack.Enabled
+	return s.ViaSlack != nil && s.ViaSlack.Enabled && s.ViaSlack.Webhook.ID != ""
 }
 
 func (s *Notification) ShouldNotifyViaDiscord() bool {
-	return s.ViaDiscord != nil && s.ViaDiscord.Enabled
+	return s.ViaDiscord != nil && s.ViaDiscord.Enabled && s.ViaDiscord.Webhook.ID != ""
 }
 
 func (s *Notification) ShouldNotifyViaTelegram() bool {
-	return s.ViaTelegram != nil && s.ViaTelegram.Enabled
+	return s.ViaTelegram != nil && s.ViaTelegram.Enabled && s.ViaTelegram.Setting.ID != ""
 }
 
 func (s *Notification) ShouldNotifyViaLark() bool {
-	return s.ViaLark != nil && s.ViaLark.Enabled
+	return s.ViaLark != nil && s.ViaLark.Enabled && s.ViaLark.Webhook.ID != ""
 }
 
 type NotificationViaEmail struct {

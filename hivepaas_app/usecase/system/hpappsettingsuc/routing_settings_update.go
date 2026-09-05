@@ -78,7 +78,7 @@ func (uc *UC) loadRoutingSettingsForUpdate(
 	req *hpappsettingsdto.UpdateRoutingSettingsReq,
 	data *updateRoutingSettingsData,
 ) error {
-	app, err := uc.hpAppService.LoadAppByKey(ctx, uc.db, base.HivepaasAppKey,
+	app, err := uc.hpAppService.LoadAppByKey(ctx, db, base.HivepaasAppKey,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectFor("UPDATE OF app"),
 		bunex.SelectRelation("Project",

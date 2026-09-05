@@ -25,7 +25,7 @@ func InitSystemSettings(
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
 			logger.Info("starting system settings initialization...")
-			err := sysSettingsLoadAppDomain(ctx, db, settingRepo, cfg)
+			err := sysSettingsLoadAppDomain(db, settingRepo, cfg) //nolint:contextcheck
 			if err != nil {
 				return fmt.Errorf("failed to load system settings: %w", err)
 			}
@@ -39,13 +39,13 @@ func InitSystemSettings(
 }
 
 func sysSettingsLoadAppDomain(
-	ctx context.Context,
 	db *database.DB,
 	settingRepo repository.SettingRepo,
 	cfg *config.Config,
 ) (err error) {
-	loaderFunc := func() (string, error) {
-		dbRoutingSettings, _, err := settingRepo.List(ctx, db, nil, nil,
+	loaderFunc := func() (domain string, err error) {
+		// NOTE: do not re-use ctx as it may become timed out
+		dbRoutingSettings, _, err := settingRepo.List(context.Background(), db, nil, nil,
 			bunex.SelectJoin("JOIN apps AS app ON app.id = setting.object_id"),
 			bunex.SelectJoin("JOIN projects AS project ON project.id = app.project_id"),
 			bunex.SelectWhere("project.key = ?", base.HivepaasProjectKey),
@@ -61,9 +61,9 @@ func sysSettingsLoadAppDomain(
 		}
 		routingSettings := dbRoutingSettings[0].MustAsAppRoutingSettings()
 		if len(routingSettings.Domains) > 0 {
-			return routingSettings.Domains[0].Domain, nil
+			domain = routingSettings.Domains[0].Domain
 		}
-		return "", nil
+		return domain, nil
 	}
 
 	config.SetAppDomainReloadFunc(loaderFunc)

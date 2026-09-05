@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"time"
 
 	"github.com/moby/moby/api/types/container"
@@ -20,6 +21,21 @@ import (
 
 // cmdBuildx is the docker CLI plugin every builder command goes through.
 const cmdBuildx = "buildx"
+
+// buildkitContainerPrefix is how the docker-container driver names the container it
+// runs buildkit in: the prefix, the node name, and the node index. A builder created
+// with --name X gets nodes X0, X1, ... so its first container is buildx_buildkit_X0.
+//
+// The container carries no labels at all - buildx sets none - so the name is the only
+// thing that identifies it. A label filter here silently matches nothing, which looks
+// exactly like a builder that has not started.
+const buildkitContainerPrefix = "buildx_buildkit_"
+
+// defaultMemSwapFactor is the total memory+swap allowance given when a memory limit
+// is configured without a swap one. It is what docker itself picks for `run -m X`,
+// so an operator who sets only a memory limit gets the behavior that flag describes.
+// Setting memSwap equal to mem is how you ask for no swap at all.
+const defaultMemSwapFactor = 2
 
 const (
 	// builderBootstrapTimeout bounds the bootstrap step, which pulls the buildkit
@@ -237,7 +253,7 @@ func (s *service) applyBuilderResourceLimits(
 
 	resList, err := s.dockerManager.ContainerList(ctx, func(opts *client.ContainerListOptions) {
 		opts.All = true
-		docker.FilterAdd(&opts.Filters, "label", fmt.Sprintf("com.docker.buildx.builder=%s", builderName))
+		docker.FilterAdd(&opts.Filters, "name", buildkitContainerPattern(builderName))
 	})
 	if err != nil {
 		warnBuilderLimits(ctx, logStore, "failed to list the containers of builder %q: %v", builderName, err)
@@ -248,15 +264,9 @@ func (s *service) applyBuilderResourceLimits(
 		return
 	}
 
-	var updateRes container.Resources
-	if res.CPUs > 0 {
-		updateRes.NanoCPUs = int64(res.CPUs) * docker.UnitCPUNano //nolint:gosec
-	}
-	if res.Mem > 0 {
-		updateRes.Memory = res.Mem.Bytes()
-	}
-	if res.MemSwap > 0 {
-		updateRes.MemorySwap = res.MemSwap.Bytes()
+	updateRes, skipped := buildResourceUpdate(res)
+	for _, reason := range skipped {
+		warnBuilderLimits(ctx, logStore, "%s", reason)
 	}
 
 	for _, item := range resList.Items {
@@ -269,10 +279,58 @@ func (s *service) applyBuilderResourceLimits(
 	}
 }
 
+// buildResourceUpdate turns the configured limits into a container update, together
+// with the reason for any limit it had to leave out.
+//
+// Memory and swap have to travel together. Docker refuses a memory update that is
+// larger than the swap limit already on the container unless the same call sets swap
+// too, and the buildkit container is created with neither - so sending a memory limit
+// on its own always fails with "update the memoryswap at the same time".
+func buildResourceUpdate(res *entity.ImageBuildResourceSettings) (container.Resources, []string) {
+	var update container.Resources
+	var skipped []string
+
+	if res.CPUs > 0 {
+		update.NanoCPUs = int64(res.CPUs) * docker.UnitCPUNano //nolint:gosec
+	}
+
+	switch {
+	case res.Mem > 0 && res.MemSwap > 0 && res.MemSwap < res.Mem:
+		// Docker would reject the pair. Report the numbers rather than quietly
+		// raising one of them: which one the operator meant is not ours to guess.
+		skipped = append(skipped, fmt.Sprintf(
+			"memory limits not applied: memSwap (%s) must be at least mem (%s)", res.MemSwap, res.Mem))
+
+	case res.Mem > 0:
+		update.Memory = res.Mem.Bytes()
+		if res.MemSwap > 0 {
+			update.MemorySwap = res.MemSwap.Bytes()
+		} else {
+			update.MemorySwap = res.Mem.Bytes() * defaultMemSwapFactor
+		}
+
+	case res.MemSwap > 0:
+		skipped = append(skipped, fmt.Sprintf(
+			"memSwap (%s) not applied: docker requires a mem limit alongside it", res.MemSwap))
+	}
+
+	return update, skipped
+}
+
 func warnBuilderLimits(ctx context.Context, logStore *tasklog.Store, format string, args ...any) {
 	msg := fmt.Sprintf(format, args...)
 	logging.Warnf("image build: resource limits not applied: %s", msg)
 	_ = logStore.Add(ctx, tasklog.NewWarnFrame("Build resource limits not applied: "+msg, tasklog.TsNow))
+}
+
+// buildkitContainerPattern matches every buildkit container of one builder.
+//
+// The docker name filter is a regular expression matched against the stored names,
+// which carry a leading slash. It is anchored so a builder named "web" does not also
+// match the containers of "web-staging", and the name is quoted because it comes from
+// configuration rather than from this package.
+func buildkitContainerPattern(builderName string) string {
+	return fmt.Sprintf("^/?%s%s[0-9]+$", buildkitContainerPrefix, regexp.QuoteMeta(builderName))
 }
 
 func runDocker(ctx context.Context, args ...string) ([]byte, error) {

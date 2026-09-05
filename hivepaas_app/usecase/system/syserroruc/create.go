@@ -14,10 +14,21 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc/syserrordto"
 )
 
+// CreateSysError records an error.
+//
+// Repeats of an error already recorded in the last few minutes are dropped rather
+// than stored again: one dependency going down otherwise writes thousands of
+// identical rows, at the moment the database can least afford them. Nothing is lost
+// by it - every error is logged where it was rendered, so the store keeps one row per
+// distinct failure while the log keeps the volume.
 func (uc *UC) CreateSysError(
 	ctx context.Context,
 	req *syserrordto.CreateSysErrorReq,
 ) (*syserrordto.CreateSysErrorResp, error) {
+	if !uc.floodGuard.allow(errorFingerprint(req.ErrorInfo)) {
+		return &syserrordto.CreateSysErrorResp{}, nil
+	}
+
 	persistingData := &persistingSysErrorData{}
 	uc.preparePersistingSysError(req, persistingData)
 

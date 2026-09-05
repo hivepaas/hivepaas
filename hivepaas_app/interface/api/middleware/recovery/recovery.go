@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
 // Recovery create a middleware for recovering from panic
@@ -20,6 +21,7 @@ func Recovery(cfg *config.Config, baseHandler *handler.BaseHandler) gin.HandlerF
 	}
 
 	return gin.CustomRecoveryWithWriter(writer, func(ctx *gin.Context, recover any) {
+		defer safego.Recover("gin.Recovery")
 		err := hperrors.Wrap(hperrors.ErrInternal).
 			WithMsgLog("recovered from panic: %v", recover)
 		if baseHandler != nil {

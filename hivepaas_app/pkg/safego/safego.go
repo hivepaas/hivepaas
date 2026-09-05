@@ -125,8 +125,8 @@ func LogPanic(name string, r any) {
 
 func logPanic(logger logging.Logger, name string, r any, stack []byte) {
 	if logger == nil {
-		// The global logger is not initialized yet (bootstrap, tests, tools).
-		// Never let the reporting itself panic.
+		// Defensive: reporting a panic must never panic itself, whatever the caller
+		// passed. The global logger is never nil, so this is for direct callers.
 		fmt.Fprintf(os.Stderr, "[panic] goroutine %s: %v\n%s\n", name, r, stack)
 		return
 	}

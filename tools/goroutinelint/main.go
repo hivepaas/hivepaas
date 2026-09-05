@@ -15,8 +15,13 @@
 //     unqualified form inside package safego itself)
 //   - a function literal that calls recover()
 //
-// It also rejects safego.RecoverTo(nil): with nowhere to return the panic to,
-// that call is a misuse - use safego.Recover, which logs it.
+// It also rejects two misuses of the guards themselves:
+//
+//   - safego.RecoverTo(nil): with nowhere to return the panic to, that call is a
+//     misuse - use safego.Recover, which logs it.
+//   - a guard called without defer. recover() only returns a panic to a function
+//     the runtime is unwinding into, so `safego.Recover("x")` written as a plain
+//     statement compiles, reads as protection, and does nothing at all.
 //
 // For `go f()` / `go x.m()` the same check is applied to the declaration of f/m
 // in the same package. A callee this tool cannot see (another package) is
@@ -62,7 +67,10 @@ var skipDirs = map[string]bool{
 	"test-results":   true,
 }
 
-const allowDirective = "//safego:allow"
+const (
+	allowDirective = "//safego:allow"
+	safegoPkg      = "safego"
+)
 
 type finding struct {
 	pos token.Position
@@ -148,6 +156,9 @@ type pkgContext struct {
 	allowed map[string]map[int]bool
 	// imports holds the package-qualifier idents used in each file.
 	imports map[string]map[string]bool
+	// pkgName is the package being checked, so an unqualified Recover can be told
+	// apart from a method named Recover on someone else's type.
+	pkgName string
 }
 
 func checkDir(fset *token.FileSet, dir string) ([]finding, error) {
@@ -174,6 +185,7 @@ func checkDir(fset *token.FileSet, dir string) ([]finding, error) {
 		}
 		files = append(files, file)
 
+		ctx.pkgName = file.Name.Name
 		ctx.allowed[path] = allowedLines(fset, file)
 		ctx.imports[path] = importIdents(file)
 		for _, decl := range file.Decls {
@@ -181,6 +193,18 @@ func checkDir(fset *token.FileSet, dir string) ([]finding, error) {
 				ctx.decls[fn.Name.Name] = append(ctx.decls[fn.Name.Name], fn)
 			}
 		}
+	}
+
+	// Collect the deferred calls first, so the guard check below can tell a call
+	// that is deferred from one that only looks like it.
+	deferred := map[*ast.CallExpr]bool{}
+	for _, file := range files {
+		ast.Inspect(file, func(n ast.Node) bool {
+			if stmt, ok := n.(*ast.DeferStmt); ok {
+				deferred[stmt.Call] = true
+			}
+			return true
+		})
 	}
 
 	var findings []finding
@@ -192,6 +216,7 @@ func checkDir(fset *token.FileSet, dir string) ([]finding, error) {
 			case *ast.CallExpr:
 				findings = append(findings, ctx.checkWaitGroupGo(node)...)
 				findings = append(findings, ctx.checkRecoverToNil(node)...)
+				findings = append(findings, ctx.checkGuardNotDeferred(node, deferred)...)
 			}
 			return true
 		})
@@ -273,6 +298,50 @@ func (c *pkgContext) checkRecoverToNil(call *ast.CallExpr) []finding {
 	}
 	return []finding{{pos, "RecoverTo(nil) has nowhere to return the panic to and only hides it." +
 		" Pass a *error, or use safego.Recover(\"name\") which logs the panic"}}
+}
+
+// checkGuardNotDeferred reports a guard helper invoked as a plain statement.
+//
+// recover() returns a value only when it is called directly by a deferred function
+// while the goroutine is unwinding. Called any other way it returns nil, so a guard
+// written without defer is not weaker protection - it is none, in a line that reads
+// exactly like protection.
+func (c *pkgContext) checkGuardNotDeferred(call *ast.CallExpr, deferred map[*ast.CallExpr]bool) []finding {
+	if deferred[call] {
+		return nil
+	}
+	name, ok := c.guardName(call)
+	if !ok {
+		return nil
+	}
+	pos := c.fset.Position(call.Pos())
+	if c.isAllowed(pos) {
+		return nil
+	}
+	return []finding{{pos, fmt.Sprintf("%s is called without defer: recover() only returns a panic"+
+		" to a deferred function, so this call does nothing. Write `defer %s(...)` instead", name, name)}}
+}
+
+// guardName reports which guard helper a call refers to, if any.
+//
+// A qualified call has to go through the safego qualifier, and an unqualified one
+// only counts inside package safego itself. Matching on the bare name everywhere
+// would flag any Recover method that happens to share it.
+func (c *pkgContext) guardName(call *ast.CallExpr) (string, bool) {
+	switch fn := ast.Unparen(call.Fun).(type) {
+	case *ast.SelectorExpr:
+		x, ok := fn.X.(*ast.Ident)
+		if !ok || x.Name != safegoPkg {
+			return "", false
+		}
+		return safegoPkg + "." + fn.Sel.Name, guardFuncs[fn.Sel.Name]
+	case *ast.Ident:
+		if c.pkgName != safegoPkg {
+			return "", false
+		}
+		return fn.Name, guardFuncs[fn.Name]
+	}
+	return "", false
 }
 
 // checkCallee verifies the same-package declaration(s) of a goroutine entry point.

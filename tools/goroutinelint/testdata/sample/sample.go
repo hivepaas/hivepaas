@@ -113,3 +113,26 @@ func ok7() {
 		println("intentionally unguarded")
 	}()
 }
+
+// bad8 calls the guard without defer: it compiles, reads as protection, and the
+// recover() inside always returns nil.
+func bad8() {
+	safego.Recover("not deferred") // want: called without defer
+	println("unprotected")
+}
+
+// bad9 is the same mistake on another guard helper.
+func bad9() (err error) {
+	safego.RecoverTo(&err) // want: called without defer
+	return nil
+}
+
+func ok8() {
+	// A method named Recover on something that is not safego must not be flagged.
+	var r fakeRecoverer
+	r.Recover("unrelated")
+}
+
+type fakeRecoverer struct{}
+
+func (fakeRecoverer) Recover(string) {}

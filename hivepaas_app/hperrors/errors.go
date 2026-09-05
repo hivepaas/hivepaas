@@ -19,6 +19,18 @@ const (
 	ErrLevelError ErrLevel = iota + 1
 )
 
+// ShouldRecord reports whether an error at this level is worth storing for someone
+// to look at later.
+//
+// Everything below WARN is the caller being told no - a failed validation, an expired
+// token, a permission denied, a business rule refusing an action. Nobody can act on
+// those, and anyone who can reach the API can produce them at will, so recording them
+// turns the store into a log of other people's mistakes and hands an attacker a way
+// to grow the database from outside.
+func (l ErrLevel) ShouldRecord() bool {
+	return l >= ErrLevelWarn
+}
+
 // ParseError parse the given error and return a list of ErrorInfo.
 // If the given error is a single one, the returned slice will contain only one item.
 func ParseError(err error, lang translation.Lang) (*ErrorInfo, ErrLevel) {
@@ -30,15 +42,28 @@ func ParseError(err error, lang translation.Lang) (*ErrorInfo, ErrLevel) {
 	// `New` will automatically create AppError if the input is not AppError
 	appErr := Wrap(err)
 	errorInfo := appErr.Build(lang)
-	if errorInfo.Status == http.StatusInternalServerError {
+	// Any 5xx is ours, not the caller's: 500 for a bug, 503 when a dependency is
+	// down, 501 for a path that was never finished. Matching only 500 would file an
+	// outage as an ordinary user error.
+	if errorInfo.Status >= http.StatusInternalServerError {
 		return errorInfo, ErrLevelError
 	}
-	baseErr := getBaseError(appErr)
-	if baseErr != nil && errorWarnLevelMap[baseErr] {
+	if isWarnLevelError(appErr) {
 		return errorInfo, ErrLevelWarn
 	}
 	// User error, not the logic and not unexpected, reports at INFO level
 	return errorInfo, ErrLevelInfo
+}
+
+// isWarnLevelError reports whether the error is one of the errors that are unexpected
+// despite the status they carry.
+func isWarnLevelError(err error) bool {
+	for _, warnErr := range warnLevelErrors {
+		if errors.Is(err, warnErr) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetErrorDetail parses to get detail from the given error

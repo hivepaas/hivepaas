@@ -44,9 +44,24 @@ var errorStatusMap = map[error]int{
 	ErrNotImplemented:       http.StatusNotImplemented,
 }
 
-// errorWarnLevelMap defines the errors that are handled but unexpected to happen.
-// Every error defined in this map will be notified at WARN level instead of ERROR.
-var errorWarnLevelMap = map[error]bool{}
+// warnLevelErrors are errors that are handled but unexpected to happen: they answer
+// the caller with a 4xx - it did ask for something that cannot be done - yet still
+// leave the system in a state a person has to repair. They are reported at WARN
+// instead of the INFO their status would otherwise earn them, which is what decides
+// whether they are recorded at all.
+//
+// Matching is errors.Is against the entry, so an entry can be one specific error or a
+// whole class. Prefer the specific error: naming a base error such as
+// ErrPreconditionFailed raises every business rule built on it, and those are the
+// ordinary refusals this list exists to be distinguished from.
+var warnLevelErrors = []error{
+	// The repository was re-encrypted, storing the new password failed, and putting
+	// the old one back failed too. Nothing recovers this except a person.
+	ErrBackupRepoPasswordOutOfSync,
+	// Data written by a newer version than the one running: a rollback or a deploy
+	// went sideways, and the next write may lose fields it does not understand.
+	ErrDataVerNewerThanSystemVer,
+}
 
 // grpcErrorStatusMap - mapping from HTTP status code to gRPC code
 // Do not put non-base errors to this map

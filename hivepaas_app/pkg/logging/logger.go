@@ -7,7 +7,11 @@ import (
 const LoggerCtxKey string = "logger"
 
 var (
-	globalLogger Logger
+	// globalLogger starts as the fallback so the package functions are always safe to
+	// call. Before InitGlobalLogger runs they are reached anyway - error rendering
+	// logs a missing translation, tools and tests call in without a bootstrap - and a
+	// nil here would turn each of those log lines into a crash.
+	globalLogger Logger = fallbackLogger
 	once         sync.Once
 )
 
@@ -29,13 +33,15 @@ type Logger interface {
 // InitGlobalLogger sets singleton instance of Logger
 func InitGlobalLogger(log Logger) {
 	once.Do(func() {
-		globalLogger = log
+		if log != nil {
+			globalLogger = log
+		}
 	})
 }
 
-// GlobalLogger returns the singleton instance of Logger. It returns nil when
-// InitGlobalLogger has not been called yet, so callers running outside the
-// normal app bootstrap (tests, tools) must check the result.
+// GlobalLogger returns the singleton instance of Logger. It is never nil: before
+// InitGlobalLogger has run it is a fallback that writes to stderr, so a caller
+// outside the normal app bootstrap (tests, tools) still gets its output somewhere.
 func GlobalLogger() Logger {
 	return globalLogger
 }

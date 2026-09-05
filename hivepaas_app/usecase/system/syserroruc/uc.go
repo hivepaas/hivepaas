@@ -9,6 +9,9 @@ type UC struct {
 	db *database.DB
 
 	appErrorRepo repository.SysErrorRepo
+
+	// floodGuard collapses repeats of the same error; see flood_guard.go.
+	floodGuard *floodGuard
 }
 
 func New(
@@ -20,5 +23,7 @@ func New(
 		db: db,
 
 		appErrorRepo: appErrorRepo,
+
+		floodGuard: newFloodGuard(),
 	}
 }

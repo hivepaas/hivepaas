@@ -25,6 +25,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httputil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
@@ -109,8 +110,8 @@ func (h *BaseHandler) RenderResponse(ctx *gin.Context, status int, body any) {
 // RenderError renders errors to client as JSON
 func (h *BaseHandler) RenderError(ctx *gin.Context, err error) {
 	// Parse the error
-	errInfo, _ := hperrors.ParseError(err, h.ParseRequestLang(ctx))
-	h.SaveError(ctx, err, errInfo)
+	errInfo, errLevel := hperrors.ParseError(err, h.ParseRequestLang(ctx))
+	h.SaveError(ctx, errInfo, errLevel)
 
 	// Remove the error debug data from the response if we are not in dev env
 	if !config.Current.IsDevEnv() {
@@ -128,13 +129,49 @@ func (h *BaseHandler) RenderError(ctx *gin.Context, err error) {
 	ctx.JSON(errInfo.Status, errInfo)
 }
 
-// SaveError save error in to DB
-func (h *BaseHandler) SaveError(ctx *gin.Context, _ error, errInfo *hperrors.ErrorInfo) {
+// SaveError logs an error and saves it into the DB, if it is one worth keeping.
+//
+// Every error is logged. Only errors at WARN level and above are stored - see
+// ErrLevel.ShouldRecord for why the rest are dropped - and the store additionally
+// collapses repeats of the same error. Logging first is what makes both of those
+// safe: whatever the store leaves out, the log still has, and logs rotate while a
+// table does not.
+func (h *BaseHandler) SaveError(ctx *gin.Context, errInfo *hperrors.ErrorInfo, level hperrors.ErrLevel) {
+	logRequestError(ctx, errInfo, level)
+	if !level.ShouldRecord() {
+		return
+	}
 	if h != nil && h.sysErrorUC != nil {
 		_, _ = h.sysErrorUC.CreateSysError(ctx, &syserrordto.CreateSysErrorReq{
 			ErrorInfo: errInfo,
 		})
 	}
+}
+
+// logRequestError writes one line for a failed request. It runs before RenderError
+// strips the debug fields, so the cause is still there to log even though the response
+// will not carry it.
+func logRequestError(ctx *gin.Context, errInfo *hperrors.ErrorInfo, level hperrors.ErrLevel) {
+	if errInfo == nil {
+		return
+	}
+	method, path := "", ""
+	if ctx != nil && ctx.Request != nil {
+		method, path = ctx.Request.Method, ctx.Request.URL.Path
+	}
+	detail := errInfo.Detail
+	if errInfo.DebugLog != "" {
+		detail += " | " + errInfo.DebugLog
+	}
+	if errInfo.Cause != "" {
+		detail += " | cause: " + errInfo.Cause
+	}
+	// Errors the caller caused are ordinary traffic; the rest are ours to look at.
+	logf := logging.Infof
+	if level.ShouldRecord() {
+		logf = logging.Errorf
+	}
+	logf("%s %s -> %d %s: %s", method, path, errInfo.Status, errInfo.Code, detail)
 }
 
 // parsePagination parses paging and sorting params
@@ -148,14 +185,14 @@ func (h *BaseHandler) parsePagination(ctx *gin.Context, paging *basedto.Paging) 
 	if limitStr := ctx.Query("pageLimit"); limitStr != "" {
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil || limit <= 0 || limit > basedto.PageLimitMax {
-			return hperrors.NewArgumentInvalid("pageLimit")
+			return hperrors.NewArgumentInvalidNT("pageLimit")
 		}
 		paging.Limit = limit
 	}
 	if offsetStr := ctx.Query("pageOffset"); offsetStr != "" {
 		offset, err := strconv.Atoi(offsetStr)
 		if err != nil || offset < 0 {
-			return hperrors.NewArgumentInvalid("pageOffset")
+			return hperrors.NewArgumentInvalidNT("pageOffset")
 		}
 		if offset > 0 {
 			paging.Offset = offset

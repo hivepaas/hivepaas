@@ -5,11 +5,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
-)
-
-const (
-	secretMaxLen = secrethelper.DefaultPasswordMaxLen
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 )
 
 type UpdateAppSecretReq struct {
@@ -25,9 +21,9 @@ func NewUpdateAppSecretReq() *UpdateAppSecretReq {
 func (req *UpdateAppSecretReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, basedto.ValidateStr(&req.CurrentSecret, true,
-		1, secretMaxLen, "currentSecret")...)
+		1, hpappservice.SecretRequirements.MaxLen, "currentSecret")...)
 	validators = append(validators, basedto.ValidateStr(&req.NewSecret, true,
-		1, secretMaxLen, "newSecret")...)
+		hpappservice.SecretRequirements.MinLen, hpappservice.SecretRequirements.MaxLen, "newSecret")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

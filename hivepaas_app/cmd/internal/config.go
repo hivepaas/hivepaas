@@ -25,7 +25,14 @@ var (
 // appSecretMinLen is the shortest app secret accepted outside development. A
 // generated one is 64 hex characters; this only rules out obviously trivial
 // values someone typed by hand.
-const appSecretMinLen = 10
+const appSecretMinLen = 12
+
+// jwtSecretMinLen is the shortest JWT signing secret accepted outside development.
+// Tokens are signed with HS256, so anyone holding a single captured token can brute
+// force a short secret offline, at their own pace, with no request to us to notice.
+// 32 characters puts that out of reach; the sessions themselves are not what makes
+// this safe, since a forged token still has to match a live session in Redis.
+const jwtSecretMinLen = 32
 
 func InitConfig(lc fx.Lifecycle, cfg *config.Config, logger logging.Logger) {
 	lc.Append(fx.Hook{
@@ -77,9 +84,10 @@ func validateConfig(cfg *config.Config, logger logging.Logger) error {
 	logger.Info("validating app config...")
 	isProdEnv := !cfg.IsDevEnv()
 
-	// JWT secret must not be empty or a trivial value
-	if isProdEnv && len(cfg.Session.JWTSecret) < 10 {
-		return fmt.Errorf("%w: invalid JWT secret for production", ErrInvalidConfig)
+	// JWT secret must not be empty or short enough to brute force offline
+	if isProdEnv && len(cfg.Session.JWTSecret) < jwtSecretMinLen {
+		return fmt.Errorf("%w: JWT secret must be at least %d characters for production",
+			ErrInvalidConfig, jwtSecretMinLen)
 	}
 
 	// App secret is mandatory: everything stored as a secret is encrypted with it,

@@ -11,7 +11,7 @@ import (
 
 const (
 	passwordMinLen = 1
-	passwordMaxLen = secrethelper.DefaultPasswordMaxLen
+	passwordMaxLen = secrethelper.DefaultSecretMaxLen
 )
 
 type ChangeRepoPasswordReq struct {

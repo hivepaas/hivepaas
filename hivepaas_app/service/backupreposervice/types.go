@@ -2,7 +2,21 @@ package backupreposervice
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 	"github.com/hivepaas/hivepaas/services/backup"
+)
+
+var (
+	PasswordRequirements = secrethelper.SecretStrengthRequirements{
+		MinLen:             secrethelper.DefaultSecretMinLen,
+		MaxLen:             secrethelper.DefaultSecretMaxLen,
+		RequiredLowercases: secrethelper.DefaultSecretRequiredLowercases,
+		RequiredUppercases: secrethelper.DefaultSecretRequiredUppercases,
+		RequiredDigits:     secrethelper.DefaultSecretRequiredDigits,
+		RequiredSpecials:   secrethelper.DefaultSecretRequiredSpecials,
+		MaxSimilarRun:      secrethelper.DefaultSecretMaxSimilarRun,
+		MaxSequenceRun:     secrethelper.DefaultSecretMaxSequenceRun,
+	}
 )
 
 // repoLockPrefix namespaces the advisory lock so it cannot collide with locks taken elsewhere.

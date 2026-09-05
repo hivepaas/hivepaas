@@ -14,6 +14,19 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 )
 
+var (
+	PasswordRequirements = secrethelper.SecretStrengthRequirements{
+		MinLen:             secrethelper.DefaultSecretMinLen,
+		MaxLen:             secrethelper.DefaultSecretMaxLen,
+		RequiredLowercases: secrethelper.DefaultSecretRequiredLowercases,
+		RequiredUppercases: secrethelper.DefaultSecretRequiredUppercases,
+		RequiredDigits:     secrethelper.DefaultSecretRequiredDigits,
+		RequiredSpecials:   secrethelper.DefaultSecretRequiredSpecials,
+		MaxSimilarRun:      secrethelper.DefaultSecretMaxSimilarRun,
+		MaxSequenceRun:     secrethelper.DefaultSecretMaxSequenceRun,
+	}
+)
+
 const (
 	saltLength       = 10
 	hashingIteration = 1
@@ -33,8 +46,10 @@ func (s *service) ChangePassword(user *entity.User, newPassword, currPassword st
 	}
 
 	// Verify password strength
-	if err := s.CheckPasswordStrength(newPassword); err != nil {
-		return err
+	requirements := PasswordRequirements
+	requirements.PrevSecrets = []string{currPassword}
+	if err := secrethelper.ValidateStrength(newPassword, &requirements); err != nil {
+		return hperrors.Wrap(err)
 	}
 
 	user.Password, err = s.createPasswordHash(newPassword)
@@ -77,14 +92,6 @@ func (s *service) VerifyPassword(user *entity.User, password string) error {
 	// a leaky comparison would expose the stored hash byte by byte.
 	if !cryptoutil.SecureCompareBytes(passHash, passBytes) {
 		return hperrors.Wrap(hperrors.ErrPasswordMismatched)
-	}
-	return nil
-}
-
-func (s *service) CheckPasswordStrength(password string) error {
-	err := secrethelper.ValidateStrength(password, -1, -1, -1, -1, -1, -1)
-	if err != nil {
-		return hperrors.Wrap(err)
 	}
 	return nil
 }

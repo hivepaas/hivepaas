@@ -153,7 +153,10 @@ var (
 	ErrTokenTypeUnsupported                 = NewErr(ErrUnsupported, "ERR_TOKEN_TYPE_UNSUPPORTED")
 	ErrWebhookTypeUnsupported               = NewErr(ErrUnsupported, "ERR_WEBHOOK_TYPE_UNSUPPORTED")
 	ErrIMServiceUnsupported                 = NewErr(ErrUnsupported, "ERR_IM_SERVICE_UNSUPPORTED")
+	ErrPasswordCurrentMismatched            = NewErr(ErrBadRequest, "ERR_PASSWORD_CURRENT_MISMATCHED")
 	ErrPasswordNotMeetRequirements          = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_NOT_MEET_REQUIREMENTS")
+	ErrPasswordHasWeakSequence              = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_HAS_WEAK_SEQUENCE")
+	ErrPasswordTooSimilarToPrevious         = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_TOO_SIMILAR_TO_PREVIOUS")
 	ErrDataVerNewerThanSystemVer            = NewErr(ErrValueInvalid, "ERR_DATA_VER_NEWER_THAN_SYSTEM_VER")
 )
 
@@ -205,7 +208,6 @@ var (
 	// before kopia can be pointed at it.
 	ErrBackupRepoVolumePathUnresolved = NewErr(ErrPreconditionFailed, "ERR_BACKUP_REPO_VOLUME_PATH_UNRESOLVED")
 	ErrBackupRepoVolumeNodeRequired   = NewErr(ErrBadRequest, "ERR_BACKUP_REPO_VOLUME_NODE_REQUIRED")
-	ErrBackupRepoPasswordMismatched   = NewErr(ErrBadRequest, "ERR_BACKUP_REPO_PASSWORD_MISMATCHED")
 	// The repository was re-encrypted but the new password could not be stored, and putting the
 	// old one back failed too. Only a manual password change on the repository can fix it.
 	ErrBackupRepoPasswordOutOfSync = NewErr(ErrPreconditionFailed, "ERR_BACKUP_REPO_PASSWORD_OUT_OF_SYNC")

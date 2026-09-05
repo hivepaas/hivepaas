@@ -27,7 +27,6 @@ type Service interface {
 
 	ChangePassword(user *entity.User, newPassword, currPassword string) error
 	VerifyPassword(user *entity.User, password string) error
-	CheckPasswordStrength(password string) error
 
 	GenerateMFAToken(userID string, mfaType base.MFAType, trustedDeviceID string) (string, error)
 	ParseMFAToken(token string) (*appentity.MFATokenClaims, error)

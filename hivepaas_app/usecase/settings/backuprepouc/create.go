@@ -24,7 +24,8 @@ func (uc *UC) CreateBackupRepo(
 	req.Type = currentSettingType
 	// Validate password strength on repo creation
 	if !req.ImportExisting {
-		if err := validatePasswordStrength(req.Password); err != nil {
+		requirements := backupreposervice.PasswordRequirements
+		if err := secrethelper.ValidateStrength(req.Password, &requirements); err != nil {
 			return nil, hperrors.Wrap(err)
 		}
 	}
@@ -104,11 +105,4 @@ func applyRepoConfig(repo *entity.BackupRepo, config *backup.RepoConfig) {
 			KeepMonthly: config.Retention.KeepMonthly,
 		}
 	}
-}
-
-func validatePasswordStrength(password string) error {
-	if err := secrethelper.ValidateStrength(password, -1, -1, -1, -1, -1, -1); err != nil {
-		return hperrors.Wrap(err)
-	}
-	return nil
 }

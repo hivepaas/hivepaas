@@ -7,6 +7,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/cryptoutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/backuprepouc/backuprepodto"
@@ -26,10 +28,6 @@ func (uc *UC) ChangeRepoPassword(
 	req *backuprepodto.ChangeRepoPasswordReq,
 ) (*backuprepodto.ChangeRepoPasswordResp, error) {
 	req.Type = currentSettingType
-	// Validate password strength
-	if err := validatePasswordStrength(req.NewPassword); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
 	data := &changeRepoPasswordData{}
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		PrepareUpdate: func(
@@ -55,8 +53,14 @@ func (uc *UC) ChangeRepoPassword(
 			}
 			// The repository is what actually holds the password, so a mismatch here would only
 			// surface later as a repository nobody can open.
-			if req.CurrentPassword != currentPassword {
-				return hperrors.Wrap(hperrors.ErrBackupRepoPasswordMismatched)
+			if !cryptoutil.SecureCompare(req.CurrentPassword, currentPassword) {
+				return hperrors.Wrap(hperrors.ErrPasswordCurrentMismatched)
+			}
+			// Validate password strength
+			strengthReqs := backupreposervice.PasswordRequirements
+			strengthReqs.PrevSecrets = []string{currentPassword}
+			if err := secrethelper.ValidateStrength(req.NewPassword, &strengthReqs); err != nil {
+				return hperrors.Wrap(err)
 			}
 
 			data.Req = &backupreposervice.ChangeRepoPasswordReq{

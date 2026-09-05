@@ -34,6 +34,8 @@ ERR_VLD_DOMAIN_INVALID = "Domain is invalid"
 ERR_VLD_SUBDOMAIN_REQUIRED = "Value must be same or a subdomain of '{{.Domain}}'"
 ERR_VLD_WILDCARD_UNALLOWED = "Wildcard value is not allowed"
 ERR_VLD_MUTUALLY_EXCLUSIVE_FIELDS_INVALID = "Fields are mutually exclusive"
+ERR_VLD_SECRET_INVALID = "Secret is invalid"
+ERR_VLD_SECRET_MUST_DIFFER = "New secret must differ from the current one"
 
 # USERS
 ERR_VLD_EMAIL_INVALID = "Email is invalid"

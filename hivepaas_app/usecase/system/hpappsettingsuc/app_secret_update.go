@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
 
@@ -35,12 +36,15 @@ func (uc *UC) UpdateAppSecret(
 		return nil, hperrors.Wrap(hperrors.ErrUserDemoUnauthorized)
 	}
 
-	if err := secrethelper.ValidateStrength(req.NewSecret, -1, -1, -1, -1, -1, -1); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
 	if req.NewSecret == req.CurrentSecret {
 		return nil, hperrors.Wrap(hperrors.ErrBadRequest).
 			WithExtraDetail("the new app secret must differ from the current one")
+	}
+
+	strengthReqs := hpappservice.SecretRequirements
+	strengthReqs.PrevSecrets = []string{req.CurrentSecret}
+	if err := secrethelper.ValidateStrength(req.NewSecret, &strengthReqs); err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
 	if !secretRotationMu.TryLock() {

@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 )
 
+//nolint:unparam
 func (h *Handler) getAuth(
 	ctx *gin.Context,
 	resType base.ResourceType,

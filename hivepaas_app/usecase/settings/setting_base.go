@@ -31,7 +31,7 @@ type BaseSettingResp struct {
 	Status      base.SettingStatus `json:"status"`
 	Size        int64              `json:"size,omitempty"`
 	Inherited   bool               `json:"inherited,omitempty"`
-	Inheritable bool               `json:"inheritable,omitempty"`
+	Inheritable bool               `json:"inheritable"`
 	Default     bool               `json:"default,omitempty"`
 	UpdateVer   int                `json:"updateVer"`
 

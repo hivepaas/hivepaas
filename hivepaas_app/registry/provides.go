@@ -108,7 +108,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/binobjectuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/builduc"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/imageuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc"
@@ -270,7 +269,6 @@ var Provides = []any{
 	hpappsettingsuc.New,
 	hpappuc.New,
 	imagebuildsettingsuc.New,
-	imageuc.New,
 	imserviceuc.New,
 	networkuc.New,
 	nodeuc.New,

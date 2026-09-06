@@ -58,16 +58,17 @@ func TransformNetwork(
 	}
 
 	net := refClusterObjects.RefNetworks[setting.RefID]
-
-	resp.Driver = net.Driver
-	resp.Internal = net.Internal
-	resp.Attachable = net.Attachable
-	resp.Ingress = net.Ingress
-	resp.EnableIPv4 = net.EnableIPv4
-	resp.EnableIPv6 = net.EnableIPv6
-	resp.Options = net.Options
-	resp.Labels = net.Labels
-	resp.CreatedAt = net.Created
+	if net != nil {
+		resp.Driver = net.Driver
+		resp.Internal = net.Internal
+		resp.Attachable = net.Attachable
+		resp.Ingress = net.Ingress
+		resp.EnableIPv4 = net.EnableIPv4
+		resp.EnableIPv6 = net.EnableIPv6
+		resp.Options = net.Options
+		resp.Labels = net.Labels
+		resp.CreatedAt = net.Created
+	}
 
 	return resp, nil
 }

@@ -51,7 +51,6 @@ type NodeResp struct {
 	Platform     *NodePlatformResp       `json:"platform"`
 	Resources    *NodeResources          `json:"resources"`
 	EngineDesc   *NodeEngineDescResp     `json:"engineDesc"`
-	UpdateVer    int                     `json:"updateVer"`
 }
 
 type NodeBaseResp struct {
@@ -98,7 +97,6 @@ func TransformNode(
 	if err = copier.Copy(&resp, nodeEnt); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	resp.UpdateVer = setting.UpdateVer
 
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
@@ -106,41 +104,44 @@ func TransformNode(
 	}
 
 	node := refClusterObjects.RefNodes[setting.RefID]
+	if node != nil {
+		resp.RefID = node.ID
+		resp.Name = gofn.Coalesce(node.Spec.Name, "<unset>")
+		resp.State = docker.NodeState(node.Status.State)
+		resp.Availability = docker.NodeAvailability(node.Spec.Availability)
+		resp.Role = docker.NodeRole(node.Spec.Role)
+		isManager := node.Spec.Role == swarm.NodeRoleManager
+		resp.IsLeader = isManager && node.ManagerStatus != nil && node.ManagerStatus.Leader
+		resp.Hostname = node.Description.Hostname
+		resp.Addr = node.Status.Addr
+		resp.Platform = &NodePlatformResp{
+			Architecture: node.Description.Platform.Architecture,
+			OS:           node.Description.Platform.OS,
+		}
+		resp.Resources = &NodeResources{
+			CPUs:        node.Description.Resources.NanoCPUs / docker.UnitCPUNano,
+			Memory:      unit.DataSize(node.Description.Resources.MemoryBytes),
+			MemoryBytes: node.Description.Resources.MemoryBytes,
+		}
+		resp.CreatedAt = node.CreatedAt
+		resp.UpdatedAt = node.UpdatedAt
 
-	resp.RefID = node.ID
-	resp.Name = gofn.Coalesce(node.Spec.Name, "<unset>")
-	resp.State = docker.NodeState(node.Status.State)
-	resp.Availability = docker.NodeAvailability(node.Spec.Availability)
-	resp.Role = docker.NodeRole(node.Spec.Role)
-	isManager := node.Spec.Role == swarm.NodeRoleManager
-	resp.IsLeader = isManager && node.ManagerStatus != nil && node.ManagerStatus.Leader
-	resp.Hostname = node.Description.Hostname
-	resp.Addr = node.Status.Addr
-	resp.Platform = &NodePlatformResp{
-		Architecture: node.Description.Platform.Architecture,
-		OS:           node.Description.Platform.OS,
-	}
-	resp.Resources = &NodeResources{
-		CPUs:        node.Description.Resources.NanoCPUs / docker.UnitCPUNano,
-		Memory:      unit.DataSize(node.Description.Resources.MemoryBytes),
-		MemoryBytes: node.Description.Resources.MemoryBytes,
-	}
-	resp.CreatedAt = node.CreatedAt
-	resp.UpdatedAt = node.UpdatedAt
-
-	if detailed {
-		resp.Labels = node.Spec.Labels
-		resp.EngineDesc = &NodeEngineDescResp{
-			EngineVersion: node.Description.Engine.EngineVersion,
-			Labels:        node.Description.Engine.Labels,
-			Plugins: gofn.MapSlice(node.Description.Engine.Plugins, func(p swarm.PluginDescription) *NodePluginDescResp {
-				return &NodePluginDescResp{
-					Type: p.Type,
-					Name: p.Name,
-				}
-			}),
+		if detailed {
+			resp.Labels = node.Spec.Labels
+			resp.EngineDesc = &NodeEngineDescResp{
+				EngineVersion: node.Description.Engine.EngineVersion,
+				Labels:        node.Description.Engine.Labels,
+				Plugins: gofn.MapSlice(node.Description.Engine.Plugins,
+					func(p swarm.PluginDescription) *NodePluginDescResp {
+						return &NodePluginDescResp{
+							Type: p.Type,
+							Name: p.Name,
+						}
+					}),
+			}
 		}
 	}
+
 	return resp, nil
 }
 

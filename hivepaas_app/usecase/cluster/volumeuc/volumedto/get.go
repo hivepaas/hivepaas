@@ -102,31 +102,33 @@ func TransformVolume(
 	}
 
 	vol := refClusterObjects.RefVolumes[setting.RefID]
+	if vol != nil {
+		resp.Driver = docker.VolumeDriver(vol.Driver)
+		resp.Mountpoint = vol.Mountpoint
+		resp.Options = vol.Options
+		resp.Scope = docker.VolumeScope(vol.Scope)
+		resp.Labels = vol.Labels
+		resp.CreatedAt = transformVolumeCreatedAt(vol.CreatedAt)
+		if vol.UsageData != nil {
+			resp.RefCount = vol.UsageData.RefCount
+			resp.Size = vol.UsageData.Size
+		}
 
-	resp.Driver = docker.VolumeDriver(vol.Driver)
-	resp.Mountpoint = vol.Mountpoint
-	resp.Options = vol.Options
-	resp.Scope = docker.VolumeScope(vol.Scope)
-	resp.Labels = vol.Labels
-	resp.CreatedAt = transformVolumeCreatedAt(vol.CreatedAt)
-	if vol.UsageData != nil {
-		resp.RefCount = vol.UsageData.RefCount
-		resp.Size = vol.UsageData.Size
-	}
-
-	if resp.Driver == docker.VolumeDriverLocal {
-		switch vol.Options["type"] {
-		case "none":
-			resp.BindOptions = transformVolumeTypeBind(volEnt, vol)
-			resp.Options = nil
-		case "nfs":
-			resp.NfsOptions = transformVolumeTypeNfs(vol)
-			resp.Options = nil
-		case "tmpfs":
-			resp.TmpfsOptions = transformVolumeTypeTmpfs(vol)
-			resp.Options = nil
+		if resp.Driver == docker.VolumeDriverLocal {
+			switch vol.Options["type"] {
+			case "none":
+				resp.BindOptions = transformVolumeTypeBind(volEnt, vol)
+				resp.Options = nil
+			case "nfs":
+				resp.NfsOptions = transformVolumeTypeNfs(vol)
+				resp.Options = nil
+			case "tmpfs":
+				resp.TmpfsOptions = transformVolumeTypeTmpfs(vol)
+				resp.Options = nil
+			}
 		}
 	}
+
 	return resp, nil
 }
 

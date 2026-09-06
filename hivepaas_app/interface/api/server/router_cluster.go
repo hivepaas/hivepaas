@@ -34,16 +34,6 @@ func (s *HTTPServer) registerClusterRoutes(apiGroup *gin.RouterGroup) {
 		volumeGroup.POST("/sync", clusterHandler.SyncVolume)
 	}
 
-	{ // image group
-		imageGroup := clusterGroup.Group("/images")
-		// Volumes
-		imageGroup.GET("", clusterHandler.ListImage)
-		imageGroup.GET("/:imageID", clusterHandler.GetImage)
-		imageGroup.GET("/:imageID/inspect", clusterHandler.GetImageInspection)
-		imageGroup.POST("", clusterHandler.CreateImage)
-		imageGroup.DELETE("/:imageID", clusterHandler.DeleteImage)
-	}
-
 	{ // network group
 		networkGroup := clusterGroup.Group("/networks")
 		// Networks

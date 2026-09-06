@@ -95,7 +95,7 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
 
     function createPayload(values: CreateOrEditCloudStorageFormOutput) {
         return {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             kind: values.kind,
             name: values.name,
@@ -182,7 +182,7 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
               region: cloudStorage.s3.region,
               bucket: cloudStorage.s3.bucket,
               endpoint: cloudStorage.s3.endpoint,
-              inheritable: cloudStorage.inheritable ?? false,
+              inheritable: Boolean(cloudStorage.inheritable),
               default: cloudStorage.default ?? false,
           }
         : undefined;
@@ -209,7 +209,8 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
                     onHasChanges={setHasChanges}
                     savedVersion={saveRevision}
                     initialValues={initialValues}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
                     onClose={handleClose}

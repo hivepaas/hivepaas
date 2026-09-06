@@ -109,7 +109,7 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
     const readOnlyInherited = scope.type === "project" && acmeDnsProvider?.inherited === true;
 
     function onSubmit(values: CreateOrEditAcmeDnsProviderFormOutput) {
-        const payload = createPayload(values, scope.type === "project");
+        const payload = createPayload(values);
 
         if (isEditMode && acmeDnsProvider) {
             const updatePayload = {
@@ -171,8 +171,7 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
 
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const initialValues =
-        isEditMode && acmeDnsProvider ? createInitialValues(acmeDnsProvider) : createInitialValues(undefined);
+    const initialValues = createInitialValues(isEditMode ? acmeDnsProvider : undefined, scope.type === "project");
     const shouldRenderForm = mode === "create" || !!acmeDnsProvider;
     const title = mode === "create" ? "Create ACME DNS Provider" : "Edit ACME DNS Provider";
 
@@ -196,7 +195,8 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
                     onHasChanges={setHasChanges}
                     savedVersion={saveRevision}
                     initialValues={initialValues}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     showTestAccess
                     isEdit={isEditMode}
                     readOnlyInherited={readOnlyInherited}
@@ -322,22 +322,22 @@ function createConfigPayload(values: CreateOrEditAcmeDnsProviderFormOutput): Acm
     };
 }
 
-function createPayload(
-    values: CreateOrEditAcmeDnsProviderFormOutput,
-    isProjectScope: boolean,
-): AcmeDnsProvider_CreateOne_Payload {
+function createPayload(values: CreateOrEditAcmeDnsProviderFormOutput): AcmeDnsProvider_CreateOne_Payload {
     return {
         ...createConfigPayload(values),
-        inheritable: isProjectScope ? false : values.inheritable,
+        inheritable: values.inheritable,
         default: values.default,
     };
 }
 
-function createInitialValues(acmeDnsProvider?: SettingAcmeDnsProvider): Partial<CreateOrEditAcmeDnsProviderFormInput> {
+function createInitialValues(
+    acmeDnsProvider?: SettingAcmeDnsProvider,
+    isProjectScope?: boolean,
+): Partial<CreateOrEditAcmeDnsProviderFormInput> {
     if (!acmeDnsProvider) {
         return {
             kind: EAcmeDnsProviderKind.AcmeDNS,
-            inheritable: false,
+            inheritable: isProjectScope ? true : false,
             default: false,
         };
     }
@@ -380,7 +380,7 @@ function createInitialValues(acmeDnsProvider?: SettingAcmeDnsProvider): Partial<
         tencentCloudSecretId: acmeDnsProvider.tencentCloud?.secretId ?? "",
         tencentCloudSecretKey: secretValue(acmeDnsProvider.tencentCloud?.secretKey, acmeDnsProvider.secretMasked),
         tencentCloudRegion: acmeDnsProvider.tencentCloud?.region ?? "",
-        inheritable: acmeDnsProvider.inheritable ?? false,
+        inheritable: Boolean(acmeDnsProvider.inheritable),
         default: acmeDnsProvider.default ?? false,
     };
 }

@@ -82,7 +82,7 @@ export function UpdateRegistryAuthStatusDialog() {
             updateVer: registryAuth.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -127,12 +127,12 @@ export function UpdateRegistryAuthStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "Registry Auth"} Status`
         : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = registryAuth
         ? {
               status: registryAuth.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: registryAuth.expireAt ?? undefined,
-              inheritable: registryAuth.inheritable ?? false,
+              inheritable: Boolean(registryAuth.inheritable),
               default: registryAuth.default ?? false,
           }
         : undefined;
@@ -161,7 +161,8 @@ export function UpdateRegistryAuthStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

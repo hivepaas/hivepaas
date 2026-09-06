@@ -6,7 +6,7 @@ import { type FieldErrors, useController, useForm, useWatch } from "react-hook-f
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 import { SSL_KEY_TYPE_OPTIONS, SSL_PROVIDER_OPTIONS } from "~/settings/module-shared/constants/ssl-provider.constants";
 
-import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESslProviderKind } from "@application/shared/enums";
 
 import {
@@ -52,12 +52,15 @@ export function CreateOrEditSslProviderForm({
     savedVersion = 0,
     initialValues,
     showAvailableInProjects,
+    isProjectScope = false,
     isEdit,
     readOnlyInherited = false,
     readOnly = false,
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
 
     const {
         handleSubmit,
@@ -68,6 +71,7 @@ export function CreateOrEditSslProviderForm({
     } = useForm<CreateOrEditSslProviderFormInput, unknown, CreateOrEditSslProviderFormOutput>({
         defaultValues: {
             ...DEFAULT_FORM_VALUES,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             ...initialValues,
         },
         resolver: zodResolver(CreateOrEditSslProviderFormSchema),
@@ -302,14 +306,18 @@ export function CreateOrEditSslProviderForm({
                     {showAvailableInProjects && (
                         <InfoBlock
                             titleWidth={220}
-                            title={<LabelWithInfo label="Available in Projects" />}
+                            title={<LabelWithInfo label={inheritableLabel} />}
                         >
-                            <Checkbox
-                                checked={inheritable.value}
-                                onCheckedChange={checked => {
-                                    inheritable.onChange(Boolean(checked));
-                                }}
-                            />
+                            <div className="flex items-center gap-3">
+                                <Checkbox
+                                    disabled={isInheritableDisabled}
+                                    checked={inheritable.value}
+                                    onCheckedChange={checked => {
+                                        inheritable.onChange(Boolean(checked));
+                                    }}
+                                />
+                                {isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                            </div>
                         </InfoBlock>
                     )}
 
@@ -363,6 +371,7 @@ interface Props {
     savedVersion?: number;
     initialValues?: Partial<CreateOrEditSslProviderFormInput>;
     showAvailableInProjects: boolean;
+    isProjectScope?: boolean;
     isEdit: boolean;
     readOnlyInherited?: boolean;
     readOnly?: boolean;

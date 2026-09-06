@@ -78,10 +78,9 @@ export class ProjectNotificationApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_CreateOne_Res, Error>> {
         const { projectID, env, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.post(getProjectNotificationsBasePath(projectID, env), json, { signal })).pipe(
+            from(this.client.v1.post(getProjectNotificationsBasePath(projectID, env), payload, { signal })).pipe(
                 map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -94,10 +93,11 @@ export class ProjectNotificationApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_UpdateOne_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.put(`${getProjectNotificationsBasePath(projectID, env)}/${id}`, json, { signal })).pipe(
+            from(
+                this.client.v1.put(`${getProjectNotificationsBasePath(projectID, env)}/${id}`, payload, { signal }),
+            ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -109,11 +109,12 @@ export class ProjectNotificationApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectNotification_UpdateStatus_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectNotificationsBasePath(projectID, env)}/${id}/status`, json, { signal }),
+                this.client.v1.put(`${getProjectNotificationsBasePath(projectID, env)}/${id}/status`, payload, {
+                    signal,
+                }),
             ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),

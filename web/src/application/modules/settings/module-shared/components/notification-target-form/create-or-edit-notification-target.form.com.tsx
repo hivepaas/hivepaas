@@ -7,7 +7,14 @@ import { EmailQueries, ImServiceQueries } from "~/settings/data/queries";
 import type { SettingEmail, SettingImService } from "~/settings/domain";
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { AppLink, Combobox, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import {
+    AppLink,
+    AvailableInAppsWarning,
+    Combobox,
+    FormActionBar,
+    InfoBlock,
+    LabelWithInfo,
+} from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { EImServiceKind } from "@application/shared/enums";
 
@@ -111,12 +118,15 @@ export function CreateOrEditNotificationTargetForm({
     onHasChanges,
     savedVersion = 0,
     initialValues,
-    showAvailableInProjects,
+    showAvailableInProjects = true,
     readOnlyInherited = false,
     readOnly = false,
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+    const isProjectScope = scope.type === "project";
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
     const [openSections, setOpenSections] = useState<NotificationSection[]>(initialOpenSections);
 
     const { emailQuery, imServiceQuery } = useNotificationSourceQueries(scope);
@@ -149,7 +159,7 @@ export function CreateOrEditNotificationTargetForm({
             larkUseDefault: initialValues?.larkUseDefault ?? true,
             larkWebhookId: initialValues?.larkWebhookId ?? "",
             minSendInterval: initialValues?.minSendInterval ?? "3m",
-            inheritable: initialValues?.inheritable ?? false,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditNotificationTargetFormSchema),
@@ -809,14 +819,18 @@ export function CreateOrEditNotificationTargetForm({
                     {showAvailableInProjects && (
                         <InfoBlock
                             titleWidth={220}
-                            title={<LabelWithInfo label="Available in Projects" />}
+                            title={<LabelWithInfo label={inheritableLabel} />}
                         >
-                            <Checkbox
-                                checked={inheritable.value}
-                                onCheckedChange={checked => {
-                                    inheritable.onChange(Boolean(checked));
-                                }}
-                            />
+                            <div className="flex items-center gap-3">
+                                <Checkbox
+                                    disabled={isInheritableDisabled}
+                                    checked={inheritable.value}
+                                    onCheckedChange={checked => {
+                                        inheritable.onChange(Boolean(checked));
+                                    }}
+                                />
+                                {isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                            </div>
                         </InfoBlock>
                     )}
 
@@ -870,7 +884,7 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     savedVersion?: number;
     initialValues?: Partial<CreateOrEditNotificationTargetFormInput>;
-    showAvailableInProjects: boolean;
+    showAvailableInProjects?: boolean;
     readOnlyInherited?: boolean;
     readOnly?: boolean;
     onClose?: () => void;

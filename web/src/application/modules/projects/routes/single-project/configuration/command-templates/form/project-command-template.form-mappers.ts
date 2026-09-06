@@ -25,6 +25,7 @@ export function createEmptyProjectCommandTemplateFormDefaults(): ProjectCommandT
         consoleSize: { ...PROJECT_COMMAND_TEMPLATE_DEFAULT_CONSOLE_SIZE },
         envVars: [],
         argGroups: [],
+        inheritable: true,
         default: false,
     };
 }
@@ -49,6 +50,7 @@ export function mapProjectCommandTemplateToFormInput(
         consoleSize: { ...commandTemplate.consoleSize },
         envVars: commandTemplate.envVars,
         argGroups: commandTemplate.argGroups,
+        inheritable: commandTemplate.inheritable,
         default: commandTemplate.default,
     };
 }

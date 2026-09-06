@@ -86,11 +86,10 @@ export class ProjectBackupRepoApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectBackupRepo_CreateOne_Res, Error>> {
         const { projectID, env, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(getProjectBackupRepoBasePath(projectID, env), json, {
+                this.client.v1.post(getProjectBackupRepoBasePath(projectID, env), payload, {
                     signal,
                 }),
             ).pipe(
@@ -106,11 +105,10 @@ export class ProjectBackupRepoApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectBackupRepo_UpdateOne_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectBackupRepoBasePath(projectID, env)}/${id}`, json, {
+                this.client.v1.put(`${getProjectBackupRepoBasePath(projectID, env)}/${id}`, payload, {
                     signal,
                 }),
             ).pipe(
@@ -126,11 +124,10 @@ export class ProjectBackupRepoApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectBackupRepo_UpdateStatus_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectBackupRepoBasePath(projectID, env)}/${id}/status`, json, {
+                this.client.v1.put(`${getProjectBackupRepoBasePath(projectID, env)}/${id}/status`, payload, {
                     signal,
                 }),
             ).pipe(

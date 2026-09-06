@@ -87,6 +87,7 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
             volumeID: volume.id,
             payload: {
                 updateVer: volume.updateVer,
+                inheritable: values.inheritable,
                 default: values.default,
             },
         });
@@ -105,12 +106,13 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
                     key={volume.id}
                     initialValues={toVolumeFormInitialValues(volume)}
                     readOnlyCore
-                    readOnlyAvailableInProjects={scope.type === "project" || !canSubmit}
+                    readOnlyAvailableInProjects={!canSubmit}
                     readOnlyDefault={!canSubmit}
                     readOnlyInherited={isInherited}
                     readOnlyPermission={!canWrite}
                     isPending={isPending}
-                    showAvailableInProjects={scope.type === "cluster"}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     onSubmit={onSubmit}
                 >
                     {!canSubmit ? (

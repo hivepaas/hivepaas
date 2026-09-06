@@ -57,7 +57,7 @@ export function ProvisionGithubAppDialog() {
             name: values.name,
             org: values.ownerType === EGithubAppOwnerType.Organization ? values.org : "",
             ssoEnabled: values.ssoEnabled,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -83,7 +83,7 @@ export function ProvisionGithubAppDialog() {
 
     const open = state.mode !== "closed";
     const isPending = isBeginningSettings || isBeginningProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
 
     return (
         <Dialog
@@ -103,7 +103,8 @@ export function ProvisionGithubAppDialog() {
                         loginChecked={loginChecked}
                         onLoginCheck={onLoginCheck}
                         onSubmit={onSubmit}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnly={!canWrite}
                         onClose={handleClose}
                     />

@@ -55,10 +55,7 @@ function getEabValues(sslProvider?: SettingSslProvider) {
     };
 }
 
-function createPayload(
-    values: CreateOrEditSslProviderFormOutput,
-    isProjectScope: boolean,
-): SslProvider_CreateOne_Payload {
+function createPayload(values: CreateOrEditSslProviderFormOutput): SslProvider_CreateOne_Payload {
     const defaultKeyType =
         values.defaultKeyType === SSL_PROVIDER_UNSPECIFIED_KEY_TYPE ? undefined : values.defaultKeyType;
     const isLetsEncrypt = values.kind === ESslProviderKind.LetsEncrypt;
@@ -70,7 +67,7 @@ function createPayload(
     };
 
     return {
-        inheritable: isProjectScope ? false : values.inheritable,
+        inheritable: values.inheritable,
         default: values.default,
         name: values.name,
         kind: values.kind,
@@ -143,7 +140,7 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
     const readOnlyInherited = scope.type === "project" && sslProvider?.inherited === true;
 
     function onSubmit(values: CreateOrEditSslProviderFormOutput) {
-        const payload = createPayload(values, scope.type === "project");
+        const payload = createPayload(values);
 
         if (isEditMode && sslProvider) {
             const updatePayload = { ...payload, updateVer: sslProvider.updateVer };
@@ -197,13 +194,13 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
                   email: sslProvider.email,
                   defaultKeyType: sslProvider.defaultKeyType || SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
                   ...getEabValues(sslProvider),
-                  inheritable: sslProvider.inheritable ?? false,
+                  inheritable: Boolean(sslProvider.inheritable),
                   default: sslProvider.default ?? false,
               }
             : {
                   kind: ESslProviderKind.LetsEncrypt,
                   defaultKeyType: SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
-                  inheritable: false,
+                  inheritable: scope.type === "project" ? true : false,
                   default: false,
               };
     const shouldRenderForm = mode === "create" || !!sslProvider;
@@ -226,7 +223,8 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
                     onHasChanges={setHasChanges}
                     savedVersion={saveRevision}
                     initialValues={initialValues}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     isEdit={isEditMode}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}

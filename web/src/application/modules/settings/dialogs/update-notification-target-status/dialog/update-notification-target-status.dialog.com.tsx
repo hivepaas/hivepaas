@@ -75,7 +75,7 @@ export function UpdateNotificationTargetStatusDialog() {
             updateVer: notificationTarget.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -112,7 +112,7 @@ export function UpdateNotificationTargetStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "Notification Target"} Status`
         : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = notificationTarget
         ? {
               status:
@@ -120,7 +120,7 @@ export function UpdateNotificationTargetStatusDialog() {
                       ? ESettingStatus.Disabled
                       : ESettingStatus.Active,
               expireAt: notificationTarget.expireAt ?? undefined,
-              inheritable: notificationTarget.inheritable ?? false,
+              inheritable: Boolean(notificationTarget.inheritable),
               default: notificationTarget.default ?? false,
           }
         : undefined;
@@ -149,7 +149,8 @@ export function UpdateNotificationTargetStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

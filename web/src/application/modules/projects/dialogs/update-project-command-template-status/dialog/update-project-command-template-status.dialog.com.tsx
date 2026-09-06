@@ -67,7 +67,7 @@ export function UpdateProjectCommandTemplateStatusDialog() {
                 updateVer: commandTemplate.updateVer,
                 status: values.status,
                 expireAt: values.expireAt ?? null,
-                inheritable: false,
+                inheritable: values.inheritable,
                 default: values.default,
             },
         });
@@ -100,6 +100,7 @@ export function UpdateProjectCommandTemplateStatusDialog() {
               status:
                   commandTemplate.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: commandTemplate.expireAt ?? undefined,
+              inheritable: commandTemplate.inheritable,
               default: commandTemplate.default,
           }
         : undefined;

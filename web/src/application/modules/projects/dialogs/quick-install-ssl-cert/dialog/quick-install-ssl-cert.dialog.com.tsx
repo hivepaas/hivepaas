@@ -97,7 +97,7 @@ export function QuickInstallSslCertDialog() {
             projectID: projectId,
             env: env ?? undefined,
             payload: {
-                inheritable: false,
+                inheritable: true,
                 default: false,
                 certType: values.certType,
                 provider: values.provider?.id ? { id: values.provider.id } : undefined,

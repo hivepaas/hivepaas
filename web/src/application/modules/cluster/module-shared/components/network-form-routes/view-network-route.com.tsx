@@ -84,6 +84,7 @@ export function ViewNetworkRoute({ scope, networkId }: Props) {
             networkID: network.id,
             payload: {
                 updateVer: network.updateVer,
+                inheritable: values.inheritable,
                 default: values.default,
             },
         });
@@ -101,12 +102,13 @@ export function ViewNetworkRoute({ scope, networkId }: Props) {
                 <ViewNetworkForm
                     key={network.id}
                     network={network}
-                    readOnlyAvailableInProjects={scope.type === "project" || !canSubmit}
+                    readOnlyAvailableInProjects={!canSubmit}
                     readOnlyDefault={!canSubmit}
                     readOnlyInherited={isInherited}
                     readOnlyPermission={!canWrite}
                     isPending={isPending}
-                    showAvailableInProjects={scope.type === "cluster"}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     onSubmit={onSubmit}
                 >
                     {!canSubmit ? (

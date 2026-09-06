@@ -84,7 +84,7 @@ export function UpdateImPlatformStatusDialog() {
             updateVer: imPlatform.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -129,12 +129,12 @@ export function UpdateImPlatformStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "IM Platform"} Status`
         : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = imPlatform
         ? {
               status: imPlatform.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: imPlatform.expireAt ?? undefined,
-              inheritable: imPlatform.inheritable ?? false,
+              inheritable: Boolean(imPlatform.inheritable),
               default: imPlatform.default ?? false,
           }
         : undefined;
@@ -163,7 +163,8 @@ export function UpdateImPlatformStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

@@ -3,7 +3,7 @@ import { type FieldErrors, useController, useForm, useFormState } from "react-ho
 import { useUpdateEffect } from "react-use";
 import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
 import {
@@ -36,12 +36,15 @@ export function UpdateNetworkStatusForm({
     onSubmit,
     initialValues,
     onHasChanges,
-    showAvailableInProjects,
+    showAvailableInProjects = true,
+    isProjectScope = false,
     readOnlyInherited = false,
     readOnly = false,
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
 
     const {
         handleSubmit,
@@ -51,7 +54,7 @@ export function UpdateNetworkStatusForm({
         defaultValues: {
             status: initialValues?.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
             expireAt: initialValues?.expireAt ?? undefined,
-            inheritable: initialValues?.inheritable ?? false,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(UpdateNetworkStatusFormSchema),
@@ -147,15 +150,19 @@ export function UpdateNetworkStatusForm({
                         {showAvailableInProjects && (
                             <Field>
                                 <InfoBlock
-                                    title={<LabelWithInfo label="Available in Projects" />}
+                                    title={<LabelWithInfo label={inheritableLabel} />}
                                     titleWidth={220}
                                 >
-                                    <Checkbox
-                                        checked={inheritable.value}
-                                        onCheckedChange={checked => {
-                                            inheritable.onChange(Boolean(checked));
-                                        }}
-                                    />
+                                    <div className="flex items-center gap-3">
+                                        <Checkbox
+                                            disabled={isInheritableDisabled}
+                                            checked={inheritable.value}
+                                            onCheckedChange={checked => {
+                                                inheritable.onChange(Boolean(checked));
+                                            }}
+                                        />
+                                        {isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                                    </div>
                                 </InfoBlock>
                             </Field>
                         )}
@@ -211,7 +218,8 @@ interface Props {
     onSubmit: (values: UpdateNetworkStatusFormOutput) => void;
     initialValues?: Partial<UpdateNetworkStatusFormInput>;
     onHasChanges?: (dirty: boolean) => void;
-    showAvailableInProjects: boolean;
+    showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
     readOnlyInherited?: boolean;
     readOnly?: boolean;
     onClose?: () => void;

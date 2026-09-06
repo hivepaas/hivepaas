@@ -31,7 +31,7 @@ export type ProjectClusterVolumes_CreateOne_Req = ApiRequestBase<{
     env?: string;
     payload: ClusterVolumeBasePayload & {
         default: boolean;
-        inheritable?: false;
+        inheritable?: boolean;
     };
 }>;
 
@@ -44,7 +44,7 @@ export type ProjectClusterVolumes_UpdateOne_Req = ApiRequestBase<{
     env?: string;
     volumeID: string;
     payload: Omit<ClusterVolumeUpdatePayload, "inheritable"> & {
-        inheritable?: false;
+        inheritable?: boolean;
     };
 }>;
 
@@ -57,7 +57,7 @@ export type ProjectClusterVolumes_UpdateStatus_Req = ApiRequestBase<{
     env?: string;
     volumeID: string;
     payload: Omit<ClusterVolumeUpdateStatusPayload, "inheritable"> & {
-        inheritable?: false;
+        inheritable?: boolean;
     };
 }>;
 

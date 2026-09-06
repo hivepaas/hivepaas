@@ -113,7 +113,7 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
         const headers = toRecord(values.headers);
 
         return {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             name: values.name,
             kind: values.kind,
@@ -254,7 +254,8 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
                         onHasChanges={setHasChanges}
                         savedVersion={saveRevision}
                         initialValues={initialValues}
-                        showAvailableInProjects={scope.type === "settings"}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}
@@ -334,7 +335,7 @@ function toInitialValues(emailAccount: SettingEmail): Partial<CreateOrEditEmailA
         httpContentType: emailAccount.http?.contentType ?? "application/json",
         headers: toKeyValueList(emailAccount.http?.headers),
         fieldMapping: toKeyValueList(emailAccount.http?.fieldMapping),
-        inheritable: emailAccount.inheritable ?? false,
+        inheritable: Boolean(emailAccount.inheritable),
         default: emailAccount.default ?? false,
     };
 }

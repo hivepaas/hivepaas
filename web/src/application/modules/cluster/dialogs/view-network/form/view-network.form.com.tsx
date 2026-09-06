@@ -11,7 +11,7 @@ import {
 import { EClusterNetworkDriver } from "~/cluster/module-shared/enums";
 import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
 
 interface ViewNetworkFormValues {
@@ -35,6 +35,7 @@ export function ViewNetworkForm({
     readOnlyPermission = false,
     isPending = false,
     showAvailableInProjects = true,
+    isProjectScope = false,
     onSubmit,
     children,
 }: Props) {
@@ -179,11 +180,16 @@ export function ViewNetworkForm({
                             className="border-0 p-0 m-0 min-w-0"
                         >
                             <CheckboxField
-                                title={<LabelWithInfo label="Available in Projects" />}
+                                title={
+                                    <LabelWithInfo
+                                        label={isProjectScope ? "Available in Apps" : "Available in Projects"}
+                                    />
+                                }
                                 checked={inheritable.value}
                                 onCheckedChange={checked => {
                                     inheritable.onChange(checked);
                                 }}
+                                extra={isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
                             />
                         </fieldset>
                     ) : null}
@@ -207,18 +213,21 @@ export function ViewNetworkForm({
     );
 }
 
-function CheckboxField({ title, checked, onCheckedChange }: CheckboxFieldProps) {
+function CheckboxField({ title, checked, onCheckedChange, extra }: CheckboxFieldProps) {
     return (
         <InfoBlock
             title={title}
             titleWidth={220}
         >
-            <Checkbox
-                checked={checked}
-                onCheckedChange={value => {
-                    onCheckedChange(Boolean(value));
-                }}
-            />
+            <div className="flex items-center gap-3">
+                <Checkbox
+                    checked={checked}
+                    onCheckedChange={value => {
+                        onCheckedChange(Boolean(value));
+                    }}
+                />
+                {extra}
+            </div>
         </InfoBlock>
     );
 }
@@ -241,6 +250,7 @@ interface CheckboxFieldProps {
     title: string | ReactNode;
     checked: boolean;
     onCheckedChange: (checked: boolean) => void;
+    extra?: ReactNode;
 }
 
 interface ReadonlyCheckboxProps {
@@ -256,5 +266,6 @@ interface Props extends PropsWithChildren {
     readOnlyPermission?: boolean;
     isPending?: boolean;
     showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
     onSubmit: (values: ViewNetworkFormOutput) => void;
 }

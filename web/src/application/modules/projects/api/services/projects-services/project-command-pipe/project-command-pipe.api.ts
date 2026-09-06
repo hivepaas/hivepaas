@@ -80,11 +80,10 @@ export class ProjectCommandPipeApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandPipe_CreateOne_Res, Error>> {
         const { projectID, env, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(getProjectCommandPipeBasePath(projectID, env), json, {
+                this.client.v1.post(getProjectCommandPipeBasePath(projectID, env), payload, {
                     signal,
                 }),
             ).pipe(
@@ -119,11 +118,10 @@ export class ProjectCommandPipeApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandPipe_UpdateOne_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectCommandPipeBasePath(projectID, env)}/${id}`, json, {
+                this.client.v1.put(`${getProjectCommandPipeBasePath(projectID, env)}/${id}`, payload, {
                     signal,
                 }),
             ).pipe(
@@ -139,11 +137,10 @@ export class ProjectCommandPipeApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandPipe_UpdateStatus_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectCommandPipeBasePath(projectID, env)}/${id}/status`, json, {
+                this.client.v1.put(`${getProjectCommandPipeBasePath(projectID, env)}/${id}/status`, payload, {
                     signal,
                 }),
             ).pipe(

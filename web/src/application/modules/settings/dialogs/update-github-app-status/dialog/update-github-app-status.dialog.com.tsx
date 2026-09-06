@@ -81,7 +81,7 @@ export function UpdateGithubAppStatusDialog() {
             updateVer: githubApp.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -125,12 +125,12 @@ export function UpdateGithubAppStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "Github App"} Status`
         : "Change status";
     const isPending = isUpdatingSettings || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = githubApp
         ? {
               status: githubApp.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: githubApp.expireAt ?? undefined,
-              inheritable: githubApp.inheritable ?? false,
+              inheritable: Boolean(githubApp.inheritable),
               default: githubApp.default ?? false,
           }
         : undefined;
@@ -159,7 +159,8 @@ export function UpdateGithubAppStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

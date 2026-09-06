@@ -81,7 +81,7 @@ export function UpdateRepoWebhookStatusDialog() {
             updateVer: repoWebhook.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -125,12 +125,12 @@ export function UpdateRepoWebhookStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "Webhook"} Status`
         : "Change status";
     const isPending = isUpdatingSettings || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = repoWebhook
         ? {
               status: repoWebhook.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: repoWebhook.expireAt ?? undefined,
-              inheritable: repoWebhook.inheritable ?? false,
+              inheritable: Boolean(repoWebhook.inheritable),
               default: repoWebhook.default ?? false,
           }
         : undefined;
@@ -159,7 +159,8 @@ export function UpdateRepoWebhookStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

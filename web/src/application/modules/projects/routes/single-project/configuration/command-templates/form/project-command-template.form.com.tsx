@@ -12,6 +12,7 @@ import {
 } from "~/settings/module-shared/components";
 
 import {
+    AvailableInAppsWarning,
     ContentBlock,
     EditableCombobox,
     FormActionBar,
@@ -106,6 +107,7 @@ export function ProjectCommandTemplateForm({
         field: desc,
         fieldState: { invalid: isDescInvalid },
     } = useController({ control, name: "desc" });
+    const { field: inheritable } = useController({ control, name: "inheritable" });
     const { field: defaultField } = useController({ control, name: "default" });
     const trimmedLink = link.value.trim();
     const linkHref = toCommandTemplateExternalHref(trimmedLink);
@@ -235,6 +237,22 @@ export function ProjectCommandTemplateForm({
                             <ContentBlock label="Arg Groups">
                                 <CommandArgGroupsSection readOnly={isReadOnly} />
                             </ContentBlock>
+
+                            <InfoBlock
+                                titleWidth={INFO_BLOCK_TITLE_WIDTH}
+                                title={<LabelWithInfo label="Available in Apps" />}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Checkbox
+                                        disabled={isReadOnly}
+                                        checked={inheritable.value}
+                                        onCheckedChange={checked => {
+                                            inheritable.onChange(Boolean(checked));
+                                        }}
+                                    />
+                                    {!inheritable.value && <AvailableInAppsWarning />}
+                                </div>
+                            </InfoBlock>
 
                             <InfoBlock
                                 titleWidth={INFO_BLOCK_TITLE_WIDTH}

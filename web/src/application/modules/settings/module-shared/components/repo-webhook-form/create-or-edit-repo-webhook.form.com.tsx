@@ -16,7 +16,7 @@ import {
 } from "~/settings/module-shared/constants";
 import { ERepoWebhookKind } from "~/settings/module-shared/enums";
 
-import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
@@ -54,13 +54,16 @@ export function CreateOrEditRepoWebhookForm({
     savedVersion = 0,
     initialValues,
     webhookURL,
-    showAvailableInProjects,
+    showAvailableInProjects = true,
+    isProjectScope = false,
     readOnlyInherited = false,
     readOnly = false,
     stickyActions = false,
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
     const [showEventTypes, setShowEventTypes] = useState(false);
 
     const {
@@ -74,7 +77,7 @@ export function CreateOrEditRepoWebhookForm({
             name: initialValues?.name ?? "",
             kind: initialValues?.kind ?? ERepoWebhookKind.Github,
             secret: initialValues?.secret ?? "",
-            inheritable: initialValues?.inheritable ?? false,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditRepoWebhookFormSchema),
@@ -305,14 +308,18 @@ export function CreateOrEditRepoWebhookForm({
                     {showAvailableInProjects && (
                         <InfoBlock
                             titleWidth={220}
-                            title={<LabelWithInfo label="Available in Projects" />}
+                            title={<LabelWithInfo label={inheritableLabel} />}
                         >
-                            <Checkbox
-                                checked={inheritable.value}
-                                onCheckedChange={checked => {
-                                    inheritable.onChange(Boolean(checked));
-                                }}
-                            />
+                            <div className="flex items-center gap-3">
+                                <Checkbox
+                                    disabled={isInheritableDisabled}
+                                    checked={inheritable.value}
+                                    onCheckedChange={checked => {
+                                        inheritable.onChange(Boolean(checked));
+                                    }}
+                                />
+                                {isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                            </div>
                         </InfoBlock>
                     )}
 
@@ -366,7 +373,8 @@ interface Props {
     savedVersion?: number;
     initialValues?: Partial<CreateOrEditRepoWebhookFormInput>;
     webhookURL?: string;
-    showAvailableInProjects: boolean;
+    showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
     readOnlyInherited?: boolean;
     readOnly?: boolean;
     stickyActions?: boolean;

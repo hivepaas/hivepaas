@@ -69,7 +69,7 @@ export function ProjectCommandTemplateFormRoute({ mode, projectId, env, commandT
 
     function createPayload(values: ProjectCommandTemplateFormOutput): ProjectCommandTemplate_CreateOne_Payload {
         return {
-            inheritable: false,
+            inheritable: values.inheritable,
             default: values.default,
             name: values.name,
             kind: values.kind,

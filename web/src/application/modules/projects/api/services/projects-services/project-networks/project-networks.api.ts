@@ -89,7 +89,7 @@ export class ProjectNetworksApi extends BaseApi {
             ingress: payload.ingress,
             labels: payload.labels,
             options: payload.options,
-            inheritable: false,
+            inheritable: payload.inheritable,
             default: payload.default ?? false,
         };
 
@@ -107,14 +107,10 @@ export class ProjectNetworksApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectNetworks_UpdateOne_Res, Error>> {
         const { projectID, env, networkID, payload } = request.data;
-        const json = {
-            ...payload,
-            inheritable: false,
-        };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectNetworksBasePath(projectID, env)}/${networkID}`, json, { signal }),
+                this.client.v1.put(`${getProjectNetworksBasePath(projectID, env)}/${networkID}`, payload, { signal }),
             ).pipe(
                 map(this.validator.updateOne),
                 map(res => Ok(res)),
@@ -128,14 +124,10 @@ export class ProjectNetworksApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectNetworks_UpdateStatus_Res, Error>> {
         const { projectID, env, networkID, payload } = request.data;
-        const json = {
-            ...payload,
-            inheritable: false,
-        };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectNetworksBasePath(projectID, env)}/${networkID}/status`, json, {
+                this.client.v1.put(`${getProjectNetworksBasePath(projectID, env)}/${networkID}/status`, payload, {
                     signal,
                 }),
             ).pipe(

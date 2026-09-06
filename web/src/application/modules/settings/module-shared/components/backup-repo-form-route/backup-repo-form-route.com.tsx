@@ -102,7 +102,7 @@ export function BackupRepoFormRoute({ mode, scope, backupRepoId }: Props) {
                 compression: values.compression,
                 packSize: values.packSize,
                 retention: values.retention,
-                inheritable: scope.type === "project" ? true : values.inheritable,
+                inheritable: values.inheritable,
                 default: values.default,
             };
 
@@ -139,7 +139,7 @@ export function BackupRepoFormRoute({ mode, scope, backupRepoId }: Props) {
             compression: isImport ? undefined : values.compression,
             packSize: isImport ? undefined : values.packSize,
             retention: isImport ? undefined : values.retention,
-            inheritable: scope.type === "project" ? true : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -195,7 +195,7 @@ export function BackupRepoFormRoute({ mode, scope, backupRepoId }: Props) {
                           keepWeekly: backupRepo.retention?.keepWeekly ?? DEFAULT_BACKUP_REPO_RETENTION.keepWeekly,
                           keepMonthly: backupRepo.retention?.keepMonthly ?? DEFAULT_BACKUP_REPO_RETENTION.keepMonthly,
                       },
-                      inheritable: backupRepo.inheritable ?? false,
+                      inheritable: Boolean(backupRepo.inheritable),
                       default: backupRepo.default ?? false,
                   }
                 : undefined,
@@ -225,7 +225,7 @@ export function BackupRepoFormRoute({ mode, scope, backupRepoId }: Props) {
                     savedVersion={saveRevision}
                     initialValues={initialValues}
                     scope={scope}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
                     onClose={handleClose}

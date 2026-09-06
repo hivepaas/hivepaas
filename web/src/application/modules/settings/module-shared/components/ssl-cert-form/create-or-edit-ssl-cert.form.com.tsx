@@ -14,6 +14,7 @@ import { useNotificationSettingsSources } from "~/settings/module-shared/hooks";
 
 import {
     AppLink,
+    AvailableInAppsWarning,
     Combobox,
     ContentBlock,
     FormActionBar,
@@ -114,12 +115,15 @@ export function CreateOrEditSslCertForm({
     savedVersion = 0,
     initialValues,
     scope,
-    showAvailableInProjects,
+    showAvailableInProjects = true,
     readOnlyInherited = false,
     readOnly = false,
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+    const isProjectScope = scope.type === "project";
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
     const initialProviderId = initialValues?.provider?.id;
     const initialProviderName = initialValues?.provider?.name;
     const initialProvider = useMemo(
@@ -147,7 +151,7 @@ export function CreateOrEditSslCertForm({
             caCertificate: initialValues?.caCertificate ?? "",
             expireAt: initialValues?.expireAt ?? null,
             notifyFrom: initialValues?.notifyFrom ?? null,
-            inheritable: initialValues?.inheritable ?? false,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             default: initialValues?.default ?? false,
             notification: {
                 successUseDefault: initialValues?.notification?.successUseDefault ?? true,
@@ -762,14 +766,18 @@ export function CreateOrEditSslCertForm({
                             {showAvailableInProjects && (
                                 <InfoBlock
                                     titleWidth={220}
-                                    title={<LabelWithInfo label="Available in Projects" />}
+                                    title={<LabelWithInfo label={inheritableLabel} />}
                                 >
-                                    <Checkbox
-                                        checked={inheritable.value}
-                                        onCheckedChange={checked => {
-                                            inheritable.onChange(Boolean(checked));
-                                        }}
-                                    />
+                                    <div className="flex items-center gap-3">
+                                        <Checkbox
+                                            disabled={isInheritableDisabled}
+                                            checked={inheritable.value}
+                                            onCheckedChange={checked => {
+                                                inheritable.onChange(Boolean(checked));
+                                            }}
+                                        />
+                                        {isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                                    </div>
                                 </InfoBlock>
                             )}
 
@@ -840,7 +848,7 @@ interface Props {
     savedVersion?: number;
     initialValues?: Partial<CreateOrEditSslCertFormInput>;
     scope: SslCertTableScope;
-    showAvailableInProjects: boolean;
+    showAvailableInProjects?: boolean;
     readOnlyInherited?: boolean;
     readOnly?: boolean;
     onClose?: () => void;

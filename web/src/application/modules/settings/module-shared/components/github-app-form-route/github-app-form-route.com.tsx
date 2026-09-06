@@ -6,7 +6,10 @@ import { ProjectGithubAppQueries } from "~/projects/data/queries";
 import { GithubAppCommands } from "~/settings/data/commands";
 import { GithubAppQueries } from "~/settings/data/queries";
 import { CreateOrEditGithubAppForm } from "~/settings/module-shared/components/github-app-form";
-import type { CreateOrEditGithubAppFormOutput } from "~/settings/module-shared/components/github-app-form";
+import type {
+    CreateOrEditGithubAppFormInput,
+    CreateOrEditGithubAppFormOutput,
+} from "~/settings/module-shared/components/github-app-form";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
@@ -104,7 +107,7 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
 
     function createPayload(values: CreateOrEditGithubAppFormOutput) {
         return {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             name: values.name,
             organization: values.organization,
@@ -213,10 +216,10 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
 
     const isPending = isCreatingSettings || isUpdatingSettings || isCreatingProject || isUpdatingProject;
     const isReprovisioning = isReprovisioningSettings || isReprovisioningProject;
-    const showAvailableInProjects = scope.type === "settings";
-    const showTestConnection = true;
-    const initialValues =
-        githubApp && isEditMode
+    const showAvailableInProjects = true;
+    const showTestConnection = isEditMode && (!readOnlyInherited || canWrite);
+    const initialValues: Partial<CreateOrEditGithubAppFormInput> | undefined =
+        isEditMode && githubApp
             ? {
                   name: githubApp.name,
                   organization: githubApp.organization,
@@ -226,12 +229,12 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
                   clientSecret: githubApp.secretMasked ? "" : githubApp.clientSecret,
                   privateKey: githubApp.secretMasked ? "" : githubApp.privateKey,
                   ssoEnabled: githubApp.ssoEnabled,
-                  inheritable: githubApp.inheritable ?? false,
+                  inheritable: Boolean(githubApp.inheritable),
                   default: githubApp.default ?? false,
               }
             : {
                   ssoEnabled: true,
-                  inheritable: true,
+                  inheritable: scope.type === "project" ? true : false,
                   default: true,
               };
     const readonlyValues =
@@ -271,6 +274,7 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
                     initialValues={initialValues}
                     readonlyValues={readonlyValues}
                     showAvailableInProjects={showAvailableInProjects}
+                    isProjectScope={scope.type === "project"}
                     showTestConnection={showTestConnection}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}

@@ -67,7 +67,7 @@ export function UpdateProjectCommandPipeStatusDialog() {
                 updateVer: commandPipe.updateVer,
                 status: values.status,
                 expireAt: values.expireAt ?? null,
-                inheritable: false,
+                inheritable: values.inheritable,
                 default: values.default,
             },
         });
@@ -99,6 +99,7 @@ export function UpdateProjectCommandPipeStatusDialog() {
         ? {
               status: commandPipe.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: commandPipe.expireAt ?? undefined,
+              inheritable: commandPipe.inheritable,
               default: commandPipe.default,
           }
         : undefined;

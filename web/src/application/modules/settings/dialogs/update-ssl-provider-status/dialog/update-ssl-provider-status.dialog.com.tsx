@@ -84,7 +84,7 @@ export function UpdateSslProviderStatusDialog() {
             updateVer: sslProvider.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -129,12 +129,12 @@ export function UpdateSslProviderStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "SSL Provider"} Status`
         : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = sslProvider
         ? {
               status: sslProvider.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: sslProvider.expireAt ?? undefined,
-              inheritable: sslProvider.inheritable ?? false,
+              inheritable: Boolean(sslProvider.inheritable),
               default: sslProvider.default ?? false,
           }
         : undefined;
@@ -163,7 +163,8 @@ export function UpdateSslProviderStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

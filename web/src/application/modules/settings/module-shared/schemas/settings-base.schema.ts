@@ -11,7 +11,7 @@ export const SettingsBaseEntitySchema = z.object({
     type: z.string(),
     kind: z.string().optional(),
     inherited: z.boolean().optional(),
-    inheritable: z.boolean().optional(),
+    inheritable: z.boolean().optional().default(false),
     default: z.boolean().optional(),
     updateVer: z.number(),
     createdAt: z.coerce.date(),

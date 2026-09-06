@@ -58,7 +58,7 @@ export function CreateVolumeFormRoute({ scope }: Props) {
             env: scope.env,
             payload: {
                 ...toVolumeBasePayload(values),
-                inheritable: false,
+                inheritable: values.inheritable,
                 default: values.default,
             },
         });
@@ -74,7 +74,8 @@ export function CreateVolumeFormRoute({ scope }: Props) {
                 readOnlyDefault={!canWrite}
                 readOnlyPermission={!canWrite}
                 isPending={isPending}
-                showAvailableInProjects={scope.type === "cluster"}
+                showAvailableInProjects
+                isProjectScope={scope.type === "project"}
                 onSubmit={onSubmit}
             >
                 {!canWrite ? (

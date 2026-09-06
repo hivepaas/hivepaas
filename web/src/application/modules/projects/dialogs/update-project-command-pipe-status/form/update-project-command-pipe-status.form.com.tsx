@@ -3,7 +3,7 @@ import { type FieldErrors, useController, useForm, useFormState } from "react-ho
 import { useUpdateEffect } from "react-use";
 import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
 
 import {
@@ -50,6 +50,7 @@ export function UpdateProjectCommandPipeStatusForm({
         defaultValues: {
             status: initialValues?.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
             expireAt: initialValues?.expireAt ?? undefined,
+            inheritable: initialValues?.inheritable ?? true,
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(UpdateProjectCommandPipeStatusFormSchema),
@@ -67,6 +68,7 @@ export function UpdateProjectCommandPipeStatusForm({
         field: expireAt,
         fieldState: { invalid: isExpireAtInvalid },
     } = useController({ name: "expireAt", control });
+    const { field: inheritable } = useController({ name: "inheritable", control });
     const { field: defaultField } = useController({ name: "default", control });
 
     function onValid(values: UpdateProjectCommandPipeStatusFormOutput) {
@@ -138,6 +140,24 @@ export function UpdateProjectCommandPipeStatusForm({
                                     aria-invalid={isExpireAtInvalid}
                                 />
                                 <FieldError errors={[errors.expireAt]} />
+                            </InfoBlock>
+                        </Field>
+
+                        <Field>
+                            <InfoBlock
+                                title={<LabelWithInfo label="Available in Apps" />}
+                                titleWidth={160}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Checkbox
+                                        disabled={isReadOnly}
+                                        checked={inheritable.value}
+                                        onCheckedChange={checked => {
+                                            inheritable.onChange(Boolean(checked));
+                                        }}
+                                    />
+                                    {!inheritable.value && <AvailableInAppsWarning />}
+                                </div>
                             </InfoBlock>
                         </Field>
 

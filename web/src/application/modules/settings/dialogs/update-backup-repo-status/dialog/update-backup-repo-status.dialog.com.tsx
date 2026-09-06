@@ -75,7 +75,7 @@ export function UpdateBackupRepoStatusDialog() {
             updateVer: backupRepo.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -115,12 +115,12 @@ export function UpdateBackupRepoStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "Backup Repository"} Status`
         : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = backupRepo
         ? {
               status: backupRepo.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: backupRepo.expireAt ? new Date(backupRepo.expireAt) : undefined,
-              inheritable: backupRepo.inheritable ?? false,
+              inheritable: Boolean(backupRepo.inheritable),
               default: backupRepo.default ?? false,
           }
         : undefined;
@@ -149,7 +149,8 @@ export function UpdateBackupRepoStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

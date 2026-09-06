@@ -16,6 +16,7 @@ import {
 
 import {
     AppLink,
+    AvailableInAppsWarning,
     Combobox,
     ContentBlock,
     FormActionBar,
@@ -76,7 +77,7 @@ export function CreateOrEditBackupRepoForm({
     isPending,
     readOnly = false,
     readOnlyInherited = false,
-    showAvailableInProjects,
+    showAvailableInProjects = true,
     onSubmit,
     onHasChanges,
     onClose,
@@ -84,6 +85,9 @@ export function CreateOrEditBackupRepoForm({
     const updatePasswordDialog = useUpdateBackupRepoPasswordDialog();
     const isUpdate = mode === "edit";
     const isReadOnly = readOnly || readOnlyInherited;
+    const isProjectScope = scope.type === "project";
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
     const projectId = scope.type === "project" ? scope.projectId : "";
     const env = scope.type === "project" ? scope.env : undefined;
 
@@ -108,7 +112,7 @@ export function CreateOrEditBackupRepoForm({
                 keepWeekly: initialValues?.retention?.keepWeekly ?? DEFAULT_BACKUP_REPO_RETENTION.keepWeekly,
                 keepMonthly: initialValues?.retention?.keepMonthly ?? DEFAULT_BACKUP_REPO_RETENTION.keepMonthly,
             },
-            inheritable: initialValues?.inheritable ?? false,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             default: initialValues?.default ?? false,
         },
     });
@@ -729,15 +733,18 @@ export function CreateOrEditBackupRepoForm({
                             {showAvailableInProjects && (
                                 <InfoBlock
                                     titleWidth={220}
-                                    title={<LabelWithInfo label="Available In Projects" />}
+                                    title={<LabelWithInfo label={inheritableLabel} />}
                                 >
-                                    <Checkbox
-                                        checked={inheritableField.value}
-                                        onCheckedChange={checked => {
-                                            inheritableField.onChange(Boolean(checked));
-                                        }}
-                                        disabled={isReadOnly}
-                                    />
+                                    <div className="flex items-center gap-3">
+                                        <Checkbox
+                                            checked={inheritableField.value}
+                                            onCheckedChange={checked => {
+                                                inheritableField.onChange(Boolean(checked));
+                                            }}
+                                            disabled={isInheritableDisabled}
+                                        />
+                                        {isProjectScope && !inheritableField.value ? <AvailableInAppsWarning /> : null}
+                                    </div>
                                 </InfoBlock>
                             )}
 
@@ -798,7 +805,7 @@ interface Props {
     savedVersion?: number;
     initialValues?: Partial<CreateOrEditBackupRepoFormInput>;
     scope: BackupRepoTableScope;
-    showAvailableInProjects: boolean;
+    showAvailableInProjects?: boolean;
     readOnlyInherited?: boolean;
     readOnly?: boolean;
     onClose?: () => void;

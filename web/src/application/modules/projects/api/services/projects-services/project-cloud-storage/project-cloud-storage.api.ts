@@ -78,10 +78,9 @@ export class ProjectCloudStorageApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_CreateOne_Res, Error>> {
         const { projectID, env, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
-            from(this.client.v1.post(getProjectCloudStorageBasePath(projectID, env), json, { signal })).pipe(
+            from(this.client.v1.post(getProjectCloudStorageBasePath(projectID, env), payload, { signal })).pipe(
                 map(response => this.validator.createOne(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -94,11 +93,10 @@ export class ProjectCloudStorageApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_UpdateOne_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectCloudStorageBasePath(projectID, env)}/${id}`, json, {
+                this.client.v1.put(`${getProjectCloudStorageBasePath(projectID, env)}/${id}`, payload, {
                     signal,
                 }),
             ).pipe(
@@ -114,11 +112,10 @@ export class ProjectCloudStorageApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCloudStorage_UpdateMeta_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectCloudStorageBasePath(projectID, env)}/${id}/status`, json, {
+                this.client.v1.put(`${getProjectCloudStorageBasePath(projectID, env)}/${id}/status`, payload, {
                     signal,
                 }),
             ).pipe(

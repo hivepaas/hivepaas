@@ -84,6 +84,7 @@ export function UpdateNetworkStatusDialog() {
             updateVer: network.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -99,10 +100,7 @@ export function UpdateNetworkStatusDialog() {
 
         updateClusterStatus({
             networkID: network.id,
-            payload: {
-                ...payload,
-                inheritable: values.inheritable,
-            },
+            payload,
         });
     }
 
@@ -132,7 +130,7 @@ export function UpdateNetworkStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "Network"} Status`
         : "Change status";
     const isPending = isUpdatingCluster || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "cluster";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = network
         ? {
               status: network.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
@@ -170,7 +168,8 @@ export function UpdateNetworkStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

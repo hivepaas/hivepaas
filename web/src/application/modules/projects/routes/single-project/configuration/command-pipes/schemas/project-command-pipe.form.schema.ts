@@ -5,6 +5,7 @@ export const ProjectCommandPipeFormSchema = z
         name: z.string().trim().min(1, "Name is required"),
         sourceCommandId: z.string().trim(),
         targetCommandId: z.string().trim(),
+        inheritable: z.boolean(),
         default: z.boolean(),
     })
     .superRefine((value, ctx) => {

@@ -84,7 +84,7 @@ export function UpdateEmailAccountStatusDialog() {
             updateVer: emailAccount.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -129,13 +129,13 @@ export function UpdateEmailAccountStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "Email Account"} Status`
         : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const isDetailLoading = state.mode === "open" && detailQuery.isFetching;
     const initialValues = emailAccount
         ? {
               status: emailAccount.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: emailAccount.expireAt ?? undefined,
-              inheritable: emailAccount.inheritable ?? false,
+              inheritable: Boolean(emailAccount.inheritable),
               default: emailAccount.default ?? false,
           }
         : undefined;
@@ -163,7 +163,8 @@ export function UpdateEmailAccountStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

@@ -9,7 +9,7 @@ import { cn } from "@lib/utils";
 import { type FieldErrors, FormProvider, useController, useForm } from "react-hook-form";
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESSHKeyKind, ESSHKeyType } from "@application/shared/enums";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
@@ -45,12 +45,15 @@ export function CreateOrEditSSHKeyForm({
     onHasChanges,
     savedVersion = 0,
     initialValues,
-    showAvailableInProjects,
+    showAvailableInProjects = true,
+    isProjectScope = false,
     readOnlyInherited = false,
     readOnly = false,
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
 
     const form = useForm<CreateOrEditSSHKeyFormInput, unknown, CreateOrEditSSHKeyFormOutput>({
         defaultValues: {
@@ -60,7 +63,7 @@ export function CreateOrEditSSHKeyForm({
             publicKey: initialValues?.publicKey ?? "",
             privateKey: initialValues?.privateKey ?? "",
             passphrase: initialValues?.passphrase ?? "",
-            inheritable: initialValues?.inheritable ?? false,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditSSHKeyFormSchema),
@@ -312,14 +315,18 @@ export function CreateOrEditSSHKeyForm({
                         {showAvailableInProjects && (
                             <InfoBlock
                                 titleWidth={220}
-                                title={<LabelWithInfo label="Available in Projects" />}
+                                title={<LabelWithInfo label={inheritableLabel} />}
                             >
-                                <Checkbox
-                                    checked={inheritable.value}
-                                    onCheckedChange={checked => {
-                                        inheritable.onChange(Boolean(checked));
-                                    }}
-                                />
+                                <div className="flex items-center gap-3">
+                                    <Checkbox
+                                        disabled={isInheritableDisabled}
+                                        checked={inheritable.value}
+                                        onCheckedChange={checked => {
+                                            inheritable.onChange(Boolean(checked));
+                                        }}
+                                    />
+                                    {isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                                </div>
                             </InfoBlock>
                         )}
 
@@ -396,7 +403,8 @@ interface Props {
     onHasChanges?: (dirty: boolean) => void;
     savedVersion?: number;
     initialValues?: Partial<CreateOrEditSSHKeyFormInput>;
-    showAvailableInProjects: boolean;
+    showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
     readOnlyInherited?: boolean;
     readOnly?: boolean;
     onClose?: () => void;

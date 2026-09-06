@@ -12,7 +12,7 @@ import {
     SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS,
 } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
@@ -40,7 +40,8 @@ export function CreateOrEditGithubAppForm({
     savedVersion = 0,
     initialValues,
     readonlyValues,
-    showAvailableInProjects,
+    showAvailableInProjects = true,
+    isProjectScope = false,
     showTestConnection,
     readOnlyInherited = false,
     readOnly = false,
@@ -48,6 +49,8 @@ export function CreateOrEditGithubAppForm({
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
 
     const resolvedSettingsUrl =
         settingsURL ?? (initialValues?.appId ? `https://github.com/settings/apps/${initialValues.appId}` : "");
@@ -69,7 +72,7 @@ export function CreateOrEditGithubAppForm({
             clientSecret: initialValues?.clientSecret ?? "",
             privateKey: initialValues?.privateKey ?? "",
             ssoEnabled: initialValues?.ssoEnabled ?? true,
-            inheritable: initialValues?.inheritable ?? false,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             default: initialValues?.default ?? false,
         },
         resolver: zodResolver(CreateOrEditGithubAppFormSchema),
@@ -389,14 +392,18 @@ export function CreateOrEditGithubAppForm({
                     {showAvailableInProjects && (
                         <InfoBlock
                             titleWidth={220}
-                            title={<LabelWithInfo label="Available in Projects" />}
+                            title={<LabelWithInfo label={inheritableLabel} />}
                         >
-                            <Checkbox
-                                checked={inheritable.value}
-                                onCheckedChange={checked => {
-                                    inheritable.onChange(Boolean(checked));
-                                }}
-                            />
+                            <div className="flex items-center gap-3">
+                                <Checkbox
+                                    disabled={isInheritableDisabled}
+                                    checked={inheritable.value}
+                                    onCheckedChange={checked => {
+                                        inheritable.onChange(Boolean(checked));
+                                    }}
+                                />
+                                {isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                            </div>
                         </InfoBlock>
                     )}
 
@@ -479,7 +486,8 @@ interface Props {
         webhookURL?: string;
         webhookSecret?: string;
     };
-    showAvailableInProjects: boolean;
+    showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
     showTestConnection: boolean;
     readOnlyInherited?: boolean;
     readOnly?: boolean;

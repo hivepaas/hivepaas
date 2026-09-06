@@ -83,7 +83,7 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
 
     function createPayload(values: CreateOrEditBasicAuthFormOutput) {
         return {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             name: values.name,
             username: values.username,
@@ -143,7 +143,7 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
               name: basicAuth.name,
               username: basicAuth.username,
               password: basicAuth.password,
-              inheritable: basicAuth.inheritable ?? false,
+              inheritable: Boolean(basicAuth.inheritable),
               default: basicAuth.default ?? false,
           }
         : undefined;
@@ -167,7 +167,8 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
                     onHasChanges={setHasChanges}
                     savedVersion={saveRevision}
                     initialValues={initialValues}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
                     onClose={handleClose}

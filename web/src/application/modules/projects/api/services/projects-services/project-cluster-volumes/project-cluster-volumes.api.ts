@@ -82,7 +82,6 @@ export class ProjectClusterVolumesApi extends BaseApi {
             ...payload,
             name: JsonTransformer.string({ data: payload.name }),
             driver: JsonTransformer.string({ data: payload.driver }),
-            inheritable: false,
         };
 
         return lastValueFrom(
@@ -99,14 +98,12 @@ export class ProjectClusterVolumesApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectClusterVolumes_UpdateOne_Res, Error>> {
         const { projectID, env, volumeID, payload } = request.data;
-        const json = {
-            ...payload,
-            inheritable: false,
-        };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectClusterVolumesBasePath(projectID, env)}/${volumeID}`, json, { signal }),
+                this.client.v1.put(`${getProjectClusterVolumesBasePath(projectID, env)}/${volumeID}`, payload, {
+                    signal,
+                }),
             ).pipe(
                 map(this.validator.updateOne),
                 map(res => Ok(res)),
@@ -120,14 +117,10 @@ export class ProjectClusterVolumesApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectClusterVolumes_UpdateStatus_Res, Error>> {
         const { projectID, env, volumeID, payload } = request.data;
-        const json = {
-            ...payload,
-            inheritable: false,
-        };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectClusterVolumesBasePath(projectID, env)}/${volumeID}/status`, json, {
+                this.client.v1.put(`${getProjectClusterVolumesBasePath(projectID, env)}/${volumeID}/status`, payload, {
                     signal,
                 }),
             ).pipe(

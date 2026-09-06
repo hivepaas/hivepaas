@@ -86,6 +86,7 @@ export function UpdateVolumeStatusDialog() {
             updateVer: volume.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -101,10 +102,7 @@ export function UpdateVolumeStatusDialog() {
 
         updateClusterStatus({
             volumeID: volume.id,
-            payload: {
-                ...payload,
-                inheritable: values.inheritable,
-            },
+            payload,
         });
     }
 
@@ -132,12 +130,12 @@ export function UpdateVolumeStatusDialog() {
         resolvedDialogOptions.readOnlyInherited === true || (state.mode === "open" && volume?.inherited === true);
     const dialogTitle = readOnlyInherited ? `${resolvedDialogOptions.entityTitle ?? "Volume"} Status` : "Change status";
     const isPending = isUpdatingCluster || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "cluster";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = volume
         ? {
               status: volume.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: volume.expireAt ?? undefined,
-              inheritable: volume.inheritable ?? false,
+              inheritable: Boolean(volume.inheritable),
               default: volume.default ?? false,
           }
         : undefined;
@@ -170,7 +168,8 @@ export function UpdateVolumeStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

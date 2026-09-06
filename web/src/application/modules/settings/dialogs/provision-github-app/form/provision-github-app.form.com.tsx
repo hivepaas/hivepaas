@@ -5,7 +5,7 @@ import { type FieldErrors, useController, useForm, useWatch } from "react-hook-f
 import { PermissionReadonlyNotice } from "~/settings/module-shared/components";
 import { EGithubAppOwnerType } from "~/settings/module-shared/enums";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     Button,
@@ -33,11 +33,14 @@ export function ProvisionGithubAppForm({
     onLoginCheck,
     onSubmit,
     initialValues,
-    showAvailableInProjects,
+    showAvailableInProjects = true,
+    isProjectScope = false,
     readOnly = false,
     onClose,
 }: Props) {
     const isReadOnly = readOnly;
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
 
     const {
         handleSubmit,
@@ -49,7 +52,7 @@ export function ProvisionGithubAppForm({
             ownerType: initialValues?.ownerType ?? EGithubAppOwnerType.Organization,
             org: initialValues?.org ?? "",
             ssoEnabled: initialValues?.ssoEnabled ?? true,
-            inheritable: initialValues?.inheritable ?? true,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             default: initialValues?.default ?? true,
         },
         resolver: zodResolver(ProvisionGithubAppFormSchema),
@@ -189,14 +192,18 @@ export function ProvisionGithubAppForm({
                             <Field>
                                 <InfoBlock
                                     titleWidth={160}
-                                    title={<LabelWithInfo label="Available in Projects" />}
+                                    title={<LabelWithInfo label={inheritableLabel} />}
                                 >
-                                    <Checkbox
-                                        checked={inheritable.value}
-                                        onCheckedChange={checked => {
-                                            inheritable.onChange(Boolean(checked));
-                                        }}
-                                    />
+                                    <div className="flex items-center gap-3">
+                                        <Checkbox
+                                            disabled={isInheritableDisabled}
+                                            checked={inheritable.value}
+                                            onCheckedChange={checked => {
+                                                inheritable.onChange(Boolean(checked));
+                                            }}
+                                        />
+                                        {isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                                    </div>
                                 </InfoBlock>
                             </Field>
                         )}
@@ -229,13 +236,15 @@ export function ProvisionGithubAppForm({
             )}
             {isReadOnly && (
                 <DialogActionFooter>
-                    <Button
-                        type="button"
-                        onClick={onClose}
-                        className="min-w-[100px]"
-                    >
-                        Close
-                    </Button>
+                    <div className="flex justify-end">
+                        <Button
+                            type="button"
+                            onClick={onClose}
+                            className="min-w-[100px]"
+                        >
+                            Close
+                        </Button>
+                    </div>
                 </DialogActionFooter>
             )}
         </form>
@@ -248,7 +257,8 @@ interface Props {
     onLoginCheck: () => void;
     onSubmit: (values: ProvisionGithubAppFormOutput) => void;
     initialValues?: Partial<ProvisionGithubAppFormInput>;
-    showAvailableInProjects: boolean;
+    showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
     readOnly?: boolean;
     onClose?: () => void;
 }

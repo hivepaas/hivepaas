@@ -170,7 +170,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
             : defaultValidityDays;
 
         return {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             certType: values.certType,
             provider: values.provider?.id ? { id: values.provider.id } : undefined,
@@ -265,7 +265,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
                   caCertificate: sslCert.caCertificate ?? "",
                   expireAt: sslCert.expireAt ?? null,
                   notifyFrom: sslCert.notifyFrom ?? null,
-                  inheritable: sslCert.inheritable ?? false,
+                  inheritable: Boolean(sslCert.inheritable),
                   default: sslCert.default ?? false,
                   notification: {
                       successUseDefault: sslCert.notification?.successUseDefault ?? true,
@@ -281,7 +281,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
                   email: domainSettings?.email ?? "",
                   keyType: normalizeKeyType(domainSettings?.keyType),
                   autoRenew: domainSettings?.autoRenew ?? true,
-                  inheritable: false,
+                  inheritable: scope.type === "project" ? true : false,
                   default: false,
                   notification: {
                       successUseDefault: true,
@@ -309,7 +309,7 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
                     savedVersion={saveRevision}
                     initialValues={initialValues}
                     scope={scope}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
                     onClose={handleClose}

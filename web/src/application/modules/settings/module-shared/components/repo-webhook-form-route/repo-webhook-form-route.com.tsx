@@ -97,7 +97,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
 
     function createPayload(values: CreateOrEditRepoWebhookFormOutput) {
         return {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             name: values.name,
             kind: values.kind,
@@ -161,7 +161,6 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
     }
 
     const isPending = isCreatingSettings || isUpdatingSettings || isCreatingProject || isUpdatingProject;
-    const showAvailableInProjects = scope.type === "settings";
     const matchedCreatedWebhook =
         createdWebhook && isEditMode && createdWebhook.id === repoWebhookId ? createdWebhook : null;
     const createdInitialValues =
@@ -176,7 +175,7 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
               name: repoWebhook.name,
               kind: repoWebhook.kind as ERepoWebhookKind | "",
               secret: matchedCreatedWebhook?.secret ?? repoWebhook.secret,
-              inheritable: repoWebhook.inheritable ?? false,
+              inheritable: Boolean(repoWebhook.inheritable),
               default: repoWebhook.default ?? false,
           }
         : createdInitialValues;
@@ -204,7 +203,8 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
                     key={createdWebhook?.id ?? "new"}
                     initialValues={initialValues}
                     webhookURL={webhookURL}
-                    showAvailableInProjects={showAvailableInProjects}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
                     stickyActions

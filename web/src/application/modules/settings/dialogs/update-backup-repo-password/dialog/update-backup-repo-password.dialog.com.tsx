@@ -76,7 +76,7 @@ export function UpdateBackupRepoPasswordDialog() {
             updateVer,
             currentPassword: values.currentPassword,
             newPassword: values.newPassword,
-            inheritable: state.scope.type === "project" ? false : backupRepo?.inheritable,
+            inheritable: backupRepo ? Boolean(backupRepo.inheritable) : false,
             default: backupRepo?.default,
         };
 

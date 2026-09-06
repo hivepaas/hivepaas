@@ -93,7 +93,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
 
     function createPayload(values: CreateOrEditAccessTokenFormOutput) {
         return {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             expireAt: values.expireAt,
             kind: values.kind,
@@ -169,7 +169,7 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
               token: accessToken.token,
               baseURL: accessToken.baseURL,
               expireAt: accessToken.expireAt ?? null,
-              inheritable: accessToken.inheritable ?? false,
+              inheritable: Boolean(accessToken.inheritable),
               default: accessToken.default ?? false,
           }
         : undefined;
@@ -196,7 +196,8 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
                     onHasChanges={setHasChanges}
                     savedVersion={saveRevision}
                     initialValues={initialValues}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
                     onClose={handleClose}

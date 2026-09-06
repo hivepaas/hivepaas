@@ -44,7 +44,10 @@ export const ProjectCommandTemplateFormSchema = z
         desc: z
             .string()
             .trim()
-            .max(COMMAND_TEMPLATE_DESC_MAX_LEN, `Description must be at most ${COMMAND_TEMPLATE_DESC_MAX_LEN} characters`),
+            .max(
+                COMMAND_TEMPLATE_DESC_MAX_LEN,
+                `Description must be at most ${COMMAND_TEMPLATE_DESC_MAX_LEN} characters`,
+            ),
         commandMode: z.enum([
             PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Command,
             PROJECT_COMMAND_TEMPLATE_COMMAND_MODE.Script,
@@ -59,6 +62,7 @@ export const ProjectCommandTemplateFormSchema = z
         }),
         envVars: z.array(KeyValueSchema),
         argGroups: z.array(ArgGroupSchema),
+        inheritable: z.boolean(),
         default: z.boolean(),
     })
     .superRefine((value, ctx) => {

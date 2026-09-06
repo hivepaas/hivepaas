@@ -94,7 +94,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
 
     function createPayload(values: CreateOrEditRegistryAuthFormOutput) {
         return {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             name: values.name,
             address: values.address,
@@ -171,7 +171,7 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
               username: registryAuth.username,
               password: registryAuth.password,
               readonly: registryAuth.readonly,
-              inheritable: registryAuth.inheritable ?? false,
+              inheritable: Boolean(registryAuth.inheritable),
               default: registryAuth.default ?? false,
           }
         : undefined;
@@ -198,7 +198,8 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
                     onHasChanges={setHasChanges}
                     savedVersion={saveRevision}
                     initialValues={initialValues}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
                     onClose={handleClose}

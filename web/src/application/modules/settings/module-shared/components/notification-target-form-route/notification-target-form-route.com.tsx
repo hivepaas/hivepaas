@@ -136,7 +136,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
             : null;
 
         return {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             name: values.name,
             viaEmail,
@@ -218,7 +218,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
               larkUseDefault: notificationTarget.viaLark?.useDefault ?? true,
               larkWebhookId: notificationTarget.viaLark?.webhook?.id ?? "",
               minSendInterval: notificationTarget.minSendInterval || "3m",
-              inheritable: notificationTarget.inheritable ?? false,
+              inheritable: Boolean(notificationTarget.inheritable),
               default: notificationTarget.default ?? false,
           }
         : undefined;
@@ -243,7 +243,7 @@ export function NotificationTargetFormRoute({ mode, scope, notificationTargetId 
                     onHasChanges={setHasChanges}
                     savedVersion={saveRevision}
                     initialValues={initialValues}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
                     onClose={handleClose}

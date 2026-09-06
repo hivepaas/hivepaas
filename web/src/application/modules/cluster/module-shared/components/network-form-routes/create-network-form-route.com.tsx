@@ -86,7 +86,10 @@ export function CreateNetworkFormRoute({ scope }: Props) {
         createProjectNetwork({
             projectID: scope.projectId,
             env: scope.env,
-            payload,
+            payload: {
+                ...payload,
+                inheritable: values.inheritable,
+            },
         });
     }
 
@@ -97,7 +100,8 @@ export function CreateNetworkFormRoute({ scope }: Props) {
             <CreateNetworkForm
                 readOnly={!canWrite}
                 isPending={isPending}
-                showAvailableInProjects={scope.type !== "project"}
+                showAvailableInProjects
+                isProjectScope={scope.type === "project"}
                 showProjectNamePrefixNote={scope.type === "project"}
                 onSubmit={onSubmit}
             >

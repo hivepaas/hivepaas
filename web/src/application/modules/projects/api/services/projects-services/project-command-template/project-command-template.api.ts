@@ -106,11 +106,10 @@ export class ProjectCommandTemplateApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandTemplate_CreateOne_Res, Error>> {
         const { projectID, env, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(getProjectCommandTemplateBasePath(projectID, env), json, {
+                this.client.v1.post(getProjectCommandTemplateBasePath(projectID, env), payload, {
                     signal,
                 }),
             ).pipe(
@@ -145,11 +144,10 @@ export class ProjectCommandTemplateApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandTemplate_UpdateOne_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectCommandTemplateBasePath(projectID, env)}/${id}`, json, {
+                this.client.v1.put(`${getProjectCommandTemplateBasePath(projectID, env)}/${id}`, payload, {
                     signal,
                 }),
             ).pipe(
@@ -165,11 +163,10 @@ export class ProjectCommandTemplateApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectCommandTemplate_UpdateStatus_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectCommandTemplateBasePath(projectID, env)}/${id}/status`, json, {
+                this.client.v1.put(`${getProjectCommandTemplateBasePath(projectID, env)}/${id}/status`, payload, {
                     signal,
                 }),
             ).pipe(

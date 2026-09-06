@@ -7,6 +7,7 @@ export function createEmptyProjectCommandPipeFormDefaults(): ProjectCommandPipeF
         name: "",
         sourceCommandId: "",
         targetCommandId: "",
+        inheritable: true,
         default: false,
     };
 }
@@ -16,6 +17,7 @@ export function mapProjectCommandPipeToFormInput(commandPipe: ProjectCommandPipe
         name: commandPipe.name,
         sourceCommandId: commandPipe.sourceCommand?.id ?? "",
         targetCommandId: commandPipe.targetCommand?.id ?? "",
+        inheritable: commandPipe.inheritable,
         default: commandPipe.default,
     };
 }

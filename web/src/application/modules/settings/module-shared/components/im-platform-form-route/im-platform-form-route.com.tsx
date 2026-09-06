@@ -93,7 +93,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
 
     function createPayload(values: CreateOrEditImPlatformFormOutput) {
         const basePayload = {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             name: values.name,
             kind: values.kind,
@@ -216,7 +216,7 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
               secret: imPlatform.kind === EImServiceKind.Lark ? (imPlatform.lark?.secret ?? "") : "",
               botToken: imPlatform.kind === EImServiceKind.Telegram ? (imPlatform.telegram?.botToken ?? "") : "",
               chatId: imPlatform.kind === EImServiceKind.Telegram ? (imPlatform.telegram?.chatId ?? "") : "",
-              inheritable: imPlatform.inheritable ?? false,
+              inheritable: Boolean(imPlatform.inheritable),
               default: imPlatform.default ?? false,
           }
         : undefined;
@@ -243,7 +243,8 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
                     onHasChanges={setHasChanges}
                     savedVersion={saveRevision}
                     initialValues={initialValues}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
                     onClose={handleClose}

@@ -75,7 +75,7 @@ export function UpdateCloudStorageStatusDialog() {
             updateVer: cloudStorage.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -112,12 +112,12 @@ export function UpdateCloudStorageStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "Cloud Storage"} Status`
         : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = cloudStorage
         ? {
               status: cloudStorage.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: cloudStorage.expireAt ?? undefined,
-              inheritable: cloudStorage.inheritable ?? false,
+              inheritable: Boolean(cloudStorage.inheritable),
               default: cloudStorage.default ?? false,
           }
         : undefined;
@@ -146,7 +146,8 @@ export function UpdateCloudStorageStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

@@ -61,7 +61,7 @@ export function ProjectCommandPipeFormRoute({ mode, projectId, env, commandPipeI
 
     function createPayload(values: ProjectCommandPipeFormOutput): ProjectCommandPipe_CreateOne_Payload {
         return {
-            inheritable: false,
+            inheritable: values.inheritable,
             default: values.default,
             name: values.name,
             sourceCommand: { id: values.sourceCommandId },

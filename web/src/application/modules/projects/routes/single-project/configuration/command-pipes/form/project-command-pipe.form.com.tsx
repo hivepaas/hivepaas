@@ -11,7 +11,7 @@ import {
     SettingsFormCancelAction,
 } from "~/settings/module-shared/components";
 
-import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@/components/ui";
 
@@ -82,6 +82,7 @@ export function ProjectCommandPipeForm({
         field: name,
         fieldState: { invalid: isNameInvalid },
     } = useController({ control, name: "name" });
+    const { field: inheritable } = useController({ control, name: "inheritable" });
     const { field: defaultField } = useController({ control, name: "default" });
 
     function onValid(values: SchemaOutput) {
@@ -156,6 +157,22 @@ export function ProjectCommandPipeForm({
                                 placeholder="select command"
                                 readOnly={isReadOnly}
                             />
+
+                            <InfoBlock
+                                titleWidth={220}
+                                title={<LabelWithInfo label="Available in Apps" />}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Checkbox
+                                        disabled={isReadOnly}
+                                        checked={inheritable.value}
+                                        onCheckedChange={checked => {
+                                            inheritable.onChange(Boolean(checked));
+                                        }}
+                                    />
+                                    {!inheritable.value && <AvailableInAppsWarning />}
+                                </div>
+                            </InfoBlock>
 
                             <InfoBlock
                                 titleWidth={220}

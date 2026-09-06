@@ -70,7 +70,7 @@ export function UpdateSSHKeyStatusDialog() {
             updateVer: sshKey.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -107,12 +107,12 @@ export function UpdateSSHKeyStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "SSH Key"} Status`
         : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = sshKey
         ? {
               status: sshKey.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: sshKey.expireAt ?? undefined,
-              inheritable: sshKey.inheritable ?? false,
+              inheritable: Boolean(sshKey.inheritable),
               default: sshKey.default ?? false,
           }
         : undefined;
@@ -141,7 +141,8 @@ export function UpdateSSHKeyStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

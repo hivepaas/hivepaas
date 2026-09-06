@@ -85,7 +85,7 @@ export function UpdateAcmeDnsProviderStatusDialog() {
             updateVer: acmeDnsProvider.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -130,13 +130,13 @@ export function UpdateAcmeDnsProviderStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "ACME DNS Provider"} Status`
         : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = acmeDnsProvider
         ? {
               status:
                   acmeDnsProvider.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: acmeDnsProvider.expireAt ?? undefined,
-              inheritable: acmeDnsProvider.inheritable ?? false,
+              inheritable: Boolean(acmeDnsProvider.inheritable),
               default: acmeDnsProvider.default ?? false,
           }
         : undefined;
@@ -165,7 +165,8 @@ export function UpdateAcmeDnsProviderStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

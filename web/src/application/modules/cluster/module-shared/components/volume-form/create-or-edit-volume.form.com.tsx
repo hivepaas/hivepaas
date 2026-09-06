@@ -12,7 +12,7 @@ import {
 } from "~/cluster/module-shared/enums";
 import { InheritedSettingReadonlyNotice, PermissionReadonlyNotice } from "~/settings/module-shared/components";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
 
 import {
@@ -59,12 +59,14 @@ export function CreateOrEditVolumeForm({
     readOnlyPermission = false,
     isPending = false,
     showAvailableInProjects = true,
+    isProjectScope = false,
     onSubmit,
     children,
 }: Props) {
     const methods = useForm<CreateOrEditVolumeFormInput, unknown, CreateOrEditVolumeFormOutput>({
         defaultValues: {
             ...DEFAULT_VOLUME_FORM_VALUES,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             ...initialValues,
             bindOptions: {
                 ...DEFAULT_VOLUME_FORM_VALUES.bindOptions,
@@ -485,11 +487,16 @@ export function CreateOrEditVolumeForm({
                             className="border-0 p-0 m-0 min-w-0"
                         >
                             <CheckboxField
-                                title={<LabelWithInfo label="Available in Projects" />}
+                                title={
+                                    <LabelWithInfo
+                                        label={isProjectScope ? "Available in Apps" : "Available in Projects"}
+                                    />
+                                }
                                 checked={inheritable.value}
                                 onCheckedChange={checked => {
                                     inheritable.onChange(checked);
                                 }}
+                                extra={isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
                             />
                         </fieldset>
                     ) : null}
@@ -513,18 +520,21 @@ export function CreateOrEditVolumeForm({
     );
 }
 
-function CheckboxField({ title, checked, onCheckedChange }: CheckboxFieldProps) {
+function CheckboxField({ title, checked, onCheckedChange, extra }: CheckboxFieldProps) {
     return (
         <InfoBlock
             title={title}
             titleWidth={220}
         >
-            <Checkbox
-                checked={checked}
-                onCheckedChange={value => {
-                    onCheckedChange(Boolean(value));
-                }}
-            />
+            <div className="flex items-center gap-3">
+                <Checkbox
+                    checked={checked}
+                    onCheckedChange={value => {
+                        onCheckedChange(Boolean(value));
+                    }}
+                />
+                {extra}
+            </div>
         </InfoBlock>
     );
 }
@@ -533,6 +543,7 @@ interface CheckboxFieldProps {
     title: string | ReactNode;
     checked: boolean;
     onCheckedChange: (checked: boolean) => void;
+    extra?: ReactNode;
 }
 
 interface Props extends PropsWithChildren {
@@ -544,5 +555,6 @@ interface Props extends PropsWithChildren {
     readOnlyPermission?: boolean;
     isPending?: boolean;
     showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
     onSubmit: (values: CreateOrEditVolumeFormOutput) => void;
 }

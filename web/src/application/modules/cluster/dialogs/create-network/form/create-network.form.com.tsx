@@ -10,7 +10,7 @@ import {
     CLUSTER_NETWORK_FORM_CONTROL_MAX_WIDTH_CLASS,
 } from "~/cluster/module-shared/constants/network-form-layout.constants";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
 
 import { type CreateNetworkFormInput, type CreateNetworkFormOutput, CreateNetworkFormSchema } from "../schemas";
@@ -19,6 +19,7 @@ export function CreateNetworkForm({
     readOnly = false,
     isPending = false,
     showAvailableInProjects = true,
+    isProjectScope = false,
     showProjectNamePrefixNote = false,
     onSubmit,
     children,
@@ -33,7 +34,7 @@ export function CreateNetworkForm({
             ingress: false,
             labels: [],
             options: [],
-            inheritable: false,
+            inheritable: isProjectScope ? true : false,
             default: false,
         },
         resolver: zodResolver(CreateNetworkFormSchema),
@@ -160,11 +161,13 @@ export function CreateNetworkForm({
                         </InfoBlock>
                         {showAvailableInProjects ? (
                             <CheckboxField
-                                title="Available in Projects"
+                                title={isProjectScope ? "Available in Apps" : "Available in Projects"}
                                 checked={inheritable.value}
+                                disabled={readOnly || isPending}
                                 onCheckedChange={value => {
                                     inheritable.onChange(value);
                                 }}
+                                extra={isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
                             />
                         ) : null}
                         <CheckboxField
@@ -182,18 +185,22 @@ export function CreateNetworkForm({
     );
 }
 
-function CheckboxField({ title, checked, onCheckedChange }: CheckboxFieldProps) {
+function CheckboxField({ title, checked, disabled, onCheckedChange, extra }: CheckboxFieldProps) {
     return (
         <InfoBlock
             title={title}
             titleWidth={220}
         >
-            <Checkbox
-                checked={checked}
-                onCheckedChange={value => {
-                    onCheckedChange(Boolean(value));
-                }}
-            />
+            <div className="flex items-center gap-3">
+                <Checkbox
+                    disabled={disabled}
+                    checked={checked}
+                    onCheckedChange={value => {
+                        onCheckedChange(Boolean(value));
+                    }}
+                />
+                {extra}
+            </div>
         </InfoBlock>
     );
 }
@@ -201,13 +208,16 @@ function CheckboxField({ title, checked, onCheckedChange }: CheckboxFieldProps) 
 interface CheckboxFieldProps {
     title: string | ReactNode;
     checked: boolean;
+    disabled?: boolean;
     onCheckedChange: (checked: boolean) => void;
+    extra?: ReactNode;
 }
 
 interface Props extends PropsWithChildren {
     readOnly?: boolean;
     isPending?: boolean;
     showAvailableInProjects?: boolean;
+    isProjectScope?: boolean;
     showProjectNamePrefixNote?: boolean;
     onSubmit: (values: CreateNetworkFormOutput) => void;
 }

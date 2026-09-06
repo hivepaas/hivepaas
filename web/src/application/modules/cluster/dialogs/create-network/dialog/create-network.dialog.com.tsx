@@ -74,16 +74,12 @@ export function CreateNetworkDialog() {
             ingress: values.ingress,
             labels: toRecord(values.labels),
             options: toRecord(values.options),
+            inheritable: values.inheritable,
             default: values.default,
         };
 
         if (scope.type === "cluster") {
-            createClusterNetwork({
-                payload: {
-                    ...payload,
-                    inheritable: values.inheritable,
-                },
-            });
+            createClusterNetwork({ payload });
             return;
         }
 
@@ -118,7 +114,8 @@ export function CreateNetworkDialog() {
                 <CreateNetworkForm
                     readOnly={!canWrite}
                     isPending={isPending}
-                    showAvailableInProjects={scope?.type !== "project"}
+                    showAvailableInProjects
+                    isProjectScope={scope?.type === "project"}
                     showProjectNamePrefixNote={scope?.type === "project"}
                     onSubmit={onSubmit}
                 >

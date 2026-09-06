@@ -82,7 +82,7 @@ export function UpdateBasicAuthStatusDialog() {
             updateVer: basicAuth.updateVer,
             status: values.status,
             expireAt: values.expireAt ?? null,
-            inheritable: state.scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
         };
 
@@ -127,12 +127,12 @@ export function UpdateBasicAuthStatusDialog() {
         ? `${resolvedDialogOptions.entityTitle ?? "Basic Auth"} Status`
         : "Change status";
     const isPending = isUpdatingSetting || isUpdatingProject;
-    const showAvailableInProjects = state.mode === "open" && state.scope.type === "settings";
+    const isProjectScope = state.mode === "open" && state.scope.type === "project";
     const initialValues = basicAuth
         ? {
               status: basicAuth.status === ESettingStatus.Disabled ? ESettingStatus.Disabled : ESettingStatus.Active,
               expireAt: basicAuth.expireAt ?? undefined,
-              inheritable: basicAuth.inheritable ?? false,
+              inheritable: Boolean(basicAuth.inheritable),
               default: basicAuth.default ?? false,
           }
         : undefined;
@@ -161,7 +161,8 @@ export function UpdateBasicAuthStatusDialog() {
                         onSubmit={onSubmit}
                         onHasChanges={setHasChanges}
                         initialValues={initialValues}
-                        showAvailableInProjects={showAvailableInProjects}
+                        showAvailableInProjects
+                        isProjectScope={isProjectScope}
                         readOnlyInherited={readOnlyInherited}
                         readOnly={!canWrite}
                         onClose={handleClose}

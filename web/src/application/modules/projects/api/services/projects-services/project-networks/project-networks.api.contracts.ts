@@ -33,7 +33,7 @@ export type ProjectNetworks_CreateOne_Req = ApiRequestBase<{
     projectID: string;
     env?: string;
     payload: Omit<ClusterNetworkCreatePayload, "inheritable"> & {
-        inheritable?: false;
+        inheritable?: boolean;
     };
 }>;
 
@@ -46,7 +46,7 @@ export type ProjectNetworks_UpdateOne_Req = ApiRequestBase<{
     env?: string;
     networkID: string;
     payload: Omit<ClusterNetworkUpdatePayload, "inheritable"> & {
-        inheritable?: false;
+        inheritable?: boolean;
     };
 }>;
 
@@ -59,7 +59,7 @@ export type ProjectNetworks_UpdateStatus_Req = ApiRequestBase<{
     env?: string;
     networkID: string;
     payload: Omit<ClusterNetworkUpdateStatusPayload, "inheritable"> & {
-        inheritable?: false;
+        inheritable?: boolean;
     };
 }>;
 

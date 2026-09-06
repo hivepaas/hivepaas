@@ -5,7 +5,7 @@ import { type FieldErrors, useController, useForm, useWatch } from "react-hook-f
 import { ACME_DNS_PROVIDER_OPTIONS } from "~/settings/module-shared/constants/acme-dns-provider.constants";
 import { SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS } from "~/settings/module-shared/constants/settings-form-layout.constants";
 
-import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AvailableInAppsWarning, FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     Button,
@@ -43,6 +43,7 @@ export function CreateOrEditAcmeDnsProviderForm({
     savedVersion = 0,
     initialValues,
     showAvailableInProjects,
+    isProjectScope = false,
     showTestAccess,
     isEdit,
     readOnlyInherited = false,
@@ -50,6 +51,8 @@ export function CreateOrEditAcmeDnsProviderForm({
     onClose,
 }: Props) {
     const isReadOnly = readOnlyInherited || readOnly;
+    const isInheritableDisabled = isReadOnly;
+    const inheritableLabel = isProjectScope ? "Available in Apps" : "Available in Projects";
     const [testDialogOpen, setTestDialogOpen] = useState(false);
     const [testValues, setTestValues] = useState<CreateOrEditAcmeDnsProviderFormOutput | null>(null);
 
@@ -62,6 +65,7 @@ export function CreateOrEditAcmeDnsProviderForm({
     } = useForm<CreateOrEditAcmeDnsProviderFormInput, unknown, CreateOrEditAcmeDnsProviderFormOutput>({
         defaultValues: {
             ...DEFAULT_ACME_DNS_PROVIDER_FORM_VALUES,
+            inheritable: initialValues?.inheritable ?? (isProjectScope ? true : false),
             ...initialValues,
         },
         resolver: zodResolver(CreateOrEditAcmeDnsProviderFormSchema),
@@ -197,14 +201,18 @@ export function CreateOrEditAcmeDnsProviderForm({
                         {showAvailableInProjects && (
                             <InfoBlock
                                 titleWidth={220}
-                                title={<LabelWithInfo label="Available in Projects" />}
+                                title={<LabelWithInfo label={inheritableLabel} />}
                             >
-                                <Checkbox
-                                    checked={inheritable.value}
-                                    onCheckedChange={checked => {
-                                        inheritable.onChange(Boolean(checked));
-                                    }}
-                                />
+                                <div className="flex items-center gap-3">
+                                    <Checkbox
+                                        disabled={isInheritableDisabled}
+                                        checked={inheritable.value}
+                                        onCheckedChange={checked => {
+                                            inheritable.onChange(Boolean(checked));
+                                        }}
+                                    />
+                                    {isProjectScope && !inheritable.value ? <AvailableInAppsWarning /> : null}
+                                </div>
                             </InfoBlock>
                         )}
 
@@ -286,6 +294,7 @@ interface Props {
     savedVersion?: number;
     initialValues?: Partial<CreateOrEditAcmeDnsProviderFormInput>;
     showAvailableInProjects: boolean;
+    isProjectScope?: boolean;
     showTestAccess: boolean;
     isEdit: boolean;
     readOnlyInherited?: boolean;

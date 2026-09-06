@@ -73,7 +73,8 @@ export function ViewNetworkDialog() {
                             network={network}
                             readOnlyAvailableInProjects
                             readOnlyDefault
-                            showAvailableInProjects={scope?.type === "cluster"}
+                            showAvailableInProjects
+                            isProjectScope={scope?.type === "project"}
                             onSubmit={handleReadonlySubmit}
                         />
                     ) : (

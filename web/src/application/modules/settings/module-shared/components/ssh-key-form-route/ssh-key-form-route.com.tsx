@@ -86,7 +86,7 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
 
     function createPayload(values: CreateOrEditSSHKeyFormOutput) {
         return {
-            inheritable: scope.type === "project" ? false : values.inheritable,
+            inheritable: values.inheritable,
             default: values.default,
             name: values.name,
             kind: values.kind,
@@ -152,7 +152,7 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
               publicKey: sshKey.publicKey ?? "",
               privateKey: sshKey.privateKey,
               passphrase: sshKey.passphrase ?? "",
-              inheritable: sshKey.inheritable ?? false,
+              inheritable: Boolean(sshKey.inheritable),
               default: sshKey.default ?? false,
           }
         : undefined;
@@ -181,7 +181,8 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
                     onHasChanges={setHasChanges}
                     savedVersion={saveRevision}
                     initialValues={initialValues}
-                    showAvailableInProjects={scope.type === "settings"}
+                    showAvailableInProjects
+                    isProjectScope={scope.type === "project"}
                     readOnlyInherited={readOnlyInherited}
                     readOnly={!canWrite}
                     onClose={handleClose}

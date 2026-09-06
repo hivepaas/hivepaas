@@ -78,11 +78,10 @@ export class ProjectImServiceApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectImService_CreateOne_Res, Error>> {
         const { projectID, env, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.post(getProjectImServiceBasePath(projectID, env), json, {
+                this.client.v1.post(getProjectImServiceBasePath(projectID, env), payload, {
                     signal,
                 }),
             ).pipe(
@@ -98,11 +97,10 @@ export class ProjectImServiceApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectImService_UpdateOne_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectImServiceBasePath(projectID, env)}/${id}`, json, {
+                this.client.v1.put(`${getProjectImServiceBasePath(projectID, env)}/${id}`, payload, {
                     signal,
                 }),
             ).pipe(
@@ -118,11 +116,10 @@ export class ProjectImServiceApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<ProjectImService_UpdateStatus_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
-        const json = { ...payload, inheritable: true };
 
         return lastValueFrom(
             from(
-                this.client.v1.put(`${getProjectImServiceBasePath(projectID, env)}/${id}/status`, json, {
+                this.client.v1.put(`${getProjectImServiceBasePath(projectID, env)}/${id}/status`, payload, {
                     signal,
                 }),
             ).pipe(

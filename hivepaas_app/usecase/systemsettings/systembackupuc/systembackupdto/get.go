@@ -41,6 +41,7 @@ type SystemBackupResp struct {
 	CloudStorage   *SystemBackupCloudStorageResp      `json:"cloudStorage"`
 	DBBackupConfig *SystemBackupDBConfigResp          `json:"dbBackupConfig"`
 	Notification   *basedto.BaseEventNotificationResp `json:"notification"`
+	SecretMasked   bool                               `json:"secretMasked,omitempty"`
 
 	// Calculated fields
 	NextRuns []time.Time `json:"nextRuns"`
@@ -81,10 +82,6 @@ func TransformSystemBackup(
 	refObjects *entity.RefObjects,
 ) (resp *SystemBackupResp, err error) {
 	config := setting.MustAsSystemBackup()
-	err = config.Decrypt()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
 	if err = copier.Copy(&resp, config); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -92,6 +89,13 @@ func TransformSystemBackup(
 	resp.BaseSettingResp, err = settings.TransformSettingBase(setting)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+
+	resp.SecretMasked = config.Encryption.Secret.IsEncrypted() || resp.Inherited
+	if resp.SecretMasked {
+		if resp.Encryption != nil {
+			resp.Encryption.Secret = basedto.MaskedSecret
+		}
 	}
 
 	if refObjects == nil {

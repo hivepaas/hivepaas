@@ -20,14 +20,7 @@ func (uc *UC) GetBackupRepo(
 		return nil, hperrors.Wrap(err)
 	}
 
-	setting := resp.Data
-	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
-		if err := setting.MustAsBackupRepo().Decrypt(); err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-	}
-
-	respData, err := backuprepodto.TransformBackupRepo(setting, resp.RefObjects)
+	respData, err := backuprepodto.TransformBackupRepo(resp.Data, resp.RefObjects)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

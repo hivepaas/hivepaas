@@ -21,18 +21,11 @@ func (uc *UC) GetOAuth(
 		return nil, hperrors.Wrap(err)
 	}
 
-	setting := resp.Data
-	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
-		if err := setting.MustAsOAuth().Decrypt(); err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-	}
-
 	input := &oauthdto.OAuthTransformInput{
 		RefObjects:      resp.RefObjects,
 		BaseCallbackURL: config.Current.SsoBaseCallbackURL(),
 	}
-	respData, err := oauthdto.TransformOAuth(setting, input)
+	respData, err := oauthdto.TransformOAuth(resp.Data, input)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

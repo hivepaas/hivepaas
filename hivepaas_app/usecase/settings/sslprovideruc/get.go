@@ -20,14 +20,7 @@ func (uc *UC) GetSSLProvider(
 		return nil, hperrors.Wrap(err)
 	}
 
-	setting := resp.Data
-	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
-		if err := setting.MustAsSSLProvider().Decrypt(); err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-	}
-
-	respData, err := sslproviderdto.TransformSSLProvider(setting, resp.RefObjects)
+	respData, err := sslproviderdto.TransformSSLProvider(resp.Data, resp.RefObjects)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

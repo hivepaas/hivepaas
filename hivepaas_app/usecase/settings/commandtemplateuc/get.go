@@ -20,8 +20,7 @@ func (uc *UC) GetCommandTemplate(
 		return nil, hperrors.Wrap(err)
 	}
 
-	setting := resp.Data
-	respData, err := commandtemplatedto.TransformCommandTemplate(setting, resp.RefObjects, false)
+	respData, err := commandtemplatedto.TransformCommandTemplate(resp.Data, resp.RefObjects, false)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

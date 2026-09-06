@@ -20,7 +20,6 @@ func (uc *UC) GetConfigFile(
 		return nil, hperrors.Wrap(err)
 	}
 
-	resp.Data.MustAsConfigFile()
 	respData, err := configfiledto.TransformConfigFile(resp.Data, resp.RefObjects)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

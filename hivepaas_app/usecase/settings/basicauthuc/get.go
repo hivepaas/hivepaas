@@ -20,14 +20,7 @@ func (uc *UC) GetBasicAuth(
 		return nil, hperrors.Wrap(err)
 	}
 
-	setting := resp.Data
-	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
-		if err := setting.MustAsBasicAuth().Decrypt(); err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-	}
-
-	respData, err := basicauthdto.TransformBasicAuth(setting, resp.RefObjects)
+	respData, err := basicauthdto.TransformBasicAuth(resp.Data, resp.RefObjects)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

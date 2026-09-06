@@ -22,10 +22,7 @@ func (uc *UC) GetGithubApp(
 	}
 
 	setting := resp.Data
-	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
-		if err := setting.MustAsGithubApp().Decrypt(); err != nil {
-			return nil, hperrors.Wrap(err)
-		}
+	if setting.ObjectID == setting.CurrentObjectID {
 		// Settings created before the slug was persisted have no github.com URLs
 		// until it is read back from the API once.
 		uc.ensureAppSlug(ctx, setting)

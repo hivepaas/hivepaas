@@ -20,8 +20,7 @@ func (uc *UC) GetCommandPipe(
 		return nil, hperrors.Wrap(err)
 	}
 
-	setting := resp.Data
-	respData, err := commandpipedto.TransformCommandPipe(setting, resp.RefObjects)
+	respData, err := commandpipedto.TransformCommandPipe(resp.Data, resp.RefObjects)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

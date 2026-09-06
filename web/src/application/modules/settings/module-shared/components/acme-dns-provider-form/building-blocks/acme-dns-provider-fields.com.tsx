@@ -136,6 +136,7 @@ export function AcmeDnsProviderFields({ control, errors, kind }: Props) {
                         name="gCloudServiceAccount"
                         label="Service Account"
                         type="textarea"
+                        maxLength={10000}
                         isRequired
                     />
                     <AcmeDnsProviderField

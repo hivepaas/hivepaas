@@ -10,6 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@components/ui/dialog";
+import { Separator } from "@components/ui/separator";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { Copy } from "lucide-react";
@@ -125,6 +126,9 @@ export function CreateProfileApiKeyDialog() {
                     <DialogTitle>Create a new API key</DialogTitle>
                     <DialogDescription />
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
 
                 <DialogBody className="flex flex-col gap-6">
                     <CreateProfileApiKeyForm
@@ -181,14 +185,24 @@ export function CreateProfileApiKeyDialog() {
                     )}
                 </DialogBody>
                 <DialogActionFooter>
-                    <Button
-                        type="submit"
-                        form={CREATE_PROFILE_API_KEY_FORM_ID}
-                        isLoading={isPending}
-                        disabled={isPending || !showForm}
-                    >
-                        Create Key
-                    </Button>
+                    {showForm ? (
+                        <Button
+                            type="submit"
+                            form={CREATE_PROFILE_API_KEY_FORM_ID}
+                            isLoading={isPending}
+                            disabled={isPending}
+                        >
+                            Create Key
+                        </Button>
+                    ) : (
+                        <Button
+                            type="button"
+                            className="min-w-[100px]"
+                            onClick={handleClose}
+                        >
+                            Close
+                        </Button>
+                    )}
                 </DialogActionFooter>
             </DialogFixedContent>
         </Dialog>

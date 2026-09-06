@@ -208,10 +208,6 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
     );
 }
 
-function secretValue(value: string | undefined, secretMasked?: boolean) {
-    return secretMasked ? "" : (value ?? "");
-}
-
 function createConfigPayload(values: CreateOrEditAcmeDnsProviderFormOutput): AcmeDnsProvider_ConfigPayload {
     const isAcmeDns = values.kind === EAcmeDnsProviderKind.AcmeDNS;
     const isAzure = values.kind === EAcmeDnsProviderKind.Azure;
@@ -351,34 +347,34 @@ function createInitialValues(
         acmeDnsStoragePath: acmeDnsProvider.acmeDns?.storagePath ?? "",
         acmeDnsStorageBaseUrl: acmeDnsProvider.acmeDns?.storageBaseUrl ?? "",
         azureClientId: acmeDnsProvider.azure?.clientId ?? "",
-        azureClientSecret: secretValue(acmeDnsProvider.azure?.clientSecret, acmeDnsProvider.secretMasked),
+        azureClientSecret: acmeDnsProvider.azure?.clientSecret ?? "",
         azureSubscriptionId: acmeDnsProvider.azure?.subscriptionId ?? "",
         azureTenantId: acmeDnsProvider.azure?.tenantId ?? "",
         azureResourceGroupName: acmeDnsProvider.azure?.resourceGroupName ?? "",
         baiduCloudAccessKey: acmeDnsProvider.baiduCloud?.accessKey ?? "",
-        baiduCloudSecretKey: secretValue(acmeDnsProvider.baiduCloud?.secretKey, acmeDnsProvider.secretMasked),
-        cloudflareAuthToken: secretValue(acmeDnsProvider.cloudflare?.authToken, acmeDnsProvider.secretMasked),
-        digitalOceanAuthToken: secretValue(acmeDnsProvider.digitalOcean?.authToken, acmeDnsProvider.secretMasked),
-        gCloudServiceAccount: secretValue(acmeDnsProvider.gCloud?.serviceAccount, acmeDnsProvider.secretMasked),
+        baiduCloudSecretKey: acmeDnsProvider.baiduCloud?.secretKey ?? "",
+        cloudflareAuthToken: acmeDnsProvider.cloudflare?.authToken ?? "",
+        digitalOceanAuthToken: acmeDnsProvider.digitalOcean?.authToken ?? "",
+        gCloudServiceAccount: acmeDnsProvider.gCloud?.serviceAccount ?? "",
         gCloudProjectId: acmeDnsProvider.gCloud?.projectId ?? "",
         goDaddyApiKey: acmeDnsProvider.goDaddy?.apiKey ?? "",
-        goDaddyApiSecret: secretValue(acmeDnsProvider.goDaddy?.apiSecret, acmeDnsProvider.secretMasked),
-        hetznerApiToken: secretValue(acmeDnsProvider.hetzner?.apiToken, acmeDnsProvider.secretMasked),
+        goDaddyApiSecret: acmeDnsProvider.goDaddy?.apiSecret ?? "",
+        hetznerApiToken: acmeDnsProvider.hetzner?.apiToken ?? "",
         huaweiCloudAccessKey: acmeDnsProvider.huaweiCloud?.accessKey ?? "",
-        huaweiCloudSecretKey: secretValue(acmeDnsProvider.huaweiCloud?.secretKey, acmeDnsProvider.secretMasked),
+        huaweiCloudSecretKey: acmeDnsProvider.huaweiCloud?.secretKey ?? "",
         huaweiCloudRegion: acmeDnsProvider.huaweiCloud?.region ?? "",
         namecheapApiUser: acmeDnsProvider.namecheap?.apiUser ?? "",
-        namecheapApiKey: secretValue(acmeDnsProvider.namecheap?.apiKey, acmeDnsProvider.secretMasked),
+        namecheapApiKey: acmeDnsProvider.namecheap?.apiKey ?? "",
         rfc2136Nameserver: acmeDnsProvider.rfc2136?.nameserver ?? "",
         rfc2136TsigKeyName: acmeDnsProvider.rfc2136?.tsigKeyName ?? "",
-        rfc2136TsigSecret: secretValue(acmeDnsProvider.rfc2136?.tsigSecret, acmeDnsProvider.secretMasked),
+        rfc2136TsigSecret: acmeDnsProvider.rfc2136?.tsigSecret ?? "",
         rfc2136TsigAlgorithm: acmeDnsProvider.rfc2136?.tsigAlgorithm ?? "",
         route53AccessKeyId: acmeDnsProvider.route53?.accessKeyId ?? "",
-        route53SecretAccessKey: secretValue(acmeDnsProvider.route53?.secretAccessKey, acmeDnsProvider.secretMasked),
+        route53SecretAccessKey: acmeDnsProvider.route53?.secretAccessKey ?? "",
         route53HostedZoneId: acmeDnsProvider.route53?.hostedZoneId ?? "",
         route53Region: acmeDnsProvider.route53?.region ?? "",
         tencentCloudSecretId: acmeDnsProvider.tencentCloud?.secretId ?? "",
-        tencentCloudSecretKey: secretValue(acmeDnsProvider.tencentCloud?.secretKey, acmeDnsProvider.secretMasked),
+        tencentCloudSecretKey: acmeDnsProvider.tencentCloud?.secretKey ?? "",
         tencentCloudRegion: acmeDnsProvider.tencentCloud?.region ?? "",
         inheritable: Boolean(acmeDnsProvider.inheritable),
         default: acmeDnsProvider.default ?? false,

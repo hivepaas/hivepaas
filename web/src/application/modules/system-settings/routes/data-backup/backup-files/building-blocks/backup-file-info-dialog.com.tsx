@@ -8,6 +8,7 @@ import { AppLoader } from "@application/shared/components";
 import { getFriendlyDataSize } from "@application/shared/utils/data-size";
 
 import { Dialog, DialogBody, DialogFixedContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 
 function InfoRow({ label, value }: InfoRowProps) {
     return (
@@ -74,6 +75,9 @@ export function BackupFileInfoDialog({ fileID, open, onOpenChange }: Props) {
                 <DialogHeader>
                     <DialogTitle>Backup file info</DialogTitle>
                 </DialogHeader>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
 
                 <DialogBody>
                     {isLoading ? <AppLoader /> : data?.data ? <BackupFileInfoContent file={data.data} /> : null}

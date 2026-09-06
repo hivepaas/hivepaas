@@ -203,6 +203,7 @@ export function CreateProfileApiKeyForm({ formId, onSubmit, onHasChanges }: Prop
                                 expireAt.onChange(date ?? undefined);
                             }}
                             className={PROFILE_API_KEY_FORM_CONTROL_MAX_WIDTH_CLASS}
+                            containerClassName={PROFILE_API_KEY_FORM_CONTROL_MAX_WIDTH_CLASS}
                             displayFormat={{ hour24: "yyyy-MM-dd HH:mm:ss" }}
                             aria-invalid={isExpireAtInvalid}
                             placeholder="Select expiration date"

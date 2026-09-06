@@ -798,10 +798,24 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
         };
 
         const handleClear = (e: React.MouseEvent) => {
+            e.preventDefault();
             e.stopPropagation();
             onChange?.(undefined);
             setDisplayDate(undefined);
         };
+
+        const widthClasses = React.useMemo(() => {
+            if (!className) return "";
+            return className
+                .split(/\s+/)
+                .filter(c => {
+                    const baseClass = c.includes(":") ? c.split(":").pop()! : c;
+                    return (
+                        baseClass.startsWith("w-") || baseClass.startsWith("max-w-") || baseClass.startsWith("min-w-")
+                    );
+                })
+                .join(" ");
+        }, [className]);
 
         useImperativeHandle(
             ref,
@@ -829,7 +843,7 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
         }
 
         return (
-            <div className={cn("relative w-full", containerClassName)}>
+            <div className={cn("relative w-full", widthClasses, containerClassName)}>
                 <Popover>
                     <PopoverTrigger
                         asChild
@@ -840,6 +854,7 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
                             className={cn(
                                 "w-full justify-between text-left font-normal",
                                 !displayDate && "text-muted-foreground",
+                                showClearButton && displayDate && !disabled && "pr-14",
                                 className,
                             )}
                             ref={buttonRef}
@@ -900,7 +915,7 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
                         )}
                     </PopoverContent>
                 </Popover>
-                {showClearButton && displayDate && (
+                {showClearButton && displayDate && !disabled && (
                     <button
                         type="button"
                         onClick={handleClear}

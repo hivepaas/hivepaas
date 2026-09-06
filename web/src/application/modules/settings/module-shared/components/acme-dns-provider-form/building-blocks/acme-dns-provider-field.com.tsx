@@ -11,7 +11,7 @@ import type { CreateOrEditAcmeDnsProviderFormInput } from "../create-or-edit-acm
 
 type FieldName = FieldPath<CreateOrEditAcmeDnsProviderFormInput>;
 
-export function AcmeDnsProviderField({ control, errors, name, label, isRequired, type = "text" }: Props) {
+export function AcmeDnsProviderField({ control, errors, name, label, isRequired, type = "text", maxLength }: Props) {
     const {
         field,
         fieldState: { invalid },
@@ -34,7 +34,7 @@ export function AcmeDnsProviderField({ control, errors, name, label, isRequired,
                         {...field}
                         value={String(field.value)}
                         aria-invalid={invalid}
-                        maxLength={1000}
+                        maxLength={maxLength ?? 1000}
                         minRows={6}
                         maxRows={10}
                     />
@@ -69,4 +69,5 @@ interface Props {
     label: string;
     isRequired?: boolean;
     type?: "text" | "password" | "textarea";
+    maxLength?: number;
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { PasswordInput } from "@components/ui/input-password";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
@@ -264,7 +265,7 @@ export function CreateOrEditRepoWebhookForm({
                     >
                         <FieldGroup>
                             <Field>
-                                <Input
+                                <PasswordInput
                                     {...secret}
                                     placeholder="auto-generate if empty"
                                     aria-invalid={isSecretInvalid}

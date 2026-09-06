@@ -5,7 +5,7 @@ import { cn } from "@lib/utils";
 import { Copy } from "lucide-react";
 import { toast } from "sonner";
 
-import { RouteFormHeader } from "@application/shared/components";
+import { FormActionBar, RouteFormHeader } from "@application/shared/components";
 import { CAPABILITY_IDS, ROUTE } from "@application/shared/constants";
 import { ProfileCommands } from "@application/shared/data/commands";
 import { CreateProfileApiKeyForm } from "@application/shared/dialogs/create-profile-api-key/form";
@@ -15,7 +15,6 @@ import { PageNoAccess } from "@application/shared/pages";
 import { useCapability } from "@application/shared/permissions";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 
 interface CreatedApiKey {
     keyId: string;
@@ -162,41 +161,39 @@ export function ProfileApiKeyCreateRoute() {
                         )}
                     </div>
                 )}
+            </div>
 
-                <Separator className="opacity-50" />
-
-                <div className="pb-0 flex justify-end">
-                    {showForm ? (
-                        <div className="flex items-center gap-3">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                className="min-w-[100px]"
-                                disabled={isPending}
-                                onClick={handleClose}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                form={CREATE_PROFILE_API_KEY_FORM_ID}
-                                isLoading={isPending}
-                                disabled={isPending}
-                            >
-                                Create Key
-                            </Button>
-                        </div>
-                    ) : (
+            <FormActionBar>
+                {showForm ? (
+                    <>
                         <Button
                             type="button"
+                            variant="outline"
                             className="min-w-[100px]"
+                            disabled={isPending}
                             onClick={handleClose}
                         >
-                            Close
+                            Cancel
                         </Button>
-                    )}
-                </div>
-            </div>
+                        <Button
+                            type="submit"
+                            form={CREATE_PROFILE_API_KEY_FORM_ID}
+                            isLoading={isPending}
+                            disabled={isPending}
+                        >
+                            Create Key
+                        </Button>
+                    </>
+                ) : (
+                    <Button
+                        type="button"
+                        className="min-w-[100px]"
+                        onClick={handleClose}
+                    >
+                        Close
+                    </Button>
+                )}
+            </FormActionBar>
         </div>
     );
 }

@@ -18,6 +18,7 @@ type InviteUserReq struct {
 	AccessExpireAt  time.Time                    `json:"accessExpireAt"`
 	SendInviteEmail bool                         `json:"sendInviteEmail"`
 	ModuleAccesses  basedto.ModuleAccessSliceReq `json:"moduleAccesses"`
+	Capabilities    basedto.CapabilitySliceReq   `json:"capabilities"`
 	ProjectAccesses []*ProjectAccessReq          `json:"projectAccesses"`
 }
 
@@ -38,6 +39,8 @@ func (req *InviteUserReq) Validate() hperrors.ValidationErrors {
 		base.AllUserSecurityOptions, "securityOption")...)
 	validators = append(validators, basedto.ValidateModuleAccessSliceReq(req.ModuleAccesses, true,
 		0, base.AllResourceModules, "moduleAccesses")...)
+	validators = append(validators, basedto.ValidateCapabilitySliceReq(req.Capabilities, true,
+		0, base.AllResourceCapabilities, "capabilities")...)
 	validators = append(validators, validateProjectAccesses(req.ProjectAccesses, "projectAccesses")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

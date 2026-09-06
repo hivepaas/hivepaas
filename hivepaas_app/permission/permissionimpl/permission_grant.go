@@ -80,6 +80,13 @@ func (p *manager) AuthorizeAccessChanges(
 }
 
 // loadActorAccess reads the acting user's own grants.
+//
+// Capabilities are deliberately not among the types read here. They are held or
+// not held, with nothing to delegate a part of, so managing them is left to
+// admins: a non-admin comes back with no actions on any capability, which means
+// authorizeAccessChanges refuses them any change to one and leaves the rows they
+// cannot reach untouched. Adding base.ResourceTypeCapability to this list is what
+// would make capabilities delegatable - do it on purpose, not in passing.
 func (p *manager) loadActorAccess(
 	ctx context.Context,
 	db database.IDB,

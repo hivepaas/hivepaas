@@ -101,9 +101,9 @@ func (uc *BaseUC) authorizeReveal(
 //
 // Two gates, and they answer different questions. The config flag is the
 // operator's: it lives in a file on the host, so a session that has taken over an
-// admin account cannot turn it on. The module permission is the account's. Note
-// that an admin passes the second gate unconditionally - see CheckAccess - which
-// is precisely why the attempt is recorded rather than merely refused.
+// admin account cannot turn it on. The capability is the account's. Note that an
+// admin passes the second gate unconditionally - see CheckAccess - which is
+// precisely why the attempt is recorded rather than merely refused.
 func (uc *BaseUC) canRevealSecrets(
 	ctx context.Context,
 	db database.IDB,
@@ -113,9 +113,8 @@ func (uc *BaseUC) canRevealSecrets(
 		return false, hperrors.Wrap(hperrors.ErrRevealSecretsDisabled)
 	}
 
-	hasPerm, err := uc.PermissionManager.CheckAccess(ctx, db, auth, &permission.ModuleAccessCheck{
-		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
-		Module:          base.ResourceModuleSecret,
+	hasPerm, err := uc.PermissionManager.CheckAccess(ctx, db, auth, &permission.CapabilityCheck{
+		Capability: base.ResourceCapSecretReveal,
 	})
 	if err != nil {
 		return false, hperrors.Wrap(err)

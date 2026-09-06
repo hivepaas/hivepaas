@@ -25,6 +25,7 @@ const (
 	ResourceTypeBackupRepo        ResourceType = "backup-repo"
 	ResourceTypeBackupRepoCleanup ResourceType = "backup-repo-cleanup"
 	ResourceTypeBasicAuth         ResourceType = "basic-auth"
+	ResourceTypeCapability        ResourceType = "capability"
 	ResourceTypeCloudStorage      ResourceType = "cloud-storage"
 	ResourceTypeCluster           ResourceType = "cluster"
 	ResourceTypeClusterNode       ResourceType = "cluster-node"
@@ -72,7 +73,6 @@ type ResourceModule string
 
 const (
 	ResourceModuleSettings ResourceModule = "mod::settings"
-	ResourceModuleSecret   ResourceModule = "mod::secret"
 	ResourceModuleCluster  ResourceModule = "mod::cluster"
 	ResourceModuleUser     ResourceModule = "mod::user"
 	ResourceModuleProject  ResourceModule = "mod::project"
@@ -80,8 +80,19 @@ const (
 )
 
 var (
-	AllResourceModules = []ResourceModule{ResourceModuleSettings, ResourceModuleSecret, ResourceModuleUser,
+	AllResourceModules = []ResourceModule{ResourceModuleSettings, ResourceModuleUser,
 		ResourceModuleCluster, ResourceModuleProject, ResourceModuleSystem}
+)
+
+type ResourceCapability string
+
+const (
+	// The name of a permission, not a credential - hence the gosec exclusion.
+	ResourceCapSecretReveal ResourceCapability = "cap::secret::reveal" //nolint:gosec // G101
+)
+
+var (
+	AllResourceCapabilities = []ResourceCapability{ResourceCapSecretReveal}
 )
 
 type ActionType string

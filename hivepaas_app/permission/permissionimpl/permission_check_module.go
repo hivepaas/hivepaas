@@ -14,28 +14,41 @@ func (p *manager) checkModuleAccess(
 	db database.IDB,
 	check *permission.ModuleAccessCheck,
 ) (bool, error) {
-	resources := []*base.PermissionResource{ // order matters, the check will go from current scope to higher
-		{
-			SubjectType:  check.SubjectType,
-			SubjectID:    check.SubjectID,
-			ResourceType: base.ResourceTypeModule,
-			ResourceID:   string(check.Module),
-		},
+	return p.checkFlatResourceAccess(ctx, db, &check.BaseAccessCheck,
+		base.ResourceTypeModule, string(check.Module))
+}
+
+// checkFlatResourceAccess answers a check against a single resource row, for the
+// resource types that have no scope to walk up: the subject either holds the row
+// or does not.
+func (p *manager) checkFlatResourceAccess(
+	ctx context.Context,
+	db database.IDB,
+	check *permission.BaseAccessCheck,
+	resourceType base.ResourceType,
+	resourceID string,
+) (bool, error) {
+	resource := &base.PermissionResource{
+		SubjectType:  check.SubjectType,
+		SubjectID:    check.SubjectID,
+		ResourceType: resourceType,
+		ResourceID:   resourceID,
 	}
 
-	perms, err := p.aclPermissionRepo.ListByResources(ctx, db, resources)
+	perms, err := p.aclPermissionRepo.ListByResources(ctx, db, []*base.PermissionResource{resource})
 	if err != nil || len(perms) == 0 {
 		return false, hperrors.Wrap(err)
 	}
 
-	for _, res := range resources {
-		for _, perm := range perms {
-			if res.ResourceType != perm.ResourceType {
-				continue
-			}
-			if res.ResourceID != "" && res.ResourceID == perm.ResourceID {
-				return p.hasPermission(perm, &check.BaseAccessCheck), nil
-			}
+	// An empty resourceID matches nothing on purpose. It means the caller left the
+	// module or capability unset, and answering that with the first row that has
+	// an empty id would grant on a mistake.
+	if resourceID == "" {
+		return false, nil
+	}
+	for _, perm := range perms {
+		if perm.ResourceType == resourceType && perm.ResourceID == resourceID {
+			return p.hasPermission(perm, check), nil
 		}
 	}
 

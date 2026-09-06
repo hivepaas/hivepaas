@@ -24,6 +24,7 @@ type UpdateUserReq struct {
 	SecurityOption  *base.UserSecurityOption     `json:"securityOption"`
 	AccessExpireAt  *time.Time                   `json:"accessExpireAt"`
 	ModuleAccesses  basedto.ModuleAccessSliceReq `json:"moduleAccesses"`
+	Capabilities    basedto.CapabilitySliceReq   `json:"capabilities"`
 	ProjectAccesses []*ProjectAccessReq          `json:"projectAccesses"`
 }
 
@@ -64,6 +65,8 @@ func (req *UpdateUserReq) Validate() hperrors.ValidationErrors {
 		base.AllUserSecurityOptions, "securityOption")...)
 	validators = append(validators, basedto.ValidateModuleAccessSliceReq(req.ModuleAccesses, true,
 		0, base.AllResourceModules, "moduleAccesses")...)
+	validators = append(validators, basedto.ValidateCapabilitySliceReq(req.Capabilities, true,
+		0, base.AllResourceCapabilities, "capabilities")...)
 	validators = append(validators, validateProjectAccesses(req.ProjectAccesses, "projectAccesses")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

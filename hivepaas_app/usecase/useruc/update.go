@@ -36,7 +36,8 @@ func (uc *UC) UpdateUser(
 		uc.prepareUpdatingUserData(req, userData, persistingData)
 
 		err = uc.authorizeAccessChanges(ctx, db, auth, userData.User,
-			accessResourceTypesToReplace(req.ModuleAccesses != nil, req.ProjectAccesses != nil),
+			accessResourceTypesToReplace(req.ModuleAccesses != nil, req.Capabilities != nil,
+				req.ProjectAccesses != nil),
 			persistingData)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -170,6 +171,9 @@ func (uc *UC) prepareUpdatingUserData(
 
 	if req.ModuleAccesses != nil {
 		uc.preparePersistingUserModuleAccesses(user, req.ModuleAccesses, timeNow, persistingData)
+	}
+	if req.Capabilities != nil {
+		uc.preparePersistingUserCapabilities(user, req.Capabilities, timeNow, persistingData)
 	}
 	if req.ProjectAccesses != nil {
 		uc.preparePersistingUserProjectAccesses(user, req.ProjectAccesses, timeNow, persistingData)

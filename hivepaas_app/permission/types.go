@@ -47,6 +47,18 @@ type ModuleAccessCheck struct {
 	Module base.ResourceModule
 }
 
+// CapabilityCheck asks whether a subject holds one capability.
+//
+// Unlike the other checks it takes no action: a capability is a single operation,
+// so there is exactly one action it could be checked for, and the check fills it
+// in itself. Leave BaseAccessCheck's Action, AllOf and AnyOf unset - anything put
+// there is overwritten.
+type CapabilityCheck struct {
+	BaseAccessCheck
+
+	Capability base.ResourceCapability
+}
+
 type GeneralResourceAccessCheck struct {
 	BaseAccessCheck
 

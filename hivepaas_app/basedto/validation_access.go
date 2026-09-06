@@ -97,3 +97,33 @@ func ValidateModuleAccessSliceReq(access ModuleAccessSliceReq, unique bool, minL
 
 	return res
 }
+
+func ValidateCapabilitySliceReq(caps CapabilitySliceReq, unique bool, minLen int,
+	allowedValues []base.ResourceCapability, field string) (res []vld.Validator) {
+	if unique {
+		res = append(res, vld.SliceUnique(caps).OnError(
+			vld.SetField(field, nil),
+			vld.SetCustomKey("ERR_VLD_OBJECT_IDS_NON_UNIQUE"),
+		))
+	}
+	if minLen > 0 {
+		res = append(res, vld.SliceLen(caps, minLen, math.MaxInt).OnError(
+			vld.SetField(field, nil),
+			vld.SetCustomKey("ERR_VLD_OBJECT_IDS_REQUIRED"),
+		))
+	}
+	if len(allowedValues) > 0 {
+		res = append(res,
+			vld.Slice(caps).ForEach(func(elem base.ResourceCapability, index int, elemValidator vld.ItemValidator) {
+				elemValidator.Validate(
+					vld.StrIn(&elem, allowedValues...).OnError(
+						vld.SetField(fmt.Sprintf("%s[%d]", field, index), nil),
+						vld.SetCustomKey("ERR_VLD_VALUE_NOT_IN_LIST"),
+					),
+				)
+			}),
+		)
+	}
+
+	return res
+}

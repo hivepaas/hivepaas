@@ -32,9 +32,13 @@ type ModuleIDReq struct {
 
 type ModuleAccessSliceReq []*ModuleAccessReq
 
+type CapabilitySliceReq []base.ResourceCapability
+
 type ObjectAccessResp struct {
 	NamedObjectResp
 	Access base.AccessActions `json:"access"`
 }
 
 type ObjectAccessSliceResp []*ObjectAccessResp
+
+type CapabilitySliceResp []base.ResourceCapability

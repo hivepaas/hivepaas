@@ -55,6 +55,7 @@ type UserDetailsResp struct {
 	*UserResp
 	ProjectAccesses []*ProjectAccessResp          `json:"projectAccesses"`
 	ModuleAccesses  basedto.ObjectAccessSliceResp `json:"moduleAccesses"`
+	Capabilities    basedto.CapabilitySliceResp   `json:"capabilities"`
 }
 
 type ProjectAccessResp struct {
@@ -154,14 +155,16 @@ func TransformUserDetails(user *entity.User) (resp *UserDetailsResp, err error) 
 			data.envAccesses[env.ID] = access.Actions
 			continue
 		}
-		if access.ResourceType == base.ResourceTypeModule {
+		switch access.ResourceType { //nolint:exhaustive
+		case base.ResourceTypeModule:
 			resp.ModuleAccesses = append(resp.ModuleAccesses, &basedto.ObjectAccessResp{
 				NamedObjectResp: basedto.NamedObjectResp{
 					ID: access.ResourceID,
 				},
 				Access: access.Actions,
 			})
-			continue
+		case base.ResourceTypeCapability:
+			resp.Capabilities = append(resp.Capabilities, base.ResourceCapability(access.ResourceID))
 		}
 	}
 

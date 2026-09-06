@@ -47,10 +47,11 @@ func TestPreparePersistingUserProjectAccessesWritesEnvLevelRows(t *testing.T) {
 
 func TestAccessResourceTypesToReplace(t *testing.T) {
 	tests := []struct {
-		name             string
-		replaceModules   bool
-		replaceProjects  bool
-		wantResourceType []base.ResourceType
+		name                string
+		replaceModules      bool
+		replaceCapabilities bool
+		replaceProjects     bool
+		wantResourceType    []base.ResourceType
 	}{
 		{
 			name: "nothing to replace when the request carries no access list",
@@ -59,6 +60,14 @@ func TestAccessResourceTypesToReplace(t *testing.T) {
 			name:             "modules only",
 			replaceModules:   true,
 			wantResourceType: []base.ResourceType{base.ResourceTypeModule},
+		},
+		{
+			// Leaving capabilities out made a capabilities-only update skip the
+			// authorization check entirely, and made a granted capability
+			// impossible to revoke.
+			name:                "capabilities only",
+			replaceCapabilities: true,
+			wantResourceType:    []base.ResourceType{base.ResourceTypeCapability},
 		},
 		{
 			// The legacy project level must be replaced too, otherwise an old row
@@ -70,18 +79,21 @@ func TestAccessResourceTypesToReplace(t *testing.T) {
 			},
 		},
 		{
-			name:            "both",
-			replaceModules:  true,
-			replaceProjects: true,
+			name:                "all of them",
+			replaceModules:      true,
+			replaceCapabilities: true,
+			replaceProjects:     true,
 			wantResourceType: []base.ResourceType{
-				base.ResourceTypeModule, base.ResourceTypeProject, base.ResourceTypeProjectEnv,
+				base.ResourceTypeModule, base.ResourceTypeCapability,
+				base.ResourceTypeProject, base.ResourceTypeProjectEnv,
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := accessResourceTypesToReplace(tt.replaceModules, tt.replaceProjects)
+			got := accessResourceTypesToReplace(tt.replaceModules, tt.replaceCapabilities,
+				tt.replaceProjects)
 			if !slices.Equal(got, tt.wantResourceType) {
 				t.Errorf("accessResourceTypesToReplace() = %v, want %v", got, tt.wantResourceType)
 			}

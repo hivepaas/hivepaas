@@ -27,14 +27,16 @@ func (p *manager) CheckAccess(
 
 	var allowedResources map[base.ResourceType][]string
 	switch chk := check.(type) {
-	case *permission.ModuleAccessCheck:
-		hasPerm, err = p.checkModuleAccess(ctx, db, chk)
-	case *permission.GeneralResourceAccessCheck:
-		hasPerm, allowedResources, err = p.checkResourceAccess(ctx, db, chk)
 	case *permission.AppAccessCheck:
 		hasPerm, allowedResources, err = p.checkAppAccess(ctx, db, chk)
 	case *permission.ProjectAccessCheck:
 		hasPerm, allowedResources, err = p.checkProjectAccess(ctx, db, chk)
+	case *permission.ModuleAccessCheck:
+		hasPerm, err = p.checkModuleAccess(ctx, db, chk)
+	case *permission.CapabilityCheck:
+		hasPerm, err = p.checkCapability(ctx, db, chk)
+	case *permission.GeneralResourceAccessCheck:
+		hasPerm, allowedResources, err = p.checkResourceAccess(ctx, db, chk)
 	}
 	if err != nil {
 		return false, hperrors.Wrap(err)

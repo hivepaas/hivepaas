@@ -41,7 +41,7 @@ func (uc *UC) InviteUser(
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		err := uc.authorizeAccessChanges(ctx, db, auth, inviteData.User,
-			accessResourceTypesToReplace(true, true), persistingData)
+			accessResourceTypesToReplace(true, true, true), persistingData)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -158,6 +158,7 @@ func (uc *UC) preparePersistingUserInviteData(
 	persistingData.UpsertingUsers = append(persistingData.UpsertingUsers, user)
 
 	uc.preparePersistingUserModuleAccesses(user, req.ModuleAccesses, timeNow, persistingData)
+	uc.preparePersistingUserCapabilities(user, req.Capabilities, timeNow, persistingData)
 	uc.preparePersistingUserProjectAccesses(user, req.ProjectAccesses, timeNow, persistingData)
 }
 
@@ -175,6 +176,26 @@ func (uc *UC) preparePersistingUserModuleAccesses(
 				ResourceType: base.ResourceTypeModule,
 				ResourceID:   moduleReq.ID,
 				Actions:      moduleReq.Access,
+				CreatedAt:    timeNow,
+				UpdatedAt:    timeNow,
+			})
+	}
+}
+
+func (uc *UC) preparePersistingUserCapabilities(
+	user *entity.User,
+	capabilityReqs basedto.CapabilitySliceReq,
+	timeNow time.Time,
+	persistingData *userservice.PersistingUserData,
+) {
+	for _, capReq := range capabilityReqs {
+		persistingData.UpsertingAccesses = append(persistingData.UpsertingAccesses,
+			&entity.ACLPermission{
+				SubjectType:  base.SubjectTypeUser,
+				SubjectID:    user.ID,
+				ResourceType: base.ResourceTypeCapability,
+				ResourceID:   string(capReq),
+				Actions:      base.AccessActions{Exec: true},
 				CreatedAt:    timeNow,
 				UpdatedAt:    timeNow,
 			})

@@ -47,6 +47,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice/apppreviewserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice/approutingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice/auditserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice/backuprepocleanupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice/backupreposerviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustercleanupservice/clustercleanupserviceimpl"
@@ -303,6 +304,7 @@ var Provides = []any{
 
 	// Service
 	agentserviceimpl.New,
+	auditserviceimpl.New,
 	appcloneserviceimpl.New,
 	appdeploymentserviceimpl.New,
 	apppreviewserviceimpl.New,
@@ -353,6 +355,7 @@ var Provides = []any{
 
 	// Repository
 	repository.NewACLPermissionRepo,
+	repository.NewAuditLogRepo,
 	repository.NewAppRepo,
 	repository.NewBinObjectRepo,
 	repository.NewDataMigrationRepo,

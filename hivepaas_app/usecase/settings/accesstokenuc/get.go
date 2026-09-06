@@ -20,14 +20,7 @@ func (uc *UC) GetAccessToken(
 		return nil, hperrors.Wrap(err)
 	}
 
-	setting := resp.Data
-	if setting.ObjectID == setting.CurrentObjectID { // not return sensitive data if setting is inherited
-		if err := setting.MustAsAccessToken().Decrypt(); err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-	}
-
-	respData, err := accesstokendto.TransformAccessToken(setting, resp.RefObjects)
+	respData, err := accesstokendto.TransformAccessToken(resp.Data, resp.RefObjects)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

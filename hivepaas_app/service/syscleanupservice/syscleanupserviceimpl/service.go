@@ -9,6 +9,7 @@ import (
 )
 
 type service struct {
+	auditLogRepo   repository.AuditLogRepo
 	deploymentRepo repository.DeploymentRepo
 	fileRepo       repository.FileRepo
 	lockRepo       repository.LockRepo
@@ -23,6 +24,7 @@ type service struct {
 }
 
 func New(
+	auditLogRepo repository.AuditLogRepo,
 	deploymentRepo repository.DeploymentRepo,
 	fileRepo repository.FileRepo,
 	lockRepo repository.LockRepo,
@@ -36,6 +38,7 @@ func New(
 	dockerManager docker.Manager,
 ) syscleanupservice.Service {
 	return &service{
+		auditLogRepo:   auditLogRepo,
 		deploymentRepo: deploymentRepo,
 		fileRepo:       fileRepo,
 		lockRepo:       lockRepo,

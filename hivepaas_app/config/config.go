@@ -77,6 +77,7 @@ type Config struct {
 	Proxy      Proxy      `toml:"proxy"`
 	Tasks      Tasks      `toml:"tasks"`
 	Files      Files      `toml:"files"`
+	Security   Security   `toml:"security"`
 	Agent      Agent      `toml:"agent"`
 
 	DevMode DevMode `toml:"dev_mode"`

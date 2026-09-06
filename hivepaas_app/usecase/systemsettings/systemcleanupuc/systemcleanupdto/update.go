@@ -79,6 +79,7 @@ type DBObjectRetentionReq struct {
 	Enabled        bool              `json:"enabled"`
 	Tasks          timeutil.Duration `json:"tasks"`
 	SysErrors      timeutil.Duration `json:"sysErrors"`
+	AuditLogs      timeutil.Duration `json:"auditLogs"`
 	Deployments    timeutil.Duration `json:"deployments"`
 	DeletedObjects timeutil.Duration `json:"deletedObjects"`
 }
@@ -88,6 +89,7 @@ func (req *DBObjectRetentionReq) ToEntity() entity.DBObjectRetention {
 		Enabled:        req.Enabled,
 		Tasks:          req.Tasks,
 		SysErrors:      req.SysErrors,
+		AuditLogs:      req.AuditLogs,
 		Deployments:    req.Deployments,
 		DeletedObjects: req.DeletedObjects,
 	}
@@ -101,7 +103,7 @@ func (req *DBObjectRetentionReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 	oneDay := timeutil.Duration(timeutil.Day)
-	durValid := req.Tasks >= oneDay && req.SysErrors >= oneDay &&
+	durValid := req.Tasks >= oneDay && req.SysErrors >= oneDay && req.AuditLogs >= oneDay &&
 		req.Deployments >= oneDay && req.DeletedObjects >= oneDay
 	res = append(res, vld.Must(durValid).OnError(
 		vld.SetField(field+"duration values", nil),

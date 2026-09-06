@@ -5,6 +5,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/fileservice"
@@ -25,6 +26,7 @@ type BaseUC struct {
 	TagRepo           repository.TagRepo
 
 	AppService           appservice.Service
+	AuditService         auditservice.Service
 	ClusterSecretService clustersecretservice.Service
 	ClusterService       clusterservice.Service
 	FileService          fileservice.Service
@@ -46,6 +48,7 @@ func New(
 	tagRepo repository.TagRepo,
 
 	appService appservice.Service,
+	auditService auditservice.Service,
 	clusterSecretService clustersecretservice.Service,
 	clusterService clusterservice.Service,
 	fileService fileservice.Service,
@@ -66,6 +69,7 @@ func New(
 		TagRepo:           tagRepo,
 
 		AppService:           appService,
+		AuditService:         auditService,
 		ClusterSecretService: clusterSecretService,
 		ClusterService:       clusterService,
 		FileService:          fileService,

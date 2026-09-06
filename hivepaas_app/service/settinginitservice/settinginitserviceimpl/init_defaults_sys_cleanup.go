@@ -26,6 +26,7 @@ const (
 
 	dbObjectRetentionOfTasks          = timeutil.Duration(timeutil.Day * 90)
 	dbObjectRetentionOfSysErrors      = timeutil.Duration(timeutil.Day * 90)
+	dbObjectRetentionOfAuditLogs      = timeutil.Duration(timeutil.Day * 90)
 	dbObjectRetentionOfDeployments    = timeutil.Duration(timeutil.Day * 90)
 	dbObjectRetentionOfDeletedObjects = timeutil.Duration(timeutil.Day * 90)
 
@@ -60,6 +61,7 @@ func (s *service) initDefaultSystemCleanup(
 			Enabled:        true,
 			Tasks:          dbObjectRetentionOfTasks,
 			SysErrors:      dbObjectRetentionOfSysErrors,
+			AuditLogs:      dbObjectRetentionOfAuditLogs,
 			Deployments:    dbObjectRetentionOfDeployments,
 			DeletedObjects: dbObjectRetentionOfDeletedObjects,
 		},

@@ -56,6 +56,7 @@ type DBObjectRetentionResp struct {
 	Enabled        bool              `json:"enabled"`
 	Tasks          timeutil.Duration `json:"tasks"`
 	SysErrors      timeutil.Duration `json:"sysErrors"`
+	AuditLogs      timeutil.Duration `json:"auditLogs"`
 	Deployments    timeutil.Duration `json:"deployments"`
 	DeletedObjects timeutil.Duration `json:"deletedObjects"`
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reqinfo"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc/syserrordto"
@@ -30,7 +31,7 @@ func (uc *UC) CreateSysError(
 	}
 
 	persistingData := &persistingSysErrorData{}
-	uc.preparePersistingSysError(req, persistingData)
+	uc.preparePersistingSysError(ctx, req, persistingData)
 
 	err := uc.persistData(ctx, uc.db, persistingData)
 	if err != nil {
@@ -49,12 +50,18 @@ type persistingSysErrorData struct {
 }
 
 func (uc *UC) preparePersistingSysError(
+	ctx context.Context,
 	req *syserrordto.CreateSysErrorReq,
 	persistingData *persistingSysErrorData,
 ) {
 	timeNow := timeutil.NowUTC()
+	requestID := ""
+	if info := reqinfo.From(ctx); info != nil {
+		requestID = info.RequestID
+	}
 	appErr := &entity.SysError{
 		ID:         gofn.Must(ulid.NewStringULID()),
+		RequestID:  requestID,
 		Status:     req.ErrorInfo.Status,
 		Code:       req.ErrorInfo.Code,
 		Detail:     req.ErrorInfo.Detail,

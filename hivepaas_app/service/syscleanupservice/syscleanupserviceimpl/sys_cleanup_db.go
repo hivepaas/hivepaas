@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -71,6 +72,11 @@ var (
 			NoSoftDelete: true,
 		},
 		{
+			Type:         "db/audit-log",
+			Model:        (*entity.AuditLog)(nil),
+			NoSoftDelete: true,
+		},
+		{
 			Type:  "db/bin-object",
 			Model: (*entity.BinObject)(nil),
 		},
@@ -131,6 +137,12 @@ func (s *service) sysCleanupDB(
 
 	// Hard delete all old sys-errors from the DB
 	e = s.sysCleanupDBOldSysErrors(ctx, db, retentionSetting, timeNow)
+	if e != nil {
+		err = errors.Join(err, e)
+	}
+
+	// Hard delete all old audit logs from the DB
+	e = s.sysCleanupDBOldAuditLogs(ctx, db, retentionSetting, timeNow)
 	if e != nil {
 		err = errors.Join(err, e)
 	}
@@ -282,6 +294,52 @@ func (s *service) sysCleanupDBOldSysErrors(
 
 	err = s.sysErrorRepo.DeleteHard(ctx, db,
 		bunex.DeleteWhere("created_at < ?", oldestTs),
+	)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
+	return nil
+}
+
+// auditLogRevealRetention is the shortest time a secret-reveal entry is kept,
+// whatever the configured retention says.
+//
+// Retention is an operator setting, and without a floor, shortening it would be a
+// supported way to erase the record of one's own reveals - the one thing this log
+// exists to make impossible. A longer configured retention still wins: the floor
+// only stops entries being aged out early, it does not cap how long they are kept.
+const auditLogRevealRetention = 90 * timeutil.Day
+
+// auditLogCutoffs returns the instant before which an entry may be deleted: one
+// for entries in general, one for the reveal entries that carry the floor.
+//
+// Both are instants, so the earlier of the two is the longer retention - which is
+// why a configured retention longer than the floor is kept as it is.
+func auditLogCutoffs(retention time.Duration, timeNow time.Time) (oldestTs, revealOldestTs time.Time) {
+	oldestTs = timeNow.Add(-retention)
+	revealOldestTs = timeNow.Add(-auditLogRevealRetention)
+	if oldestTs.Before(revealOldestTs) {
+		revealOldestTs = oldestTs
+	}
+	return oldestTs, revealOldestTs
+}
+
+func (s *service) sysCleanupDBOldAuditLogs(
+	ctx context.Context,
+	db database.IDB,
+	retentionSetting *entity.DBObjectRetention,
+	timeNow time.Time,
+) (err error) {
+	if retentionSetting.AuditLogs <= 0 {
+		return nil
+	}
+
+	oldestTs, revealOldestTs := auditLogCutoffs(retentionSetting.AuditLogs.ToDuration(), timeNow)
+
+	err = s.auditLogRepo.DeleteHard(ctx, db,
+		bunex.DeleteWhere("CASE WHEN type = ? THEN created_at < ? ELSE created_at < ? END",
+			base.AuditLogTypeSecretReveal, revealOldestTs, oldestTs),
 	)
 	if err != nil {
 		return hperrors.Wrap(err)

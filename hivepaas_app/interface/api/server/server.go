@@ -60,6 +60,8 @@ func (s *HTTPServer) init() {
 	engine := gin.New()
 	s.engine = engine
 
+	applyTrustedProxies(engine, s.config.HTTPServer.TrustedProxies, s.logger)
+
 	s.Server = &http.Server{
 		Addr:           s.config.HTTPServer.BindingAddress(),
 		ReadTimeout:    180 * time.Second, //nolint:mnd
@@ -83,6 +85,24 @@ func (s *HTTPServer) init() {
 	}
 
 	s.registerRoutes()
+}
+
+// applyTrustedProxies decides whose X-Forwarded-For header is believed.
+//
+// Gin's own default is to trust 0.0.0.0/0, which means any caller can pick the
+// address recorded against them just by sending the header. That is harmless
+// while nothing reads the address and wrong the moment something does - the audit
+// log does. So nothing is trusted unless it is configured here, and a malformed
+// entry falls back to trusting nothing rather than being ignored, which would
+// leave gin in the very state this exists to leave.
+func applyTrustedProxies(engine *gin.Engine, trustedProxies []string, logger logging.Logger) {
+	if err := engine.SetTrustedProxies(trustedProxies); err == nil {
+		return
+	} else if logger != nil {
+		logger.Errorf("invalid http_server.trusted_proxies %v: %v - trusting no proxy",
+			trustedProxies, err)
+	}
+	_ = engine.SetTrustedProxies(nil)
 }
 
 func (s *HTTPServer) Start() error {

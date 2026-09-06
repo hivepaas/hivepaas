@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"path/filepath"
 	"reflect"
@@ -26,11 +27,13 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httputil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reqinfo"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/strutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc/filedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
@@ -97,9 +100,54 @@ func New(
 	}
 }
 
+// requestInfoKey is where the per-request info is memoized on the gin context, so
+// repeated RequestCtx calls in one request share a request id.
+const requestInfoKey = "hp.requestInfo"
+
+// RequestCtx returns the context the layers below the handler run under.
+//
+// It is the gin context itself, plus the request facts those layers need in a
+// form they can read without importing gin - see pkg/reqinfo. Reaching for the
+// gin context by type assertion would work today and break silently the day this
+// stops returning one.
 func (h *BaseHandler) RequestCtx(ginCtx *gin.Context) context.Context {
-	// TODO: for now just use the input context without any conversion
-	return ginCtx
+	return reqinfo.NewContext(ginCtx, requestInfoOf(ginCtx))
+}
+
+// requestInfoOf builds - and memoizes on the gin context - the request facts.
+func requestInfoOf(ginCtx *gin.Context) *reqinfo.RequestInfo {
+	if ginCtx == nil {
+		return nil
+	}
+	if cached, ok := ginCtx.Get(requestInfoKey); ok {
+		if info, ok := cached.(*reqinfo.RequestInfo); ok {
+			return info
+		}
+	}
+
+	info := &reqinfo.RequestInfo{RequestID: gofn.Must(ulid.NewStringULID())}
+	if ginCtx.Request != nil {
+		info.ClientIP = ginCtx.ClientIP()
+		info.RemoteAddr = remoteAddrOf(ginCtx.Request.RemoteAddr)
+		info.UserAgent = ginCtx.Request.UserAgent()
+	}
+	ginCtx.Set(requestInfoKey, info)
+
+	return info
+}
+
+// remoteAddrOf strips the port from an http.Request.RemoteAddr. The port is a
+// different one on every connection, so keeping it only makes the addresses
+// harder to group.
+func remoteAddrOf(remoteAddr string) string {
+	if remoteAddr == "" {
+		return ""
+	}
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil {
+		return remoteAddr // not host:port, keep whatever it is
+	}
+	return host
 }
 
 // RenderResponse renders response to client as JSON

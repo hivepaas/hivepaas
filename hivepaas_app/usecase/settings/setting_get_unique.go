@@ -16,6 +16,7 @@ import (
 
 type GetUniqueSettingReq struct {
 	BaseSettingReq
+	RevealSecrets bool `json:"-" mapstructure:"revealSecrets"`
 }
 
 func (req *GetUniqueSettingReq) Validate() (validators []vld.Validator) {

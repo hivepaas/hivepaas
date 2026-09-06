@@ -14,7 +14,8 @@ import (
 
 type GetSettingReq struct {
 	BaseSettingReq
-	ID string `json:"-" mapstructure:"-"`
+	ID            string `json:"-" mapstructure:"-"`
+	RevealSecrets bool   `json:"-" mapstructure:"revealSecrets"`
 }
 
 func (req *GetSettingReq) Validate() (validators []vld.Validator) {
@@ -60,6 +61,10 @@ func (uc *BaseUC) GetSetting(
 	}
 	if setting != nil {
 		setting.CurrentObjectID = req.Scope.ScopeObjectID()
+	}
+
+	if err = uc.revealSecrets(ctx, db, auth, req.RevealSecrets, setting); err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
 	var refObjects *entity.RefObjects

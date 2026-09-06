@@ -72,6 +72,7 @@ type ResourceModule string
 
 const (
 	ResourceModuleSettings ResourceModule = "mod::settings"
+	ResourceModuleSecret   ResourceModule = "mod::secret"
 	ResourceModuleCluster  ResourceModule = "mod::cluster"
 	ResourceModuleUser     ResourceModule = "mod::user"
 	ResourceModuleProject  ResourceModule = "mod::project"
@@ -79,7 +80,7 @@ const (
 )
 
 var (
-	AllResourceModules = []ResourceModule{ResourceModuleSettings, ResourceModuleUser,
+	AllResourceModules = []ResourceModule{ResourceModuleSettings, ResourceModuleSecret, ResourceModuleUser,
 		ResourceModuleCluster, ResourceModuleProject, ResourceModuleSystem}
 )
 

@@ -114,6 +114,39 @@ func (req *EmailHTTP) validate(field string) (res []vld.Validator) {
 	return res
 }
 
+// SecretFields lists the request's secret values in one place, so the paths that
+// care about them do not each restate the list. Only the selected kind is listed:
+// ToEntity ignores the others, so a placeholder left in them is never stored.
+func (req *EmailBaseReq) SecretFields() []basedto.SecretField {
+	switch {
+	case req.Kind == base.EmailKindSMTP && req.SMTP != nil:
+		return []basedto.SecretField{{Path: "smtp.password", Value: &req.SMTP.Password}}
+	case req.Kind == base.EmailKindHTTP && req.HTTP != nil:
+		return []basedto.SecretField{{Path: "http.password", Value: &req.HTTP.Password}}
+	}
+	return nil
+}
+
+// KeepMaskedSecrets restores the stored values for the secrets the request only
+// carries as the masked placeholder the GET response substitutes for them.
+func (req *EmailBaseReq) KeepMaskedSecrets(email, current *entity.Email) {
+	if current == nil {
+		return
+	}
+	switch req.Kind {
+	case base.EmailKindSMTP:
+		if req.SMTP != nil && basedto.IsMaskedSecret(req.SMTP.Password) &&
+			email.SMTP != nil && current.SMTP != nil {
+			email.SMTP.Password = current.SMTP.Password
+		}
+	case base.EmailKindHTTP:
+		if req.HTTP != nil && basedto.IsMaskedSecret(req.HTTP.Password) &&
+			email.HTTP != nil && current.HTTP != nil {
+			email.HTTP.Password = current.HTTP.Password
+		}
+	}
+}
+
 func (req *EmailBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
@@ -138,6 +171,9 @@ func (req *CreateEmailReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
+	// Creation has no stored value to fall back on, so the placeholder is not a
+	// meaningful input here the way it is on update.
+	validators = append(validators, basedto.ValidateNoMaskedSecrets(req.SecretFields())...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

@@ -139,6 +139,69 @@ func (req *IMLarkReq) validate(field string) (res []vld.Validator) {
 	return res
 }
 
+// SecretFields lists the request's secret values in one place, so the paths that
+// care about them do not each restate the list. Only the selected kind is listed:
+// ToEntity ignores the others, so a placeholder left in them is never stored.
+func (req *IMServiceBaseReq) SecretFields() []basedto.SecretField {
+	switch req.Kind {
+	case base.IMServiceKindSlack:
+		if req.Slack != nil {
+			return []basedto.SecretField{{Path: "slack.webhook", Value: &req.Slack.Webhook}}
+		}
+	case base.IMServiceKindDiscord:
+		if req.Discord != nil {
+			return []basedto.SecretField{{Path: "discord.webhook", Value: &req.Discord.Webhook}}
+		}
+	case base.IMServiceKindTelegram:
+		if req.Telegram != nil {
+			return []basedto.SecretField{{Path: "telegram.botToken", Value: &req.Telegram.BotToken}}
+		}
+	case base.IMServiceKindLark:
+		if req.Lark != nil {
+			return []basedto.SecretField{
+				{Path: "lark.webhook", Value: &req.Lark.Webhook},
+				{Path: "lark.secret", Value: &req.Lark.Secret},
+			}
+		}
+	}
+	return nil
+}
+
+// KeepMaskedSecrets restores the stored values for the secrets the request only
+// carries as the masked placeholder the GET response substitutes for them.
+func (req *IMServiceBaseReq) KeepMaskedSecrets(imService, current *entity.IMService) {
+	if current == nil {
+		return
+	}
+	switch req.Kind {
+	case base.IMServiceKindSlack:
+		if req.Slack != nil && basedto.IsMaskedSecret(req.Slack.Webhook) &&
+			imService.Slack != nil && current.Slack != nil {
+			imService.Slack.Webhook = current.Slack.Webhook
+		}
+	case base.IMServiceKindDiscord:
+		if req.Discord != nil && basedto.IsMaskedSecret(req.Discord.Webhook) &&
+			imService.Discord != nil && current.Discord != nil {
+			imService.Discord.Webhook = current.Discord.Webhook
+		}
+	case base.IMServiceKindTelegram:
+		if req.Telegram != nil && basedto.IsMaskedSecret(req.Telegram.BotToken) &&
+			imService.Telegram != nil && current.Telegram != nil {
+			imService.Telegram.BotToken = current.Telegram.BotToken
+		}
+	case base.IMServiceKindLark:
+		if req.Lark == nil || imService.Lark == nil || current.Lark == nil {
+			return
+		}
+		if basedto.IsMaskedSecret(req.Lark.Webhook) {
+			imService.Lark.Webhook = current.Lark.Webhook
+		}
+		if basedto.IsMaskedSecret(req.Lark.Secret) {
+			imService.Lark.Secret = current.Lark.Secret
+		}
+	}
+}
+
 func (req *IMServiceBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
@@ -169,6 +232,9 @@ func (req *CreateIMServiceReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
+	// Creation has no stored value to fall back on, so the placeholder is not a
+	// meaningful input here the way it is on update.
+	validators = append(validators, basedto.ValidateNoMaskedSecrets(req.SecretFields())...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

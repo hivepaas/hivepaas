@@ -27,7 +27,13 @@ func (uc *UC) UpdateEmail(
 			pData *settings.PersistingSettingData,
 		) error {
 			pData.Setting.Kind = string(req.Kind)
-			err := pData.Setting.SetData(emailAcc)
+			current, err := data.Setting.AsEmail()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			req.KeepMaskedSecrets(emailAcc, current)
+
+			err = pData.Setting.SetData(emailAcc)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

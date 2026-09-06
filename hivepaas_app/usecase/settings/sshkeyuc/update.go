@@ -28,11 +28,19 @@ func (uc *UC) UpdateSSHKey(
 			data *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
-			if err := generateKey(sshKey); err != nil {
+			current, err := data.Setting.AsSSHKey()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			// Restored before generateKey, which derives the public key from the
+			// private one and would fail outright on the placeholder.
+			req.KeepMaskedSecrets(sshKey, current)
+
+			if err = generateKey(sshKey); err != nil {
 				return hperrors.Wrap(err)
 			}
 			pData.Setting.Kind = gofn.Coalesce(string(req.Kind), pData.Setting.Kind)
-			if err := pData.Setting.SetData(sshKey); err != nil {
+			if err = pData.Setting.SetData(sshKey); err != nil {
 				return hperrors.Wrap(err)
 			}
 			return nil

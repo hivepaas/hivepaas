@@ -10,10 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "********"
-)
-
 type GetRegistryAuthReq struct {
 	settings.GetSettingReq
 }
@@ -63,7 +59,7 @@ func TransformRegistryAuth(
 
 	resp.SecretMasked = config.Password.IsEncrypted() || resp.Inherited
 	if resp.SecretMasked {
-		resp.Password = maskedSecret
+		resp.Password = basedto.MaskedSecret
 	}
 
 	return resp, nil

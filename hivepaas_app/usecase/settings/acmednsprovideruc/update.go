@@ -27,7 +27,13 @@ func (uc *UC) UpdateAcmeDnsProvider(
 			pData *settings.PersistingSettingData,
 		) error {
 			pData.Setting.Kind = string(req.Kind)
-			if err := pData.Setting.SetData(acmeDnsProvider); err != nil {
+			current, err := data.Setting.AsAcmeDnsProvider()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			req.KeepMaskedSecrets(acmeDnsProvider, current)
+
+			if err = pData.Setting.SetData(acmeDnsProvider); err != nil {
 				return hperrors.Wrap(err)
 			}
 			return nil

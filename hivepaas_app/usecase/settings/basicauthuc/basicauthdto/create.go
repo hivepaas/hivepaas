@@ -35,6 +35,23 @@ func (req *BasicAuthBaseReq) ToEntity() *entity.BasicAuth {
 	}
 }
 
+// SecretFields lists the request's secret values in one place, so the paths that
+// care about them do not each restate the list.
+func (req *BasicAuthBaseReq) SecretFields() []basedto.SecretField {
+	return []basedto.SecretField{{Path: "password", Value: &req.Password}}
+}
+
+// KeepMaskedSecrets restores the stored values for the secrets the request only
+// carries as the masked placeholder the GET response substitutes for them.
+func (req *BasicAuthBaseReq) KeepMaskedSecrets(basicAuth, current *entity.BasicAuth) {
+	if current == nil {
+		return
+	}
+	if basedto.IsMaskedSecret(req.Password) {
+		basicAuth.Password = current.Password
+	}
+}
+
 func (req *BasicAuthBaseReq) modifyRequest() error {
 	req.Name = strings.TrimSpace(req.Name)
 	req.Username = strings.TrimSpace(req.Username)
@@ -65,6 +82,9 @@ func (req *CreateBasicAuthReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
+	// Creation has no stored value to fall back on, so the placeholder is not a
+	// meaningful input here the way it is on update.
+	validators = append(validators, basedto.ValidateNoMaskedSecrets(req.SecretFields())...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

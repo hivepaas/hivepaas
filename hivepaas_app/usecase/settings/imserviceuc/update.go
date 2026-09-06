@@ -27,7 +27,13 @@ func (uc *UC) UpdateIMService(
 			pData *settings.PersistingSettingData,
 		) error {
 			pData.Setting.Kind = string(req.Kind)
-			err := pData.Setting.SetData(imPlatform)
+			current, err := data.Setting.AsIMService()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			req.KeepMaskedSecrets(imPlatform, current)
+
+			err = pData.Setting.SetData(imPlatform)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

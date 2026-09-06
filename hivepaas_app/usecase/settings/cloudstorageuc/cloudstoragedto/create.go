@@ -76,6 +76,29 @@ func (req *CloudStorageS3Req) validate(field string) (res []vld.Validator) {
 	return res
 }
 
+// SecretFields lists the request's secret values in one place, so the paths that
+// care about them do not each restate the list. Only the selected kind is listed:
+// ToEntity ignores the others, so a placeholder left in them is not stored.
+func (req *CloudStorageBaseReq) SecretFields() []basedto.SecretField {
+	if req.Kind == base.CloudStorageKindS3 && req.S3 != nil {
+		return []basedto.SecretField{{Path: "s3.secretKey", Value: &req.S3.SecretKey}}
+	}
+	return nil
+}
+
+// KeepMaskedSecrets restores the stored values for the secrets the request only
+// carries as the masked placeholder the GET response substitutes for them.
+func (req *CloudStorageBaseReq) KeepMaskedSecrets(storage, current *entity.CloudStorage) {
+	if current == nil || req.S3 == nil || !basedto.IsMaskedSecret(req.S3.SecretKey) {
+		return
+	}
+	if storage.S3 == nil || storage.S3.CloudProviderAWS == nil ||
+		current.S3 == nil || current.S3.CloudProviderAWS == nil {
+		return
+	}
+	storage.S3.SecretKey = current.S3.SecretKey
+}
+
 func (req *CloudStorageBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
@@ -97,6 +120,9 @@ func (req *CreateCloudStorageReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
+	// Creation has no stored value to fall back on, so the placeholder is not a
+	// meaningful input here the way it is on update.
+	validators = append(validators, basedto.ValidateNoMaskedSecrets(req.SecretFields())...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

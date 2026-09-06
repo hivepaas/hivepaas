@@ -10,10 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "****************"
-)
-
 type GetOAuthReq struct {
 	settings.GetSettingReq
 }
@@ -75,7 +71,7 @@ func TransformOAuth(
 	resp.CallbackURL = input.BaseCallbackURL + "/" + setting.ID
 	resp.SecretMasked = config.ClientSecret.IsEncrypted() || resp.Inherited
 	if resp.SecretMasked {
-		resp.ClientSecret = maskedSecret
+		resp.ClientSecret = basedto.MaskedSecret
 	}
 
 	return resp, nil

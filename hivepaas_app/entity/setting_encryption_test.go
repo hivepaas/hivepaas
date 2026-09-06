@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/datakey"
 )
 
@@ -111,4 +112,30 @@ func TestEncryptedFieldReencrypt(t *testing.T) {
 	plain, err := final.Secret.GetPlain()
 	assert.NoError(t, err)
 	assert.Equal(t, "my-plain-value", plain)
+}
+
+// The placeholder an API response carries in place of a stored secret must never
+// become a stored secret. A form that loads a setting and posts it back unchanged
+// returns the placeholder, and encrypting it would replace the real value with
+// eight stars, silently and beyond recovery.
+func TestEncryptedFieldRefusesTheMaskedPlaceholder(t *testing.T) {
+	useDataKey(t)
+
+	_, err := json.Marshal(&encryptedHolder{Secret: NewEncryptedField(base.MaskedSecret)})
+	assert.Error(t, err, "the masked placeholder must not be stored as a secret")
+
+	field := NewEncryptedField(base.MaskedSecret)
+	_, err = field.GetEncrypted()
+	assert.Error(t, err)
+}
+
+// The guard is an exact match: a secret that merely contains stars, or is a run
+// of stars of a different length, is a real value and must still be storable.
+func TestEncryptedFieldAcceptsValuesNearThePlaceholder(t *testing.T) {
+	useDataKey(t)
+
+	for _, value := range []string{"*******", "*********", "****************", "a" + base.MaskedSecret} {
+		_, err := json.Marshal(&encryptedHolder{Secret: NewEncryptedField(value)})
+		assert.NoError(t, err, "value %q is a real secret, not the placeholder", value)
+	}
 }

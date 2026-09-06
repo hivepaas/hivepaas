@@ -12,10 +12,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "****************"
-)
-
 type GetRepoWebhookReq struct {
 	settings.GetSettingReq
 }
@@ -68,7 +64,7 @@ func TransformRepoWebhook(
 
 	resp.SecretMasked = conf.Secret.IsEncrypted() || resp.Inherited
 	if resp.SecretMasked {
-		resp.Secret = maskedSecret
+		resp.Secret = basedto.MaskedSecret
 	}
 
 	return resp, nil

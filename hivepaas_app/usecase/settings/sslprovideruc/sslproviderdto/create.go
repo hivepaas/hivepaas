@@ -108,6 +108,40 @@ func (req *SSLProviderGoogleTrustReq) validate(field string) (res []vld.Validato
 	return res
 }
 
+// SecretFields lists the request's secret values in one place, so the paths that
+// care about them do not each restate the list. Only the selected kind is listed:
+// ToEntity ignores the others, so a placeholder left in them is never stored.
+func (req *SSLProviderBaseReq) SecretFields() []basedto.SecretField {
+	switch {
+	case req.Kind == base.SSLProviderZeroSSL && req.ZeroSSL != nil:
+		return []basedto.SecretField{{Path: "zeroSSL.eabHmacKey", Value: &req.ZeroSSL.EABHmacKey}}
+	case req.Kind == base.SSLProviderGoogleTrust && req.GoogleTrust != nil:
+		return []basedto.SecretField{{Path: "googleTrust.eabHmacKey", Value: &req.GoogleTrust.EABHmacKey}}
+	}
+	return nil
+}
+
+// KeepMaskedSecrets restores the stored values for the secrets the request only
+// carries as the masked placeholder the GET response substitutes for them.
+func (req *SSLProviderBaseReq) KeepMaskedSecrets(provider, current *entity.SSLProvider) {
+	if current == nil {
+		return
+	}
+	switch req.Kind {
+	case base.SSLProviderZeroSSL:
+		if req.ZeroSSL != nil && basedto.IsMaskedSecret(req.ZeroSSL.EABHmacKey) &&
+			provider.ZeroSSL != nil && current.ZeroSSL != nil {
+			provider.ZeroSSL.EABHmacKey = current.ZeroSSL.EABHmacKey
+		}
+	case base.SSLProviderGoogleTrust:
+		if req.GoogleTrust != nil && basedto.IsMaskedSecret(req.GoogleTrust.EABHmacKey) &&
+			provider.GoogleTrust != nil && current.GoogleTrust != nil {
+			provider.GoogleTrust.EABHmacKey = current.GoogleTrust.EABHmacKey
+		}
+	case base.SSLProviderLetsEncrypt:
+	}
+}
+
 func (req *SSLProviderBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
@@ -135,6 +169,9 @@ func (req *CreateSSLProviderReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
+	// Creation has no stored value to fall back on, so the placeholder is not a
+	// meaningful input here the way it is on update.
+	validators = append(validators, basedto.ValidateNoMaskedSecrets(req.SecretFields())...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

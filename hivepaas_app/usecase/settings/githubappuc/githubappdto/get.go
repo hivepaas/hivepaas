@@ -10,10 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "****************"
-)
-
 type GetGithubAppReq struct {
 	settings.GetSettingReq
 }
@@ -95,9 +91,9 @@ func TransformGithubApp(
 	resp.PublicURL = config.PublicURL()
 	resp.SecretMasked = config.ClientSecret.IsEncrypted() || resp.Inherited
 	if resp.SecretMasked {
-		resp.ClientSecret = maskedSecret
-		resp.WebhookSecret = maskedSecret
-		resp.PrivateKey = maskedSecret
+		resp.ClientSecret = basedto.MaskedSecret
+		resp.WebhookSecret = basedto.MaskedSecret
+		resp.PrivateKey = basedto.MaskedSecret
 	}
 
 	return resp, nil

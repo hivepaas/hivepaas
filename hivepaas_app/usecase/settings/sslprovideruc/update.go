@@ -27,7 +27,13 @@ func (uc *UC) UpdateSSLProvider(
 			pData *settings.PersistingSettingData,
 		) error {
 			pData.Setting.Kind = string(req.Kind)
-			err := pData.Setting.SetData(sslProvider)
+			current, err := data.Setting.AsSSLProvider()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			req.KeepMaskedSecrets(sslProvider, current)
+
+			err = pData.Setting.SetData(sslProvider)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

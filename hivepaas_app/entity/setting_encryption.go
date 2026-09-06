@@ -97,6 +97,16 @@ func (s *EncryptedField) encrypt() (string, error) {
 	if s.decrypted == "" {
 		return "", nil // nothing to encrypt, the field is unset
 	}
+	if base.IsMaskedSecret(s.decrypted) {
+		// The placeholder an API response carries in place of a stored secret.
+		// Reaching here means a request echoed it back and the handler did not
+		// resolve it against the stored value - see the KeepMaskedSecrets methods
+		// on the request types. Encrypting it would replace a real secret with
+		// eight stars, silently and beyond recovery, so refuse instead. This is a
+		// backstop: it catches the cases a handler forgot, and every setting type
+		// that gains a secret later without anyone remembering this exists.
+		return "", hperrors.NewArgumentInvalidNT("secret")
+	}
 	key := datakey.Active()
 	if key == nil {
 		return "", hperrors.NewMissing("Data encryption key")

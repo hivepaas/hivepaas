@@ -11,10 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "****************"
-)
-
 type GetIMServiceReq struct {
 	settings.GetSettingReq
 }
@@ -106,24 +102,24 @@ func TransformIMService(
 	case config.Slack != nil:
 		resp.SecretMasked = config.Slack.Webhook.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.Slack.Webhook = maskedSecret
+			resp.Slack.Webhook = basedto.MaskedSecret
 		}
 	case config.Discord != nil:
 		resp.SecretMasked = config.Discord.Webhook.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.Discord.Webhook = maskedSecret
+			resp.Discord.Webhook = basedto.MaskedSecret
 		}
 	case config.Telegram != nil:
 		resp.SecretMasked = config.Telegram.BotToken.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.Telegram.BotToken = maskedSecret
+			resp.Telegram.BotToken = basedto.MaskedSecret
 		}
 	case config.Lark != nil:
 		resp.SecretMasked = config.Lark.Webhook.IsEncrypted() || config.Lark.Secret.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.Lark.Webhook = maskedSecret
+			resp.Lark.Webhook = basedto.MaskedSecret
 			if config.Lark.Secret.String() != "" {
-				resp.Lark.Secret = maskedSecret
+				resp.Lark.Secret = basedto.MaskedSecret
 			}
 		}
 	}

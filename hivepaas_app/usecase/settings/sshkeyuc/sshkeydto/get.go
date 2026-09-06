@@ -11,10 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "****************"
-)
-
 type GetSSHKeyReq struct {
 	settings.GetSettingReq
 }
@@ -69,9 +65,9 @@ func TransformSSHKey(
 
 	resp.SecretMasked = sshKey.PrivateKey.IsEncrypted() || resp.Inherited
 	if resp.SecretMasked {
-		resp.PrivateKey = maskedSecret
+		resp.PrivateKey = basedto.MaskedSecret
 		if resp.Passphrase != "" {
-			resp.Passphrase = maskedSecret
+			resp.Passphrase = basedto.MaskedSecret
 		}
 	}
 

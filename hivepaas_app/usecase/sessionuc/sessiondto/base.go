@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
@@ -32,7 +33,10 @@ func TransformUser(user *entity.User) (resp *UserResp, err error) {
 		return nil, hperrors.Wrap(err)
 	}
 	if user.TotpSecret != "" {
-		resp.MfaSecret = "********"
+		// The same value as every other masked secret. Nothing posts it back - the
+		// TOTP secret is only ever set through the dedicated setup flow - but a
+		// literal here is how the placeholder ended up in several lengths before.
+		resp.MfaSecret = basedto.MaskedSecret
 	}
 	return resp, nil
 }

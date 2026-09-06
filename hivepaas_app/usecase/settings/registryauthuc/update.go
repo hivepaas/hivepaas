@@ -27,7 +27,13 @@ func (uc *UC) UpdateRegistryAuth(
 			pData *settings.PersistingSettingData,
 		) error {
 			pData.Setting.Kind = req.Address
-			err := pData.Setting.SetData(regAuth)
+			current, err := data.Setting.AsRegistryAuth()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			req.KeepMaskedSecrets(regAuth, current)
+
+			err = pData.Setting.SetData(regAuth)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

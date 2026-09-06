@@ -26,7 +26,13 @@ func (uc *UC) UpdateBasicAuth(
 			data *settings.UpdateSettingData,
 			pData *settings.PersistingSettingData,
 		) error {
-			err := pData.Setting.SetData(basicAuth)
+			current, err := data.Setting.AsBasicAuth()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			req.KeepMaskedSecrets(basicAuth, current)
+
+			err = pData.Setting.SetData(basicAuth)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

@@ -29,7 +29,13 @@ func (uc *UC) UpdateOAuth(
 			pData *settings.PersistingSettingData,
 		) error {
 			pData.Setting.Kind = gofn.Coalesce(string(req.Kind), pData.Setting.Kind)
-			err := pData.Setting.SetData(oauth)
+			current, err := data.Setting.AsOAuth()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			req.KeepMaskedSecrets(oauth, current)
+
+			err = pData.Setting.SetData(oauth)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

@@ -41,14 +41,23 @@ func (req *GithubAppBaseReq) ToEntity() *entity.GithubApp {
 
 // KeepMaskedSecrets restores the stored values for the secrets the request only
 // carries as the masked placeholder the GET response substitutes for them.
+// SecretFields lists the request's secret values in one place, so the paths that
+// care about them do not each restate the list.
+func (req *GithubAppBaseReq) SecretFields() []basedto.SecretField {
+	return []basedto.SecretField{
+		{Path: "clientSecret", Value: &req.ClientSecret},
+		{Path: "privateKey", Value: &req.PrivateKey},
+	}
+}
+
 func (req *GithubAppBaseReq) KeepMaskedSecrets(app, current *entity.GithubApp) {
 	if current == nil {
 		return
 	}
-	if req.ClientSecret == maskedSecret {
+	if req.ClientSecret == basedto.MaskedSecret {
 		app.ClientSecret = current.ClientSecret
 	}
-	if req.PrivateKey == maskedSecret {
+	if req.PrivateKey == basedto.MaskedSecret {
 		app.PrivateKey = current.PrivateKey
 	}
 }
@@ -83,6 +92,9 @@ func (req *CreateGithubAppReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
+	// Creation has no stored value to fall back on, so the placeholder is not a
+	// meaningful input here the way it is on update.
+	validators = append(validators, basedto.ValidateNoMaskedSecrets(req.SecretFields())...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

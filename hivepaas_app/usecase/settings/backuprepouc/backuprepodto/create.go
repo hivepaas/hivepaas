@@ -43,6 +43,13 @@ func (req *BackupRepoBaseReq) ToEntity() *entity.BackupRepo {
 	return res
 }
 
+// SecretFields lists the request's secret values in one place. Only creation
+// carries a password: BackupRepoBaseUpdateReq has none, and changing it goes
+// through the dedicated password-change endpoint.
+func (req *BackupRepoBaseReq) SecretFields() []basedto.SecretField {
+	return []basedto.SecretField{{Path: "password", Value: &req.Password}}
+}
+
 func (req *BackupRepoBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
@@ -132,6 +139,9 @@ func (req *CreateBackupRepoReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
+	// Creation has no stored value to fall back on, so the placeholder is not a
+	// meaningful input here the way it is on update.
+	validators = append(validators, basedto.ValidateNoMaskedSecrets(req.SecretFields())...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

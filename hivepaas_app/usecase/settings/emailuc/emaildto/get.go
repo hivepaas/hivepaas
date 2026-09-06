@@ -11,10 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "****************"
-)
-
 type GetEmailReq struct {
 	settings.GetSettingReq
 }
@@ -101,12 +97,12 @@ func TransformEmail(
 	case config.SMTP != nil:
 		resp.SecretMasked = config.SMTP.Password.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.SMTP.Password = maskedSecret
+			resp.SMTP.Password = basedto.MaskedSecret
 		}
 	case config.HTTP != nil:
 		resp.SecretMasked = config.HTTP.Password.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.HTTP.Password = maskedSecret
+			resp.HTTP.Password = basedto.MaskedSecret
 		}
 	}
 

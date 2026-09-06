@@ -10,10 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "********"
-)
-
 type GetCloudStorageReq struct {
 	settings.GetSettingReq
 }
@@ -74,7 +70,7 @@ func TransformCloudStorage(
 	resp.SecretMasked = resp.Inherited || (config.S3 != nil && config.S3.SecretKey.IsEncrypted())
 	if resp.SecretMasked {
 		if resp.S3 != nil {
-			resp.S3.SecretKey = maskedSecret
+			resp.S3.SecretKey = basedto.MaskedSecret
 		}
 	}
 

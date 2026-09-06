@@ -10,10 +10,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "****************"
-)
-
 type GetAccessTokenReq struct {
 	settings.GetSettingReq
 }
@@ -62,7 +58,7 @@ func TransformAccessToken(
 
 	resp.SecretMasked = config.Token.IsEncrypted() || resp.Inherited
 	if resp.SecretMasked {
-		resp.Token = maskedSecret
+		resp.Token = basedto.MaskedSecret
 	}
 
 	return resp, nil

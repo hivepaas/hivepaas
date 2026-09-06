@@ -11,10 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "****************"
-)
-
 type GetSSLProviderReq struct {
 	settings.GetSettingReq
 }
@@ -90,12 +86,12 @@ func TransformSSLProvider(
 	case config.ZeroSSL != nil:
 		resp.SecretMasked = config.ZeroSSL.EABHmacKey.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.ZeroSSL.EABHmacKey = maskedSecret
+			resp.ZeroSSL.EABHmacKey = basedto.MaskedSecret
 		}
 	case config.GoogleTrust != nil:
 		resp.SecretMasked = config.GoogleTrust.EABHmacKey.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.GoogleTrust.EABHmacKey = maskedSecret
+			resp.GoogleTrust.EABHmacKey = basedto.MaskedSecret
 		}
 	}
 

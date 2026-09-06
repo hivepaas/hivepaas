@@ -27,7 +27,13 @@ func (uc *UC) UpdateCloudStorage(
 			pData *settings.PersistingSettingData,
 		) error {
 			pData.Setting.Kind = string(req.Kind)
-			err := pData.Setting.SetData(cloudStorage)
+			current, err := data.Setting.AsCloudStorage()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			req.KeepMaskedSecrets(cloudStorage, current)
+
+			err = pData.Setting.SetData(cloudStorage)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

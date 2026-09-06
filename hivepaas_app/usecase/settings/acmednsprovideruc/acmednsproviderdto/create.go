@@ -395,6 +395,86 @@ func (req *AcmeDnsProviderTencentCloudReq) validate(field string) (res []vld.Val
 	return res
 }
 
+// SecretFields lists the request's secret values in one place, so the paths that
+// care about them do not each restate the list. Only the selected kind is listed:
+// ToEntity ignores the others, so a placeholder left in them is never stored.
+func (req *AcmeDnsProviderBaseReq) SecretFields() []basedto.SecretField {
+	switch req.Kind {
+	case base.AcmeDnsProviderAzure:
+		if req.Azure != nil {
+			return []basedto.SecretField{{Path: "azure.clientSecret", Value: &req.Azure.ClientSecret}}
+		}
+	case base.AcmeDnsProviderBaiduCloud:
+		if req.BaiduCloud != nil {
+			return []basedto.SecretField{{Path: "baiduCloud.secretKey", Value: &req.BaiduCloud.SecretKey}}
+		}
+	case base.AcmeDnsProviderCloudflare:
+		if req.Cloudflare != nil {
+			return []basedto.SecretField{{Path: "cloudflare.authToken", Value: &req.Cloudflare.AuthToken}}
+		}
+	case base.AcmeDnsProviderDigitalOcean:
+		if req.DigitalOcean != nil {
+			return []basedto.SecretField{{Path: "digitalOcean.authToken", Value: &req.DigitalOcean.AuthToken}}
+		}
+	case base.AcmeDnsProviderGCloud:
+		if req.GCloud != nil {
+			return []basedto.SecretField{{Path: "gCloud.serviceAccount", Value: &req.GCloud.ServiceAccount}}
+		}
+	case base.AcmeDnsProviderGoDaddy:
+		if req.GoDaddy != nil {
+			return []basedto.SecretField{{Path: "goDaddy.apiSecret", Value: &req.GoDaddy.APISecret}}
+		}
+	case base.AcmeDnsProviderHetzner:
+		if req.Hetzner != nil {
+			return []basedto.SecretField{{Path: "hetzner.apiToken", Value: &req.Hetzner.APIToken}}
+		}
+	case base.AcmeDnsProviderHuaweiCloud:
+		if req.HuaweiCloud != nil {
+			return []basedto.SecretField{{Path: "huaweiCloud.secretKey", Value: &req.HuaweiCloud.SecretKey}}
+		}
+	case base.AcmeDnsProviderNamecheap:
+		if req.Namecheap != nil {
+			return []basedto.SecretField{{Path: "namecheap.apiKey", Value: &req.Namecheap.APIKey}}
+		}
+	case base.AcmeDnsProviderRFC2136:
+		if req.RFC2136 != nil {
+			return []basedto.SecretField{{Path: "rfc2136.tsigSecret", Value: &req.RFC2136.TSIGSecret}}
+		}
+	case base.AcmeDnsProviderRoute53:
+		if req.Route53 != nil {
+			return []basedto.SecretField{{Path: "route53.secretAccessKey", Value: &req.Route53.SecretAccessKey}}
+		}
+	case base.AcmeDnsProviderTencentCloud:
+		if req.TencentCloud != nil {
+			return []basedto.SecretField{{Path: "tencentCloud.secretKey", Value: &req.TencentCloud.SecretKey}}
+		}
+	case base.AcmeDnsProviderAcmeDNS:
+	}
+	return nil
+}
+
+// KeepMaskedSecrets restores the stored value for the secret the request only
+// carries as the masked placeholder the GET response substitutes for it.
+//
+// The stored side is looked up by the request's kind, so switching provider does
+// not resolve the placeholder against another provider's secret. When there is
+// nothing to restore from, the placeholder is left in place and rejected further
+// down, where EncryptedField refuses to encrypt it.
+func (req *AcmeDnsProviderBaseReq) KeepMaskedSecrets(provider, current *entity.AcmeDnsProvider) {
+	if current == nil {
+		return
+	}
+	fields := req.SecretFields()
+	if len(fields) == 0 || !basedto.IsMaskedSecret(*fields[0].Value) {
+		return
+	}
+	target, stored := provider.SecretFieldFor(req.Kind), current.SecretFieldFor(req.Kind)
+	if target == nil || stored == nil {
+		return
+	}
+	*target = *stored
+}
+
 func (req *AcmeDnsProviderBaseReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
@@ -455,6 +535,9 @@ func (req *CreateAcmeDnsProviderReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
+	// Creation has no stored value to fall back on, so the placeholder is not a
+	// meaningful input here the way it is on update.
+	validators = append(validators, basedto.ValidateNoMaskedSecrets(req.SecretFields())...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

@@ -122,77 +122,83 @@ func (s *AcmeDnsProvider) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
+// SecretFieldFor returns the one encrypted secret the given provider kind stores,
+// or nil when that kind holds no secret or is not the one populated here.
+//
+// Looking the field up by kind rather than by whichever sub-struct happens to be
+// set is what makes it safe to pair a request against a stored setting: if the
+// update switches provider, the stored side returns nil instead of a secret
+// belonging to a different provider.
+//
 //nolint:gocognit
+func (s *AcmeDnsProvider) SecretFieldFor(kind base.AcmeDnsProvider) *EncryptedField {
+	switch kind {
+	case base.AcmeDnsProviderAzure:
+		if s.Azure != nil {
+			return &s.Azure.ClientSecret
+		}
+	case base.AcmeDnsProviderBaiduCloud:
+		if s.BaiduCloud != nil {
+			return &s.BaiduCloud.SecretKey
+		}
+	case base.AcmeDnsProviderCloudflare:
+		if s.Cloudflare != nil {
+			return &s.Cloudflare.AuthToken
+		}
+	case base.AcmeDnsProviderDigitalOcean:
+		if s.DigitalOcean != nil {
+			return &s.DigitalOcean.AuthToken
+		}
+	case base.AcmeDnsProviderGCloud:
+		if s.GCloud != nil {
+			return &s.GCloud.ServiceAccount
+		}
+	case base.AcmeDnsProviderGoDaddy:
+		if s.GoDaddy != nil {
+			return &s.GoDaddy.APISecret
+		}
+	case base.AcmeDnsProviderHetzner:
+		if s.Hetzner != nil {
+			return &s.Hetzner.APIToken
+		}
+	case base.AcmeDnsProviderHuaweiCloud:
+		if s.HuaweiCloud != nil {
+			return &s.HuaweiCloud.SecretKey
+		}
+	case base.AcmeDnsProviderNamecheap:
+		if s.Namecheap != nil {
+			return &s.Namecheap.APIKey
+		}
+	case base.AcmeDnsProviderRFC2136:
+		if s.RFC2136 != nil {
+			return &s.RFC2136.TSIGSecret
+		}
+	case base.AcmeDnsProviderRoute53:
+		if s.Route53 != nil {
+			return &s.Route53.SecretAccessKey
+		}
+	case base.AcmeDnsProviderTencentCloud:
+		if s.TencentCloud != nil {
+			return &s.TencentCloud.SecretKey
+		}
+	case base.AcmeDnsProviderAcmeDNS:
+	}
+	return nil
+}
+
+// Decrypt reads every secret this provider holds, so a value that cannot be
+// decrypted surfaces here rather than at the point of use.
+//
+// It walks the kinds rather than the sub-structs: SecretFieldFor already knows
+// which field each kind stores, and restating that list here is how the two
+// drift apart when a provider is added.
 func (s *AcmeDnsProvider) Decrypt() error {
-	if s.Azure != nil {
-		_, err := s.Azure.ClientSecret.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
+	for _, kind := range base.AllAcmeDnsProviders {
+		field := s.SecretFieldFor(kind)
+		if field == nil {
+			continue
 		}
-	}
-	if s.BaiduCloud != nil {
-		_, err := s.BaiduCloud.SecretKey.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	if s.Cloudflare != nil {
-		_, err := s.Cloudflare.AuthToken.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	if s.DigitalOcean != nil {
-		_, err := s.DigitalOcean.AuthToken.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	if s.GCloud != nil {
-		_, err := s.GCloud.ServiceAccount.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	if s.GoDaddy != nil {
-		_, err := s.GoDaddy.APISecret.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	if s.Hetzner != nil {
-		_, err := s.Hetzner.APIToken.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	if s.HuaweiCloud != nil {
-		_, err := s.HuaweiCloud.SecretKey.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	if s.Namecheap != nil {
-		_, err := s.Namecheap.APIKey.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	if s.RFC2136 != nil {
-		_, err := s.RFC2136.TSIGSecret.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	if s.Route53 != nil {
-		_, err := s.Route53.SecretAccessKey.GetPlain()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-	if s.TencentCloud != nil {
-		_, err := s.TencentCloud.SecretKey.GetPlain()
-		if err != nil {
+		if _, err := field.GetPlain(); err != nil {
 			return hperrors.Wrap(err)
 		}
 	}

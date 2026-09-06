@@ -36,8 +36,14 @@ func (req *RepoWebhookBaseReq) ToEntity() *entity.RepoWebhook {
 // IsSecretMasked reports whether the request carries the placeholder the GET
 // response substitutes for a stored secret, rather than a real value. A form that
 // posts the response back unchanged must not overwrite the secret with the mask.
+// SecretFields lists the request's secret values in one place, so the paths that
+// care about them do not each restate the list.
+func (req *RepoWebhookBaseReq) SecretFields() []basedto.SecretField {
+	return []basedto.SecretField{{Path: "secret", Value: &req.Secret}}
+}
+
 func (req *RepoWebhookBaseReq) IsSecretMasked() bool {
-	return req.Secret == maskedSecret
+	return req.Secret == basedto.MaskedSecret
 }
 
 func (req *RepoWebhookBaseReq) modifyRequest() error {
@@ -71,6 +77,9 @@ func (req *CreateRepoWebhookReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
 	validators = append(validators, req.CreateSettingReq.Validate()...)
 	validators = append(validators, req.validate("")...)
+	// Creation has no stored value to fall back on, so the placeholder is not a
+	// meaningful input here the way it is on update.
+	validators = append(validators, basedto.ValidateNoMaskedSecrets(req.SecretFields())...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

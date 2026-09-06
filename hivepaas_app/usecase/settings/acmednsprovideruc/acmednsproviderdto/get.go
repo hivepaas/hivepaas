@@ -11,10 +11,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "****************"
-)
-
 type GetAcmeDnsProviderReq struct {
 	settings.GetSettingReq
 }
@@ -209,62 +205,62 @@ func TransformAcmeDnsProvider(
 	case config.Azure != nil:
 		resp.SecretMasked = config.Azure.ClientSecret.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.Azure.ClientSecret = maskedSecret
+			resp.Azure.ClientSecret = basedto.MaskedSecret
 		}
 	case config.BaiduCloud != nil:
 		resp.SecretMasked = config.BaiduCloud.SecretKey.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.BaiduCloud.SecretKey = maskedSecret
+			resp.BaiduCloud.SecretKey = basedto.MaskedSecret
 		}
 	case config.Cloudflare != nil:
 		resp.SecretMasked = config.Cloudflare.AuthToken.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.Cloudflare.AuthToken = maskedSecret
+			resp.Cloudflare.AuthToken = basedto.MaskedSecret
 		}
 	case config.DigitalOcean != nil:
 		resp.SecretMasked = config.DigitalOcean.AuthToken.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.DigitalOcean.AuthToken = maskedSecret
+			resp.DigitalOcean.AuthToken = basedto.MaskedSecret
 		}
 	case config.GCloud != nil:
 		resp.SecretMasked = config.GCloud.ServiceAccount.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.GCloud.ServiceAccount = maskedSecret
+			resp.GCloud.ServiceAccount = basedto.MaskedSecret
 		}
 	case config.GoDaddy != nil:
 		resp.SecretMasked = config.GoDaddy.APISecret.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.GoDaddy.APISecret = maskedSecret
+			resp.GoDaddy.APISecret = basedto.MaskedSecret
 		}
 	case config.Hetzner != nil:
 		resp.SecretMasked = config.Hetzner.APIToken.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.Hetzner.APIToken = maskedSecret
+			resp.Hetzner.APIToken = basedto.MaskedSecret
 		}
 	case config.HuaweiCloud != nil:
 		resp.SecretMasked = config.HuaweiCloud.SecretKey.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.HuaweiCloud.SecretKey = maskedSecret
+			resp.HuaweiCloud.SecretKey = basedto.MaskedSecret
 		}
 	case config.Namecheap != nil:
 		resp.SecretMasked = config.Namecheap.APIKey.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.Namecheap.APIKey = maskedSecret
+			resp.Namecheap.APIKey = basedto.MaskedSecret
 		}
 	case config.RFC2136 != nil:
 		resp.SecretMasked = config.RFC2136.TSIGSecret.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.RFC2136.TSIGSecret = maskedSecret
+			resp.RFC2136.TSIGSecret = basedto.MaskedSecret
 		}
 	case config.Route53 != nil:
 		resp.SecretMasked = config.Route53.SecretAccessKey.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.Route53.SecretAccessKey = maskedSecret
+			resp.Route53.SecretAccessKey = basedto.MaskedSecret
 		}
 	case config.TencentCloud != nil:
 		resp.SecretMasked = config.TencentCloud.SecretKey.IsEncrypted() || resp.Inherited
 		if resp.SecretMasked {
-			resp.TencentCloud.SecretKey = maskedSecret
+			resp.TencentCloud.SecretKey = basedto.MaskedSecret
 		}
 	}
 

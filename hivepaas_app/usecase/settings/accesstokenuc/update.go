@@ -30,7 +30,13 @@ func (uc *UC) UpdateAccessToken(
 		) error {
 			pData.Setting.Kind = gofn.Coalesce(string(req.Kind), pData.Setting.Kind)
 			pData.Setting.ExpireAt = req.ExpireAt
-			err := pData.Setting.SetData(accessToken)
+			current, err := data.Setting.AsAccessToken()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			req.KeepMaskedSecrets(accessToken, current)
+
+			err = pData.Setting.SetData(accessToken)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}

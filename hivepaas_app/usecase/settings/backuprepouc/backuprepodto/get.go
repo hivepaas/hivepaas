@@ -13,10 +13,6 @@ import (
 	"github.com/hivepaas/hivepaas/services/backup"
 )
 
-const (
-	maskedSecret = "********"
-)
-
 type GetBackupRepoReq struct {
 	settings.GetSettingReq
 }
@@ -96,7 +92,7 @@ func TransformBackupRepo(
 
 	resp.SecretMasked = resp.Inherited
 	if resp.SecretMasked {
-		resp.Password = maskedSecret
+		resp.Password = basedto.MaskedSecret
 	}
 
 	return resp, nil

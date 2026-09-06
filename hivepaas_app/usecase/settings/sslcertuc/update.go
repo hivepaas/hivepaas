@@ -32,6 +32,10 @@ func (uc *UC) UpdateSSLCert(
 			if err != nil {
 				return hperrors.Wrap(err)
 			}
+			// Restored here rather than in PrepareUpdate so everything downstream,
+			// including re-obtaining the certificate, sees the real values.
+			req.KeepMaskedSecrets(newCert, currCert)
+
 			switch newCert.CertType {
 			case base.SSLCertTypeLetsEncrypt, base.SSLCertTypeZeroSSL, base.SSLCertTypeGoogleTrust:
 				reObtainCert = newCert.Domain != currCert.Domain || newCert.KeyType != currCert.KeyType ||

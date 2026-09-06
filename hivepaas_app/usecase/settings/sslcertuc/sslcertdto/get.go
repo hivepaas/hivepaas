@@ -14,10 +14,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
-const (
-	maskedSecret = "****************"
-)
-
 type GetSSLCertReq struct {
 	settings.GetSettingReq
 }
@@ -100,10 +96,10 @@ func TransformSSLCert(
 
 	resp.SecretMasked = config.PrivateKey.IsEncrypted() || resp.Inherited
 	if resp.SecretMasked {
-		resp.PrivateKey = maskedSecret
-		resp.Certificate = maskedSecret
+		resp.PrivateKey = basedto.MaskedSecret
+		resp.Certificate = basedto.MaskedSecret
 		if resp.CACertificate != "" {
-			resp.CACertificate = maskedSecret
+			resp.CACertificate = basedto.MaskedSecret
 		}
 	}
 
@@ -122,10 +118,10 @@ func TransformSSLCertBasic(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	resp.Certificate = maskedSecret
-	resp.PrivateKey = maskedSecret
+	resp.Certificate = basedto.MaskedSecret
+	resp.PrivateKey = basedto.MaskedSecret
 	if resp.CACertificate != "" {
-		resp.CACertificate = maskedSecret
+		resp.CACertificate = basedto.MaskedSecret
 	}
 	resp.SecretMasked = true
 	resp.Notification = nil

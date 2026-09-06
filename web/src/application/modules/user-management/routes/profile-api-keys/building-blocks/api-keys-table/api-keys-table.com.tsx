@@ -2,12 +2,13 @@ import { Plus } from "lucide-react";
 import { ProfileApiKeysTableDefs } from "~/user-management/module-shared/definitions/tables/profile-api-keys";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
+import { CAPABILITY_IDS, DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 import { ProfileQueries } from "@application/shared/data/queries";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useTableState } from "@application/shared/hooks/table";
+import { useCapability } from "@application/shared/permissions";
 
-import { Button, DataTable } from "@/components/ui";
+import { Button, DataTable, Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui";
 
 export function ApiKeysTable() {
     const { navigate } = useAppNavigate();
@@ -18,19 +19,34 @@ export function ApiKeysTable() {
             sorting,
             search,
         });
+    const { hasCapability: canCreateApiKey } = useCapability(CAPABILITY_IDS.ApiKeyCreate);
+
+    const newApiKeyButton = (
+        <Button
+            disabled={!canCreateApiKey}
+            onClick={() => {
+                navigate.modules(ROUTE.currentUser.profileApiKeys.create.$route);
+            }}
+        >
+            <Plus /> New API Key
+        </Button>
+    );
 
     return (
         <div className="flex flex-col gap-4">
             <TableActions
                 search={{ value: search, onChange: setSearch }}
                 renderActions={
-                    <Button
-                        onClick={() => {
-                            navigate.modules(ROUTE.currentUser.profileApiKeys.create.$route);
-                        }}
-                    >
-                        <Plus /> New API Key
-                    </Button>
+                    canCreateApiKey ? (
+                        newApiKeyButton
+                    ) : (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="inline-flex">{newApiKeyButton}</span>
+                            </TooltipTrigger>
+                            <TooltipContent>You do not have permission to create API keys</TooltipContent>
+                        </Tooltip>
+                    )
                 }
             />
             <DataTable

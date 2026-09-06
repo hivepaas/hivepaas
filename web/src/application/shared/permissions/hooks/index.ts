@@ -4,3 +4,4 @@ export * from "./use-set-module-permissions";
 export * from "./use-conditional-project";
 export * from "./use-conditional-project-collections";
 export * from "./use-set-project-permissions";
+export * from "./use-capability";

@@ -6,11 +6,13 @@ import { Copy } from "lucide-react";
 import { toast } from "sonner";
 
 import { RouteFormHeader } from "@application/shared/components";
-import { ROUTE } from "@application/shared/constants";
+import { CAPABILITY_IDS, ROUTE } from "@application/shared/constants";
 import { ProfileCommands } from "@application/shared/data/commands";
 import { CreateProfileApiKeyForm } from "@application/shared/dialogs/create-profile-api-key/form";
 import type { CreateProfileApiKeyFormSchemaOutput } from "@application/shared/dialogs/create-profile-api-key/schemas";
 import { useAppNavigate } from "@application/shared/hooks/router";
+import { PageNoAccess } from "@application/shared/pages";
+import { useCapability } from "@application/shared/permissions";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +25,7 @@ interface CreatedApiKey {
 const CREATE_PROFILE_API_KEY_FORM_ID = "create-profile-api-key-form";
 
 export function ProfileApiKeyCreateRoute() {
+    const { hasCapability: canCreateApiKey } = useCapability(CAPABILITY_IDS.ApiKeyCreate);
     const [hasChanges, setHasChanges] = useState(false);
     const [createdKey, setCreatedKey] = useState<CreatedApiKey | null>(null);
     const { mutate: createApiKey, isPending } = ProfileCommands.useCreateOneApiKey();
@@ -30,6 +33,10 @@ export function ProfileApiKeyCreateRoute() {
 
     function navigateToList() {
         navigate.modules(ROUTE.currentUser.profileApiKeys.$route, { ignorePrevPath: true });
+    }
+
+    if (!canCreateApiKey) {
+        return <PageNoAccess />;
     }
 
     function onSubmit(values: CreateProfileApiKeyFormSchemaOutput) {

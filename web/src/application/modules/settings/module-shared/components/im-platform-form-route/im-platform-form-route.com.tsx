@@ -5,20 +5,25 @@ import { ProjectImServiceCommands } from "~/projects/data/commands";
 import { ProjectImServiceQueries } from "~/projects/data/queries";
 import { ImServiceCommands } from "~/settings/data/commands";
 import { ImServiceQueries } from "~/settings/data/queries";
+import type { SettingImService } from "~/settings/domain";
 import { CreateOrEditImPlatformForm } from "~/settings/module-shared/components/im-platform-form";
 import type {
     CreateOrEditImPlatformFormInput,
     CreateOrEditImPlatformFormOutput,
 } from "~/settings/module-shared/components/im-platform-form";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets, useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { EImServiceKind } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
 import type { ImPlatformTableScope } from "../im-platform-table";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 
 type ImPlatformFormRouteMode = "create" | "edit";
 
@@ -187,45 +192,88 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
     }
 
     function handleClose() {
-        if (isPending) return;
+        if (isPending) {
+            return;
+        }
         if (
             !readOnlyInherited &&
             canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
-        )
+        ) {
             return;
+        }
 
         navigateToList();
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingImService>({
+        settingType: "im-services",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || imPlatform?.inherited === true,
+        mode,
+    });
+
+    const activeImPlatform = revealedData ?? imPlatform;
+
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const initialValues: Partial<CreateOrEditImPlatformFormInput> | undefined = imPlatform
+    const initialValues: Partial<CreateOrEditImPlatformFormInput> | undefined = activeImPlatform
         ? {
-              name: imPlatform.name,
-              kind: imPlatform.kind,
+              name: activeImPlatform.name,
+              kind: activeImPlatform.kind,
               webhook:
-                  imPlatform.kind === EImServiceKind.Slack
-                      ? (imPlatform.slack?.webhook ?? "")
-                      : imPlatform.kind === EImServiceKind.Discord
-                        ? (imPlatform.discord?.webhook ?? "")
-                        : imPlatform.kind === EImServiceKind.Lark
-                          ? (imPlatform.lark?.webhook ?? "")
+                  activeImPlatform.kind === EImServiceKind.Slack
+                      ? (activeImPlatform.slack?.webhook ?? "")
+                      : activeImPlatform.kind === EImServiceKind.Discord
+                        ? (activeImPlatform.discord?.webhook ?? "")
+                        : activeImPlatform.kind === EImServiceKind.Lark
+                          ? (activeImPlatform.lark?.webhook ?? "")
                           : "",
-              secret: imPlatform.kind === EImServiceKind.Lark ? (imPlatform.lark?.secret ?? "") : "",
-              botToken: imPlatform.kind === EImServiceKind.Telegram ? (imPlatform.telegram?.botToken ?? "") : "",
-              chatId: imPlatform.kind === EImServiceKind.Telegram ? (imPlatform.telegram?.chatId ?? "") : "",
-              inheritable: Boolean(imPlatform.inheritable),
-              default: imPlatform.default ?? false,
+              secret: activeImPlatform.kind === EImServiceKind.Lark ? (activeImPlatform.lark?.secret ?? "") : "",
+              botToken:
+                  activeImPlatform.kind === EImServiceKind.Telegram ? (activeImPlatform.telegram?.botToken ?? "") : "",
+              chatId:
+                  activeImPlatform.kind === EImServiceKind.Telegram ? (activeImPlatform.telegram?.chatId ?? "") : "",
+              inheritable: Boolean(activeImPlatform.inheritable),
+              default: activeImPlatform.default ?? false,
           }
         : undefined;
-    const shouldRenderForm = mode === "create" || initialValues;
+    const shouldRenderForm = mode === "create" || Boolean(initialValues);
     const title = mode === "create" ? "Create IM Platform" : "Edit IM Platform";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -234,21 +282,24 @@ export function ImPlatformFormRoute({ mode, scope, imPlatformId }: Props) {
             )}
 
             {!isDetailLoading && shouldRenderForm && (
-                <CreateOrEditImPlatformForm
-                    isPending={isPending}
-                    isTesting={isTesting}
-                    testStatus={testStatus}
-                    onSubmit={onSubmit}
-                    onTestSendMsg={onTestSendMsg}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    initialValues={initialValues}
-                    showAvailableInProjects
-                    isProjectScope={scope.type === "project"}
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditImPlatformForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        isTesting={isTesting}
+                        testStatus={testStatus}
+                        onSubmit={onSubmit}
+                        onTestSendMsg={onTestSendMsg}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

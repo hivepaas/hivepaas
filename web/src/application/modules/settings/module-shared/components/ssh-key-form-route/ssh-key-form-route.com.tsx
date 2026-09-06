@@ -5,6 +5,7 @@ import { ProjectSSHKeyCommands } from "~/projects/data/commands";
 import { ProjectSSHKeyQueries } from "~/projects/data/queries";
 import { SSHKeyCommands } from "~/settings/data/commands";
 import { SSHKeyQueries } from "~/settings/data/queries";
+import type { SettingSSHKey } from "~/settings/domain";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
 import { CreateOrEditSSHKeyForm } from "~/settings/module-shared/components/ssh-key-form";
 import type {
@@ -12,12 +13,17 @@ import type {
     CreateOrEditSSHKeyFormOutput,
 } from "~/settings/module-shared/components/ssh-key-form";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { ESSHKeyKind } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 import type { SSHKeyTableScope } from "../ssh-key-table";
 
 type SSHKeyFormRouteMode = "create" | "edit";
@@ -130,38 +136,79 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
     }
 
     function handleClose() {
-        if (isPending) return;
+        if (isPending) {
+            return;
+        }
         if (
             !readOnlyInherited &&
             canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
-        )
+        ) {
             return;
+        }
 
         navigateToList();
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingSSHKey>({
+        settingType: "ssh-keys",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || sshKey?.inherited === true,
+        mode,
+    });
+
+    const activeSSHKey = revealedData ?? sshKey;
+
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const initialValues: Partial<CreateOrEditSSHKeyFormInput> | undefined = sshKey
+    const initialValues: Partial<CreateOrEditSSHKeyFormInput> | undefined = activeSSHKey
         ? {
-              name: sshKey.name,
-              kind: getInitialKind(sshKey.kind),
-              keyType: sshKey.keyType ?? "",
-              publicKey: sshKey.publicKey ?? "",
-              privateKey: sshKey.privateKey,
-              passphrase: sshKey.passphrase ?? "",
-              inheritable: Boolean(sshKey.inheritable),
-              default: sshKey.default ?? false,
+              name: activeSSHKey.name,
+              kind: getInitialKind(activeSSHKey.kind),
+              keyType: activeSSHKey.keyType ?? "",
+              publicKey: activeSSHKey.publicKey ?? "",
+              privateKey: activeSSHKey.privateKey,
+              passphrase: activeSSHKey.passphrase ?? "",
+              inheritable: Boolean(activeSSHKey.inheritable),
+              default: activeSSHKey.default ?? false,
           }
         : undefined;
-    const shouldRenderForm = mode === "create" || initialValues;
+    const shouldRenderForm = mode === "create" || Boolean(initialValues);
     const title = mode === "create" ? "Create SSH Key" : "Edit SSH Key";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -170,23 +217,26 @@ export function SSHKeyFormRoute({ mode, scope, sshKeyId }: Props) {
             )}
 
             {!isDetailLoading && shouldRenderForm && (
-                <CreateOrEditSSHKeyForm
-                    isPending={isPending}
-                    isGenerating={isGenerating}
-                    onGenerate={async payload => {
-                        const response = await generateSSHKey({ payload });
-                        return response.data;
-                    }}
-                    onSubmit={onSubmit}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    initialValues={initialValues}
-                    showAvailableInProjects
-                    isProjectScope={scope.type === "project"}
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditSSHKeyForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        isGenerating={isGenerating}
+                        onGenerate={async payload => {
+                            const response = await generateSSHKey({ payload });
+                            return response.data;
+                        }}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

@@ -53,3 +53,5 @@ export * from "./backup-repo-form";
 export * from "./backup-repo-form-route";
 export * from "./settings-form-cancel-action";
 export * from "./settings-form-route-header";
+export * from "./confirm-reveal-secrets-dialog";
+export * from "./reveal-secrets-button";

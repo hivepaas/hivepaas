@@ -5,18 +5,24 @@ import { ProjectGithubAppCommands } from "~/projects/data/commands";
 import { ProjectGithubAppQueries } from "~/projects/data/queries";
 import { GithubAppCommands } from "~/settings/data/commands";
 import { GithubAppQueries } from "~/settings/data/queries";
+import type { SettingGithubApp } from "~/settings/domain";
 import { CreateOrEditGithubAppForm } from "~/settings/module-shared/components/github-app-form";
 import type {
     CreateOrEditGithubAppFormInput,
     CreateOrEditGithubAppFormOutput,
 } from "~/settings/module-shared/components/github-app-form";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
 import type { GithubAppTableScope } from "../github-app-table";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 import { SettingsFormRouteHeader } from "../settings-form-route-header";
 
 type GithubAppFormRouteMode = "create" | "edit";
@@ -214,23 +220,42 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
         navigateToList();
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingGithubApp>({
+        settingType: "github-apps",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || githubApp?.inherited === true,
+        mode,
+    });
+
+    const activeGithubApp = revealedData ?? githubApp;
+
     const isPending = isCreatingSettings || isUpdatingSettings || isCreatingProject || isUpdatingProject;
     const isReprovisioning = isReprovisioningSettings || isReprovisioningProject;
     const showAvailableInProjects = true;
     const showTestConnection = isEditMode && (!readOnlyInherited || canWrite);
     const initialValues: Partial<CreateOrEditGithubAppFormInput> | undefined =
-        isEditMode && githubApp
+        isEditMode && activeGithubApp
             ? {
-                  name: githubApp.name,
-                  organization: githubApp.organization,
-                  appId: githubApp.appId || undefined,
-                  installationId: githubApp.installationId || undefined,
-                  clientId: githubApp.clientId,
-                  clientSecret: githubApp.clientSecret,
-                  privateKey: githubApp.privateKey,
-                  ssoEnabled: githubApp.ssoEnabled,
-                  inheritable: Boolean(githubApp.inheritable),
-                  default: githubApp.default ?? false,
+                  name: activeGithubApp.name,
+                  organization: activeGithubApp.organization,
+                  appId: activeGithubApp.appId,
+                  installationId: activeGithubApp.installationId,
+                  clientId: activeGithubApp.clientId,
+                  clientSecret: activeGithubApp.clientSecret,
+                  privateKey: activeGithubApp.privateKey,
+                  ssoEnabled: activeGithubApp.ssoEnabled,
+                  inheritable: Boolean(activeGithubApp.inheritable),
+                  default: activeGithubApp.default ?? false,
               }
             : {
                   ssoEnabled: true,
@@ -238,20 +263,39 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
                   default: true,
               };
     const readonlyValues =
-        githubApp && isEditMode
+        activeGithubApp && isEditMode
             ? {
-                  callbackURL: githubApp.callbackURL,
-                  webhookURL: githubApp.webhookURL,
-                  webhookSecret: githubApp.webhookSecret,
+                  callbackURL: activeGithubApp.callbackURL,
+                  webhookURL: activeGithubApp.webhookURL,
+                  webhookSecret: activeGithubApp.webhookSecret,
               }
             : undefined;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const canRenderForm = mode === "create" || (isEditMode && !!githubApp);
+    const canRenderForm = mode === "create" || (isEditMode && Boolean(activeGithubApp));
     const title = readOnlyInherited ? "Github App" : mode === "create" ? "Create Github App" : "Edit Github App";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -260,27 +304,30 @@ export function GithubAppFormRoute({ mode, scope, githubAppId }: Props) {
             )}
 
             {!isDetailLoading && canRenderForm && (
-                <CreateOrEditGithubAppForm
-                    isPending={isPending}
-                    isTesting={isTesting}
-                    testStatus={testStatus}
-                    isReprovisioning={isReprovisioning}
-                    onSubmit={onSubmit}
-                    onTestConnection={onTestConnection}
-                    onReprovision={isEditMode && !readOnlyInherited && canWrite ? onReprovision : undefined}
-                    settingsURL={githubApp?.settingsURL}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    initialValues={initialValues}
-                    readonlyValues={readonlyValues}
-                    showAvailableInProjects={showAvailableInProjects}
-                    isProjectScope={scope.type === "project"}
-                    showTestConnection={showTestConnection}
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    stickyActions
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditGithubAppForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        isTesting={isTesting}
+                        testStatus={testStatus}
+                        isReprovisioning={isReprovisioning}
+                        onSubmit={onSubmit}
+                        onTestConnection={onTestConnection}
+                        onReprovision={isEditMode && !readOnlyInherited && canWrite ? onReprovision : undefined}
+                        settingsURL={activeGithubApp?.settingsURL}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        readonlyValues={readonlyValues}
+                        showAvailableInProjects={showAvailableInProjects}
+                        isProjectScope={scope.type === "project"}
+                        showTestConnection={showTestConnection}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        stickyActions
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

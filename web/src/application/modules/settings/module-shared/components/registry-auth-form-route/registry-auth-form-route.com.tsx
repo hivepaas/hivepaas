@@ -5,19 +5,24 @@ import { ProjectRegistryAuthCommands } from "~/projects/data/commands";
 import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
 import { RegistryAuthCommands } from "~/settings/data/commands";
 import { RegistryAuthQueries } from "~/settings/data/queries";
+import type { SettingRegistryAuth } from "~/settings/domain";
 import { CreateOrEditRegistryAuthForm } from "~/settings/module-shared/components/registry-auth-form";
 import type {
     CreateOrEditRegistryAuthFormInput,
     CreateOrEditRegistryAuthFormOutput,
 } from "~/settings/module-shared/components/registry-auth-form";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets, useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
 import type { RegistryAuthTableScope } from "../registry-auth-table";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 
 type RegistryAuthFormRouteMode = "create" | "edit";
 
@@ -150,37 +155,78 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
     }
 
     function handleClose() {
-        if (isPending) return;
+        if (isPending) {
+            return;
+        }
         if (
             !readOnlyInherited &&
             canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
-        )
+        ) {
             return;
+        }
 
         navigateToList();
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingRegistryAuth>({
+        settingType: "registry-auth",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || registryAuth?.inherited === true,
+        mode,
+    });
+
+    const activeRegistryAuth = revealedData ?? registryAuth;
+
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const initialValues: Partial<CreateOrEditRegistryAuthFormInput> | undefined = registryAuth
+    const initialValues: Partial<CreateOrEditRegistryAuthFormInput> | undefined = activeRegistryAuth
         ? {
-              name: registryAuth.name,
-              address: registryAuth.address,
-              username: registryAuth.username,
-              password: registryAuth.password,
-              readonly: registryAuth.readonly,
-              inheritable: Boolean(registryAuth.inheritable),
-              default: registryAuth.default ?? false,
+              name: activeRegistryAuth.name,
+              address: activeRegistryAuth.address,
+              username: activeRegistryAuth.username,
+              password: activeRegistryAuth.password,
+              readonly: activeRegistryAuth.readonly,
+              inheritable: Boolean(activeRegistryAuth.inheritable),
+              default: activeRegistryAuth.default ?? false,
           }
         : undefined;
-    const shouldRenderForm = mode === "create" || initialValues;
+    const shouldRenderForm = mode === "create" || Boolean(initialValues);
     const title = mode === "create" ? "Create Registry Auth" : "Edit Registry Auth";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -189,21 +235,24 @@ export function RegistryAuthFormRoute({ mode, scope, registryAuthId }: Props) {
             )}
 
             {!isDetailLoading && shouldRenderForm && (
-                <CreateOrEditRegistryAuthForm
-                    isPending={isPending}
-                    isTesting={isTesting}
-                    testStatus={testStatus}
-                    onSubmit={onSubmit}
-                    onTestConnection={onTestConnection}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    initialValues={initialValues}
-                    showAvailableInProjects
-                    isProjectScope={scope.type === "project"}
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditRegistryAuthForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        isTesting={isTesting}
+                        testStatus={testStatus}
+                        onSubmit={onSubmit}
+                        onTestConnection={onTestConnection}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

@@ -6,19 +6,24 @@ import { ProjectSslCertCommands } from "~/projects/data/commands";
 import { ProjectDomainSettingsQueries, ProjectSslCertQueries } from "~/projects/data/queries";
 import type { SslCert_Notification_Payload } from "~/settings/api/services/ssl-cert-services";
 import { DomainSettingsQueries, SslCertCommands, SslCertQueries } from "~/settings/data";
+import type { SettingSslCert } from "~/settings/domain";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
 import { CreateOrEditSslCertForm } from "~/settings/module-shared/components/ssl-cert-form";
 import type {
     CreateOrEditSslCertFormInput,
     CreateOrEditSslCertFormOutput,
 } from "~/settings/module-shared/components/ssl-cert-form";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets, useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { ESslCertType, ESslKeyType } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 import type { SslCertTableScope } from "../ssl-cert-table";
 
 type SslCertFormRouteMode = "create" | "edit";
@@ -222,17 +227,39 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
     }
 
     function handleClose() {
-        if (isPending) return;
+        if (isPending) {
+            return;
+        }
         if (
             !readOnlyInherited &&
             canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
-        )
+        ) {
             return;
+        }
 
         navigateToList();
     }
+
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingSslCert>({
+        settingType: "ssl-certs",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || sslCert?.inherited === true,
+        mode,
+    });
+
+    const activeSslCert = revealedData ?? sslCert;
 
     const isDomainSettingsLoading =
         mode === "create" &&
@@ -249,29 +276,31 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
     const isDetailLoading = isEditMode && detailQuery.isFetching;
     const isLoading = isDetailLoading || isDomainSettingsLoading;
     const initialValues: Partial<CreateOrEditSslCertFormInput> | undefined =
-        isEditMode && sslCert
+        isEditMode && activeSslCert
             ? {
-                  domain: sslCert.domain,
-                  certType: normalizeCertType(sslCert.certType),
-                  provider: sslCert.provider ? { id: sslCert.provider.id, name: sslCert.provider.name } : undefined,
-                  acmeProvider: sslCert.acmeProvider
-                      ? { id: sslCert.acmeProvider.id, name: sslCert.acmeProvider.name }
+                  domain: activeSslCert.domain,
+                  certType: normalizeCertType(activeSslCert.certType),
+                  provider: activeSslCert.provider
+                      ? { id: activeSslCert.provider.id, name: activeSslCert.provider.name }
                       : undefined,
-                  email: sslCert.email,
-                  keyType: normalizeKeyType(sslCert.keyType),
-                  autoRenew: sslCert.autoRenew,
-                  certificate: sslCert.certificate,
-                  privateKey: sslCert.privateKey,
-                  caCertificate: sslCert.caCertificate ?? "",
-                  expireAt: sslCert.expireAt ?? null,
-                  notifyFrom: sslCert.notifyFrom ?? null,
-                  inheritable: Boolean(sslCert.inheritable),
-                  default: sslCert.default ?? false,
+                  acmeProvider: activeSslCert.acmeProvider
+                      ? { id: activeSslCert.acmeProvider.id, name: activeSslCert.acmeProvider.name }
+                      : undefined,
+                  email: activeSslCert.email,
+                  keyType: normalizeKeyType(activeSslCert.keyType),
+                  autoRenew: activeSslCert.autoRenew,
+                  certificate: activeSslCert.certificate,
+                  privateKey: activeSslCert.privateKey,
+                  caCertificate: activeSslCert.caCertificate ?? "",
+                  expireAt: activeSslCert.expireAt ?? null,
+                  notifyFrom: activeSslCert.notifyFrom ?? null,
+                  inheritable: Boolean(activeSslCert.inheritable),
+                  default: activeSslCert.default ?? false,
                   notification: {
-                      successUseDefault: sslCert.notification?.successUseDefault ?? true,
-                      success: sslCert.notification?.success ?? undefined,
-                      failureUseDefault: sslCert.notification?.failureUseDefault ?? true,
-                      failure: sslCert.notification?.failure ?? undefined,
+                      successUseDefault: activeSslCert.notification?.successUseDefault ?? true,
+                      success: activeSslCert.notification?.success ?? undefined,
+                      failureUseDefault: activeSslCert.notification?.failureUseDefault ?? true,
+                      failure: activeSslCert.notification?.failure ?? undefined,
                   },
               }
             : {
@@ -288,12 +317,31 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
                       failureUseDefault: true,
                   },
               };
-    const shouldRenderForm = mode === "create" || !!sslCert;
+    const shouldRenderForm = mode === "create" || Boolean(activeSslCert);
     const title = mode === "create" ? "Create SSL Certificate" : "Edit SSL Certificate";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -302,18 +350,21 @@ export function SslCertFormRoute({ mode, scope, sslCertId }: Props) {
             )}
 
             {!isLoading && shouldRenderForm && (
-                <CreateOrEditSslCertForm
-                    isPending={isPending}
-                    onSubmit={onSubmit}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    initialValues={initialValues}
-                    scope={scope}
-                    showAvailableInProjects
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditSslCertForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        scope={scope}
+                        showAvailableInProjects
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

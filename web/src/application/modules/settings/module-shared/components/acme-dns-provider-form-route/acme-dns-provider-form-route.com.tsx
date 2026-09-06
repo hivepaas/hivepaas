@@ -19,14 +19,18 @@ import type {
     CreateOrEditAcmeDnsProviderFormOutput,
 } from "~/settings/module-shared/components/acme-dns-provider-form";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets, useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { EAcmeDnsProviderKind } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
 import type { AcmeDnsProviderTableScope } from "../acme-dns-provider-table";
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 
 type AcmeDnsProviderFormRouteMode = "create" | "edit";
 type TestStatus = "idle" | "success" | "error";
@@ -157,27 +161,68 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
     }
 
     function handleClose() {
-        if (isPending || isTesting) return;
+        if (isPending || isTesting) {
+            return;
+        }
         if (
             !readOnlyInherited &&
             canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
-        )
+        ) {
             return;
+        }
 
         navigateToList();
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingAcmeDnsProvider>({
+        settingType: "acme-dns-providers",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || acmeDnsProvider?.inherited === true,
+        mode,
+    });
+
+    const activeAcmeDnsProvider = revealedData ?? acmeDnsProvider;
+
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const initialValues = createInitialValues(isEditMode ? acmeDnsProvider : undefined, scope.type === "project");
-    const shouldRenderForm = mode === "create" || !!acmeDnsProvider;
+    const initialValues = createInitialValues(isEditMode ? activeAcmeDnsProvider : undefined, scope.type === "project");
+    const shouldRenderForm = mode === "create" || Boolean(activeAcmeDnsProvider);
     const title = mode === "create" ? "Create ACME DNS Provider" : "Edit ACME DNS Provider";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -186,23 +231,26 @@ export function AcmeDnsProviderFormRoute({ mode, scope, acmeDnsProviderId }: Pro
             )}
 
             {!isDetailLoading && shouldRenderForm && (
-                <CreateOrEditAcmeDnsProviderForm
-                    isPending={isPending}
-                    isTesting={isTesting}
-                    testStatus={testStatus}
-                    onSubmit={onSubmit}
-                    onTestAccess={onTestAccess}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    initialValues={initialValues}
-                    showAvailableInProjects
-                    isProjectScope={scope.type === "project"}
-                    showTestAccess
-                    isEdit={isEditMode}
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditAcmeDnsProviderForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        isTesting={isTesting}
+                        testStatus={testStatus}
+                        onSubmit={onSubmit}
+                        onTestAccess={onTestAccess}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        showTestAccess
+                        isEdit={isEditMode}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

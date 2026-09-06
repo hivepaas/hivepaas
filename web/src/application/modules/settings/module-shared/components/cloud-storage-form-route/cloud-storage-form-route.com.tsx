@@ -5,20 +5,25 @@ import { ProjectCloudStorageCommands } from "~/projects/data/commands";
 import { ProjectCloudStorageQueries } from "~/projects/data/queries";
 import { CloudStorageCommands } from "~/settings/data/commands";
 import { CloudStorageQueries } from "~/settings/data/queries";
+import type { SettingCloudStorage } from "~/settings/domain";
 import { CreateOrEditCloudStorageForm } from "~/settings/module-shared/components/cloud-storage-form";
 import type {
     CreateOrEditCloudStorageFormInput,
     CreateOrEditCloudStorageFormOutput,
 } from "~/settings/module-shared/components/cloud-storage-form";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets, useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { ECloudStorageKind } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
 import type { CloudStorageTableScope } from "../cloud-storage-table";
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 
 type CloudStorageFormRouteMode = "create" | "edit";
 
@@ -159,39 +164,83 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
     }
 
     function handleClose() {
-        if (isPending) return;
+        if (isPending) {
+            return;
+        }
         if (
             !readOnlyInherited &&
             canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
-        )
+        ) {
             return;
+        }
 
         navigateToList();
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingCloudStorage>({
+        settingType: "cloud-storages",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || cloudStorage?.inherited === true,
+        mode,
+    });
+
+    const activeCloudStorage = revealedData ?? cloudStorage;
+
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const initialValues: Partial<CreateOrEditCloudStorageFormInput> | undefined = cloudStorage
+    const initialValues: Partial<CreateOrEditCloudStorageFormInput> | undefined = activeCloudStorage
         ? {
-              name: cloudStorage.name,
-              kind: cloudStorage.kind === ECloudStorageKind.AWSS3 ? ECloudStorageKind.AWSS3 : ECloudStorageKind.AWSS3,
-              accessKeyId: cloudStorage.s3.accessKeyId,
-              secretKey: cloudStorage.s3.secretKey,
-              region: cloudStorage.s3.region,
-              bucket: cloudStorage.s3.bucket,
-              endpoint: cloudStorage.s3.endpoint,
-              inheritable: Boolean(cloudStorage.inheritable),
-              default: cloudStorage.default ?? false,
+              name: activeCloudStorage.name,
+              kind:
+                  activeCloudStorage.kind === ECloudStorageKind.AWSS3
+                      ? ECloudStorageKind.AWSS3
+                      : ECloudStorageKind.AWSS3,
+              accessKeyId: activeCloudStorage.s3.accessKeyId,
+              secretKey: activeCloudStorage.s3.secretKey,
+              region: activeCloudStorage.s3.region,
+              bucket: activeCloudStorage.s3.bucket,
+              endpoint: activeCloudStorage.s3.endpoint,
+              inheritable: Boolean(activeCloudStorage.inheritable),
+              default: activeCloudStorage.default ?? false,
           }
         : undefined;
-    const shouldRenderForm = mode === "create" || initialValues;
+    const shouldRenderForm = mode === "create" || Boolean(initialValues);
     const title = mode === "create" ? "Create Cloud Storage" : "Edit Cloud Storage";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -200,21 +249,24 @@ export function CloudStorageFormRoute({ mode, scope, cloudStorageId }: Props) {
             )}
 
             {!isDetailLoading && shouldRenderForm && (
-                <CreateOrEditCloudStorageForm
-                    isPending={isPending}
-                    isTesting={isTesting}
-                    testStatus={testStatus}
-                    onSubmit={onSubmit}
-                    onTestConnection={onTestConnection}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    initialValues={initialValues}
-                    showAvailableInProjects
-                    isProjectScope={scope.type === "project"}
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditCloudStorageForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        isTesting={isTesting}
+                        testStatus={testStatus}
+                        onSubmit={onSubmit}
+                        onTestConnection={onTestConnection}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

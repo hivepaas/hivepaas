@@ -5,6 +5,7 @@ import { ProjectAccessTokenCommands } from "~/projects/data/commands";
 import { ProjectAccessTokenQueries } from "~/projects/data/queries";
 import { AccessTokenCommands } from "~/settings/data/commands";
 import { AccessTokenQueries } from "~/settings/data/queries";
+import type { SettingAccessToken } from "~/settings/domain";
 import { CreateOrEditAccessTokenForm } from "~/settings/module-shared/components/access-token-form";
 import type {
     CreateOrEditAccessTokenFormInput,
@@ -12,13 +13,18 @@ import type {
 } from "~/settings/module-shared/components/access-token-form";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { EAccessTokenKind } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
 import type { AccessTokenTableScope } from "../access-token-table";
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 
 type AccessTokenFormRouteMode = "create" | "edit";
 
@@ -147,38 +153,79 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
     }
 
     function handleClose() {
-        if (isPending) return;
+        if (isPending) {
+            return;
+        }
         if (
             !readOnlyInherited &&
             canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
-        )
+        ) {
             return;
+        }
 
         navigateToList();
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingAccessToken>({
+        settingType: "access-tokens",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || accessToken?.inherited === true,
+        mode,
+    });
+
+    const activeAccessToken = revealedData ?? accessToken;
+
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const initialValues: Partial<CreateOrEditAccessTokenFormInput> | undefined = accessToken
+    const initialValues: Partial<CreateOrEditAccessTokenFormInput> | undefined = activeAccessToken
         ? {
-              name: accessToken.name,
-              kind: accessToken.kind ?? EAccessTokenKind.Github,
-              user: accessToken.user,
-              token: accessToken.token,
-              baseURL: accessToken.baseURL,
-              expireAt: accessToken.expireAt ?? null,
-              inheritable: Boolean(accessToken.inheritable),
-              default: accessToken.default ?? false,
+              name: activeAccessToken.name,
+              kind: (activeAccessToken.kind ?? EAccessTokenKind.Github) as EAccessTokenKind,
+              user: activeAccessToken.user,
+              token: activeAccessToken.token,
+              baseURL: activeAccessToken.baseURL,
+              expireAt: activeAccessToken.expireAt ?? null,
+              inheritable: Boolean(activeAccessToken.inheritable),
+              default: activeAccessToken.default ?? false,
           }
         : undefined;
-    const shouldRenderForm = mode === "create" || initialValues;
+    const shouldRenderForm = mode === "create" || Boolean(initialValues);
     const title = mode === "create" ? "Create Access Token" : "Edit Access Token";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -187,21 +234,24 @@ export function AccessTokenFormRoute({ mode, scope, accessTokenId }: Props) {
             )}
 
             {!isDetailLoading && shouldRenderForm && (
-                <CreateOrEditAccessTokenForm
-                    isPending={isPending}
-                    isTesting={isTesting}
-                    testStatus={testStatus}
-                    onSubmit={onSubmit}
-                    onTestConnection={onTestConnection}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    initialValues={initialValues}
-                    showAvailableInProjects
-                    isProjectScope={scope.type === "project"}
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditAccessTokenForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        isTesting={isTesting}
+                        testStatus={testStatus}
+                        onSubmit={onSubmit}
+                        onTestConnection={onTestConnection}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

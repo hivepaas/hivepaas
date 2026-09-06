@@ -16,14 +16,18 @@ import type {
     TestSendMailFormOutput,
 } from "~/settings/module-shared/components/email-account-form";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets, useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { EEmailKind } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
 import type { EmailAccountTableScope } from "../email-account-table";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 
 type EmailAccountFormRouteMode = "create" | "edit";
 
@@ -202,14 +206,17 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
     }
 
     function handleClose() {
-        if (isPending || isTesting) return;
+        if (isPending || isTesting) {
+            return;
+        }
         if (
             !readOnlyInherited &&
             canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
-        )
+        ) {
             return;
+        }
 
         navigateToList();
     }
@@ -227,18 +234,56 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
         }
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingEmail>({
+        settingType: "emails",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || emailAccount?.inherited === true,
+        mode,
+    });
+
+    const activeEmailAccount = revealedData ?? emailAccount;
+
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const initialValues: Partial<CreateOrEditEmailAccountFormInput> | undefined = emailAccount
-        ? toInitialValues(emailAccount)
+    const initialValues: Partial<CreateOrEditEmailAccountFormInput> | undefined = activeEmailAccount
+        ? toInitialValues(activeEmailAccount)
         : undefined;
-    const shouldRenderForm = mode === "create" || initialValues;
+    const shouldRenderForm = mode === "create" || Boolean(initialValues);
     const title = mode === "create" ? "Create Email Account" : "Edit Email Account";
 
     return (
         <>
             <div className="flex w-full flex-col">
-                <SettingsFormRouteHeader title={title} />
+                <SettingsFormRouteHeader
+                    title={title}
+                    actions={
+                        canShowRevealButton ? (
+                            <RevealSecretsButton
+                                onClick={() => {
+                                    setIsDialogOpen(true);
+                                }}
+                                isLoading={isRevealing}
+                            />
+                        ) : undefined
+                    }
+                />
+
+                <ConfirmRevealSecretsDialog
+                    open={isDialogOpen}
+                    onOpenChange={setIsDialogOpen}
+                    onConfirm={handleConfirmReveal}
+                    isPending={isRevealing}
+                />
 
                 {isDetailLoading && (
                     <div className="flex min-h-[220px] items-center justify-center">
@@ -247,19 +292,22 @@ export function EmailAccountFormRoute({ mode, scope, emailAccountId }: Props) {
                 )}
 
                 {!isDetailLoading && shouldRenderForm && (
-                    <CreateOrEditEmailAccountForm
-                        isPending={isPending}
-                        onSubmit={onSubmit}
-                        onOpenTestSendMail={openTestSendMailDialog}
-                        onHasChanges={setHasChanges}
-                        savedVersion={saveRevision}
-                        initialValues={initialValues}
-                        showAvailableInProjects
-                        isProjectScope={scope.type === "project"}
-                        readOnlyInherited={readOnlyInherited}
-                        readOnly={!canWrite}
-                        onClose={handleClose}
-                    />
+                    <RevealSecretsProvider value={{ isRevealed }}>
+                        <CreateOrEditEmailAccountForm
+                            key={`${detailId}-${revealRevision}`}
+                            isPending={isPending}
+                            onSubmit={onSubmit}
+                            onOpenTestSendMail={openTestSendMailDialog}
+                            onHasChanges={setHasChanges}
+                            savedVersion={saveRevision}
+                            initialValues={initialValues}
+                            showAvailableInProjects
+                            isProjectScope={scope.type === "project"}
+                            readOnlyInherited={readOnlyInherited}
+                            readOnly={!canWrite}
+                            onClose={handleClose}
+                        />
+                    </RevealSecretsProvider>
                 )}
             </div>
             <TestSendMailDialog

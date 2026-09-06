@@ -16,13 +16,17 @@ import type {
     CreateOrEditSslProviderFormInput,
     CreateOrEditSslProviderFormOutput,
 } from "~/settings/module-shared/components/ssl-provider-form";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets, useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { ESslProviderKind } from "@application/shared/enums";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 import type { SslProviderTableScope } from "../ssl-provider-table";
 
 type SslProviderFormRouteMode = "create" | "edit";
@@ -172,30 +176,52 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
     }
 
     function handleClose() {
-        if (isPending) return;
+        if (isPending) {
+            return;
+        }
         if (
             !readOnlyInherited &&
             canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
-        )
+        ) {
             return;
+        }
 
         navigateToList();
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingSslProvider>({
+        settingType: "ssl-providers",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || sslProvider?.inherited === true,
+        mode,
+    });
+
+    const activeSslProvider = revealedData ?? sslProvider;
+
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
     const initialValues: Partial<CreateOrEditSslProviderFormInput> | undefined =
-        isEditMode && sslProvider
+        isEditMode && activeSslProvider
             ? {
-                  name: sslProvider.name,
-                  kind: sslProvider.kind,
-                  email: sslProvider.email,
-                  defaultKeyType: sslProvider.defaultKeyType || SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
-                  ...getEabValues(sslProvider),
-                  inheritable: Boolean(sslProvider.inheritable),
-                  default: sslProvider.default ?? false,
+                  name: activeSslProvider.name,
+                  kind: activeSslProvider.kind,
+                  email: activeSslProvider.email,
+                  defaultKeyType: activeSslProvider.defaultKeyType || SSL_PROVIDER_UNSPECIFIED_KEY_TYPE,
+                  ...getEabValues(activeSslProvider),
+                  inheritable: Boolean(activeSslProvider.inheritable),
+                  default: activeSslProvider.default ?? false,
               }
             : {
                   kind: ESslProviderKind.LetsEncrypt,
@@ -203,12 +229,31 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
                   inheritable: scope.type === "project" ? true : false,
                   default: false,
               };
-    const shouldRenderForm = mode === "create" || !!sslProvider;
+    const shouldRenderForm = mode === "create" || Boolean(activeSslProvider);
     const title = mode === "create" ? "Create SSL Provider" : "Edit SSL Provider";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -217,19 +262,22 @@ export function SslProviderFormRoute({ mode, scope, sslProviderId }: Props) {
             )}
 
             {!isDetailLoading && shouldRenderForm && (
-                <CreateOrEditSslProviderForm
-                    isPending={isPending}
-                    onSubmit={onSubmit}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    initialValues={initialValues}
-                    showAvailableInProjects
-                    isProjectScope={scope.type === "project"}
-                    isEdit={isEditMode}
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditSslProviderForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        isEdit={isEditMode}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

@@ -5,19 +5,24 @@ import { ProjectBasicAuthCommands } from "~/projects/data/commands";
 import { ProjectBasicAuthQueries } from "~/projects/data/queries";
 import { BasicAuthCommands } from "~/settings/data/commands";
 import { BasicAuthQueries } from "~/settings/data/queries";
+import type { SettingBasicAuth } from "~/settings/domain";
 import { CreateOrEditBasicAuthForm } from "~/settings/module-shared/components/basic-auth-form";
 import type {
     CreateOrEditBasicAuthFormInput,
     CreateOrEditBasicAuthFormOutput,
 } from "~/settings/module-shared/components/basic-auth-form";
 import { SettingsFormRouteHeader } from "~/settings/module-shared/components/settings-form-route-header";
-import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets, useSettingsScopePermissions } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
 import type { BasicAuthTableScope } from "../basic-auth-table";
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 
 type BasicAuthFormRouteMode = "create" | "edit";
 
@@ -124,35 +129,76 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
     }
 
     function handleClose() {
-        if (isPending) return;
+        if (isPending) {
+            return;
+        }
         if (
             !readOnlyInherited &&
             canWrite &&
             hasChanges &&
             !window.confirm("Are you sure you want to close without saving changes?")
-        )
+        ) {
             return;
+        }
 
         navigateToList();
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingBasicAuth>({
+        settingType: "basic-auth",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || basicAuth?.inherited === true,
+        mode,
+    });
+
+    const activeBasicAuth = revealedData ?? basicAuth;
+
     const isPending = isCreatingSetting || isUpdatingSetting || isCreatingProject || isUpdatingProject;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const initialValues: Partial<CreateOrEditBasicAuthFormInput> | undefined = basicAuth
+    const initialValues: Partial<CreateOrEditBasicAuthFormInput> | undefined = activeBasicAuth
         ? {
-              name: basicAuth.name,
-              username: basicAuth.username,
-              password: basicAuth.password,
-              inheritable: Boolean(basicAuth.inheritable),
-              default: basicAuth.default ?? false,
+              name: activeBasicAuth.name,
+              username: activeBasicAuth.username,
+              password: activeBasicAuth.password,
+              inheritable: Boolean(activeBasicAuth.inheritable),
+              default: activeBasicAuth.default ?? false,
           }
         : undefined;
-    const shouldRenderForm = mode === "create" || initialValues;
+    const shouldRenderForm = mode === "create" || Boolean(initialValues);
     const title = mode === "create" ? "Create Basic Auth" : "Edit Basic Auth";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -161,18 +207,21 @@ export function BasicAuthFormRoute({ mode, scope, basicAuthId }: Props) {
             )}
 
             {!isDetailLoading && shouldRenderForm && (
-                <CreateOrEditBasicAuthForm
-                    isPending={isPending}
-                    onSubmit={onSubmit}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    initialValues={initialValues}
-                    showAvailableInProjects
-                    isProjectScope={scope.type === "project"}
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditBasicAuthForm
+                        key={`${detailId}-${revealRevision}`}
+                        isPending={isPending}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        initialValues={initialValues}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

@@ -6,16 +6,22 @@ import { ProjectRepoWebhookCommands } from "~/projects/data/commands";
 import { ProjectRepoWebhookQueries } from "~/projects/data/queries";
 import { RepoWebhookCommands } from "~/settings/data/commands";
 import { RepoWebhookQueries } from "~/settings/data/queries";
+import type { SettingRepoWebhook } from "~/settings/domain";
 import { CreateOrEditRepoWebhookForm } from "~/settings/module-shared/components/repo-webhook-form";
 import type { CreateOrEditRepoWebhookFormOutput } from "~/settings/module-shared/components/repo-webhook-form";
 import type { ERepoWebhookKind } from "~/settings/module-shared/enums";
 import { useSettingsScopePermissions } from "~/settings/module-shared/hooks";
+import { useSettingRevealSecrets } from "~/settings/module-shared/hooks";
 
 import { AppLoader } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 
+import { RevealSecretsProvider } from "@/components/ui/input-password";
+
+import { ConfirmRevealSecretsDialog } from "../confirm-reveal-secrets-dialog";
 import type { RepoWebhookTableScope } from "../repo-webhook-table";
+import { RevealSecretsButton } from "../reveal-secrets-button";
 import { SettingsFormRouteHeader } from "../settings-form-route-header";
 
 type RepoWebhookFormRouteMode = "create" | "edit";
@@ -160,6 +166,25 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
         navigate.modules(getRepoWebhookListRoute(scope), { ignorePrevPath: true });
     }
 
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        isRevealed,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<SettingRepoWebhook>({
+        settingType: "repo-webhooks",
+        settingId: detailId,
+        scope,
+        isInherited: readOnlyInherited || repoWebhook?.inherited === true,
+        mode,
+    });
+
+    const activeRepoWebhook = revealedData ?? repoWebhook;
+
     const isPending = isCreatingSettings || isUpdatingSettings || isCreatingProject || isUpdatingProject;
     const matchedCreatedWebhook =
         createdWebhook && isEditMode && createdWebhook.id === repoWebhookId ? createdWebhook : null;
@@ -170,23 +195,42 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
                   secret: createdWebhook.secret,
               }
             : undefined;
-    const initialValues = repoWebhook
+    const initialValues = activeRepoWebhook
         ? {
-              name: repoWebhook.name,
-              kind: repoWebhook.kind as ERepoWebhookKind | "",
-              secret: matchedCreatedWebhook?.secret ?? repoWebhook.secret,
-              inheritable: Boolean(repoWebhook.inheritable),
-              default: repoWebhook.default ?? false,
+              name: activeRepoWebhook.name,
+              kind: activeRepoWebhook.kind as ERepoWebhookKind | "",
+              secret: matchedCreatedWebhook?.secret ?? activeRepoWebhook.secret,
+              inheritable: Boolean(activeRepoWebhook.inheritable),
+              default: activeRepoWebhook.default ?? false,
           }
         : createdInitialValues;
-    const webhookURL = repoWebhook?.webhookURL ?? matchedCreatedWebhook?.webhookURL ?? createdWebhook?.webhookURL;
+    const webhookURL = activeRepoWebhook?.webhookURL ?? matchedCreatedWebhook?.webhookURL ?? createdWebhook?.webhookURL;
     const isDetailLoading = isEditMode && detailQuery.isFetching;
-    const canRenderForm = mode === "create" || (isEditMode && !!repoWebhook);
+    const canRenderForm = mode === "create" || (isEditMode && Boolean(activeRepoWebhook));
     const title = readOnlyInherited ? "Webhook" : mode === "create" ? "Create Webhook" : "Edit Webhook";
 
     return (
         <div className="flex w-full flex-col">
-            <SettingsFormRouteHeader title={title} />
+            <SettingsFormRouteHeader
+                title={title}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : undefined
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -195,21 +239,23 @@ export function RepoWebhookFormRoute({ mode, scope, repoWebhookId }: Props) {
             )}
 
             {!isDetailLoading && canRenderForm && (
-                <CreateOrEditRepoWebhookForm
-                    isPending={isPending}
-                    onSubmit={onSubmit}
-                    onHasChanges={setHasChanges}
-                    savedVersion={saveRevision}
-                    key={createdWebhook?.id ?? "new"}
-                    initialValues={initialValues}
-                    webhookURL={webhookURL}
-                    showAvailableInProjects
-                    isProjectScope={scope.type === "project"}
-                    readOnlyInherited={readOnlyInherited}
-                    readOnly={!canWrite}
-                    stickyActions
-                    onClose={handleClose}
-                />
+                <RevealSecretsProvider value={{ isRevealed }}>
+                    <CreateOrEditRepoWebhookForm
+                        isPending={isPending}
+                        onSubmit={onSubmit}
+                        onHasChanges={setHasChanges}
+                        savedVersion={saveRevision}
+                        key={`${createdWebhook?.id ?? "new"}-${detailId}-${revealRevision}`}
+                        initialValues={initialValues}
+                        webhookURL={webhookURL}
+                        showAvailableInProjects
+                        isProjectScope={scope.type === "project"}
+                        readOnlyInherited={readOnlyInherited}
+                        readOnly={!canWrite}
+                        stickyActions
+                        onClose={handleClose}
+                    />
+                </RevealSecretsProvider>
             )}
         </div>
     );

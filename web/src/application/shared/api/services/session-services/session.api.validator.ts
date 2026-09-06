@@ -136,6 +136,7 @@ const GetProfileSchema = z.object({
             mfaSecret: z.string().optional(),
             projectAccesses: z.array(ProjectAccessSchema).nullable().optional(),
             moduleAccesses: z.array(ModuleAccessSchema).nullable().optional(),
+            capabilities: z.array(z.string()).nullish(),
             mfaTotpActivated: z.boolean().optional(),
         }),
     }),
@@ -177,6 +178,7 @@ export class SessionApiValidator {
                 moduleAccesses,
                 modulePermissions: mapModuleAccessesToModulePermissions(moduleAccesses),
                 projectPermissions: mapProjectAccessesToProjectPermissions(projectAccesses),
+                capabilities: user.capabilities ?? [],
                 mfaTotpActivated: user.mfaTotpActivated,
             },
         };

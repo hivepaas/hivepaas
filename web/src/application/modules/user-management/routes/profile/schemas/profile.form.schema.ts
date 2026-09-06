@@ -23,6 +23,7 @@ export const ProfileFormSchema = z.object({
     securityOption: z.nativeEnum(ESecuritySettings),
     projectAccesses: z.array(AccessSchema),
     moduleAccesses: z.array(AccessSchema),
+    capabilities: z.array(z.string()),
 });
 
 export type ProfileFormSchemaInput = z.input<typeof ProfileFormSchema>;

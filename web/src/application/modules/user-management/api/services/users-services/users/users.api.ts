@@ -144,6 +144,9 @@ export class UsersApi extends BaseApi {
             moduleAccesses: JsonTransformer.array({
                 data: user.moduleAccesses,
             }),
+            capabilities: JsonTransformer.array({
+                data: user.capabilities,
+            }),
             status: JsonTransformer.string({
                 data: user.status,
             }),

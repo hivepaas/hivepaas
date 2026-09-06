@@ -46,4 +46,5 @@ export interface UserBase {
             delete: boolean;
         };
     }[];
+    capabilities: string[];
 }

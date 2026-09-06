@@ -54,6 +54,7 @@ const FindOneByIdSchema = z.object({
     data: UserSchema.extend({
         projectAccesses: z.array(ProjectAccessApiSchema).nullable(),
         moduleAccesses: z.array(AccessSchema).nullable(),
+        capabilities: z.array(z.string()).nullish(),
     }),
 });
 
@@ -102,6 +103,7 @@ export class UsersApiValidator {
                 username: user.username ?? "",
                 projectAccesses: [],
                 moduleAccesses: [],
+                capabilities: [],
             })),
             meta,
         };
@@ -139,6 +141,7 @@ export class UsersApiValidator {
                     envAccesses: projectAccess.envAccesses ?? [],
                 })),
                 moduleAccesses: data.moduleAccesses ?? [],
+                capabilities: data.capabilities ?? [],
             },
         };
     };

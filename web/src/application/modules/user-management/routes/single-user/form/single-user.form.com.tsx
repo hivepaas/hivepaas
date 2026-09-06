@@ -29,6 +29,7 @@ const DEFAULTS: SingleUserFormSchemaInput = {
     securityOption: ESecuritySettings.PasswordOnly,
     projectAccesses: [],
     moduleAccesses: [],
+    capabilities: [],
 };
 
 type SchemaInput = SingleUserFormSchemaInput;
@@ -39,6 +40,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false,
         defaultValues: {
             ...DEFAULTS,
             ...defaultValues,
+            capabilities: defaultValues.capabilities ?? [],
             moduleAccesses: mapModuleAccesses(defaultValues.moduleAccesses),
         },
         resolver: zodResolver(SingleUserFormSchema),
@@ -64,6 +66,7 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false,
                 methods.reset({
                     ...DEFAULTS,
                     ...values,
+                    capabilities: values.capabilities,
                     moduleAccesses: mapModuleAccesses(values.moduleAccesses),
                 });
             },
@@ -172,6 +175,23 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false,
                         >
                             <UserInput.ModuleAccess<SingleUserFormSchemaInput>
                                 name="moduleAccesses"
+                                isAdmin={isAdmin}
+                            />
+                        </InfoBlock>
+
+                        {/* Capabilities */}
+                        <Separator className="opacity-50" />
+                        <InfoBlock
+                            titleWidth={220}
+                            title={
+                                <LabelWithInfo
+                                    label="Capabilities"
+                                    content="Capabilities description"
+                                />
+                            }
+                        >
+                            <UserInput.Capabilities<SingleUserFormSchemaInput>
+                                name="capabilities"
                                 isAdmin={isAdmin}
                             />
                         </InfoBlock>

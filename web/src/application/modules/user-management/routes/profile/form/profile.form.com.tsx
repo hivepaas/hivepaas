@@ -36,6 +36,7 @@ const DEFAULTS: ProfileFormSchemaInput = {
     securityOption: ESecuritySettings.PasswordOnly,
     projectAccesses: [],
     moduleAccesses: [],
+    capabilities: [],
     photo: null,
 };
 
@@ -51,6 +52,7 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
             ...defaultValues,
             fullName: defaultValues.fullName ?? "",
             email: defaultValues.email ?? "",
+            capabilities: defaultValues.capabilities,
             moduleAccesses: mapModuleAccesses(defaultValues.moduleAccesses),
             photo: defaultValues.photo,
         },
@@ -82,6 +84,7 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
                 methods.reset({
                     ...DEFAULTS,
                     ...values,
+                    capabilities: values.capabilities,
                     moduleAccesses: mapModuleAccesses(values.moduleAccesses),
                 });
             },
@@ -236,6 +239,24 @@ export function ProfileForm({ ref, defaultValues, isPhotoPending = false, onSubm
                     >
                         <UserInput.ModuleAccess<ProfileFormSchemaInput>
                             name="moduleAccesses"
+                            isAdmin={isAdmin}
+                            disabled
+                        />
+                    </InfoBlock>
+
+                    {/* Capabilities */}
+                    <Separator className="opacity-50" />
+                    <InfoBlock
+                        titleWidth={220}
+                        title={
+                            <LabelWithInfo
+                                label="Capabilities"
+                                content="Capabilities description"
+                            />
+                        }
+                    >
+                        <UserInput.Capabilities<ProfileFormSchemaInput>
+                            name="capabilities"
                             isAdmin={isAdmin}
                             disabled
                         />

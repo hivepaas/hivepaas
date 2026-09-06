@@ -20,6 +20,7 @@ const DEFAULTS: InviteUserFormInput = {
     securityOption: ESecuritySettings.PasswordOnly,
     projectAccesses: [],
     moduleAccesses: [],
+    capabilities: [],
 };
 
 export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
@@ -28,6 +29,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
             defaultValues: {
                 ...DEFAULTS,
                 ...defaultValues,
+                capabilities: defaultValues.capabilities ?? [],
                 moduleAccesses: mapModuleAccesses(defaultValues.moduleAccesses),
             },
             resolver: zodResolver(InviteUserFormSchema),
@@ -165,6 +167,23 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                             >
                                 <UserInput.ModuleAccess<InviteUserFormInput>
                                     name="moduleAccesses"
+                                    isAdmin={isAdmin}
+                                    disabled={readOnly}
+                                />
+                            </InfoBlock>
+
+                            {/* Capabilities */}
+                            <InfoBlock
+                                title={
+                                    <LabelWithInfo
+                                        label="Capabilities"
+                                        content="Capabilities description"
+                                    />
+                                }
+                                titleWidth={220}
+                            >
+                                <UserInput.Capabilities<InviteUserFormInput>
+                                    name="capabilities"
                                     isAdmin={isAdmin}
                                     disabled={readOnly}
                                 />

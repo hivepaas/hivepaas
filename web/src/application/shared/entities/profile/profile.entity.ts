@@ -89,5 +89,7 @@ export interface Profile {
 
     projectPermissions: ProjectPermission[];
 
+    capabilities: string[];
+
     mfaTotpActivated?: boolean;
 }

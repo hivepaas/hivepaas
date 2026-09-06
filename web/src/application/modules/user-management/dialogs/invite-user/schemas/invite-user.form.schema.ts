@@ -10,6 +10,7 @@ export const InviteUserFormSchema = z.object({
     accessExpireAt: z.date().nullable(),
     projectAccesses: z.array(ProjectAccessSchema),
     moduleAccesses: z.array(AccessSchema),
+    capabilities: z.array(z.string()),
 });
 
 export type InviteUserFormInput = z.output<typeof InviteUserFormSchema>;

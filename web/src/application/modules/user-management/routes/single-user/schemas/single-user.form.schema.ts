@@ -22,6 +22,7 @@ export const SingleUserFormSchema = z.object({
     securityOption: z.nativeEnum(ESecuritySettings),
     projectAccesses: z.array(ProjectAccessSchema),
     moduleAccesses: z.array(AccessSchema),
+    capabilities: z.array(z.string()),
 });
 
 export type SingleUserFormSchemaInput = z.input<typeof SingleUserFormSchema>;

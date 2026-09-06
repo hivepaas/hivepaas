@@ -55,7 +55,7 @@ export type Users_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
  * Invite a user
  */
 export type Users_InviteOne_Req = ApiRequestBase<{
-    user: Pick<UserBase, "email" | "accessExpireAt" | "projectAccesses" | "moduleAccesses"> & {
+    user: Pick<UserBase, "email" | "accessExpireAt" | "projectAccesses" | "moduleAccesses" | "capabilities"> & {
         role: EUserRole;
         securityOption: ESecuritySettings;
     };

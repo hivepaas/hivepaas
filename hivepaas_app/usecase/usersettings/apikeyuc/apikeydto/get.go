@@ -32,8 +32,13 @@ type GetAPIKeyResp struct {
 
 type APIKeyResp struct {
 	*settings.BaseSettingResp
-	KeyID        string             `json:"keyId"`
-	AccessAction base.AccessActions `json:"accessAction"`
+	KeyID string `json:"keyId"`
+	// A pointer, because null and "no actions" are opposite answers and this
+	// field used to report them as the same one. A key stored without a limit -
+	// which is every key created before it became required - carries its owner's
+	// full authority, and copying it into a value field reported it as granting
+	// nothing at all: the most dangerous key on the list looked like the safest.
+	AccessAction *base.AccessActions `json:"accessAction"`
 }
 
 func TransformAPIKey(

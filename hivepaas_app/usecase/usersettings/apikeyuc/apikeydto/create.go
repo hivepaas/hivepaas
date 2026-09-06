@@ -18,7 +18,11 @@ const (
 
 type CreateAPIKeyReq struct {
 	settings.CreateSettingReq
-	Name         string              `json:"name"`
+	Name string `json:"name"`
+	// AccessAction narrows what the key may do below what its owner may do; it
+	// never widens anything. It is required: left unset the key carries the
+	// owner's full authority, which is the last thing anyone chooses on purpose
+	// and the easiest thing to end up with by saying nothing.
 	AccessAction *base.AccessActions `json:"accessAction"`
 	ExpireAt     time.Time           `json:"expireAt"`
 }
@@ -36,6 +40,10 @@ func (req *CreateAPIKeyReq) Validate() hperrors.ValidationErrors {
 		base.SettingNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateTime(&req.ExpireAt, true, timeNow,
 		timeNow.AddDate(expirationYearMax, 0, 0), "expireAt")...)
+	// A key granting nothing is refused as well as one granting everything by
+	// omission: it cannot do any work, so it is a mistake either way.
+	validators = append(validators, basedto.ValidateCond(
+		req.AccessAction != nil && !req.AccessAction.IsNoAccess(), "accessAction")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

@@ -43,6 +43,11 @@ func (uc *UC) UpdateUser(
 			return hperrors.Wrap(err)
 		}
 
+		err = uc.cascadeRevokedCapabilities(ctx, db, auth, userData.User, persistingData)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		// Revoke target user's JWT, user needs to re-login
 		err = uc.userTokenRepo.DelAll(ctx, req.ID)
 		if err != nil {

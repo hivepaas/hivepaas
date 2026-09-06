@@ -113,9 +113,7 @@ func (uc *BaseUC) canRevealSecrets(
 		return false, hperrors.Wrap(hperrors.ErrRevealSecretsDisabled)
 	}
 
-	hasPerm, err := uc.PermissionManager.CheckAccess(ctx, db, auth, &permission.CapabilityCheck{
-		Capability: base.ResourceCapSecretReveal,
-	})
+	hasPerm, err := uc.HasCapability(ctx, db, auth, base.ResourceCapSecretReveal)
 	if err != nil {
 		return false, hperrors.Wrap(err)
 	}
@@ -123,4 +121,24 @@ func (uc *BaseUC) canRevealSecrets(
 		return false, hperrors.Wrap(hperrors.ErrUserNotHavePermissionOnRevealSecrets)
 	}
 	return true, nil
+}
+
+// HasCapability reports whether the caller holds a capability.
+//
+// It answers only that: the caller picks the error a refusal turns into, because
+// "you may not reveal secrets" and "you may not mint API keys" are different
+// things to tell someone even though the lookup behind them is the same.
+func (uc *BaseUC) HasCapability(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	capability base.ResourceCapability,
+) (bool, error) {
+	hasPerm, err := uc.PermissionManager.CheckAccess(ctx, db, auth, &permission.CapabilityCheck{
+		Capability: capability,
+	})
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	return hasPerm, nil
 }

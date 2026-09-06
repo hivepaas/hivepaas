@@ -89,10 +89,16 @@ type ResourceCapability string
 const (
 	// The name of a permission, not a credential - hence the gosec exclusion.
 	ResourceCapSecretReveal ResourceCapability = "cap::secret::reveal" //nolint:gosec // G101
+	// ResourceCapAPIKeyCreate gates minting an API key. A key grants nothing its
+	// owner does not already hold - it is a second credential for the same
+	// account - so this is not a privilege boundary but a limit on how far that
+	// account's authority can be carried: a key lives up to a year, travels as a
+	// bearer token, and authenticates without the owner's second factor.
+	ResourceCapAPIKeyCreate ResourceCapability = "cap::api-key::create" //nolint:gosec // G101
 )
 
 var (
-	AllResourceCapabilities = []ResourceCapability{ResourceCapSecretReveal}
+	AllResourceCapabilities = []ResourceCapability{ResourceCapSecretReveal, ResourceCapAPIKeyCreate}
 )
 
 type ActionType string

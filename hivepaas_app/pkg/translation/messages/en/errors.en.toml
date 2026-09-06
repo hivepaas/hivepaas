@@ -67,6 +67,7 @@ ERR_EMAIL_CHANGE_UNALLOWED = "Email changing is not allowed"
 ERR_USER_NOT_HAVE_PERMISSION_ON_RESOURCE = "User doesn't have permission on this resource"
 ERR_USER_NOT_HAVE_PERMISSION_ON_REVEAL_SECRETS = "User doesn't have permission on revealing secrets"
 ERR_REVEAL_SECRETS_DISABLED = "Returning secrets via the API is disabled on this server"
+ERR_USER_NOT_HAVE_PERMISSION_ON_CREATE_API_KEY = "User doesn't have permission to create API keys"
 
 # API client errors
 ERR_API_KEY_INVALID = "API key is invalid"

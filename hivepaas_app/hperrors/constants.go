@@ -143,7 +143,9 @@ var (
 	// ErrRevealSecretsDisabled is the operator's switch, not the caller's
 	// permissions: it is off for everyone, admins included, until the host
 	// configuration turns it on.
-	ErrRevealSecretsDisabled = NewErr(ErrNotAllowed, "ERR_REVEAL_SECRETS_DISABLED")
+	ErrRevealSecretsDisabled               = NewErr(ErrNotAllowed, "ERR_REVEAL_SECRETS_DISABLED")
+	ErrUserNotHavePermissionOnCreateAPIKey = NewErr(ErrUnauthorized,
+		"ERR_USER_NOT_HAVE_PERMISSION_ON_CREATE_API_KEY")
 )
 
 // Errors for api client

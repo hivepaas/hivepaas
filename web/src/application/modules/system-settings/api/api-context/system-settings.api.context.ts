@@ -7,6 +7,8 @@ import {
     HivePaaSRestartApiValidator,
     HivePaaSRoutingSettingsApi,
     HivePaaSRoutingSettingsApiValidator,
+    HivePaaSSecuritySettingsApi,
+    HivePaaSSecuritySettingsApiValidator,
     HivePaaSServiceSettingsApi,
     HivePaaSServiceSettingsApiValidator,
     SystemBackupApi,
@@ -33,6 +35,7 @@ function createApi() {
     const systemBackupRepoCleanupValidator = new SystemBackupRepoCleanupApiValidator();
     const hivePaaSServiceSettingsValidator = new HivePaaSServiceSettingsApiValidator();
     const hivePaaSRoutingSettingsValidator = new HivePaaSRoutingSettingsApiValidator();
+    const hivePaaSSecuritySettingsValidator = new HivePaaSSecuritySettingsApiValidator();
     const hivePaaSAppSecretValidator = new HivePaaSAppSecretApiValidator();
     const hivePaaSRestartValidator = new HivePaaSRestartApiValidator();
     const traefikServiceSettingsValidator = new TraefikServiceSettingsApiValidator();
@@ -43,6 +46,7 @@ function createApi() {
             hivepaasServiceSettings: new HivePaaSServiceSettingsApi(hivePaaSServiceSettingsValidator),
             hivepaasRoutingSettings: new HivePaaSRoutingSettingsApi(hivePaaSRoutingSettingsValidator),
             hivepaasHttpSettings: new HivePaaSRoutingSettingsApi(hivePaaSRoutingSettingsValidator),
+            hivepaasSecuritySettings: new HivePaaSSecuritySettingsApi(hivePaaSSecuritySettingsValidator),
             hivepaasAppSecret: new HivePaaSAppSecretApi(hivePaaSAppSecretValidator),
             hivepaasRestart: new HivePaaSRestartApi(hivePaaSRestartValidator),
             traefikServiceSettings: new TraefikServiceSettingsApi(traefikServiceSettingsValidator),

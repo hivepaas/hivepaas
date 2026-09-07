@@ -353,6 +353,11 @@ export function HivePaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = f
 
                     <SectionHeader>Periodic Job Configuration</SectionHeader>
                     <div className="flex flex-col gap-6 px-3">
+                        <NoteBox>
+                            If the system has many periodic jobs, you can decrease the Base Interval to evenly
+                            distribute the system load. Note: The HivePaaS app will restart, which may interrupt ongoing
+                            tasks.
+                        </NoteBox>
                         <DurationField
                             name="periodicSettings.baseInterval"
                             label="Base Interval"

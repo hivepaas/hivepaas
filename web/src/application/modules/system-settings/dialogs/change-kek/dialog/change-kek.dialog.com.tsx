@@ -52,7 +52,7 @@ export function ChangeKekDialog() {
         >
             <DialogFixedContent className="w-full sm:w-[420px] sm:max-w-[420px]">
                 <DialogHeader>
-                    <DialogTitle>Change KEK</DialogTitle>
+                    <DialogTitle>Change App Secret (KEK)</DialogTitle>
                 </DialogHeader>
                 <DialogDescription className="sr-only">Change Key Encryption Key</DialogDescription>
                 <div className="px-4">

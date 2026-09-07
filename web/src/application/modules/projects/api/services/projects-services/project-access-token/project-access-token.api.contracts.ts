@@ -1,8 +1,8 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
 import type {
     AccessToken_CreateOne_Payload,
-    AccessToken_UpdateMeta_Payload,
     AccessToken_UpdateOne_Payload,
+    AccessToken_UpdateStatus_Payload,
 } from "~/settings/api/services";
 import type { SettingAccessToken } from "~/settings/domain";
 
@@ -43,14 +43,14 @@ export type ProjectAccessToken_UpdateOne_Req = ApiRequestBase<{
 
 export type ProjectAccessToken_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
-export type ProjectAccessToken_UpdateMeta_Req = ApiRequestBase<{
+export type ProjectAccessToken_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
     env?: string;
     id: string;
-    payload: AccessToken_UpdateMeta_Payload;
+    payload: AccessToken_UpdateStatus_Payload;
 }>;
 
-export type ProjectAccessToken_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
+export type ProjectAccessToken_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
 
 export type ProjectAccessToken_DeleteOne_Req = ApiRequestBase<{
     projectID: string;

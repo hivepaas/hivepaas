@@ -8,8 +8,8 @@ import type {
     CloudStorage_FindManyPaginated_Req,
     CloudStorage_FindOneById_Req,
     CloudStorage_TestConn_Req,
-    CloudStorage_UpdateMeta_Req,
     CloudStorage_UpdateOne_Req,
+    CloudStorage_UpdateStatus_Req,
 } from "~/settings/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -67,8 +67,8 @@ function createHook() {
                         },
                     });
                 },
-                updateMeta: async (data: CloudStorage_UpdateMeta_Req["data"]) => {
-                    const result = await api.settings.cloudStorage.updateMeta({ data });
+                updateStatus: async (data: CloudStorage_UpdateStatus_Req["data"]) => {
+                    const result = await api.settings.cloudStorage.updateStatus({ data });
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {

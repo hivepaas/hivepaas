@@ -5,10 +5,10 @@ import type {
     OAuth_CreateOne_Res,
     OAuth_DeleteOne_Req,
     OAuth_DeleteOne_Res,
-    OAuth_UpdateMeta_Req,
-    OAuth_UpdateMeta_Res,
     OAuth_UpdateOne_Req,
     OAuth_UpdateOne_Res,
+    OAuth_UpdateStatus_Req,
+    OAuth_UpdateStatus_Res,
 } from "~/settings/api/services";
 import { QK } from "~/settings/data/constants";
 
@@ -49,16 +49,16 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
-type UpdateMetaReq = OAuth_UpdateMeta_Req["data"];
-type UpdateMetaRes = OAuth_UpdateMeta_Res;
-type UpdateMetaOptions = Omit<UseMutationOptions<UpdateMetaRes, Error, UpdateMetaReq>, "mutationFn">;
+type UpdateStatusReq = OAuth_UpdateStatus_Req["data"];
+type UpdateStatusRes = OAuth_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
 
-function useUpdateMeta({ onSuccess, ...options }: UpdateMetaOptions = {}) {
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
     const { mutations } = useOAuthApi();
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mutations.updateMeta,
+        mutationFn: mutations.updateStatus,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({ queryKey: [QK["settings.oauth.find-many-paginated"]] });
             void queryClient.invalidateQueries({ queryKey: [QK["settings.oauth.find-one-by-id"]] });
@@ -90,6 +90,6 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 export const OAuthCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
-    useUpdateMeta,
+    useUpdateStatus,
     useDeleteOne,
 });

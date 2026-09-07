@@ -5,10 +5,10 @@ import type {
     ProjectAccessToken_CreateOne_Res,
     ProjectAccessToken_DeleteOne_Req,
     ProjectAccessToken_DeleteOne_Res,
-    ProjectAccessToken_UpdateMeta_Req,
-    ProjectAccessToken_UpdateMeta_Res,
     ProjectAccessToken_UpdateOne_Req,
     ProjectAccessToken_UpdateOne_Res,
+    ProjectAccessToken_UpdateStatus_Req,
+    ProjectAccessToken_UpdateStatus_Res,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
@@ -49,16 +49,16 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
-type UpdateMetaReq = ProjectAccessToken_UpdateMeta_Req["data"];
-type UpdateMetaRes = ProjectAccessToken_UpdateMeta_Res;
-type UpdateMetaOptions = Omit<UseMutationOptions<UpdateMetaRes, Error, UpdateMetaReq>, "mutationFn">;
+type UpdateStatusReq = ProjectAccessToken_UpdateStatus_Req["data"];
+type UpdateStatusRes = ProjectAccessToken_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
 
-function useUpdateMeta({ onSuccess, ...options }: UpdateMetaOptions = {}) {
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
     const { mutations } = useProjectAccessTokenApi();
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mutations.updateMeta,
+        mutationFn: mutations.updateStatus,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({ queryKey: [QK["projects.access-token.$.find-many-paginated"]] });
             void queryClient.invalidateQueries({ queryKey: [QK["projects.access-token.$.find-one-by-id"]] });
@@ -90,6 +90,6 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 export const ProjectAccessTokenCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
-    useUpdateMeta,
+    useUpdateStatus,
     useDeleteOne,
 });

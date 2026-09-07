@@ -40,7 +40,7 @@ export type CloudStorage_UpdateOne_Req = ApiRequestBase<{
 
 export type CloudStorage_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
-export type CloudStorage_UpdateMeta_Payload = {
+export type CloudStorage_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
@@ -48,12 +48,12 @@ export type CloudStorage_UpdateMeta_Payload = {
     default?: boolean;
 };
 
-export type CloudStorage_UpdateMeta_Req = ApiRequestBase<{
+export type CloudStorage_UpdateStatus_Req = ApiRequestBase<{
     id: string;
-    payload: CloudStorage_UpdateMeta_Payload;
+    payload: CloudStorage_UpdateStatus_Payload;
 }>;
 
-export type CloudStorage_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
+export type CloudStorage_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
 
 export type CloudStorage_DeleteOne_Req = ApiRequestBase<{ id: string }>;
 

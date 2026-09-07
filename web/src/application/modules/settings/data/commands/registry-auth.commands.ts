@@ -7,10 +7,10 @@ import type {
     RegistryAuth_DeleteOne_Res,
     RegistryAuth_TestConn_Req,
     RegistryAuth_TestConn_Res,
-    RegistryAuth_UpdateMeta_Req,
-    RegistryAuth_UpdateMeta_Res,
     RegistryAuth_UpdateOne_Req,
     RegistryAuth_UpdateOne_Res,
+    RegistryAuth_UpdateStatus_Req,
+    RegistryAuth_UpdateStatus_Res,
 } from "~/settings/api/services/registry-auth-services";
 import { QK } from "~/settings/data/constants";
 
@@ -59,16 +59,16 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
-type UpdateMetaReq = RegistryAuth_UpdateMeta_Req["data"];
-type UpdateMetaRes = RegistryAuth_UpdateMeta_Res;
-type UpdateMetaOptions = Omit<UseMutationOptions<UpdateMetaRes, Error, UpdateMetaReq>, "mutationFn">;
+type UpdateStatusReq = RegistryAuth_UpdateStatus_Req["data"];
+type UpdateStatusRes = RegistryAuth_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
 
-function useUpdateMeta({ onSuccess, ...options }: UpdateMetaOptions = {}) {
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
     const { mutations } = useRegistryAuthApi();
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mutations.updateMeta,
+        mutationFn: mutations.updateStatus,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({
                 queryKey: [QK["settings.registry-auth.find-many-paginated"]],
@@ -123,7 +123,7 @@ function useTestConn(options: TestConnOptions = {}) {
 export const RegistryAuthCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
-    useUpdateMeta,
+    useUpdateStatus,
     useDeleteOne,
     useTestConn,
 });

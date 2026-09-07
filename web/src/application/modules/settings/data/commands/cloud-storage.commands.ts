@@ -7,10 +7,10 @@ import type {
     CloudStorage_DeleteOne_Res,
     CloudStorage_TestConn_Req,
     CloudStorage_TestConn_Res,
-    CloudStorage_UpdateMeta_Req,
-    CloudStorage_UpdateMeta_Res,
     CloudStorage_UpdateOne_Req,
     CloudStorage_UpdateOne_Res,
+    CloudStorage_UpdateStatus_Req,
+    CloudStorage_UpdateStatus_Res,
 } from "~/settings/api/services";
 import { QK } from "~/settings/data/constants";
 
@@ -51,16 +51,16 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
-type UpdateMetaReq = CloudStorage_UpdateMeta_Req["data"];
-type UpdateMetaRes = CloudStorage_UpdateMeta_Res;
-type UpdateMetaOptions = Omit<UseMutationOptions<UpdateMetaRes, Error, UpdateMetaReq>, "mutationFn">;
+type UpdateStatusReq = CloudStorage_UpdateStatus_Req["data"];
+type UpdateStatusRes = CloudStorage_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
 
-function useUpdateMeta({ onSuccess, ...options }: UpdateMetaOptions = {}) {
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
     const { mutations } = useCloudStorageApi();
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mutations.updateMeta,
+        mutationFn: mutations.updateStatus,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({ queryKey: [QK["settings.cloud-storage.find-many-paginated"]] });
             void queryClient.invalidateQueries({ queryKey: [QK["settings.cloud-storage.find-one-by-id"]] });
@@ -105,7 +105,7 @@ function useTestConn(options: TestConnOptions = {}) {
 export const CloudStorageCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
-    useUpdateMeta,
+    useUpdateStatus,
     useDeleteOne,
     useTestConn,
 });

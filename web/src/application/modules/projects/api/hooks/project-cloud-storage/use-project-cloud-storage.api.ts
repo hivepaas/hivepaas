@@ -7,8 +7,8 @@ import type {
     ProjectCloudStorage_DeleteOne_Req,
     ProjectCloudStorage_FindManyPaginated_Req,
     ProjectCloudStorage_FindOneById_Req,
-    ProjectCloudStorage_UpdateMeta_Req,
     ProjectCloudStorage_UpdateOne_Req,
+    ProjectCloudStorage_UpdateStatus_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -69,8 +69,8 @@ function createHook() {
                         },
                     });
                 },
-                updateMeta: async (data: ProjectCloudStorage_UpdateMeta_Req["data"]) => {
-                    const result = await api.projects.cloudStorage.$.updateMeta({ data });
+                updateStatus: async (data: ProjectCloudStorage_UpdateStatus_Req["data"]) => {
+                    const result = await api.projects.cloudStorage.$.updateStatus({ data });
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {

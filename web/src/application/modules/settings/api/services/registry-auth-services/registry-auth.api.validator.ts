@@ -10,8 +10,8 @@ import type {
     RegistryAuth_FindManyPaginated_Res,
     RegistryAuth_FindOneById_Res,
     RegistryAuth_TestConn_Res,
-    RegistryAuth_UpdateMeta_Res,
     RegistryAuth_UpdateOne_Res,
+    RegistryAuth_UpdateStatus_Res,
 } from "./registry-auth.api.contracts";
 
 const FindManyPaginatedSchema = z.object({
@@ -72,7 +72,7 @@ export class RegistryAuthApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateMeta = (response: AxiosResponse): RegistryAuth_UpdateMeta_Res => {
+    updateStatus = (response: AxiosResponse): RegistryAuth_UpdateStatus_Res => {
         parseApiResponse({
             response,
             schema: MetaOnlySchema,

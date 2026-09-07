@@ -7,8 +7,8 @@ import type {
     OAuth_DeleteOne_Req,
     OAuth_FindManyPaginated_Req,
     OAuth_FindOneById_Req,
-    OAuth_UpdateMeta_Req,
     OAuth_UpdateOne_Req,
+    OAuth_UpdateStatus_Req,
 } from "~/settings/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -66,8 +66,8 @@ function createHook() {
                         },
                     });
                 },
-                updateMeta: async (data: OAuth_UpdateMeta_Req["data"]) => {
-                    const result = await api.settings.oauth.updateMeta({ data });
+                updateStatus: async (data: OAuth_UpdateStatus_Req["data"]) => {
+                    const result = await api.settings.oauth.updateStatus({ data });
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {

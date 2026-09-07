@@ -5,10 +5,10 @@ import type {
     ProjectCloudStorage_CreateOne_Res,
     ProjectCloudStorage_DeleteOne_Req,
     ProjectCloudStorage_DeleteOne_Res,
-    ProjectCloudStorage_UpdateMeta_Req,
-    ProjectCloudStorage_UpdateMeta_Res,
     ProjectCloudStorage_UpdateOne_Req,
     ProjectCloudStorage_UpdateOne_Res,
+    ProjectCloudStorage_UpdateStatus_Req,
+    ProjectCloudStorage_UpdateStatus_Res,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
@@ -49,16 +49,16 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
-type UpdateMetaReq = ProjectCloudStorage_UpdateMeta_Req["data"];
-type UpdateMetaRes = ProjectCloudStorage_UpdateMeta_Res;
-type UpdateMetaOptions = Omit<UseMutationOptions<UpdateMetaRes, Error, UpdateMetaReq>, "mutationFn">;
+type UpdateStatusReq = ProjectCloudStorage_UpdateStatus_Req["data"];
+type UpdateStatusRes = ProjectCloudStorage_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
 
-function useUpdateMeta({ onSuccess, ...options }: UpdateMetaOptions = {}) {
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
     const { mutations } = useProjectCloudStorageApi();
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mutations.updateMeta,
+        mutationFn: mutations.updateStatus,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({ queryKey: [QK["projects.cloud-storage.$.find-many-paginated"]] });
             void queryClient.invalidateQueries({ queryKey: [QK["projects.cloud-storage.$.find-one-by-id"]] });
@@ -90,6 +90,6 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 export const ProjectCloudStorageCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
-    useUpdateMeta,
+    useUpdateStatus,
     useDeleteOne,
 });

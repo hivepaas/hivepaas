@@ -24,14 +24,14 @@ export function UpdateSSHKeyStatusDialog() {
     const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
     const { canWrite } = useSettingsScopePermissions(permissionScope);
 
-    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = SSHKeyCommands.useUpdateMeta({
+    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = SSHKeyCommands.useUpdateStatus({
         onSuccess: () => {
             toast.success("SSH key status updated successfully");
             closeDialog();
             dialogOptions?.onSuccess?.();
         },
     });
-    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectSSHKeyCommands.useUpdateMeta({
+    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectSSHKeyCommands.useUpdateStatus({
         onSuccess: () => {
             toast.success("Project SSH key status updated successfully");
             closeDialog();

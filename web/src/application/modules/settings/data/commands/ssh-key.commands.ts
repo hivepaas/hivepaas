@@ -7,10 +7,10 @@ import type {
     SSHKey_DeleteOne_Res,
     SSHKey_Generate_Req,
     SSHKey_Generate_Res,
-    SSHKey_UpdateMeta_Req,
-    SSHKey_UpdateMeta_Res,
     SSHKey_UpdateOne_Req,
     SSHKey_UpdateOne_Res,
+    SSHKey_UpdateStatus_Req,
+    SSHKey_UpdateStatus_Res,
 } from "~/settings/api/services";
 import { QK } from "~/settings/data/constants";
 
@@ -51,16 +51,16 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
-type UpdateMetaReq = SSHKey_UpdateMeta_Req["data"];
-type UpdateMetaRes = SSHKey_UpdateMeta_Res;
-type UpdateMetaOptions = Omit<UseMutationOptions<UpdateMetaRes, Error, UpdateMetaReq>, "mutationFn">;
+type UpdateStatusReq = SSHKey_UpdateStatus_Req["data"];
+type UpdateStatusRes = SSHKey_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
 
-function useUpdateMeta({ onSuccess, ...options }: UpdateMetaOptions = {}) {
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
     const { mutations } = useSSHKeyApi();
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mutations.updateMeta,
+        mutationFn: mutations.updateStatus,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({ queryKey: [QK["settings.ssh-key.find-many-paginated"]] });
             void queryClient.invalidateQueries({ queryKey: [QK["settings.ssh-key.find-one-by-id"]] });
@@ -105,7 +105,7 @@ function useGenerate(options: GenerateOptions = {}) {
 export const SSHKeyCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
-    useUpdateMeta,
+    useUpdateStatus,
     useDeleteOne,
     useGenerate,
 });

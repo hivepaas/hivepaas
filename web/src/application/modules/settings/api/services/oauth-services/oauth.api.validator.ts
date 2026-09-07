@@ -9,8 +9,8 @@ import type {
     OAuth_DeleteOne_Res,
     OAuth_FindManyPaginated_Res,
     OAuth_FindOneById_Res,
-    OAuth_UpdateMeta_Res,
     OAuth_UpdateOne_Res,
+    OAuth_UpdateStatus_Res,
 } from "./oauth.api.contracts";
 
 const FindManyPaginatedSchema = z.object({
@@ -56,7 +56,7 @@ export class OAuthApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateMeta = (response: AxiosResponse): OAuth_UpdateMeta_Res => {
+    updateStatus = (response: AxiosResponse): OAuth_UpdateStatus_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

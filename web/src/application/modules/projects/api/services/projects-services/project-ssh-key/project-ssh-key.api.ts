@@ -12,10 +12,10 @@ import type {
     ProjectSSHKey_FindManyPaginated_Res,
     ProjectSSHKey_FindOneById_Req,
     ProjectSSHKey_FindOneById_Res,
-    ProjectSSHKey_UpdateMeta_Req,
-    ProjectSSHKey_UpdateMeta_Res,
     ProjectSSHKey_UpdateOne_Req,
     ProjectSSHKey_UpdateOne_Res,
+    ProjectSSHKey_UpdateStatus_Req,
+    ProjectSSHKey_UpdateStatus_Res,
 } from "./project-ssh-key.api.contracts";
 import type { ProjectSSHKeyApiValidator } from "./project-ssh-key.api.validator";
 
@@ -111,10 +111,10 @@ export class ProjectSSHKeyApi extends BaseApi {
         );
     }
 
-    async updateMeta(
-        request: ProjectSSHKey_UpdateMeta_Req,
+    async updateStatus(
+        request: ProjectSSHKey_UpdateStatus_Req,
         signal?: AbortSignal,
-    ): Promise<Result<ProjectSSHKey_UpdateMeta_Res, Error>> {
+    ): Promise<Result<ProjectSSHKey_UpdateStatus_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
 
         return lastValueFrom(
@@ -123,7 +123,7 @@ export class ProjectSSHKeyApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateMeta),
+                map(this.validator.updateStatus),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

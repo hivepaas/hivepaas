@@ -14,10 +14,10 @@ import type {
     AccessToken_FindOneById_Res,
     AccessToken_TestConn_Req,
     AccessToken_TestConn_Res,
-    AccessToken_UpdateMeta_Req,
-    AccessToken_UpdateMeta_Res,
     AccessToken_UpdateOne_Req,
     AccessToken_UpdateOne_Res,
+    AccessToken_UpdateStatus_Req,
+    AccessToken_UpdateStatus_Res,
 } from "./access-token.api.contracts";
 import type { AccessTokenApiValidator } from "./access-token.api.validator";
 
@@ -88,15 +88,15 @@ export class AccessTokenApi extends BaseApi {
         );
     }
 
-    async updateMeta(
-        request: AccessToken_UpdateMeta_Req,
+    async updateStatus(
+        request: AccessToken_UpdateStatus_Req,
         signal?: AbortSignal,
-    ): Promise<Result<AccessToken_UpdateMeta_Res, Error>> {
+    ): Promise<Result<AccessToken_UpdateStatus_Res, Error>> {
         const { id, payload } = request.data;
 
         return lastValueFrom(
             from(this.client.v1.put(`/settings/access-tokens/${id}/status`, payload, { signal })).pipe(
-                map(this.validator.updateMeta),
+                map(this.validator.updateStatus),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

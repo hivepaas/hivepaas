@@ -10,8 +10,8 @@ import type {
     CloudStorage_FindManyPaginated_Res,
     CloudStorage_FindOneById_Res,
     CloudStorage_TestConn_Res,
-    CloudStorage_UpdateMeta_Res,
     CloudStorage_UpdateOne_Res,
+    CloudStorage_UpdateStatus_Res,
 } from "./cloud-storage.api.contracts";
 
 const FindManyPaginatedSchema = z.object({
@@ -54,7 +54,7 @@ export class CloudStorageApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateMeta = (response: AxiosResponse): CloudStorage_UpdateMeta_Res => {
+    updateStatus = (response: AxiosResponse): CloudStorage_UpdateStatus_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

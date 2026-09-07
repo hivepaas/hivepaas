@@ -43,7 +43,7 @@ export type SSHKey_UpdateOne_Req = ApiRequestBase<{
 
 export type SSHKey_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
-export type SSHKey_UpdateMeta_Payload = {
+export type SSHKey_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
@@ -51,12 +51,12 @@ export type SSHKey_UpdateMeta_Payload = {
     default?: boolean;
 };
 
-export type SSHKey_UpdateMeta_Req = ApiRequestBase<{
+export type SSHKey_UpdateStatus_Req = ApiRequestBase<{
     id: string;
-    payload: SSHKey_UpdateMeta_Payload;
+    payload: SSHKey_UpdateStatus_Payload;
 }>;
 
-export type SSHKey_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
+export type SSHKey_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
 
 export type SSHKey_DeleteOne_Req = ApiRequestBase<{ id: string }>;
 

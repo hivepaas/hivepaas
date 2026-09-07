@@ -1,8 +1,8 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
 import type {
     RegistryAuth_CreateOne_Payload,
-    RegistryAuth_UpdateMeta_Payload,
     RegistryAuth_UpdateOne_Payload,
+    RegistryAuth_UpdateStatus_Payload,
 } from "~/settings/api/services/registry-auth-services";
 import type { SettingRegistryAuth } from "~/settings/domain";
 
@@ -43,14 +43,14 @@ export type ProjectRegistryAuth_UpdateOne_Req = ApiRequestBase<{
 
 export type ProjectRegistryAuth_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
-export type ProjectRegistryAuth_UpdateMeta_Req = ApiRequestBase<{
+export type ProjectRegistryAuth_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
     env?: string;
     id: string;
-    payload: RegistryAuth_UpdateMeta_Payload;
+    payload: RegistryAuth_UpdateStatus_Payload;
 }>;
 
-export type ProjectRegistryAuth_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
+export type ProjectRegistryAuth_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
 
 export type ProjectRegistryAuth_DeleteOne_Req = ApiRequestBase<{
     projectID: string;

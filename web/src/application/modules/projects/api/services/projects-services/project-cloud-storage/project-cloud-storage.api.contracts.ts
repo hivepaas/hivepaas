@@ -1,8 +1,8 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
 import type {
     CloudStorage_CreateOne_Payload,
-    CloudStorage_UpdateMeta_Payload,
     CloudStorage_UpdateOne_Payload,
+    CloudStorage_UpdateStatus_Payload,
 } from "~/settings/api/services";
 import type { SettingCloudStorage } from "~/settings/domain";
 
@@ -43,14 +43,14 @@ export type ProjectCloudStorage_UpdateOne_Req = ApiRequestBase<{
 
 export type ProjectCloudStorage_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
-export type ProjectCloudStorage_UpdateMeta_Req = ApiRequestBase<{
+export type ProjectCloudStorage_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
     env?: string;
     id: string;
-    payload: CloudStorage_UpdateMeta_Payload;
+    payload: CloudStorage_UpdateStatus_Payload;
 }>;
 
-export type ProjectCloudStorage_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
+export type ProjectCloudStorage_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
 
 export type ProjectCloudStorage_DeleteOne_Req = ApiRequestBase<{
     projectID: string;

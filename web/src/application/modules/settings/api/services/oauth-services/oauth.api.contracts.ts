@@ -46,19 +46,19 @@ export type OAuth_UpdateOne_Req = ApiRequestBase<{
 
 export type OAuth_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
-export type OAuth_UpdateMeta_Payload = {
+export type OAuth_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
     default?: boolean;
 };
 
-export type OAuth_UpdateMeta_Req = ApiRequestBase<{
+export type OAuth_UpdateStatus_Req = ApiRequestBase<{
     id: string;
-    payload: OAuth_UpdateMeta_Payload;
+    payload: OAuth_UpdateStatus_Payload;
 }>;
 
-export type OAuth_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
+export type OAuth_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
 
 export type OAuth_DeleteOne_Req = ApiRequestBase<{ id: string }>;
 

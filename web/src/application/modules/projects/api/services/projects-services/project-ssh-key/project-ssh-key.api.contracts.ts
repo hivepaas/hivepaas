@@ -1,8 +1,8 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
 import type {
     SSHKey_CreateOne_Payload,
-    SSHKey_UpdateMeta_Payload,
     SSHKey_UpdateOne_Payload,
+    SSHKey_UpdateStatus_Payload,
 } from "~/settings/api/services";
 import type { SettingSSHKey } from "~/settings/domain";
 
@@ -43,14 +43,14 @@ export type ProjectSSHKey_UpdateOne_Req = ApiRequestBase<{
 
 export type ProjectSSHKey_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
-export type ProjectSSHKey_UpdateMeta_Req = ApiRequestBase<{
+export type ProjectSSHKey_UpdateStatus_Req = ApiRequestBase<{
     projectID: string;
     env?: string;
     id: string;
-    payload: SSHKey_UpdateMeta_Payload;
+    payload: SSHKey_UpdateStatus_Payload;
 }>;
 
-export type ProjectSSHKey_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
+export type ProjectSSHKey_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
 
 export type ProjectSSHKey_DeleteOne_Req = ApiRequestBase<{
     projectID: string;

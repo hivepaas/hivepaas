@@ -5,10 +5,10 @@ import type {
     ProjectRegistryAuth_CreateOne_Res,
     ProjectRegistryAuth_DeleteOne_Req,
     ProjectRegistryAuth_DeleteOne_Res,
-    ProjectRegistryAuth_UpdateMeta_Req,
-    ProjectRegistryAuth_UpdateMeta_Res,
     ProjectRegistryAuth_UpdateOne_Req,
     ProjectRegistryAuth_UpdateOne_Res,
+    ProjectRegistryAuth_UpdateStatus_Req,
+    ProjectRegistryAuth_UpdateStatus_Res,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
@@ -57,16 +57,16 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
-type UpdateMetaReq = ProjectRegistryAuth_UpdateMeta_Req["data"];
-type UpdateMetaRes = ProjectRegistryAuth_UpdateMeta_Res;
-type UpdateMetaOptions = Omit<UseMutationOptions<UpdateMetaRes, Error, UpdateMetaReq>, "mutationFn">;
+type UpdateStatusReq = ProjectRegistryAuth_UpdateStatus_Req["data"];
+type UpdateStatusRes = ProjectRegistryAuth_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
 
-function useUpdateMeta({ onSuccess, ...options }: UpdateMetaOptions = {}) {
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
     const { mutations } = useProjectRegistryAuthApi();
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mutations.updateMeta,
+        mutationFn: mutations.updateStatus,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({
                 queryKey: [QK["projects.registry-auth.$.find-many-paginated"]],
@@ -108,6 +108,6 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 export const ProjectRegistryAuthCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
-    useUpdateMeta,
+    useUpdateStatus,
     useDeleteOne,
 });

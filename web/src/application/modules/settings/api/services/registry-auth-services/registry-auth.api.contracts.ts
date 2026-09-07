@@ -53,7 +53,7 @@ export type RegistryAuth_UpdateOne_Req = ApiRequestBase<{
 
 export type RegistryAuth_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
-export type RegistryAuth_UpdateMeta_Payload = {
+export type RegistryAuth_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
@@ -61,12 +61,12 @@ export type RegistryAuth_UpdateMeta_Payload = {
     default?: boolean;
 };
 
-export type RegistryAuth_UpdateMeta_Req = ApiRequestBase<{
+export type RegistryAuth_UpdateStatus_Req = ApiRequestBase<{
     id: string;
-    payload: RegistryAuth_UpdateMeta_Payload;
+    payload: RegistryAuth_UpdateStatus_Payload;
 }>;
 
-export type RegistryAuth_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
+export type RegistryAuth_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
 
 export type RegistryAuth_DeleteOne_Req = ApiRequestBase<{
     id: string;

@@ -10,8 +10,8 @@ import type {
     AccessToken_FindManyPaginated_Res,
     AccessToken_FindOneById_Res,
     AccessToken_TestConn_Res,
-    AccessToken_UpdateMeta_Res,
     AccessToken_UpdateOne_Res,
+    AccessToken_UpdateStatus_Res,
 } from "./access-token.api.contracts";
 
 const FindManyPaginatedSchema = z.object({
@@ -54,7 +54,7 @@ export class AccessTokenApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateMeta = (response: AxiosResponse): AccessToken_UpdateMeta_Res => {
+    updateStatus = (response: AxiosResponse): AccessToken_UpdateStatus_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

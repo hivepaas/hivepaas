@@ -8,8 +8,8 @@ import type {
     SSHKey_FindManyPaginated_Req,
     SSHKey_FindOneById_Req,
     SSHKey_Generate_Req,
-    SSHKey_UpdateMeta_Req,
     SSHKey_UpdateOne_Req,
+    SSHKey_UpdateStatus_Req,
 } from "~/settings/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -67,8 +67,8 @@ function createHook() {
                         },
                     });
                 },
-                updateMeta: async (data: SSHKey_UpdateMeta_Req["data"]) => {
-                    const result = await api.settings.sshKey.updateMeta({ data });
+                updateStatus: async (data: SSHKey_UpdateStatus_Req["data"]) => {
+                    const result = await api.settings.sshKey.updateStatus({ data });
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {

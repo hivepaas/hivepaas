@@ -12,10 +12,10 @@ import type {
     ProjectRegistryAuth_FindManyPaginated_Res,
     ProjectRegistryAuth_FindOneById_Req,
     ProjectRegistryAuth_FindOneById_Res,
-    ProjectRegistryAuth_UpdateMeta_Req,
-    ProjectRegistryAuth_UpdateMeta_Res,
     ProjectRegistryAuth_UpdateOne_Req,
     ProjectRegistryAuth_UpdateOne_Res,
+    ProjectRegistryAuth_UpdateStatus_Req,
+    ProjectRegistryAuth_UpdateStatus_Res,
 } from "./project-registry-auth.api.contracts";
 import type { ProjectRegistryAuthApiValidator } from "./project-registry-auth.api.validator";
 
@@ -111,10 +111,10 @@ export class ProjectRegistryAuthApi extends BaseApi {
         );
     }
 
-    async updateMeta(
-        request: ProjectRegistryAuth_UpdateMeta_Req,
+    async updateStatus(
+        request: ProjectRegistryAuth_UpdateStatus_Req,
         signal?: AbortSignal,
-    ): Promise<Result<ProjectRegistryAuth_UpdateMeta_Res, Error>> {
+    ): Promise<Result<ProjectRegistryAuth_UpdateStatus_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
 
         return lastValueFrom(
@@ -123,7 +123,7 @@ export class ProjectRegistryAuthApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(response => this.validator.updateMeta(response)),
+                map(response => this.validator.updateStatus(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

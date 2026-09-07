@@ -29,14 +29,14 @@ export function UpdateAccessTokenStatusDialog() {
     const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
     const { canWrite } = useSettingsScopePermissions(permissionScope);
 
-    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = AccessTokenCommands.useUpdateMeta({
+    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = AccessTokenCommands.useUpdateStatus({
         onSuccess: () => {
             toast.success("Access token status updated successfully");
             closeDialog();
             dialogOptions?.onSuccess?.();
         },
     });
-    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectAccessTokenCommands.useUpdateMeta({
+    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectAccessTokenCommands.useUpdateStatus({
         onSuccess: () => {
             toast.success("Project access token status updated successfully");
             closeDialog();

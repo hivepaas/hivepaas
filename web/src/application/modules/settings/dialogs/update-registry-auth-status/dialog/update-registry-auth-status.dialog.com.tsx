@@ -29,7 +29,7 @@ export function UpdateRegistryAuthStatusDialog() {
     const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
     const { canWrite } = useSettingsScopePermissions(permissionScope);
 
-    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = RegistryAuthCommands.useUpdateMeta({
+    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = RegistryAuthCommands.useUpdateStatus({
         onSuccess: () => {
             toast.success("Registry auth status updated successfully");
             closeDialog();
@@ -37,7 +37,7 @@ export function UpdateRegistryAuthStatusDialog() {
         },
     });
 
-    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectRegistryAuthCommands.useUpdateMeta({
+    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectRegistryAuthCommands.useUpdateStatus({
         onSuccess: () => {
             toast.success("Project registry auth status updated successfully");
             closeDialog();

@@ -7,8 +7,8 @@ import type {
     ProjectRegistryAuth_DeleteOne_Req,
     ProjectRegistryAuth_FindManyPaginated_Req,
     ProjectRegistryAuth_FindOneById_Req,
-    ProjectRegistryAuth_UpdateMeta_Req,
     ProjectRegistryAuth_UpdateOne_Req,
+    ProjectRegistryAuth_UpdateStatus_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -104,8 +104,8 @@ function createHook() {
                         },
                     });
                 },
-                updateMeta: async (data: ProjectRegistryAuth_UpdateMeta_Req["data"]) => {
-                    const result = await api.projects.registryAuth.$.updateMeta({
+                updateStatus: async (data: ProjectRegistryAuth_UpdateStatus_Req["data"]) => {
+                    const result = await api.projects.registryAuth.$.updateStatus({
                         data,
                     });
 

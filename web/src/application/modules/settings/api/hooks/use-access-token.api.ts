@@ -8,8 +8,8 @@ import type {
     AccessToken_FindManyPaginated_Req,
     AccessToken_FindOneById_Req,
     AccessToken_TestConn_Req,
-    AccessToken_UpdateMeta_Req,
     AccessToken_UpdateOne_Req,
+    AccessToken_UpdateStatus_Req,
 } from "~/settings/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -67,8 +67,8 @@ function createHook() {
                         },
                     });
                 },
-                updateMeta: async (data: AccessToken_UpdateMeta_Req["data"]) => {
-                    const result = await api.settings.accessToken.updateMeta({ data });
+                updateStatus: async (data: AccessToken_UpdateStatus_Req["data"]) => {
+                    const result = await api.settings.accessToken.updateStatus({ data });
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {

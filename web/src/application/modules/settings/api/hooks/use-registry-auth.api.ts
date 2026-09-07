@@ -8,8 +8,8 @@ import type {
     RegistryAuth_FindManyPaginated_Req,
     RegistryAuth_FindOneById_Req,
     RegistryAuth_TestConn_Req,
-    RegistryAuth_UpdateMeta_Req,
     RegistryAuth_UpdateOne_Req,
+    RegistryAuth_UpdateStatus_Req,
 } from "~/settings/api/services/registry-auth-services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -102,8 +102,8 @@ function createHook() {
                         },
                     });
                 },
-                updateMeta: async (data: RegistryAuth_UpdateMeta_Req["data"]) => {
-                    const result = await api.settings.registryAuth.updateMeta({
+                updateStatus: async (data: RegistryAuth_UpdateStatus_Req["data"]) => {
+                    const result = await api.settings.registryAuth.updateStatus({
                         data,
                     });
 

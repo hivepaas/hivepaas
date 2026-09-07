@@ -43,7 +43,7 @@ export type AccessToken_UpdateOne_Req = ApiRequestBase<{
 
 export type AccessToken_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
 
-export type AccessToken_UpdateMeta_Payload = {
+export type AccessToken_UpdateStatus_Payload = {
     updateVer: number;
     status?: ESettingStatus;
     expireAt?: Date | null;
@@ -51,12 +51,12 @@ export type AccessToken_UpdateMeta_Payload = {
     default?: boolean;
 };
 
-export type AccessToken_UpdateMeta_Req = ApiRequestBase<{
+export type AccessToken_UpdateStatus_Req = ApiRequestBase<{
     id: string;
-    payload: AccessToken_UpdateMeta_Payload;
+    payload: AccessToken_UpdateStatus_Payload;
 }>;
 
-export type AccessToken_UpdateMeta_Res = ApiResponseBase<{ type: "success" }>;
+export type AccessToken_UpdateStatus_Res = ApiResponseBase<{ type: "success" }>;
 
 export type AccessToken_DeleteOne_Req = ApiRequestBase<{ id: string }>;
 

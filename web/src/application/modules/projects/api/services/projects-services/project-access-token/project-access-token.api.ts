@@ -12,10 +12,10 @@ import type {
     ProjectAccessToken_FindManyPaginated_Res,
     ProjectAccessToken_FindOneById_Req,
     ProjectAccessToken_FindOneById_Res,
-    ProjectAccessToken_UpdateMeta_Req,
-    ProjectAccessToken_UpdateMeta_Res,
     ProjectAccessToken_UpdateOne_Req,
     ProjectAccessToken_UpdateOne_Res,
+    ProjectAccessToken_UpdateStatus_Req,
+    ProjectAccessToken_UpdateStatus_Res,
 } from "./project-access-token.api.contracts";
 import type { ProjectAccessTokenApiValidator } from "./project-access-token.api.validator";
 
@@ -111,10 +111,10 @@ export class ProjectAccessTokenApi extends BaseApi {
         );
     }
 
-    async updateMeta(
-        request: ProjectAccessToken_UpdateMeta_Req,
+    async updateStatus(
+        request: ProjectAccessToken_UpdateStatus_Req,
         signal?: AbortSignal,
-    ): Promise<Result<ProjectAccessToken_UpdateMeta_Res, Error>> {
+    ): Promise<Result<ProjectAccessToken_UpdateStatus_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
 
         return lastValueFrom(
@@ -123,7 +123,7 @@ export class ProjectAccessTokenApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateMeta),
+                map(this.validator.updateStatus),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

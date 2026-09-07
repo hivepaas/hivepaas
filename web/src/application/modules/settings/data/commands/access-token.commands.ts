@@ -7,10 +7,10 @@ import type {
     AccessToken_DeleteOne_Res,
     AccessToken_TestConn_Req,
     AccessToken_TestConn_Res,
-    AccessToken_UpdateMeta_Req,
-    AccessToken_UpdateMeta_Res,
     AccessToken_UpdateOne_Req,
     AccessToken_UpdateOne_Res,
+    AccessToken_UpdateStatus_Req,
+    AccessToken_UpdateStatus_Res,
 } from "~/settings/api/services";
 import { QK } from "~/settings/data/constants";
 
@@ -51,16 +51,16 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
-type UpdateMetaReq = AccessToken_UpdateMeta_Req["data"];
-type UpdateMetaRes = AccessToken_UpdateMeta_Res;
-type UpdateMetaOptions = Omit<UseMutationOptions<UpdateMetaRes, Error, UpdateMetaReq>, "mutationFn">;
+type UpdateStatusReq = AccessToken_UpdateStatus_Req["data"];
+type UpdateStatusRes = AccessToken_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
 
-function useUpdateMeta({ onSuccess, ...options }: UpdateMetaOptions = {}) {
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
     const { mutations } = useAccessTokenApi();
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mutations.updateMeta,
+        mutationFn: mutations.updateStatus,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({ queryKey: [QK["settings.access-token.find-many-paginated"]] });
             void queryClient.invalidateQueries({ queryKey: [QK["settings.access-token.find-one-by-id"]] });
@@ -105,7 +105,7 @@ function useTestConn(options: TestConnOptions = {}) {
 export const AccessTokenCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
-    useUpdateMeta,
+    useUpdateStatus,
     useDeleteOne,
     useTestConn,
 });

@@ -12,8 +12,8 @@ import type {
     SSHKey_FindManyPaginated_Res,
     SSHKey_FindOneById_Res,
     SSHKey_Generate_Res,
-    SSHKey_UpdateMeta_Res,
     SSHKey_UpdateOne_Res,
+    SSHKey_UpdateStatus_Res,
 } from "./ssh-key.api.contracts";
 
 const FindManyPaginatedSchema = z.object({
@@ -65,7 +65,7 @@ export class SSHKeyApiValidator {
         return { data: { type: "success" } };
     };
 
-    updateMeta = (response: AxiosResponse): SSHKey_UpdateMeta_Res => {
+    updateStatus = (response: AxiosResponse): SSHKey_UpdateStatus_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
     };

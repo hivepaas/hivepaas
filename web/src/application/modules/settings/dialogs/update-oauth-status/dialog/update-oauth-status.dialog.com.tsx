@@ -21,7 +21,7 @@ export function UpdateOAuthStatusDialog() {
     const [hasChanges, setHasChanges] = useState(false);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.Settings });
 
-    const { mutate: updateMeta, isPending } = OAuthCommands.useUpdateMeta({
+    const { mutate: updateStatus, isPending } = OAuthCommands.useUpdateStatus({
         onSuccess: () => {
             toast.success("OAuth status updated successfully");
             closeDialog();
@@ -43,7 +43,7 @@ export function UpdateOAuthStatusDialog() {
     function onSubmit(values: UpdateOAuthStatusFormOutput) {
         if (state.mode !== "open" || !oauth || !canWrite) return;
 
-        updateMeta({
+        updateStatus({
             id: oauth.id,
             payload: {
                 updateVer: oauth.updateVer,

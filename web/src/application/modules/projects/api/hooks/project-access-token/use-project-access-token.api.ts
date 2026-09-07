@@ -7,8 +7,8 @@ import type {
     ProjectAccessToken_DeleteOne_Req,
     ProjectAccessToken_FindManyPaginated_Req,
     ProjectAccessToken_FindOneById_Req,
-    ProjectAccessToken_UpdateMeta_Req,
     ProjectAccessToken_UpdateOne_Req,
+    ProjectAccessToken_UpdateStatus_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -69,8 +69,8 @@ function createHook() {
                         },
                     });
                 },
-                updateMeta: async (data: ProjectAccessToken_UpdateMeta_Req["data"]) => {
-                    const result = await api.projects.accessToken.$.updateMeta({ data });
+                updateStatus: async (data: ProjectAccessToken_UpdateStatus_Req["data"]) => {
+                    const result = await api.projects.accessToken.$.updateStatus({ data });
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {

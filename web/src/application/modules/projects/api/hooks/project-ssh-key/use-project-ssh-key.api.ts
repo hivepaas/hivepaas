@@ -7,8 +7,8 @@ import type {
     ProjectSSHKey_DeleteOne_Req,
     ProjectSSHKey_FindManyPaginated_Req,
     ProjectSSHKey_FindOneById_Req,
-    ProjectSSHKey_UpdateMeta_Req,
     ProjectSSHKey_UpdateOne_Req,
+    ProjectSSHKey_UpdateStatus_Req,
 } from "~/projects/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -66,8 +66,8 @@ function createHook() {
                         },
                     });
                 },
-                updateMeta: async (data: ProjectSSHKey_UpdateMeta_Req["data"]) => {
-                    const result = await api.projects.sshKey.$.updateMeta({ data });
+                updateStatus: async (data: ProjectSSHKey_UpdateStatus_Req["data"]) => {
+                    const result = await api.projects.sshKey.$.updateStatus({ data });
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {

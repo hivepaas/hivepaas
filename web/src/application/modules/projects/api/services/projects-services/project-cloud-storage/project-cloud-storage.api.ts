@@ -12,10 +12,10 @@ import type {
     ProjectCloudStorage_FindManyPaginated_Res,
     ProjectCloudStorage_FindOneById_Req,
     ProjectCloudStorage_FindOneById_Res,
-    ProjectCloudStorage_UpdateMeta_Req,
-    ProjectCloudStorage_UpdateMeta_Res,
     ProjectCloudStorage_UpdateOne_Req,
     ProjectCloudStorage_UpdateOne_Res,
+    ProjectCloudStorage_UpdateStatus_Req,
+    ProjectCloudStorage_UpdateStatus_Res,
 } from "./project-cloud-storage.api.contracts";
 import type { ProjectCloudStorageApiValidator } from "./project-cloud-storage.api.validator";
 
@@ -107,10 +107,10 @@ export class ProjectCloudStorageApi extends BaseApi {
         );
     }
 
-    async updateMeta(
-        request: ProjectCloudStorage_UpdateMeta_Req,
+    async updateStatus(
+        request: ProjectCloudStorage_UpdateStatus_Req,
         signal?: AbortSignal,
-    ): Promise<Result<ProjectCloudStorage_UpdateMeta_Res, Error>> {
+    ): Promise<Result<ProjectCloudStorage_UpdateStatus_Res, Error>> {
         const { projectID, env, id, payload } = request.data;
 
         return lastValueFrom(
@@ -119,7 +119,7 @@ export class ProjectCloudStorageApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(response => this.validator.updateMeta(response)),
+                map(response => this.validator.updateStatus(response)),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

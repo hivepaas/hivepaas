@@ -14,10 +14,10 @@ import type {
     CloudStorage_FindOneById_Res,
     CloudStorage_TestConn_Req,
     CloudStorage_TestConn_Res,
-    CloudStorage_UpdateMeta_Req,
-    CloudStorage_UpdateMeta_Res,
     CloudStorage_UpdateOne_Req,
     CloudStorage_UpdateOne_Res,
+    CloudStorage_UpdateStatus_Req,
+    CloudStorage_UpdateStatus_Res,
 } from "./cloud-storage.api.contracts";
 import type { CloudStorageApiValidator } from "./cloud-storage.api.validator";
 
@@ -88,15 +88,15 @@ export class CloudStorageApi extends BaseApi {
         );
     }
 
-    async updateMeta(
-        request: CloudStorage_UpdateMeta_Req,
+    async updateStatus(
+        request: CloudStorage_UpdateStatus_Req,
         signal?: AbortSignal,
-    ): Promise<Result<CloudStorage_UpdateMeta_Res, Error>> {
+    ): Promise<Result<CloudStorage_UpdateStatus_Res, Error>> {
         const { id, payload } = request.data;
 
         return lastValueFrom(
             from(this.client.v1.put(`/settings/cloud-storages/${id}/status`, payload, { signal })).pipe(
-                map(this.validator.updateMeta),
+                map(this.validator.updateStatus),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

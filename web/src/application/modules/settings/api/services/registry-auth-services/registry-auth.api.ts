@@ -14,10 +14,10 @@ import type {
     RegistryAuth_FindOneById_Res,
     RegistryAuth_TestConn_Req,
     RegistryAuth_TestConn_Res,
-    RegistryAuth_UpdateMeta_Req,
-    RegistryAuth_UpdateMeta_Res,
     RegistryAuth_UpdateOne_Req,
     RegistryAuth_UpdateOne_Res,
+    RegistryAuth_UpdateStatus_Req,
+    RegistryAuth_UpdateStatus_Res,
 } from "./registry-auth.api.contracts";
 import type { RegistryAuthApiValidator } from "./registry-auth.api.validator";
 
@@ -105,10 +105,10 @@ export class RegistryAuthApi extends BaseApi {
         );
     }
 
-    async updateMeta(
-        request: RegistryAuth_UpdateMeta_Req,
+    async updateStatus(
+        request: RegistryAuth_UpdateStatus_Req,
         signal?: AbortSignal,
-    ): Promise<Result<RegistryAuth_UpdateMeta_Res, Error>> {
+    ): Promise<Result<RegistryAuth_UpdateStatus_Res, Error>> {
         const { id, payload } = request.data;
 
         return lastValueFrom(
@@ -117,7 +117,7 @@ export class RegistryAuthApi extends BaseApi {
                     signal,
                 }),
             ).pipe(
-                map(this.validator.updateMeta),
+                map(this.validator.updateStatus),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

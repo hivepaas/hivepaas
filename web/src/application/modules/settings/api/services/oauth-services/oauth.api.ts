@@ -12,10 +12,10 @@ import type {
     OAuth_FindManyPaginated_Res,
     OAuth_FindOneById_Req,
     OAuth_FindOneById_Res,
-    OAuth_UpdateMeta_Req,
-    OAuth_UpdateMeta_Res,
     OAuth_UpdateOne_Req,
     OAuth_UpdateOne_Res,
+    OAuth_UpdateStatus_Req,
+    OAuth_UpdateStatus_Res,
 } from "./oauth.api.contracts";
 import type { OAuthApiValidator } from "./oauth.api.validator";
 
@@ -80,15 +80,15 @@ export class OAuthApi extends BaseApi {
         );
     }
 
-    async updateMeta(
-        request: OAuth_UpdateMeta_Req,
+    async updateStatus(
+        request: OAuth_UpdateStatus_Req,
         signal?: AbortSignal,
-    ): Promise<Result<OAuth_UpdateMeta_Res, Error>> {
+    ): Promise<Result<OAuth_UpdateStatus_Res, Error>> {
         const { id, payload } = request.data;
 
         return lastValueFrom(
             from(this.client.v1.put(`/settings/oauth/${id}/status`, payload, { signal })).pipe(
-                map(this.validator.updateMeta),
+                map(this.validator.updateStatus),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

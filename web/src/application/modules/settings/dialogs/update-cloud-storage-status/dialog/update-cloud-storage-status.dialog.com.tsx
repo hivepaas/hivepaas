@@ -29,14 +29,14 @@ export function UpdateCloudStorageStatusDialog() {
     const permissionScope = state.mode === "closed" ? ({ type: "settings" } as const) : state.scope;
     const { canWrite } = useSettingsScopePermissions(permissionScope);
 
-    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = CloudStorageCommands.useUpdateMeta({
+    const { mutate: updateSettingMeta, isPending: isUpdatingSetting } = CloudStorageCommands.useUpdateStatus({
         onSuccess: () => {
             toast.success("Cloud storage status updated successfully");
             closeDialog();
             dialogOptions?.onSuccess?.();
         },
     });
-    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectCloudStorageCommands.useUpdateMeta({
+    const { mutate: updateProjectMeta, isPending: isUpdatingProject } = ProjectCloudStorageCommands.useUpdateStatus({
         onSuccess: () => {
             toast.success("Project cloud storage status updated successfully");
             closeDialog();

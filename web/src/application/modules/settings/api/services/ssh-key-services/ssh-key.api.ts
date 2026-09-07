@@ -14,10 +14,10 @@ import type {
     SSHKey_FindOneById_Res,
     SSHKey_Generate_Req,
     SSHKey_Generate_Res,
-    SSHKey_UpdateMeta_Req,
-    SSHKey_UpdateMeta_Res,
     SSHKey_UpdateOne_Req,
     SSHKey_UpdateOne_Res,
+    SSHKey_UpdateStatus_Req,
+    SSHKey_UpdateStatus_Res,
 } from "./ssh-key.api.contracts";
 import type { SSHKeyApiValidator } from "./ssh-key.api.validator";
 
@@ -82,15 +82,15 @@ export class SSHKeyApi extends BaseApi {
         );
     }
 
-    async updateMeta(
-        request: SSHKey_UpdateMeta_Req,
+    async updateStatus(
+        request: SSHKey_UpdateStatus_Req,
         signal?: AbortSignal,
-    ): Promise<Result<SSHKey_UpdateMeta_Res, Error>> {
+    ): Promise<Result<SSHKey_UpdateStatus_Res, Error>> {
         const { id, payload } = request.data;
 
         return lastValueFrom(
             from(this.client.v1.put(`/settings/ssh-keys/${id}/status`, payload, { signal })).pipe(
-                map(this.validator.updateMeta),
+                map(this.validator.updateStatus),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

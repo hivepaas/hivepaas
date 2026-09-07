@@ -5,10 +5,10 @@ import type {
     ProjectSSHKey_CreateOne_Res,
     ProjectSSHKey_DeleteOne_Req,
     ProjectSSHKey_DeleteOne_Res,
-    ProjectSSHKey_UpdateMeta_Req,
-    ProjectSSHKey_UpdateMeta_Res,
     ProjectSSHKey_UpdateOne_Req,
     ProjectSSHKey_UpdateOne_Res,
+    ProjectSSHKey_UpdateStatus_Req,
+    ProjectSSHKey_UpdateStatus_Res,
 } from "~/projects/api/services";
 import { QK } from "~/projects/data/constants";
 
@@ -49,16 +49,16 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
-type UpdateMetaReq = ProjectSSHKey_UpdateMeta_Req["data"];
-type UpdateMetaRes = ProjectSSHKey_UpdateMeta_Res;
-type UpdateMetaOptions = Omit<UseMutationOptions<UpdateMetaRes, Error, UpdateMetaReq>, "mutationFn">;
+type UpdateStatusReq = ProjectSSHKey_UpdateStatus_Req["data"];
+type UpdateStatusRes = ProjectSSHKey_UpdateStatus_Res;
+type UpdateStatusOptions = Omit<UseMutationOptions<UpdateStatusRes, Error, UpdateStatusReq>, "mutationFn">;
 
-function useUpdateMeta({ onSuccess, ...options }: UpdateMetaOptions = {}) {
+function useUpdateStatus({ onSuccess, ...options }: UpdateStatusOptions = {}) {
     const { mutations } = useProjectSSHKeyApi();
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: mutations.updateMeta,
+        mutationFn: mutations.updateStatus,
         onSuccess: (response, ...rest) => {
             void queryClient.invalidateQueries({ queryKey: [QK["projects.ssh-key.$.find-many-paginated"]] });
             void queryClient.invalidateQueries({ queryKey: [QK["projects.ssh-key.$.find-one-by-id"]] });
@@ -90,6 +90,6 @@ function useDeleteOne({ onSuccess, ...options }: DeleteOneOptions = {}) {
 export const ProjectSSHKeyCommands = Object.freeze({
     useCreateOne,
     useUpdateOne,
-    useUpdateMeta,
+    useUpdateStatus,
     useDeleteOne,
 });

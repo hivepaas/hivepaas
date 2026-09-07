@@ -6,10 +6,12 @@ import {
     QuickInstallSslCertDialog,
     RestartHivePaaSDialog,
     RestartTraefikDialog,
+    RoutingChangeConfirmDialog,
     useChangeKekDialogState,
     useQuickInstallSslCertDialogState,
     useRestartHivePaaSDialogState,
     useRestartTraefikDialogState,
+    useRoutingChangeConfirmDialogState,
 } from "~/system-settings/dialogs";
 
 function View() {
@@ -18,12 +20,17 @@ function View() {
     const changeKekDialog = useChangeKekDialogState();
     const restartHivePaaSDialog = useRestartHivePaaSDialogState();
     const restartTraefikDialog = useRestartTraefikDialogState();
+    const routingChangeConfirmDialog = useRoutingChangeConfirmDialogState();
 
     useUpdateEffect(() => {
         quickInstallSslCertDialog.destroy();
         changeKekDialog.destroy();
         restartHivePaaSDialog.destroy();
         restartTraefikDialog.destroy();
+        // A no-op by design - see the store. A routing change stays on trial while
+        // the operator browses elsewhere, and the dialog is the only thing that
+        // can keep it.
+        routingChangeConfirmDialog.destroy();
     }, [location]);
 
     return (
@@ -32,6 +39,7 @@ function View() {
             <ChangeKekDialog />
             <RestartHivePaaSDialog />
             <RestartTraefikDialog />
+            <RoutingChangeConfirmDialog />
         </>
     );
 }

@@ -1,6 +1,10 @@
 export const QK = {
     "system-settings.hivepaas.service-settings.find-one": "system-settings.hivepaas.service-settings.find-one",
     "system-settings.hivepaas.routing-settings.find-one": "system-settings.hivepaas.routing-settings.find-one",
+    // Separate from find-one on purpose: the probe polls on a timer while the
+    // confirm dialog is open, and must not fight the page's own cache entry or
+    // inherit its retry and notification behaviour.
+    "system-settings.hivepaas.routing-settings.probe": "system-settings.hivepaas.routing-settings.probe",
     "system-settings.hivepaas.http-settings.find-one": "system-settings.hivepaas.routing-settings.find-one",
     "system-settings.hivepaas.security-settings.find-one": "system-settings.hivepaas.security-settings.find-one",
 

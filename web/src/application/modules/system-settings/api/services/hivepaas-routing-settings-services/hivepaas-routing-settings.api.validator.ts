@@ -3,19 +3,26 @@ import { z } from "zod";
 import type {
     HivePaaSRoutingClientConfig,
     HivePaaSRoutingDomain,
+    HivePaaSRoutingPendingChange,
     HivePaaSRoutingRateLimitConfig,
 } from "~/system-settings/domain";
 import type {
     HivePaaSRoutingClientConfigSchema,
     HivePaaSRoutingDomainSchema,
+    HivePaaSRoutingPendingChangeSchema,
     HivePaaSRoutingRateLimitConfigSchema,
 } from "~/system-settings/module-shared/schemas";
-import { HivePaaSRoutingSettingsEntitySchema } from "~/system-settings/module-shared/schemas";
+import {
+    HivePaaSRoutingSettingsEntitySchema,
+    HivePaaSRoutingPendingChangeSchema as PendingChangeSchema,
+} from "~/system-settings/module-shared/schemas";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 import type {
+    HivePaaSRoutingSettings_ConfirmChange_Res,
     HivePaaSRoutingSettings_FindOne_Res,
+    HivePaaSRoutingSettings_RevertChange_Res,
     HivePaaSRoutingSettings_UpdateOne_Res,
 } from "./hivepaas-routing-settings.api.contracts";
 
@@ -27,6 +34,35 @@ const FindOneSchema = z.object({
 const MetaOnlySchema = z.object({
     meta: BaseMetaApiSchema.nullish(),
 });
+
+const UpdateOneSchema = z.object({
+    data: PendingChangeSchema.nullish(),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+const RevertChangeSchema = z.object({
+    data: z
+        .object({
+            reverted: z.boolean(),
+            reason: z.string().nullish(),
+        })
+        .nullish(),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
+function mapPendingChange(
+    raw: z.infer<typeof HivePaaSRoutingPendingChangeSchema> | null | undefined,
+): HivePaaSRoutingPendingChange | null {
+    if (raw == null) {
+        return null;
+    }
+    return {
+        changeId: raw.changeId,
+        appliedAt: raw.appliedAt,
+        confirmableFrom: raw.confirmableFrom,
+        deadlineAt: raw.deadlineAt,
+    };
+}
 
 function mapSettingRef(raw: { id: string; name: string } | null | undefined): { id: string; name: string } | null {
     if (raw == null) {
@@ -79,14 +115,25 @@ export class HivePaaSRoutingSettingsApiValidator {
             data: {
                 domains: data.domains?.map(mapDomain) ?? [],
                 updateVer: data.updateVer,
+                pendingChange: mapPendingChange(data.pendingChange ?? undefined),
             },
             meta,
         };
     };
 
     updateOne = (response: AxiosResponse): HivePaaSRoutingSettings_UpdateOne_Res => {
+        const { data } = parseApiResponse({ response, schema: UpdateOneSchema });
+        return { data: { pendingChange: mapPendingChange(data ?? undefined) } };
+    };
+
+    confirmChange = (response: AxiosResponse): HivePaaSRoutingSettings_ConfirmChange_Res => {
         parseApiResponse({ response, schema: MetaOnlySchema });
         return { data: { type: "success" } };
+    };
+
+    revertChange = (response: AxiosResponse): HivePaaSRoutingSettings_RevertChange_Res => {
+        const { data } = parseApiResponse({ response, schema: RevertChangeSchema });
+        return { data: { reverted: data?.reverted ?? false, reason: data?.reason ?? null } };
     };
 }
 

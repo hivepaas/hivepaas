@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UploadIcon } from "lucide-react";
+import { Download, UploadIcon } from "lucide-react";
 import { type FieldErrors, useController, useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
 import { FormActionBar, InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -159,6 +160,47 @@ export function CreateOrEditAppSecretForm({
         control,
     });
 
+    async function handleDownloadFile() {
+        if (!selectedFile) {
+            return;
+        }
+
+        if (typeof window !== "undefined" && "showSaveFilePicker" in window) {
+            try {
+                const handle = await (
+                    window as unknown as {
+                        showSaveFilePicker: (options?: { suggestedName?: string }) => Promise<{
+                            createWritable: () => Promise<{
+                                write: (data: Blob) => Promise<void>;
+                                close: () => Promise<void>;
+                            }>;
+                        }>;
+                    }
+                ).showSaveFilePicker({
+                    suggestedName: selectedFile.name,
+                });
+                const writable = await handle.createWritable();
+                await writable.write(selectedFile);
+                await writable.close();
+                toast.success("File saved successfully");
+                return;
+            } catch (err: unknown) {
+                if (err && typeof err === "object" && "name" in err && err.name === "AbortError") {
+                    return;
+                }
+            }
+        }
+
+        const url = window.URL.createObjectURL(selectedFile);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = selectedFile.name;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        window.URL.revokeObjectURL(url);
+    }
+
     function onValid(values: CreateOrEditAppSecretFormOutput) {
         if (readOnly) {
             return;
@@ -273,7 +315,7 @@ export function CreateOrEditAppSecretForm({
                         >
                             <FieldGroup>
                                 <Field>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex flex-wrap items-center gap-3">
                                         <Button
                                             type="button"
                                             variant="outline"
@@ -284,10 +326,29 @@ export function CreateOrEditAppSecretForm({
                                             <UploadIcon className="size-4" />
                                             Choose File
                                         </Button>
-                                        <span className="truncate text-sm text-muted-foreground">
-                                            {selectedFile?.name ??
-                                                (isEditMode ? "Leave empty to keep current value" : "")}
-                                        </span>
+                                        {selectedFile ? (
+                                            <div className="flex items-center gap-2">
+                                                <span className="truncate text-sm font-medium text-foreground">
+                                                    {selectedFile.name}
+                                                </span>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 gap-1.5 px-2.5 text-xs"
+                                                    onClick={() => {
+                                                        void handleDownloadFile();
+                                                    }}
+                                                >
+                                                    <Download className="size-3.5" />
+                                                    Download
+                                                </Button>
+                                            </div>
+                                        ) : isEditMode ? (
+                                            <span className="truncate text-sm text-muted-foreground">
+                                                Leave empty to keep current value
+                                            </span>
+                                        ) : null}
                                     </div>
                                     <Input
                                         id="app-secret-binary-value"

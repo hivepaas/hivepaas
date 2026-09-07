@@ -93,7 +93,7 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
 
             navigateToList();
         } catch {
-            toast.error(isEditMode ? "Failed to update storage mount" : "Failed to add storage mount");
+            // Error notification is handled by useAppStorageSettingsApi via notifyError
         }
     }
 

@@ -22,6 +22,8 @@ export function CreateOrEditAppSecretForm({
     isPending,
     onSubmit,
     onHasChanges,
+    revealedSecret,
+    revealedVersion,
     isEditMode,
     initialValues,
     readOnly = false,
@@ -60,6 +62,37 @@ export function CreateOrEditAppSecretForm({
     useEffect(() => {
         onHasChanges?.(readOnly ? false : isDirty);
     }, [isDirty, onHasChanges, readOnly]);
+
+    useEffect(() => {
+        if (revealedSecret !== undefined && revealedSecret !== null) {
+            setValue("textValue", revealedSecret, { shouldDirty: false });
+            if (initialValues?.valueType === "binary" && revealedSecret) {
+                try {
+                    const binaryStr = window.atob(revealedSecret);
+                    const bytes = new Uint8Array(binaryStr.length);
+                    for (let i = 0; i < binaryStr.length; i++) {
+                        bytes[i] = binaryStr.charCodeAt(i);
+                    }
+                    const fileName = initialValues.filePath
+                        ? (initialValues.filePath.split("/").pop() ?? "secret.bin")
+                        : initialValues.name
+                          ? `${initialValues.name}.bin`
+                          : "secret.bin";
+                    const file = new File([bytes], fileName);
+                    setValue("binaryFile", file, { shouldDirty: false });
+                } catch (e) {
+                    console.error("Failed to parse binary secret:", e);
+                }
+            }
+        }
+    }, [
+        revealedSecret,
+        revealedVersion,
+        setValue,
+        initialValues?.valueType,
+        initialValues?.filePath,
+        initialValues?.name,
+    ]);
 
     useEffect(() => {
         if (isEditMode || dirtyFields.filePath) {
@@ -397,6 +430,8 @@ interface Props {
     isPending: boolean;
     onSubmit: (values: CreateOrEditAppSecretFormOutput) => Promise<void> | void;
     onHasChanges?: (dirty: boolean) => void;
+    revealedSecret?: string | null;
+    revealedVersion?: number;
     isEditMode: boolean;
     initialValues?: Partial<CreateOrEditAppSecretFormInput>;
     readOnly?: boolean;

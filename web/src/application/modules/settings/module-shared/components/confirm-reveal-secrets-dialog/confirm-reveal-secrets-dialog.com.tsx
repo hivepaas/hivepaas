@@ -10,7 +10,14 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 
-export function ConfirmRevealSecretsDialog({ open, onOpenChange, onConfirm, isPending = false }: Props) {
+export function ConfirmRevealSecretsDialog({
+    open,
+    onOpenChange,
+    onConfirm,
+    isPending = false,
+    title = "Reveal Secrets",
+    actionLabel = "Reveal the secrets",
+}: Props) {
     return (
         <Dialog
             open={open}
@@ -18,7 +25,7 @@ export function ConfirmRevealSecretsDialog({ open, onOpenChange, onConfirm, isPe
         >
             <DialogFixedContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Reveal Secrets</DialogTitle>
+                    <DialogTitle>{title}</DialogTitle>
                 </DialogHeader>
                 <div className="px-4">
                     <Separator className="opacity-50" />
@@ -55,7 +62,7 @@ export function ConfirmRevealSecretsDialog({ open, onOpenChange, onConfirm, isPe
                         isLoading={isPending}
                         disabled={isPending}
                     >
-                        Reveal the secrets
+                        {actionLabel}
                     </Button>
                 </DialogActionFooter>
             </DialogFixedContent>
@@ -68,4 +75,6 @@ interface Props {
     onOpenChange: (open: boolean) => void;
     onConfirm: () => void | Promise<void>;
     isPending?: boolean;
+    title?: string;
+    actionLabel?: string;
 }

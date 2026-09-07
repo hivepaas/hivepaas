@@ -6,6 +6,7 @@ import type {
     AppSecrets_FindOneById_Res,
     AppSecrets_GetDownloadToken_Res,
 } from "~/projects/api/services/project-apps-services";
+
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
@@ -16,6 +17,8 @@ const AppSecretSchema = z.object({
     name: z.string(),
     updateVer: z.number(),
     key: z.string(),
+    value: z.string().optional(),
+    secretMasked: z.boolean().optional(),
     base64: z.boolean().optional().default(false),
     type: z.string().optional().default("secret"),
     status: z.string(),

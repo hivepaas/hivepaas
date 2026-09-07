@@ -18,6 +18,8 @@ export function CreateOrEditProjectSecretForm({
     onSubmit,
     onHasChanges,
     savedVersion = 0,
+    revealedSecret,
+    revealedVersion,
     isEditMode,
     initialValues,
     readOnly = false,
@@ -30,6 +32,7 @@ export function CreateOrEditProjectSecretForm({
         handleSubmit,
         control,
         getValues,
+        setValue,
         reset,
         formState: { errors, isDirty },
     } = useForm<CreateOrEditProjectSecretFormInput, unknown, CreateOrEditProjectSecretFormOutput>({
@@ -55,6 +58,26 @@ export function CreateOrEditProjectSecretForm({
         reset(getValues());
         onHasChanges?.(false);
     }, [getValues, onHasChanges, reset, savedVersion]);
+
+    useEffect(() => {
+        if (revealedSecret !== undefined && revealedSecret !== null) {
+            setValue("textValue", revealedSecret, { shouldDirty: false });
+            if (initialValues?.valueType === "binary" && revealedSecret) {
+                try {
+                    const binaryStr = window.atob(revealedSecret);
+                    const bytes = new Uint8Array(binaryStr.length);
+                    for (let i = 0; i < binaryStr.length; i++) {
+                        bytes[i] = binaryStr.charCodeAt(i);
+                    }
+                    const fileName = initialValues.name ? `${initialValues.name}.bin` : "secret.bin";
+                    const file = new File([bytes], fileName);
+                    setValue("binaryFile", file, { shouldDirty: false });
+                } catch (e) {
+                    console.error("Failed to parse binary secret:", e);
+                }
+            }
+        }
+    }, [revealedSecret, revealedVersion, setValue, initialValues?.valueType, initialValues?.name]);
 
     useEffect(() => {
         onHasChanges?.(readOnly ? false : isDirty);
@@ -273,6 +296,8 @@ interface Props {
     onSubmit: (values: CreateOrEditProjectSecretFormOutput) => Promise<void> | void;
     onHasChanges?: (dirty: boolean) => void;
     savedVersion?: number;
+    revealedSecret?: string | null;
+    revealedVersion?: number;
     isEditMode: boolean;
     initialValues?: Partial<CreateOrEditProjectSecretFormInput>;
     readOnly?: boolean;

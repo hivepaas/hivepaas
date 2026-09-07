@@ -18,6 +18,8 @@ export interface AppSecret {
     name: string;
     updateVer: number;
     key: string;
+    value?: string;
+    secretMasked?: boolean;
     base64: boolean;
     type: string;
     status: OpenApiConstant<EProjectSecretStatus>;

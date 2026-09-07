@@ -5,6 +5,7 @@ import type {
     ProjectSecrets_FindManyPaginated_Res,
     ProjectSecrets_FindOneById_Res,
 } from "~/projects/api/services/projects-services";
+
 import { BaseMetaApiSchema, PagingMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
 /**
@@ -15,7 +16,10 @@ const ProjectSecretSchema = z.object({
     name: z.string(),
     updateVer: z.number(),
     key: z.string(),
+    value: z.string().optional(),
+    secretMasked: z.boolean().optional(),
     base64: z.boolean().optional().default(false),
+    inherited: z.boolean().optional().default(false),
     status: z.string(),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date().nullable(),

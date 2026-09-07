@@ -2,7 +2,7 @@ import { EyeIcon, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-export function RevealSecretsButton({ onClick, isLoading = false, disabled = false }: Props) {
+export function RevealSecretsButton({ onClick, isLoading = false, disabled = false, label = "Reveal Secrets" }: Props) {
     return (
         <Button
             type="button"
@@ -17,7 +17,7 @@ export function RevealSecretsButton({ onClick, isLoading = false, disabled = fal
             ) : (
                 <EyeIcon className="size-3.5 sm:size-4" />
             )}
-            <span>Reveal Secrets</span>
+            <span>{label}</span>
         </Button>
     );
 }
@@ -26,4 +26,5 @@ interface Props {
     onClick: () => void;
     isLoading?: boolean;
     disabled?: boolean;
+    label?: string;
 }

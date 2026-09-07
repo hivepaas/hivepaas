@@ -5,6 +5,9 @@ import { ProjectAppSecretsCommands } from "~/projects/data/commands";
 import { ProjectAppSecretsQueries } from "~/projects/data/queries";
 import { CreateOrEditAppSecretForm } from "~/projects/dialogs/create-or-edit-app-secret/form";
 import type { CreateOrEditAppSecretFormOutput } from "~/projects/dialogs/create-or-edit-app-secret/schemas";
+import { ConfirmRevealSecretsDialog } from "~/settings/module-shared/components/confirm-reveal-secrets-dialog";
+import { RevealSecretsButton } from "~/settings/module-shared/components/reveal-secrets-button";
+import { useSettingRevealSecrets } from "~/settings/module-shared/hooks/use-setting-reveal-secrets";
 
 import { AppLoader, RouteFormHeader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -78,6 +81,27 @@ export function AppSecretFormRoute({ mode, projectId, appId, env, secretId }: Pr
         },
     );
     const secret = detailQuery.data?.data;
+
+    const customPath =
+        isEditMode && secretId
+            ? `/projects/${projectId}/${encodeURIComponent(env)}/apps/${appId}/secrets/${secretId}`
+            : undefined;
+
+    const {
+        canShowRevealButton,
+        isDialogOpen,
+        setIsDialogOpen,
+        isRevealing,
+        revealedData,
+        revealRevision,
+        handleConfirmReveal,
+    } = useSettingRevealSecrets<{ value?: string }>({
+        customPath,
+        isInherited: secret?.inherited,
+        mode,
+        successMessage: "Secret revealed successfully",
+        errorMessage: "Failed to reveal secret",
+    });
 
     const { mutate: createAppSecret, isPending: isCreatingApp } = ProjectAppSecretsCommands.useCreateOne({
         onSuccess: () => {
@@ -160,7 +184,29 @@ export function AppSecretFormRoute({ mode, projectId, appId, env, secretId }: Pr
 
     return (
         <div className="flex w-full flex-col">
-            <RouteFormHeader title={mode === "create" ? "Create Secret" : "Edit Secret"} />
+            <RouteFormHeader
+                title={mode === "create" ? "Create Secret" : "Edit Secret"}
+                actions={
+                    canShowRevealButton ? (
+                        <RevealSecretsButton
+                            label="Reveal Secret"
+                            onClick={() => {
+                                setIsDialogOpen(true);
+                            }}
+                            isLoading={isRevealing}
+                        />
+                    ) : null
+                }
+            />
+
+            <ConfirmRevealSecretsDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                onConfirm={handleConfirmReveal}
+                isPending={isRevealing}
+                title="Reveal Secret"
+                actionLabel="Reveal the secret"
+            />
 
             {isDetailLoading && (
                 <div className="flex min-h-[220px] items-center justify-center">
@@ -173,6 +219,8 @@ export function AppSecretFormRoute({ mode, projectId, appId, env, secretId }: Pr
                     isPending={isPending}
                     onSubmit={onSubmit}
                     onHasChanges={setHasChanges}
+                    revealedSecret={revealedData?.value}
+                    revealedVersion={revealRevision}
                     isEditMode={isEditMode}
                     initialValues={initialValues}
                     readOnly={!canWrite}

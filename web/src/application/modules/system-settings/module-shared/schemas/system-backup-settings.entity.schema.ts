@@ -65,6 +65,7 @@ export const SystemBackupSettingsEntitySchema = SettingsBaseEntitySchema.omit({ 
     cloudStorage: SystemBackupCloudStorageSchema,
     dbBackupConfig: SystemBackupDBConfigSchema,
     notification: SystemBackupNotificationSchema,
+    secretMasked: z.boolean().optional(),
     nextRuns: z
         .array(z.coerce.date())
         .nullish()

@@ -1,12 +1,13 @@
 import React, { type PropsWithChildren, useEffect, useImperativeHandle, useMemo, useState } from "react";
 
-import { PasswordInput } from "@components/ui/input-password";
+import { PasswordInput, RevealSecretsProvider } from "@components/ui/input-password";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { type FieldPath, FormProvider, useController, useForm, useFormContext, useWatch } from "react-hook-form";
 import { CloudStorageQueries } from "~/settings/data";
-import { useNotificationSettingsSources } from "~/settings/module-shared/hooks";
+import { ConfirmRevealSecretsDialog, RevealSecretsButton } from "~/settings/module-shared/components";
+import { useNotificationSettingsSources, useSettingRevealSecrets } from "~/settings/module-shared/hooks";
 import type { SystemBackupSettings } from "~/system-settings/domain";
 
 import { AppLink, Combobox, InfoBlock, NextRunsField } from "@application/shared/components";
@@ -107,6 +108,19 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
             encryptionSecret.onChange("");
         }
     }, [encryptionFormat.value, encryptionSecret]);
+
+    const { canShowRevealButton, isDialogOpen, setIsDialogOpen, isRevealing, isRevealed, handleConfirmReveal } =
+        useSettingRevealSecrets<SystemBackupSettings>({
+            customPath: "/system/settings/backup",
+            mode: "edit",
+            onSuccess: data => {
+                if (data.encryption.secret) {
+                    encryptionSecret.onChange(data.encryption.secret);
+                }
+            },
+        });
+
+    const shouldShowReveal = canShowRevealButton && encryptionFormat.value !== ESystemBackupEncryptionFormat.None;
 
     const cloudStorageOptions = useMemo(() => {
         return cloudStorages.map(item => ({
@@ -247,17 +261,37 @@ function GeneralFields({ nextRuns }: { nextRuns: Date[] }) {
                         title="Encryption Secret"
                     >
                         <FieldGroup>
-                            <Field className="max-w-[400px]">
-                                <PasswordInput
-                                    value={encryptionSecret.value}
-                                    onChange={encryptionSecret.onChange}
-                                    placeholder="password"
-                                    className="max-w-[400px]"
-                                    aria-invalid={isEncryptionSecretInvalid}
-                                />
+                            <Field>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-full max-w-[400px]">
+                                        <RevealSecretsProvider value={{ isRevealed }}>
+                                            <PasswordInput
+                                                value={encryptionSecret.value}
+                                                onChange={encryptionSecret.onChange}
+                                                placeholder="password"
+                                                className="w-full"
+                                                aria-invalid={isEncryptionSecretInvalid}
+                                            />
+                                        </RevealSecretsProvider>
+                                    </div>
+                                    {shouldShowReveal && (
+                                        <RevealSecretsButton
+                                            onClick={() => {
+                                                setIsDialogOpen(true);
+                                            }}
+                                            isLoading={isRevealing}
+                                        />
+                                    )}
+                                </div>
                                 <FieldError errors={[encryptionSecretError]} />
                             </Field>
                         </FieldGroup>
+                        <ConfirmRevealSecretsDialog
+                            open={isDialogOpen}
+                            onOpenChange={setIsDialogOpen}
+                            onConfirm={handleConfirmReveal}
+                            isPending={isRevealing}
+                        />
                     </InfoBlock>
                 )}
 

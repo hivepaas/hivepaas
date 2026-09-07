@@ -51,5 +51,6 @@ export interface SystemBackupSettings extends SettingsBaseEntity {
     cloudStorage?: SystemBackupCloudStorage | null;
     dbBackupConfig: SystemBackupDBConfig;
     notification?: SystemBackupNotification | null;
+    secretMasked?: boolean;
     nextRuns: Date[];
 }

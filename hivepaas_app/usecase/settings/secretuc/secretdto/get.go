@@ -32,9 +32,16 @@ type GetSecretResp struct {
 
 type SecretResp struct {
 	*settings.BaseSettingResp
-	Key      string              `json:"key"`
-	Base64   bool                `json:"base64"`
-	SwarmRef *SwarmSecretRefResp `json:"swarmRef"`
+	Key          string              `json:"key"`
+	Value        string              `json:"value,omitzero"`
+	Base64       bool                `json:"base64"`
+	SwarmRef     *SwarmSecretRefResp `json:"swarmRef"`
+	SecretMasked bool                `json:"secretMasked,omitempty"`
+}
+
+func (resp *SecretResp) CopyValue(field entity.EncryptedField) error {
+	resp.Value = field.String()
+	return nil
 }
 
 type SwarmSecretRefResp struct {
@@ -62,5 +69,11 @@ func TransformSecret(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+
+	resp.SecretMasked = secret.Value.IsEncrypted() || resp.Inherited
+	if resp.SecretMasked {
+		resp.Value = ""
+	}
+
 	return resp, nil
 }

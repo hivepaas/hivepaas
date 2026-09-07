@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
@@ -94,8 +95,22 @@ func (uc *UC) loadSettingData(
 	backupSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeSystemBackup, false,
 		bunex.SelectFor("UPDATE OF setting"),
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 		return hperrors.Wrap(err)
+	}
+	if backupSetting == nil {
+		timeNow := timeutil.NowUTC()
+		backupSetting = &entity.Setting{
+			ID:        gofn.Must(ulid.NewStringULID()),
+			Scope:     req.Scope.ScopeType,
+			Type:      base.SettingTypeSystemBackup,
+			Status:    base.SettingStatusActive,
+			Name:      backupSettingName,
+			Version:   entity.CurrentSystemBackupVersion,
+			Data:      "{}", // NOTE: this is necessary to make the parse not to fail
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		}
 	}
 	data.Setting = backupSetting
 
@@ -104,6 +119,19 @@ func (uc *UC) loadSettingData(
 		return hperrors.Wrap(err)
 	}
 	data.JobScheduleChanges = !backup.Schedule.Equal(&data.NewBackup.Schedule)
+
+	req.KeepMaskedSecrets(data.NewBackup, backup)
+	encryptionSecretUnchanged, err := data.NewBackup.Encryption.Secret.Equal(&backup.Encryption.Secret)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if !encryptionSecretUnchanged {
+		requirements := systembackupdto.EncryptionSecretRequirements
+		err = secrethelper.ValidateStrength(gofn.Must(data.NewBackup.Encryption.Secret.GetPlain()), &requirements)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
 
 	// Load sched job of the backup
 	jobSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeSchedJob, false,

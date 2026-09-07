@@ -94,8 +94,22 @@ func (uc *UC) loadSettingData(
 	renewalSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeSSLRenewal, false,
 		bunex.SelectFor("UPDATE OF setting"),
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 		return hperrors.Wrap(err)
+	}
+	if renewalSetting == nil {
+		timeNow := timeutil.NowUTC()
+		renewalSetting = &entity.Setting{
+			ID:        gofn.Must(ulid.NewStringULID()),
+			Scope:     req.Scope.ScopeType,
+			Type:      base.SettingTypeSSLRenewal,
+			Status:    base.SettingStatusActive,
+			Name:      renewalSettingName,
+			Version:   entity.CurrentSSLRenewalVersion,
+			Data:      "{}", // NOTE: this is necessary to make the parse not to fail
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		}
 	}
 	data.Setting = renewalSetting
 

@@ -9,8 +9,22 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/secrethelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+)
+
+var (
+	EncryptionSecretRequirements = secrethelper.SecretStrengthRequirements{
+		MinLen:             secrethelper.DefaultSecretMinLen,
+		MaxLen:             secrethelper.DefaultSecretMaxLen,
+		RequiredLowercases: secrethelper.DefaultSecretRequiredLowercases,
+		RequiredUppercases: secrethelper.DefaultSecretRequiredUppercases,
+		RequiredDigits:     secrethelper.DefaultSecretRequiredDigits,
+		RequiredSpecials:   secrethelper.DefaultSecretRequiredSpecials,
+		MaxSimilarRun:      secrethelper.DefaultSecretMaxSimilarRun,
+		MaxSequenceRun:     secrethelper.DefaultSecretMaxSequenceRun,
+	}
 )
 
 type UpdateSystemBackupReq struct {
@@ -36,6 +50,17 @@ func (req *SystemBackupBaseReq) ToEntity() *entity.SystemBackup {
 		CloudStorage:   req.CloudStorage.ToEntity(),
 		DBBackupConfig: req.DBBackupConfig.ToEntity(),
 		Notification:   req.Notification.ToEntity(),
+	}
+}
+
+// KeepMaskedSecrets restores the stored values for the secrets the request only
+// carries as the masked placeholder the GET response substitutes for them.
+func (req *SystemBackupBaseReq) KeepMaskedSecrets(backup, current *entity.SystemBackup) {
+	if current == nil {
+		return
+	}
+	if basedto.IsMaskedSecret(req.Encryption.Secret) {
+		backup.Encryption.Secret = current.Encryption.Secret
 	}
 }
 
@@ -90,6 +115,8 @@ func (req *SystemBackupEncryptionReq) validate(field string) (res []vld.Validato
 	}
 	res = append(res, basedto.ValidateStrIn(&req.Format, false,
 		base.AllFileEncryptionFormats, field+"format")...)
+	res = append(res, basedto.ValidateStr(&req.Secret, req.Format != "", // required if set
+		1, EncryptionSecretRequirements.MaxLen, field+"secret")...)
 	res = append(res, basedto.ValidatePlainSecret(&req.Secret, field+"secret")...)
 	return res
 }

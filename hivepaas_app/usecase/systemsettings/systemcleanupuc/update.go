@@ -94,8 +94,22 @@ func (uc *UC) loadSettingData(
 	cleanupSetting, err := uc.SettingRepo.GetSingle(ctx, db, req.Scope, base.SettingTypeSystemCleanup, false,
 		bunex.SelectFor("UPDATE OF setting"),
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 		return hperrors.Wrap(err)
+	}
+	if cleanupSetting == nil {
+		timeNow := timeutil.NowUTC()
+		cleanupSetting = &entity.Setting{
+			ID:        gofn.Must(ulid.NewStringULID()),
+			Scope:     req.Scope.ScopeType,
+			Type:      base.SettingTypeSystemCleanup,
+			Status:    base.SettingStatusActive,
+			Name:      cleanupSettingName,
+			Version:   entity.CurrentSystemCleanupVersion,
+			Data:      "{}", // NOTE: this is necessary to make the parse not to fail
+			CreatedAt: timeNow,
+			UpdatedAt: timeNow,
+		}
 	}
 	data.Setting = cleanupSetting
 

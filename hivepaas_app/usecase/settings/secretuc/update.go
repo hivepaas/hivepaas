@@ -38,7 +38,7 @@ func (uc *UC) UpdateSecret(
 				return hperrors.Wrap(err)
 			}
 			updatedSecret.Key = oldSecret.Key // when update, keep the old KEY of the secret
-			if req.Value == "" {
+			if req.Value == "" || basedto.IsMaskedSecret(req.Value) {
 				updatedSecret.Value = oldSecret.Value
 				secretValueChanged = false
 			}

@@ -71,7 +71,7 @@ func (s *service) loadRepoCache(
 		}
 		data.RepoCacheFile = file
 
-		rootDir := config.Current.AppPath
+		rootDir := config.Current().AppPath
 		filePath := filepath.Join(rootDir, file.Path)
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			return nil
@@ -136,7 +136,7 @@ func (s *service) saveRepoCache(
 	for {
 		newCacheFile.Name = fmt.Sprintf("%v.%v%v", newCacheFile.ID, gofn.RandTokenAsHex(4), //nolint:mnd
 			repoCacheArchiveFormat.FileExtDefault())
-		newCacheFile.Path = filepath.Join(config.Current.DataPathSystemCacheRepos().RelPath(), newCacheFile.Name)
+		newCacheFile.Path = filepath.Join(config.Current().DataPathSystemCacheRepos().RelPath(), newCacheFile.Name)
 		if data.RepoCacheFile == nil || data.RepoCacheFile.Name != newCacheFile.Name {
 			break
 		}
@@ -144,7 +144,7 @@ func (s *service) saveRepoCache(
 	newCacheFile.UpdatedAt = timeNow
 	newCacheFile.Deleted = false
 
-	rootDir := config.Current.AppPath
+	rootDir := config.Current().AppPath
 	newFilePath := filepath.Join(rootDir, newCacheFile.Path)
 	fileEntitySaved := false
 

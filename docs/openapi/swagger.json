@@ -35466,6 +35466,96 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/hivepaas/security-settings" : {
+      "get" : {
+        "description" : "Gets HivePaaS security settings",
+        "operationId" : "getHivePaaSSecuritySettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.GetSecuritySettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets HivePaaS security settings",
+        "tags" : [ "system_hivepaas" ]
+      },
+      "put" : {
+        "description" : "Updates HivePaaS security settings",
+        "operationId" : "updateHivePaaSSecuritySettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/system_hpappsettingsdto.UpdateSecuritySettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.UpdateSecuritySettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates HivePaaS security settings",
+        "tags" : [ "system_hivepaas" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/hivepaas/service-settings" : {
       "get" : {
         "description" : "Gets HivePaaS service settings",
@@ -51628,6 +51718,9 @@
           "name" : {
             "type" : "string"
           },
+          "secretMasked" : {
+            "type" : "boolean"
+          },
           "size" : {
             "type" : "integer"
           },
@@ -51645,9 +51738,12 @@
           },
           "updatedAt" : {
             "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
           }
         },
-        "required" : [ "base64", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "key", "kind", "name", "size", "status", "swarmRef", "type", "updateVer", "updatedAt" ],
+        "required" : [ "base64", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "key", "kind", "name", "secretMasked", "size", "status", "swarmRef", "type", "updateVer", "updatedAt", "value" ],
         "type" : "object"
       },
       "settings_secretdto.SwarmRefFileTargetReq" : {
@@ -52682,6 +52778,18 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "system_hpappsettingsdto.GetSecuritySettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_hpappsettingsdto.SecuritySettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "system_hpappsettingsdto.GetServiceSettingsResp" : {
         "properties" : {
           "data" : {
@@ -52907,6 +53015,15 @@
         "required" : [ "domains", "updateVer" ],
         "type" : "object"
       },
+      "system_hpappsettingsdto.SecuritySettingsResp" : {
+        "properties" : {
+          "returnSecretsViaApi" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "returnSecretsViaApi" ],
+        "type" : "object"
+      },
       "system_hpappsettingsdto.ServiceSettingsResp" : {
         "properties" : {
           "appSettings" : {
@@ -53004,6 +53121,28 @@
         "type" : "object"
       },
       "system_hpappsettingsdto.UpdateRoutingSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.UpdateSecuritySettingsReq" : {
+        "properties" : {
+          "appSecret" : {
+            "description" : "AppSecret is the current app secret, re-entered. It is not authentication -\nthe endpoint is already admin-only - it is proof that the caller is the\noperator and not merely a session that reached an admin account. The flags\nbelow decide whether stored secrets may leave the server, so a stolen\nsession must not be enough to turn them on.",
+            "type" : "string"
+          },
+          "returnSecretsViaApi" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "appSecret", "returnSecretsViaApi" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.UpdateSecuritySettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -54224,6 +54363,9 @@
           "schedule" : {
             "$ref" : "#/components/schemas/systemsettings_systembackupdto.ScheduleResp"
           },
+          "secretMasked" : {
+            "type" : "boolean"
+          },
           "size" : {
             "type" : "integer"
           },
@@ -54240,7 +54382,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "cloudStorage", "compression", "createdAt", "dbBackupConfig", "default", "encryption", "expireAt", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "size", "status", "type", "updateVer", "updatedAt" ],
+        "required" : [ "cloudStorage", "compression", "createdAt", "dbBackupConfig", "default", "encryption", "expireAt", "id", "inheritable", "inherited", "kind", "name", "nextRuns", "notification", "schedule", "secretMasked", "size", "status", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "systemsettings_systembackupdto.UpdateSystemBackupReq" : {
@@ -54675,7 +54817,11 @@
       "usersettings_apikeydto.APIKeyResp" : {
         "properties" : {
           "accessAction" : {
-            "$ref" : "#/components/schemas/base.AccessActions"
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/base.AccessActions"
+            } ],
+            "description" : "A pointer, because null and \"no actions\" are opposite answers and this\nfield used to report them as the same one. A key stored without a limit -\nwhich is every key created before it became required - carries its owner's\nfull authority, and copying it into a value field reported it as granting\nnothing at all: the most dangerous key on the list looked like the safest.",
+            "type" : "object"
           },
           "createdAt" : {
             "type" : "string"
@@ -54726,7 +54872,11 @@
       "usersettings_apikeydto.CreateAPIKeyReq" : {
         "properties" : {
           "accessAction" : {
-            "$ref" : "#/components/schemas/base.AccessActions"
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/base.AccessActions"
+            } ],
+            "description" : "AccessAction narrows what the key may do below what its owner may do; it\nnever widens anything. It is required: left unset the key carries the\nowner's full authority, which is the last thing anyone chooses on purpose\nand the easiest thing to end up with by saying nothing.",
+            "type" : "object"
           },
           "default" : {
             "type" : "boolean"
@@ -55015,6 +55165,12 @@
           "accessExpireAt" : {
             "type" : "string"
           },
+          "capabilities" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "email" : {
             "type" : "string"
           },
@@ -55040,7 +55196,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "accessExpireAt", "email", "moduleAccesses", "projectAccesses", "role", "securityOption", "sendInviteEmail" ],
+        "required" : [ "accessExpireAt", "capabilities", "email", "moduleAccesses", "projectAccesses", "role", "securityOption", "sendInviteEmail" ],
         "type" : "object"
       },
       "userdto.InviteUserResp" : {
@@ -55292,6 +55448,12 @@
           "accessExpireAt" : {
             "type" : "string"
           },
+          "capabilities" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "email" : {
             "type" : "string"
           },
@@ -55329,7 +55491,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessExpireAt", "email", "fullName", "moduleAccesses", "notes", "position", "projectAccesses", "role", "securityOption", "status", "username" ],
+        "required" : [ "accessExpireAt", "capabilities", "email", "fullName", "moduleAccesses", "notes", "position", "projectAccesses", "role", "securityOption", "status", "username" ],
         "type" : "object"
       },
       "userdto.UpdateUserResp" : {
@@ -55345,6 +55507,12 @@
         "properties" : {
           "accessExpireAt" : {
             "type" : "string"
+          },
+          "capabilities" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
           },
           "createdAt" : {
             "type" : "string"
@@ -55401,7 +55569,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessExpireAt", "createdAt", "email", "fullName", "id", "lastAccess", "mfaTotpActivated", "moduleAccesses", "notes", "photo", "position", "projectAccesses", "role", "securityOption", "status", "updatedAt", "username" ],
+        "required" : [ "accessExpireAt", "capabilities", "createdAt", "email", "fullName", "id", "lastAccess", "mfaTotpActivated", "moduleAccesses", "notes", "photo", "position", "projectAccesses", "role", "securityOption", "status", "updatedAt", "username" ],
         "type" : "object"
       },
       "userdto.UserInviteInfoResp" : {
@@ -55644,9 +55812,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

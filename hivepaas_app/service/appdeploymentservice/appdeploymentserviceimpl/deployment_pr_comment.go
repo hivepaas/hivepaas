@@ -76,7 +76,7 @@ func (s *service) buildPRDeploymentResultMessage(data *appDeploymentData) string
 	isSucceeded := deployment.IsDone()
 	scope := app.GetObjectScope()
 
-	dashboardURL := config.Current.DashboardAppDeploymentDetailsURL(scope.GetBaseURLPath(), deployment.ID)
+	dashboardURL := config.Current().DashboardAppDeploymentDetailsURL(scope.GetBaseURLPath(), deployment.ID)
 	duration := deployment.GetDuration().Truncate(time.Second).String()
 
 	var commitInfo string

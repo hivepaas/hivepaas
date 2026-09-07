@@ -10,7 +10,7 @@ import (
 
 const (
 	DefaultSecretMinLen             = 8
-	DefaultSecretMaxLen             = 50
+	DefaultSecretMaxLen             = 64
 	DefaultSecretRequiredLowercases = 1
 	DefaultSecretRequiredUppercases = 1
 	DefaultSecretRequiredDigits     = 1

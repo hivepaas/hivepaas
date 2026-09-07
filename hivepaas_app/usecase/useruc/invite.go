@@ -136,7 +136,7 @@ func (uc *UC) loadUserInviteData(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	data.InviteLink = config.Current.DashboardUserSignupURL(inviteToken)
+	data.InviteLink = config.Current().DashboardUserSignupURL(inviteToken)
 
 	return nil
 }

@@ -20,7 +20,7 @@ import (
 // Unwrapping needs the app secret, so a wrong or changed one fails here rather
 // than surfacing later as unreadable settings.
 func (s *service) Load(ctx context.Context, db database.IDB) error {
-	appSecret := config.Current.Secret
+	appSecret := config.Current().Secret
 	if appSecret == "" {
 		return hperrors.NewMissing("App secret")
 	}

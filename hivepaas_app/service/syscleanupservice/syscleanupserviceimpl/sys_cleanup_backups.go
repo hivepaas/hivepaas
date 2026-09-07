@@ -82,7 +82,7 @@ func (s *service) sysCleanupLocalBackupFiles(
 	}
 
 	// Delete real files in local
-	rootDir := config.Current.AppPath
+	rootDir := config.Current().AppPath
 	for _, file := range deletingFiles {
 		filePathAbs := filepath.Join(rootDir, file.Path)
 		err := os.Remove(filePathAbs)

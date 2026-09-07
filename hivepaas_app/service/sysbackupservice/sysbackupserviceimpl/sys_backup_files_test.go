@@ -13,8 +13,8 @@ import (
 // archive would ship the lock and the key together and make the encryption
 // pointless. Anything added here must stay outside it.
 func TestSysBackupExcludesTheAppPath(t *testing.T) {
-	config.Current = &config.Config{AppPath: "/var/lib/hivepaas"}
-	appPath := filepath.Clean(config.Current.AppPath)
+	config.SetCurrent(&config.Config{AppPath: "/var/lib/hivepaas"})
+	appPath := filepath.Clean(config.Current().AppPath)
 
 	for _, model := range sysBackupFileModels {
 		if model.DirPath == nil {

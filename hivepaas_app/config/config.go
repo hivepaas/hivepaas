@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
+	"sync/atomic"
 
 	"github.com/jinzhu/configor"
 	"github.com/tiendc/gofn"
@@ -51,9 +53,38 @@ const (
 )
 
 var (
-	Current        *Config
+	current atomic.Pointer[Config]
+
+	// loadMu serializes the load paths. It guards lastConfigFile, which a reload
+	// reads to find the file the first load came from, and it keeps two reloads -
+	// a SIGHUP and an API call arriving together - from interleaving.
+	loadMu         sync.Mutex
 	lastConfigFile string
 )
+
+// Current returns the configuration in force. It is nil until LoadConfig runs.
+//
+// A function rather than a variable, because the config is replaced wholesale on
+// every reload while the rest of the process is reading it. One atomic load hands
+// the caller a coherent snapshot: they see all of the old config or all of the
+// new one, never half of each. Nothing mutates the value behind the pointer - the
+// writers publish a copy, see SaveAppSecret - so a snapshot stays valid for as
+// long as its holder keeps it.
+//
+// Read it once per operation and pass the result down rather than calling this in
+// a loop: two calls either side of a reload are two different configurations.
+func Current() *Config {
+	return current.Load()
+}
+
+// SetCurrent installs a configuration.
+//
+// The loader calls it, and tests call it to stand up a config without a file on
+// disk. Nothing else should: a config swapped in mid-request is a config half the
+// request has already read.
+func SetCurrent(cfg *Config) {
+	current.Store(cfg)
+}
 
 type Config struct {
 	Env      string `toml:"env" env:"HP_ENV"`
@@ -81,9 +112,6 @@ type Config struct {
 	Agent      Agent      `toml:"agent"`
 
 	DevMode DevMode `toml:"dev_mode"`
-
-	// Readonly and internal data
-	SystemInfo SystemInfo `toml:"-"`
 }
 
 func (cfg *Config) IsDevEnv() bool   { return cfg.Env == EnvDev }
@@ -101,14 +129,17 @@ func (cfg *Config) BaseURL() string {
 /// LOAD CONFIG
 
 func LoadConfig() (*Config, error) {
-	if Current != nil {
-		return Current, nil
+	loadMu.Lock()
+	defer loadMu.Unlock()
+
+	if cfg := current.Load(); cfg != nil {
+		return cfg, nil
 	}
 	cfg, err := loadConfig("")
 	if err != nil {
 		return nil, tracerr.Wrap(err)
 	}
-	Current = cfg
+	current.Store(cfg)
 	return cfg, nil
 }
 
@@ -174,6 +205,9 @@ func loadConfig(configFile string) (*Config, error) {
 }
 
 func ReloadConfig() (*Config, error) {
+	loadMu.Lock()
+	defer loadMu.Unlock()
+
 	newConfig, err := loadConfig(lastConfigFile)
 	if err != nil {
 		return nil, tracerr.Wrap(err)
@@ -181,7 +215,7 @@ func ReloadConfig() (*Config, error) {
 
 	// TODO: validate then apply a certain portion of the new config
 
-	Current = newConfig
+	current.Store(newConfig)
 	return newConfig, nil
 }
 
@@ -211,7 +245,10 @@ func ensureAppSecret(config *Config, appPath string) error {
 	}
 
 	config.Secret = gofn.RandTokenAsHex(appSecretLen)
-	if err := saveManagedSettings(appPath, &ManagedSettings{Secret: config.Secret}); err != nil {
+	err := updateManagedSettings(appPath, func(settings *ManagedSettings) {
+		settings.Secret = config.Secret
+	})
+	if err != nil {
 		return fmt.Errorf("failed to persist the generated app secret: %w", err)
 	}
 	return nil

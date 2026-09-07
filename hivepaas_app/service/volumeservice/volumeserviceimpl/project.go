@@ -29,7 +29,7 @@ func (s *service) CreateProjectDefaultVolume(
 	ctx context.Context,
 	project *entity.Project,
 ) (_ *entity.Setting, _ *client.VolumeCreateResult, err error) {
-	storagePathInHost := config.Current.Storage.BindSource
+	storagePathInHost := config.Current().Storage.BindSource
 	if storagePathInHost == "" {
 		return nil, nil, hperrors.Wrap(hperrors.ErrUnconfigured).
 			WithParam("Name", "HP_STORAGE_BIND_SOURCE")

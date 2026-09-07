@@ -41,12 +41,12 @@ func (uc *UC) GetMe(
 
 	respData := &sessiondto.GetMeDataResp{User: userResp}
 
-	if config.Current.SystemInfo.NextStep != "" && user.IsAdmin() {
+	if config.CurrentSystemInfo().NextStep != "" && user.IsAdmin() {
 		sysStatus, err := uc.systemStatusRepo.Get(ctx, uc.db)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		config.Current.SystemInfo.NextStep = sysStatus.NextStep
+		config.SetInstallationStep(sysStatus.NextStep)
 		respData.NextStep = string(sysStatus.NextStep)
 	}
 

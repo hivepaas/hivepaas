@@ -34,7 +34,7 @@ func (s *service) Upload(
 	var fileDir string
 	switch req.FileType { //nolint
 	case base.FileTypeTmp:
-		fileDir = config.Current.DataPathFiles().RelPath()
+		fileDir = config.Current().DataPathFiles().RelPath()
 	default:
 		// Do nothing
 	}
@@ -117,7 +117,7 @@ func (s *service) uploadItem(
 func (s *service) uploadItemToLocal(
 	req *uploadItemReq,
 ) (*uploadItemResp, error) {
-	filePath := filepath.Join(config.Current.AppPath, req.file.Path)
+	filePath := filepath.Join(config.Current().AppPath, req.file.Path)
 	file, err := os.Create(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file for writing: %w", err)

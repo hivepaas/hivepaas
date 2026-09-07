@@ -3,8 +3,10 @@ package hpappsettingsuc
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/datakeyservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
@@ -26,8 +28,11 @@ type UC struct {
 	appRepo     repository.AppRepo
 	settingRepo repository.SettingRepo
 
+	cacheAppSecretAttemptRepo cacherepository.AppSecretAttemptRepo
+
 	appRoutingService approutingservice.Service
 	appService        appservice.Service
+	auditService      auditservice.Service
 	dataKeyService    datakeyservice.Service
 	domainService     domainservice.Service
 	hpAppService      hpappservice.Service
@@ -47,8 +52,11 @@ func New(
 	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
 
+	cacheAppSecretAttemptRepo cacherepository.AppSecretAttemptRepo,
+
 	appRoutingService approutingservice.Service,
 	appService appservice.Service,
+	auditService auditservice.Service,
 	dataKeyService datakeyservice.Service,
 	domainService domainservice.Service,
 	hpAppService hpappservice.Service,
@@ -68,8 +76,11 @@ func New(
 		appRepo:     appRepo,
 		settingRepo: settingRepo,
 
+		cacheAppSecretAttemptRepo: cacheAppSecretAttemptRepo,
+
 		appRoutingService: appRoutingService,
 		appService:        appService,
+		auditService:      auditService,
 		dataKeyService:    dataKeyService,
 		domainService:     domainService,
 		hpAppService:      hpAppService,

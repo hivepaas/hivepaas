@@ -32,7 +32,7 @@ func (uc *UC) InitOAuthProvider(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	callbackURL := config.Current.SsoCallbackURL(req.Provider)
+	callbackURL := config.Current().SsoCallbackURL(req.Provider)
 
 	var provider goth.Provider
 	switch base.OAuthKind(setting.Kind) {

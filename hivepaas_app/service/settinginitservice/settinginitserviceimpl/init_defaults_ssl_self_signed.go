@@ -33,7 +33,7 @@ func (s *service) initDefaultSSLSelfSigned(
 	db database.IDB,
 	timeNow time.Time,
 ) (err error) {
-	certDir := config.Current.DataPathSslCerts().AbsPath()
+	certDir := config.Current().DataPathSslCerts().AbsPath()
 	certFile := filepath.Join(certDir, sslSelfSignedBaseName+".crt")
 	keyFile := filepath.Join(certDir, sslSelfSignedBaseName+".key")
 	certFileExists, _ := fileutil.FileExists(certFile, true)
@@ -41,7 +41,7 @@ func (s *service) initDefaultSSLSelfSigned(
 	regenerate := !certFileExists || !keyFileExists
 
 	var certBytes, keyBytes []byte
-	domain := gofn.Coalesce(config.Current.RootDomain, sslSelfSignedCN)
+	domain := gofn.Coalesce(config.Current().RootDomain, sslSelfSignedCN)
 	validTo := timeNow.Add(sslSelfSignedValidPeriod)
 	if regenerate {
 		certBytes, keyBytes, err = s.sslService.GenerateCertAsPEM(&pkix.Name{CommonName: domain},

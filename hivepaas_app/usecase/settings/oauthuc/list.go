@@ -23,7 +23,7 @@ func (uc *UC) ListOAuth(
 
 	input := &oauthdto.OAuthTransformInput{
 		RefObjects:      resp.RefObjects,
-		BaseCallbackURL: config.Current.SsoBaseCallbackURL(),
+		BaseCallbackURL: config.Current().SsoBaseCallbackURL(),
 	}
 	respData, err := oauthdto.TransformOAuths(resp.Data, input)
 	if err != nil {

@@ -99,7 +99,7 @@ func (s *service) containerExec(
 	}
 
 	isRemote := task.NodeID != "" && task.NodeID != currNodeID
-	if config.Current.DevMode.Enabled && config.Current.DevMode.ForceAgentLocal {
+	if config.Current().DevMode.Enabled && config.Current().DevMode.ForceAgentLocal {
 		isRemote = true
 	}
 

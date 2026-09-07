@@ -14,5 +14,5 @@ func TransformObjectIcon(iconID string) string {
 	if strings.HasPrefix(iconID, "/") {
 		return iconID
 	}
-	return fmt.Sprintf("%v/images/%v", config.Current.HTTPServer.BasePath, iconID)
+	return fmt.Sprintf("%v/images/%v", config.Current().HTTPServer.BasePath, iconID)
 }

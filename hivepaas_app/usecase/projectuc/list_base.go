@@ -49,7 +49,7 @@ func (uc *UC) ListProjectBase(
 		)
 	}
 
-	if !config.Current.IsDevEnv() {
+	if !config.Current().IsDevEnv() {
 		listOpts = append(listOpts,
 			bunex.SelectWhere("project.key != ?", base.HivepaasProjectKey),
 		)

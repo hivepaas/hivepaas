@@ -77,7 +77,7 @@ func (s *service) buildDeploymentNotifMsgData(
 		Method:        deployment.Settings.ActiveMethod,
 		StartedAt:     deployment.StartedAt.Truncate(time.Second),
 		Duration:      deployment.GetDuration().Truncate(time.Millisecond),
-		DashboardLink: config.Current.DashboardAppDeploymentDetailsURL(scope.GetBaseURLPath(), deployment.ID),
+		DashboardLink: config.Current().DashboardAppDeploymentDetailsURL(scope.GetBaseURLPath(), deployment.ID),
 	}
 	data.NotifMsgData = msgData
 

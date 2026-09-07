@@ -34,7 +34,7 @@ func (uc *UC) DetectAppPhoto(
 	var photoURL string
 	iconName := apphelper.DetectAppIcon(app.Name, imageName)
 	if iconName != "" {
-		photoURL = filepath.Join(config.Current.HttpPathStaticIcons(), fmt.Sprintf("%s.svg", iconName))
+		photoURL = filepath.Join(config.Current().HttpPathStaticIcons(), fmt.Sprintf("%s.svg", iconName))
 	}
 
 	return &appdto.DetectAppPhotoResp{

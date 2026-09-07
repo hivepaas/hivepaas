@@ -377,6 +377,7 @@ var Provides = []any{
 	repository.NewUserRepo,
 
 	// Cache repository
+	cacherepository.NewAppSecretAttemptRepo,
 	cacherepository.NewDeploymentInfoRepo,
 	cacherepository.NewGithubAppManifestRepo,
 	cacherepository.NewHealthcheckStateRepo,

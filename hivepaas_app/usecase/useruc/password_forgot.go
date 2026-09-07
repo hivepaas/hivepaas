@@ -44,7 +44,7 @@ func (uc *UC) PasswordForgot(
 		return nil, hperrors.Wrap(hperrors.ErrActionFailed)
 	}
 
-	resetLink := config.Current.DashboardPasswordResetURL(user.ID, token)
+	resetLink := config.Current().DashboardPasswordResetURL(user.ID, token)
 	err = uc.emailService.SendMailPasswordReset(ctx, uc.db, &emailservice.EmailDataPasswordReset{
 		BaseTemplateData: emailservice.BaseTemplateData{
 			Email:      email,

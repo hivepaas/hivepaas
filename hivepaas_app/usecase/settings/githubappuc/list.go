@@ -23,7 +23,7 @@ func (uc *UC) ListGithubApp(
 
 	input := &githubappdto.GithubAppTransformInput{
 		RefObjects:      resp.RefObjects,
-		BaseCallbackURL: config.Current.SsoBaseCallbackURL(),
+		BaseCallbackURL: config.Current().SsoBaseCallbackURL(),
 	}
 	respData, err := githubappdto.TransformGithubApps(resp.Data, input)
 	if err != nil {

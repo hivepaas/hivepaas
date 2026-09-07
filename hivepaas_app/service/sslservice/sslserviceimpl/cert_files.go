@@ -26,7 +26,7 @@ func (s *service) WriteCertFiles(
 	if len(settings) == 0 {
 		return nil
 	}
-	certDir := config.Current.DataPathSslCerts().AbsPath()
+	certDir := config.Current().DataPathSslCerts().AbsPath()
 	err := os.MkdirAll(certDir, certDirFileMode)
 	if err != nil {
 		return hperrors.Wrap(err).WithMsgLog("failed to create directory to save cert files")
@@ -71,7 +71,7 @@ func (s *service) DeleteCertFiles(
 	if len(settings) == 0 {
 		return nil
 	}
-	certDir := config.Current.DataPathSslCerts().AbsPath()
+	certDir := config.Current().DataPathSslCerts().AbsPath()
 	for _, setting := range settings {
 		sslCert := setting.MustAsSSLCert()
 		baseFilename := gofn.Coalesce(sslCert.BaseFilename, setting.ID)

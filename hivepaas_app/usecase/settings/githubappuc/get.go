@@ -30,7 +30,7 @@ func (uc *UC) GetGithubApp(
 
 	input := &githubappdto.GithubAppTransformInput{
 		RefObjects:      resp.RefObjects,
-		BaseCallbackURL: config.Current.SsoBaseCallbackURL(),
+		BaseCallbackURL: config.Current().SsoBaseCallbackURL(),
 	}
 	respData, err := githubappdto.TransformGithubApp(setting, input)
 	if err != nil {

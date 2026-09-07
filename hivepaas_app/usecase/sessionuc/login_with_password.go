@@ -3,7 +3,6 @@ package sessionuc
 import (
 	"context"
 	"errors"
-	"math"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -11,13 +10,15 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/failbackoff"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/sessionuc/sessiondto"
 )
 
 const (
-	// We allow at most 10 attempts of login in the first 2 minutes
-	// The duration increase by exponential of 2 after each minute
+	// The first 10 wrong passwords in a row are free. From there each further 10
+	// doubles the wait, starting at 2 minutes and measured from the most recent
+	// failure - so 10 failures cost 4 minutes, 20 cost 8, and so on.
 	maxPasswordFailsInARow       = 10
 	passwordCheckDurationEachRow = 2 * time.Minute
 	loginAttemptExp              = 4 * time.Hour
@@ -27,6 +28,13 @@ const (
 	// when a non-existent username is checked.
 	dummyHashForTimingAttack = "MTIzNDU2Nzg5MA== AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 )
+
+// passwordBackoff makes each wrong password cost more than the last, counted
+// against the account rather than the address the guess came from.
+var passwordBackoff = failbackoff.Policy{
+	MaxFailsInARow: maxPasswordFailsInARow,
+	Step:           passwordCheckDurationEachRow,
+}
 
 const (
 	nextStepMfaInput = "NextMfa"
@@ -61,7 +69,7 @@ func (uc *UC) LoginWithPassword(
 		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 			return nil, hperrors.Wrap(err)
 		}
-		if trustedDevice != nil && timeNow.Sub(trustedDevice.UpdatedAt) < config.Current.Session.DeviceTrustedPeriod {
+		if trustedDevice != nil && timeNow.Sub(trustedDevice.UpdatedAt) < config.Current().Session.DeviceTrustedPeriod {
 			passcodeRequired = false
 		}
 	}
@@ -125,6 +133,10 @@ func (uc *UC) passwordCheck(
 
 // allowPasswordLoginAtTheMoment checks if user can do password login at the moment.
 // If user made too many login failures, they need to wait for some time before they can try again.
+//
+// The wait is measured from the last failure, so pacing the guesses out no longer
+// avoids it - it used to be measured from the first, which meant only a burst was
+// ever slowed down. See failbackoff.Policy.Wait.
 func (uc *UC) allowPasswordLoginAtTheMoment(
 	ctx context.Context,
 	dbUser *entity.User,
@@ -140,18 +152,11 @@ func (uc *UC) allowPasswordLoginAtTheMoment(
 		}
 		return nil, hperrors.Wrap(err)
 	}
-	if attempt == nil || attempt.Fails < maxPasswordFailsInARow {
-		return attempt, nil
+	if wait := passwordBackoff.Wait(attempt, timeutil.NowUTC()); wait > 0 {
+		return nil, hperrors.Wrap(hperrors.ErrTooManyLoginFailures).
+			WithParam("WaitDuration", int(wait.Seconds()))
 	}
-
-	expo := attempt.Fails / maxPasswordFailsInARow
-	minWaitingDuration := time.Duration(math.Pow(2, float64(expo))) * passwordCheckDurationEachRow //nolint:mnd
-	durationFromFirstFail := timeutil.NowUTC().Sub(attempt.FirstFailAt)
-	if durationFromFirstFail > minWaitingDuration {
-		return attempt, nil
-	}
-	waitingDuration := int((minWaitingDuration - durationFromFirstFail).Seconds())
-	return nil, hperrors.Wrap(hperrors.ErrTooManyLoginFailures).WithParam("WaitDuration", waitingDuration)
+	return attempt, nil
 }
 
 // savePasswordCheckingStatus saves password checking status including the number of failures
@@ -172,14 +177,8 @@ func (uc *UC) savePasswordCheckingStatus(
 		return nil
 	}
 
-	// Save failed check count and update the first fail timestamp
-	if attempt == nil {
-		attempt = &cacheentity.LoginAttempt{}
-	}
-	attempt.Fails++
-	if attempt.FirstFailAt.IsZero() {
-		attempt.FirstFailAt = time.Now()
-	}
+	// Save the failed check count and move the timestamps the backoff reads
+	attempt = passwordBackoff.Fail(attempt, timeutil.NowUTC())
 	err := uc.cacheLoginAttemptRepo.Set(ctx, dbUser.ID, attempt, loginAttemptExp)
 	if err != nil {
 		return hperrors.Wrap(err)

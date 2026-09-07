@@ -25,7 +25,7 @@ func (s *service) GetDownloadURL(
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		urlStr, err := url.JoinPath(config.Current.BaseAPIURL(), "files", req.File.ID, "download")
+		urlStr, err := url.JoinPath(config.Current().BaseAPIURL(), "files", req.File.ID, "download")
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}

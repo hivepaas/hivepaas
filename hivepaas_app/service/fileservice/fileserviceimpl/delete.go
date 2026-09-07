@@ -39,7 +39,7 @@ func (s *service) deleteLocalFile(
 	ctx context.Context,
 	req *fileservice.DeleteDataReq,
 ) error {
-	filePath := filepath.Join(config.Current.AppPath, req.File.Path)
+	filePath := filepath.Join(config.Current().AppPath, req.File.Path)
 	// TODO: create an async task for deleting the file later
 	err := gofn.ExecRetryCtx(ctx, func() error {
 		err := os.Remove(filePath)

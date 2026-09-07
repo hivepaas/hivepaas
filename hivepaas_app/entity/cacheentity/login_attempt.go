@@ -1,8 +1,10 @@
 package cacheentity
 
-import "time"
+import "github.com/hivepaas/hivepaas/hivepaas_app/pkg/failbackoff"
 
-type LoginAttempt struct {
-	Fails       int       `json:"fails"`
-	FirstFailAt time.Time `json:"firstFailAt"`
-}
+// LoginAttempt counts one user's consecutive failed password checks.
+//
+// Its own key space, separate from [AppSecretAttempt]: failing to log in and
+// failing to prove you are the operator are different runs of failures and must
+// not shorten each other's fuse.
+type LoginAttempt = failbackoff.Attempt

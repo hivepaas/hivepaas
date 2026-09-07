@@ -83,5 +83,5 @@ func (h *Handler) SSOOAuthCallback(ctx *gin.Context) {
 	h.writeSessionDataToCookies(ctx, &sessionResp.BaseCreateSessionResp, false)
 
 	// Redirect client to front-end page
-	ctx.Redirect(http.StatusFound, config.Current.DashboardSsoSuccessURL())
+	ctx.Redirect(http.StatusFound, config.Current().DashboardSsoSuccessURL())
 }

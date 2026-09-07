@@ -55,7 +55,7 @@ func (uc *UC) CreateRepoWebhook(
 		Data: &repowebhookdto.RepoWebhookDataResp{
 			ID:         resp.Data.ID,
 			Secret:     secret,
-			WebhookURL: config.Current.RepoWebhookURL(resp.Data.ID),
+			WebhookURL: config.Current().RepoWebhookURL(resp.Data.ID),
 		},
 	}, nil
 }

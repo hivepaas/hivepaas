@@ -23,7 +23,7 @@ func (uc *UC) GetOAuth(
 
 	input := &oauthdto.OAuthTransformInput{
 		RefObjects:      resp.RefObjects,
-		BaseCallbackURL: config.Current.SsoBaseCallbackURL(),
+		BaseCallbackURL: config.Current().SsoBaseCallbackURL(),
 	}
 	respData, err := oauthdto.TransformOAuth(resp.Data, input)
 	if err != nil {

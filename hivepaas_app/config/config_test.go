@@ -11,7 +11,7 @@ func Test_LoadConfig(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		_ = os.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
 
-		Current = nil
+		SetCurrent(nil)
 		cfg, err := LoadConfig()
 		assert.Nil(t, err)
 		assert.Equal(t, "myenv", cfg.Env)
@@ -24,7 +24,7 @@ func Test_LoadConfig(t *testing.T) {
 		t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
 		t.Setenv("HP_DB_HOST", "db-from-env")
 
-		Current = nil
+		SetCurrent(nil)
 		cfg, err := LoadConfig()
 		assert.Nil(t, err)
 		assert.Equal(t, "myenv", cfg.Env)
@@ -41,7 +41,7 @@ func Test_LoadConfig(t *testing.T) {
 		t.Setenv("HP_CONFIG_FILE", "testdata/config.myenv.toml")
 		t.Setenv("HP_DB", "host: db-from-section\nport: 25432")
 
-		Current = nil
+		SetCurrent(nil)
 		cfg, err := LoadConfig()
 		assert.Nil(t, err)
 		assert.Equal(t, "db-from-section", cfg.DB.Host)
@@ -52,7 +52,7 @@ func Test_LoadConfig(t *testing.T) {
 		_ = os.Unsetenv("HP_ENV")
 		_ = os.Unsetenv("HP_CONFIG_FILE")
 
-		Current = nil
+		SetCurrent(nil)
 		_, err := LoadConfig()
 		assert.ErrorIs(t, err, ErrConfigFileUnset)
 	})
@@ -61,7 +61,7 @@ func Test_LoadConfig(t *testing.T) {
 		_ = os.Unsetenv("HP_ENV")
 		_ = os.Setenv("HP_CONFIG_FILE", "notexist/config.myenv.toml")
 
-		Current = nil
+		SetCurrent(nil)
 		_, err := LoadConfig()
 		assert.ErrorIs(t, err, ErrConfigFileNotFound)
 	})
@@ -70,7 +70,7 @@ func Test_LoadConfig(t *testing.T) {
 		_ = os.Unsetenv("HP_ENV")
 		_ = os.Setenv("HP_CONFIG_FILE", "testdata/config-malformed.toml")
 
-		Current = nil
+		SetCurrent(nil)
 		_, err := LoadConfig()
 		assert.NotNil(t, err)
 	})

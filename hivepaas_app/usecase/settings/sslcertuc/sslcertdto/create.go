@@ -115,7 +115,7 @@ func (req *SSLCertBaseReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 
-	cfg := config.Current
+	cfg := config.Current()
 	requireCert := req.CertType == base.SSLCertTypeCustom
 	requireProvider := req.CertType == base.SSLCertTypeZeroSSL || req.CertType == base.SSLCertTypeGoogleTrust
 	requireAcmeProvider := strings.HasPrefix(req.Domain, "*.") && req.CertType != base.SSLCertTypeCustom &&

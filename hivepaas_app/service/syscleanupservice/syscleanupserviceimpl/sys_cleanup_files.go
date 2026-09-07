@@ -41,7 +41,7 @@ func (s *service) sysCleanupTempFiles(
 		return nil
 	}
 
-	baseDirs := []string{base.BaseTempDirDefault, filepath.Join(config.Current.AppPath, "tmp")}
+	baseDirs := []string{base.BaseTempDirDefault, filepath.Join(config.Current().AppPath, "tmp")}
 	threshold := time.Now().AddDate(0, 0, -3) //nolint:mnd
 	if data.CleanupFilesTemp == base.CleanupFlagForce {
 		threshold = time.Now()

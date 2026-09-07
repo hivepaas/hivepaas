@@ -88,9 +88,9 @@ func storedPassword(t *testing.T, setting *entity.Setting) *entity.EncryptedFiel
 
 func enableReveal(t *testing.T, enabled bool) {
 	t.Helper()
-	prev := config.Current
-	config.Current = &config.Config{Security: config.Security{ReturnSecretsViaAPI: enabled}}
-	t.Cleanup(func() { config.Current = prev })
+	prev := config.Current()
+	config.SetCurrent(&config.Config{Security: config.Security{ReturnSecretsViaAPI: enabled}})
+	t.Cleanup(func() { config.SetCurrent(prev) })
 }
 
 /// Tests

@@ -9,7 +9,7 @@ import (
 )
 
 func CreateAuthCtx(ctx context.Context) context.Context {
-	return metadata.AppendToOutgoingContext(ctx, "authorization", config.Current.Agent.SecretToken)
+	return metadata.AppendToOutgoingContext(ctx, "authorization", config.Current().Agent.SecretToken)
 }
 
 func CreateAuthCtxWithCancel(ctx context.Context) (context.Context, context.CancelFunc) {

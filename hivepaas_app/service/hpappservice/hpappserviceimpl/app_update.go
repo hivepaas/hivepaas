@@ -57,7 +57,7 @@ func (s *service) UpdateSystemVersion(
 		UpdatedAt: timeNow,
 	}
 	task.MustSetArgs(&entity.TaskSystemUpdateArgs{
-		CurrentVersion: gofn.If(config.Current.IsBetaEnv(), base.BetaVersion, base.StableVersion),
+		CurrentVersion: gofn.If(config.Current().IsBetaEnv(), base.BetaVersion, base.StableVersion),
 		TargetVersion:  targetVersion,
 	})
 

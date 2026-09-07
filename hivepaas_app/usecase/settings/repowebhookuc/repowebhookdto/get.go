@@ -60,7 +60,7 @@ func TransformRepoWebhook(
 	}
 
 	// Computed field
-	resp.WebhookURL = config.Current.RepoWebhookURL(setting.ID)
+	resp.WebhookURL = config.Current().RepoWebhookURL(setting.ID)
 
 	resp.SecretMasked = conf.Secret.IsEncrypted() || resp.Inherited
 	if resp.SecretMasked {

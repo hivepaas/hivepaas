@@ -56,7 +56,7 @@ func (s *service) buildSystemUpdateNotifMsgData(
 		Succeeded:      isSucceeded,
 		StartedAt:      task.StartedAt.Truncate(time.Second),
 		Duration:       task.GetDuration().Truncate(time.Millisecond),
-		DashboardLink:  config.Current.DashboardTaskDetailsURL(task.ID),
+		DashboardLink:  config.Current().DashboardTaskDetailsURL(task.ID),
 	}
 	data.NotifMsgData = msgData
 }

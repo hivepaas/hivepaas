@@ -22,6 +22,13 @@ const (
 	// disappear without a record are the same problem as secrets handed out
 	// without one, so the cascade that follows a revoked capability writes these.
 	AuditLogTypeAPIKeyRevoke AuditLogType = "api-key-revoke" //nolint:gosec // G101: an event name
+
+	// AuditLogTypeSecuritySettingsUpdate records a change to the operator-level
+	// security switches. One of them decides whether stored secrets may leave the
+	// server at all, so the change is worth as much as the reveals it permits:
+	// without this, a switch flipped on and back off leaves the reveals in between
+	// looking like they were always allowed.
+	AuditLogTypeSecuritySettingsUpdate AuditLogType = "security-settings-update"
 )
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.
@@ -37,6 +44,9 @@ const (
 	// AuditLogSourceCapabilityRevoked is the system acting on its own, following
 	// through on a capability somebody took away.
 	AuditLogSourceCapabilityRevoked AuditLogSource = "capability-revoked"
+
+	// AuditLogSourceAPIUpdate is an update endpoint.
+	AuditLogSourceAPIUpdate AuditLogSource = "api-update"
 )
 
 // AuditLogResult says whether the action was permitted.

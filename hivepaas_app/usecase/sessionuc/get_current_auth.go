@@ -54,7 +54,7 @@ func (uc *UC) verifyAuth(ctx context.Context, auth *basedto.Auth) error {
 	// NOTE: We can't update `last_access` timestamp every request due to performance reason.
 	timeNow := timeutil.NowUTC()
 	if user.LastAccess.IsZero() ||
-		timeNow.Sub(user.LastAccess) > config.Current.Session.LastAccessUpdatePeriod {
+		timeNow.Sub(user.LastAccess) > config.Current().Session.LastAccessUpdatePeriod {
 		user.LastAccess = timeNow
 		// Just ignore the error if happens (as this is not important action)
 		_ = uc.userRepo.Update(ctx, uc.db, user.Entity(), bunex.UpdateColumns("last_access"))

@@ -32,7 +32,7 @@ func (s *service) initRootProjectMainApp(
 	service *swarm.Service,
 ) (shouldUpdateService bool, err error) {
 	timeNow := timeutil.NowUTC()
-	cfg := config.Current
+	cfg := config.Current()
 
 	// Add service settings for the app
 	dbServiceSetting := &entity.Setting{

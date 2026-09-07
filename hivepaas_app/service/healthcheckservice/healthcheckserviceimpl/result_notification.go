@@ -90,7 +90,7 @@ func (s *service) buildNotificationMsgData(
 	if app := data.Scope.GetApp(); app != nil {
 		msgData.AppName = app.Name
 	}
-	msgData.DashboardLink = config.Current.DashboardPeriodicTaskDetailsURL(data.Scope.GetBaseURLPath(),
+	msgData.DashboardLink = config.Current().DashboardPeriodicTaskDetailsURL(data.Scope.GetBaseURLPath(),
 		data.PeriodicSetting.ID, data.Task.ID)
 
 	taskOutput, _ := data.Task.OutputAsPeriodicJob()

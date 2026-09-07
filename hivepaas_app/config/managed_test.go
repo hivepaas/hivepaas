@@ -12,7 +12,7 @@ import (
 // resetLoadState clears the package globals a load leaves behind, so each test
 // starts from the state a fresh process would have.
 func resetLoadState() {
-	Current = nil
+	SetCurrent(nil)
 	lastConfigFile = ""
 	envSnapshotOnce = sync.Once{}
 	envSnapshot = nil

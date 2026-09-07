@@ -127,7 +127,7 @@ func (s *service) sysBackupCreateWriter(
 	data *sysBackupData,
 ) (tmpFileName string, tarW *tar.Writer, closer func() error, err error) {
 	// Make sure the backup directory exist
-	data.BackupSaveDir = config.Current.DataPathSystemBackupFiles().AbsPath()
+	data.BackupSaveDir = config.Current().DataPathSystemBackupFiles().AbsPath()
 
 	err = os.MkdirAll(data.BackupSaveDir, base.DirModeDefault)
 	if err != nil {

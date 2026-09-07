@@ -33,7 +33,19 @@ var ErrManagedSettingsPermissive = errors.New("managed settings file is too perm
 // overridden by the file at all, so write access to the app volume does not let
 // anyone repoint the database or change the listening address.
 type ManagedSettings struct {
-	Secret string `toml:"secret"`
+	Secret   string          `toml:"secret"`
+	Security ManagedSecurity `toml:"security"`
+}
+
+// ManagedSecurity is the security section of the managed file.
+//
+// Every field is a pointer, and that is not decoration. applyTo overlays only
+// what the file actually sets, which for a string is "not empty" - but the zero
+// value of a bool is also a meaningful setting. Without the pointer, turning a
+// flag off would be indistinguishable from never having written it, and the
+// operator's "off" would silently lose to whatever the base config file says.
+type ManagedSecurity struct {
+	ReturnSecretsViaAPI *bool `toml:"return_secrets_via_api"`
 }
 
 // applyTo overlays the settings that are set. A field the file omits leaves the
@@ -44,6 +56,9 @@ func (s *ManagedSettings) applyTo(config *Config) {
 	}
 	if s.Secret != "" {
 		config.Secret = s.Secret
+	}
+	if v := s.Security.ReturnSecretsViaAPI; v != nil {
+		config.Security.ReturnSecretsViaAPI = *v
 	}
 }
 
@@ -78,6 +93,22 @@ func loadManagedSettings(appPath string) (*ManagedSettings, error) {
 		return nil, fmt.Errorf("failed to parse managed settings %s: %w", path, err)
 	}
 	return settings, nil
+}
+
+// updateManagedSettings applies a change to the managed settings file.
+//
+// It exists because saveManagedSettings replaces the whole file. Handing it a
+// struct with one field filled in - the obvious way to write one setting - erases
+// every other setting in it, and the one that hurts is the app secret: erase that
+// and nothing encrypted is readable again. So a write is always read, modify,
+// write, and no caller builds a ManagedSettings from scratch.
+func updateManagedSettings(appPath string, modify func(settings *ManagedSettings)) error {
+	settings, err := loadManagedSettings(appPath)
+	if err != nil {
+		return err
+	}
+	modify(settings)
+	return saveManagedSettings(appPath, settings)
 }
 
 // saveManagedSettings writes the managed settings, replacing any existing file.

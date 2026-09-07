@@ -37,7 +37,7 @@ func CreateTempDirInAppPath(baseDir, pattern string, perm os.FileMode) (dir stri
 	if perm == 0 {
 		perm = defaultDirMode
 	}
-	dir = filepath.Join(config.Current.AppPath, "tmp", timeutil.NowUTC().Format(time.DateOnly), baseDir)
+	dir = filepath.Join(config.Current().AppPath, "tmp", timeutil.NowUTC().Format(time.DateOnly), baseDir)
 
 	err = os.MkdirAll(dir, perm)
 	if err != nil {

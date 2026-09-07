@@ -84,7 +84,7 @@ func (s *service) sysCleanupCacheRepoSource(
 	}
 
 	// Delete real files in local
-	rootDir := config.Current.AppPath
+	rootDir := config.Current().AppPath
 	for _, file := range deletingFiles {
 		err := os.Remove(filepath.Join(rootDir, file.Path))
 		if err != nil {

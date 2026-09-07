@@ -126,7 +126,7 @@ func (s *service) onCloneDeploymentSettingDefault(
 	deploymentSettings := setting.MustAsAppDeploymentSettings()
 
 	if !settings.CloneDeploymentSettings {
-		isDevEnv := config.Current.IsDevEnv()
+		isDevEnv := config.Current().IsDevEnv()
 		deploymentSettings.ActiveMethod = base.DeploymentMethodImage
 		deploymentSettings.ImageSource = &entity.DeploymentImageSource{
 			Image: gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit),

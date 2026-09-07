@@ -91,6 +91,6 @@ func (s *service) cleanup(
 	data *execData,
 ) {
 	if execErr != nil && data.File != nil && data.File.StorageType == base.FileStorageLocal {
-		_ = os.RemoveAll(filepath.Join(config.Current.AppPath, data.File.Path))
+		_ = os.RemoveAll(filepath.Join(config.Current().AppPath, data.File.Path))
 	}
 }

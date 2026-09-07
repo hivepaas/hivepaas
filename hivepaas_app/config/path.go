@@ -111,7 +111,7 @@ func (lp LocalPath) RelPath() string {
 	return string(lp)
 }
 func (lp LocalPath) AbsPath() string {
-	return filepath.Join(Current.AppPath, string(lp))
+	return filepath.Join(Current().AppPath, string(lp))
 }
 func (lp LocalPath) Join(elem ...string) LocalPath {
 	return LocalPath(filepath.Join(append([]string{string(lp)}, elem...)...))

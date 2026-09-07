@@ -63,7 +63,7 @@ func (s *service) repoDeployStepImageBuild(
 	}()
 
 	isRemote := buildNode.Node != nil && buildNode.Node.ID != "" && buildNode.Node.ID != buildNode.CurrentNodeID
-	if config.Current.DevMode.Enabled && config.Current.DevMode.ForceAgentLocal {
+	if config.Current().DevMode.Enabled && config.Current().DevMode.ForceAgentLocal {
 		isRemote = true
 	}
 

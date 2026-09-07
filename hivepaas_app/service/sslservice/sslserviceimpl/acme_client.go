@@ -65,7 +65,7 @@ func (s *service) GetAcmeClient(
 
 	// If no DNS-01 provider is set, fallback to HTTP-01
 	if acmeCfg.DNS01Provider == nil {
-		acmeCfg.HTTP01Provider, err = acme.NewHTTP01Provider(config.Current.DataPathSslAcme().AbsPath())
+		acmeCfg.HTTP01Provider, err = acme.NewHTTP01Provider(config.Current().DataPathSslAcme().AbsPath())
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}

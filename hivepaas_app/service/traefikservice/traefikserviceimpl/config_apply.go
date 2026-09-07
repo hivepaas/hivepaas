@@ -95,7 +95,7 @@ func (s *service) ApplyAppConfig(
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-	} else if data.App != nil && config.Current != nil {
+	} else if data.App != nil && config.Current() != nil {
 		// Ensure file does not exist if no certs are needed
 		_ = os.Remove(data.App.TraefikConfigPath())
 	}

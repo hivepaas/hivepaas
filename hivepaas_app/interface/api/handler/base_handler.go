@@ -162,7 +162,7 @@ func (h *BaseHandler) RenderError(ctx *gin.Context, err error) {
 	h.SaveError(ctx, errInfo, errLevel)
 
 	// Remove the error debug data from the response if we are not in dev env
-	if !config.Current.IsDevEnv() {
+	if !config.Current().IsDevEnv() {
 		// these fields are for dev only
 		errInfo.Cause = ""
 		errInfo.DebugLog = ""
@@ -518,7 +518,7 @@ func (h *BaseHandler) IsWebsocketRequest(ctx *gin.Context) bool {
 
 //nolint:gocognit,gocyclo
 func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) error {
-	cfg := &config.Current.Files
+	cfg := &config.Current().Files
 	err := ctx.Request.ParseMultipartForm(int64(cfg.RequestMaxSize))
 	if err != nil {
 		if errors.Is(err, multipart.ErrMessageTooLarge) {

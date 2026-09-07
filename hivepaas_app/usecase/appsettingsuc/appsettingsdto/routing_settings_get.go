@@ -158,7 +158,7 @@ type AppRoutingSettingsTransformInput struct {
 
 func TransformRoutingSettings(input *AppRoutingSettingsTransformInput) (resp *RoutingSettingsResp, err error) {
 	resp = &RoutingSettingsResp{}
-	resp.DomainSuggestion = fmt.Sprintf("<name>.%v", config.Current.RootDomain)
+	resp.DomainSuggestion = fmt.Sprintf("<name>.%v", config.Current().RootDomain)
 
 	if input.RoutingSettings == nil {
 		return resp, nil

@@ -34,7 +34,7 @@ func (uc *UC) BeginReprovisionGithubApp(
 		return nil, hperrors.Wrap(err)
 	}
 
-	cfg := config.Current
+	cfg := config.Current()
 	isLocalEnv := cfg.IsDevEnv() && cfg.Platform == config.PlatformLocal
 	timeNow := timeutil.NowUTC()
 

@@ -62,7 +62,7 @@ func (s *service) initOutputWriterToFile(
 			closeFunc: func() error { return pw.Close() },
 		}
 	} else {
-		destFilePath := filepath.Join(config.Current.AppPath, data.File.Path)
+		destFilePath := filepath.Join(config.Current().AppPath, data.File.Path)
 		f, err := os.Create(destFilePath)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
@@ -189,7 +189,7 @@ func (s *service) initOutputFile(
 			return s3Client.UploadEx(ctx, data.File.Bucket, objectKey, 0, 0, content)
 		}
 	} else {
-		data.File.Path = filepath.Join(config.Current.DataPathFiles().RelPath(), data.File.ID+"-"+fileName)
+		data.File.Path = filepath.Join(config.Current().DataPathFiles().RelPath(), data.File.ID+"-"+fileName)
 	}
 
 	return nil

@@ -15,8 +15,8 @@ import (
 )
 
 func (s *service) GetAgentAddrForNode(ctx context.Context, nodeID string) (string, error) {
-	grpcPort := strconv.Itoa(config.Current.Agent.Port)
-	if config.Current.DevMode.Enabled && config.Current.DevMode.ForceAgentLocal {
+	grpcPort := strconv.Itoa(config.Current().Agent.Port)
+	if config.Current().DevMode.Enabled && config.Current().DevMode.ForceAgentLocal {
 		return "localhost:" + grpcPort, nil
 	}
 

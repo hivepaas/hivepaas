@@ -54,7 +54,7 @@ func (uc *UC) CreateGithubApp(
 	return &githubappdto.CreateGithubAppResp{
 		Data: &githubappdto.GithubAppCreationResp{
 			ID:          resp.Data.ID,
-			CallbackURL: config.Current.SsoCallbackURL(resp.Data.ID),
+			CallbackURL: config.Current().SsoCallbackURL(resp.Data.ID),
 		},
 	}, nil
 }
@@ -69,11 +69,11 @@ func (uc *UC) installGithubAppWebhook(
 		githubApp.WebhookSecret = entity.NewEncryptedField(gofn.RandTokenAsHex(base.DefaultWebhookSecretByteLen))
 	}
 
-	if config.Current.IsDevEnv() && config.Current.Platform == config.PlatformLocal {
+	if config.Current().IsDevEnv() && config.Current().Platform == config.PlatformLocal {
 		githubApp.WebhookSecret.Set("abc123")
 		githubApp.WebhookURL = "https://smee.io/RBNiNjxieUIWZ6Ej"
 	} else {
-		githubApp.WebhookURL = config.Current.RepoWebhookURL(settingID)
+		githubApp.WebhookURL = config.Current().RepoWebhookURL(settingID)
 	}
 
 	privateKey, err := githubApp.PrivateKey.GetPlain()

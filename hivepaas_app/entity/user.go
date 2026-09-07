@@ -63,5 +63,5 @@ func (u *User) GetObjectScope() *ObjectScope {
 }
 
 func (u *User) IsDemoUser() bool {
-	return u.ID == config.Current.Users.Demo.UserID
+	return u.ID == config.Current().Users.Demo.UserID
 }

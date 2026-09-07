@@ -35,7 +35,7 @@ func (s *service) sysBackupDB(
 		}
 	}()
 
-	dbConf := config.Current.DB
+	dbConf := config.Current().DB
 	dumpFileName := "db.pg_dump"
 	dumpFilePath := filepath.Join(data.TempDir, dumpFileName)
 

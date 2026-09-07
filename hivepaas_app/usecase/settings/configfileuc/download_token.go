@@ -31,7 +31,7 @@ func (uc *UC) GetDownloadToken(
 
 	expiration := req.Expiration.ToDuration()
 	if expiration <= 0 {
-		expiration = gofn.If(config.Current.IsDevEnv(), defaultDownloadTokenExpDev, defaultDownloadTokenExp)
+		expiration = gofn.If(config.Current().IsDevEnv(), defaultDownloadTokenExpDev, defaultDownloadTokenExp)
 	}
 	token, err := uc.FileService.GenerateDownloadToken(auth.User.ID, resp.Data.ID, false, expiration)
 	if err != nil {

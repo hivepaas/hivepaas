@@ -15,8 +15,8 @@ import (
 )
 
 func init() {
-	if config.Current == nil {
-		config.Current = &config.Config{Secret: "test_secret_key"}
+	if config.Current() == nil {
+		config.SetCurrent(&config.Config{Secret: "test_secret_key"})
 	}
 }
 

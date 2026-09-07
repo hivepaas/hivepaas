@@ -43,7 +43,7 @@ func SystemInstallation(
 			if err != nil {
 				return fmt.Errorf("failed to load system status: %w", err)
 			}
-			config.Current.SystemInfo.NextStep = sysStatus.NextStep
+			config.SetInstallationStep(sysStatus.NextStep)
 
 			if sysStatus.NextStep == base.InstallationStepInitData {
 				err = sysInstallationInitData(ctx, db, sysStatusRepo, projectRepo, userService,
@@ -80,7 +80,7 @@ func sysInstallationInitData(
 		if err != nil {
 			return fmt.Errorf("failed to load system status: %w", err)
 		}
-		config.Current.SystemInfo.NextStep = sysStatus.NextStep
+		config.SetInstallationStep(sysStatus.NextStep)
 		if sysStatus.NextStep == "" {
 			return nil
 		}
@@ -109,7 +109,7 @@ func sysInstallationInitData(
 		if err != nil {
 			return fmt.Errorf("failed to save system status: %w", err)
 		}
-		config.Current.SystemInfo.NextStep = sysStatus.NextStep
+		config.SetInstallationStep(sysStatus.NextStep)
 
 		return nil
 	})
@@ -133,7 +133,7 @@ func sysInstallationInitDevProjects(
 	projectService projectservice.Service,
 	logger logging.Logger,
 ) error {
-	if !config.Current.IsDevEnv() {
+	if !config.Current().IsDevEnv() {
 		return nil
 	}
 

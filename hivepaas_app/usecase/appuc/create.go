@@ -215,7 +215,7 @@ func (uc *UC) preparePersistingAppService(
 	app *entity.App,
 	data *createAppData,
 ) error {
-	isDevEnv := config.Current.IsDevEnv()
+	isDevEnv := config.Current().IsDevEnv()
 
 	appInfo := &apphelper.AppInfo{
 		Name: app.Name,

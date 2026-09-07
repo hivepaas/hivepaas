@@ -58,7 +58,7 @@ func (uc *UC) handleGithubAppManifestFlowOnCreation(
 	//
 	// Local dev is the exception: deliveries are replayed through smee against the
 	// fixed secret the seed data uses, so the placeholder is kept there.
-	cfg := config.Current
+	cfg := config.Current()
 	isLocalEnv := cfg.IsDevEnv() && cfg.Platform == config.PlatformLocal
 	if webhookSecret := gofn.PtrValueOrEmpty(appConfig.WebhookSecret); webhookSecret != "" && !isLocalEnv {
 		githubApp.WebhookSecret = entity.NewEncryptedField(webhookSecret)
@@ -130,7 +130,7 @@ func (uc *UC) handleGithubAppManifestFlowOnInstallation(
 
 	_ = uc.cacheAppManifestRepo.Del(ctx, req.SettingID)
 
-	redirectURL := config.Current.DashboardGithubAppsURL(manifestCache.Scope.GetBaseURLPath())
+	redirectURL := config.Current().DashboardGithubAppsURL(manifestCache.Scope.GetBaseURLPath())
 	return &githubappdto.HandleGithubAppManifestFlowProgressResp{
 		Data: &githubappdto.HandleGithubAppManifestFlowProgressDataResp{
 			RedirectURL: redirectURL,

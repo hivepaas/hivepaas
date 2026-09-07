@@ -177,10 +177,19 @@ var (
 	ErrWebhookTypeUnsupported               = NewErr(ErrUnsupported, "ERR_WEBHOOK_TYPE_UNSUPPORTED")
 	ErrIMServiceUnsupported                 = NewErr(ErrUnsupported, "ERR_IM_SERVICE_UNSUPPORTED")
 	ErrPasswordCurrentMismatched            = NewErr(ErrBadRequest, "ERR_PASSWORD_CURRENT_MISMATCHED")
-	ErrPasswordNotMeetRequirements          = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_NOT_MEET_REQUIREMENTS")
-	ErrPasswordHasWeakSequence              = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_HAS_WEAK_SEQUENCE")
-	ErrPasswordTooSimilarToPrevious         = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_TOO_SIMILAR_TO_PREVIOUS")
-	ErrDataVerNewerThanSystemVer            = NewErr(ErrValueInvalid, "ERR_DATA_VER_NEWER_THAN_SYSTEM_VER")
+	// ErrAppSecretMismatched is a wrong app secret, not a bad session: the caller
+	// is still who they said they are, they just cannot prove they are the
+	// operator. Deliberately a bad request rather than an unauthorized, so a
+	// mistyped secret does not read as an expired login and log anyone out.
+	ErrAppSecretMismatched = NewErr(ErrBadRequest, "ERR_APP_SECRET_MISMATCHED")
+	// ErrTooManyAppSecretFailures spaces out guessing. Like the mismatch above it
+	// is not an unauthorized: the session is fine, only this one check is being
+	// made to wait, and answering 401 would log the operator out mid-change.
+	ErrTooManyAppSecretFailures     = NewErr(ErrTooMany, "ERR_TOO_MANY_APP_SECRET_FAILURES")
+	ErrPasswordNotMeetRequirements  = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_NOT_MEET_REQUIREMENTS")
+	ErrPasswordHasWeakSequence      = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_HAS_WEAK_SEQUENCE")
+	ErrPasswordTooSimilarToPrevious = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_TOO_SIMILAR_TO_PREVIOUS")
+	ErrDataVerNewerThanSystemVer    = NewErr(ErrValueInvalid, "ERR_DATA_VER_NEWER_THAN_SYSTEM_VER")
 )
 
 // Errors for projects

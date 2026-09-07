@@ -28,7 +28,7 @@ func (s *service) migrateDBSchema(
 	ctx context.Context,
 	data *sysUpdateData,
 ) (err error) {
-	cfg := config.Current
+	cfg := config.Current()
 	start := timeutil.NowUTC()
 	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Start migrating db schema...", tasklog.TsNow))
 	defer func() {

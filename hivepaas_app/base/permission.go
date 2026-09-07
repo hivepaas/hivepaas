@@ -56,6 +56,7 @@ const (
 	ResourceTypeRepoWebhook       ResourceType = "repo-webhook"
 	ResourceTypeSchedJob          ResourceType = "sched-job"
 	ResourceTypeSecret            ResourceType = "secret"
+	ResourceTypeSecuritySettings  ResourceType = "security-settings"
 	ResourceTypeSetting           ResourceType = "setting"
 	ResourceTypeSSHKey            ResourceType = "ssh-key"
 	ResourceTypeSSLCert           ResourceType = "ssl-cert"

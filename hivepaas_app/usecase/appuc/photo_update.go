@@ -132,7 +132,7 @@ func (uc *UC) preparePersistingAppPhoto(
 	case req.Delete:
 		app.Photo = ""
 	case req.IsPresetIcon:
-		app.Photo = filepath.Join(config.Current.HttpPathStaticIcons(), data.PresetIcon)
+		app.Photo = filepath.Join(config.Current().HttpPathStaticIcons(), data.PresetIcon)
 	default:
 		photoData = &entity.BinObject{
 			ID:          gofn.Must(ulid.NewStringULID()),

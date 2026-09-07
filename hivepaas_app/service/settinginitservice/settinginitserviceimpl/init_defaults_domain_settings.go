@@ -41,12 +41,12 @@ func (s *service) initDefaultDomainSettings(
 		UpdatedAt:   timeNow,
 	}
 	domain := &entity.DomainSettings{
-		RootDomain: config.Current.RootDomain,
+		RootDomain: config.Current().RootDomain,
 		CertSettings: &entity.DomainCertSettings{
 			CertType:    domainCertTypeDefault,
 			KeyType:     domainCertKeyTypeDefault,
 			ValidPeriod: timeutil.Duration(domainCertValidPeriodDefault),
-			Email:       config.Current.Users.Admin.Email,
+			Email:       config.Current().Users.Admin.Email,
 			AutoRenew:   domainCertAutoRenewDefault,
 		},
 	}

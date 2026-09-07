@@ -100,7 +100,8 @@ func (uc *BaseUC) authorizeReveal(
 // canRevealSecrets reports whether the caller may see stored secrets in the clear.
 //
 // Two gates, and they answer different questions. The config flag is the
-// operator's: it lives in a file on the host, so a session that has taken over an
+// operator's: it lives in a file on the host, and the one endpoint that can write
+// it makes the caller re-enter the app secret, so a session that has taken over an
 // admin account cannot turn it on. The capability is the account's. Note that an
 // admin passes the second gate unconditionally - see CheckAccess - which is
 // precisely why the attempt is recorded rather than merely refused.
@@ -109,7 +110,7 @@ func (uc *BaseUC) canRevealSecrets(
 	db database.IDB,
 	auth *basedto.Auth,
 ) (allowed bool, err error) {
-	if !config.Current.Security.ReturnSecretsViaAPI {
+	if !config.Current().Security.ReturnSecretsViaAPI {
 		return false, hperrors.Wrap(hperrors.ErrRevealSecretsDisabled)
 	}
 

@@ -78,7 +78,7 @@ func (uc *UC) downloadLocalFile(
 		},
 	}
 
-	filePath := filepath.Join(config.Current.AppPath, file.Path)
+	filePath := filepath.Join(config.Current().AppPath, file.Path)
 	reader, err := os.Open(filePath)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

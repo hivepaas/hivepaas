@@ -38,7 +38,7 @@ func (uc *UC) LoginPasswordForgot(
 		return nil, hperrors.Wrap(err).WithMsgLog("failed to generate password reset token")
 	}
 
-	resetLink := config.Current.DashboardPasswordResetURL(user.ID, token)
+	resetLink := config.Current().DashboardPasswordResetURL(user.ID, token)
 
 	email, err := emailSetting.AsEmail()
 	if err != nil {

@@ -18,6 +18,16 @@ type Service interface {
 	GetHpAppSwarmService(ctx context.Context) (*swarm.Service, error)
 	GetHpAppTasks(ctx context.Context) ([]swarm.Task, error)
 	RestartHpAppSwarmService(ctx context.Context) error
+
+	// ReloadHpAppConfig makes the main app re-read its configuration, by SIGHUP.
+	//
+	// NOTE: the main app only. The worker runs as its own swarm service and keeps
+	// the configuration it started with until it restarts, so a setting the worker
+	// reads is not applied by this call. Nothing needs it today - the app secret is
+	// only unwrapped at startup, and the security flags are read on the API path -
+	// but a setting added to config.Security that the worker acts on will need a
+	// ReloadHpWorkerConfig beside this, or it will be live in one service and stale
+	// in the other with nothing to show for it.
 	ReloadHpAppConfig(ctx context.Context) error
 	SetupRoutingSettingsDefault(routingSettings *entity.AppRoutingSettings)
 

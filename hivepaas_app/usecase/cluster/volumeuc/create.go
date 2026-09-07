@@ -166,7 +166,7 @@ func (uc *UC) calcBindDirectory(
 ) (string, error) {
 	subpath := ""
 	if directory == "" {
-		storageInHost := config.Current.Storage.BindSource
+		storageInHost := config.Current().Storage.BindSource
 		if storageInHost == "" {
 			return "", hperrors.Wrap(hperrors.ErrUnconfigured).
 				WithParam("Name", "HP_STORAGE_BIND_SOURCE")

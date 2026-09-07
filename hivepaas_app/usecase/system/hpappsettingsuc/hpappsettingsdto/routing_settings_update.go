@@ -32,7 +32,7 @@ func (req *UpdateRoutingSettingsReq) ApplyTo(setting *entity.AppRoutingSettings)
 			targetDomain = &entity.AppDomain{
 				Enabled:       domain.Enabled,
 				Domain:        domain.Domain,
-				ContainerPort: config.Current.HTTPServer.Port,
+				ContainerPort: config.Current().HTTPServer.Port,
 				ForceHttps:    true,
 			}
 		}

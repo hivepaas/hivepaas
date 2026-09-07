@@ -156,7 +156,7 @@ func (s *service) onCloneServiceDefault(
 	settings := data.CloneSettings
 	destSvcSpec := &destSvc.Spec
 	containerSpec := destSvcSpec.TaskTemplate.ContainerSpec
-	isDevEnv := config.Current.IsDevEnv()
+	isDevEnv := config.Current().IsDevEnv()
 	if !settings.CloneDeploymentSettings {
 		containerSpec.Image = gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit)
 		containerSpec.Command = nil

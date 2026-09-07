@@ -9,5 +9,5 @@ export * from "./use-hivepaas-security-settings.api";
 export * from "./use-hivepaas-app-secret.api";
 export * from "./use-hivepaas-restart.api";
 export * from "./use-traefik-service-settings.api";
-
 export * from "./use-traefik-config-options.api";
+export * from "./use-traefik-restart.api";

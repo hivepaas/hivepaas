@@ -452,6 +452,11 @@ export const ROUTE = {
                 $pattern: "system/traefik/config-options",
                 $route: "/system/traefik/config-options/",
             },
+
+            actions: {
+                $pattern: "system/traefik/actions",
+                $route: "/system/traefik/actions/",
+            },
         },
 
         dataBackup: {

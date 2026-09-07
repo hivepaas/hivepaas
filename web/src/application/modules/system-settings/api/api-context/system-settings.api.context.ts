@@ -23,6 +23,8 @@ import {
     SystemSslRenewalApiValidator,
     TraefikConfigOptionsApi,
     TraefikConfigOptionsApiValidator,
+    TraefikRestartApi,
+    TraefikRestartApiValidator,
     TraefikServiceSettingsApi,
     TraefikServiceSettingsApiValidator,
 } from "../services";
@@ -40,6 +42,7 @@ function createApi() {
     const hivePaaSRestartValidator = new HivePaaSRestartApiValidator();
     const traefikServiceSettingsValidator = new TraefikServiceSettingsApiValidator();
     const traefikConfigOptionsValidator = new TraefikConfigOptionsApiValidator();
+    const traefikRestartValidator = new TraefikRestartApiValidator();
 
     return {
         systemSettings: {
@@ -51,6 +54,7 @@ function createApi() {
             hivepaasRestart: new HivePaaSRestartApi(hivePaaSRestartValidator),
             traefikServiceSettings: new TraefikServiceSettingsApi(traefikServiceSettingsValidator),
             traefikConfigOptions: new TraefikConfigOptionsApi(traefikConfigOptionsValidator),
+            traefikRestart: new TraefikRestartApi(traefikRestartValidator),
             backup: new SystemBackupApi(systemBackupValidator),
             backupFiles: new SystemBackupFileApi(systemBackupFileValidator),
             cleanup: new SystemCleanupApi(systemCleanupValidator),

@@ -129,6 +129,14 @@ export const systemSettingsRouter: RouteObject = {
                         return { Component: SystemSettingsTraefikConfigOptionsRoute };
                     },
                 },
+                {
+                    path: "actions",
+                    lazy: async () => {
+                        const { SystemSettingsTraefikActionsRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsTraefikActionsRoute };
+                    },
+                },
             ],
         },
         {

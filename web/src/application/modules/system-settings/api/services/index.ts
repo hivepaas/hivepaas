@@ -9,5 +9,5 @@ export * from "./hivepaas-security-settings-services";
 export * from "./hivepaas-app-secret-services";
 export * from "./hivepaas-restart-services";
 export * from "./traefik-service-settings-services";
-
 export * from "./traefik-config-options-services";
+export * from "./traefik-restart-services";

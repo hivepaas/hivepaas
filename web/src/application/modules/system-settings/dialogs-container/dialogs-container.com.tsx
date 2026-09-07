@@ -5,9 +5,11 @@ import {
     ChangeKekDialog,
     QuickInstallSslCertDialog,
     RestartHivePaaSDialog,
+    RestartTraefikDialog,
     useChangeKekDialogState,
     useQuickInstallSslCertDialogState,
     useRestartHivePaaSDialogState,
+    useRestartTraefikDialogState,
 } from "~/system-settings/dialogs";
 
 function View() {
@@ -15,11 +17,13 @@ function View() {
     const quickInstallSslCertDialog = useQuickInstallSslCertDialogState();
     const changeKekDialog = useChangeKekDialogState();
     const restartHivePaaSDialog = useRestartHivePaaSDialogState();
+    const restartTraefikDialog = useRestartTraefikDialogState();
 
     useUpdateEffect(() => {
         quickInstallSslCertDialog.destroy();
         changeKekDialog.destroy();
         restartHivePaaSDialog.destroy();
+        restartTraefikDialog.destroy();
     }, [location]);
 
     return (
@@ -27,6 +31,7 @@ function View() {
             <QuickInstallSslCertDialog />
             <ChangeKekDialog />
             <RestartHivePaaSDialog />
+            <RestartTraefikDialog />
         </>
     );
 }

@@ -9,6 +9,7 @@ export {
     SystemSettingsHivePaaSHttpSettingsRoute,
     SystemSettingsTraefikGeneralRoute,
     SystemSettingsTraefikConfigOptionsRoute,
+    SystemSettingsTraefikActionsRoute,
     SystemSettingsDataBackupActionsRoute,
     SystemSettingsDataBackupBackupFilesRoute,
     SystemSettingsDataBackupConfigurationRoute,

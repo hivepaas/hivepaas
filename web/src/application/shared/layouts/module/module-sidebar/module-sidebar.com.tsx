@@ -247,24 +247,29 @@ const navMain: SidebarItem[] = [
         pattern: "#",
         icon: Container,
         moduleId: MODULE_IDS.Cluster,
-        items: [
+        sections: [
             {
-                title: "Nodes",
-                icon: Server,
-                route: ROUTE.cluster.nodes.$route,
-                pattern: ROUTE.cluster.nodes.$pattern,
-            },
-            {
-                title: "Networks",
-                icon: Network,
-                route: ROUTE.cluster.networks.$route,
-                pattern: ROUTE.cluster.networks.$pattern,
-            },
-            {
-                title: "Volumes",
-                icon: HardDrive,
-                route: ROUTE.cluster.volumes.$route,
-                pattern: ROUTE.cluster.volumes.$pattern,
+                title: "Resources",
+                items: [
+                    {
+                        title: "Nodes",
+                        icon: Server,
+                        route: ROUTE.cluster.nodes.$route,
+                        pattern: ROUTE.cluster.nodes.$pattern,
+                    },
+                    {
+                        title: "Networks",
+                        icon: Network,
+                        route: ROUTE.cluster.networks.$route,
+                        pattern: ROUTE.cluster.networks.$pattern,
+                    },
+                    {
+                        title: "Volumes",
+                        icon: HardDrive,
+                        route: ROUTE.cluster.volumes.$route,
+                        pattern: ROUTE.cluster.volumes.$pattern,
+                    },
+                ],
             },
         ],
     },
@@ -274,42 +279,52 @@ const navMain: SidebarItem[] = [
         pattern: ROUTE.systemSettings.$pattern,
         icon: Settings2,
         moduleId: MODULE_IDS.System,
-        items: [
+        sections: [
             {
-                title: "HivePaaS",
-                icon: Layers,
-                route: ROUTE.systemSettings.hivepaas.general.$route,
-                pattern: ROUTE.systemSettings.hivepaas.$pattern,
+                title: "System",
+                items: [
+                    {
+                        title: "HivePaaS",
+                        icon: Layers,
+                        route: ROUTE.systemSettings.hivepaas.general.$route,
+                        pattern: ROUTE.systemSettings.hivepaas.$pattern,
+                    },
+                    {
+                        title: "Traefik",
+                        icon: Route,
+                        route: ROUTE.systemSettings.traefik.general.$route,
+                        pattern: ROUTE.systemSettings.traefik.$pattern,
+                    },
+                ],
             },
             {
-                title: "Traefik",
-                icon: Route,
-                route: ROUTE.systemSettings.traefik.general.$route,
-                pattern: ROUTE.systemSettings.traefik.$pattern,
-            },
-            {
-                title: "Backup Repo Cleanup",
-                icon: ArchiveX,
-                route: ROUTE.systemSettings.backupRepoCleanup.configuration.$route,
-                pattern: ROUTE.systemSettings.backupRepoCleanup.$pattern,
-            },
-            {
-                title: "SSL Renewal",
-                icon: RefreshCw,
-                route: ROUTE.systemSettings.sslRenewal.configuration.$route,
-                pattern: ROUTE.systemSettings.sslRenewal.$pattern,
-            },
-            {
-                title: "Data Backup",
-                icon: DatabaseBackup,
-                route: ROUTE.systemSettings.dataBackup.configuration.$route,
-                pattern: ROUTE.systemSettings.dataBackup.$pattern,
-            },
-            {
-                title: "Data Cleanup",
-                icon: Trash2,
-                route: ROUTE.systemSettings.dataCleanup.configuration.$route,
-                pattern: ROUTE.systemSettings.dataCleanup.$pattern,
+                title: "Scheduled Jobs",
+                items: [
+                    {
+                        title: "Backup Repo Cleanup",
+                        icon: ArchiveX,
+                        route: ROUTE.systemSettings.backupRepoCleanup.configuration.$route,
+                        pattern: ROUTE.systemSettings.backupRepoCleanup.$pattern,
+                    },
+                    {
+                        title: "SSL Renewal",
+                        icon: RefreshCw,
+                        route: ROUTE.systemSettings.sslRenewal.configuration.$route,
+                        pattern: ROUTE.systemSettings.sslRenewal.$pattern,
+                    },
+                    {
+                        title: "Data Backup",
+                        icon: DatabaseBackup,
+                        route: ROUTE.systemSettings.dataBackup.configuration.$route,
+                        pattern: ROUTE.systemSettings.dataBackup.$pattern,
+                    },
+                    {
+                        title: "Data Cleanup",
+                        icon: Trash2,
+                        route: ROUTE.systemSettings.dataCleanup.configuration.$route,
+                        pattern: ROUTE.systemSettings.dataCleanup.$pattern,
+                    },
+                ],
             },
         ],
     },

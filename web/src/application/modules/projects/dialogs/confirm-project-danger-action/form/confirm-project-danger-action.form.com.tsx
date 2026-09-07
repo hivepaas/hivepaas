@@ -5,6 +5,7 @@ import { DialogActionFooter, DialogBody } from "@components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertTriangle } from "lucide-react";
 import { type FieldErrors, useForm } from "react-hook-form";
+import { ConfirmDangerTargetBadge } from "~/projects/module-shared/components";
 
 import { Button, Field, FieldError, Input } from "@/components/ui";
 
@@ -92,10 +93,7 @@ export function ConfirmProjectDangerActionForm({
             <DialogBody className={cn("flex flex-col", copy.warning ? "gap-4" : "gap-7")}>
                 <p className="text-sm font-medium leading-6 text-foreground">
                     To confirm {copy.bodyAction} the project, please type{" "}
-                    <span className="inline-flex max-w-full items-center rounded-[4px] border border-input bg-muted/50 px-2 py-0 align-middle font-semibold text-primary break-all">
-                        {projectName}
-                    </span>{" "}
-                    into the text box below.
+                    <ConfirmDangerTargetBadge text={projectName} /> into the text box below.
                 </p>
 
                 {copy.warning && (

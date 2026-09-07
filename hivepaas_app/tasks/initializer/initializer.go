@@ -7,6 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskschedjobexec"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/tasksettingsrevert"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskworkflow"
 )
 
@@ -22,6 +23,7 @@ func NewWorkerInitializer(
 	_ *taskschedjobexec.Executor,
 	_ *taskperiodicjobexec.Executor,
 	_ *taskworkflow.Executor,
+	_ *tasksettingsrevert.Executor,
 ) *WorkerInitializer {
 	return nil
 }

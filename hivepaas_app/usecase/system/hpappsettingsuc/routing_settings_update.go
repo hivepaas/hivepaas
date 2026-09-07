@@ -36,6 +36,14 @@ func (uc *UC) UpdateRoutingSettings(
 		persistingData := &persistingAppData{}
 		uc.prepareUpdatingRoutingSettings(ctx, data, persistingData)
 
+		// Inside the same transaction as the change, so a committed change always
+		// has a committed deadline. There is no window in which one exists
+		// without the other.
+		err = uc.armProbation(ctx, db, auth, data, persistingData)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -51,13 +59,17 @@ func (uc *UC) UpdateRoutingSettings(
 		return nil, hperrors.Wrap(err)
 	}
 
+	uc.scheduleProbation(ctx, data)
+
 	if data != nil && data.DomainChanged {
 		// Publish a message to reload config in other instances
 		_ = uc.systemEventBus.Publish(ctx, base.SystemEventHivepaasDomainReload)
 		config.SetAppDomainToNeedReload()
 	}
 
-	return &hpappsettingsdto.UpdateRoutingSettingsResp{}, nil
+	return &hpappsettingsdto.UpdateRoutingSettingsResp{
+		Data: hpappsettingsdto.TransformPendingChange(data.Probation),
+	}, nil
 }
 
 type updateRoutingSettingsData struct {
@@ -66,6 +78,17 @@ type updateRoutingSettingsData struct {
 	NewRoutingSettings *entity.AppRoutingSettings
 	RefObjects         *entity.RefObjects
 	DomainChanged      bool
+
+	// Snapshot is the settings as they were before this request touched them: the
+	// state a revert restores. Taken before ApplyTo, because after it the parsed
+	// settings are already the new ones.
+	Snapshot        entity.SettingSnapshot
+	ProbationWindow time.Duration
+
+	// Probation is the scheduled undo of this change, and SupersededProbation the
+	// one it replaces - see armProbation.
+	Probation           *entity.Task
+	SupersededProbation *entity.Task
 }
 
 type persistingAppData struct {
@@ -98,6 +121,9 @@ func (uc *UC) loadRoutingSettingsForUpdate(
 		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
+	data.Snapshot = entity.SnapshotOf(data.RoutingSetting)
+	data.ProbationWindow = resolveProbationWindow(req.ConfirmWindow.ToDuration())
+
 	routingSettings := data.RoutingSetting.MustAsAppRoutingSettings()
 	var currDomain string
 	if domains := routingSettings.GetActiveDomainNames(); len(domains) > 0 {
@@ -108,6 +134,12 @@ func (uc *UC) loadRoutingSettingsForUpdate(
 		return hperrors.Wrap(err)
 	}
 	data.NewRoutingSettings = routingSettings
+
+	// Checked on the result, not on the request, so it sees what will actually be
+	// written - including the parts of the current settings the request left alone.
+	if err := ensureStillReachable(ctx, routingSettings); err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	// Make sure all reference settings used in these settings exist actively
 	err = uc.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, app.GetObjectScope(),

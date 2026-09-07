@@ -56,23 +56,32 @@ func (s *service) ApplyTrustedIPsToWebEntrypoints(
 				newArgs = append(newArgs, arg)
 				continue
 			}
+			if key != epWeb && key != epWebsecure {
+				newArgs = append(newArgs, arg) // keeps other args
+				continue
+			}
+
 			if key == epWeb {
 				hasEpWebTrustedIPs = true
-				if val != trustedIPsStr && trustedIPsStr != "" {
-					newArgs = append(newArgs, fmt.Sprintf("--%s=%s", epWeb, trustedIPsStr))
-					hasChanges = true
-					continue
-				}
-			}
-			if key == epWebsecure {
+			} else {
 				hasEpWebsecureTrustedIPs = true
-				if val != trustedIPsStr && trustedIPsStr != "" {
-					newArgs = append(newArgs, fmt.Sprintf("--%s=%s", epWebsecure, trustedIPsStr))
-					hasChanges = true
-					continue
-				}
 			}
-			newArgs = append(newArgs, arg) // keeps other args
+
+			// No trusted IPs means the proxy declaration was withdrawn, and the trust
+			// has to go with it. Left in place, Traefik keeps honoring X-Forwarded-For
+			// from whoever connects - so once the proxy is gone, callers set their own
+			// address, and every check keyed on it (rate limits, IP allowlists) is
+			// answering about an address the caller chose.
+			if trustedIPsStr == "" {
+				hasChanges = true
+				continue
+			}
+			if val != trustedIPsStr {
+				newArgs = append(newArgs, fmt.Sprintf("--%s=%s", key, trustedIPsStr))
+				hasChanges = true
+				continue
+			}
+			newArgs = append(newArgs, arg)
 		}
 
 		if !hasEpWebTrustedIPs && trustedIPsStr != "" {

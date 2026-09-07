@@ -2,6 +2,7 @@ package hpappsettingsuc
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository/cacherepository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
@@ -24,9 +25,11 @@ type UC struct {
 	db            *database.DB
 	taskQueue     queue.TaskQueue
 	dockerManager docker.Manager
+	logger        logging.Logger
 
 	appRepo     repository.AppRepo
 	settingRepo repository.SettingRepo
+	taskRepo    repository.TaskRepo
 
 	cacheAppSecretAttemptRepo cacherepository.AppSecretAttemptRepo
 
@@ -48,9 +51,11 @@ func New(
 	db *database.DB,
 	taskQueue queue.TaskQueue,
 	dockerManager docker.Manager,
+	logger logging.Logger,
 
 	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
+	taskRepo repository.TaskRepo,
 
 	cacheAppSecretAttemptRepo cacherepository.AppSecretAttemptRepo,
 
@@ -72,9 +77,11 @@ func New(
 		db:            db,
 		taskQueue:     taskQueue,
 		dockerManager: dockerManager,
+		logger:        logger,
 
 		appRepo:     appRepo,
 		settingRepo: settingRepo,
+		taskRepo:    taskRepo,
 
 		cacheAppSecretAttemptRepo: cacheAppSecretAttemptRepo,
 

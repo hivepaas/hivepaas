@@ -12,6 +12,8 @@ func (s *HTTPServer) registerHivePaaSRoutes(systemGroup *gin.RouterGroup) *gin.R
 	hivepaasGroup.POST("/restart", hivepaasHandler.RestartHivePaaSApp)
 	// Config
 	hivepaasGroup.POST("/config/reload", hivepaasHandler.ReloadHivePaaSAppConfig)
+	// How a request reaches this install - used to work out the proxy settings
+	hivepaasGroup.GET("/request-info", hivepaasHandler.GetRequestInfo)
 
 	// Release info
 	hivepaasGroup.GET("/release-info", hivepaasHandler.GetAppReleaseInfo)
@@ -28,6 +30,10 @@ func (s *HTTPServer) registerHivePaaSRoutes(systemGroup *gin.RouterGroup) *gin.R
 	// Routing settings
 	hivepaasGroup.GET("/routing-settings", hivepaasHandler.GetRoutingSettings)
 	hivepaasGroup.PUT("/routing-settings", hivepaasHandler.UpdateRoutingSettings)
+	// Confirm-or-revert. A routing change applied through the PUT above is undone
+	// at its deadline unless a call gets back in here to vouch for it.
+	hivepaasGroup.POST("/routing-settings/confirm", hivepaasHandler.ConfirmRoutingSettings)
+	hivepaasGroup.POST("/routing-settings/revert", hivepaasHandler.RevertRoutingSettings)
 
 	// Security settings
 	hivepaasGroup.GET("/security-settings", hivepaasHandler.GetSecuritySettings)

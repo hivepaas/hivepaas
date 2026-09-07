@@ -28,6 +28,11 @@ type GetRoutingSettingsResp struct {
 type RoutingSettingsResp struct {
 	Domains   []*DomainResp `json:"domains"`
 	UpdateVer int           `json:"updateVer"`
+
+	// PendingChange is set while a change is on trial and has still to be
+	// confirmed. It is repeated here, rather than only on the update that started
+	// it, so a dashboard reloaded mid-trial can pick the countdown back up.
+	PendingChange *PendingChangeResp `json:"pendingChange,omitempty"`
 }
 
 type DomainResp struct {

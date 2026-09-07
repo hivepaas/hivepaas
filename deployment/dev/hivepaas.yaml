@@ -161,6 +161,52 @@ services:
   app:
     image: hivepaas/hivepaas-dev:latest
     stop_grace_period: 10m
+    # Swarm's UpdateFailureActionRollback, which the update paths in the code set,
+    # only fires when Swarm can tell an update failed. Without a healthcheck it
+    # cannot: a container that starts and then serves nothing counts as converged,
+    # so the rollback those code paths rely on never runs. This is what arms it.
+    #
+    # The check is also a liveness probe for the whole life of the container, not
+    # only during an update - Swarm restarts a task that turns unhealthy. That is
+    # wanted, but it means a check that is too strict restarts a working install,
+    # which is the very outcome all of this exists to avoid. Hence the tolerance:
+    # 5s to answer a static handler, and three consecutive misses before acting.
+    #
+    # The intervals are split because the two jobs want opposite things. During
+    # startup, checking often makes a healthy task converge in seconds so updates
+    # are not held up. Afterwards, twice a minute is plenty and costs nothing.
+    #
+    # start_period is deliberately generous rather than tight. It is not a delay:
+    # docker ends it the moment the first check passes, so with start_interval at
+    # 5s a task that is ready at 12s converges at 15s whether this says 45s or
+    # 120s. What the number actually sets is how long a slow start is tolerated
+    # before it counts as a failure, so it has to cover the slowest legitimate
+    # boot - the first one, where SystemInstallation creates the admin user, the
+    # default settings and the root project - not the typical one. Sizing it to
+    # the typical boot turns "slow but fine" into "rolled back".
+    #
+    # For the same reason, do not try to shorten it at runtime once installation
+    # is done. healthcheck lives in TaskTemplate.ContainerSpec, so writing it is a
+    # task-level change and swarm answers by recreating the task: the app would
+    # restart itself right after starting. It would also overwrite PreviousSpec,
+    # pointing `docker service rollback` at this file instead of at the previous
+    # release, and the next stack deploy would set it back and restart again.
+    #
+    # The numbers have to line up with update_config.monitor below, or the whole
+    # arrangement is decoration:
+    #
+    #   never becomes healthy: start_period + retries * interval = 120 + 90 = 210s
+    #   healthy, then breaks:  retries * interval                =        90s
+    #
+    # Both have to fit inside monitor, or Swarm calls the update converged before
+    # a broken task can be marked unhealthy, and it is never rolled back.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:10000/_/ping"]
+      start_period: 120s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
     networks:
       hivepaas_net:
         aliases:
@@ -203,6 +249,12 @@ services:
         constraints:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
+      # 180s leaves room over the 135s worst case computed above. Erring long only
+      # delays the verdict; erring short removes it.
+      update_config:
+        failure_action: rollback
+        monitor: 240s
+        max_failure_ratio: 0.5
       restart_policy:
         condition: on-failure
         delay: 5s
@@ -216,6 +268,31 @@ services:
   worker:
     image: hivepaas/hivepaas-dev:latest
     stop_grace_period: 10m
+    # The worker serves no port, so there is nothing to probe over HTTP. Instead
+    # it refreshes a file with a unix timestamp every 15s, and only while it can
+    # still reach the database - see InitWorkerHeartbeat. This check reads that
+    # timestamp; a worker whose process is up but stuck stops refreshing it.
+    #
+    # restart_policy below only ever notices a process that exits, and
+    # applyServiceSettingsToWorkerService sets UpdateFailureActionRollback on this
+    # service, which without a healthcheck can never fire: swarm counts a worker
+    # that starts and then does nothing as converged. This is what arms both.
+    #
+    # date/cat/[ are busybox builtins, so nothing here depends on a tool the
+    # alpine image might drop. Missing, empty and malformed all read as 0, which
+    # is never recent - verified against busybox, not assumed.
+    #
+    #   never becomes healthy: start_period + retries * interval = 120 + 90 = 210s
+    #   healthy, then breaks:  staleness + retries * interval    = 60 + 90 = 150s
+    #
+    # Both fit inside update_config.monitor.
+    healthcheck:
+      test: ["CMD-SHELL", "HB=$$(cat /tmp/hivepaas-worker.alive 2>/dev/null); [ $$(( $$(date +%s) - $${HB:-0} )) -lt 60 ]"]
+      start_period: 120s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
     networks:
       - local_net
     environment:
@@ -243,6 +320,15 @@ services:
         condition: on-failure
         delay: 5s
         window: 120s
+      # applyServiceSettingsToWorkerService sets FailureAction and
+      # MaxFailureRatio on this service every time worker settings change, but it
+      # never sets Monitor - and swarm's default for it is 5s, far too short for
+      # any healthcheck to have answered. Setting it here is what makes that
+      # rollback real; the code preserves whatever it finds.
+      update_config:
+        failure_action: rollback
+        monitor: 240s
+        max_failure_ratio: 0.5
     logging:
       driver: local
       options:

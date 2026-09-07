@@ -171,15 +171,29 @@ func (req *HivePaaSPeriodicSettingsReq) validate(field string) (res []vld.Valida
 	return res
 }
 
+const (
+	proxyProviderMaxLen = 50
+
+	// proxyHopsMin and proxyHopsMax bound the X-Forwarded-For depth. One is the
+	// smallest position that can hold a caller; the upper bound is not a real
+	// topology so much as a guard - past a handful of hops the value is a typo,
+	// and a depth longer than the chain makes every caller resolve to nothing and
+	// share a single rate-limit bucket.
+	proxyHopsMin = 1
+	proxyHopsMax = 10
+)
+
 type HivePaaSProxySettingsReq struct {
 	ProxyProvider string   `json:"proxyProvider"`
 	TrustedIPs    []string `json:"trustedIPs"`
+	ProxyHops     int      `json:"proxyHops"`
 }
 
 func (req *HivePaaSProxySettingsReq) ToEntity() *entity.HivePaaSProxySettings {
 	return &entity.HivePaaSProxySettings{
 		ProxyProvider: req.ProxyProvider,
 		TrustedIPs:    req.TrustedIPs,
+		ProxyHops:     req.ProxyHops,
 	}
 }
 
@@ -192,10 +206,42 @@ func (req *HivePaaSProxySettingsReq) modifyRequest() error {
 	req.TrustedIPs = strings.FieldsFunc(strings.Join(req.TrustedIPs, ","), func(r rune) bool {
 		return r == ',' || unicode.IsSpace(r)
 	})
+
+	// No proxy means the other two describe nothing, so they are dropped rather
+	// than rejected: a form that still holds yesterday's values must not block the
+	// operator from saying there is no proxy any more. Dropping them is also what
+	// keeps the three fields from disagreeing - see validate.
+	if req.ProxyProvider == "" {
+		req.TrustedIPs = nil
+		req.ProxyHops = 0
+	}
 	return nil
 }
 
-func (req *HivePaaSProxySettingsReq) validate(_ string) (res []vld.Validator) {
+// validate keeps the three proxy fields consistent with each other.
+//
+// Declaring a proxy without saying which addresses it comes from is the shape
+// that hurts: Traefik is then never told to trust anything, so every forwarded
+// header is ignored, every caller behind the proxy is counted as one, and the
+// rate limits meant to protect the install throttle it instead. The operator gets
+// no signal at all - the settings look configured. Requiring the fields together
+// is what turns that silent state into a form error.
+func (req *HivePaaSProxySettingsReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return res
+	}
+	if field != "" {
+		field += "."
+	}
+	if req.ProxyProvider == "" {
+		return res
+	}
+
+	res = append(res, basedto.ValidateStr(&req.ProxyProvider, true, 1,
+		proxyProviderMaxLen, field+"proxyProvider")...)
+	res = append(res, basedto.ValidateIPOrCIDRSlice(req.TrustedIPs, 1, field+"trustedIPs")...)
+	res = append(res, basedto.ValidateNumber(&req.ProxyHops, true,
+		proxyHopsMin, proxyHopsMax, field+"proxyHops")...)
 	return res
 }
 

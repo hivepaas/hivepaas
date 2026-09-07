@@ -82,13 +82,18 @@ func (uc *UC) UpdateServiceSettings(
 		err = errors.Join(err, e)
 	}
 
-	// Apply trusted IPs to traefik if configured
-	if req.ProxySettings.ProxyProvider != "" {
-		_, e := uc.traefikService.ApplyTrustedIPsToWebEntrypoints(ctx, &traefikservice.ApplyTrustedIPsReq{
-			TrustedIPs: req.ProxySettings.TrustedIPs,
-		})
-		err = errors.Join(err, e)
-	}
+	// Apply the trusted IPs to traefik, including when there are none.
+	//
+	// Withdrawing the proxy has to reach Traefik as much as declaring one does.
+	// Skipping the call when no provider is set - which is what this used to do -
+	// left the entrypoint trusting a proxy that is no longer in front, so
+	// X-Forwarded-For stayed honored from whoever connected. Validation clears the
+	// addresses when the provider is cleared, so the empty list here is the
+	// instruction to stop trusting.
+	_, e := uc.traefikService.ApplyTrustedIPsToWebEntrypoints(ctx, &traefikservice.ApplyTrustedIPsReq{
+		TrustedIPs: req.ProxySettings.TrustedIPs,
+	})
+	err = errors.Join(err, e)
 
 	if err != nil {
 		return nil, hperrors.Wrap(err)

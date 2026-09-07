@@ -30,7 +30,11 @@ func main() {
 		fx.Invoke(internal.InitSystemSettings),
 		fx.Invoke(internal.InitSystemEventBus),
 		fx.Invoke(internal.InitTaskQueue),
+		// After InitTaskQueue: the heartbeat must not vouch for a worker whose
+		// queue has not started.
+		fx.Invoke(internal.InitWorkerHeartbeat),
 		fx.Invoke(internal.InitJWTSession),
+		fx.Invoke(internal.InitSettingsProbation),
 		fx.Invoke(internal.InitHTTPServer),
 		fx.Invoke(internal.InitUpdater),
 		fx.Invoke(internal.FinalizeStartup),

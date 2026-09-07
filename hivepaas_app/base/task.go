@@ -11,12 +11,16 @@ const (
 	TaskTypePeriodicExec TaskType = "task:periodic-exec"
 	TaskTypeSystemUpdate TaskType = "task:system-update"
 	TaskTypeWorkflow     TaskType = "task:workflow"
+
+	// TaskTypeSettingsRevert undoes a settings change that was never confirmed.
+	// See usecase/system/hpappsettingsuc/routing_settings_probation.go.
+	TaskTypeSettingsRevert TaskType = "task:settings-revert"
 )
 
 var (
 	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
-		TaskTypeSystemUpdate, TaskTypeWorkflow}
+		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert}
 )
 
 type TaskStatus string

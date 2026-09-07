@@ -29,6 +29,15 @@ const (
 	// without this, a switch flipped on and back off leaves the reveals in between
 	// looking like they were always allowed.
 	AuditLogTypeSecuritySettingsUpdate AuditLogType = "security-settings-update"
+
+	// AuditLogTypeRoutingChangeConfirm records somebody vouching that a routing
+	// change left HivePaaS reachable, which is what stops it being undone.
+	AuditLogTypeRoutingChangeConfirm AuditLogType = "routing-change-confirm"
+
+	// AuditLogTypeRoutingChangeRevert records a routing change being undone on
+	// request, before its deadline. The automatic undo is not recorded here: it
+	// has no caller to attribute, and its record is the task row that ran it.
+	AuditLogTypeRoutingChangeRevert AuditLogType = "routing-change-revert"
 )
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.

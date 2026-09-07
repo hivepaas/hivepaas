@@ -50,6 +50,12 @@ func (uc *UC) GetRoutingSettings(
 		return nil, hperrors.Wrap(err)
 	}
 
+	pending, err := uc.findPendingProbation(ctx, uc.db, app.ID)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	resp.PendingChange = hpappsettingsdto.TransformPendingChange(pending)
+
 	return &hpappsettingsdto.GetRoutingSettingsResp{
 		Data: resp,
 	}, nil

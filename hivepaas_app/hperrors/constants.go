@@ -185,7 +185,21 @@ var (
 	// ErrTooManyAppSecretFailures spaces out guessing. Like the mismatch above it
 	// is not an unauthorized: the session is fine, only this one check is being
 	// made to wait, and answering 401 would log the operator out mid-change.
-	ErrTooManyAppSecretFailures     = NewErr(ErrTooMany, "ERR_TOO_MANY_APP_SECRET_FAILURES")
+	ErrTooManyAppSecretFailures = NewErr(ErrTooMany, "ERR_TOO_MANY_APP_SECRET_FAILURES")
+
+	// Routing changes that would leave HivePaaS unreachable. They are refusals of
+	// the request, not reports of a broken system: nothing has happened yet, which
+	// is the whole point of catching them here.
+	ErrRoutingNoEnabledDomain = NewErr(ErrPreconditionFailed, "ERR_ROUTING_NO_ENABLED_DOMAIN")
+	ErrRoutingCallerUnknown   = NewErr(ErrPreconditionFailed, "ERR_ROUTING_CALLER_UNKNOWN")
+	ErrRoutingWouldLockYouOut = NewErr(ErrPreconditionFailed, "ERR_ROUTING_WOULD_LOCK_YOU_OUT")
+
+	// Confirm-or-revert. A routing change is applied on probation and undone
+	// unless the caller comes back through the new configuration and confirms it.
+	ErrSettingsNoPendingChange      = NewErr(ErrNotFound, "ERR_SETTINGS_NO_PENDING_CHANGE")
+	ErrSettingsChangeSuperseded     = NewErr(ErrPreconditionFailed, "ERR_SETTINGS_CHANGE_SUPERSEDED")
+	ErrSettingsConfirmTooEarly      = NewErr(ErrPreconditionFailed, "ERR_SETTINGS_CONFIRM_TOO_EARLY")
+	ErrSettingsProbationNotArmed    = NewErr(ErrUnavailable, "ERR_SETTINGS_PROBATION_NOT_ARMED")
 	ErrPasswordNotMeetRequirements  = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_NOT_MEET_REQUIREMENTS")
 	ErrPasswordHasWeakSequence      = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_HAS_WEAK_SEQUENCE")
 	ErrPasswordTooSimilarToPrevious = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_TOO_SIMILAR_TO_PREVIOUS")

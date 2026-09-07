@@ -18,10 +18,11 @@ import (
 // whatever command a user configured - keep the long ceiling. What this buys is a much lower
 // ceiling for the types whose duration is predictable, which are also the ones that run most.
 const (
-	timeoutDummy        = 5 * time.Minute
-	timeoutPeriodicExec = 15 * time.Minute
-	timeoutAppDeploy    = time.Hour
-	timeoutSystemUpdate = time.Hour
+	timeoutDummy          = 5 * time.Minute
+	timeoutPeriodicExec   = 15 * time.Minute
+	timeoutAppDeploy      = time.Hour
+	timeoutSystemUpdate   = time.Hour
+	timeoutSettingsRevert = 5 * time.Minute
 )
 
 var taskTypeTimeouts = map[base.TaskType]time.Duration{
@@ -35,6 +36,11 @@ var taskTypeTimeouts = map[base.TaskType]time.Duration{
 	base.TaskTypeAppDeploy: timeoutAppDeploy,
 	// Pull the new HivePaaS images and restart the services.
 	base.TaskTypeSystemUpdate: timeoutSystemUpdate,
+	// Restore a settings snapshot and push labels back onto one swarm service. It
+	// is short work, and it is the work that gets somebody back into a HivePaaS
+	// they locked themselves out of - holding a transaction open any longer than
+	// it takes would only delay the next attempt.
+	base.TaskTypeSettingsRevert: timeoutSettingsRevert,
 
 	// NOTE: the types below keep the long ceiling on purpose.
 	//

@@ -19,6 +19,11 @@ import (
 type UpdateRoutingSettingsReq struct {
 	Domains   []*DomainReq `json:"domains"`
 	UpdateVer int          `json:"updateVer"`
+
+	// ConfirmWindow is how long the change may stay unconfirmed before it is
+	// undone. Absent means the default; there is no value that turns the trial
+	// off - see resolveProbationWindow.
+	ConfirmWindow timeutil.Duration `json:"confirmWindow,omitempty"`
 }
 
 func (req *UpdateRoutingSettingsReq) ApplyTo(setting *entity.AppRoutingSettings) error {
@@ -134,11 +139,15 @@ func (req *HTTPClientConfigReq) modifyRequest() error {
 	return nil
 }
 
-//nolint:unparam
 func (req *HTTPClientConfigReq) validate(field string) (res []vld.Validator) {
 	if req == nil || !req.Enabled {
 		return
 	}
+	// An entry Traefik cannot parse is not a field-level annoyance: the middleware
+	// fails to build and the router that carries it stops serving. On this app that
+	// is the dashboard. See also ensureStillReachable, which needs these parseable
+	// to tell whether the caller would still get in.
+	res = append(res, basedto.ValidateIPOrCIDRSlice(req.AllowedIPs, 0, field+"allowedIPs")...)
 	return res
 }
 
@@ -191,6 +200,7 @@ func (req *UpdateRoutingSettingsReq) ModifyRequest() error {
 // Validate implements interface basedto.ReqValidator
 func (req *UpdateRoutingSettingsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, basedto.ValidateSlice(req.Domains, false, 1, nil, "domains")...)
 	validators = append(validators, vld.Slice(req.Domains).ForEach(
 		func(r *DomainReq, index int, elemValidator vld.ItemValidator) {
 			elemValidator.Validate(r.validate(fmt.Sprintf("domains[%d]", index))...)
@@ -199,5 +209,6 @@ func (req *UpdateRoutingSettingsReq) Validate() hperrors.ValidationErrors {
 }
 
 type UpdateRoutingSettingsResp struct {
-	Meta *basedto.Meta `json:"meta"`
+	Meta *basedto.Meta      `json:"meta"`
+	Data *PendingChangeResp `json:"data"`
 }

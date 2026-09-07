@@ -59,6 +59,7 @@ type HivePaaSPeriodicSettingsResp struct {
 type HivePaaSProxySettingsResp struct {
 	ProxyProvider string   `json:"proxyProvider,omitempty"`
 	TrustedIPs    []string `json:"trustedIPs,omitempty"`
+	ProxyHops     int      `json:"proxyHops,omitempty"`
 }
 
 type ServiceSettingsTransformInput struct {

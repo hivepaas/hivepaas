@@ -41,6 +41,10 @@ type appConfigData struct {
 	traefikSvc       *swarm.Service
 	hasCerts         bool
 	tcpPortsNeedOpen []string
+
+	// proxySettings is nil until something in this apply needs to know which
+	// address counts as the caller's. See getProxySettings.
+	proxySettings *entity.HivePaaSProxySettings
 }
 
 type AppTraefikConfig struct {
@@ -64,7 +68,7 @@ func (s *service) ApplyAppConfig(
 	data := &appConfigData{
 		ApplyAppConfigReq: req,
 	}
-	err := s.loadAppConfigData(ctx, data)
+	err := s.loadAppConfigData(ctx, db, data)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -119,6 +123,7 @@ func (s *service) ApplyAppConfig(
 
 func (s *service) loadAppConfigData(
 	ctx context.Context,
+	db database.IDB,
 	data *appConfigData,
 ) error {
 	traefikSvc, err := s.GetTraefikSwarmService(ctx)
@@ -126,6 +131,10 @@ func (s *service) loadAppConfigData(
 		return hperrors.Wrap(err)
 	}
 	data.traefikSvc = traefikSvc
+
+	if err := s.loadProxySettings(ctx, db, data); err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	if data.RefObjects == nil {
 		data.RefObjects = entity.NewRefObjects()
@@ -254,7 +263,7 @@ func (s *service) collectDomainConfig(
 	s.createPathRewriteConfig(domain.PathRewriteConfig, routerName, labels, &middlewares)
 
 	// RateLimit config
-	s.createRateLimitConfig(domain.RateLimitConfig, routerName, labels, &middlewares)
+	s.createRateLimitConfig(domain.RateLimitConfig, routerName, labels, &middlewares, data)
 
 	if len(middlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", routerName)] =
@@ -332,7 +341,7 @@ func (s *service) collectPathConfig(
 	s.createPathRewriteConfig(pathCfg.PathRewriteConfig, pathRouterName, labels, &pathMiddlewares)
 
 	// RateLimit config for path
-	s.createRateLimitConfig(pathCfg.RateLimitConfig, pathRouterName, labels, &pathMiddlewares)
+	s.createRateLimitConfig(pathCfg.RateLimitConfig, pathRouterName, labels, &pathMiddlewares, data)
 
 	if len(pathMiddlewares) > 0 {
 		labels[fmt.Sprintf("traefik.http.routers.%s.middlewares", pathRouterName)] =
@@ -477,9 +486,12 @@ func (s *service) createClientConfig(
 		mwNameIp := fmt.Sprintf("%s-allowed-ips", routerName)
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.ipallowlist.sourcerange", mwNameIp)] =
 			strings.Join(clientCfg.AllowedIPs, ",")
-		if s.hasTraefikTrustedIPs(data.traefikSvc) {
-			labels[fmt.Sprintf("traefik.http.middlewares.%s.ipallowlist.ipstrategy.depth", mwNameIp)] = "2"
-		}
+		// The same answer the rate limits use. The allowlist used to carry its own
+		// hard-coded depth of 2, which meant one request could be two different
+		// callers depending on which middleware was asking - and the allowlist is
+		// the one where disagreeing decides who gets in.
+		applyClientIPStrategy(s.clientIPStrategyDepth(data),
+			fmt.Sprintf("traefik.http.middlewares.%s.ipallowlist", mwNameIp), labels)
 		*middlewares = append(*middlewares, mwNameIp+middlewareProvider)
 	}
 }
@@ -620,17 +632,40 @@ func (s *service) createPathRewriteConfig(
 	}
 }
 
+// createRateLimitConfig builds the rate limit and in-flight middlewares.
+//
+// Both are told how to identify the caller, and both have to be told separately:
+// they are two middlewares with two independent sourceCriterion blocks, so
+// configuring one and not the other leaves requests-per-minute counted per caller
+// while concurrent requests are still counted per proxy.
+//
+// Only ipStrategy is ever written, never requestHeaderName. A provider header
+// such as CF-Connecting-IP would be exact where it applies, but Traefik passes
+// non-standard headers through untouched no matter what the entrypoint trusts -
+// so anyone who reaches the origin directly sets it to a fresh value per request
+// and the limit silently ceases to exist. The forwarded-header path fails the
+// other way: when the peer is untrusted Traefik strips X-Forwarded-For, the depth
+// resolves to nothing, and those callers share one bucket. Given the choice
+// between a criterion that fails open and one that fails closed, this takes the
+// one that fails closed. Note also that Traefik rejects both being set at once -
+// "iPStrategy and RequestHeaderName are mutually exclusive" - which takes the
+// router down rather than degrading it.
 func (s *service) createRateLimitConfig(
 	rlCfg *entity.HTTPRateLimitConfig,
 	routerName string,
 	labels map[string]string,
 	middlewares *[]string,
+	data *appConfigData,
 ) {
 	if rlCfg == nil || !rlCfg.Enabled {
 		return
 	}
+	depth := s.clientIPStrategyDepth(data)
+
 	if rlCfg.Average > 0 || rlCfg.Burst > 0 || rlCfg.Period > 0 {
 		mwName := fmt.Sprintf("%s-ratelimit", routerName)
+		applyClientIPStrategy(depth,
+			fmt.Sprintf("traefik.http.middlewares.%s.ratelimit.sourcecriterion", mwName), labels)
 		if rlCfg.Average > 0 {
 			labels[fmt.Sprintf("traefik.http.middlewares.%s.ratelimit.average", mwName)] =
 				strconv.Itoa(rlCfg.Average)
@@ -650,8 +685,36 @@ func (s *service) createRateLimitConfig(
 		mwName := fmt.Sprintf("%s-inflightreq", routerName)
 		labels[fmt.Sprintf("traefik.http.middlewares.%s.inflightreq.amount", mwName)] =
 			strconv.Itoa(rlCfg.MaxInFlightReq)
+		applyClientIPStrategy(depth,
+			fmt.Sprintf("traefik.http.middlewares.%s.inflightreq.sourcecriterion", mwName), labels)
 		*middlewares = append(*middlewares, mwName+middlewareProvider)
 	}
+}
+
+// clientIPStrategyDepth reports which X-Forwarded-For position identifies the
+// caller, or 0 for "use the address Traefik is talking to".
+//
+// Two things have to agree before a forwarded position means anything, and both
+// are checked here. The operator has to have described the topology, which is
+// what ProxyHops is; and the entrypoint has to have been told which proxies to
+// trust, or Traefik strips the forwarded headers before any middleware sees them.
+// With either missing, reading a position reads whatever the caller wrote there.
+func (s *service) clientIPStrategyDepth(data *appConfigData) int {
+	if !s.hasTraefikTrustedIPs(data.traefikSvc) {
+		return 0
+	}
+	return data.getProxySettings().ClientIPDepth()
+}
+
+// applyClientIPStrategy writes the depth under a middleware's ip-strategy prefix.
+//
+// Depth 0 writes nothing: it is already Traefik's default, and an explicit zero
+// would only add a label that says what happens anyway.
+func applyClientIPStrategy(depth int, prefix string, labels map[string]string) {
+	if depth <= 0 {
+		return
+	}
+	labels[prefix+".ipstrategy.depth"] = strconv.Itoa(depth)
 }
 
 func (s *service) updateSwarmServiceLabels(

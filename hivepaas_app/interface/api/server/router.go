@@ -171,9 +171,9 @@ func (s *HTTPServer) registerRoutes() {
 }
 
 func routePing(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "pong"})
+	c.String(http.StatusOK, "{\"message\": \"pong\"}")
 }
 
 func routeNotFound(c *gin.Context) {
-	c.JSON(http.StatusNotFound, "not found")
+	c.String(http.StatusNotFound, "not found")
 }

@@ -23,6 +23,7 @@ export interface HivePaaSPeriodicSettings {
 export interface HivePaaSProxySettings {
     proxyProvider: string;
     trustedIPs: string[];
+    proxyHops: number;
 }
 
 export interface HivePaaSServiceSettings extends SettingsBaseEntity {

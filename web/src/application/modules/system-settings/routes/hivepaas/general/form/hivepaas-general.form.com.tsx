@@ -47,7 +47,7 @@ function NoteBox({ children }: PropsWithChildren) {
     );
 }
 
-function NumberField({ name, label, content, min, max }: NumberFieldProps) {
+function NumberField({ name, label, content, min, max, readOnly }: NumberFieldProps) {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const {
         field,
@@ -75,6 +75,7 @@ function NumberField({ name, label, content, min, max }: NumberFieldProps) {
                         fixedDecimalScale={false}
                         className="max-w-[110px]"
                         aria-invalid={invalid}
+                        disabled={readOnly}
                     />
                     <FieldError errors={[error]} />
                 </Field>
@@ -144,11 +145,24 @@ function RunWorkerInMainAppField() {
 }
 
 function ProxyProviderField({ readOnly }: { readOnly: boolean }) {
-    const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const { control, setValue, getValues } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const {
         field,
         fieldState: { error, invalid },
     } = useController({ control, name: "proxySettings.proxyProvider" });
+
+    const handleProviderChange = (value: string) => {
+        field.onChange(value);
+        const trimmed = value.trim();
+        const currentHops = getValues("proxySettings.proxyHops");
+        if (trimmed !== "") {
+            if (currentHops === 0) {
+                setValue("proxySettings.proxyHops", 2, { shouldValidate: true, shouldDirty: true });
+            }
+        } else {
+            setValue("proxySettings.proxyHops", 0, { shouldValidate: true, shouldDirty: true });
+        }
+    };
 
     return (
         <InfoBlock
@@ -165,7 +179,7 @@ function ProxyProviderField({ readOnly }: { readOnly: boolean }) {
                     <EditableCombobox
                         options={PROXY_PROVIDER_OPTIONS}
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={handleProviderChange}
                         placeholder="select provider"
                         aria-invalid={invalid}
                         className="max-w-[280px]"
@@ -225,6 +239,19 @@ function TrustedIPsField({ readOnly }: { readOnly: boolean }) {
     );
 }
 
+function ProxyHopsField({ readOnly }: { readOnly: boolean }) {
+    return (
+        <NumberField
+            name="proxySettings.proxyHops"
+            label="Proxy Hops"
+            content="Number of reverse proxy hops in front of HivePaaS to resolve the client IP address."
+            min={0}
+            max={10}
+            readOnly={readOnly}
+        />
+    );
+}
+
 function ProxyConfigurationSection({ readOnly }: { readOnly: boolean }) {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();
     const proxyProvider = useWatch({ control, name: "proxySettings.proxyProvider" });
@@ -235,7 +262,12 @@ function ProxyConfigurationSection({ readOnly }: { readOnly: boolean }) {
             <SectionHeader>Proxy Configuration</SectionHeader>
             <div className="flex flex-col gap-6 px-3">
                 <ProxyProviderField readOnly={readOnly} />
-                {hasProxyProvider ? <TrustedIPsField readOnly={readOnly} /> : null}
+                {hasProxyProvider ? (
+                    <>
+                        <TrustedIPsField readOnly={readOnly} />
+                        <ProxyHopsField readOnly={readOnly} />
+                    </>
+                ) : null}
             </div>
         </>
     );
@@ -384,7 +416,11 @@ export function HivePaaSGeneralForm({ ref, defaultValues, onSubmit, readOnly = f
 
 type NumberFieldPath = Extract<
     FieldPath<SchemaInput>,
-    "appSettings.replicas" | "workerSettings.replicas" | "workerSettings.concurrency" | "periodicSettings.batchSize"
+    | "appSettings.replicas"
+    | "workerSettings.replicas"
+    | "workerSettings.concurrency"
+    | "periodicSettings.batchSize"
+    | "proxySettings.proxyHops"
 >;
 
 type DurationFieldPath = Extract<
@@ -398,6 +434,7 @@ type NumberFieldProps = {
     content: string;
     min: number;
     max: number;
+    readOnly?: boolean;
 };
 
 type DurationFieldProps = {

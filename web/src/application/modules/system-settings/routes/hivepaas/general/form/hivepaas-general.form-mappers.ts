@@ -24,6 +24,7 @@ export function mapHivePaaSServiceSettingsToFormInput(settings: HivePaaSServiceS
         proxySettings: {
             proxyProvider: settings.proxySettings.proxyProvider,
             trustedIPsText: joinTrustedIPsText(settings.proxySettings.trustedIPs),
+            proxyHops: settings.proxySettings.proxyHops,
         },
     };
 }

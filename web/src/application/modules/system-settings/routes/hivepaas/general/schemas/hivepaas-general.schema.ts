@@ -5,6 +5,7 @@ const workerReplicasSchema = z.number().int().min(0).max(100);
 const workerConcurrencySchema = z.number().int().min(1).max(100);
 const periodicBatchSizeSchema = z.number().int().min(1).max(10000);
 const durationSchema = z.string().trim().min(1);
+const proxyHopsSchema = z.number().int().min(0).max(10);
 
 export const HivePaaSGeneralFormSchema = z
     .object({
@@ -27,6 +28,7 @@ export const HivePaaSGeneralFormSchema = z
         proxySettings: z.object({
             proxyProvider: z.string(),
             trustedIPsText: z.string(),
+            proxyHops: proxyHopsSchema,
         }),
     })
     .superRefine((values, ctx) => {
@@ -36,6 +38,25 @@ export const HivePaaSGeneralFormSchema = z
                 message: "Run Worker in Main App must be enabled when worker replicas is 0",
                 path: ["workerSettings", "runWorkerInMainApp"],
             });
+        }
+
+        const proxyProvider = values.proxySettings.proxyProvider.trim();
+        if (proxyProvider !== "") {
+            if (values.proxySettings.trustedIPsText.trim() === "") {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "Trusted IPs is required when a proxy provider is configured",
+                    path: ["proxySettings", "trustedIPsText"],
+                });
+            }
+
+            if (values.proxySettings.proxyHops <= 0) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: "Proxy Hops must be greater than 0 when a proxy provider is configured",
+                    path: ["proxySettings", "proxyHops"],
+                });
+            }
         }
     });
 
@@ -62,5 +83,6 @@ export const emptyHivePaaSGeneralFormDefaults: HivePaaSGeneralFormInput = {
     proxySettings: {
         proxyProvider: "",
         trustedIPsText: "",
+        proxyHops: 0,
     },
 };

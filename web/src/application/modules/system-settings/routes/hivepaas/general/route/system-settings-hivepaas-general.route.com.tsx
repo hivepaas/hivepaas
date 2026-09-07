@@ -46,6 +46,7 @@ function mapFormValuesToPayload(values: HivePaaSGeneralFormOutput, updateVer: nu
         proxySettings: {
             proxyProvider,
             trustedIPs: proxyProvider ? splitTrustedIPsText(values.proxySettings.trustedIPsText) : [],
+            proxyHops: proxyProvider ? values.proxySettings.proxyHops : 0,
         },
     };
 }

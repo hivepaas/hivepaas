@@ -24,6 +24,7 @@ const HivePaaSPeriodicSettingsSchema = z.object({
 const HivePaaSProxySettingsSchema = z.object({
     proxyProvider: z.preprocess(value => value ?? "", z.string()),
     trustedIPs: z.preprocess(value => value ?? [], z.array(z.string())),
+    proxyHops: z.preprocess(value => (typeof value === "number" ? value : 0), z.number()),
 });
 
 export const HivePaaSServiceSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({

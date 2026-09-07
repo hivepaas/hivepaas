@@ -26,6 +26,7 @@ export type HivePaaSServiceSettings_UpdateOne_Payload = {
     proxySettings: {
         proxyProvider: string;
         trustedIPs: string[];
+        proxyHops: number;
     };
 };
 

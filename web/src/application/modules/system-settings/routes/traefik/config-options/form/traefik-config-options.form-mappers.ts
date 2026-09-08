@@ -1,4 +1,5 @@
 import type { TraefikConfigOptions, TraefikConfigOptions_UpdateOne_Payload } from "~/system-settings/api/services";
+import { CONFIRM_WINDOW } from "~/system-settings/module-shared/utils";
 
 import type { TraefikConfigOptionsFormInput } from "../schemas";
 
@@ -39,5 +40,10 @@ export function mapFormOutputToUpdatePayload(values: {
             fastProxy: values.startupCommand.fastProxy,
             args,
         },
+        // Asking for the same window as the other trials. Traefik takes longer to
+        // come back than a routing change does, and the server's floor accounts
+        // for that, but the operator should not be given a shorter budget here
+        // than anywhere else.
+        confirmWindow: CONFIRM_WINDOW,
     };
 }

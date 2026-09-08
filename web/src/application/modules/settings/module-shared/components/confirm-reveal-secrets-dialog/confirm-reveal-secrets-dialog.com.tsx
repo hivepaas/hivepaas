@@ -1,4 +1,7 @@
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ExternalLink } from "lucide-react";
+
+import { AppLink } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
 import { Button, Separator } from "@/components/ui";
 import {
@@ -34,11 +37,26 @@ export function ConfirmRevealSecretsDialog({
                 <DialogBody className="flex flex-col gap-4">
                     <div className="flex items-start gap-2.5 rounded-md border border-destructive bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive font-medium leading-normal">
                         <AlertTriangle className="size-4 shrink-0 text-destructive mt-0.5" />
-                        <span>
-                            Warning: Revealing secrets is not recommended for security reasons. Only administrators and
-                            users with the &quot;Can Reveal Secrets&quot; capability can view secrets. This action will
-                            also be recorded in the database for auditing purposes.
-                        </span>
+                        <div className="flex flex-col gap-2">
+                            <p>
+                                Warning: Revealing secrets is not recommended for security reasons. Only administrators
+                                and users with the &quot;Can Reveal Secrets&quot; capability can view secrets. This
+                                action will also be recorded in the database for auditing purposes.
+                            </p>
+                            <p>
+                                Configure whether to allow or disallow returning secrets via API{" "}
+                                <AppLink.Basic
+                                    to={ROUTE.systemSettings.hivepaas.security.$route}
+                                    className="inline-flex items-center gap-1 font-semibold underline underline-offset-4 hover:opacity-80"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    here
+                                    <ExternalLink className="size-3 shrink-0" />
+                                </AppLink.Basic>
+                                .
+                            </p>
+                        </div>
                     </div>
                 </DialogBody>
 

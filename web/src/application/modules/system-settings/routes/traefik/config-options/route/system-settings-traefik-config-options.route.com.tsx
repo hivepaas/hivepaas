@@ -5,9 +5,12 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import type { TraefikConfigOptions_UpdateOne_Req } from "~/system-settings/api/services";
 import { TraefikConfigOptionsCommands, TraefikConfigOptionsQueries } from "~/system-settings/data";
+import { useSettingsChangeConfirmDialogState } from "~/system-settings/dialogs";
+import { probationWarning } from "~/system-settings/module-shared/utils";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
+import { useGlobalAlertDialogState } from "@application/shared/dialogs";
 import { PageError } from "@application/shared/pages";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -30,13 +33,24 @@ export function SystemSettingsTraefikConfigOptionsRoute() {
     const formRef = useRef<TraefikConfigOptionsFormRef>(null);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.System });
 
+    const confirmDialog = useSettingsChangeConfirmDialogState();
+    const globalAlert = useGlobalAlertDialogState();
     const configOptionsQuery = TraefikConfigOptionsQueries.useFindOne();
 
-    console.log("configOptionsQuery", configOptionsQuery);
-
     const { mutate: update, isPending } = TraefikConfigOptionsCommands.useUpdateOne({
-        onSuccess: () => {
-            toast.success("Traefik config options updated");
+        onSuccess: response => {
+            // No trial means the request asked for nothing Traefik was not already
+            // running, so nothing restarted and there is nothing to confirm.
+            if (response.data.pendingChange == null) {
+                toast.success("Traefik config options updated");
+                return;
+            }
+
+            toast.success("Traefik config applied - confirm to keep it");
+            // Straight from the response rather than waiting for the refetch: the
+            // countdown is already running server-side, and every second spent
+            // waiting for a round trip is a second off the operator's budget.
+            confirmDialog.open("traefik", response.data.pendingChange);
         },
         onError: err => {
             if (isValidationException(err)) {
@@ -54,8 +68,23 @@ export function SystemSettingsTraefikConfigOptionsRoute() {
             return;
         }
 
-        update({
-            payload: mapFormValuesToPayload(values),
+        const payload = mapFormValuesToPayload(values);
+
+        // Unconditional, because the cost is not in whether the change is risky
+        // but in what applying it does at all: Traefik's task is replaced, and its
+        // ports are bound in host mode, so every route is down until the new one
+        // is serving. Nobody should meet that by accident.
+        const { title, description } = probationWarning("Traefik config options");
+        globalAlert.open({
+            props: {
+                type: "warning",
+                title,
+                description,
+                actionText: "Apply",
+                onAction: () => {
+                    update({ payload });
+                },
+            },
         });
     }
 

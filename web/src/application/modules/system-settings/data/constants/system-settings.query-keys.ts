@@ -12,6 +12,8 @@ export const QK = {
 
     "system-settings.traefik.service-settings.find-one": "system-settings.traefik.service-settings.find-one",
     "system-settings.traefik.config-options.find-one": "system-settings.traefik.config-options.find-one",
+    // Separate from find-one for the same reason as the routing probe above.
+    "system-settings.traefik.config-options.probe": "system-settings.traefik.config-options.probe",
     "system-settings.backup.find-one": "system-settings.backup.find-one",
     "system-settings.backup-files.find-many-paginated": "system-settings.backup-files.find-many-paginated",
     "system-settings.backup-files.find-one-by-id": "system-settings.backup-files.find-one-by-id",

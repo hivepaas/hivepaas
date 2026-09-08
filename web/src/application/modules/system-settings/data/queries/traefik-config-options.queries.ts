@@ -19,6 +19,29 @@ function useFindOne(request: FindOneReq = {}, options: Omit<UseQueryOptions<Find
     });
 }
 
+/**
+ * Polls the config options endpoint while a change is on trial.
+ *
+ * Two answers come out of one request: whether the caller can still reach
+ * HivePaaS at all - which here means whether the new Traefik is routing anything
+ * - and whether the trial is still running.
+ */
+function useProbe(options: Omit<UseQueryOptions<FindOneRes>, "queryKey" | "queryFn"> = {}) {
+    const { queries } = useTraefikConfigOptionsApi();
+
+    return useQuery({
+        queryKey: [QK["system-settings.traefik.config-options.probe"]],
+        queryFn: ({ signal }) => queries.probe(signal),
+        // A failed probe is information, not something to paper over: retrying
+        // inside one tick would blur the boundary between "slow" and "locked
+        // out", which is the only thing this query exists to tell apart.
+        retry: false,
+        gcTime: 0,
+        ...options,
+    });
+}
+
 export const TraefikConfigOptionsQueries = Object.freeze({
     useFindOne,
+    useProbe,
 });

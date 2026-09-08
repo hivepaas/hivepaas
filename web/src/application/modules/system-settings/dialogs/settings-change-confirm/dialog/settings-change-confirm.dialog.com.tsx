@@ -19,6 +19,8 @@ import {
     HivePaaSRoutingSettingsQueries,
     HivePaaSServiceSettingsCommands,
     HivePaaSServiceSettingsQueries,
+    TraefikConfigOptionsCommands,
+    TraefikConfigOptionsQueries,
 } from "~/system-settings/data";
 import { QK } from "~/system-settings/data/constants";
 import type { HivePaaSRoutingDomain } from "~/system-settings/domain";
@@ -47,14 +49,24 @@ const COPY: Record<SettingsChangeKind, { title: string; applied: string; settlin
     },
     service: {
         title: "Confirm proxy settings change",
-        // Traefik is restarted by this change, so the honest thing to say is that
-        // the dashboard is expected to be unreachable for part of the countdown.
-        applied: "The change is being applied. HivePaaS may be unreachable while the proxy restarts.",
+        // Traefik is restarted by this change - and HivePaaS too, when the same
+        // request carried a replica or worker setting - so the honest thing to say
+        // is that the dashboard is expected to be unreachable for part of the
+        // countdown.
+        applied: "The change is being applied. HivePaaS may be unreachable while it restarts.",
+        settling: "Waiting for the restart to finish",
+    },
+    traefik: {
+        title: "Confirm Traefik config change",
+        // Traefik publishes :80 and :443 in host mode, so its replacement cannot
+        // overlap: the old task stops before the new one binds, and there is no
+        // ingress at all in between.
+        applied: "The change is being applied. Every route is down while the proxy restarts.",
         settling: "Waiting for the proxy to restart",
     },
 };
 
-type Phase = "waiting" | "ready" | "disconnected" | "expired" | "resolved";
+type Phase = "waiting" | "ready" | "disconnected" | "rolledBack" | "expired" | "resolved";
 
 const fnPlaceholder = () => null;
 
@@ -82,9 +94,10 @@ export function SettingsChangeConfirmDialog() {
 
     const now = useNow(open);
     const [tooEarly, setTooEarly] = useState(false);
+    const [rolledBack, setRolledBack] = useState(false);
 
-    // Both probes are declared because hooks cannot be called conditionally; only
-    // the one matching the trial is enabled, so only it makes requests.
+    // All three probes are declared because hooks cannot be called conditionally;
+    // only the one matching the trial is enabled, so only it makes requests.
     const routingProbe = HivePaaSRoutingSettingsQueries.useProbe({
         enabled: open && kind === "routing",
         refetchInterval: open && kind === "routing" ? PROBE_INTERVAL_MS : false,
@@ -93,7 +106,11 @@ export function SettingsChangeConfirmDialog() {
         enabled: open && kind === "service",
         refetchInterval: open && kind === "service" ? PROBE_INTERVAL_MS : false,
     });
-    const probe = kind === "routing" ? routingProbe : serviceProbe;
+    const traefikProbe = TraefikConfigOptionsQueries.useProbe({
+        enabled: open && kind === "traefik",
+        refetchInterval: open && kind === "traefik" ? PROBE_INTERVAL_MS : false,
+    });
+    const probe = kind === "routing" ? routingProbe : kind === "service" ? serviceProbe : traefikProbe;
 
     const msUntilConfirmable = pendingChange ? pendingChange.confirmableFrom.getTime() - now : 0;
     const msUntilDeadline = pendingChange ? pendingChange.deadlineAt.getTime() - now : 0;
@@ -109,11 +126,14 @@ export function SettingsChangeConfirmDialog() {
     // Order matters, and "waiting" sitting above "disconnected" is the whole point
     // of it.
     //
-    // Before confirmableFrom the server has not claimed the change is live yet. A
-    // proxy settings change restarts traefik, so being unable to reach HivePaaS in
-    // that window is what is supposed to happen - reporting it as a lockout would
-    // raise a false alarm on every single proxy change, next to a button offering
-    // to revert. After that moment the same failure means something real.
+    // Before confirmableFrom the server has not claimed the change is live yet.
+    // These changes replace traefik's task, and some of them restart HivePaaS
+    // itself, so being unable to reach it in that window is what is supposed to
+    // happen - reporting it as a lockout would raise a false alarm on every single
+    // one, next to a button offering to revert. The server sizes that window
+    // against what the change actually disturbs, and it is much longer when the
+    // app is coming back up. After that moment the same failure means something
+    // real.
     //
     // Past the deadline the story is always "it ran out", even once the probe
     // confirms the trial is gone: that is the same event, and the vaguer "no longer
@@ -123,17 +143,26 @@ export function SettingsChangeConfirmDialog() {
             ? "expired"
             : resolvedByServer
               ? "resolved"
-              : msUntilConfirmable > 0
-                ? "waiting"
-                : disconnected
-                  ? "disconnected"
-                  : "ready";
+              : rolledBack
+                ? "rolledBack"
+                : msUntilConfirmable > 0
+                  ? "waiting"
+                  : disconnected
+                    ? "disconnected"
+                    : "ready";
 
     const onConfirmError = (error: Error) => {
         // Not a failure - the new configuration is not serving yet. The countdown
         // is already showing when it will be worth retrying.
         if (error instanceof HttpException && error.code === "ERR_SETTINGS_CONFIRM_TOO_EARLY") {
             setTooEarly(true);
+            return;
+        }
+        // The server checked and the change is not what is running: the cluster
+        // undid it on its own. Retrying cannot help, and neither can waiting, so
+        // this replaces the countdown rather than sitting next to it.
+        if (error instanceof HttpException && error.code === "ERR_SETTINGS_CHANGE_NOT_LIVE") {
+            setRolledBack(true);
             return;
         }
         // Anything else means this is no longer the change on trial. The probe
@@ -157,6 +186,9 @@ export function SettingsChangeConfirmDialog() {
             });
             void queryClient.invalidateQueries({
                 queryKey: [QK["system-settings.hivepaas.service-settings.find-one"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["system-settings.traefik.config-options.find-one"]],
             });
         }
     };
@@ -187,9 +219,17 @@ export function SettingsChangeConfirmDialog() {
         onSuccess: onReverted,
         onError: () => void probe.refetch(),
     });
+    const traefikConfirm = TraefikConfigOptionsCommands.useConfirmChange({
+        onSuccess: onConfirmed,
+        onError: onConfirmError,
+    });
+    const traefikRevert = TraefikConfigOptionsCommands.useRevertChange({
+        onSuccess: onReverted,
+        onError: () => void probe.refetch(),
+    });
 
-    const confirm = kind === "routing" ? routingConfirm : serviceConfirm;
-    const revert = kind === "routing" ? routingRevert : serviceRevert;
+    const confirm = kind === "routing" ? routingConfirm : kind === "service" ? serviceConfirm : traefikConfirm;
+    const revert = kind === "routing" ? routingRevert : kind === "service" ? serviceRevert : traefikRevert;
 
     // Read off the routing probe when there is one: it is the configuration that
     // is actually live, not whatever the form was showing. A proxy change does not
@@ -212,6 +252,13 @@ export function SettingsChangeConfirmDialog() {
             setTooEarly(false);
         }
     }, [msUntilConfirmable]);
+
+    // A refusal belongs to the change that was refused. This component is never
+    // unmounted between trials, so left standing it would open the next one
+    // straight into "not what is running" with nothing having been checked.
+    useEffect(() => {
+        setRolledBack(false);
+    }, [changeId]);
 
     const isBusy = confirm.isPending || revert.isPending;
     const copy = COPY[kind];
@@ -332,6 +379,25 @@ export function SettingsChangeConfirmDialog() {
                         </>
                     )}
 
+                    {phase === "rolledBack" && (
+                        <div className="flex flex-col gap-3">
+                            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                                <AlertTriangleIcon className="size-4 shrink-0 text-amber-500" />
+                                The change is not what is running
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                The proxy never came up healthy under it, so the cluster restored the previous
+                                configuration on its own. What you are looking at now is that older one - which is why
+                                the dashboard works.
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                Confirming would have left the saved settings describing something nothing is running.
+                                The change will be undone in the database too when the countdown ends, or you can undo
+                                it now.
+                            </p>
+                        </div>
+                    )}
+
                     {phase === "expired" && (
                         <div className="flex flex-col gap-3">
                             <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -357,7 +423,20 @@ export function SettingsChangeConfirmDialog() {
                 </DialogBody>
 
                 <DialogActionFooter>
-                    {phase === "expired" || phase === "resolved" ? (
+                    {phase === "rolledBack" ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="min-w-[100px]"
+                            isLoading={revert.isPending}
+                            disabled={isBusy}
+                            onClick={() => {
+                                revert.mutate({ changeId });
+                            }}
+                        >
+                            Undo it now
+                        </Button>
+                    ) : phase === "expired" || phase === "resolved" ? (
                         <Button
                             type="button"
                             className="min-w-[100px]"

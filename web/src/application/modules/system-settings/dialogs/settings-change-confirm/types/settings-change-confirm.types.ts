@@ -3,11 +3,18 @@ import type { SettingsPendingChange } from "~/system-settings/domain";
 /**
  * Which settings are on trial.
  *
- * The dialog is the same either way, but the endpoints are not, and neither is
- * what the change disturbs: "routing" only rewrites labels, while "service"
- * restarts traefik and takes every route down with it for a moment.
+ * The dialog is the same for all of them, but the endpoints are not, and neither
+ * is what the change disturbs: "routing" only rewrites labels, while "service"
+ * and "traefik" both replace Traefik's task and take every route down with it for
+ * a moment.
+ *
+ * "traefik" is the one where the trial is doing work nothing else can. Traefik's
+ * healthcheck asks /ping, which answers 200 whether or not a single router was
+ * discovered - so a command line that starts cleanly and serves nothing passes
+ * every automatic check there is, and only somebody failing to come back reveals
+ * it.
  */
-export type SettingsChangeKind = "routing" | "service";
+export type SettingsChangeKind = "routing" | "service" | "traefik";
 
 /**
  * How the trial ended.

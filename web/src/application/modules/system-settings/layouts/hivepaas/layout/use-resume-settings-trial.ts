@@ -13,10 +13,11 @@ import { useSettingsChangeConfirmDialogState } from "~/system-settings/dialogs";
  * pages is enough, and the operator does not have to remember which one it was.
  *
  * It watches from here rather than from the module's dialog container because the
- * container also covers Traefik, backups, cleanup and SSL renewal - pages where no
- * trial can ever exist, and where these two requests would be pure waste. The
- * dialog itself stays in the container, so a trial already on screen survives a
- * walk into those pages.
+ * container also covers backups, cleanup and SSL renewal - pages where no trial of
+ * these two kinds can exist, and where these requests would be pure waste. Traefik
+ * has a trial of its own and watches for it from its own layout, for the same
+ * reason. The dialog itself stays in the container, so a trial already on screen
+ * survives a walk into any of those pages.
  *
  * The dialog store refuses a trial it has already seen through to an end, so this
  * cannot resurrect one from a query result that has not caught up yet.

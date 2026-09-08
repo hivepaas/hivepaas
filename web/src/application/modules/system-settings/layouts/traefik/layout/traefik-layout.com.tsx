@@ -5,6 +5,8 @@ import { SystemSettingsSidebarLayout, type SystemSettingsTabSection } from "~/sy
 
 import { ROUTE } from "@application/shared/constants";
 
+import { useResumeTraefikTrial } from "./use-resume-traefik-trial";
+
 const sections: SystemSettingsTabSection[] = [
     {
         title: "Configuration",
@@ -29,6 +31,8 @@ const sections: SystemSettingsTabSection[] = [
 ];
 
 function View({ children }: PropsWithChildren) {
+    useResumeTraefikTrial();
+
     return <SystemSettingsSidebarLayout sections={sections}>{children}</SystemSettingsSidebarLayout>;
 }
 

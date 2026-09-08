@@ -3,11 +3,15 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { SystemSettingsApiContext } from "~/system-settings/api/api-context";
 import type {
+    TraefikConfigOptions_ConfirmChange_Req,
     TraefikConfigOptions_FindOne_Req,
+    TraefikConfigOptions_RevertChange_Req,
     TraefikConfigOptions_UpdateOne_Req,
 } from "~/system-settings/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
+
+import { isProbationErrorHandledByCaller } from "./settings-probation.errors";
 
 function createHook() {
     return function useTraefikConfigOptionsApi() {
@@ -27,6 +31,25 @@ function createHook() {
                         },
                     });
                 },
+
+                /**
+                 * Same request as findOne, deliberately silent.
+                 *
+                 * It runs every few seconds while a command change is on trial, and
+                 * its failures are the thing the dialog is displaying - they mean
+                 * the new Traefik is not letting the caller back in. A toast every
+                 * three seconds would pile noise on top of that.
+                 */
+                probe: async (signal?: AbortSignal) => {
+                    const result = await api.systemSettings.traefikConfigOptions.findOne({ data: {} }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            throw error;
+                        },
+                    });
+                },
             }),
             [api, notifyError],
         );
@@ -40,6 +63,34 @@ function createHook() {
                         Ok: _ => _,
                         Err: error => {
                             notifyError({ message: "Failed to update Traefik config options", error });
+                            throw error;
+                        },
+                    });
+                },
+
+                confirmChange: async (data: TraefikConfigOptions_ConfirmChange_Req["data"]) => {
+                    const result = await api.systemSettings.traefikConfigOptions.confirmChange({ data });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            if (!isProbationErrorHandledByCaller(error)) {
+                                notifyError({ message: "Failed to confirm the Traefik config change", error });
+                            }
+                            throw error;
+                        },
+                    });
+                },
+
+                revertChange: async (data: TraefikConfigOptions_RevertChange_Req["data"]) => {
+                    const result = await api.systemSettings.traefikConfigOptions.revertChange({ data });
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: error => {
+                            if (!isProbationErrorHandledByCaller(error)) {
+                                notifyError({ message: "Failed to revert the Traefik config change", error });
+                            }
                             throw error;
                         },
                     });

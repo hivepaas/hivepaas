@@ -2,6 +2,7 @@ package settingsrevertserviceimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/moby/moby/api/types/swarm"
 
@@ -35,7 +36,10 @@ func (s *service) revertHivePaaSService(
 	setting, err := s.settingRepo.GetSingle(ctx, db, nil, base.SettingTypeHivePaaSService, true,
 		bunex.SelectFor("UPDATE"),
 	)
-	if err != nil {
+	// GetSingle reports a missing row as ErrNotFound rather than a nil setting, so
+	// both shapes are checked. Either one means the row this trial was about is
+	// gone, which is a reason to stop rather than a failure to retry.
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 		return nil, hperrors.Wrap(err)
 	}
 	if setting == nil {

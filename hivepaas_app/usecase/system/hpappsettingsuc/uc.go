@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsprobationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsrevertservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemeventbusservice"
@@ -34,13 +35,15 @@ type UC struct {
 
 	cacheAppSecretAttemptRepo cacherepository.AppSecretAttemptRepo
 
-	appRoutingService     approutingservice.Service
-	appService            appservice.Service
-	auditService          auditservice.Service
-	dataKeyService        datakeyservice.Service
-	domainService         domainservice.Service
-	hpAppService          hpappservice.Service
-	networkService        networkservice.Service
+	appRoutingService approutingservice.Service
+	appService        appservice.Service
+	auditService      auditservice.Service
+	dataKeyService    datakeyservice.Service
+	domainService     domainservice.Service
+	hpAppService      hpappservice.Service
+	networkService    networkservice.Service
+	// probationService is confirm-or-revert, shared with the traefik settings.
+	probationService      settingsprobationservice.Service
 	settingService        settingservice.Service
 	settingsRevertService settingsrevertservice.Service
 	sslService            sslservice.Service
@@ -68,6 +71,7 @@ func New(
 	domainService domainservice.Service,
 	hpAppService hpappservice.Service,
 	networkService networkservice.Service,
+	probationService settingsprobationservice.Service,
 	settingService settingservice.Service,
 	settingsRevertService settingsrevertservice.Service,
 	sslService sslservice.Service,
@@ -95,6 +99,7 @@ func New(
 		domainService:         domainService,
 		hpAppService:          hpAppService,
 		networkService:        networkService,
+		probationService:      probationService,
 		settingService:        settingService,
 		settingsRevertService: settingsRevertService,
 		sslService:            sslService,

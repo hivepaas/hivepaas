@@ -104,6 +104,7 @@ ERR_SETTINGS_NO_PENDING_CHANGE = "There is no routing change waiting to be confi
 ERR_SETTINGS_CHANGE_SUPERSEDED = "This is no longer the change that is waiting to be confirmed - the settings have moved on since. Reload the page to see where they stand."
 ERR_SETTINGS_CONFIRM_TOO_EARLY = "Too early to confirm. The change is still being picked up by the proxy, so a confirmation now would vouch for the previous configuration. Try again from {{.ConfirmableFrom}}."
 ERR_SETTINGS_PROBATION_NOT_ARMED = "The routing change could not be put on trial, so it was not applied. An unconfirmed change that cannot be undone is what this refuses to create."
+ERR_SETTING_IN_USE = "'{{.Name}}' is still used by {{.Count}} other object(s) and cannot be deleted. Remove it from those first."
 
 ERR_PASSWORD_NOT_MEET_REQUIREMENTS = "Password does not meet requirements. Must contain at least {{.MinLen}} characters with {{.Lowers}} lowercase, {{.Uppers}} uppercase, {{.Digits}} digit, and {{.Specials}} special characters."
 ERR_PASSWORD_HAS_WEAK_SEQUENCE = "Password contains an easily guessed sequence. Avoid more than {{.MaxRun}} characters in a row that are sequential (1234), repeated (aaaa), or side by side on the keyboard (qwer)."

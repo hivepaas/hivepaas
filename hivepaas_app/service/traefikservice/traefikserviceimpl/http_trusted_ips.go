@@ -15,6 +15,13 @@ import (
 
 const (
 	defaultServiceUpdateRetryMax = 2
+
+	// The two arguments ApplyTrustedIPsToWebEntrypoints writes and
+	// WebEntrypointsCarryTrustedIPs reads back. Named once, because a reader that
+	// looked at a different key from the writer would report every change as
+	// missing.
+	epWebTrustedIPsArg       = "entrypoints.web.forwardedheaders.trustedips"
+	epWebsecureTrustedIPsArg = "entrypoints.websecure.forwardedheaders.trustedips"
 )
 
 //nolint:gocognit
@@ -35,8 +42,8 @@ func (s *service) ApplyTrustedIPsToWebEntrypoints(
 
 	sort.Strings(req.TrustedIPs)
 	trustedIPsStr := strings.Join(req.TrustedIPs, ",")
-	epWeb := "entrypoints.web.forwardedheaders.trustedips"
-	epWebsecure := "entrypoints.websecure.forwardedheaders.trustedips"
+	epWeb := epWebTrustedIPsArg
+	epWebsecure := epWebsecureTrustedIPsArg
 
 	applyFunc := func(_ int, svc *swarm.Service) (bool, error) {
 		resp.Service = svc
@@ -116,4 +123,55 @@ func (s *service) ApplyTrustedIPsToWebEntrypoints(
 		return nil, hperrors.Wrap(err)
 	}
 	return resp, nil
+}
+
+// WebEntrypointsCarryTrustedIPs reports whether traefik is running with exactly
+// these trusted IPs on both web entrypoints.
+//
+// It reads the live service spec, which is the only place that answers honestly.
+// The database records what HivePaaS asked for; swarm records what it settled on,
+// and the two part company when an update fails its healthcheck and
+// failure_action: rollback puts the previous command back. A confirmation of a
+// change that was rolled back would vouch for a configuration nobody is running.
+//
+// Both entrypoints have to agree, because both are written together: one carrying
+// the new value and the other the old is a half-applied update, which is no more
+// confirmable than none of it.
+func (s *service) WebEntrypointsCarryTrustedIPs(ctx context.Context, trustedIPs []string) (bool, error) {
+	svc, err := s.GetTraefikSwarmService(ctx)
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	if svc == nil || svc.Spec.TaskTemplate.ContainerSpec == nil {
+		return false, nil
+	}
+
+	return argsCarryTrustedIPs(svc.Spec.TaskTemplate.ContainerSpec.Args, trustedIPs), nil
+}
+
+// argsCarryTrustedIPs is the comparison on its own, away from docker.
+func argsCarryTrustedIPs(args, trustedIPs []string) bool {
+	// Sorted and joined the way the writer does it, so the comparison is against
+	// the exact string that would have been written.
+	wanted := append([]string(nil), trustedIPs...)
+	sort.Strings(wanted)
+	wantedStr := strings.Join(wanted, ",")
+
+	found := map[string]string{}
+	for _, arg := range args {
+		key, val, valid := traefikhelper.ParseCommandArg(arg)
+		if !valid {
+			continue
+		}
+		if key == epWebTrustedIPsArg || key == epWebsecureTrustedIPsArg {
+			found[key] = val
+		}
+	}
+
+	// An empty list is applied by removing the arguments, so their absence is
+	// what "no trusted IPs" looks like - not an argument with an empty value.
+	if wantedStr == "" {
+		return len(found) == 0
+	}
+	return found[epWebTrustedIPsArg] == wantedStr && found[epWebsecureTrustedIPsArg] == wantedStr
 }

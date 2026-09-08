@@ -5,7 +5,8 @@
 // that runs at startup - and because what "undo" means depends on which setting
 // is on trial. Routing settings go back onto the app's swarm labels; HivePaaS
 // service settings go back onto traefik's entrypoint arguments and, when they
-// reach that far, onto the service specs themselves.
+// reach that far, onto the service specs themselves; traefik config options go
+// back onto traefik's whole startup command.
 package settingsrevertservice
 
 import (

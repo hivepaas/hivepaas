@@ -2,6 +2,7 @@ package hpappsettingsuc
 
 import (
 	"context"
+	"time"
 
 	"github.com/tiendc/gofn"
 
@@ -10,11 +11,15 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsprobationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
+)
+
+const (
+	appLabelsSweepMaxRetry   = 3
+	appLabelsSweepRetryDelay = 30 * time.Second
 )
 
 // ConfirmRoutingSettings vouches for a routing change, which is what stops it
@@ -77,91 +82,70 @@ func transformRevertOutput(output *entity.TaskSettingsRevertOutput) *hpappsettin
 	return resp
 }
 
-// confirmSettingsChange is the whole of the check.
-//
-// The proof is the request itself: HivePaaS is reachable only through Traefik, so
-// a call that arrives here at all traveled through the configuration under trial.
-// That is why the settle delay matters - before it, the request would have gone
-// through the configuration being replaced. See TaskSettingsRevertArgs.ConfirmableFrom.
 func (uc *UC) confirmSettingsChange(
 	ctx context.Context,
 	auth *basedto.Auth,
 	settingType base.SettingType,
 	changeID string,
 ) error {
-	var (
-		confirmed *entity.Task
-		sweep     *entity.Task
-		e         error
-	)
-	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		task, args, setting, err := uc.pendingProbationFor(ctx, db, settingType, changeID)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-
-		if timeutil.NowUTC().Before(args.ConfirmableFrom()) {
-			return hperrors.Wrap(hperrors.ErrSettingsConfirmTooEarly).
-				WithParam("ConfirmableFrom", args.ConfirmableFrom())
-		}
-
-		task.Status = base.TaskStatusCanceled
-		task.UpdatedAt = timeutil.NowUTC()
-		if err = uc.taskRepo.Update(ctx, db, task, bunex.UpdateColumns("status", "updated_at")); err != nil {
-			return hperrors.Wrap(err)
-		}
-		confirmed = task
-
-		// Only the HivePaaS app carried the new proxy topology while the change
-		// was on trial. Now that somebody has vouched for it, the rest get it too.
-		if sweep, e = uc.scheduleAppLabelsSweep(ctx, db, settingType, args.AppID); e != nil {
-			return hperrors.Wrap(e)
-		}
-
-		return uc.recordProbationOutcome(ctx, db, auth, base.AuditLogTypeRoutingChangeConfirm, setting)
-	})
+	appID, err := uc.hivePaaSAppID(ctx, uc.db)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-
-	// Best effort: the row already says canceled, and the executor refuses to run
-	// a task that is not in the not-started state, so a missed unschedule costs a
-	// wasted wake-up rather than an unwanted revert.
-	if err := uc.taskQueue.UnscheduleTask(ctx, confirmed); err != nil {
-		uc.logger.Warnf("failed to unschedule confirmed settings probation %s: %v", confirmed.ID, err)
-	}
-	if sweep != nil {
-		// Best effort, as with the probation itself: the row is committed, so the
-		// queue's own scan and the startup reconciler will find it even if this
-		// call does not land.
-		if err := uc.taskQueue.ScheduleTask(ctx, sweep); err != nil {
-			uc.logger.Warnf("failed to schedule the app labels sweep %s: %v", sweep.ID, err)
-		}
-	}
-
-	return nil
+	return hperrors.Wrap(uc.probationService.Confirm(ctx, auth, &settingsprobationservice.AnswerReq{
+		AppID:           appID,
+		SettingType:     settingType,
+		ChangeID:        changeID,
+		OnConfirmed:     uc.appLabelsSweepOnConfirm,
+		EnsureStillLive: uc.ensureProxySettingsAreLive,
+	}))
 }
 
-// scheduleAppLabelsSweep records the fan-out the trial deferred.
+func (uc *UC) revertSettingsChange(
+	ctx context.Context,
+	auth *basedto.Auth,
+	settingType base.SettingType,
+	changeID string,
+) (*entity.TaskSettingsRevertOutput, error) {
+	appID, err := uc.hivePaaSAppID(ctx, uc.db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	output, err := uc.probationService.RevertNow(ctx, auth, &settingsprobationservice.AnswerReq{
+		AppID:       appID,
+		SettingType: settingType,
+		ChangeID:    changeID,
+	})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return output, nil
+}
+
+// appLabelsSweepOnConfirm records the fan-out the trial deferred.
 //
-// Only for the HivePaaS service settings: a routing change is one app's labels
-// and has nothing to spread. The task is written in the same transaction as the
-// confirmation, so a confirmation that commits always has a sweep to go with it.
-func (uc *UC) scheduleAppLabelsSweep(
+// Only for the HivePaaS service settings: those are the ones whose proxy topology
+// every other app's labels are derived from, and while the change was on trial
+// only the HivePaaS app was given the new one. A routing change is one app's
+// labels and has nothing to spread; a traefik command change is not in any app's
+// labels at all.
+//
+// It runs inside the confirmation's transaction, so a confirmation that commits
+// always has its sweep committed with it. See settingsprobationservice.AnswerReq.
+func (uc *UC) appLabelsSweepOnConfirm(
 	ctx context.Context,
 	db database.Tx,
-	settingType base.SettingType,
-	appID string,
-) (*entity.Task, error) {
-	if settingType != base.SettingTypeHivePaaSService {
-		return nil, nil //nolint:nilnil // no sweep is the answer for other setting types
+	args *entity.TaskSettingsRevertArgs,
+) ([]*entity.Task, error) {
+	if args.SettingType != base.SettingTypeHivePaaSService {
+		return nil, nil
 	}
 
 	timeNow := timeutil.NowUTC()
 	task := &entity.Task{
 		ID:       gofn.Must(ulid.NewStringULID()),
 		Scope:    base.ObjectScopeApp,
-		ObjectID: appID,
+		ObjectID: args.AppID,
 		Type:     base.TaskTypeAppLabelsSweep,
 		Status:   base.TaskStatusNotStarted,
 		Config: entity.TaskConfig{
@@ -174,115 +158,60 @@ func (uc *UC) scheduleAppLabelsSweep(
 		CreatedAt: timeNow,
 		UpdatedAt: timeNow,
 	}
-	if err := task.SetArgs(&entity.TaskAppLabelsSweepArgs{AppID: appID}); err != nil {
+	if err := task.SetArgs(&entity.TaskAppLabelsSweepArgs{AppID: args.AppID}); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	if err := uc.taskRepo.Insert(ctx, db, task); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return task, nil
+	return []*entity.Task{task}, nil
 }
 
-// revertSettingsChange undoes the change now instead of waiting for its deadline.
+// ensureProxySettingsAreLive refuses a confirmation of proxy settings traefik is
+// not running.
 //
-// This is for the caller who can still get in and can see the change was wrong.
-// The caller who cannot get in is served by the deadline, which needs nobody.
-func (uc *UC) revertSettingsChange(
-	ctx context.Context,
-	auth *basedto.Auth,
-	settingType base.SettingType,
-	changeID string,
-) (*entity.TaskSettingsRevertOutput, error) {
-	var (
-		reverted *entity.Task
-		output   *entity.TaskSettingsRevertOutput
-	)
-	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		task, _, setting, err := uc.pendingProbationFor(ctx, db, settingType, changeID)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-
-		if err = uc.executeProbationTask(ctx, db, task); err != nil {
-			return hperrors.Wrap(err)
-		}
-		reverted = task
-		if output, err = task.OutputAsSettingsRevert(); err != nil {
-			return hperrors.Wrap(err)
-		}
-
-		return uc.recordProbationOutcome(ctx, db, auth, base.AuditLogTypeRoutingChangeRevert, setting)
-	})
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	if err := uc.taskQueue.UnscheduleTask(ctx, reverted); err != nil {
-		uc.logger.Warnf("failed to unschedule reverted settings probation %s: %v", reverted.ID, err)
-	}
-
-	return output, nil
-}
-
-// pendingProbationFor returns the trial the caller is talking about, refusing
-// anything that has already been overtaken.
+// Only the proxy settings, and only because of what applying them does: they are
+// written onto traefik's web entrypoints as forwardedheaders.trustedips, which is
+// a container spec change, which swarm answers by replacing the task. A task that
+// never becomes healthy is rolled back - failure_action: rollback on that service
+// - and the previous trusted IPs come back with it, quietly, around two and a
+// half minutes in. That is inside the confirmation window, and by then traefik is
+// serving again and the dashboard looks entirely healthy.
 //
-// The setting is loaded from the id the task carries rather than from the type
-// the endpoint belongs to. That is what lets one piece of code serve both kinds
-// of trial, and it is also the safer read: the task is the record of what was put
-// on trial, so asking it removes any chance of confirming one setting while
-// checking the version of another.
-func (uc *UC) pendingProbationFor(
+// Confirming there would cancel the trial with the setting row saying one thing
+// and traefik running another. Refusing lets the deadline undo the row, which is
+// what puts them back in agreement.
+//
+// Nothing to check for a routing change: it rewrites swarm service labels, which
+// does not recreate a task, so there is no failed update for swarm to roll back.
+func (uc *UC) ensureProxySettingsAreLive(
 	ctx context.Context,
-	db database.Tx,
-	settingType base.SettingType,
-	changeID string,
-) (*entity.Task, *entity.TaskSettingsRevertArgs, *entity.Setting, error) {
-	app, err := uc.hpAppService.LoadAppByKey(ctx, db, base.HivepaasAppKey,
-		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-	)
-	if err != nil {
-		return nil, nil, nil, hperrors.Wrap(err)
+	_ database.Tx,
+	args *entity.TaskSettingsRevertArgs,
+) error {
+	if args.SettingType != base.SettingTypeHivePaaSService {
+		return nil
 	}
 
-	task, err := uc.findPendingProbation(ctx, db, app.ID, settingType)
+	// pendingFor has already checked this row still carries the trial's version,
+	// so it is the change on trial and not a later one.
+	setting, err := uc.settingRepo.GetSingle(ctx, uc.db, nil, base.SettingTypeHivePaaSService, true)
 	if err != nil {
-		return nil, nil, nil, hperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
-	if task == nil {
-		return nil, nil, nil, hperrors.Wrap(hperrors.ErrSettingsNoPendingChange)
-	}
-	// A confirmation that names a different change was written for a state of the
-	// world that has moved on. Accepting it would vouch for settings its sender
-	// never saw.
-	if changeID != "" && changeID != task.ID {
-		return nil, nil, nil, hperrors.Wrap(hperrors.ErrSettingsChangeSuperseded)
+	applied, err := setting.AsHivePaaSService()
+	if err != nil {
+		return hperrors.Wrap(err)
 	}
 
-	args, err := task.ArgsAsSettingsRevert()
+	live, err := uc.traefikService.WebEntrypointsCarryTrustedIPs(ctx, applied.ProxySettings.TrustedIPs)
 	if err != nil {
-		return nil, nil, nil, hperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
-	if args == nil {
-		return nil, nil, nil, hperrors.Wrap(hperrors.ErrInternal).
-			WithMsgLog("settings probation task %s has no args", task.ID)
+	if !live {
+		return hperrors.Wrap(hperrors.ErrSettingsChangeNotLive).
+			WithMsgLog("traefik is not running the trusted IPs on trial, " +
+				"most likely because swarm rolled the update back")
 	}
-
-	// Locking the setting, not the task: it is the row every writer of these
-	// settings goes through, so it is what serializes confirm, revert and a
-	// concurrent update against each other.
-	setting, err := uc.settingRepo.GetByID(ctx, db, nil, args.SettingType, args.SettingID, true,
-		bunex.SelectFor("UPDATE"),
-	)
-	if err != nil {
-		return nil, nil, nil, hperrors.Wrap(err)
-	}
-	if setting == nil {
-		return nil, nil, nil, hperrors.Wrap(hperrors.ErrSettingsNoPendingChange)
-	}
-	if args.ProbationVer != setting.UpdateVer {
-		return nil, nil, nil, hperrors.Wrap(hperrors.ErrSettingsChangeSuperseded)
-	}
-
-	return task, args, setting, nil
+	return nil
 }

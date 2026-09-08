@@ -115,6 +115,13 @@ Once the installation finishes, access the HivePaaS dashboard:
 * **Default Username:** `admin`
 * **Default Password:** `abc123`
 
+### 3. If a change locks you out
+
+Configuration changes that can make the dashboard unreachable - traefik's startup
+command, the HivePaaS routing and proxy settings - are applied on trial and undone
+automatically unless you confirm them. [docs/recovery.md](docs/recovery.md)
+explains what catches what, and what to do by hand when nothing automatic can run.
+
 ---
 
 ## 🛠️ Tech Stack

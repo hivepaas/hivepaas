@@ -196,10 +196,30 @@ var (
 
 	// Confirm-or-revert. A routing change is applied on probation and undone
 	// unless the caller comes back through the new configuration and confirms it.
-	ErrSettingsNoPendingChange      = NewErr(ErrNotFound, "ERR_SETTINGS_NO_PENDING_CHANGE")
-	ErrSettingsChangeSuperseded     = NewErr(ErrPreconditionFailed, "ERR_SETTINGS_CHANGE_SUPERSEDED")
-	ErrSettingsConfirmTooEarly      = NewErr(ErrPreconditionFailed, "ERR_SETTINGS_CONFIRM_TOO_EARLY")
-	ErrSettingsProbationNotArmed    = NewErr(ErrUnavailable, "ERR_SETTINGS_PROBATION_NOT_ARMED")
+	ErrSettingsNoPendingChange  = NewErr(ErrNotFound, "ERR_SETTINGS_NO_PENDING_CHANGE")
+	ErrSettingsChangeSuperseded = NewErr(ErrPreconditionFailed, "ERR_SETTINGS_CHANGE_SUPERSEDED")
+	ErrSettingsConfirmTooEarly  = NewErr(ErrPreconditionFailed, "ERR_SETTINGS_CONFIRM_TOO_EARLY")
+
+	// ErrSettingsChangeNotLive refuses to confirm a change that is no longer what
+	// is running.
+	//
+	// Swarm undoes a service update whose task never becomes healthy - that is
+	// what failure_action: rollback is for - and it puts the previous command back
+	// without telling HivePaaS. The database then says one thing and the cluster
+	// another. Accepting a confirmation there would end the trial and leave the
+	// two disagreeing for good; refusing lets the deadline bring the database back
+	// to what is actually running.
+	ErrSettingsChangeNotLive     = NewErr(ErrPreconditionFailed, "ERR_SETTINGS_CHANGE_NOT_LIVE")
+	ErrSettingsProbationNotArmed = NewErr(ErrUnavailable, "ERR_SETTINGS_PROBATION_NOT_ARMED")
+
+	// ErrSettingInUse refuses to delete a setting something else still points at.
+	//
+	// A refusal rather than a cascade: the references live inside other settings'
+	// payloads, so deleting this row would leave those payloads naming an id that
+	// resolves to nothing - and the apply path treats a missing reference as fatal,
+	// so each referencing object would fail at its next deploy, long after anybody
+	// could connect the two events.
+	ErrSettingInUse                 = NewErr(ErrPreconditionFailed, "ERR_SETTING_IN_USE")
 	ErrPasswordNotMeetRequirements  = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_NOT_MEET_REQUIREMENTS")
 	ErrPasswordHasWeakSequence      = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_HAS_WEAK_SEQUENCE")
 	ErrPasswordTooSimilarToPrevious = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_TOO_SIMILAR_TO_PREVIOUS")

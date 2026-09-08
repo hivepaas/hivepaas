@@ -7,6 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/volumeuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/fileuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/accesstokenuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/acmednsprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appfeaturesettingsuc"
@@ -43,6 +44,7 @@ import (
 type Handler struct {
 	*handler.BaseHandler
 	AuthHandler            *authhandler.Handler
+	BaseSettingUC          *settings.BaseUC
 	AccessTokenUC          *accesstokenuc.UC
 	AcmeDnsProviderUC      *acmednsprovideruc.UC
 	APIKeyUC               *apikeyuc.UC
@@ -83,6 +85,7 @@ type Handler struct {
 func New(
 	baseHandler *handler.BaseHandler,
 	authHandler *authhandler.Handler,
+	baseSettingUC *settings.BaseUC,
 	accessTokenUC *accesstokenuc.UC,
 	acmeDnsProviderUC *acmednsprovideruc.UC,
 	apiKeyUC *apikeyuc.UC,
@@ -122,6 +125,7 @@ func New(
 	return &Handler{
 		BaseHandler:            baseHandler,
 		AuthHandler:            authHandler,
+		BaseSettingUC:          baseSettingUC,
 		AccessTokenUC:          accessTokenUC,
 		AcmeDnsProviderUC:      acmeDnsProviderUC,
 		APIKeyUC:               apiKeyUC,

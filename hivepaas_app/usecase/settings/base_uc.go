@@ -21,6 +21,7 @@ type BaseUC struct {
 	DB *database.DB
 
 	FileRepo          repository.FileRepo
+	ResLinkRepo       repository.ResLinkRepo
 	SharedSettingRepo repository.SharedSettingRepo
 	SettingRepo       repository.SettingRepo
 	TagRepo           repository.TagRepo
@@ -43,6 +44,7 @@ func New(
 	db *database.DB,
 
 	fileRepo repository.FileRepo,
+	resLinkRepo repository.ResLinkRepo,
 	sharedSettingRepo repository.SharedSettingRepo,
 	settingRepo repository.SettingRepo,
 	tagRepo repository.TagRepo,
@@ -64,6 +66,7 @@ func New(
 		DB: db,
 
 		FileRepo:          fileRepo,
+		ResLinkRepo:       resLinkRepo,
 		SharedSettingRepo: sharedSettingRepo,
 		SettingRepo:       settingRepo,
 		TagRepo:           tagRepo,

@@ -47,6 +47,7 @@ const (
 	SettingTypeSecret            SettingType = "secret"
 	SettingTypeSystemBackup      SettingType = "system-backup"
 	SettingTypeSystemCleanup     SettingType = "system-cleanup"
+	SettingTypeTraefikConfig     SettingType = "traefik-config"
 	SettingTypeTraefikService    SettingType = "traefik-service"
 )
 

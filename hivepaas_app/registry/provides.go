@@ -79,6 +79,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingeventservice/settingeventserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settinginitservice/settinginitserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice/settingserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsprobationservice/settingsprobationserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsrevertservice/settingsrevertserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslrenewalservice/sslrenewalserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice/sslserviceimpl"
@@ -314,6 +315,7 @@ var Provides = []any{
 	appdeploymentserviceimpl.New,
 	apppreviewserviceimpl.New,
 	approutingserviceimpl.New,
+	settingsprobationserviceimpl.New,
 	settingsrevertserviceimpl.New,
 	appserviceimpl.New,
 	backuprepocleanupserviceimpl.New,

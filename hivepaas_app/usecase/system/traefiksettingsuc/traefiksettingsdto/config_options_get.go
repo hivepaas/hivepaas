@@ -29,6 +29,10 @@ type GetConfigOptionsResp struct {
 
 type ConfigOptionsResp struct {
 	StartupCommand *StartupCommandResp `json:"startupCommand"`
+
+	// PendingChange is set while a change to these options is on trial. Null the
+	// rest of the time.
+	PendingChange *PendingChangeResp `json:"pendingChange"`
 }
 
 type StartupCommandResp struct {

@@ -41,10 +41,11 @@ func (uc *UC) UpdateRoutingSettings(
 		// without the other.
 		err = uc.armProbation(ctx, db, auth,
 			&probationArgs{
-				AppID:    data.App.ID,
-				Setting:  data.RoutingSetting,
-				Snapshot: data.Snapshot,
-				Window:   data.ProbationWindow,
+				AppID:       data.App.ID,
+				Setting:     data.RoutingSetting,
+				Snapshot:    data.Snapshot,
+				Window:      data.ProbationWindow,
+				SettleDelay: data.SettleDelay,
 			},
 			&data.probationResult,
 			func(task *entity.Task) {
@@ -94,6 +95,7 @@ type updateRoutingSettingsData struct {
 	// state a revert restores. Taken before ApplyTo, because after it the parsed
 	// settings are already the new ones.
 	Snapshot        entity.SettingSnapshot
+	SettleDelay     time.Duration
 	ProbationWindow time.Duration
 
 	// probationResult holds the scheduled undo of this change - see armProbation.
@@ -139,7 +141,10 @@ func (uc *UC) loadRoutingSettingsForUpdate(
 	}
 
 	data.Snapshot = entity.SettingSnapshotOf(data.RoutingSetting)
-	data.ProbationWindow = resolveProbationWindow(req.ConfirmWindow.ToDuration(), base.SettingTypeAppRouting)
+	// Nothing restarts: a routing change rewrites swarm service labels and waits
+	// for traefik to poll. The shared floor is exactly that wait.
+	data.SettleDelay = entity.SettingsProbationSettleDelay
+	data.ProbationWindow = resolveProbationWindow(req.ConfirmWindow.ToDuration(), data.SettleDelay)
 
 	routingSettings := data.RoutingSetting.MustAsAppRoutingSettings()
 	var currDomain string // active domain before any change

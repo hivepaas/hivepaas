@@ -8,23 +8,24 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsprobationservice"
 )
 
 // InitSettingsProbation re-arms confirm-or-revert across a restart.
 //
-// It runs in the app process rather than the worker on purpose. A routing change
-// rewrites swarm service labels, which does not recreate the task, so the app that
-// published a change that locked everybody out is still running and is the one
-// thing certain to be able to undo it. The worker may be a separate service that
-// is scaled to zero.
+// It runs in the app process rather than the worker on purpose. None of the
+// changes put on trial recreate the app's task - a routing change only rewrites
+// swarm service labels, and a traefik change replaces traefik's task and not this
+// one - so the app that published a change that locked everybody out is still
+// running and is the one thing certain to be able to undo it. The worker may be a
+// separate service that is scaled to zero.
 //
 // The sweep is started in the background: nothing else waits on it, and a startup
 // that blocks on reaching the database twice is a startup that fails in a new way.
 func InitSettingsProbation(
 	lc fx.Lifecycle,
 	cfg *config.Config,
-	hpAppSettingsUC *hpappsettingsuc.UC,
+	probationService settingsprobationservice.Service,
 	logger logging.Logger,
 ) {
 	if cfg.RunMode != config.RunModeApp && cfg.RunMode != config.RunModeAppAndWorker {
@@ -34,7 +35,7 @@ func InitSettingsProbation(
 		OnStart: func(_ context.Context) error {
 			//nolint:contextcheck // the sweep outlives the OnStart context, which fx cancels
 			safego.Go("reconcileSettingsProbation", func() {
-				if err := hpAppSettingsUC.ReconcileProbations(context.Background()); err != nil {
+				if err := probationService.Reconcile(context.Background()); err != nil {
 					logger.Errorf("failed to reconcile settings probations: %v", err)
 				}
 			})

@@ -19,4 +19,9 @@ type Service interface {
 	RemoveAppConfig(ctx context.Context, db database.IDB, req *RemoveAppConfigReq) (*RemoveAppConfigResp, error)
 
 	ApplyTrustedIPsToWebEntrypoints(ctx context.Context, req *ApplyTrustedIPsReq) (*ApplyTrustedIPsResp, error)
+
+	// WebEntrypointsCarryTrustedIPs reports whether traefik is running with
+	// exactly these trusted IPs. Reads the live swarm spec, which is the only
+	// thing that knows whether an update survived or was rolled back.
+	WebEntrypointsCarryTrustedIPs(ctx context.Context, trustedIPs []string) (bool, error)
 }

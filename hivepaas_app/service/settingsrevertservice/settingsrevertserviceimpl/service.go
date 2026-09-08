@@ -37,6 +37,7 @@ func New(
 	s.reverters = map[base.SettingType]reverter{
 		base.SettingTypeAppRouting:      s.revertAppRouting,
 		base.SettingTypeHivePaaSService: s.revertHivePaaSService,
+		base.SettingTypeTraefikConfig:   s.revertTraefikConfig,
 	}
 
 	return s

@@ -8,11 +8,17 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/services/traefik/traefikhelper"
 )
 
 type UpdateConfigOptionsReq struct {
 	StartupCommand *StartupCommandReq `json:"startupCommand"`
+
+	// ConfirmWindow is how long the change may stay unconfirmed before it is
+	// undone, as a Go duration string ("5m"). Clamped server-side, and there is no
+	// way to ask for no trial at all - see settingsprobationservice.ResolveWindow.
+	ConfirmWindow timeutil.Duration `json:"confirmWindow,omitempty"`
 }
 
 type StartupCommandReq struct {
@@ -84,4 +90,11 @@ func (req *UpdateConfigOptionsReq) Validate() hperrors.ValidationErrors {
 
 type UpdateConfigOptionsResp struct {
 	Meta *basedto.Meta `json:"meta"`
+	// Null when the request changed nothing traefik is not already running: there
+	// is no restart to survive, so there is nothing to confirm.
+	//
+	// The trial itself is the payload, matching the routing and service settings
+	// endpoints - the three are read by one dialog, and a shape that differed
+	// would be a difference with nothing behind it.
+	Data *PendingChangeResp `json:"data"`
 }

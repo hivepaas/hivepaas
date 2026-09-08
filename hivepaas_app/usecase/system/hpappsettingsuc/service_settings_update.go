@@ -47,10 +47,11 @@ func (uc *UC) UpdateServiceSettings(
 			// committed deadline.
 			err = uc.armProbation(ctx, db, auth,
 				&probationArgs{
-					AppID:    data.AppID,
-					Setting:  data.Setting,
-					Snapshot: data.Snapshot,
-					Window:   data.ProbationWindow,
+					AppID:       data.AppID,
+					Setting:     data.Setting,
+					Snapshot:    data.Snapshot,
+					Window:      data.ProbationWindow,
+					SettleDelay: data.SettleDelay,
 				},
 				&data.probationResult,
 				func(task *entity.Task) {
@@ -163,6 +164,7 @@ type updateServiceSettingsData struct {
 	// Snapshot is the settings as they were before this request, and the state a
 	// revert restores. Taken before MustSetData overwrites the payload.
 	Snapshot        entity.SettingSnapshot
+	SettleDelay     time.Duration
 	ProbationWindow time.Duration
 	proxyChanges    bool
 
@@ -192,7 +194,6 @@ func (uc *UC) loadServiceSettingsForUpdate(
 	}
 
 	data.Snapshot = entity.SettingSnapshotOf(setting)
-	data.ProbationWindow = resolveProbationWindow(req.ConfirmWindow.ToDuration(), base.SettingTypeHivePaaSService)
 
 	newSettings := req.ToEntity()
 	data.NewSettings = newSettings
@@ -249,6 +250,18 @@ func (uc *UC) loadServiceSettingsForUpdate(
 			data.mainSvcChanges = true
 		}
 	}
+
+	// Last, because it depends on mainSvcChanges, which is only settled above.
+	//
+	// A proxy-only change leaves the app running and is back in seconds; the same
+	// request carrying a replica or worker setting takes the app down with it, and
+	// until it is serving again the dashboard must not read a failed probe as a
+	// lockout. See SettingsProbationAppRestartSettleDelay.
+	data.SettleDelay = entity.SettingsProbationSettleDelay
+	if data.mainSvcChanges {
+		data.SettleDelay = entity.SettingsProbationAppRestartSettleDelay
+	}
+	data.ProbationWindow = resolveProbationWindow(req.ConfirmWindow.ToDuration(), data.SettleDelay)
 
 	if data.workerSvcChanges || data.mainSvcChanges {
 		// Make sure there is no task in-progress

@@ -59,6 +59,12 @@ func (uc *BaseUC) DeleteSetting(
 			return hperrors.Wrap(err)
 		}
 
+		// Before the AfterLoading hooks, so no setting type can delete something
+		// out from under a reference by doing its own work first.
+		if err = uc.ensureSettingNotInUse(ctx, db, data.Setting); err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		if data.AfterLoading != nil {
 			if err := data.AfterLoading(ctx, db, data); err != nil {
 				return hperrors.Wrap(err)

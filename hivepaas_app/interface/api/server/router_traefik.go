@@ -21,6 +21,12 @@ func (s *HTTPServer) registerTraefikRoutes(systemGroup *gin.RouterGroup) *gin.Ro
 	// Config options
 	traefikGroup.GET("/config-options", traefikHandler.GetConfigOptions)
 	traefikGroup.PUT("/config-options", traefikHandler.UpdateConfigOptions)
+	// Confirm-or-revert. A command change applied through the PUT above is undone
+	// unless somebody comes back through the new traefik and confirms it: an
+	// argument that parses but discovers no routers leaves /ping answering 200
+	// while nothing else is served, so swarm's own rollback never fires.
+	traefikGroup.POST("/config-options/confirm", traefikHandler.ConfirmConfigOptions)
+	traefikGroup.POST("/config-options/revert", traefikHandler.RevertConfigOptions)
 
 	return traefikGroup
 }

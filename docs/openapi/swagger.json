@@ -35324,6 +35324,46 @@
         "tags" : [ "system_hivepaas" ]
       }
     },
+    "/system/hivepaas/request-info" : {
+      "get" : {
+        "description" : "Echoes the proxy headers and the X-Forwarded-For chain this install receives,\nand derives the proxyHops value that follows from it. Call it from outside the\ncluster, over the path real traffic takes.",
+        "operationId" : "getHivePaaSRequestInfo",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.GetRequestInfoResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "403" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Forbidden"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Reports how a request reached HivePaaS",
+        "tags" : [ "system_hivepaas" ]
+      }
+    },
     "/system/hivepaas/restart" : {
       "post" : {
         "description" : "Restarts hivepaas app containers",
@@ -35462,6 +35502,110 @@
           }
         },
         "summary" : "Updates HivePaaS routing settings",
+        "tags" : [ "system_hivepaas" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/hivepaas/routing-settings/confirm" : {
+      "post" : {
+        "description" : "Keeps a routing change that would otherwise be reverted at its deadline",
+        "operationId" : "confirmHivePaaSRoutingSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/system_hpappsettingsdto.ConfirmRoutingSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.ConfirmRoutingSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Confirms a routing change that is on trial",
+        "tags" : [ "system_hivepaas" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/hivepaas/routing-settings/revert" : {
+      "post" : {
+        "description" : "Undoes an unconfirmed routing change now, without waiting for its deadline",
+        "operationId" : "revertHivePaaSRoutingSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/system_hpappsettingsdto.RevertRoutingSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.RevertRoutingSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Reverts a routing change that is on trial",
         "tags" : [ "system_hivepaas" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -35642,6 +35786,110 @@
           }
         },
         "summary" : "Updates HivePaaS service settings",
+        "tags" : [ "system_hivepaas" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/hivepaas/service-settings/confirm" : {
+      "post" : {
+        "description" : "Keeps a proxy settings change that would otherwise be reverted at its deadline",
+        "operationId" : "confirmHivePaaSServiceSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/system_hpappsettingsdto.ConfirmServiceSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.ConfirmServiceSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Confirms a service settings change that is on trial",
+        "tags" : [ "system_hivepaas" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/hivepaas/service-settings/revert" : {
+      "post" : {
+        "description" : "Undoes an unconfirmed proxy settings change now, without waiting for its deadline",
+        "operationId" : "revertHivePaaSServiceSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/system_hpappsettingsdto.RevertServiceSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_hpappsettingsdto.RevertServiceSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Reverts a service settings change that is on trial",
         "tags" : [ "system_hivepaas" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -38898,7 +39146,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -38916,7 +39164,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -52724,6 +52972,43 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "system_hpappsettingsdto.ConfirmRoutingSettingsReq" : {
+        "properties" : {
+          "changeId" : {
+            "description" : "ChangeID names the change being vouched for. It is optional, but sending it\nis what stops a confirmation that was in flight during one change from\nlanding on the next one.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "changeId" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.ConfirmRoutingSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.ConfirmServiceSettingsReq" : {
+        "properties" : {
+          "changeId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "changeId" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.ConfirmServiceSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
       "system_hpappsettingsdto.DomainReq" : {
         "properties" : {
           "clientConfig" : {
@@ -52764,6 +53049,18 @@
           }
         },
         "required" : [ "clientConfig", "domain", "enabled", "rateLimitConfig", "sslCert" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.GetRequestInfoResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_hpappsettingsdto.RequestInfoResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.GetRoutingSettingsResp" : {
@@ -52918,6 +53215,9 @@
       },
       "system_hpappsettingsdto.HivePaaSProxySettingsReq" : {
         "properties" : {
+          "proxyHops" : {
+            "type" : "integer"
+          },
           "proxyProvider" : {
             "type" : "string"
           },
@@ -52928,11 +53228,14 @@
             "type" : "array"
           }
         },
-        "required" : [ "proxyProvider", "trustedIPs" ],
+        "required" : [ "proxyHops", "proxyProvider", "trustedIPs" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.HivePaaSProxySettingsResp" : {
         "properties" : {
+          "proxyHops" : {
+            "type" : "integer"
+          },
           "proxyProvider" : {
             "type" : "string"
           },
@@ -52943,7 +53246,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "proxyProvider", "trustedIPs" ],
+        "required" : [ "proxyHops", "proxyProvider", "trustedIPs" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.HivePaaSTaskSettingsReq" : {
@@ -53000,6 +53303,114 @@
         "required" : [ "concurrency", "replicas", "runWorkerInMainApp" ],
         "type" : "object"
       },
+      "system_hpappsettingsdto.PendingChangeResp" : {
+        "properties" : {
+          "appliedAt" : {
+            "type" : "string"
+          },
+          "changeId" : {
+            "type" : "string"
+          },
+          "confirmableFrom" : {
+            "description" : "ConfirmableFrom is when a confirmation starts being accepted. Before it,\nthe request would likely have arrived through the configuration being\nreplaced, so it proves nothing and is refused.",
+            "type" : "string"
+          },
+          "deadlineAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appliedAt", "changeId", "confirmableFrom", "deadlineAt" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.RequestInfoResp" : {
+        "properties" : {
+          "clientIp" : {
+            "description" : "ClientIP is what the app currently believes the caller's address is.",
+            "type" : "string"
+          },
+          "explanation" : {
+            "type" : "string"
+          },
+          "forwardedFor" : {
+            "description" : "ForwardedFor is the X-Forwarded-For chain as the app receives it, in order.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "headers" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "description" : "Headers are the proxy-related headers that arrived, verbatim.",
+            "type" : "object"
+          },
+          "remoteAddr" : {
+            "description" : "RemoteAddr is the peer the app is talking to - the proxy, or Traefik.",
+            "type" : "string"
+          },
+          "suggestedProxyHops" : {
+            "description" : "SuggestedProxyHops is the value to put in the proxy settings, derived from\nthe chain below. Read Explanation before trusting it.",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "clientIp", "explanation", "forwardedFor", "headers", "remoteAddr", "suggestedProxyHops" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.RevertRoutingSettingsReq" : {
+        "properties" : {
+          "changeId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "changeId" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.RevertRoutingSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_hpappsettingsdto.RevertSettingsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.RevertServiceSettingsReq" : {
+        "properties" : {
+          "changeId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "changeId" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.RevertServiceSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_hpappsettingsdto.RevertSettingsDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "system_hpappsettingsdto.RevertSettingsDataResp" : {
+        "properties" : {
+          "reason" : {
+            "type" : "string"
+          },
+          "reverted" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "reason", "reverted" ],
+        "type" : "object"
+      },
       "system_hpappsettingsdto.RoutingSettingsResp" : {
         "properties" : {
           "domains" : {
@@ -53008,11 +53419,18 @@
             },
             "type" : "array"
           },
+          "pendingChange" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/system_hpappsettingsdto.PendingChangeResp"
+            } ],
+            "description" : "PendingChange is set while a change is on trial and has still to be\nconfirmed. It is repeated here, rather than only on the update that started\nit, so a dashboard reloaded mid-trial can pick the countdown back up.",
+            "type" : "object"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "domains", "updateVer" ],
+        "required" : [ "domains", "pendingChange", "updateVer" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.SecuritySettingsResp" : {
@@ -53053,6 +53471,13 @@
           "name" : {
             "type" : "string"
           },
+          "pendingChange" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/system_hpappsettingsdto.PendingChangeResp"
+            } ],
+            "description" : "PendingChange is set while a proxy settings change is on trial and has\nstill to be confirmed. Repeated here, and not only on the update that\nstarted it, so a dashboard reloaded mid-trial can pick the countdown up.",
+            "type" : "object"
+          },
           "periodicSettings" : {
             "$ref" : "#/components/schemas/system_hpappsettingsdto.HivePaaSPeriodicSettingsResp"
           },
@@ -53081,7 +53506,7 @@
             "$ref" : "#/components/schemas/system_hpappsettingsdto.HivePaaSWorkerSettingsResp"
           }
         },
-        "required" : [ "appSettings", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "periodicSettings", "proxySettings", "size", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
+        "required" : [ "appSettings", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "kind", "name", "pendingChange", "periodicSettings", "proxySettings", "size", "status", "taskSettings", "type", "updateVer", "updatedAt", "workerSettings" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.UpdateAppSecretReq" : {
@@ -53107,6 +53532,13 @@
       },
       "system_hpappsettingsdto.UpdateRoutingSettingsReq" : {
         "properties" : {
+          "confirmWindow" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/timeutil.Duration"
+            } ],
+            "description" : "ConfirmWindow is how long the change may stay unconfirmed before it is\nundone. Absent means the default; there is no value that turns the trial\noff - see resolveProbationWindow.",
+            "type" : "object"
+          },
           "domains" : {
             "items" : {
               "$ref" : "#/components/schemas/system_hpappsettingsdto.DomainReq"
@@ -53117,16 +53549,19 @@
             "type" : "integer"
           }
         },
-        "required" : [ "domains", "updateVer" ],
+        "required" : [ "confirmWindow", "domains", "updateVer" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.UpdateRoutingSettingsResp" : {
         "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_hpappsettingsdto.PendingChangeResp"
+          },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
           }
         },
-        "required" : [ "meta" ],
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.UpdateSecuritySettingsReq" : {
@@ -53156,6 +53591,13 @@
           "appSettings" : {
             "$ref" : "#/components/schemas/system_hpappsettingsdto.HivePaaSAppSettingsReq"
           },
+          "confirmWindow" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/timeutil.Duration"
+            } ],
+            "description" : "ConfirmWindow is how long a proxy settings change may stay unconfirmed\nbefore it is undone. Absent means the default; there is no value that turns\nthe trial off. It is ignored when the request leaves the proxy settings\nalone, since nothing else in here can lock the caller out.",
+            "type" : "object"
+          },
           "periodicSettings" : {
             "$ref" : "#/components/schemas/system_hpappsettingsdto.HivePaaSPeriodicSettingsReq"
           },
@@ -53172,16 +53614,19 @@
             "$ref" : "#/components/schemas/system_hpappsettingsdto.HivePaaSWorkerSettingsReq"
           }
         },
-        "required" : [ "appSettings", "periodicSettings", "proxySettings", "taskSettings", "updateVer", "workerSettings" ],
+        "required" : [ "appSettings", "confirmWindow", "periodicSettings", "proxySettings", "taskSettings", "updateVer", "workerSettings" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.UpdateServiceSettingsResp" : {
         "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_hpappsettingsdto.PendingChangeResp"
+          },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
           }
         },
-        "required" : [ "meta" ],
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "system_hpappdto.GetHpAppReleaseInfoResp" : {
@@ -55812,9 +56257,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

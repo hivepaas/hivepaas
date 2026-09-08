@@ -24,9 +24,13 @@ type TaskSettingsRevertArgs struct {
 	// Snapshot is the setting as it was before the change: the state to restore.
 	Snapshot SettingSnapshot `json:"snapshot"`
 
-	AppliedBy  string    `json:"appliedBy,omitempty"`
-	AppliedAt  time.Time `json:"appliedAt"`
-	DeadlineAt time.Time `json:"deadlineAt"`
+	AppliedBy string    `json:"appliedBy,omitempty"`
+	AppliedAt time.Time `json:"appliedAt"`
+
+	// ConfirmableAt is when a confirmation starts being worth something. See
+	// SettingsProbationSettleDelay for what decides it.
+	ConfirmableAt time.Time `json:"confirmableAt"`
+	DeadlineAt    time.Time `json:"deadlineAt"`
 }
 
 // SettingSnapshot is a setting's payload frozen at a point in time.
@@ -40,53 +44,60 @@ type SettingSnapshot struct {
 
 // SettingsProbationSettleDelay is how long a confirmation is worth nothing.
 //
-// Traefik's swarm provider polls every 15s, so a request arriving sooner may well
-// have traveled through the configuration being replaced: it would vouch for a
-// router that is not live yet, and the real one would go live afterwards with
-// nothing left to undo it.
+// The danger it guards is narrow and specific: a confirmation that the *previous*
+// configuration served. That one succeeds, cancels the trial, and leaves the new
+// configuration live with nothing left to undo it. A confirmation that fails
+// costs nothing - the operator retries - so this only has to outlast the moment
+// the old configuration stops answering, not the moment the new one is fully up.
 //
-// It lives here rather than with the usecase because the answer is reported to
-// callers as ConfirmableFrom and enforced on the way back in, and those two have
-// to be the same number.
-const SettingsProbationSettleDelay = 25 * time.Second
+// Two things decide that moment, and the slower one wins:
+//
+//   - A label change is picked up by traefik's swarm provider, which polls every
+//     15s. Until it does, the old routers are the live ones.
+//   - A change to traefik's container spec replaces its task. Measured on a
+//     single-node swarm, three runs within 50ms of each other: the old task stops
+//     answering 3.2s after the API call, and the new one is serving at 4.2s - an
+//     outage of about one second.
+//
+// So the poll is the binding constraint, and 30s is twice it. The task
+// replacement being the *faster* of the two is worth stating plainly, because the
+// opposite was assumed here for some time: this was 120s, sized against traefik's
+// start_period of 60s and the app's of 120s. That was measuring the wrong thing.
+// start_period is a grace window for the healthcheck, not a delay anything waits
+// out - swarm marked the replacement task healthy at 9.6s in the same runs, and
+// it was serving five seconds before that.
+const SettingsProbationSettleDelay = 30 * time.Second
 
-// SettingsProbationRestartSettleDelay is the same idea for a change that takes a
-// service down and brings it back.
+// SettingsProbationAppRestartSettleDelay is the same idea for a change that takes
+// the HivePaaS app itself down and brings it back.
 //
-// Applying HivePaaS service settings rewrites traefik's entrypoint arguments,
-// which is a change to its container spec: swarm answers by destroying the task
-// and starting a new one. Until that new traefik is serving, nothing can reach
-// HivePaaS at all - so a probe failing here means "still restarting", not "locked
-// out", and a confirmation is not worth anything either way.
+// Not a correctness bound - the one above already covers that, and an app that is
+// not running cannot serve a wrong confirmation either. This is about what the
+// dashboard tells the operator while it waits. Before ConfirmableFrom, a probe
+// that cannot reach HivePaaS means "still restarting"; after it, the dashboard
+// says the change may have locked them out and advises them to sit out the
+// countdown - advice that would throw away a perfectly good change if the app was
+// merely still booting.
 //
-// It covers the app restarting too. The same request can carry a replica count
-// or a worker setting alongside the proxy fields, and those recreate the main
-// app's task as well; one number for both cases rather than a delay computed per
-// request, because the cost of the two mistakes is not symmetric. Confirming too
-// early vouches for a configuration that is not serving yet and leaves the real
-// one live with nothing to undo it. Waiting too long only makes an operator sit
-// through a countdown - and only on a change to the proxy settings, which is not
-// something anybody does often.
+// So it is sized against the app coming back rather than traefik: its start_period
+// is 120s because SystemInstallation is the slowest thing in that path.
 //
-// Sized against the healthchecks: traefik's start_period is 60s and the app's is
-// 120s, and being reachable comes well before being marked healthy.
-const SettingsProbationRestartSettleDelay = 120 * time.Second
-
-// SettleDelayFor picks the delay by what the change disturbs.
-//
-// Routing settings only rewrite labels, so nothing restarts and the wait is just
-// traefik noticing. Service settings take traefik down with them.
-func SettleDelayFor(settingType base.SettingType) time.Duration {
-	if settingType == base.SettingTypeHivePaaSService {
-		return SettingsProbationRestartSettleDelay
-	}
-	return SettingsProbationSettleDelay
-}
+// Only the caller knows whether a given request restarts the app - the same
+// endpoint can carry proxy fields alone, or a replica count with them - which is
+// why this is passed in at arm time rather than derived from the setting type.
+const SettingsProbationAppRestartSettleDelay = 120 * time.Second
 
 // ConfirmableFrom is the earliest moment a confirmation of this change means
 // anything.
+//
+// Read from the record rather than recomputed, because what the change disturbs
+// is known when it is applied and not afterwards. A task written before this
+// field existed carries the zero time and falls back to the floor.
 func (a *TaskSettingsRevertArgs) ConfirmableFrom() time.Time {
-	return a.AppliedAt.Add(SettleDelayFor(a.SettingType))
+	if a.ConfirmableAt.IsZero() {
+		return a.AppliedAt.Add(SettingsProbationSettleDelay)
+	}
+	return a.ConfirmableAt
 }
 
 type TaskSettingsRevertOutput struct {

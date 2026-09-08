@@ -3,7 +3,7 @@
 // The task is the record of the probation: while it sits in the queue unstarted,
 // a change is on trial; canceling it is what "confirm" means, and running it is
 // what happens when the caller never came back. See the usecase side in
-// usecase/system/hpappsettingsuc/routing_settings_probation.go.
+// usecase/system/settingsprobation.
 //
 // The work itself lives in settingsrevertservice, because the queue is only one
 // of three things that can trigger it - the app arms a timer of its own, and the

@@ -43,6 +43,11 @@ services:
     # during an update. It does NOT verify that any router works - /ping answers
     # the same whether or not the swarm provider found a single service.
     #
+    # What to do when this is not enough - the process alive and answering /ping
+    # while serving nothing - is in docs/recovery.md. Short version: config
+    # options changes are on trial and undo themselves, and `docker service
+    # rollback hivepaas_traefik` is the way out when nothing else can run.
+    #
     # wget rather than `traefik healthcheck`: the CLI has to be handed the same
     # three ping flags as the command above to find the endpoint, and a port
     # changed in one place but not the other would have swarm killing a healthy

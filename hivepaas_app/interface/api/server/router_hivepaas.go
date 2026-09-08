@@ -34,6 +34,8 @@ func (s *HTTPServer) registerHivePaaSRoutes(systemGroup *gin.RouterGroup) *gin.R
 	// at its deadline unless a call gets back in here to vouch for it.
 	hivepaasGroup.POST("/routing-settings/confirm", hivepaasHandler.ConfirmRoutingSettings)
 	hivepaasGroup.POST("/routing-settings/revert", hivepaasHandler.RevertRoutingSettings)
+	hivepaasGroup.POST("/service-settings/confirm", hivepaasHandler.ConfirmServiceSettings)
+	hivepaasGroup.POST("/service-settings/revert", hivepaasHandler.RevertServiceSettings)
 
 	// Security settings
 	hivepaasGroup.GET("/security-settings", hivepaasHandler.GetSecuritySettings)

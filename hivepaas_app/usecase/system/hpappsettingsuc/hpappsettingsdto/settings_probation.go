@@ -85,11 +85,55 @@ func (req *RevertRoutingSettingsReq) Validate() hperrors.ValidationErrors {
 }
 
 type RevertRoutingSettingsResp struct {
-	Meta *basedto.Meta          `json:"meta"`
-	Data *RevertRoutingDataResp `json:"data"`
+	Meta *basedto.Meta           `json:"meta"`
+	Data *RevertSettingsDataResp `json:"data"`
 }
 
-type RevertRoutingDataResp struct {
+type RevertSettingsDataResp struct {
 	Reverted bool   `json:"reverted"`
 	Reason   string `json:"reason,omitempty"`
+}
+
+// The service settings side of confirm-or-revert. Separate request types rather
+// than one shared pair, because these arrive on their own endpoints and a caller
+// should not be able to confirm the wrong kind of change by posting to the wrong
+// path with the right body.
+
+type ConfirmServiceSettingsReq struct {
+	ChangeID string `json:"changeId"`
+}
+
+func NewConfirmServiceSettingsReq() *ConfirmServiceSettingsReq {
+	return &ConfirmServiceSettingsReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *ConfirmServiceSettingsReq) Validate() hperrors.ValidationErrors {
+	validators := make([]vld.Validator, 0, 2) //nolint:mnd
+	validators = append(validators, basedto.ValidateStr(&req.ChangeID, true, 0, changeIDMaxLen, "changeId")...)
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
+}
+
+type ConfirmServiceSettingsResp struct {
+	Meta *basedto.Meta `json:"meta"`
+}
+
+type RevertServiceSettingsReq struct {
+	ChangeID string `json:"changeId"`
+}
+
+func NewRevertServiceSettingsReq() *RevertServiceSettingsReq {
+	return &RevertServiceSettingsReq{}
+}
+
+// Validate implements interface basedto.ReqValidator
+func (req *RevertServiceSettingsReq) Validate() hperrors.ValidationErrors {
+	validators := make([]vld.Validator, 0, 2) //nolint:mnd
+	validators = append(validators, basedto.ValidateStr(&req.ChangeID, true, 0, changeIDMaxLen, "changeId")...)
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
+}
+
+type RevertServiceSettingsResp struct {
+	Meta *basedto.Meta           `json:"meta"`
+	Data *RevertSettingsDataResp `json:"data"`
 }

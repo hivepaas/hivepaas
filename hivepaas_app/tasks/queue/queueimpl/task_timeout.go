@@ -23,6 +23,7 @@ const (
 	timeoutAppDeploy      = time.Hour
 	timeoutSystemUpdate   = time.Hour
 	timeoutSettingsRevert = 5 * time.Minute
+	timeoutAppLabelsSweep = 15 * time.Minute
 )
 
 var taskTypeTimeouts = map[base.TaskType]time.Duration{
@@ -41,6 +42,11 @@ var taskTypeTimeouts = map[base.TaskType]time.Duration{
 	// they locked themselves out of - holding a transaction open any longer than
 	// it takes would only delay the next attempt.
 	base.TaskTypeSettingsRevert: timeoutSettingsRevert,
+	// One label-only service update per app that reads client addresses. Nothing
+	// restarts, so this is bounded by how fast the docker API answers rather than
+	// by anything converging - but it is a fan-out, so it gets more room than the
+	// single-service types above.
+	base.TaskTypeAppLabelsSweep: timeoutAppLabelsSweep,
 
 	// NOTE: the types below keep the long ceiling on purpose.
 	//

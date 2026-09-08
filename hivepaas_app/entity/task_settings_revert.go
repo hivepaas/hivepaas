@@ -50,10 +50,43 @@ type SettingSnapshot struct {
 // to be the same number.
 const SettingsProbationSettleDelay = 25 * time.Second
 
+// SettingsProbationRestartSettleDelay is the same idea for a change that takes a
+// service down and brings it back.
+//
+// Applying HivePaaS service settings rewrites traefik's entrypoint arguments,
+// which is a change to its container spec: swarm answers by destroying the task
+// and starting a new one. Until that new traefik is serving, nothing can reach
+// HivePaaS at all - so a probe failing here means "still restarting", not "locked
+// out", and a confirmation is not worth anything either way.
+//
+// It covers the app restarting too. The same request can carry a replica count
+// or a worker setting alongside the proxy fields, and those recreate the main
+// app's task as well; one number for both cases rather than a delay computed per
+// request, because the cost of the two mistakes is not symmetric. Confirming too
+// early vouches for a configuration that is not serving yet and leaves the real
+// one live with nothing to undo it. Waiting too long only makes an operator sit
+// through a countdown - and only on a change to the proxy settings, which is not
+// something anybody does often.
+//
+// Sized against the healthchecks: traefik's start_period is 60s and the app's is
+// 120s, and being reachable comes well before being marked healthy.
+const SettingsProbationRestartSettleDelay = 120 * time.Second
+
+// SettleDelayFor picks the delay by what the change disturbs.
+//
+// Routing settings only rewrite labels, so nothing restarts and the wait is just
+// traefik noticing. Service settings take traefik down with them.
+func SettleDelayFor(settingType base.SettingType) time.Duration {
+	if settingType == base.SettingTypeHivePaaSService {
+		return SettingsProbationRestartSettleDelay
+	}
+	return SettingsProbationSettleDelay
+}
+
 // ConfirmableFrom is the earliest moment a confirmation of this change means
 // anything.
 func (a *TaskSettingsRevertArgs) ConfirmableFrom() time.Time {
-	return a.AppliedAt.Add(SettingsProbationSettleDelay)
+	return a.AppliedAt.Add(SettleDelayFor(a.SettingType))
 }
 
 type TaskSettingsRevertOutput struct {
@@ -69,8 +102,8 @@ func (t *Task) OutputAsSettingsRevert() (*TaskSettingsRevertOutput, error) {
 	return parseTaskOutputAs(t, func() *TaskSettingsRevertOutput { return &TaskSettingsRevertOutput{} })
 }
 
-// SnapshotOf freezes the setting's current payload.
-func SnapshotOf(setting *Setting) SettingSnapshot {
+// SettingSnapshotOf freezes the setting's current payload.
+func SettingSnapshotOf(setting *Setting) SettingSnapshot {
 	if setting == nil {
 		return SettingSnapshot{}
 	}

@@ -39,7 +39,7 @@ func (s *service) loadProxySettings(
 	db database.IDB,
 	data *appConfigData,
 ) error {
-	if !needsClientIPStrategy(data.RoutingSettings) {
+	if !data.RoutingSettings.UsesClientIP() {
 		return nil
 	}
 
@@ -64,31 +64,4 @@ func (s *service) loadProxySettings(
 
 	data.proxySettings = &svcSettings.ProxySettings
 	return nil
-}
-
-// needsClientIPStrategy reports whether any middleware in these routing settings
-// has to decide which address a request came from.
-func needsClientIPStrategy(routingSettings *entity.AppRoutingSettings) bool {
-	if routingSettings == nil || !routingSettings.ExposePublicly {
-		return false
-	}
-
-	for _, domain := range routingSettings.Domains {
-		if usesClientIP(domain.RateLimitConfig, domain.ClientConfig) {
-			return true
-		}
-		for _, pathCfg := range domain.Paths {
-			if usesClientIP(pathCfg.RateLimitConfig, pathCfg.ClientConfig) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func usesClientIP(rateLimit *entity.HTTPRateLimitConfig, client *entity.HTTPClientConfig) bool {
-	if rateLimit != nil && rateLimit.Enabled {
-		return true
-	}
-	return client != nil && client.Enabled && len(client.AllowedIPs) > 0
 }

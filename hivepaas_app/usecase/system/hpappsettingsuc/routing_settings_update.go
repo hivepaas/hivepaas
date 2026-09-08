@@ -39,7 +39,18 @@ func (uc *UC) UpdateRoutingSettings(
 		// Inside the same transaction as the change, so a committed change always
 		// has a committed deadline. There is no window in which one exists
 		// without the other.
-		err = uc.armProbation(ctx, db, auth, data, persistingData)
+		err = uc.armProbation(ctx, db, auth,
+			&probationArgs{
+				AppID:    data.App.ID,
+				Setting:  data.RoutingSetting,
+				Snapshot: data.Snapshot,
+				Window:   data.ProbationWindow,
+			},
+			&data.probationResult,
+			func(task *entity.Task) {
+				persistingData.UpsertingTasks = append(persistingData.UpsertingTasks, task)
+			},
+		)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -59,7 +70,7 @@ func (uc *UC) UpdateRoutingSettings(
 		return nil, hperrors.Wrap(err)
 	}
 
-	uc.scheduleProbation(ctx, data)
+	uc.scheduleProbation(ctx, probationOf(data))
 
 	if data != nil && data.DomainChanged {
 		// Publish a message to reload config in other instances
@@ -85,10 +96,16 @@ type updateRoutingSettingsData struct {
 	Snapshot        entity.SettingSnapshot
 	ProbationWindow time.Duration
 
-	// Probation is the scheduled undo of this change, and SupersededProbation the
-	// one it replaces - see armProbation.
-	Probation           *entity.Task
-	SupersededProbation *entity.Task
+	// probationResult holds the scheduled undo of this change - see armProbation.
+	probationResult
+}
+
+// probationOf survives a transaction that never got as far as building one.
+func probationOf(data *updateRoutingSettingsData) *probationResult {
+	if data == nil {
+		return nil
+	}
+	return &data.probationResult
 }
 
 type persistingAppData struct {
@@ -121,11 +138,11 @@ func (uc *UC) loadRoutingSettingsForUpdate(
 		return hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
 
-	data.Snapshot = entity.SnapshotOf(data.RoutingSetting)
-	data.ProbationWindow = resolveProbationWindow(req.ConfirmWindow.ToDuration())
+	data.Snapshot = entity.SettingSnapshotOf(data.RoutingSetting)
+	data.ProbationWindow = resolveProbationWindow(req.ConfirmWindow.ToDuration(), base.SettingTypeAppRouting)
 
 	routingSettings := data.RoutingSetting.MustAsAppRoutingSettings()
-	var currDomain string
+	var currDomain string // active domain before any change
 	if domains := routingSettings.GetActiveDomainNames(); len(domains) > 0 {
 		currDomain = domains[0]
 	}
@@ -149,21 +166,21 @@ func (uc *UC) loadRoutingSettingsForUpdate(
 	}
 
 	// Active domains of the app need to validate
-	activeDomains := routingSettings.GetActiveDomainNames()
+	newActiveDomains := routingSettings.GetActiveDomainNames()
 
 	// Verify domains are allowed in project
-	err = uc.domainService.VerifyProjectDomains(ctx, db, app.ProjectID, activeDomains)
+	err = uc.domainService.VerifyProjectDomains(ctx, db, app.ProjectID, newActiveDomains)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 
 	// Make sure all domains used by the app are not hold by any other app
-	err = uc.domainService.VerifyDomainsAvailable(ctx, db, activeDomains, []string{app.ID})
+	err = uc.domainService.VerifyDomainsAvailable(ctx, db, newActiveDomains, []string{app.ID})
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 
-	if len(activeDomains) > 0 && activeDomains[0] != currDomain {
+	if len(newActiveDomains) > 0 && newActiveDomains[0] != currDomain {
 		data.DomainChanged = true
 	}
 

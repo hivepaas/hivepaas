@@ -16,6 +16,14 @@ var (
 		"entrypoints.websecure.http.tls":   {},
 		"providers.file.directory":         {},
 		"providers.file.watch":             {},
+
+		// The liveness endpoint swarm's healthcheck reads. Removing or moving any
+		// of these leaves the check probing a port nothing answers on, and swarm
+		// answers that by restarting a traefik that was working - repeatedly. See
+		// the healthcheck in deployment/*/hivepaas.yaml.
+		"ping":                     {},
+		"ping.entrypoint":          {},
+		"entrypoints.ping.address": {},
 	}
 )
 

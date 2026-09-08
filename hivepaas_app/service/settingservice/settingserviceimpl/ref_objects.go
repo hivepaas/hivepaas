@@ -74,7 +74,7 @@ func (s *service) loadRefObjectsByIDs(
 	refIDs *entity.RefObjectIDs,
 ) (err error) {
 	if pRefObjects == nil {
-		return hperrors.NewArgumentInvalid("refObjects")
+		return hperrors.NewArgumentInvalidNT("refObjects")
 	}
 	if *pRefObjects == nil {
 		*pRefObjects = entity.NewRefObjects()

@@ -15,12 +15,17 @@ const (
 	// TaskTypeSettingsRevert undoes a settings change that was never confirmed.
 	// See usecase/system/hpappsettingsuc/routing_settings_probation.go.
 	TaskTypeSettingsRevert TaskType = "task:settings-revert"
+
+	// TaskTypeAppLabelsSweep pushes a confirmed proxy topology onto the apps that
+	// were left out while the change was on trial.
+	// See usecase/system/hpappsettingsuc/settings_probation_confirm.go.
+	TaskTypeAppLabelsSweep TaskType = "task:app-labels-sweep"
 )
 
 var (
 	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
-		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert}
+		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert, TaskTypeAppLabelsSweep}
 )
 
 type TaskStatus string

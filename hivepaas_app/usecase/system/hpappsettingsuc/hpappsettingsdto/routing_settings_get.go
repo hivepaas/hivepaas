@@ -1,11 +1,13 @@
 package hpappsettingsdto
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc/sslcertdto"
 )
 
@@ -57,29 +59,39 @@ type HTTPRateLimitConfigResp struct {
 }
 
 type RoutingSettingsTransformInput struct {
-	App             *entity.App
-	RoutingSettings *entity.Setting
-	RefSettingMap   map[string]*entity.Setting
+	App            *entity.App
+	RoutingSetting *entity.Setting
+	RefObjects     *entity.RefObjects
 }
 
 func TransformRoutingSettings(input *RoutingSettingsTransformInput) (resp *RoutingSettingsResp, err error) {
 	resp = &RoutingSettingsResp{}
-	if input.RoutingSettings == nil {
+	if input.RoutingSetting == nil {
 		return resp, nil
 	}
 
-	if err = copier.Copy(&resp, input.RoutingSettings); err != nil {
+	if input.RefObjects == nil {
+		input.RefObjects = entity.NewRefObjects()
+	}
+
+	if err = copier.Copy(&resp, input.RoutingSetting); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	routingSettings := input.RoutingSettings.MustAsAppRoutingSettings()
+	routingSettings := input.RoutingSetting.MustAsAppRoutingSettings()
 	if err = copier.Copy(&resp, routingSettings); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
 	for _, domain := range resp.Domains {
 		if domain.SSLCert != nil && domain.SSLCert.ID != "" {
-			setting := input.RefSettingMap[domain.SSLCert.ID]
-			domain.SSLCert, _ = sslcertdto.TransformSSLCertBasic(setting, &entity.RefObjects{})
+			setting := input.RefObjects.RefSettings[domain.SSLCert.ID]
+			certResp, _ := sslcertdto.TransformSSLCertBasic(setting, input.RefObjects)
+			if certResp == nil {
+				certResp = &sslcertdto.SSLCertResp{
+					BaseSettingResp: settings.NewMissingSetting(domain.SSLCert.ID, base.SettingTypeSSLCert),
+				}
+			}
+			domain.SSLCert = certResp
 		} else {
 			domain.SSLCert = nil
 		}

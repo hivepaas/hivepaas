@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"slices"
+
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -73,6 +75,21 @@ type HivePaaSProxySettings struct {
 // The provider name is the declaration; the other two fields are what makes it
 // actionable. Validation keeps them together, so anything past validation either
 // has all three or none.
+// Equal reports whether two proxy configurations would be read the same way.
+//
+// It is what decides whether a settings change goes on trial, so it covers every
+// field that feeds the client-address calculation. A field added to the struct and
+// forgotten here would apply silently, with no way back.
+func (s *HivePaaSProxySettings) Equal(other *HivePaaSProxySettings) bool {
+	if s == nil || other == nil {
+		return s == other
+	}
+	if s.ProxyProvider != other.ProxyProvider || s.ProxyHops != other.ProxyHops {
+		return false
+	}
+	return slices.Equal(s.TrustedIPs, other.TrustedIPs)
+}
+
 func (s *HivePaaSProxySettings) HasProxy() bool {
 	return s != nil && s.ProxyProvider != ""
 }

@@ -7,9 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
@@ -36,11 +34,12 @@ func (uc *UC) GetRoutingSettings(
 	}
 
 	input := &hpappsettingsdto.RoutingSettingsTransformInput{
-		App:             app,
-		RoutingSettings: settinghelper.FindSettingByType(settings, base.SettingTypeAppRouting),
+		App:            app,
+		RoutingSetting: settinghelper.FindSettingByType(settings, base.SettingTypeAppRouting),
 	}
 
-	err = uc.loadRoutingSettingsRefData(ctx, uc.db, input)
+	err = uc.settingService.LoadRefObjectsSkipMissing(ctx, uc.db, &input.RefObjects,
+		app.GetObjectScope(), false, input.RoutingSetting)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -50,7 +49,7 @@ func (uc *UC) GetRoutingSettings(
 		return nil, hperrors.Wrap(err)
 	}
 
-	pending, err := uc.findPendingProbation(ctx, uc.db, app.ID)
+	pending, err := uc.findPendingProbation(ctx, uc.db, app.ID, base.SettingTypeAppRouting)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -59,34 +58,4 @@ func (uc *UC) GetRoutingSettings(
 	return &hpappsettingsdto.GetRoutingSettingsResp{
 		Data: resp,
 	}, nil
-}
-
-func (uc *UC) loadRoutingSettingsRefData(
-	ctx context.Context,
-	db database.IDB,
-	input *hpappsettingsdto.RoutingSettingsTransformInput,
-) (err error) {
-	if input.RoutingSettings == nil {
-		return nil
-	}
-
-	app := input.App
-	routingSettings, err := input.RoutingSettings.AsAppRoutingSettings()
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	settingIDs := routingSettings.GetRefObjectIDs().RefSettingIDs
-
-	settings, _, err := uc.settingRepo.List(ctx, db, app.GetObjectScope(), nil,
-		bunex.SelectWhere("setting.id IN (?)", bunex.List(settingIDs)),
-	)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	for _, setting := range settings {
-		setting.CurrentObjectID = app.ID
-	}
-	input.RefSettingMap = entityutil.SliceToIDMap(settings)
-
-	return nil
 }

@@ -34,6 +34,11 @@ type ServiceSettingsResp struct {
 	TaskSettings     HivePaaSTaskSettingsResp     `json:"taskSettings"`
 	PeriodicSettings HivePaaSPeriodicSettingsResp `json:"periodicSettings"`
 	ProxySettings    HivePaaSProxySettingsResp    `json:"proxySettings"`
+
+	// PendingChange is set while a proxy settings change is on trial and has
+	// still to be confirmed. Repeated here, and not only on the update that
+	// started it, so a dashboard reloaded mid-trial can pick the countdown up.
+	PendingChange *PendingChangeResp `json:"pendingChange,omitempty"`
 }
 
 type HivePaaSAppSettingsResp struct {
@@ -81,8 +86,8 @@ func TransformServiceSettings(
 	}
 
 	// Some dynamic info retrieved from the infra
-	resp.AppSettings.Replicas = int(*input.MainService.Spec.Mode.Replicated.Replicas)      //nolint
-	resp.WorkerSettings.Replicas = int(*input.WorkerService.Spec.Mode.Replicated.Replicas) //nolint
+	resp.AppSettings.Replicas = int(*input.MainService.Spec.Mode.Replicated.Replicas)      //nolint:gosec
+	resp.WorkerSettings.Replicas = int(*input.WorkerService.Spec.Mode.Replicated.Replicas) //nolint:gosec
 
 	return resp, nil
 }

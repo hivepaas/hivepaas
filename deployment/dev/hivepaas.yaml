@@ -1,5 +1,3 @@
-version: "3"
-
 services:
   traefik:
     image: traefik:v3.7
@@ -14,11 +12,56 @@ services:
       - "--entrypoints.web.allowacmebypass=true"
       - "--entrypoints.websecure.address=:443"
       - "--entrypoints.websecure.http.tls=true"
+      # Liveness endpoint for the healthcheck below.
+      #
+      # Its own entrypoint rather than the api one, and bound to loopback. Sharing
+      # the api entrypoint would tie traefik staying alive to api.insecure staying
+      # on, so an operator turning the dashboard off would have swarm start killing
+      # a perfectly healthy traefik. Loopback is enough because the check runs
+      # inside the container, and it keeps /ping off the overlay network.
+      #
+      # These three are on the unsettable list in base/traefik.go: reachable only
+      # from inside, and not removable through the traefik settings UI.
+      - "--entrypoints.ping.address=127.0.0.1:8082"
+      - "--ping=true"
+      - "--ping.entrypoint=ping"
       - "--providers.file.directory=/etc/traefik/dynamic"
       - "--providers.file.watch=true"
       - "--log=true"
       - "--log.level=DEBUG"
       - "--accesslog=true"
+    # Traefik had neither a healthcheck nor an update_config, which made every
+    # UpdateFailureActionRollback the code sets on this service inert - swarm's
+    # default monitor is 5s, so an update was called converged before anything
+    # could go wrong. update_config below is the half with real teeth.
+    #
+    # What the check itself adds is narrower, and worth stating honestly: an
+    # entrypoint that cannot bind makes traefik exit (verified - "address already
+    # in use" is a fatal error, not a degraded start), and a task that exits is
+    # something swarm already sees. This catches the case swarm cannot: the
+    # process alive with its HTTP server wedged, in steady state as well as
+    # during an update. It does NOT verify that any router works - /ping answers
+    # the same whether or not the swarm provider found a single service.
+    #
+    # wget rather than `traefik healthcheck`: the CLI has to be handed the same
+    # three ping flags as the command above to find the endpoint, and a port
+    # changed in one place but not the other would have swarm killing a healthy
+    # traefik. One URL is one thing to keep in step.
+    #
+    #   never becomes healthy: start_period + retries * interval = 60 + 90 = 150s
+    #   healthy, then breaks:  retries * interval                =       90s
+    #
+    # Both fit inside monitor. Traefik starts in a second or two, so 60s is
+    # already generous; it is kept tighter than the app's 120s because traefik
+    # being wrong takes every ingress down with it, and the rollback verdict is
+    # worth having sooner.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8082/ping"]
+      start_period: 60s
+      start_interval: 5s
+      interval: 30s
+      timeout: 5s
+      retries: 3
     networks:
       hivepaas_net:
         aliases:
@@ -59,6 +102,10 @@ services:
         condition: on-failure
         delay: 5s
         window: 120s
+      update_config:
+        failure_action: rollback
+        monitor: 180s
+        max_failure_ratio: 0.5
     logging:
       driver: local
       options:
@@ -219,7 +266,6 @@ services:
       HP_USER_ADMIN_EMAIL: admin@domain.name
       HP_USER_ADMIN_PASSWORD: abc123
       HP_AGENT_SECRET_TOKEN: abc123
-      VITE_API_URL: http://localhost:10000
     volumes:
       - ${PWD}/hivepaas:/var/lib/hivepaas
       - ${PWD}/hivepaas:/host${PWD}/hivepaas

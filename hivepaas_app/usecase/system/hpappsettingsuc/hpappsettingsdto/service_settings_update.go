@@ -36,6 +36,12 @@ const (
 type UpdateServiceSettingsReq struct {
 	*ServiceSettingsBaseReq
 	UpdateVer int `json:"updateVer"`
+
+	// ConfirmWindow is how long a proxy settings change may stay unconfirmed
+	// before it is undone. Absent means the default; there is no value that turns
+	// the trial off. It is ignored when the request leaves the proxy settings
+	// alone, since nothing else in here can lock the caller out.
+	ConfirmWindow timeutil.Duration `json:"confirmWindow,omitempty"`
 }
 
 type ServiceSettingsBaseReq struct {
@@ -261,5 +267,6 @@ func (req *UpdateServiceSettingsReq) Validate() hperrors.ValidationErrors {
 }
 
 type UpdateServiceSettingsResp struct {
-	Meta *basedto.Meta `json:"meta"`
+	Meta *basedto.Meta      `json:"meta"`
+	Data *PendingChangeResp `json:"data"`
 }

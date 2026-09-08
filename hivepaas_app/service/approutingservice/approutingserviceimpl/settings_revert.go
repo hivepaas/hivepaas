@@ -46,17 +46,6 @@ func (s *service) RevertSettings(
 		return nil, hperrors.Wrap(err)
 	}
 
-	// SkipMissing, unlike the apply path, which refuses a change that references a
-	// setting that is gone. Here refusing means staying on the configuration that
-	// locked somebody out, so the settings are restored as far as they can be and
-	// a missing reference is dropped rather than being made fatal.
-	var refObjects *entity.RefObjects
-	err = s.settingService.LoadRefObjectsByIDsSkipMissing(ctx, db, &refObjects,
-		req.App.GetObjectScope(), true, routingSettings.GetRefObjectIDs())
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
 	err = s.appService.PersistAppData(ctx, db, &appservice.PersistingAppData{
 		UpsertingSettings: []*entity.Setting{setting},
 	})
@@ -64,12 +53,16 @@ func (s *service) RevertSettings(
 		return nil, hperrors.Wrap(err)
 	}
 
-	resp, err := s.ApplyRoutingSettings(ctx, db, &approutingservice.ApplyAppRoutingReq{
-		App:                 req.App,
-		RoutingSettings:     routingSettings,
-		RefObjects:          refObjects,
-		SkipUpdatingService: true,
-	})
+	// SkipMissingRefObjects, unlike the apply path, which refuses a change that
+	// references a setting that is gone. Here refusing means staying on the
+	// configuration that locked somebody out, so the settings are restored as far
+	// as they can be and a missing reference is dropped rather than being made
+	// fatal.
+	//
+	// It has to be said here rather than by pre-loading the references leniently:
+	// the apply reloads them itself, and it re-queries exactly the ones a lenient
+	// load left out.
+	resp, err := s.ApplyRoutingSettings(ctx, db, revertApplyReq(req.App, routingSettings))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -96,4 +89,20 @@ func findSettingByID(app *entity.App, settingID string) *entity.Setting {
 		}
 	}
 	return nil
+}
+
+// revertApplyReq is the request the routing revert makes.
+//
+// The service update is done by the caller afterwards, with the rollback terms
+// set on it - see RevertSettings.
+func revertApplyReq(
+	app *entity.App,
+	routingSettings *entity.AppRoutingSettings,
+) *approutingservice.ApplyAppRoutingReq {
+	return &approutingservice.ApplyAppRoutingReq{
+		App:                   app,
+		RoutingSettings:       routingSettings,
+		SkipUpdatingService:   true,
+		SkipMissingRefObjects: true,
+	}
 }

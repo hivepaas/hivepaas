@@ -131,42 +131,6 @@ func TestCreateClientConfigUsesTheSameDepth(t *testing.T) {
 	assert.Equal(t, "3", labels["traefik.http.middlewares.router-allowed-ips.ipallowlist.ipstrategy.depth"])
 }
 
-func TestNeedsClientIPStrategy(t *testing.T) {
-	t.Run("nothing asks who the caller is", func(t *testing.T) {
-		assert.False(t, needsClientIPStrategy(&entity.AppRoutingSettings{
-			ExposePublicly: true,
-			Domains:        []*entity.AppDomain{{Domain: "x.example.com"}},
-		}))
-	})
-
-	t.Run("a rate limit on a path asks", func(t *testing.T) {
-		assert.True(t, needsClientIPStrategy(&entity.AppRoutingSettings{
-			ExposePublicly: true,
-			Domains: []*entity.AppDomain{{Paths: []*entity.HTTPPathConfig{{
-				RateLimitConfig: &entity.HTTPRateLimitConfig{Enabled: true, Average: 10},
-			}}}},
-		}))
-	})
-
-	t.Run("an allowlist asks", func(t *testing.T) {
-		assert.True(t, needsClientIPStrategy(&entity.AppRoutingSettings{
-			ExposePublicly: true,
-			Domains: []*entity.AppDomain{{
-				ClientConfig: &entity.HTTPClientConfig{Enabled: true, AllowedIPs: []string{"10.0.0.0/8"}},
-			}},
-		}))
-	})
-
-	t.Run("a disabled rate limit does not", func(t *testing.T) {
-		assert.False(t, needsClientIPStrategy(&entity.AppRoutingSettings{
-			ExposePublicly: true,
-			Domains: []*entity.AppDomain{{
-				RateLimitConfig: &entity.HTTPRateLimitConfig{Enabled: false, Average: 10},
-			}},
-		}))
-	})
-}
-
 // Nothing loaded the settings, which means nothing needed them - and the answer
 // then has to be the safe one, not a nil dereference.
 func TestGetProxySettingsWithoutALoad(t *testing.T) {

@@ -44,8 +44,15 @@ func (s *service) loadAppRoutingData(
 	// Load reference objects
 	refObjectIDs := data.RoutingSettings.GetRefObjectIDs()
 
-	err = s.settingService.LoadRefObjectsByIDs(ctx, db, &data.RefObjects, data.App.GetObjectScope(),
-		true, refObjectIDs)
+	// NOTE: this runs even when the caller already loaded the references, and it
+	// re-queries exactly the ones the caller could not find - so a caller that
+	// wants missing references tolerated has to say so here. Loading them
+	// leniently before the call does nothing on its own.
+	loadRefObjects := s.settingService.LoadRefObjectsByIDs
+	if data.SkipMissingRefObjects {
+		loadRefObjects = s.settingService.LoadRefObjectsByIDsSkipMissing
+	}
+	err = loadRefObjects(ctx, db, &data.RefObjects, data.App.GetObjectScope(), true, refObjectIDs)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

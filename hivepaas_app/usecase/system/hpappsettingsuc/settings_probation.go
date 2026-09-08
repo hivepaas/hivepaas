@@ -18,7 +18,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/tasksettingsrevert"
 )
 
 // Confirm-or-revert.
@@ -46,13 +45,26 @@ const (
 	// window that is too long costs the operator a longer wait to get back into a
 	// dashboard - and only the dashboard: these settings govern the HivePaaS
 	// routers alone, so no application traffic is riding on it.
-	probationWindowDefault = 3 * time.Minute // 2m35s to answer
-	probationWindowMin     = time.Minute     // 35s to answer
+	probationWindowDefault = 3 * time.Minute
 	probationWindowMax     = 15 * time.Minute
+
+	// probationAnswerMargin is the least a caller gets between confirmation
+	// becoming possible and the deadline taking the change away.
+	//
+	// The floor is derived from that rather than written down as a second number,
+	// because the two have already drifted apart once: a 60s minimum outlived its
+	// settle delay until service settings arrived with a 75s one, at which point
+	// the smallest window expired fifteen seconds before anybody was allowed to
+	// answer it. Deriving it means a setting type added later with a slower settle
+	// cannot reintroduce that.
+	probationAnswerMargin = 45 * time.Second
 
 	// probationFallbackLag holds the in-process timer back so the queue, which is
 	// the path with retries and a record, normally gets there first.
 	probationFallbackLag = 20 * time.Second
+
+	appLabelsSweepMaxRetry   = 3
+	appLabelsSweepRetryDelay = 30 * time.Second
 
 	probationMaxRetry   = 3
 	probationRetryDelay = 15 * time.Second
@@ -65,11 +77,12 @@ const (
 // exactly the caller this exists for: a script that applies a change and dies
 // leaves the change reverted, which is the outcome we want and not one the
 // script gets to opt out of.
-func resolveProbationWindow(requested time.Duration) time.Duration {
+func resolveProbationWindow(requested time.Duration, settingType base.SettingType) time.Duration {
+	minWindow := entity.SettleDelayFor(settingType) + probationAnswerMargin
 	if requested <= 0 {
-		return probationWindowDefault
+		return max(probationWindowDefault, minWindow)
 	}
-	return gofn.Clamp(requested, probationWindowMin, probationWindowMax)
+	return gofn.Clamp(requested, minWindow, probationWindowMax)
 }
 
 // armProbation records the change as being on trial and schedules its undo.
@@ -77,18 +90,37 @@ func resolveProbationWindow(requested time.Duration) time.Duration {
 // The task is built here but not scheduled: it goes into the same transaction as
 // the change, so the deadline is committed with the thing it guards. Handing it
 // to the queue is scheduleProbation's job, after the commit.
+// probationArgs is what a caller has to know to put its change on trial.
+//
+// Snapshot has to be taken before the change is written, and ProbationVer read
+// after - the version the setting carries once it is the new one.
+type probationArgs struct {
+	AppID    string
+	Setting  *entity.Setting
+	Snapshot entity.SettingSnapshot
+	Window   time.Duration
+}
+
+// probationResult is what the caller has to carry out of the transaction so
+// scheduleProbation can hand the deadline to the things that enforce it.
+type probationResult struct {
+	Probation           *entity.Task
+	SupersededProbation *entity.Task
+}
+
 func (uc *UC) armProbation(
 	ctx context.Context,
 	db database.Tx,
 	auth *basedto.Auth,
-	data *updateRoutingSettingsData,
-	persistingData *persistingAppData,
+	in *probationArgs,
+	out *probationResult,
+	upsertTask func(task *entity.Task),
 ) error {
 	timeNow := timeutil.NowUTC()
-	setting := data.RoutingSetting
+	setting := in.Setting
 
-	snapshot := data.Snapshot
-	pending, err := uc.findPendingProbation(ctx, db, data.App.ID)
+	snapshot := in.Snapshot
+	pending, err := uc.findPendingProbation(ctx, db, in.AppID, setting.Type)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -104,15 +136,15 @@ func (uc *UC) armProbation(
 		}
 		pending.Status = base.TaskStatusCanceled
 		pending.UpdatedAt = timeNow
-		persistingData.UpsertingTasks = append(persistingData.UpsertingTasks, pending)
-		data.SupersededProbation = pending
+		upsertTask(pending)
+		out.SupersededProbation = pending
 	}
 
-	deadlineAt := timeNow.Add(data.ProbationWindow)
+	deadlineAt := timeNow.Add(in.Window)
 	task := &entity.Task{
 		ID:       gofn.Must(ulid.NewStringULID()),
 		Scope:    base.ObjectScopeApp,
-		ObjectID: data.App.ID,
+		ObjectID: in.AppID,
 		Type:     base.TaskTypeSettingsRevert,
 		Status:   base.TaskStatusNotStarted,
 		Config: entity.TaskConfig{
@@ -127,12 +159,12 @@ func (uc *UC) armProbation(
 		UpdatedAt: timeNow,
 	}
 	err = task.SetArgs(&entity.TaskSettingsRevertArgs{
-		AppID:        data.App.ID,
+		AppID:        in.AppID,
 		SettingID:    setting.ID,
 		SettingType:  setting.Type,
 		ProbationVer: setting.UpdateVer,
 		Snapshot:     snapshot,
-		AppliedBy:    authUserID(auth),
+		AppliedBy:    auth.UserID(),
 		AppliedAt:    timeNow,
 		DeadlineAt:   deadlineAt,
 	})
@@ -140,8 +172,8 @@ func (uc *UC) armProbation(
 		return hperrors.Wrap(err)
 	}
 
-	persistingData.UpsertingTasks = append(persistingData.UpsertingTasks, task)
-	data.Probation = task
+	upsertTask(task)
+	out.Probation = task
 	return nil
 }
 
@@ -157,24 +189,24 @@ func (uc *UC) armProbation(
 // Nothing here is allowed to fail the change: by this point the row is committed,
 // so the deadline exists whether or not anything managed to schedule it. A failure
 // costs lateness, not the guarantee.
-func (uc *UC) scheduleProbation(ctx context.Context, data *updateRoutingSettingsData) {
-	if data == nil {
+func (uc *UC) scheduleProbation(ctx context.Context, out *probationResult) {
+	if out == nil {
 		return
 	}
-	if data.SupersededProbation != nil {
-		if err := uc.taskQueue.UnscheduleTask(ctx, data.SupersededProbation); err != nil {
-			uc.logger.Warnf("failed to unschedule superseded routing probation %s: %v",
-				data.SupersededProbation.ID, err)
+	if out.SupersededProbation != nil {
+		if err := uc.taskQueue.UnscheduleTask(ctx, out.SupersededProbation); err != nil {
+			uc.logger.Warnf("failed to unschedule superseded settings probation %s: %v",
+				out.SupersededProbation.ID, err)
 		}
 	}
-	if data.Probation == nil {
+	if out.Probation == nil {
 		return
 	}
-	if err := uc.taskQueue.ScheduleTask(ctx, data.Probation); err != nil {
-		uc.logger.Warnf("failed to schedule routing probation %s, falling back to the local timer "+
-			"and the startup scan: %v", data.Probation.ID, err)
+	if err := uc.taskQueue.ScheduleTask(ctx, out.Probation); err != nil {
+		uc.logger.Warnf("failed to schedule settings probation %s, falling back to the local timer "+
+			"and the startup scan: %v", out.Probation.ID, err)
 	}
-	uc.armProbationFallback(data.Probation) //nolint:contextcheck // the timer outlives this request
+	uc.armProbationFallback(out.Probation) //nolint:contextcheck // the timer outlives this request
 }
 
 // armProbationFallback runs the revert from this process if nothing else did.
@@ -234,13 +266,13 @@ func (uc *UC) executeProbationTask(ctx context.Context, db database.Tx, task *en
 		return hperrors.Wrap(hperrors.ErrInternal).WithMsgLog("routing probation task %s has no args", task.ID)
 	}
 
-	resp, err := tasksettingsrevert.Run(ctx, db, uc.appRoutingService, uc.hpAppService, args)
+	resp, err := uc.settingsRevertService.Revert(ctx, db, args)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	if resp.Reverted {
-		uc.logger.Warnf("reverted unconfirmed routing change on app %s, applied at %v",
-			args.AppID, args.AppliedAt)
+		uc.logger.Warnf("reverted unconfirmed %s change on app %s, applied at %v",
+			args.SettingType, args.AppID, args.AppliedAt)
 	}
 
 	timeNow := timeutil.NowUTC()
@@ -252,15 +284,24 @@ func (uc *UC) executeProbationTask(ctx context.Context, db database.Tx, task *en
 	return hperrors.Wrap(uc.taskRepo.Update(ctx, db, task))
 }
 
-// findPendingProbation returns the change currently on trial for the app.
+// findPendingProbation returns the change of the given kind currently on trial.
 //
-// No row lock is taken here. Every writer reaches this after locking the routing
-// setting itself, so that row is what serializes them; locking the task as well
+// The setting type is not a column - it lives in the task args - so it is matched
+// here rather than in the query. Matching it at all is the point: routing settings
+// and service settings can be on trial at the same time, and they are not
+// interchangeable. Treating them as one would let a confirmation for one vouch for
+// the other, and would let armProbation carry a routing snapshot into a service
+// settings task, whose revert would then write routing JSON over the service
+// settings row.
+//
+// No row lock is taken here. Every writer reaches this after locking the setting
+// it is about, so that row is what serializes them; locking the task as well
 // would add a second order to acquire and nothing else.
 func (uc *UC) findPendingProbation(
 	ctx context.Context,
 	db database.IDB,
 	appID string,
+	settingType base.SettingType,
 ) (*entity.Task, error) {
 	tasks, _, err := uc.taskRepo.List(ctx, db, "", nil,
 		bunex.SelectWhere("task.type = ?", base.TaskTypeSettingsRevert),
@@ -273,18 +314,15 @@ func (uc *UC) findPendingProbation(
 
 	var latest *entity.Task
 	for _, task := range tasks {
+		args, e := task.ArgsAsSettingsRevert()
+		if e != nil || args == nil || args.SettingType != settingType {
+			continue
+		}
 		if latest == nil || task.CreatedAt.After(latest.CreatedAt) {
 			latest = task
 		}
 	}
 	return latest, nil
-}
-
-func authUserID(auth *basedto.Auth) string {
-	if auth == nil || auth.User == nil {
-		return ""
-	}
-	return auth.User.ID
 }
 
 func (uc *UC) recordProbationOutcome(

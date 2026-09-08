@@ -28,6 +28,13 @@ type Auth struct {
 	AllowedResources map[base.ResourceType][]string
 }
 
+func (auth *Auth) UserID() string {
+	if auth == nil || auth.User == nil {
+		return ""
+	}
+	return auth.User.ID
+}
+
 func (auth *Auth) AllowedUsers(inIDs []string) (allowAll bool, allowed []string) {
 	return auth.calcResIntersection(auth.AllowedResources[base.ResourceTypeUser], inIDs)
 }

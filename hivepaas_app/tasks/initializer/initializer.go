@@ -3,6 +3,7 @@ package initializer
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskappclone"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskappdeploy"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskapplabelssweep"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskapppreview"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
@@ -18,6 +19,7 @@ type WorkerInitializer struct {
 func NewWorkerInitializer(
 	_ *taskdummy.Executor,
 	_ *taskappdeploy.Executor,
+	_ *taskapplabelssweep.Executor,
 	_ *taskappclone.Executor,
 	_ *taskapppreview.Executor,
 	_ *taskschedjobexec.Executor,

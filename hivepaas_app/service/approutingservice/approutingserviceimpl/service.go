@@ -2,6 +2,7 @@ package approutingserviceimpl
 
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
@@ -15,6 +16,8 @@ type service struct {
 	db            *database.DB
 	dockerManager docker.Manager
 
+	appRepo repository.AppRepo
+
 	appService     appservice.Service
 	networkService networkservice.Service
 	settingService settingservice.Service
@@ -26,6 +29,8 @@ func New(
 	db *database.DB,
 	dockerManager docker.Manager,
 
+	appRepo repository.AppRepo,
+
 	appService appservice.Service,
 	networkService networkservice.Service,
 	settingService settingservice.Service,
@@ -35,6 +40,8 @@ func New(
 	return &service{
 		db:            db,
 		dockerManager: dockerManager,
+
+		appRepo: appRepo,
 
 		appService:     appService,
 		networkService: networkService,

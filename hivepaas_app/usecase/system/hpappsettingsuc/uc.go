@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsrevertservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemeventbusservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
@@ -33,18 +34,19 @@ type UC struct {
 
 	cacheAppSecretAttemptRepo cacherepository.AppSecretAttemptRepo
 
-	appRoutingService approutingservice.Service
-	appService        appservice.Service
-	auditService      auditservice.Service
-	dataKeyService    datakeyservice.Service
-	domainService     domainservice.Service
-	hpAppService      hpappservice.Service
-	networkService    networkservice.Service
-	settingService    settingservice.Service
-	sslService        sslservice.Service
-	systemEventBus    systemeventbusservice.Service
-	taskService       taskservice.Service
-	traefikService    traefikservice.Service
+	appRoutingService     approutingservice.Service
+	appService            appservice.Service
+	auditService          auditservice.Service
+	dataKeyService        datakeyservice.Service
+	domainService         domainservice.Service
+	hpAppService          hpappservice.Service
+	networkService        networkservice.Service
+	settingService        settingservice.Service
+	settingsRevertService settingsrevertservice.Service
+	sslService            sslservice.Service
+	systemEventBus        systemeventbusservice.Service
+	taskService           taskservice.Service
+	traefikService        traefikservice.Service
 }
 
 func New(
@@ -67,6 +69,7 @@ func New(
 	hpAppService hpappservice.Service,
 	networkService networkservice.Service,
 	settingService settingservice.Service,
+	settingsRevertService settingsrevertservice.Service,
 	sslService sslservice.Service,
 	systemEventBus systemeventbusservice.Service,
 	taskService taskservice.Service,
@@ -85,17 +88,18 @@ func New(
 
 		cacheAppSecretAttemptRepo: cacheAppSecretAttemptRepo,
 
-		appRoutingService: appRoutingService,
-		appService:        appService,
-		auditService:      auditService,
-		dataKeyService:    dataKeyService,
-		domainService:     domainService,
-		hpAppService:      hpAppService,
-		networkService:    networkService,
-		settingService:    settingService,
-		sslService:        sslService,
-		systemEventBus:    systemEventBus,
-		taskService:       taskService,
-		traefikService:    traefikService,
+		appRoutingService:     appRoutingService,
+		appService:            appService,
+		auditService:          auditService,
+		dataKeyService:        dataKeyService,
+		domainService:         domainService,
+		hpAppService:          hpAppService,
+		networkService:        networkService,
+		settingService:        settingService,
+		settingsRevertService: settingsRevertService,
+		sslService:            sslService,
+		systemEventBus:        systemEventBus,
+		taskService:           taskService,
+		traefikService:        traefikService,
 	}
 }

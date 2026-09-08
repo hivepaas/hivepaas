@@ -2,6 +2,7 @@ package hpappserviceimpl
 
 import (
 	"context"
+	"strings"
 
 	"github.com/moby/moby/api/types/swarm"
 
@@ -34,12 +35,47 @@ func (s *service) RestartHpWorkerSwarmService(ctx context.Context) error {
 func (s *service) SyncHpWorkerSwarmServiceConfig(
 	mainAppSvc, workerSvc *swarm.Service,
 ) {
-	workerSvc.Spec.TaskTemplate.ContainerSpec.Image = mainAppSvc.Spec.TaskTemplate.ContainerSpec.Image
-	workerSvc.Spec.TaskTemplate.ContainerSpec.Command = mainAppSvc.Spec.TaskTemplate.ContainerSpec.Command
-	workerSvc.Spec.TaskTemplate.ContainerSpec.Args = mainAppSvc.Spec.TaskTemplate.ContainerSpec.Args
+	if mainAppSvc == nil || workerSvc == nil {
+		return
+	}
+	if mainAppSvc.Spec.TaskTemplate.ContainerSpec == nil {
+		mainAppSvc.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
+	}
+	if workerSvc.Spec.TaskTemplate.ContainerSpec == nil {
+		workerSvc.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
+	}
 
-	// TODO: sync Envs
+	mainContainer := mainAppSvc.Spec.TaskTemplate.ContainerSpec
+	workerContainer := workerSvc.Spec.TaskTemplate.ContainerSpec
+
+	workerContainer.Image = mainContainer.Image
+	workerContainer.Command = mainContainer.Command
+	workerContainer.Args = mainContainer.Args
+	workerContainer.Env = syncWorkerEnvs(mainContainer.Env)
 
 	// Make sure the worker service has the same storages as the main service
-	workerSvc.Spec.TaskTemplate.ContainerSpec.Mounts = mainAppSvc.Spec.TaskTemplate.ContainerSpec.Mounts
+	workerContainer.Mounts = mainContainer.Mounts
+}
+
+const (
+	envHpRunMode       = "HP_RUN_MODE"
+	envHpRunModeWorker = "HP_RUN_MODE=worker"
+)
+
+func syncWorkerEnvs(mainEnvs []string) []string {
+	workerEnvs := make([]string, 0, len(mainEnvs)+1)
+	runModeSet := false
+	for _, env := range mainEnvs {
+		k, _, _ := strings.Cut(env, "=")
+		if k == envHpRunMode {
+			workerEnvs = append(workerEnvs, envHpRunModeWorker)
+			runModeSet = true
+		} else {
+			workerEnvs = append(workerEnvs, env)
+		}
+	}
+	if !runModeSet {
+		workerEnvs = append(workerEnvs, envHpRunModeWorker)
+	}
+	return workerEnvs
 }

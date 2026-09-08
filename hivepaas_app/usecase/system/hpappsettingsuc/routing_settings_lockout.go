@@ -2,10 +2,10 @@ package hpappsettingsuc
 
 import (
 	"context"
-	"net/netip"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/netutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reqinfo"
 )
 
@@ -23,15 +23,15 @@ import (
 // anything else outside this setting - it only rules out the two shapes that are
 // decided here and are unrecoverable.
 func ensureStillReachable(ctx context.Context, settings *entity.AppRoutingSettings) error {
-	enabled := enabledDomains(settings)
-	if len(enabled) == 0 {
+	activeDomains := settings.GetActiveDomains()
+	if len(activeDomains) == 0 {
 		// Every router label for the app is rebuilt from this list, so an empty one
 		// leaves the service with no route at all - reachable by nothing, on any
 		// address.
 		return hperrors.Wrap(hperrors.ErrRoutingNoEnabledDomain)
 	}
 
-	clientIP := callerIP(ctx)
+	clientIP := reqinfo.ClientIPFrom(ctx)
 	if clientIP == "" {
 		// Without knowing where the caller is, the check below cannot be made, and
 		// an unverifiable answer is not one to act on when being wrong locks
@@ -39,7 +39,7 @@ func ensureStillReachable(ctx context.Context, settings *entity.AppRoutingSettin
 		return hperrors.Wrap(hperrors.ErrRoutingCallerUnknown)
 	}
 
-	for _, domain := range enabled {
+	for _, domain := range activeDomains {
 		if domainAdmits(domain, clientIP) {
 			return nil
 		}
@@ -52,33 +52,6 @@ func ensureStillReachable(ctx context.Context, settings *entity.AppRoutingSettin
 		WithParam("ClientIP", clientIP)
 }
 
-func enabledDomains(settings *entity.AppRoutingSettings) []*entity.AppDomain {
-	if settings == nil {
-		return nil
-	}
-	res := make([]*entity.AppDomain, 0, len(settings.Domains))
-	for _, domain := range settings.Domains {
-		if domain != nil && domain.Enabled && domain.Domain != "" {
-			res = append(res, domain)
-		}
-	}
-	return res
-}
-
-// callerIP is the address this request came from, as the app resolved it.
-//
-// It is the app's answer, not Traefik's. The two agree when the proxy settings
-// describe the deployment correctly and diverge when they do not - which is why
-// the refusal reports the address it used, and why GET /system/hivepaas/request-info
-// exists to check it.
-func callerIP(ctx context.Context) string {
-	info := reqinfo.From(ctx)
-	if info == nil {
-		return ""
-	}
-	return info.ClientIP
-}
-
 // domainAdmits reports whether a domain would still let this address through.
 //
 // Only the IP allowlist is considered. A rate limit slows a caller down but does
@@ -89,27 +62,5 @@ func domainAdmits(domain *entity.AppDomain, clientIP string) bool {
 	if cfg == nil || !cfg.Enabled || len(cfg.AllowedIPs) == 0 {
 		return true
 	}
-	return ipAllowed(cfg.AllowedIPs, clientIP)
-}
-
-// ipAllowed reports whether an address falls inside any of the allowed entries,
-// each of which is a single address or a CIDR block.
-func ipAllowed(allowedIPs []string, clientIP string) bool {
-	addr, err := netip.ParseAddr(clientIP)
-	if err != nil {
-		return false
-	}
-
-	for _, allowed := range allowedIPs {
-		if single, err := netip.ParseAddr(allowed); err == nil {
-			if single == addr {
-				return true
-			}
-			continue
-		}
-		if prefix, err := netip.ParsePrefix(allowed); err == nil && prefix.Contains(addr) {
-			return true
-		}
-	}
-	return false
+	return netutil.IPAllowed(cfg.AllowedIPs, clientIP)
 }

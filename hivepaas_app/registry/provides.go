@@ -79,6 +79,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingeventservice/settingeventserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settinginitservice/settinginitserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice/settingserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsrevertservice/settingsrevertserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslrenewalservice/sslrenewalserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice/sslserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/startupservice/startupserviceimpl"
@@ -94,6 +95,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue/queueimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskappclone"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskappdeploy"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskapplabelssweep"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskapppreview"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskdummy"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
@@ -197,6 +199,7 @@ var Provides = []any{
 	// Task queue
 	initializer.NewWorkerInitializer,
 	queueimpl.New,
+	taskapplabelssweep.NewExecutor,
 	taskappclone.NewExecutor,
 	taskappdeploy.NewExecutor,
 	taskapppreview.NewExecutor,
@@ -311,6 +314,7 @@ var Provides = []any{
 	appdeploymentserviceimpl.New,
 	apppreviewserviceimpl.New,
 	approutingserviceimpl.New,
+	settingsrevertserviceimpl.New,
 	appserviceimpl.New,
 	backuprepocleanupserviceimpl.New,
 	backupreposerviceimpl.New,

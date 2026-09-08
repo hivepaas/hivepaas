@@ -51,3 +51,12 @@ func From(ctx context.Context) *RequestInfo {
 	info, _ := ctx.Value(ctxKey{}).(*RequestInfo)
 	return info
 }
+
+// ClientIPFrom is the address the request came from.
+func ClientIPFrom(ctx context.Context) string {
+	info := From(ctx)
+	if info == nil {
+		return ""
+	}
+	return info.ClientIP
+}

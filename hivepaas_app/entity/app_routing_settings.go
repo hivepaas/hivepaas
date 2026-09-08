@@ -143,14 +143,57 @@ func (s *AppRoutingSettings) GetDomain(domain string) *AppDomain {
 	return nil
 }
 
-func (s *AppRoutingSettings) GetActiveDomainNames() (res []string) {
-	if !s.ExposePublicly {
+// UsesClientIP reports whether any middleware in these settings has to decide
+// which address a request came from.
+//
+// It is the filter for two things that must agree. Traefik's ip-strategy depth is
+// written into an app's labels only when this is true, so it is also the set of
+// apps a change to the proxy topology can affect - see the sweep in
+// approutingservice. Answering it in two places would let the sweep skip an app
+// whose labels do carry a depth, and that app would then keep reading the wrong
+// forwarded position until something unrelated redeployed it.
+func (s *AppRoutingSettings) UsesClientIP() bool {
+	if s == nil || !s.ExposePublicly {
+		return false
+	}
+
+	for _, domain := range s.Domains {
+		if usesClientIP(domain.RateLimitConfig, domain.ClientConfig) {
+			return true
+		}
+		for _, pathCfg := range domain.Paths {
+			if usesClientIP(pathCfg.RateLimitConfig, pathCfg.ClientConfig) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func usesClientIP(rateLimit *HTTPRateLimitConfig, client *HTTPClientConfig) bool {
+	if rateLimit != nil && rateLimit.Enabled {
+		return true
+	}
+	return client != nil && client.Enabled && len(client.AllowedIPs) > 0
+}
+
+func (s *AppRoutingSettings) GetActiveDomains() (res []*AppDomain) {
+	if s == nil || !s.ExposePublicly {
 		return
 	}
+	res = make([]*AppDomain, 0, len(s.Domains))
 	for _, domain := range s.Domains {
-		if !domain.Enabled {
-			continue
+		if domain != nil && domain.Enabled && domain.Domain != "" {
+			res = append(res, domain)
 		}
+	}
+	return res
+}
+
+func (s *AppRoutingSettings) GetActiveDomainNames() (res []string) {
+	activeDomains := s.GetActiveDomains()
+	res = make([]string, 0, len(activeDomains))
+	for _, domain := range activeDomains {
 		res = append(res, domain.Domain)
 	}
 	return res
@@ -158,13 +201,13 @@ func (s *AppRoutingSettings) GetActiveDomainNames() (res []string) {
 
 func (s *AppRoutingSettings) GetActivePorts() []int {
 	activePorts := []int{s.Port}
-	for _, domain := range s.Domains {
-		if !domain.Enabled {
+	for _, domain := range s.GetActiveDomains() {
+		if gofn.Contain(activePorts, domain.ContainerPort) {
 			continue
 		}
 		activePorts = append(activePorts, domain.ContainerPort)
 	}
-	return gofn.ToSet(activePorts)
+	return activePorts
 }
 
 func (s *AppRoutingSettings) GetType() base.SettingType {

@@ -146,9 +146,14 @@ export function parseApiError(error: unknown): Error {
             return new Http500Exception(problem);
         }
 
+        // The catch-all branch, which is where ERR_SETTING_IN_USE lands: it maps to
+        // 412, and only the statuses above have a class of their own. The request
+        // URL rides along because a refusal about the resource is answered far
+        // from the call site - see HttpException.requestUrl.
         return new HttpException({
             status: problem.status,
             problem,
+            requestUrl: error.config?.url,
         });
     }
 

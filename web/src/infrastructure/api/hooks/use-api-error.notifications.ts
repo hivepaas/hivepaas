@@ -3,7 +3,7 @@ import { useCallback } from "react";
 
 import { type ExternalToast, toast } from "sonner";
 
-import { useGlobalAlertDialog } from "@application/shared/dialogs";
+import { useGlobalAlertDialog, useSettingInUseDialogState } from "@application/shared/dialogs";
 
 import {
     isCancelException,
@@ -11,6 +11,17 @@ import {
     isUnauthorizedException,
     isValidationException,
 } from "@infrastructure/api/utils";
+
+import { HttpException } from "@infrastructure/exceptions/http";
+
+/**
+ * A refusal that deserves a page of its own, not a toast.
+ *
+ * Handled here because every API hook funnels its failures through this one
+ * function, and around fifty delete commands can raise it. Reacting to it at the
+ * call sites would mean touching all of them and getting it wrong in one.
+ */
+const SETTING_IN_USE = "ERR_SETTING_IN_USE";
 
 interface Params {
     message: React.ReactNode;
@@ -22,10 +33,18 @@ interface Params {
 function createHook() {
     return function useApiErrorNotifications() {
         const { actions: globalAlertActions } = useGlobalAlertDialog();
+        const settingInUseDialog = useSettingInUseDialogState();
 
         const notifyError = useCallback(
             ({ message, error, status = "error", options = {} }: Params) => {
                 if (isCancelException(error)) {
+                    return;
+                }
+
+                if (error instanceof HttpException && error.code === SETTING_IN_USE) {
+                    // The failed request's URL is what locates the usage list -
+                    // see HttpException.requestUrl.
+                    settingInUseDialog.open({ props: { requestUrl: error.requestUrl } });
                     return;
                 }
 
@@ -99,7 +118,7 @@ function createHook() {
                     ...toastOptions,
                 });
             },
-            [globalAlertActions],
+            [globalAlertActions, settingInUseDialog],
         );
 
         return {

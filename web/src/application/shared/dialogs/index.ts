@@ -6,3 +6,4 @@ export * from "./photo-upload";
 export * from "./create-profile-api-key";
 export * from "./update-api-key-status";
 export * from "./global-alert";
+export * from "./setting-in-use";

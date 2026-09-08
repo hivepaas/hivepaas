@@ -63,13 +63,15 @@ func (uc *UC) CreateAPIKey(
 			// for is what this is here to prevent, and it outlives the session
 			// that made it by up to a year.
 			return uc.AuditService.Record(ctx, db, &auditservice.Entry{
-				Type:    base.AuditLogTypeAPIKeyCreate,
-				Source:  base.AuditLogSourceAPICreate,
-				Result:  base.AuditLogResultAllowed,
-				Auth:    auth,
-				ResType: base.ResourceTypeAPIKey,
-				ResID:   pData.Setting.ID,
-				ResName: req.Name,
+				Type:     base.AuditLogTypeAPIKeyCreate,
+				Scope:    base.ObjectScopeUser,
+				ObjectID: actingUser.ID,
+				Source:   base.AuditLogSourceAPICreate,
+				Result:   base.AuditLogResultAllowed,
+				Auth:     auth,
+				ResType:  base.ResourceTypeAPIKey,
+				ResID:    pData.Setting.ID,
+				ResName:  req.Name,
 			})
 		},
 	})
@@ -101,11 +103,13 @@ func (uc *UC) authorizeAPIKeyCreate(ctx context.Context, auth *basedto.Auth) err
 	}
 
 	err := uc.AuditService.Record(ctx, uc.DB, &auditservice.Entry{
-		Type:    base.AuditLogTypeAPIKeyCreate,
-		Source:  base.AuditLogSourceAPICreate,
-		Result:  base.AuditLogResultDenied,
-		Auth:    auth,
-		ResType: base.ResourceTypeAPIKey,
+		Type:     base.AuditLogTypeAPIKeyCreate,
+		Scope:    base.ObjectScopeUser,
+		ObjectID: auth.UserID(),
+		Source:   base.AuditLogSourceAPICreate,
+		Result:   base.AuditLogResultDenied,
+		Auth:     auth,
+		ResType:  base.ResourceTypeAPIKey,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

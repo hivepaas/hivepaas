@@ -109,14 +109,16 @@ func (uc *UC) revokeUserAPIKeys(
 		}
 
 		err = uc.auditService.Record(ctx, db, &auditservice.Entry{
-			Type:    base.AuditLogTypeAPIKeyRevoke,
-			Source:  base.AuditLogSourceCapabilityRevoked,
-			Result:  base.AuditLogResultAllowed,
-			Auth:    auth,
-			ResType: base.ResourceTypeAPIKey,
-			ResID:   apiKey.ID,
-			ResName: apiKey.Name,
-			Detail:  string(detail),
+			Type:     base.AuditLogTypeAPIKeyRevoke,
+			Scope:    base.ObjectScopeUser,
+			ObjectID: target.ID,
+			Source:   base.AuditLogSourceCapabilityRevoked,
+			Result:   base.AuditLogResultAllowed,
+			Auth:     auth,
+			ResType:  base.ResourceTypeAPIKey,
+			ResID:    apiKey.ID,
+			ResName:  apiKey.Name,
+			Detail:   string(detail),
 		})
 		if err != nil {
 			return hperrors.Wrap(err)

@@ -18,10 +18,12 @@ import (
 // long before anyone reads the entry, and an entry that has become a pair of
 // meaningless identifiers is no use exactly when it is needed.
 type AuditLog struct {
-	ID     string              `bun:",pk" json:"id"`
-	Type   base.AuditLogType   `json:"type"`
-	Source base.AuditLogSource `json:"source,omitempty"`
-	Result base.AuditLogResult `json:"result"`
+	ID       string               `bun:",pk" json:"id"`
+	Scope    base.ObjectScopeType `json:"scope"`
+	ObjectID string               `bun:",nullzero" json:"objectId,omitempty"`
+	Type     base.AuditLogType    `json:"type"`
+	Source   base.AuditLogSource  `json:"source,omitempty"`
+	Result   base.AuditLogResult  `json:"result"`
 
 	ActorID   string           `json:"actorId"`
 	ActorType base.SubjectType `json:"actorType"`

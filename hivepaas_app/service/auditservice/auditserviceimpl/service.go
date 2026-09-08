@@ -37,6 +37,8 @@ func (s *service) Record(ctx context.Context, db database.IDB, entry *auditservi
 
 	auditLog := &entity.AuditLog{
 		ID:        gofn.Must(ulid.NewStringULID()),
+		Scope:     entry.Scope,
+		ObjectID:  entry.ObjectID,
 		Type:      entry.Type,
 		Source:    entry.Source,
 		Result:    entry.Result,

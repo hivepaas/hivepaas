@@ -196,12 +196,14 @@ func (s *service) recordOutcome(
 	setting *entity.Setting,
 ) error {
 	return hperrors.Wrap(s.auditService.Record(ctx, db, &auditservice.Entry{
-		Type:    typ,
-		Source:  base.AuditLogSourceAPIUpdate,
-		Result:  base.AuditLogResultAllowed,
-		Auth:    auth,
-		ResType: base.ResourceTypeSetting,
-		ResID:   setting.ID,
-		ResName: setting.Name,
+		Type:     typ,
+		Scope:    setting.Scope,
+		ObjectID: setting.ObjectID,
+		Source:   base.AuditLogSourceAPIUpdate,
+		Result:   base.AuditLogResultAllowed,
+		Auth:     auth,
+		ResType:  base.ResourceTypeSetting,
+		ResID:    setting.ID,
+		ResName:  setting.Name,
 	}))
 }

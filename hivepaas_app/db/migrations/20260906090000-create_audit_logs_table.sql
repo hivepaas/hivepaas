@@ -2,6 +2,8 @@
 CREATE TABLE IF NOT EXISTS audit_logs
 (
     id             VARCHAR(100) PRIMARY KEY,
+    scope          VARCHAR(50) NOT NULL,
+    object_id      VARCHAR(100) NULL,
     type           VARCHAR(50)  NOT NULL,
     source         VARCHAR(50)  NULL,
     result         VARCHAR(50)  NOT NULL,
@@ -26,6 +28,8 @@ CREATE TABLE IF NOT EXISTS audit_logs
     created_at     TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX idx_audit_logs_scope ON audit_logs(scope);
+CREATE INDEX idx_audit_logs_object_id ON audit_logs(object_id);
 CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at);
 CREATE INDEX idx_audit_logs_type_created_at ON audit_logs(type, created_at DESC);
 CREATE INDEX idx_audit_logs_actor_id_created_at ON audit_logs(actor_id, created_at DESC);

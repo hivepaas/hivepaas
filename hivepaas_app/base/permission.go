@@ -22,6 +22,7 @@ const (
 	ResourceTypeApp               ResourceType = "app"
 	ResourceTypeAppFeatures       ResourceType = "app-features"
 	ResourceTypeAppPlacement      ResourceType = "app-placement"
+	ResourceTypeAuditLog          ResourceType = "audit-log"
 	ResourceTypeBackupRepo        ResourceType = "backup-repo"
 	ResourceTypeBackupRepoCleanup ResourceType = "backup-repo-cleanup"
 	ResourceTypeBasicAuth         ResourceType = "basic-auth"

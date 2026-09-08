@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apppreviewhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appsettingshandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/auditloghandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/clusterhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/devhelperhandler"
@@ -45,6 +46,7 @@ type HandlerRegistry struct {
 	appHandler                *apphandler.Handler
 	appPreviewHandler         *apppreviewhandler.Handler
 	appSettingsHandler        *appsettingshandler.Handler
+	auditLogHandler           *auditloghandler.Handler
 	clusterHandler            *clusterhandler.Handler
 	devHelperHandler          *devhelperhandler.Handler
 	fileHandler               *filehandler.Handler
@@ -74,6 +76,7 @@ func NewHandlerRegistry(
 	appHandler *apphandler.Handler,
 	appPreviewHandler *apppreviewhandler.Handler,
 	appSettingsHandler *appsettingshandler.Handler,
+	auditLogHandler *auditloghandler.Handler,
 	clusterHandler *clusterhandler.Handler,
 	devHelperHandler *devhelperhandler.Handler,
 	fileHandler *filehandler.Handler,
@@ -102,6 +105,7 @@ func NewHandlerRegistry(
 		appHandler:                appHandler,
 		appPreviewHandler:         appPreviewHandler,
 		appSettingsHandler:        appSettingsHandler,
+		auditLogHandler:           auditLogHandler,
 		clusterHandler:            clusterHandler,
 		devHelperHandler:          devHelperHandler,
 		fileHandler:               fileHandler,

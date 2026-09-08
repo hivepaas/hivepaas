@@ -7,6 +7,7 @@ import (
 func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 	systemGroup := apiGroup.Group("/system")
 	systemHandler := s.handlerRegistry.systemHandler
+	auditLogHandler := s.handlerRegistry.auditLogHandler
 
 	{ // task group
 		taskGroup := systemGroup.Group("/tasks")
@@ -28,6 +29,12 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		errorGroup.GET("", systemHandler.ListSysError)
 		errorGroup.GET("/:errorID", systemHandler.GetSysError)
 		errorGroup.DELETE("/:errorID", systemHandler.DeleteSysError)
+	}
+
+	{ // Audit log group
+		auditLogGroup := systemGroup.Group("/audit-logs")
+		auditLogGroup.GET("", auditLogHandler.ListGlobalAuditLog)
+		auditLogGroup.GET("/:itemID", auditLogHandler.GetGlobalAuditLog)
 	}
 
 	// System settings group

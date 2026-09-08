@@ -9,6 +9,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	projectGroup := apiGroup.Group("/projects")
 	projectHandler := s.handlerRegistry.projectHandler
 	projectSettingsHandler := s.handlerRegistry.projectSettingsHandler
+	auditLogHandler := s.handlerRegistry.auditLogHandler
 
 	// Projects
 	projectGroup.GET("/base", projectHandler.ListProjectBase)
@@ -54,6 +55,12 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		acmeDnsProviderGroup.PUT("/:itemID", projectSettingsHandler.UpdateAcmeDnsProvider)
 		acmeDnsProviderGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateAcmeDnsProviderStatus)
 		acmeDnsProviderGroup.DELETE("/:itemID", projectSettingsHandler.DeleteAcmeDnsProvider)
+	}
+
+	{ // Audit log group
+		auditLogGroup := projectGroup.Group("/:projectID/audit-logs")
+		auditLogGroup.GET("", auditLogHandler.ListProjectAuditLog)
+		auditLogGroup.GET("/:itemID", auditLogHandler.GetProjectAuditLog)
 	}
 
 	{ // Backup repository group

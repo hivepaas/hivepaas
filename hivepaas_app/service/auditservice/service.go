@@ -18,9 +18,11 @@ import (
 // Entry is one action to record. The caller supplies what happened; the service
 // fills in who and from where, from the auth and the request context.
 type Entry struct {
-	Type   base.AuditLogType
-	Source base.AuditLogSource
-	Result base.AuditLogResult
+	Scope    base.ObjectScopeType
+	ObjectID string
+	Type     base.AuditLogType
+	Source   base.AuditLogSource
+	Result   base.AuditLogResult
 
 	Auth *basedto.Auth
 

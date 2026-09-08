@@ -114,6 +114,7 @@ func (uc *UC) authorizeSecuritySettingsUpdate(
 	}
 	err := uc.auditService.Record(ctx, uc.db, &auditservice.Entry{
 		Type:    base.AuditLogTypeSecuritySettingsUpdate,
+		Scope:   base.ObjectScopeHivepaas,
 		Source:  base.AuditLogSourceAPIUpdate,
 		Result:  result,
 		Auth:    auth,

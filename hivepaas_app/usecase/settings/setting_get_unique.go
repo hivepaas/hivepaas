@@ -55,7 +55,7 @@ func (uc *BaseUC) GetUniqueSetting(
 		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 
-	if err = uc.revealSecrets(ctx, db, auth, req.RevealSecrets, setting); err != nil {
+	if err = uc.revealSecrets(ctx, db, auth, req.Scope, req.RevealSecrets, setting); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 

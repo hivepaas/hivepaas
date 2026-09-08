@@ -9,6 +9,7 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 	projectEnvGroup := projectGroup.Group("/:projectEnv")
 	projectEnvHandler := s.handlerRegistry.projectEnvHandler
 	projectEnvSettingsHandler := s.handlerRegistry.projectEnvSettingsHandler
+	auditLogHandler := s.handlerRegistry.auditLogHandler
 
 	// Project envs
 	projectEnvGroup.PUT("/status", projectEnvHandler.UpdateProjectEnvStatus)
@@ -35,6 +36,12 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 		acmeDnsProviderGroup.PUT("/:itemID", projectEnvSettingsHandler.UpdateAcmeDnsProvider)
 		acmeDnsProviderGroup.PUT("/:itemID/status", projectEnvSettingsHandler.UpdateAcmeDnsProviderStatus)
 		acmeDnsProviderGroup.DELETE("/:itemID", projectEnvSettingsHandler.DeleteAcmeDnsProvider)
+	}
+
+	{ // Audit log group
+		auditLogGroup := projectEnvGroup.Group("/audit-logs")
+		auditLogGroup.GET("", auditLogHandler.ListProjectEnvAuditLog)
+		auditLogGroup.GET("/:itemID", auditLogHandler.GetProjectEnvAuditLog)
 	}
 
 	{ // Backup repository group

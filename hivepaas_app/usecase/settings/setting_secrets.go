@@ -33,6 +33,7 @@ func (uc *BaseUC) revealSecrets(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
+	scope *entity.ObjectScope,
 	reveal bool,
 	setting *entity.Setting,
 ) error {
@@ -54,7 +55,7 @@ func (uc *BaseUC) revealSecrets(
 		return nil // the type holds no secrets, so there is nothing to reveal
 	}
 
-	if err = uc.authorizeReveal(ctx, db, auth, setting); err != nil {
+	if err = uc.authorizeReveal(ctx, db, auth, scope, setting); err != nil {
 		return hperrors.Wrap(err)
 	}
 	if err = decrypter.Decrypt(); err != nil {
@@ -73,6 +74,7 @@ func (uc *BaseUC) authorizeReveal(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
+	scope *entity.ObjectScope,
 	setting *entity.Setting,
 ) error {
 	allowed, denyErr := uc.canRevealSecrets(ctx, db, auth)
@@ -82,13 +84,15 @@ func (uc *BaseUC) authorizeReveal(
 		result = base.AuditLogResultDenied
 	}
 	err := uc.AuditService.Record(ctx, db, &auditservice.Entry{
-		Type:    base.AuditLogTypeSecretReveal,
-		Source:  base.AuditLogSourceAPIGet,
-		Result:  result,
-		Auth:    auth,
-		ResType: base.ResourceTypeSetting,
-		ResID:   setting.ID,
-		ResName: setting.Name,
+		Type:     base.AuditLogTypeSecretReveal,
+		Scope:    scope.ScopeType,
+		ObjectID: scope.ScopeObjectID(),
+		Source:   base.AuditLogSourceAPIGet,
+		Result:   result,
+		Auth:     auth,
+		ResType:  base.ResourceTypeSetting,
+		ResID:    setting.ID,
+		ResName:  setting.Name,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

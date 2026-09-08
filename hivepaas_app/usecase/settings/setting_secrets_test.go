@@ -93,6 +93,11 @@ func enableReveal(t *testing.T, enabled bool) {
 	t.Cleanup(func() { config.SetCurrent(prev) })
 }
 
+// revealScope is the scope the reveal is being asked for. It is what the audit
+// entry is filed under, and an entry filed under the wrong scope is invisible to
+// the scoped audit log listing - which is where somebody would go looking for it.
+var revealScope = &entity.ObjectScope{ScopeType: base.ObjectScopeApp, AppID: "obj_1"}
+
 /// Tests
 
 func TestRevealSecretsAllowed(t *testing.T) {
@@ -100,7 +105,7 @@ func TestRevealSecretsAllowed(t *testing.T) {
 	uc, audit := newRevealUC(t, true, nil)
 	setting := newBasicAuthSetting(t)
 
-	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, true, setting); err != nil {
+	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting); err != nil {
 		t.Fatalf("reveal must succeed: %v", err)
 	}
 	if got := storedPassword(t, setting).String(); got != "the-real-password" {
@@ -112,6 +117,10 @@ func TestRevealSecretsAllowed(t *testing.T) {
 	if audit.entries[0].ResID != "set_1" || audit.entries[0].ResName != "web-auth" {
 		t.Error("the entry must name the setting it is about")
 	}
+	if audit.entries[0].Scope != base.ObjectScopeApp || audit.entries[0].ObjectID != "obj_1" {
+		t.Errorf("the entry must be filed under the scope the reveal was asked for, got %v/%q",
+			audit.entries[0].Scope, audit.entries[0].ObjectID)
+	}
 }
 
 // A refusal is the more interesting half of the record: it is the only sign that
@@ -121,7 +130,7 @@ func TestRevealSecretsDeniedIsStillRecorded(t *testing.T) {
 	uc, audit := newRevealUC(t, false, nil)
 	setting := newBasicAuthSetting(t)
 
-	err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, true, setting)
+	err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
 	if err == nil {
 		t.Fatal("a caller without the permission must be refused")
 	}
@@ -139,7 +148,7 @@ func TestRevealSecretsFailsClosedWhenNotRecordable(t *testing.T) {
 	uc, _ := newRevealUC(t, true, errors.New("database is down"))
 	setting := newBasicAuthSetting(t)
 
-	err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, true, setting)
+	err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
 	if err == nil {
 		t.Fatal("a reveal that cannot be recorded must not happen")
 	}
@@ -155,7 +164,7 @@ func TestRevealSecretsRefusedWhenDisabledByConfig(t *testing.T) {
 	uc, audit := newRevealUC(t, true, nil)
 	setting := newBasicAuthSetting(t)
 
-	err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, true, setting)
+	err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
 	if !errors.Is(err, hperrors.ErrRevealSecretsDisabled) {
 		t.Fatalf("expected the disabled-by-config error, got %v", err)
 	}
@@ -172,7 +181,7 @@ func TestRevealSecretsNotRequested(t *testing.T) {
 	uc, audit := newRevealUC(t, true, nil)
 	setting := newBasicAuthSetting(t)
 
-	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, false, setting); err != nil {
+	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, false, setting); err != nil {
 		t.Fatal(err)
 	}
 	if !storedPassword(t, setting).IsEncrypted() {
@@ -190,7 +199,7 @@ func TestRevealSecretsInheritedIsNeverRevealed(t *testing.T) {
 	setting := newBasicAuthSetting(t)
 	setting.CurrentObjectID = "obj_2"
 
-	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, true, setting); err != nil {
+	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting); err != nil {
 		t.Fatal(err)
 	}
 	if !storedPassword(t, setting).IsEncrypted() {
@@ -212,7 +221,7 @@ func TestRevealSecretsOnTypeWithoutSecrets(t *testing.T) {
 	}
 	setting.ObjectID, setting.CurrentObjectID = "obj_1", "obj_1"
 
-	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, true, setting); err != nil {
+	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting); err != nil {
 		t.Fatalf("a type without secrets must not be refused: %v", err)
 	}
 	if len(audit.entries) != 0 {

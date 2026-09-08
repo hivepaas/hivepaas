@@ -308,6 +308,42 @@ func (repo *settingRepo) applyNameAndKindFilter(opts []bunex.SelectQueryOption,
 	return opts
 }
 
+// settingOwnedByAny matches settings that belong to one of the given objects.
+//
+// The ids a scope does not have are dropped rather than compared against. A scope
+// with no parent app carries an empty ParentAppID, and that is not harmless
+// noise: object_id is nullable here, so "" would match a global setting whose
+// column was written as an empty string rather than NULL - reaching it without
+// the inheritable check every other path to a global setting goes through.
+func settingOwnedByAny(objectIDs ...string) bunex.SelectQueryOption {
+	ids := gofn.ToSliceSkippingZero(objectIDs...)
+	return bunex.SelectWhereOrIf(len(ids) > 0, "setting.object_id IN (?)", bunex.List(ids))
+}
+
+// settingSharedWithAny matches settings imported into one of the given objects.
+//
+// Absent ids are dropped, as in settingOwnedByAny - object_id is NOT NULL in
+// shared_settings, so "" is a comparison that can never match.
+//
+// EXISTS rather than the LEFT JOIN this replaces. shared_settings is keyed
+// (object_id, setting_id), so one setting can be shared into several of the
+// objects listed here at once - a global secret imported into a project and into
+// one of its envs - and a join would then produce one result row per share. The
+// page would carry the setting twice, and Count() would agree with the page
+// rather than with reality.
+//
+// DISTINCT would have hidden that instead of preventing it, and at a price: the
+// select list includes data, which is unbounded text, so every settings query
+// would sort or hash on it. A semi-join answers "at least one" and stops at the
+// first match, on the index shared_settings already has over setting_id.
+func settingSharedWithAny(objectIDs ...string) bunex.SelectQueryOption {
+	ids := gofn.ToSliceSkippingZero(objectIDs...)
+	return bunex.SelectWhereOrIf(len(ids) > 0,
+		"EXISTS (SELECT 1 FROM shared_settings ss"+
+			" WHERE ss.setting_id = setting.id AND ss.deleted_at IS NULL AND ss.object_id IN (?))",
+		bunex.List(ids))
+}
+
 // applyAppFilter filters settings belong to the app or to any parent object
 func (repo *settingRepo) applyAppFilter(opts []bunex.SelectQueryOption,
 	scope *entity.ObjectScope) []bunex.SelectQueryOption {
@@ -317,19 +353,28 @@ func (repo *settingRepo) applyAppFilter(opts []bunex.SelectQueryOption,
 		)
 	}
 
+	// Nearest first: the parent app, then the env, then the project. Order does
+	// not change what matches - they are OR-ed - but it is the order GetSingle
+	// resolves them in when more than one answers.
+	inheritedFrom := []string{scope.ParentAppID, scope.ProjectEnvID, scope.ProjectID}
+
 	return append(opts,
-		bunex.SelectJoin("LEFT JOIN shared_settings ss ON ss.setting_id = setting.id"),
 		bunex.SelectWhereGroup(
+			// This app's setting
 			bunex.SelectWhere("setting.object_id = ?", scope.AppID),
-			bunex.SelectWhereOrIf(scope.ParentAppID != "", "setting.object_id = ?", scope.ParentAppID),
-			bunex.SelectWhereOrIf(scope.ProjectEnvID != "", "setting.object_id = ?", scope.ProjectEnvID),
-			bunex.SelectWhereOr("setting.object_id = ?", scope.ProjectID),
-			bunex.SelectWhereOr("(setting.object_id IS NULL AND setting.inheritable = TRUE)"),
-			bunex.SelectWhereOr("(setting.object_id IS NULL AND ss.object_id = ? AND ss.deleted_at IS NULL)",
-				scope.ProjectID),
-			bunex.SelectWhereOrIf(scope.ProjectEnvID != "",
-				"(setting.object_id IS NULL AND ss.object_id = ? AND ss.deleted_at IS NULL)",
-				scope.ProjectEnvID),
+			// Imported (shared into this app from another scope)
+			settingSharedWithAny(scope.AppID),
+			// Inherited
+			bunex.SelectWhereOrGroup(
+				bunex.SelectWhere("setting.inheritable = TRUE"),
+				bunex.SelectWhereGroup(
+					// Inherited from the parent app, the project env or the project
+					settingOwnedByAny(inheritedFrom...),
+					settingSharedWithAny(inheritedFrom...),
+					// Inherited from global
+					bunex.SelectWhereOr("setting.object_id IS NULL"),
+				),
+			),
 		),
 	)
 }
@@ -343,15 +388,22 @@ func (repo *settingRepo) applyProjectEnvFilter(opts []bunex.SelectQueryOption,
 	}
 
 	return append(opts,
-		bunex.SelectJoin("LEFT JOIN shared_settings ss ON ss.setting_id = setting.id"),
 		bunex.SelectWhereGroup(
-			bunex.SelectWhere("setting.object_id = ?", scope.ProjectID),
-			bunex.SelectWhereOr("setting.object_id = ?", scope.ProjectEnvID),
-			bunex.SelectWhereOr("(setting.object_id IS NULL AND setting.inheritable = TRUE)"),
-			bunex.SelectWhereOr("(setting.object_id IS NULL AND ss.object_id = ? AND ss.deleted_at IS NULL)",
-				scope.ProjectID),
-			bunex.SelectWhereOr("(setting.object_id IS NULL AND ss.object_id = ? AND ss.deleted_at IS NULL)",
-				scope.ProjectEnvID),
+			// This env's setting
+			bunex.SelectWhere("setting.object_id = ?", scope.ProjectEnvID),
+			// Imported (shared into this env from another scope)
+			settingSharedWithAny(scope.ProjectEnvID),
+			// Inherited
+			bunex.SelectWhereOrGroup(
+				bunex.SelectWhere("setting.inheritable = TRUE"),
+				bunex.SelectWhereGroup(
+					// Inherited from project
+					settingOwnedByAny(scope.ProjectID),
+					settingSharedWithAny(scope.ProjectID),
+					// Inherited from global
+					bunex.SelectWhereOr("setting.object_id IS NULL"),
+				),
+			),
 		),
 	)
 }
@@ -367,12 +419,17 @@ func (repo *settingRepo) applyProjectFilter(opts []bunex.SelectQueryOption,
 	}
 
 	return append(opts,
-		bunex.SelectJoin("LEFT JOIN shared_settings ss ON ss.setting_id = setting.id"),
 		bunex.SelectWhereGroup(
+			// This project's setting
 			bunex.SelectWhere("setting.object_id = ?", projectID),
-			bunex.SelectWhereOr("(setting.object_id IS NULL AND setting.inheritable = TRUE)"),
-			bunex.SelectWhereOr("(setting.object_id IS NULL AND ss.object_id = ? AND ss.deleted_at IS NULL)",
-				projectID),
+			// Imported (shared into this project from another scope)
+			settingSharedWithAny(projectID),
+			// Inherited
+			bunex.SelectWhereOrGroup(
+				bunex.SelectWhere("setting.inheritable = TRUE"),
+				// Inherited from global
+				bunex.SelectWhere("setting.object_id IS NULL"),
+			),
 		),
 	)
 }

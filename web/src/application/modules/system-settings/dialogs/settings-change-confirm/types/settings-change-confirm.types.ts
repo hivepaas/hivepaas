@@ -24,10 +24,15 @@ export type SettingsChangeOutcome = "confirmed" | "reverted" | "expired" | "supe
 
 export type SettingsChangeConfirmDialogState = {
     state: { mode: "closed" } | { mode: "open"; kind: SettingsChangeKind; pendingChange: SettingsPendingChange };
-};
 
-export type SettingsChangeConfirmDialogOptions = {
-    props?: {
-        onResolved?: (outcome: SettingsChangeOutcome, changeId: string) => void;
-    };
+    /**
+     * Trials this page has already seen through to an end.
+     *
+     * It lives in the store rather than in whichever component opened the dialog,
+     * because several things open it - the update that started the trial, and the
+     * module noticing an unfinished one on any page - and a dedupe that only one
+     * of them knows about would let the others reopen a change moments after it
+     * was confirmed, from a query result that had not caught up yet.
+     */
+    resolvedChangeIds: Set<string>;
 };

@@ -121,7 +121,9 @@ function DialogActionFooter({ className, children, ...props }: React.ComponentPr
             <div className="px-4">
                 <Separator className="opacity-50" />
             </div>
-            <div className={cn("p-4 flex items-center justify-end gap-3", className)}>{children}</div>
+            <div className={cn("p-4 flex items-center justify-end gap-3 [&_button]:min-w-[100px]", className)}>
+                {children}
+            </div>
         </div>
     );
 }
@@ -140,7 +142,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
             data-slot="dialog-footer"
-            className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+            className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&_button]:min-w-[100px]", className)}
             {...props}
         />
     );

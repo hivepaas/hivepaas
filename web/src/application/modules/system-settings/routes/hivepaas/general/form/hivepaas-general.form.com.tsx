@@ -6,8 +6,10 @@ import { Textarea } from "@components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
+import { AlertTriangleIcon } from "lucide-react";
 import { type FieldPath, FormProvider, useController, useForm, useFormContext, useWatch } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
+import { HivePaaSRequestInfoQueries } from "~/system-settings/data";
 import type { HivePaaSServiceSettings } from "~/system-settings/domain";
 
 import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -239,6 +241,94 @@ function TrustedIPsField({ readOnly }: { readOnly: boolean }) {
     );
 }
 
+/**
+ * What the browser's own request says about the proxies in front.
+ *
+ * The hop count cannot be worked out from the deployment: whether a proxy adds
+ * itself to X-Forwarded-For is that proxy's decision. It has to be measured, and
+ * the request that painted this page took exactly the path real traffic takes -
+ * so the measurement is right here for the asking, and guessing is never the
+ * better option.
+ *
+ * It sits outside the "a provider is configured" branch on purpose. The most
+ * damaging way to get this section wrong is not a hop count that is off by one:
+ * it is a proxy that is really there and was never declared, because then traefik
+ * trusts nobody, every allowlist compares against the proxy's address instead of
+ * the caller's, and nothing anywhere says so. That case only shows up when the
+ * measurement is visible before a provider has been chosen.
+ */
+function MeasuredProxyTopology({ readOnly, hasProxyProvider }: { readOnly: boolean; hasProxyProvider: boolean }) {
+    const { control, setValue } = useFormContext<SchemaInput, unknown, SchemaOutput>();
+    const currentHops = useWatch({ control, name: "proxySettings.proxyHops" });
+    const requestInfo = HivePaaSRequestInfoQueries.useFindOne();
+
+    const info = requestInfo.data?.data;
+    if (info == null) {
+        // Silent when it cannot be read. It is a hint beside a field, and an error
+        // about a missing hint helps nobody who is trying to fill the field in.
+        return null;
+    }
+
+    const detectedProxy = info.suggestedProxyHops > 0;
+    const undeclaredProxy = detectedProxy && !hasProxyProvider;
+    // Offering to fill in the hops without a provider would put the form into a
+    // state its own schema rejects - hops above zero require one.
+    const canApply = hasProxyProvider && !readOnly && info.suggestedProxyHops !== currentHops;
+
+    return (
+        <div className="flex flex-col gap-1.5 rounded-lg border bg-background/50 p-3 text-xs">
+            {undeclaredProxy ? (
+                <p className="flex items-center gap-2 font-semibold text-amber-600 dark:text-amber-400">
+                    <AlertTriangleIcon className="size-3.5 shrink-0" />
+                    This request arrived through {info.suggestedProxyHops} proxy hop
+                    {info.suggestedProxyHops === 1 ? "" : "s"}, but no proxy provider is configured
+                </p>
+            ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-muted-foreground">
+                        {detectedProxy
+                            ? "Measured from this browser's request:"
+                            : "No proxy detected in front of HivePaaS."}
+                    </span>
+                    {detectedProxy && <span className="font-mono font-semibold">{info.suggestedProxyHops}</span>}
+                    {hasProxyProvider &&
+                        (canApply ? (
+                            <button
+                                type="button"
+                                className="text-link underline-offset-4 hover:underline"
+                                onClick={() => {
+                                    setValue("proxySettings.proxyHops", info.suggestedProxyHops, {
+                                        shouldValidate: true,
+                                        shouldDirty: true,
+                                    });
+                                }}
+                            >
+                                Use {info.suggestedProxyHops}
+                            </button>
+                        ) : (
+                            <span className="text-emerald-600 dark:text-emerald-400">matches the value below</span>
+                        ))}
+                </div>
+            )}
+
+            {info.forwardedFor.length > 0 && (
+                <div className="text-muted-foreground">
+                    <span>X-Forwarded-For: </span>
+                    <span className="font-mono break-all">{info.forwardedFor.join(" → ")}</span>
+                </div>
+            )}
+
+            {/*
+             * The check that makes the number trustworthy, and the reason the
+             * chain above is shown at all: if the first entry is not the
+             * operator's own public address, the reading is of some other path
+             * and the suggestion is wrong.
+             */}
+            <p className="text-muted-foreground">{info.explanation}</p>
+        </div>
+    );
+}
+
 function ProxyHopsField({ readOnly }: { readOnly: boolean }) {
     return (
         <NumberField
@@ -261,6 +351,10 @@ function ProxyConfigurationSection({ readOnly }: { readOnly: boolean }) {
         <>
             <SectionHeader>Proxy Configuration</SectionHeader>
             <div className="flex flex-col gap-6 px-3">
+                <MeasuredProxyTopology
+                    readOnly={readOnly}
+                    hasProxyProvider={hasProxyProvider}
+                />
                 <ProxyProviderField readOnly={readOnly} />
                 {hasProxyProvider ? (
                     <>

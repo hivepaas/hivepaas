@@ -1,22 +1,14 @@
 import { create } from "zustand";
 import type { SettingsPendingChange } from "~/system-settings/domain";
 
-import type {
-    SettingsChangeConfirmDialogOptions,
-    SettingsChangeConfirmDialogState,
-    SettingsChangeKind,
-} from "../types";
+import type { SettingsChangeConfirmDialogState, SettingsChangeKind } from "../types";
 
-type State = SettingsChangeConfirmDialogState & SettingsChangeConfirmDialogOptions;
+type State = SettingsChangeConfirmDialogState;
 
 interface Actions {
-    open: (
-        kind: SettingsChangeKind,
-        pendingChange: SettingsPendingChange,
-        options?: SettingsChangeConfirmDialogOptions,
-    ) => void;
+    open: (kind: SettingsChangeKind, pendingChange: SettingsPendingChange) => void;
+    markResolved: (changeId: string) => void;
     close: () => void;
-    clear: () => void;
     destroy: () => void;
 }
 
@@ -24,14 +16,17 @@ export const useSettingsChangeConfirmDialogState = create<State & Actions>()(set
     state: {
         mode: "closed",
     },
-    props: {},
+    resolvedChangeIds: new Set<string>(),
 
-    // Idempotent for the same change. Two things open this dialog - the update
-    // that started the trial, and the page noticing an unfinished one - and they
-    // routinely fire within a moment of each other. Reopening would restart the
-    // probe and throw away whichever of them got there first.
-    open: (kind, pendingChange, options = {}) => {
+    // Idempotent, and refuses a trial that is already over. Two things open this -
+    // the update that started the trial, and the module noticing an unfinished one
+    // - and they routinely fire within a moment of each other. Reopening would
+    // restart the probe and throw away whichever got there first.
+    open: (kind, pendingChange) => {
         set(current => {
+            if (current.resolvedChangeIds.has(pendingChange.changeId)) {
+                return current;
+            }
             if (current.state.mode === "open" && current.state.pendingChange.changeId === pendingChange.changeId) {
                 return current;
             }
@@ -42,8 +37,15 @@ export const useSettingsChangeConfirmDialogState = create<State & Actions>()(set
                     kind,
                     pendingChange,
                 },
-                ...options,
             };
+        });
+    },
+
+    markResolved: changeId => {
+        set(current => {
+            const resolvedChangeIds = new Set(current.resolvedChangeIds);
+            resolvedChangeIds.add(changeId);
+            return { resolvedChangeIds };
         });
     },
 
@@ -52,12 +54,6 @@ export const useSettingsChangeConfirmDialogState = create<State & Actions>()(set
             state: {
                 mode: "closed",
             },
-        });
-    },
-
-    clear: () => {
-        set({
-            props: {},
         });
     },
 

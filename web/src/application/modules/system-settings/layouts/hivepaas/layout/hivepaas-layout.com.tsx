@@ -5,6 +5,8 @@ import { SystemSettingsSidebarLayout, type SystemSettingsTabSection } from "~/sy
 
 import { ROUTE } from "@application/shared/constants";
 
+import { useResumeSettingsTrial } from "./use-resume-settings-trial";
+
 const sections: SystemSettingsTabSection[] = [
     {
         title: "Configuration",
@@ -34,6 +36,8 @@ const sections: SystemSettingsTabSection[] = [
 ];
 
 function View({ children }: PropsWithChildren) {
+    useResumeSettingsTrial();
+
     return <SystemSettingsSidebarLayout sections={sections}>{children}</SystemSettingsSidebarLayout>;
 }
 

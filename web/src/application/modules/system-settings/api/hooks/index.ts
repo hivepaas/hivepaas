@@ -11,3 +11,4 @@ export * from "./use-hivepaas-restart.api";
 export * from "./use-traefik-service-settings.api";
 export * from "./use-traefik-config-options.api";
 export * from "./use-traefik-restart.api";
+export * from "./use-hivepaas-request-info.api";

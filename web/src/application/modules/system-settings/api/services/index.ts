@@ -4,6 +4,7 @@ export * from "./system-cleanup-services";
 export * from "./system-ssl-renewal-services";
 export * from "./system-backup-repo-cleanup-services";
 export * from "./hivepaas-service-settings-services";
+export * from "./hivepaas-request-info-services";
 export * from "./hivepaas-routing-settings-services";
 export * from "./hivepaas-security-settings-services";
 export * from "./hivepaas-app-secret-services";

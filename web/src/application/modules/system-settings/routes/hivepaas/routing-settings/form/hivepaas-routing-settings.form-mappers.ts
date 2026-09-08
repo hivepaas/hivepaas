@@ -3,6 +3,7 @@ import type {
     HivePaaSRoutingSettings,
     HivePaaSRoutingSettingsUpdatePayload,
 } from "~/system-settings/domain";
+import { CONFIRM_WINDOW } from "~/system-settings/module-shared/utils";
 
 import {
     type HivePaaSRoutingSettingsFormInput,
@@ -40,18 +41,6 @@ export function mapHivePaaSRoutingSettingsToFormInput(data: HivePaaSRoutingSetti
     };
 }
 export const mapHivePaaSHttpSettingsToFormInput = mapHivePaaSRoutingSettingsToFormInput;
-
-/**
- * How long the dashboard asks to keep a routing change on trial.
- *
- * Longer than the server's own default, because a person at a browser is the
- * slowest caller it has: they are meant to go and look at the change before
- * vouching for it, and the confirm button is dead for the first ~25s while the
- * proxy catches up. Five minutes leaves a real margin for that, and the cost of
- * the extra time is a longer wait to get back into the dashboard - only the
- * dashboard, since these settings govern the HivePaaS routers alone.
- */
-const CONFIRM_WINDOW = "5m";
 
 export function mapFormValuesToPayload(
     values: HivePaaSRoutingSettingsFormOutput,

@@ -1,7 +1,6 @@
 import React from "react";
 
 import { Button } from "@components/ui";
-import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { X } from "lucide-react";
 
@@ -54,11 +53,11 @@ function View() {
                     </AlertDialogTitle>
                     <AlertDialogDescription
                         className={cn(
-                            dashedBorderBox,
+                            "rounded-lg border border-solid border-gray-300 dark:border-gray-700 bg-[#F1F1F2] dark:bg-gray-950/20 text-left",
                             type === "error"
                                 ? "text-red-500"
                                 : type === "warning"
-                                  ? "text-yellow-500"
+                                  ? "text-amber-600 dark:text-amber-400"
                                   : "text-gray-500",
                             "px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-xs sm:text-sm min-w-0 max-w-full max-h-[min(50svh,24rem)] overflow-y-auto whitespace-pre-wrap break-words break-all",
                         )}
@@ -77,8 +76,20 @@ function View() {
 
                 {showFooter ? (
                     <AlertDialogFooter className="gap-2 sm:gap-3">
-                        {cancelText && <AlertDialogCancel onClick={onCancel}>{cancelText}</AlertDialogCancel>}
-                        <AlertDialogAction onClick={onAction}>{actionText}</AlertDialogAction>
+                        {cancelText && (
+                            <AlertDialogCancel
+                                onClick={onCancel}
+                                className="min-w-[100px]"
+                            >
+                                {cancelText}
+                            </AlertDialogCancel>
+                        )}
+                        <AlertDialogAction
+                            onClick={onAction}
+                            className="min-w-[100px]"
+                        >
+                            {actionText}
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 ) : null}
             </AlertDialogContent>

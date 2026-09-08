@@ -11,6 +11,7 @@ import {
     DialogTitle,
 } from "@components/ui/dialog";
 import { Separator } from "@components/ui/separator";
+import { useQueryClient } from "@tanstack/react-query";
 import { AlertTriangleIcon, CheckCircle2Icon, ExternalLinkIcon, Loader2Icon, WifiOffIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -19,12 +20,13 @@ import {
     HivePaaSServiceSettingsCommands,
     HivePaaSServiceSettingsQueries,
 } from "~/system-settings/data";
+import { QK } from "~/system-settings/data/constants";
 import type { HivePaaSRoutingDomain } from "~/system-settings/domain";
 
 import { HttpException } from "@infrastructure/exceptions/http";
 
 import { formatCountdown, useNow, useSettingsChangeConfirmDialogState } from "../hooks";
-import type { SettingsChangeKind } from "../types";
+import type { SettingsChangeKind, SettingsChangeOutcome } from "../types";
 
 /** How often the probe asks whether HivePaaS is still reachable. */
 const PROBE_INTERVAL_MS = 3000;
@@ -70,7 +72,8 @@ function findPrimaryDomain(domains: HivePaaSRoutingDomain[] | undefined): string
 }
 
 export function SettingsChangeConfirmDialog() {
-    const { state, props: { onResolved = fnPlaceholder } = {}, ...actions } = useSettingsChangeConfirmDialogState();
+    const { state, ...actions } = useSettingsChangeConfirmDialogState();
+    const queryClient = useQueryClient();
 
     const open = state.mode === "open";
     const kind: SettingsChangeKind = state.mode === "open" ? state.kind : "routing";
@@ -138,16 +141,34 @@ export function SettingsChangeConfirmDialog() {
         void probe.refetch();
     };
 
+    // Closing out a trial is one thing, done in one place, so no caller can end
+    // one without recording it. The record is what stops the module reopening the
+    // dialog from a query result that has not caught up yet.
+    const finish = (outcome: SettingsChangeOutcome) => {
+        actions.markResolved(changeId);
+        actions.close();
+
+        // The confirm and revert commands invalidate their own settings query
+        // already; this covers the outcomes that ran no command at all - a trial
+        // that expired, or one another session ended.
+        if (outcome === "expired" || outcome === "superseded") {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["system-settings.hivepaas.routing-settings.find-one"]],
+            });
+            void queryClient.invalidateQueries({
+                queryKey: [QK["system-settings.hivepaas.service-settings.find-one"]],
+            });
+        }
+    };
+
     const onConfirmed = () => {
         toast.success("Change confirmed");
-        onResolved("confirmed", changeId);
-        actions.close();
+        finish("confirmed");
     };
 
     const onReverted = () => {
         toast.info("Change reverted");
-        onResolved("reverted", changeId);
-        actions.close();
+        finish("reverted");
     };
 
     const routingConfirm = HivePaaSRoutingSettingsCommands.useConfirmChange({
@@ -196,8 +217,7 @@ export function SettingsChangeConfirmDialog() {
     const copy = COPY[kind];
 
     function handleResolvedAcknowledged() {
-        onResolved(phase === "expired" ? "expired" : "superseded", changeId);
-        actions.close();
+        finish(phase === "expired" ? "expired" : "superseded");
     }
 
     return (

@@ -75,7 +75,7 @@ function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">)
     return (
         <div
             data-slot="alert-dialog-footer"
-            className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+            className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end [&_button]:min-w-[100px]", className)}
             {...props}
         />
     );
@@ -107,7 +107,7 @@ function AlertDialogDescription({
 function AlertDialogAction({ className, ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Action>) {
     return (
         <AlertDialogPrimitive.Action
-            className={cn(buttonVariants(), className)}
+            className={cn(buttonVariants(), "min-w-[100px]", className)}
             {...props}
         />
     );
@@ -116,7 +116,7 @@ function AlertDialogAction({ className, ...props }: React.ComponentProps<typeof 
 function AlertDialogCancel({ className, ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Cancel>) {
     return (
         <AlertDialogPrimitive.Cancel
-            className={cn(buttonVariants({ variant: "outline" }), className)}
+            className={cn(buttonVariants({ variant: "outline" }), "min-w-[100px]", className)}
             {...props}
         />
     );

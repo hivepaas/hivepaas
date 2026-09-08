@@ -9,3 +9,4 @@ export * from "./hivepaas-security-settings.queries";
 export * from "./traefik-service-settings.queries";
 
 export * from "./traefik-config-options.queries";
+export * from "./hivepaas-request-info.queries";

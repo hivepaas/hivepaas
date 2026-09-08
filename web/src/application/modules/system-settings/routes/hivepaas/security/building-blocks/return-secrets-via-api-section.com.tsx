@@ -111,7 +111,7 @@ export function ReturnSecretsViaApiSection() {
                     if (!open) handleCloseDialog();
                 }}
             >
-                <DialogFixedContent className="sm:max-w-[560px]">
+                <DialogFixedContent className="sm:max-w-[450px]">
                     <DialogHeader>
                         <DialogTitle>
                             {isEnabled ? "Disable Returning Secrets via API" : "Enable Returning Secrets via API"}

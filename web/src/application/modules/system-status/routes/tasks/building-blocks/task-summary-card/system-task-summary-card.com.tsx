@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@components/ui/badge";
 import { dashedBorderBox } from "@lib/styles";
 import { format } from "date-fns";
-import { ChevronDown } from "lucide-react";
+import { Calendar, ChevronDown, Clock, ShieldCheck } from "lucide-react";
 import ReactTimeAgo from "react-time-ago";
 import type { SystemTask } from "~/system-status/domain";
 import { SystemTaskStatus } from "~/system-status/domain";
@@ -67,8 +67,8 @@ function formatValue(value: string | number | null | undefined): string {
 
 function canCancelTask(task: SystemTask): boolean {
     return (
-        task.status === SystemTaskStatus.NotStarted ||
-        (task.status === SystemTaskStatus.InProgress && !task.config.controlDisabled)
+        !task.config.controlDisabled &&
+        (task.status === SystemTaskStatus.NotStarted || task.status === SystemTaskStatus.InProgress)
     );
 }
 
@@ -77,11 +77,11 @@ function shouldShowDuration(task: SystemTask): task is SystemTask & { startedAt:
 }
 
 function StatusBadge({ status }: { status: SystemTaskStatus }) {
-    return <Badge className={cn("h-7 px-3", STATUS_CLASS_NAMES[status])}>{STATUS_LABELS[status]}</Badge>;
+    return <Badge className={cn("h-7 px-3 text-sm", STATUS_CLASS_NAMES[status])}>{STATUS_LABELS[status]}</Badge>;
 }
 
 function JobBadge({ kind }: { kind: string }) {
-    return <Badge className="h-7 bg-sky-400 px-3 text-white hover:bg-sky-400/90">{kind}</Badge>;
+    return <Badge className="h-7 bg-sky-400 px-3 text-sm text-white hover:bg-sky-400/90">{kind}</Badge>;
 }
 
 function InfoRow({ label, children }: { label: string; children: ReactNode }) {
@@ -114,7 +114,7 @@ export function SystemTaskSummaryCard({
 }: SystemTaskSummaryCardProps) {
     const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(false);
     const isClickable = Boolean(onClick);
-    const shouldShowDetailsContent = !isFullHeight && (variant === "list" || isDetailsContentOpen);
+    const shouldShowDetailsContent = !isFullHeight && isDetailsContentOpen;
     const { priority } = task.config;
     const controlEnabled = !task.config.controlDisabled;
     const jobKind = task.targetJob?.kind.trim();
@@ -133,7 +133,7 @@ export function SystemTaskSummaryCard({
             className={cn(
                 "rounded-[8px] border bg-background shadow-xs",
                 variant === "list"
-                    ? ["p-5", STATUS_BORDER_CLASS_NAMES[task.status]]
+                    ? ["p-3 sm:p-4", STATUS_BORDER_CLASS_NAMES[task.status]]
                     : "border-0 p-0 shadow-none bg-transparent",
                 isClickable &&
                     "cursor-pointer transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -147,11 +147,13 @@ export function SystemTaskSummaryCard({
             onClick={onClick}
             onKeyDown={handleKeyDown}
         >
-            <dl className="grid grid-cols-1 items-center gap-y-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-x-8 sm:gap-y-4">
-                <InfoRow label="Status">
-                    <div className="flex items-center justify-between gap-3 w-full">
-                        <div className="flex flex-wrap items-center gap-3">
+            {variant === "list" ? (
+                <div className="flex flex-col gap-2.5">
+                    {/* Header: Status, Job Kind, Cancel Link, and Schedule At */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
                             <StatusBadge status={task.status} />
+                            {jobKind && <JobBadge kind={jobKind} />}
                             {onCancel && canCancelTask(task) && (
                                 <PopConfirm
                                     title="Cancel task"
@@ -166,17 +168,121 @@ export function SystemTaskSummaryCard({
                                     <Button
                                         type="button"
                                         variant="link"
-                                        className="h-auto p-0 text-primary"
+                                        className="h-auto p-0 text-sm text-destructive hover:underline"
                                         isLoading={isCancelling}
                                         onClick={event => {
                                             event.stopPropagation();
                                         }}
                                     >
-                                        Cancel Task
+                                        Cancel
                                     </Button>
                                 </PopConfirm>
                             )}
-                            {variant === "details" && (
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                                <Calendar className="size-4 shrink-0 text-muted-foreground/70" />
+                                <span>Scheduled:</span>
+                                <span className="font-medium text-foreground">{formatDateTime(task.runAt)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Meta Row / Chips */}
+                    <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-sm text-muted-foreground pt-2 border-t border-border/50">
+                        {shouldShowDuration(task) && (
+                            <>
+                                <div className="flex items-center gap-1.5">
+                                    <Clock className="size-4 shrink-0 text-muted-foreground/70" />
+                                    <span>
+                                        {formatDuration(task.startedAt, task.endedAt ?? now)} (
+                                        <ReactTimeAgo
+                                            date={task.startedAt}
+                                            locale="en-US"
+                                        />
+                                        )
+                                    </span>
+                                </div>
+                                <span className="text-muted-foreground/40 select-none">•</span>
+                            </>
+                        )}
+
+                        <div className="flex items-center gap-1">
+                            <span>Priority:</span>
+                            <span className="font-medium text-foreground capitalize">{priority}</span>
+                        </div>
+
+                        <span className="text-muted-foreground/40 select-none">•</span>
+
+                        <div className="flex items-center gap-1">
+                            <span>Retries:</span>
+                            <span className="font-medium text-foreground">
+                                {task.config.retry} / {task.config.maxRetry}
+                            </span>
+                        </div>
+
+                        {task.config.timeout && task.config.timeout !== "" && task.config.timeout !== "-" && (
+                            <>
+                                <span className="text-muted-foreground/40 select-none">•</span>
+                                <div className="flex items-center gap-1">
+                                    <span>Timeout:</span>
+                                    <span className="font-medium text-foreground">{task.config.timeout}</span>
+                                </div>
+                            </>
+                        )}
+
+                        <span className="text-muted-foreground/40 select-none">•</span>
+
+                        <div className="flex items-center gap-1.5">
+                            <ShieldCheck
+                                className={cn(
+                                    "size-4 shrink-0",
+                                    controlEnabled ? "text-emerald-500" : "text-muted-foreground/50",
+                                )}
+                            />
+                            <span>Control:</span>
+                            <span
+                                className={cn(
+                                    "font-medium",
+                                    controlEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+                                )}
+                            >
+                                {controlEnabled ? "Enabled" : "Disabled"}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <dl className="grid grid-cols-1 items-center gap-y-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-x-8 sm:gap-y-4">
+                    <InfoRow label="Status">
+                        <div className="flex items-center justify-between gap-3 w-full">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <StatusBadge status={task.status} />
+                                {onCancel && canCancelTask(task) && (
+                                    <PopConfirm
+                                        title="Cancel task"
+                                        description="Are you sure you want to cancel this task?"
+                                        confirmText="Cancel task"
+                                        cancelText="Cancel"
+                                        variant="destructive"
+                                        onConfirm={() => {
+                                            onCancel(task.id);
+                                        }}
+                                    >
+                                        <Button
+                                            type="button"
+                                            variant="link"
+                                            className="h-auto p-0 text-sm text-destructive hover:underline"
+                                            isLoading={isCancelling}
+                                            onClick={event => {
+                                                event.stopPropagation();
+                                            }}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </PopConfirm>
+                                )}
                                 <Button
                                     type="button"
                                     variant="ghost"
@@ -197,102 +303,102 @@ export function SystemTaskSummaryCard({
                                         )}
                                     />
                                 </Button>
+                            </div>
+
+                            {onToggleFullscreen && (
+                                <LogViewerActionButtons
+                                    isFullscreen={isFullscreen}
+                                    isFullView={isFullView}
+                                    isFullHeight={isFullHeight}
+                                    fontSize={fontSize}
+                                    themeId={themeId}
+                                    onToggleFullscreen={onToggleFullscreen}
+                                    onToggleFullView={onToggleFullView}
+                                    onToggleFullHeight={onToggleFullHeight}
+                                    onCycleFontSize={onCycleFontSize}
+                                    onSelectTheme={onSelectTheme}
+                                />
                             )}
                         </div>
-
-                        {variant === "details" && onToggleFullscreen && (
-                            <LogViewerActionButtons
-                                isFullscreen={isFullscreen}
-                                isFullView={isFullView}
-                                isFullHeight={isFullHeight}
-                                fontSize={fontSize}
-                                themeId={themeId}
-                                onToggleFullscreen={onToggleFullscreen}
-                                onToggleFullView={onToggleFullView}
-                                onToggleFullHeight={onToggleFullHeight}
-                                onCycleFontSize={onCycleFontSize}
-                                onSelectTheme={onSelectTheme}
-                            />
-                        )}
-                    </div>
-                </InfoRow>
-
-                {shouldShowDetailsContent && jobKind ? (
-                    <InfoRow label="Job">
-                        <JobBadge kind={jobKind} />
                     </InfoRow>
-                ) : null}
 
-                {shouldShowDetailsContent && (
-                    <InfoRow label="Schedule At">
-                        <span>{formatDateTime(task.runAt)}</span>
-                    </InfoRow>
-                )}
+                    {shouldShowDetailsContent && jobKind ? (
+                        <InfoRow label="Job">
+                            <JobBadge kind={jobKind} />
+                        </InfoRow>
+                    ) : null}
 
-                {variant === "details" && shouldShowDetailsContent && (
-                    <>
-                        <InfoRow label="Started At">
-                            <span>{formatDateTime(task.startedAt)}</span>
+                    {shouldShowDetailsContent && (
+                        <InfoRow label="Schedule At">
+                            <span>{formatDateTime(task.runAt)}</span>
                         </InfoRow>
-                        <InfoRow label="Ended At">
-                            <span>{formatDateTime(task.endedAt)}</span>
-                        </InfoRow>
-                    </>
-                )}
+                    )}
 
-                {shouldShowDetailsContent && shouldShowDuration(task) && (
-                    <InfoRow label="Duration">
-                        <span>
-                            {formatDuration(task.startedAt, task.endedAt ?? now)} from{" "}
-                            <ReactTimeAgo
-                                date={task.startedAt}
-                                locale="en-US"
-                            />
-                        </span>
-                    </InfoRow>
-                )}
-
-                {shouldShowDetailsContent && (
-                    <>
-                        <InfoRow label="Priority">
-                            <span>{priority}</span>
-                        </InfoRow>
-                        <InfoRow label="Control Enabled">
-                            <Checkbox
-                                checked={controlEnabled}
-                                disabled
-                            />
-                        </InfoRow>
-                        <InfoRow label="Timeout">
-                            <span>{formatValue(task.config.timeout)}</span>
-                        </InfoRow>
-                        <InfoRow label="Max Retry">
-                            <span>{task.config.maxRetry}</span>
-                        </InfoRow>
-                    </>
-                )}
-
-                {shouldShowDetailsContent && (
-                    <InfoRow label="Retries">
-                        <span>{task.config.retry}</span>
-                    </InfoRow>
-                )}
-
-                {variant === "details" && shouldShowDetailsContent && (
-                    <>
-                        <InfoRow label="Retry Delay">
-                            <span>{formatValue(task.config.retryDelay)}</span>
-                        </InfoRow>
-                        {task.lastError.trim() ? (
-                            <InfoRow label="Error">
-                                <div className={cn(dashedBorderBox, "break-words whitespace-pre-wrap")}>
-                                    {task.lastError}
-                                </div>
+                    {shouldShowDetailsContent && (
+                        <>
+                            <InfoRow label="Started At">
+                                <span>{formatDateTime(task.startedAt)}</span>
                             </InfoRow>
-                        ) : null}
-                    </>
-                )}
-            </dl>
+                            <InfoRow label="Ended At">
+                                <span>{formatDateTime(task.endedAt)}</span>
+                            </InfoRow>
+                        </>
+                    )}
+
+                    {shouldShowDetailsContent && shouldShowDuration(task) && (
+                        <InfoRow label="Duration">
+                            <span>
+                                {formatDuration(task.startedAt, task.endedAt ?? now)} from{" "}
+                                <ReactTimeAgo
+                                    date={task.startedAt}
+                                    locale="en-US"
+                                />
+                            </span>
+                        </InfoRow>
+                    )}
+
+                    {shouldShowDetailsContent && (
+                        <>
+                            <InfoRow label="Priority">
+                                <span>{priority}</span>
+                            </InfoRow>
+                            <InfoRow label="Control Enabled">
+                                <Checkbox
+                                    checked={controlEnabled}
+                                    disabled
+                                />
+                            </InfoRow>
+                            <InfoRow label="Timeout">
+                                <span>{formatValue(task.config.timeout)}</span>
+                            </InfoRow>
+                            <InfoRow label="Max Retry">
+                                <span>{task.config.maxRetry}</span>
+                            </InfoRow>
+                        </>
+                    )}
+
+                    {shouldShowDetailsContent && (
+                        <InfoRow label="Retries">
+                            <span>{task.config.retry}</span>
+                        </InfoRow>
+                    )}
+
+                    {shouldShowDetailsContent && (
+                        <>
+                            <InfoRow label="Retry Delay">
+                                <span>{formatValue(task.config.retryDelay)}</span>
+                            </InfoRow>
+                            {task.lastError.trim() ? (
+                                <InfoRow label="Error">
+                                    <div className={cn(dashedBorderBox, "break-words whitespace-pre-wrap")}>
+                                        {task.lastError}
+                                    </div>
+                                </InfoRow>
+                            ) : null}
+                        </>
+                    )}
+                </dl>
+            )}
 
             {children && (
                 <div className={cn("mt-5 min-w-0", isFullscreen && "flex-1 min-h-0 flex flex-col")}>{children}</div>
@@ -302,13 +408,30 @@ export function SystemTaskSummaryCard({
 }
 
 export function SystemTaskSummaryCardSkeleton({ variant = "list" }: { variant?: SystemTaskCardVariant }) {
+    if (variant === "list") {
+        return (
+            <div className="rounded-[8px] border border-border bg-background p-3 sm:p-4 border-l-4 border-l-muted">
+                <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                            <Skeleton className="h-7 w-20 rounded-md" />
+                            <Skeleton className="h-7 w-28 rounded-md" />
+                        </div>
+                        <Skeleton className="h-5 w-44 rounded-md" />
+                    </div>
+                    <div className="flex items-center gap-3 pt-2 border-t border-border/40">
+                        <Skeleton className="h-4 w-36" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-4 w-24" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div
-            className={cn(
-                "rounded-[8px] border border-border bg-background p-5",
-                variant === "list" && "border-l-4 border-l-purple-200",
-            )}
-        >
+        <div className="rounded-[8px] border border-border bg-background p-5">
             <div className="grid grid-cols-1 items-center gap-y-2 sm:grid-cols-[150px_minmax(0,1fr)] sm:gap-x-8 sm:gap-y-4">
                 <Skeleton className="h-5 w-16" />
                 <Skeleton className="h-7 w-56" />

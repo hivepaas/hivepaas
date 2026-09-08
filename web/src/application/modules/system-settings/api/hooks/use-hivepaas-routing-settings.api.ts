@@ -11,24 +11,7 @@ import type {
 
 import { useApiErrorNotifications } from "@infrastructure/api";
 
-import { HttpException } from "@infrastructure/exceptions/http";
-
-/**
- * Errors the confirm dialog explains better than a toast can.
- *
- * "Too early" is not a failure at all - it is the proxy still catching up, and
- * the dialog answers it by waiting and retrying. A toast would turn a normal
- * step of the flow into something that looks broken.
- */
-const CONFIRM_ERRORS_HANDLED_BY_CALLER = new Set([
-    "ERR_SETTINGS_CONFIRM_TOO_EARLY",
-    "ERR_SETTINGS_CHANGE_SUPERSEDED",
-    "ERR_SETTINGS_NO_PENDING_CHANGE",
-]);
-
-function isHandledByCaller(error: Error): boolean {
-    return error instanceof HttpException && CONFIRM_ERRORS_HANDLED_BY_CALLER.has(error.code);
-}
+import { isProbationErrorHandledByCaller } from "./settings-probation.errors";
 
 function createHook() {
     return function useHivePaaSRoutingSettingsApi() {
@@ -91,7 +74,7 @@ function createHook() {
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {
-                            if (!isHandledByCaller(error)) {
+                            if (!isProbationErrorHandledByCaller(error)) {
                                 notifyError({ message: "Failed to confirm the routing change", error });
                             }
                             throw error;
@@ -105,7 +88,7 @@ function createHook() {
                     return match(result, {
                         Ok: _ => _,
                         Err: error => {
-                            if (!isHandledByCaller(error)) {
+                            if (!isProbationErrorHandledByCaller(error)) {
                                 notifyError({ message: "Failed to revert the routing change", error });
                             }
                             throw error;

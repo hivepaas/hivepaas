@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { SettingsPendingChangeSchema } from "./settings-probation.entity.schema";
+
 const SettingRefSchema = z
     .object({
         id: z.string(),
@@ -28,17 +30,10 @@ export const HivePaaSRoutingDomainSchema = z.object({
     rateLimitConfig: HivePaaSRoutingRateLimitConfigSchema.nullish(),
 });
 
-export const HivePaaSRoutingPendingChangeSchema = z.object({
-    changeId: z.string(),
-    appliedAt: z.coerce.date(),
-    confirmableFrom: z.coerce.date(),
-    deadlineAt: z.coerce.date(),
-});
-
 export const HivePaaSRoutingSettingsEntitySchema = z.object({
     domains: z.array(HivePaaSRoutingDomainSchema).nullish(),
     updateVer: z.number(),
-    pendingChange: HivePaaSRoutingPendingChangeSchema.nullish(),
+    pendingChange: SettingsPendingChangeSchema.nullish(),
 });
 
 export const HivePaaSHttpSettingsEntitySchema = HivePaaSRoutingSettingsEntitySchema;

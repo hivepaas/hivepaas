@@ -1,7 +1,7 @@
 import type {
-    HivePaaSRoutingPendingChange,
     HivePaaSRoutingSettings,
     HivePaaSRoutingSettingsUpdatePayload,
+    SettingsPendingChange,
 } from "~/system-settings/domain";
 
 import type { ApiRequestBase, ApiResponseBase } from "@infrastructure/api";
@@ -15,7 +15,7 @@ export type HivePaaSRoutingSettings_UpdateOne_Req = ApiRequestBase<{
 // The update answers with the trial it just started, so the caller knows what to
 // confirm and by when. Null only if the server did not put the change on trial.
 export type HivePaaSRoutingSettings_UpdateOne_Res = ApiResponseBase<{
-    pendingChange: HivePaaSRoutingPendingChange | null;
+    pendingChange: SettingsPendingChange | null;
 }>;
 
 export type HivePaaSRoutingSettings_ConfirmChange_Req = ApiRequestBase<{ changeId: string }>;

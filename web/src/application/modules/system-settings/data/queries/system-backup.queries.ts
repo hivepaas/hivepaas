@@ -6,10 +6,7 @@ import { QK } from "~/system-settings/data/constants";
 type FindOneReq = SystemBackup_FindOne_Req["data"];
 type FindOneRes = SystemBackup_FindOne_Res;
 
-function useFindOne(
-    request: FindOneReq = {},
-    options: Omit<UseQueryOptions<FindOneRes>, "queryKey" | "queryFn"> = {},
-) {
+function useFindOne(request: FindOneReq = {}, options: Omit<UseQueryOptions<FindOneRes>, "queryKey" | "queryFn"> = {}) {
     const { queries } = useSystemBackupApi();
 
     return useQuery({

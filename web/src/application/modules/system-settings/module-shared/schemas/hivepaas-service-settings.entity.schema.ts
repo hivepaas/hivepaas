@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
+import { SettingsPendingChangeSchema } from "./settings-probation.entity.schema";
+
 const HivePaaSAppSettingsSchema = z.object({
     replicas: z.number(),
 });
@@ -34,4 +36,5 @@ export const HivePaaSServiceSettingsEntitySchema = SettingsBaseEntitySchema.omit
     taskSettings: HivePaaSTaskSettingsSchema,
     periodicSettings: HivePaaSPeriodicSettingsSchema,
     proxySettings: HivePaaSProxySettingsSchema,
+    pendingChange: SettingsPendingChangeSchema.nullish(),
 });

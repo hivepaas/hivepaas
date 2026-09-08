@@ -3,18 +3,18 @@ import { z } from "zod";
 import type {
     HivePaaSRoutingClientConfig,
     HivePaaSRoutingDomain,
-    HivePaaSRoutingPendingChange,
     HivePaaSRoutingRateLimitConfig,
+    SettingsPendingChange,
 } from "~/system-settings/domain";
 import type {
     HivePaaSRoutingClientConfigSchema,
     HivePaaSRoutingDomainSchema,
-    HivePaaSRoutingPendingChangeSchema,
     HivePaaSRoutingRateLimitConfigSchema,
+    SettingsPendingChangeSchema,
 } from "~/system-settings/module-shared/schemas";
 import {
     HivePaaSRoutingSettingsEntitySchema,
-    HivePaaSRoutingPendingChangeSchema as PendingChangeSchema,
+    SettingsPendingChangeSchema as PendingChangeSchema,
 } from "~/system-settings/module-shared/schemas";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
@@ -51,8 +51,8 @@ const RevertChangeSchema = z.object({
 });
 
 function mapPendingChange(
-    raw: z.infer<typeof HivePaaSRoutingPendingChangeSchema> | null | undefined,
-): HivePaaSRoutingPendingChange | null {
+    raw: z.infer<typeof SettingsPendingChangeSchema> | null | undefined,
+): SettingsPendingChange | null {
     if (raw == null) {
         return null;
     }

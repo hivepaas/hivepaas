@@ -5,8 +5,9 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import type { HivePaaSRoutingSettings_UpdateOne_Req } from "~/system-settings/api/services";
 import { HivePaaSRoutingSettingsCommands, HivePaaSRoutingSettingsQueries } from "~/system-settings/data";
-import { useRoutingChangeConfirmDialogState } from "~/system-settings/dialogs";
-import type { HivePaaSRoutingPendingChange } from "~/system-settings/domain";
+import { useSettingsChangeConfirmDialogState } from "~/system-settings/dialogs";
+import type { SettingsChangeOutcome } from "~/system-settings/dialogs";
+import type { SettingsPendingChange } from "~/system-settings/domain";
 
 import { AppLoader, FormActionBar } from "@application/shared/components";
 import { MODULE_IDS } from "@application/shared/constants";
@@ -28,7 +29,7 @@ export function SystemSettingsHivePaaSRoutingSettingsRoute() {
     const formRef = useRef<HivePaaSRoutingSettingsFormRef>(null);
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.System });
 
-    const confirmDialog = useRoutingChangeConfirmDialogState();
+    const confirmDialog = useSettingsChangeConfirmDialogState();
     // Changes this page has already seen through to an end. Without it the effect
     // below would reopen the dialog from cached data in the moment between a
     // confirmation landing and the refetch that clears the pending change.
@@ -38,13 +39,13 @@ export function SystemSettingsHivePaaSRoutingSettingsRoute() {
 
     const pendingChange = settingsQuery.data?.data.pendingChange ?? null;
 
-    function openConfirmDialog(change: HivePaaSRoutingPendingChange) {
+    function openConfirmDialog(change: SettingsPendingChange) {
         if (resolvedChangeIds.current.has(change.changeId)) {
             return;
         }
-        confirmDialog.open(change, {
+        confirmDialog.open("routing", change, {
             props: {
-                onResolved: (_outcome, changeId) => {
+                onResolved: (_outcome: SettingsChangeOutcome, changeId: string) => {
                     resolvedChangeIds.current.add(changeId);
                     void settingsQuery.refetch();
                 },

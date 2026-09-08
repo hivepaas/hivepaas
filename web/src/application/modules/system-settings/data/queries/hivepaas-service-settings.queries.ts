@@ -19,6 +19,27 @@ function useFindOne(request: FindOneReq = {}, options: Omit<UseQueryOptions<Find
     });
 }
 
+/**
+ * Polls the settings endpoint while a proxy change is on trial.
+ *
+ * Two answers from one request: whether the caller can reach HivePaaS at all,
+ * and whether the trial is still running. During a proxy change the first answer
+ * is "no" for a while by design - traefik is being restarted - which is why the
+ * dialog reads it against confirmableFrom rather than on its own.
+ */
+function useProbe(options: Omit<UseQueryOptions<FindOneRes>, "queryKey" | "queryFn"> = {}) {
+    const { queries } = useHivePaaSServiceSettingsApi();
+
+    return useQuery({
+        queryKey: [QK["system-settings.hivepaas.service-settings.probe"]],
+        queryFn: ({ signal }) => queries.probe(signal),
+        retry: false,
+        gcTime: 0,
+        ...options,
+    });
+}
+
 export const HivePaaSServiceSettingsQueries = Object.freeze({
     useFindOne,
+    useProbe,
 });

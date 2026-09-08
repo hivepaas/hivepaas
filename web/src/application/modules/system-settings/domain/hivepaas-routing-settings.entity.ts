@@ -1,3 +1,5 @@
+import type { SettingsPendingChange } from "./settings-probation.entity";
+
 export type HivePaaSRoutingSslCertRef = {
     id: string;
     name: string;
@@ -24,30 +26,10 @@ export type HivePaaSRoutingDomain = {
     rateLimitConfig?: HivePaaSRoutingRateLimitConfig | null;
 };
 
-/**
- * A routing change that has been applied but not yet vouched for.
- *
- * HivePaaS applies routing changes on trial: unless a request gets back in
- * through the new configuration and confirms it, the change is undone at
- * `deadlineAt`. That is the guard for the mistakes nothing can detect up front -
- * a broken auth reference, a domain whose DNS is not ready, an allowlist that
- * excludes the person editing it.
- *
- * `confirmableFrom` is earlier than `deadlineAt` and later than `appliedAt`: the
- * proxy needs a few seconds to pick the change up, and a confirmation sent before
- * that would be vouching for the configuration being replaced.
- */
-export type HivePaaSRoutingPendingChange = {
-    changeId: string;
-    appliedAt: Date;
-    confirmableFrom: Date;
-    deadlineAt: Date;
-};
-
 export type HivePaaSRoutingSettings = {
     domains: HivePaaSRoutingDomain[];
     updateVer: number;
-    pendingChange: HivePaaSRoutingPendingChange | null;
+    pendingChange: SettingsPendingChange | null;
 };
 
 export type HivePaaSRoutingSettingsObjectIdReq = {

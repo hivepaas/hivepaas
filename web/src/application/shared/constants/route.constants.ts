@@ -541,6 +541,11 @@ export const ROUTE = {
                 $route: (taskId: string) => `/system-status/tasks/${taskId}/`,
             },
         },
+
+        auditLogs: {
+            $pattern: "system-status/audit-logs",
+            $route: "/system-status/audit-logs/",
+        },
     },
 
     /**
@@ -1131,6 +1136,16 @@ export const ROUTE = {
                         $route: (id: string, volumeId: string) =>
                             `/projects/${id}/cluster-resources/volumes/${volumeId}/edit/`,
                     },
+                },
+            },
+
+            status: {
+                $pattern: "projects/:id/status",
+                $route: (id: string) => `/projects/${id}/status/`,
+
+                auditLogs: {
+                    $pattern: "projects/:id/status/audit-logs",
+                    $route: (id: string) => `/projects/${id}/status/audit-logs/`,
                 },
             },
         },

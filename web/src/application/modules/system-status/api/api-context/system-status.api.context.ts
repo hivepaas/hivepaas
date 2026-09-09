@@ -1,9 +1,16 @@
 import { createContext } from "react";
 
-import { SystemTaskLogsWsApi, SystemTasksApi, SystemTasksApiValidator } from "../services";
+import {
+    AuditLogsApi,
+    AuditLogsApiValidator,
+    SystemTaskLogsWsApi,
+    SystemTasksApi,
+    SystemTasksApiValidator,
+} from "../services";
 
 function createApi() {
     const systemTasksValidator = new SystemTasksApiValidator();
+    const auditLogsValidator = new AuditLogsApiValidator();
 
     return {
         systemStatus: {
@@ -11,6 +18,7 @@ function createApi() {
             taskLogs: {
                 $: new SystemTaskLogsWsApi(),
             },
+            auditLogs: new AuditLogsApi(auditLogsValidator),
         },
     };
 }

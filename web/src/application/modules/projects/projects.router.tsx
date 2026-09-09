@@ -506,6 +506,10 @@ export const projectsRouter: RouteObject = {
                     element: <ProjectRouteRedirect to={ROUTE.projects.single.clusterResources.networks.$route} />,
                 },
                 {
+                    path: ROUTE.projects.single.status.$pattern,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.status.auditLogs.$route} />,
+                },
+                {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.accessTokens,
                     element: (
                         <ProjectRouteRedirect to={ROUTE.projects.single.providerConfiguration.accessTokens.$route} />
@@ -1265,6 +1269,31 @@ export const projectsRouter: RouteObject = {
 
                                 return {
                                     Component: ProjectVolumeEditRoute,
+                                };
+                            },
+                        },
+                    ],
+                },
+                {
+                    lazy: async () => {
+                        const { ProjectWithSidebar } = await getLazyComponents();
+
+                        return {
+                            element: (
+                                <ProjectWithSidebar section="status">
+                                    <Outlet />
+                                </ProjectWithSidebar>
+                            ),
+                        };
+                    },
+                    children: [
+                        {
+                            path: ROUTE.projects.single.status.auditLogs.$pattern,
+                            lazy: async () => {
+                                const { ProjectAuditLogsRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectAuditLogsRoute,
                                 };
                             },
                         },

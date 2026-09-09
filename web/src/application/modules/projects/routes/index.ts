@@ -45,6 +45,7 @@ export {
     ProjectVolumesRoute,
     ProjectVolumeCreateRoute,
     ProjectVolumeEditRoute,
+    ProjectAuditLogsRoute,
     ProjectCloudStorageEditRoute,
     ProjectCloudStorageCreateRoute,
     ProjectRegistryAuthEditRoute,

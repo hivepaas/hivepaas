@@ -1,4 +1,4 @@
 /**
  * System Status
  */
-export { SystemTaskDetailsRoute, SystemTasksRoute } from "./routes";
+export { SystemAuditLogsRoute, SystemTaskDetailsRoute, SystemTasksRoute } from "./routes";

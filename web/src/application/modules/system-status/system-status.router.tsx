@@ -53,5 +53,21 @@ export const systemStatusRouter: RouteObject = {
                 };
             },
         },
+        {
+            path: ROUTE.systemStatus.auditLogs.$pattern,
+            lazy: async () => {
+                const { SystemAuditLogsRoute } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Audit Logs">
+                                <SystemAuditLogsRoute />
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+        },
     ],
 } as const;

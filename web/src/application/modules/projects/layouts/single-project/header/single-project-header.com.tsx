@@ -74,6 +74,11 @@ function View({ projectId }: Props) {
             label: "Cluster Resources",
             activePathPrefixes: [ROUTE.projects.single.clusterResources.$route(projectId)],
         },
+        {
+            route: ROUTE.projects.single.status.auditLogs.$route(projectId),
+            label: "Status",
+            activePathPrefixes: [ROUTE.projects.single.status.$route(projectId)],
+        },
     ];
 
     function openProjectUserAccessesDialog() {

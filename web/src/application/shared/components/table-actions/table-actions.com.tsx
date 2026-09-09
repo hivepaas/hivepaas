@@ -4,7 +4,7 @@ import { Input } from "@components/ui/input";
 import { SearchIcon } from "lucide-react";
 import { useDebounce } from "react-use";
 
-export function TableActions({ children, search, renderActions = null }: Props) {
+export function TableActions({ children, search, renderActions = null, renderAfterSearch = null }: Props) {
     const [internalSearch, setInternalSearch] = useState(search?.value ?? "");
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -45,6 +45,8 @@ export function TableActions({ children, search, renderActions = null }: Props) 
                         />
                     </div>
                 )}
+
+                {renderAfterSearch}
             </div>
 
             {renderActions && (
@@ -64,4 +66,5 @@ type Props = PropsWithChildren<{
         placeholder?: string;
     };
     renderActions?: React.ReactNode;
+    renderAfterSearch?: React.ReactNode;
 }>;

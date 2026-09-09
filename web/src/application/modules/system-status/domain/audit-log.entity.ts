@@ -80,7 +80,6 @@ export interface AuditLog {
     source?: AuditLogSource;
     result: AuditLogResult;
     scopeProject?: AuditLogScopeProject;
-    scopeProjectEnv?: AuditLogScopeProjectEnv;
     scopeApp?: AuditLogScopeApp;
     scopeUser?: AuditLogScopeUser;
     actor?: AuditLogActor;

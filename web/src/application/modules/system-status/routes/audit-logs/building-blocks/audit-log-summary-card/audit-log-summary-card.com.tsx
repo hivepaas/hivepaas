@@ -105,9 +105,7 @@ export function AuditLogSummaryCard({
         ? Boolean(detailedLog.scopeApp)
         : Boolean(detailedLog.scopeProject ?? detailedLog.scopeApp ?? detailedLog.scopeUser);
 
-    const hasAnyScope = Boolean(
-        detailedLog.scopeProject ?? detailedLog.scopeProjectEnv ?? detailedLog.scopeApp ?? detailedLog.scopeUser,
-    );
+    const hasAnyScope = Boolean(detailedLog.scopeProject ?? detailedLog.scopeApp ?? detailedLog.scopeUser);
 
     function handleKeyDown(event: KeyboardEvent<HTMLElement>) {
         if (!handleClick || (event.key !== "Enter" && event.key !== " ")) {
@@ -255,6 +253,9 @@ export function AuditLogSummaryCard({
                                         className="size-4 rounded-xs text-[9px] border border-border shrink-0"
                                     />
                                     <span className="font-medium text-foreground">{detailedLog.scopeApp.name}</span>
+                                    <span className="font-medium text-muted-foreground">
+                                        ({detailedLog.scopeApp.env})
+                                    </span>
                                 </div>
                             )}
 
@@ -335,34 +336,12 @@ export function AuditLogSummaryCard({
                                                 <span className="font-medium text-foreground">
                                                     {detailedLog.scopeProject.name}
                                                 </span>
-                                                {detailedLog.scopeProject.key && (
-                                                    <span className="font-mono text-muted-foreground">
-                                                        ({detailedLog.scopeProject.key})
-                                                    </span>
-                                                )}
                                             </div>
-                                        )}
-
-                                        {detailedLog.scopeProjectEnv && (
-                                            <>
-                                                {detailedLog.scopeProject && (
-                                                    <span className="text-muted-foreground/40 select-none">•</span>
-                                                )}
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="text-muted-foreground">Env:</span>
-                                                    <Badge
-                                                        variant="outline"
-                                                        className="text-[11px] px-1.5 py-0 font-normal"
-                                                    >
-                                                        {detailedLog.scopeProjectEnv.name}
-                                                    </Badge>
-                                                </div>
-                                            </>
                                         )}
 
                                         {detailedLog.scopeApp && (
                                             <>
-                                                {Boolean(detailedLog.scopeProject ?? detailedLog.scopeProjectEnv) && (
+                                                {detailedLog.scopeProject && (
                                                     <span className="text-muted-foreground/40 select-none">•</span>
                                                 )}
                                                 <div className="flex items-center gap-1.5">
@@ -375,22 +354,18 @@ export function AuditLogSummaryCard({
                                                     <span className="font-medium text-foreground">
                                                         {detailedLog.scopeApp.name}
                                                     </span>
-                                                    {detailedLog.scopeApp.key && (
-                                                        <span className="font-mono text-muted-foreground">
-                                                            ({detailedLog.scopeApp.key})
-                                                        </span>
-                                                    )}
+                                                    <span className="font-medium text-muted-foreground">
+                                                        ({detailedLog.scopeApp.env})
+                                                    </span>
                                                 </div>
                                             </>
                                         )}
 
                                         {detailedLog.scopeUser && (
                                             <>
-                                                {Boolean(
-                                                    detailedLog.scopeProject ??
-                                                        detailedLog.scopeProjectEnv ??
-                                                        detailedLog.scopeApp,
-                                                ) && <span className="text-muted-foreground/40 select-none">•</span>}
+                                                {Boolean(detailedLog.scopeProject ?? detailedLog.scopeApp) && (
+                                                    <span className="text-muted-foreground/40 select-none">•</span>
+                                                )}
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="text-muted-foreground">User:</span>
                                                     <Avatar
@@ -506,42 +481,6 @@ export function AuditLogSummaryCard({
                                             <span className="text-foreground">{detailedLog.resource.loggedName}</span>
                                         </div>
                                     )}
-
-                                {detailedLog.scopeProject?.id && (
-                                    <div>
-                                        <span className="text-muted-foreground">Scope Project ID:</span>{" "}
-                                        <span className="font-mono text-foreground select-all">
-                                            {detailedLog.scopeProject.id}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {detailedLog.scopeProjectEnv?.id && (
-                                    <div>
-                                        <span className="text-muted-foreground">Scope Env ID:</span>{" "}
-                                        <span className="font-mono text-foreground select-all">
-                                            {detailedLog.scopeProjectEnv.id}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {detailedLog.scopeApp?.id && (
-                                    <div>
-                                        <span className="text-muted-foreground">Scope App ID:</span>{" "}
-                                        <span className="font-mono text-foreground select-all">
-                                            {detailedLog.scopeApp.id}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {detailedLog.scopeUser?.id && (
-                                    <div>
-                                        <span className="text-muted-foreground">Scope User ID:</span>{" "}
-                                        <span className="font-mono text-foreground select-all">
-                                            {detailedLog.scopeUser.id}
-                                        </span>
-                                    </div>
-                                )}
                             </div>
 
                             {detailedLog.userAgent && (

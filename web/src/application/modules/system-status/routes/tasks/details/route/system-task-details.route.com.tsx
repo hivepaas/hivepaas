@@ -33,7 +33,11 @@ function isTaskTerminal(status?: SystemTaskStatus): boolean {
     );
 }
 
-export function SystemTaskDetailsRoute() {
+export interface SystemTaskDetailsRouteProps {
+    embedded?: boolean;
+}
+
+export function SystemTaskDetailsRoute({ embedded = false }: SystemTaskDetailsRouteProps) {
     const { taskId } = useParams<{ taskId: string }>();
 
     invariant(taskId, "taskId must be defined");
@@ -92,6 +96,53 @@ export function SystemTaskDetailsRoute() {
         },
     });
 
+    const content = (
+        <div className={cn("flex flex-col gap-4", isFullscreen && "flex-1 min-h-0")}>
+            {isFetching && !task ? (
+                <SystemTaskSummaryCardSkeleton variant="details" />
+            ) : task ? (
+                <SystemTaskSummaryCard
+                    task={task}
+                    now={now}
+                    variant="details"
+                    isCancelling={isCancelling}
+                    isFullscreen={isFullscreen}
+                    isFullView={isFullView}
+                    isFullHeight={isFullHeight}
+                    fontSize={fontSize}
+                    themeId={themeId}
+                    onToggleFullscreen={toggleFullscreen}
+                    onToggleFullView={toggleFullView}
+                    onToggleFullHeight={toggleFullHeight}
+                    onCycleFontSize={cycleFontSize}
+                    onSelectTheme={changeTheme}
+                    onCancel={id => {
+                        cancelTask({ taskID: id });
+                    }}
+                >
+                    <SystemTaskLogsViewer
+                        taskID={taskId}
+                        status={task.status}
+                        fontSize={fontSize}
+                        themeId={themeId}
+                        height={isFullscreen ? "100%" : undefined}
+                        isFullView={isFullView}
+                        isFullHeight={isFullHeight}
+                        onStreamClosedWhileInProgress={handleStreamClosedWhileInProgress}
+                    />
+                </SystemTaskSummaryCard>
+            ) : (
+                <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+                    Task not found.
+                </div>
+            )}
+        </div>
+    );
+
+    if (embedded && !isFullscreen) {
+        return content;
+    }
+
     return (
         <section
             className={cn(
@@ -101,46 +152,7 @@ export function SystemTaskDetailsRoute() {
                     "!max-w-none !w-auto fixed inset-1.5 md:inset-4 z-50 min-h-0 rounded-lg border bg-background p-2.5 md:p-4 shadow-2xl flex flex-col",
             )}
         >
-            <div className={cn("flex flex-col gap-2 sm:gap-5", isFullscreen && "flex-1 min-h-0")}>
-                {isFetching && !task ? (
-                    <SystemTaskSummaryCardSkeleton variant="details" />
-                ) : task ? (
-                    <SystemTaskSummaryCard
-                        task={task}
-                        now={now}
-                        variant="details"
-                        isCancelling={isCancelling}
-                        isFullscreen={isFullscreen}
-                        isFullView={isFullView}
-                        isFullHeight={isFullHeight}
-                        fontSize={fontSize}
-                        themeId={themeId}
-                        onToggleFullscreen={toggleFullscreen}
-                        onToggleFullView={toggleFullView}
-                        onToggleFullHeight={toggleFullHeight}
-                        onCycleFontSize={cycleFontSize}
-                        onSelectTheme={changeTheme}
-                        onCancel={id => {
-                            cancelTask({ taskID: id });
-                        }}
-                    >
-                        <SystemTaskLogsViewer
-                            taskID={taskId}
-                            status={task.status}
-                            fontSize={fontSize}
-                            themeId={themeId}
-                            height={isFullscreen ? "100%" : undefined}
-                            isFullView={isFullView}
-                            isFullHeight={isFullHeight}
-                            onStreamClosedWhileInProgress={handleStreamClosedWhileInProgress}
-                        />
-                    </SystemTaskSummaryCard>
-                ) : (
-                    <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-                        Task not found.
-                    </div>
-                )}
-            </div>
+            {content}
         </section>
     );
 }

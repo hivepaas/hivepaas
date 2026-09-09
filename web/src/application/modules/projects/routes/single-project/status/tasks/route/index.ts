@@ -1,2 +1,2 @@
 export * from "./project-tasks.route.com";
-export { SystemTaskDetailsRoute as ProjectTaskDetailsRoute } from "~/system-status/routes/tasks";
+export * from "./project-task-details.route.com";

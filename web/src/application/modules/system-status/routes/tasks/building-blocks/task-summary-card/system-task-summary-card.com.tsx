@@ -226,6 +226,7 @@ export function SystemTaskSummaryCard({
                                             className="size-4.5 rounded-xs text-[9px] border border-border shrink-0"
                                         />
                                         <span className="font-medium text-foreground">{task.scopeApp.name}</span>
+                                        <span className="font-medium text-muted-foreground">({task.scopeApp.env})</span>
                                     </div>
                                 )}
 
@@ -413,6 +414,7 @@ export function SystemTaskSummaryCard({
                                             className="size-4.5 rounded-xs text-[9px] border border-border shrink-0"
                                         />
                                         <span className="font-medium text-foreground">{task.scopeApp.name}</span>
+                                        <span className="font-medium text-muted-foreground">({task.scopeApp.env})</span>
                                     </div>
                                 )}
 
@@ -434,7 +436,7 @@ export function SystemTaskSummaryCard({
 
                     {/* Expanded Details Section */}
                     {shouldShowDetailsContent && (
-                        <div className="flex flex-col gap-3.5 pt-3 mt-1 border-t border-border/60">
+                        <div className="flex flex-col gap-3.5 pt-3 border-t border-border/60">
                             {/* Scope Hierarchy Banner */}
                             {hasScope && (
                                 <div className="flex flex-col gap-1.5">
@@ -453,11 +455,6 @@ export function SystemTaskSummaryCard({
                                                 <span className="font-medium text-foreground">
                                                     {task.scopeProject.name}
                                                 </span>
-                                                {task.scopeProject.key && (
-                                                    <span className="font-mono text-muted-foreground">
-                                                        ({task.scopeProject.key})
-                                                    </span>
-                                                )}
                                             </div>
                                         )}
 
@@ -476,11 +473,9 @@ export function SystemTaskSummaryCard({
                                                 <span className="font-medium text-foreground">
                                                     {task.scopeApp.name}
                                                 </span>
-                                                {task.scopeApp.key && (
-                                                    <span className="font-mono text-muted-foreground">
-                                                        ({task.scopeApp.key})
-                                                    </span>
-                                                )}
+                                                <span className="font-medium text-muted-foreground">
+                                                    ({task.scopeApp.env})
+                                                </span>
                                             </div>
                                         )}
 
@@ -617,31 +612,6 @@ export function SystemTaskSummaryCard({
                                         <span className="text-muted-foreground">Job ID:</span>{" "}
                                         <span className="font-mono text-foreground select-all">
                                             {task.targetJob.id}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {task.scopeProject?.id && (
-                                    <div>
-                                        <span className="text-muted-foreground">Scope Project ID:</span>{" "}
-                                        <span className="font-mono text-foreground select-all">
-                                            {task.scopeProject.id}
-                                        </span>
-                                    </div>
-                                )}
-
-                                {task.scopeApp?.id && (
-                                    <div>
-                                        <span className="text-muted-foreground">Scope App ID:</span>{" "}
-                                        <span className="font-mono text-foreground select-all">{task.scopeApp.id}</span>
-                                    </div>
-                                )}
-
-                                {task.scopeUser?.id && (
-                                    <div>
-                                        <span className="text-muted-foreground">Scope User ID:</span>{" "}
-                                        <span className="font-mono text-foreground select-all">
-                                            {task.scopeUser.id}
                                         </span>
                                     </div>
                                 )}

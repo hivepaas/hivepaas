@@ -6,7 +6,7 @@ import { dashedBorderBox } from "@lib/styles";
 import { format } from "date-fns";
 import { Box, ChevronDown, Clock, FileText, FolderGit2, GitBranch, GitCommit, Info } from "lucide-react";
 import ReactTimeAgo from "react-time-ago";
-import type { AppDeployment, AppDeploymentOutput, AppDeploymentSourceUser } from "~/projects/domain";
+import type { AppDeployment, AppDeploymentSourceUser } from "~/projects/domain";
 import {
     EAppDeploymentMethod,
     EAppDeploymentStatus,
@@ -95,10 +95,6 @@ function isRepoDeployment(deployment: AppDeployment): deployment is RepoDeployme
     return deployment.settings.activeMethod === EAppDeploymentMethod.Repo;
 }
 
-function shouldShowCommit(deployment: AppDeployment): deployment is RepoDeployment & { output: AppDeploymentOutput } {
-    return isRepoDeployment(deployment) && deployment.output != null;
-}
-
 function stopCardClick(event: MouseEvent<HTMLElement>) {
     event.stopPropagation();
 }
@@ -124,117 +120,6 @@ function StatusBadge({ status }: { status: OpenApiConstant<EAppDeploymentStatus>
     );
 }
 
-function InfoRow({ label, children }: { label: string; children: ReactNode }) {
-    return (
-        <>
-            <dt className="text-sm font-semibold text-foreground">{label}</dt>
-            <dd className="min-w-0 text-sm text-foreground">{children}</dd>
-        </>
-    );
-}
-
-function RepositoryValue({ repoUrl, repoRef }: { repoUrl: string; repoRef: string }) {
-    return (
-        <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1">
-            {repoUrl ? (
-                <a
-                    href={repoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="min-w-0 max-w-full break-all underline underline-offset-4 hover:text-primary"
-                    onClick={stopCardClick}
-                >
-                    {repoUrl}
-                </a>
-            ) : (
-                <span />
-            )}
-            <span>-</span>
-            <span className="break-words">{repoRef}</span>
-        </div>
-    );
-}
-
-function CommitValue({
-    output,
-    isCommitMessageOpen,
-    onToggleCommitMessage,
-}: {
-    output: AppDeploymentOutput;
-    isCommitMessageOpen: boolean;
-    onToggleCommitMessage: () => void;
-}) {
-    const commitURL = output.commitURL || undefined;
-    const hasCommitMessage = output.commitMessage.trim().length > 0;
-
-    return (
-        <div className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1">
-            {output.commitAuthor && <span>{output.commitAuthor}</span>}
-            {output.commitHashShort && (
-                <>
-                    {output.commitAuthor && <span>-</span>}
-                    {commitURL ? (
-                        <a
-                            href={commitURL}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="underline underline-offset-4 hover:text-primary"
-                            onClick={stopCardClick}
-                        >
-                            {output.commitHashShort}
-                        </a>
-                    ) : (
-                        <span>{output.commitHashShort}</span>
-                    )}
-                </>
-            )}
-            {output.commitTitle && (
-                <>
-                    {(output.commitAuthor || output.commitHashShort) && <span className="shrink-0">-</span>}
-                    <span className="flex min-w-0 flex-1 items-center gap-x-1">
-                        {commitURL ? (
-                            <a
-                                href={commitURL}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="min-w-0 flex-1 truncate underline underline-offset-4 hover:text-primary"
-                                title={output.commitTitle}
-                                onClick={stopCardClick}
-                            >
-                                {output.commitTitle}
-                            </a>
-                        ) : (
-                            <span
-                                className="min-w-0 flex-1 truncate"
-                                title={output.commitTitle}
-                            >
-                                {output.commitTitle}
-                            </span>
-                        )}
-                        {hasCommitMessage && (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                className="size-6 shrink-0 text-primary hover:text-primary"
-                                aria-label="Toggle commit message"
-                                title="Toggle commit message"
-                                aria-pressed={isCommitMessageOpen}
-                                onClick={event => {
-                                    event.stopPropagation();
-                                    onToggleCommitMessage();
-                                }}
-                            >
-                                <Info className="size-4" />
-                            </Button>
-                        )}
-                    </span>
-                </>
-            )}
-        </div>
-    );
-}
-
 export function DeploymentSummaryCard({
     deployment,
     now,
@@ -257,7 +142,7 @@ export function DeploymentSummaryCard({
     const { output } = deployment;
     const sourceUser = deployment.trigger?.sourceUser;
     const [isCommitMessageOpen, setIsCommitMessageOpen] = useState(false);
-    const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(false);
+    const [isDetailsContentOpen, setIsDetailsContentOpen] = useState(true);
     const isRepo = isRepoDeployment(deployment);
     const isClickable = Boolean(onClick);
     const shouldShowDetailsContent = !isFullHeight && isDetailsContentOpen;
@@ -576,59 +461,93 @@ export function DeploymentSummaryCard({
                     )}
                 </div>
             ) : (
-                <dl className="grid grid-cols-1 items-center gap-y-2 sm:grid-cols-[130px_minmax(0,1fr)] sm:gap-x-8 sm:gap-y-4">
-                    <InfoRow label="Status">
-                        <div className="flex items-center justify-between gap-3 w-full">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <StatusBadge status={deployment.status} />
-                                {onCancel && canCancelDeployment(deployment.status) && (
-                                    <PopConfirm
-                                        title="Cancel deployment"
-                                        description="Are you sure you want to cancel this deployment?"
-                                        confirmText="Cancel deployment"
-                                        cancelText="Cancel"
-                                        variant="destructive"
-                                        onConfirm={() => {
-                                            onCancel(deployment.id);
-                                        }}
-                                    >
-                                        <Button
-                                            type="button"
-                                            variant="link"
-                                            className="h-auto p-0 text-sm text-destructive hover:underline"
-                                            isLoading={isCancelling}
-                                            onClick={event => {
-                                                event.stopPropagation();
-                                            }}
-                                        >
-                                            Cancel
-                                        </Button>
-                                    </PopConfirm>
-                                )}
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-sm"
-                                    className="size-6 text-primary hover:text-primary"
-                                    aria-label={
-                                        isDetailsContentOpen ? "Hide deployment details" : "Show deployment details"
-                                    }
-                                    title={isDetailsContentOpen ? "Hide deployment details" : "Show deployment details"}
-                                    aria-expanded={isDetailsContentOpen}
-                                    onClick={event => {
-                                        event.stopPropagation();
-                                        setIsDetailsContentOpen(current => !current);
+                <div className="flex flex-col gap-3.5">
+                    {/* Header Row: Status Badge, Method Badge, Webhook Badge, Cancel Button, Details Toggle Chevron, and Toolbar Action Buttons */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                            <StatusBadge status={deployment.status} />
+
+                            {isRepo ? (
+                                <Badge
+                                    variant="outline"
+                                    className="h-7 px-3 text-sm font-medium rounded-md border-border/70 bg-muted/50 text-foreground flex items-center gap-1.5"
+                                >
+                                    <GitBranch className="size-3.5 shrink-0 text-muted-foreground" />
+                                    <span>{formatRepoRef(deployment.settings.repoSource.repoRef)}</span>
+                                </Badge>
+                            ) : output?.imageTags && output.imageTags.length > 0 ? (
+                                <Badge
+                                    variant="outline"
+                                    className="h-7 px-3 text-sm font-mono rounded-md border-border/70 bg-muted/50 text-foreground flex items-center gap-1.5"
+                                >
+                                    <Box className="size-3.5 shrink-0 text-muted-foreground" />
+                                    <span>{output.imageTags[0]}</span>
+                                </Badge>
+                            ) : (
+                                <Badge
+                                    variant="outline"
+                                    className="h-7 px-3 text-sm font-medium rounded-md border-border/70 bg-muted/50 text-foreground"
+                                >
+                                    Deployment
+                                </Badge>
+                            )}
+
+                            {deployment.trigger?.source === EAppDeploymentTriggerSource.RepoWebhook && (
+                                <Badge className="h-7 px-2.5 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30">
+                                    Webhook
+                                </Badge>
+                            )}
+
+                            {onCancel && canCancelDeployment(deployment.status) && (
+                                <PopConfirm
+                                    title="Cancel deployment"
+                                    description="Are you sure you want to cancel this deployment?"
+                                    confirmText="Cancel deployment"
+                                    cancelText="Cancel"
+                                    variant="destructive"
+                                    onConfirm={() => {
+                                        onCancel(deployment.id);
                                     }}
                                 >
-                                    <ChevronDown
-                                        className={cn(
-                                            "size-4 transition-transform duration-200",
-                                            isDetailsContentOpen && "rotate-180",
-                                        )}
-                                    />
-                                </Button>
-                            </div>
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        className="h-auto p-0 text-sm text-destructive hover:underline"
+                                        isLoading={isCancelling}
+                                        onClick={event => {
+                                            event.stopPropagation();
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </PopConfirm>
+                            )}
 
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="size-7 text-muted-foreground hover:text-foreground"
+                                aria-label={
+                                    isDetailsContentOpen ? "Hide deployment details" : "Show deployment details"
+                                }
+                                title={isDetailsContentOpen ? "Hide deployment details" : "Show deployment details"}
+                                aria-expanded={isDetailsContentOpen}
+                                onClick={event => {
+                                    event.stopPropagation();
+                                    setIsDetailsContentOpen(current => !current);
+                                }}
+                            >
+                                <ChevronDown
+                                    className={cn(
+                                        "size-4 transition-transform duration-200",
+                                        isDetailsContentOpen && "rotate-180",
+                                    )}
+                                />
+                            </Button>
+                        </div>
+
+                        <div className="flex items-center gap-3">
                             {onToggleFullscreen && (
                                 <LogViewerActionButtons
                                     isFullscreen={isFullscreen}
@@ -644,88 +563,368 @@ export function DeploymentSummaryCard({
                                 />
                             )}
                         </div>
-                    </InfoRow>
+                    </div>
 
-                    {shouldShowDetailsContent && (
-                        <>
-                            <InfoRow label="Started At">
-                                <span>{formatDateTime(deployment.startedAt)}</span>
-                            </InfoRow>
-                            <InfoRow label="Ended At">
-                                <span>{formatDateTime(deployment.endedAt)}</span>
-                            </InfoRow>
-                            {shouldShowDuration(deployment) && (
-                                <InfoRow label="Duration">
-                                    <span>
-                                        {formatDuration(deployment.startedAt, deployment.endedAt ?? now)} from{" "}
-                                        <ReactTimeAgo
-                                            date={deployment.startedAt}
-                                            locale="en-US"
-                                        />
+                    {/* Compact Summary when details are collapsed */}
+                    {!shouldShowDetailsContent && (
+                        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-sm text-muted-foreground pt-2 border-t border-border/50">
+                            {isRepo && (
+                                <div className="flex items-center gap-1 font-medium text-foreground">
+                                    <GitBranch className="size-4 shrink-0 text-muted-foreground/70" />
+                                    <span title={deployment.settings.repoSource.repoRef}>
+                                        {formatRepoRef(deployment.settings.repoSource.repoRef)}
                                     </span>
-                                </InfoRow>
+                                </div>
                             )}
-                            {deployment.trigger?.source === EAppDeploymentTriggerSource.RepoWebhook && (
-                                <InfoRow label="Trigger">
-                                    <Badge className="h-7 bg-emerald-500 px-4 text-white hover:bg-emerald-500/90">
-                                        Webhook
-                                    </Badge>
-                                </InfoRow>
+
+                            {output?.commitHashShort && (
+                                <>
+                                    {isRepo && <span className="text-muted-foreground/40 select-none">•</span>}
+                                    <div className="flex items-center gap-1 font-mono">
+                                        <GitCommit className="size-4 shrink-0 text-muted-foreground/70" />
+                                        {output.commitURL ? (
+                                            <a
+                                                href={output.commitURL}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+                                                onClick={stopCardClick}
+                                            >
+                                                {output.commitHashShort}
+                                            </a>
+                                        ) : (
+                                            <span className="font-medium text-foreground">
+                                                {output.commitHashShort}
+                                            </span>
+                                        )}
+                                    </div>
+                                </>
                             )}
+
                             {sourceUser && (
-                                <InfoRow label="Trigger">
-                                    <div className="flex min-w-0 items-center gap-2">
+                                <>
+                                    <span className="text-muted-foreground/40 select-none">•</span>
+                                    <div className="flex items-center gap-1.5">
                                         <Avatar
                                             name={getUserDisplayName(sourceUser)}
                                             src={sourceUser.photo}
-                                            className="size-7 text-xs"
+                                            className="size-4.5 rounded-full text-[9px] border border-border shrink-0"
                                         />
-                                        <span className="truncate">{getUserDisplayName(sourceUser)}</span>
+                                        <span className="font-medium text-foreground">
+                                            {getUserDisplayName(sourceUser)}
+                                        </span>
                                     </div>
-                                </InfoRow>
+                                </>
                             )}
-                            {isRepo && (
-                                <InfoRow label="Repository">
-                                    <RepositoryValue
-                                        repoUrl={deployment.settings.repoSource.repoUrl}
-                                        repoRef={deployment.settings.repoSource.repoRef}
-                                    />
-                                </InfoRow>
+
+                            {shouldShowDuration(deployment) && (
+                                <>
+                                    <span className="text-muted-foreground/40 select-none">•</span>
+                                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                                        <Clock className="size-4 shrink-0 text-muted-foreground/70" />
+                                        <span>
+                                            {formatDuration(deployment.startedAt, deployment.endedAt ?? now)} (
+                                            <ReactTimeAgo
+                                                date={deployment.startedAt}
+                                                locale="en-US"
+                                            />
+                                            )
+                                        </span>
+                                    </div>
+                                </>
                             )}
-                            {shouldShowCommit(deployment) &&
-                                (deployment.output.commitAuthor ||
-                                    deployment.output.commitHashShort ||
-                                    deployment.output.commitTitle) && (
-                                    <InfoRow label="Commit">
-                                        <CommitValue
-                                            output={deployment.output}
-                                            isCommitMessageOpen={isCommitMessageOpen}
-                                            onToggleCommitMessage={() => {
-                                                setIsCommitMessageOpen(current => !current);
-                                            }}
-                                        />
-                                    </InfoRow>
+                        </div>
+                    )}
+
+                    {/* Expanded Details Section */}
+                    {shouldShowDetailsContent && (
+                        <div className="flex flex-col gap-3.5 pt-3 border-t border-border/60">
+                            {/* Source & Trigger Banner */}
+                            <div className="flex flex-col gap-1.5">
+                                <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                    Source & Trigger
+                                </span>
+                                <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3.5 py-2.5 text-sm">
+                                    {isRepo ? (
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <div className="flex items-center gap-1.5 font-medium text-foreground">
+                                                <FolderGit2 className="size-4 shrink-0 text-muted-foreground/70" />
+                                                {deployment.settings.repoSource.repoUrl ? (
+                                                    <a
+                                                        href={deployment.settings.repoSource.repoUrl}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="underline underline-offset-4 hover:text-primary"
+                                                        title={deployment.settings.repoSource.repoUrl}
+                                                        onClick={stopCardClick}
+                                                    >
+                                                        {getRepoShortName(deployment.settings.repoSource.repoUrl)}
+                                                    </a>
+                                                ) : (
+                                                    <span>Repository</span>
+                                                )}
+                                            </div>
+
+                                            <span className="text-muted-foreground/40 select-none">•</span>
+
+                                            <div className="flex items-center gap-1 text-foreground">
+                                                <GitBranch className="size-4 shrink-0 text-muted-foreground/70" />
+                                                <span className="font-mono text-xs font-semibold bg-muted/70 px-1.5 py-0.5 rounded border border-border/60">
+                                                    {formatRepoRef(deployment.settings.repoSource.repoRef)}
+                                                </span>
+                                            </div>
+
+                                            {output?.commitHashShort && (
+                                                <>
+                                                    <span className="text-muted-foreground/40 select-none">•</span>
+                                                    <div className="flex items-center gap-1.5 font-mono text-xs">
+                                                        <GitCommit className="size-4 shrink-0 text-muted-foreground/70" />
+                                                        {output.commitURL ? (
+                                                            <a
+                                                                href={output.commitURL}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+                                                                onClick={stopCardClick}
+                                                            >
+                                                                {output.commitHashShort}
+                                                            </a>
+                                                        ) : (
+                                                            <span className="font-medium text-foreground">
+                                                                {output.commitHashShort}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {output?.commitTitle && (
+                                                <>
+                                                    <span className="text-muted-foreground/40 select-none">•</span>
+                                                    <div className="flex items-center gap-1.5 max-w-[340px] sm:max-w-[420px] truncate">
+                                                        <span
+                                                            className="truncate text-foreground font-medium"
+                                                            title={output.commitTitle}
+                                                        >
+                                                            {output.commitTitle}
+                                                        </span>
+                                                        {hasCommitMessage && (
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon-sm"
+                                                                className={cn(
+                                                                    "size-6 shrink-0 rounded transition-colors",
+                                                                    isCommitMessageOpen
+                                                                        ? "bg-primary/10 text-primary"
+                                                                        : "text-muted-foreground hover:text-primary",
+                                                                )}
+                                                                aria-label={
+                                                                    isCommitMessageOpen
+                                                                        ? "Hide commit message"
+                                                                        : "Show commit message"
+                                                                }
+                                                                title={
+                                                                    isCommitMessageOpen
+                                                                        ? "Hide commit message"
+                                                                        : "Show commit message"
+                                                                }
+                                                                aria-expanded={isCommitMessageOpen}
+                                                                onClick={event => {
+                                                                    event.stopPropagation();
+                                                                    setIsCommitMessageOpen(current => !current);
+                                                                }}
+                                                            >
+                                                                <Info className="size-3.5" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <Box className="size-4 shrink-0 text-muted-foreground/70" />
+                                            <span className="text-muted-foreground">Docker Image:</span>
+                                            <span className="font-mono text-foreground font-medium">
+                                                {output?.imageTags.length ? output.imageTags.join(", ") : "-"}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Trigger on right of banner */}
+                                    {sourceUser && (
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <span className="text-muted-foreground">Trigger:</span>
+                                            <Avatar
+                                                name={getUserDisplayName(sourceUser)}
+                                                src={sourceUser.photo}
+                                                className="size-5 rounded-full text-[10px] border border-border shrink-0"
+                                            />
+                                            <span className="font-medium text-foreground">
+                                                {getUserDisplayName(sourceUser)}
+                                            </span>
+                                            {sourceUser.email && (
+                                                <span className="text-xs text-muted-foreground hidden sm:inline">
+                                                    ({sourceUser.email})
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {deployment.trigger?.source === EAppDeploymentTriggerSource.RepoWebhook && (
+                                        <div className="flex items-center gap-1.5 shrink-0">
+                                            <span className="text-muted-foreground">Trigger:</span>
+                                            <Badge className="h-5 px-1.5 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                                                Webhook
+                                            </Badge>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Detailed 4-Column Metadata Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-2.5 text-sm">
+                                <div>
+                                    <span className="text-muted-foreground">Deployment ID:</span>{" "}
+                                    <span className="font-mono text-foreground font-medium select-all">
+                                        {deployment.id}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span className="text-muted-foreground">Started At:</span>{" "}
+                                    <span className="text-foreground font-medium">
+                                        {formatDateTime(deployment.startedAt)}
+                                    </span>
+                                </div>
+
+                                <div>
+                                    <span className="text-muted-foreground">Ended At:</span>{" "}
+                                    <span className="text-foreground font-medium">
+                                        {formatDateTime(deployment.endedAt)}
+                                    </span>
+                                </div>
+
+                                {shouldShowDuration(deployment) && (
+                                    <div>
+                                        <span className="text-muted-foreground">Duration:</span>{" "}
+                                        <span className="text-foreground font-medium">
+                                            {formatDuration(deployment.startedAt, deployment.endedAt ?? now)}
+                                        </span>{" "}
+                                        <span className="text-xs text-muted-foreground">
+                                            (
+                                            <ReactTimeAgo
+                                                date={deployment.startedAt}
+                                                locale="en-US"
+                                            />
+                                            )
+                                        </span>
+                                    </div>
                                 )}
-                            {output?.commitMessage && isCommitMessageOpen && (
-                                <div className={cn(dashedBorderBox, "sm:col-span-2 break-words whitespace-pre-wrap")}>
-                                    {output.commitMessage}
+
+                                <div>
+                                    <span className="text-muted-foreground">Method:</span>{" "}
+                                    <span className="text-foreground font-medium capitalize">
+                                        {deployment.settings.activeMethod === EAppDeploymentMethod.Repo
+                                            ? "Git Repository"
+                                            : "Docker Image"}
+                                    </span>
+                                </div>
+
+                                {isRepo && (
+                                    <div>
+                                        <span className="text-muted-foreground">Branch / Ref:</span>{" "}
+                                        <span className="font-mono text-foreground font-medium">
+                                            {formatRepoRef(deployment.settings.repoSource.repoRef)}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {output?.commitAuthor && (
+                                    <div>
+                                        <span className="text-muted-foreground">Commit Author:</span>{" "}
+                                        <span className="text-foreground font-medium">{output.commitAuthor}</span>
+                                    </div>
+                                )}
+
+                                {output?.commitHashShort && (
+                                    <div>
+                                        <span className="text-muted-foreground">Commit Hash:</span>{" "}
+                                        {output.commitURL ? (
+                                            <a
+                                                href={output.commitURL}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="font-mono text-foreground font-medium underline underline-offset-4 hover:text-primary select-all"
+                                                onClick={stopCardClick}
+                                            >
+                                                {output.commitHashShort}
+                                            </a>
+                                        ) : (
+                                            <span className="font-mono text-foreground font-medium select-all">
+                                                {output.commitHashShort}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
+                                {output?.imageTags && output.imageTags.length > 0 && (
+                                    <div className="sm:col-span-2">
+                                        <span className="text-muted-foreground">Docker Image:</span>{" "}
+                                        <span className="font-mono text-foreground font-medium select-all">
+                                            {output.imageTags.join(", ")}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div>
+                                    <span className="text-muted-foreground">Created At:</span>{" "}
+                                    <span className="text-foreground font-medium">
+                                        {formatDateTime(deployment.createdAt)}
+                                    </span>
+                                </div>
+
+                                {deployment.updatedAt && (
+                                    <div>
+                                        <span className="text-muted-foreground">Updated At:</span>{" "}
+                                        <span className="text-foreground font-medium">
+                                            {formatDateTime(deployment.updatedAt)}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Commit Message Box (when toggled open) */}
+                            {hasCommitMessage && isCommitMessageOpen && output?.commitMessage && (
+                                <div className="flex flex-col gap-1.5 pt-1">
+                                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                                        Commit Message
+                                    </span>
+                                    <div className="rounded-md border border-border bg-muted/40 p-3 max-h-60 overflow-y-auto">
+                                        <pre className="font-mono text-xs text-foreground/90 whitespace-pre-wrap break-words">
+                                            {output.commitMessage}
+                                        </pre>
+                                    </div>
                                 </div>
                             )}
-                            {output && output.imageTags.length > 0 && (
-                                <InfoRow label="Docker Image">
-                                    <span className="break-words">{output.imageTags.join(", ")}</span>
-                                </InfoRow>
-                            )}
+
+                            {/* Error Banner */}
                             {output?.error.trim() ? (
-                                <InfoRow label="Error">
-                                    <div className={cn(dashedBorderBox, "break-words whitespace-pre-wrap")}>
-                                        {output.error}
+                                <div className="flex flex-col gap-1.5 pt-1">
+                                    <span className="text-[11px] font-semibold text-destructive uppercase tracking-wider">
+                                        Error
+                                    </span>
+                                    <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 max-h-60 overflow-y-auto">
+                                        <pre className="font-mono text-xs text-destructive whitespace-pre-wrap break-all select-all">
+                                            {output.error}
+                                        </pre>
                                     </div>
-                                </InfoRow>
+                                </div>
                             ) : null}
-                        </>
+                        </div>
                     )}
-                </dl>
+                </div>
             )}
 
             {children && (
@@ -759,14 +958,30 @@ export function DeploymentSummaryCardSkeleton({ variant = "list" }: { variant?: 
     }
 
     return (
-        <div className="rounded-[8px] border border-border bg-background p-5">
-            <div className="grid grid-cols-1 items-center gap-y-2 sm:grid-cols-[130px_minmax(0,1fr)] sm:gap-x-8 sm:gap-y-4">
-                <Skeleton className="h-5 w-16" />
-                <Skeleton className="h-7 w-56" />
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-5 w-72" />
-                <Skeleton className="h-5 w-16" />
-                <Skeleton className="h-7 w-32" />
+        <div className="flex flex-col gap-3.5 p-1">
+            <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                    <Skeleton className="h-7 w-20 rounded-md" />
+                    <Skeleton className="h-7 w-28 rounded-md" />
+                    <Skeleton className="size-7 rounded-md" />
+                </div>
+                <div className="flex items-center gap-2">
+                    <Skeleton className="size-8 rounded-md" />
+                    <Skeleton className="size-8 rounded-md" />
+                    <Skeleton className="size-8 rounded-md" />
+                    <Skeleton className="size-8 rounded-md" />
+                </div>
+            </div>
+            <div className="h-11 rounded-md bg-muted/40 border border-border" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-4 w-24" />
             </div>
         </div>
     );

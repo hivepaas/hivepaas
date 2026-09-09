@@ -854,7 +854,6 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
                             className={cn(
                                 "w-full justify-between text-left font-normal",
                                 !displayDate && "text-muted-foreground",
-                                showClearButton && displayDate && !disabled && "pr-14",
                                 className,
                             )}
                             ref={buttonRef}
@@ -871,8 +870,30 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
                                       )
                                     : placeholder}
                             </span>
-                            <div className="flex items-center gap-1 ml-2">
-                                <CalendarIcon className="h-4 w-4 shrink-0" />
+                            <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                                <CalendarIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                {showClearButton && displayDate && !disabled && (
+                                    <span
+                                        role="button"
+                                        tabIndex={-1}
+                                        aria-label="Clear date"
+                                        className="flex size-4.5 items-center justify-center rounded-xs text-muted-foreground hover:text-foreground opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+                                        onPointerDown={e => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        }}
+                                        onClick={handleClear}
+                                        onKeyDown={e => {
+                                            if (e.key === "Enter" || e.key === " ") {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleClear(e as any);
+                                            }
+                                        }}
+                                    >
+                                        <X className="size-3.5" />
+                                    </span>
+                                )}
                             </div>
                         </Button>
                     </PopoverTrigger>
@@ -915,15 +936,6 @@ const DateTimePicker = React.forwardRef<Partial<DateTimePickerRef>, DateTimePick
                         )}
                     </PopoverContent>
                 </Popover>
-                {showClearButton && displayDate && !disabled && (
-                    <button
-                        type="button"
-                        onClick={handleClear}
-                        className="absolute right-8 top-1/2 -translate-y-1/2 h-6 w-6 flex items-center justify-center rounded-sm opacity-50 hover:opacity-100 transition-opacity z-10"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
-                )}
             </div>
         );
     },

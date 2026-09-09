@@ -14,11 +14,11 @@ import (
 )
 
 const (
-	emailTemplateDir    = "email/templates/" // NOTE: must end with /
-	slackTemplateDir    = "slack/templates/"
-	discordTemplateDir  = "discord/templates/"
-	telegramTemplateDir = "telegram/templates/"
-	larkTemplateDir     = "lark/templates/"
+	emailTemplateDir    = "email/" // NOTE: must end with /
+	slackTemplateDir    = "slack/"
+	discordTemplateDir  = "discord/"
+	telegramTemplateDir = "telegram/"
+	larkTemplateDir     = "lark/"
 )
 
 type Template interface {

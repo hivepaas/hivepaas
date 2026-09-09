@@ -16,7 +16,7 @@ import (
 )
 
 func TestDiscordAppDeploymentTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/app_deployment_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/app_deployment_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -89,7 +89,7 @@ func TestDiscordAppDeploymentTemplate(t *testing.T) {
 }
 
 func TestDiscordHealthcheckTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/healthcheck_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/healthcheck_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -118,7 +118,7 @@ func TestDiscordHealthcheckTemplate(t *testing.T) {
 }
 
 func TestDiscordSchedTaskTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/sched_task_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/sched_task_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -145,7 +145,7 @@ func TestDiscordSchedTaskTemplate(t *testing.T) {
 }
 
 func TestDiscordSSLExpiringTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/ssl_expiring_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/ssl_expiring_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -172,7 +172,7 @@ func TestDiscordSSLExpiringTemplate(t *testing.T) {
 }
 
 func TestDiscordSSLRenewalTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/ssl_renewal_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/ssl_renewal_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -199,7 +199,7 @@ func TestDiscordSSLRenewalTemplate(t *testing.T) {
 }
 
 func TestDiscordSystemUpdateTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/templates/system_update_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "discord/system_update_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -223,7 +223,7 @@ func TestDiscordSystemUpdateTemplate(t *testing.T) {
 }
 
 func TestSlackAppDeploymentTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/app_deployment_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/app_deployment_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -293,7 +293,7 @@ func TestSlackAppDeploymentTemplate(t *testing.T) {
 }
 
 func TestSlackHealthcheckTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/healthcheck_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/healthcheck_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -322,7 +322,7 @@ func TestSlackHealthcheckTemplate(t *testing.T) {
 }
 
 func TestSlackSchedTaskTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/sched_task_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/sched_task_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -349,7 +349,7 @@ func TestSlackSchedTaskTemplate(t *testing.T) {
 }
 
 func TestSlackSSLExpiringTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/ssl_expiring_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/ssl_expiring_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -376,7 +376,7 @@ func TestSlackSSLExpiringTemplate(t *testing.T) {
 }
 
 func TestSlackSSLRenewalTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/ssl_renewal_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/ssl_renewal_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -403,7 +403,7 @@ func TestSlackSSLRenewalTemplate(t *testing.T) {
 }
 
 func TestSlackSystemUpdateTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/templates/system_update_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "slack/system_update_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -427,7 +427,7 @@ func TestSlackSystemUpdateTemplate(t *testing.T) {
 }
 
 func TestTelegramAppDeploymentTemplate(t *testing.T) {
-	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/app_deployment_notification.tpl")
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/app_deployment_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -484,7 +484,7 @@ func TestTelegramAppDeploymentTemplate(t *testing.T) {
 }
 
 func TestTelegramHealthcheckTemplate(t *testing.T) {
-	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/healthcheck_notification.tpl")
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/healthcheck_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -510,7 +510,7 @@ func TestTelegramHealthcheckTemplate(t *testing.T) {
 }
 
 func TestTelegramSchedTaskTemplate(t *testing.T) {
-	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/sched_task_notification.tpl")
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/sched_task_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -534,7 +534,7 @@ func TestTelegramSchedTaskTemplate(t *testing.T) {
 }
 
 func TestTelegramSSLExpiringTemplate(t *testing.T) {
-	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/ssl_expiring_notification.tpl")
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/ssl_expiring_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -558,7 +558,7 @@ func TestTelegramSSLExpiringTemplate(t *testing.T) {
 }
 
 func TestTelegramSSLRenewalTemplate(t *testing.T) {
-	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/ssl_renewal_notification.tpl")
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/ssl_renewal_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -582,7 +582,7 @@ func TestTelegramSSLRenewalTemplate(t *testing.T) {
 }
 
 func TestTelegramSystemUpdateTemplate(t *testing.T) {
-	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/templates/system_update_notification.tpl")
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "telegram/system_update_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -603,7 +603,7 @@ func TestTelegramSystemUpdateTemplate(t *testing.T) {
 }
 
 func TestLarkAppDeploymentTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/app_deployment_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/app_deployment_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -660,7 +660,7 @@ func TestLarkAppDeploymentTemplate(t *testing.T) {
 }
 
 func TestLarkHealthcheckTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/healthcheck_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/healthcheck_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -690,7 +690,7 @@ func TestLarkHealthcheckTemplate(t *testing.T) {
 }
 
 func TestLarkSchedTaskTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/sched_task_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/sched_task_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -718,7 +718,7 @@ func TestLarkSchedTaskTemplate(t *testing.T) {
 }
 
 func TestLarkSSLExpiringTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/ssl_expiring_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/ssl_expiring_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -746,7 +746,7 @@ func TestLarkSSLExpiringTemplate(t *testing.T) {
 }
 
 func TestLarkSSLRenewalTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/ssl_renewal_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/ssl_renewal_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -774,7 +774,7 @@ func TestLarkSSLRenewalTemplate(t *testing.T) {
 }
 
 func TestLarkSystemUpdateTemplate(t *testing.T) {
-	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/templates/system_update_notification.tpl")
+	tpl, err := texttemplate.ParseFS(assets.GetTemplatesFS(), "lark/system_update_notification.tpl")
 	if err != nil {
 		t.Fatalf("failed to parse template: %v", err)
 	}
@@ -796,4 +796,285 @@ func TestLarkSystemUpdateTemplate(t *testing.T) {
 	err = json.Unmarshal(buf.Bytes(), &parsed)
 	assert.NoError(t, err)
 	assert.Equal(t, "interactive", parsed["msg_type"])
+}
+
+func TestEmailSchedTaskTemplate(t *testing.T) {
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "email/sched_task_notification.html")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	t.Run("succeeded task", func(t *testing.T) {
+		data := notificationservice.TemplateDataSchedTask{
+			ProjectName:   "Alpha Project",
+			AppName:       "Worker App",
+			Succeeded:     true,
+			SchedJobName:  "Database Backup",
+			Schedule:      "every 1d",
+			StartedAt:     time.Date(2026, 9, 9, 0, 31, 0, 0, time.UTC),
+			Duration:      1500 * time.Millisecond,
+			Retries:       0,
+			DashboardLink: "https://hivepaas.io/tasks/123",
+		}
+
+		var buf bytes.Buffer
+		err = tpl.Execute(&buf, data)
+		assert.NoError(t, err)
+
+		out := buf.String()
+		assert.Contains(t, out, "Scheduled task succeeded")
+		assert.Contains(t, out, "badge-succeeded")
+		assert.Contains(t, out, "Database Backup")
+		assert.Contains(t, out, "Sep 09, 2026, 00:31:00 UTC")
+		assert.Contains(t, out, "https://hivepaas.io/tasks/123")
+		assert.NotContains(t, out, "Error Details")
+	})
+
+	t.Run("failed task with last error", func(t *testing.T) {
+		data := notificationservice.TemplateDataSchedTask{
+			ProjectName:   "Alpha Project",
+			AppName:       "Worker App",
+			Succeeded:     false,
+			SchedJobName:  "System backup job",
+			Schedule:      "every 1d",
+			StartedAt:     time.Date(2026, 9, 9, 0, 31, 0, 0, time.UTC),
+			Duration:      6 * time.Millisecond,
+			Retries:       1,
+			LastError:     "mysqldump: Got error 2002: Can't connect to server",
+			DashboardLink: "https://hivepaas.io/tasks/456",
+		}
+
+		var buf bytes.Buffer
+		err = tpl.Execute(&buf, data)
+		assert.NoError(t, err)
+
+		out := buf.String()
+		assert.Contains(t, out, "Scheduled task failed")
+		assert.Contains(t, out, "badge-failed")
+		assert.Contains(t, out, "Error Details")
+		assert.Contains(t, out, "mysqldump: Got error 2002: Can&#39;t connect to server")
+		assert.Contains(t, out, "Sep 09, 2026, 00:31:00 UTC")
+		assert.Contains(t, out, "https://hivepaas.io/tasks/456")
+	})
+}
+
+func TestEmailAppDeploymentTemplate(t *testing.T) {
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "email/app_deployment_notification.html")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := notificationservice.TemplateDataAppDeployment{
+		ProjectName:   "Alpha Project",
+		AppName:       "Web App",
+		Succeeded:     true,
+		Method:        "repo",
+		RepoURL:       "https://github.com/hivepaas/hivepaas",
+		RepoRef:       "main",
+		CommitMsg:     "feat: improve email templates",
+		CommitAuthor:  "Dev",
+		StartedAt:     time.Date(2026, 9, 9, 1, 0, 0, 0, time.UTC),
+		Duration:      45 * time.Second,
+		DashboardLink: "https://hivepaas.io/deployments/123",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	out := buf.String()
+	assert.Contains(t, out, "Deployment succeeded")
+	assert.Contains(t, out, "badge-succeeded")
+	assert.Contains(t, out, "Sep 09, 2026, 01:00:00 UTC")
+	assert.Contains(t, out, "https://hivepaas.io/deployments/123")
+}
+
+func TestEmailHealthcheckTemplate(t *testing.T) {
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "email/healthcheck_notification.html")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := notificationservice.TemplateDataHealthcheck{
+		ProjectName:     "Alpha Project",
+		AppName:         "API Service",
+		Succeeded:       false,
+		HealthcheckName: "ping-check",
+		HealthcheckType: "http",
+		Expect:          "200 OK",
+		Actual:          "503 Service Unavailable",
+		StartedAt:       time.Date(2026, 9, 9, 1, 0, 0, 0, time.UTC),
+		Duration:        200 * time.Millisecond,
+		Retries:         3,
+		DashboardLink:   "https://hivepaas.io/health/123",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	out := buf.String()
+	assert.Contains(t, out, "Healthcheck failed")
+	assert.Contains(t, out, "badge-failed")
+	assert.Contains(t, out, "Check Result Mismatch")
+	assert.Contains(t, out, "503 Service Unavailable")
+	assert.Contains(t, out, "Sep 09, 2026, 01:00:00 UTC")
+}
+
+func TestEmailSSLExpiringTemplate(t *testing.T) {
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "email/ssl_expiring_notification.html")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := notificationservice.TemplateDataSSLExpiring{
+		ProjectName:   "Alpha Project",
+		AppName:       "Web App",
+		SSLName:       "Production Cert",
+		SSLType:       "Let's Encrypt",
+		Domain:        "app.example.com",
+		CreatedAt:     time.Date(2026, 6, 9, 0, 0, 0, 0, time.UTC),
+		ExpireAt:      time.Date(2026, 9, 16, 0, 0, 0, 0, time.UTC),
+		ExpireIn:      timeutil.Duration(7 * 24 * time.Hour),
+		DashboardLink: "https://hivepaas.io/ssl/123",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	out := buf.String()
+	assert.Contains(t, out, "SSL expiring in")
+	assert.Contains(t, out, "badge-warning")
+	assert.Contains(t, out, "Jun 09, 2026, 00:00:00 UTC")
+	assert.Contains(t, out, "Sep 16, 2026, 00:00:00 UTC")
+	assert.Contains(t, out, "https://hivepaas.io/ssl/123")
+}
+
+func TestEmailSSLRenewalTemplate(t *testing.T) {
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "email/ssl_renewal_notification.html")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	t.Run("renewal succeeded", func(t *testing.T) {
+		data := notificationservice.TemplateDataSSLRenewal{
+			ProjectName:   "Alpha Project",
+			AppName:       "Web App",
+			Succeeded:     true,
+			SSLName:       "Production Cert",
+			SSLType:       "Let's Encrypt",
+			Domain:        "app.example.com",
+			CreatedAt:     time.Date(2026, 6, 9, 0, 0, 0, 0, time.UTC),
+			ExpireAt:      time.Date(2026, 12, 9, 0, 0, 0, 0, time.UTC),
+			NextRenewalIn: timeutil.Duration(60 * 24 * time.Hour),
+			DashboardLink: "https://hivepaas.io/ssl/123",
+		}
+
+		var buf bytes.Buffer
+		err = tpl.Execute(&buf, data)
+		assert.NoError(t, err)
+
+		out := buf.String()
+		assert.Contains(t, out, "SSL renewal succeeded")
+		assert.Contains(t, out, "badge-succeeded")
+		assert.Contains(t, out, "Jun 09, 2026, 00:00:00 UTC")
+	})
+
+	t.Run("renewal failed", func(t *testing.T) {
+		data := notificationservice.TemplateDataSSLRenewal{
+			ProjectName:   "Alpha Project",
+			AppName:       "Web App",
+			Succeeded:     false,
+			SSLName:       "Production Cert",
+			SSLType:       "Let's Encrypt",
+			Domain:        "app.example.com",
+			CreatedAt:     time.Date(2026, 6, 9, 0, 0, 0, 0, time.UTC),
+			ExpireAt:      time.Date(2026, 9, 10, 0, 0, 0, 0, time.UTC),
+			NextRenewalIn: timeutil.Duration(1 * 24 * time.Hour),
+			DashboardLink: "https://hivepaas.io/ssl/123",
+		}
+
+		var buf bytes.Buffer
+		err = tpl.Execute(&buf, data)
+		assert.NoError(t, err)
+
+		out := buf.String()
+		assert.Contains(t, out, "SSL renewal failed")
+		assert.Contains(t, out, "badge-failed")
+	})
+}
+
+func TestEmailSystemUpdateTemplate(t *testing.T) {
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "email/system_update_notification.html")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := notificationservice.TemplateDataSystemUpdate{
+		Succeeded:      true,
+		CurrentVersion: "v1.2.0",
+		TargetVersion:  "v1.3.0",
+		StartedAt:      time.Date(2026, 9, 9, 2, 0, 0, 0, time.UTC),
+		Duration:       45 * time.Second,
+		DashboardLink:  "https://hivepaas.io/system",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	out := buf.String()
+	assert.Contains(t, out, "System update succeeded")
+	assert.Contains(t, out, "badge-succeeded")
+	assert.Contains(t, out, "v1.2.0")
+	assert.Contains(t, out, "v1.3.0")
+	assert.Contains(t, out, "Sep 09, 2026, 02:00:00 UTC")
+}
+
+func TestEmailPasswordResetTemplate(t *testing.T) {
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "email/password_reset.html")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := struct {
+		ResetPasswordLink string
+	}{
+		ResetPasswordLink: "https://hivepaas.io/reset?token=xyz",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	out := buf.String()
+	assert.Contains(t, out, "Reset your password")
+	assert.Contains(t, out, "badge-security")
+	assert.Contains(t, out, "https://hivepaas.io/reset?token=xyz")
+}
+
+func TestEmailUserInviteTemplate(t *testing.T) {
+	tpl, err := htmltemplate.ParseFS(assets.GetTemplatesFS(), "email/user_invite.html")
+	if err != nil {
+		t.Fatalf("failed to parse template: %v", err)
+	}
+
+	data := struct {
+		InviterName    string
+		UserSignupLink string
+	}{
+		InviterName:    "Alice Smith",
+		UserSignupLink: "https://hivepaas.io/invite?code=abc",
+	}
+
+	var buf bytes.Buffer
+	err = tpl.Execute(&buf, data)
+	assert.NoError(t, err)
+
+	out := buf.String()
+	assert.Contains(t, out, "Join HivePaaS")
+	assert.Contains(t, out, "badge-invite")
+	assert.Contains(t, out, "Alice Smith")
+	assert.Contains(t, out, "https://hivepaas.io/invite?code=abc")
 }

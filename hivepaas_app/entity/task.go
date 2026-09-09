@@ -128,7 +128,7 @@ func (t *Task) ShouldRunAt() time.Time {
 }
 
 func (t *Task) GetRuns() ([]*TaskRun, error) {
-	if t.Runs == "" {
+	if t == nil || t.Runs == "" {
 		return nil, nil
 	}
 	runs := []*TaskRun{}
@@ -137,6 +137,17 @@ func (t *Task) GetRuns() ([]*TaskRun, error) {
 		return nil, hperrors.Wrap(err)
 	}
 	return runs, nil
+}
+
+func (t *Task) GetLastError() string {
+	if t == nil {
+		return ""
+	}
+	runs, err := t.GetRuns()
+	if err != nil || len(runs) == 0 {
+		return ""
+	}
+	return runs[len(runs)-1].Error
 }
 
 func (t *Task) AddRun(run *TaskRun) error {

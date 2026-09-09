@@ -30,9 +30,9 @@ func (s *service) GetTemplate(
 
 	switch name { //nolint
 	case emailservice.TemplateNamePasswordReset:
-		tpl, err = template.ParseFS(assets.GetTemplatesFS(), "email/templates/password_reset.html")
+		tpl, err = template.ParseFS(assets.GetTemplatesFS(), "email/password_reset.html")
 	case emailservice.TemplateNameUserInvite:
-		tpl, err = template.ParseFS(assets.GetTemplatesFS(), "email/templates/user_invite.html")
+		tpl, err = template.ParseFS(assets.GetTemplatesFS(), "email/user_invite.html")
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)

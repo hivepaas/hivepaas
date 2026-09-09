@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<meta name="color-scheme" content="light dark"/>
+	<title>HivePaaS Notification</title>
+	<style>
+		body { margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; }
+		table { border-collapse: collapse; }
+		.wrap { width: 100%; background-color: #f1f5f9; padding: 32px 16px; box-sizing: border-box; }
+		.card { width: 100%; max-width: 580px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+		.content { padding: 28px 32px; }
+		.brand { font-size: 11px; font-weight: 700; color: #6366f1; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+		.title { font-size: 20px; font-weight: 700; line-height: 1.3; color: #0f172a; margin: 0; }
+		.sub { font-size: 14px; line-height: 1.4; color: #64748b; margin: 6px 0 0; }
+		.badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+		.badge-succeeded { color: #059669; background-color: #ecfdf5; border: 1px solid #a7f3d0; }
+		.badge-failed { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; }
+		.err-box { background-color: #fef2f2; border: 1px solid #fee2e2; border-left: 3px solid #ef4444; border-radius: 4px; padding: 12px 14px; margin: 20px 0; }
+		.err-title { font-size: 11px; font-weight: 700; color: #b91c1c; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+		.err-msg { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 12px; line-height: 1.5; color: #991b1b; }
+		.tbl { width: 100%; margin: 24px 0 26px; border-top: 1px solid #f1f5f9; }
+		.tbl tr { border-bottom: 1px solid #f1f5f9; }
+		.tbl td { padding: 9px 0; font-size: 13px; vertical-align: top; }
+		.tbl .lbl { color: #64748b; width: 35%; }
+		.tbl .val { font-weight: 500; color: #0f172a; word-break: break-word; }
+		.btn-wrap { text-align: center; margin: 28px 0 12px; }
+		.btn { display: inline-block; background-color: #4f46e5; color: #ffffff !important; padding: 11px 26px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; }
+		.fallback { font-size: 11px; color: #94a3b8; text-align: center; }
+		.fallback a { color: #6366f1; text-decoration: underline; }
+		.footer { font-size: 12px; line-height: 1.5; color: #94a3b8; text-align: center; margin-top: 24px; max-width: 580px; margin-left: auto; margin-right: auto; }
+		.footer strong { color: #64748b; }
+		@media (prefers-color-scheme: dark) {
+			body, .wrap { background-color: #0f172a !important; }
+			.card { background-color: #1e293b !important; border-color: #334155 !important; }
+			.title { color: #f8fafc !important; }
+			.sub, .tbl .lbl, .footer, .fallback { color: #94a3b8 !important; }
+			.tbl, .tbl tr { border-color: #334155 !important; }
+			.tbl .val { color: #f1f5f9 !important; }
+			.err-box { background-color: rgba(239, 68, 68, 0.12) !important; border-color: rgba(239, 68, 68, 0.25) !important; }
+			.err-title, .badge-failed { color: #f87171 !important; }
+			.err-msg { color: #fca5a5 !important; }
+			.badge-succeeded { background-color: rgba(16, 185, 129, 0.15) !important; border-color: rgba(16, 185, 129, 0.3) !important; color: #34d399 !important; }
+			.badge-failed { background-color: rgba(239, 68, 68, 0.15) !important; border-color: rgba(239, 68, 68, 0.3) !important; }
+			.footer strong { color: #cbd5e1 !important; }
+			.fallback a { color: #818cf8 !important; }
+		}
+	</style>
+</head>
+<body>
+<div class="wrap">
+	<table class="card" align="center" role="presentation">
+		<tr>
+			<td class="content">
+				<div class="brand">HivePaaS &bull; Health Check</div>
+				<table width="100%" role="presentation" style="margin-bottom: 20px;">
+					<tr>
+						<td style="vertical-align: top;">
+							{{if .Succeeded}}
+							<h1 class="title">Healthcheck passed</h1>
+							<p class="sub">The service is healthy and operating normally.</p>
+							{{else}}
+							<h1 class="title">Healthcheck failed</h1>
+							<p class="sub">The service is not functioning as expected.</p>
+							{{end}}
+						</td>
+						<td style="vertical-align: top; text-align: right; width: 95px;">
+							{{if .Succeeded}}
+							<span class="badge badge-succeeded">Passed</span>
+							{{else}}
+							<span class="badge badge-failed">Failed</span>
+							{{end}}
+						</td>
+					</tr>
+				</table>
+
+				{{if not .Succeeded}}
+				<div class="err-box">
+					<div class="err-title">Check Result Mismatch</div>
+					<div class="err-msg">
+						<div><strong>Expected:</strong> {{.Expect}}</div>
+						<div style="margin-top: 3px;"><strong>Actual:</strong> {{.Actual}}</div>
+					</div>
+				</div>
+				{{end}}
+
+				<table class="tbl" role="presentation">
+					{{if .ProjectName}}
+					<tr><td class="lbl">Project</td><td class="val">{{.ProjectName}}</td></tr>
+					{{end}}
+					{{if .AppName}}
+					<tr><td class="lbl">App</td><td class="val">{{.AppName}}</td></tr>
+					{{end}}
+					<tr><td class="lbl">Check Name</td><td class="val">{{.HealthcheckName}}</td></tr>
+					<tr><td class="lbl">Type</td><td class="val">{{.HealthcheckType}}</td></tr>
+					<tr><td class="lbl">Started At</td><td class="val">{{if .StartedAtFormatted}}{{.StartedAtFormatted}}{{else}}{{.StartedAt}}{{end}}</td></tr>
+					<tr><td class="lbl">Duration</td><td class="val">{{.Duration}}</td></tr>
+					<tr><td class="lbl">Retries</td><td class="val">{{.Retries}}</td></tr>
+				</table>
+
+				<div class="btn-wrap">
+					<a class="btn" href="{{.DashboardLink}}" target="_blank">View Health Check in Dashboard &rarr;</a>
+				</div>
+				<div class="fallback">
+					Button not working? <a href="{{.DashboardLink}}" target="_blank">Open in browser</a>
+				</div>
+			</td>
+		</tr>
+	</table>
+
+	<div class="footer">
+		Automated notification sent by <strong>HivePaaS</strong>.<br/>
+		You can adjust alert rules in your healthcheck notification settings.
+	</div>
+</div>
+</body>
+</html>

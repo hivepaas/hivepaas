@@ -70,10 +70,7 @@ func TransformTask(task *entity.Task, taskInfo *cacheentity.TaskInfo) (resp *Tas
 	}
 
 	if resp.Status == base.TaskStatusInProgress || resp.Status == base.TaskStatusFailed {
-		runs, _ := task.GetRuns()
-		if len(runs) > 0 {
-			resp.LastError = runs[len(runs)-1].Error
-		}
+		resp.LastError = task.GetLastError()
 	}
 
 	return resp, nil

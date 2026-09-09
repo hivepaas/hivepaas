@@ -88,6 +88,10 @@ type TemplateDataAppDeployment struct {
 	DashboardLink string
 }
 
+func (d TemplateDataAppDeployment) StartedAtFormatted() string {
+	return formatDateTime(d.StartedAt)
+}
+
 //
 // CRON TASK
 //
@@ -102,7 +106,12 @@ type TemplateDataSchedTask struct {
 	StartedAt     time.Time
 	Duration      time.Duration
 	Retries       int
+	LastError     string
 	DashboardLink string
+}
+
+func (d TemplateDataSchedTask) StartedAtFormatted() string {
+	return formatDateTime(d.StartedAt)
 }
 
 //
@@ -124,6 +133,10 @@ type TemplateDataHealthcheck struct {
 	DashboardLink   string
 }
 
+func (d TemplateDataHealthcheck) StartedAtFormatted() string {
+	return formatDateTime(d.StartedAt)
+}
+
 //
 // SSL EXPIRING
 //
@@ -139,6 +152,14 @@ type TemplateDataSSLExpiring struct {
 	ExpireAt      time.Time
 	ExpireIn      timeutil.Duration
 	DashboardLink string
+}
+
+func (d TemplateDataSSLExpiring) CreatedAtFormatted() string {
+	return formatDateTime(d.CreatedAt)
+}
+
+func (d TemplateDataSSLExpiring) ExpireAtFormatted() string {
+	return formatDateTime(d.ExpireAt)
 }
 
 //
@@ -159,6 +180,14 @@ type TemplateDataSSLRenewal struct {
 	DashboardLink string
 }
 
+func (d TemplateDataSSLRenewal) CreatedAtFormatted() string {
+	return formatDateTime(d.CreatedAt)
+}
+
+func (d TemplateDataSSLRenewal) ExpireAtFormatted() string {
+	return formatDateTime(d.ExpireAt)
+}
+
 //
 // SYSTEM UPDATE
 //
@@ -171,4 +200,8 @@ type TemplateDataSystemUpdate struct {
 	StartedAt      time.Time
 	Duration       time.Duration
 	DashboardLink  string
+}
+
+func (d TemplateDataSystemUpdate) StartedAtFormatted() string {
+	return formatDateTime(d.StartedAt)
 }

@@ -64,6 +64,7 @@ func (e *Executor) buildNotificationMsgData(
 		StartedAt:    data.Task.StartedAt.Truncate(time.Second),
 		Duration:     data.Task.GetDuration().Truncate(time.Millisecond),
 		Retries:      data.Task.Config.Retry,
+		LastError:    data.Task.GetLastError(),
 	}
 	if schedJob.Schedule.Interval > 0 {
 		msgData.Schedule = fmt.Sprintf("every %v", schedJob.Schedule.Interval.String())

@@ -1143,6 +1143,16 @@ export const ROUTE = {
                 $pattern: "projects/:id/status",
                 $route: (id: string) => `/projects/${id}/status/`,
 
+                tasks: {
+                    $pattern: "projects/:id/status/tasks",
+                    $route: (id: string) => `/projects/${id}/status/tasks/`,
+
+                    details: {
+                        $pattern: "projects/:id/status/tasks/:taskId",
+                        $route: (id: string, taskId: string) => `/projects/${id}/status/tasks/${taskId}/`,
+                    },
+                },
+
                 auditLogs: {
                     $pattern: "projects/:id/status/audit-logs",
                     $route: (id: string) => `/projects/${id}/status/audit-logs/`,

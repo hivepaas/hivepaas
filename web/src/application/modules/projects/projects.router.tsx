@@ -507,7 +507,7 @@ export const projectsRouter: RouteObject = {
                 },
                 {
                     path: ROUTE.projects.single.status.$pattern,
-                    element: <ProjectRouteRedirect to={ROUTE.projects.single.status.auditLogs.$route} />,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.status.tasks.$route} />,
                 },
                 {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.accessTokens,
@@ -1287,6 +1287,26 @@ export const projectsRouter: RouteObject = {
                         };
                     },
                     children: [
+                        {
+                            path: ROUTE.projects.single.status.tasks.$pattern,
+                            lazy: async () => {
+                                const { ProjectTasksRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectTasksRoute,
+                                };
+                            },
+                        },
+                        {
+                            path: ROUTE.projects.single.status.tasks.details.$pattern,
+                            lazy: async () => {
+                                const { ProjectTaskDetailsRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectTaskDetailsRoute,
+                                };
+                            },
+                        },
                         {
                             path: ROUTE.projects.single.status.auditLogs.$pattern,
                             lazy: async () => {

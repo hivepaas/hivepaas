@@ -42,6 +42,38 @@ export interface SystemTaskTargetJob {
     status: string;
 }
 
+export interface SystemTaskScopeProject {
+    id: string;
+    name: string;
+    key?: string;
+    photo?: string;
+    status?: string;
+}
+
+export interface SystemTaskScopeApp {
+    id: string;
+    name: string;
+    key?: string;
+    photo?: string;
+    status?: string;
+    env?: string;
+}
+
+export interface SystemTaskScopeUser {
+    id: string;
+    username: string;
+    email?: string;
+    fullName?: string;
+    photo?: string;
+    role?: string;
+}
+
+export type SystemTaskScope =
+    | { type: "global" }
+    | { type: "project"; projectID: string }
+    | { type: "project-env"; projectID: string; projectEnvID: string }
+    | { type: "app"; projectID: string; projectEnvID: string; appID: string };
+
 export interface SystemTask {
     id: string;
     type: string;
@@ -50,6 +82,9 @@ export interface SystemTask {
     targetJob?: SystemTaskTargetJob;
     lastError: string;
     updateVer: number;
+    scopeProject?: SystemTaskScopeProject;
+    scopeApp?: SystemTaskScopeApp;
+    scopeUser?: SystemTaskScopeUser;
     runAt: Date | null;
     retryAt: Date | null;
     startedAt: Date | null;

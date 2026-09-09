@@ -5,6 +5,8 @@ import type {
     SystemTasks_FindManyPaginated_Res,
     SystemTasks_FindOneById_Req,
     SystemTasks_FindOneById_Res,
+    SystemTasks_FindTypes_Req,
+    SystemTasks_FindTypes_Res,
 } from "~/system-status/api/services";
 import { QK } from "~/system-status/data/constants";
 
@@ -38,7 +40,27 @@ function useFindOneById(request: FindOneByIdReq, options: FindOneByIdOptions = {
     });
 }
 
+type FindTypesReq = SystemTasks_FindTypes_Req["data"];
+type FindTypesRes = SystemTasks_FindTypes_Res;
+type FindTypesOptions = Omit<UseQueryOptions<FindTypesRes>, "queryKey" | "queryFn">;
+
+function useFindTypes(request: FindTypesReq = {}, options: FindTypesOptions = {}) {
+    const { queries } = useSystemTasksApi();
+
+    return useQuery({
+        queryKey: [QK["system-status.tasks.find-types"], request],
+        queryFn: ({ signal }) => queries.findTypes(request, signal),
+        staleTime: Infinity,
+        gcTime: Infinity,
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        ...options,
+    });
+}
+
 export const SystemTasksQueries = Object.freeze({
     useFindManyPaginated,
     useFindOneById,
+    useFindTypes,
 });

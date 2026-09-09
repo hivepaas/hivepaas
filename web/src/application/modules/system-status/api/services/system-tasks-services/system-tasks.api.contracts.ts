@@ -1,5 +1,5 @@
 import type { PaginationState, SortingState } from "@infrastructure/data";
-import type { SystemTask, SystemTaskJobName, SystemTaskStatus } from "~/system-status/domain";
+import type { SystemTask, SystemTaskJobName, SystemTaskScope, SystemTaskStatus } from "~/system-status/domain";
 
 import type { ApiRequestBase, ApiResponseBase, ApiResponsePaginated } from "@infrastructure/api";
 
@@ -12,15 +12,28 @@ export interface SystemTaskLogFrame {
 }
 
 export type SystemTasks_FindManyPaginated_Req = ApiRequestBase<{
+    scope?: SystemTaskScope;
     pagination?: PaginationState;
     sorting?: SortingState;
     search?: string;
     jobName?: SystemTaskJobName;
     targetId?: string[];
+    type?: string[];
     status?: SystemTaskStatus[];
+    fromDate?: string;
+    toDate?: string;
+    projectID?: string;
+    appID?: string;
+    scopeOnly?: boolean;
 }>;
 
 export type SystemTasks_FindManyPaginated_Res = ApiResponsePaginated<SystemTask>;
+
+export type SystemTasks_FindTypes_Req = ApiRequestBase<{
+    scope?: SystemTaskScope;
+}>;
+
+export type SystemTasks_FindTypes_Res = ApiResponseBase<string[]>;
 
 export type SystemTasks_FindOneById_Req = ApiRequestBase<{
     taskID: string;

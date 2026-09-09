@@ -16,6 +16,7 @@ import {
     HardDrive,
     KeyRound,
     Layers,
+    ListTodo,
     Lock,
     type LucideIcon,
     Mail,
@@ -261,8 +262,13 @@ function createClusterResourcesSections(projectId: string): ProviderTabSection[]
 function createStatusSections(projectId: string): ProviderTabSection[] {
     return [
         {
-            title: "Audit Logs",
+            title: "Status",
             items: [
+                {
+                    label: "Tasks",
+                    icon: ListTodo,
+                    route: ROUTE.projects.single.status.tasks.$route(projectId),
+                },
                 {
                     label: "Audit Logs",
                     icon: ShieldCheck,

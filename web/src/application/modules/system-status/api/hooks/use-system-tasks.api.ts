@@ -6,6 +6,7 @@ import type {
     SystemTasks_Cancel_Req,
     SystemTasks_FindManyPaginated_Req,
     SystemTasks_FindOneById_Req,
+    SystemTasks_FindTypes_Req,
 } from "~/system-status/api/services";
 
 import { useApiErrorNotifications } from "@infrastructure/api";
@@ -37,6 +38,14 @@ function createHook() {
                             notifyError({ message: "Failed to get system task", error });
                             throw error;
                         },
+                    });
+                },
+                findTypes: async (data: SystemTasks_FindTypes_Req["data"] = {}, signal?: AbortSignal) => {
+                    const result = await api.systemStatus.tasks.findTypes({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: () => ({ data: [] as string[] }),
                     });
                 },
             }),

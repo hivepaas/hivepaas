@@ -1,5 +1,6 @@
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
+import type { SystemTaskScope } from "~/system-status/domain";
 
 import { BaseApi, parseApiError } from "@infrastructure/api";
 
@@ -10,9 +11,28 @@ import type {
     SystemTasks_FindManyPaginated_Res,
     SystemTasks_FindOneById_Req,
     SystemTasks_FindOneById_Res,
+    SystemTasks_FindTypes_Req,
+    SystemTasks_FindTypes_Res,
     SystemTasks_GetLogs_Req,
 } from "./system-tasks.api.contracts";
 import type { SystemTasksApiValidator } from "./system-tasks.api.validator";
+
+export function resolveSystemTasksEndpoint(scope?: SystemTaskScope): string {
+    if (!scope || scope.type === "global") {
+        return "/system/tasks";
+    }
+
+    switch (scope.type) {
+        case "project":
+            return `/projects/${scope.projectID}/tasks`;
+        case "project-env":
+            return `/projects/${scope.projectID}/${scope.projectEnvID}/tasks`;
+        case "app":
+            return `/projects/${scope.projectID}/${scope.projectEnvID}/apps/${scope.appID}/tasks`;
+        default:
+            return "/system/tasks";
+    }
+}
 
 export type SystemTaskLogsQueryParams = Record<string, string | number | boolean>;
 
@@ -37,7 +57,21 @@ export class SystemTasksApi extends BaseApi {
         request: SystemTasks_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<SystemTasks_FindManyPaginated_Res, Error>> {
-        const { pagination, sorting, search, jobName, targetId, status } = request.data;
+        const {
+            scope,
+            pagination,
+            sorting,
+            search,
+            jobName,
+            targetId,
+            status,
+            type,
+            fromDate,
+            toDate,
+            projectID,
+            appID,
+            scopeOnly,
+        } = request.data;
         const query = this.queryBuilder.getInstance();
 
         query
@@ -48,16 +82,41 @@ export class SystemTasksApi extends BaseApi {
                 jobName: jobName ? [jobName] : undefined,
                 targetId,
                 status,
+                type,
+                fromDate: fromDate ? [fromDate] : undefined,
+                toDate: toDate ? [toDate] : undefined,
+                projectId: projectID ? [projectID] : undefined,
+                appId: appID ? [appID] : undefined,
+                scopeOnly: scopeOnly ? [true] : undefined,
             });
+
+        const url = resolveSystemTasksEndpoint(scope);
 
         return lastValueFrom(
             from(
-                this.client.v1.get("/system/tasks", {
+                this.client.v1.get(url, {
                     params: query.build(),
                     signal,
                 }),
             ).pipe(
                 map(this.validator.findManyPaginated),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findTypes(
+        request: SystemTasks_FindTypes_Req = { data: {} },
+        signal?: AbortSignal,
+    ): Promise<Result<SystemTasks_FindTypes_Res, Error>> {
+        const { scope } = request.data;
+        const baseUrl = resolveSystemTasksEndpoint(scope);
+        const url = `${baseUrl}/types`;
+
+        return lastValueFrom(
+            from(this.client.v1.get(url, { signal })).pipe(
+                map(this.validator.findTypes),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

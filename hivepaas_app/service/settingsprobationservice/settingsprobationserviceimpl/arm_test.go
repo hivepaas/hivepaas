@@ -25,7 +25,7 @@ type noTasksRepo struct {
 	repository.TaskRepo
 }
 
-func (noTasksRepo) List(_ context.Context, _ database.IDB, _ string, _ *basedto.Paging,
+func (noTasksRepo) ListByTarget(_ context.Context, _ database.IDB, _ string, _ *basedto.Paging,
 	_ ...bunex.SelectQueryOption) ([]*entity.Task, *basedto.PagingMeta, error) {
 	return nil, nil, nil
 }

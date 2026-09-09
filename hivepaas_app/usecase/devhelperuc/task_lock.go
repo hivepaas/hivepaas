@@ -16,7 +16,7 @@ func (uc *UC) LockTask(
 	req *devhelperdto.LockTaskReq,
 ) (*devhelperdto.LockTaskResp, error) {
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		_, err := uc.taskRepo.GetByID(ctx, db, "", req.TaskID,
+		_, err := uc.taskRepo.GetByID(ctx, db, nil, "", req.TaskID,
 			bunex.SelectFor("UPDATE"),
 		)
 		if err != nil {

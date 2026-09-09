@@ -28,7 +28,7 @@ func (s *service) UpdateSystemVersion(
 	timeNow := timeutil.NowUTC()
 
 	// Make sure there is no other update task in the system
-	tasks, _, err := s.taskRepo.List(ctx, db, "", nil,
+	tasks, _, err := s.taskRepo.ListByTarget(ctx, db, "", nil,
 		bunex.SelectWhere("task.type = ?", base.TaskTypeSystemUpdate),
 		bunex.SelectWhereIn("task.status IN (?)", base.TaskStatusNotStarted, base.TaskStatusInProgress),
 		bunex.SelectWhere("task.created_at > ?", timeNow.Add(-time.Hour)),
@@ -46,6 +46,7 @@ func (s *service) UpdateSystemVersion(
 	// Create a task for the system update
 	task := &entity.Task{
 		ID:     gofn.Must(ulid.NewStringULID()),
+		Scope:  base.ObjectScopeGlobal,
 		Type:   base.TaskTypeSystemUpdate,
 		Status: base.TaskStatusNotStarted,
 		Config: entity.TaskConfig{

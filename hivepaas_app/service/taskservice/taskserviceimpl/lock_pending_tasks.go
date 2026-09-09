@@ -36,7 +36,7 @@ func (s *service) LockAllPendingTasks(
 	opts = append(opts, extraOpts...)
 
 	for {
-		tasks, _, err := s.taskRepo.List(ctx, db, "", nil, opts...)
+		tasks, _, err := s.taskRepo.ListByTarget(ctx, db, "", nil, opts...)
 		if err == nil {
 			return tasks, nil
 		}

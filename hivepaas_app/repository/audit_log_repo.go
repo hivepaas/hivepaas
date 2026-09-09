@@ -152,7 +152,7 @@ func (repo *auditLogRepo) loadScopeData(ctx context.Context, db database.IDB, sc
 	return nil
 }
 
-// applyAppFilter filters settings belong to the app or to any parent object
+// applyAppFilter filters logs belong to the app or to any parent object
 func (repo *auditLogRepo) applyAppFilter(opts []bunex.SelectQueryOption,
 	scope *entity.ObjectScope) []bunex.SelectQueryOption {
 	if scope.NoInherited {
@@ -175,7 +175,7 @@ func (repo *auditLogRepo) applyAppFilter(opts []bunex.SelectQueryOption,
 	)
 }
 
-// applyProjectEnvFilter filters settings belong to the project env or to any parent object
+// applyProjectEnvFilter filters logs belong to the project env or to any parent object
 func (repo *auditLogRepo) applyProjectEnvFilter(opts []bunex.SelectQueryOption,
 	scope *entity.ObjectScope) []bunex.SelectQueryOption {
 	if scope.NoInherited {
@@ -197,7 +197,7 @@ func (repo *auditLogRepo) applyProjectEnvFilter(opts []bunex.SelectQueryOption,
 	)
 }
 
-// applyProjectFilter filters settings belong to the project or to any parent object
+// applyProjectFilter filters logs belong to the project or to any parent object
 func (repo *auditLogRepo) applyProjectFilter(opts []bunex.SelectQueryOption,
 	scope *entity.ObjectScope) []bunex.SelectQueryOption {
 	projectID := scope.ProjectID
@@ -227,14 +227,14 @@ func (repo *auditLogRepo) applyProjectFilter(opts []bunex.SelectQueryOption,
 	)
 }
 
-// applyDirectUserFilter filters settings belong to the user
+// applyDirectUserFilter filters logs belong to the user
 func (repo *auditLogRepo) applyDirectUserFilter(opts []bunex.SelectQueryOption,
 	scope *entity.ObjectScope) []bunex.SelectQueryOption {
 	opts = append(opts, bunex.SelectWhere("audit_log.object_id = ?", scope.UserID))
 	return opts
 }
 
-// applyGlobalFilter filters settings belong to global scope
+// applyGlobalFilter filters logs belong to global scope
 func (repo *auditLogRepo) applyGlobalFilter(opts []bunex.SelectQueryOption,
 	scope *entity.ObjectScope) []bunex.SelectQueryOption {
 	if scope.NoInherited {
@@ -243,7 +243,7 @@ func (repo *auditLogRepo) applyGlobalFilter(opts []bunex.SelectQueryOption,
 	return opts
 }
 
-// applyHivepaasFilter filters settings belong to Hivepaas scope
+// applyHivepaasFilter filters logs belong to Hivepaas scope
 func (repo *auditLogRepo) applyHivepaasFilter(opts []bunex.SelectQueryOption) []bunex.SelectQueryOption {
 	opts = append(opts, bunex.SelectWhere("audit_log.scope = ?", base.ObjectScopeHivepaas))
 	return opts

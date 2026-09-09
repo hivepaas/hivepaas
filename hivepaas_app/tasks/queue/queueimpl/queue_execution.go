@@ -168,7 +168,7 @@ func (q *taskQueue) loadTask(
 	db database.IDB,
 	taskID string,
 ) (*entity.Task, error) {
-	task, err := q.taskRepo.GetByID(ctx, db, "", taskID,
+	task, err := q.taskRepo.GetByID(ctx, db, nil, "", taskID,
 		bunex.SelectWhereIn("task.status IN (?)", base.TaskStatusNotStarted, base.TaskStatusFailed),
 		bunex.SelectFor("UPDATE OF task SKIP LOCKED"),
 		bunex.SelectRelation("TargetJob"),

@@ -161,7 +161,7 @@ func (s *service) sysCleanupDBDeleteOrphanedTasksAndDeployments(
 	db database.IDB,
 ) (err error) {
 	// Soft delete tasks belonging to deleted apps (skipping currently locked ones)
-	orphanedTasks, _, e := s.taskRepo.List(ctx, db, "", nil,
+	orphanedTasks, _, e := s.taskRepo.ListByTarget(ctx, db, "", nil,
 		bunex.SelectColumns("id"),
 		bunex.SelectWhere("EXISTS(SELECT 1 FROM apps "+
 			"WHERE apps.id = task.target_id AND apps.deleted_at IS NOT NULL) OR "+

@@ -127,7 +127,7 @@ func (q *taskQueue) loadCurrentTasksForUnscheduling(
 	jobs []*entity.Setting,
 ) ([]*entity.Task, error) {
 	timeNow := timeutil.NowUTC()
-	tasks, _, err := q.taskRepo.List(ctx, db, "", nil,
+	tasks, _, err := q.taskRepo.ListByTarget(ctx, db, "", nil,
 		bunex.SelectFor("UPDATE OF task SKIP LOCKED"),
 		bunex.SelectWhereIn("task.target_id IN (?)", entityutil.ExtractIDs(jobs)...),
 		bunex.SelectWhere("task.status != ?", base.TaskStatusDone),

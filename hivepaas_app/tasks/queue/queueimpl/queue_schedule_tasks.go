@@ -25,7 +25,7 @@ func (q *taskQueue) findSchedulingTasks(
 	}
 	scanFrom := timeNow.Add(-missedTaskPeriod)
 	scanTo := timeNow.Add(q.config.Tasks.Queue.TaskCheckInterval)
-	tasks, _, err := q.taskRepo.List(ctx, q.db, "", nil,
+	tasks, _, err := q.taskRepo.ListByTarget(ctx, q.db, "", nil,
 		bunex.SelectWhere("task.type != ?", base.TaskTypePeriodicExec), // special tasks no need scheduling
 		bunex.SelectWhere("task.type != ?", base.TaskTypeSystemUpdate), // special tasks
 		bunex.SelectWhereGroup(

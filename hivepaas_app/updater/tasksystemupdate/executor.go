@@ -154,7 +154,7 @@ func (e *Executor) loadUpdateTask(
 		bunex.SelectLimit(1),
 	}
 	opts = append(opts, extraOpts...)
-	tasks, _, err := e.taskRepo.List(ctx, db, "", nil, opts...)
+	tasks, _, err := e.taskRepo.ListByTarget(ctx, db, "", nil, opts...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

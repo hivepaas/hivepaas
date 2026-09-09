@@ -25,7 +25,7 @@ func (s *service) GetTask(
 	}
 	getOpts = append(getOpts, req.ExtraSelectOpts...)
 
-	task, err := s.taskRepo.GetByID(ctx, db, req.Type, req.ID, getOpts...)
+	task, err := s.taskRepo.GetByID(ctx, db, nil, req.Type, req.ID, getOpts...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -109,7 +109,7 @@ func (s *service) ListTask(
 	}
 	listOpts = append(listOpts, req.ExtraSelectOpts...)
 
-	tasks, paging, err := s.taskRepo.List(ctx, db, "", &req.Paging, listOpts...)
+	tasks, paging, err := s.taskRepo.ListByTarget(ctx, db, "", &req.Paging, listOpts...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

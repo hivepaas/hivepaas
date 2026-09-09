@@ -28,7 +28,7 @@ func (s *service) GetTaskLogs(
 		req.Duration = 0
 	}
 
-	task, err := s.taskRepo.GetByID(ctx, db, "", req.TaskID)
+	task, err := s.taskRepo.GetByID(ctx, db, nil, "", req.TaskID)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

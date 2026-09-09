@@ -149,7 +149,7 @@ func (s *service) armFallback(task *entity.Task) {
 func (s *service) runFallback(taskID string) error {
 	ctx := context.Background()
 	return hperrors.Wrap(transaction.Execute(ctx, s.db, func(db database.Tx) error {
-		task, err := s.taskRepo.GetByID(ctx, db, base.TaskTypeSettingsRevert, taskID,
+		task, err := s.taskRepo.GetByID(ctx, db, nil, base.TaskTypeSettingsRevert, taskID,
 			bunex.SelectWhere("task.status = ?", base.TaskStatusNotStarted),
 			bunex.SelectFor("UPDATE OF task SKIP LOCKED"),
 		)
@@ -216,7 +216,7 @@ func (s *service) FindPending(
 	appID string,
 	settingType base.SettingType,
 ) (*entity.Task, error) {
-	tasks, _, err := s.taskRepo.List(ctx, db, "", nil,
+	tasks, _, err := s.taskRepo.ListByTarget(ctx, db, "", nil,
 		bunex.SelectWhere("task.type = ?", base.TaskTypeSettingsRevert),
 		bunex.SelectWhere("task.object_id = ?", appID),
 		bunex.SelectWhere("task.status = ?", base.TaskStatusNotStarted),
@@ -243,7 +243,7 @@ func (s *service) FindPending(
 // Called at startup, by the process that serves the API - the one none of these
 // changes can take down.
 func (s *service) Reconcile(ctx context.Context) error {
-	tasks, _, err := s.taskRepo.List(ctx, s.db, "", nil,
+	tasks, _, err := s.taskRepo.ListByTarget(ctx, s.db, "", nil,
 		bunex.SelectWhere("task.type = ?", base.TaskTypeSettingsRevert),
 		bunex.SelectWhere("task.status = ?", base.TaskStatusNotStarted),
 	)

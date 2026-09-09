@@ -18,7 +18,7 @@ func (s *service) CancelTask(
 	taskID string,
 	validatingTargetID *string,
 ) (canceled bool, err error) {
-	task, err := s.taskRepo.GetByID(ctx, db, "", taskID,
+	task, err := s.taskRepo.GetByID(ctx, db, nil, "", taskID,
 		bunex.SelectFor("UPDATE OF task SKIP LOCKED"),
 	)
 	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {

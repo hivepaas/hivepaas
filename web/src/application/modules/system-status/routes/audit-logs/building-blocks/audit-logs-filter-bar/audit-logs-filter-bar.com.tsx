@@ -21,6 +21,7 @@ export interface AuditLogFilterValues {
     toDate?: string;
     projectId?: string;
     appId?: string;
+    scopeOnly?: boolean;
 }
 
 export interface AuditLogsFilterBarProps {
@@ -58,18 +59,51 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
     );
     const apps = appsResponse?.data ?? [];
 
+    const projectSelectValue = filters.scopeOnly ? "scope-only" : (filters.projectId ?? "all");
+    const appSelectValue = filters.scopeOnly ? "scope-only" : (filters.appId ?? "all");
+
     function handleProjectChange(val: string) {
-        onChange({
-            ...filters,
-            projectId: val === "all" ? undefined : val,
-        });
+        if (val === "scope-only") {
+            onChange({
+                ...filters,
+                projectId: undefined,
+                scopeOnly: true,
+            });
+        } else if (val === "all") {
+            onChange({
+                ...filters,
+                projectId: undefined,
+                scopeOnly: undefined,
+            });
+        } else {
+            onChange({
+                ...filters,
+                projectId: val,
+                scopeOnly: undefined,
+            });
+        }
     }
 
     function handleAppChange(val: string) {
-        onChange({
-            ...filters,
-            appId: val === "all" ? undefined : val,
-        });
+        if (val === "scope-only") {
+            onChange({
+                ...filters,
+                appId: undefined,
+                scopeOnly: true,
+            });
+        } else if (val === "all") {
+            onChange({
+                ...filters,
+                appId: undefined,
+                scopeOnly: undefined,
+            });
+        } else {
+            onChange({
+                ...filters,
+                appId: val,
+                scopeOnly: undefined,
+            });
+        }
     }
 
     function handleTypeChange(val: string) {
@@ -132,7 +166,7 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                             Project
                         </span>
                         <Select
-                            value={filters.projectId ?? "all"}
+                            value={projectSelectValue}
                             onValueChange={handleProjectChange}
                         >
                             <SelectTrigger className="h-9 w-full">
@@ -140,7 +174,10 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    <span className="text-muted-foreground">All Projects</span>
+                                    <span>All Projects</span>
+                                </SelectItem>
+                                <SelectItem value="scope-only">
+                                    <span>Global Only</span>
                                 </SelectItem>
                                 {projects.map(project => (
                                     <SelectItem
@@ -168,7 +205,7 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                             App
                         </span>
                         <Select
-                            value={filters.appId ?? "all"}
+                            value={appSelectValue}
                             onValueChange={handleAppChange}
                         >
                             <SelectTrigger className="h-9 w-full">
@@ -176,7 +213,10 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    <span className="text-muted-foreground">All Apps</span>
+                                    <span>All Apps</span>
+                                </SelectItem>
+                                <SelectItem value="scope-only">
+                                    <span>Project Only</span>
                                 </SelectItem>
                                 {apps.map(app => (
                                     <SelectItem
@@ -211,7 +251,7 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">
-                                <span className="text-muted-foreground">All Types</span>
+                                <span>All Types</span>
                             </SelectItem>
                             {availableTypes.map(typeItem => (
                                 <SelectItem
@@ -244,7 +284,7 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">
-                                <span className="text-muted-foreground">All Sources</span>
+                                <span>All Sources</span>
                             </SelectItem>
                             {ALL_SOURCES.map(sourceItem => (
                                 <SelectItem
@@ -277,7 +317,7 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">
-                                <span className="text-muted-foreground">All Results</span>
+                                <span>All Results</span>
                             </SelectItem>
                             <SelectItem value={AuditLogResult.Allowed}>
                                 <ResultBadge result={AuditLogResult.Allowed} />
@@ -303,7 +343,7 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">
-                                <span className="text-muted-foreground">All Actors</span>
+                                <span>All Actors</span>
                             </SelectItem>
                             {users.map(user => {
                                 const userName = user.fullName ? user.fullName : user.username;

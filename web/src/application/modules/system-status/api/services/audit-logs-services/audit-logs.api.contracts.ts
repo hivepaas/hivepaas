@@ -17,6 +17,7 @@ export type AuditLogs_FindManyPaginated_Req = ApiRequestBase<{
     toDate?: string;
     projectID?: string;
     appID?: string;
+    scopeOnly?: boolean;
 }>;
 
 export type AuditLogs_FindManyPaginated_Res = ApiResponsePaginated<AuditLog>;

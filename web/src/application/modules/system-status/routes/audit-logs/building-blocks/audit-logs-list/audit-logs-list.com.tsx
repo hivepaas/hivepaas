@@ -44,6 +44,7 @@ export function AuditLogsList({ scope = { type: "global" }, onSelectLog, classNa
         if (filters.toDate) count++;
         if (filters.projectId) count++;
         if (filters.appId) count++;
+        if (filters.scopeOnly) count++;
         return count;
     }, [filters]);
 
@@ -94,6 +95,7 @@ export function AuditLogsList({ scope = { type: "global" }, onSelectLog, classNa
         toDate: filters.toDate,
         projectID: filters.projectId,
         appID: filters.appId,
+        scopeOnly: filters.scopeOnly,
     });
 
     const pageCount = Math.max(1, Math.ceil(meta.page.total / pagination.size));

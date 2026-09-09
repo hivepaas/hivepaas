@@ -54,6 +54,7 @@ export class AuditLogsApi extends BaseApi {
             toDate,
             projectID,
             appID,
+            scopeOnly,
         } = request.data;
         const query = this.queryBuilder.getInstance();
 
@@ -71,6 +72,7 @@ export class AuditLogsApi extends BaseApi {
                 toDate: toDate ? [toDate] : undefined,
                 projectId: projectID ? [projectID] : undefined,
                 appId: appID ? [appID] : undefined,
+                scopeOnly: scopeOnly ? [true] : undefined,
             });
 
         const url = resolveAuditLogsEndpoint(scope);

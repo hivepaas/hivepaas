@@ -16,6 +16,7 @@ export const emptySystemCleanupConfigurationFormDefaults: SystemCleanupConfigura
         tasks: "180d",
         deployments: "180d",
         sysErrors: "180d",
+        auditLogs: "180d",
         deletedObjects: "180d",
     },
     clusterCleanup: {
@@ -62,6 +63,7 @@ export function mapSystemCleanupSettingsToFormInput(
             tasks: settings.dbObjectRetention.tasks,
             deployments: settings.dbObjectRetention.deployments,
             sysErrors: settings.dbObjectRetention.sysErrors,
+            auditLogs: settings.dbObjectRetention.auditLogs,
             deletedObjects: settings.dbObjectRetention.deletedObjects,
         },
         clusterCleanup: {

@@ -29,6 +29,7 @@ function mapFormValuesToPayload(values: SystemCleanupConfigurationFormOutput, up
             tasks: values.dbObjectRetention.tasks,
             deployments: values.dbObjectRetention.deployments,
             sysErrors: values.dbObjectRetention.sysErrors,
+            auditLogs: values.dbObjectRetention.auditLogs,
             deletedObjects: values.dbObjectRetention.deletedObjects,
         },
         clusterCleanup: {

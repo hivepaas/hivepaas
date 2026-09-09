@@ -5,6 +5,7 @@ const SystemCleanupDBObjectRetentionSchema = z.object({
     enabled: z.boolean(),
     tasks: z.string(),
     sysErrors: z.string(),
+    auditLogs: z.string(),
     deployments: z.string(),
     deletedObjects: z.string(),
 });

@@ -186,6 +186,10 @@ function DBCleanupOptionsFields() {
         fieldState: { error: sysErrorsError, invalid: isSysErrorsInvalid },
     } = useController({ control, name: "dbObjectRetention.sysErrors" });
     const {
+        field: auditLogs,
+        fieldState: { error: auditLogsError, invalid: isAuditLogsInvalid },
+    } = useController({ control, name: "dbObjectRetention.auditLogs" });
+    const {
         field: deletedObjects,
         fieldState: { error: deletedObjectsError, invalid: isDeletedObjectsInvalid },
     } = useController({ control, name: "dbObjectRetention.deletedObjects" });
@@ -253,6 +257,23 @@ function DBCleanupOptionsFields() {
                                         aria-invalid={isSysErrorsInvalid}
                                     />
                                     <FieldError errors={[sysErrorsError]} />
+                                </Field>
+                            </FieldGroup>
+                        </InfoBlock>
+
+                        <InfoBlock
+                            titleWidth={220}
+                            title="Audit Logs Retention"
+                        >
+                            <FieldGroup>
+                                <Field>
+                                    <Input
+                                        {...auditLogs}
+                                        placeholder="180d"
+                                        className="max-w-[400px]"
+                                        aria-invalid={isAuditLogsInvalid}
+                                    />
+                                    <FieldError errors={[auditLogsError]} />
                                 </Field>
                             </FieldGroup>
                         </InfoBlock>

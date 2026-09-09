@@ -14,6 +14,7 @@ export interface SystemCleanupDBObjectRetention {
     enabled: boolean;
     tasks: string;
     sysErrors: string;
+    auditLogs: string;
     deployments: string;
     deletedObjects: string;
 }

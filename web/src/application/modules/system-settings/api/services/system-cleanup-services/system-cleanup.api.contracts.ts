@@ -25,6 +25,7 @@ export type SystemCleanup_UpdateOne_Payload = {
         enabled: boolean;
         tasks: string;
         sysErrors: string;
+        auditLogs: string;
         deployments: string;
         deletedObjects: string;
     };

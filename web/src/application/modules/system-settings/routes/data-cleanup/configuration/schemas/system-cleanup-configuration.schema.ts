@@ -32,6 +32,7 @@ export const SystemCleanupConfigurationFormSchema = z.object({
         tasks: z.string(),
         deployments: z.string(),
         sysErrors: z.string(),
+        auditLogs: z.string(),
         deletedObjects: z.string(),
     }),
     clusterCleanup: z.object({

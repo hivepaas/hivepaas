@@ -41,6 +41,7 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 	{ // Audit log group
 		auditLogGroup := projectEnvGroup.Group("/audit-logs")
 		auditLogGroup.GET("", auditLogHandler.ListProjectEnvAuditLog)
+		auditLogGroup.GET("/types", auditLogHandler.ListAuditLogTypes)
 		auditLogGroup.GET("/:itemID", auditLogHandler.GetProjectEnvAuditLog)
 	}
 

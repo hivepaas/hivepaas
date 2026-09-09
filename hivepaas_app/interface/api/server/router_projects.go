@@ -60,6 +60,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	{ // Audit log group
 		auditLogGroup := projectGroup.Group("/:projectID/audit-logs")
 		auditLogGroup.GET("", auditLogHandler.ListProjectAuditLog)
+		auditLogGroup.GET("/types", auditLogHandler.ListAuditLogTypes)
 		auditLogGroup.GET("/:itemID", auditLogHandler.GetProjectAuditLog)
 	}
 

@@ -40,6 +40,15 @@ const (
 	AuditLogTypeRoutingChangeRevert AuditLogType = "routing-change-revert"
 )
 
+var AllAuditLogTypes = []AuditLogType{
+	AuditLogTypeSecretReveal,
+	AuditLogTypeAPIKeyCreate,
+	AuditLogTypeAPIKeyRevoke,
+	AuditLogTypeSecuritySettingsUpdate,
+	AuditLogTypeRoutingChangeConfirm,
+	AuditLogTypeRoutingChangeRevert,
+}
+
 // AuditLogSource is the way in - which endpoint, or which subsystem.
 type AuditLogSource string
 

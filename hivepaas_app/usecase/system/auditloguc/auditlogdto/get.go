@@ -11,6 +11,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
 )
 
 type GetAuditLogReq struct {
@@ -30,20 +32,8 @@ func (req *GetAuditLogReq) Validate() hperrors.ValidationErrors {
 }
 
 type GetAuditLogResp struct {
-	Meta *basedto.Meta       `json:"meta"`
-	Data *AuditLogDetailResp `json:"data"`
-}
-
-// AuditLogDetailResp is one entry with its Detail.
-//
-// Detail is the free-form half of a record - what a capability revoke took away,
-// which fields a settings change touched - and it is only worth sending when
-// somebody has asked for that one entry. The listing leaves it out on purpose:
-// it is unbounded, and a page of them is a large response nobody reads.
-type AuditLogDetailResp struct {
-	AuditLogResp
-
-	Detail string `json:"detail,omitempty"`
+	Meta *basedto.Meta `json:"meta"`
+	Data *AuditLogResp `json:"data"`
 }
 
 type AuditLogResp struct {
@@ -51,6 +41,11 @@ type AuditLogResp struct {
 	Type   base.AuditLogType   `json:"type"`
 	Source base.AuditLogSource `json:"source,omitempty"`
 	Result base.AuditLogResult `json:"result"`
+
+	ScopeProject    *projectdto.ProjectBaseResp `json:"scopeProject,omitempty"`
+	ScopeProjectEnv *projectdto.ProjectEnvResp  `json:"scopeProjectEnv,omitempty"`
+	ScopeApp        *appdto.AppBaseResp         `json:"scopeApp,omitempty"`
+	ScopeUser       *basedto.UserBaseResp       `json:"scopeUser,omitempty"`
 
 	Actor    *ActorResp    `json:"actor"`
 	Resource *ResourceResp `json:"resource,omitempty"`
@@ -61,6 +56,9 @@ type AuditLogResp struct {
 	RemoteAddr string `json:"remoteAddr,omitempty"`
 	UserAgent  string `json:"userAgent,omitempty"`
 	RequestID  string `json:"requestId,omitempty"`
+
+	Detail    string `json:"detail,omitempty"`
+	HasDetail bool   `json:"hasDetail,omitempty"`
 
 	CreatedAt time.Time `json:"createdAt"`
 }
@@ -88,11 +86,73 @@ func TransformAuditLog(
 	if err = copier.Copy(&resp, &auditLog); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if refObjects == nil {
+		refObjects = entity.NewRefObjects()
+	}
 
+	TransformAuditLogScopeObject(auditLog, refObjects, resp)
 	resp.Actor = TransformAuditLogActor(auditLog, refObjects)
 	resp.Resource = TransformAuditLogResource(auditLog, refObjects)
 
+	// Return detail along with the item if it's not too big
+	if len(auditLog.Detail) < 100 { //nolint:mnd
+		resp.Detail = auditLog.Detail
+	}
+	resp.HasDetail = auditLog.Detail != ""
+
 	return resp, nil
+}
+
+func TransformAuditLogScopeObject(
+	auditLog *entity.AuditLog,
+	refObjects *entity.RefObjects,
+	resp *AuditLogResp,
+) {
+	if auditLog.ObjectID == "" {
+		return
+	}
+
+	var projectID, projectEnvID, appID, userID string
+	switch auditLog.Scope {
+	case base.ObjectScopeProject:
+		projectID = auditLog.ObjectID
+	case base.ObjectScopeProjectEnv:
+		projectEnvID = auditLog.ObjectID
+	case base.ObjectScopeApp:
+		appID = auditLog.ObjectID
+	case base.ObjectScopeUser:
+		userID = auditLog.ObjectID
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+	}
+
+	if projectID != "" {
+		refResp := projectdto.TransformProjectBase(refObjects.RefProjects[projectID])
+		if refResp == nil {
+			refResp = projectdto.NewMissingProject(projectID)
+		}
+		resp.ScopeProject = refResp
+	}
+	if projectEnvID != "" {
+		refResp, _ := projectdto.TransformProjectEnv(refObjects.RefProjectEnvs[projectEnvID])
+		if refResp == nil {
+			refResp = projectdto.NewMissingProjectEnv(projectEnvID)
+		}
+		resp.ScopeProjectEnv = refResp
+	}
+	if appID != "" {
+		refResp := appdto.TransformAppBase(refObjects.RefApps[appID])
+		if refResp == nil {
+			refResp = appdto.NewMissingApp(appID)
+		}
+		resp.ScopeApp = refResp
+	}
+	if userID != "" {
+		refResp := basedto.TransformUserBase(refObjects.RefUsers[userID])
+		if refResp == nil {
+			refResp = basedto.NewMissingUser(userID)
+		}
+		resp.ScopeUser = refResp
+	}
 }
 
 func TransformAuditLogActor(
@@ -149,10 +209,12 @@ func TransformAuditLogResource(
 func TransformAuditLogDetail(
 	auditLog *entity.AuditLog,
 	refObjects *entity.RefObjects,
-) (resp *AuditLogDetailResp, err error) {
+) (resp *AuditLogResp, err error) {
 	item, err := TransformAuditLog(auditLog, refObjects)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return &AuditLogDetailResp{AuditLogResp: *item, Detail: auditLog.Detail}, nil
+	item.Detail = auditLog.Detail
+	item.HasDetail = item.Detail != ""
+	return item, nil
 }

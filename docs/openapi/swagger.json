@@ -3075,6 +3075,140 @@
         "tags" : [ "apps" ]
       }
     },
+    "/projects/{projectID}/audit-logs" : {
+      "get" : {
+        "description" : "Lists audit logs",
+        "operationId" : "listProjectAuditLog",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists audit logs",
+        "tags" : [ "audit_logs" ]
+      }
+    },
+    "/projects/{projectID}/audit-logs/{itemID}" : {
+      "get" : {
+        "description" : "Gets audit log",
+        "operationId" : "getProjectAuditLog",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "log ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_auditlogdto.GetAuditLogResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets audit log",
+        "tags" : [ "audit_logs" ]
+      }
+    },
     "/projects/{projectID}/backup-repos" : {
       "get" : {
         "description" : "Lists backup repo settings",
@@ -19745,6 +19879,156 @@
         "tags" : [ "apps" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/audit-logs" : {
+      "get" : {
+        "description" : "Lists audit logs",
+        "operationId" : "listProjectEnvAuditLog",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists audit logs",
+        "tags" : [ "audit_logs" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/audit-logs/{itemID}" : {
+      "get" : {
+        "description" : "Gets audit log",
+        "operationId" : "getProjectEnvAuditLog",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "log ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_auditlogdto.GetAuditLogResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets audit log",
+        "tags" : [ "audit_logs" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/backup-repos" : {
       "get" : {
         "description" : "Lists backup repo settings",
@@ -34981,6 +35265,144 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/audit-logs" : {
+      "get" : {
+        "description" : "Lists audit logs",
+        "operationId" : "listAuditLog",
+        "parameters" : [ {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists audit logs",
+        "tags" : [ "audit_logs" ]
+      }
+    },
+    "/system/audit-logs/types" : {
+      "get" : {
+        "description" : "Lists available audit log types",
+        "operationId" : "listAuditLogTypes",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogTypeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Lists available audit log types",
+        "tags" : [ "audit_logs" ]
+      }
+    },
+    "/system/audit-logs/{itemID}" : {
+      "get" : {
+        "description" : "Gets audit log",
+        "operationId" : "getAuditLog",
+        "parameters" : [ {
+          "description" : "log ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_auditlogdto.GetAuditLogResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets audit log",
+        "tags" : [ "audit_logs" ]
+      }
+    },
     "/system/errors" : {
       "get" : {
         "description" : "Lists sys errors",
@@ -37048,6 +37470,110 @@
           }
         },
         "summary" : "Updates Traefik config options",
+        "tags" : [ "system_traefik" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/traefik/config-options/confirm" : {
+      "post" : {
+        "description" : "Vouches for a config options change that is on trial, which stops it being undone",
+        "operationId" : "confirmTraefikConfigOptions",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/system_traefiksettingsdto.ConfirmConfigOptionsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_traefiksettingsdto.ConfirmConfigOptionsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Confirms a Traefik config options change",
+        "tags" : [ "system_traefik" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/traefik/config-options/revert" : {
+      "post" : {
+        "description" : "Undoes a config options change that is on trial, without waiting for its deadline",
+        "operationId" : "revertTraefikConfigOptions",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/system_traefiksettingsdto.RevertConfigOptionsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_traefiksettingsdto.RevertConfigOptionsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Reverts a Traefik config options change",
         "tags" : [ "system_traefik" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -39146,7 +39672,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -39164,7 +39690,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -52972,6 +53498,141 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "system_auditlogdto.ActorResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "loggedName" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "photo" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "loggedName", "name", "photo", "type" ],
+        "type" : "object"
+      },
+      "system_auditlogdto.AuditLogResp" : {
+        "properties" : {
+          "actor" : {
+            "$ref" : "#/components/schemas/system_auditlogdto.ActorResp"
+          },
+          "clientIp" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "detail" : {
+            "type" : "string"
+          },
+          "hasDetail" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "remoteAddr" : {
+            "type" : "string"
+          },
+          "requestId" : {
+            "type" : "string"
+          },
+          "resource" : {
+            "$ref" : "#/components/schemas/system_auditlogdto.ResourceResp"
+          },
+          "result" : {
+            "type" : "string"
+          },
+          "sessionUid" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "userAgent" : {
+            "type" : "string"
+          },
+          "viaApiKey" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "actor", "clientIp", "createdAt", "detail", "hasDetail", "id", "remoteAddr", "requestId", "resource", "result", "sessionUid", "source", "type", "userAgent", "viaApiKey" ],
+        "type" : "object"
+      },
+      "system_auditlogdto.GetAuditLogResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_auditlogdto.AuditLogResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "system_auditlogdto.ListAuditLogResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/system_auditlogdto.AuditLogResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "system_auditlogdto.ListAuditLogTypeResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "system_auditlogdto.ResourceResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "loggedName" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "photo" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "loggedName", "name", "photo", "type" ],
+        "type" : "object"
+      },
       "system_hpappsettingsdto.ConfirmRoutingSettingsReq" : {
         "properties" : {
           "changeId" : {
@@ -54001,11 +54662,37 @@
       },
       "system_traefiksettingsdto.ConfigOptionsResp" : {
         "properties" : {
+          "pendingChange" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/system_traefiksettingsdto.PendingChangeResp"
+            } ],
+            "description" : "PendingChange is set while a change to these options is on trial. Null the\nrest of the time.",
+            "type" : "object"
+          },
           "startupCommand" : {
             "$ref" : "#/components/schemas/system_traefiksettingsdto.StartupCommandResp"
           }
         },
-        "required" : [ "startupCommand" ],
+        "required" : [ "pendingChange", "startupCommand" ],
+        "type" : "object"
+      },
+      "system_traefiksettingsdto.ConfirmConfigOptionsReq" : {
+        "properties" : {
+          "changeId" : {
+            "description" : "ChangeID names the change being vouched for. It is optional, but sending it\nis what stops a confirmation that was in flight during one change from\nlanding on the next one.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "changeId" ],
+        "type" : "object"
+      },
+      "system_traefiksettingsdto.ConfirmConfigOptionsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
         "type" : "object"
       },
       "system_traefiksettingsdto.GetConfigOptionsResp" : {
@@ -54024,6 +54711,58 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/system_traefiksettingsdto.ServiceSettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "system_traefiksettingsdto.PendingChangeResp" : {
+        "properties" : {
+          "appliedAt" : {
+            "type" : "string"
+          },
+          "changeId" : {
+            "type" : "string"
+          },
+          "confirmableFrom" : {
+            "description" : "ConfirmableFrom is when a confirmation starts being accepted. Before it,\nthe request would likely have arrived through the configuration being\nreplaced, so it proves nothing and is refused.",
+            "type" : "string"
+          },
+          "deadlineAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appliedAt", "changeId", "confirmableFrom", "deadlineAt" ],
+        "type" : "object"
+      },
+      "system_traefiksettingsdto.RevertConfigOptionsData" : {
+        "properties" : {
+          "reason" : {
+            "type" : "string"
+          },
+          "reverted" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "reason", "reverted" ],
+        "type" : "object"
+      },
+      "system_traefiksettingsdto.RevertConfigOptionsReq" : {
+        "properties" : {
+          "changeId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "changeId" ],
+        "type" : "object"
+      },
+      "system_traefiksettingsdto.RevertConfigOptionsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_traefiksettingsdto.RevertConfigOptionsData"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -54154,20 +54893,34 @@
       },
       "system_traefiksettingsdto.UpdateConfigOptionsReq" : {
         "properties" : {
+          "confirmWindow" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/timeutil.Duration"
+            } ],
+            "description" : "ConfirmWindow is how long the change may stay unconfirmed before it is\nundone, as a Go duration string (\"5m\"). Clamped server-side, and there is no\nway to ask for no trial at all - see settingsprobationservice.ResolveWindow.",
+            "type" : "object"
+          },
           "startupCommand" : {
             "$ref" : "#/components/schemas/system_traefiksettingsdto.StartupCommandReq"
           }
         },
-        "required" : [ "startupCommand" ],
+        "required" : [ "confirmWindow", "startupCommand" ],
         "type" : "object"
       },
       "system_traefiksettingsdto.UpdateConfigOptionsResp" : {
         "properties" : {
+          "data" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/system_traefiksettingsdto.PendingChangeResp"
+            } ],
+            "description" : "Null when the request changed nothing traefik is not already running: there\nis no restart to survive, so there is nothing to confirm.\n\nThe trial itself is the payload, matching the routing and service settings\nendpoints - the three are read by one dialog, and a shape that differed\nwould be a difference with nothing behind it.",
+            "type" : "object"
+          },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
           }
         },
-        "required" : [ "meta" ],
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "system_traefiksettingsdto.UpdateServiceSettingsReq" : {
@@ -56257,9 +57010,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -34,6 +34,7 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 	{ // Audit log group
 		auditLogGroup := systemGroup.Group("/audit-logs")
 		auditLogGroup.GET("", auditLogHandler.ListGlobalAuditLog)
+		auditLogGroup.GET("/types", auditLogHandler.ListAuditLogTypes)
 		auditLogGroup.GET("/:itemID", auditLogHandler.GetGlobalAuditLog)
 	}
 

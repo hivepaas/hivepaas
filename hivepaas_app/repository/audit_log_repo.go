@@ -240,8 +240,7 @@ func (repo *auditLogRepo) applyGlobalFilter(opts []bunex.SelectQueryOption,
 	if scope.NoInherited {
 		return append(opts, bunex.SelectWhere("audit_log.object_id IS NULL"))
 	}
-
-	return append(opts, bunex.SelectWhere("audit_log.scope != ?", base.ObjectScopeHivepaas))
+	return opts
 }
 
 // applyHivepaasFilter filters settings belong to Hivepaas scope

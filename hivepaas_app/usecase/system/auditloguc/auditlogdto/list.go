@@ -7,16 +7,23 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
 type ListAuditLogReq struct {
 	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
+
+	ProjectID    string `json:"-" mapstructure:"projectId"`
+	ProjectEnvID string `json:"-" mapstructure:"projectEnvId"`
+	AppID        string `json:"-" mapstructure:"appId"`
 
 	Type       []base.AuditLogType   `json:"-" mapstructure:"type"`
 	Source     []base.AuditLogSource `json:"-" mapstructure:"source"`
 	Result     []base.AuditLogResult `json:"-" mapstructure:"result"`
 	ActorID    []string              `json:"-" mapstructure:"actorId"`
 	ResourceID []string              `json:"-" mapstructure:"resourceId"`
+	FromDate   timeutil.Date         `json:"-" mapstructure:"fromDate"`
+	ToDate     timeutil.Date         `json:"-" mapstructure:"toDate"`
 	Search     string                `json:"-" mapstructure:"search"`
 
 	Paging basedto.Paging `json:"-"`

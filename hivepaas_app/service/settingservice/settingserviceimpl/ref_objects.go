@@ -189,6 +189,7 @@ func (s *service) loadReferenceSettings(
 	return nil
 }
 
+//nolint:gocognit
 func (s *service) loadReferenceApps(
 	ctx context.Context,
 	db database.IDB,
@@ -227,6 +228,12 @@ func (s *service) loadReferenceApps(
 	}
 	for _, app := range apps {
 		refObjects.RefApps[app.ID] = app
+		if _, ok := refObjects.RefProjects[app.ProjectID]; !ok && app.Project != nil {
+			refObjects.RefProjects[app.ProjectID] = app.Project
+		}
+		if _, ok := refObjects.RefProjectEnvs[app.ProjectEnvID]; !ok && app.ProjectEnv != nil {
+			refObjects.RefProjectEnvs[app.ProjectEnvID] = app.ProjectEnv
+		}
 	}
 
 	for _, id := range loadAppIDs {
@@ -334,6 +341,9 @@ func (s *service) loadReferenceProjectEnvs(
 	}
 	for _, projectEnv := range projectEnvs {
 		refObjects.RefProjectEnvs[projectEnv.ID] = projectEnv
+		if _, ok := refObjects.RefProjects[projectEnv.ProjectID]; !ok && projectEnv.Project != nil {
+			refObjects.RefProjects[projectEnv.ProjectID] = projectEnv.Project
+		}
 	}
 
 	for _, id := range loadProjectEnvIDs {

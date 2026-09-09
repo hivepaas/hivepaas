@@ -6,7 +6,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/auditloguc/auditlogdto"
 )
 
@@ -15,6 +17,19 @@ func (uc *UC) ListAuditLog(
 	auth *basedto.Auth,
 	req *auditlogdto.ListAuditLogReq,
 ) (*auditlogdto.ListAuditLogResp, error) {
+	listScope := req.Scope
+	switch {
+	case req.ProjectID != "":
+		listScope = entity.NewObjectScopeProject(req.ProjectID)
+	case req.ProjectEnvID != "":
+		projectID, env := projecthelper.ParseProjectEnvID(req.ProjectEnvID)
+		if projectID != "" && env != "" {
+			listScope = entity.NewObjectScopeProjectEnv(projectID, env)
+		}
+	case req.AppID != "":
+		listScope = entity.NewObjectScopeApp(req.AppID, "", "", "")
+	}
+
 	var listOpts []bunex.SelectQueryOption
 	if len(req.Type) > 0 {
 		listOpts = append(listOpts, bunex.SelectWhereIn("audit_log.type IN (?)", req.Type...))
@@ -31,6 +46,14 @@ func (uc *UC) ListAuditLog(
 	if len(req.ResourceID) > 0 {
 		listOpts = append(listOpts, bunex.SelectWhereIn("audit_log.res_id IN (?)", req.ResourceID...))
 	}
+	if !req.FromDate.IsZero() {
+		listOpts = append(listOpts, bunex.SelectWhereIn("audit_log.created_at > ?",
+			req.FromDate.ToTime()))
+	}
+	if !req.ToDate.IsZero() {
+		listOpts = append(listOpts, bunex.SelectWhereIn("audit_log.created_at < ?",
+			req.ToDate.AddDate(0, 0, 1).ToTime()))
+	}
 	if req.Search != "" {
 		keyword := bunex.MakeLikeOpStr(req.Search, true)
 		listOpts = append(listOpts,
@@ -43,13 +66,16 @@ func (uc *UC) ListAuditLog(
 		)
 	}
 
-	auditLogs, pagingMeta, err := uc.auditLogRepo.List(ctx, uc.db, req.Scope, &req.Paging, listOpts...)
+	auditLogs, pagingMeta, err := uc.auditLogRepo.List(ctx, uc.db, listScope, &req.Paging, listOpts...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
-	// TODO: implement this when need ref objects
 	refObjects := entity.NewRefObjects()
+	err = uc.loadAuditLogRefData(ctx, uc.db, auditLogs, &refObjects)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 
 	resp, err := auditlogdto.TransformAuditLogs(auditLogs, refObjects)
 	if err != nil {
@@ -60,4 +86,27 @@ func (uc *UC) ListAuditLog(
 		Meta: &basedto.ListMeta{Page: pagingMeta},
 		Data: resp,
 	}, nil
+}
+
+func (uc *UC) loadAuditLogRefData(
+	ctx context.Context,
+	db database.IDB,
+	auditLogs []*entity.AuditLog,
+	refObjects **entity.RefObjects,
+) error {
+	if len(auditLogs) == 0 {
+		return nil
+	}
+	refIDs := &entity.RefObjectIDs{}
+	for _, auditLog := range auditLogs {
+		if auditLog == nil {
+			continue
+		}
+		refIDs.AddRefIDs(auditLog.GetRefObjectIDs())
+	}
+	err := uc.settingService.LoadRefObjectsByIDsSkipMissing(ctx, db, refObjects, nil, false, refIDs)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	return nil
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 )
 
 type GetProjectReq struct {
@@ -103,6 +104,13 @@ func TransformProjectOwner(project *entity.Project) *basedto.UserBaseResp {
 	return basedto.TransformUserBase(project.Owner)
 }
 
+func TransformProjectEnv(env *entity.ProjectEnv) (resp *ProjectEnvResp, err error) {
+	if err = copier.Copy(&resp, env); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return resp, nil
+}
+
 func TransformProjectEnvs(envs []*entity.ProjectEnv) (resp []*ProjectEnvResp, err error) {
 	if err = copier.Copy(&resp, &envs); err != nil {
 		return nil, hperrors.Wrap(err)
@@ -166,5 +174,23 @@ func TransformProjectBase(project *entity.Project) *ProjectBaseResp {
 		Photo:  basedto.TransformObjectIcon(project.Photo),
 		Status: project.Status,
 		Envs:   envs,
+	}
+}
+
+func NewMissingProject(id string) *ProjectBaseResp {
+	return &ProjectBaseResp{
+		ID:     id,
+		Name:   "missing",
+		Key:    "unknown",
+		Status: base.ProjectStatusMissing,
+	}
+}
+
+func NewMissingProjectEnv(id string) *ProjectEnvResp {
+	_, env := projecthelper.ParseProjectEnvID(id)
+	return &ProjectEnvResp{
+		ID:     id,
+		Name:   gofn.Coalesce(env, "missing"),
+		Status: base.ProjectStatusMissing,
 	}
 }

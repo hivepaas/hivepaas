@@ -28,7 +28,7 @@ func (s *service) SetProjectEnvStatus(
 		targetAppStatus = base.AppStatusActive
 	case base.ProjectStatusDisabled:
 		targetAppStatus = base.AppStatusDisabled
-	case base.ProjectStatusDeleting:
+	case base.ProjectStatusDeleting, base.ProjectStatusMissing:
 		// Do nothing
 	}
 

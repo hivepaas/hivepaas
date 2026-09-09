@@ -22,8 +22,11 @@ func (uc *UC) GetAuditLog(
 		return nil, hperrors.Wrap(err)
 	}
 
-	// TODO: implement this when need ref objects
 	refObjects := entity.NewRefObjects()
+	err = uc.loadAuditLogRefData(ctx, uc.db, []*entity.AuditLog{auditLog}, &refObjects)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 
 	resp, err := auditlogdto.TransformAuditLogDetail(auditLog, refObjects)
 	if err != nil {

@@ -58,3 +58,33 @@ type AuditLog struct {
 func (e *AuditLog) GetID() string {
 	return e.ID
 }
+
+func (e *AuditLog) GetRefObjectIDs() *RefObjectIDs {
+	refIDs := &RefObjectIDs{}
+	if e.ObjectID != "" {
+		switch e.Scope {
+		case base.ObjectScopeApp:
+			refIDs.RefAppIDs = append(refIDs.RefAppIDs, e.ObjectID)
+		case base.ObjectScopeProject:
+			refIDs.RefProjectIDs = append(refIDs.RefProjectIDs, e.ObjectID)
+		case base.ObjectScopeProjectEnv:
+			refIDs.RefProjectEnvIDs = append(refIDs.RefProjectEnvIDs, e.ObjectID)
+		case base.ObjectScopeUser:
+			refIDs.RefUserIDs = append(refIDs.RefUserIDs, e.ObjectID)
+		case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		}
+	}
+	if e.ActorID != "" {
+		switch e.ActorType { //nolint:exhaustive
+		case base.SubjectTypeApp:
+			refIDs.RefAppIDs = append(refIDs.RefAppIDs, e.ActorID)
+		case base.SubjectTypeProject:
+			refIDs.RefProjectIDs = append(refIDs.RefProjectIDs, e.ActorID)
+		case base.SubjectTypeProjectEnv:
+			refIDs.RefProjectEnvIDs = append(refIDs.RefProjectEnvIDs, e.ActorID)
+		case base.SubjectTypeUser:
+			refIDs.RefUserIDs = append(refIDs.RefUserIDs, e.ActorID)
+		}
+	}
+	return refIDs
+}

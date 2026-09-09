@@ -115,7 +115,43 @@ func (uc *UC) loadUserDataForUpdate(
 		}
 	}
 
+	if err = ensureAdminSecurityOption(req, user); err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	return nil
+}
+
+// ensureAdminSecurityOption refuses an update that would leave an admin account
+// authenticating with a password and nothing else.
+//
+// Read against the result of the update rather than the request, because either
+// half can be left out and the dangerous combinations arrive both ways round:
+// promoting a password-only member sends a role and no security option, and
+// weakening an admin sends a security option and no role.
+//
+// Only when the request moves one of them. An account whose combination predates
+// this rule - the bootstrap admin is seeded password-only, see
+// userserviceimpl.initAdminUser - would otherwise have every edit through the
+// user form refused, including the one that disables it in a hurry. Refusing to
+// disable a compromised admin because their authentication is weak is the wrong
+// way round, and the header's disable button sends a status and nothing else, so
+// it stays clear of this either way.
+func ensureAdminSecurityOption(req *userdto.UpdateUserReq, user *entity.User) error {
+	role, option := user.Role, user.SecurityOption
+	var changed bool
+	if req.Role != nil && *req.Role != role {
+		role, changed = *req.Role, true
+	}
+	if req.SecurityOption != nil && *req.SecurityOption != option {
+		option, changed = *req.SecurityOption, true
+	}
+
+	if !changed || base.SecurityOptionAllowedForRole(role, option) {
+		return nil
+	}
+	return hperrors.Wrap(hperrors.ErrUserAdminSecurityOptionWeak).
+		WithMsgLog("an admin account cannot use the '%s' security option", option)
 }
 
 func (uc *UC) prepareUpdatingUserData(

@@ -37,6 +37,8 @@ func (req *InviteUserReq) Validate() hperrors.ValidationErrors {
 		base.AllUserRoles, "role")...)
 	validators = append(validators, basedto.ValidateStrIn(&req.SecurityOption, true,
 		base.AllUserSecurityOptions, "securityOption")...)
+	validators = append(validators, validateAdminSecurityOption(req.Role, req.SecurityOption,
+		"securityOption")...)
 	validators = append(validators, basedto.ValidateModuleAccessSliceReq(req.ModuleAccesses, true,
 		0, base.AllResourceModules, "moduleAccesses")...)
 	validators = append(validators, basedto.ValidateCapabilitySliceReq(req.Capabilities, true,

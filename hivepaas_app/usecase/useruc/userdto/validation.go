@@ -73,6 +73,25 @@ func validateEnvAccesses(accesses basedto.ObjectAccessSliceReq, projectID, field
 	return res
 }
 
+// validateAdminSecurityOption refuses an admin account that authenticates with a
+// password and nothing else.
+//
+// Usable on the invite request alone because both halves are required there. The
+// update request carries them as optional pointers, so the same rule has to be
+// applied against the merged result in the usecase - see ensureAdminSecurityOption.
+func validateAdminSecurityOption(
+	role base.UserRole,
+	option base.UserSecurityOption,
+	field string,
+) []vld.Validator {
+	return []vld.Validator{
+		vld.Must(base.SecurityOptionAllowedForRole(role, option)).OnError(
+			vld.SetField(field, nil),
+			vld.SetCustomKey("ERR_VLD_ADMIN_SECURITY_OPTION_WEAK"),
+		),
+	}
+}
+
 func validateUserPhoto(photo *UserPhotoReq, field string) (res []vld.Validator) {
 	if photo == nil || photo.FileName == "" {
 		return nil

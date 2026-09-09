@@ -115,12 +115,6 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		schedJobGroup.DELETE("/:itemID", appSettingsHandler.DeleteAppSchedJob)
 		// Execute
 		schedJobGroup.POST("/:itemID/exec", appSettingsHandler.ExecuteAppSchedJob)
-
-		// Sched job task group
-		schedJobGroup.GET("/:itemID/tasks", appSettingsHandler.ListAppSchedJobTask)
-		schedJobGroup.GET("/:itemID/tasks/:taskID", appSettingsHandler.GetAppSchedJobTask)
-		schedJobGroup.POST("/:itemID/tasks/:taskID/cancel", appSettingsHandler.CancelAppSchedJobTask)
-		schedJobGroup.GET("/:itemID/tasks/:taskID/logs", appSettingsHandler.GetAppSchedJobTaskLogs)
 	}
 
 	{ // Periodic jobs
@@ -131,9 +125,6 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		periodicJobGroup.PUT("/:itemID", appSettingsHandler.UpdateAppPeriodicJob)
 		periodicJobGroup.PUT("/:itemID/status", appSettingsHandler.UpdateAppPeriodicJobStatus)
 		periodicJobGroup.DELETE("/:itemID", appSettingsHandler.DeleteAppPeriodicJob)
-
-		// Periodic job task group
-		periodicJobGroup.GET("/:itemID/tasks", appSettingsHandler.ListAppPeriodicJobTask)
 	}
 
 	{ // Command templates

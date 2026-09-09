@@ -18,6 +18,8 @@ import (
 type TaskRepo interface {
 	GetByID(ctx context.Context, db database.IDB, scope *entity.ObjectScope, typ base.TaskType, id string,
 		opts ...bunex.SelectQueryOption) (*entity.Task, error)
+	List(ctx context.Context, db database.IDB, scope *entity.ObjectScope, paging *basedto.Paging,
+		opts ...bunex.SelectQueryOption) ([]*entity.Task, *basedto.PagingMeta, error)
 	ListByTarget(ctx context.Context, db database.IDB, targetID string, paging *basedto.Paging,
 		opts ...bunex.SelectQueryOption) ([]*entity.Task, *basedto.PagingMeta, error)
 	ListByIDs(ctx context.Context, db database.IDB, ids []string,
@@ -298,7 +300,8 @@ func (repo *taskRepo) applyDirectUserFilter(opts []bunex.SelectQueryOption,
 func (repo *taskRepo) applyGlobalFilter(opts []bunex.SelectQueryOption,
 	scope *entity.ObjectScope) []bunex.SelectQueryOption {
 	if scope.NoInherited {
-		return append(opts, bunex.SelectWhere("task.object_id IS NULL"))
+		return append(opts, bunex.SelectWhereIn("task.scope IN (?)",
+			base.ObjectScopeGlobal, base.ObjectScopeHivepaas))
 	}
 	return opts
 }

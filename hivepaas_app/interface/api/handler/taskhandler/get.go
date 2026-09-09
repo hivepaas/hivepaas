@@ -1,4 +1,4 @@
-package auditloghandler
+package taskhandler
 
 import (
 	"net/http"
@@ -9,31 +9,31 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/auditloguc/auditlogdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/taskuc/taskdto"
 )
 
-type GetAuditLogOptions struct {
+type GetTaskOptions struct {
 	PreRequestHandler func(auth *basedto.Auth, req any) error
 }
 
-type GetAuditLogOption func(*GetAuditLogOptions)
+type GetTaskOption func(*GetTaskOptions)
 
-func GetAuditLogPreRequestHandler(fn func(auth *basedto.Auth, req any) error) GetAuditLogOption {
-	return func(opts *GetAuditLogOptions) {
+func GetTaskPreRequestHandler(fn func(auth *basedto.Auth, req any) error) GetTaskOption {
+	return func(opts *GetTaskOptions) {
 		opts.PreRequestHandler = fn
 	}
 }
 
-func (h *Handler) GetAuditLog(
+func (h *Handler) GetTask(
 	ctx *gin.Context,
 	scopeType base.ObjectScopeType,
-	opts ...GetAuditLogOption,
+	opts ...GetTaskOption,
 ) {
 	var auth *basedto.Auth
 	var itemID string
 	var err error
 
-	options := &GetAuditLogOptions{}
+	options := &GetTaskOptions{}
 	for _, o := range opts {
 		o(options)
 	}
@@ -41,26 +41,26 @@ func (h *Handler) GetAuditLog(
 	scope := &entity.ObjectScope{ScopeType: scopeType}
 	switch scopeType {
 	case base.ObjectScopeProject:
-		auth, scope.ProjectID, itemID, err = h.GetAuthProjectAuditLogs(ctx, base.ActionTypeRead, "itemID")
+		auth, scope.ProjectID, itemID, err = h.GetAuthProjectTasks(ctx, base.ActionTypeRead, "itemID")
 	case base.ObjectScopeProjectEnv:
-		auth, scope.ProjectID, scope.ProjectEnvID, itemID, err = h.GetAuthProjectEnvAuditLogs(ctx,
+		auth, scope.ProjectID, scope.ProjectEnvID, itemID, err = h.GetAuthProjectEnvTasks(ctx,
 			base.ActionTypeRead, "itemID")
 	case base.ObjectScopeApp:
-		auth, scope.ProjectID, scope.ProjectEnvID, scope.AppID, itemID, err = h.GetAuthAppAuditLogs(ctx,
+		auth, scope.ProjectID, scope.ProjectEnvID, scope.AppID, itemID, err = h.GetAuthAppTasks(ctx,
 			base.ActionTypeRead, "itemID")
 	case base.ObjectScopeUser:
-		auth, scope.UserID, itemID, err = h.GetAuthUserAuditLogs(ctx, base.ActionTypeRead, "itemID")
+		auth, scope.UserID, itemID, err = h.GetAuthUserTasks(ctx, base.ActionTypeRead, "itemID")
 	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
-		auth, itemID, err = h.GetAuthGlobalAuditLogs(ctx, base.ResourceTypeAuditLog, base.ActionTypeRead, "itemID")
+		auth, itemID, err = h.GetAuthGlobalTasks(ctx, base.ResourceTypeTask, base.ActionTypeRead, "itemID")
 	default:
-		err = hperrors.NewUnsupported("AuditLog scope 'none'")
+		err = hperrors.NewUnsupported("Task scope 'none'")
 	}
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
 	}
 
-	req := auditlogdto.NewGetAuditLogReq()
+	req := taskdto.NewGetTaskReq()
 	req.Scope, req.ID = scope, itemID
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
@@ -74,7 +74,7 @@ func (h *Handler) GetAuditLog(
 		}
 	}
 
-	resp, err := h.AuditLogUC.GetAuditLog(h.RequestCtx(ctx), auth, req)
+	resp, err := h.TaskUC.GetTask(h.RequestCtx(ctx), auth, req)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

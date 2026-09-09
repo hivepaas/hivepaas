@@ -187,6 +187,24 @@ func (t *Task) NextRetryDelay() time.Duration {
 	return delay
 }
 
+func (t *Task) GetRefObjectIDs() *RefObjectIDs {
+	refIDs := &RefObjectIDs{}
+	if t.ObjectID != "" {
+		switch t.Scope {
+		case base.ObjectScopeApp:
+			refIDs.RefAppIDs = append(refIDs.RefAppIDs, t.ObjectID)
+		case base.ObjectScopeProject:
+			refIDs.RefProjectIDs = append(refIDs.RefProjectIDs, t.ObjectID)
+		case base.ObjectScopeProjectEnv:
+			refIDs.RefProjectEnvIDs = append(refIDs.RefProjectEnvIDs, t.ObjectID)
+		case base.ObjectScopeUser:
+			refIDs.RefUserIDs = append(refIDs.RefUserIDs, t.ObjectID)
+		case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		}
+	}
+	return refIDs
+}
+
 type TaskRun struct {
 	StartedAt  time.Time `json:"startedAt"`
 	EndedAt    time.Time `json:"endedAt"`

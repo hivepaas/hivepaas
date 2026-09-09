@@ -33,6 +33,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/supporthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/systemhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/systemsettingshandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/taskhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/traefikhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/userhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/usersettingshandler"
@@ -112,6 +113,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apppreviewuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/auditloguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/binobjectuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/builduc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/networkuc"
@@ -152,18 +154,17 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/supportuc"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/auditloguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefikuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systemcleanupuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/taskuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/usersettings/apikeyuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/webhookuc"
@@ -244,6 +245,7 @@ var Provides = []any{
 	supporthandler.New,
 	systemhandler.New,
 	systemsettingshandler.New,
+	taskhandler.New,
 	traefikhandler.New,
 	userhandler.New,
 	usersettingshandler.New,

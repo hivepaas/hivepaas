@@ -238,7 +238,8 @@ func (repo *auditLogRepo) applyDirectUserFilter(opts []bunex.SelectQueryOption,
 func (repo *auditLogRepo) applyGlobalFilter(opts []bunex.SelectQueryOption,
 	scope *entity.ObjectScope) []bunex.SelectQueryOption {
 	if scope.NoInherited {
-		return append(opts, bunex.SelectWhere("audit_log.object_id IS NULL"))
+		return append(opts, bunex.SelectWhereIn("audit_log.scope IN (?)",
+			base.ObjectScopeGlobal, base.ObjectScopeHivepaas))
 	}
 	return opts
 }

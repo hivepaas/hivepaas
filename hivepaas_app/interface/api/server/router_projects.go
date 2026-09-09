@@ -9,7 +9,6 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	projectGroup := apiGroup.Group("/projects")
 	projectHandler := s.handlerRegistry.projectHandler
 	projectSettingsHandler := s.handlerRegistry.projectSettingsHandler
-	auditLogHandler := s.handlerRegistry.auditLogHandler
 
 	// Projects
 	projectGroup.GET("/base", projectHandler.ListProjectBase)
@@ -59,9 +58,9 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 
 	{ // Audit log group
 		auditLogGroup := projectGroup.Group("/:projectID/audit-logs")
-		auditLogGroup.GET("", auditLogHandler.ListProjectAuditLog)
-		auditLogGroup.GET("/types", auditLogHandler.ListAuditLogTypes)
-		auditLogGroup.GET("/:itemID", auditLogHandler.GetProjectAuditLog)
+		auditLogGroup.GET("", projectHandler.ListAuditLog)
+		auditLogGroup.GET("/types", projectHandler.ListAuditLogTypes)
+		auditLogGroup.GET("/:itemID", projectHandler.GetAuditLog)
 	}
 
 	{ // Backup repository group
@@ -289,6 +288,15 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		sslProviderGroup.PUT("/:itemID", projectSettingsHandler.UpdateSSLProvider)
 		sslProviderGroup.PUT("/:itemID/status", projectSettingsHandler.UpdateSSLProviderStatus)
 		sslProviderGroup.DELETE("/:itemID", projectSettingsHandler.DeleteSSLProvider)
+	}
+
+	{ // Task group
+		taskGroup := projectGroup.Group("/:projectID/tasks")
+		taskGroup.GET("", projectHandler.ListTask)
+		taskGroup.GET("/:itemID", projectHandler.GetTask)
+		taskGroup.GET("/:itemID/status", projectHandler.GetTaskStatus)
+		taskGroup.POST("/:itemID/cancel", projectHandler.CancelTask)
+		taskGroup.GET("/:itemID/logs", projectHandler.GetTaskLogs)
 	}
 
 	s.registerProjectEnvRoutes(projectGroup.Group("/:projectID"))

@@ -5,19 +5,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/auditloguc/auditlogdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/auditloguc/auditlogdto"
 )
 
-// ListAuditLogTypes lists available audit log types
-// @Summary Lists available audit log types
-// @Description Lists available audit log types
-// @Tags    audit_logs
-// @Produce json
-// @Id      listAuditLogTypes
-// @Success 200 {object} auditlogdto.ListAuditLogTypeResp
-// @Router  /system/audit-logs/types [get]
-func (h *Handler) ListAuditLogTypes(ctx *gin.Context) {
+func (h *Handler) ListAuditLogTypes(ctx *gin.Context, scopeType base.ObjectScopeType) {
 	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
 	if err != nil {
 		h.RenderError(ctx, err)
@@ -25,6 +19,7 @@ func (h *Handler) ListAuditLogTypes(ctx *gin.Context) {
 	}
 
 	req := auditlogdto.NewListAuditLogTypeReq()
+	req.Scope = &entity.ObjectScope{ScopeType: scopeType}
 	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return

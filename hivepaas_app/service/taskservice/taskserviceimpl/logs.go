@@ -15,7 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/taskuc/taskdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/taskuc/taskdto"
 )
 
 func (s *service) GetTaskLogs(
@@ -28,7 +28,7 @@ func (s *service) GetTaskLogs(
 		req.Duration = 0
 	}
 
-	task, err := s.taskRepo.GetByID(ctx, db, nil, "", req.TaskID)
+	task, err := s.taskRepo.GetByID(ctx, db, req.Scope, "", req.TaskID)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

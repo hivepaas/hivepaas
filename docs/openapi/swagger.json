@@ -3149,7 +3149,56 @@
           }
         },
         "summary" : "Lists audit logs",
-        "tags" : [ "audit_logs" ]
+        "tags" : [ "project_audit_logs" ]
+      }
+    },
+    "/projects/{projectID}/audit-logs/types" : {
+      "get" : {
+        "description" : "Lists audit log types",
+        "operationId" : "listProjectAuditLogType",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogTypeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists audit log types",
+        "tags" : [ "project_audit_logs" ]
       }
     },
     "/projects/{projectID}/audit-logs/{itemID}" : {
@@ -3206,7 +3255,7 @@
           }
         },
         "summary" : "Gets audit log",
-        "tags" : [ "audit_logs" ]
+        "tags" : [ "project_audit_logs" ]
       }
     },
     "/projects/{projectID}/backup-repos" : {
@@ -11760,6 +11809,360 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/tasks" : {
+      "get" : {
+        "description" : "Lists tasks",
+        "operationId" : "listProjectTask",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.ListTaskResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists tasks",
+        "tags" : [ "project_tasks" ]
+      }
+    },
+    "/projects/{projectID}/tasks/types" : {
+      "get" : {
+        "description" : "Lists task types",
+        "operationId" : "listProjectTaskType",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.ListTaskTypeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists task types",
+        "tags" : [ "project_tasks" ]
+      }
+    },
+    "/projects/{projectID}/tasks/{itemID}" : {
+      "get" : {
+        "description" : "Gets task",
+        "operationId" : "getProjectTask",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task",
+        "tags" : [ "project_tasks" ]
+      }
+    },
+    "/projects/{projectID}/tasks/{itemID}/cancel" : {
+      "post" : {
+        "description" : "Cancels task",
+        "operationId" : "cancelProjectTask",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.CancelTaskReq"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Cancels task",
+        "tags" : [ "project_tasks" ]
+      }
+    },
+    "/projects/{projectID}/tasks/{itemID}/logs" : {
+      "get" : {
+        "description" : "Gets task logs",
+        "operationId" : "getProjectTaskLogs",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskLogsReq"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task logs",
+        "tags" : [ "project_tasks" ]
+      }
+    },
+    "/projects/{projectID}/tasks/{itemID}/status" : {
+      "get" : {
+        "description" : "Gets task status",
+        "operationId" : "getProjectTaskStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task status",
+        "tags" : [ "project_tasks" ]
+      }
+    },
     "/projects/{projectID}/user-accesses" : {
       "get" : {
         "description" : "Gets user accesses on the project",
@@ -16713,107 +17116,6 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/{projectEnv}/apps/{appID}/periodic-jobs/{itemID}/tasks" : {
-      "get" : {
-        "description" : "Lists periodic job's tasks",
-        "operationId" : "listAppPeriodicJobTask",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "project env",
-          "in" : "path",
-          "name" : "projectEnv",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "app ID",
-          "in" : "path",
-          "name" : "appID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "setting ID",
-          "in" : "path",
-          "name" : "itemID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`search=<target> (support *)`",
-          "in" : "query",
-          "name" : "search",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`pageOffset=offset`",
-          "in" : "query",
-          "name" : "pageOffset",
-          "schema" : {
-            "type" : "integer"
-          }
-        }, {
-          "description" : "`pageLimit=limit`",
-          "in" : "query",
-          "name" : "pageLimit",
-          "schema" : {
-            "type" : "integer"
-          }
-        }, {
-          "description" : "`sort=[-]field1|field2...`",
-          "in" : "query",
-          "name" : "sort",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_periodicjobdto.ListPeriodicJobTaskResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Lists periodic job's tasks",
-        "tags" : [ "app_settings" ]
-      }
-    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/photo" : {
       "put" : {
         "description" : "Updates app photo",
@@ -18219,188 +18521,6 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks" : {
-      "get" : {
-        "description" : "Lists sched-job tasks",
-        "operationId" : "listAppSchedJobTask",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "project env",
-          "in" : "path",
-          "name" : "projectEnv",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "app ID",
-          "in" : "path",
-          "name" : "appID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "setting ID",
-          "in" : "path",
-          "name" : "itemID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`search=<target> (support *)`",
-          "in" : "query",
-          "name" : "search",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`pageOffset=offset`",
-          "in" : "query",
-          "name" : "pageOffset",
-          "schema" : {
-            "type" : "integer"
-          }
-        }, {
-          "description" : "`pageLimit=limit`",
-          "in" : "query",
-          "name" : "pageLimit",
-          "schema" : {
-            "type" : "integer"
-          }
-        }, {
-          "description" : "`sort=[-]field1|field2...`",
-          "in" : "query",
-          "name" : "sort",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_schedjobdto.ListSchedJobTaskResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Lists sched-job tasks",
-        "tags" : [ "app_settings" ]
-      }
-    },
-    "/projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}" : {
-      "get" : {
-        "description" : "Gets a sched-job task",
-        "operationId" : "getAppSchedJobTask",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "project env",
-          "in" : "path",
-          "name" : "projectEnv",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "app ID",
-          "in" : "path",
-          "name" : "appID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "setting ID",
-          "in" : "path",
-          "name" : "itemID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "task ID",
-          "in" : "path",
-          "name" : "taskID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_schedjobdto.GetSchedJobTaskResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets a sched-job task",
-        "tags" : [ "app_settings" ]
-      }
-    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}/cancel" : {
       "post" : {
         "description" : "Cancels job task",
@@ -18492,87 +18612,6 @@
         "summary" : "Cancels job task",
         "tags" : [ "app_settings" ],
         "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}/logs" : {
-      "get" : {
-        "description" : "Gets logs of a sched-job task",
-        "operationId" : "getAppSchedJobTaskLogs",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "project env",
-          "in" : "path",
-          "name" : "projectEnv",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "app ID",
-          "in" : "path",
-          "name" : "appID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "setting ID",
-          "in" : "path",
-          "name" : "itemID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "task ID",
-          "in" : "path",
-          "name" : "taskID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_schedjobdto.GetSchedJobTaskLogsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets logs of a sched-job task",
-        "tags" : [ "app_settings" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/secrets" : {
@@ -19749,6 +19788,456 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks" : {
+      "get" : {
+        "description" : "Lists tasks",
+        "operationId" : "listAppTask",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.ListTaskResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists tasks",
+        "tags" : [ "app_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/types" : {
+      "get" : {
+        "description" : "Lists task types",
+        "operationId" : "listAppTaskType",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.ListTaskTypeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists task types",
+        "tags" : [ "app_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/{itemID}" : {
+      "get" : {
+        "description" : "Gets task",
+        "operationId" : "getAppTask",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task",
+        "tags" : [ "app_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/{itemID}/cancel" : {
+      "post" : {
+        "description" : "Cancels task",
+        "operationId" : "cancelAppTask",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.CancelTaskReq"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Cancels task",
+        "tags" : [ "app_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/{itemID}/logs" : {
+      "get" : {
+        "description" : "Gets task logs",
+        "operationId" : "getAppTaskLogs",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskLogsReq"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task logs",
+        "tags" : [ "app_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/{itemID}/status" : {
+      "get" : {
+        "description" : "Gets task status",
+        "operationId" : "getAppTaskStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task status",
+        "tags" : [ "app_tasks" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/terminal" : {
       "get" : {
         "description" : "Opens app terminal via websocket",
@@ -19961,7 +20450,56 @@
           }
         },
         "summary" : "Lists audit logs",
-        "tags" : [ "audit_logs" ]
+        "tags" : [ "project_env_audit_logs" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/audit-logs/types" : {
+      "get" : {
+        "description" : "Lists audit log types",
+        "operationId" : "listProjectEnvAuditLogType",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogTypeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists audit log types",
+        "tags" : [ "project_env_audit_logs" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/audit-logs/{itemID}" : {
@@ -20026,7 +20564,7 @@
           }
         },
         "summary" : "Gets audit log",
-        "tags" : [ "audit_logs" ]
+        "tags" : [ "project_env_audit_logs" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/backup-repos" : {
@@ -27995,6 +28533,408 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/tasks" : {
+      "get" : {
+        "description" : "Lists tasks",
+        "operationId" : "listProjectEnvTask",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`search=<target> (support *)`",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`sort=[-]field1|field2...`",
+          "in" : "query",
+          "name" : "sort",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.ListTaskResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists tasks",
+        "tags" : [ "project_env_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/tasks/types" : {
+      "get" : {
+        "description" : "Lists task types",
+        "operationId" : "listProjectEnvTaskType",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.ListTaskTypeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists task types",
+        "tags" : [ "project_env_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/tasks/{itemID}" : {
+      "get" : {
+        "description" : "Gets task",
+        "operationId" : "getProjectEnvTask",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task",
+        "tags" : [ "project_env_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/tasks/{itemID}/cancel" : {
+      "post" : {
+        "description" : "Cancels task",
+        "operationId" : "cancelProjectEnvTask",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.CancelTaskReq"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Cancels task",
+        "tags" : [ "project_env_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/tasks/{itemID}/logs" : {
+      "get" : {
+        "description" : "Gets task logs",
+        "operationId" : "getProjectEnvTaskLogs",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskLogsReq"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task logs",
+        "tags" : [ "project_env_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/tasks/{itemID}/status" : {
+      "get" : {
+        "description" : "Gets task status",
+        "operationId" : "getProjectEnvTaskStatus",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task status",
+        "tags" : [ "project_env_tasks" ]
+      }
+    },
     "/sessions" : {
       "delete" : {
         "description" : "Deletes the current user session",
@@ -35331,13 +36271,13 @@
           }
         },
         "summary" : "Lists audit logs",
-        "tags" : [ "audit_logs" ]
+        "tags" : [ "system_audit_logs" ]
       }
     },
     "/system/audit-logs/types" : {
       "get" : {
-        "description" : "Lists available audit log types",
-        "operationId" : "listAuditLogTypes",
+        "description" : "Lists audit log types",
+        "operationId" : "listAuditLogType",
         "responses" : {
           "200" : {
             "content" : {
@@ -35348,10 +36288,30 @@
               }
             },
             "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
           }
         },
-        "summary" : "Lists available audit log types",
-        "tags" : [ "audit_logs" ]
+        "summary" : "Lists audit log types",
+        "tags" : [ "system_audit_logs" ]
       }
     },
     "/system/audit-logs/{itemID}" : {
@@ -35400,7 +36360,7 @@
           }
         },
         "summary" : "Gets audit log",
-        "tags" : [ "audit_logs" ]
+        "tags" : [ "system_audit_logs" ]
       }
     },
     "/system/errors" : {
@@ -37186,30 +38146,9 @@
     },
     "/system/tasks" : {
       "get" : {
-        "description" : "Lists task",
+        "description" : "Lists tasks",
         "operationId" : "listTask",
         "parameters" : [ {
-          "description" : "`jobName=<system job name>`",
-          "in" : "query",
-          "name" : "jobName",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`taregtId=<target id>`",
-          "in" : "query",
-          "name" : "targetId",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`status=<target>`",
-          "in" : "query",
-          "name" : "status",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
           "description" : "`search=<target> (support *)`",
           "in" : "query",
           "name" : "search",
@@ -37270,40 +38209,118 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Lists task",
+        "summary" : "Lists tasks",
         "tags" : [ "system_tasks" ]
       }
     },
-    "/system/tasks/{taskID}/cancel" : {
+    "/system/tasks/types" : {
+      "get" : {
+        "description" : "Lists task types",
+        "operationId" : "listTaskType",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.ListTaskTypeResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists task types",
+        "tags" : [ "system_tasks" ]
+      }
+    },
+    "/system/tasks/{itemID}" : {
+      "get" : {
+        "description" : "Gets task",
+        "operationId" : "getTask",
+        "parameters" : [ {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task",
+        "tags" : [ "system_tasks" ]
+      }
+    },
+    "/system/tasks/{itemID}/cancel" : {
       "post" : {
-        "description" : "Cancels a task",
+        "description" : "Cancels task",
         "operationId" : "cancelTask",
         "parameters" : [ {
           "description" : "task ID",
           "in" : "path",
-          "name" : "taskID",
+          "name" : "itemID",
           "required" : true,
           "schema" : {
             "type" : "string"
           }
         } ],
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/system_taskdto.CancelTaskReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
         "responses" : {
           "200" : {
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.CancelTaskResp"
+                  "$ref" : "#/components/schemas/system_taskdto.CancelTaskReq"
                 }
               }
             },
@@ -37330,19 +38347,18 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Cancels a task",
-        "tags" : [ "system_tasks" ],
-        "x-codegen-request-body-name" : "body"
+        "summary" : "Cancels task",
+        "tags" : [ "system_tasks" ]
       }
     },
-    "/system/tasks/{taskID}/logs" : {
+    "/system/tasks/{itemID}/logs" : {
       "get" : {
-        "description" : "Gets logs of a task",
+        "description" : "Gets task logs",
         "operationId" : "getTaskLogs",
         "parameters" : [ {
           "description" : "task ID",
           "in" : "path",
-          "name" : "taskID",
+          "name" : "itemID",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -37353,7 +38369,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskLogsResp"
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskLogsReq"
                 }
               }
             },
@@ -37380,7 +38396,56 @@
             "description" : "Internal Server Error"
           }
         },
-        "summary" : "Gets logs of a task",
+        "summary" : "Gets task logs",
+        "tags" : [ "system_tasks" ]
+      }
+    },
+    "/system/tasks/{itemID}/status" : {
+      "get" : {
+        "description" : "Gets task status",
+        "operationId" : "getTaskStatus",
+        "parameters" : [ {
+          "description" : "task ID",
+          "in" : "path",
+          "name" : "itemID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_taskdto.GetTaskStatusResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets task status",
         "tags" : [ "system_tasks" ]
       }
     },
@@ -37822,119 +38887,6 @@
         "summary" : "Updates Traefik service settings",
         "tags" : [ "system_traefik" ],
         "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/tasks/{taskID}" : {
-      "get" : {
-        "description" : "Gets task",
-        "operationId" : "getTask",
-        "parameters" : [ {
-          "description" : "task ID",
-          "in" : "path",
-          "name" : "taskID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets task",
-        "tags" : [ "system_tasks" ]
-      }
-    },
-    "/tasks/{taskID}/status" : {
-      "get" : {
-        "description" : "Gets task status",
-        "operationId" : "getTaskStatus",
-        "parameters" : [ {
-          "description" : "task ID",
-          "in" : "path",
-          "name" : "taskID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskStatusResp"
-                }
-              },
-              "text/plain" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskStatusResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              },
-              "text/plain" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              },
-              "text/plain" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets task status",
-        "tags" : [ "system_tasks" ]
       }
     },
     "/users" : {
@@ -39672,7 +40624,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -39690,7 +40642,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -51052,21 +52004,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "settings_periodicjobdto.ListPeriodicJobTaskResp" : {
-        "properties" : {
-          "data" : {
-            "items" : {
-              "$ref" : "#/components/schemas/system_taskdto.TaskResp"
-            },
-            "type" : "array"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.ListMeta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
       "settings_periodicjobdto.PeriodicJobResp" : {
         "properties" : {
           "createdAt" : {
@@ -52031,50 +52968,11 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "settings_schedjobdto.GetSchedJobTaskLogsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobTaskLogsDataResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "settings_schedjobdto.GetSchedJobTaskResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/system_taskdto.TaskResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
       "settings_schedjobdto.ListSchedJobResp" : {
         "properties" : {
           "data" : {
             "items" : {
               "$ref" : "#/components/schemas/settings_schedjobdto.SchedJobResp"
-            },
-            "type" : "array"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.ListMeta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "settings_schedjobdto.ListSchedJobTaskResp" : {
-        "properties" : {
-          "data" : {
-            "items" : {
-              "$ref" : "#/components/schemas/system_taskdto.TaskResp"
             },
             "type" : "array"
           },
@@ -52180,18 +53078,6 @@
           }
         },
         "required" : [ "app", "command", "commandOutput", "controlDisabled", "createdAt", "default", "expireAt", "id", "inheritable", "inherited", "jobType", "kind", "maxRetry", "name", "nextRuns", "notification", "priority", "retryBackoff", "retryBackoffJitter", "retryDelay", "retryDelayIncr", "retryDelayMax", "schedule", "size", "status", "timeout", "type", "updateVer", "updatedAt" ],
-        "type" : "object"
-      },
-      "settings_schedjobdto.SchedJobTaskLogsDataResp" : {
-        "properties" : {
-          "logs" : {
-            "items" : {
-              "$ref" : "#/components/schemas/pkg_tasklog.LogFrame"
-            },
-            "type" : "array"
-          }
-        },
-        "required" : [ "logs" ],
         "type" : "object"
       },
       "settings_schedjobdto.ScheduleReq" : {
@@ -53551,6 +54437,15 @@
           "result" : {
             "type" : "string"
           },
+          "scopeApp" : {
+            "$ref" : "#/components/schemas/appdto.AppBaseResp"
+          },
+          "scopeProject" : {
+            "$ref" : "#/components/schemas/projectdto.ProjectBaseResp"
+          },
+          "scopeUser" : {
+            "$ref" : "#/components/schemas/basedto.UserBaseResp"
+          },
           "sessionUid" : {
             "type" : "string"
           },
@@ -53567,7 +54462,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "actor", "clientIp", "createdAt", "detail", "hasDetail", "id", "remoteAddr", "requestId", "resource", "result", "sessionUid", "source", "type", "userAgent", "viaApiKey" ],
+        "required" : [ "actor", "clientIp", "createdAt", "detail", "hasDetail", "id", "remoteAddr", "requestId", "resource", "result", "scopeApp", "scopeProject", "scopeUser", "sessionUid", "source", "type", "userAgent", "viaApiKey" ],
         "type" : "object"
       },
       "system_auditlogdto.GetAuditLogResp" : {
@@ -54494,40 +55389,10 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "system_taskdto.CancelTaskDataResp" : {
-        "properties" : {
-          "canceled" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "canceled" ],
-        "type" : "object"
-      },
       "system_taskdto.CancelTaskReq" : {
         "type" : "object"
       },
-      "system_taskdto.CancelTaskResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/system_taskdto.CancelTaskDataResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "system_taskdto.GetTaskLogsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/system_taskdto.TaskLogsDataResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
+      "system_taskdto.GetTaskLogsReq" : {
         "type" : "object"
       },
       "system_taskdto.GetTaskResp" : {
@@ -54569,16 +55434,19 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "system_taskdto.TaskLogsDataResp" : {
+      "system_taskdto.ListTaskTypeResp" : {
         "properties" : {
-          "logs" : {
+          "data" : {
             "items" : {
-              "$ref" : "#/components/schemas/pkg_tasklog.LogFrame"
+              "type" : "string"
             },
             "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
           }
         },
-        "required" : [ "logs" ],
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "system_taskdto.TaskResp" : {
@@ -54608,6 +55476,15 @@
           "runAt" : {
             "type" : "string"
           },
+          "scopeApp" : {
+            "$ref" : "#/components/schemas/appdto.AppBaseResp"
+          },
+          "scopeProject" : {
+            "$ref" : "#/components/schemas/projectdto.ProjectBaseResp"
+          },
+          "scopeUser" : {
+            "$ref" : "#/components/schemas/basedto.UserBaseResp"
+          },
           "startedAt" : {
             "type" : "string"
           },
@@ -54627,7 +55504,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "config", "createdAt", "endedAt", "id", "lastError", "retryAt", "runAt", "startedAt", "status", "targetJob", "type", "updateVer", "updatedAt" ],
+        "required" : [ "config", "createdAt", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "startedAt", "status", "targetJob", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "system_taskdto.TaskStatusResp" : {
@@ -57010,9 +57887,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

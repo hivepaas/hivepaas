@@ -9,9 +9,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
 type GetTaskReq struct {
+	Scope    *entity.ObjectScope
 	ID       string
 	Type     base.TaskType
 	TargetID string
@@ -27,8 +29,11 @@ type GetTaskResp struct {
 
 type ListTaskReq struct {
 	Scope     *entity.ObjectScope
+	Types     []base.TaskType
 	TargetIDs []string
 	Statuses  []base.TaskStatus
+	FromDate  timeutil.Date
+	ToDate    timeutil.Date
 	Search    string
 	Paging    basedto.Paging
 
@@ -43,6 +48,7 @@ type ListTaskResp struct {
 }
 
 type GetTaskLogsReq struct {
+	Scope    *entity.ObjectScope
 	TaskID   string
 	Follow   bool
 	Since    time.Time

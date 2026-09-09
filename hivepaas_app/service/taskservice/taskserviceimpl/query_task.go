@@ -25,7 +25,7 @@ func (s *service) GetTask(
 	}
 	getOpts = append(getOpts, req.ExtraSelectOpts...)
 
-	task, err := s.taskRepo.GetByID(ctx, db, nil, req.Type, req.ID, getOpts...)
+	task, err := s.taskRepo.GetByID(ctx, db, req.Scope, req.Type, req.ID, getOpts...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -65,11 +65,8 @@ func (s *service) ListTask(
 	}
 
 	var listOpts []bunex.SelectQueryOption
-	if req.Scope != nil {
-		listOpts = append(listOpts, bunex.SelectWhere("task.scope = ?", req.Scope.ScopeType))
-		if req.Scope.ScopeObjectID() != "" {
-			listOpts = append(listOpts, bunex.SelectWhere("task.object_id = ?", req.Scope.ScopeObjectID()))
-		}
+	if len(req.Types) > 0 {
+		listOpts = append(listOpts, bunex.SelectWhereIn("task.type IN (?)", req.Types...))
 	}
 	if len(req.TargetIDs) > 0 {
 		listOpts = append(listOpts, bunex.SelectWhereIn("task.target_id IN (?)", req.TargetIDs...))
@@ -99,6 +96,14 @@ func (s *service) ListTask(
 				bunex.SelectWhereIn("task.status IN (?)", statuses...))
 		}
 	}
+	if !req.FromDate.IsZero() {
+		listOpts = append(listOpts, bunex.SelectWhereIn("task.created_at >= ?",
+			req.FromDate.ToTime()))
+	}
+	if !req.ToDate.IsZero() {
+		listOpts = append(listOpts, bunex.SelectWhereIn("task.created_at < ?",
+			req.ToDate.AddDate(0, 0, 1).ToTime()))
+	}
 	if req.Search != "" {
 		keyword := bunex.MakeLikeOpStr(req.Search, true)
 		listOpts = append(listOpts,
@@ -109,7 +114,7 @@ func (s *service) ListTask(
 	}
 	listOpts = append(listOpts, req.ExtraSelectOpts...)
 
-	tasks, paging, err := s.taskRepo.ListByTarget(ctx, db, "", &req.Paging, listOpts...)
+	tasks, paging, err := s.taskRepo.List(ctx, db, req.Scope, &req.Paging, listOpts...)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

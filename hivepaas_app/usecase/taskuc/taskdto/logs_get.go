@@ -1,0 +1,58 @@
+package taskdto
+
+import (
+	"time"
+
+	vld "github.com/tiendc/go-validator"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+)
+
+type GetTaskLogsReq struct {
+	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
+	ID    string              `json:"-"`
+
+	Follow     bool              `json:"-" mapstructure:"follow"`
+	Since      time.Time         `json:"-" mapstructure:"since"`
+	Duration   timeutil.Duration `json:"-" mapstructure:"duration"`
+	Tail       int               `json:"-" mapstructure:"tail"`
+	Timestamps bool              `json:"-" mapstructure:"timestamps"`
+}
+
+func NewGetTaskLogsReq() *GetTaskLogsReq {
+	return &GetTaskLogsReq{}
+}
+
+func (req *GetTaskLogsReq) Validate() hperrors.ValidationErrors {
+	validators := make([]vld.Validator, 0, 10) //nolint:mnd
+	validators = append(validators, basedto.ValidateID(&req.ID, true, "id")...)
+	// TODO: add validation
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
+}
+
+type GetTaskLogsResp struct {
+	Meta *basedto.Meta     `json:"meta"`
+	Data *TaskLogsDataResp `json:"data"`
+}
+
+type TaskLogsDataResp struct {
+	StaticLogs       []*tasklog.LogFrame        `json:"logs"`
+	LogsStream       <-chan []*tasklog.LogFrame `json:"-"`
+	LogsStreamCloser func() error               `json:"-"`
+}
+
+func TransformTaskLogs(logs []*entity.TaskLog) (resp []*tasklog.LogFrame) {
+	resp = make([]*tasklog.LogFrame, 0, len(logs))
+	for _, log := range logs {
+		resp = append(resp, &tasklog.LogFrame{
+			Type: log.Type,
+			Data: log.Data,
+			Ts:   log.Ts,
+		})
+	}
+	return resp
+}

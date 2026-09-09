@@ -1,4 +1,4 @@
-package systemhandler
+package projecthandler
 
 import (
 	"github.com/gin-gonic/gin"
@@ -11,9 +11,10 @@ import (
 // ListTask Lists tasks
 // @Summary Lists tasks
 // @Description Lists tasks
-// @Tags    system_tasks
+// @Tags    project_tasks
 // @Produce json
-// @Id      listTask
+// @Id      listProjectTask
+// @Param   projectID path string true "project ID"
 // @Param   search query string false "`search=<target> (support *)`"
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
@@ -21,81 +22,86 @@ import (
 // @Success 200 {object} taskdto.ListTaskResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
-// @Router  /system/tasks [get]
+// @Router  /projects/{projectID}/tasks [get]
 func (h *Handler) ListTask(ctx *gin.Context) {
-	h.taskHandler.ListTask(ctx, base.ObjectScopeGlobal)
+	h.TaskHandler.ListTask(ctx, base.ObjectScopeProject)
 }
 
 // GetTask Gets task
 // @Summary Gets task
 // @Description Gets task
-// @Tags    system_tasks
+// @Tags    project_tasks
 // @Produce json
-// @Id      getTask
+// @Id      getProjectTask
+// @Param   projectID path string true "project ID"
 // @Param   itemID path string true "task ID"
 // @Success 200 {object} taskdto.GetTaskResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
-// @Router  /system/tasks/{itemID} [get]
+// @Router  /projects/{projectID}/tasks/{itemID} [get]
 func (h *Handler) GetTask(ctx *gin.Context) {
-	h.taskHandler.GetTask(ctx, base.ObjectScopeGlobal)
+	h.TaskHandler.GetTask(ctx, base.ObjectScopeProject)
 }
 
 // GetTaskStatus Gets task status
 // @Summary Gets task status
 // @Description Gets task status
-// @Tags    system_tasks
+// @Tags    project_tasks
 // @Produce json
-// @Id      getTaskStatus
+// @Id      getProjectTaskStatus
+// @Param   projectID path string true "project ID"
 // @Param   itemID path string true "task ID"
 // @Success 200 {object} taskdto.GetTaskStatusResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
-// @Router  /system/tasks/{itemID}/status [get]
+// @Router  /projects/{projectID}/tasks/{itemID}/status [get]
 func (h *Handler) GetTaskStatus(ctx *gin.Context) {
-	h.taskHandler.GetTaskStatus(ctx, base.ObjectScopeGlobal)
+	h.TaskHandler.GetTaskStatus(ctx, base.ObjectScopeProject)
 }
 
 // ListTaskType Lists task types
 // @Summary Lists task types
 // @Description Lists task types
-// @Tags    system_tasks
+// @Tags    project_tasks
 // @Produce json
-// @Id      listTaskType
+// @Id      listProjectTaskType
+// @Param   projectID path string true "project ID"
 // @Success 200 {object} taskdto.ListTaskTypeResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
-// @Router  /system/tasks/types [get]
+// @Router  /projects/{projectID}/tasks/types [get]
 func (h *Handler) ListTaskType(ctx *gin.Context) {
-	h.taskHandler.ListTaskType(ctx, base.ObjectScopeGlobal)
+	h.TaskHandler.ListTaskType(ctx, base.ObjectScopeProject)
 }
 
 // GetTaskLogs Gets task logs
 // @Summary Gets task logs
 // @Description Gets task logs
-// @Tags    system_tasks
+// @Tags    project_tasks
 // @Produce json
-// @Id      getTaskLogs
+// @Id      getProjectTaskLogs
+// @Param   projectID path string true "project ID"
 // @Param   itemID path string true "task ID"
 // @Success 200 {object} taskdto.GetTaskLogsReq
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
-// @Router  /system/tasks/{itemID}/logs [get]
+// @Router  /projects/{projectID}/tasks/{itemID}/logs [get]
 func (h *Handler) GetTaskLogs(ctx *gin.Context) {
-	h.taskHandler.GetTaskLogs(ctx, base.ObjectScopeGlobal)
+	h.TaskHandler.GetTaskLogs(ctx, base.ObjectScopeProject)
 }
 
 // CancelTask Cancels task
 // @Summary Cancels task
 // @Description Cancels task
-// @Tags    system_tasks
+// @Tags    project_tasks
 // @Produce json
-// @Id      cancelTask
+// @Id      cancelProjectTask
+// @Param   projectID path string true "project ID"
 // @Param   itemID path string true "task ID"
 // @Success 200 {object} taskdto.CancelTaskReq
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
-// @Router  /system/tasks/{itemID}/cancel [post]
+// @Router  /projects/{projectID}/tasks/{itemID}/cancel [post]
 func (h *Handler) CancelTask(ctx *gin.Context) {
-	h.taskHandler.CancelTask(ctx, base.ObjectScopeGlobal)
+	h.TaskHandler.CancelTask(ctx, base.ObjectScopeProject)
 }

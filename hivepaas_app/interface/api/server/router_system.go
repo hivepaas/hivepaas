@@ -7,24 +7,22 @@ import (
 func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 	systemGroup := apiGroup.Group("/system")
 	systemHandler := s.handlerRegistry.systemHandler
-	auditLogHandler := s.handlerRegistry.auditLogHandler
 
-	{ // task group
+	{ // Task group
 		taskGroup := systemGroup.Group("/tasks")
 		taskGroup.GET("", systemHandler.ListTask)
-		taskGroup.GET("/:taskID", systemHandler.GetTask)
-		taskGroup.GET("/:taskID/status", systemHandler.GetTaskStatus)
-		taskGroup.POST("/:taskID/cancel", systemHandler.CancelTask)
-		// Task logs
-		taskGroup.GET("/:taskID/logs", systemHandler.GetTaskLogs)
+		taskGroup.GET("/:itemID", systemHandler.GetTask)
+		taskGroup.GET("/:itemID/status", systemHandler.GetTaskStatus)
+		taskGroup.POST("/:itemID/cancel", systemHandler.CancelTask)
+		taskGroup.GET("/:itemID/logs", systemHandler.GetTaskLogs)
 	}
 
-	{ // status group
+	{ // Status group
 		statusGroup := systemGroup.Group("/status")
 		statusGroup.GET("/db", systemHandler.GetDBStats)
 	}
 
-	{ // error group
+	{ // Error group
 		errorGroup := systemGroup.Group("/errors")
 		errorGroup.GET("", systemHandler.ListSysError)
 		errorGroup.GET("/:errorID", systemHandler.GetSysError)
@@ -33,9 +31,9 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 
 	{ // Audit log group
 		auditLogGroup := systemGroup.Group("/audit-logs")
-		auditLogGroup.GET("", auditLogHandler.ListGlobalAuditLog)
-		auditLogGroup.GET("/types", auditLogHandler.ListAuditLogTypes)
-		auditLogGroup.GET("/:itemID", auditLogHandler.GetGlobalAuditLog)
+		auditLogGroup.GET("", systemHandler.ListAuditLog)
+		auditLogGroup.GET("/types", systemHandler.ListAuditLogTypes)
+		auditLogGroup.GET("/:itemID", systemHandler.GetAuditLog)
 	}
 
 	// System settings group

@@ -26,6 +26,13 @@ var (
 	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
 		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert, TaskTypeAppLabelsSweep}
+
+	AllGlobalTaskTypes   = AllTaskTypes
+	AllHivepaasTaskTypes = []TaskType{}
+	AllProjectTaskTypes  = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
+		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec}
+	AllAppTaskTypes  = AllProjectTaskTypes
+	AllUserTaskTypes = []TaskType{}
 )
 
 type TaskStatus string

@@ -18,3 +18,4 @@ export * from "./logs-viewer";
 export * from "./route-form-header";
 export * from "./next-runs-field";
 export * from "./available-in-apps-warning";
+export * from "./weak-account-security-warning";

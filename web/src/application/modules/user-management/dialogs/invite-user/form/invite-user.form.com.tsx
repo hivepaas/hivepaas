@@ -134,6 +134,7 @@ export const InviteUserForm = forwardRef<HTMLFormElement, Props>(
                             >
                                 <UserInput.SecurityOption<InviteUserFormInput>
                                     name="securityOption"
+                                    role={methods.watch("role")}
                                     disabled={readOnly}
                                 />
                             </InfoBlock>

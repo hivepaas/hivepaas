@@ -142,7 +142,10 @@ export function SingleUserForm({ ref, defaultValues, onSubmit, readOnly = false,
                             titleWidth={220}
                             title="Security Option"
                         >
-                            <UserInput.SecurityOption<SingleUserFormSchemaInput> name="securityOption" />
+                            <UserInput.SecurityOption<SingleUserFormSchemaInput>
+                                name="securityOption"
+                                role={methods.watch("role")}
+                            />
                         </InfoBlock>
 
                         {/* Project Access */}

@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@components/ui/dialog";
+import { toast } from "sonner";
 import { UsersCommands } from "~/user-management/data/commands";
 
 import { MODULE_IDS } from "@application/shared/constants";
@@ -30,14 +31,18 @@ export function InviteUserDialog() {
 
     const open = state.mode !== "closed";
 
-    const [sendInviteEmail, setSendInviteEmail] = useState(false);
+    // Which button was pressed, kept in a ref rather than state because it is
+    // written on click and read on the submit that the same click triggers, and
+    // never rendered. Reading a stale value here would close the dialog on the
+    // "Generate Invite Link" path and take the freshly generated link with it.
+    const sendInviteEmailRef = useRef(false);
 
     // Reset invite link when dialog closes
     useEffect(() => {
         if (state.mode === "closed") {
             setInviteLink(null);
             setHasChanges(false);
-            setSendInviteEmail(false);
+            sendInviteEmailRef.current = false;
         }
     }, [state.mode]);
 
@@ -46,17 +51,26 @@ export function InviteUserDialog() {
             return;
         }
 
+        const sendInviteEmail = sendInviteEmailRef.current;
+
         inviteUser(
             { user: values, sendInviteEmail },
             {
                 onSuccess: response => {
-                    if (sendInviteEmail) {
-                        setInviteLink(null);
-                    } else {
+                    // The generated link is shown nowhere else, so that path has to
+                    // keep the dialog open. The email path has nothing left to show,
+                    // and leaving it open reads as if the invite had not been sent.
+                    if (!sendInviteEmail) {
                         setInviteLink(response.data.inviteLink);
+                        return;
                     }
-                    setSendInviteEmail(false); // Reset after submission
+
+                    toast.success(`An invitation email has been sent to ${values.email}.`);
+                    actions.close();
                 },
+                // Failures need no handling here: useUsersApi.inviteOne reports them
+                // through notifyError, which raises the toast. The dialog stays open
+                // with what was typed still in it, ready to be corrected.
             },
         );
     }
@@ -102,7 +116,7 @@ export function InviteUserDialog() {
                                         isLoading={isGeneratingLink}
                                         disabled={isDenied}
                                         onClick={() => {
-                                            setSendInviteEmail(true);
+                                            sendInviteEmailRef.current = true;
                                         }}
                                     >
                                         Send Email
@@ -120,7 +134,7 @@ export function InviteUserDialog() {
                                         isLoading={isGeneratingLink}
                                         disabled={isDenied || inviteLink !== null}
                                         onClick={() => {
-                                            setSendInviteEmail(false);
+                                            sendInviteEmailRef.current = false;
                                         }}
                                     >
                                         Generate Invite Link

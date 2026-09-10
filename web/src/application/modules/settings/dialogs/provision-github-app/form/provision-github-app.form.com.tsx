@@ -97,7 +97,7 @@ export function ProvisionGithubAppForm({
         >
             <DialogBody className="flex flex-col gap-6">
                 {isReadOnly && <PermissionReadonlyNotice />}
-                <div className={cn(dashedBorderBox, "flex flex-col gap-5 text-sm leading-6")}>
+                <div className={cn(dashedBorderBox, "flex flex-col gap-5")}>
                     <div>
                         <span className="font-semibold text-orange-500">Important:</span> When you click begin, you will
                         be redirected to the GitHub page where you will be guided on how to set up a GitHub App. Make

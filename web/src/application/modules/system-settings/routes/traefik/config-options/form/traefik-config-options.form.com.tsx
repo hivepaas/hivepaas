@@ -245,7 +245,7 @@ export function TraefikConfigOptionsForm({ ref, defaultValues, onSubmit, readOnl
                     disabled={readOnly}
                     className="contents"
                 >
-                    <div className={cn(dashedBorderBox, "text-sm leading-6 text-muted-foreground")}>
+                    <div className={cn(dashedBorderBox, "text-muted-foreground")}>
                         For configuration details, see{" "}
                         <a
                             className="text-blue-500 underline underline-offset-2 hover:text-blue-600"

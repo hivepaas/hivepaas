@@ -164,7 +164,7 @@ export function PreviewCommandsFields({ projectID, env, readOnly = false }: Prop
                                             type="button"
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 rounded-md text-zinc-400 hover:bg-red-50 hover:text-red-500"
+                                            className="h-8 w-8 rounded-md text-muted-foreground hover:bg-red-50 hover:text-red-500"
                                             disabled={readOnly}
                                         >
                                             <Trash2 className="size-3.5" />

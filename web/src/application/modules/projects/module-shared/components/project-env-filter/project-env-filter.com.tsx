@@ -1,9 +1,7 @@
 import { memo, useEffect, useMemo } from "react";
 
 import { cn } from "@/lib/utils";
-import { Check } from "lucide-react";
 import type { ProjectEnvEntity } from "~/projects/domain";
-import { PROJECT_ALL_ENV_COLOR } from "~/projects/module-shared/constants";
 import { PROJECT_ENV_FILTER_ALL, useProjectEnvFilter, useProjectEnvFilterStore } from "~/projects/module-shared/hooks";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,8 +28,17 @@ function View({ projectId, envs, className, showAll = true, interactive = true }
         return null;
     }
 
+    // Selection is said in the control's own language - surface, weight - and never
+    // in the environment's colour. env.color is user-chosen and can be any hue, so a
+    // control that uses it as its ground can never sit well next to anything; it also
+    // forced text-white onto pale colours, which was unreadable. The colour survives
+    // as a dot, where it identifies the environment without having to carry text.
+    //
+    // Active lifts off the track in both themes, which needs two different answers:
+    // in light --background is white above a grey track, but in dark the elevation
+    // runs the other way, so --accent is what sits above --muted there.
     const triggerClassName =
-        "h-7 max-w-[10rem] flex-none px-2.5 text-xs font-medium text-white opacity-45 saturate-75 shadow-none transition-[filter,opacity,box-shadow] hover:opacity-80 hover:saturate-100 data-[state=active]:font-semibold data-[state=active]:text-white data-[state=active]:opacity-100 data-[state=active]:brightness-110 data-[state=active]:saturate-125 data-[state=active]:shadow-[inset_0_0_0_2px_rgba(255,255,255,0.9),0_1px_4px_rgba(0,0,0,0.22)] dark:text-white dark:data-[state=active]:text-white";
+        "h-7 max-w-[10rem] flex-none gap-1.5 px-2.5 text-xs font-medium text-muted-foreground shadow-none transition-[color,background-color,box-shadow] hover:text-foreground data-[state=active]:font-semibold data-[state=active]:text-foreground data-[state=active]:bg-background data-[state=active]:shadow-sm dark:data-[state=active]:bg-accent dark:data-[state=active]:border-transparent";
 
     return (
         <Tabs
@@ -48,17 +55,13 @@ function View({ projectId, envs, className, showAll = true, interactive = true }
                         key={env.name}
                         value={env.name}
                         className={triggerClassName}
-                        style={{
-                            backgroundColor: env.color,
-                        }}
                         aria-label={interactive ? `Filter apps by ${env.name} environment` : `${env.name} environment`}
                     >
-                        {activeEnv === env.name && (
-                            <Check
-                                className="size-3"
-                                aria-hidden
-                            />
-                        )}
+                        <span
+                            aria-hidden
+                            className="size-[7px] shrink-0 rounded-full"
+                            style={{ backgroundColor: env.color }}
+                        />
                         <span className="min-w-0 truncate">{env.name}</span>
                     </TabsTrigger>
                 ))}
@@ -66,21 +69,13 @@ function View({ projectId, envs, className, showAll = true, interactive = true }
                 {showAll ? (
                     <TabsTrigger
                         value={PROJECT_ENV_FILTER_ALL}
-                        className={cn(
-                            triggerClassName,
-                            "text-primary! data-[state=active]:text-primary! border border-amber-500/25 dark:border-amber-400/25 dark:text-primary! dark:data-[state=active]:text-primary!",
-                        )}
-                        style={{
-                            backgroundColor: PROJECT_ALL_ENV_COLOR,
-                        }}
+                        className={triggerClassName}
                         aria-label="Show apps from all environments"
                     >
-                        {activeEnv === PROJECT_ENV_FILTER_ALL && (
-                            <Check
-                                className="size-3"
-                                aria-hidden
-                            />
-                        )}
+                        <span
+                            aria-hidden
+                            className="size-[7px] shrink-0 rounded-full border border-amber-500 dark:border-amber-400"
+                        />
                         <span className="min-w-0 truncate">all</span>
                     </TabsTrigger>
                 ) : null}

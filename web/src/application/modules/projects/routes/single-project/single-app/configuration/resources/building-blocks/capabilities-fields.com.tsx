@@ -26,7 +26,7 @@ export function CapabilitiesFields() {
 
     return (
         <div className="flex flex-col gap-6">
-            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+            <div className={cn(dashedBorderBox)}>
                 <p>
                     <span className="font-semibold text-orange-500">Warning:</span> Modifying container capabilities can
                     introduce severe security risks; please ensure you understand the implications before proceeding.

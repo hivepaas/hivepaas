@@ -24,7 +24,7 @@ function View({ label, htmlFor, content, className, isRequired = false, icon }: 
                     <TooltipTrigger asChild>
                         <Info
                             size={14}
-                            className="text-gray-500"
+                            className="text-muted-foreground"
                         />
                     </TooltipTrigger>
                     <TooltipContent

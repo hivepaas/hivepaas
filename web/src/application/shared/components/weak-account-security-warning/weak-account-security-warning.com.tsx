@@ -1,3 +1,4 @@
+import { inlineLink } from "@/lib/styles";
 import { AlertTriangle } from "lucide-react";
 
 import { AppLink } from "@application/shared/components/navigation";
@@ -35,8 +36,6 @@ export function WeakAccountSecurityWarning() {
         return null;
     }
 
-    const linkClass = "font-medium text-primary underline underline-offset-4 hover:opacity-80";
-
     return (
         <div
             role="status"
@@ -51,14 +50,14 @@ export function WeakAccountSecurityWarning() {
                 </span>{" "}
                 <AppLink.Basic
                     to={ROUTE.currentUser.profile.$route}
-                    className={linkClass}
+                    className={inlineLink}
                 >
                     profile
                 </AppLink.Basic>
                 <span className="text-muted-foreground">, then switch the security option on</span>{" "}
                 <AppLink.Basic
                     to={ROUTE.userManagement.users.single.$route(profile.id)}
-                    className={linkClass}
+                    className={inlineLink}
                 >
                     your account
                 </AppLink.Basic>

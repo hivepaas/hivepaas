@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import type { ProjectEnvEntity } from "~/projects/domain";
 import { PROJECT_ALL_ENV_COLOR } from "~/projects/module-shared/constants";
 import { PROJECT_ENV_FILTER_ALL } from "~/projects/module-shared/hooks";
@@ -38,7 +37,7 @@ export function ProjectEnvScopeBadge({ selectedEnv, envs, size = "sm", className
             name={`Env: ${selectedEnv}`}
             color={matchedEnv?.color}
             size={size}
-            className={cn("text-white", className)}
+            className={className}
         />
     );
 }

@@ -194,7 +194,7 @@ export function SaveToFileSection({ projectId, env, readOnly = false }: Props) {
                             />
                             <AppLink.Modules
                                 to={cloudStoragesRoute}
-                                className="text-xs text-primary hover:underline"
+                                className="text-xs text-link hover:underline"
                             >
                                 Configure Cloud Storages
                             </AppLink.Modules>

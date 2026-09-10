@@ -56,7 +56,7 @@ export function RestartPolicyFields() {
                     }}
                     className="w-fit"
                 >
-                    <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                    <TabsList className="bg-muted/80 p-1 rounded-lg">
                         <TabsTrigger value={ERestartPolicyCondition.None}>None</TabsTrigger>
                         <TabsTrigger value={ERestartPolicyCondition.OnFailure}>On Failure</TabsTrigger>
                         <TabsTrigger value={ERestartPolicyCondition.Any}>Any</TabsTrigger>

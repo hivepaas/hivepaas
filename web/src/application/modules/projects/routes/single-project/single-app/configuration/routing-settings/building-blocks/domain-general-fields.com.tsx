@@ -70,7 +70,7 @@ export function DomainGeneralFields({ domainIndex, readOnly = false }: DomainGen
             </InfoBlock>
 
             {isUdp && (
-                <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                <div className={cn(dashedBorderBox)}>
                     <span className="font-semibold text-orange-500">Note:</span> UDP routing is not supported by the
                     reverse proxy. To expose and route UDP traffic for this application, please configure directly
                     published container ports in the <strong>Networks</strong> tab instead.

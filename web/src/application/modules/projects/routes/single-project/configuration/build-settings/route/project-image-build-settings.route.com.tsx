@@ -20,7 +20,7 @@ import type { ProjectImageBuildSettingsFormRef } from "../types";
 
 function NoteBox({ children }: { children: React.ReactNode }) {
     return (
-        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+        <div className={cn(dashedBorderBox)}>
             <span className="font-semibold text-orange-500">Note: </span>
             {children}
         </div>
@@ -104,7 +104,7 @@ export function ProjectImageBuildSettingsRoute() {
                         Image build configuration is only available at the global scope,{" "}
                         <AppLink.Basic
                             to={ROUTE.appSettings.imageBuild.$route}
-                            className="font-medium text-primary underline-offset-4 hover:underline"
+                            className="font-medium text-link underline-offset-4 hover:underline"
                         >
                             view here
                         </AppLink.Basic>

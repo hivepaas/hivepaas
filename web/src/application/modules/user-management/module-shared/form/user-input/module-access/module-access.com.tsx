@@ -175,7 +175,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                             type="button"
                                             variant="ghost"
                                             size="icon"
-                                            className="size-7 text-zinc-400 hover:text-primary hover:bg-primary/10 rounded-md"
+                                            className="size-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
                                             title={
                                                 grantableKeys(module.id).length === 0
                                                     ? NO_REACH_HINT

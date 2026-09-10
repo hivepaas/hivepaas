@@ -100,7 +100,7 @@ function EnvAccessRow({ envAccess, disabled = false, canGrant, onChangeAccess }:
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="size-7 text-zinc-400 hover:text-primary hover:bg-primary/10 rounded-md"
+                            className="size-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
                             title={
                                 grantableKeys.length === 0 ? NO_REACH_HINT : allSelected ? "Deselect all" : "Select all"
                             }
@@ -310,7 +310,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="size-7 text-zinc-400 hover:text-primary hover:bg-primary/10 rounded-md"
+                                                    className="size-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
                                                     title={
                                                         projectHasReachableAction
                                                             ? projectAllSelected
@@ -329,7 +329,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="size-7 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 dark:hover:text-red-400 rounded-md"
+                                                    className="size-7 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 dark:hover:text-red-400 rounded-md"
                                                     title="Remove this project"
                                                     onClick={() => {
                                                         remove(projectIndex);

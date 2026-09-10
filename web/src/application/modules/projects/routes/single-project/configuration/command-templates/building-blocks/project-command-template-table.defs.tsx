@@ -99,7 +99,7 @@ function createColumns(projectId: string, env?: string): ColumnDef<ProjectComman
                         href={href}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-primary hover:underline font-mono text-xs truncate max-w-[200px] inline-block"
+                        className="text-link hover:underline font-mono text-xs truncate max-w-[200px] inline-block"
                         title={original.link}
                     >
                         {original.link}

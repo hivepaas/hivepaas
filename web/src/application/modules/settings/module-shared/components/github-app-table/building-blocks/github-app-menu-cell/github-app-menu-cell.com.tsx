@@ -181,7 +181,7 @@ function View({ scope, githubApp }: Props) {
                                     href={advancedSettingsUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-primary underline underline-offset-4 hover:opacity-80 font-medium"
+                                    className="text-link underline underline-offset-4 hover:opacity-80 font-medium"
                                 >
                                     here
                                 </a>

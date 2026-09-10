@@ -226,7 +226,9 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                                     </div>
                                 ) : (
                                     <>
-                                        <CommandEmpty className="p-2 text-sm text-gray-500">{emptyText}</CommandEmpty>
+                                        <CommandEmpty className="p-2 text-sm text-muted-foreground">
+                                            {emptyText}
+                                        </CommandEmpty>
                                         {options.length > 0 && (
                                             <CommandGroup>
                                                 {options.map(option => {

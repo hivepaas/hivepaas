@@ -375,7 +375,7 @@ export function SignUpForm({ method, isPending, onSubmit }: Props) {
                                             Agree to{" "}
                                             <a
                                                 href="/terms-and-conditions"
-                                                className="text-primary underline"
+                                                className="text-link underline"
                                             >
                                                 Terms and Conditions
                                             </a>

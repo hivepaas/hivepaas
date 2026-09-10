@@ -51,7 +51,7 @@ export function ServiceModeFields({ savedMode, isAppStopped = false }: Props) {
                         }}
                         className="w-fit"
                     >
-                        <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                        <TabsList className="bg-muted/80 p-1 rounded-lg">
                             <TabsTrigger
                                 value={EServiceMode.Replicated}
                                 disabled={isAppStopped && savedMode !== EServiceMode.Replicated}
@@ -89,7 +89,7 @@ export function ServiceModeFields({ savedMode, isAppStopped = false }: Props) {
             </InfoBlock>
 
             {isChangingMode && (
-                <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                <div className={cn(dashedBorderBox)}>
                     <span className="font-semibold text-orange-500">Downtime warning:</span> Docker Swarm cannot change
                     the mode of a running service, so saving this will <strong>delete and recreate</strong> the service.
                     The app stops until the new service is up, and its instance history is lost. All other settings are

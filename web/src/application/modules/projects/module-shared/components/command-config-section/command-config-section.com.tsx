@@ -122,7 +122,7 @@ export function CommandConfigSection({
                                     to={configureTemplatesLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-xs text-primary hover:underline"
+                                    className="text-xs text-link hover:underline"
                                 >
                                     Configure Command Templates
                                 </AppLink.Modules>

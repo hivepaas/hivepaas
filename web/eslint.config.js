@@ -117,8 +117,14 @@ export default tseslint.config(
             ...jsxA11y.configs.recommended.rules,
             "react/react-in-jsx-scope": "off", // Not needed in React 17+
             "react/jsx-uses-react": "off", // Not needed in React 17+
-            "react/jsx-indent": ["error", 4],
-            "react/jsx-indent-props": ["error", 4],
+            // Deliberately absent: "react/jsx-indent" and "react/jsx-indent-props".
+            // Prettier owns indentation here (tabWidth 4 in .prettierrc), and
+            // eslint-config-prettier - spread in above - switches both rules off
+            // for exactly that reason. Re-enabling them after the spread put the
+            // two formatters in conflict: Prettier aligns JSX inside a ternary arm
+            // to the opening paren, which is never a multiple of 4, so any nested
+            // ternary returning JSX became an unfixable error. Both rules are also
+            // deprecated in eslint-plugin-react.
             "react/jsx-first-prop-new-line": ["error", "multiline"],
             "react/jsx-max-props-per-line": ["error", { maximum: 1, when: "multiline" }],
             "react/jsx-boolean-value": ["error", "never", { always: ["personal"] }],

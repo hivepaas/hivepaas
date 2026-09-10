@@ -641,7 +641,7 @@ export function CreateOrEditBackupRepoForm({
                         {!isImportExisting && (
                             <ContentBlock label="Retention Policy">
                                 <div className="flex flex-col gap-4">
-                                    <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                                    <div className={cn(dashedBorderBox)}>
                                         <span className="font-semibold text-orange-500">Note:</span> Retention rules
                                         apply together and independently — a backup is kept if it matches any enabled
                                         rule. Leaving a rule blank means no extra limit from that rule, not that data

@@ -271,7 +271,7 @@ function EnvUserAccessRow({
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="size-7 text-zinc-400 hover:text-primary hover:bg-primary/10 rounded-md"
+                                className="size-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md"
                                 aria-label={allSelected ? "Deselect all permissions" : "Select all permissions"}
                                 title={allSelected ? "Deselect all permissions" : "Select all permissions"}
                                 disabled={isDenied || !canUpdateProjectAccess}
@@ -293,7 +293,7 @@ function EnvUserAccessRow({
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="size-7 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 dark:hover:text-red-400 rounded-md"
+                                className="size-7 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/50 dark:hover:text-red-400 rounded-md"
                                 aria-label="Remove user access"
                                 title="Remove user access"
                                 disabled={isDenied || !canUpdateProjectAccess}
@@ -834,7 +834,7 @@ export function ProjectUserAccessesDialog() {
                                                                 href={ROUTE.userManagement.users.single.$route(user.id)}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="text-sm font-medium text-primary hover:underline"
+                                                                className="text-sm font-medium text-link hover:underline"
                                                             >
                                                                 Settings
                                                             </a>

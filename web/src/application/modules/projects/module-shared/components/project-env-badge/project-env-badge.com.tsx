@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { cn } from "@/lib/utils";
 import { PROJECT_ALL_ENV_COLOR } from "~/projects/module-shared/constants";
 
@@ -42,11 +44,9 @@ export function ProjectEnvBadge({ name, color, className, size = "xs" }: Project
 
     return (
         <span
-            style={{
-                backgroundColor,
-            }}
+            style={{ "--env-color": backgroundColor } as CSSProperties}
             className={cn(
-                "inline-flex w-fit shrink-0 items-center justify-center rounded-md text-white",
+                "env-fill inline-flex w-fit shrink-0 items-center justify-center rounded-md border",
                 sizeClasses,
                 className,
             )}

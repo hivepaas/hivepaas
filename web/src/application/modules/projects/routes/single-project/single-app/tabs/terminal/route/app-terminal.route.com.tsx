@@ -67,7 +67,7 @@ export function AppTerminalRoute() {
                             env,
                             appID,
                         )}
-                        className="text-primary underline-offset-4 hover:underline"
+                        className="text-link underline-offset-4 hover:underline"
                     >
                         Feature Settings
                     </AppLink.Basic>

@@ -269,7 +269,7 @@ export function CreateOrEditAppSecretForm({
                                 valueTypeField.onChange(nextValue);
                             }}
                         >
-                            <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                            <TabsList className="bg-muted/80 p-1 rounded-lg">
                                 <TabsTrigger value="text">Text</TabsTrigger>
                                 <TabsTrigger value="binary">Binary</TabsTrigger>
                             </TabsList>

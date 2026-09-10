@@ -47,7 +47,7 @@ export function ModuleLayout({ children }: PropsWithChildren) {
                     </div>
                 </header>
 
-                <div className="flex flex-1 flex-col gap-2 sm:gap-4 p-2 sm:p-4 bg-[#f5f5f5]">
+                <div className="flex flex-1 flex-col gap-2 sm:gap-4 p-2 sm:p-4 bg-canvas">
                     {/* Above the page, not inside it: the account it is about is the
                         one signed in, so it has nothing to do with whichever page
                         happens to be open. */}

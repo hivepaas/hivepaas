@@ -163,7 +163,7 @@ export function CreateOrEditRepoWebhookForm({
             <div className="flex flex-col gap-6">
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
-                <div className={cn(dashedBorderBox, SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS, "leading-6 ")}>
+                <div className={cn(dashedBorderBox, SETTINGS_FORM_FIELD_CONTROL_MAX_WIDTH_CLASS)}>
                     <p>
                         <span className="font-semibold text-orange-500">Note:</span> Webhooks allow{" "}
                         <span className="text-orange-500">HivePaaS</span> to receive events from your source code
@@ -284,7 +284,7 @@ export function CreateOrEditRepoWebhookForm({
                                 className={cn(
                                     dashedBorderBox,
                                     SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS,
-                                    "flex min-h-12 items-center justify-center gap-3 break-all text-sm",
+                                    "flex min-h-12 items-center justify-center gap-3 break-all",
                                 )}
                             >
                                 <span>{webhookURL}</span>
@@ -300,7 +300,7 @@ export function CreateOrEditRepoWebhookForm({
                                 </Button>
                             </div>
                         ) : (
-                            <div className={cn(dashedBorderBox, SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS, "text-sm p-2")}>
+                            <div className={cn(dashedBorderBox, SETTINGS_FORM_CONTROL_MAX_WIDTH_CLASS, "p-2")}>
                                 please create a webhook first
                             </div>
                         )}

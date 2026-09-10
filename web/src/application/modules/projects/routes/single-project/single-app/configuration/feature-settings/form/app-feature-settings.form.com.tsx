@@ -125,7 +125,7 @@ function AutoCloneDbAppsField() {
 
 function AppPreviewWarningBox() {
     return (
-        <div className={cn(dashedBorderBox, "space-y-2 text-sm leading-6")}>
+        <div className={cn(dashedBorderBox, "space-y-2")}>
             <p>
                 <span className="font-semibold text-orange-500">Warning:</span> Deploying a Preview App that executes
                 database schema migrations against a shared database may break or crash the Main App.
@@ -215,7 +215,7 @@ export function AppFeatureSettingsForm({
                         disabled={readOnly}
                         className="contents"
                     >
-                        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                        <div className={cn(dashedBorderBox)}>
                             <span className="font-semibold text-orange-500">Note:</span> By default, some features may
                             be locked to enhance security. If you need those features, you can unlock them here.
                         </div>

@@ -15,7 +15,7 @@ function View({ githubApp }: Props) {
         <>
             <button
                 type="button"
-                className="text-sm font-medium text-primary hover:underline cursor-pointer"
+                className="text-sm font-medium text-link hover:underline cursor-pointer"
                 onClick={() => {
                     setOpen(true);
                 }}

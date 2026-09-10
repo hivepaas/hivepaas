@@ -204,7 +204,7 @@ export function SetManagerNodesDialog() {
                     <Separator className="opacity-50" />
                 </div>
                 <DialogBody className="flex min-h-0 flex-1 flex-col gap-4">
-                    <div className={cn(dashedBorderBox, "text-sm")}>
+                    <div className={cn(dashedBorderBox)}>
                         <span className="font-semibold text-orange-500">Notice:</span> A 3-node cluster can tolerate the
                         loss of 1 manager, but a 4-node cluster can ALSO only tolerate the loss of 1 manager. So having
                         even number of managers does not make sense in terms of HA, and causes unnecessary resource

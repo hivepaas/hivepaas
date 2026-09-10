@@ -162,7 +162,7 @@ export function CreateOrEditGithubAppForm({
                 {readOnlyInherited && <InheritedSettingReadonlyNotice />}
                 {readOnly && !readOnlyInherited && <PermissionReadonlyNotice />}
                 {onReprovision && !isReadOnly && (
-                    <div className={cn(dashedBorderBox, "flex flex-col gap-4 text-sm leading-6")}>
+                    <div className={cn(dashedBorderBox, "flex flex-col gap-4")}>
                         <div>
                             <span className="font-semibold text-orange-500">Important:</span> It is recommended that you
                             do not manually modify the information below unless you are certain it is correct. You can
@@ -173,7 +173,7 @@ export function CreateOrEditGithubAppForm({
                                     href={advancedSettingsUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-primary underline underline-offset-4 hover:opacity-80"
+                                    className="text-link underline underline-offset-4 hover:opacity-80"
                                 >
                                     here
                                 </a>

@@ -38,7 +38,7 @@
     .icon {
       width: 16px;
       height: 16px;
-      color: hsl(var(--muted-foreground));
+      color: var(--muted-foreground);
       flex-shrink: 0;
 
       transition: color 0.1s ease-in-out;
@@ -67,6 +67,10 @@
 
     &:hover {
       background-color: rgb(0 0 0 / 3%);
+    }
+
+    :global(.dark) &:hover {
+      background-color: rgb(255 255 255 / 5%);
     }
 
     &.is-top-level {

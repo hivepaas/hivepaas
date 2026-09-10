@@ -5,7 +5,7 @@ import { getModulePermissionDeniedMessage } from "@application/shared/permission
 
 export function PermissionReadonlyNotice({ className }: { className?: string } = {}) {
     return (
-        <div className={cn(dashedBorderBox, "text-sm leading-6 mb-4", className)}>
+        <div className={cn(dashedBorderBox, "mb-4", className)}>
             <span className="font-semibold text-orange-500">Notice:</span> {getModulePermissionDeniedMessage("write")}
         </div>
     );

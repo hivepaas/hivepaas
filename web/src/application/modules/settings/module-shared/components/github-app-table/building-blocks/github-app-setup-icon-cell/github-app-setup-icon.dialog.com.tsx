@@ -80,7 +80,7 @@ export function GithubAppSetupIconDialog({ open, onOpenChange, githubApp }: Prop
                             href={hivepaasLogo512}
                             download="logo-512x512.png"
                             onClick={handleDownload}
-                            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline cursor-pointer"
+                            className="inline-flex items-center gap-1.5 text-sm font-medium text-link hover:underline cursor-pointer"
                         >
                             <Download className="size-4" />
                             Download Icon
@@ -90,7 +90,7 @@ export function GithubAppSetupIconDialog({ open, onOpenChange, githubApp }: Prop
                                 href={settingsUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline cursor-pointer"
+                                className="inline-flex items-center gap-1.5 text-sm font-medium text-link hover:underline cursor-pointer"
                             >
                                 <ExternalLink className="size-4" />
                                 GitHub App Settings

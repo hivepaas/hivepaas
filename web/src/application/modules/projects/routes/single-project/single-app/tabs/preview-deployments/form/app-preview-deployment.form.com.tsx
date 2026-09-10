@@ -129,7 +129,7 @@ export function AppPreviewDeploymentForm({
                     </InfoBlock>
 
                     {!isDashboardUI && (
-                        <div className={cn(dashedBorderBox, "space-y-4 text-sm leading-6")}>
+                        <div className={cn(dashedBorderBox, "space-y-4")}>
                             <div className="space-y-2">
                                 <p>Comment in your pull request to trigger a preview deployment:</p>
                                 <div className="rounded bg-muted/60 p-3 font-mono text-sm text-foreground">
@@ -179,7 +179,7 @@ export function AppPreviewDeploymentForm({
                                         env,
                                         appId,
                                     )}
-                                    className="font-medium text-primary underline-offset-4 hover:underline"
+                                    className="font-medium text-link underline-offset-4 hover:underline"
                                 >
                                     here
                                 </AppLink.Modules>

@@ -1,84 +1,51 @@
 import { useEffect } from "react";
 
-import * as DarkReader from "darkreader";
-
 import { type ColorMode, useColorModeContext } from "./color-mode.store";
 
-const DARK_READER_THEME = {
-    brightness: 140,
-    contrast: 90,
-};
+const DARK_CLASS = "dark";
+const DARK_QUERY = "(prefers-color-scheme: dark)";
 
-const DARK_READER_FIXES: DarkReader.DynamicThemeFix = {
-    invert: [],
-    css: `
-        svg.hivepaas-logo,
-        svg.hivepaas-logo * {
-            filter: none !important;
-        }
-        .hivepaas-logo .hivepaas-logo-hex {
-            fill: #111827 !important;
-            stroke: #374151 !important;
-        }
-        .hivepaas-logo .hivepaas-logo-inner,
-        .hivepaas-logo .hivepaas-logo-inner rect,
-        .hivepaas-logo .hivepaas-logo-inner polygon {
-            fill: #fef7eb !important;
-            stroke: #fef7eb !important;
-        }
-        .tab-active-indicator,
-        .active-indicator {
-            background-color: #f59e0b !important;
-        }
-    `,
-    ignoreInlineStyle: [
-        ".x-logo",
-        ".hivepaas-logo",
-        "svg.hivepaas-logo",
-        "svg.hivepaas-logo *",
-        "[class*='terminalFrame']",
-        "[class*='terminalHost']",
-    ],
-    ignoreImageAnalysis: [
-        ".x-logo",
-        ".hivepaas-logo",
-        "svg.hivepaas-logo",
-        "svg.hivepaas-logo *",
-        "[class*='terminalFrame']",
-        "[class*='terminalHost']",
-    ],
-    disableStyleSheetsProxy: false,
-    ignoreCSSUrl: [],
-};
-
-function applyColorMode(mode: ColorMode) {
-    DarkReader.auto(false);
-
-    if (mode === "dark") {
-        DarkReader.enable(DARK_READER_THEME, DARK_READER_FIXES);
-        return;
-    }
-
-    if (mode === "light") {
-        DarkReader.disable();
-        return;
-    }
-
-    DarkReader.auto(DARK_READER_THEME, DARK_READER_FIXES);
-}
-
-function resetColorMode() {
-    DarkReader.auto(false);
-    DarkReader.disable();
+/**
+ * Applies the app's own dark palette by toggling the `dark` class that the
+ * Tailwind variant keys off - see `@custom-variant dark` in index.css.
+ *
+ * This replaces Darkreader, which used to synthesise dark mode at runtime from
+ * the light stylesheet. None of the fixes it carried had to be ported: each one
+ * - the logo, the tab indicator, the terminal frames - was an instruction to
+ * leave those colours alone, and without Darkreader they simply keep the colours
+ * they are authored with.
+ *
+ * The class is also set by an inline script in index.html before React mounts,
+ * so a dark session does not flash light on load. This effect keeps it in sync
+ * afterwards.
+ */
+function applyColorMode(mode: ColorMode, prefersDark: boolean) {
+    const isDark = mode === "dark" || (mode === "system" && prefersDark);
+    document.documentElement.classList.toggle(DARK_CLASS, isDark);
 }
 
 export function ColorModeEffect() {
     const mode = useColorModeContext(state => state.mode);
 
     useEffect(() => {
-        applyColorMode(mode);
+        const query = window.matchMedia(DARK_QUERY);
 
-        return resetColorMode;
+        applyColorMode(mode, query.matches);
+
+        // Only "system" follows the OS, and it has to keep following it - the
+        // user can flip their OS theme while this tab is open.
+        if (mode !== "system") {
+            return;
+        }
+
+        const onChange = (event: MediaQueryListEvent) => {
+            applyColorMode(mode, event.matches);
+        };
+        query.addEventListener("change", onChange);
+
+        return () => {
+            query.removeEventListener("change", onChange);
+        };
     }, [mode]);
 
     return null;

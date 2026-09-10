@@ -49,7 +49,7 @@ function SharedEnvVarsNotice() {
     const [showExample, setShowExample] = useState(false);
 
     return (
-        <div className={cn(dashedBorderBox, "leading-6")}>
+        <div className={cn(dashedBorderBox)}>
             <p>
                 These are runtime environment variables that can be accessed by other applications within the same
                 project. <br />
@@ -58,7 +58,7 @@ function SharedEnvVarsNotice() {
                 names). Hardcoding values may prevent certain HivePaaS features from working properly.{" "}
                 <button
                     type="button"
-                    className="text-primary hover:underline"
+                    className="text-link hover:underline"
                     onClick={() => {
                         setShowExample(previous => !previous);
                     }}
@@ -258,7 +258,7 @@ export const AppConfigEnvVarsForm = React.forwardRef<AppConfigEnvVarsFormRef, Pr
                         disabled={readOnly}
                         className="contents"
                     >
-                        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                        <div className={cn(dashedBorderBox)}>
                             <p>
                                 <span className="font-semibold text-orange-500">Note:</span> From an env var, you can
                                 reference another env var or secret, for example:{" "}

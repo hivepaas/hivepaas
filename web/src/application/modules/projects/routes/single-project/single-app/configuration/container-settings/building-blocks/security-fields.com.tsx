@@ -97,7 +97,7 @@ export function SecurityFields() {
                     }}
                     className="w-fit"
                 >
-                    <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                    <TabsList className="bg-muted/80 p-1 rounded-lg">
                         <TabsTrigger value="enabled">Enabled</TabsTrigger>
                         <TabsTrigger value="disabled">Disabled</TabsTrigger>
                     </TabsList>
@@ -166,7 +166,7 @@ export function SecurityFields() {
                     }}
                     className="w-fit"
                 >
-                    <TabsList className="bg-zinc-100/80 p-1 rounded-lg flex-wrap h-auto">
+                    <TabsList className="bg-muted/80 p-1 rounded-lg flex-wrap h-auto">
                         <TabsTrigger value={ESeccompMode.Default}>Default</TabsTrigger>
                         <TabsTrigger value={ESeccompMode.Unconfined}>Unconfined</TabsTrigger>
                         <TabsTrigger value={ESeccompMode.Custom}>Custom</TabsTrigger>
@@ -211,7 +211,7 @@ export function SecurityFields() {
                     }}
                     className="w-fit"
                 >
-                    <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                    <TabsList className="bg-muted/80 p-1 rounded-lg">
                         <TabsTrigger value={EAppArmorMode.Default}>Default</TabsTrigger>
                         <TabsTrigger value={EAppArmorMode.Disabled}>Disabled</TabsTrigger>
                     </TabsList>

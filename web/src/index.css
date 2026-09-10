@@ -4,15 +4,29 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  color-scheme: light;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
+  /* The page ground behind cards. Distinct from --background because in light
+     the canvas is grey and the cards on it are white, while in dark that order
+     reverses: the canvas is the darkest surface and cards sit above it. */
+  --canvas: #f5f5f5;
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #4e46b4;
+  --primary: #1e293b;
   --primary-foreground: oklch(0.985 0 0);
+  /* Warm accent lifted from the logo's inner deck. Used on top of --primary
+     surfaces, never as a surface itself, so it never collides with the amber
+     that already means "warning" across the app. */
+  --primary-accent: #f59e0b;
+  /* Primary as a line rather than a surface. It exists because --primary has to
+     be a button ground first, and in dark that makes it a near-white: correct
+     behind label text, wrong as a 1px rule, where it reads as a bare hairline
+     with no identity. Light keeps the ink, so nothing there changes. */
+  --primary-stroke: #1e293b;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -20,6 +34,14 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: #d23b3b;
+  /* Links are blue because primary no longer can be. Primary is a near-body
+     slate, so a link painted with it differs from the sentence around it by
+     underline alone - and an underline reads as emphasis, not as something you
+     can click. Blue is the one hue the web has trained everyone to read as a
+     link, and it is free here: it collides with neither the slate primary nor
+     the amber accent. Deep enough to clear 4.5:1 on the tinted note grounds,
+     not only on white. */
+  --link: #0958d9;
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -47,45 +69,74 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: #d23b3b;
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-  --color-error: #ff0000;
-  --color-warning: #ffa500;
-  --color-info: #0000ff;
-  --color-success: #00ff00;
-  --color-neutral: #808080;
-  --color-neutral-foreground: #000000;
-  --color-neutral-background: #ffffff;
-  --color-neutral-border: #808080;
+  color-scheme: dark;
+
+  /* Elevation runs the opposite way to the usual dark-mode convention, and that
+     is deliberate: the shell around the work (canvas, sidebar, popovers) is the
+     lighter surface, and the views the operator actually reads - cards, tables,
+     forms - are the darkest. Dense tabular data is easier to scan on the deeper
+     ground, and the shell reads as a frame around it rather than another panel
+     competing for attention.
+
+     Every grey carries a little chroma at hue 265, picked up from the logo's
+     #111827: neutral grey reads as colour switched off, a slight cast reads as
+     colour chosen. */
+  --canvas: oklch(0.305 0.01 265);
+  --background: oklch(0.265 0.009 265);
+  --card: oklch(0.265 0.009 265);
+  --popover: oklch(0.3 0.011 265);
+  --foreground: oklch(0.955 0.004 265);
+  --card-foreground: oklch(0.955 0.004 265);
+  --popover-foreground: oklch(0.955 0.004 265);
+
+  /* Cool near-white rather than a sterile neutral. The primary button stays a
+     light surface here - the inverse of the ink it is in light mode - but
+     anything drawing a primary-coloured stroke (dashed note boxes, selected
+     borders) reads as periwinkle, the hue Darkreader produced by inverting
+     #111827 and the reason those borders looked right. */
+  --primary: oklch(0.87 0.04 268);
+  --primary-foreground: oklch(0.245 0.012 265);
+  --primary-accent: #b45309;
+  /* Periwinkle, not the near-white --primary: this is the hue Darkreader used
+     to produce by inverting the ink #111827 while holding its hue, and the
+     reason those dashed note boxes read as deliberate rather than leftover. */
+  --primary-stroke: oklch(0.62 0.13 278);
+
+  /* Lifts off --card, so table headers and subtle panels separate from the rows
+     beneath them without going bright. */
+  --secondary: oklch(0.3 0.011 265);
+  --secondary-foreground: oklch(0.955 0.004 265);
+  --muted: oklch(0.3 0.011 265);
+  --muted-foreground: oklch(0.735 0.014 265);
+  --accent: oklch(0.335 0.012 265);
+  --accent-foreground: oklch(0.955 0.004 265);
+  --destructive: #e05252;
+  /* The light blue is far too dark to read on these grounds; a link token that
+     does not flip is the usual way dark mode loses its links. */
+  --link: #69b1ff;
+  --border: oklch(1 0 0 / 13%);
+  --input: oklch(1 0 0 / 17%);
+  --ring: oklch(0.65 0.03 268);
+
+  --chart-1: oklch(0.62 0.19 265);
+  --chart-2: oklch(0.7 0.15 162);
+  --chart-3: oklch(0.77 0.17 70);
+  --chart-4: oklch(0.65 0.24 304);
+  --chart-5: oklch(0.66 0.2 16);
+
+  /* The rail takes exactly --card. Sidebar and content cards become one
+     material, and --canvas - the lighter ground they both sit on - is the only
+     thing separating them. The shell stops being a third surface competing for
+     attention: what the operator sees is two panels of the same stock, framed
+     by the space between them. */
+  --sidebar: oklch(0.265 0.009 265);
+  --sidebar-foreground: oklch(0.955 0.004 265);
+  --sidebar-primary: oklch(0.62 0.19 265);
+  --sidebar-primary-foreground: oklch(0.955 0.004 265);
+  --sidebar-accent: oklch(0.315 0.01 265);
+  --sidebar-accent-foreground: oklch(0.955 0.004 265);
+  --sidebar-border: oklch(1 0 0 / 9%);
+  --sidebar-ring: oklch(0.65 0.03 268);
 }
 
 @theme inline {
@@ -94,6 +145,7 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --color-background: var(--background);
+  --color-canvas: var(--canvas);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -101,6 +153,8 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-accent: var(--primary-accent);
+  --color-primary-stroke: var(--primary-stroke);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -124,41 +178,30 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-link: #1677ff;
+  --color-link: var(--link);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: #d23b3b;
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+@layer components {
+  /* A fill whose text and edge are worked out from the fill itself.
+     Give it --env-color and it does the rest: CSS relative colour syntax reads
+     that colour's OKLCH lightness, and the clamp turns it into 1 (white) below
+     the threshold or 0 (black) above it.
+
+     White is the intended look and the threshold sits high on purpose, so it
+     stays white for every saturated colour someone is likely to pick - violet,
+     fuchsia, green, orange all keep it. The flip is an escape hatch for the pale
+     end only, where the background has come close enough to white that white
+     text is simply gone: amber-400 and lighter. Chasing WCAG here would have
+     flipped mid-tones like fuchsia to black, which reads as a glitch. */
+  /* Doubled selector on purpose. The computed colour is the point of this rule,
+     so a text-* utility arriving through a className prop overriding it is always
+     a bug - and it silently was one, because utilities layer after components.
+     Two classes outrank the single-class utility and close that off. */
+  .env-fill.env-fill {
+    background-color: var(--env-color);
+    color: oklch(from var(--env-color) clamp(0, (0.8 - l) * 1000, 1) 0 0);
+    border-color: oklch(from var(--env-color) clamp(0, (0.8 - l) * 1000, 1) 0 0 / 0.25);
+  }
 }
 
 @layer base {

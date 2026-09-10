@@ -124,7 +124,7 @@ export function PlacementPreferencesFields() {
                         </Button>
                     </div>
 
-                    <div className="mt-2 divide-y divide-zinc-200">
+                    <div className="mt-2 divide-y divide-border">
                         {fields.map((field, index) => {
                             const isEditing = editingIndex === index;
 
@@ -163,7 +163,7 @@ export function PlacementPreferencesFields() {
                                             type="button"
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md"
+                                            className="h-8 w-8 text-muted-foreground hover:text-zinc-700 hover:bg-muted rounded-md"
                                             title={isEditing ? "Save value" : "Edit value"}
                                             aria-label={isEditing ? "Save value" : "Edit value"}
                                             onClick={() => {
@@ -197,7 +197,7 @@ export function PlacementPreferencesFields() {
                                                 type="button"
                                                 variant="ghost"
                                                 size="icon"
-                                                className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md"
+                                                className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-md"
                                                 title="Remove item"
                                                 aria-label="Remove item"
                                             >

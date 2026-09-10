@@ -105,7 +105,7 @@ export function ViewNetworkForm({
                                     value={network.driver}
                                     className="w-fit"
                                 >
-                                    <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                                    <TabsList className="bg-muted/80 p-1 rounded-lg">
                                         <TabsTrigger
                                             value={EClusterNetworkDriver.Overlay}
                                             disabled

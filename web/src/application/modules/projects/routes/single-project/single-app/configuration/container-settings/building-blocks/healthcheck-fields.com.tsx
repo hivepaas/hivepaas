@@ -80,7 +80,7 @@ export function HealthcheckFields() {
                             }}
                             className="w-fit"
                         >
-                            <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                            <TabsList className="bg-muted/80 p-1 rounded-lg">
                                 <TabsTrigger value={EHealthcheckMode.Inherit}>Inherit</TabsTrigger>
                                 <TabsTrigger value={EHealthcheckMode.Cmd}>CMD</TabsTrigger>
                                 <TabsTrigger value={EHealthcheckMode.CmdShell}>CMD-SHELL</TabsTrigger>

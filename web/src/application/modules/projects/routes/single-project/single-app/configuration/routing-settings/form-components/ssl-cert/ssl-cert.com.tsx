@@ -170,7 +170,7 @@ function View({ domainIndex, readOnly = false }: SslCertProps) {
                         <div className="text-xs text-muted-foreground">
                             <AppLink.Basic
                                 to={ROUTE.projects.single.providerConfiguration.sslCertificates.$route(projectId)}
-                                className="text-primary underline-offset-4 hover:underline"
+                                className="text-link underline-offset-4 hover:underline"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >

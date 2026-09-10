@@ -142,7 +142,7 @@ function SettingUsageRow({ usage }: { usage: SettingUsage }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary inline-flex items-center gap-1 font-medium underline underline-offset-4 hover:opacity-80"
+            className="text-link inline-flex items-center gap-1 font-medium underline underline-offset-4 hover:opacity-80"
         >
             {label}
             <ExternalLinkIcon className="size-3 shrink-0" />

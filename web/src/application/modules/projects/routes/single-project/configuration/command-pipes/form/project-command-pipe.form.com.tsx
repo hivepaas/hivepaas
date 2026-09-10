@@ -134,7 +134,7 @@ export function ProjectCommandPipeForm({
                                 </Field>
                             </InfoBlock>
 
-                            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                            <div className={cn(dashedBorderBox)}>
                                 <span className="font-semibold text-orange-500">Note:</span> If either the{" "}
                                 <span className="text-orange-500">Source Command</span> or{" "}
                                 <span className="text-orange-500">Target Command</span> is missing, the remaining

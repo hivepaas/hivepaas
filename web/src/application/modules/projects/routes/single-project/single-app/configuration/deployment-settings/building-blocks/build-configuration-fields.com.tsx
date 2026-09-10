@@ -259,7 +259,7 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
                 </p>
             </InfoBlock>
 
-            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+            <div className={cn(dashedBorderBox)}>
                 <span className="font-semibold text-orange-500">Important:</span> If your cluster has multiple nodes, a
                 container registry must be configured. Without pushing to a registry, other worker nodes won&apos;t be
                 able to access the image to run your application.

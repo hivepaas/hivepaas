@@ -233,7 +233,7 @@ export function DeploymentSummaryCard({
                                             href={output.commitURL}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="truncate text-sm font-semibold text-foreground hover:text-primary hover:underline"
+                                            className="truncate text-sm font-semibold text-foreground hover:text-link hover:underline"
                                             title={output.commitTitle}
                                             onClick={stopCardClick}
                                         >
@@ -325,7 +325,7 @@ export function DeploymentSummaryCard({
                                             href={output.commitURL}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+                                            className="font-medium text-foreground underline underline-offset-4 hover:text-link"
                                             onClick={stopCardClick}
                                         >
                                             {output.commitHashShort}
@@ -346,7 +346,7 @@ export function DeploymentSummaryCard({
                                         href={deployment.settings.repoSource.repoUrl}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="truncate underline underline-offset-4 hover:text-primary"
+                                        className="truncate underline underline-offset-4 hover:text-link"
                                         title={deployment.settings.repoSource.repoUrl}
                                         onClick={stopCardClick}
                                     >
@@ -587,7 +587,7 @@ export function DeploymentSummaryCard({
                                                 href={output.commitURL}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+                                                className="font-medium text-foreground underline underline-offset-4 hover:text-link"
                                                 onClick={stopCardClick}
                                             >
                                                 {output.commitHashShort}
@@ -654,7 +654,7 @@ export function DeploymentSummaryCard({
                                                         href={deployment.settings.repoSource.repoUrl}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="underline underline-offset-4 hover:text-primary"
+                                                        className="underline underline-offset-4 hover:text-link"
                                                         title={deployment.settings.repoSource.repoUrl}
                                                         onClick={stopCardClick}
                                                     >
@@ -684,7 +684,7 @@ export function DeploymentSummaryCard({
                                                                 href={output.commitURL}
                                                                 target="_blank"
                                                                 rel="noreferrer"
-                                                                className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+                                                                className="font-medium text-foreground underline underline-offset-4 hover:text-link"
                                                                 onClick={stopCardClick}
                                                             >
                                                                 {output.commitHashShort}
@@ -856,7 +856,7 @@ export function DeploymentSummaryCard({
                                                 href={output.commitURL}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="font-mono text-foreground font-medium underline underline-offset-4 hover:text-primary select-all"
+                                                className="font-mono text-foreground font-medium underline underline-offset-4 hover:text-link select-all"
                                                 onClick={stopCardClick}
                                             >
                                                 {output.commitHashShort}

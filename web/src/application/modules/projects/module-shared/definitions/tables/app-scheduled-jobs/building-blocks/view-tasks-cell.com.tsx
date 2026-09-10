@@ -8,7 +8,7 @@ import { ROUTE } from "@application/shared/constants";
 function View({ projectId, env, appId, scheduledJob }: Props) {
     return (
         <AppLink.Basic
-            className="text-sm font-medium text-primary underline-offset-4"
+            className="text-sm font-medium text-link underline-offset-4"
             to={ROUTE.projects.single.apps.single.scheduledJobTasks.$route(projectId, env, appId, scheduledJob.id)}
         >
             View Tasks

@@ -118,9 +118,9 @@ export function AppConfigAvailabilityForm({ ref, defaultValues, onSubmit, readOn
                             savedMode={defaultValues?.modeSpec.mode}
                             isAppStopped={isAppStopped}
                         />
-                        <div className="h-px bg-zinc-200" />
+                        <div className="h-px bg-muted" />
                         <PlacementConstraintsFields />
-                        <div className="h-px bg-zinc-200" />
+                        <div className="h-px bg-muted" />
                         <PlacementPreferencesFields />
                         {children}
                     </fieldset>

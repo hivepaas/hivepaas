@@ -178,7 +178,7 @@ export function SystemSettingsDataCleanupActionsRoute() {
                             <Button
                                 type="button"
                                 variant="link"
-                                className="px-0 text-primary underline-offset-4 hover:underline"
+                                className="px-0 text-link underline-offset-4 hover:underline"
                                 isLoading={repoCacheQuery.isFetching}
                                 onClick={handleQueryRepoCache}
                             >

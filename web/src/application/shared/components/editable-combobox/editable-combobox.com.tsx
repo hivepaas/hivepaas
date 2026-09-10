@@ -161,7 +161,7 @@ export function EditableCombobox({
                     >
                         <Command shouldFilter={false}>
                             <CommandList>
-                                <CommandEmpty className="p-2 text-sm text-gray-500">{emptyText}</CommandEmpty>
+                                <CommandEmpty className="p-2 text-sm text-muted-foreground">{emptyText}</CommandEmpty>
                                 {filtered.length > 0 && (
                                     <CommandGroup>
                                         {filtered.map(option => (

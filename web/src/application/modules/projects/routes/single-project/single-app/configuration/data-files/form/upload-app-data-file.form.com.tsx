@@ -147,7 +147,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onC
                             uploadMethodField.onChange(value);
                         }}
                     >
-                        <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                        <TabsList className="bg-muted/80 p-1 rounded-lg">
                             <TabsTrigger value="local">Local Files</TabsTrigger>
                             <TabsTrigger value="cloud">File in Cloud</TabsTrigger>
                         </TabsList>
@@ -226,7 +226,7 @@ export function UploadAppDataFileForm({ isPending, onSubmit, projectId, env, onC
 
                 {uploadMethod === "cloud" && (
                     <>
-                        <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                        <div className={cn(dashedBorderBox)}>
                             <span className="font-semibold text-orange-500">Note:</span> Uploading a file from cloud
                             storage (S3) only creates a database record referencing the file; the file content is not
                             downloaded to the local system. If you delete the file from the cloud storage, local file

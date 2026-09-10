@@ -173,7 +173,7 @@ export function SingleNodeForm({ ref, defaultValues, onSubmit, readOnly = false,
                                 }}
                                 className="w-fit"
                             >
-                                <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                                <TabsList className="bg-muted/80 p-1 rounded-lg">
                                     <TabsTrigger
                                         disabled={defaultValues.isLeader}
                                         value={ENodeAvailability.Active}

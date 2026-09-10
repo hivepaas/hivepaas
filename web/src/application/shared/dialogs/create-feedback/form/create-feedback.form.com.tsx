@@ -68,7 +68,7 @@ export function CreateFeedbackForm({ defaultValues, isPending = false, onSubmit 
             }}
         >
             <DialogBody className="flex flex-col gap-5">
-                <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                <div className={cn(dashedBorderBox)}>
                     <span className="font-semibold text-orange-500">Note:</span> If you want to interact with the
                     HivePaaS development team and user community, you can join our chat channel at{" "}
                     <a

@@ -454,7 +454,7 @@ function CommandPipesSection({ projectId, env, readOnly }: { projectId: string; 
 
             {enabledField.value ? (
                 <>
-                    <div className={cn(dashedBorderBox, "leading-6 mb-6")}>
+                    <div className={cn(dashedBorderBox, "mb-6")}>
                         <p>
                             <span className="font-semibold text-orange-500">Note:</span>{" "}
                             <span className="font-semibold">Post-Clone Commands</span> offer higher data consistency
@@ -559,7 +559,7 @@ function CommandPipesSection({ projectId, env, readOnly }: { projectId: string; 
                                                         type="button"
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="h-8 w-8 rounded-md text-zinc-400 hover:bg-red-50 hover:text-red-500"
+                                                        className="h-8 w-8 rounded-md text-muted-foreground hover:bg-red-50 hover:text-red-500"
                                                         disabled={readOnly}
                                                     >
                                                         <Trash2 className="size-3.5" />
@@ -760,7 +760,7 @@ export function AppCloneSettingsForm({
                             <div className="flex flex-col gap-6">
                                 <SectionEnabledField name="cloneVolumes" />
                                 <ConditionalSection enabled={cloneVolumes}>
-                                    <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                                    <div className={cn(dashedBorderBox)}>
                                         <p>
                                             <span className="font-semibold text-orange-500">Warning:</span>{" "}
                                             <span className="font-semibold">Raw volume cloning</span> is not recommended

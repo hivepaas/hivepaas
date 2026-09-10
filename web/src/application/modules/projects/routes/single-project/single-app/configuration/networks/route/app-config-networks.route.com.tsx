@@ -113,7 +113,7 @@ export function AppConfigNetworksRoute() {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className={cn(dashedBorderBox, "text-sm leading-6 text-muted-foreground")}>
+            <div className={cn(dashedBorderBox, "text-muted-foreground")}>
                 For configuration details, see{" "}
                 <a
                     href="/cluster/networks"

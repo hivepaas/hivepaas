@@ -33,7 +33,7 @@ function View({ nextRuns, titleWidth }: Props) {
                 <div
                     className={cn(
                         dashedBorderBox,
-                        "flex min-h-10 flex-col items-center justify-center gap-1 py-1.5 sm:py-1.5 text-center text-sm leading-6",
+                        "flex min-h-10 flex-col items-center justify-center gap-1 py-1.5 sm:py-1.5 text-center",
                     )}
                 >
                     <div className="relative flex w-full items-center justify-center">

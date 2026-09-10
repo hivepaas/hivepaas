@@ -131,14 +131,14 @@ export function ProjectEnvInput({
                 return (
                     <div
                         key={env.name}
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 py-1 text-white shadow-xs"
-                        style={{ backgroundColor: displayColor }}
+                        className="env-fill inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 py-1 shadow-xs"
+                        style={{ "--env-color": displayColor } as React.CSSProperties}
                     >
                         <span className="text-sm font-medium">{env.name}</span>
                         <label
                             htmlFor={colorInputId}
                             className={cn(
-                                "inline-flex size-5 cursor-pointer items-center justify-center rounded-sm border-2 border-white/80 transition-colors hover:border-white focus-within:ring-2 focus-within:ring-white/80",
+                                "inline-flex size-5 cursor-pointer items-center justify-center rounded-sm border-2 border-current/80 transition-colors hover:border-current focus-within:ring-2 focus-within:ring-current/80",
                                 disabled && "cursor-not-allowed opacity-70",
                             )}
                             style={{ backgroundColor: displayColor }}

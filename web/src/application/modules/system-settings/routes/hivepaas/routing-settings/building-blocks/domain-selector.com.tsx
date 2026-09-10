@@ -54,7 +54,7 @@ function DomainChip({
                 <button
                     type="button"
                     title="Make Default"
-                    className="text-xs text-primary hover:underline whitespace-nowrap"
+                    className="text-xs text-link hover:underline whitespace-nowrap"
                     onClick={e => {
                         e.stopPropagation();
                         onMakeDefault();

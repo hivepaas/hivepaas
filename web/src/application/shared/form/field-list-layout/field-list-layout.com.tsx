@@ -47,7 +47,7 @@ export function FieldListLayout({
                     <Plus className="size-4" /> Add
                 </Button>
             </div>
-            <div className="mt-2 divide-y divide-zinc-200">
+            <div className="mt-2 divide-y divide-border">
                 {items.map(item => {
                     const hasEdit = item.onEdit !== undefined;
 
@@ -68,7 +68,7 @@ export function FieldListLayout({
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-md"
+                                        className="h-8 w-8 text-muted-foreground hover:text-zinc-700 hover:bg-muted rounded-md"
                                         disabled={disabled}
                                         title={item.isEditing ? "Save value" : "Edit value"}
                                         aria-label={item.isEditing ? "Save value" : "Edit value"}
@@ -101,7 +101,7 @@ export function FieldListLayout({
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-md"
+                                        className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-md"
                                         disabled={disabled}
                                         title="Remove item"
                                         aria-label="Remove item"

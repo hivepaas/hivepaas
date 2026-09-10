@@ -56,7 +56,7 @@ export function RepoCacheInfoFields({
                         variant="link"
                         onClick={onQuery}
                         isLoading={isQuerying}
-                        className="text-primary underline-offset-4 hover:underline px-0"
+                        className="text-link underline-offset-4 hover:underline px-0"
                     >
                         Query
                     </Button>

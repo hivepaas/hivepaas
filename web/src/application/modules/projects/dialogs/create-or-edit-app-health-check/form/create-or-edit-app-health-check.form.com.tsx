@@ -637,7 +637,7 @@ export function CreateOrEditAppHealthCheckForm({
                                 readOnly={readOnly}
                                 titleWidth={220}
                             >
-                                <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+                                <div className={cn(dashedBorderBox)}>
                                     <span className="font-semibold text-orange-500">Note:</span> If you don&apos;t want
                                     to receive continuous notifications for identical results, use this configuration.
                                     For example, if you set{" "}

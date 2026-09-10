@@ -354,7 +354,7 @@ export function CreateOrEditAppScheduledJobForm({
                                                 <div
                                                     className={cn(
                                                         dashedBorderBox,
-                                                        "w-fit text-sm text-muted-foreground leading-normal",
+                                                        "w-fit text-muted-foreground leading-normal",
                                                     )}
                                                 >
                                                     <span className="font-semibold text-orange-500">Note:</span>{" "}

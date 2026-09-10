@@ -57,7 +57,7 @@ function AcmeDnsProviderTableView({ scope }: Props) {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+            <div className={cn(dashedBorderBox)}>
                 <span className="font-semibold text-orange-500">Note:</span> {ACME_DNS_PROVIDER_NOTE}
             </div>
 

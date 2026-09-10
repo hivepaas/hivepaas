@@ -25,7 +25,7 @@ type SchemaInput = HivePaaSRoutingSettingsFormInput;
 type SchemaOutput = HivePaaSRoutingSettingsFormOutput;
 
 function NoteBox({ children }: PropsWithChildren) {
-    return <div className={cn(dashedBorderBox, "text-sm leading-6")}>{children}</div>;
+    return <div className={cn(dashedBorderBox)}>{children}</div>;
 }
 
 function ConditionalDomainDetailSections({

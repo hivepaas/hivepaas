@@ -55,7 +55,7 @@ function GithubAppTableView({ scope }: Props) {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+            <div className={cn(dashedBorderBox)}>
                 <span className="font-semibold text-orange-500">Note:</span> It is recommended to use the GitHub App if
                 you are hosting your source code on GitHub, as it is the most efficient and straightforward way for
                 HivePaaS to deploy your applications.

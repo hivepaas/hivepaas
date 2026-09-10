@@ -108,7 +108,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                             }}
                             className="w-fit"
                         >
-                            <TabsList className="bg-zinc-100/80 p-1 rounded-lg">
+                            <TabsList className="bg-muted/80 p-1 rounded-lg">
                                 <TabsTrigger
                                     value={EEndpointResolutionMode.VIP}
                                     disabled={readOnly}
@@ -127,7 +127,7 @@ export function EndpointPortConfigFields({ readOnly = false }: Props) {
                 </div>
             </InfoBlock>
 
-            <div className={cn(dashedBorderBox, "text-sm leading-6")}>
+            <div className={cn(dashedBorderBox)}>
                 <span className="font-semibold text-orange-500">Note:</span> Directly publishing container ports to the
                 host is primarily recommended for UDP services. For HTTP, HTTPS, or TCP traffic, please configure them
                 in the Routing settings instead.

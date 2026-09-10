@@ -9,6 +9,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@components/ui/dialog";
+import { Send } from "lucide-react";
 import { toast } from "sonner";
 import { UsersCommands } from "~/user-management/data/commands";
 
@@ -119,6 +120,9 @@ export function InviteUserDialog() {
                                             sendInviteEmailRef.current = true;
                                         }}
                                     >
+                                        {/* Hidden while loading: Button prepends its own spinner, and the
+                                            two icons would otherwise sit side by side. */}
+                                        {!isGeneratingLink && <Send className="size-4" />}
                                         Send Email
                                     </Button>
                                 )}

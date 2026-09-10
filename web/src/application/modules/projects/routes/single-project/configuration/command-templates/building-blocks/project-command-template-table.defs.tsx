@@ -1,7 +1,6 @@
 import { Badge } from "@components/ui/badge";
 import { Checkbox } from "@components/ui/checkbox";
 import type { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
 import type { ProjectCommandTemplate } from "~/projects/domain";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 
@@ -120,17 +119,6 @@ function createColumns(projectId: string, env?: string): ColumnDef<ProjectComman
                     {original.inherited && <Badge className="bg-purple-500 text-white">Inherited</Badge>}
                 </div>
             ),
-        },
-        {
-            accessorKey: "expireAt",
-            header: "Expire At",
-            cell: ({ row: { original } }) => {
-                if (!original.expireAt) {
-                    return "-";
-                }
-
-                return format(original.expireAt, "yyyy-MM-dd HH:mm:ss");
-            },
         },
         {
             accessorKey: "desc",

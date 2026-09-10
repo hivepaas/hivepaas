@@ -5,7 +5,7 @@ import { flushSync } from "react-dom";
 import { Button, Checkbox, Field, FieldError, FieldGroup, Input } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
 import { cn } from "@lib/utils";
-import { ArrowBigLeftDash, Check, EyeIcon, Plus, X } from "lucide-react";
+import { ArrowBigLeftDash, Check, ExternalLink, Plus, X } from "lucide-react";
 import { useController, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
@@ -57,14 +57,14 @@ function DomainChip({ domain, isFirst, isActive, readOnly, onClick, onMoveLeft, 
             )}
             <button
                 type="button"
-                title="View domain"
+                title="Open domain in new tab"
                 className="flex items-center rounded hover:text-primary"
                 onClick={e => {
                     e.stopPropagation();
                     onView();
                 }}
             >
-                <EyeIcon className="size-4 cursor-pointer" />
+                <ExternalLink className="size-4 cursor-pointer" />
             </button>
             {!readOnly && (
                 <PopConfirm

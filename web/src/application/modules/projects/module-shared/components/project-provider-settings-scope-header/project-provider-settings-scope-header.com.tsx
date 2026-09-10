@@ -45,7 +45,7 @@ export function ProjectProviderSettingsScopeHeader({ projectId, forceAllEnvs = f
                     <div
                         className={cn(
                             dashedBorderBox,
-                            "inline-flex min-h-7 h-auto w-fit items-center px-2.5 sm:px-3 py-1 sm:py-0.5 text-xs sm:text-sm leading-normal",
+                            "inline-flex min-h-7 h-auto w-fit items-center px-2.5 sm:px-3 py-1 sm:py-0.5",
                         )}
                     >
                         <span>

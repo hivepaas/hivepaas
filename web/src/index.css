@@ -58,14 +58,19 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --color-error: #ff0000;
-  --color-warning: #ffa500;
-  --color-info: #0000ff;
-  --color-success: #00ff00;
-  --color-neutral: #808080;
-  --color-neutral-foreground: #000000;
-  --color-neutral-background: #ffffff;
-  --color-neutral-border: #808080;
+  /* Status colours, for the toast icons and anything else that has to say
+     good/bad without words. Error and info are not new colours: the app already
+     has one red it uses for danger and one blue it uses for links, and a second
+     red or blue would only ask the reader to work out whether the difference
+     meant something.
+
+     They were pure RGB - #ff0000, #00ff00, #0000ff - which is why the toast
+     icons read as neon. Pure blue in particular came to 1.3:1 on the dark
+     popover, i.e. invisible; every value below clears 3:1 on both grounds. */
+  --color-error: var(--destructive);
+  --color-info: var(--link);
+  --color-warning: #b45309;
+  --color-success: #15803d;
 }
 
 .dark {
@@ -107,13 +112,22 @@
   --secondary: oklch(0.3 0.011 265);
   --secondary-foreground: oklch(0.955 0.004 265);
   --muted: oklch(0.3 0.011 265);
-  --muted-foreground: oklch(0.735 0.014 265);
+  /* Lifted from 0.735. Dark mode carries a lot on this one token - sidebar
+     icons and section headings, form field labels, placeholders, timestamps -
+     and at 0.735 the parts of it that are not really secondary text, the field
+     labels above all, read as greyed out rather than quiet. Still a clear step
+     below --foreground at 0.955, so the hierarchy it exists to draw survives. */
+  --muted-foreground: oklch(0.8 0.014 265);
   --accent: oklch(0.335 0.012 265);
   --accent-foreground: oklch(0.955 0.004 265);
   --destructive: #e05252;
   /* The light blue is far too dark to read on these grounds; a link token that
      does not flip is the usual way dark mode loses its links. */
   --link: #69b1ff;
+  /* --color-error and --color-info follow --destructive and --link, which are
+     already redefined here, so only these two need a dark value of their own. */
+  --color-warning: #fbbf24;
+  --color-success: #4ade80;
   --border: oklch(1 0 0 / 13%);
   --input: oklch(1 0 0 / 17%);
   --ring: oklch(0.65 0.03 268);

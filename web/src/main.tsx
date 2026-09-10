@@ -2,11 +2,11 @@ import { StrictMode } from "react";
 
 import { createRoot } from "react-dom/client";
 
-import { Toaster } from "@components/ui/sonner";
 import { DeviceInfo } from "@infrastructure/device";
 
 import { EnvConfig } from "@config";
 
+import { AppToaster } from "@application/shared/color-mode";
 import "@application/shared/utils/time-ago";
 
 import App from "./App";
@@ -21,6 +21,6 @@ DeviceInfo.init();
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <App />
-        <Toaster theme="light" />
+        <AppToaster />
     </StrictMode>,
 );

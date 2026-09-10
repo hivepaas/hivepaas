@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import { ExternalLink } from "lucide-react";
 import { useController, useFormContext } from "react-hook-form";
 import { ProjectCommandTemplateQueries } from "~/projects/data/queries";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
@@ -112,12 +113,14 @@ export function CommandTemplateSelectField({
                                 projectId,
                                 selectedTemplateId,
                             )}
-                            className="shrink-0 text-sm text-link"
+                            className="inline-flex shrink-0 items-center rounded p-1 text-link hover:opacity-80"
                             target="_blank"
                             rel="noopener noreferrer"
+                            title="Open command template in new tab"
+                            aria-label="Open command template in new tab"
                             ignorePrevPath
                         >
-                            View
+                            <ExternalLink className="size-4" />
                         </AppLink.Basic>
                     ) : null}
                 </div>

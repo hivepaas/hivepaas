@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ExternalLink } from "lucide-react";
 import { type FieldErrors, FormProvider, useController, useForm, useFormState } from "react-hook-form";
 import type { ProjectCommandTemplate } from "~/projects/domain";
 import { CommandArgGroupsSection, CommandConfigSection } from "~/projects/module-shared/components";
@@ -201,9 +202,11 @@ export function ProjectCommandTemplateForm({
                                                 href={linkHref}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-link shrink-0"
+                                                className="inline-flex shrink-0 items-center rounded p-1 text-link hover:opacity-80"
+                                                title="Open link in new tab"
+                                                aria-label="Open link in new tab"
                                             >
-                                                View
+                                                <ExternalLink className="size-4" />
                                             </a>
                                         ) : null}
                                     </div>

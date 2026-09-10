@@ -1,27 +1,39 @@
 import { memo, useState } from "react";
 
 import { Button } from "@components/ui/button";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogBody,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
-import { Brush, MoreVertical, RefreshCw, SlidersHorizontal, Trash2Icon } from "lucide-react";
+import { AlertTriangle, Brush, MoreVertical, RefreshCw, SlidersHorizontal, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 import { ProjectBackupRepoCommands } from "~/projects/data/commands";
 import { BackupRepoCommands } from "~/settings/data/commands";
 import { useUpdateBackupRepoStatusDialog } from "~/settings/dialogs/update-backup-repo-status";
 import type { SettingBackupRepo } from "~/settings/domain";
-import { SettingsScopeMenuButton, SettingsScopePopConfirmButton } from "~/settings/module-shared/components";
+import { SettingsScopeMenuButton } from "~/settings/module-shared/components";
 import { SETTINGS_ENTITY_TITLES } from "~/settings/module-shared/constants/settings-entity-titles";
 import { isInheritedProjectSetting } from "~/settings/module-shared/hooks";
+
+import { Separator } from "@/components/ui";
 
 import type { BackupRepoTableScope } from "../../backup-repo-table.types";
 
 function View({ scope, backupRepo }: Props) {
     const [open, setOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const updateStatusDialog = useUpdateBackupRepoStatusDialog();
 
     const { mutate: deleteSettingBackupRepo, isPending: isDeletingSetting } = BackupRepoCommands.useDeleteOne({
         onSuccess: () => {
             toast.success("Backup repository deleted successfully");
             setOpen(false);
+            setIsDeleteDialogOpen(false);
         },
     });
 
@@ -29,6 +41,7 @@ function View({ scope, backupRepo }: Props) {
         onSuccess: () => {
             toast.success("Project backup repository deleted successfully");
             setOpen(false);
+            setIsDeleteDialogOpen(false);
         },
     });
 
@@ -121,64 +134,104 @@ function View({ scope, backupRepo }: Props) {
     }
 
     return (
-        <DropdownMenu
-            open={open}
-            onOpenChange={setOpen}
-        >
-            <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                >
-                    <MoreVertical className="size-4" />
-                    <span className="sr-only">Actions menu</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <div className="flex flex-col gap-0">
-                    <SettingsScopeMenuButton
-                        scope={scope}
-                        action="write"
-                        onClick={handleChangeStatus}
+        <>
+            <DropdownMenu
+                open={open}
+                onOpenChange={setOpen}
+            >
+                <DropdownMenuTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
                     >
-                        <SlidersHorizontal className="mr-2 size-4" />
-                        Change Status
-                    </SettingsScopeMenuButton>
-                    <SettingsScopeMenuButton
-                        scope={scope}
-                        action="write"
-                        isLoading={isCleaning}
-                        onClick={handleCleanup}
-                    >
-                        <Brush className="mr-2 size-4" />
-                        Repo Cleanup
-                    </SettingsScopeMenuButton>
-                    <SettingsScopeMenuButton
-                        scope={scope}
-                        action="write"
-                        isLoading={isSyncing}
-                        onClick={handleSync}
-                    >
-                        <RefreshCw className="mr-2 size-4" />
-                        Repo Sync
-                    </SettingsScopeMenuButton>
-                    <SettingsScopePopConfirmButton
-                        scope={scope}
-                        action="delete"
-                        title="Delete backup repository"
-                        confirmText="Delete"
-                        cancelText="Cancel"
-                        description="Confirm deletion of this item?"
-                        onConfirm={handleDelete}
-                        isLoading={isDeleting}
-                    >
-                        <Trash2Icon className="mr-2 size-4" />
-                        Remove
-                    </SettingsScopePopConfirmButton>
-                </div>
-            </DropdownMenuContent>
-        </DropdownMenu>
+                        <MoreVertical className="size-4" />
+                        <span className="sr-only">Actions menu</span>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <div className="flex flex-col gap-0">
+                        <SettingsScopeMenuButton
+                            scope={scope}
+                            action="write"
+                            onClick={handleChangeStatus}
+                        >
+                            <SlidersHorizontal className="mr-2 size-4" />
+                            Change Status
+                        </SettingsScopeMenuButton>
+                        <SettingsScopeMenuButton
+                            scope={scope}
+                            action="write"
+                            isLoading={isCleaning}
+                            onClick={handleCleanup}
+                        >
+                            <Brush className="mr-2 size-4" />
+                            Repo Cleanup
+                        </SettingsScopeMenuButton>
+                        <SettingsScopeMenuButton
+                            scope={scope}
+                            action="write"
+                            isLoading={isSyncing}
+                            onClick={handleSync}
+                        >
+                            <RefreshCw className="mr-2 size-4" />
+                            Repo Sync
+                        </SettingsScopeMenuButton>
+                        <SettingsScopeMenuButton
+                            scope={scope}
+                            action="delete"
+                            onClick={() => {
+                                setIsDeleteDialogOpen(true);
+                                setOpen(false);
+                            }}
+                        >
+                            <Trash2Icon className="mr-2 size-4" />
+                            Remove
+                        </SettingsScopeMenuButton>
+                    </div>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Dialog
+                open={isDeleteDialogOpen}
+                onOpenChange={nextOpen => {
+                    if (!isDeleting) {
+                        setIsDeleteDialogOpen(nextOpen);
+                    }
+                }}
+            >
+                <DialogFixedContent className="sm:max-w-[560px]">
+                    <DialogHeader>
+                        <DialogTitle>Delete Backup Repository</DialogTitle>
+                    </DialogHeader>
+                    <div className="px-4">
+                        <Separator className="opacity-50" />
+                    </div>
+                    <DialogBody className="flex flex-col gap-4">
+                        <p className="text-sm leading-6 text-foreground">
+                            Deleting this backup repository from HivePaaS will not delete the backup data in the
+                            storage. You need to delete that data manually in the storage if you no longer need it.
+                        </p>
+                        <div className="flex items-center gap-2.5 rounded-md border border-destructive bg-destructive/10 px-3.5 py-2.5 text-sm text-destructive font-medium">
+                            <AlertTriangle className="size-4 shrink-0 text-destructive" />
+                            <span>Warning: This action is permanent and cannot be undone.</span>
+                        </div>
+                    </DialogBody>
+                    <DialogActionFooter className="flex justify-end">
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={handleDelete}
+                            isLoading={isDeleting}
+                            disabled={isDeleting}
+                            className="min-w-[120px]"
+                        >
+                            Delete this Backup Repository
+                        </Button>
+                    </DialogActionFooter>
+                </DialogFixedContent>
+            </Dialog>
+        </>
     );
 }
 

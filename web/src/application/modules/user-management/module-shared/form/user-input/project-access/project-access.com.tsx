@@ -273,6 +273,7 @@ function View<T>({ name, isAdmin = false, disabled = false }: Props<T>) {
                     />
                     <Button
                         type="button"
+                        variant="outline"
                         onClick={() => {
                             handleAddProject(selectedProject);
                         }}

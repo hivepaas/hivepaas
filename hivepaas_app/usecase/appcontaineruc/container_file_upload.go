@@ -3,10 +3,12 @@ package appcontaineruc
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/containerservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc/appcontainerdto"
@@ -46,6 +48,20 @@ func (uc *UC) UploadFileToContainer(
 
 		req.ContainerID = task.Status.ContainerStatus.ContainerID
 		req.NodeID = task.NodeID
+	}
+
+	// Before the upload, and its failure abandons it: pushing a file into a
+	// running production container is exactly the kind of act that is worth
+	// nothing to anybody unless there is a record of who did it.
+	err = uc.recordAppAction(ctx, uc.db, auth, app, base.AuditLogSourceAPIAction, "container-file-upload",
+		auditdetail.New().
+			Set("path", req.Path).
+			Set("fileName", req.FileName).
+			Set("fileSize", req.FileSize).
+			Set("extract", req.Extract).
+			Set("containerId", req.ContainerID))
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
 	prepResp, err := uc.containerFileService.PrepareUploadTarStream(ctx, &containerfileservice.PrepareUploadTarStreamReq{

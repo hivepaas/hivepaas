@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
@@ -14,6 +15,7 @@ type UC struct {
 	db        *database.DB
 	taskQueue queue.TaskQueue
 
+	auditService         auditservice.Service
 	appDeploymentService appdeploymentservice.Service
 	appService           appservice.Service
 	clusterService       clusterservice.Service
@@ -26,6 +28,7 @@ func New(
 	db *database.DB,
 	taskQueue queue.TaskQueue,
 
+	auditService auditservice.Service,
 	appDeploymentService appdeploymentservice.Service,
 	appService appservice.Service,
 	clusterService clusterservice.Service,
@@ -37,6 +40,7 @@ func New(
 		db:        db,
 		taskQueue: taskQueue,
 
+		auditService:         auditService,
 		appDeploymentService: appDeploymentService,
 		appService:           appService,
 		clusterService:       clusterService,

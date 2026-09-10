@@ -109,6 +109,12 @@ const (
 
 	// AuditLogSourceAPIDelete is a delete endpoint.
 	AuditLogSourceAPIDelete AuditLogSource = "api-delete"
+
+	// AuditLogSourceAPIAction is an endpoint that makes something happen rather
+	// than writing a record: a deploy, a restart, a stop, a cancel. Recording one
+	// of those as api-update would say the stored configuration changed, which is
+	// the opposite of what a reader needs to know about a restart.
+	AuditLogSourceAPIAction AuditLogSource = "api-action"
 )
 
 // AuditLogResult says whether the action was permitted.

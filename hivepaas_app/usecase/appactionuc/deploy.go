@@ -45,7 +45,10 @@ func (uc *UC) DeployApp(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		return nil
+
+		// Inside the transaction, unlike restart and stop: this one writes a
+		// deployment row, so a failed record can still take the change with it.
+		return uc.recordAppAction(ctx, db, auth, data.App, base.AuditLogSourceAPIAction, "deploy", nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

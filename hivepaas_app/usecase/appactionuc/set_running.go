@@ -3,9 +3,11 @@ package appactionuc
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appactionuc/appactiondto"
 )
@@ -21,6 +23,12 @@ func (uc *UC) SetAppRunning(
 		),
 		bunex.SelectRelation("ProjectEnv"),
 	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	err = uc.recordAppAction(ctx, uc.db, auth, app, base.AuditLogSourceAPIAction, "set-running",
+		auditdetail.New().Set("running", req.Running))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

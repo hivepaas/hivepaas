@@ -4,10 +4,12 @@ import (
 	"context"
 	"io"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/client/containerservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appcontaineruc/appcontainerdto"
@@ -46,6 +48,18 @@ func (uc *UC) DownloadFileFromContainer(
 
 		req.ContainerID = task.Status.ContainerStatus.ContainerID
 		req.NodeID = task.NodeID
+	}
+
+	// A read, and recorded anyway. Copying a file out of a production container
+	// is the same shape as revealing a stored secret: nothing about the app
+	// changes, and whatever was in that file has left the machine. Source says
+	// api-get so it can be told apart from the writes.
+	err = uc.recordAppAction(ctx, uc.db, auth, app, base.AuditLogSourceAPIGet, "container-file-download",
+		auditdetail.New().
+			Set("path", req.Path).
+			Set("containerId", req.ContainerID))
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
 	var (

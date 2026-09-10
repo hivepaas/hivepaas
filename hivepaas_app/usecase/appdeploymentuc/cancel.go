@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity/cacheentity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -42,7 +43,9 @@ func (uc *UC) CancelDeployment(
 				return hperrors.Wrap(err)
 			}
 			canceled = true
-			return nil
+			return uc.recordAppAction(ctx, db, auth, req.AppID, "deployment-cancel", auditdetail.New().
+				Set("deploymentId", req.DeploymentID).
+				Set("outcome", "marked-canceled"))
 		}
 
 		// Deployment is in-progress, send `cancel` command to the executor of the deployment task
@@ -63,7 +66,9 @@ func (uc *UC) CancelDeployment(
 			return hperrors.Wrap(err)
 		}
 
-		return nil
+		return uc.recordAppAction(ctx, db, auth, req.AppID, "deployment-cancel", auditdetail.New().
+			Set("deploymentId", req.DeploymentID).
+			Set("outcome", "cancel-requested"))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -3,6 +3,7 @@ package appactionuc
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -21,6 +22,11 @@ func (uc *UC) RestartApp(
 		),
 		bunex.SelectRelation("ProjectEnv"),
 	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	err = uc.recordAppAction(ctx, uc.db, auth, app, base.AuditLogSourceAPIAction, "restart", nil)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

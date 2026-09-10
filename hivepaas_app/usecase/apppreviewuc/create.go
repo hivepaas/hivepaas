@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -54,7 +55,13 @@ func (uc *UC) CreatePreview(
 			return hperrors.Wrap(err)
 		}
 
-		return nil
+		// Filed against the parent app: the preview does not exist yet, and the
+		// app it was spun off is what somebody would search the log for.
+		return uc.recordAppAction(ctx, db, auth, data.App, base.AuditLogSourceAPICreate, "preview-create",
+			auditdetail.New().
+				Set("repoRef", req.RepoRef).
+				Set("cloneDBApps", cloneDBApps).
+				Set("taskId", previewTask.ID))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

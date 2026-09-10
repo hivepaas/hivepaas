@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerfileservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -12,6 +13,7 @@ type UC struct {
 	db            *database.DB
 	dockerManager docker.Manager
 
+	auditService         auditservice.Service
 	agentService         agentservice.Service
 	appService           appservice.Service
 	containerFileService containerfileservice.Service
@@ -21,6 +23,7 @@ func New(
 	db *database.DB,
 	dockerManager docker.Manager,
 
+	auditService auditservice.Service,
 	agentService agentservice.Service,
 	appService appservice.Service,
 	containerFileService containerfileservice.Service,
@@ -30,6 +33,7 @@ func New(
 		db:            db,
 		dockerManager: dockerManager,
 
+		auditService:         auditService,
 		agentService:         agentService,
 		appService:           appService,
 		containerFileService: containerFileService,

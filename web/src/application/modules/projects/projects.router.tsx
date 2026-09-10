@@ -83,6 +83,38 @@ const LEGACY_PROJECT_SOURCES_PATTERNS = {
     webhookEdit: "projects/:id/sources/webhooks/:repoWebhookId/edit",
 } as const;
 
+const LEGACY_PROJECT_STATUS_PATTERNS = {
+    root: "projects/:id/status",
+    tasks: "projects/:id/status/tasks",
+    taskDetails: "projects/:id/status/tasks/:taskId",
+    auditLogs: "projects/:id/status/audit-logs",
+} as const;
+
+// eslint-disable-next-line react-refresh/only-export-components
+function ProjectLegacyTaskDetailsRouteRedirect() {
+    const { id, taskId } = useParams<{ id: string; taskId: string }>();
+
+    if (!id) {
+        return (
+            <Navigate
+                to={ROUTE.projects.list.$route}
+                replace
+            />
+        );
+    }
+
+    return (
+        <Navigate
+            to={
+                taskId
+                    ? ROUTE.projects.single.operations.tasks.details.$route(id, taskId)
+                    : ROUTE.projects.single.operations.tasks.$route(id)
+            }
+            replace
+        />
+    );
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 function SingleAppRouteRedirect() {
     const { id, env, appId } = useParams<{ id: string; env: string; appId: string }>();
@@ -506,8 +538,24 @@ export const projectsRouter: RouteObject = {
                     element: <ProjectRouteRedirect to={ROUTE.projects.single.clusterResources.networks.$route} />,
                 },
                 {
-                    path: ROUTE.projects.single.status.$pattern,
-                    element: <ProjectRouteRedirect to={ROUTE.projects.single.status.tasks.$route} />,
+                    path: ROUTE.projects.single.operations.$pattern,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.operations.tasks.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_STATUS_PATTERNS.root,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.operations.tasks.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_STATUS_PATTERNS.tasks,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.operations.tasks.$route} />,
+                },
+                {
+                    path: LEGACY_PROJECT_STATUS_PATTERNS.taskDetails,
+                    element: <ProjectLegacyTaskDetailsRouteRedirect />,
+                },
+                {
+                    path: LEGACY_PROJECT_STATUS_PATTERNS.auditLogs,
+                    element: <ProjectRouteRedirect to={ROUTE.projects.single.operations.auditLogs.$route} />,
                 },
                 {
                     path: LEGACY_PROJECT_CONFIGURATION_PATTERNS.accessTokens,
@@ -1280,7 +1328,7 @@ export const projectsRouter: RouteObject = {
 
                         return {
                             element: (
-                                <ProjectWithSidebar section="status">
+                                <ProjectWithSidebar section="operations">
                                     <Outlet />
                                 </ProjectWithSidebar>
                             ),
@@ -1288,7 +1336,7 @@ export const projectsRouter: RouteObject = {
                     },
                     children: [
                         {
-                            path: ROUTE.projects.single.status.tasks.$pattern,
+                            path: ROUTE.projects.single.operations.tasks.$pattern,
                             lazy: async () => {
                                 const { ProjectTasksRoute } = await getLazyComponents();
 
@@ -1298,7 +1346,7 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.status.tasks.details.$pattern,
+                            path: ROUTE.projects.single.operations.tasks.details.$pattern,
                             lazy: async () => {
                                 const { ProjectTaskDetailsRoute } = await getLazyComponents();
 
@@ -1308,7 +1356,7 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
-                            path: ROUTE.projects.single.status.auditLogs.$pattern,
+                            path: ROUTE.projects.single.operations.auditLogs.$pattern,
                             lazy: async () => {
                                 const { ProjectAuditLogsRoute } = await getLazyComponents();
 

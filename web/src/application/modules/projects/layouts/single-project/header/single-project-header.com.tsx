@@ -75,9 +75,9 @@ function View({ projectId }: Props) {
             activePathPrefixes: [ROUTE.projects.single.clusterResources.$route(projectId)],
         },
         {
-            route: ROUTE.projects.single.status.tasks.$route(projectId),
-            label: "Status",
-            activePathPrefixes: [ROUTE.projects.single.status.$route(projectId)],
+            route: ROUTE.projects.single.operations.tasks.$route(projectId),
+            label: "Operations",
+            activePathPrefixes: [ROUTE.projects.single.operations.$route(projectId), `/projects/${projectId}/status`],
         },
     ];
 

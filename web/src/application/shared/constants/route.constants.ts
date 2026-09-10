@@ -526,25 +526,25 @@ export const ROUTE = {
     },
 
     /**
-     * System Status
+     * Operations
      */
-    systemStatus: {
-        $pattern: "system-status",
-        $route: "/system-status/tasks/",
+    operations: {
+        $pattern: "operations",
+        $route: "/operations/tasks/",
 
         tasks: {
-            $pattern: "system-status/tasks",
-            $route: "/system-status/tasks/",
+            $pattern: "operations/tasks",
+            $route: "/operations/tasks/",
 
             details: {
-                $pattern: "system-status/tasks/:taskId",
-                $route: (taskId: string) => `/system-status/tasks/${taskId}/`,
+                $pattern: "operations/tasks/:taskId",
+                $route: (taskId: string) => `/operations/tasks/${taskId}/`,
             },
         },
 
         auditLogs: {
-            $pattern: "system-status/audit-logs",
-            $route: "/system-status/audit-logs/",
+            $pattern: "operations/audit-logs",
+            $route: "/operations/audit-logs/",
         },
     },
 
@@ -1139,23 +1139,23 @@ export const ROUTE = {
                 },
             },
 
-            status: {
-                $pattern: "projects/:id/status",
-                $route: (id: string) => `/projects/${id}/status/`,
+            operations: {
+                $pattern: "projects/:id/operations",
+                $route: (id: string) => `/projects/${id}/operations/`,
 
                 tasks: {
-                    $pattern: "projects/:id/status/tasks",
-                    $route: (id: string) => `/projects/${id}/status/tasks/`,
+                    $pattern: "projects/:id/operations/tasks",
+                    $route: (id: string) => `/projects/${id}/operations/tasks/`,
 
                     details: {
-                        $pattern: "projects/:id/status/tasks/:taskId",
-                        $route: (id: string, taskId: string) => `/projects/${id}/status/tasks/${taskId}/`,
+                        $pattern: "projects/:id/operations/tasks/:taskId",
+                        $route: (id: string, taskId: string) => `/projects/${id}/operations/tasks/${taskId}/`,
                     },
                 },
 
                 auditLogs: {
-                    $pattern: "projects/:id/status/audit-logs",
-                    $route: (id: string) => `/projects/${id}/status/audit-logs/`,
+                    $pattern: "projects/:id/operations/audit-logs",
+                    $route: (id: string) => `/projects/${id}/operations/audit-logs/`,
                 },
             },
         },

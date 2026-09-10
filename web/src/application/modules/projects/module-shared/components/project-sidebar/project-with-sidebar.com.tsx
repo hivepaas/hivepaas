@@ -259,20 +259,20 @@ function createClusterResourcesSections(projectId: string): ProviderTabSection[]
     ];
 }
 
-function createStatusSections(projectId: string): ProviderTabSection[] {
+function createOperationsSections(projectId: string): ProviderTabSection[] {
     return [
         {
-            title: "Status",
+            title: "Operations",
             items: [
                 {
                     label: "Tasks",
                     icon: ListTodo,
-                    route: ROUTE.projects.single.status.tasks.$route(projectId),
+                    route: ROUTE.projects.single.operations.tasks.$route(projectId),
                 },
                 {
                     label: "Audit Logs",
                     icon: ShieldCheck,
-                    route: ROUTE.projects.single.status.auditLogs.$route(projectId),
+                    route: ROUTE.projects.single.operations.auditLogs.$route(projectId),
                 },
             ],
         },
@@ -293,8 +293,9 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
                 return createProviderConfigurationSections(projectId);
             case "clusterResources":
                 return createClusterResourcesSections(projectId);
+            case "operations":
             case "status":
-                return createStatusSections(projectId);
+                return createOperationsSections(projectId);
             case "configuration":
             default:
                 return createConfigurationSections(projectId);
@@ -426,7 +427,7 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
 
 interface Props extends PropsWithChildren {
     projectId?: string;
-    section?: "configuration" | "providerConfiguration" | "clusterResources" | "status";
+    section?: "configuration" | "providerConfiguration" | "clusterResources" | "status" | "operations";
 }
 
 export const ProjectWithSidebar = memo(View);

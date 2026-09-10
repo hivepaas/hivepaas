@@ -5,6 +5,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/userservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -18,6 +19,7 @@ type UC struct {
 	binObjectRepo repository.BinObjectRepo
 	projectRepo   repository.ProjectRepo
 
+	auditService   auditservice.Service
 	appService     appservice.Service
 	projectService projectservice.Service
 	userService    userservice.Service
@@ -34,6 +36,7 @@ func New(
 	binObjectRepo repository.BinObjectRepo,
 	projectRepo repository.ProjectRepo,
 
+	auditService auditservice.Service,
 	appService appservice.Service,
 	projectService projectservice.Service,
 	userService userservice.Service,
@@ -49,6 +52,7 @@ func New(
 		binObjectRepo: binObjectRepo,
 		projectRepo:   projectRepo,
 
+		auditService:   auditService,
 		appService:     appService,
 		projectService: projectService,
 		userService:    userService,

@@ -61,6 +61,18 @@ const (
 	AuditLogTypeSettingStatusUpdate AuditLogType = "setting-status-update"
 
 	AuditLogTypeSettingDelete AuditLogType = "setting-delete"
+
+	// AuditLogTypeProjectUpdate and AuditLogTypeAppUpdate record a change to a
+	// project or an app itself, as opposed to a setting stored under it.
+	//
+	// One type each, covering every write. A project is changed from several
+	// endpoints - its own details, its user accesses, its env vars - and an app
+	// from a dozen more, one per settings tab. A type per endpoint would name the
+	// routing of the day it was written and put twenty values in a filter nobody
+	// can then use; which part was written is in the entry's detail, under
+	// "section", where it can be read without being filtered on.
+	AuditLogTypeProjectUpdate AuditLogType = "project-update"
+	AuditLogTypeAppUpdate     AuditLogType = "app-update"
 )
 
 var AllAuditLogTypes = []AuditLogType{
@@ -74,6 +86,8 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeSettingUpdate,
 	AuditLogTypeSettingStatusUpdate,
 	AuditLogTypeSettingDelete,
+	AuditLogTypeProjectUpdate,
+	AuditLogTypeAppUpdate,
 }
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.

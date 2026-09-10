@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -32,10 +33,22 @@ func (uc *UC) UpdateApp(
 			return nil
 		}
 
+		// Shallow on purpose: the update writes scalar fields on the app itself,
+		// and copying deeply would follow the entity's back-references for nothing.
+		before := *appData.App
+
 		persistingData := &persistingAppData{}
 		uc.preparePersistingAppUpdate(req, appData, persistingData)
 
-		return uc.persistData(ctx, db, persistingData)
+		if err := uc.persistData(ctx, db, persistingData); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		app := appData.App
+		return uc.recordAppUpdate(ctx, db, auth, app, "details", auditdetail.New().
+			Compare("name", before.Name, app.Name).
+			Compare("note", before.Note, app.Note).
+			Compare("status", before.Status, app.Status))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

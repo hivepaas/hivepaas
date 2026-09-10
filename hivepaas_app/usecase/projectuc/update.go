@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -34,10 +35,25 @@ func (uc *UC) UpdateProject(
 			return nil
 		}
 
+		// A shallow copy is enough and is what is wanted: the update writes scalar
+		// fields on the project itself, while its envs travel in their own slice.
+		// Copying deeply would follow the entity's back-references for nothing.
+		before := *projectData.Project
+
 		persistingData := &persistingProjectData{}
 		uc.preparePersistingProjectUpdate(req, projectData, persistingData)
 
-		return uc.persistData(ctx, db, persistingData)
+		if err := uc.persistData(ctx, db, persistingData); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		project := projectData.Project
+		return uc.recordProjectUpdate(ctx, db, auth, project, "details", auditdetail.New().
+			Compare("name", before.Name, project.Name).
+			Compare("note", before.Note, project.Note).
+			Compare("status", before.Status, project.Status).
+			Compare("ownerId", before.OwnerID, project.OwnerID).
+			Set("envCount", len(req.Envs)))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

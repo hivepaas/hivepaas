@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -244,5 +245,31 @@ func TestBuilderMasksAStoredSecretThatReachesAValue(t *testing.T) {
 	}
 	if !strings.Contains(rendered, base.MaskedSecret) {
 		t.Fatalf("want the placeholder, got %s", rendered)
+	}
+}
+
+// Database entities point back at their parents, so a walk that follows every
+// pointer runs until the stack ends. This is the shape that does it.
+func TestFieldChangesSurvivesACycle(t *testing.T) {
+	type node struct {
+		Label string `json:"label"`
+		Peer  *node  `json:"peer,omitempty"`
+	}
+	build := func(label string) *node {
+		n := &node{Label: label}
+		n.Peer = n
+		return n
+	}
+
+	done := make(chan []string, 1)
+	go func() { done <- auditdetail.FieldChanges(build("a"), build("b")) }()
+
+	select {
+	case got := <-done:
+		if len(got) != 1 || got[0] != "label" {
+			t.Fatalf("want [label], got %v", got)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("the walk did not terminate")
 	}
 }

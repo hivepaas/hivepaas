@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -44,7 +45,8 @@ func (uc *UC) UpdateUserAccesses(
 			return hperrors.Wrap(err)
 		}
 
-		return nil
+		return uc.recordProjectUpdate(ctx, db, auth, data.Project, "user-accesses", auditdetail.New().
+			Compare("accessCount", len(data.CurrentAccessList), len(persistingData.UpsertingACLPermissions)))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

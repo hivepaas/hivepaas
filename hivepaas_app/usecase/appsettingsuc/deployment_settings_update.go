@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/gittool"
@@ -44,7 +45,8 @@ func (uc *UC) UpdateAppDeploymentSettings(
 			return hperrors.Wrap(err)
 		}
 
-		return nil
+		return uc.recordAppUpdate(ctx, db, auth, data.App, "deployment", auditdetail.New().
+			WithChangedFields(parseAppSetting(data.DeploymentSetting), data.NewDeploymentSettings))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

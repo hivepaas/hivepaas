@@ -45,16 +45,45 @@ func FieldChanges(old, current any) []string {
 	if old == nil || current == nil {
 		return nil
 	}
-	walker := &fieldWalker{}
+	walker := &fieldWalker{visited: map[visit]bool{}}
 	walker.compare("", reflect.ValueOf(old), reflect.ValueOf(current))
 	sort.Strings(walker.changed)
 	return gofn.ToSet(walker.changed)
 }
 
-// fieldWalker collects the paths that differ. It holds only paths: no value it
-// reads is ever stored on it.
+// visit is a pair of pointers already being compared.
+type visit struct {
+	old, current uintptr
+	typ          reflect.Type
+}
+
+// fieldWalker collects the paths that differ. Beyond the paths it holds only the
+// set of pointer pairs it is already inside: no value it reads is ever stored.
 type fieldWalker struct {
 	changed []string
+	// visited stops the walk looping. Database entities point back at their
+	// parents - a ProjectEnv carries its Project, an ACL permission carries the
+	// project it is on - so a walk that follows every pointer will recurse until
+	// the stack ends. Objects reached twice are also compared twice for nothing,
+	// which is the cheaper half of the same problem.
+	visited map[visit]bool
+}
+
+// enter reports whether this pair is already being compared further up the walk.
+func (w *fieldWalker) enter(old, current reflect.Value) bool {
+	if !isPointerLike(old) || !isPointerLike(current) || old.IsNil() || current.IsNil() {
+		return false
+	}
+	key := visit{old: old.Pointer(), current: current.Pointer(), typ: old.Type()}
+	if w.visited[key] {
+		return true
+	}
+	w.visited[key] = true
+	return false
+}
+
+func isPointerLike(value reflect.Value) bool {
+	return value.IsValid() && (value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface)
 }
 
 func (w *fieldWalker) mark(path string) {
@@ -66,6 +95,9 @@ func (w *fieldWalker) mark(path string) {
 
 //nolint:exhaustive
 func (w *fieldWalker) compare(path string, old, current reflect.Value) {
+	if done := w.enter(old, current); done {
+		return
+	}
 	old, current = deref(old), deref(current)
 
 	switch {

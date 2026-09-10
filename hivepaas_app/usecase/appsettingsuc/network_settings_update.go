@@ -37,7 +37,8 @@ func (uc *UC) UpdateAppNetworkSettings(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		return nil
+
+		return uc.recordAppUpdate(ctx, db, auth, data.App, "networks", nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

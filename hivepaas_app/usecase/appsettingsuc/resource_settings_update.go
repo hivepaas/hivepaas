@@ -38,7 +38,8 @@ func (uc *UC) UpdateAppResourceSettings(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		return nil
+
+		return uc.recordAppUpdate(ctx, db, auth, data.App, "resources", nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

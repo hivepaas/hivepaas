@@ -12,6 +12,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
 
@@ -43,4 +44,30 @@ type Service interface {
 	// Performing a recordable action after its record failed leaves exactly the
 	// gap the record exists to close.
 	Record(ctx context.Context, db database.IDB, entry *Entry) error
+}
+
+// RecordAllowed records an action that was carried out, refusing to record one it
+// cannot attribute.
+//
+// The refusal is the point. A usecase reaches this with the caller threaded down
+// from the handler, and the way that goes wrong is not a crash but a forgotten
+// assignment - somebody adds an endpoint, copies its neighbor, and the entry it
+// writes names nobody. An entry naming nobody answers none of the questions the
+// entry exists for, so it is better for the write to fail loudly in development
+// than to succeed and leave a hole nobody sees until it matters.
+//
+// Only outcomes that happened belong here; a refusal is recorded with Result
+// denied, by whichever gate refused it.
+func RecordAllowed(ctx context.Context, svc Service, db database.IDB, entry *Entry) error {
+	if entry == nil {
+		return hperrors.NewArgumentInvalidNT("audit entry")
+	}
+	if entry.Auth == nil {
+		return hperrors.NewArgumentInvalidNT("audit auth")
+	}
+	entry.Result = base.AuditLogResultAllowed
+	if err := svc.Record(ctx, db, entry); err != nil {
+		return hperrors.Wrap(err)
+	}
+	return nil
 }

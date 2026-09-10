@@ -43,18 +43,13 @@ func (uc *BaseUC) recordSettingAudit(
 	if setting == nil {
 		return hperrors.NewArgumentInvalidNT("audited setting")
 	}
-	if req.Auth == nil {
-		// Not a caller mistake to paper over: an unattributed entry answers none
-		// of the questions the entry exists for, so refuse the write instead.
-		return hperrors.NewArgumentInvalidNT("audit auth")
-	}
-
-	err := uc.AuditService.Record(ctx, db, &auditservice.Entry{
+	// RecordAllowed refuses an entry it cannot attribute, which is what turns a
+	// usecase that forgot to set req.Auth into a loud failure rather than a hole.
+	err := auditservice.RecordAllowed(ctx, uc.AuditService, db, &auditservice.Entry{
 		Type:     logType,
 		Scope:    req.Scope.ScopeType,
 		ObjectID: req.Scope.ScopeObjectID(),
 		Source:   source,
-		Result:   base.AuditLogResultAllowed,
 		Auth:     req.Auth,
 		ResType:  base.ResourceType(setting.Type),
 		ResID:    setting.ID,

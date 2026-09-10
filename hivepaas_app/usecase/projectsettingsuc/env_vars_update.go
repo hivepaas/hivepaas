@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/envvarhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -52,7 +53,11 @@ func (uc *UC) UpdateProjectEnvVars(
 			return hperrors.Wrap(err)
 		}
 
-		return nil
+		// Which classes of variable moved, not which variables: an env var value
+		// is a credential as often as not, and it carries no marker saying so.
+		return uc.recordProjectUpdate(ctx, db, auth, data.Project, "env-vars", auditdetail.New().
+			Set("runtimeChanged", data.RuntimeVarsChange).
+			Set("buildChanged", data.BuildVarsChange))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

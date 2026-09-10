@@ -34,7 +34,8 @@ func (uc *UC) UpdateAppServiceSettings(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		return nil
+
+		return uc.recordAppUpdate(ctx, db, auth, data.App, "service", nil)
 	})
 	if err != nil {
 		// A failed mode change rolls the swarm service back, but under a new ID. The transaction is

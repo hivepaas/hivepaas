@@ -6,20 +6,25 @@ import { type VariantProps, cva } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
 
 const buttonVariants = cva(
-    "inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+    "inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
     {
         variants: {
             variant: {
-                default: "bg-primary text-primary-foreground hover:bg-primary/90",
+                default:
+                    "bg-gradient-to-r from-[#4e46b4] via-[#5c54c7] to-[#7066e0] text-white border border-white/20 hover:brightness-105 active:scale-[0.98] transition-all duration-200",
                 destructive:
-                    "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+                    "bg-gradient-to-r from-red-600 via-rose-600 to-red-500 text-white border border-white/20 hover:brightness-105 active:scale-[0.98] transition-all duration-200 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
                 destructiveOutline:
-                    "border border-destructive text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:border-destructive/50",
+                    "border border-destructive text-destructive hover:bg-destructive/10 active:scale-[0.98] focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:border-destructive/50 transition-all duration-200",
                 outline:
-                    "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-                secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+                    "border bg-background hover:bg-accent hover:text-accent-foreground active:scale-[0.98] dark:bg-input/30 dark:border-input dark:hover:bg-input/50 transition-all duration-200",
+                secondary:
+                    "bg-secondary text-secondary-foreground hover:bg-secondary/80 active:scale-[0.98] transition-all duration-200",
                 ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
                 link: "text-primary underline-offset-4 hover:underline",
+                tactile:
+                    "bg-gradient-to-b from-primary/90 via-primary to-primary text-primary-foreground border border-primary/90 dark:border-white/20 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.25),0_1px_2px_0_rgba(0,0,0,0.1)] hover:from-primary hover:to-primary/90 hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.35),0_2px_4px_0_rgba(0,0,0,0.15)] active:scale-[0.98] active:translate-y-px active:shadow-[inset_0_1px_2px_0_rgba(0,0,0,0.2)] dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.5),0_1px_2px_0_rgba(0,0,0,0.3)]",
+                glow: "bg-gradient-to-r from-[#4e46b4] via-[#5c54c7] to-[#7066e0] text-white border border-white/20 shadow-md shadow-indigo-500/25 hover:shadow-lg hover:shadow-indigo-500/40 hover:brightness-105 active:translate-y-0 active:scale-[0.98] active:shadow-sm transition-all duration-200",
             },
             size: {
                 "default": "h-9 px-4 py-2 has-[>svg]:px-3",

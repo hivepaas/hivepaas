@@ -185,5 +185,16 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		previewGroup.POST("/prepare", appPreviewHandler.PrepareCreateAppPreview)
 	}
 
+	{ // Task group
+		taskGroup := appGroup.Group("/:appID/tasks")
+		taskGroup.GET("", appHandler.ListTask)
+		taskGroup.GET("/types", appHandler.ListTaskType)
+		taskGroup.GET("/:itemID", appHandler.GetTask)
+		taskGroup.GET("/:itemID/status", appHandler.GetTaskStatus)
+		taskGroup.POST("/:itemID/cancel", appHandler.CancelTask)
+		taskGroup.GET("/:itemID/logs", appHandler.GetTaskLogs)
+		taskGroup.GET("/target-objects", appHandler.ListTaskTargetObject)
+	}
+
 	return appGroup
 }

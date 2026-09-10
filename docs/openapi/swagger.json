@@ -3121,7 +3121,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogResp"
+                  "$ref" : "#/components/schemas/auditlogdto.ListAuditLogResp"
                 }
               }
             },
@@ -3170,7 +3170,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogTypeResp"
+                  "$ref" : "#/components/schemas/auditlogdto.ListAuditLogTypeResp"
                 }
               }
             },
@@ -3227,7 +3227,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_auditlogdto.GetAuditLogResp"
+                  "$ref" : "#/components/schemas/auditlogdto.GetAuditLogResp"
                 }
               }
             },
@@ -11855,7 +11855,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.ListTaskResp"
+                  "$ref" : "#/components/schemas/taskdto.ListTaskResp"
                 }
               }
             },
@@ -11886,6 +11886,55 @@
         "tags" : [ "project_tasks" ]
       }
     },
+    "/projects/{projectID}/tasks/target-objects" : {
+      "get" : {
+        "description" : "Lists task target objects",
+        "operationId" : "listProjectTaskTargetObject",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/taskdto.ListTargetObjectsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists task target objects",
+        "tags" : [ "project_tasks" ]
+      }
+    },
     "/projects/{projectID}/tasks/types" : {
       "get" : {
         "description" : "Lists task types",
@@ -11904,7 +11953,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.ListTaskTypeResp"
+                  "$ref" : "#/components/schemas/taskdto.ListTaskTypeResp"
                 }
               }
             },
@@ -11961,7 +12010,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskResp"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskResp"
                 }
               }
             },
@@ -12018,7 +12067,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.CancelTaskReq"
+                  "$ref" : "#/components/schemas/taskdto.CancelTaskReq"
                 }
               }
             },
@@ -12075,7 +12124,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskLogsReq"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskLogsReq"
                 }
               }
             },
@@ -12132,7 +12181,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskStatusResp"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskStatusResp"
                 }
               }
             },
@@ -18521,99 +18570,6 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/projects/{projectID}/{projectEnv}/apps/{appID}/sched-jobs/{itemID}/tasks/{taskID}/cancel" : {
-      "post" : {
-        "description" : "Cancels job task",
-        "operationId" : "cancelAppSchedJobTask",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "project env",
-          "in" : "path",
-          "name" : "projectEnv",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "app ID",
-          "in" : "path",
-          "name" : "appID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "setting ID",
-          "in" : "path",
-          "name" : "itemID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "task ID",
-          "in" : "path",
-          "name" : "taskID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/settings_schedjobdto.CancelSchedJobTaskReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/settings_schedjobdto.CancelSchedJobTaskResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Cancels job task",
-        "tags" : [ "app_settings" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/secrets" : {
       "get" : {
         "description" : "Lists app secrets",
@@ -19850,7 +19806,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.ListTaskResp"
+                  "$ref" : "#/components/schemas/taskdto.ListTaskResp"
                 }
               }
             },
@@ -19878,6 +19834,71 @@
           }
         },
         "summary" : "Lists tasks",
+        "tags" : [ "app_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/tasks/target-objects" : {
+      "get" : {
+        "description" : "Lists task target objects",
+        "operationId" : "listAppTaskTargetObject",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/taskdto.ListTargetObjectsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists task target objects",
         "tags" : [ "app_tasks" ]
       }
     },
@@ -19915,7 +19936,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.ListTaskTypeResp"
+                  "$ref" : "#/components/schemas/taskdto.ListTaskTypeResp"
                 }
               }
             },
@@ -19988,7 +20009,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskResp"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskResp"
                 }
               }
             },
@@ -20061,7 +20082,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.CancelTaskReq"
+                  "$ref" : "#/components/schemas/taskdto.CancelTaskReq"
                 }
               }
             },
@@ -20134,7 +20155,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskLogsReq"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskLogsReq"
                 }
               }
             },
@@ -20207,7 +20228,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskStatusResp"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskStatusResp"
                 }
               }
             },
@@ -20422,7 +20443,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogResp"
+                  "$ref" : "#/components/schemas/auditlogdto.ListAuditLogResp"
                 }
               }
             },
@@ -20471,7 +20492,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogTypeResp"
+                  "$ref" : "#/components/schemas/auditlogdto.ListAuditLogTypeResp"
                 }
               }
             },
@@ -20536,7 +20557,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_auditlogdto.GetAuditLogResp"
+                  "$ref" : "#/components/schemas/auditlogdto.GetAuditLogResp"
                 }
               }
             },
@@ -28587,7 +28608,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.ListTaskResp"
+                  "$ref" : "#/components/schemas/taskdto.ListTaskResp"
                 }
               }
             },
@@ -28618,6 +28639,63 @@
         "tags" : [ "project_env_tasks" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/tasks/target-objects" : {
+      "get" : {
+        "description" : "Lists task target objects",
+        "operationId" : "listProjectEnvTaskTargetObject",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project Env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/taskdto.ListTargetObjectsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists task target objects",
+        "tags" : [ "project_env_tasks" ]
+      }
+    },
     "/projects/{projectID}/{projectEnv}/tasks/types" : {
       "get" : {
         "description" : "Lists task types",
@@ -28644,7 +28722,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.ListTaskTypeResp"
+                  "$ref" : "#/components/schemas/taskdto.ListTaskTypeResp"
                 }
               }
             },
@@ -28709,7 +28787,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskResp"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskResp"
                 }
               }
             },
@@ -28774,7 +28852,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.CancelTaskReq"
+                  "$ref" : "#/components/schemas/taskdto.CancelTaskReq"
                 }
               }
             },
@@ -28839,7 +28917,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskLogsReq"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskLogsReq"
                 }
               }
             },
@@ -28904,7 +28982,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskStatusResp"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskStatusResp"
                 }
               }
             },
@@ -36243,7 +36321,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogResp"
+                  "$ref" : "#/components/schemas/auditlogdto.ListAuditLogResp"
                 }
               }
             },
@@ -36283,7 +36361,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_auditlogdto.ListAuditLogTypeResp"
+                  "$ref" : "#/components/schemas/auditlogdto.ListAuditLogTypeResp"
                 }
               }
             },
@@ -36332,7 +36410,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_auditlogdto.GetAuditLogResp"
+                  "$ref" : "#/components/schemas/auditlogdto.GetAuditLogResp"
                 }
               }
             },
@@ -38182,7 +38260,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.ListTaskResp"
+                  "$ref" : "#/components/schemas/taskdto.ListTaskResp"
                 }
               }
             },
@@ -38213,6 +38291,46 @@
         "tags" : [ "system_tasks" ]
       }
     },
+    "/system/tasks/target-objects" : {
+      "get" : {
+        "description" : "Lists task target objects",
+        "operationId" : "listTaskTargetObject",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/taskdto.ListTargetObjectsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists task target objects",
+        "tags" : [ "system_tasks" ]
+      }
+    },
     "/system/tasks/types" : {
       "get" : {
         "description" : "Lists task types",
@@ -38222,7 +38340,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.ListTaskTypeResp"
+                  "$ref" : "#/components/schemas/taskdto.ListTaskTypeResp"
                 }
               }
             },
@@ -38271,7 +38389,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskResp"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskResp"
                 }
               }
             },
@@ -38320,7 +38438,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.CancelTaskReq"
+                  "$ref" : "#/components/schemas/taskdto.CancelTaskReq"
                 }
               }
             },
@@ -38369,7 +38487,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskLogsReq"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskLogsReq"
                 }
               }
             },
@@ -38418,7 +38536,7 @@
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/system_taskdto.GetTaskStatusResp"
+                  "$ref" : "#/components/schemas/taskdto.GetTaskStatusResp"
                 }
               }
             },
@@ -43912,6 +44030,150 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "auditlogdto.ActorResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "loggedName" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "photo" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "loggedName", "name", "photo", "type" ],
+        "type" : "object"
+      },
+      "auditlogdto.AuditLogResp" : {
+        "properties" : {
+          "actor" : {
+            "$ref" : "#/components/schemas/auditlogdto.ActorResp"
+          },
+          "clientIp" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "detail" : {
+            "type" : "string"
+          },
+          "hasDetail" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "remoteAddr" : {
+            "type" : "string"
+          },
+          "requestId" : {
+            "type" : "string"
+          },
+          "resource" : {
+            "$ref" : "#/components/schemas/auditlogdto.ResourceResp"
+          },
+          "result" : {
+            "type" : "string"
+          },
+          "scopeApp" : {
+            "$ref" : "#/components/schemas/appdto.AppBaseResp"
+          },
+          "scopeProject" : {
+            "$ref" : "#/components/schemas/projectdto.ProjectBaseResp"
+          },
+          "scopeUser" : {
+            "$ref" : "#/components/schemas/basedto.UserBaseResp"
+          },
+          "sessionUid" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "userAgent" : {
+            "type" : "string"
+          },
+          "viaApiKey" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "actor", "clientIp", "createdAt", "detail", "hasDetail", "id", "remoteAddr", "requestId", "resource", "result", "scopeApp", "scopeProject", "scopeUser", "sessionUid", "source", "type", "userAgent", "viaApiKey" ],
+        "type" : "object"
+      },
+      "auditlogdto.GetAuditLogResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/auditlogdto.AuditLogResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "auditlogdto.ListAuditLogResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/auditlogdto.AuditLogResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "auditlogdto.ListAuditLogTypeResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "auditlogdto.ResourceResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "loggedName" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "photo" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "loggedName", "name", "photo", "type" ],
         "type" : "object"
       },
       "cluster_builddto.ClearBuildCacheDataResp" : {
@@ -52659,30 +52921,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "settings_schedjobdto.CancelSchedJobTaskDataResp" : {
-        "properties" : {
-          "canceled" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "canceled" ],
-        "type" : "object"
-      },
-      "settings_schedjobdto.CancelSchedJobTaskReq" : {
-        "type" : "object"
-      },
-      "settings_schedjobdto.CancelSchedJobTaskResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/settings_schedjobdto.CancelSchedJobTaskDataResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
       "settings_schedjobdto.CommandOutputFileStorageReq" : {
         "properties" : {
           "bucket" : {
@@ -54384,150 +54622,6 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "system_auditlogdto.ActorResp" : {
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "loggedName" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "photo" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "id", "loggedName", "name", "photo", "type" ],
-        "type" : "object"
-      },
-      "system_auditlogdto.AuditLogResp" : {
-        "properties" : {
-          "actor" : {
-            "$ref" : "#/components/schemas/system_auditlogdto.ActorResp"
-          },
-          "clientIp" : {
-            "type" : "string"
-          },
-          "createdAt" : {
-            "type" : "string"
-          },
-          "detail" : {
-            "type" : "string"
-          },
-          "hasDetail" : {
-            "type" : "boolean"
-          },
-          "id" : {
-            "type" : "string"
-          },
-          "remoteAddr" : {
-            "type" : "string"
-          },
-          "requestId" : {
-            "type" : "string"
-          },
-          "resource" : {
-            "$ref" : "#/components/schemas/system_auditlogdto.ResourceResp"
-          },
-          "result" : {
-            "type" : "string"
-          },
-          "scopeApp" : {
-            "$ref" : "#/components/schemas/appdto.AppBaseResp"
-          },
-          "scopeProject" : {
-            "$ref" : "#/components/schemas/projectdto.ProjectBaseResp"
-          },
-          "scopeUser" : {
-            "$ref" : "#/components/schemas/basedto.UserBaseResp"
-          },
-          "sessionUid" : {
-            "type" : "string"
-          },
-          "source" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "userAgent" : {
-            "type" : "string"
-          },
-          "viaApiKey" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "actor", "clientIp", "createdAt", "detail", "hasDetail", "id", "remoteAddr", "requestId", "resource", "result", "scopeApp", "scopeProject", "scopeUser", "sessionUid", "source", "type", "userAgent", "viaApiKey" ],
-        "type" : "object"
-      },
-      "system_auditlogdto.GetAuditLogResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/system_auditlogdto.AuditLogResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "system_auditlogdto.ListAuditLogResp" : {
-        "properties" : {
-          "data" : {
-            "items" : {
-              "$ref" : "#/components/schemas/system_auditlogdto.AuditLogResp"
-            },
-            "type" : "array"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.ListMeta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "system_auditlogdto.ListAuditLogTypeResp" : {
-        "properties" : {
-          "data" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.ListMeta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "system_auditlogdto.ResourceResp" : {
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "loggedName" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "photo" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "id", "loggedName", "name", "photo", "type" ],
-        "type" : "object"
-      },
       "system_hpappsettingsdto.ConfirmRoutingSettingsReq" : {
         "properties" : {
           "changeId" : {
@@ -55387,154 +55481,6 @@
           }
         },
         "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "system_taskdto.CancelTaskReq" : {
-        "type" : "object"
-      },
-      "system_taskdto.GetTaskLogsReq" : {
-        "type" : "object"
-      },
-      "system_taskdto.GetTaskResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/system_taskdto.TaskResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "system_taskdto.GetTaskStatusResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/system_taskdto.TaskStatusResp"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.Meta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "system_taskdto.ListTaskResp" : {
-        "properties" : {
-          "data" : {
-            "items" : {
-              "$ref" : "#/components/schemas/system_taskdto.TaskResp"
-            },
-            "type" : "array"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.ListMeta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "system_taskdto.ListTaskTypeResp" : {
-        "properties" : {
-          "data" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
-          "meta" : {
-            "$ref" : "#/components/schemas/basedto.ListMeta"
-          }
-        },
-        "required" : [ "data", "meta" ],
-        "type" : "object"
-      },
-      "system_taskdto.TaskResp" : {
-        "properties" : {
-          "config" : {
-            "allOf" : [ {
-              "$ref" : "#/components/schemas/entity.TaskConfig"
-            } ],
-            "description" : "NOTE: use entity's type directly here, may need refactor",
-            "type" : "object"
-          },
-          "createdAt" : {
-            "type" : "string"
-          },
-          "endedAt" : {
-            "type" : "string"
-          },
-          "id" : {
-            "type" : "string"
-          },
-          "lastError" : {
-            "type" : "string"
-          },
-          "retryAt" : {
-            "type" : "string"
-          },
-          "runAt" : {
-            "type" : "string"
-          },
-          "scopeApp" : {
-            "$ref" : "#/components/schemas/appdto.AppBaseResp"
-          },
-          "scopeProject" : {
-            "$ref" : "#/components/schemas/projectdto.ProjectBaseResp"
-          },
-          "scopeUser" : {
-            "$ref" : "#/components/schemas/basedto.UserBaseResp"
-          },
-          "startedAt" : {
-            "type" : "string"
-          },
-          "status" : {
-            "type" : "string"
-          },
-          "targetJob" : {
-            "$ref" : "#/components/schemas/system_taskdto.TaskTargetJobResp"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "updateVer" : {
-            "type" : "integer"
-          },
-          "updatedAt" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "config", "createdAt", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "startedAt", "status", "targetJob", "type", "updateVer", "updatedAt" ],
-        "type" : "object"
-      },
-      "system_taskdto.TaskStatusResp" : {
-        "properties" : {
-          "status" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "status" ],
-        "type" : "object"
-      },
-      "system_taskdto.TaskTargetJobResp" : {
-        "properties" : {
-          "id" : {
-            "type" : "string"
-          },
-          "kind" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "status" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "id", "kind", "name", "status", "type" ],
         "type" : "object"
       },
       "system_traefiksettingsdto.ConfigOptionsResp" : {
@@ -56874,6 +56820,184 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "taskdto.CancelTaskReq" : {
+        "type" : "object"
+      },
+      "taskdto.GetTaskLogsReq" : {
+        "type" : "object"
+      },
+      "taskdto.GetTaskResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/taskdto.TaskResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "taskdto.GetTaskStatusResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/taskdto.TaskStatusResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "taskdto.ListTargetObjectsResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/taskdto.TargetObjectResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "taskdto.ListTaskResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/taskdto.TaskResp"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "taskdto.ListTaskTypeResp" : {
+        "properties" : {
+          "data" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.ListMeta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "taskdto.TargetObjectResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "name", "type" ],
+        "type" : "object"
+      },
+      "taskdto.TaskResp" : {
+        "properties" : {
+          "config" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/entity.TaskConfig"
+            } ],
+            "description" : "NOTE: use entity's type directly here, may need refactor",
+            "type" : "object"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "endedAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "lastError" : {
+            "type" : "string"
+          },
+          "retryAt" : {
+            "type" : "string"
+          },
+          "runAt" : {
+            "type" : "string"
+          },
+          "scopeApp" : {
+            "$ref" : "#/components/schemas/appdto.AppBaseResp"
+          },
+          "scopeProject" : {
+            "$ref" : "#/components/schemas/projectdto.ProjectBaseResp"
+          },
+          "scopeUser" : {
+            "$ref" : "#/components/schemas/basedto.UserBaseResp"
+          },
+          "startedAt" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "targetJob" : {
+            "$ref" : "#/components/schemas/taskdto.TaskTargetJobResp"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "config", "createdAt", "endedAt", "id", "lastError", "retryAt", "runAt", "scopeApp", "scopeProject", "scopeUser", "startedAt", "status", "targetJob", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "taskdto.TaskStatusResp" : {
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "status" ],
+        "type" : "object"
+      },
+      "taskdto.TaskTargetJobResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "kind", "name", "status", "type" ],
+        "type" : "object"
+      },
       "usersettings_apikeydto.APIKeyDataResp" : {
         "properties" : {
           "id" : {
@@ -57887,9 +58011,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -105,7 +105,7 @@ func (h *Handler) CancelTask(ctx *gin.Context) {
 // @Description Lists task target objects
 // @Tags    system_tasks
 // @Produce json
-// @Id      listProjectTaskTargetObject
+// @Id      listTaskTargetObject
 // @Success 200 {object} taskdto.ListTargetObjectsResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

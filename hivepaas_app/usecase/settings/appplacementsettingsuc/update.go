@@ -16,6 +16,7 @@ func (uc *UC) UpdateAppPlacementSettings(
 	req *appplacementsettingsdto.UpdateAppPlacementSettingsReq,
 ) (*appplacementsettingsdto.UpdateAppPlacementSettingsResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
 		Name: string(currentSettingType),
 		PrepareUpdate: func(

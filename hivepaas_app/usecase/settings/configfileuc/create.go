@@ -16,6 +16,7 @@ func (uc *UC) CreateConfigFile(
 	req *configfiledto.CreateConfigFileReq,
 ) (*configfiledto.CreateConfigFileResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	configFile := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

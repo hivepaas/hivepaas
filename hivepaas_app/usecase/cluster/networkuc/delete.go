@@ -17,6 +17,7 @@ func (uc *UC) DeleteNetwork(
 	req *networkdto.DeleteNetworkReq,
 ) (*networkdto.DeleteNetworkResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
 		AfterLoading: func(
 			ctx context.Context,

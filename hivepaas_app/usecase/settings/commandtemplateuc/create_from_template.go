@@ -24,6 +24,7 @@ func (uc *UC) CreateCommandTemplateFromTemplate(
 	req *commandtemplatedto.CreateCommandTemplateFromTemplateReq,
 ) (*commandtemplatedto.CreateCommandTemplateFromTemplateResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName: req.Name,
 		Version:       currentSettingVersion,

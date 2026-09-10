@@ -28,6 +28,7 @@ func (uc *UC) ChangeRepoPassword(
 	req *backuprepodto.ChangeRepoPasswordReq,
 ) (*backuprepodto.ChangeRepoPasswordResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	data := &changeRepoPasswordData{}
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		PrepareUpdate: func(

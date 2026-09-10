@@ -18,6 +18,7 @@ func (uc *UC) DeleteSecret(
 	req *secretdto.DeleteSecretReq,
 ) (*secretdto.DeleteSecretResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	var appEnvVarData []*envvarservice.AppEnvVarData
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
 		AfterPersisting: func(

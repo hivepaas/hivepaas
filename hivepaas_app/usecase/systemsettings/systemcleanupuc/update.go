@@ -33,6 +33,7 @@ func (uc *UC) UpdateSystemCleanup(
 	req *systemcleanupdto.UpdateSystemCleanupReq,
 ) (*systemcleanupdto.UpdateSystemCleanupResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	updateData := &updateSettingData{
 		NewCleanup: req.ToEntity(),
 	}

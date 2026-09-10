@@ -16,6 +16,7 @@ func (uc *UC) CreateBasicAuth(
 	req *basicauthdto.CreateBasicAuthReq,
 ) (*basicauthdto.CreateBasicAuthResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	basicAuth := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

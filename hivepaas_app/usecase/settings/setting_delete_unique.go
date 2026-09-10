@@ -5,6 +5,7 @@ import (
 
 	vld "github.com/tiendc/go-validator"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -73,6 +74,13 @@ func (uc *BaseUC) DeleteUniqueSetting(
 			if err := data.AfterPersisting(ctx, db, data, persistingData); err != nil {
 				return hperrors.Wrap(err)
 			}
+		}
+
+		err = uc.recordSettingAudit(ctx, db, &req.BaseSettingReq,
+			base.AuditLogTypeSettingDelete, base.AuditLogSourceAPIDelete,
+			persistingData.Setting, nil)
+		if err != nil {
+			return hperrors.Wrap(err)
 		}
 
 		// Fire delete event

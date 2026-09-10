@@ -15,6 +15,7 @@ func (uc *UC) UpdateVolumeStatus(
 	req *volumedto.UpdateVolumeStatusReq,
 ) (*volumedto.UpdateVolumeStatusResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

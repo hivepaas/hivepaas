@@ -16,6 +16,7 @@ func (uc *UC) CreateSecret(
 	req *secretdto.CreateSecretReq,
 ) (*secretdto.CreateSecretResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	secret := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Key,

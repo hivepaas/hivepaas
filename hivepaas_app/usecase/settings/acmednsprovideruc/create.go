@@ -16,6 +16,7 @@ func (uc *UC) CreateAcmeDnsProvider(
 	req *acmednsproviderdto.CreateAcmeDnsProviderReq,
 ) (*acmednsproviderdto.CreateAcmeDnsProviderResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	acmeDnsProvider := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

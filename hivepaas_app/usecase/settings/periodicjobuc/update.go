@@ -16,6 +16,7 @@ func (uc *UC) UpdatePeriodicJob(
 	req *periodicjobdto.UpdatePeriodicJobReq,
 ) (*periodicjobdto.UpdatePeriodicJobResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	periodicJob := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

@@ -20,6 +20,7 @@ func (uc *UC) CreateNetwork(
 	req *networkdto.CreateNetworkReq,
 ) (*networkdto.CreateNetworkResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	netEntity := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingRefIDs: netEntity.GetRefObjectIDs(),

@@ -16,6 +16,7 @@ func (uc *UC) DeleteSSLCert(
 	req *sslcertdto.DeleteSSLCertReq,
 ) (*sslcertdto.DeleteSSLCertResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
 		AfterPersisting: func(
 			ctx context.Context,

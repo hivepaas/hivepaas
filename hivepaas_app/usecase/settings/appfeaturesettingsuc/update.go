@@ -19,6 +19,7 @@ func (uc *UC) UpdateAppFeatureSettings(
 	req *appfeaturesettingsdto.UpdateAppFeatureSettingsReq,
 ) (*appfeaturesettingsdto.UpdateAppFeatureSettingsResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
 		Name: "App feature settings",
 		PrepareUpdate: func(

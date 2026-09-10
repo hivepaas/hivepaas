@@ -16,6 +16,7 @@ func (uc *UC) UpdateCommandTemplate(
 	req *commandtemplatedto.UpdateCommandTemplateReq,
 ) (*commandtemplatedto.UpdateCommandTemplateResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	newCmdTemplate := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

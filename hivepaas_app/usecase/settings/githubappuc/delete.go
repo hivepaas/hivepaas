@@ -15,6 +15,7 @@ func (uc *UC) DeleteGithubApp(
 	req *githubappdto.DeleteGithubAppReq,
 ) (*githubappdto.DeleteGithubAppResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

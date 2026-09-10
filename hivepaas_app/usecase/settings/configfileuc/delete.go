@@ -16,6 +16,7 @@ func (uc *UC) DeleteConfigFile(
 	req *configfiledto.DeleteConfigFileReq,
 ) (*configfiledto.DeleteConfigFileResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
 		AfterPersisting: func(
 			ctx context.Context,

@@ -16,6 +16,7 @@ func (uc *UC) CreatePeriodicJob(
 	req *periodicjobdto.CreatePeriodicJobReq,
 ) (*periodicjobdto.CreatePeriodicJobResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	periodicJob := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

@@ -15,6 +15,7 @@ func (uc *UC) DeleteCommandPipe(
 	req *commandpipedto.DeleteCommandPipeReq,
 ) (*commandpipedto.DeleteCommandPipeResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

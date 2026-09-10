@@ -16,6 +16,7 @@ func (uc *UC) UpdateGithubApp(
 	req *githubappdto.UpdateGithubAppReq,
 ) (*githubappdto.UpdateGithubAppResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	githubApp := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

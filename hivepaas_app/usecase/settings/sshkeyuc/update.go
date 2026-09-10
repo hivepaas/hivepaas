@@ -18,6 +18,7 @@ func (uc *UC) UpdateSSHKey(
 	req *sshkeydto.UpdateSSHKeyReq,
 ) (*sshkeydto.UpdateSSHKeyResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	sshKey := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

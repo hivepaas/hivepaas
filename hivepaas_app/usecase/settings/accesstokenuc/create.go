@@ -16,6 +16,7 @@ func (uc *UC) CreateAccessToken(
 	req *accesstokendto.CreateAccessTokenReq,
 ) (*accesstokendto.CreateAccessTokenResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	accessToken := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

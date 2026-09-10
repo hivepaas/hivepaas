@@ -34,6 +34,7 @@ func (uc *UC) UpdateSystemBackup(
 	req *systembackupdto.UpdateSystemBackupReq,
 ) (*systembackupdto.UpdateSystemBackupResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	updateData := &updateSettingData{
 		NewBackup: req.ToEntity(),
 	}

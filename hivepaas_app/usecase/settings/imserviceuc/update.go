@@ -16,6 +16,7 @@ func (uc *UC) UpdateIMService(
 	req *imservicedto.UpdateIMServiceReq,
 ) (*imservicedto.UpdateIMServiceResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	imPlatform := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

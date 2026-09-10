@@ -21,6 +21,15 @@ type BaseSettingReq struct {
 	Type  base.SettingType    `json:"-" mapstructure:"-"`
 	Kind  string              `json:"-" mapstructure:"-"`
 	Scope *entity.ObjectScope `json:"-" mapstructure:"-"`
+
+	// Auth is who is asking, carried this far only so the write can be recorded.
+	//
+	// It is set by each concrete usecase next to Type, and the generic flows
+	// refuse to run without it - see recordSettingAudit. That refusal is the
+	// point: the alternative is a usecase that quietly writes unattributed
+	// entries because somebody added a setting type and missed one line, which is
+	// exactly the kind of gap an audit trail is useless with.
+	Auth *basedto.Auth `json:"-" mapstructure:"-"`
 }
 
 type BaseSettingResp struct {

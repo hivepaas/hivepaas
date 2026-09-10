@@ -22,6 +22,7 @@ func (uc *UC) CreateBackupRepo(
 	req *backuprepodto.CreateBackupRepoReq,
 ) (*backuprepodto.CreateBackupRepoResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	// Validate password strength on repo creation
 	if !req.ImportExisting {
 		requirements := backupreposervice.PasswordRequirements

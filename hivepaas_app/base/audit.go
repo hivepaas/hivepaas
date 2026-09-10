@@ -38,6 +38,29 @@ const (
 	// request, before its deadline. The automatic undo is not recorded here: it
 	// has no caller to attribute, and its record is the task row that ran it.
 	AuditLogTypeRoutingChangeRevert AuditLogType = "routing-change-revert"
+
+	// AuditLogTypeSettingCreate, AuditLogTypeSettingUpdate,
+	// AuditLogTypeSettingStatusUpdate and AuditLogTypeSettingDelete record the
+	// lifecycle of a stored setting - a registry credential, an SSH key, a backup
+	// repository, and the twenty-odd others.
+	//
+	// Four types for all of them, not four per kind. Which kind it was is already
+	// on the entry as ResType, and folding it into the name instead would put
+	// eighty-odd values in the type filter, which is the same as having no filter.
+	//
+	// Creation is recorded alongside the rest because a trail that shows a setting
+	// changed and then deleted, with no record of it ever appearing, reads as if
+	// something is missing from the log.
+	AuditLogTypeSettingCreate AuditLogType = "setting-create"
+	AuditLogTypeSettingUpdate AuditLogType = "setting-update"
+
+	// AuditLogTypeSettingStatusUpdate is separate from a plain update because it
+	// covers the switches that decide whether a setting is in force at all -
+	// status, expiry, inheritable, default - and "who disabled this" is a question
+	// asked on its own.
+	AuditLogTypeSettingStatusUpdate AuditLogType = "setting-status-update"
+
+	AuditLogTypeSettingDelete AuditLogType = "setting-delete"
 )
 
 var AllAuditLogTypes = []AuditLogType{
@@ -47,6 +70,10 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeSecuritySettingsUpdate,
 	AuditLogTypeRoutingChangeConfirm,
 	AuditLogTypeRoutingChangeRevert,
+	AuditLogTypeSettingCreate,
+	AuditLogTypeSettingUpdate,
+	AuditLogTypeSettingStatusUpdate,
+	AuditLogTypeSettingDelete,
 }
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.
@@ -65,6 +92,9 @@ const (
 
 	// AuditLogSourceAPIUpdate is an update endpoint.
 	AuditLogSourceAPIUpdate AuditLogSource = "api-update"
+
+	// AuditLogSourceAPIDelete is a delete endpoint.
+	AuditLogSourceAPIDelete AuditLogSource = "api-delete"
 )
 
 // AuditLogResult says whether the action was permitted.

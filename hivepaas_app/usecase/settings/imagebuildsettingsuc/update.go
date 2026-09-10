@@ -16,6 +16,7 @@ func (uc *UC) UpdateImageBuildSettings(
 	req *imagebuildsettingsdto.UpdateImageBuildSettingsReq,
 ) (*imagebuildsettingsdto.UpdateImageBuildSettingsResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	newSettings := req.ToEntity()
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
 		Name: string(currentSettingType),

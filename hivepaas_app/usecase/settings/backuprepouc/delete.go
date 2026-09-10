@@ -20,6 +20,7 @@ func (uc *UC) DeleteBackupRepo(
 	req *backuprepodto.DeleteBackupRepoReq,
 ) (*backuprepodto.DeleteBackupRepoResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
 		BeforePersisting: func(
 			ctx context.Context,

@@ -21,6 +21,7 @@ func (uc *UC) UpdateSecret(
 	req *secretdto.UpdateSecretReq,
 ) (*secretdto.UpdateSecretResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	var oldSecret *entity.Secret
 	updatedSecret := req.ToEntity()
 	secretValueChanged := true

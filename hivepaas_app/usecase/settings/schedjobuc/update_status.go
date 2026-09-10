@@ -16,6 +16,7 @@ func (uc *UC) UpdateSchedJobStatus(
 	req *schedjobdto.UpdateSchedJobStatusReq,
 ) (*schedjobdto.UpdateSchedJobStatusResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{
 		AfterLoading: func(
 			ctx context.Context,

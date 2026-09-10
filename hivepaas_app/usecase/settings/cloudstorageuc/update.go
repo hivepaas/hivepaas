@@ -16,6 +16,7 @@ func (uc *UC) UpdateCloudStorage(
 	req *cloudstoragedto.UpdateCloudStorageReq,
 ) (*cloudstoragedto.UpdateCloudStorageResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	cloudStorage := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

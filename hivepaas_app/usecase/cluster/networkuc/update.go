@@ -15,6 +15,7 @@ func (uc *UC) UpdateNetwork(
 	req *networkdto.UpdateNetworkReq,
 ) (*networkdto.UpdateNetworkResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	// NOTE: only allow updating `inheritable` and `default`
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{})
 	if err != nil {

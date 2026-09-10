@@ -27,6 +27,7 @@ func (uc *UC) UpdateBackupRepo(
 	req *backuprepodto.UpdateBackupRepoReq,
 ) (*backuprepodto.UpdateBackupRepoResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	data := &updateBackupRepoData{}
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName: req.Name,

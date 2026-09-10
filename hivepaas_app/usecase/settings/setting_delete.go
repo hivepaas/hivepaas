@@ -6,6 +6,7 @@ import (
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -88,6 +89,15 @@ func (uc *BaseUC) DeleteSetting(
 			if err := data.AfterPersisting(ctx, db, data, persistingData); err != nil {
 				return hperrors.Wrap(err)
 			}
+		}
+
+		// persistingData.Setting can be nil if the setting is imported, so fall
+		// back to what was loaded - the entry must name what was deleted.
+		err = uc.recordSettingAudit(ctx, db, &req.BaseSettingReq,
+			base.AuditLogTypeSettingDelete, base.AuditLogSourceAPIDelete,
+			gofn.Coalesce(persistingData.Setting, data.Setting), nil)
+		if err != nil {
+			return hperrors.Wrap(err)
 		}
 
 		// Fire delete event

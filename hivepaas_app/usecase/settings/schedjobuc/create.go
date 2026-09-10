@@ -29,6 +29,7 @@ func (uc *UC) CreateSchedJob(
 	req *schedjobdto.CreateSchedJobReq,
 ) (*schedjobdto.CreateSchedJobResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	schedJob := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

@@ -16,6 +16,7 @@ func (uc *UC) CreateCloudStorage(
 	req *cloudstoragedto.CreateCloudStorageReq,
 ) (*cloudstoragedto.CreateCloudStorageResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	cloudStorage := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

@@ -16,6 +16,7 @@ func (uc *UC) UpdateAcmeDnsProvider(
 	req *acmednsproviderdto.UpdateAcmeDnsProviderReq,
 ) (*acmednsproviderdto.UpdateAcmeDnsProviderResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	acmeDnsProvider := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

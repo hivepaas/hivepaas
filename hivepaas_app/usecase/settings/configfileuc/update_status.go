@@ -16,6 +16,7 @@ func (uc *UC) UpdateConfigFileStatus(
 	req *configfiledto.UpdateConfigFileStatusReq,
 ) (*configfiledto.UpdateConfigFileStatusResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{
 		BeforePersisting: func(
 			ctx context.Context,

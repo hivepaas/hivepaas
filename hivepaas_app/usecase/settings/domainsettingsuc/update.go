@@ -16,6 +16,7 @@ func (uc *UC) UpdateDomainSettings(
 	req *domainsettingsdto.UpdateDomainSettingsReq,
 ) (*domainsettingsdto.UpdateDomainSettingsResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
 		Name: "Domain settings",
 		PrepareUpdate: func(

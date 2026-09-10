@@ -19,6 +19,7 @@ func (uc *UC) CreateOAuth(
 	req *oauthdto.CreateOAuthReq,
 ) (*oauthdto.CreateOAuthResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	oauth := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   gofn.Coalesce(req.Name, req.Organization),

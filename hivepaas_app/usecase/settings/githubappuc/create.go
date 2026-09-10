@@ -24,6 +24,7 @@ func (uc *UC) CreateGithubApp(
 	req *githubappdto.CreateGithubAppReq,
 ) (*githubappdto.CreateGithubAppResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	githubApp := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   gofn.Coalesce(req.Name, req.Organization),

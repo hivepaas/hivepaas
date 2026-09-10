@@ -29,6 +29,7 @@ func (uc *UC) CreateVolume(
 	req *volumedto.CreateVolumeReq,
 ) (*volumedto.CreateVolumeResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	volEntity := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingRefIDs: volEntity.GetRefObjectIDs(),

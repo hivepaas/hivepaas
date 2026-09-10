@@ -16,6 +16,7 @@ func (uc *UC) CreateIMService(
 	req *imservicedto.CreateIMServiceReq,
 ) (*imservicedto.CreateIMServiceResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	imPlatform := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

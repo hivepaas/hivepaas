@@ -96,6 +96,13 @@ func (uc *BaseUC) CreateSetting(
 			}
 		}
 
+		err = uc.recordSettingAudit(ctx, db, &req.BaseSettingReq,
+			base.AuditLogTypeSettingCreate, base.AuditLogSourceAPICreate,
+			nil, persistingData.Setting)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		// Fire create event
 		err = uc.SettingEventService.OnCreate(ctx, db, &settingeventservice.CreateEvent{Setting: persistingData.Setting})
 		if err != nil {

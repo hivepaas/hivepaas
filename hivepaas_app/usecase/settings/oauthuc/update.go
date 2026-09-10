@@ -18,6 +18,7 @@ func (uc *UC) UpdateOAuth(
 	req *oauthdto.UpdateOAuthReq,
 ) (*oauthdto.UpdateOAuthResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	oauth := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

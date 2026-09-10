@@ -16,6 +16,7 @@ func (uc *UC) DeleteCommandTemplate(
 	req *commandtemplatedto.DeleteCommandTemplateReq,
 ) (*commandtemplatedto.DeleteCommandTemplateResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
 		AfterPersisting: func(
 			ctx context.Context,

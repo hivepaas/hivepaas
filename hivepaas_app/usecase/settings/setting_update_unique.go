@@ -95,6 +95,13 @@ func (uc *BaseUC) UpdateUniqueSetting(
 			}
 		}
 
+		err = uc.recordSettingAudit(ctx, db, &req.BaseSettingReq,
+			uniqueSettingAuditType(data.Setting), base.AuditLogSourceAPIUpdate,
+			data.Setting, persistingData.Setting)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		// Fire update event
 		err = uc.SettingEventService.OnUpdate(ctx, db, &settingeventservice.UpdateEvent{
 			Setting:    persistingData.Setting,
@@ -111,6 +118,19 @@ func (uc *BaseUC) UpdateUniqueSetting(
 	}
 
 	return &UpdateUniqueSettingResp{}, nil
+}
+
+// uniqueSettingAuditType picks what to call the write.
+//
+// This endpoint upserts: with nothing loaded, the write just created the setting,
+// and recording that as an update would hide where it came from. The source stays
+// api-update either way, which is the truth about how it arrived - which is the
+// reason type and source are separate fields.
+func uniqueSettingAuditType(loaded *entity.Setting) base.AuditLogType {
+	if loaded == nil {
+		return base.AuditLogTypeSettingCreate
+	}
+	return base.AuditLogTypeSettingUpdate
 }
 
 func (uc *BaseUC) loadUniqueSettingForUpdate(

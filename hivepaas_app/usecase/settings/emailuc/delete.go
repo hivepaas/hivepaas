@@ -15,6 +15,7 @@ func (uc *UC) DeleteEmail(
 	req *emaildto.DeleteEmailReq,
 ) (*emaildto.DeleteEmailResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -18,6 +18,7 @@ func (uc *UC) UpdateAccessToken(
 	req *accesstokendto.UpdateAccessTokenReq,
 ) (*accesstokendto.UpdateAccessTokenResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	accessToken := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

@@ -16,6 +16,7 @@ func (uc *UC) UpdateCommandPipe(
 	req *commandpipedto.UpdateCommandPipeReq,
 ) (*commandpipedto.UpdateCommandPipeResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	commandPipe := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

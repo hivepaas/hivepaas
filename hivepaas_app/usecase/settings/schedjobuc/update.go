@@ -17,6 +17,7 @@ func (uc *UC) UpdateSchedJob(
 	req *schedjobdto.UpdateSchedJobReq,
 ) (*schedjobdto.UpdateSchedJobResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	newJob := req.ToEntity()
 	var oldJob *entity.SchedJob
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{

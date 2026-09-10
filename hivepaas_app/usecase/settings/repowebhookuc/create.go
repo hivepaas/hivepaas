@@ -20,6 +20,7 @@ func (uc *UC) CreateRepoWebhook(
 	req *repowebhookdto.CreateRepoWebhookReq,
 ) (*repowebhookdto.CreateRepoWebhookResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	webhookData := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

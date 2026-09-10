@@ -33,6 +33,7 @@ func (uc *UC) UpdateBackupRepoCleanup(
 	req *backuprepocleanupdto.UpdateBackupRepoCleanupReq,
 ) (*backuprepocleanupdto.UpdateBackupRepoCleanupResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	updateData := &updateSettingData{
 		NewSettings: req.ToEntity(),
 	}

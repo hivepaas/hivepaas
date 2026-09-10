@@ -15,6 +15,7 @@ func (uc *UC) UpdateImageBuildSettingsStatus(
 	req *imagebuildsettingsdto.UpdateImageBuildSettingsStatusReq,
 ) (*imagebuildsettingsdto.UpdateImageBuildSettingsStatusResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.UpdateUniqueSettingStatus(ctx, &req.UpdateUniqueSettingStatusReq,
 		&settings.UpdateUniqueSettingStatusData{})
 	if err != nil {

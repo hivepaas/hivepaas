@@ -16,6 +16,7 @@ func (uc *UC) UpdateSSLProvider(
 	req *sslproviderdto.UpdateSSLProviderReq,
 ) (*sslproviderdto.UpdateSSLProviderResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	sslProvider := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

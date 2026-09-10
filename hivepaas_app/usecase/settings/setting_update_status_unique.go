@@ -83,6 +83,13 @@ func (uc *BaseUC) UpdateUniqueSettingStatus(
 			}
 		}
 
+		err = uc.recordSettingAudit(ctx, db, &req.BaseSettingReq,
+			base.AuditLogTypeSettingStatusUpdate, base.AuditLogSourceAPIUpdate,
+			data.Setting, persistingData.Setting)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		// Fire update event
 		err = uc.SettingEventService.OnUpdateStatus(ctx, db, &settingeventservice.UpdateEvent{
 			Setting:    persistingData.Setting,

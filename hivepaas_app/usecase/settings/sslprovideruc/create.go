@@ -16,6 +16,7 @@ func (uc *UC) CreateSSLProvider(
 	req *sslproviderdto.CreateSSLProviderReq,
 ) (*sslproviderdto.CreateSSLProviderResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	sslProvider := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

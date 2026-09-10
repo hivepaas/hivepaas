@@ -20,6 +20,7 @@ func (uc *UC) CreateSSHKey(
 	req *sshkeydto.CreateSSHKeyReq,
 ) (*sshkeydto.CreateSSHKeyResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	sshKey := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

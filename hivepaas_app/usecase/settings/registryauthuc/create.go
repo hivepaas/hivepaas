@@ -16,6 +16,7 @@ func (uc *UC) CreateRegistryAuth(
 	req *registryauthdto.CreateRegistryAuthReq,
 ) (*registryauthdto.CreateRegistryAuthResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	regAuth := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

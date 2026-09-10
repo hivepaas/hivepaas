@@ -15,6 +15,7 @@ func (uc *UC) UpdateVolume(
 	req *volumedto.UpdateVolumeReq,
 ) (*volumedto.UpdateVolumeResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	// NOTE: only allow updating `inheritable` and `default`
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{})
 	if err != nil {

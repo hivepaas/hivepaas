@@ -15,6 +15,7 @@ func (uc *UC) DeleteImageBuildSettings(
 	req *imagebuildsettingsdto.DeleteImageBuildSettingsReq,
 ) (*imagebuildsettingsdto.DeleteImageBuildSettingsResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteUniqueSetting(ctx, &req.DeleteUniqueSettingReq, &settings.DeleteUniqueSettingData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

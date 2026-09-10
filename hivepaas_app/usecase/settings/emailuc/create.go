@@ -16,6 +16,7 @@ func (uc *UC) CreateEmail(
 	req *emaildto.CreateEmailReq,
 ) (*emaildto.CreateEmailResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	emailAcc := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

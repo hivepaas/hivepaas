@@ -18,6 +18,7 @@ func (uc *UC) DeleteNode(
 	req *nodedto.DeleteNodeReq,
 ) (*nodedto.DeleteNodeResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
 		AfterLoading: func(
 			ctx context.Context,

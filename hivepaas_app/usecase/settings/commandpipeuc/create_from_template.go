@@ -24,6 +24,7 @@ func (uc *UC) CreateCommandPipeFromTemplate(
 	req *commandpipedto.CreateCommandPipeFromTemplateReq,
 ) (*commandpipedto.CreateCommandPipeFromTemplateResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName: req.Name,
 		Version:       currentSettingVersion,

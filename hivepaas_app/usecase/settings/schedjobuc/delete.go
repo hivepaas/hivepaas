@@ -16,6 +16,7 @@ func (uc *UC) DeleteSchedJob(
 	req *schedjobdto.DeleteSchedJobReq,
 ) (*schedjobdto.DeleteSchedJobResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{
 		AfterLoading: func(
 			ctx context.Context,

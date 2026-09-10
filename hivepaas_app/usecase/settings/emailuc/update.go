@@ -16,6 +16,7 @@ func (uc *UC) UpdateEmail(
 	req *emaildto.UpdateEmailReq,
 ) (*emaildto.UpdateEmailResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	emailAcc := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

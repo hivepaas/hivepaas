@@ -19,6 +19,7 @@ func (uc *UC) UpdateNode(
 	req *nodedto.UpdateNodeReq,
 ) (*nodedto.UpdateNodeResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		PrepareUpdate: func(
 			ctx context.Context,

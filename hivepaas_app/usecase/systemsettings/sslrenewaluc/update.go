@@ -33,6 +33,7 @@ func (uc *UC) UpdateSSLRenewal(
 	req *sslrenewaldto.UpdateSSLRenewalReq,
 ) (*sslrenewaldto.UpdateSSLRenewalResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	updateData := &updateSettingData{
 		NewRenewal: req.ToEntity(),
 	}

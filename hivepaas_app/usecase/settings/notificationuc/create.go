@@ -16,6 +16,7 @@ func (uc *UC) CreateNotification(
 	req *notificationdto.CreateNotificationReq,
 ) (*notificationdto.CreateNotificationResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	notification := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

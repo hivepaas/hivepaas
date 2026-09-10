@@ -16,6 +16,7 @@ func (uc *UC) UpdateRegistryAuth(
 	req *registryauthdto.UpdateRegistryAuthReq,
 ) (*registryauthdto.UpdateRegistryAuthResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	regAuth := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

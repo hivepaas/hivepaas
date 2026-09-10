@@ -15,6 +15,7 @@ func (uc *UC) UpdateAppFeatureSettingsStatus(
 	req *appfeaturesettingsdto.UpdateAppFeatureSettingsStatusReq,
 ) (*appfeaturesettingsdto.UpdateAppFeatureSettingsStatusResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.UpdateUniqueSettingStatus(ctx, &req.UpdateUniqueSettingStatusReq,
 		&settings.UpdateUniqueSettingStatusData{})
 	if err != nil {

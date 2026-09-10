@@ -18,6 +18,7 @@ func (uc *UC) UpdateSecretStatus(
 	req *secretdto.UpdateSecretStatusReq,
 ) (*secretdto.UpdateSecretStatusResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	var appEnvVarData []*envvarservice.AppEnvVarData
 	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{
 		AfterPersisting: func(

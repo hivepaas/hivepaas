@@ -16,6 +16,7 @@ func (uc *UC) UpdateRepoWebhook(
 	req *repowebhookdto.UpdateRepoWebhookReq,
 ) (*repowebhookdto.UpdateRepoWebhookResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	webhookData := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingName:   req.Name,

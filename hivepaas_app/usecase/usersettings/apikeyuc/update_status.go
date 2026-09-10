@@ -19,6 +19,7 @@ func (uc *UC) UpdateAPIKeyStatus(
 	}
 
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.UpdateSettingStatus(ctx, &req.UpdateSettingStatusReq, &settings.UpdateSettingStatusData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -16,6 +16,7 @@ func (uc *UC) UpdateConfigFile(
 	req *configfiledto.UpdateConfigFileReq,
 ) (*configfiledto.UpdateConfigFileResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	updatedConfigFile := req.ToEntity()
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{
 		VerifyingRefIDs: updatedConfigFile.GetRefObjectIDs(),

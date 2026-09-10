@@ -18,6 +18,7 @@ func (uc *UC) UpdateSSLCert(
 	req *sslcertdto.UpdateSSLCertReq,
 ) (*sslcertdto.UpdateSSLCertResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	newCert := req.ToEntity()
 	reObtainCert := false
 	_, err := uc.UpdateSetting(ctx, &req.UpdateSettingReq, &settings.UpdateSettingData{

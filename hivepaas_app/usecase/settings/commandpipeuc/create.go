@@ -18,6 +18,7 @@ func (uc *UC) CreateCommandPipe(
 	req *commandpipedto.CreateCommandPipeReq,
 ) (*commandpipedto.CreateCommandPipeResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	commandPipe := req.ToEntity()
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName:   req.Name,

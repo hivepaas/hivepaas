@@ -15,6 +15,7 @@ func (uc *UC) DeleteBasicAuth(
 	req *basicauthdto.DeleteBasicAuthReq,
 ) (*basicauthdto.DeleteBasicAuthResp, error) {
 	req.Type = currentSettingType
+	req.Auth = auth
 	_, err := uc.DeleteSetting(ctx, &req.DeleteSettingReq, &settings.DeleteSettingData{})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

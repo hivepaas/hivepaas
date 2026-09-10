@@ -37,6 +37,7 @@ func (uc *UC) CreateAPIKey(
 	keyID, secretKey := gofn.RandTokenAsHex(keyLen), gofn.RandTokenAsHex(secretLen)
 
 	req.Type = currentSettingType
+	req.Auth = auth
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingName: req.Name,
 		Version:       currentSettingVersion,

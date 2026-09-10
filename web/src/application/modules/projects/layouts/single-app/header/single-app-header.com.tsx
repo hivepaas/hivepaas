@@ -6,13 +6,7 @@ import { Power, RefreshCw } from "lucide-react";
 import { useParams } from "react-router";
 import { toast } from "sonner";
 import invariant from "tiny-invariant";
-import {
-    AppScheduledJobsQueries,
-    AppServiceTasksQueries,
-    ProjectAppsCommands,
-    ProjectAppsQueries,
-    ProjectsQueries,
-} from "~/projects/data";
+import { AppServiceTasksQueries, ProjectAppsCommands, ProjectAppsQueries, ProjectsQueries } from "~/projects/data";
 import { AppInstancesCountBadge, ProjectAppStatusBadge, ProjectEnvFilter } from "~/projects/module-shared/components";
 import { EProjectAppStatus } from "~/projects/module-shared/enums";
 import { APP_SERVICE_TASKS_REFETCH_INTERVAL_MS, computeAppInstancesHealth } from "~/projects/module-shared/utils";
@@ -28,8 +22,7 @@ import { AppAccessLinksDropdown } from "./building-blocks";
 import { SingleAppHeaderSkeleton } from "./single-app-header.skeleton.com";
 
 function View({ projectId, env, appId }: Props) {
-    const { scheduledJobId, taskId } = useParams<{
-        scheduledJobId?: string;
+    const { taskId } = useParams<{
         taskId?: string;
     }>();
     const { data, isLoading, error } = ProjectsQueries.useFindOneById({ projectID: projectId });
@@ -38,17 +31,6 @@ function View({ projectId, env, appId }: Props) {
         isLoading: isLoadingApp,
         error: errorApp,
     } = ProjectAppsQueries.useFindOneById({ projectID: projectId, env, appID: appId, getStats: true });
-    const { data: scheduledJobResponse } = AppScheduledJobsQueries.useFindOneById(
-        {
-            projectID: projectId,
-            env,
-            appID: appId,
-            scheduledJobID: scheduledJobId ?? "",
-        },
-        {
-            enabled: Boolean(scheduledJobId),
-        },
-    );
     // Mounted for the whole app detail scope, so polling starts on entering the app and stops on leaving it.
     const { data: serviceTasksResponse, isSuccess: isServiceTasksLoaded } = AppServiceTasksQueries.useFindMany(
         { projectID: projectId, env, appID: appId },
@@ -106,34 +88,15 @@ function View({ projectId, env, appId }: Props) {
     const isAppDeleting = appData.status === EProjectAppStatus.Deleting;
     const appEnv = project.envs.find(projectEnv => projectEnv.name === appData.env);
     const appRoute = ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId);
-    const scheduledJobName = scheduledJobResponse?.data.name.trim();
-    const scheduledJobTasksLabel = scheduledJobName ? `${scheduledJobName} Tasks` : "Scheduled Job Tasks";
-    const taskBreadcrumbItems = scheduledJobId
+    const taskBreadcrumbItems = taskId
         ? [
               {
-                  label: "Scheduled Jobs",
-                  to: ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId),
+                  label: "Tasks",
+                  to: ROUTE.projects.single.apps.single.tasks.$route(projectId, env, appId),
               },
               {
-                  label: scheduledJobTasksLabel,
-                  ...(taskId
-                      ? {
-                            to: ROUTE.projects.single.apps.single.scheduledJobTasks.$route(
-                                projectId,
-                                env,
-                                appId,
-                                scheduledJobId,
-                            ),
-                        }
-                      : {}),
+                  label: "Task Details",
               },
-              ...(taskId
-                  ? [
-                        {
-                            label: "Task Details",
-                        },
-                    ]
-                  : []),
           ]
         : [];
     const configurationActivePathPrefixes = [
@@ -180,6 +143,11 @@ function View({ projectId, env, appId }: Props) {
             route: ROUTE.projects.single.apps.single.deployments.$route(projectId, env, appId),
             label: "Deployments",
             activePathPrefixes: [ROUTE.projects.single.apps.single.deployments.$route(projectId, env, appId)],
+        },
+        {
+            route: ROUTE.projects.single.apps.single.tasks.$route(projectId, env, appId),
+            label: "Tasks",
+            activePathPrefixes: [ROUTE.projects.single.apps.single.tasks.$route(projectId, env, appId)],
         },
         {
             route: ROUTE.projects.single.apps.single.logs.$route(projectId, env, appId),

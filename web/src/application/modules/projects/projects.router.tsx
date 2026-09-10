@@ -90,6 +90,11 @@ const LEGACY_PROJECT_STATUS_PATTERNS = {
     auditLogs: "projects/:id/status/audit-logs",
 } as const;
 
+const LEGACY_APP_SCHEDULED_JOB_TASKS_PATTERNS = {
+    tasks: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/tasks",
+    taskDetails: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/tasks/:taskId",
+} as const;
+
 // eslint-disable-next-line react-refresh/only-export-components
 function ProjectLegacyTaskDetailsRouteRedirect() {
     const { id, taskId } = useParams<{ id: string; taskId: string }>();
@@ -126,6 +131,66 @@ function SingleAppRouteRedirect() {
                     ? ROUTE.projects.single.apps.single.configuration.general.$route(id, env, appId)
                     : ROUTE.projects.list.$route
             }
+            replace
+        />
+    );
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+function LegacyScheduledJobTasksRedirect() {
+    const { id, env, appId, scheduledJobId } = useParams<{
+        id: string;
+        env: string;
+        appId: string;
+        scheduledJobId: string;
+    }>();
+
+    if (!id || !env || !appId) {
+        return (
+            <Navigate
+                to={ROUTE.projects.list.$route}
+                replace
+            />
+        );
+    }
+
+    const to = scheduledJobId
+        ? `${ROUTE.projects.single.apps.single.tasks.$route(id, env, appId)}?targetId=${scheduledJobId}`
+        : ROUTE.projects.single.apps.single.tasks.$route(id, env, appId);
+
+    return (
+        <Navigate
+            to={to}
+            replace
+        />
+    );
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+function LegacyScheduledJobTaskDetailsRedirect() {
+    const { id, env, appId, taskId } = useParams<{
+        id: string;
+        env: string;
+        appId: string;
+        taskId: string;
+    }>();
+
+    if (!id || !env || !appId) {
+        return (
+            <Navigate
+                to={ROUTE.projects.list.$route}
+                replace
+            />
+        );
+    }
+
+    const to = taskId
+        ? ROUTE.projects.single.apps.single.tasks.details.$route(id, env, appId, taskId)
+        : ROUTE.projects.single.apps.single.tasks.$route(id, env, appId);
+
+    return (
+        <Navigate
+            to={to}
             replace
         />
     );
@@ -1451,27 +1516,38 @@ export const projectsRouter: RouteObject = {
                     },
                 },
                 /**
-                 * Single App – Scheduled Job Tasks
+                 * Single App – Tasks
                  */
                 {
-                    path: ROUTE.projects.single.apps.single.scheduledJobTasks.$pattern,
+                    path: ROUTE.projects.single.apps.single.tasks.$pattern,
                     lazy: async () => {
-                        const { AppScheduledJobTasksRoute } = await getLazyComponents();
+                        const { SingleAppTasksRoute } = await getLazyComponents();
 
                         return {
-                            Component: AppScheduledJobTasksRoute,
+                            Component: SingleAppTasksRoute,
                         };
                     },
                 },
                 {
-                    path: ROUTE.projects.single.apps.single.scheduledJobTasks.details.$pattern,
+                    path: ROUTE.projects.single.apps.single.tasks.details.$pattern,
                     lazy: async () => {
-                        const { AppScheduledJobTaskDetailsRoute } = await getLazyComponents();
+                        const { SingleAppTaskDetailsRoute } = await getLazyComponents();
 
                         return {
-                            Component: AppScheduledJobTaskDetailsRoute,
+                            Component: SingleAppTaskDetailsRoute,
                         };
                     },
+                },
+                /**
+                 * Single App – Scheduled Job Tasks (Legacy Redirects)
+                 */
+                {
+                    path: LEGACY_APP_SCHEDULED_JOB_TASKS_PATTERNS.tasks,
+                    element: <LegacyScheduledJobTasksRedirect />,
+                },
+                {
+                    path: LEGACY_APP_SCHEDULED_JOB_TASKS_PATTERNS.taskDetails,
+                    element: <LegacyScheduledJobTaskDetailsRedirect />,
                 },
                 /**
                  * Single App – Logs

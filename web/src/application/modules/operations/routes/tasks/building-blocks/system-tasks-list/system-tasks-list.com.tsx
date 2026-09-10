@@ -26,23 +26,32 @@ import { useSystemTaskCurrentTime } from "../task-summary-card/system-task-summa
 
 export interface SystemTasksListProps {
     scope?: SystemTaskScope;
+    initialFilters?: SystemTaskFilterValues;
     onSelectTask?: (task: SystemTask) => void;
     className?: string;
 }
 
-export function SystemTasksList({ scope = { type: "global" }, onSelectTask, className }: SystemTasksListProps) {
+export function SystemTasksList({
+    scope = { type: "global" },
+    initialFilters,
+    onSelectTask,
+    className,
+}: SystemTasksListProps) {
     const { pagination, setPagination, sorting, search, setSearch } = useTableState();
     const { navigate } = useAppNavigate();
 
     // Filter panel toggle state
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isFilterOpen, setIsFilterOpen] = useState(() =>
+        Boolean(initialFilters && Object.values(initialFilters).some(Boolean)),
+    );
 
     // Active filter values
-    const [filters, setFilters] = useState<SystemTaskFilterValues>({});
+    const [filters, setFilters] = useState<SystemTaskFilterValues>(() => initialFilters ?? {});
 
     const activeFilterCount = useMemo(() => {
         let count = 0;
         if (filters.type) count++;
+        if (filters.targetId) count++;
         if (filters.status) count++;
         if (filters.fromDate) count++;
         if (filters.toDate) count++;
@@ -71,6 +80,7 @@ export function SystemTasksList({ scope = { type: "global" }, onSelectTask, clas
             sorting,
             search,
             type: filters.type ? [filters.type] : undefined,
+            targetId: filters.targetId ? [filters.targetId] : undefined,
             status: filters.status ? [filters.status] : undefined,
             fromDate: filters.fromDate,
             toDate: filters.toDate,

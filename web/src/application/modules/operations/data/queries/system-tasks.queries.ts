@@ -5,6 +5,8 @@ import type {
     SystemTasks_FindManyPaginated_Res,
     SystemTasks_FindOneById_Req,
     SystemTasks_FindOneById_Res,
+    SystemTasks_FindTargetObjects_Req,
+    SystemTasks_FindTargetObjects_Res,
     SystemTasks_FindTypes_Req,
     SystemTasks_FindTypes_Res,
 } from "~/operations/api/services";
@@ -59,8 +61,24 @@ function useFindTypes(request: FindTypesReq = {}, options: FindTypesOptions = {}
     });
 }
 
+type FindTargetObjectsReq = SystemTasks_FindTargetObjects_Req["data"];
+type FindTargetObjectsRes = SystemTasks_FindTargetObjects_Res;
+type FindTargetObjectsOptions = Omit<UseQueryOptions<FindTargetObjectsRes>, "queryKey" | "queryFn">;
+
+function useFindTargetObjects(request: FindTargetObjectsReq = {}, options: FindTargetObjectsOptions = {}) {
+    const { queries } = useSystemTasksApi();
+
+    return useQuery({
+        queryKey: [QK["operations.tasks.find-target-objects"], request],
+        queryFn: ({ signal }) => queries.findTargetObjects(request, signal),
+        staleTime: 60_000,
+        ...options,
+    });
+}
+
 export const SystemTasksQueries = Object.freeze({
     useFindManyPaginated,
     useFindOneById,
     useFindTypes,
+    useFindTargetObjects,
 });

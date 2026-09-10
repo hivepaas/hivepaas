@@ -15,6 +15,7 @@ export interface SystemTaskFilterValues {
     appId?: string;
     scopeOnly?: boolean;
     type?: string;
+    targetId?: string;
     status?: SystemTaskStatus;
     fromDate?: string;
     toDate?: string;
@@ -66,6 +67,7 @@ const ALL_TASK_TYPES_FALLBACK = [
 export function SystemTasksFilterBar({ scope, filters, onChange, className }: SystemTasksFilterBarProps) {
     const isGlobalScope = !scope || scope.type === "global";
     const isProjectOrEnvScope = scope?.type === "project" || scope?.type === "project-env";
+    const isAppScope = scope?.type === "app";
     const projectID = isProjectOrEnvScope ? scope.projectID : "";
 
     // 1. Fetch available types from backend (with static fallback)
@@ -84,8 +86,19 @@ export function SystemTasksFilterBar({ scope, filters, onChange, className }: Sy
     );
     const apps = appsResponse?.data ?? [];
 
+    // 4. Fetch target objects for Target Job filter (app scope only)
+    const { data: targetObjectsResponse } = SystemTasksQueries.useFindTargetObjects({ scope }, { enabled: isAppScope });
+    const targetObjects = targetObjectsResponse?.data ?? [];
+
     const projectSelectValue = filters.scopeOnly ? "scope-only" : (filters.projectId ?? "all");
     const appSelectValue = filters.scopeOnly ? "scope-only" : (filters.appId ?? "all");
+
+    function handleTargetJobChange(val: string) {
+        onChange({
+            ...filters,
+            targetId: val === "all" ? undefined : val,
+        });
+    }
 
     function handleProjectChange(val: string) {
         if (val === "scope-only") {
@@ -240,6 +253,44 @@ export function SystemTasksFilterBar({ scope, filters, onChange, className }: Sy
                                                 className="size-4.5 text-[9px] shrink-0"
                                             />
                                             <span className="truncate">{app.name}</span>
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
+
+                {/* Target Job Dropdown (app scope only) */}
+                {isAppScope && (
+                    <div className="flex flex-col gap-1.5 min-w-0">
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            Target Job
+                        </span>
+                        <Select
+                            value={filters.targetId ?? "all"}
+                            onValueChange={handleTargetJobChange}
+                        >
+                            <SelectTrigger className="h-9 w-full">
+                                <SelectValue placeholder="All Jobs" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    <span>All Jobs</span>
+                                </SelectItem>
+                                {targetObjects.map(item => (
+                                    <SelectItem
+                                        key={item.id}
+                                        value={item.id}
+                                    >
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <Badge
+                                                variant="outline"
+                                                className="font-mono text-[11px] px-1.5 py-0.5 rounded-md shrink-0 border-border/70 bg-muted/50 text-foreground"
+                                            >
+                                                {item.type}
+                                            </Badge>
+                                            <span className="truncate">{item.name}</span>
                                         </div>
                                     </SelectItem>
                                 ))}

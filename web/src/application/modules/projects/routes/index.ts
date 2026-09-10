@@ -75,8 +75,8 @@ export {
     AppTerminalRoute,
     AppPreviewDeploymentCreateRoute,
     AppPreviewDeploymentsRoute,
-    AppScheduledJobTaskDetailsRoute,
-    AppScheduledJobTasksRoute,
+    SingleAppTaskDetailsRoute,
+    SingleAppTasksRoute,
     // Single App Configuration
     AppConfigGeneralRoute,
     AppConfigDeploymentSettingsRoute,

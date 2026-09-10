@@ -11,6 +11,8 @@ import type {
     SystemTasks_FindManyPaginated_Res,
     SystemTasks_FindOneById_Req,
     SystemTasks_FindOneById_Res,
+    SystemTasks_FindTargetObjects_Req,
+    SystemTasks_FindTargetObjects_Res,
     SystemTasks_FindTypes_Req,
     SystemTasks_FindTypes_Res,
     SystemTasks_GetLogs_Req,
@@ -117,6 +119,23 @@ export class SystemTasksApi extends BaseApi {
         return lastValueFrom(
             from(this.client.v1.get(url, { signal })).pipe(
                 map(this.validator.findTypes),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async findTargetObjects(
+        request: SystemTasks_FindTargetObjects_Req = { data: {} },
+        signal?: AbortSignal,
+    ): Promise<Result<SystemTasks_FindTargetObjects_Res, Error>> {
+        const { scope } = request.data;
+        const baseUrl = resolveSystemTasksEndpoint(scope);
+        const url = `${baseUrl}/target-objects`;
+
+        return lastValueFrom(
+            from(this.client.v1.get(url, { signal })).pipe(
+                map(this.validator.findTargetObjects),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

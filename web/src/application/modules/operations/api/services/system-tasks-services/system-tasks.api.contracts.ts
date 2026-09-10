@@ -59,3 +59,15 @@ export type SystemTasks_Cancel_Req = ApiRequestBase<{
 export type SystemTasks_Cancel_Res = ApiResponseBase<{
     canceled: boolean;
 }>;
+
+export interface SystemTaskTargetObject {
+    id: string;
+    type: string;
+    name: string;
+}
+
+export type SystemTasks_FindTargetObjects_Req = ApiRequestBase<{
+    scope?: SystemTaskScope;
+}>;
+
+export type SystemTasks_FindTargetObjects_Res = ApiResponseBase<SystemTaskTargetObject[]>;

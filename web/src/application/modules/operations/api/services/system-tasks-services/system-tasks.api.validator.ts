@@ -8,6 +8,7 @@ import type {
     SystemTasks_Cancel_Res,
     SystemTasks_FindManyPaginated_Res,
     SystemTasks_FindOneById_Res,
+    SystemTasks_FindTargetObjects_Res,
     SystemTasks_FindTypes_Res,
 } from "./system-tasks.api.contracts";
 
@@ -139,6 +140,17 @@ const FindTypesSchema = z.object({
     meta: BaseMetaApiSchema.nullish(),
 });
 
+const TargetObjectSchema = z.object({
+    id: z.string(),
+    type: z.string().optional().default(""),
+    name: z.string().optional().default(""),
+});
+
+const FindTargetObjectsSchema = z.object({
+    data: z.array(TargetObjectSchema),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
 const CancelSchema = z.object({
     data: z.object({
         canceled: z.boolean(),
@@ -159,6 +171,11 @@ export class SystemTasksApiValidator {
 
     findTypes = (response: AxiosResponse): SystemTasks_FindTypes_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindTypesSchema });
+        return { data, meta };
+    };
+
+    findTargetObjects = (response: AxiosResponse): SystemTasks_FindTargetObjects_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: FindTargetObjectsSchema });
         return { data, meta };
     };
 

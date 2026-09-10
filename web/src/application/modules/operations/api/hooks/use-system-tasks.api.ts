@@ -3,9 +3,11 @@ import { use, useMemo } from "react";
 import { match } from "oxide.ts";
 import { OperationsApiContext } from "~/operations/api/api-context";
 import type {
+    SystemTaskTargetObject,
     SystemTasks_Cancel_Req,
     SystemTasks_FindManyPaginated_Req,
     SystemTasks_FindOneById_Req,
+    SystemTasks_FindTargetObjects_Req,
     SystemTasks_FindTypes_Req,
 } from "~/operations/api/services";
 
@@ -46,6 +48,17 @@ function createHook() {
                     return match(result, {
                         Ok: _ => _,
                         Err: () => ({ data: [] as string[] }),
+                    });
+                },
+                findTargetObjects: async (
+                    data: SystemTasks_FindTargetObjects_Req["data"] = {},
+                    signal?: AbortSignal,
+                ) => {
+                    const result = await api.operations.tasks.findTargetObjects({ data }, signal);
+
+                    return match(result, {
+                        Ok: _ => _,
+                        Err: () => ({ data: [] as SystemTaskTargetObject[] }),
                     });
                 },
             }),

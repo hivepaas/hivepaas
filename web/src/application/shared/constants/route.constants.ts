@@ -758,14 +758,14 @@ export const ROUTE = {
                         },
                     },
 
-                    scheduledJobTasks: {
-                        $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/tasks",
-                        $route: (id: string, env: string, appId: string, scheduledJobId: string) =>
-                            `/projects/${id}/${env}/apps/${appId}/sched-jobs/${scheduledJobId}/tasks/`,
+                    tasks: {
+                        $pattern: "projects/:id/:env/apps/:appId/tasks",
+                        $route: (id: string, env: string, appId: string) =>
+                            `/projects/${id}/${env}/apps/${appId}/tasks/`,
                         details: {
-                            $pattern: "projects/:id/:env/apps/:appId/sched-jobs/:scheduledJobId/tasks/:taskId",
-                            $route: (id: string, env: string, appId: string, scheduledJobId: string, taskId: string) =>
-                                `/projects/${id}/${env}/apps/${appId}/sched-jobs/${scheduledJobId}/tasks/${taskId}/`,
+                            $pattern: "projects/:id/:env/apps/:appId/tasks/:taskId",
+                            $route: (id: string, env: string, appId: string, taskId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/tasks/${taskId}/`,
                         },
                     },
 

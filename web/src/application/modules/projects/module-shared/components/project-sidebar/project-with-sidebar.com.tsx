@@ -294,7 +294,6 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
             case "clusterResources":
                 return createClusterResourcesSections(projectId);
             case "operations":
-            case "status":
                 return createOperationsSections(projectId);
             case "configuration":
             default:
@@ -304,9 +303,15 @@ function View({ projectId: projectIdProp, section = "providerConfiguration", chi
 
     const allTabs = useMemo(() => sections.flatMap(sec => sec.items), [sections]);
     const activeKey = findActiveTab(allTabs, location.pathname);
+    const isOperations = section === "operations";
 
     return (
-        <div className="flex flex-col gap-2 md:flex-row md:gap-4 w-full max-w-[1400px] mx-auto min-w-0">
+        <div
+            className={cn(
+                "flex flex-col gap-2 md:flex-row md:gap-4 w-full mx-auto min-w-0",
+                isOperations ? "max-w-[1600px]" : "max-w-[1400px]",
+            )}
+        >
             {/* Mobile Dropdown Navigation (< md) */}
             <div className="md:hidden w-full bg-background/95 backdrop-blur-md rounded-xl p-2 shadow-xs sticky top-[53px] z-20 border border-amber-500/25">
                 <Select

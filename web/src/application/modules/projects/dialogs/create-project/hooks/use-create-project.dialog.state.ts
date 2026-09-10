@@ -56,4 +56,3 @@ export const useCreateProjectDialogState = create<State & Actions>()(set => ({
         });
     },
 }));
-

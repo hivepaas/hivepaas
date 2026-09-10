@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 const OptionalStringSchema = z
     .string()
     .nullish()
@@ -15,7 +16,10 @@ export const ProjectAppParentSchema = z
         id: z.string(),
         name: OptionalStringSchema,
         key: OptionalStringSchema,
-        status: z.string().nullish().transform(value => value ?? ""),
+        status: z
+            .string()
+            .nullish()
+            .transform(value => value ?? ""),
         env: OptionalStringSchema,
     })
     .nullish()

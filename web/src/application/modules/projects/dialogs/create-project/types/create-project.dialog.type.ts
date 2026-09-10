@@ -15,4 +15,3 @@ export interface CreateProjectDialogOptions {
         onError?: (error: Error) => void;
     };
 }
-

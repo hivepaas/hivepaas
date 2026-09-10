@@ -34,10 +34,7 @@ function buildMountsWithIds(initialMounts: AppStorageMount[]): StorageMountWithI
 }
 
 export function StorageMountsProvider({ initialMounts = [], children }: StorageMountsProviderProps) {
-    const buildMountsWithIdsCallback = useCallback(
-        () => buildMountsWithIds(initialMounts),
-        [initialMounts],
-    );
+    const buildMountsWithIdsCallback = useCallback(() => buildMountsWithIds(initialMounts), [initialMounts]);
 
     const [mounts, setMounts] = useState<StorageMountWithId[]>(buildMountsWithIdsCallback);
 

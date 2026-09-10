@@ -14,7 +14,14 @@ export interface TagInputProps {
     disabled?: boolean;
 }
 
-export function TagInput({ tags, onCreate, onDelete, placeholder = "Enter tag", className, disabled = false }: TagInputProps) {
+export function TagInput({
+    tags,
+    onCreate,
+    onDelete,
+    placeholder = "Enter tag",
+    className,
+    disabled = false,
+}: TagInputProps) {
     const [isInputVisible, setIsInputVisible] = React.useState(false);
     const [inputValue, setInputValue] = React.useState("");
     const inputRef = React.useRef<HTMLInputElement>(null);

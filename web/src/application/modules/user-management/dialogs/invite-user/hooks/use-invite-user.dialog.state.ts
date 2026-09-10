@@ -55,4 +55,3 @@ export const useInviteUserDialogState = create<State & Actions>()(set => ({
         });
     },
 }));
-

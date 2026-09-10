@@ -5,8 +5,8 @@ import type { SettingAcmeDnsProvider } from "~/settings/domain";
 import { SettingStatusBadge } from "~/settings/module-shared/components";
 import { formatAcmeDnsProviderKind } from "~/settings/module-shared/constants/acme-dns-provider.constants";
 
-import { AcmeDnsProviderEditCell, AcmeDnsProviderMenuCell } from "./building-blocks";
 import type { AcmeDnsProviderTableScope } from "./acme-dns-provider-table.types";
+import { AcmeDnsProviderEditCell, AcmeDnsProviderMenuCell } from "./building-blocks";
 
 function createColumns(scope: AcmeDnsProviderTableScope): ColumnDef<SettingAcmeDnsProvider>[] {
     return [

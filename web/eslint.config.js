@@ -76,6 +76,13 @@ export default tseslint.config(
         },
         rules: {
             ...prettierConfig.rules,
+            // Formatting is reported through ESLint so there is one place to
+            // look and one command to fix it. Order matters: eslint-config-prettier
+            // above switches off every core rule that would fight Prettier, and
+            // this turns Prettier's own output into the single formatting error.
+            // Do not re-enable a formatting rule below this line - see the note
+            // on jsx-indent for what that costs.
+            "prettier/prettier": "error",
             // TypeScript rules
             "@typescript-eslint/no-namespace": "off",
             "@typescript-eslint/prefer-namespace-keyword": "off",

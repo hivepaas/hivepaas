@@ -2,9 +2,10 @@ import { StrictMode } from "react";
 
 import { createRoot } from "react-dom/client";
 
-import { EnvConfig } from "@config";
 import { Toaster } from "@components/ui/sonner";
 import { DeviceInfo } from "@infrastructure/device";
+
+import { EnvConfig } from "@config";
 
 import "@application/shared/utils/time-ago";
 

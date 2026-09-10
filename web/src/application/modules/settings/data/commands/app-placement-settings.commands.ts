@@ -1,9 +1,6 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAppPlacementSettingsApi } from "~/settings/api/hooks";
-import type {
-    AppPlacementSettings_UpdateOne_Req,
-    AppPlacementSettings_UpdateOne_Res,
-} from "~/settings/api/services";
+import type { AppPlacementSettings_UpdateOne_Req, AppPlacementSettings_UpdateOne_Res } from "~/settings/api/services";
 import { QK } from "~/settings/data/constants";
 
 type UpdateOneReq = AppPlacementSettings_UpdateOne_Req["data"];

@@ -37,7 +37,10 @@ function View({ status }: Props) {
 
     return (
         <Badge
-            className={cn(statusColorMap[status as EProjectSecretStatus] ?? "bg-primary text-primary-foreground", "h-6")}
+            className={cn(
+                statusColorMap[status as EProjectSecretStatus] ?? "bg-primary text-primary-foreground",
+                "h-6",
+            )}
         >
             {statusMap[status as EProjectSecretStatus] ?? formatStatusLabel(status)}
         </Badge>

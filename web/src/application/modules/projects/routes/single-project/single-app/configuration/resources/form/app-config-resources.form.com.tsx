@@ -9,12 +9,7 @@ import { ContentBlock } from "@application/shared/components";
 
 import { type ValidationException } from "@infrastructure/exceptions/validation";
 
-import {
-    CapabilitiesFields,
-    MemoryFields,
-    ResourceLimitFields,
-    ResourceReservationFields,
-} from "../building-blocks";
+import { CapabilitiesFields, MemoryFields, ResourceLimitFields, ResourceReservationFields } from "../building-blocks";
 import {
     AppConfigResourcesFormSchema,
     type AppConfigResourcesFormSchemaInput,

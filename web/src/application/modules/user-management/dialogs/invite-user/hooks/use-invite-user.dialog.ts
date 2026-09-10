@@ -21,4 +21,3 @@ function createHook() {
 }
 
 export const useInviteUserDialog = createHook();
-

@@ -16,16 +16,14 @@ export type ProjectEnvVars_FindOne_Res = ApiResponseBase<ProjectEnvVar>;
 /**
  * Update project env vars
  */
-export type ProjectEnvVars_UpdateOne_Req = ApiRequestBase<
-    {
-        projectID: string;
-        /** When set to a concrete env name, uses /projects/{id}/{env}/env-vars */
-        env?: string;
-        updateVer: number;
-        buildtime: ProjectBuildtimeEnvVar[];
-        runtime: ProjectRuntimeEnvVar[];
-    }
->;
+export type ProjectEnvVars_UpdateOne_Req = ApiRequestBase<{
+    projectID: string;
+    /** When set to a concrete env name, uses /projects/{id}/{env}/env-vars */
+    env?: string;
+    updateVer: number;
+    buildtime: ProjectBuildtimeEnvVar[];
+    runtime: ProjectRuntimeEnvVar[];
+}>;
 
 export type ProjectEnvVars_UpdateOne_Res = ApiResponseBase<{
     type: "success";

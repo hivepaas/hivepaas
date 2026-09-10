@@ -5,10 +5,7 @@ import type {
     AppDeployments_FindManyPaginated_Res,
     AppDeployments_FindOneById_Res,
 } from "~/projects/api/services/project-apps-services";
-import {
-    EAppDeploymentMethod,
-    EAppDeploymentTriggerSource,
-} from "~/projects/module-shared/enums";
+import { EAppDeploymentMethod, EAppDeploymentTriggerSource } from "~/projects/module-shared/enums";
 
 import { EUserRole } from "@application/shared/enums";
 

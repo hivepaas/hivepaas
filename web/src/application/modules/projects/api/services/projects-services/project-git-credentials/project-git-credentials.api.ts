@@ -82,14 +82,17 @@ export class ProjectGitCredentialsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`${getProjectGitCredentialsBasePath(projectID, env)}/${itemID}/repository/branches`, {
-                    params: {
-                        ...query.build(),
-                        ...(owner !== undefined ? { owner } : {}),
-                        repo,
+                this.client.v1.get(
+                    `${getProjectGitCredentialsBasePath(projectID, env)}/${itemID}/repository/branches`,
+                    {
+                        params: {
+                            ...query.build(),
+                            ...(owner !== undefined ? { owner } : {}),
+                            repo,
+                        },
+                        signal,
                     },
-                    signal,
-                }),
+                ),
             ).pipe(
                 map(response => this.validator.findManyBranches(response)),
                 map(res => Ok(res)),
@@ -108,14 +111,17 @@ export class ProjectGitCredentialsApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(`${getProjectGitCredentialsBasePath(projectID, env)}/${itemID}/repository/pull-requests`, {
-                    params: {
-                        ...query.build(),
-                        ...(owner !== undefined ? { owner } : {}),
-                        repo,
+                this.client.v1.get(
+                    `${getProjectGitCredentialsBasePath(projectID, env)}/${itemID}/repository/pull-requests`,
+                    {
+                        params: {
+                            ...query.build(),
+                            ...(owner !== undefined ? { owner } : {}),
+                            repo,
+                        },
+                        signal,
                     },
-                    signal,
-                }),
+                ),
             ).pipe(
                 map(response => this.validator.findManyPullRequests(response)),
                 map(res => Ok(res)),

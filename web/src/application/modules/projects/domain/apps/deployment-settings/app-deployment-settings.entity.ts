@@ -1,4 +1,9 @@
-import { type EAppDeploymentMethod, type EBuildTool, type EDockerfileSource, type ERepoType } from "~/projects/module-shared/enums";
+import {
+    type EAppDeploymentMethod,
+    type EBuildTool,
+    type EDockerfileSource,
+    type ERepoType,
+} from "~/projects/module-shared/enums";
 import { type SettingsBaseEntity } from "~/settings/domain";
 
 export type DeploymentDockerfile = {

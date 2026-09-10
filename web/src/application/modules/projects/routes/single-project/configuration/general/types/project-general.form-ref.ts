@@ -6,4 +6,3 @@ export interface ProjectGeneralFormRef {
     setValues: (values: Partial<ProjectGeneralFormSchemaInput>) => void;
     onError: (error: ValidationException) => void;
 }
-

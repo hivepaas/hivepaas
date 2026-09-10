@@ -168,7 +168,9 @@ function groupCommandTemplates(commandTemplates: ProjectCommandTemplate[], searc
             return true;
         }
 
-        return [commandTemplate.kind, commandTemplate.name].some(value => value.toLowerCase().includes(normalizedSearch));
+        return [commandTemplate.kind, commandTemplate.name].some(value =>
+            value.toLowerCase().includes(normalizedSearch),
+        );
     });
 
     const sorted = [...filtered].sort((left, right) => {

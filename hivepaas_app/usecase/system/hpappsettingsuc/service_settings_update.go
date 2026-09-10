@@ -75,9 +75,10 @@ func (uc *UC) UpdateServiceSettings(
 	}
 
 	if data.workerSvcChanges {
-		e := gofn.ExecRetry(func() error {
-			return uc.applyServiceSettingsToWorkerService(ctx, data)
-		}, serviceUpdateMaxRetry, serviceUpdateRetryInterval)
+		// No outer retry: applyServiceSettingsToWorkerService retries internally,
+		// re-inspecting the service each time. Wrapping it in another retry only
+		// multiplied the attempts.
+		e := uc.applyServiceSettingsToWorkerService(ctx, data)
 
 		// When task queue(s) are shutdown but the setting application fails,
 		// restart the services to make sure they run properly.
@@ -123,9 +124,8 @@ func (uc *UC) UpdateServiceSettings(
 	// request context uncancellable. Putting the self-restart at the end means
 	// none of that has to hold.
 	if data.mainSvcChanges {
-		e := gofn.ExecRetry(func() error {
-			return uc.applyServiceSettingsToMainService(ctx, data)
-		}, serviceUpdateMaxRetry, serviceUpdateRetryInterval)
+		// See applyServiceSettingsToWorkerService on the missing outer retry.
+		e := uc.applyServiceSettingsToMainService(ctx, data)
 
 		// When task queue(s) are shutdown but the setting application fails,
 		// restart the services to make sure they run properly.
@@ -350,51 +350,76 @@ func (uc *UC) reapplyClientIPStrategy(ctx context.Context, data *updateServiceSe
 	return nil
 }
 
+// applyServiceSettingsToMainService pushes the replica count onto the HivePaaS
+// main service.
+//
+// The service is re-inspected instead of reusing the copy loaded at the start of
+// the request, because by the time this runs that copy is two ways stale. A proxy
+// change in the same request has already gone through reapplyClientIPStrategy,
+// which does its own ServiceUpdate on this very service: its version index has
+// moved on - swarm answers a stale one with "update out of sequence", and
+// retrying the same stale index just fails again - and its spec now carries the
+// regenerated ip-strategy labels that pushing the old spec would silently undo.
+// ServiceUpdateFunc with a nil service inspects before every attempt, so both the
+// version and the labels come from whatever is live now.
 func (uc *UC) applyServiceSettingsToMainService(
 	ctx context.Context,
 	data *updateServiceSettingsData,
 ) error {
-	mainAppSvc := data.MainService
+	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.MainService.ID, nil,
+		func(_ int, mainAppSvc *swarm.Service) (bool, error) {
+			data.MainService = mainAppSvc
 
-	// Set service mode and replicas
-	mainAppSvc.Spec.Mode.Replicated = &swarm.ReplicatedService{
-		Replicas: new(uint64(data.NewSettings.AppSettings.Replicas)), //nolint:gosec
-	}
-	mainAppSvc.Spec.TaskTemplate.ForceUpdate++
+			// Set service mode and replicas
+			mainAppSvc.Spec.Mode.Replicated = &swarm.ReplicatedService{
+				Replicas: new(uint64(data.NewSettings.AppSettings.Replicas)), //nolint:gosec
+			}
+			mainAppSvc.Spec.TaskTemplate.ForceUpdate++
 
-	if mainAppSvc.Spec.UpdateConfig == nil {
-		mainAppSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
-	}
-	mainAppSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
-	mainAppSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
+			if mainAppSvc.Spec.UpdateConfig == nil {
+				mainAppSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
+			}
+			mainAppSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
+			mainAppSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
 
-	_, err := uc.dockerManager.ServiceUpdate(ctx, mainAppSvc.ID, &mainAppSvc.Version, &mainAppSvc.Spec)
+			return true, nil
+		}, serviceUpdateMaxRetry, serviceUpdateRetryInterval)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	return nil
 }
 
+// applyServiceSettingsToWorkerService pushes the replica count onto the HivePaaS
+// worker service.
+//
+// Re-inspected per attempt for the same reason as the main service: a retry that
+// replays the version index that just lost is guaranteed to lose again. Nothing
+// earlier in this request touches the worker service, so the first attempt is only
+// paying an extra inspect - the retries are what this buys.
 func (uc *UC) applyServiceSettingsToWorkerService(
 	ctx context.Context,
 	data *updateServiceSettingsData,
 ) error {
-	mainAppSvc, workerSvc := data.MainService, data.WorkerService
-	uc.hpAppService.SyncHpWorkerSwarmServiceConfig(mainAppSvc, workerSvc)
+	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.WorkerService.ID, nil,
+		func(_ int, workerSvc *swarm.Service) (bool, error) {
+			data.WorkerService = workerSvc
+			uc.hpAppService.SyncHpWorkerSwarmServiceConfig(data.MainService, workerSvc)
 
-	// Set service mode and replicas
-	workerSvc.Spec.Mode.Replicated = &swarm.ReplicatedService{
-		Replicas: new(uint64(data.NewSettings.WorkerSettings.Replicas)), //nolint:gosec
-	}
-	workerSvc.Spec.TaskTemplate.ForceUpdate++
+			// Set service mode and replicas
+			workerSvc.Spec.Mode.Replicated = &swarm.ReplicatedService{
+				Replicas: new(uint64(data.NewSettings.WorkerSettings.Replicas)), //nolint:gosec
+			}
+			workerSvc.Spec.TaskTemplate.ForceUpdate++
 
-	if workerSvc.Spec.UpdateConfig == nil {
-		workerSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
-	}
-	workerSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
-	workerSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
+			if workerSvc.Spec.UpdateConfig == nil {
+				workerSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
+			}
+			workerSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
+			workerSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
 
-	_, err := uc.dockerManager.ServiceUpdate(ctx, workerSvc.ID, &workerSvc.Version, &workerSvc.Spec)
+			return true, nil
+		}, serviceUpdateMaxRetry, serviceUpdateRetryInterval)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

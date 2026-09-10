@@ -88,3 +88,14 @@ type TaskCommand string
 const (
 	TaskCommandCancel TaskCommand = "cancel"
 )
+
+type TaskTargetType string
+
+const (
+	TaskTargetTypeSchedJob    TaskTargetType = "sched-job"
+	TaskTargetTypePeriodicJob TaskTargetType = "periodic-job"
+)
+
+var (
+	AllTaskTargetTypes = []TaskTargetType{TaskTargetTypeSchedJob, TaskTargetTypePeriodicJob}
+)

@@ -298,6 +298,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 		taskGroup.GET("/:itemID/status", projectHandler.GetTaskStatus)
 		taskGroup.POST("/:itemID/cancel", projectHandler.CancelTask)
 		taskGroup.GET("/:itemID/logs", projectHandler.GetTaskLogs)
+		taskGroup.GET("/target-objects", projectHandler.ListTaskTargetObject)
 	}
 
 	s.registerProjectEnvRoutes(projectGroup.Group("/:projectID"))

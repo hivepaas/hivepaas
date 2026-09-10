@@ -123,6 +123,7 @@ func (uc *UC) loadProjectDataForUpdate(
 				Name:      envReq.Name,
 				Key:       projecthelper.CalcProjectEnvKey(envReq.Name),
 				Status:    base.ProjectStatusActive,
+				Color:     envReq.Color,
 				Index:     i,
 				CreatedAt: timeNow,
 				UpdatedAt: timeNow,

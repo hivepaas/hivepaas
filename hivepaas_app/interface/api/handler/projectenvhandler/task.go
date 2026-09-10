@@ -111,3 +111,19 @@ func (h *Handler) GetTaskLogs(ctx *gin.Context) {
 func (h *Handler) CancelTask(ctx *gin.Context) {
 	h.TaskHandler.CancelTask(ctx, base.ObjectScopeProjectEnv)
 }
+
+// ListTaskTargetObject Lists task target objects
+// @Summary Lists task target objects
+// @Description Lists task target objects
+// @Tags    project_env_tasks
+// @Produce json
+// @Id      listProjectEnvTaskTargetObject
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project Env"
+// @Success 200 {object} taskdto.ListTargetObjectsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/tasks/target-objects [get]
+func (h *Handler) ListTaskTargetObject(ctx *gin.Context) {
+	h.TaskHandler.ListTargetObject(ctx, base.ObjectScopeProjectEnv)
+}

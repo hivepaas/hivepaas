@@ -238,6 +238,7 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 	{ // Task group
 		taskGroup := projectEnvGroup.Group("/tasks")
 		taskGroup.GET("", projectEnvHandler.ListTask)
+		taskGroup.GET("/types", projectEnvHandler.ListTaskType)
 		taskGroup.GET("/:itemID", projectEnvHandler.GetTask)
 		taskGroup.GET("/:itemID/status", projectEnvHandler.GetTaskStatus)
 		taskGroup.POST("/:itemID/cancel", projectEnvHandler.CancelTask)

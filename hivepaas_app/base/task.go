@@ -1,5 +1,7 @@
 package base
 
+import "github.com/tiendc/gofn"
+
 type TaskType string
 
 const (
@@ -27,9 +29,10 @@ var (
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
 		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert, TaskTypeAppLabelsSweep}
 
-	AllGlobalTaskTypes   = AllTaskTypes
+	// These are listing types for front-end to show
+	AllGlobalTaskTypes   = gofn.Drop(AllTaskTypes, TaskTypeDummy)
 	AllHivepaasTaskTypes = []TaskType{}
-	AllProjectTaskTypes  = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
+	AllProjectTaskTypes  = []TaskType{TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec}
 	AllAppTaskTypes  = AllProjectTaskTypes
 	AllUserTaskTypes = []TaskType{}

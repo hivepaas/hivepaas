@@ -204,6 +204,12 @@ VALUES ('01JAB9XED0GTXBSQDFVYAJ8WE1', '', NULL, 'oauth', 'github', 'Github', 'ac
         '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
        ('01JAB9XED0GTXBSQDFVYAJ8WR1', '', NULL, 'cloud-storage', 'aws-s3', 'my cloud storage (s3)', 'active', true, true,
         '{"s3": {"secretKey": "hpenc:Wep2Rt6LyLSqEXFhx6WBpWCnKvSVftqlUpbReY24l/8716IEg7NXjVPTP0X8PIY0eaTjkDEQX405WbZGE2HJm4GmVo5Kj4OSI3VQ7RMQ17vDlj/yA3TmnScZJyQ=", "accessKeyId": "e74c319305880f8ce70dedb4463b4e8a", "bucket": "localpaas-dev", "region": "apac", "endpoint": "https://2d8acc928b0d56d7301b169067ba96af.r2.cloudflarestorage.com"}}',
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WS1', '', NULL, 'backup-repo', 'kopia', 'kopia 11', 'active', true, true,
+        '{"engine": "kopia", "packSize": "32mb", "password": "hpenc:7b+uV94qY2h+/CEJuPfTZeuI/ASqTYO48ie7UlcypUbSAPvZ7uYpw1g=", "retention": {"keepLast": 10, "keepDaily": 7, "keepHourly": 48, "keepWeekly": 4, "keepMonthly": 24}, "compression": "zstd-fastest", "cloudStorage": {"id": "01JAB9XED0GTXBSQDFVYAJ8WR1"}, "storagePrefix": "/kopia11"}',
+        '2025-10-01 00:00:00', '2025-10-01 00:00:00'),
+       ('01JAB9XED0GTXBSQDFVYAJ8WS2', '', NULL, 'backup-repo', 'kopia', 'kopia 12', 'active', true, true,
+        '{"engine": "kopia", "packSize": "20mb", "password": "hpenc:x3SE/YqsnWRh4Qrv3iq4I2wAfm8aiqTeigr7oOChkoG1mHyZD3gsa6Y=", "retention": {"keepLast": 10, "keepDaily": 7, "keepHourly": 48, "keepWeekly": 4, "keepMonthly": 24}, "compression": "none", "cloudStorage": {"id": "01JAB9XED0GTXBSQDFVYAJ8WR1"}, "storagePrefix": "/kopia12"}',
         '2025-10-01 00:00:00', '2025-10-01 00:00:00')
 ON CONFLICT DO NOTHING;
 

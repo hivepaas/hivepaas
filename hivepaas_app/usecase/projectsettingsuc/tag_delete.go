@@ -6,10 +6,12 @@ import (
 
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -31,7 +33,13 @@ func (uc *UC) DeleteProjectTags(
 		persistingData := &persistingProjectData{}
 		uc.prepareDeletingProjectTag(tagData, persistingData)
 
-		return uc.persistData(ctx, db, persistingData)
+		if err := uc.persistData(ctx, db, persistingData); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		return uc.recordProjectUpdate(ctx, db, auth, tagData.Project,
+			base.AuditLogSourceAPIDelete, "tag-delete", auditdetail.New().
+				Set("tags", req.Tags))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

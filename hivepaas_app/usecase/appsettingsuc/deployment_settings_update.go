@@ -45,7 +45,7 @@ func (uc *UC) UpdateAppDeploymentSettings(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.recordAppUpdate(ctx, db, auth, data.App, "deployment", auditdetail.New().
+		return uc.recordAppUpdate(ctx, db, auth, data.App, base.AuditLogSourceAPIUpdate, "deployment", auditdetail.New().
 			WithChangedFields(parseAppSetting(data.DeploymentSetting), data.NewDeploymentSettings))
 	})
 	if err != nil {

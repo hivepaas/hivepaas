@@ -43,7 +43,7 @@ func (uc *UC) UpdateAppStorageSettings(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.recordAppUpdate(ctx, db, auth, data.App, "storage", auditdetail.New().
+		return uc.recordAppUpdate(ctx, db, auth, data.App, base.AuditLogSourceAPIUpdate, "storage", auditdetail.New().
 			Set("mountCount", len(data.FinalMounts)))
 	})
 	if err != nil {

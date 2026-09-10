@@ -34,6 +34,7 @@ func (uc *UC) recordAppUpdate(
 	db database.IDB,
 	auth *basedto.Auth,
 	app *entity.App,
+	source base.AuditLogSource,
 	section string,
 	detail *auditdetail.Builder,
 ) error {
@@ -48,7 +49,7 @@ func (uc *UC) recordAppUpdate(
 		Type:     base.AuditLogTypeAppUpdate,
 		Scope:    base.ObjectScopeApp,
 		ObjectID: app.ID,
-		Source:   base.AuditLogSourceAPIUpdate,
+		Source:   source,
 		Auth:     auth,
 		ResType:  base.ResourceTypeApp,
 		ResID:    app.ID,

@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -40,7 +41,21 @@ func (uc *UC) UpdateAppPhoto(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.persistAppPhotoData(ctx, db, persistingData)
+		if err := uc.persistAppPhotoData(ctx, db, persistingData); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		// Nothing to record when the request asked for no change: preparing is a
+		// no-op in that case, and an entry saying the photo was set when it was
+		// not is worse than no entry.
+		if !req.IsChanged() {
+			return nil
+		}
+
+		return uc.recordAppWrite(ctx, db, auth, appData.App,
+			base.AuditLogTypeAppUpdate, base.AuditLogSourceAPIUpdate, "photo", auditdetail.New().
+				Set("action", photoAction(req.AppPhotoReq)).
+				Set("fileName", req.FileName))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

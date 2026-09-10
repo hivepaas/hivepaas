@@ -5,6 +5,7 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -35,7 +36,7 @@ func (uc *UC) UpdateAppServiceSettings(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.recordAppUpdate(ctx, db, auth, data.App, "service", nil)
+		return uc.recordAppUpdate(ctx, db, auth, data.App, base.AuditLogSourceAPIUpdate, "service", nil)
 	})
 	if err != nil {
 		// A failed mode change rolls the swarm service back, but under a new ID. The transaction is

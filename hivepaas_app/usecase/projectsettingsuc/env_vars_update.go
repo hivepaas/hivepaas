@@ -55,9 +55,10 @@ func (uc *UC) UpdateProjectEnvVars(
 
 		// Which classes of variable moved, not which variables: an env var value
 		// is a credential as often as not, and it carries no marker saying so.
-		return uc.recordProjectUpdate(ctx, db, auth, data.Project, "env-vars", auditdetail.New().
-			Set("runtimeChanged", data.RuntimeVarsChange).
-			Set("buildChanged", data.BuildVarsChange))
+		return uc.recordProjectUpdate(ctx, db, auth, data.Project,
+			base.AuditLogSourceAPIUpdate, "env-vars", auditdetail.New().
+				Set("runtimeChanged", data.RuntimeVarsChange).
+				Set("buildChanged", data.BuildVarsChange))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

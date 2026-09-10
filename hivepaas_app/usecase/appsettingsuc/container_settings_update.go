@@ -8,6 +8,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -37,7 +38,7 @@ func (uc *UC) UpdateAppContainerSettings(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.recordAppUpdate(ctx, db, auth, data.App, "container", nil)
+		return uc.recordAppUpdate(ctx, db, auth, data.App, base.AuditLogSourceAPIUpdate, "container", nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

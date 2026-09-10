@@ -45,8 +45,9 @@ func (uc *UC) UpdateUserAccesses(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.recordProjectUpdate(ctx, db, auth, data.Project, "user-accesses", auditdetail.New().
-			Compare("accessCount", len(data.CurrentAccessList), len(persistingData.UpsertingACLPermissions)))
+		return uc.recordProjectUpdate(ctx, db, auth, data.Project,
+			base.AuditLogSourceAPIUpdate, "user-accesses", auditdetail.New().
+				Compare("accessCount", len(data.CurrentAccessList), len(persistingData.UpsertingACLPermissions)))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

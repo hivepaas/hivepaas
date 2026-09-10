@@ -39,7 +39,7 @@ func (uc *UC) UpdateAppResourceSettings(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.recordAppUpdate(ctx, db, auth, data.App, "resources", nil)
+		return uc.recordAppUpdate(ctx, db, auth, data.App, base.AuditLogSourceAPIUpdate, "resources", nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

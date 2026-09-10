@@ -4,10 +4,12 @@ import (
 	"context"
 	"strings"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
@@ -28,7 +30,13 @@ func (uc *UC) CreateAppTag(
 		persistingData := &persistingAppData{}
 		uc.preparePersistingAppTags(tagData.App, []string{req.Tag}, tagData.NextIndex, persistingData)
 
-		return uc.persistData(ctx, db, persistingData)
+		if err := uc.persistData(ctx, db, persistingData); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		return uc.recordAppUpdate(ctx, db, auth, tagData.App,
+			base.AuditLogSourceAPICreate, "tag-create", auditdetail.New().
+				Set("tag", req.Tag))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -30,6 +30,7 @@ func (uc *UC) recordProjectUpdate(
 	db database.IDB,
 	auth *basedto.Auth,
 	project *entity.Project,
+	source base.AuditLogSource,
 	section string,
 	detail *auditdetail.Builder,
 ) error {
@@ -44,7 +45,7 @@ func (uc *UC) recordProjectUpdate(
 		Type:     base.AuditLogTypeProjectUpdate,
 		Scope:    base.ObjectScopeProject,
 		ObjectID: project.ID,
-		Source:   base.AuditLogSourceAPIUpdate,
+		Source:   source,
 		Auth:     auth,
 		ResType:  base.ResourceTypeProject,
 		ResID:    project.ID,

@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/apphelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -75,7 +76,19 @@ func (uc *UC) CreateApp(
 		}
 		createdApp.ServiceID = res.ID
 
-		return uc.persistData(ctx, db, persistingData)
+		if err := uc.persistData(ctx, db, persistingData); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		// After persisting and still inside the transaction. The Swarm service is
+		// already up by this point, but a record that fails errors the call, and
+		// the deferred cleanup above tears that service back down - so there is no
+		// path here that leaves a live app behind with nothing recorded.
+		return uc.recordAppWrite(ctx, db, auth, createdApp,
+			base.AuditLogTypeAppCreate, base.AuditLogSourceAPICreate, "create", auditdetail.New().
+				Set("projectId", appData.Project.ID).
+				Set("envId", appData.ProjectEnv.ID).
+				Set("serviceId", createdApp.ServiceID))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

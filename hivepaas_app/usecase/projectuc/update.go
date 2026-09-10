@@ -48,12 +48,13 @@ func (uc *UC) UpdateProject(
 		}
 
 		project := projectData.Project
-		return uc.recordProjectUpdate(ctx, db, auth, project, "details", auditdetail.New().
-			Compare("name", before.Name, project.Name).
-			Compare("note", before.Note, project.Note).
-			Compare("status", before.Status, project.Status).
-			Compare("ownerId", before.OwnerID, project.OwnerID).
-			Set("envCount", len(req.Envs)))
+		return uc.recordProjectWrite(ctx, db, auth, project,
+			base.AuditLogTypeProjectUpdate, base.AuditLogSourceAPIUpdate, "details", auditdetail.New().
+				Compare("name", before.Name, project.Name).
+				Compare("note", before.Note, project.Note).
+				Compare("status", before.Status, project.Status).
+				Compare("ownerId", before.OwnerID, project.OwnerID).
+				Set("envCount", len(req.Envs)))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -273,3 +273,22 @@ func TestFieldChangesSurvivesACycle(t *testing.T) {
 		t.Fatal("the walk did not terminate")
 	}
 }
+
+// Set takes whatever a caller has, and a slice is a normal thing to have - a
+// list of tags being removed, say. Comparing an interface holding a slice is the
+// shape that panics if the guards are written carelessly.
+func TestBuilderTakesNonScalarValues(t *testing.T) {
+	detail := decode(t, auditdetail.New().
+		Set("tags", []string{"web", "api"}).
+		Set("counts", map[string]int{"apps": 2}).
+		Set("nilSlice", []string(nil)).
+		String())
+
+	tags, ok := detail["tags"].([]any)
+	if !ok || len(tags) != 2 {
+		t.Fatalf("tags = %v", detail["tags"])
+	}
+	if _, ok := detail["counts"]; !ok {
+		t.Error("a map value was dropped")
+	}
+}

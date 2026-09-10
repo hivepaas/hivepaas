@@ -10,30 +10,30 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
 
-// recordAppUpdate records one write against an app.
+// recordAppWrite records one write against an app.
 //
 // Called inside the caller's transaction and before it returns, so a record that
 // cannot be written rolls the change back with it. A change that happened without
 // a record is the gap the record exists to close.
 //
-// section says which settings tab was written - routing, resources, deployment,
-// and the rest. It is a detail field rather than an audit type of its own because
-// an app is written from a dozen endpoints, and a type per endpoint would name
-// the routing of the day it was written while filling the type filter with values
-// nobody can use.
+// logType separates the three things that can happen to an app. The edits all
+// share app-update, with section saying which endpoint made them, because an app
+// is edited from a dozen endpoints and a type per endpoint would name the routing
+// of the day it was written while filling the type filter with values nobody can
+// use. Creation and removal get their own types: they are what somebody scanning
+// that column is looking for, and they read as nothing at all folded into edits.
 //
-// detail may be nil, for a section with nothing to add beyond its own name. Some
-// sections carry the list of fields that moved and some do not, and that is not
-// an oversight: the ones backed by a stored settings row have a before and an
-// after to compare, while the ones that write straight to the Swarm service -
-// resources, container, networks - have no stored row to diff.
-func (uc *UC) recordAppUpdate(
+// detail may be nil, for a section with nothing to add beyond its own name.
+func (uc *UC) recordAppWrite(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
 	app *entity.App,
+	logType base.AuditLogType,
+	source base.AuditLogSource,
 	section string,
 	detail *auditdetail.Builder,
 ) error {
@@ -45,10 +45,10 @@ func (uc *UC) recordAppUpdate(
 	}
 
 	err := auditservice.RecordAllowed(ctx, uc.auditService, db, &auditservice.Entry{
-		Type:     base.AuditLogTypeAppUpdate,
+		Type:     logType,
 		Scope:    base.ObjectScopeApp,
 		ObjectID: app.ID,
-		Source:   base.AuditLogSourceAPIUpdate,
+		Source:   source,
 		Auth:     auth,
 		ResType:  base.ResourceTypeApp,
 		ResID:    app.ID,
@@ -59,4 +59,17 @@ func (uc *UC) recordAppUpdate(
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// photoAction names what the request did to the photo, so the entry says which
+// of the three it was rather than only that the photo moved.
+func photoAction(req *appdto.AppPhotoReq) string {
+	switch {
+	case req.Delete:
+		return "remove"
+	case req.IsPresetIcon:
+		return "preset-icon"
+	default:
+		return "upload"
+	}
 }

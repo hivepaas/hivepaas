@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -57,7 +58,17 @@ func (uc *UC) CreateProject(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		return nil
+
+		// After persisting and still inside the transaction. The volume is already
+		// created by this point, but a record that fails errors the call, and the
+		// deferred cleanupOnFail above removes it - so there is no path here that
+		// leaves a project standing with nothing recorded.
+		project := persistingData.UpsertingProjects[0]
+		return uc.recordProjectWrite(ctx, db, auth, project,
+			base.AuditLogTypeProjectCreate, base.AuditLogSourceAPICreate, "create", auditdetail.New().
+				Set("key", project.Key).
+				Set("ownerId", project.OwnerID).
+				Set("envCount", len(persistingData.UpsertingProjectEnvs)))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

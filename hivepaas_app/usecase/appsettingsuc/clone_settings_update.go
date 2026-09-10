@@ -39,7 +39,7 @@ func (uc *UC) UpdateAppCloneSettings(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.recordAppUpdate(ctx, db, auth, data.App, "clone", auditdetail.New().
+		return uc.recordAppUpdate(ctx, db, auth, data.App, base.AuditLogSourceAPIUpdate, "clone", auditdetail.New().
 			WithChangedFields(parseAppSetting(data.AppCloneSetting), data.NewAppCloneSettings))
 	})
 	if err != nil {

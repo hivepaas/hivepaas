@@ -47,7 +47,7 @@ func (uc *UC) UpdateAppRoutingSettings(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.recordAppUpdate(ctx, db, auth, data.App, "routing", auditdetail.New().
+		return uc.recordAppUpdate(ctx, db, auth, data.App, base.AuditLogSourceAPIUpdate, "routing", auditdetail.New().
 			WithChangedFields(parseAppSetting(data.RoutingSetting), data.NewRoutingSettings))
 	})
 	if err != nil {

@@ -3,9 +3,11 @@ package projectenvuc
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectenvuc/projectenvdto"
@@ -23,6 +25,20 @@ func (uc *UC) DeleteProjectEnv(
 				bunex.SelectWhere("app.deleted_at IS NULL"),
 			),
 		)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		// Recorded before the removal, not after. DeleteProjectEnv reaches past the
+		// database into the infra, and rolling the transaction back does not put
+		// the apps it tore down back; writing the entry first is the only order
+		// that cannot leave the removal unrecorded. The app count goes in because
+		// it is the size of what was destroyed, and it is unrecoverable after.
+		err = uc.recordProjectEnvAction(ctx, db, auth, projectEnv,
+			base.AuditLogTypeProjectEnvDelete, base.AuditLogSourceAPIDelete, "env-delete",
+			auditdetail.New().
+				Set("status", projectEnv.Status).
+				Set("appCount", len(projectEnv.Apps)))
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

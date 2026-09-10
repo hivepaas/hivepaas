@@ -3,10 +3,12 @@ package appuc
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
@@ -27,11 +29,15 @@ func (uc *UC) UpdateAppStatus(
 			return nil
 		}
 
+		before := appData.App.Status
 		err = uc.appService.SetAppStatus(ctx, db, appData.App, req.Status, true)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		return nil
+
+		return uc.recordAppWrite(ctx, db, auth, appData.App,
+			base.AuditLogTypeAppUpdate, base.AuditLogSourceAPIUpdate, "status", auditdetail.New().
+				Compare("status", before, req.Status))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

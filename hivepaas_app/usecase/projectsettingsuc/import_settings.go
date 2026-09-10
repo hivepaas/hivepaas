@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -35,7 +36,21 @@ func (uc *UC) ImportSettingsToProject(
 			return hperrors.Wrap(err)
 		}
 
-		return nil
+		// canViewData is the point of the entry. Importing a setting hands this
+		// scope a reference to something defined elsewhere, and that flag decides
+		// whether the people here get to read its stored secrets or only use it -
+		// which makes the import the moment access widened, and the only moment
+		// there is anything to record about it.
+		//
+		// The names go in alongside the ids because a setting can be renamed or
+		// deleted long before anyone reads this, and an entry that is a list of
+		// identifiers is no use exactly when it is needed. A setting name is a
+		// label, not a secret; none of its data comes near this.
+		return uc.recordProjectUpdate(ctx, db, auth, data.Project,
+			base.AuditLogSourceAPICreate, "settings-import", auditdetail.New().
+				Set("canViewData", req.CanViewData).
+				Set("settingCount", len(data.Settings)).
+				Set("settings", importedSettingRefs(data.Settings)))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -120,4 +135,13 @@ func (uc *UC) persistSettingImports(
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// importedSettingRefs is what was shared, as "<type>:<name>" pairs keyed by id.
+func importedSettingRefs(settings []*entity.Setting) map[string]string {
+	refs := make(map[string]string, len(settings))
+	for _, setting := range settings {
+		refs[setting.ID] = string(setting.Type) + ":" + setting.Name
+	}
+	return refs
 }

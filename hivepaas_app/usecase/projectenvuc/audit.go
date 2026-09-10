@@ -1,4 +1,4 @@
-package projectenvsettingsuc
+package projectenvuc
 
 import (
 	"context"
@@ -12,19 +12,20 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 )
 
-// recordProjectEnvUpdate records one write against a project environment.
+// recordProjectEnvAction records one write against a project environment.
 //
-// Filed under the project-update type and the environment's own scope: it is a
-// change to a project, and the scope is what puts it in front of somebody reading
-// that environment's log rather than the project's.
+// Filed under the environment's own scope, so it reaches somebody reading that
+// environment's log rather than only the project's.
 //
-// Called inside the caller's transaction, so a record that cannot be written
-// rolls the change back with it.
-func (uc *UC) recordProjectEnvUpdate(
+// logType is a parameter rather than fixed because the two writes here are not
+// the same kind of event: changing an environment's status is one more way a
+// project is edited, while removing an environment takes every app inside it.
+func (uc *UC) recordProjectEnvAction(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
 	projectEnv *entity.ProjectEnv,
+	logType base.AuditLogType,
 	source base.AuditLogSource,
 	section string,
 	detail *auditdetail.Builder,
@@ -37,7 +38,7 @@ func (uc *UC) recordProjectEnvUpdate(
 	}
 
 	err := auditservice.RecordAllowed(ctx, uc.auditService, db, &auditservice.Entry{
-		Type:     base.AuditLogTypeProjectUpdate,
+		Type:     logType,
 		Scope:    base.ObjectScopeProjectEnv,
 		ObjectID: projectEnv.ID,
 		Source:   source,

@@ -73,6 +73,31 @@ const (
 	// "section", where it can be read without being filtered on.
 	AuditLogTypeProjectUpdate AuditLogType = "project-update"
 	AuditLogTypeAppUpdate     AuditLogType = "app-update"
+
+	// AuditLogTypeAppCreate and AuditLogTypeAppDelete stand apart from
+	// app-update, which covers the edits, because an app appearing and an app
+	// being taken away are what somebody scanning the type column is looking for.
+	// Folded into app-update they would be indistinguishable from a change of
+	// replica count, and a trail that shows an app edited and then never seen
+	// again reads as if something is missing from it.
+	AuditLogTypeAppCreate AuditLogType = "app-create"
+	AuditLogTypeAppDelete AuditLogType = "app-delete"
+
+	// AuditLogTypeProjectCreate and AuditLogTypeProjectDelete are the same split,
+	// one level up. Removing a project takes its environments and every app in
+	// them, which makes it the largest single act the API offers and the one most
+	// worth being able to find by scanning one column.
+	AuditLogTypeProjectCreate AuditLogType = "project-create"
+	AuditLogTypeProjectDelete AuditLogType = "project-delete"
+
+	// AuditLogTypeProjectEnvDelete records an environment being removed, which
+	// takes every app inside it.
+	//
+	// It is not folded into project-update the way the environment's other writes
+	// are. "What was destroyed" is a question asked on its own and answered by
+	// scanning the type column, and an entry that says project-update cannot tell
+	// a rename from an environment and its apps being taken away.
+	AuditLogTypeProjectEnvDelete AuditLogType = "project-env-delete"
 )
 
 var AllAuditLogTypes = []AuditLogType{
@@ -87,7 +112,12 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeSettingStatusUpdate,
 	AuditLogTypeSettingDelete,
 	AuditLogTypeProjectUpdate,
+	AuditLogTypeProjectCreate,
+	AuditLogTypeProjectDelete,
 	AuditLogTypeAppUpdate,
+	AuditLogTypeAppCreate,
+	AuditLogTypeAppDelete,
+	AuditLogTypeProjectEnvDelete,
 }
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.

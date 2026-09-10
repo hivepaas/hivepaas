@@ -55,7 +55,7 @@ func (uc *UC) UpdateAppEnvVars(
 
 		// Which classes of variable moved, not which variables: an env var value
 		// is a credential as often as not, and it carries no marker saying so.
-		return uc.recordAppUpdate(ctx, db, auth, data.App, "env-vars", auditdetail.New().
+		return uc.recordAppUpdate(ctx, db, auth, data.App, base.AuditLogSourceAPIUpdate, "env-vars", auditdetail.New().
 			Set("runtimeChanged", data.RuntimeVarsChange).
 			Set("buildChanged", data.BuildVarsChange).
 			Set("sharedChanged", data.SharedVarsChange))

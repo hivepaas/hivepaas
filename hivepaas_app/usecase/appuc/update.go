@@ -7,6 +7,7 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -45,10 +46,11 @@ func (uc *UC) UpdateApp(
 		}
 
 		app := appData.App
-		return uc.recordAppUpdate(ctx, db, auth, app, "details", auditdetail.New().
-			Compare("name", before.Name, app.Name).
-			Compare("note", before.Note, app.Note).
-			Compare("status", before.Status, app.Status))
+		return uc.recordAppWrite(ctx, db, auth, app,
+			base.AuditLogTypeAppUpdate, base.AuditLogSourceAPIUpdate, "details", auditdetail.New().
+				Compare("name", before.Name, app.Name).
+				Compare("note", before.Note, app.Note).
+				Compare("status", before.Status, app.Status))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

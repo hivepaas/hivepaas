@@ -54,9 +54,15 @@ func (uc *UC) UpdateAppSecret(
 	defer secretRotationMu.Unlock()
 
 	// Rewrap verifies the current secret by using it: it either opens the stored
-	// key or it does not, so there is no separate comparison to get wrong.
-	if err := uc.dataKeyService.Rewrap(ctx, uc.db, req.CurrentSecret, req.NewSecret); err != nil {
+	// key or it does not, so there is no separate comparison to get wrong. That
+	// is also why the record comes after it rather than before - the outcome is
+	// not known until the attempt is made.
+	rewrapErr := uc.dataKeyService.Rewrap(ctx, uc.db, req.CurrentSecret, req.NewSecret)
+	if err := uc.recordAppSecretRotation(ctx, auth, rewrapErr == nil); err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	if rewrapErr != nil {
+		return nil, hperrors.Wrap(rewrapErr)
 	}
 
 	if err := config.SaveAppSecret(req.NewSecret); err != nil {

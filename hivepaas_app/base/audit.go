@@ -110,6 +110,24 @@ const (
 	// for that reason - it would be a third channel for node events, on top of
 	// the two that already exist, which is harder to follow than a section.
 	AuditLogTypeClusterUpdate AuditLogType = "cluster-update"
+
+	// AuditLogTypeAppSecretRotate records the app secret being changed.
+	//
+	// Its own type because of what the secret is: it wraps the data encryption
+	// key, so a rotation is the one action that moves every stored secret in the
+	// system onto a new key at once. "When was this last rotated, and by whom" is
+	// a question asked on its own, and a refused attempt is somebody working
+	// through an admin session at the operator's credential.
+	AuditLogTypeAppSecretRotate AuditLogType = "app-secret-rotate" //nolint:gosec // G101: an event name
+
+	// AuditLogTypeHivePaaSSettingsUpdate records a change to HivePaaS's own
+	// routing or service settings - the ones that decide whether HivePaaS is
+	// reachable and how many replicas serve it.
+	//
+	// Separate from security-settings-update, which stays on its own type: that
+	// one is about whether stored secrets may leave the server, which is a
+	// different question from how the install is wired.
+	AuditLogTypeHivePaaSSettingsUpdate AuditLogType = "hivepaas-settings-update"
 )
 
 var AllAuditLogTypes = []AuditLogType{
@@ -131,6 +149,8 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeAppDelete,
 	AuditLogTypeProjectEnvDelete,
 	AuditLogTypeClusterUpdate,
+	AuditLogTypeAppSecretRotate,
+	AuditLogTypeHivePaaSSettingsUpdate,
 }
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.

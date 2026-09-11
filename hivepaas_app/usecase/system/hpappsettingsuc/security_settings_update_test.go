@@ -19,6 +19,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/datakeyservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc/hpappsettingsdto"
 )
@@ -83,6 +84,23 @@ func (f *fakeAppSecretAttemptRepo) Del(_ context.Context, _ string) error {
 	return nil
 }
 
+// fakeDataKeyService stands in for the rewrap. The real one verifies the current
+// app secret by using it to open the stored key, so refusing here is what a wrong
+// secret looks like to UpdateAppSecret.
+type fakeDataKeyService struct {
+	datakeyservice.Service
+	expectSecret string
+	rewraps      int
+}
+
+func (f *fakeDataKeyService) Rewrap(_ context.Context, _ database.IDB, current, _ string) error {
+	if current != f.expectSecret {
+		return hperrors.ErrUnauthorized
+	}
+	f.rewraps++
+	return nil
+}
+
 func newSecurityUCTest(t *testing.T) (*UC, *spyAuditService, *spyHpAppService) {
 	t.Helper()
 	cfg := &config.Config{
@@ -98,6 +116,7 @@ func newSecurityUCTest(t *testing.T) (*UC, *spyAuditService, *spyHpAppService) {
 	uc := &UC{
 		auditService:              audit,
 		hpAppService:              hpApp,
+		dataKeyService:            &fakeDataKeyService{expectSecret: testAppSecret},
 		cacheAppSecretAttemptRepo: &fakeAppSecretAttemptRepo{},
 	}
 	return uc, audit, hpApp
@@ -358,4 +377,43 @@ func TestUpdateSecuritySettingsFailsClosedWhenTheCountCannotBeRead(t *testing.T)
 	assert.Error(t, err)
 	assert.False(t, savedFlag(t))
 	assert.Equal(t, 0, hpApp.reloads)
+}
+
+// A wrong app secret here is somebody working through an admin session at the
+// operator's credential, which is the half of the record worth having.
+// strongTestSecret clears the app secret strength rules - upper, lower, digits,
+// specials, and long enough - so these tests fail on what they are about rather
+// than on validation.
+const strongTestSecret = "Rq7#zLv2$Ka9!mPx4&Wd6%Tn8@Bj3^Hs5*Cy1?Ge0(Uf2)Vr4"
+
+func TestUpdateAppSecretRecordsBothOutcomes(t *testing.T) {
+	t.Run("a refused attempt is recorded", func(t *testing.T) {
+		uc, audit, _ := newSecurityUCTest(t)
+
+		_, err := uc.UpdateAppSecret(context.Background(), adminAuth(),
+			&hpappsettingsdto.UpdateAppSecretReq{
+				CurrentSecret: "not-the-app-secret",
+				NewSecret:     strongTestSecret,
+			})
+
+		assert.Error(t, err)
+		assert.Len(t, audit.entries, 1)
+		assert.Equal(t, base.AuditLogTypeAppSecretRotate, audit.entries[0].Type)
+		assert.Equal(t, base.AuditLogResultDenied, audit.entries[0].Result)
+	})
+
+	// Nothing is rewrapped when the request never gets that far, so there is no
+	// attempt at the secret to record either.
+	t.Run("a request refused before the rewrap records nothing", func(t *testing.T) {
+		uc, audit, _ := newSecurityUCTest(t)
+
+		_, err := uc.UpdateAppSecret(context.Background(), adminAuth(),
+			&hpappsettingsdto.UpdateAppSecretReq{
+				CurrentSecret: testAppSecret,
+				NewSecret:     testAppSecret,
+			})
+
+		assert.Error(t, err, "the new secret must differ from the current one")
+		assert.Empty(t, audit.entries)
+	})
 }

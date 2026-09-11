@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -65,7 +66,13 @@ func (uc *UC) UpdateRoutingSettings(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		return nil
+
+		return uc.recordHivePaaSSettingsUpdate(ctx, db, auth, "routing", auditdetail.New().
+			Set("domainChanged", data.DomainChanged).
+			Set("onProbation", data.probationResult.Probation != nil).
+			WithChangedFields(
+				settingsSnapshotData(base.SettingTypeAppRouting, data.Snapshot),
+				data.NewRoutingSettings))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

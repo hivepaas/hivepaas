@@ -8,7 +8,6 @@ import (
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
-	"github.com/moby/moby/api/types/volume"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -20,8 +19,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
-	"github.com/hivepaas/hivepaas/services/docker"
-	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
 func (uc *UC) UpdateAppStorageSettings(
@@ -36,7 +33,10 @@ func (uc *UC) UpdateAppStorageSettings(
 			return hperrors.Wrap(err)
 		}
 
-		uc.prepareUpdatingAppStorageSettings(ctx, data)
+		err = uc.prepareUpdatingAppStorageSettings(ctx, data)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
 
 		err = uc.applyAppStorageSettings(ctx, data)
 		if err != nil {
@@ -54,12 +54,11 @@ func (uc *UC) UpdateAppStorageSettings(
 }
 
 type updateAppStorageSettingsData struct {
-	App           *entity.App
-	Service       *swarm.Service
-	DBVolumes     map[string]*entity.Setting
-	DockerVolumes map[string]*volume.Volume
-	FinalMounts   []mount.Mount
-	NewMountReqs  []*appsettingsdto.Mount
+	App          *entity.App
+	Service      *swarm.Service
+	DBVolumes    map[string]*entity.Setting
+	FinalMounts  []mount.Mount
+	NewMountReqs []*appsettingsdto.Mount
 }
 
 func (uc *UC) loadAppStorageSettingsForUpdate(
@@ -100,7 +99,6 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	}
 
 	var newDBVolIDs []string
-	var newDockerVolIDs []string
 	for _, reqMnt := range req.Mounts {
 		if existingMount, exists := mapCurrMountByKey[reqMnt.Key]; reqMnt.Key != "" && exists {
 			data.FinalMounts = append(data.FinalMounts, *existingMount) // unchanged mount
@@ -126,24 +124,11 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	}
 	dbVolMap := entityutil.SliceToIDMap(dbVols)
 	for _, dbVolID := range newDBVolIDs {
-		dbVol, ok := dbVolMap[dbVolID]
-		if !ok {
+		if _, ok := dbVolMap[dbVolID]; !ok {
 			return hperrors.NewNotFound("Volume").WithMsgLog("volume %v not found", dbVolID)
 		}
-		newDockerVolIDs = append(newDockerVolIDs, dbVol.RefID)
 	}
 	data.DBVolumes = dbVolMap
-
-	// Loads docker volumes
-	listRes, err := uc.dockerManager.VolumeListByIDs(ctx, newDockerVolIDs)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	data.DockerVolumes = make(map[string]*volume.Volume, len(dbVolMap))
-	for i := range listRes.Items {
-		dockerVol := &listRes.Items[i]
-		data.DockerVolumes[dockerhelper.GetVolumeID(dockerVol)] = dockerVol
-	}
 
 	return nil
 }
@@ -151,19 +136,22 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 func (uc *UC) prepareUpdatingAppStorageSettings(
 	ctx context.Context,
 	data *updateAppStorageSettingsData,
-) {
+) error {
 	for _, reqMnt := range data.NewMountReqs {
 		dbVol := data.DBVolumes[reqMnt.Source]
-		dockerVol := data.DockerVolumes[dbVol.RefID]
+		vol, err := dbVol.AsClusterVolume()
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
 		dockerMnt := &mount.Mount{
 			Type:        reqMnt.Type,
-			Source:      dockerhelper.GetVolumeID(dockerVol),
+			Source:      dbVol.RefID,
 			Target:      reqMnt.Target,
 			ReadOnly:    reqMnt.ReadOnly,
 			Consistency: reqMnt.Consistency,
 		}
 
-		uc.buildDockerMount(ctx, dockerMnt, reqMnt, dockerVol, dbVol, data)
+		uc.buildDockerMount(ctx, dockerMnt, reqMnt, vol, dbVol, data)
 
 		// Ensure full permissions (0777) on all mounted volume subpaths before starting/updating the service
 		if dockerMnt.Type == mount.TypeVolume || dockerMnt.Type == mount.TypeCluster {
@@ -176,19 +164,20 @@ func (uc *UC) prepareUpdatingAppStorageSettings(
 
 		data.FinalMounts = append(data.FinalMounts, *dockerMnt)
 	}
+	return nil
 }
 
 func (uc *UC) buildDockerMount(
 	ctx context.Context,
 	dockerMnt *mount.Mount,
 	reqMnt *appsettingsdto.Mount,
-	dockerVol *volume.Volume,
+	vol *entity.ClusterVolume,
 	dbVol *entity.Setting,
 	data *updateAppStorageSettingsData,
 ) {
 	app := data.App
 	subpath := calcMountSubpath(app, reqMnt, dbVol)
-	uc.useBindMountIfAppropriate(ctx, dockerMnt, dockerVol, subpath)
+	uc.useBindMountIfAppropriate(ctx, dockerMnt, vol, subpath)
 
 	switch dockerMnt.Type {
 	case mount.TypeVolume:
@@ -204,6 +193,11 @@ func (uc *UC) buildDockerMount(
 					Options: reqMnt.VolumeOptions.DriverConfig.Options,
 				}
 			}
+		}
+		// Only when the request did not bring its own: an explicit DriverConfig
+		// from the client is the caller overriding, and this must not undo it.
+		if dockerMnt.VolumeOptions == nil || dockerMnt.VolumeOptions.DriverConfig == nil {
+			applyVolumeDriverConfig(dockerMnt, vol)
 		}
 	case mount.TypeCluster:
 		if reqMnt.ClusterOptions != nil {
@@ -226,28 +220,26 @@ func (uc *UC) buildDockerMount(
 func (uc *UC) useBindMountIfAppropriate(
 	ctx context.Context,
 	dockerMnt *mount.Mount,
-	dockerVol *volume.Volume,
+	vol *entity.ClusterVolume,
 	subpath string,
 ) {
-	if dockerVol.Driver != string(docker.VolumeDriverLocal) { // not a driver local
+	directory, propagation, ok := bindMountTarget(vol, subpath)
+	if !ok {
 		return
 	}
-	directory := dockerVol.Options["device"]
-	if dockerVol.Options["type"] != "none" || directory == "" {
-		return
-	}
-
-	err := uc.volumeService.MakeSubDirInHost(ctx, directory, subpath, true)
-	if err != nil {
+	if err := uc.volumeService.MakeSubDirInHost(ctx, vol.DriverOpts["device"], subpath, true); err != nil {
 		return
 	}
 
 	dockerMnt.Type = mount.TypeBind
-	dockerMnt.Source = filepath.Join(directory, subpath)
+	dockerMnt.Source = directory
 	dockerMnt.BindOptions = &mount.BindOptions{
+		// Kept for volumes with no pin, which claim every node reaches the same
+		// data: creating the directory there is the right thing. A pinned volume
+		// is kept on its node by a placement constraint instead.
 		CreateMountpoint: true,
 	}
-	if propagation := getConfiguredPropagation(dockerVol.Options["o"]); propagation != "" {
+	if propagation != "" {
 		dockerMnt.BindOptions.Propagation = propagation
 	}
 	// Reset all other kind of options
@@ -301,13 +293,11 @@ func calcMountSubpath(
 func getConfiguredPropagation(o string) mount.Propagation {
 	parts := strings.Split(o, ",")
 	for _, part := range parts {
+		// Go case clauses don't fall through: every valid propagation value has to
+		// share this one case, or only the last of them would ever be returned.
 		switch mount.Propagation(part) {
-		case mount.PropagationRPrivate:
-		case mount.PropagationPrivate:
-		case mount.PropagationRSlave:
-		case mount.PropagationSlave:
-		case mount.PropagationRShared:
-		case mount.PropagationShared:
+		case mount.PropagationRPrivate, mount.PropagationPrivate, mount.PropagationRSlave,
+			mount.PropagationSlave, mount.PropagationRShared, mount.PropagationShared:
 			return mount.Propagation(part)
 		}
 	}

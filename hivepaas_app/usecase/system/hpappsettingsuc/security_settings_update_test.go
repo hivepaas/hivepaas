@@ -181,8 +181,30 @@ func TestUpdateSecuritySettingsAppliesTheChange(t *testing.T) {
 
 	assert.Len(t, audit.entries, 1)
 	assert.Equal(t, base.AuditLogResultAllowed, audit.entries[0].Result)
-	assert.Contains(t, audit.entries[0].Detail, `"from":{"returnSecretsViaApi":false}`)
-	assert.Contains(t, audit.entries[0].Detail, `"to":{"returnSecretsViaApi":true}`)
+	assert.Contains(t, audit.entries[0].Detail, `"returnSecretsViaApi":false`)
+	assert.Contains(t, audit.entries[0].Detail, `"returnSecretsViaApi":true`)
+}
+
+// An exemption is a hole in the flag, so the record has to show it. A record that
+// said only "the flag stayed off" while a secret type was added to the list would
+// be worse than none: true, and silent about the part that mattered.
+func TestUpdateSecuritySettingsRecordsTheExemptions(t *testing.T) {
+	uc, audit, _ := newSecurityUCTest(t)
+
+	_, err := uc.UpdateSecuritySettings(context.Background(), adminAuth(),
+		&hpappsettingsdto.UpdateSecuritySettingsReq{
+			AppSecret:               testAppSecret,
+			AlwaysReturnSecretTypes: []string{string(base.SecretTypeSwarmJoinToken)},
+		})
+
+	assert.NoError(t, err)
+	assert.False(t, config.Current().Security.ReturnSecretsViaAPI,
+		"an exemption must not turn the flag on")
+	assert.Equal(t, []string{string(base.SecretTypeSwarmJoinToken)},
+		config.Current().Security.AlwaysReturnSecretTypes)
+
+	assert.Len(t, audit.entries, 1)
+	assert.Contains(t, audit.entries[0].Detail, `"alwaysReturnSecretTypes":["swarm-join-token"]`)
 }
 
 // Turning the flag back off has to reach the file, or the next start would read

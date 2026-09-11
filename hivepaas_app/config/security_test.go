@@ -146,3 +146,52 @@ func TestCurrentIsSafeUnderConcurrentWrites(t *testing.T) {
 	close(stop)
 	readers.Wait()
 }
+
+func TestSecurityAllowsSecretType(t *testing.T) {
+	t.Run("the flag on allows everything", func(t *testing.T) {
+		security := &Security{ReturnSecretsViaAPI: true}
+		assert.True(t, security.AllowsSecretType(""))
+		assert.True(t, security.AllowsSecretType(base.SecretTypeSwarmJoinToken))
+	})
+
+	t.Run("the flag off refuses everything not exempt", func(t *testing.T) {
+		security := &Security{}
+		assert.False(t, security.AllowsSecretType(""))
+		assert.False(t, security.AllowsSecretType(base.SecretTypeSwarmJoinToken))
+	})
+
+	t.Run("an exemption stands the flag down for that type alone", func(t *testing.T) {
+		security := &Security{
+			AlwaysReturnSecretTypes: []string{string(base.SecretTypeSwarmJoinToken)},
+		}
+		assert.True(t, security.AllowsSecretType(base.SecretTypeSwarmJoinToken))
+		// The empty type is every stored setting. Exempting a named type must not
+		// quietly open those too - that is what the flag itself is for.
+		assert.False(t, security.AllowsSecretType(""))
+	})
+}
+
+func TestSecurityEqual(t *testing.T) {
+	base1 := &Security{ReturnSecretsViaAPI: true, AlwaysReturnSecretTypes: []string{"a", "b"}}
+
+	t.Run("order of the exemptions is not a change", func(t *testing.T) {
+		assert.True(t, base1.Equal(&Security{
+			ReturnSecretsViaAPI:     true,
+			AlwaysReturnSecretTypes: []string{"b", "a"},
+		}))
+	})
+
+	t.Run("a different set is a change", func(t *testing.T) {
+		assert.False(t, base1.Equal(&Security{
+			ReturnSecretsViaAPI:     true,
+			AlwaysReturnSecretTypes: []string{"a"},
+		}))
+		assert.False(t, base1.Equal(&Security{AlwaysReturnSecretTypes: []string{"a", "b"}}))
+	})
+
+	// The update endpoint skips persisting when nothing changed, so a comparison
+	// that misses a cleared list would make "remove the exemption" a no-op.
+	t.Run("clearing the exemptions is a change", func(t *testing.T) {
+		assert.False(t, base1.Equal(&Security{ReturnSecretsViaAPI: true}))
+	})
+}

@@ -280,3 +280,60 @@ func TestAuthorizeSecretRevealRefusedWhenDisabledByConfig(t *testing.T) {
 		t.Error("the refusal must still be recorded")
 	}
 }
+
+// The exemption is the whole point of naming a secret type: node onboarding has
+// to keep working while the operator's flag stays off for everything else.
+func TestAuthorizeSecretRevealHonoursTheTypeExemption(t *testing.T) {
+	prev := config.Current()
+	config.SetCurrent(&config.Config{Security: config.Security{
+		ReturnSecretsViaAPI:     false,
+		AlwaysReturnSecretTypes: []string{string(base.SecretTypeSwarmJoinToken)},
+	}})
+	t.Cleanup(func() { config.SetCurrent(prev) })
+
+	uc, audit := newRevealUC(t, true, nil)
+	err := uc.AuthorizeSecretReveal(context.Background(), nil, &basedto.Auth{}, &RevealSubject{
+		Scope:      base.ObjectScopeGlobal,
+		SecretType: base.SecretTypeSwarmJoinToken,
+		ResType:    base.ResourceTypeCluster,
+	})
+	if err != nil {
+		t.Fatalf("the exempt type must pass: %v", err)
+	}
+	if len(audit.entries) != 1 || audit.entries[0].Result != base.AuditLogResultAllowed {
+		t.Fatal("an exempt reveal is still recorded")
+	}
+
+	// A stored setting rides on the flag alone, and must not be let through by
+	// somebody else's exemption.
+	audit.entries = nil
+	err = uc.AuthorizeSecretReveal(context.Background(), nil, &basedto.Auth{}, &RevealSubject{
+		Scope:   base.ObjectScopeGlobal,
+		ResType: base.ResourceTypeSetting,
+	})
+	if !errors.Is(err, hperrors.ErrRevealSecretsDisabled) {
+		t.Fatalf("want the flag to still bind stored secrets, got %v", err)
+	}
+}
+
+// An exemption stands down the operator's flag, not the account's permission.
+func TestAuthorizeSecretRevealStillNeedsTheCapability(t *testing.T) {
+	prev := config.Current()
+	config.SetCurrent(&config.Config{Security: config.Security{
+		AlwaysReturnSecretTypes: []string{string(base.SecretTypeSwarmJoinToken)},
+	}})
+	t.Cleanup(func() { config.SetCurrent(prev) })
+
+	uc, audit := newRevealUC(t, false, nil)
+	err := uc.AuthorizeSecretReveal(context.Background(), nil, &basedto.Auth{}, &RevealSubject{
+		Scope:      base.ObjectScopeGlobal,
+		SecretType: base.SecretTypeSwarmJoinToken,
+		ResType:    base.ResourceTypeCluster,
+	})
+	if !errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets) {
+		t.Fatalf("want the capability to still bind, got %v", err)
+	}
+	if len(audit.entries) != 1 || audit.entries[0].Result != base.AuditLogResultDenied {
+		t.Fatal("the refusal must be recorded")
+	}
+}

@@ -34,10 +34,11 @@ func (uc *UC) GetNodeJoinCommand(
 	}
 	detail := auditdetail.New().Set("tokenRole", role).String()
 	err := uc.AuthorizeSecretReveal(ctx, uc.DB, auth, &settings.RevealSubject{
-		Scope:   base.ObjectScopeGlobal,
-		Source:  base.AuditLogSourceAPIGet,
-		ResType: base.ResourceTypeCluster,
-		Detail:  detail,
+		Scope:      base.ObjectScopeGlobal,
+		Source:     base.AuditLogSourceAPIGet,
+		SecretType: base.SecretTypeSwarmJoinToken,
+		ResType:    base.ResourceTypeCluster,
+		Detail:     detail,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

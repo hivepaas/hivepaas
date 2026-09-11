@@ -77,7 +77,7 @@ func (uc *UC) UpdateSecuritySettings(
 	// is still recorded above: a caller who reaches this line has just had an app
 	// secret confirmed, and that is worth knowing whether or not they changed
 	// anything with it.
-	if *newSettings == current {
+	if newSettings.Equal(&current) {
 		return &hpappsettingsdto.UpdateSecuritySettingsResp{}, nil
 	}
 
@@ -238,10 +238,21 @@ func verifyAppSecret(appSecret string) bool {
 
 // securitySettingsDetail describes the change for the audit record. It carries
 // the flags only - never the app secret that authorized it.
+//
+// The exemption list is in it because an exemption is a hole in the flag: a
+// record that showed only "the flag stayed off" while a secret type was quietly
+// added to the list would be worse than no record, having said something true and
+// left out the part that mattered.
 func securitySettingsDetail(current, newSettings *config.Security) string {
 	detail, err := json.Marshal(map[string]any{
-		"from": map[string]any{"returnSecretsViaApi": current.ReturnSecretsViaAPI},
-		"to":   map[string]any{"returnSecretsViaApi": newSettings.ReturnSecretsViaAPI},
+		"from": map[string]any{
+			"returnSecretsViaApi":     current.ReturnSecretsViaAPI,
+			"alwaysReturnSecretTypes": current.AlwaysReturnSecretTypes,
+		},
+		"to": map[string]any{
+			"returnSecretsViaApi":     newSettings.ReturnSecretsViaAPI,
+			"alwaysReturnSecretTypes": newSettings.AlwaysReturnSecretTypes,
+		},
 	})
 	if err != nil {
 		return ""

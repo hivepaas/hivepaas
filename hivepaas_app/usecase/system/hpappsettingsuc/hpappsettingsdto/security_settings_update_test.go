@@ -7,6 +7,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/tiendc/gofn"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 )
 
 func TestUpdateSecuritySettingsReqValidate(t *testing.T) {
@@ -36,11 +38,42 @@ func TestUpdateSecuritySettingsReqValidate(t *testing.T) {
 func TestSecuritySettingsJSONNames(t *testing.T) {
 	req := &UpdateSecuritySettingsReq{}
 	assert.NoError(t, json.Unmarshal(
-		[]byte(`{"appSecret":"s","returnSecretsViaApi":true}`), req))
+		[]byte(`{"appSecret":"s","returnSecretsViaApi":true,`+
+			`"alwaysReturnSecretTypes":["swarm-join-token"]}`), req))
 	assert.Equal(t, "s", req.AppSecret)
 	assert.True(t, req.ReturnSecretsViaAPI)
+	assert.Equal(t, []string{"swarm-join-token"}, req.AlwaysReturnSecretTypes)
 
-	body, err := json.Marshal(&SecuritySettingsResp{ReturnSecretsViaAPI: true})
+	body, err := json.Marshal(&SecuritySettingsResp{
+		ReturnSecretsViaAPI:     true,
+		AlwaysReturnSecretTypes: []string{"swarm-join-token"},
+	})
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"returnSecretsViaApi":true}`, string(body))
+	assert.JSONEq(t,
+		`{"returnSecretsViaApi":true,"alwaysReturnSecretTypes":["swarm-join-token"]}`,
+		string(body))
+}
+
+func TestUpdateSecuritySettingsReqRejectsUnknownSecretType(t *testing.T) {
+	valid := &UpdateSecuritySettingsReq{
+		AppSecret:               gofn.RandTokenAsHex(32),
+		AlwaysReturnSecretTypes: []string{string(base.SecretTypeSwarmJoinToken)},
+	}
+	assert.Empty(t, valid.Validate())
+
+	// A name that is not a secret type must be refused rather than stored: stored,
+	// it exempts nothing while the operator believes a door is open.
+	invalid := &UpdateSecuritySettingsReq{
+		AppSecret:               gofn.RandTokenAsHex(32),
+		AlwaysReturnSecretTypes: []string{"swarm-join-tokens"},
+	}
+	assert.NotEmpty(t, invalid.Validate())
+}
+
+// The exemptions are behind the same app secret as the flag they punch a hole in.
+func TestUpdateSecuritySettingsReqExemptionsNeedTheAppSecret(t *testing.T) {
+	req := &UpdateSecuritySettingsReq{
+		AlwaysReturnSecretTypes: []string{string(base.SecretTypeSwarmJoinToken)},
+	}
+	assert.NotEmpty(t, req.Validate())
 }

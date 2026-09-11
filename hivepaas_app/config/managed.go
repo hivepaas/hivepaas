@@ -45,7 +45,8 @@ type ManagedSettings struct {
 // flag off would be indistinguishable from never having written it, and the
 // operator's "off" would silently lose to whatever the base config file says.
 type ManagedSecurity struct {
-	ReturnSecretsViaAPI *bool `toml:"return_secrets_via_api"`
+	ReturnSecretsViaAPI     *bool     `toml:"return_secrets_via_api"`
+	AlwaysReturnSecretTypes *[]string `toml:"always_return_secret_types"`
 }
 
 // applyTo overlays the settings that are set. A field the file omits leaves the
@@ -59,6 +60,9 @@ func (s *ManagedSettings) applyTo(config *Config) {
 	}
 	if v := s.Security.ReturnSecretsViaAPI; v != nil {
 		config.Security.ReturnSecretsViaAPI = *v
+	}
+	if v := s.Security.AlwaysReturnSecretTypes; v != nil {
+		config.Security.AlwaysReturnSecretTypes = *v
 	}
 }
 

@@ -74,6 +74,11 @@ type RevealSubject struct {
 	ObjectID string
 	Source   base.AuditLogSource
 
+	// SecretType is the kind of secret being asked for, and decides whether the
+	// operator's ReturnSecretsViaAPI flag can be stood down for it. Empty - which
+	// is every stored setting - is always bound by the flag.
+	SecretType base.SecretType
+
 	ResType base.ResourceType
 	ResID   string
 	// ResName is stored as it reads now, because the object may be renamed or
@@ -104,7 +109,7 @@ func (uc *BaseUC) AuthorizeSecretReveal(
 	if subject == nil {
 		return hperrors.NewArgumentInvalid("Reveal subject")
 	}
-	allowed, denyErr := uc.canRevealSecrets(ctx, db, auth)
+	allowed, denyErr := uc.canRevealSecrets(ctx, db, auth, subject.SecretType)
 
 	result := base.AuditLogResultAllowed
 	if !allowed {
@@ -147,7 +152,7 @@ func (uc *BaseUC) authorizeReveal(
 	})
 }
 
-// canRevealSecrets reports whether the caller may see stored secrets in the clear.
+// canRevealSecrets reports whether the caller may see a secret in the clear.
 //
 // Two gates, and they answer different questions. The config flag is the
 // operator's: it lives in a file on the host, and the one endpoint that can write
@@ -155,12 +160,21 @@ func (uc *BaseUC) authorizeReveal(
 // admin account cannot turn it on. The capability is the account's. Note that an
 // admin passes the second gate unconditionally - see CheckAccess - which is
 // precisely why the attempt is recorded rather than merely refused.
+//
+// secretType only ever concerns the first gate. An operator can stand the flag
+// down for a named kind of secret - see Security.AlwaysReturnSecretTypes - which
+// is how node onboarding keeps working without opening up every stored
+// credential. The capability is not exemptible: an exemption says this kind of
+// secret is ordinary to hand out, not that anyone may have it.
+//
+// An empty secretType means a stored setting, and is always bound by the flag.
 func (uc *BaseUC) canRevealSecrets(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
+	secretType base.SecretType,
 ) (allowed bool, err error) {
-	if !config.Current().Security.ReturnSecretsViaAPI {
+	if !config.Current().Security.AllowsSecretType(secretType) {
 		return false, hperrors.Wrap(hperrors.ErrRevealSecretsDisabled)
 	}
 

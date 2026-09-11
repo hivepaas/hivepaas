@@ -18,6 +18,10 @@ const (
 	VolumeDriverLocal VolumeDriver = "local"
 )
 
+// VolumeNameLabel carries the name a person gave the volume, because its docker
+// name is a ULID.
+const VolumeNameLabel = "hivepaas.volume.name"
+
 type VolumeScope string
 
 const (

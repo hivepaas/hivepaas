@@ -12,6 +12,12 @@ type BaseCreateSessionReq struct {
 	IsAPIKey     bool
 	AccessAction *base.AccessActions
 
+	// StartedAt is when the login that began this session happened, for a request
+	// that is renewing one. Zero starts a new session from now, which is what a
+	// login passes - and also what a session older than the deadline claim gets,
+	// so an upgrade does not sign everybody out.
+	StartedAt time.Time
+
 	// Method is how the caller proved who they are, and it is what the session's
 	// audit entry is filed under.
 	//

@@ -35,8 +35,21 @@ app_path = "/var/lib/hivepaas"
     device_trusted_period = "48h" # 2-days
 
     jwt_secret = "abc123"
-    access_token_exp = "12h"
-    refresh_token_exp = "24h"
+    access_token_exp = "8h"
+    refresh_token_exp = "16h"
+
+    # The deadline a session cannot renew past, measured from the login that
+    # started it. The two lifetimes above are renewable and only decide how long
+    # a session may sit unused - the dashboard renews one whenever a request
+    # finds the access token expired - so this is what ends a session that is
+    # kept alive. "0s" means no deadline.
+    session_max_exp = "24h"
+
+    # The same three for admin sessions, which can change the whole install.
+    # Any of them set to "0s" falls back to the shared value above.
+    admin_access_token_exp = "30m"
+    admin_refresh_token_exp = "1h"
+    admin_session_max_exp = "8h"
 
     basic_auth_username = "hivepaas"
     basic_auth_password = "abc123"

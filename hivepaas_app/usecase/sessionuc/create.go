@@ -42,14 +42,34 @@ func (uc *UC) createSession(
 		AccessAction: req.AccessAction,
 	}
 
+	// Decided per session rather than once at startup, because the answer depends
+	// on who is signing in - and on a refresh it is re-decided from the account as
+	// it is now, so an admin demoted mid-session lengthens on their next renewal
+	// and a member promoted to admin shortens on theirs.
+	exp := jwtsession.TokenExp(privilegedSession(req))
+
+	// The deadline is measured from the login that began the session, so a
+	// renewal cannot move it. Held to here rather than only checked, so the
+	// tokens this hands out cannot outlive it either.
+	startedAt := req.StartedAt
+	if startedAt.IsZero() {
+		startedAt = timeutil.NowUTC()
+	}
+	exp, alive := exp.Within(startedAt, timeutil.NowUTC())
+	if !alive {
+		return nil, hperrors.Wrap(hperrors.ErrSessionJWTExpired).
+			WithMsgLog("session reached its %v deadline and has to be signed into again", exp.Max)
+	}
+	authClaims.StartedAt = startedAt.Unix()
+
 	resp = &sessiondto.BaseCreateSessionResp{}
-	resp.AccessToken, err = jwtsession.GenerateAccessToken(authClaims)
+	resp.AccessToken, err = jwtsession.GenerateAccessTokenWithExp(authClaims, exp.Access)
 	if err != nil {
 		return nil, hperrors.Wrap(err).WithMsgLog("failed to create access token")
 	}
 	resp.AccessTokenExp = authClaims.ExpiresAt.Time
 
-	resp.RefreshToken, err = jwtsession.GenerateRefreshToken(authClaims)
+	resp.RefreshToken, err = jwtsession.GenerateRefreshTokenWithExp(authClaims, exp.Refresh)
 	if err != nil {
 		return nil, hperrors.Wrap(err).WithMsgLog("failed to create refresh token")
 	}
@@ -70,4 +90,20 @@ func (uc *UC) createSession(
 	}
 
 	return resp, nil
+}
+
+// privilegedSession reports whether this session gets the admin lifetimes.
+//
+// An admin account, signed into by a person. The role is the whole of the reason:
+// an admin session can change anything the install has, so how long it stays
+// usable unattended is worth deciding separately from everybody else's.
+//
+// Not a session minted from an API key, even an admin's. The key is itself the
+// long-lived credential - it is issued for up to a year and is what an attacker
+// would have to hold - so shortening the session it mints protects nothing it
+// does not already protect, while multiplying how often every piece of
+// automation has to sign in again. What guards a key is revoking it, which the
+// api-key-revoke record next door is about.
+func privilegedSession(req *sessiondto.BaseCreateSessionReq) bool {
+	return !req.IsAPIKey && req.User != nil && req.User.IsAdmin()
 }

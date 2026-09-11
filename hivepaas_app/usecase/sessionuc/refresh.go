@@ -17,9 +17,13 @@ func (uc *UC) RefreshSession(
 		return nil, hperrors.Wrap(hperrors.ErrSessionRefreshTokenRequired)
 	}
 
+	// The start travels with the session, so its deadline is measured from the
+	// login and not from this renewal. A session minted before that claim existed
+	// carries nothing here and is dated from now - one more full window, once.
 	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{
-		User:   user.User,
-		Method: auditMethodRefresh,
+		User:      user.User,
+		StartedAt: user.AuthClaims.SessionStartedAt(),
+		Method:    auditMethodRefresh,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err).WithMsgLog("failed to create session")

@@ -116,6 +116,8 @@ func (s *service) loadPlacementSettingsData(
 		data.VolumePins = pins
 	}
 
+	s.warnOnPinDrift(ctx, data)
+
 	return nil
 }
 

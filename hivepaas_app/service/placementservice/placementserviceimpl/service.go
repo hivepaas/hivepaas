@@ -1,6 +1,7 @@
 package placementserviceimpl
 
 import (
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
@@ -13,6 +14,7 @@ func New(
 	settingRepo repository.SettingRepo,
 
 	clusterService clusterservice.Service,
+	logger logging.Logger,
 ) placementservice.Service {
 	return &service{
 		dockerManager: dockerManager,
@@ -20,6 +22,7 @@ func New(
 		settingRepo: settingRepo,
 
 		clusterService: clusterService,
+		logger:         logger,
 	}
 }
 
@@ -29,4 +32,5 @@ type service struct {
 	settingRepo repository.SettingRepo
 
 	clusterService clusterservice.Service
+	logger         logging.Logger
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
@@ -87,6 +88,13 @@ func (s *service) applyPlacementSettings(
 				newHivepaasConstraints = append(newHivepaasConstraints, fmt.Sprintf("node.labels.%s!=true", key))
 			}
 		}
+	}
+
+	// The one required constraint HivePaaS emits. A conflict is refused where the
+	// mounts are chosen, so by here the pins already agree.
+	if constraint, conflict := placementservice.VolumePinConstraint(data.VolumePins); conflict == nil &&
+		constraint != "" {
+		newHivepaasConstraints = append(newHivepaasConstraints, constraint)
 	}
 
 	finalConstraints = append(finalConstraints, newHivepaasConstraints...)

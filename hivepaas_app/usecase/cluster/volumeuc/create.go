@@ -33,8 +33,11 @@ func (uc *UC) CreateVolume(
 	req.NodeID = nodeID
 
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
-		// The settings framework refuses a duplicate name for us. It replaces the
-		// VolumeInspect this used to do, which asked the wrong daemon anyway.
+		// The settings framework refuses a duplicate name within the request's
+		// scope for us. It replaces the VolumeInspect this used to do, which asked
+		// the wrong daemon anyway - and it only catches what actually gets
+		// persisted because req.Name is never rewritten before pData.Setting.Name
+		// is set to it below: same string, checked once and stored unchanged.
 		VerifyingName:   req.Name,
 		VerifyingRefIDs: (&entity.ClusterVolume{}).GetRefObjectIDs(),
 		Version:         currentSettingVersion,
@@ -44,9 +47,6 @@ func (uc *UC) CreateVolume(
 			data *settings.CreateSettingData,
 			pData *settings.PersistingSettingCreationData,
 		) error {
-			if req.Scope.IsProjectScope() {
-				req.Name = req.Scope.Project.Key + "_" + req.Name
-			}
 			volEntity, err := uc.prepareVolumeSpec(ctx, req)
 			if err != nil {
 				return hperrors.Wrap(err)

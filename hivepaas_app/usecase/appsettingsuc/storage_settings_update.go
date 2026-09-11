@@ -194,11 +194,7 @@ func (uc *UC) buildDockerMount(
 				}
 			}
 		}
-		// Only when the request did not bring its own: an explicit DriverConfig
-		// from the client is the caller overriding, and this must not undo it.
-		if dockerMnt.VolumeOptions == nil || dockerMnt.VolumeOptions.DriverConfig == nil {
-			applyVolumeDriverConfig(dockerMnt, vol)
-		}
+		applyVolumeDriverConfigUnlessOverridden(dockerMnt, vol)
 	case mount.TypeCluster:
 		if reqMnt.ClusterOptions != nil {
 			dockerMnt.VolumeOptions = &mount.VolumeOptions{

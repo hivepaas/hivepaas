@@ -47,3 +47,13 @@ func applyVolumeDriverConfig(dockerMnt *mount.Mount, vol *entity.ClusterVolume) 
 		dockerMnt.VolumeOptions.Labels = vol.Labels
 	}
 }
+
+// applyVolumeDriverConfigUnlessOverridden fills in the volume's driver config
+// unless the request already carries one. An explicit DriverConfig on the
+// mount came from the caller overriding, and filling it in from the setting
+// anyway would silently discard that override.
+func applyVolumeDriverConfigUnlessOverridden(dockerMnt *mount.Mount, vol *entity.ClusterVolume) {
+	if dockerMnt.VolumeOptions == nil || dockerMnt.VolumeOptions.DriverConfig == nil {
+		applyVolumeDriverConfig(dockerMnt, vol)
+	}
+}

@@ -105,7 +105,7 @@ func (s *EncryptedField) encrypt() (string, error) {
 		// eight stars, silently and beyond recovery, so refuse instead. This is a
 		// backstop: it catches the cases a handler forgot, and every setting type
 		// that gains a secret later without anyone remembering this exists.
-		return "", hperrors.NewArgumentInvalidNT("secret")
+		return "", hperrors.NewArgumentInvalid("secret")
 	}
 	key := datakey.Active()
 	if key == nil {

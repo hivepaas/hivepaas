@@ -60,10 +60,10 @@ type Service interface {
 // denied, by whichever gate refused it.
 func RecordAllowed(ctx context.Context, svc Service, db database.IDB, entry *Entry) error {
 	if entry == nil {
-		return hperrors.NewArgumentInvalidNT("audit entry")
+		return hperrors.NewArgumentInvalid("audit entry")
 	}
 	if entry.Auth == nil {
-		return hperrors.NewArgumentInvalidNT("audit auth")
+		return hperrors.NewArgumentInvalid("audit auth")
 	}
 	entry.Result = base.AuditLogResultAllowed
 	if err := svc.Record(ctx, db, entry); err != nil {

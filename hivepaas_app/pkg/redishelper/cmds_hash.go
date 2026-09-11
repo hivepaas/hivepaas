@@ -18,7 +18,7 @@ func HGet[T any](
 	data, err := cmder.HGet(ctx, key, field).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return value, hperrors.NewNotFoundNT(key).WithCause(err)
+			return value, hperrors.NewNotFound(key).WithCause(err)
 		}
 		return value, hperrors.Wrap(err)
 	}
@@ -49,7 +49,7 @@ func HGetAll[T any](
 	data, err := cmder.HGetAll(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return nil, hperrors.NewNotFoundNT(key).WithCause(err)
+			return nil, hperrors.NewNotFound(key).WithCause(err)
 		}
 		return nil, hperrors.Wrap(err)
 	}

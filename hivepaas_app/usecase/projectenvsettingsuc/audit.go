@@ -30,7 +30,7 @@ func (uc *UC) recordProjectEnvUpdate(
 	detail *auditdetail.Builder,
 ) error {
 	if projectEnv == nil {
-		return hperrors.NewArgumentInvalidNT("audited project env")
+		return hperrors.NewArgumentInvalid("audited project env")
 	}
 	if detail == nil {
 		detail = auditdetail.New()

@@ -32,7 +32,7 @@ func New(
 // Record implements auditservice.Service.
 func (s *service) Record(ctx context.Context, db database.IDB, entry *auditservice.Entry) error {
 	if entry == nil {
-		return hperrors.NewArgumentInvalidNT("audit entry")
+		return hperrors.NewArgumentInvalid("audit entry")
 	}
 
 	auditLog := &entity.AuditLog{

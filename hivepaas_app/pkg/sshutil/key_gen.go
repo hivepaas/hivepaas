@@ -81,7 +81,7 @@ func GeneratePublicKey(privKey, passphrase string) (base.PrivateKeyType, string,
 	pub := signer.PublicKey()
 	cryptoPub, ok := pub.(ssh.CryptoPublicKey)
 	if !ok {
-		return "", "", hperrors.NewUnsupportedNT("Public key").WithExtraDetail("cannot extract crypto public key")
+		return "", "", hperrors.NewUnsupported("Public key").WithExtraDetail("cannot extract crypto public key")
 	}
 	pubKeyStr := string(ssh.MarshalAuthorizedKey(pub))
 

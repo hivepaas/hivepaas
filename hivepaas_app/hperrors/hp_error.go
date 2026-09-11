@@ -34,12 +34,12 @@ type HPError interface {
 
 	// WithCause sets cause of the error
 	WithCause(cause error) HPError
-	// WithParam sets a custom param (the param will be translated when build message)
+	// WithParam sets a custom but non-translatable param
 	WithParam(k string, v any) HPError
-	// WithParams sets custom params
+	// WithParams sets custom but non-translatable params
 	WithParams(map[string]any) HPError
-	// WithNTParam sets a custom but non-translation param
-	WithNTParam(k string, v any) HPError
+	// WithTransParam sets a custom but translatable param
+	WithTransParam(k string, v any) HPError
 	// WithExtraDetail sets extra detail
 	WithExtraDetail(string, ...any) HPError
 	// WithMsgLog sets log message (used for debug purpose)
@@ -67,8 +67,8 @@ type HPError interface {
 type hpError struct {
 	err                error
 	cause              error
-	params             map[string]any
-	ntParams           map[string]any // non-translation params
+	params             map[string]any // non-translatable params
+	tParams            map[string]any // translatable params
 	extraDetail        string
 	msgLog             string
 	displayLevel       DisplayLevel
@@ -95,8 +95,8 @@ func (e *hpError) WithParams(m map[string]any) HPError {
 	return e
 }
 
-func (e *hpError) WithNTParam(k string, v any) HPError {
-	e.ntParams[k] = v
+func (e *hpError) WithTransParam(k string, v any) HPError {
+	e.tParams[k] = v
 	return e
 }
 
@@ -198,9 +198,9 @@ func (e *hpError) Message(lang translation.Lang) (msg string, transErr error) {
 }
 
 func (e *hpError) getMessage(msgID string, lang translation.Lang) (msg string, transErr error) {
-	params := make(map[string]any, len(e.params)+len(e.ntParams))
-	maps.Copy(params, e.ntParams)
-	for k, v := range e.params {
+	params := make(map[string]any, len(e.params)+len(e.tParams))
+	maps.Copy(params, e.params)
+	for k, v := range e.tParams {
 		vAsStr, ok := v.(string)
 		if !ok {
 			params[k] = v
@@ -354,8 +354,8 @@ func Wrap(err error) HPError {
 	e, ok := errors.AsType[*hpError](err)
 	if !ok {
 		return &hpError{
-			ntParams:           map[string]any{},
 			params:             map[string]any{},
+			tParams:            map[string]any{},
 			fallbackToErrorMsg: true,
 			err:                goerrors.Wrap(err, 1),
 		}
@@ -377,7 +377,7 @@ func Wrap(err error) HPError {
 	// lead back to e, and every chain walker here would loop forever.
 	wrapped := *e
 	wrapped.params = cloneErrParams(e.params)
-	wrapped.ntParams = cloneErrParams(e.ntParams)
+	wrapped.tParams = cloneErrParams(e.tParams)
 	wrapped.err = err
 	return &wrapped
 }

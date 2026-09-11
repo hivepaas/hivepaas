@@ -77,7 +77,7 @@ func BLPopOne[T any](
 	strSlice, err := cmder.BLPop(ctx, timeout, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return val, hperrors.NewNotFoundNT(key)
+			return val, hperrors.NewNotFound(key)
 		}
 		return val, hperrors.Wrap(err)
 	}

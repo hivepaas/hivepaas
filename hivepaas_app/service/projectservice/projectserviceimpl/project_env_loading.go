@@ -36,12 +36,12 @@ func (s *service) validateProjectEnvStatus(
 		projectName = env.Project.Name
 	}
 	if requireProjectActive && (env.Project == nil || env.Project.Status != base.ProjectStatusActive) {
-		return hperrors.Wrap(hperrors.ErrProjectInactive).WithNTParam("Name", projectName)
+		return hperrors.Wrap(hperrors.ErrProjectInactive).WithParam("Name", projectName)
 	}
 	if requireEnvActive {
 		if env.Status != base.ProjectStatusActive {
-			return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithNTParam("Project", projectName).
-				WithNTParam("Env", env.Name)
+			return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithParam("Project", projectName).
+				WithParam("Env", env.Name)
 		}
 	}
 	return nil

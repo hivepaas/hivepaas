@@ -102,7 +102,7 @@ func (h *Handler) UpdateSetting(
 
 	case base.ResourceTypeAPIKey:
 		// NOTE: not implemented
-		err = hperrors.NewNotImplementedNT()
+		err = hperrors.NewNotImplemented()
 
 	case base.ResourceTypeBackupRepo:
 		r := backuprepodto.NewUpdateBackupRepoReq()

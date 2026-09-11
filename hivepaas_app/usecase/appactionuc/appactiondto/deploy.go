@@ -32,7 +32,7 @@ type DeployAppReq struct {
 func (req *DeployAppReq) ApplyTo(setting *entity.AppDeploymentSettings) error {
 	setting.ActiveMethod = gofn.Coalesce(req.ActiveMethod, setting.ActiveMethod)
 	if setting.ActiveMethod == "" {
-		return hperrors.Wrap(hperrors.ErrSettingMissing).WithNTParam("Name", "activeMethod")
+		return hperrors.Wrap(hperrors.ErrSettingMissing).WithParam("Name", "activeMethod")
 	}
 	switch setting.ActiveMethod {
 	case base.DeploymentMethodImage:
@@ -53,7 +53,7 @@ type DeploymentImageSourceReq struct {
 
 func (req *DeploymentImageSourceReq) ApplyTo(setting *entity.DeploymentImageSource) error {
 	if setting == nil || setting.Image == "" {
-		return hperrors.Wrap(hperrors.ErrSettingMissing).WithNTParam("Name", "imageSource.image")
+		return hperrors.Wrap(hperrors.ErrSettingMissing).WithParam("Name", "imageSource.image")
 	}
 	if req != nil {
 		if req.ImageTag != "" {
@@ -84,7 +84,7 @@ type DeploymentRepoSourceReq struct {
 
 func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource) error {
 	if setting == nil || setting.RepoURL == "" {
-		return hperrors.Wrap(hperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoURL")
+		return hperrors.Wrap(hperrors.ErrSettingMissing).WithParam("Name", "repoSource.repoURL")
 	}
 	if req != nil {
 		setting.RepoRef = gofn.Coalesce(req.RepoRef, setting.RepoRef)
@@ -101,7 +101,7 @@ func (req *DeploymentRepoSourceReq) ApplyTo(setting *entity.DeploymentRepoSource
 		}
 	}
 	if setting.RepoRef == "" {
-		return hperrors.Wrap(hperrors.ErrSettingMissing).WithNTParam("Name", "repoSource.repoRef")
+		return hperrors.Wrap(hperrors.ErrSettingMissing).WithParam("Name", "repoSource.repoRef")
 	}
 	return nil
 }

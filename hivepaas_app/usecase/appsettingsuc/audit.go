@@ -39,7 +39,7 @@ func (uc *UC) recordAppUpdate(
 	detail *auditdetail.Builder,
 ) error {
 	if app == nil {
-		return hperrors.NewArgumentInvalidNT("audited app")
+		return hperrors.NewArgumentInvalid("audited app")
 	}
 	if detail == nil {
 		detail = auditdetail.New()

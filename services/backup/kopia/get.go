@@ -87,7 +87,7 @@ func (c *Client) GetSnapshot(
 
 	var rawManifests []kopiaSnapshotManifest
 	if err := json.Unmarshal(outBuf.Bytes(), &rawManifests); err != nil || len(rawManifests) == 0 {
-		return res, hperrors.Wrap(backupmodel.ErrSnapshotNotFound).WithNTParam("Name", snapshotID)
+		return res, hperrors.Wrap(backupmodel.ErrSnapshotNotFound).WithParam("Name", snapshotID)
 	}
 
 	res.Item = toStandardSnapshot(&rawManifests[0])

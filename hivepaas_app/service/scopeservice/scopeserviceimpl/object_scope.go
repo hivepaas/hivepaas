@@ -100,7 +100,7 @@ func (s *service) LoadObjectScope(
 	// An unrecognized scope type leaves scope nil, and every line below would panic on it. That is
 	// reachable whenever the type comes from stored data rather than a validated request.
 	if scope == nil {
-		return nil, hperrors.NewUnsupportedNT(scopeType)
+		return nil, hperrors.NewUnsupported(scopeType)
 	}
 	scope.NotRequireActive = !requireActive
 

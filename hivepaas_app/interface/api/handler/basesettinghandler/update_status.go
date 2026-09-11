@@ -115,7 +115,7 @@ func (h *Handler) UpdateSettingStatus(
 
 	case base.ResourceTypeClusterNode:
 		// NOTE: not implemented
-		err = hperrors.NewNotImplementedNT()
+		err = hperrors.NewNotImplemented()
 
 	case base.ResourceTypeClusterVolume:
 		r := volumedto.NewUpdateVolumeStatusReq()
@@ -204,7 +204,7 @@ func (h *Handler) UpdateSettingStatus(
 
 	default:
 		// NOTE: not implemented
-		err = hperrors.NewNotImplementedNT()
+		err = hperrors.NewNotImplemented()
 	}
 	if err != nil {
 		h.RenderError(ctx, err)

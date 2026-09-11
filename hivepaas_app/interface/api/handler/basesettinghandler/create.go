@@ -124,7 +124,7 @@ func (h *Handler) CreateSetting(
 
 	case base.ResourceTypeClusterNode:
 		// NOTE: not implemented
-		err = hperrors.NewNotImplementedNT()
+		err = hperrors.NewNotImplemented()
 
 	case base.ResourceTypeClusterVolume:
 		r := volumedto.NewCreateVolumeReq()
@@ -213,7 +213,7 @@ func (h *Handler) CreateSetting(
 
 	default:
 		// NOTE: not implemented
-		err = hperrors.NewNotImplementedNT()
+		err = hperrors.NewNotImplemented()
 	}
 	if err != nil {
 		h.RenderError(ctx, err)

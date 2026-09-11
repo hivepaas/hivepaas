@@ -72,7 +72,7 @@ func (uc *UC) CreateApp(
 		}
 		if res.ID == "" { // should never happen
 			return hperrors.Wrap(hperrors.ErrInfraInternal).
-				WithNTParam("Error", "empty service ID returned")
+				WithParam("Error", "empty service ID returned")
 		}
 		createdApp.ServiceID = res.ID
 
@@ -122,15 +122,15 @@ func (uc *UC) loadAppData(
 		return hperrors.Wrap(err)
 	}
 	if project.Status != base.ProjectStatusActive {
-		return hperrors.Wrap(hperrors.ErrProjectInactive).WithNTParam("Name", project.Name)
+		return hperrors.Wrap(hperrors.ErrProjectInactive).WithParam("Name", project.Name)
 	}
 	if len(project.ProjectEnvs) == 0 {
 		return hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", req.ProjectEnvID)
 	}
 	projectEnv := project.ProjectEnvs[0]
 	if projectEnv.Status != base.ProjectStatusActive {
-		return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithNTParam("Project", project.Name).
-			WithNTParam("Env", projectEnv.Name)
+		return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithParam("Project", project.Name).
+			WithParam("Env", projectEnv.Name)
 	}
 
 	data.Project = project

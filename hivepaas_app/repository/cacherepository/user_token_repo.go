@@ -32,7 +32,7 @@ func (repo *userTokenRepo) Exist(ctx context.Context, userID, uid string) error 
 		return hperrors.Wrap(err)
 	}
 	if count == 0 {
-		return hperrors.NewNotFoundNT(key)
+		return hperrors.NewNotFound(key)
 	}
 	return nil
 }

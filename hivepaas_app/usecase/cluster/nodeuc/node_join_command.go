@@ -51,7 +51,7 @@ func (uc *UC) loadGetNodeJoinCommandData(
 	joinToken := gofn.If(req.JoinAsManager, theSwarm.JoinTokens.Manager, theSwarm.JoinTokens.Worker)
 	if joinToken == "" {
 		return hperrors.Wrap(hperrors.ErrInfraInternal).
-			WithNTParam("Error", "join token is not found")
+			WithParam("Error", "join token is not found")
 	}
 	data.JoinToken = joinToken
 
@@ -74,7 +74,7 @@ func (uc *UC) loadGetNodeJoinCommandData(
 	data.PreferManagerAddr = gofn.Coalesce(leaderAddr, managerAddr)
 	if data.PreferManagerAddr == "" {
 		return hperrors.Wrap(hperrors.ErrInfraInternal).
-			WithNTParam("Error", "active manager node not found")
+			WithParam("Error", "active manager node not found")
 	}
 
 	return nil

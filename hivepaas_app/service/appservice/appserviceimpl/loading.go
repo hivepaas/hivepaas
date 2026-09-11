@@ -110,22 +110,22 @@ func (s *service) validateAppStatus(
 		projectName = app.Project.Name
 	}
 	if requireProjectActive && (app.Project == nil || app.Project.Status != base.ProjectStatusActive) {
-		return hperrors.Wrap(hperrors.ErrProjectInactive).WithNTParam("Name", projectName)
+		return hperrors.Wrap(hperrors.ErrProjectInactive).WithParam("Name", projectName)
 	}
 	if requireProjectActive && (app.ProjectEnv == nil || app.ProjectEnv.Status != base.ProjectStatusActive) {
 		projectEnv := app.ProjectEnvID
 		if app.ProjectEnv != nil {
 			projectEnv = app.ProjectEnv.Name
 		}
-		return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithNTParam("Project", projectName).
-			WithNTParam("Env", projectEnv)
+		return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithParam("Project", projectName).
+			WithParam("Env", projectEnv)
 	}
 	if requireAppActive {
 		if app.Status != base.AppStatusActive {
-			return hperrors.Wrap(hperrors.ErrAppInactive).WithNTParam("Name", app.Name)
+			return hperrors.Wrap(hperrors.ErrAppInactive).WithParam("Name", app.Name)
 		}
 		if app.ParentApp != nil && app.ParentApp.Status != base.AppStatusActive {
-			return hperrors.Wrap(hperrors.ErrAppInactive).WithNTParam("Name", app.ParentApp.Name)
+			return hperrors.Wrap(hperrors.ErrAppInactive).WithParam("Name", app.ParentApp.Name)
 		}
 	}
 	return nil

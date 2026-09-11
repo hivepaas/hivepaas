@@ -42,7 +42,7 @@ func (s *service) RecreateServiceWithSpec(
 	}
 	if oldSpec == nil || newSpec == nil {
 		return "", hperrors.Wrap(hperrors.ErrInfraInternal).
-			WithNTParam("Error", "missing service spec to recreate")
+			WithParam("Error", "missing service spec to recreate")
 	}
 
 	oldServiceID := app.ServiceID
@@ -61,7 +61,7 @@ func (s *service) RecreateServiceWithSpec(
 	res, err := s.dockerManager.ServiceCreate(ctx, newSpec)
 	if err == nil && res.ID == "" { // should never happen
 		err = hperrors.Wrap(hperrors.ErrInfraInternal).
-			WithNTParam("Error", "empty service ID returned")
+			WithParam("Error", "empty service ID returned")
 	}
 	if err != nil {
 		return "", s.rollbackRecreatedService(ctx, app, oldSpec, err)
@@ -82,7 +82,7 @@ func (s *service) rollbackRecreatedService(
 	if restoreErr != nil || restored == nil || restored.ID == "" {
 		// The app now has no service at all. Surface it loudly: no automatic recovery exists.
 		return hperrors.Wrap(createErr).
-			WithNTParam("Error", "failed to change the service mode and to restore the previous "+
+			WithParam("Error", "failed to change the service mode and to restore the previous "+
 				"service; the app currently has no running service and must be redeployed")
 	}
 
@@ -90,5 +90,5 @@ func (s *service) rollbackRecreatedService(
 	app.ServiceID = restored.ID
 
 	return hperrors.Wrap(createErr).
-		WithNTParam("Error", "failed to change the service mode; the previous service was restored")
+		WithParam("Error", "failed to change the service mode; the previous service was restored")
 }

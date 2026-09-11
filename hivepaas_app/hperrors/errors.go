@@ -95,118 +95,76 @@ func NewInternal() HPError {
 
 // NewPanic return HPError for error Panic
 func NewPanic(err any) HPError {
-	return Wrap(ErrPanic).WithNTParam("Error", err)
+	return Wrap(ErrPanic).WithParam("Error", err)
 }
 
 // NewNotFound return HPError for error NotFound
 func NewNotFound(name any) HPError {
 	return Wrap(ErrNotFound).WithParam("Name", name)
 }
-func NewNotFoundNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrNotFound).WithNTParam("Name", name)
-}
 
 // NewAlreadyExist return HPError for error AlreadyExist
 func NewAlreadyExist(name any) HPError {
 	return Wrap(ErrAlreadyExist).WithParam("Name", name)
-}
-func NewAlreadyExistNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrAlreadyExist).WithNTParam("Name", name)
 }
 
 // NewConflict return HPError for error Conflict
 func NewConflict(name any) HPError {
 	return Wrap(ErrConflict).WithParam("Name", name)
 }
-func NewConflictNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrConflict).WithNTParam("Name", name)
-}
 
 // NewArgumentInvalid return HPError for error ErrArgumentInvalid
 func NewArgumentInvalid(name any) HPError {
 	return Wrap(ErrArgumentInvalid).WithParam("Name", name)
-}
-func NewArgumentInvalidNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrArgumentInvalid).WithNTParam("Name", name)
 }
 
 // NewUnavailable return HPError for error Unavailable
 func NewUnavailable(name any) HPError {
 	return Wrap(ErrUnavailable).WithParam("Name", name)
 }
-func NewUnavailableNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrUnavailable).WithNTParam("Name", name)
-}
 
 // NewForbidden return HPError for error Forbidden
 func NewForbidden(name any) HPError {
 	return Wrap(ErrForbidden).WithParam("Name", name)
-}
-func NewForbiddenNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrForbidden).WithNTParam("Name", name)
 }
 
 // NewNonEditable return HPError for error NonEditable
 func NewNonEditable(name any) HPError {
 	return Wrap(ErrNonEditable).WithParam("Name", name)
 }
-func NewNonEditableNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrNonEditable).WithNTParam("Name", name)
-}
 
 // NewNonDeletable return HPError for error NonDeletable
 func NewNonDeletable(name any) HPError {
 	return Wrap(ErrNonDeletable).WithParam("Name", name)
-}
-func NewNonDeletableNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrNonDeletable).WithNTParam("Name", name)
 }
 
 // NewInUse return HPError for error ResourceInUse
 func NewInUse(name any) HPError {
 	return Wrap(ErrInUse).WithParam("Name", name)
 }
-func NewInUseNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrInUse).WithNTParam("Name", name)
-}
 
 // NewInactive return HPError for error ResourceInactive
 func NewInactive(name any) HPError {
 	return Wrap(ErrInactive).WithParam("Name", name)
-}
-func NewInactiveNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrInactive).WithNTParam("Name", name)
 }
 
 // NewMissing return HPError for error ResourceMissing
 func NewMissing(name any) HPError {
 	return Wrap(ErrMissing).WithParam("Name", name)
 }
-func NewMissingNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrMissing).WithNTParam("Name", name)
-}
 
 // NewMismatch return HPError for error Mismatch
 func NewMismatch(left, right any) HPError {
 	return Wrap(ErrMismatch).WithParam("Left", left).WithParam("Right", right)
-}
-func NewMismatchNT(left, right any) HPError { // NT: non translation param
-	return Wrap(ErrMismatch).WithNTParam("Left", left).WithNTParam("Right", right)
 }
 
 // NewUnsupported return HPError for error Unsupported
 func NewUnsupported(name any) HPError {
 	return Wrap(ErrUnsupported).WithParam("Name", name)
 }
-func NewUnsupportedNT(name any) HPError { // NT: non translation param
-	return Wrap(ErrUnsupported).WithNTParam("Name", name)
-}
 
 // NewNotImplemented return HPError for error NotImplemented
 func NewNotImplemented() HPError {
-	return Wrap(ErrNotImplemented)
-}
-func NewNotImplementedNT() HPError { // NT: non translation param
 	return Wrap(ErrNotImplemented)
 }
 

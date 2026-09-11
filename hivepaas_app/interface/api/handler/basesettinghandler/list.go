@@ -216,7 +216,7 @@ func (h *Handler) ListSetting(
 
 	default:
 		// NOTE: not implemented
-		err = hperrors.NewNotImplementedNT()
+		err = hperrors.NewNotImplemented()
 	}
 	if err != nil {
 		h.RenderError(ctx, err)

@@ -233,14 +233,14 @@ func (h *BaseHandler) parsePagination(ctx *gin.Context, paging *basedto.Paging) 
 	if limitStr := ctx.Query("pageLimit"); limitStr != "" {
 		limit, err := strconv.Atoi(limitStr)
 		if err != nil || limit <= 0 || limit > basedto.PageLimitMax {
-			return hperrors.NewArgumentInvalidNT("pageLimit")
+			return hperrors.NewArgumentInvalid("pageLimit")
 		}
 		paging.Limit = limit
 	}
 	if offsetStr := ctx.Query("pageOffset"); offsetStr != "" {
 		offset, err := strconv.Atoi(offsetStr)
 		if err != nil || offset < 0 {
-			return hperrors.NewArgumentInvalidNT("pageOffset")
+			return hperrors.NewArgumentInvalid("pageOffset")
 		}
 		if offset > 0 {
 			paging.Offset = offset
@@ -616,19 +616,19 @@ func (h *BaseHandler) ParseFormFiles(ctx *gin.Context, req *filedto.UploadReq) e
 	}
 	if maxFile > 0 && len(form.File["file"]) > maxFile {
 		return hperrors.Wrap(hperrors.ErrTooMany).WithParam("Name", "Files").
-			WithNTParam("MaxItem", maxFile)
+			WithParam("MaxItem", maxFile)
 	}
 	allowAnyExt := gofn.Contain(fileExts, "*")
 	for _, formFile := range form.File["file"] {
 		if maxFileSize > 0 && formFile.Size > maxFileSize.Bytes() {
 			return hperrors.Wrap(hperrors.ErrFileSizeTooBig).
-				WithNTParam("MaxSize", maxFileSize)
+				WithParam("MaxSize", maxFileSize)
 		}
 		if !(allowAnyExt || gofn.Contain(fileExts, strings.ToLower(filepath.Ext(formFile.Filename)))) { //nolint
-			return hperrors.Wrap(hperrors.ErrFileExtNotSupported).WithNTParam("SupportedExts", fileExts)
+			return hperrors.Wrap(hperrors.ErrFileExtNotSupported).WithParam("SupportedExts", fileExts)
 		}
 		if cfg.FileNameMaxLength > 0 && gofn.RuneLength(formFile.Filename) > cfg.FileNameMaxLength {
-			return hperrors.Wrap(hperrors.ErrFileNameTooLong).WithNTParam("MaxNameLen", cfg.FileNameMaxLength)
+			return hperrors.Wrap(hperrors.ErrFileNameTooLong).WithParam("MaxNameLen", cfg.FileNameMaxLength)
 		}
 		req.Files = append(req.Files, formFile)
 	}

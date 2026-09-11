@@ -38,9 +38,9 @@ func Get[T any](
 	valueStr, err := cmder.Get(ctx, key).Result()
 	if err != nil {
 		if errors.Is(err, redis.Nil) {
-			return value, hperrors.NewNotFoundNT(key)
+			return value, hperrors.NewNotFound(key)
 		}
-		return value, hperrors.NewNotFoundNT(key)
+		return value, hperrors.NewNotFound(key)
 	}
 	return unmarshalStr[T](valueStr)
 }

@@ -18,7 +18,7 @@ func newPagingMeta(paging *basedto.Paging) *basedto.PagingMeta {
 
 func wrapPaginationError(err error, paging *basedto.Paging) error {
 	if paging != nil && len(paging.Sort) > 0 && bunex.IsErrorColumnNotExist(err) {
-		return hperrors.NewArgumentInvalidNT("sort").WithCause(err)
+		return hperrors.NewArgumentInvalid("sort").WithCause(err)
 	}
 	return hperrors.Wrap(err)
 }

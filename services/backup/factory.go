@@ -23,6 +23,6 @@ func NewEngine(
 	case EngineTypeKopia:
 		return kopia.NewClient(storageCfg, commandExec), nil
 	default:
-		return nil, hperrors.Wrap(backupmodel.ErrEngineUnsupported).WithNTParam("Name", engineType)
+		return nil, hperrors.Wrap(backupmodel.ErrEngineUnsupported).WithParam("Name", engineType)
 	}
 }

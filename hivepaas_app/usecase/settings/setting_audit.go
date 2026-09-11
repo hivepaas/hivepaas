@@ -41,7 +41,7 @@ func (uc *BaseUC) recordSettingAudit(
 ) error {
 	setting := gofn.Coalesce(current, old)
 	if setting == nil {
-		return hperrors.NewArgumentInvalidNT("audited setting")
+		return hperrors.NewArgumentInvalid("audited setting")
 	}
 	// RecordAllowed refuses an entry it cannot attribute, which is what turns a
 	// usecase that forgot to set req.Auth into a loud failure rather than a hole.

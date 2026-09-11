@@ -35,7 +35,7 @@ func (uc *UC) recordProjectUpdate(
 	detail *auditdetail.Builder,
 ) error {
 	if project == nil {
-		return hperrors.NewArgumentInvalidNT("audited project")
+		return hperrors.NewArgumentInvalid("audited project")
 	}
 	if detail == nil {
 		detail = auditdetail.New()

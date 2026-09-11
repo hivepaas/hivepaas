@@ -192,7 +192,7 @@ func (s *service) createSwarmService(
 	}
 	if res.ID == "" { // should never happen
 		return hperrors.Wrap(hperrors.ErrInfraInternal).
-			WithNTParam("Error", "empty service ID returned")
+			WithParam("Error", "empty service ID returned")
 	}
 	data.DestApp.ServiceID = res.ID
 	data.DestService.ID = res.ID

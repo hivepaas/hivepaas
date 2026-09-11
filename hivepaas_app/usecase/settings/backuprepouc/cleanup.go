@@ -33,7 +33,7 @@ func (uc *UC) CleanupBackupRepo(
 		return nil, hperrors.Wrap(err)
 	}
 	if !acquired {
-		return nil, hperrors.Wrap(hperrors.ErrBackupRepoCleanupInProgress).WithNTParam("Name", req.ID)
+		return nil, hperrors.Wrap(hperrors.ErrBackupRepoCleanupInProgress).WithParam("Name", req.ID)
 	}
 	defer func() {
 		_ = lock.Release(ctx)

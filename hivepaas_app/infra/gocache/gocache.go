@@ -35,7 +35,7 @@ func NewCache() *Cache {
 func (c *Cache) Get(key string) (any, error) {
 	val, exists := c.client.Get(key)
 	if !exists {
-		return nil, hperrors.NewNotFoundNT(key)
+		return nil, hperrors.NewNotFound(key)
 	}
 	return val, nil
 }

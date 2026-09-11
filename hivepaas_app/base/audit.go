@@ -98,6 +98,18 @@ const (
 	// scanning the type column, and an entry that says project-update cannot tell
 	// a rename from an environment and its apps being taken away.
 	AuditLogTypeProjectEnvDelete AuditLogType = "project-env-delete"
+
+	// AuditLogTypeClusterUpdate records an operation carried out on the cluster
+	// itself: a machine joined, the manager set changed, the build cache purged,
+	// the database reconciled against Docker.
+	//
+	// Nodes, networks and volumes are stored as settings, so their creation and
+	// removal already arrive as setting-create and setting-delete with ResType
+	// naming which kind. This covers what is left: the operations that act on the
+	// cluster rather than on its records. A node joining gets no type of its own
+	// for that reason - it would be a third channel for node events, on top of
+	// the two that already exist, which is harder to follow than a section.
+	AuditLogTypeClusterUpdate AuditLogType = "cluster-update"
 )
 
 var AllAuditLogTypes = []AuditLogType{
@@ -118,6 +130,7 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeAppCreate,
 	AuditLogTypeAppDelete,
 	AuditLogTypeProjectEnvDelete,
+	AuditLogTypeClusterUpdate,
 }
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.

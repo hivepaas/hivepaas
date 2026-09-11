@@ -64,19 +64,46 @@ func (uc *BaseUC) revealSecrets(
 	return nil
 }
 
-// authorizeReveal decides whether the caller may see the secrets, and records the
-// answer either way.
+// RevealSubject identifies the secret being asked for.
+//
+// It exists because a stored setting is not the only secret the API hands out in
+// the clear - the Swarm join token is another, and it is not a setting at all -
+// and every one of them has to pass the same two gates and leave the same record.
+type RevealSubject struct {
+	Scope    base.ObjectScopeType
+	ObjectID string
+	Source   base.AuditLogSource
+
+	ResType base.ResourceType
+	ResID   string
+	// ResName is stored as it reads now, because the object may be renamed or
+	// deleted long before anyone comes to read the entry.
+	ResName string
+
+	// Detail is free-form JSON, and must never carry the secret it describes.
+	Detail string
+}
+
+// AuthorizeSecretReveal decides whether the caller may see a secret in the clear,
+// and records the answer either way.
 //
 // The record is written before the secret is handed over and its failure aborts
 // the reveal. A secret released without a trace is the case this whole path
 // exists to prevent, so a reveal that cannot be recorded does not happen.
-func (uc *BaseUC) authorizeReveal(
+//
+// A refusal is recorded too, which is the half that matters: an admin passes the
+// capability gate unconditionally, so the attempt is the only thing there is to
+// see. Note this is the one place in the audit that records denials - everywhere
+// else permission is settled in the handler, before the usecase runs.
+func (uc *BaseUC) AuthorizeSecretReveal(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
-	scope *entity.ObjectScope,
-	setting *entity.Setting,
+	subject *RevealSubject,
 ) error {
+	if subject == nil {
+		return hperrors.NewArgumentInvalid("Reveal subject")
+	}
 	allowed, denyErr := uc.canRevealSecrets(ctx, db, auth)
 
 	result := base.AuditLogResultAllowed
@@ -85,20 +112,39 @@ func (uc *BaseUC) authorizeReveal(
 	}
 	err := uc.AuditService.Record(ctx, db, &auditservice.Entry{
 		Type:     base.AuditLogTypeSecretReveal,
-		Scope:    scope.ScopeType,
-		ObjectID: scope.ScopeObjectID(),
-		Source:   base.AuditLogSourceAPIGet,
+		Scope:    subject.Scope,
+		ObjectID: subject.ObjectID,
+		Source:   subject.Source,
 		Result:   result,
 		Auth:     auth,
-		ResType:  base.ResourceTypeSetting,
-		ResID:    setting.ID,
-		ResName:  setting.Name,
+		ResType:  subject.ResType,
+		ResID:    subject.ResID,
+		ResName:  subject.ResName,
+		Detail:   subject.Detail,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 
 	return denyErr
+}
+
+// authorizeReveal is AuthorizeSecretReveal for a stored setting.
+func (uc *BaseUC) authorizeReveal(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	scope *entity.ObjectScope,
+	setting *entity.Setting,
+) error {
+	return uc.AuthorizeSecretReveal(ctx, db, auth, &RevealSubject{
+		Scope:    scope.ScopeType,
+		ObjectID: scope.ScopeObjectID(),
+		Source:   base.AuditLogSourceAPIGet,
+		ResType:  base.ResourceTypeSetting,
+		ResID:    setting.ID,
+		ResName:  setting.Name,
+	})
 }
 
 // canRevealSecrets reports whether the caller may see stored secrets in the clear.

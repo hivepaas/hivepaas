@@ -13,6 +13,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/clusteraudit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 	"github.com/hivepaas/hivepaas/services/ssh"
 )
@@ -43,6 +45,25 @@ func (uc *UC) JoinNode(
 		return nil, hperrors.Wrap(err)
 	}
 	passphrase, err := data.SSHKey.Passphrase.GetPlain()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	// Before the command runs, and its failure abandons the join. The command is
+	// `swarm leave --force && swarm join`: it takes a machine into the cluster,
+	// which is the act worth being able to find later, and nothing about it can
+	// be undone from here once the SSH session starts.
+	//
+	// The join token is deliberately absent. It is the credential that lets any
+	// machine holding it into the swarm, and an audit row outlives the node it
+	// was used for.
+	err = clusteraudit.Record(ctx, uc.AuditService, uc.db, auth,
+		clusteraudit.Target{ResType: base.ResourceTypeClusterNode, Name: req.Host}, "node-join",
+		auditdetail.New().
+			Set("host", req.Host).
+			Set("port", req.Port).
+			Set("user", req.User).
+			Set("sshKeyId", req.SSHKey.ID))
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

@@ -228,3 +228,55 @@ func TestRevealSecretsOnTypeWithoutSecrets(t *testing.T) {
 		t.Error("nothing was revealed, so there is nothing to record")
 	}
 }
+
+// AuthorizeSecretReveal is the same gate the setting path uses, reached directly
+// by callers whose secret is not a stored setting - the Swarm join token.
+func TestAuthorizeSecretRevealRecordsSubjectAndDenial(t *testing.T) {
+	enableReveal(t, true)
+	uc, audit := newRevealUC(t, false, nil)
+
+	subject := &RevealSubject{
+		Scope:   base.ObjectScopeGlobal,
+		Source:  base.AuditLogSourceAPIGet,
+		ResType: base.ResourceTypeCluster,
+		Detail:  `{"tokenRole":"manager"}`,
+	}
+	err := uc.AuthorizeSecretReveal(context.Background(), nil, &basedto.Auth{}, subject)
+	if err == nil {
+		t.Fatal("want the refusal to come back")
+	}
+
+	if len(audit.entries) != 1 {
+		t.Fatalf("want 1 entry, got %d", len(audit.entries))
+	}
+	entry := audit.entries[0]
+	// A refused attempt is the only sign of somebody trying doors, so it has to
+	// be recorded rather than only refused.
+	if entry.Result != base.AuditLogResultDenied {
+		t.Errorf("result = %q", entry.Result)
+	}
+	if entry.Type != base.AuditLogTypeSecretReveal {
+		t.Errorf("type = %q", entry.Type)
+	}
+	if entry.ResType != base.ResourceTypeCluster || entry.Detail != subject.Detail {
+		t.Errorf("subject was not carried through: %q / %q", entry.ResType, entry.Detail)
+	}
+}
+
+// The config flag is the operator's, and it refuses before the capability is even
+// looked at - so an endpoint behind this gate stops working when it is off.
+func TestAuthorizeSecretRevealRefusedWhenDisabledByConfig(t *testing.T) {
+	enableReveal(t, false)
+	uc, audit := newRevealUC(t, true, nil)
+
+	err := uc.AuthorizeSecretReveal(context.Background(), nil, &basedto.Auth{}, &RevealSubject{
+		Scope:   base.ObjectScopeGlobal,
+		ResType: base.ResourceTypeCluster,
+	})
+	if !errors.Is(err, hperrors.ErrRevealSecretsDisabled) {
+		t.Fatalf("want ErrRevealSecretsDisabled, got %v", err)
+	}
+	if len(audit.entries) != 1 || audit.entries[0].Result != base.AuditLogResultDenied {
+		t.Error("the refusal must still be recorded")
+	}
+}

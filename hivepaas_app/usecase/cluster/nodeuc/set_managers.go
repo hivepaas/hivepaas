@@ -10,8 +10,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/clusteraudit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
 )
 
@@ -66,6 +68,20 @@ func (uc *UC) SetManagerNodes(
 		} else if !inTarget && isManager {
 			demoteNodes = append(demoteNodes, node)
 		}
+	}
+
+	// Recorded before anything moves. Promotion and demotion go straight to
+	// Docker, one node at a time, and a failure halfway leaves the cluster in a
+	// state no rollback here can undo - so the only order that cannot lose the
+	// record is to write it first. Who holds manager role is who controls the
+	// cluster, which is why this is worth a record at all.
+	err = clusteraudit.Record(ctx, uc.AuditService, uc.DB, auth,
+		clusteraudit.Target{ResType: base.ResourceTypeClusterNode}, "node-set-managers",
+		auditdetail.New().
+			Set("promoting", nodeIDs(promoteNodes)).
+			Set("demoting", nodeIDs(demoteNodes)))
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
 	// 1. Promote worker nodes to managers first to preserve quorum
@@ -141,4 +157,14 @@ func (uc *UC) sortNodesToDemote(
 		return false
 	})
 	return demoteNodes
+}
+
+// nodeIDs names the nodes an operation is about to move, so the entry survives
+// the operation failing partway through.
+func nodeIDs(nodes []*swarm.Node) []string {
+	ids := make([]string, 0, len(nodes))
+	for _, node := range nodes {
+		ids = append(ids, node.ID)
+	}
+	return ids
 }

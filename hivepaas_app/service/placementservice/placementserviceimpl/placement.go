@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/moby/moby/api/types/mount"
-	"github.com/uptrace/bun"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -122,48 +119,42 @@ func (s *service) loadPlacementSettingsData(
 	return nil
 }
 
-// loadVolumePins reads the pin of every volume the service mounts by name.
+// loadVolumePins reads the pin of every volume the service mounts, by whatever
+// identity that mount type carries.
 //
-// Mounts are matched on RefID because that is the volume's docker-side identity,
-// which is what a mount spec names. The scope passed to List is the app's own -
-// the same one storage_settings_update.go validates a mount against - so a
-// volume defined at a parent scope (project, project env, or global) is found
-// here exactly when the app was allowed to mount it: List already walks up the
-// scope chain for settings marked inheritable.
+// A TypeVolume/TypeCluster mount names its volume's RefID directly. A TypeBind
+// mount - what a pinned `local` volume with type=none/device=<dir> actually
+// becomes on the wire, see storage_settings_update.go's
+// useBindMountIfAppropriate - carries no volume identity at all, only the host
+// path. So this loads every cluster-volume setting the service could possibly
+// mount rather than filtering by ref id, and leaves the matching (including the
+// bind-to-device comparison) to VolumePinsForMounts.
+//
+// The scope passed to List is the app's own - the same one
+// storage_settings_update.go validates a mount against - so a volume defined at
+// a parent scope (project, project env, or global) is found here exactly when
+// the app was allowed to mount it: List already walks up the scope chain for
+// settings marked inheritable.
 func (s *service) loadVolumePins(
 	ctx context.Context,
 	db database.IDB,
 	data *placementSettingsData,
 ) ([]placementservice.VolumePin, error) {
-	var refIDs []string
-	for _, mnt := range data.Service.Spec.TaskTemplate.ContainerSpec.Mounts {
-		if mnt.Type == mount.TypeVolume || mnt.Type == mount.TypeCluster {
-			refIDs = append(refIDs, mnt.Source)
-		}
-	}
-	if len(refIDs) == 0 {
+	mounts := data.Service.Spec.TaskTemplate.ContainerSpec.Mounts
+	if len(mounts) == 0 {
 		return nil, nil
 	}
 
 	settings, _, err := s.settingRepo.List(ctx, db, data.App.GetObjectScope(), nil,
 		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
-		bunex.SelectWhere("setting.ref_id IN (?)", bun.List(refIDs)),
 	)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
-	pins := make([]placementservice.VolumePin, 0, len(settings))
-	for _, setting := range settings {
-		vol, err := setting.AsClusterVolume()
-		if err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-		pins = append(pins, placementservice.VolumePin{
-			VolumeName: setting.Name,
-			NodeID:     vol.NodeID,
-			NodeLabel:  vol.NodeLabel,
-		})
+	pins, err := placementservice.VolumePinsForMounts(mounts, settings)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 	return pins, nil
 }

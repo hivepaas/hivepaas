@@ -94,7 +94,38 @@ func TestLoadVolumePinsUsesAppScopeSoParentScopeVolumesAreFound(t *testing.T) {
 	assert.Equal(t, []placementservice.VolumePin{{VolumeName: "default", NodeID: "node-1"}}, pins)
 }
 
-func TestLoadVolumePinsIgnoresNonVolumeMounts(t *testing.T) {
+func TestLoadVolumePinsSkipsTheQueryWhenTheServiceHasNoMounts(t *testing.T) {
+	app := &entity.App{ID: "app-1"}
+	repo := &scopeCapturingSettingRepo{}
+	svc := &service{settingRepo: repo}
+
+	data := &placementSettingsData{
+		ApplyPlacementSettingsReq: &placementservice.ApplyPlacementSettingsReq{
+			App: app,
+			Service: &swarm.Service{
+				Spec: swarm.ServiceSpec{
+					TaskTemplate: swarm.TaskSpec{
+						ContainerSpec: &swarm.ContainerSpec{},
+					},
+				},
+			},
+		},
+	}
+
+	pins, err := svc.loadVolumePins(context.Background(), nil, data)
+
+	require.NoError(t, err)
+	assert.Nil(t, pins)
+	assert.Nil(t, repo.gotScope, "a service with no mounts at all must not query settings")
+}
+
+// A bind mount that does not come from any volume HivePaaS knows about (the
+// user may have added it directly) still has to be checked against whatever
+// cluster volumes the app can see - loadVolumePins can no longer tell in
+// advance, from the mount alone, that a bind is unrelated to any volume. It
+// must still come back with no pins once VolumePinsForMounts finds nothing to
+// match.
+func TestLoadVolumePinsIgnoresABindMountThatMatchesNoVolume(t *testing.T) {
 	app := &entity.App{ID: "app-1"}
 	repo := &scopeCapturingSettingRepo{}
 	svc := &service{settingRepo: repo}
@@ -117,6 +148,47 @@ func TestLoadVolumePinsIgnoresNonVolumeMounts(t *testing.T) {
 	pins, err := svc.loadVolumePins(context.Background(), nil, data)
 
 	require.NoError(t, err)
-	assert.Nil(t, pins)
-	assert.Nil(t, repo.gotScope, "a service with no volume/cluster mounts must not query settings at all")
+	assert.Empty(t, pins)
+	assert.NotNil(t, repo.gotScope, "a bind mount has no ref id to pre-filter on, so it must still query")
+}
+
+// This is the case Task 6b exists for: a volume pinned to a node is mounted as
+// a plain bind (useBindMountIfAppropriate rewrites a local/type=none volume
+// into one), so loadVolumePins has to find its pin by matching the mount's host
+// path against the volume's recorded device, not by ref id.
+func TestLoadVolumePinsFindsAPinBehindABindMount(t *testing.T) {
+	app := &entity.App{ID: "app-1"}
+
+	bindVolume := &entity.Setting{
+		ID:   "setting-1",
+		Type: base.SettingTypeClusterVolume,
+		Name: "webroot",
+	}
+	bindVolume.MustSetData(&entity.ClusterVolume{
+		NodeID:     "node-1",
+		DriverOpts: map[string]string{"type": "none", "device": "/srv/data"},
+	})
+
+	repo := &scopeCapturingSettingRepo{settings: []*entity.Setting{bindVolume}}
+	svc := &service{settingRepo: repo}
+
+	data := &placementSettingsData{
+		ApplyPlacementSettingsReq: &placementservice.ApplyPlacementSettingsReq{
+			App: app,
+			Service: &swarm.Service{
+				Spec: swarm.ServiceSpec{
+					TaskTemplate: swarm.TaskSpec{
+						ContainerSpec: &swarm.ContainerSpec{
+							Mounts: []mount.Mount{{Type: mount.TypeBind, Source: "/srv/data/shop/prod/web"}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	pins, err := svc.loadVolumePins(context.Background(), nil, data)
+
+	require.NoError(t, err)
+	assert.Equal(t, []placementservice.VolumePin{{VolumeName: "webroot", NodeID: "node-1"}}, pins)
 }

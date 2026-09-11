@@ -9,7 +9,6 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
@@ -106,7 +105,9 @@ func TestWarnOnPinDriftNamesTheAppTheNodeAndThePin(t *testing.T) {
 
 	svc.warnOnPinDrift(context.Background(), driftData("svc-1", pinnedToNode1()))
 
-	require.Len(t, logger.warnings, 1)
+	if len(logger.warnings) != 1 {
+		t.Fatalf("expected exactly 1 warning, got %d: %v", len(logger.warnings), logger.warnings)
+	}
 	assert.Contains(t, logger.warnings[0], "shop-web")
 	assert.Contains(t, logger.warnings[0], "node-2")
 	assert.Contains(t, logger.warnings[0], "node-1")

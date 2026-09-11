@@ -6,7 +6,6 @@ import (
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -73,7 +72,9 @@ func TestBuildDockerMountRewritesABindVolumeIntoABindMount(t *testing.T) {
 
 	assert.Equal(t, mount.TypeBind, dockerMnt.Type)
 	assert.Equal(t, "/srv/data/web", dockerMnt.Source)
-	require.NotNil(t, dockerMnt.BindOptions)
+	if dockerMnt.BindOptions == nil {
+		t.Fatal("expected BindOptions to be set")
+	}
 	assert.True(t, dockerMnt.BindOptions.CreateMountpoint)
 	assert.Equal(t, []string{"/srv/data|web"}, volumeService.madeSubDirs)
 }
@@ -96,8 +97,9 @@ func TestBuildDockerMountFillsInTheDriverConfigForANonBindVolume(t *testing.T) {
 		vol, appScopedVolumeSetting("01JVOL"), newStorageSettingsData("web"))
 
 	assert.Equal(t, mount.TypeVolume, dockerMnt.Type)
-	require.NotNil(t, dockerMnt.VolumeOptions)
-	require.NotNil(t, dockerMnt.VolumeOptions.DriverConfig)
+	if dockerMnt.VolumeOptions == nil || dockerMnt.VolumeOptions.DriverConfig == nil {
+		t.Fatalf("expected VolumeOptions.DriverConfig to be set, got %+v", dockerMnt.VolumeOptions)
+	}
 	assert.Equal(t, "local", dockerMnt.VolumeOptions.DriverConfig.Name)
 	assert.Equal(t, ":/exports/data", dockerMnt.VolumeOptions.DriverConfig.Options["device"])
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -79,16 +78,24 @@ func TestApplyAppStorageSettingsPutsThePinConstraintInTheSameUpdateAsTheMounts(t
 		FinalMounts: []mount.Mount{{Type: mount.TypeBind, Source: "/srv/data/web", Target: "/data"}},
 	}
 
-	require.NoError(t, uc.applyAppStorageSettings(context.Background(), nil, data))
+	if err := uc.applyAppStorageSettings(context.Background(), nil, data); err != nil {
+		t.Fatalf("applyAppStorageSettings failed: %v", err)
+	}
 
-	require.NotNil(t, dockerManager.updatedSpec, "the mounts must actually have been written")
+	if dockerManager.updatedSpec == nil {
+		t.Fatal("the mounts must actually have been written")
+	}
 	assert.Equal(t, data.FinalMounts, dockerManager.updatedSpec.TaskTemplate.ContainerSpec.Mounts)
-	require.NotNil(t, dockerManager.updatedSpec.TaskTemplate.Placement)
+	if dockerManager.updatedSpec.TaskTemplate.Placement == nil {
+		t.Fatal("expected a placement to have been set on the updated spec")
+	}
 	assert.Equal(t, []string{"node.id==node-2"},
 		dockerManager.updatedSpec.TaskTemplate.Placement.Constraints,
 		"the constraint has to ride along in the spec that rolls the tasks")
 
-	require.Len(t, placement.reqs, 1, "one update, not a second one that rolls the tasks again")
+	if len(placement.reqs) != 1 {
+		t.Fatalf("expected one update, not a second one that rolls the tasks again: got %d", len(placement.reqs))
+	}
 	assert.True(t, placement.reqs[0].SkipSavingToDocker,
 		"placementservice must mutate this spec, not save one of its own")
 	assert.Equal(t, data.App, placement.reqs[0].App)

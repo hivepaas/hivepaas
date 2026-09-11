@@ -6,7 +6,6 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
@@ -92,7 +91,9 @@ func TestApplyWarnsWhenPinsConflictInsteadOfSilentlyDroppingTheConstraint(t *tes
 	(&service{logger: logger}).applyPlacementSettings(data)
 
 	assert.Empty(t, data.Service.Spec.TaskTemplate.Placement.Constraints)
-	require.Len(t, logger.warnings, 1)
+	if len(logger.warnings) != 1 {
+		t.Fatalf("expected exactly 1 warning, got %d: %v", len(logger.warnings), logger.warnings)
+	}
 	assert.Contains(t, logger.warnings[0], "shop-prod-web")
 	assert.Contains(t, logger.warnings[0], "pgdata")
 	assert.Contains(t, logger.warnings[0], "uploads")

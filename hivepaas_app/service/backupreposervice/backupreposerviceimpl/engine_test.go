@@ -8,7 +8,6 @@ import (
 	"github.com/moby/moby/api/types/volume"
 	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -23,7 +22,7 @@ func newVolumeSetting(t *testing.T, id, refID, name string, vol *entity.ClusterV
 	t.Helper()
 
 	setting := &entity.Setting{ID: id, RefID: refID, Type: base.SettingTypeClusterVolume, Name: name}
-	require.NoError(t, setting.SetData(vol))
+	assert.NoError(t, setting.SetData(vol))
 	return &entity.Setting{
 		ID: setting.ID, RefID: setting.RefID, Name: setting.Name, Type: setting.Type, Data: setting.Data,
 	}
@@ -78,8 +77,9 @@ func TestBuildLocalStorageUsesTheRecordedDeviceWithoutAskingDocker(t *testing.T)
 	refObjects := &entity.RefObjects{RefSettings: map[string]*entity.Setting{"vol-backups": setting}}
 
 	storage, err := s.buildLocalStorage(context.Background(), repo, refObjects)
-
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatalf("buildLocalStorage failed: %v", err)
+	}
 	assert.Equal(t, "/host/srv/backups/team-a", storage.Path)
 	assert.Equal(t, "node-2", storage.NodeID)
 	assert.Empty(t, dockerManager.inspected, "the setting answers this; docker must not be consulted")
@@ -100,11 +100,11 @@ func TestResolveVolumeHostPathInspectsByRefIDWhenNoDeviceIsRecorded(t *testing.T
 		NodeID: "node-1",
 	})
 	clusterVolume, err := setting.AsClusterVolume()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 
 	hostPath, err := s.resolveVolumeHostPath(context.Background(), setting, clusterVolume)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, "/var/lib/docker/volumes/01JVOLULID/_data", hostPath)
 	assert.Equal(t, []string{"01JVOLULID"}, dockerManager.inspected)
 }

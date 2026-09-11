@@ -7,7 +7,6 @@ import (
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -47,7 +46,7 @@ func storedClusterVolumeSetting(t *testing.T, meta *entity.Setting, data *entity
 	t.Helper()
 
 	tmp := &entity.Setting{Type: meta.Type}
-	require.NoError(t, tmp.SetData(data))
+	assert.NoError(t, tmp.SetData(data))
 
 	fresh := *meta
 	fresh.Data = tmp.Data
@@ -104,7 +103,7 @@ func TestLoadVolumePinsUsesAppScopeSoParentScopeVolumesAreFound(t *testing.T) {
 
 	pins, err := svc.loadVolumePins(context.Background(), nil, data)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, app.GetObjectScope(), repo.gotScope,
 		"the query must use the app's own scope - that is what makes the scope"+
 			" filter walk up to settings the project marked inheritable")
@@ -133,7 +132,7 @@ func TestLoadVolumePinsSkipsTheQueryWhenTheServiceHasNoMounts(t *testing.T) {
 
 	pins, err := svc.loadVolumePins(context.Background(), nil, data)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Nil(t, pins)
 	assert.Nil(t, repo.gotScope, "a service with no mounts at all must not query settings")
 }
@@ -166,7 +165,7 @@ func TestLoadVolumePinsIgnoresABindMountThatMatchesNoVolume(t *testing.T) {
 
 	pins, err := svc.loadVolumePins(context.Background(), nil, data)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Empty(t, pins)
 	assert.NotNil(t, repo.gotScope, "a bind mount has no ref id to pre-filter on, so it must still query")
 }
@@ -208,6 +207,6 @@ func TestLoadVolumePinsFindsAPinBehindABindMount(t *testing.T) {
 
 	pins, err := svc.loadVolumePins(context.Background(), nil, data)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, []placementservice.VolumePin{{VolumeName: "webroot", NodeID: "node-1"}}, pins)
 }

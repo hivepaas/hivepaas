@@ -5,9 +5,24 @@ import (
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
+
+// clientVisibleDetail renders the error the way BaseHandler.RenderError does
+// for a caller outside the dev environment: Build's Detail field, not
+// Error() (which is only the internal ERR_xxx identity) and not WithMsgLog's
+// DebugLog (which RenderError strips before the response ever leaves dev).
+func clientVisibleDetail(t *testing.T, err error) string {
+	t.Helper()
+
+	hpErr, ok := err.(hperrors.HPError)
+	require.True(t, ok, "expected an hperrors.HPError, got %T", err)
+	return hpErr.Build("en").Detail
+}
 
 // A bind volume is mounted by path, so the mount carries everything the node
 // needs without consulting any daemon.
@@ -162,4 +177,115 @@ func TestApplyVolumeDriverConfigUnlessOverriddenSkipsUnmanaged(t *testing.T) {
 	applyVolumeDriverConfigUnlessOverridden(dockerMnt, vol)
 
 	assert.Nil(t, dockerMnt.VolumeOptions.DriverConfig)
+}
+
+// newVolumeSetting builds a TypeVolume/TypeCluster-matchable *entity.Setting
+// the way a row read back from the database looks: SetData caches the parsed
+// struct on the receiver, but AsClusterVolume (via VolumePinsForMounts) must
+// still work from a Setting that only carries the raw Data string, since that
+// is what a fresh read from storage produces.
+func newVolumeSetting(t *testing.T, id, refID, name, nodeID string) *entity.Setting {
+	t.Helper()
+
+	setting := &entity.Setting{ID: id, RefID: refID, Type: base.SettingTypeClusterVolume, Name: name}
+	require.NoError(t, setting.SetData(&entity.ClusterVolume{NodeID: nodeID}))
+	return &entity.Setting{
+		ID: setting.ID, Name: setting.Name, RefID: setting.RefID, Type: setting.Type, Data: setting.Data,
+	}
+}
+
+// newBindVolumeSetting builds a bind-matchable *entity.Setting the same way -
+// matched by its recorded device rather than by RefID, since that is all a
+// rewritten bind mount carries by the time it comes back from docker.
+func newBindVolumeSetting(t *testing.T, id, name, nodeID, device string) *entity.Setting {
+	t.Helper()
+
+	setting := &entity.Setting{ID: id, Type: base.SettingTypeClusterVolume, Name: name}
+	require.NoError(t, setting.SetData(&entity.ClusterVolume{
+		NodeID:     nodeID,
+		DriverOpts: map[string]string{"type": "none", "device": device},
+	}))
+	return &entity.Setting{ID: setting.ID, Name: setting.Name, Type: setting.Type, Data: setting.Data}
+}
+
+// This is the case the original plan's Task 7 missed: it only looked at the
+// volumes behind mounts being added, and an unchanged existing mount (a
+// TypeVolume mount here, matched by id) never shows up there at all.
+func TestRefuseConflictingVolumePinsCatchesAnUnchangedMountAgainstANewOne(t *testing.T) {
+	pgdata := newVolumeSetting(t, "vol-pgdata", "ref-pgdata", "pgdata", "node-1")
+	uploads := newBindVolumeSetting(t, "vol-uploads", "uploads", "node-2", "/srv/uploads")
+
+	mounts := []mount.Mount{
+		{Type: mount.TypeVolume, Source: "ref-pgdata"},               // unchanged, carried over from the load phase
+		{Type: mount.TypeBind, Source: "/srv/uploads/shop/prod/web"}, // new bind mount
+	}
+
+	err := refuseConflictingVolumePins(mounts, []*entity.Setting{pgdata, uploads})
+
+	detail := clientVisibleDetail(t, err)
+	assert.Contains(t, detail, "pgdata")
+	assert.Contains(t, detail, "uploads")
+}
+
+func TestRefuseConflictingVolumePinsCatchesTwoBindMountsOnDifferentNodes(t *testing.T) {
+	a := newBindVolumeSetting(t, "vol-a", "a", "node-1", "/srv/a")
+	b := newBindVolumeSetting(t, "vol-b", "b", "node-2", "/srv/b")
+
+	mounts := []mount.Mount{
+		{Type: mount.TypeBind, Source: "/srv/a/web"},
+		{Type: mount.TypeBind, Source: "/srv/b/web"},
+	}
+
+	err := refuseConflictingVolumePins(mounts, []*entity.Setting{a, b})
+
+	detail := clientVisibleDetail(t, err)
+	assert.Contains(t, detail, "'a'")
+	assert.Contains(t, detail, "'b'")
+}
+
+func TestRefuseConflictingVolumePinsAllowsPinsOnTheSameNode(t *testing.T) {
+	a := newBindVolumeSetting(t, "vol-a", "a", "node-1", "/srv/a")
+	b := newBindVolumeSetting(t, "vol-b", "b", "node-1", "/srv/b")
+
+	mounts := []mount.Mount{
+		{Type: mount.TypeBind, Source: "/srv/a/web"},
+		{Type: mount.TypeBind, Source: "/srv/b/web"},
+	}
+
+	assert.NoError(t, refuseConflictingVolumePins(mounts, []*entity.Setting{a, b}))
+}
+
+func TestRefuseConflictingVolumePinsAllowsAPinnedVolumeAlongsideAnUnpinnedOne(t *testing.T) {
+	pinned := newBindVolumeSetting(t, "vol-a", "a", "node-1", "/srv/a")
+	unpinned := newBindVolumeSetting(t, "vol-b", "b", "", "/srv/b")
+
+	mounts := []mount.Mount{
+		{Type: mount.TypeBind, Source: "/srv/a/web"},
+		{Type: mount.TypeBind, Source: "/srv/b/web"},
+	}
+
+	assert.NoError(t, refuseConflictingVolumePins(mounts, []*entity.Setting{pinned, unpinned}))
+}
+
+func TestRefuseConflictingVolumePinsAllowsNoPinnedVolumes(t *testing.T) {
+	a := newBindVolumeSetting(t, "vol-a", "a", "", "/srv/a")
+	b := newBindVolumeSetting(t, "vol-b", "b", "", "/srv/b")
+
+	mounts := []mount.Mount{
+		{Type: mount.TypeBind, Source: "/srv/a/web"},
+		{Type: mount.TypeBind, Source: "/srv/b/web"},
+	}
+
+	assert.NoError(t, refuseConflictingVolumePins(mounts, []*entity.Setting{a, b}))
+}
+
+func TestRefuseConflictingVolumePinsAllowsABindMountThatMatchesNoVolume(t *testing.T) {
+	pinned := newBindVolumeSetting(t, "vol-a", "a", "node-1", "/srv/a")
+
+	mounts := []mount.Mount{
+		{Type: mount.TypeBind, Source: "/srv/a/web"},
+		{Type: mount.TypeBind, Source: "/unrelated/path"},
+	}
+
+	assert.NoError(t, refuseConflictingVolumePins(mounts, []*entity.Setting{pinned}))
 }

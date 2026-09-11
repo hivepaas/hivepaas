@@ -38,6 +38,15 @@ func (uc *UC) UpdateAppStorageSettings(
 			return hperrors.Wrap(err)
 		}
 
+		// data.FinalMounts is only complete once prepare has appended the new
+		// mounts to the ones the load phase kept unchanged, so this is the
+		// earliest point - and it has to run before the mounts reach the
+		// service, since applying a contradictory pin set silently drops the
+		// placement constraint instead of failing.
+		if err := refuseConflictingVolumePins(data.FinalMounts, data.ScopeVolumes); err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		err = uc.applyAppStorageSettings(ctx, data)
 		if err != nil {
 			return hperrors.Wrap(err)
@@ -54,9 +63,15 @@ func (uc *UC) UpdateAppStorageSettings(
 }
 
 type updateAppStorageSettingsData struct {
-	App          *entity.App
-	Service      *swarm.Service
-	DBVolumes    map[string]*entity.Setting
+	App       *entity.App
+	Service   *swarm.Service
+	DBVolumes map[string]*entity.Setting
+	// ScopeVolumes is every cluster-volume setting visible to the app's scope,
+	// not just the ones named in this request - a pinned volume behind an
+	// unchanged bind mount carries no id in the request to look it up by, so
+	// resolving FinalMounts back to their pins (see refuseConflictingVolumePins)
+	// needs the same candidate set placementserviceimpl matches mounts against.
+	ScopeVolumes []*entity.Setting
 	FinalMounts  []mount.Mount
 	NewMountReqs []*appsettingsdto.Mount
 }
@@ -129,6 +144,18 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		}
 	}
 	data.DBVolumes = dbVolMap
+
+	// Loaded here rather than in prepare because only the load phase has db, and
+	// scoped the same way as the mounts themselves are validated so a volume
+	// mountable by this app - including one inherited from a parent scope - is
+	// always among the candidates refuseConflictingVolumePins matches against.
+	scopeVols, _, err := uc.settingRepo.List(ctx, db, app.GetObjectScope(), nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
+	)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	data.ScopeVolumes = scopeVols
 
 	return nil
 }

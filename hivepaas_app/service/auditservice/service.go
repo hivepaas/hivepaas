@@ -23,7 +23,10 @@ type Entry struct {
 	ObjectID string
 	Type     base.AuditLogType
 	Source   base.AuditLogSource
-	Result   base.AuditLogResult
+	// Section is which part of the object was written, for the types that cover
+	// more than one endpoint. Empty for the ones that do not.
+	Section string
+	Result  base.AuditLogResult
 
 	Auth *basedto.Auth
 

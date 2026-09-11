@@ -50,11 +50,12 @@ func (uc *UC) recordAppUpdate(
 		Scope:    base.ObjectScopeApp,
 		ObjectID: app.ID,
 		Source:   source,
+		Section:  section,
 		Auth:     auth,
 		ResType:  base.ResourceTypeApp,
 		ResID:    app.ID,
 		ResName:  app.Name,
-		Detail:   detail.Set("section", section).String(),
+		Detail:   detail.String(),
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

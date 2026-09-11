@@ -41,6 +41,9 @@ func (uc *UC) ListAuditLog(
 	if len(req.Type) > 0 {
 		listOpts = append(listOpts, bunex.SelectWhereIn("audit_log.type IN (?)", req.Type...))
 	}
+	if len(req.Section) > 0 {
+		listOpts = append(listOpts, bunex.SelectWhereIn("audit_log.section IN (?)", req.Section...))
+	}
 	if len(req.Source) > 0 {
 		listOpts = append(listOpts, bunex.SelectWhereIn("audit_log.source IN (?)", req.Source...))
 	}

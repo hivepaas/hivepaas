@@ -18,8 +18,12 @@ type ListAuditLogReq struct {
 	ProjectEnvID string `json:"-" mapstructure:"projectEnvId"`
 	AppID        string `json:"-" mapstructure:"appId"`
 
-	Type       []base.AuditLogType   `json:"-" mapstructure:"type"`
-	Source     []base.AuditLogSource `json:"-" mapstructure:"source"`
+	Type   []base.AuditLogType   `json:"-" mapstructure:"type"`
+	Source []base.AuditLogSource `json:"-" mapstructure:"source"`
+	// Section is filtered alongside Type rather than on its own: a section name
+	// belongs to a type - "env-vars" is a section of both project-update and
+	// app-update - and the index that serves this leads with type for that reason.
+	Section    []string              `json:"-" mapstructure:"section"`
 	Result     []base.AuditLogResult `json:"-" mapstructure:"result"`
 	ActorID    []string              `json:"-" mapstructure:"actorId"`
 	ResourceID []string              `json:"-" mapstructure:"resourceId"`

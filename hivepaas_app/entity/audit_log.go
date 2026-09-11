@@ -23,7 +23,13 @@ type AuditLog struct {
 	ObjectID string               `bun:",nullzero" json:"objectId,omitempty"`
 	Type     base.AuditLogType    `json:"type"`
 	Source   base.AuditLogSource  `json:"source,omitempty"`
-	Result   base.AuditLogResult  `json:"result"`
+	// Section is which part of the object was written - the settings tab, the
+	// endpoint's slice of a project. It is a column rather than a field inside
+	// Detail so it can be filtered and indexed, and because the listing drops
+	// Detail once it grows past a hundred characters, which took the section with
+	// it exactly on the entries that had most to say.
+	Section string              `bun:",nullzero" json:"section,omitempty"`
+	Result  base.AuditLogResult `json:"result"`
 
 	ActorID   string           `json:"actorId"`
 	ActorType base.SubjectType `json:"actorType"`

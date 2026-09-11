@@ -41,11 +41,12 @@ func (uc *UC) recordProjectEnvUpdate(
 		Scope:    base.ObjectScopeProjectEnv,
 		ObjectID: projectEnv.ID,
 		Source:   source,
+		Section:  section,
 		Auth:     auth,
 		ResType:  base.ResourceTypeProjectEnv,
 		ResID:    projectEnv.ID,
 		ResName:  projectEnv.Name,
-		Detail:   detail.Set("section", section).String(),
+		Detail:   detail.String(),
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

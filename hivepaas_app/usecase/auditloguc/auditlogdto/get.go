@@ -41,7 +41,10 @@ type AuditLogResp struct {
 	ID     string              `json:"id"`
 	Type   base.AuditLogType   `json:"type"`
 	Source base.AuditLogSource `json:"source,omitempty"`
-	Result base.AuditLogResult `json:"result"`
+	// Section survives in the listing where it used to be lost: it lived inside
+	// Detail, which the listing drops once it passes a hundred characters.
+	Section string              `json:"section,omitempty"`
+	Result  base.AuditLogResult `json:"result"`
 
 	ScopeProject *projectdto.ProjectBaseResp `json:"scopeProject,omitempty"`
 	ScopeApp     *appdto.AppBaseResp         `json:"scopeApp,omitempty"`

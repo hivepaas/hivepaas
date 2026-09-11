@@ -53,11 +53,12 @@ func Record(
 		Type:    base.AuditLogTypeClusterUpdate,
 		Scope:   base.ObjectScopeGlobal,
 		Source:  base.AuditLogSourceAPIAction,
+		Section: section,
 		Auth:    auth,
 		ResType: target.ResType,
 		ResID:   target.ID,
 		ResName: target.Name,
-		Detail:  detail.Set("section", section).String(),
+		Detail:  detail.String(),
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

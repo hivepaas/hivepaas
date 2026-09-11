@@ -34,10 +34,11 @@ func (uc *UC) recordHivePaaSSettingsUpdate(
 		Type:    base.AuditLogTypeHivePaaSSettingsUpdate,
 		Scope:   base.ObjectScopeHivepaas,
 		Source:  base.AuditLogSourceAPIUpdate,
+		Section: section,
 		Auth:    auth,
 		ResType: base.ResourceTypeSetting,
 		ResName: section + " settings",
-		Detail:  detail.Set("section", section).String(),
+		Detail:  detail.String(),
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

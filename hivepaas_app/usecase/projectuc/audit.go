@@ -50,11 +50,12 @@ func (uc *UC) recordProjectWrite(
 		Scope:    base.ObjectScopeProject,
 		ObjectID: project.ID,
 		Source:   source,
+		Section:  section,
 		Auth:     auth,
 		ResType:  base.ResourceTypeProject,
 		ResID:    project.ID,
 		ResName:  project.Name,
-		Detail:   detail.Set("section", section).String(),
+		Detail:   detail.String(),
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

@@ -40,10 +40,11 @@ func (uc *UC) recordAppAction(
 		Scope:    base.ObjectScopeApp,
 		ObjectID: appID,
 		Source:   base.AuditLogSourceAPIAction,
+		Section:  section,
 		Auth:     auth,
 		ResType:  base.ResourceTypeApp,
 		ResID:    appID,
-		Detail:   detail.Set("section", section).String(),
+		Detail:   detail.String(),
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

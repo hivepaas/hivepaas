@@ -41,6 +41,7 @@ func (s *service) Record(ctx context.Context, db database.IDB, entry *auditservi
 		ObjectID:  entry.ObjectID,
 		Type:      entry.Type,
 		Source:    entry.Source,
+		Section:   entry.Section,
 		Result:    entry.Result,
 		ResType:   entry.ResType,
 		ResID:     entry.ResID,

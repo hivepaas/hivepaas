@@ -1,6 +1,7 @@
 package volumedto
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -62,60 +63,23 @@ func TestVolumeNodePinningIsOneOrTheOther(t *testing.T) {
 	})
 }
 
-func strPtr(v string) *string { return &v }
-
-func updateReq(nodeID, nodeLabel *string) *UpdateVolumeReq {
+func updateReq() *UpdateVolumeReq {
 	req := NewUpdateVolumeReq()
 	req.ID = "01JAB9XED0GTXBSQDFVYAJ8WA9"
-	req.NodeID = nodeID
-	req.NodeLabel = nodeLabel
 	return req
 }
 
-// Saying nothing about the pinning is what leaves it alone; the pair only moves
-// when the request mentions it.
-func TestUpdateVolumePinningIsOptional(t *testing.T) {
-	assert.Nil(t, updateReq(nil, nil).Pinning())
-	assert.Empty(t, updateReq(nil, nil).Validate())
-}
+// Pinning is settled when the volume is created. An update that could move it
+// would be a promise HivePaaS cannot keep: the data does not follow the pin, so
+// the only thing a change moves is where HivePaaS goes looking.
+func TestUpdateVolumeCarriesNoPinning(t *testing.T) {
+	assert.Empty(t, updateReq().Validate())
 
-// Either half mentioned replaces both, so the volume never ends up claiming to
-// be pinned two ways at once.
-func TestUpdateVolumePinningReplacesThePair(t *testing.T) {
-	t.Run("id alone clears the label", func(t *testing.T) {
-		pinning := updateReq(strPtr("node-1"), nil).Pinning()
-
-		assert.NotNil(t, pinning)
-		assert.Equal(t, "node-1", pinning.NodeID)
-		assert.Empty(t, pinning.NodeLabel)
-	})
-
-	t.Run("label alone clears the id", func(t *testing.T) {
-		pinning := updateReq(nil, strPtr("storage=fast")).Pinning()
-
-		assert.NotNil(t, pinning)
-		assert.Empty(t, pinning.NodeID)
-		assert.Equal(t, "storage=fast", pinning.NodeLabel)
-	})
-
-	// Both empty is an answer, not an omission: reachable from every node.
-	t.Run("both empty unpins the volume", func(t *testing.T) {
-		req := updateReq(strPtr(""), strPtr(""))
-		pinning := req.Pinning()
-
-		assert.NotNil(t, pinning)
-		assert.Empty(t, pinning.NodeID)
-		assert.Empty(t, pinning.NodeLabel)
-		assert.Empty(t, req.Validate())
-	})
-}
-
-func TestUpdateVolumeRefusesBothWaysAtOnce(t *testing.T) {
-	errs := updateReq(strPtr("node-1"), strPtr("storage=fast")).Validate()
-
-	if len(errs) == 0 {
-		t.Fatal("pinning by id and by label at once must be refused on update too")
+	req := updateReq()
+	typ := reflect.TypeOf(*req)
+	for _, field := range []string{"NodeID", "NodeLabel"} {
+		if _, found := typ.FieldByName(field); found {
+			t.Errorf("update request must not carry %s: pinning is immutable", field)
+		}
 	}
-	assert.True(t, hasFieldError(errs, "nodeId"))
-	assert.True(t, hasFieldError(errs, "nodeLabel"))
 }

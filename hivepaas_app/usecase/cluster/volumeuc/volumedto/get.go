@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/mount"
-	"github.com/moby/moby/api/types/volume"
 	vld "github.com/tiendc/go-validator"
 	"github.com/tiendc/gofn"
 
@@ -103,6 +102,23 @@ func TransformVolume(
 		return nil, hperrors.Wrap(err)
 	}
 
+	// The setting says how the volume was specified. Until docker has actually
+	// built it, that specification is the best answer there is - better than the
+	// blank driver a freshly created, not-yet-mounted volume would show otherwise.
+	if volEnt.Driver != "" {
+		resp.Driver = docker.VolumeDriver(volEnt.Driver)
+		resp.Options = volEnt.DriverOpts
+		resp.Labels = volEnt.Labels
+		if typed := transformVolumeTypeOptions(resp, resp.Options); typed {
+			resp.Options = nil
+		}
+	}
+
+	// Docker is the authority on a volume that actually exists, so where the two
+	// disagree it wins outright - and it alone can supply Mountpoint, Scope,
+	// CreatedAt, RefCount and Size, which the setting never records. Every field
+	// docker can answer is reassigned unconditionally, so nothing from the
+	// setting survives under a docker volume that turns out to disagree with it.
 	vol := refClusterObjects.RefVolumes[setting.RefID]
 	if vol != nil {
 		resp.Driver = docker.VolumeDriver(vol.Driver)
@@ -116,22 +132,35 @@ func TransformVolume(
 			resp.Size = vol.UsageData.Size
 		}
 
-		if resp.Driver == docker.VolumeDriverLocal {
-			switch vol.Options["type"] {
-			case "none":
-				resp.BindOptions = transformVolumeTypeBind(vol)
-				resp.Options = nil
-			case "nfs":
-				resp.NfsOptions = transformVolumeTypeNfs(vol)
-				resp.Options = nil
-			case "tmpfs":
-				resp.TmpfsOptions = transformVolumeTypeTmpfs(vol)
-				resp.Options = nil
-			}
+		if typed := transformVolumeTypeOptions(resp, resp.Options); typed {
+			resp.Options = nil
 		}
 	}
 
 	return resp, nil
+}
+
+// transformVolumeTypeOptions breaks driver options for docker's `local` driver
+// into the typed block their `type` selects and reports whether one matched -
+// the same parsing whether opts came from the recorded specification or from a
+// live docker volume, and any earlier typed block is cleared either way so a
+// stale one never survives a source that turns out not to have one.
+func transformVolumeTypeOptions(resp *VolumeResp, opts map[string]string) (typed bool) {
+	resp.BindOptions, resp.NfsOptions, resp.TmpfsOptions = nil, nil, nil
+	if resp.Driver != docker.VolumeDriverLocal {
+		return false
+	}
+	switch opts["type"] {
+	case "none":
+		resp.BindOptions = transformVolumeTypeBind(opts)
+	case "nfs":
+		resp.NfsOptions = transformVolumeTypeNfs(opts)
+	case "tmpfs":
+		resp.TmpfsOptions = transformVolumeTypeTmpfs(opts)
+	default:
+		return false
+	}
+	return true
 }
 
 func transformVolumeCreatedAt(createdAt string) time.Time {
@@ -143,16 +172,16 @@ func transformVolumeCreatedAt(createdAt string) time.Time {
 }
 
 func transformVolumeTypeBind(
-	volDocker *volume.Volume,
+	opts map[string]string,
 ) *VolumeBindOptionsResp {
-	opts := strings.Split(volDocker.Options["o"], ",")
-	if !gofn.Contain(opts, "bind") {
+	optList := strings.Split(opts["o"], ",")
+	if !gofn.Contain(optList, "bind") {
 		return nil
 	}
 	resp := &VolumeBindOptionsResp{
-		Directory: volDocker.Options["device"],
+		Directory: opts["device"],
 	}
-	for _, opt := range opts {
+	for _, opt := range optList {
 		if opt == "bind" {
 			continue
 		}
@@ -173,12 +202,12 @@ func transformVolumeTypeBind(
 	return resp
 }
 
-func transformVolumeTypeNfs(volDocker *volume.Volume) *VolumeNfsOptionsResp {
+func transformVolumeTypeNfs(opts map[string]string) *VolumeNfsOptionsResp {
 	resp := &VolumeNfsOptionsResp{
-		Device: volDocker.Options["device"],
+		Device: opts["device"],
 	}
-	opts := strings.Split(volDocker.Options["o"], ",")
-	for _, opt := range opts {
+	optList := strings.Split(opts["o"], ",")
+	for _, opt := range optList {
 		if opt == "ro" || opt == "rw" {
 			resp.Readonly = opt == "ro"
 			continue
@@ -200,12 +229,12 @@ func transformVolumeTypeNfs(volDocker *volume.Volume) *VolumeNfsOptionsResp {
 	return resp
 }
 
-func transformVolumeTypeTmpfs(volDocker *volume.Volume) *VolumeTmpfsOptionsResp {
+func transformVolumeTypeTmpfs(opts map[string]string) *VolumeTmpfsOptionsResp {
 	resp := &VolumeTmpfsOptionsResp{
-		Device: volDocker.Options["device"],
+		Device: opts["device"],
 	}
-	opts := strings.Split(volDocker.Options["o"], ",")
-	for _, opt := range opts {
+	optList := strings.Split(opts["o"], ",")
+	for _, opt := range optList {
 		if strings.HasPrefix(opt, "size=") {
 			val := opt[len("size="):]
 			if !strings.HasSuffix(val, "b") {

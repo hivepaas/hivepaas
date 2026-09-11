@@ -175,3 +175,51 @@ func TestVolumePinsForMountsDedupesAVolumeMountedTwice(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, []VolumePin{{VolumeName: "web", NodeID: "node-1"}}, pins)
 }
+
+// Two settings recording the identical longest device are, literally, two
+// descriptions of the same directory. VolumePinsForMounts does not pick a
+// winner between them - it returns both pins and leaves the disagreement for
+// VolumePinConstraint to report as a conflict, which is the only honest thing
+// to do when two volumes claim the same data lives on two different nodes.
+func TestVolumePinsForMountsReturnsBothPinsOnATiedDeviceThatConflicts(t *testing.T) {
+	a := newBindVolume(t, "a", "node-1", "/srv/data")
+	b := newBindVolume(t, "b", "node-2", "/srv/data")
+
+	pins, err := VolumePinsForMounts(
+		[]mount.Mount{bindMount("/srv/data/x")},
+		[]*entity.Setting{a, b},
+	)
+
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []VolumePin{
+		{VolumeName: "a", NodeID: "node-1"},
+		{VolumeName: "b", NodeID: "node-2"},
+	}, pins)
+
+	_, conflict := VolumePinConstraint(pins)
+	assert.NotNil(t, conflict,
+		"two volumes recording the same device but pinned to different nodes is a genuine conflict")
+}
+
+// The same tie, but this time the two settings agree on the node - both pins
+// still come back (VolumePinsForMounts still does not pick a winner), and
+// together they resolve to the single constraint they agree on.
+func TestVolumePinsForMountsReturnsBothPinsOnATiedDeviceThatAgree(t *testing.T) {
+	a := newBindVolume(t, "a", "node-1", "/srv/data")
+	b := newBindVolume(t, "b", "node-1", "/srv/data")
+
+	pins, err := VolumePinsForMounts(
+		[]mount.Mount{bindMount("/srv/data/x")},
+		[]*entity.Setting{a, b},
+	)
+
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []VolumePin{
+		{VolumeName: "a", NodeID: "node-1"},
+		{VolumeName: "b", NodeID: "node-1"},
+	}, pins)
+
+	constraint, conflict := VolumePinConstraint(pins)
+	assert.Nil(t, conflict)
+	assert.Equal(t, "node.id==node-1", constraint)
+}

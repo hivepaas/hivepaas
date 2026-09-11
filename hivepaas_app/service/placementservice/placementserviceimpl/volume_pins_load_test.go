@@ -34,6 +34,26 @@ func (r *scopeCapturingSettingRepo) List(_ context.Context, _ database.IDB, scop
 	return r.settings, nil, nil
 }
 
+// storedClusterVolumeSetting builds a *entity.Setting the way a row read back
+// from the database looks. SetData caches the parsed struct on the setting it
+// is called on (setting.go:128), and AsClusterVolume returns that cache
+// before ever touching Data (setting.go:156) - so a setting built by calling
+// MustSetData on itself and handed straight to a test never exercises the
+// JSON round-trip a real row goes through. This writes Data through a
+// throwaway setting and copies it onto a fresh one built only from meta's
+// storage fields, which never had SetData called on it and so carries no
+// cache.
+func storedClusterVolumeSetting(t *testing.T, meta *entity.Setting, data *entity.ClusterVolume) *entity.Setting {
+	t.Helper()
+
+	tmp := &entity.Setting{Type: meta.Type}
+	require.NoError(t, tmp.SetData(data))
+
+	fresh := *meta
+	fresh.Data = tmp.Data
+	return &fresh
+}
+
 func mountingService(refID string) *swarm.Service {
 	return &swarm.Service{
 		Spec: swarm.ServiceSpec{
@@ -62,7 +82,7 @@ func mountingService(refID string) *swarm.Service {
 func TestLoadVolumePinsUsesAppScopeSoParentScopeVolumesAreFound(t *testing.T) {
 	app := &entity.App{ID: "app-1", ProjectID: "proj-1"}
 
-	projectVolume := &entity.Setting{
+	projectVolume := storedClusterVolumeSetting(t, &entity.Setting{
 		ID:          "setting-1",
 		Scope:       base.ObjectScopeProject,
 		ObjectID:    "proj-1",
@@ -70,8 +90,7 @@ func TestLoadVolumePinsUsesAppScopeSoParentScopeVolumesAreFound(t *testing.T) {
 		Name:        "default",
 		RefID:       "vol-ref-1",
 		Inheritable: true,
-	}
-	projectVolume.MustSetData(&entity.ClusterVolume{NodeID: "node-1"})
+	}, &entity.ClusterVolume{NodeID: "node-1"})
 
 	repo := &scopeCapturingSettingRepo{settings: []*entity.Setting{projectVolume}}
 	svc := &service{settingRepo: repo}
@@ -159,12 +178,11 @@ func TestLoadVolumePinsIgnoresABindMountThatMatchesNoVolume(t *testing.T) {
 func TestLoadVolumePinsFindsAPinBehindABindMount(t *testing.T) {
 	app := &entity.App{ID: "app-1"}
 
-	bindVolume := &entity.Setting{
+	bindVolume := storedClusterVolumeSetting(t, &entity.Setting{
 		ID:   "setting-1",
 		Type: base.SettingTypeClusterVolume,
 		Name: "webroot",
-	}
-	bindVolume.MustSetData(&entity.ClusterVolume{
+	}, &entity.ClusterVolume{
 		NodeID:     "node-1",
 		DriverOpts: map[string]string{"type": "none", "device": "/srv/data"},
 	})

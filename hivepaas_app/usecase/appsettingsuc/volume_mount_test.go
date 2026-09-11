@@ -47,11 +47,21 @@ func TestBindMountTargetRejectsNonBindVolumes(t *testing.T) {
 		name string
 		vol  *entity.ClusterVolume
 	}{
-		{"nfs", &entity.ClusterVolume{Driver: "local", DriverOpts: map[string]string{"type": "nfs", "device": ":/e"}}},
-		{"no device", &entity.ClusterVolume{Driver: "local", DriverOpts: map[string]string{"type": "none"}}},
-		{"custom driver", &entity.ClusterVolume{Driver: "some-plugin"}},
+		{"nfs", &entity.ClusterVolume{
+			Managed: true, Driver: "local", DriverOpts: map[string]string{"type": "nfs", "device": ":/e"},
+		}},
+		{"no device", &entity.ClusterVolume{
+			Managed: true, Driver: "local", DriverOpts: map[string]string{"type": "none"},
+		}},
+		{"custom driver", &entity.ClusterVolume{Managed: true, Driver: "some-plugin"}},
 		{"discovered, nothing recorded", &entity.ClusterVolume{}},
 		{"nil", nil},
+		// A discovered volume that happens to look exactly like a bind: the
+		// specification is somebody else's, so it is mounted by name and nothing
+		// about it is inferred.
+		{"unmanaged bind", &entity.ClusterVolume{
+			Driver: "local", DriverOpts: map[string]string{"type": "none", "device": "/srv/data"},
+		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -203,6 +213,7 @@ func newBindVolumeSetting(t *testing.T, id, name, nodeID, device string) *entity
 	setting := &entity.Setting{ID: id, Type: base.SettingTypeClusterVolume, Name: name}
 	require.NoError(t, setting.SetData(&entity.ClusterVolume{
 		NodeID:     nodeID,
+		Managed:    true,
 		DriverOpts: map[string]string{"type": "none", "device": device},
 	}))
 	return &entity.Setting{ID: setting.ID, Name: setting.Name, Type: setting.Type, Data: setting.Data}

@@ -91,13 +91,19 @@ func VolumePinsForMounts(mounts []mount.Mount, volumes []*entity.Setting) ([]Vol
 // describe the same directory, and if their pins disagree that is a genuine
 // conflict for VolumePinConstraint to report rather than something to guess
 // past here.
+//
+// Only volumes HivePaaS authored are candidates. An unmanaged volume's recorded
+// device was copied off somebody else's volume rather than chosen by HivePaaS,
+// so it never becomes a bind mount (bindMountTarget refuses it) and no bind
+// source can have come from it - matching one would attribute a path, and a
+// node pin, to a volume that had nothing to do with it.
 func longestDeviceMatches(source string, clusterVolumes []*entity.ClusterVolume) []int {
 	source = filepath.Clean(source)
 
 	var best []int
 	bestLen := -1
 	for i, cv := range clusterVolumes {
-		if cv.DriverOpts["type"] != "none" {
+		if !cv.Managed || cv.DriverOpts["type"] != "none" {
 			continue
 		}
 		device := cv.DriverOpts["device"]

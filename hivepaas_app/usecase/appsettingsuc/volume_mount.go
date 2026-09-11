@@ -17,11 +17,18 @@ import (
 // It reads the setting rather than the docker volume because the docker volume
 // only exists on the node that happened to create it, which is the whole reason
 // a volume's description lives in its setting now.
+//
+// Only a volume HivePaaS authored is read this way. Unmanaged means the
+// specification was copied off somebody else's volume, and rewriting such a
+// volume into a bind on a host path replaces the owner's volume - options,
+// labels and all - with a guess about where its data is; it is mounted by name
+// and nothing about it is inferred, the same rule applyVolumeDriverConfig
+// follows.
 func bindMountTarget(
 	vol *entity.ClusterVolume,
 	subpath string,
 ) (directory string, propagation mount.Propagation, ok bool) {
-	if vol == nil || vol.Driver != string(docker.VolumeDriverLocal) {
+	if vol == nil || !vol.Managed || vol.Driver != string(docker.VolumeDriverLocal) {
 		return "", "", false
 	}
 	device := vol.DriverOpts["device"]

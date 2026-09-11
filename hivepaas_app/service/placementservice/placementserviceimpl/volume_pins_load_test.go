@@ -184,6 +184,7 @@ func TestLoadVolumePinsFindsAPinBehindABindMount(t *testing.T) {
 		Name: "webroot",
 	}, &entity.ClusterVolume{
 		NodeID:     "node-1",
+		Managed:    true,
 		DriverOpts: map[string]string{"type": "none", "device": "/srv/data"},
 	})
 

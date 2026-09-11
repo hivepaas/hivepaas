@@ -21,6 +21,7 @@ func newBindVolume(t *testing.T, name, nodeID, device string) *entity.Setting {
 	setting := &entity.Setting{ID: name, Type: base.SettingTypeClusterVolume, Name: name}
 	require.NoError(t, setting.SetData(&entity.ClusterVolume{
 		NodeID:     nodeID,
+		Managed:    true,
 		DriverOpts: map[string]string{"type": "none", "device": device},
 	}))
 	return &entity.Setting{ID: setting.ID, Name: setting.Name, Type: setting.Type, Data: setting.Data}
@@ -137,6 +138,53 @@ func TestVolumePinsForMountsIgnoresUnmatchedBindsAndOtherMountTypes(t *testing.T
 
 	require.NoError(t, err)
 	assert.Empty(t, pins)
+}
+
+// A volume HivePaaS did not author never became a bind mount in the first place
+// - bindMountTarget refuses it - so a bind source that happens to sit under its
+// recorded device came from somewhere else entirely. Matching it would pin the
+// service to a node on the strength of a coincidence of paths.
+func TestVolumePinsForMountsIgnoresAnUnmanagedVolumeBehindABindMount(t *testing.T) {
+	discovered := &entity.Setting{ID: "d", Type: base.SettingTypeClusterVolume, Name: "discovered"}
+	require.NoError(t, discovered.SetData(&entity.ClusterVolume{
+		NodeID:     "node-1",
+		DriverOpts: map[string]string{"type": "none", "device": "/srv/data"},
+	}))
+	discovered = &entity.Setting{
+		ID: discovered.ID, Name: discovered.Name, Type: discovered.Type, Data: discovered.Data,
+	}
+
+	pins, err := VolumePinsForMounts(
+		[]mount.Mount{bindMount("/srv/data/shop/prod/web")},
+		[]*entity.Setting{discovered},
+	)
+
+	require.NoError(t, err)
+	assert.Empty(t, pins)
+}
+
+// The managed volume is the one the bind came from, even when an unmanaged
+// setting records a longer device under the same source - specificity only
+// ranks candidates, it does not turn a volume we did not author into one.
+func TestVolumePinsForMountsPrefersAManagedVolumeOverALongerUnmanagedDevice(t *testing.T) {
+	managed := newBindVolume(t, "managed", "node-1", "/srv/data")
+
+	unmanaged := &entity.Setting{ID: "u", Type: base.SettingTypeClusterVolume, Name: "unmanaged"}
+	require.NoError(t, unmanaged.SetData(&entity.ClusterVolume{
+		NodeID:     "node-2",
+		DriverOpts: map[string]string{"type": "none", "device": "/srv/data/shop"},
+	}))
+	unmanaged = &entity.Setting{
+		ID: unmanaged.ID, Name: unmanaged.Name, Type: unmanaged.Type, Data: unmanaged.Data,
+	}
+
+	pins, err := VolumePinsForMounts(
+		[]mount.Mount{bindMount("/srv/data/shop/prod/web")},
+		[]*entity.Setting{managed, unmanaged},
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, []VolumePin{{VolumeName: "managed", NodeID: "node-1"}}, pins)
 }
 
 // A setting written before Task 1 started recording DriverOpts has nothing to

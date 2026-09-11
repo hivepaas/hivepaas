@@ -2,7 +2,6 @@ package volumeserviceimpl
 
 import (
 	"context"
-	"time"
 
 	"github.com/moby/moby/api/types/volume"
 	"github.com/tiendc/gofn"
@@ -79,27 +78,33 @@ func (s *service) SyncVolumes(
 
 		// The pinning of a volume already recorded is left exactly as it is - see
 		// discoveredVolumePinning. Only what docker is authoritative about is
-		// carried over.
+		// carried over. The chosen name is not: docker's name is already recorded
+		// in RefID, and copying it onto Name would replace what an operator picked
+		// with a raw docker identity the first time a lazily created volume
+		// materializes.
 		hasChanged := false
 		if setting.Kind != vol.Driver {
 			setting.Kind = vol.Driver
 			hasChanged = true
 		}
-		if setting.Name != vol.Name {
-			setting.Name = vol.Name
-			hasChanged = true
+
+		backfilled, err := s.backfillVolumeSpec(setting, vol)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
 		}
+		hasChanged = hasChanged || backfilled
+
 		if hasChanged {
 			updatingSettings = append(updatingSettings, setting)
 		}
 	}
 
-	// 4. All settings that exist in DB but docker swarm need to remove
-	timeNow := time.Now()
-	for _, s := range existingVols {
-		s.DeletedAt = timeNow
-		updatingSettings = append(updatingSettings, s)
-	}
+	// 4. A setting left in existingVols is not a deletion: a volume created on
+	// this branch is not materialized in docker until a task first mounts it,
+	// and then only on whichever node runs that task - usually not the manager,
+	// which is the only daemon this scan can see. "Not in the manager's list" is
+	// the normal state of a fresh volume, not evidence it was removed. A volume
+	// actually being deleted goes through HivePaaS's own delete path.
 
 	// 5. Upsert the settings
 	err = s.settingRepo.UpsertMulti(ctx, db, updatingSettings,
@@ -141,4 +146,38 @@ func (s *service) discoveredVolumePinning(
 		return nil, hperrors.Wrap(err)
 	}
 	return &entity.ClusterVolume{NodeID: nodeID}, nil
+}
+
+// backfillVolumeSpec records how a volume is built, for settings written before
+// that was stored.
+//
+// It fills a gap and never corrects one: the pin and the specification are the
+// operator's answers, and a sync that rewrote them would overwrite the answer
+// every pass. A cluster volume is left alone entirely - swarm owns it, and
+// HivePaaS claiming to be able to rebuild it would be a claim it cannot keep.
+func (s *service) backfillVolumeSpec(setting *entity.Setting, vol *volume.Volume) (bool, error) {
+	if vol.ClusterVolume != nil && vol.ClusterVolume.ID != "" {
+		return false, nil
+	}
+
+	current, err := setting.AsClusterVolume()
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	if current == nil {
+		current = &entity.ClusterVolume{}
+	}
+	if current.Driver != "" {
+		return false, nil
+	}
+
+	current.Managed = true
+	current.Driver = vol.Driver
+	current.DriverOpts = vol.Options
+	current.Labels = vol.Labels
+
+	if err := setting.SetData(current); err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	return true, nil
 }

@@ -79,7 +79,10 @@ func clusterVolume(name string) volume.Volume {
 }
 
 // storedVolume is a volume HivePaaS already knows about, pinned however the
-// operator left it.
+// operator left it. It is built the way a row read back from the database
+// looks - through SetData, then handed back with no parsed cache - because
+// MustSetData on the returned setting would leave sync reading the in-memory
+// struct instead of something shaped like Data actually is.
 func storedVolume(name string, pinning *entity.ClusterVolume) *entity.Setting {
 	setting := &entity.Setting{
 		ID:    "setting-" + name,
@@ -89,7 +92,14 @@ func storedVolume(name string, pinning *entity.ClusterVolume) *entity.Setting {
 		RefID: name,
 	}
 	setting.MustSetData(pinning)
-	return setting
+	return &entity.Setting{
+		ID:    setting.ID,
+		Type:  setting.Type,
+		Kind:  setting.Kind,
+		Name:  setting.Name,
+		RefID: setting.RefID,
+		Data:  setting.Data,
+	}
 }
 
 func upsertedByName(repo *fakeSettingRepo, name string) *entity.Setting {
@@ -143,13 +153,23 @@ func TestSyncVolumesLeavesAClusterVolumeUnpinned(t *testing.T) {
 // storage looks exactly like a local one, so a sync that filled it in would
 // overwrite that answer every pass and the operator could never make it stick.
 func TestSyncVolumesNeverOverwritesRecordedPinning(t *testing.T) {
+	// Each fixture carries a recorded specification so the new backfill has
+	// nothing to add - otherwise this test would fail for the wrong reason,
+	// with the write coming from the specification rather than the pinning.
+	recordedSpec := func(pin entity.ClusterVolume) *entity.ClusterVolume {
+		pin.Managed = true
+		pin.Driver = "local"
+		pin.DriverOpts = map[string]string{"device": "/srv/data"}
+		return &pin
+	}
+
 	tests := []struct {
 		name    string
 		pinning *entity.ClusterVolume
 	}{
-		{"left empty on purpose - shared storage", &entity.ClusterVolume{}},
-		{"pinned by label", &entity.ClusterVolume{NodeLabel: "storage=fast"}},
-		{"pinned to another node", &entity.ClusterVolume{NodeID: "node-other"}},
+		{"left empty on purpose - shared storage", recordedSpec(entity.ClusterVolume{})},
+		{"pinned by label", recordedSpec(entity.ClusterVolume{NodeLabel: "storage=fast"})},
+		{"pinned to another node", recordedSpec(entity.ClusterVolume{NodeID: "node-other"})},
 	}
 
 	for _, tt := range tests {
@@ -190,16 +210,110 @@ func TestSyncVolumesCarriesOverWhatDockerOwns(t *testing.T) {
 	assert.Equal(t, "node-other", parsed.NodeID, "still the operator's answer")
 }
 
-// A volume that disappeared from docker is marked deleted, unchanged by the rest.
-func TestSyncVolumesMarksVanishedVolumesDeleted(t *testing.T) {
-	stored := storedVolume("gone", &entity.ClusterVolume{NodeID: "node-other"})
+// A managed setting whose volume has not materialized anywhere is left alone:
+// that is the normal state of a volume before any task has mounted it, not
+// evidence it was removed. Only HivePaaS's own delete path marks a volume
+// deleted.
+func TestSyncVolumesKeepsUnmaterializedSettings(t *testing.T) {
+	stored := storedVolume("data", &entity.ClusterVolume{
+		Managed:    true,
+		Driver:     "local",
+		DriverOpts: map[string]string{"device": "/srv/pgdata"},
+	})
 
 	uc, repo := newSyncTest(nil, []*entity.Setting{stored})
 
 	_, err := uc.SyncVolumes(context.Background(), nil)
 	assert.NoError(t, err)
 
-	setting := upsertedByName(repo, "gone")
+	assert.Empty(t, repo.upserted, "nothing docker said, so nothing to write")
+	assert.True(t, stored.DeletedAt.IsZero(), "absence is not deletion")
+}
+
+// A setting recorded before Driver/DriverOpts/Labels existed gets them filled
+// in from what docker already knows about the volume, without disturbing the
+// pin the operator already gave it.
+func TestSyncVolumesBackfillsTheSpecification(t *testing.T) {
+	stored := storedVolume("data", &entity.ClusterVolume{NodeID: "node-1"})
+
+	vol := localVolume("data")
+	vol.Options = map[string]string{"type": "none", "device": "/srv/pgdata", "o": "bind,rw"}
+
+	uc, repo := newSyncTest([]volume.Volume{vol}, []*entity.Setting{stored})
+
+	_, err := uc.SyncVolumes(context.Background(), nil)
+	assert.NoError(t, err)
+
+	setting := upsertedByName(repo, "data")
 	assert.NotNil(t, setting)
-	assert.False(t, setting.DeletedAt.IsZero())
+	assert.Contains(t, setting.Data, `"managed":true`)
+	assert.Contains(t, setting.Data, `"driver":"local"`)
+	assert.Contains(t, setting.Data, `"device":"/srv/pgdata"`)
+	assert.Contains(t, setting.Data, `"nodeId":"node-1"`, "the pin survives the backfill")
+}
+
+// Once a specification is recorded it is as much the operator's answer as the
+// pin: a device path that moved in docker does not get to overwrite the one
+// already on file.
+func TestSyncVolumesNeverOverwritesARecordedSpecification(t *testing.T) {
+	stored := storedVolume("data", &entity.ClusterVolume{
+		Managed:    true,
+		Driver:     "local",
+		DriverOpts: map[string]string{"device": "/srv/original"},
+	})
+
+	vol := localVolume("data")
+	vol.Options = map[string]string{"device": "/srv/moved"}
+
+	uc, repo := newSyncTest([]volume.Volume{vol}, []*entity.Setting{stored})
+
+	_, err := uc.SyncVolumes(context.Background(), nil)
+	assert.NoError(t, err)
+
+	assert.Empty(t, repo.upserted, "the recorded specification is not touched")
+
+	parsed, err := stored.AsClusterVolume()
+	assert.NoError(t, err)
+	assert.Equal(t, "/srv/original", parsed.DriverOpts["device"])
+}
+
+// A stored setting for a swarm cluster volume is never claimed as managed -
+// swarm owns cluster volumes, and backfillVolumeSpec leaves them alone
+// entirely.
+func TestSyncVolumesDoesNotClaimClusterVolumes(t *testing.T) {
+	stored := storedVolume("shared", &entity.ClusterVolume{})
+	stored.RefID = "csi-shared"
+	stored.Kind = "some-csi-driver"
+
+	uc, repo := newSyncTest([]volume.Volume{clusterVolume("shared")}, []*entity.Setting{stored})
+
+	_, err := uc.SyncVolumes(context.Background(), nil)
+	assert.NoError(t, err)
+
+	assert.Empty(t, repo.upserted, "nothing changed, so nothing to write")
+
+	parsed, err := stored.AsClusterVolume()
+	assert.NoError(t, err)
+	assert.False(t, parsed.Managed)
+	assert.Empty(t, parsed.Driver)
+}
+
+// The regression the name carry-over used to cause: docker's name for a
+// lazily-created volume is a ULID, recorded in RefID, and it must never
+// overwrite the name an operator chose.
+func TestSyncVolumesKeepsTheChosenName(t *testing.T) {
+	stored := storedVolume("pgdata", &entity.ClusterVolume{
+		Managed:    true,
+		Driver:     "local",
+		DriverOpts: map[string]string{"device": "/srv/pgdata"},
+	})
+	stored.RefID = "01HXAMPLEULIDFORTHISVOLUME0"
+
+	uc, repo := newSyncTest([]volume.Volume{localVolume(stored.RefID)}, []*entity.Setting{stored})
+
+	_, err := uc.SyncVolumes(context.Background(), nil)
+	assert.NoError(t, err)
+
+	assert.Empty(t, repo.upserted, "nothing docker owns changed")
+	assert.Equal(t, "pgdata", stored.Name)
 }

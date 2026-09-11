@@ -154,9 +154,5 @@ export function toVolumeUpdatePayload(
         updateVer,
         inheritable: values.inheritable,
         default: values.default,
-        // The pair goes up together - the server replaces both when either is
-        // present, so sending one alone would silently clear the other.
-        nodeId: values.nodeId,
-        nodeLabel: values.nodeLabel,
     };
 }

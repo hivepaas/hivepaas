@@ -40,9 +40,6 @@ import { CURRENT_NODE_VALUE, DEFAULT_VOLUME_FORM_VALUES } from "./volume-form.co
 const VOLUME_NODE_NOTE =
     "Where this volume's data actually lives. Pin it to a node - or to a node label - when the data sits on that machine's disk: the bind directory is created there, and a backup repository kept on this volume runs there. Pick \u201cAll nodes\u201d only when every node reaches the same data, which is true for cluster volumes and for paths backed by shared storage (NFS, Ceph, ...) mounted identically everywhere. HivePaaS cannot tell that apart from a local directory, so it takes your word for it: choosing it for data that is really on one node leaves the directory uncreated and backup repositories refusing the volume.";
 
-const PINNING_CHANGE_WARNING =
-    "Changing this moves no data. It only changes where HivePaaS looks for it: services mounting this volume and backups kept on it will be sent to the new node, and will find whatever is there - an empty directory, if the data stayed behind.";
-
 // Two choices that are not a node id, kept out of the id space so a node can never
 // collide with them.
 const ALL_NODES_OPTION = "__all_nodes__";
@@ -66,7 +63,6 @@ export function CreateOrEditVolumeForm({
     readOnlyInherited = false,
     readOnlyPermission = false,
     isPending = false,
-    warnOnPinningChange = false,
     showAvailableInProjects = true,
     isProjectScope = false,
     onSubmit,
@@ -133,7 +129,6 @@ export function CreateOrEditVolumeForm({
     const currentDriverMode = useWatch({ control, name: "driverMode" });
     const currentLocalType = useWatch({ control, name: "localType" });
     const currentNodeId = useWatch({ control, name: "nodeId" });
-    const currentNodeLabel = useWatch({ control, name: "nodeLabel" });
 
     /*
      * Pinning by label is a mode rather than a value: an empty label would
@@ -157,12 +152,7 @@ export function CreateOrEditVolumeForm({
         nodeId.onChange(value === ALL_NODES_OPTION ? "" : value);
     }
 
-    const pinningMoved =
-        warnOnPinningChange &&
-        ((initialValues?.nodeId ?? "") !== currentNodeId || (initialValues?.nodeLabel ?? "") !== currentNodeLabel);
-    // Deliberately not tied to readOnlyCore: the pinning is the one thing about
-    // an existing volume that can still be answered differently.
-    const pinningDisabled = readOnlyInherited || readOnlyPermission || isPending;
+    const pinningDisabled = readOnlyCore || readOnlyInherited || readOnlyPermission || isPending;
     const coreDisabled = readOnlyCore || readOnlyInherited || readOnlyPermission || isPending;
     const inheritableDisabled = readOnlyAvailableInProjects || readOnlyInherited || readOnlyPermission || isPending;
     const defaultDisabled = readOnlyDefault || readOnlyInherited || readOnlyPermission || isPending;
@@ -526,13 +516,6 @@ export function CreateOrEditVolumeForm({
                                 <FieldError errors={[errors.nodeLabel]} />
                             </InfoBlock>
                         ) : null}
-
-                        {pinningMoved ? (
-                            <div className={cn(dashedBorderBox, "border-orange-500/60")}>
-                                <span className="font-semibold text-orange-500">Heads up:</span>{" "}
-                                {PINNING_CHANGE_WARNING}
-                            </div>
-                        ) : null}
                     </fieldset>
 
                     {showAvailableInProjects ? (
@@ -608,8 +591,6 @@ interface Props extends PropsWithChildren {
     readOnlyInherited?: boolean;
     readOnlyPermission?: boolean;
     isPending?: boolean;
-    /** Warn when the node pinning is moved - for the edit view, where data already exists. */
-    warnOnPinningChange?: boolean;
     showAvailableInProjects?: boolean;
     isProjectScope?: boolean;
     onSubmit: (values: CreateOrEditVolumeFormOutput) => void;

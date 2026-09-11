@@ -80,12 +80,6 @@ export interface ClusterVolumeUpdatePayload {
     updateVer: number;
     inheritable: boolean;
     default: boolean;
-    /**
-     * The pinning moves as a pair: sending either field replaces both, and
-     * leaving both out keeps whatever the volume already has.
-     */
-    nodeId?: string;
-    nodeLabel?: string;
 }
 
 export interface ClusterVolumeUpdateStatusPayload extends ClusterVolumeUpdatePayload {

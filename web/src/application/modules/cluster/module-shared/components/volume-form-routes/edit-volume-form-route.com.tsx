@@ -105,7 +105,6 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
                     readOnlyInherited={isInherited}
                     readOnlyPermission={!canWrite}
                     isPending={isPending}
-                    warnOnPinningChange
                     showAvailableInProjects
                     isProjectScope={scope.type === "project"}
                     onSubmit={onSubmit}

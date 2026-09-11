@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/moby/moby/api/types/volume"
-	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -28,47 +27,47 @@ const (
 func (s *service) CreateProjectDefaultVolume(
 	ctx context.Context,
 	project *entity.Project,
-) (_ *entity.Setting, _ *client.VolumeCreateResult, err error) {
+) (_ *entity.Setting, err error) {
 	storagePathInHost := config.Current().Storage.BindSource
 	if storagePathInHost == "" {
-		return nil, nil, hperrors.Wrap(hperrors.ErrUnconfigured).
+		return nil, hperrors.Wrap(hperrors.ErrUnconfigured).
 			WithParam("Name", "HP_STORAGE_BIND_SOURCE")
 	}
 
 	subpath := filepath.Join("project_data", project.Key)
 	err = s.MakeSubDirInHost(ctx, storagePathInHost, subpath, true)
 	if err != nil {
-		return nil, nil, hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
-	driver := docker.VolumeDriverLocal
-	driverOpts := map[string]string{
-		"type":   "none",
-		"device": filepath.Join(storagePathInHost, subpath),
-		"o":      "bind,rw",
-	}
-	createResp, err := s.dockerManager.VolumeCreate(ctx, func(opts *client.VolumeCreateOptions) {
-		opts.Driver = string(driver)
-		opts.DriverOpts = driverOpts
-		opts.Labels = map[string]string{
-			docker.StackLabelNamespace: project.Key,
-		}
-		opts.Name = project.Key + "_default"
-	})
+	nodeID, err := s.dockerManager.NodeCurrentID(ctx)
 	if err != nil {
-		return nil, nil, hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
+	return buildProjectDefaultVolumeSetting(project, storagePathInHost, nodeID), nil
+}
+
+// buildProjectDefaultVolumeSetting is the whole record, and nothing in it needs
+// a host to produce - which is what makes it testable and what lets the volume
+// be rebuilt on a node this process never talks to.
+func buildProjectDefaultVolumeSetting(
+	project *entity.Project,
+	storagePathInHost string,
+	nodeID string,
+) *entity.Setting {
 	timeNow := timeutil.NowUTC()
+	settingID := gofn.Must(ulid.NewStringULID())
+
 	setting := &entity.Setting{
-		ID:              gofn.Must(ulid.NewStringULID()),
+		ID:              settingID,
 		Scope:           base.ObjectScopeProject,
 		ObjectID:        project.ID,
 		Type:            base.SettingTypeClusterVolume,
-		Kind:            string(driver),
+		Kind:            string(docker.VolumeDriverLocal),
 		Status:          base.SettingStatusActive,
 		Name:            "default",
-		RefID:           dockerhelper.GetVolumeID(&createResp.Volume),
+		RefID:           settingID,
 		Inheritable:     true,
 		Default:         true,
 		Version:         entity.CurrentClusterVolumeVersion,
@@ -77,15 +76,21 @@ func (s *service) CreateProjectDefaultVolume(
 		UpdatedAt:       timeNow,
 		CurrentObjectID: project.ID,
 	}
-	nodeID, err := s.dockerManager.NodeCurrentID(ctx)
-	if err != nil {
-		return nil, nil, hperrors.Wrap(err)
-	}
 	setting.MustSetData(&entity.ClusterVolume{
-		NodeID: nodeID,
+		NodeID:  nodeID,
+		Managed: true,
+		Driver:  string(docker.VolumeDriverLocal),
+		DriverOpts: map[string]string{
+			"type":   "none",
+			"device": filepath.Join(storagePathInHost, filepath.Join("project_data", project.Key)),
+			"o":      "bind,rw",
+		},
+		Labels: map[string]string{
+			docker.StackLabelNamespace: project.Key,
+			docker.VolumeNameLabel:     "default",
+		},
 	})
-
-	return setting, createResp, nil
+	return setting
 }
 
 func (s *service) ListProjectVolumes(

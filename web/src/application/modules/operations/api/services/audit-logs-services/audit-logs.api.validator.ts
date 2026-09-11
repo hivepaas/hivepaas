@@ -108,6 +108,10 @@ const AuditLogSchema = z.object({
     id: z.string(),
     type: AuditLogTypeSchema,
     source: AuditLogSourceSchema,
+    section: z
+        .string()
+        .nullish()
+        .transform(val => (val?.trim() ? val.trim() : undefined)),
     result: AuditLogResultSchema,
     scopeProject: ScopeProjectSchema,
     scopeProjectEnv: ScopeProjectEnvSchema,

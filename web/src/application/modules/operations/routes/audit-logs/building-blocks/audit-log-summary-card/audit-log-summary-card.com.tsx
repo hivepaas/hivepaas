@@ -159,6 +159,15 @@ export function AuditLogSummaryCard({
                                 {detailedLog.source}
                             </Badge>
                         )}
+
+                        {detailedLog.section && (
+                            <Badge
+                                variant="secondary"
+                                className="font-mono text-xs px-2 py-0.5 rounded-md text-muted-foreground bg-muted/40 border border-border/40"
+                            >
+                                {detailedLog.section}
+                            </Badge>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -415,6 +424,15 @@ export function AuditLogSummaryCard({
                                         <span className="text-muted-foreground">Session UID:</span>{" "}
                                         <span className="font-mono text-foreground font-medium select-all">
                                             {detailedLog.sessionUid}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {detailedLog.section && (
+                                    <div>
+                                        <span className="text-muted-foreground">Section:</span>{" "}
+                                        <span className="font-mono text-foreground font-medium select-all">
+                                            {detailedLog.section}
                                         </span>
                                     </div>
                                 )}

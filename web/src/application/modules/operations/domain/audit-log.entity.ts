@@ -9,15 +9,26 @@ export const AuditLogType = {
     SecretReveal: "secret-reveal",
     ApiKeyCreate: "api-key-create",
     ApiKeyRevoke: "api-key-revoke",
-    SecuritySettingsUpdate: "security-settings-update",
-    RoutingChangeConfirm: "routing-change-confirm",
-    RoutingChangeRevert: "routing-change-revert",
     SettingCreate: "setting-create",
     SettingUpdate: "setting-update",
     SettingStatusUpdate: "setting-status-update",
     SettingDelete: "setting-delete",
     ProjectUpdate: "project-update",
+    ProjectCreate: "project-create",
+    ProjectDelete: "project-delete",
     AppUpdate: "app-update",
+    AppCreate: "app-create",
+    AppDelete: "app-delete",
+    ProjectEnvDelete: "project-env-delete",
+    ClusterUpdate: "cluster-update",
+    TaskCancel: "task-cancel",
+    UserLogin: "user-login",
+    UserLogout: "user-logout",
+    HivePaaSSecuritySettingsUpdate: "hivepaas-security-settings-update",
+    HivePaaSSettingsUpdateConfirm: "hivepaas-settings-update-confirm",
+    HivePaaSSettingsUpdateRevert: "hivepaas-settings-update-revert",
+    HivePaaSSettingsUpdate: "hivepaas-settings-update",
+    HivePaaSAction: "hivepaas-action",
 } as const;
 
 export type AuditLogType = (typeof AuditLogType)[keyof typeof AuditLogType];
@@ -28,6 +39,7 @@ export const AuditLogSource = {
     CapabilityRevoked: "capability-revoked",
     ApiUpdate: "api-update",
     ApiDelete: "api-delete",
+    ApiAction: "api-action",
 } as const;
 
 export type AuditLogSource = (typeof AuditLogSource)[keyof typeof AuditLogSource];
@@ -85,6 +97,13 @@ export interface AuditLog {
     id: string;
     type: AuditLogType;
     source?: AuditLogSource;
+    /**
+     * Which part of the object was written, for the types that cover several
+     * endpoints - the settings tab, the slice of a project. It used to live
+     * inside `detail`, which the listing drops once it grows past ~100 chars, so
+     * it went missing on exactly the entries that had the most to say.
+     */
+    section?: string;
     result: AuditLogResult;
     scopeProject?: AuditLogScopeProject;
     scopeApp?: AuditLogScopeApp;

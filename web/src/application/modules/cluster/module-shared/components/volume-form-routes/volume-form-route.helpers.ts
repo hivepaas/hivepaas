@@ -1,4 +1,9 @@
-import type { ClusterVolume, ClusterVolumeBasePayload, ClusterVolumeCreatePayload } from "~/cluster/domain";
+import type {
+    ClusterVolume,
+    ClusterVolumeBasePayload,
+    ClusterVolumeCreatePayload,
+    ClusterVolumeUpdatePayload,
+} from "~/cluster/domain";
 import {
     EClusterVolumeDriverMode,
     EClusterVolumeLocalType,
@@ -38,11 +43,14 @@ export function toVolumeFormInitialValues(volume: ClusterVolume): CreateOrEditVo
         driverMode: isLocalDriver ? EClusterVolumeDriverMode.Local : EClusterVolumeDriverMode.Custom,
         customDriverName: isLocalDriver ? "" : volume.driver,
         localType: getClusterVolumeLocalType(volume) ?? EClusterVolumeLocalType.Bind,
+        // Not defaulted to the current node the way a new volume is: what an
+        // existing volume says about itself is the answer, including "empty",
+        // which means it is reachable from every node.
+        nodeId: volume.nodeId ?? "",
+        nodeLabel: volume.nodeLabel ?? "",
         bindOptions: {
             ...DEFAULT_VOLUME_FORM_VALUES.bindOptions,
             directory: volume.bindOptions?.directory ?? DEFAULT_VOLUME_FORM_VALUES.bindOptions.directory,
-            nodeId: volume.bindOptions?.nodeId ?? DEFAULT_VOLUME_FORM_VALUES.bindOptions.nodeId,
-            nodeLabel: volume.bindOptions?.nodeLabel ?? DEFAULT_VOLUME_FORM_VALUES.bindOptions.nodeLabel,
             propagation: volume.bindOptions?.propagation ?? EClusterVolumePropagation.Default,
             readonly: volume.bindOptions?.readonly ?? false,
             extraOptions: volume.bindOptions?.extraOptions ?? DEFAULT_VOLUME_FORM_VALUES.bindOptions.extraOptions,
@@ -78,6 +86,11 @@ export function toVolumeBasePayload(values: CreateOrEditVolumeFormOutput): Clust
     const payload: ClusterVolumeBasePayload = {
         name: values.name,
         driver,
+        // Sent even when empty: the server reads an empty pair as "reachable from
+        // every node", so leaving the fields out would say something different
+        // from what the form is showing.
+        nodeId: values.nodeId,
+        nodeLabel: values.nodeLabel,
         labels: toRecord(values.labels),
         options: toRecord(values.options),
     };
@@ -91,8 +104,6 @@ export function toVolumeBasePayload(values: CreateOrEditVolumeFormOutput): Clust
             ...payload,
             bindOptions: {
                 directory: optionalString(values.bindOptions.directory),
-                nodeId: optionalString(values.bindOptions.nodeId),
-                nodeLabel: optionalString(values.bindOptions.nodeLabel),
                 propagation: values.bindOptions.propagation,
                 readonly: values.bindOptions.readonly,
                 extraOptions: optionalString(values.bindOptions.extraOptions),
@@ -132,5 +143,20 @@ export function toVolumeCreatePayload(
         ...toVolumeBasePayload(values),
         inheritable,
         default: values.default,
+    };
+}
+
+export function toVolumeUpdatePayload(
+    values: CreateOrEditVolumeFormOutput,
+    updateVer: number,
+): ClusterVolumeUpdatePayload {
+    return {
+        updateVer,
+        inheritable: values.inheritable,
+        default: values.default,
+        // The pair goes up together - the server replaces both when either is
+        // present, so sending one alone would silently clear the other.
+        nodeId: values.nodeId,
+        nodeLabel: values.nodeLabel,
     };
 }

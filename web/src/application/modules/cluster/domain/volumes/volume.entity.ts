@@ -4,8 +4,6 @@ import type { EClusterVolumePropagation } from "../../module-shared/enums";
 
 export interface ClusterVolumeBindOptions {
     directory?: string;
-    nodeId?: string;
-    nodeLabel?: string;
     propagation?: EClusterVolumePropagation;
     readonly?: boolean;
     extraOptions?: string;
@@ -37,6 +35,15 @@ export interface ClusterVolumeBtrfsOptions {
 
 export interface ClusterVolume extends SettingsBaseEntity {
     driver: string;
+    /**
+     * Where the volume's data is, by node id or by node label - never both.
+     *
+     * Both empty is an answer rather than a gap: it says the volume is reachable
+     * from every node, either a swarm cluster volume or a path backed by storage
+     * mounted the same way everywhere.
+     */
+    nodeId?: string;
+    nodeLabel?: string;
     scope: string;
     mountpoint: string;
     options: Record<string, string>;
@@ -53,6 +60,9 @@ export interface ClusterVolume extends SettingsBaseEntity {
 export interface ClusterVolumeBasePayload {
     name: string;
     driver: string;
+    /** See ClusterVolume.nodeId. "current" asks the server to resolve its own node. */
+    nodeId?: string;
+    nodeLabel?: string;
     bindOptions?: ClusterVolumeBindOptions | null;
     nfsOptions?: ClusterVolumeNfsOptions | null;
     tmpfsOptions?: ClusterVolumeTmpfsOptions | null;
@@ -70,6 +80,12 @@ export interface ClusterVolumeUpdatePayload {
     updateVer: number;
     inheritable: boolean;
     default: boolean;
+    /**
+     * The pinning moves as a pair: sending either field replaces both, and
+     * leaving both out keeps whatever the volume already has.
+     */
+    nodeId?: string;
+    nodeLabel?: string;
 }
 
 export interface ClusterVolumeUpdateStatusPayload extends ClusterVolumeUpdatePayload {

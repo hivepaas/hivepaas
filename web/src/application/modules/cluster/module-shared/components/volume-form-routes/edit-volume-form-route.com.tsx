@@ -13,7 +13,7 @@ import { useConditionalModule, useConditionalProject } from "@application/shared
 
 import { CreateOrEditVolumeForm, type CreateOrEditVolumeFormOutput } from "../volume-form";
 
-import { toVolumeFormInitialValues } from "./volume-form-route.helpers";
+import { toVolumeFormInitialValues, toVolumeUpdatePayload } from "./volume-form-route.helpers";
 
 export function EditVolumeFormRoute({ scope, volumeId }: Props) {
     const { navigate } = useAppNavigate();
@@ -69,14 +69,12 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
             return;
         }
 
+        const payload = toVolumeUpdatePayload(values, volume.updateVer);
+
         if (scope.type === "cluster") {
             updateClusterVolume({
                 volumeID: volume.id,
-                payload: {
-                    updateVer: volume.updateVer,
-                    inheritable: values.inheritable,
-                    default: values.default,
-                },
+                payload,
             });
             return;
         }
@@ -85,11 +83,7 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
             projectID: scope.projectId,
             env: scope.env,
             volumeID: volume.id,
-            payload: {
-                updateVer: volume.updateVer,
-                inheritable: values.inheritable,
-                default: values.default,
-            },
+            payload,
         });
     }
 
@@ -111,6 +105,7 @@ export function EditVolumeFormRoute({ scope, volumeId }: Props) {
                     readOnlyInherited={isInherited}
                     readOnlyPermission={!canWrite}
                     isPending={isPending}
+                    warnOnPinningChange
                     showAvailableInProjects
                     isProjectScope={scope.type === "project"}
                     onSubmit={onSubmit}

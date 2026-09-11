@@ -12,8 +12,6 @@ const KeyValueSchema = z.object({
 
 const BindOptionsSchema = z.object({
     directory: z.string().trim(),
-    nodeId: z.string().trim(),
-    nodeLabel: z.string().trim(),
     propagation: z.nativeEnum(EClusterVolumePropagation),
     readonly: z.boolean(),
     extraOptions: z.string().trim(),
@@ -52,6 +50,10 @@ export const CreateOrEditVolumeFormSchema = z
     .object({
         name: z.string().trim().min(1, "Name is required").max(100, "Name must be 100 characters or less"),
         driverMode: z.nativeEnum(EClusterVolumeDriverMode),
+        // Where the data is. Empty in both is the claim that the volume is
+        // reachable from every node, not a missing answer.
+        nodeId: z.string().trim(),
+        nodeLabel: z.string().trim(),
         customDriverName: z.string().trim(),
         localType: z.nativeEnum(EClusterVolumeLocalType),
         bindOptions: BindOptionsSchema,
@@ -98,6 +100,16 @@ export const CreateOrEditVolumeFormSchema = z
                 code: z.ZodIssueCode.custom,
                 path: ["tmpfsOptions", "size"],
                 message: "Size is required",
+            });
+        }
+
+        // The server refuses both at once, and would ignore the label if it did
+        // not: two spellings of one answer, and the id is the one that wins.
+        if (values.nodeId && values.nodeLabel) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["nodeLabel"],
+                message: "Pin to a node or to a node label, not both",
             });
         }
 

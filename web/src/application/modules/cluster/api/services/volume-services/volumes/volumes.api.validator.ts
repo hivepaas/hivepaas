@@ -29,8 +29,6 @@ const optionalStringSchema = z
 const BindOptionsSchema = z
     .object({
         directory: optionalStringSchema,
-        nodeId: optionalStringSchema,
-        nodeLabel: optionalStringSchema,
         propagation: z
             .nativeEnum(EClusterVolumePropagation)
             .nullish()
@@ -95,6 +93,10 @@ const BtrfsOptionsSchema = z
 
 export const ClusterVolumeSchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
     driver: z.string(),
+    // At the root rather than under bindOptions: the pinning describes the whole
+    // volume, not one of its driver options, and it applies to every type.
+    nodeId: optionalStringSchema,
+    nodeLabel: optionalStringSchema,
     mountpoint: z
         .string()
         .nullish()

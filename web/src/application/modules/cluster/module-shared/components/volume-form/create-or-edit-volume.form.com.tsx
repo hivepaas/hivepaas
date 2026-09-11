@@ -1,4 +1,4 @@
-import { type PropsWithChildren, type ReactNode } from "react";
+import { type PropsWithChildren, type ReactNode, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
@@ -35,10 +35,18 @@ import {
     type CreateOrEditVolumeFormOutput,
     CreateOrEditVolumeFormSchema,
 } from "./create-or-edit-volume.form.schema";
-import { DEFAULT_VOLUME_FORM_VALUES } from "./volume-form.constants";
+import { CURRENT_NODE_VALUE, DEFAULT_VOLUME_FORM_VALUES } from "./volume-form.constants";
 
-const LOCAL_VOLUME_NODE_NOTE =
-    "A local bind volume is physically stored on a specific node in your cluster. Selecting a target Node or specifying a Node Label ensures the volume directory is created on that node, and any service mounting this volume will be automatically pinned to run on that specific node.";
+const VOLUME_NODE_NOTE =
+    "Where this volume's data actually lives. Pin it to a node - or to a node label - when the data sits on that machine's disk: the bind directory is created there, and a backup repository kept on this volume runs there. Pick \u201cAll nodes\u201d only when every node reaches the same data, which is true for cluster volumes and for paths backed by shared storage (NFS, Ceph, ...) mounted identically everywhere. HivePaaS cannot tell that apart from a local directory, so it takes your word for it: choosing it for data that is really on one node leaves the directory uncreated and backup repositories refusing the volume.";
+
+const PINNING_CHANGE_WARNING =
+    "Changing this moves no data. It only changes where HivePaaS looks for it: services mounting this volume and backups kept on it will be sent to the new node, and will find whatever is there - an empty directory, if the data stayed behind.";
+
+// Two choices that are not a node id, kept out of the id space so a node can never
+// collide with them.
+const ALL_NODES_OPTION = "__all_nodes__";
+const BY_LABEL_OPTION = "__by_label__";
 
 const propagationOptions = [
     { value: EClusterVolumePropagation.Default, label: "default" },
@@ -58,6 +66,7 @@ export function CreateOrEditVolumeForm({
     readOnlyInherited = false,
     readOnlyPermission = false,
     isPending = false,
+    warnOnPinningChange = false,
     showAvailableInProjects = true,
     isProjectScope = false,
     onSubmit,
@@ -95,9 +104,9 @@ export function CreateOrEditVolumeForm({
     const { field: driverMode } = useController({ control, name: "driverMode" });
     const { field: customDriverName } = useController({ control, name: "customDriverName" });
     const { field: localType } = useController({ control, name: "localType" });
+    const { field: nodeId } = useController({ control, name: "nodeId" });
+    const { field: nodeLabel } = useController({ control, name: "nodeLabel" });
     const { field: bindDirectory } = useController({ control, name: "bindOptions.directory" });
-    const { field: bindNodeId } = useController({ control, name: "bindOptions.nodeId" });
-    const { field: bindNodeLabel } = useController({ control, name: "bindOptions.nodeLabel" });
     const { field: bindPropagation } = useController({ control, name: "bindOptions.propagation" });
     const { field: bindReadonly } = useController({ control, name: "bindOptions.readonly" });
     const { field: bindExtraOptions } = useController({ control, name: "bindOptions.extraOptions" });
@@ -123,6 +132,37 @@ export function CreateOrEditVolumeForm({
 
     const currentDriverMode = useWatch({ control, name: "driverMode" });
     const currentLocalType = useWatch({ control, name: "localType" });
+    const currentNodeId = useWatch({ control, name: "nodeId" });
+    const currentNodeLabel = useWatch({ control, name: "nodeLabel" });
+
+    /*
+     * Pinning by label is a mode rather than a value: an empty label would
+     * otherwise read as "all nodes" and snap the selector back while somebody is
+     * still typing.
+     */
+    const [pinByLabel, setPinByLabel] = useState(Boolean(initialValues?.nodeLabel));
+    const nodeSelectValue = pinByLabel ? BY_LABEL_OPTION : currentNodeId || ALL_NODES_OPTION;
+
+    function onNodeSelectChange(value: string) {
+        if (value === BY_LABEL_OPTION) {
+            setPinByLabel(true);
+            nodeId.onChange("");
+            return;
+        }
+
+        // One answer at a time: picking a node - or none at all - drops whatever
+        // label was there, which is also what the server insists on.
+        setPinByLabel(false);
+        nodeLabel.onChange("");
+        nodeId.onChange(value === ALL_NODES_OPTION ? "" : value);
+    }
+
+    const pinningMoved =
+        warnOnPinningChange &&
+        ((initialValues?.nodeId ?? "") !== currentNodeId || (initialValues?.nodeLabel ?? "") !== currentNodeLabel);
+    // Deliberately not tied to readOnlyCore: the pinning is the one thing about
+    // an existing volume that can still be answered differently.
+    const pinningDisabled = readOnlyInherited || readOnlyPermission || isPending;
     const coreDisabled = readOnlyCore || readOnlyInherited || readOnlyPermission || isPending;
     const inheritableDisabled = readOnlyAvailableInProjects || readOnlyInherited || readOnlyPermission || isPending;
     const defaultDisabled = readOnlyDefault || readOnlyInherited || readOnlyPermission || isPending;
@@ -237,55 +277,6 @@ export function CreateOrEditVolumeForm({
                                             />
                                         </InfoBlock>
 
-                                        <div className={cn(dashedBorderBox)}>
-                                            <span className="font-semibold text-orange-500">Note:</span>{" "}
-                                            {LOCAL_VOLUME_NODE_NOTE}
-                                        </div>
-
-                                        <InfoBlock
-                                            title="Node"
-                                            titleWidth={220}
-                                        >
-                                            <Select
-                                                value={bindNodeId.value || "__none__"}
-                                                onValueChange={value => {
-                                                    bindNodeId.onChange(value === "__none__" ? "" : value);
-                                                }}
-                                            >
-                                                <SelectTrigger className="max-w-[600px]">
-                                                    <SelectValue placeholder="Select node (optional)" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="__none__">
-                                                        None (Current Manager Node)
-                                                    </SelectItem>
-                                                    {nodes.map(node => {
-                                                        const nodeName = node.name || node.hostname || node.refId;
-                                                        return (
-                                                            <SelectItem
-                                                                key={node.refId || node.id}
-                                                                value={node.refId || node.id}
-                                                            >
-                                                                {nodeName !== node.refId
-                                                                    ? `${nodeName} (${node.refId})`
-                                                                    : node.refId}
-                                                            </SelectItem>
-                                                        );
-                                                    })}
-                                                </SelectContent>
-                                            </Select>
-                                        </InfoBlock>
-                                        <InfoBlock
-                                            title="Node Label"
-                                            titleWidth={220}
-                                        >
-                                            <Input
-                                                {...bindNodeLabel}
-                                                value={bindNodeLabel.value}
-                                                placeholder="key=value or key"
-                                                className="max-w-[600px]"
-                                            />
-                                        </InfoBlock>
                                         <InfoBlock
                                             title="Propagation"
                                             titleWidth={220}
@@ -481,6 +472,69 @@ export function CreateOrEditVolumeForm({
                         </InfoBlock>
                     </fieldset>
 
+                    <fieldset
+                        disabled={pinningDisabled}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    >
+                        <div className={cn(dashedBorderBox)}>
+                            <span className="font-semibold text-orange-500">Note:</span> {VOLUME_NODE_NOTE}
+                        </div>
+
+                        <InfoBlock
+                            title="Node"
+                            titleWidth={220}
+                        >
+                            <Select
+                                value={nodeSelectValue}
+                                onValueChange={onNodeSelectChange}
+                            >
+                                <SelectTrigger className="max-w-[600px]">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value={CURRENT_NODE_VALUE}>Current node</SelectItem>
+                                    <SelectItem value={ALL_NODES_OPTION}>All nodes (shared storage)</SelectItem>
+                                    <SelectItem value={BY_LABEL_OPTION}>By node label...</SelectItem>
+                                    {nodes.map(node => {
+                                        const nodeName = node.name || node.hostname || node.refId;
+                                        return (
+                                            <SelectItem
+                                                key={node.refId || node.id}
+                                                value={node.refId || node.id}
+                                            >
+                                                {nodeName !== node.refId ? `${nodeName} (${node.refId})` : node.refId}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
+                            <FieldError errors={[errors.nodeId]} />
+                        </InfoBlock>
+
+                        {pinByLabel ? (
+                            <InfoBlock
+                                title="Node Label"
+                                titleWidth={220}
+                            >
+                                <Input
+                                    {...nodeLabel}
+                                    value={nodeLabel.value}
+                                    placeholder="key=value or key"
+                                    className="max-w-[600px]"
+                                    aria-invalid={Boolean(errors.nodeLabel)}
+                                />
+                                <FieldError errors={[errors.nodeLabel]} />
+                            </InfoBlock>
+                        ) : null}
+
+                        {pinningMoved ? (
+                            <div className={cn(dashedBorderBox, "border-orange-500/60")}>
+                                <span className="font-semibold text-orange-500">Heads up:</span>{" "}
+                                {PINNING_CHANGE_WARNING}
+                            </div>
+                        ) : null}
+                    </fieldset>
+
                     {showAvailableInProjects ? (
                         <fieldset
                             disabled={inheritableDisabled}
@@ -554,6 +608,8 @@ interface Props extends PropsWithChildren {
     readOnlyInherited?: boolean;
     readOnlyPermission?: boolean;
     isPending?: boolean;
+    /** Warn when the node pinning is moved - for the edit view, where data already exists. */
+    warnOnPinningChange?: boolean;
     showAvailableInProjects?: boolean;
     isProjectScope?: boolean;
     onSubmit: (values: CreateOrEditVolumeFormOutput) => void;

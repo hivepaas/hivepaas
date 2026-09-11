@@ -40,7 +40,12 @@ func (uc *UC) UpdateProfile(
 		persistingData := &persistingUserProfileData{}
 		uc.preparePersistingUserProfileData(req, profileData, persistingData)
 
-		return uc.persistUserProfileData(ctx, db, persistingData)
+		if err = uc.persistUserProfileData(ctx, db, persistingData); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		return uc.recordUserChange(ctx, db, auth, base.AuditLogTypeUserUpdate,
+			auditSectionProfile, profileData.User, nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

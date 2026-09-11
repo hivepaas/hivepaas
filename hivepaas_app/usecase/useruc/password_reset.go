@@ -3,6 +3,7 @@ package useruc
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -45,7 +46,11 @@ func (uc *UC) ResetPassword(
 			return hperrors.Wrap(err)
 		}
 
-		return nil
+		// A password changed without a session, so the section is what tells this
+		// apart from the account changing its own - and a reset nobody asked for
+		// is the thing worth being able to see.
+		return uc.recordUserChange(ctx, db, authOfUser(user), base.AuditLogTypeUserUpdate,
+			auditSectionPasswordReset, user, nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

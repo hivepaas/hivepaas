@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
@@ -29,7 +30,11 @@ func (uc *UC) DeleteUser(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		return nil
+
+		// The role of the account that is going away, because after this there is
+		// no row left to look it up in.
+		return uc.recordUserChange(ctx, db, auth, base.AuditLogTypeUserDelete, "",
+			userData.User, auditdetail.New().Set("role", userData.User.Role))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

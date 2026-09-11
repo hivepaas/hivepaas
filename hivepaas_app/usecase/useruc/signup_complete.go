@@ -32,7 +32,14 @@ func (uc *UC) CompleteUserSignup(
 			return err
 		}
 
-		return uc.persistUserSignupData(ctx, db, persistingData)
+		if err = uc.persistUserSignupData(ctx, db, persistingData); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		// Attributed to the account itself: the invite token is possession of the
+		// address, and there is nobody else to name. See authOfUser.
+		return uc.recordUserChange(ctx, db, authOfUser(signupData.User),
+			base.AuditLogTypeUserCreate, auditSectionSignup, signupData.User, nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

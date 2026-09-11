@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/emailservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/useruc/userdto"
@@ -42,6 +43,18 @@ func (uc *UC) RequestResetPassword(
 	}
 
 	resetLink := config.Current().DashboardPasswordResetURL(user.ID, token)
+
+	// Before the link goes anywhere. Whether it was mailed to the account or
+	// handed back to the caller is the point of the entry: a link returned in the
+	// response is an admin holding the means to sign in as somebody else, which
+	// is a different act from asking the system to mail them a reset.
+	err = uc.recordUserChange(ctx, uc.db, auth, base.AuditLogTypeUserUpdate,
+		auditSectionPasswordResetRequest, user, auditdetail.New().
+			Set("emailSent", req.SendResettingEmail).
+			Set("linkReturnedToActor", !req.SendResettingEmail))
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 
 	if req.SendResettingEmail {
 		emailSetting, err := uc.emailService.GetDefaultSystemEmail(ctx, uc.db)

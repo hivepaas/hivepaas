@@ -44,6 +44,13 @@ func (uc *UC) RemoveMFATotp(
 
 		// Verify passcode
 		if !totp.VerifyPasscode(req.Passcode, user.TotpSecret) {
+			// Recorded. Somebody holding a live session and working at the code
+			// that would take the second factor off it is the case this section
+			// exists for, and a refused attempt leaves nothing else behind.
+			if e := uc.recordUserChangeDenied(ctx, db, auth, auditSectionMFARemove,
+				user, auditReasonWrongPasscode); e != nil {
+				return hperrors.Wrap(e)
+			}
 			return hperrors.Wrap(hperrors.ErrPasscodeMismatched)
 		}
 
@@ -56,7 +63,8 @@ func (uc *UC) RemoveMFATotp(
 			return hperrors.Wrap(err)
 		}
 
-		return nil
+		return uc.recordUserChange(ctx, db, auth, base.AuditLogTypeUserUpdate,
+			auditSectionMFARemove, user, nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

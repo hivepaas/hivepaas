@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -32,6 +33,9 @@ func (uc *UC) UpdateUser(
 			return hperrors.Wrap(err)
 		}
 
+		// Read before prepareUpdatingUserData writes over them.
+		before := userData.snapshot()
+
 		persistingData := &userservice.PersistingUserData{}
 		uc.prepareUpdatingUserData(req, userData, persistingData)
 
@@ -54,7 +58,24 @@ func (uc *UC) UpdateUser(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.userService.PersistUserData(ctx, db, persistingData)
+		if err = uc.userService.PersistUserData(ctx, db, persistingData); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		// The privilege-bearing fields go in with their values - a role, a status
+		// and a security option are not secrets, and "member to admin" is the
+		// whole of what a reader wants from the entry. Which grant lists were
+		// replaced is said by name only: their contents are the permission model,
+		// not something an audit row has to carry.
+		user := userData.User
+		return uc.recordUserChange(ctx, db, auth, base.AuditLogTypeUserUpdate,
+			auditSectionAccount, user, auditdetail.New().
+				Compare("role", before.Role, user.Role).
+				Compare("status", before.Status, user.Status).
+				Compare("securityOption", before.SecurityOption, user.SecurityOption).
+				Set("moduleAccessesReplaced", req.ModuleAccesses != nil).
+				Set("capabilitiesReplaced", req.Capabilities != nil).
+				Set("projectAccessesReplaced", req.ProjectAccesses != nil))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -65,6 +86,22 @@ func (uc *UC) UpdateUser(
 
 type userUpdateData struct {
 	User *entity.User
+}
+
+// userSnapshot is what the record compares against: the fields that decide what
+// an account may do, as they were before the request touched them.
+type userSnapshot struct {
+	Role           base.UserRole
+	Status         base.UserStatus
+	SecurityOption base.UserSecurityOption
+}
+
+func (data *userUpdateData) snapshot() userSnapshot {
+	return userSnapshot{
+		Role:           data.User.Role,
+		Status:         data.User.Status,
+		SecurityOption: data.User.SecurityOption,
+	}
 }
 
 func (uc *UC) loadUserDataForUpdate(

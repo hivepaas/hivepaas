@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -45,7 +46,18 @@ func (uc *UC) InviteUser(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		return uc.userService.PersistUserData(ctx, db, persistingData)
+		if err = uc.userService.PersistUserData(ctx, db, persistingData); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		// The role goes in with its value. It is what the account may do from the
+		// moment it exists, it is not a secret, and "who let an admin in" is the
+		// question this entry is kept for.
+		return uc.recordUserChange(ctx, db, auth, base.AuditLogTypeUserCreate,
+			auditSectionInvite, inviteData.User, auditdetail.New().
+				Set("role", inviteData.User.Role).
+				Set("securityOption", inviteData.User.SecurityOption).
+				Set("emailSent", req.SendInviteEmail))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -111,6 +111,24 @@ const (
 	// would have said at the cost of five more values in the type filter.
 	AuditLogTypeTaskCancel AuditLogType = "task-cancel"
 
+	// AuditLogTypeUserCreate, AuditLogTypeUserUpdate and AuditLogTypeUserDelete
+	// record an account appearing, being changed, and being taken away.
+	//
+	// Split three ways for the reason projects and apps are: an account arriving
+	// and an account disappearing are what somebody scanning the type column is
+	// looking for, and folded into the edits a new admin would be
+	// indistinguishable from a changed job title.
+	//
+	// One type for every edit, with section naming which form was used - account,
+	// profile, password, password-reset, password-reset-request, mfa-setup,
+	// mfa-remove. The two weightiest, a role change and a second factor being
+	// taken off, are sections on the same reasoning as everything else in this
+	// file; what moved is in the entry's detail, with the values, because a role
+	// is not a secret and "member to admin" is the whole of what a reader wants.
+	AuditLogTypeUserCreate AuditLogType = "user-create"
+	AuditLogTypeUserUpdate AuditLogType = "user-update"
+	AuditLogTypeUserDelete AuditLogType = "user-delete"
+
 	// AuditLogTypeUserLogin records a session being handed out, and every attempt
 	// that was turned away.
 	//
@@ -218,6 +236,9 @@ const (
 
 var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeSecretReveal,
+	AuditLogTypeUserCreate,
+	AuditLogTypeUserUpdate,
+	AuditLogTypeUserDelete,
 	AuditLogTypeUserLogin,
 	AuditLogTypeUserLogout,
 	AuditLogTypeAPIKeyCreate,

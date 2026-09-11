@@ -48,7 +48,8 @@ func (uc *UC) UpdatePassword(
 			return hperrors.Wrap(err)
 		}
 
-		return nil
+		return uc.recordUserChange(ctx, db, auth, base.AuditLogTypeUserUpdate,
+			auditSectionPassword, user, nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

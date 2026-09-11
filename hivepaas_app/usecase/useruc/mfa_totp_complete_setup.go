@@ -57,7 +57,8 @@ func (uc *UC) CompleteMFATotpSetup(
 			return hperrors.Wrap(err)
 		}
 
-		return nil
+		return uc.recordUserChange(ctx, db, auth, base.AuditLogTypeUserUpdate,
+			auditSectionMFASetup, user, nil)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

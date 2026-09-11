@@ -5,7 +5,6 @@ import (
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -20,7 +19,9 @@ func clientVisibleDetail(t *testing.T, err error) string {
 	t.Helper()
 
 	hpErr, ok := err.(hperrors.HPError)
-	require.True(t, ok, "expected an hperrors.HPError, got %T", err)
+	if !ok {
+		t.Fatalf("expected an hperrors.HPError, got %T", err)
+	}
 	return hpErr.Build("en").Detail
 }
 
@@ -198,7 +199,7 @@ func newVolumeSetting(t *testing.T, id, refID, name, nodeID string) *entity.Sett
 	t.Helper()
 
 	setting := &entity.Setting{ID: id, RefID: refID, Type: base.SettingTypeClusterVolume, Name: name}
-	require.NoError(t, setting.SetData(&entity.ClusterVolume{NodeID: nodeID}))
+	assert.NoError(t, setting.SetData(&entity.ClusterVolume{NodeID: nodeID}))
 	return &entity.Setting{
 		ID: setting.ID, Name: setting.Name, RefID: setting.RefID, Type: setting.Type, Data: setting.Data,
 	}
@@ -211,7 +212,7 @@ func newBindVolumeSetting(t *testing.T, id, name, nodeID, device string) *entity
 	t.Helper()
 
 	setting := &entity.Setting{ID: id, Type: base.SettingTypeClusterVolume, Name: name}
-	require.NoError(t, setting.SetData(&entity.ClusterVolume{
+	assert.NoError(t, setting.SetData(&entity.ClusterVolume{
 		NodeID:     nodeID,
 		Managed:    true,
 		DriverOpts: map[string]string{"type": "none", "device": device},

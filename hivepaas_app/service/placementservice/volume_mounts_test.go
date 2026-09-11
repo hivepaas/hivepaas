@@ -5,7 +5,6 @@ import (
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -19,7 +18,7 @@ func newBindVolume(t *testing.T, name, nodeID, device string) *entity.Setting {
 	t.Helper()
 
 	setting := &entity.Setting{ID: name, Type: base.SettingTypeClusterVolume, Name: name}
-	require.NoError(t, setting.SetData(&entity.ClusterVolume{
+	assert.NoError(t, setting.SetData(&entity.ClusterVolume{
 		NodeID:     nodeID,
 		Managed:    true,
 		DriverOpts: map[string]string{"type": "none", "device": device},
@@ -51,7 +50,7 @@ func TestVolumePinsForMountsFindsAPinnedVolumeBehindABindMount(t *testing.T) {
 		[]*entity.Setting{web},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, []VolumePin{{VolumeName: "web", NodeID: "node-1"}}, pins)
 }
 
@@ -63,7 +62,7 @@ func TestVolumePinsForMountsMatchesTypeVolumeByRefID(t *testing.T) {
 		[]*entity.Setting{pgdata},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, []VolumePin{{VolumeName: "pgdata", NodeID: "node-1"}}, pins)
 }
 
@@ -75,7 +74,7 @@ func TestVolumePinsForMountsMatchesTypeClusterByRefID(t *testing.T) {
 		[]*entity.Setting{pgdata},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, []VolumePin{{VolumeName: "pgdata", NodeID: "node-1"}}, pins)
 }
 
@@ -89,7 +88,7 @@ func TestVolumePinsForMountsRespectsThePathBoundary(t *testing.T) {
 		[]*entity.Setting{data},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Empty(t, pins)
 }
 
@@ -105,7 +104,7 @@ func TestVolumePinsForMountsPrefersTheLongestDevice(t *testing.T) {
 		[]*entity.Setting{outer, inner},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, []VolumePin{{VolumeName: "inner", NodeID: "node-2"}}, pins)
 }
 
@@ -119,7 +118,7 @@ func TestVolumePinsForMountsToleratesATrailingSlashOnTheDevice(t *testing.T) {
 		[]*entity.Setting{web},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, []VolumePin{{VolumeName: "web", NodeID: "node-1"}}, pins)
 }
 
@@ -136,7 +135,7 @@ func TestVolumePinsForMountsIgnoresUnmatchedBindsAndOtherMountTypes(t *testing.T
 		[]*entity.Setting{web},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Empty(t, pins)
 }
 
@@ -146,7 +145,7 @@ func TestVolumePinsForMountsIgnoresUnmatchedBindsAndOtherMountTypes(t *testing.T
 // service to a node on the strength of a coincidence of paths.
 func TestVolumePinsForMountsIgnoresAnUnmanagedVolumeBehindABindMount(t *testing.T) {
 	discovered := &entity.Setting{ID: "d", Type: base.SettingTypeClusterVolume, Name: "discovered"}
-	require.NoError(t, discovered.SetData(&entity.ClusterVolume{
+	assert.NoError(t, discovered.SetData(&entity.ClusterVolume{
 		NodeID:     "node-1",
 		DriverOpts: map[string]string{"type": "none", "device": "/srv/data"},
 	}))
@@ -159,7 +158,7 @@ func TestVolumePinsForMountsIgnoresAnUnmanagedVolumeBehindABindMount(t *testing.
 		[]*entity.Setting{discovered},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Empty(t, pins)
 }
 
@@ -170,7 +169,7 @@ func TestVolumePinsForMountsPrefersAManagedVolumeOverALongerUnmanagedDevice(t *t
 	managed := newBindVolume(t, "managed", "node-1", "/srv/data")
 
 	unmanaged := &entity.Setting{ID: "u", Type: base.SettingTypeClusterVolume, Name: "unmanaged"}
-	require.NoError(t, unmanaged.SetData(&entity.ClusterVolume{
+	assert.NoError(t, unmanaged.SetData(&entity.ClusterVolume{
 		NodeID:     "node-2",
 		DriverOpts: map[string]string{"type": "none", "device": "/srv/data/shop"},
 	}))
@@ -183,7 +182,7 @@ func TestVolumePinsForMountsPrefersAManagedVolumeOverALongerUnmanagedDevice(t *t
 		[]*entity.Setting{managed, unmanaged},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, []VolumePin{{VolumeName: "managed", NodeID: "node-1"}}, pins)
 }
 
@@ -200,7 +199,7 @@ func TestVolumePinsForMountsDoesNotErrorOnALegacySettingWithNoDriverOpts(t *test
 		[]*entity.Setting{legacy},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Empty(t, pins)
 }
 
@@ -220,7 +219,7 @@ func TestVolumePinsForMountsDedupesAVolumeMountedTwice(t *testing.T) {
 		[]*entity.Setting{web},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, []VolumePin{{VolumeName: "web", NodeID: "node-1"}}, pins)
 }
 
@@ -238,7 +237,7 @@ func TestVolumePinsForMountsReturnsBothPinsOnATiedDeviceThatConflicts(t *testing
 		[]*entity.Setting{a, b},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.ElementsMatch(t, []VolumePin{
 		{VolumeName: "a", NodeID: "node-1"},
 		{VolumeName: "b", NodeID: "node-2"},
@@ -261,7 +260,7 @@ func TestVolumePinsForMountsReturnsBothPinsOnATiedDeviceThatAgree(t *testing.T) 
 		[]*entity.Setting{a, b},
 	)
 
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.ElementsMatch(t, []VolumePin{
 		{VolumeName: "a", NodeID: "node-1"},
 		{VolumeName: "b", NodeID: "node-1"},

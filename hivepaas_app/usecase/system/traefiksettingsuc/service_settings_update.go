@@ -2,16 +2,15 @@ package traefiksettingsuc
 
 import (
 	"context"
-	"time"
 
 	"github.com/moby/moby/api/types/swarm"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -19,8 +18,7 @@ import (
 )
 
 const (
-	serviceUpdateMaxRetry      = 2
-	serviceUpdateRetryInterval = time.Second * 3
+	serviceUpdateMaxRetry = 2
 )
 
 func (uc *UC) UpdateServiceSettings(
@@ -44,10 +42,24 @@ func (uc *UC) UpdateServiceSettings(
 			return hperrors.Wrap(err)
 		}
 
+		// Before the service update, not after it. Changing the replica count
+		// replaces traefik's tasks, and the connection carrying this request runs
+		// through them - so a record that cannot be written has to be able to
+		// stop the change rather than arrive after it.
+		//
+		// The replica counts go in with their values: they are numbers this
+		// endpoint validates, nothing a user typed, and "who scaled traefik down
+		// to one" is answered by the values or not at all.
+		err = uc.recordTraefikSettingsUpdate(ctx, db, auth, auditSectionServiceSettings,
+			auditdetail.New().Compare("replicas",
+				data.CurrSettings.AppSettings.Replicas,
+				data.NewSettings.AppSettings.Replicas))
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		if data.traefikSvcChanges {
-			err = gofn.ExecRetry(func() error {
-				return uc.applyServiceSettingsToTraefikService(ctx, data)
-			}, serviceUpdateMaxRetry, serviceUpdateRetryInterval)
+			err = uc.applyServiceSettingsToTraefikService(ctx, data)
 			if err != nil {
 				return hperrors.Wrap(err)
 			}
@@ -63,7 +75,10 @@ func (uc *UC) UpdateServiceSettings(
 }
 
 type updateServiceSettingsData struct {
-	Setting        *entity.Setting
+	Setting *entity.Setting
+	// CurrSettings is the settings as they were before this request, kept so the
+	// record can say what the values moved from.
+	CurrSettings   *entity.TraefikService
 	NewSettings    *entity.TraefikService
 	TraefikService *swarm.Service
 
@@ -95,6 +110,7 @@ func (uc *UC) loadServiceSettingsForUpdate(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	data.CurrSettings = currSettings
 
 	traefikSvc, err := uc.traefikService.GetTraefikSwarmService(ctx)
 	if err != nil {
@@ -113,20 +129,14 @@ func (uc *UC) applyServiceSettingsToTraefikService(
 	ctx context.Context,
 	data *updateServiceSettingsData,
 ) error {
-	traefikService := data.TraefikService
-
-	// Set service mode and replicas
-	traefikService.Spec.Mode.Replicated = &swarm.ReplicatedService{
-		Replicas: new(uint64(data.NewSettings.AppSettings.Replicas)), //nolint:gosec
-	}
-
-	if traefikService.Spec.UpdateConfig == nil {
-		traefikService.Spec.UpdateConfig = &swarm.UpdateConfig{}
-	}
-	traefikService.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
-	traefikService.Spec.UpdateConfig.MaxFailureRatio = 0.5
-
-	_, err := uc.dockerManager.ServiceUpdate(ctx, traefikService.ID, &traefikService.Version, &traefikService.Spec)
+	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.TraefikService.ID, data.TraefikService,
+		func(i int, svc *swarm.Service) (bool, error) {
+			// Set service mode and replicas
+			svc.Spec.Mode.Replicated = &swarm.ReplicatedService{
+				Replicas: new(uint64(data.NewSettings.AppSettings.Replicas)), //nolint:gosec
+			}
+			return true, nil
+		}, serviceUpdateMaxRetry, 0)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

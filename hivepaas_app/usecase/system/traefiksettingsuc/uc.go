@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsprobationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
@@ -23,6 +24,7 @@ type UC struct {
 	settingRepo repository.SettingRepo
 	taskRepo    repository.TaskRepo
 
+	auditService auditservice.Service
 	hpAppService hpappservice.Service
 	// probationService is confirm-or-revert, shared with the HivePaaS settings.
 	probationService settingsprobationservice.Service
@@ -38,6 +40,7 @@ func New(
 	settingRepo repository.SettingRepo,
 	taskRepo repository.TaskRepo,
 
+	auditService auditservice.Service,
 	hpAppService hpappservice.Service,
 	probationService settingsprobationservice.Service,
 	traefikService traefikservice.Service,
@@ -51,6 +54,7 @@ func New(
 		settingRepo: settingRepo,
 		taskRepo:    taskRepo,
 
+		auditService:     auditService,
 		hpAppService:     hpAppService,
 		probationService: probationService,
 		traefikService:   traefikService,

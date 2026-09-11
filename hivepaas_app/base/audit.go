@@ -122,7 +122,13 @@ const (
 
 	// AuditLogTypeHivePaaSSettingsUpdate records a change to HivePaaS's own
 	// routing or service settings - the ones that decide whether HivePaaS is
-	// reachable and how many replicas serve it.
+	// reachable and how many replicas serve it - and to traefik's, which decide
+	// the same thing for everything the install serves.
+	//
+	// Traefik shares the type rather than taking one of its own: its command and
+	// its replica count are the install's wiring in exactly the sense the
+	// HivePaaS pages are, and section - traefik-config, traefik-service - already
+	// tells the four pages apart without adding values to the type filter.
 	//
 	// Separate from security-settings-update, which stays on its own type: that
 	// one is about whether stored secrets may leave the server, which is a
@@ -131,7 +137,10 @@ const (
 
 	// AuditLogTypeHivePaaSAction records something done to the running install
 	// rather than to its configuration: upgrading it to a new version, restarting
-	// its services, telling them to re-read their config.
+	// its services, telling them to re-read their config. Traefik's restart,
+	// config reload and config reset are filed here too - cycling the ingress is
+	// the same kind of act as cycling the app, and section - traefik-restart,
+	// traefik-config-reload, traefik-config-reset - says which service it was.
 	//
 	// One type for the three, with section telling them apart. A version upgrade
 	// is the weighty one and could have been given a type of its own, but section

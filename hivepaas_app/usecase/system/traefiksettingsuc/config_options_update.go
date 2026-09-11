@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -23,10 +24,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc/traefiksettingsdto"
 	"github.com/hivepaas/hivepaas/services/traefik/traefikhelper"
 )
-
-// updateMaxFailureRatio matches what every other swarm update in the codebase
-// sets, so a change converges on the same terms as everything else.
-const updateMaxFailureRatio = 0.5
 
 // UpdateConfigOptions rewrites traefik's startup command, on trial.
 //
@@ -61,8 +58,14 @@ func (uc *UC) UpdateConfigOptions(
 		// Nothing traefik is not already running. Applying it would replace the
 		// task, taking every ingress down for the length of a restart, and then
 		// hold the operator on a countdown to confirm a change they did not make.
+		//
+		// Still recorded. Somebody with admin wrote traefik's command; that it
+		// resolved to the command already running is something the entry says, in
+		// commandChanged, rather than a reason for the trail to be silent about
+		// the write having been attempted at all.
 		if !data.CommandChanged {
-			return nil
+			return uc.recordTraefikSettingsUpdate(ctx, db, auth, auditSectionConfigOptions,
+				auditdetail.New().Set("commandChanged", false))
 		}
 
 		uc.prepareUpdatingConfigOptions(data)
@@ -90,6 +93,21 @@ func (uc *UC) UpdateConfigOptions(
 			return hperrors.Wrap(err)
 		}
 
+		// Before the apply for the same reason the apply is last: from there on
+		// the connection carrying this request can be cut at any moment, and a
+		// record that cannot be written has to be able to stop the change rather
+		// than arrive after traefik is already running it.
+		detail := auditdetail.New().
+			Set("commandChanged", true).
+			Set("onProbation", data.Probation != nil)
+		if changed := changedCommandArgs(data.LiveArgs, data.NewArgs); len(changed) > 0 {
+			detail.Set("changedArgs", changed)
+		}
+		if err := uc.recordTraefikSettingsUpdate(ctx, db, auth,
+			auditSectionConfigOptions, detail); err != nil {
+			return hperrors.Wrap(err)
+		}
+
 		// Last, because it is the step that takes traefik down: everything above
 		// has to be committed-shaped before the connection carrying this request
 		// is cut.
@@ -113,6 +131,10 @@ type updateConfigOptionsData struct {
 	TraefikService *swarm.Service
 	NewArgs        []string
 	CommandChanged bool
+
+	// LiveArgs is the command traefik is running as this request starts, kept so
+	// the record can name the flags that moved.
+	LiveArgs []string
 
 	// Snapshot is the command as it was before this request touched it: the state
 	// a revert restores. Taken from the live service spec rather than from the
@@ -170,6 +192,7 @@ func (uc *UC) loadConfigOptionsForUpdate(
 	data.Setting = setting
 	data.Snapshot = entity.SettingSnapshotOf(setting)
 
+	data.LiveArgs = liveArgs
 	data.NewArgs = uc.buildStartupCommand(req, traefikSvc)
 	data.CommandChanged = !(&entity.TraefikConfig{Args: liveArgs}).SameArgsAs(data.NewArgs)
 	// The shared floor. Only traefik's task is replaced - the HivePaaS app keeps
@@ -255,23 +278,14 @@ func (uc *UC) applyConfigOptionsToTraefikService(
 	ctx context.Context,
 	data *updateConfigOptionsData,
 ) error {
-	traefikSvc := data.TraefikService
-
-	if traefikSvc.Spec.TaskTemplate.ContainerSpec == nil {
-		traefikSvc.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
-	}
-	traefikSvc.Spec.TaskTemplate.ContainerSpec.Args = data.NewArgs
-
-	// Rollback covers the half of the failures swarm can recognize: a command
-	// traefik refuses makes the process exit, which fails the healthcheck inside
-	// update_config.monitor. The probation covers the other half.
-	if traefikSvc.Spec.UpdateConfig == nil {
-		traefikSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
-	}
-	traefikSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
-	traefikSvc.Spec.UpdateConfig.MaxFailureRatio = updateMaxFailureRatio
-
-	_, err := uc.dockerManager.ServiceUpdate(ctx, traefikSvc.ID, &traefikSvc.Version, &traefikSvc.Spec)
+	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.TraefikService.ID, data.TraefikService,
+		func(i int, svc *swarm.Service) (bool, error) {
+			if svc.Spec.TaskTemplate.ContainerSpec == nil {
+				svc.Spec.TaskTemplate.ContainerSpec = &swarm.ContainerSpec{}
+			}
+			svc.Spec.TaskTemplate.ContainerSpec.Args = data.NewArgs
+			return true, nil
+		}, serviceUpdateMaxRetry, 0)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

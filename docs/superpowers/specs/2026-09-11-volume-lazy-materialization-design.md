@@ -224,21 +224,44 @@ nothing HivePaaS did not author is overwritten.
 
 ### 8. Deletion
 
-A volume can now exist on several nodes, but no new cleanup is needed for that.
-`clustercleanupservice` already prunes unused volumes on every node through the
-agent, and a volume whose setting is gone is mounted by no service - which is
-precisely what prune reclaims. `DeleteVolume` keeps removing the manager node's
-copy and already ignores a not-found, which is the common case once volumes are
-materialized lazily.
+A volume can now exist on several nodes. `DeleteVolume` keeps removing the
+manager node's copy and already ignores a not-found, which is the common case
+now that volumes materialize lazily.
 
-One pre-existing hazard is worth recording, because it is easy to mistake for
-something this change introduced: the prune is unconditional, so a volume
-belonging to a service scaled to zero is unused and can be reclaimed. For bind
-volumes that costs nothing - the data is in the bind target, not in the volume -
-but a plain local volume with no bind, nfs or tmpfs options keeps its data in
-`/var/lib/docker/volumes` and would lose it. Lazy materialization makes this
-strictly less likely rather than more, since a volume nothing has mounted does
-not exist to be pruned.
+The existing cluster cleanup does not do the rest. `clustercleanupservice`
+calls `dockerManager.VolumePrune(ctx, true)`
+(`clustercleanupserviceimpl/cleanup_cluster.go:100`), and that `true` is
+`anonymousOnly`: the wrapper in `services/docker/volume.go` adds the `all=true`
+filter only when `anonymousOnly` is false, and docker's own client documents
+that filter as controlling whether named volumes are pruned at all - by
+default, only anonymous ones are. Every HivePaaS volume is named: `RefID` is a
+ULID for one created on this branch, or the pre-existing docker name for an
+older one. So the prune that already runs on every node reclaims none of them,
+deleted or not.
+
+That means a volume deleted after materializing on more than one node leaves
+copies behind on every node but the manager - a gap this change introduces,
+since before lazy materialization a volume only ever existed on the manager in
+the first place, so there was nothing else to orphan. The cost differs by
+kind: for a bind volume it is only a stale pointer, since the data lives in
+the bind target directory, not in the volume, so nothing is lost but an unused
+docker object; for a plain local volume with no bind, nfs or tmpfs options,
+the data is in the volume itself, under `/var/lib/docker/volumes`, and is
+wasted disk left behind on that node.
+
+This is recorded as a known gap, not closed here. Closing it needs removal
+addressed to a specific node, which is a capability that already exists in a
+different form: the same `nodeexecservice` path `createBindDirectoryInNode`
+uses today to create a bind directory on the pinned node can reach a node to
+remove a volume from it too.
+
+It must not be closed by flipping `VolumePrune`'s `anonymousOnly` argument to
+false instead. That would prune every unused named volume on every node, not
+just the copies a deleted setting left behind - including a volume whose
+setting still exists but whose service happens to be scaled to zero right now.
+For a bind volume that is harmless, the same as above. For a plain local
+volume it is not: an operator's data would be destroyed for the crime of being
+briefly unused, turning today's disk-space leak into permanent data loss.
 
 ## What is deliberately not changing
 

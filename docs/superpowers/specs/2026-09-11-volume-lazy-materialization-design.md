@@ -207,17 +207,38 @@ Sync keeps two jobs:
   responsibility executable on more than one node. The specification is copied
   from the volume as it exists, so stamping it back is a no-op where it came
   from and faithful everywhere else.
-- **Discovery.** Volumes created outside HivePaaS still get settings, with
-  `Managed` false.
+- **Discovery.** Volumes created outside HivePaaS still get settings, and the
+  setting starts with `Managed` false and no `Driver` recorded. That lasts one
+  sync pass. Backfill, above, cannot tell a setting discovery just wrote from
+  one that predates this change - both have an empty `Driver` - so the next
+  sync backfills the one discovery just created the same as any other,
+  stamping on the specification and setting `Managed: true`, unless the volume
+  is a swarm cluster volume. That is intended, not a gap: the specification
+  backfill records is copied from the volume as it exists, so stamping it back
+  is faithful to what is actually there, and it is what lets the volume be
+  rebuilt correctly on another node instead of docker silently creating an
+  empty default one in its place.
 
 The rule the sync already follows is unchanged and now covers one more field:
 nothing HivePaaS did not author is overwritten.
 
 ### 8. Deletion
 
-A volume can now exist on several nodes, so deleting its setting has to clean up
-more than one. This is handed to `clustercleanupservice`, which already exists
-for work of this shape; no new mechanism.
+A volume can now exist on several nodes, but no new cleanup is needed for that.
+`clustercleanupservice` already prunes unused volumes on every node through the
+agent, and a volume whose setting is gone is mounted by no service - which is
+precisely what prune reclaims. `DeleteVolume` keeps removing the manager node's
+copy and already ignores a not-found, which is the common case once volumes are
+materialized lazily.
+
+One pre-existing hazard is worth recording, because it is easy to mistake for
+something this change introduced: the prune is unconditional, so a volume
+belonging to a service scaled to zero is unused and can be reclaimed. For bind
+volumes that costs nothing - the data is in the bind target, not in the volume -
+but a plain local volume with no bind, nfs or tmpfs options keeps its data in
+`/var/lib/docker/volumes` and would lose it. Lazy materialization makes this
+strictly less likely rather than more, since a volume nothing has mounted does
+not exist to be pruned.
 
 ## What is deliberately not changing
 

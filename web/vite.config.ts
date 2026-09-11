@@ -12,9 +12,37 @@ export default defineConfig(({ mode }) => {
 
     const PORT = Number(env["PORT"]) || 4000;
 
+    /*
+     * Where the dev server forwards API calls, and under which prefix.
+     *
+     * The forwarding is what makes the split dev setup behave like production,
+     * where one server hands out both the dashboard and the API. The session's
+     * refresh token is an httpOnly cookie, so the browser attaches it only to
+     * requests it considers same-origin: calling the backend directly on its own
+     * port means no cookie, a failed refresh, and a bounce to the sign-in page
+     * the moment the access token expires.
+     *
+     * Only takes effect when VITE_HP_DASHBOARD_BASE_URL is empty, which is what
+     * makes the app call /_/... on its own origin instead of an absolute URL.
+     */
+    const API_BASE_PATH = env["VITE_HP_API_BASE_PATH"] || "/_";
+    const API_PROXY_TARGET = env["VITE_HP_API_PROXY_TARGET"] || "http://localhost:10000";
+
     return {
         server: {
             port: PORT,
+            proxy: {
+                [API_BASE_PATH]: {
+                    target: API_PROXY_TARGET,
+                    changeOrigin: true,
+                    // Websockets too - the log and terminal streams are here.
+                    ws: true,
+                    // The path is forwarded as it stands, on purpose: the refresh
+                    // cookie is scoped to <base path>/sessions/refresh, and a
+                    // rewrite here would put the request on a path the browser
+                    // does not send that cookie to.
+                },
+            },
         },
         preview: {
             port: PORT,

@@ -9,6 +9,8 @@ import {
     Http406Exception,
     HttpException,
 } from "@infrastructure/exceptions/http";
+import { NetworkException } from "@infrastructure/exceptions/network";
+import { TimeoutException } from "@infrastructure/exceptions/timeout";
 
 import { parseApiError } from "./api.data.utils";
 
@@ -114,4 +116,32 @@ export function isHighLevelException(error: Error): boolean {
  */
 export function isFeatureDisabledException(error: Error): boolean {
     return isHttpException(error) && error.code === "ERR_FEATURE_DISABLED";
+}
+
+/**
+ * Check if the error says nothing about the request and may work on a retry
+ *
+ * No response at all, a timeout, or the server answering 5xx: the request never
+ * got an answer about itself, so nothing has been decided and asking again is
+ * reasonable. Anything the server answered with a 4xx is a decision, and
+ * repeating it would only get the same decision back.
+ */
+export function isTransientException(error: Error): boolean {
+    if (error instanceof NetworkException || error instanceof TimeoutException) {
+        return true;
+    }
+
+    return error instanceof HttpException && error.status >= 500;
+}
+
+/**
+ * Check if the error is the server saying the session is over
+ *
+ * Only a 4xx counts. Losing a session costs the person their place and whatever
+ * they were typing, so it takes the server actually saying so - not a network
+ * that dropped, not a gateway restarting, and not a response we could not parse.
+ * Anything else leaves the session alone and lets the next request try again.
+ */
+export function isSessionOverException(error: Error): boolean {
+    return error instanceof HttpException && error.status >= 400 && error.status < 500;
 }

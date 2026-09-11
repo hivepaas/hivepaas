@@ -3,6 +3,7 @@ import { match } from "oxide.ts";
 
 import {
     isSessionInvalidException,
+    isSessionOverException,
     isTokenExpired,
     isTokenExpiredException,
     refreshToken,
@@ -93,10 +94,20 @@ export function initAuthInterceptors(client: AxiosInstance): void {
 
                 return request;
             },
-            Err: () => {
+            Err: error => {
                 refreshQueue.failed();
 
-                redirectToSignIn();
+                /*
+                 * Only when the server says the session is finished. A refresh
+                 * that failed because nothing answered it says nothing about the
+                 * session - the cookie holding it is still good - so the request
+                 * goes out and fails on its own terms, and the next one tries
+                 * refreshing again. Signing the person out here would throw away
+                 * a working session, and their place in the app, over a blip.
+                 */
+                if (isSessionOverException(error)) {
+                    redirectToSignIn();
+                }
 
                 return request;
             },
@@ -175,10 +186,14 @@ export function initAuthInterceptors(client: AxiosInstance): void {
 
                     return client(request);
                 },
-                Err: () => {
+                Err: refreshError => {
                     refreshQueue.failed();
 
-                    redirectToSignIn();
+                    // Same rule as the request side: the session ends when the
+                    // server says so, not when the network drops.
+                    if (isSessionOverException(refreshError)) {
+                        redirectToSignIn();
+                    }
 
                     return Promise.reject(error);
                 },

@@ -129,7 +129,16 @@ Options: {'device': '/var/lib/hp-t-bind', 'o': 'bind', 'type': 'none'}
 Labels:  {'hivepaas.volume.name': 'pgdata'}
 ```
 
-so `docker volume ls --filter label=hivepaas.project=<key>` stays usable.
+so an operator reading `docker volume ls` on any node sees the name a person
+chose beside the ULID.
+
+There is no project-wide filter to go with it. `hivepaas.volume.name` is the
+only label every created volume carries; the project default volume also carries
+`com.docker.stack.namespace=<project key>`, which finds that one volume and no
+other. Nothing writes a `hivepaas.project` label. And a bind volume is never a
+docker volume anywhere - `useBindMountIfAppropriate` turns it into a plain bind
+mount before the spec reaches docker - so no `docker volume ls` lists it at all,
+with or without a filter.
 
 ### 5. Mount specs are built from the setting
 
@@ -175,6 +184,18 @@ scheduled where its data is.
 recorded in the `hivepaas.app.placementConstraints` label and recomputed on each
 apply, which preserves constraints the operator set by hand. The volume-derived
 constraint joins `newHivepaasConstraints` and inherits that behaviour.
+
+Finding the pin behind a mount is by identity for a `TypeVolume` or `TypeCluster`
+mount, whose `Source` is the volume's `RefID`. A bind mount carries no identity -
+by the time it reaches docker it is a host path and nothing else - so it is
+matched against the `device` each volume recorded, taking the volume whose device
+is the longest path-boundary ancestor of the mount's source: the most specific
+volume is the one that describes the data, so a volume at `/srv/data/pg` wins over
+one at `/srv/data`. A tie returns both pins rather than picking one, because an
+identical device means two settings describe the same directory, and if their
+pins disagree that is a real contradiction to report, not a coin to flip. A bind
+whose source matches no volume contributes no pin: the operator may have added it
+by hand, unrelated to any volume HivePaaS knows about.
 
 It is the first *required* constraint HivePaaS emits; every existing one is an
 exclusion. Two volumes pinned to different nodes therefore produce a set no node
@@ -246,8 +267,9 @@ filter only when `anonymousOnly` is false, and docker's own client documents
 that filter as controlling whether named volumes are pruned at all - by
 default, only anonymous ones are. Every HivePaaS volume is named: `RefID` is a
 ULID for one created on this branch, or the pre-existing docker name for an
-older one. So the prune that already runs on every node reclaims none of them,
-deleted or not.
+older one. That prune is also addressed to a single daemon - the manager's, the
+same one `DeleteVolume` reaches - so it never visits the other nodes in the
+first place. Either way it reclaims none of these volumes, deleted or not.
 
 That means a volume deleted after materializing on more than one node leaves
 copies behind on every node but the manager - a gap this change introduces,
@@ -293,6 +315,16 @@ Existing volumes keep their docker names through `RefID`; only new ones are name
 by ULID. Existing settings gain their specification through backfill on the next
 sync, after which they behave like new ones. Until then they mount by name, which
 is current behaviour.
+
+The project-key prefix on a project-scoped volume's name went away with the same
+change, and is a visible difference: a volume created in project `shop` was
+stored as `shop_pgdata` and is now stored as `pgdata`. Existing volumes keep the
+prefixed names they were given - nothing rewrites them - so the two spellings
+coexist, and an operator will see older volumes carrying a prefix that new ones
+in the same project do not. The prefix existed only to keep two projects' volumes
+apart in docker's flat volume-name namespace, which `RefID` being a ULID has
+already done; keeping it would have left the duplicate-name check comparing one
+string while a different one was persisted (`9a939b26`).
 
 The one behavioural change operators will notice is that an app mounting a pinned
 volume becomes constrained to that node the next time its service is updated. An

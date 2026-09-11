@@ -5,7 +5,6 @@ import (
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/volume"
-	"github.com/moby/moby/client"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -18,8 +17,7 @@ type Service interface {
 
 	MakeSubDirInHost(ctx context.Context, baseDirInHost string, subpath string, requireBaseDirExist bool) error
 
-	CreateProjectDefaultVolume(ctx context.Context, project *entity.Project) (
-		*entity.Setting, *client.VolumeCreateResult, error)
+	CreateProjectDefaultVolume(ctx context.Context, project *entity.Project) (*entity.Setting, error)
 	ListProjectVolumes(ctx context.Context, db database.IDB, project *entity.Project,
 		extraOpts ...bunex.SelectQueryOption) ([]*entity.Setting, map[string]*volume.Volume, error)
 	RemoveAllProjectVolumes(ctx context.Context, db database.IDB, project *entity.Project,

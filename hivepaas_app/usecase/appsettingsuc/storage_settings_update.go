@@ -8,7 +8,6 @@ import (
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
-	"github.com/moby/moby/api/types/volume"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -19,9 +18,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
-	"github.com/hivepaas/hivepaas/services/docker"
-	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
 func (uc *UC) UpdateAppStorageSettings(
@@ -36,9 +34,21 @@ func (uc *UC) UpdateAppStorageSettings(
 			return hperrors.Wrap(err)
 		}
 
-		uc.prepareUpdatingAppStorageSettings(ctx, data)
+		err = uc.prepareUpdatingAppStorageSettings(ctx, data)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
 
-		err = uc.applyAppStorageSettings(ctx, data)
+		// data.FinalMounts is only complete once prepare has appended the new
+		// mounts to the ones the load phase kept unchanged, so this is the
+		// earliest point - and it has to run before the mounts reach the
+		// service, since applying a contradictory pin set silently drops the
+		// placement constraint instead of failing.
+		if err := refuseConflictingVolumePins(data.FinalMounts, data.ScopeVolumes); err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		err = uc.applyAppStorageSettings(ctx, db, data)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -54,12 +64,17 @@ func (uc *UC) UpdateAppStorageSettings(
 }
 
 type updateAppStorageSettingsData struct {
-	App           *entity.App
-	Service       *swarm.Service
-	DBVolumes     map[string]*entity.Setting
-	DockerVolumes map[string]*volume.Volume
-	FinalMounts   []mount.Mount
-	NewMountReqs  []*appsettingsdto.Mount
+	App       *entity.App
+	Service   *swarm.Service
+	DBVolumes map[string]*entity.Setting
+	// ScopeVolumes is every cluster-volume setting visible to the app's scope,
+	// not just the ones named in this request - a pinned volume behind an
+	// unchanged bind mount carries no id in the request to look it up by, so
+	// resolving FinalMounts back to their pins (see refuseConflictingVolumePins)
+	// needs the same candidate set placementserviceimpl matches mounts against.
+	ScopeVolumes []*entity.Setting
+	FinalMounts  []mount.Mount
+	NewMountReqs []*appsettingsdto.Mount
 }
 
 func (uc *UC) loadAppStorageSettingsForUpdate(
@@ -100,7 +115,6 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	}
 
 	var newDBVolIDs []string
-	var newDockerVolIDs []string
 	for _, reqMnt := range req.Mounts {
 		if existingMount, exists := mapCurrMountByKey[reqMnt.Key]; reqMnt.Key != "" && exists {
 			data.FinalMounts = append(data.FinalMounts, *existingMount) // unchanged mount
@@ -126,24 +140,23 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 	}
 	dbVolMap := entityutil.SliceToIDMap(dbVols)
 	for _, dbVolID := range newDBVolIDs {
-		dbVol, ok := dbVolMap[dbVolID]
-		if !ok {
+		if _, ok := dbVolMap[dbVolID]; !ok {
 			return hperrors.NewNotFound("Volume").WithMsgLog("volume %v not found", dbVolID)
 		}
-		newDockerVolIDs = append(newDockerVolIDs, dbVol.RefID)
 	}
 	data.DBVolumes = dbVolMap
 
-	// Loads docker volumes
-	listRes, err := uc.dockerManager.VolumeListByIDs(ctx, newDockerVolIDs)
+	// Loaded here rather than in prepare because only the load phase has db, and
+	// scoped the same way as the mounts themselves are validated so a volume
+	// mountable by this app - including one inherited from a parent scope - is
+	// always among the candidates refuseConflictingVolumePins matches against.
+	scopeVols, _, err := uc.settingRepo.List(ctx, db, app.GetObjectScope(), nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
+	)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	data.DockerVolumes = make(map[string]*volume.Volume, len(dbVolMap))
-	for i := range listRes.Items {
-		dockerVol := &listRes.Items[i]
-		data.DockerVolumes[dockerhelper.GetVolumeID(dockerVol)] = dockerVol
-	}
+	data.ScopeVolumes = scopeVols
 
 	return nil
 }
@@ -151,19 +164,22 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 func (uc *UC) prepareUpdatingAppStorageSettings(
 	ctx context.Context,
 	data *updateAppStorageSettingsData,
-) {
+) error {
 	for _, reqMnt := range data.NewMountReqs {
 		dbVol := data.DBVolumes[reqMnt.Source]
-		dockerVol := data.DockerVolumes[dbVol.RefID]
+		vol, err := dbVol.AsClusterVolume()
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
 		dockerMnt := &mount.Mount{
 			Type:        reqMnt.Type,
-			Source:      dockerhelper.GetVolumeID(dockerVol),
+			Source:      dbVol.RefID,
 			Target:      reqMnt.Target,
 			ReadOnly:    reqMnt.ReadOnly,
 			Consistency: reqMnt.Consistency,
 		}
 
-		uc.buildDockerMount(ctx, dockerMnt, reqMnt, dockerVol, dbVol, data)
+		uc.buildDockerMount(ctx, dockerMnt, reqMnt, vol, dbVol, data)
 
 		// Ensure full permissions (0777) on all mounted volume subpaths before starting/updating the service
 		if dockerMnt.Type == mount.TypeVolume || dockerMnt.Type == mount.TypeCluster {
@@ -176,19 +192,20 @@ func (uc *UC) prepareUpdatingAppStorageSettings(
 
 		data.FinalMounts = append(data.FinalMounts, *dockerMnt)
 	}
+	return nil
 }
 
 func (uc *UC) buildDockerMount(
 	ctx context.Context,
 	dockerMnt *mount.Mount,
 	reqMnt *appsettingsdto.Mount,
-	dockerVol *volume.Volume,
+	vol *entity.ClusterVolume,
 	dbVol *entity.Setting,
 	data *updateAppStorageSettingsData,
 ) {
 	app := data.App
 	subpath := calcMountSubpath(app, reqMnt, dbVol)
-	uc.useBindMountIfAppropriate(ctx, dockerMnt, dockerVol, subpath)
+	uc.useBindMountIfAppropriate(ctx, dockerMnt, vol, subpath)
 
 	switch dockerMnt.Type {
 	case mount.TypeVolume:
@@ -205,6 +222,7 @@ func (uc *UC) buildDockerMount(
 				}
 			}
 		}
+		applyVolumeDriverConfigUnlessOverridden(dockerMnt, vol)
 	case mount.TypeCluster:
 		if reqMnt.ClusterOptions != nil {
 			dockerMnt.VolumeOptions = &mount.VolumeOptions{
@@ -226,28 +244,26 @@ func (uc *UC) buildDockerMount(
 func (uc *UC) useBindMountIfAppropriate(
 	ctx context.Context,
 	dockerMnt *mount.Mount,
-	dockerVol *volume.Volume,
+	vol *entity.ClusterVolume,
 	subpath string,
 ) {
-	if dockerVol.Driver != string(docker.VolumeDriverLocal) { // not a driver local
+	directory, propagation, ok := bindMountTarget(vol, subpath)
+	if !ok {
 		return
 	}
-	directory := dockerVol.Options["device"]
-	if dockerVol.Options["type"] != "none" || directory == "" {
-		return
-	}
-
-	err := uc.volumeService.MakeSubDirInHost(ctx, directory, subpath, true)
-	if err != nil {
+	if err := uc.volumeService.MakeSubDirInHost(ctx, vol.DriverOpts["device"], subpath, true); err != nil {
 		return
 	}
 
 	dockerMnt.Type = mount.TypeBind
-	dockerMnt.Source = filepath.Join(directory, subpath)
+	dockerMnt.Source = directory
 	dockerMnt.BindOptions = &mount.BindOptions{
+		// Kept for volumes with no pin, which claim every node reaches the same
+		// data: creating the directory there is the right thing. A pinned volume
+		// is kept on its node by a placement constraint instead.
 		CreateMountpoint: true,
 	}
-	if propagation := getConfiguredPropagation(dockerVol.Options["o"]); propagation != "" {
+	if propagation != "" {
 		dockerMnt.BindOptions.Propagation = propagation
 	}
 	// Reset all other kind of options
@@ -257,13 +273,40 @@ func (uc *UC) useBindMountIfAppropriate(
 	dockerMnt.ImageOptions = nil
 }
 
+// applyAppStorageSettings writes the new mounts and the placement constraints
+// they imply in a single service update.
+//
+// Writing the mounts rolls the service's tasks, so the volume pin has to be in
+// the spec this call sends rather than in whatever spec is written next. Left to
+// the next deploy, a task rescheduled by this very update can land on a node
+// holding none of the data - the failure the pin exists to prevent, reached
+// through the branch's own primary flow.
+//
+// SkipSavingToDocker is what makes one update enough: it has ApplyPlacementSettings
+// mutate the spec and stop, instead of saving a second one and rolling the tasks
+// again. The call sits inside the callback because a retry re-inspects the
+// service and starts over from a spec carrying neither the mounts nor the
+// constraint.
 func (uc *UC) applyAppStorageSettings(
 	ctx context.Context,
+	db database.IDB,
 	data *updateAppStorageSettingsData,
 ) error {
 	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID, data.Service,
 		func(_ int, service *swarm.Service) (bool, error) {
 			service.Spec.TaskTemplate.ContainerSpec.Mounts = data.FinalMounts
+
+			// The pins are resolved from the mounts just written, so this reads the
+			// storage settings being saved and not the ones being replaced.
+			_, err := uc.placementService.ApplyPlacementSettings(ctx, db,
+				&placementservice.ApplyPlacementSettingsReq{
+					App:                data.App,
+					Service:            service,
+					SkipSavingToDocker: true,
+				})
+			if err != nil {
+				return false, hperrors.Wrap(err)
+			}
 			return true, nil
 		}, defaultServiceRetryMax, 0)
 	if err != nil {
@@ -301,13 +344,11 @@ func calcMountSubpath(
 func getConfiguredPropagation(o string) mount.Propagation {
 	parts := strings.Split(o, ",")
 	for _, part := range parts {
+		// Go case clauses don't fall through: every valid propagation value has to
+		// share this one case, or only the last of them would ever be returned.
 		switch mount.Propagation(part) {
-		case mount.PropagationRPrivate:
-		case mount.PropagationPrivate:
-		case mount.PropagationRSlave:
-		case mount.PropagationSlave:
-		case mount.PropagationRShared:
-		case mount.PropagationShared:
+		case mount.PropagationRPrivate, mount.PropagationPrivate, mount.PropagationRSlave,
+			mount.PropagationSlave, mount.PropagationRShared, mount.PropagationShared:
 			return mount.Propagation(part)
 		}
 	}

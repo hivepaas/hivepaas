@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -20,7 +19,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/projectuc/projectdto"
-	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
 const (
@@ -47,22 +45,15 @@ func (uc *UC) CreateProject(
 		return nil, hperrors.Wrap(err)
 	}
 
-	defer func() {
-		if err != nil || recover() != nil {
-			_ = uc.cleanupOnFail(ctx, projectData)
-		}
-	}()
-
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		err = uc.persistData(ctx, db, persistingData)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 
-		// After persisting and still inside the transaction. The volume is already
-		// created by this point, but a record that fails errors the call, and the
-		// deferred cleanupOnFail above removes it - so there is no path here that
-		// leaves a project standing with nothing recorded.
+		// Nothing outside the transaction was created by preparePersistingProject -
+		// the default volume is just another setting now - so a failure here rolls
+		// back cleanly with everything else and there is nothing left to clean up.
 		project := persistingData.UpsertingProjects[0]
 		return uc.recordProjectWrite(ctx, db, auth, project,
 			base.AuditLogTypeProjectCreate, base.AuditLogSourceAPICreate, "create", auditdetail.New().
@@ -81,8 +72,6 @@ func (uc *UC) CreateProject(
 
 type createProjectData struct {
 	ProjectKey string
-
-	CreatedVolume *client.VolumeCreateResult
 }
 
 func (uc *UC) loadProjectData(
@@ -149,7 +138,7 @@ func (uc *UC) preparePersistingProject(
 	uc.preparePersistingProjectTags(project, req.Tags, 0, persistingData)
 	uc.preparePersistingProjectWebhook(project, timeNow, persistingData)
 	uc.preparePersistingProjectNotificationDefault(project, timeNow, persistingData)
-	err = uc.preparePersistingProjectDefaultVolume(ctx, project, data, persistingData)
+	err = uc.preparePersistingProjectDefaultVolume(ctx, project, persistingData)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -266,28 +255,12 @@ func (uc *UC) preparePersistingProjectNotificationDefault(
 func (uc *UC) preparePersistingProjectDefaultVolume(
 	ctx context.Context,
 	project *entity.Project,
-	data *createProjectData,
 	persistingData *persistingProjectData,
 ) error {
-	setting, createRes, err := uc.volumeService.CreateProjectDefaultVolume(ctx, project)
+	setting, err := uc.volumeService.CreateProjectDefaultVolume(ctx, project)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	data.CreatedVolume = createRes
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 	return nil
-}
-
-func (uc *UC) cleanupOnFail(
-	ctx context.Context,
-	data *createProjectData,
-) (err error) {
-	if data.CreatedVolume != nil {
-		volID := dockerhelper.GetVolumeID(&data.CreatedVolume.Volume)
-		_, e := uc.dockerManager.VolumeRemove(ctx, volID, true)
-		if e != nil {
-			err = errors.Join(err, e)
-		}
-	}
-	return err
 }

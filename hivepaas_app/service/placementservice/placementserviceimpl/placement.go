@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 )
 
@@ -106,5 +107,56 @@ func (s *service) loadPlacementSettingsData(
 		}
 	}
 
+	// Load the pins of the volumes this app mounts
+	if data.VolumePins == nil {
+		pins, err := s.loadVolumePins(ctx, db, data)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		data.VolumePins = pins
+	}
+
+	s.warnOnPinDrift(ctx, data)
+
 	return nil
+}
+
+// loadVolumePins reads the pin of every volume the service mounts, by whatever
+// identity that mount type carries.
+//
+// A TypeVolume/TypeCluster mount names its volume's RefID directly. A TypeBind
+// mount - what a pinned `local` volume with type=none/device=<dir> actually
+// becomes on the wire, see storage_settings_update.go's
+// useBindMountIfAppropriate - carries no volume identity at all, only the host
+// path. So this loads every cluster-volume setting the service could possibly
+// mount rather than filtering by ref id, and leaves the matching (including the
+// bind-to-device comparison) to VolumePinsForMounts.
+//
+// The scope passed to List is the app's own - the same one
+// storage_settings_update.go validates a mount against - so a volume defined at
+// a parent scope (project, project env, or global) is found here exactly when
+// the app was allowed to mount it: List already walks up the scope chain for
+// settings marked inheritable.
+func (s *service) loadVolumePins(
+	ctx context.Context,
+	db database.IDB,
+	data *placementSettingsData,
+) ([]placementservice.VolumePin, error) {
+	mounts := data.Service.Spec.TaskTemplate.ContainerSpec.Mounts
+	if len(mounts) == 0 {
+		return nil, nil
+	}
+
+	settings, _, err := s.settingRepo.List(ctx, db, data.App.GetObjectScope(), nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
+	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	pins, err := placementservice.VolumePinsForMounts(mounts, settings)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return pins, nil
 }

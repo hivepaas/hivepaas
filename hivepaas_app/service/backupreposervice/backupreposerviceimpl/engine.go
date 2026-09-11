@@ -206,7 +206,7 @@ func (s *service) buildLocalStorage(
 		return nil, hperrors.Wrap(hperrors.ErrBackupRepoVolumeNodeRequired).WithParam("Name", setting.Name)
 	}
 
-	hostPath, err := s.resolveVolumeHostPath(ctx, setting.Name)
+	hostPath, err := s.resolveVolumeHostPath(ctx, setting, clusterVolume)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -224,22 +224,44 @@ func (s *service) buildLocalStorage(
 	}, nil
 }
 
-// resolveVolumeHostPath maps a docker volume onto its location on the host filesystem.
-func (s *service) resolveVolumeHostPath(ctx context.Context, volumeName string) (string, error) {
-	inspectResp, err := s.dockerManager.VolumeInspect(ctx, volumeName)
-	if err != nil {
-		return "", hperrors.Wrap(hperrors.ErrBackupRepoVolumePathUnresolved).WithParam("Name", volumeName)
-	}
-
+// resolveVolumeHostPath maps a volume onto its location on the host filesystem.
+//
+// The setting is asked first, because asking docker cannot work any more: volumes materialize
+// lazily, so one pinned to another node exists in no daemon this process can reach, and the
+// repository would fail for good rather than merely be slow to resolve. The recorded `device` is
+// the same string VolumeInspect used to report in Options["device"], so a repository backed by a
+// bind volume gets exactly the path it always got.
+//
+// Inspecting is kept for a volume whose specification records no device - one discovered before
+// backfill ran, or a plain local volume whose data sits under the daemon's own volume root and can
+// only be located by asking it. That lookup goes by RefID: the docker-side identity is a ULID for
+// a volume created on this branch, and only the pre-branch volumes it also covers ever had a
+// docker name equal to Setting.Name.
+func (s *service) resolveVolumeHostPath(
+	ctx context.Context,
+	setting *entity.Setting,
+	clusterVolume *entity.ClusterVolume,
+) (string, error) {
 	// Volumes created with `--opt device=/path` are bind mounts: the device is the real location,
 	// the docker-managed mountpoint is only a symlink target.
+	if clusterVolume != nil {
+		if devicePath := clusterVolume.DriverOpts["device"]; devicePath != "" {
+			return devicePath, nil
+		}
+	}
+
+	inspectResp, err := s.dockerManager.VolumeInspect(ctx, setting.RefID)
+	if err != nil {
+		return "", hperrors.Wrap(hperrors.ErrBackupRepoVolumePathUnresolved).WithParam("Name", setting.Name)
+	}
+
 	if devicePath := inspectResp.Volume.Options["device"]; devicePath != "" {
 		return devicePath, nil
 	}
 	if inspectResp.Volume.Mountpoint != "" {
 		return inspectResp.Volume.Mountpoint, nil
 	}
-	return "", hperrors.Wrap(hperrors.ErrBackupRepoVolumePathUnresolved).WithParam("Name", volumeName)
+	return "", hperrors.Wrap(hperrors.ErrBackupRepoVolumePathUnresolved).WithParam("Name", setting.Name)
 }
 
 // engineConfigFilePath gives each repository its own engine config file.

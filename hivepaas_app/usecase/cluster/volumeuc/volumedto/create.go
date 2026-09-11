@@ -7,7 +7,6 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -76,13 +75,6 @@ func (req *VolumeBaseReq) validate(field string) (res []vld.Validator) {
 	res = append(res, req.NfsOptions.validate(field+"nfsOptions")...)
 	res = append(res, req.TmpfsOptions.validate(field+"tmpfsOptions")...)
 	return res
-}
-
-func (req *VolumeBaseReq) ToEntity() *entity.ClusterVolume {
-	return &entity.ClusterVolume{
-		NodeID:    req.NodeID,
-		NodeLabel: req.NodeLabel,
-	}
 }
 
 type VolumeBindOptionsReq struct {

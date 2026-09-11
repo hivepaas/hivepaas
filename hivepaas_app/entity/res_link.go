@@ -24,9 +24,9 @@ type ResLink struct {
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	SrcUser    *User    `bun:"rel:has-one,join:src_id=id" json:"srcUser,omitempty"`
-	SrcProject *Project `bun:"rel:has-one,join:src_id=id" json:"srcProject,omitempty"`
-	SrcApp     *App     `bun:"rel:has-one,join:src_id=id" json:"srcApp,omitempty"`
+	SrcUser    *User    `bun:"rel:has-one,join:src_id=id" json:"-"`
+	SrcProject *Project `bun:"rel:has-one,join:src_id=id" json:"-"`
+	SrcApp     *App     `bun:"rel:has-one,join:src_id=id" json:"-"`
 }
 
 func (lnk *ResLink) GetKey() string {

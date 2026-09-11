@@ -23,11 +23,11 @@ type ACLPermission struct {
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	SubjectUser    *User    `bun:"rel:has-one,join:subj_id=id" json:"subjectUser,omitempty"`
-	SubjectProject *Project `bun:"rel:has-one,join:subj_id=id" json:"subjectProject,omitempty"`
-	SubjectApp     *App     `bun:"rel:has-one,join:subj_id=id" json:"subjectApp,omitempty"`
+	SubjectUser    *User    `bun:"rel:has-one,join:subj_id=id" json:"-"`
+	SubjectProject *Project `bun:"rel:has-one,join:subj_id=id" json:"-"`
+	SubjectApp     *App     `bun:"rel:has-one,join:subj_id=id" json:"-"`
 
-	ResourceProject    *Project    `bun:"rel:has-one,join:res_id=id" json:"resourceProject,omitempty"`
-	ResourceProjectEnv *ProjectEnv `bun:"rel:has-one,join:res_id=id" json:"resourceProjectEnv,omitempty"`
-	ResourceApp        *App        `bun:"rel:has-one,join:res_id=id" json:"resourceApp,omitempty"`
+	ResourceProject    *Project    `bun:"rel:has-one,join:res_id=id" json:"-"`
+	ResourceProjectEnv *ProjectEnv `bun:"rel:has-one,join:res_id=id" json:"-"`
+	ResourceApp        *App        `bun:"rel:has-one,join:res_id=id" json:"-"`
 }

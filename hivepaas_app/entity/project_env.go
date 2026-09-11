@@ -26,12 +26,12 @@ type ProjectEnv struct {
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	Project     *Project         `bun:"rel:has-one,join:project_id=id" json:"project,omitempty"`
-	Settings    []*Setting       `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
-	Apps        []*App           `bun:"rel:has-many,join:id=project_env_id" json:"apps,omitempty"`
-	Accesses    []*ACLPermission `bun:"rel:has-many,join:id=res_id" json:"accesses,omitempty"`
-	SrcResLinks []*ResLink       `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
-	DstResLinks []*ResLink       `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
+	Project     *Project         `bun:"rel:has-one,join:project_id=id" json:"-"`
+	Settings    []*Setting       `bun:"rel:has-many,join:id=object_id" json:"-"`
+	Apps        []*App           `bun:"rel:has-many,join:id=project_env_id" json:"-"`
+	Accesses    []*ACLPermission `bun:"rel:has-many,join:id=res_id" json:"-"`
+	SrcResLinks []*ResLink       `bun:"rel:has-many,join:id=dst_id" json:"-"`
+	DstResLinks []*ResLink       `bun:"rel:has-many,join:id=src_id" json:"-"`
 }
 
 // GetID implements IDEntity interface

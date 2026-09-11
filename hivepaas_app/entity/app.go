@@ -34,14 +34,14 @@ type App struct {
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	PhotoData   *BinObject  `bun:"rel:has-one,join:photo=id" json:"photoData,omitempty"`
-	Project     *Project    `bun:"rel:has-one,join:project_id=id" json:"project,omitempty"`
-	ProjectEnv  *ProjectEnv `bun:"rel:has-one,join:project_env_id=id" json:"projectEnv,omitempty"`
-	ParentApp   *App        `bun:"rel:has-one,join:parent_id=id" json:"parentApp,omitempty"`
-	Settings    []*Setting  `bun:"rel:has-many,join:id=object_id" json:"settings,omitempty"`
-	Tags        []*Tag      `bun:"rel:has-many,join:id=object_id" json:"tags,omitempty"`
-	SrcResLinks []*ResLink  `bun:"rel:has-many,join:id=dst_id" json:"srcResLinks,omitempty"`
-	DstResLinks []*ResLink  `bun:"rel:has-many,join:id=src_id" json:"dstResLinks,omitempty"`
+	PhotoData   *BinObject  `bun:"rel:has-one,join:photo=id" json:"-"`
+	Project     *Project    `bun:"rel:has-one,join:project_id=id" json:"-"`
+	ProjectEnv  *ProjectEnv `bun:"rel:has-one,join:project_env_id=id" json:"-"`
+	ParentApp   *App        `bun:"rel:has-one,join:parent_id=id" json:"-"`
+	Settings    []*Setting  `bun:"rel:has-many,join:id=object_id" json:"-"`
+	Tags        []*Tag      `bun:"rel:has-many,join:id=object_id" json:"-"`
+	SrcResLinks []*ResLink  `bun:"rel:has-many,join:id=dst_id" json:"-"`
+	DstResLinks []*ResLink  `bun:"rel:has-many,join:id=src_id" json:"-"`
 }
 
 // GetID implements IDEntity interface

@@ -35,10 +35,10 @@ type File struct {
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	Storage         *Setting `bun:"rel:has-one,join:storage_id=id" json:"storage,omitempty"`
-	BelongToUser    *User    `bun:"rel:belongs-to,join:object_id=id" json:"belongToUser,omitempty"`
-	BelongToProject *Project `bun:"rel:belongs-to,join:object_id=id" json:"belongToProject,omitempty"`
-	BelongToApp     *App     `bun:"rel:belongs-to,join:object_id=id" json:"belongToApp,omitempty"`
+	Storage         *Setting `bun:"rel:has-one,join:storage_id=id" json:"-"`
+	BelongToUser    *User    `bun:"rel:belongs-to,join:object_id=id" json:"-"`
+	BelongToProject *Project `bun:"rel:belongs-to,join:object_id=id" json:"-"`
+	BelongToApp     *App     `bun:"rel:belongs-to,join:object_id=id" json:"-"`
 }
 
 // GetID implements IDEntity interface

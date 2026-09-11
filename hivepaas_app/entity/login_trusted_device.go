@@ -13,5 +13,5 @@ type LoginTrustedDevice struct {
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 
-	User *User `bun:"rel:has-one,join:user_id=id" json:"user,omitempty"`
+	User *User `bun:"rel:has-one,join:user_id=id" json:"-"`
 }

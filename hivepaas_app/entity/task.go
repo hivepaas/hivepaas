@@ -53,8 +53,8 @@ type Task struct {
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	TargetJob        *Setting    `bun:"rel:belongs-to,join:target_id=id" json:"targetJob,omitempty"`
-	TargetDeployment *Deployment `bun:"rel:belongs-to,join:target_id=id" json:"targetDeployment,omitempty"`
+	TargetJob        *Setting    `bun:"rel:belongs-to,join:target_id=id" json:"-"`
+	TargetDeployment *Deployment `bun:"rel:belongs-to,join:target_id=id" json:"-"`
 
 	// NOTE: temporary fields
 	parsedArgs   any

@@ -37,8 +37,8 @@ type User struct {
 	DeletedAt      time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 	LastAccess     time.Time `bun:",nullzero" json:"lastAccess,omitzero"`
 
-	PhotoData *BinObject       `bun:"rel:has-one,join:photo=id" json:"photoData,omitempty"`
-	Accesses  []*ACLPermission `bun:"rel:has-many,join:id=subj_id" json:"accesses,omitempty"`
+	PhotoData *BinObject       `bun:"rel:has-one,join:photo=id" json:"-"`
+	Accesses  []*ACLPermission `bun:"rel:has-many,join:id=subj_id" json:"-"`
 }
 
 // GetID implements IDEntity interface

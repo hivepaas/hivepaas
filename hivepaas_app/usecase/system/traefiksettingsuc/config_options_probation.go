@@ -28,9 +28,15 @@ func (uc *UC) ConfirmConfigOptions(
 		return nil, hperrors.Wrap(err)
 	}
 	if err = uc.probationService.Confirm(ctx, auth, &settingsprobationservice.AnswerReq{
-		AppID:           appID,
-		SettingType:     base.SettingTypeTraefikConfig,
-		ChangeID:        req.ChangeID,
+		AppID:       appID,
+		SettingType: base.SettingTypeTraefikConfig,
+		ChangeID:    req.ChangeID,
+		// Where the command change itself was recorded - the install's log, under
+		// the traefik config section - so both halves read as one story.
+		Audit: settingsprobationservice.AuditTarget{
+			Scope:   base.ObjectScopeHivepaas,
+			Section: auditSectionConfigOptions,
+		},
 		EnsureStillLive: uc.ensureTraefikRunsTheChange,
 	}); err != nil {
 		return nil, hperrors.Wrap(err)
@@ -55,6 +61,10 @@ func (uc *UC) RevertConfigOptions(
 		AppID:       appID,
 		SettingType: base.SettingTypeTraefikConfig,
 		ChangeID:    req.ChangeID,
+		Audit: settingsprobationservice.AuditTarget{
+			Scope:   base.ObjectScopeHivepaas,
+			Section: auditSectionConfigOptions,
+		},
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -16,7 +16,10 @@ func (uc *UC) DevModeLogin(
 		return nil, hperrors.Wrap(err)
 	}
 
-	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: user})
+	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{
+		User:   user,
+		Method: auditMethodDevMode,
+	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

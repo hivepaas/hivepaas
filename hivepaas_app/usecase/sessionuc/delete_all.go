@@ -17,5 +17,12 @@ func (uc *UC) DeleteAllSessions(
 		return nil, hperrors.Wrap(err).WithMsgLog("failed to invalidate old token")
 	}
 
+	// After the tokens are dead, so what is recorded is what happened. Worth more
+	// than the single logout next door: this is the act that ends every other
+	// session the account has, wherever they are.
+	if err = uc.recordLogout(ctx, req.User, auditSectionLogoutAll); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
 	return &sessiondto.DeleteAllSessionsResp{}, nil
 }

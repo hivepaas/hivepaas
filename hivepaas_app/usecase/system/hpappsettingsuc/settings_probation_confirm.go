@@ -93,9 +93,16 @@ func (uc *UC) confirmSettingsChange(
 		return hperrors.Wrap(err)
 	}
 	return hperrors.Wrap(uc.probationService.Confirm(ctx, auth, &settingsprobationservice.AnswerReq{
-		AppID:           appID,
-		SettingType:     settingType,
-		ChangeID:        changeID,
+		AppID:       appID,
+		SettingType: settingType,
+		ChangeID:    changeID,
+		// Where this package files its own writes, so the confirmation lands
+		// beside the change it is vouching for rather than under the app that
+		// happens to hold the row.
+		Audit: settingsprobationservice.AuditTarget{
+			Scope:   base.ObjectScopeHivepaas,
+			Section: auditSectionOfSetting(settingType),
+		},
 		OnConfirmed:     uc.appLabelsSweepOnConfirm,
 		EnsureStillLive: uc.ensureProxySettingsAreLive,
 	}))
@@ -115,6 +122,10 @@ func (uc *UC) revertSettingsChange(
 		AppID:       appID,
 		SettingType: settingType,
 		ChangeID:    changeID,
+		Audit: settingsprobationservice.AuditTarget{
+			Scope:   base.ObjectScopeHivepaas,
+			Section: auditSectionOfSetting(settingType),
+		},
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

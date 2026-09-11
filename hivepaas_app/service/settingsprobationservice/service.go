@@ -92,11 +92,30 @@ type ArmResult struct {
 	SupersededProbation *entity.Task
 }
 
+// AuditTarget is where the record of an answer is filed, and what it is called.
+//
+// It has to match where the caller recorded the change itself. The settings
+// pages file their writes under the hivepaas scope - the install's own log -
+// while the setting row behind a trial belongs to an app, so filing the answer
+// under the row's scope puts the two halves of one story in different places:
+// the log shows a change being made and never shows whether anybody stood by it.
+//
+// Section is the page the change was made on, the same value the caller passed
+// when it recorded the change, so a reader can follow one page through both.
+type AuditTarget struct {
+	Scope    base.ObjectScopeType
+	ObjectID string
+	Section  string
+}
+
 // AnswerReq names the trial a caller is answering.
 type AnswerReq struct {
 	// AppID is the object the trial was filed under - the same one Arm was given.
 	AppID       string
 	SettingType base.SettingType
+
+	// Audit is where the confirmation or revert is recorded. See AuditTarget.
+	Audit AuditTarget
 
 	// ChangeID names the change being answered. It is optional, but sending it is
 	// what stops an answer that was in flight during one change from landing on

@@ -162,6 +162,7 @@ func (s *service) loadReferenceSettings(
 	}
 
 	listOpts := []bunex.SelectQueryOption{
+		bunex.SelectWithDeleted(),
 		bunex.SelectWhereIn("setting.id IN (?)", loadSettingIDs...),
 	}
 	if requireActive {
@@ -178,7 +179,7 @@ func (s *service) loadReferenceSettings(
 
 	for _, id := range loadSettingIDs {
 		setting := refObjects.RefSettings[id]
-		if setting == nil {
+		if setting == nil || !setting.DeletedAt.IsZero() {
 			if requireExistence {
 				return hperrors.Wrap(hperrors.ErrSettingNotFound).WithParam("Name", id)
 			}
@@ -212,6 +213,7 @@ func (s *service) loadReferenceApps(
 	}
 
 	opts := []bunex.SelectQueryOption{
+		bunex.SelectWithDeleted(),
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
@@ -238,7 +240,7 @@ func (s *service) loadReferenceApps(
 
 	for _, id := range loadAppIDs {
 		app := refObjects.RefApps[id]
-		if app == nil {
+		if app == nil || !app.DeletedAt.IsZero() {
 			if requireExistence {
 				return hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", id)
 			}
@@ -282,6 +284,7 @@ func (s *service) loadReferenceProjects(
 	}
 
 	opts := []bunex.SelectQueryOption{
+		bunex.SelectWithDeleted(),
 		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 	}
 	if requireActive {
@@ -298,8 +301,11 @@ func (s *service) loadReferenceProjects(
 
 	for _, id := range loadProjectIDs {
 		project := refObjects.RefProjects[id]
-		if project == nil && requireExistence {
-			return hperrors.Wrap(hperrors.ErrProjectNotFound).WithParam("Name", id)
+		if project == nil || !project.DeletedAt.IsZero() {
+			if requireExistence {
+				return hperrors.Wrap(hperrors.ErrProjectNotFound).WithParam("Name", id)
+			}
+			continue
 		}
 	}
 	return nil
@@ -327,6 +333,7 @@ func (s *service) loadReferenceProjectEnvs(
 	}
 
 	opts := []bunex.SelectQueryOption{
+		bunex.SelectWithDeleted(),
 		bunex.SelectRelation("Project",
 			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
 		),
@@ -348,7 +355,7 @@ func (s *service) loadReferenceProjectEnvs(
 
 	for _, id := range loadProjectEnvIDs {
 		projectEnv := refObjects.RefProjectEnvs[id]
-		if projectEnv == nil {
+		if projectEnv == nil || !projectEnv.DeletedAt.IsZero() {
 			if requireExistence {
 				return hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", id)
 			}
@@ -387,8 +394,12 @@ func (s *service) loadReferenceUsers(
 		return nil
 	}
 
+	listOpts := []bunex.SelectQueryOption{
+		bunex.SelectWithDeleted(),
+	}
+
 	loadUsersFunc := gofn.If(requireExistence, s.userService.LoadUsers, s.userService.LoadUsersSkipMissing)
-	userMap, err := loadUsersFunc(ctx, db, loadUserIDs, errorIfUnavailable)
+	userMap, err := loadUsersFunc(ctx, db, loadUserIDs, errorIfUnavailable, listOpts...)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

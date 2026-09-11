@@ -17,7 +17,10 @@ func (uc *UC) RefreshSession(
 		return nil, hperrors.Wrap(hperrors.ErrSessionRefreshTokenRequired)
 	}
 
-	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: user.User})
+	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{
+		User:   user.User,
+		Method: auditMethodRefresh,
+	})
 	if err != nil {
 		return nil, hperrors.Wrap(err).WithMsgLog("failed to create session")
 	}

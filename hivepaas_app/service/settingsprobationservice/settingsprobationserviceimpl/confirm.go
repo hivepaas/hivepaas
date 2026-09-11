@@ -69,7 +69,7 @@ func (s *service) Confirm(ctx context.Context, auth *basedto.Auth, in *settingsp
 			}
 		}
 
-		return s.recordOutcome(ctx, db, auth, base.AuditLogTypeHivePaaSRoutingChangeConfirm, setting)
+		return s.recordOutcome(ctx, db, auth, base.AuditLogTypeHivePaaSSettingsUpdateConfirm, in, setting)
 	})
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -120,7 +120,7 @@ func (s *service) RevertNow(
 			return hperrors.Wrap(err)
 		}
 
-		return s.recordOutcome(ctx, db, auth, base.AuditLogTypeHivePaaSRoutingChangeRevert, setting)
+		return s.recordOutcome(ctx, db, auth, base.AuditLogTypeHivePaaSSettingsUpdateRevert, in, setting)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -188,22 +188,43 @@ func (s *service) pendingFor(
 	return task, args, setting, nil
 }
 
+// recordOutcome writes down that somebody stood by a change, or took it back.
+//
+// Filed where the caller says rather than under the setting row's own scope: the
+// row belongs to an app, while the change that created the trial was recorded as
+// the install's. See AnswerReq.Audit for why the two have to agree.
 func (s *service) recordOutcome(
 	ctx context.Context,
 	db database.IDB,
 	auth *basedto.Auth,
 	typ base.AuditLogType,
+	in *settingsprobationservice.AnswerReq,
 	setting *entity.Setting,
 ) error {
 	return hperrors.Wrap(s.auditService.Record(ctx, db, &auditservice.Entry{
 		Type:     typ,
-		Scope:    setting.Scope,
-		ObjectID: setting.ObjectID,
+		Scope:    in.Audit.Scope,
+		ObjectID: in.Audit.ObjectID,
 		Source:   base.AuditLogSourceAPIUpdate,
+		Section:  in.Audit.Section,
 		Result:   base.AuditLogResultAllowed,
 		Auth:     auth,
 		ResType:  base.ResourceTypeSetting,
 		ResID:    setting.ID,
-		ResName:  setting.Name,
+		ResName:  answerResName(in, setting),
 	}))
+}
+
+// answerResName is what the entry calls the thing that was confirmed or reverted.
+//
+// The row's name where it has one, and the setting type where it does not -
+// which is every trial there is today, because the settings put on trial are the
+// install's singletons and those rows are never named. Without the fallback the
+// entry says only that "a setting" was stood by, in a log where several kinds
+// can be.
+func answerResName(in *settingsprobationservice.AnswerReq, setting *entity.Setting) string {
+	if setting.Name != "" {
+		return setting.Name
+	}
+	return string(in.SettingType)
 }

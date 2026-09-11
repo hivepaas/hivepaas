@@ -69,7 +69,7 @@ func (uc *UC) UpdateServiceSettings(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.recordHivePaaSSettingsUpdate(ctx, db, auth, "service", auditdetail.New().
+		return uc.recordHivePaaSSettingsUpdate(ctx, db, auth, auditSectionService, auditdetail.New().
 			Set("proxyChanged", data.proxyChanges).
 			Set("onProbation", data.probationResult.Probation != nil).
 			WithChangedFields(

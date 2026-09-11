@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc/systembackupdto"
 )
 
@@ -19,7 +20,7 @@ func (uc *UC) ExecuteSystemBackup(
 	req *systembackupdto.ExecuteSystemBackupReq,
 ) (*systembackupdto.ExecuteSystemBackupResp, error) {
 	req.Type = currentSettingType
-	_, jobSetting, err := uc.getBackupSettingAndJob(ctx, uc.DB, req.Scope, true, false)
+	backupSetting, jobSetting, err := uc.getBackupSettingAndJob(ctx, uc.DB, req.Scope, true, false)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -30,11 +31,20 @@ func (uc *UC) ExecuteSystemBackup(
 		return nil, hperrors.Wrap(err)
 	}
 
-	err = uc.taskRepo.Insert(ctx, uc.DB, task)
+	// The row and its record commit together, so there is no backup queued that
+	// nothing accounts for and no record of one that never ran.
+	err = transaction.Execute(ctx, uc.DB, func(db database.Tx) error {
+		if err := uc.taskRepo.Insert(ctx, db, task); err != nil {
+			return hperrors.Wrap(err)
+		}
+		return uc.recordBackupRun(ctx, db, auth, req.Scope, backupSetting, task)
+	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
+	// After the commit: handing the queue a task whose row rolled back would have
+	// it run a backup nobody asked for.
 	err = uc.taskQueue.ScheduleTask(ctx, task)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

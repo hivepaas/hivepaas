@@ -116,6 +116,7 @@ func (uc *UC) authorizeSecuritySettingsUpdate(
 		Type:    base.AuditLogTypeHivePaaSSecuritySettingsUpdate,
 		Scope:   base.ObjectScopeHivepaas,
 		Source:  base.AuditLogSourceAPIUpdate,
+		Section: auditSectionSecuritySettings,
 		Result:  result,
 		Auth:    auth,
 		ResType: base.ResourceTypeSecuritySettings,

@@ -22,7 +22,16 @@ type Service interface {
 	LockAllPendingTasks(ctx context.Context, db database.Tx, maxWait time.Duration,
 		extraOpts ...bunex.SelectQueryOption) ([]*entity.Task, error)
 
-	// Cancel a task
-	CancelTask(ctx context.Context, db database.Tx, taskID string, validatingTargetID *string) (canceled bool, _ error)
+	// CancelTask stops a task the caller is entitled to stop.
+	//
+	// scope is what the caller reached the task through - the project, the
+	// environment, the app - and the task has to be inside it, inheritance
+	// included. A nil scope means no such check, which is only for callers that
+	// have already proven the task is theirs by other means.
+	//
+	// The task it returns is the row as it stood before the cancel, so a caller
+	// can record what was stopped.
+	CancelTask(ctx context.Context, db database.Tx, scope *entity.ObjectScope, taskID string,
+		validatingTargetID *string) (task *entity.Task, canceled bool, _ error)
 	CancelInProgressTask(ctx context.Context, taskID string) error
 }

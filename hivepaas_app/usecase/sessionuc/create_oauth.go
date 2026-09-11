@@ -54,7 +54,10 @@ func (uc *UC) CreateOAuthSession(
 		return nil, hperrors.Wrap(err)
 	}
 
-	sessionResp, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: dbUser})
+	sessionResp, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{
+		User:   dbUser,
+		Method: auditMethodOAuth,
+	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

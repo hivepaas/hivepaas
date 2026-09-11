@@ -22,7 +22,11 @@ func (uc *UC) CancelSchedJobTask(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		canceled, err = uc.taskService.CancelTask(ctx, db, req.TaskID, &req.JobID)
+		// The job's scope, which is also the task's: a job's runs are filed under
+		// whatever the job itself is under - see the sched job task builder. The
+		// target id below already ties the task to this job; the scope is what
+		// stops an id from another project reaching this far to be checked.
+		_, canceled, err = uc.taskService.CancelTask(ctx, db, req.Scope, req.TaskID, &req.JobID)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

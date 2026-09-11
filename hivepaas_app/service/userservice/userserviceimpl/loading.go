@@ -59,7 +59,7 @@ func (s *service) LoadUsers(
 	userMap := entityutil.SliceToIDMap(users)
 
 	for _, userID := range userIDs {
-		if _, ok := userMap[userID]; !ok {
+		if user, ok := userMap[userID]; !ok || !user.DeletedAt.IsZero() {
 			return nil, hperrors.Wrap(hperrors.ErrUserNotFound).WithParam("Name", userID)
 		}
 	}
@@ -122,7 +122,7 @@ func (s *service) collectAvailUsers(
 }
 
 func (s *service) checkUserAvailable(user *entity.User) error {
-	if user == nil {
+	if user == nil || !user.DeletedAt.IsZero() {
 		return hperrors.NewNotFound("User")
 	}
 	if user.Status != base.UserStatusActive {

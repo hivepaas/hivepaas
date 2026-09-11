@@ -38,19 +38,25 @@ func (uc *UC) LoginWithPasscode(
 		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 			return nil, hperrors.Wrap(err)
 		}
+		// A wrong second factor is worth more than a wrong password: whoever is
+		// here already got past the password, so these are the attempts that say
+		// an account's password is known to somebody it should not be.
 		if passcode == nil {
 			passcode = &cacheentity.MFAPasscode{Attempts: 1}
 			_ = uc.cacheMfaPasscodeRepo.Set(ctx, mfaTokenClaims.UserID, passcode, mfaPasscodeDuration)
-			return nil, hperrors.Wrap(hperrors.ErrPasscodeMismatched)
+			return nil, uc.refusePasscodeLogin(ctx, dbUser, auditReasonWrongPasscode,
+				hperrors.ErrPasscodeMismatched)
 		}
 		if passcode.Attempts >= passcodeMaxAttempts {
 			_ = uc.cacheMfaPasscodeRepo.Del(ctx, mfaTokenClaims.UserID)
-			return nil, hperrors.Wrap(hperrors.ErrTooManyPasscodeAttempts).
-				WithMsgLog("too many passcode attempts: %d", passcode.Attempts)
+			return nil, uc.refusePasscodeLogin(ctx, dbUser, auditReasonTooManyPasscodes,
+				hperrors.Wrap(hperrors.ErrTooManyPasscodeAttempts).
+					WithMsgLog("too many passcode attempts: %d", passcode.Attempts))
 		}
 		// Increase the attempts
 		_ = uc.cacheMfaPasscodeRepo.IncrAttempts(ctx, mfaTokenClaims.UserID, passcode)
-		return nil, hperrors.Wrap(hperrors.ErrPasscodeMismatched)
+		return nil, uc.refusePasscodeLogin(ctx, dbUser, auditReasonWrongPasscode,
+			hperrors.ErrPasscodeMismatched)
 	}
 
 	// Removes the passcode in redis
@@ -75,7 +81,10 @@ func (uc *UC) LoginWithPasscode(
 	}
 
 	// Create a new session as login succeeds
-	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: dbUser})
+	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{
+		User:   dbUser,
+		Method: auditMethodPasscode,
+	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

@@ -14,18 +14,18 @@ func (uc *UC) LoginWithAPIKey(
 ) (resp *sessiondto.LoginWithAPIKeyResp, err error) {
 	apiKeySetting, err := uc.settingRepo.GetByKind(ctx, uc.db, nil, base.SettingTypeAPIKey, req.KeyID, false)
 	if err != nil {
-		return nil, uc.wrapSensitiveError(err)
+		return nil, uc.refuseAPIKeyLogin(ctx, err)
 	}
 	if !apiKeySetting.IsActive() {
-		return nil, uc.wrapSensitiveError(hperrors.ErrAPIKeyInvalid)
+		return nil, uc.refuseAPIKeyLogin(ctx, hperrors.ErrAPIKeyInvalid)
 	}
 
 	apiKey := apiKeySetting.MustAsAPIKey()
 	if apiKey == nil {
-		return nil, uc.wrapSensitiveError(hperrors.ErrAPIKeyInvalid)
+		return nil, uc.refuseAPIKeyLogin(ctx, hperrors.ErrAPIKeyInvalid)
 	}
 	if err = apiKey.SecretKey.VerifyHash(req.SecretKey); err != nil {
-		return nil, uc.wrapSensitiveError(err)
+		return nil, uc.refuseAPIKeyLogin(ctx, err)
 	}
 	actingUserID := apiKeySetting.ObjectID
 
@@ -39,6 +39,7 @@ func (uc *UC) LoginWithAPIKey(
 		User:         dbUser,
 		IsAPIKey:     true,
 		AccessAction: apiKey.AccessAction,
+		Method:       auditMethodAPIKey,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

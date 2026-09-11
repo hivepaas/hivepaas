@@ -20,6 +20,13 @@ func (uc *UC) createSession(
 	ctx context.Context,
 	req *sessiondto.BaseCreateSessionReq,
 ) (resp *sessiondto.BaseCreateSessionResp, err error) {
+	// Refused rather than recorded under an empty method. Every way into HivePaaS
+	// ends here, so this is the one place that can make a login path added later
+	// say how it authenticated - and a path that never says goes no further.
+	if req.Method == "" {
+		return nil, hperrors.NewArgumentInvalid("session login method")
+	}
+
 	// If user is demo user, restrict permissions to READ only
 	if req.User.IsDemoUser() {
 		if req.AccessAction == nil {
@@ -52,6 +59,14 @@ func (uc *UC) createSession(
 	err = uc.userTokenRepo.Set(ctx, authClaims.UserID, authClaims.UID, resp.RefreshTokenExp.Sub(timeutil.NowUTC()))
 	if err != nil {
 		return nil, hperrors.Wrap(err).WithMsgLog("failed to store token in cache")
+	}
+
+	// Last, and the login does not happen if it cannot be recorded. Nothing has
+	// left this function yet, so refusing here costs the caller another sign-in;
+	// the alternative is a live session nobody can account for, which is the one
+	// thing this record exists to prevent.
+	if err = uc.recordLogin(ctx, req.User, req.Method); err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
 	return resp, nil

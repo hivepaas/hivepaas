@@ -95,30 +95,96 @@ const (
 	// the two that already exist, which is harder to follow than a section.
 	AuditLogTypeClusterUpdate AuditLogType = "cluster-update"
 
-	// AuditLogTypeHivePaaSAppSecretRotate records the app secret being changed.
+	// AuditLogTypeTaskCancel records work in flight being stopped by hand: a
+	// deploy, an image build, a backup, a cleanup sweep.
 	//
-	// Its own type because of what the secret is: it wraps the data encryption
-	// key, so a rotation is the one action that moves every stored secret in the
-	// system onto a new key at once. "When was this last rotated, and by whom" is
-	// a question asked on its own, and a refused attempt is somebody working
-	// through an admin session at the operator's credential.
-	AuditLogTypeHivePaaSAppSecretRotate AuditLogType = "hivepaas-app-secret-rotate" //nolint:gosec // G101
+	// The only type tasks get, and it is about the person rather than the task.
+	// Everything else in a task's life - queued, retried, failed, finished - is
+	// the system acting on its own and already has the task row as its record.
+	// A cancel is the one point where somebody reaches in and stops the work,
+	// which is what is worth answering for later.
+	//
+	// One type across every scope, rather than folding the cancel into whatever
+	// the task was doing. Tasks run under projects, environments, apps, users and
+	// the install itself, and there is no type at all for some of those - the
+	// entry's own scope says where it happened, which is what a type per scope
+	// would have said at the cost of five more values in the type filter.
+	AuditLogTypeTaskCancel AuditLogType = "task-cancel"
 
-	// AuditLogTypeHivePaaSSecuritySettingsUpdate records a change to the operator-level
-	// security switches. One of them decides whether stored secrets may leave the
-	// server at all, so the change is worth as much as the reveals it permits:
-	// without this, a switch flipped on and back off leaves the reveals in between
+	// AuditLogTypeUserLogin records a session being handed out, and every attempt
+	// that was turned away.
+	//
+	// The refusals are the half that exists nowhere else. A login that worked
+	// leaves a session behind to find; a wrong password leaves nothing at all,
+	// and a run of them against one account is the earliest notice anybody gets
+	// that somebody is working at it. The backoff that slows those guesses down
+	// counts them in redis, where the count is per account, expires in hours, and
+	// is never read by a person.
+	//
+	// One type for every way in, with section naming which - password, passcode,
+	// oauth, api-key, dev-mode. A type per method would put five values in the
+	// filter to answer one question, and which door was used is the second
+	// question a reader asks, not the first.
+	//
+	// A refused attempt names no actor. Who was on the other end is precisely
+	// what could not be established; the account that was aimed at is recorded as
+	// the entry's resource, and where the attempt came from is on every entry
+	// anyway.
+	AuditLogTypeUserLogin AuditLogType = "user-login"
+
+	// AuditLogTypeUserLogout records a session being given up - the one in hand,
+	// or every session the user has, which section tells apart.
+	//
+	// Worth recording for the same reason a login is: signing out everywhere is
+	// what somebody does after losing a laptop, and also what somebody else does
+	// after taking one. The two read identically in the moment and differently
+	// afterwards, which is what a trail is for.
+	AuditLogTypeUserLogout AuditLogType = "user-logout"
+
+	// AuditLogTypeHivePaaSSecuritySettingsUpdate records a change to the
+	// operator-level security switches, and the rotation of the app secret.
+	//
+	// One of the switches decides whether stored secrets may leave the server at
+	// all, so the change is worth as much as the reveals it permits: without
+	// this, a switch flipped on and back off leaves the reveals in between
 	// looking like they were always allowed.
+	//
+	// The rotation is a section of this - app-secret-rotate, against
+	// security-settings for the switches - rather than a type of its own. It is
+	// the weightiest single action in here, because the secret wraps the data
+	// encryption key and rotating it moves every stored secret in the system onto
+	// a new key at once; but that is a reason to be able to find it, and (type,
+	// section) is the indexed pair that finds it.
+	//
+	// Both sections record refusals as well as writes. An attempt at either from
+	// an admin session is somebody working at the operator's own credential, and
+	// that attempt exists nowhere else if it is not written down here.
 	AuditLogTypeHivePaaSSecuritySettingsUpdate AuditLogType = "hivepaas-security-settings-update"
 
-	// AuditLogTypeHivePaaSRoutingChangeConfirm records somebody vouching that a routing
-	// change left HivePaaS reachable, which is what stops it being undone.
-	AuditLogTypeHivePaaSRoutingChangeConfirm AuditLogType = "hivepaas-routing-change-confirm"
+	// AuditLogTypeHivePaaSSettingsUpdateConfirm records somebody vouching that a
+	// settings change left HivePaaS reachable, which is what stops it from being
+	// undone.
+	//
+	// Not named after routing, which is what it used to say. The same trial
+	// guards the HivePaaS service settings and traefik's startup command, and a
+	// name that says routing makes two of the three read as something else -
+	// exactly the drift this file's opening comment is about. Which page the
+	// change was made on is the entry's section, the same value the change itself
+	// carried.
+	AuditLogTypeHivePaaSSettingsUpdateConfirm AuditLogType = "hivepaas-settings-update-confirm"
 
-	// AuditLogTypeHivePaaSRoutingChangeRevert records a routing change being undone on
-	// request, before its deadline. The automatic undo is not recorded here: it
-	// has no caller to attribute, and its record is the task row that ran it.
-	AuditLogTypeHivePaaSRoutingChangeRevert AuditLogType = "hivepaas-routing-change-revert"
+	// AuditLogTypeHivePaaSSettingsUpdateRevert records a settings change being
+	// undone on request, before its deadline. The automatic undo is not recorded
+	// here: it has no caller to attribute, and its record is the task row that
+	// ran it.
+	//
+	// Confirm and revert stay types of their own rather than becoming sections of
+	// hivepaas-settings-update, because section already carries which page was
+	// written - routing, service, traefik-config - and one field cannot carry
+	// both the page and the act without multiplying into one value per pair.
+	// "What was taken back" is asked across every page at once, which is a
+	// question only the type column can answer.
+	AuditLogTypeHivePaaSSettingsUpdateRevert AuditLogType = "hivepaas-settings-update-revert"
 
 	// AuditLogTypeHivePaaSSettingsUpdate records a change to HivePaaS's own
 	// routing or service settings - the ones that decide whether HivePaaS is
@@ -152,6 +218,8 @@ const (
 
 var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeSecretReveal,
+	AuditLogTypeUserLogin,
+	AuditLogTypeUserLogout,
 	AuditLogTypeAPIKeyCreate,
 	AuditLogTypeAPIKeyRevoke,
 	AuditLogTypeSettingCreate,
@@ -166,10 +234,10 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeAppDelete,
 	AuditLogTypeProjectEnvDelete,
 	AuditLogTypeClusterUpdate,
-	AuditLogTypeHivePaaSAppSecretRotate,
+	AuditLogTypeTaskCancel,
 	AuditLogTypeHivePaaSSecuritySettingsUpdate,
-	AuditLogTypeHivePaaSRoutingChangeConfirm,
-	AuditLogTypeHivePaaSRoutingChangeRevert,
+	AuditLogTypeHivePaaSSettingsUpdateConfirm,
+	AuditLogTypeHivePaaSSettingsUpdateRevert,
 	AuditLogTypeHivePaaSSettingsUpdate,
 	AuditLogTypeHivePaaSAction,
 }

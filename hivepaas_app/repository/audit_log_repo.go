@@ -167,8 +167,7 @@ func (repo *auditLogRepo) applyAppFilter(opts []bunex.SelectQueryOption,
 			bunex.SelectWhere("audit_log.object_id = ?", scope.AppID),
 			// Logs from child apps
 			bunex.SelectWhereOrGroup(
-				bunex.SelectJoin("LEFT JOIN apps AS child_app ON child_app.id = audit_log.object_id AND "+
-					"child_app.deleted_at IS NULL"),
+				bunex.SelectJoin("LEFT JOIN apps AS child_app ON child_app.id = audit_log.object_id"),
 				bunex.SelectWhere("child_app.parent_id = ?", scope.AppID),
 			),
 		),
@@ -189,8 +188,7 @@ func (repo *auditLogRepo) applyProjectEnvFilter(opts []bunex.SelectQueryOption,
 			bunex.SelectWhere("audit_log.object_id = ?", scope.ProjectEnvID),
 			// Logs from containing apps
 			bunex.SelectWhereOrGroup(
-				bunex.SelectJoin("LEFT JOIN apps AS app ON app.id = audit_log.object_id AND "+
-					"app.deleted_at IS NULL"),
+				bunex.SelectJoin("LEFT JOIN apps AS app ON app.id = audit_log.object_id"),
 				bunex.SelectWhere("app.project_env_id = ?", scope.ProjectEnvID),
 			),
 		),
@@ -213,14 +211,12 @@ func (repo *auditLogRepo) applyProjectFilter(opts []bunex.SelectQueryOption,
 			bunex.SelectWhere("audit_log.object_id = ?", projectID),
 			// Logs from containing envs
 			bunex.SelectWhereOrGroup(
-				bunex.SelectJoin("LEFT JOIN project_envs AS env ON env.id = audit_log.object_id AND "+
-					"env.deleted_at IS NULL"),
+				bunex.SelectJoin("LEFT JOIN project_envs AS env ON env.id = audit_log.object_id"),
 				bunex.SelectWhere("env.project_id = ?", projectID),
 			),
 			// Logs from containing apps
 			bunex.SelectWhereOrGroup(
-				bunex.SelectJoin("LEFT JOIN apps AS app ON app.id = audit_log.object_id AND "+
-					"app.deleted_at IS NULL"),
+				bunex.SelectJoin("LEFT JOIN apps AS app ON app.id = audit_log.object_id"),
 				bunex.SelectWhere("app.project_id = ?", projectID),
 			),
 		),

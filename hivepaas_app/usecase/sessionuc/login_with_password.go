@@ -50,12 +50,25 @@ func (uc *UC) LoginWithPassword(
 		if errors.Is(err, hperrors.ErrNotFound) {
 			// Perform dummy password verification to prevent user enumeration via timing attack
 			_ = uc.userService.VerifyPassword(&entity.User{Password: dummyHashForTimingAttack}, req.Password)
+
+			// Nothing the caller typed goes into the record - see
+			// recordLoginDenied. The address it came from is on the entry anyway,
+			// and a run of these from one address is what somebody reads them for.
+			if e := uc.recordLoginDenied(ctx, nil, auditMethodPassword, auditReasonUnknownUser); e != nil {
+				return nil, hperrors.Wrap(e)
+			}
 		}
 		return nil, uc.wrapSensitiveError(err)
 	}
 
 	err = uc.passwordCheck(ctx, req, dbUser)
 	if err != nil {
+		// Only a refusal is recorded as one: see loginRefusalReason.
+		if reason := loginRefusalReason(err); reason != "" {
+			if e := uc.recordLoginDenied(ctx, dbUser, auditMethodPassword, reason); e != nil {
+				return nil, hperrors.Wrap(e)
+			}
+		}
 		return nil, uc.wrapSensitiveError(err)
 	}
 
@@ -95,7 +108,10 @@ func (uc *UC) LoginWithPassword(
 	}
 
 	// Create a new session as login succeeds
-	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{User: dbUser})
+	sessionData, err := uc.createSession(ctx, &sessiondto.BaseCreateSessionReq{
+		User:   dbUser,
+		Method: auditMethodPassword,
+	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

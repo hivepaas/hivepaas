@@ -67,7 +67,7 @@ func (uc *UC) UpdateRoutingSettings(
 			return hperrors.Wrap(err)
 		}
 
-		return uc.recordHivePaaSSettingsUpdate(ctx, db, auth, "routing", auditdetail.New().
+		return uc.recordHivePaaSSettingsUpdate(ctx, db, auth, auditSectionRouting, auditdetail.New().
 			Set("domainChanged", data.DomainChanged).
 			Set("onProbation", data.probationResult.Probation != nil).
 			WithChangedFields(

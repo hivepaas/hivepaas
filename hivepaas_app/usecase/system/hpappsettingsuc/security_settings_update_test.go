@@ -398,7 +398,9 @@ func TestUpdateAppSecretRecordsBothOutcomes(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Len(t, audit.entries, 1)
-		assert.Equal(t, base.AuditLogTypeHivePaaSAppSecretRotate, audit.entries[0].Type)
+		assert.Equal(t, base.AuditLogTypeHivePaaSSecuritySettingsUpdate, audit.entries[0].Type)
+		assert.Equal(t, auditSectionAppSecretRotate, audit.entries[0].Section,
+			"the rotation has to stay tellable apart from the switches it shares a type with")
 		assert.Equal(t, base.AuditLogResultDenied, audit.entries[0].Result)
 	})
 

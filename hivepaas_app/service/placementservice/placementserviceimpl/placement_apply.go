@@ -90,10 +90,20 @@ func (s *service) applyPlacementSettings(
 		}
 	}
 
-	// The one required constraint HivePaaS emits. A conflict is refused where the
-	// mounts are chosen, so by here the pins already agree.
-	if constraint, conflict := placementservice.VolumePinConstraint(data.VolumePins); conflict == nil &&
-		constraint != "" {
+	// The one required constraint HivePaaS emits.
+	constraint, conflict := placementservice.VolumePinConstraint(data.VolumePins)
+	switch {
+	case conflict != nil:
+		// UpdateAppStorageSettings refuses a contradictory pin set before it is
+		// saved, but that is the only door with a lock on it: a spec written
+		// before that check existed, or edited on the service directly, still
+		// arrives here. Emitting no constraint stays the only honest answer - no
+		// node satisfies both pins - but a service that has quietly lost its pin
+		// must not also be invisible.
+		s.logger.Warnf("app %s mounts volumes with contradictory node pins, so no placement "+
+			"constraint is applied and its tasks may be scheduled anywhere: %v",
+			data.Service.Spec.Name, conflict)
+	case constraint != "":
 		newHivepaasConstraints = append(newHivepaasConstraints, constraint)
 	}
 

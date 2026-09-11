@@ -1,12 +1,15 @@
 package placementserviceimpl
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 )
 
@@ -60,4 +63,37 @@ func TestApplyAddsNothingForUnpinnedVolumes(t *testing.T) {
 	(&service{}).applyPlacementSettings(data)
 
 	assert.Empty(t, data.Service.Spec.TaskTemplate.Placement.Constraints)
+}
+
+// warnRecordingLogger keeps only the warnings, which is all this branch emits.
+type warnRecordingLogger struct {
+	logging.Logger
+
+	warnings []string
+}
+
+func (l *warnRecordingLogger) Warnf(template string, args ...any) {
+	l.warnings = append(l.warnings, fmt.Sprintf(template, args...))
+}
+
+// Two volumes pinned to different nodes describe a placement no node satisfies,
+// so no constraint can be emitted. UpdateAppStorageSettings refuses that set
+// before it is saved, but a spec written before that check existed - or edited
+// on the service directly - still reaches here, and a service that has silently
+// lost its pin has to be visible somewhere.
+func TestApplyWarnsWhenPinsConflictInsteadOfSilentlyDroppingTheConstraint(t *testing.T) {
+	data := applyData([]placementservice.VolumePin{
+		{VolumeName: "pgdata", NodeID: "node-1"},
+		{VolumeName: "uploads", NodeID: "node-2"},
+	}, nil)
+	data.Service.Spec.Name = "shop-prod-web"
+	logger := &warnRecordingLogger{}
+
+	(&service{logger: logger}).applyPlacementSettings(data)
+
+	assert.Empty(t, data.Service.Spec.TaskTemplate.Placement.Constraints)
+	require.Len(t, logger.warnings, 1)
+	assert.Contains(t, logger.warnings[0], "shop-prod-web")
+	assert.Contains(t, logger.warnings[0], "pgdata")
+	assert.Contains(t, logger.warnings[0], "uploads")
 }

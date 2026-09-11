@@ -3,6 +3,7 @@ package hpappuc
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 )
 
@@ -11,6 +12,7 @@ type UC struct {
 
 	lockRepo repository.LockRepo
 
+	auditService auditservice.Service
 	hpAppService hpappservice.Service
 }
 
@@ -19,6 +21,7 @@ func New(
 
 	lockRepo repository.LockRepo,
 
+	auditService auditservice.Service,
 	hpAppService hpappservice.Service,
 ) *UC {
 	return &UC{
@@ -26,6 +29,7 @@ func New(
 
 		lockRepo: lockRepo,
 
+		auditService: auditService,
 		hpAppService: hpAppService,
 	}
 }

@@ -23,22 +23,6 @@ const (
 	// without one, so the cascade that follows a revoked capability writes these.
 	AuditLogTypeAPIKeyRevoke AuditLogType = "api-key-revoke" //nolint:gosec // G101: an event name
 
-	// AuditLogTypeSecuritySettingsUpdate records a change to the operator-level
-	// security switches. One of them decides whether stored secrets may leave the
-	// server at all, so the change is worth as much as the reveals it permits:
-	// without this, a switch flipped on and back off leaves the reveals in between
-	// looking like they were always allowed.
-	AuditLogTypeSecuritySettingsUpdate AuditLogType = "security-settings-update"
-
-	// AuditLogTypeRoutingChangeConfirm records somebody vouching that a routing
-	// change left HivePaaS reachable, which is what stops it being undone.
-	AuditLogTypeRoutingChangeConfirm AuditLogType = "routing-change-confirm"
-
-	// AuditLogTypeRoutingChangeRevert records a routing change being undone on
-	// request, before its deadline. The automatic undo is not recorded here: it
-	// has no caller to attribute, and its record is the task row that ran it.
-	AuditLogTypeRoutingChangeRevert AuditLogType = "routing-change-revert"
-
 	// AuditLogTypeSettingCreate, AuditLogTypeSettingUpdate,
 	// AuditLogTypeSettingStatusUpdate and AuditLogTypeSettingDelete record the
 	// lifecycle of a stored setting - a registry credential, an SSH key, a backup
@@ -111,14 +95,30 @@ const (
 	// the two that already exist, which is harder to follow than a section.
 	AuditLogTypeClusterUpdate AuditLogType = "cluster-update"
 
-	// AuditLogTypeAppSecretRotate records the app secret being changed.
+	// AuditLogTypeHivePaaSAppSecretRotate records the app secret being changed.
 	//
 	// Its own type because of what the secret is: it wraps the data encryption
 	// key, so a rotation is the one action that moves every stored secret in the
 	// system onto a new key at once. "When was this last rotated, and by whom" is
 	// a question asked on its own, and a refused attempt is somebody working
 	// through an admin session at the operator's credential.
-	AuditLogTypeAppSecretRotate AuditLogType = "app-secret-rotate" //nolint:gosec // G101: an event name
+	AuditLogTypeHivePaaSAppSecretRotate AuditLogType = "hivepaas-app-secret-rotate" //nolint:gosec // G101
+
+	// AuditLogTypeHivePaaSSecuritySettingsUpdate records a change to the operator-level
+	// security switches. One of them decides whether stored secrets may leave the
+	// server at all, so the change is worth as much as the reveals it permits:
+	// without this, a switch flipped on and back off leaves the reveals in between
+	// looking like they were always allowed.
+	AuditLogTypeHivePaaSSecuritySettingsUpdate AuditLogType = "hivepaas-security-settings-update"
+
+	// AuditLogTypeHivePaaSRoutingChangeConfirm records somebody vouching that a routing
+	// change left HivePaaS reachable, which is what stops it being undone.
+	AuditLogTypeHivePaaSRoutingChangeConfirm AuditLogType = "hivepaas-routing-change-confirm"
+
+	// AuditLogTypeHivePaaSRoutingChangeRevert records a routing change being undone on
+	// request, before its deadline. The automatic undo is not recorded here: it
+	// has no caller to attribute, and its record is the task row that ran it.
+	AuditLogTypeHivePaaSRoutingChangeRevert AuditLogType = "hivepaas-routing-change-revert"
 
 	// AuditLogTypeHivePaaSSettingsUpdate records a change to HivePaaS's own
 	// routing or service settings - the ones that decide whether HivePaaS is
@@ -128,15 +128,23 @@ const (
 	// one is about whether stored secrets may leave the server, which is a
 	// different question from how the install is wired.
 	AuditLogTypeHivePaaSSettingsUpdate AuditLogType = "hivepaas-settings-update"
+
+	// AuditLogTypeHivePaaSAction records something done to the running install
+	// rather than to its configuration: upgrading it to a new version, restarting
+	// its services, telling them to re-read their config.
+	//
+	// One type for the three, with section telling them apart. A version upgrade
+	// is the weighty one and could have been given a type of its own, but section
+	// is an indexed column that the listing filters on, so it now separates them
+	// as well as a type would - and every type added is one more value in a
+	// filter that has to stay readable.
+	AuditLogTypeHivePaaSAction AuditLogType = "hivepaas-action"
 )
 
 var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeSecretReveal,
 	AuditLogTypeAPIKeyCreate,
 	AuditLogTypeAPIKeyRevoke,
-	AuditLogTypeSecuritySettingsUpdate,
-	AuditLogTypeRoutingChangeConfirm,
-	AuditLogTypeRoutingChangeRevert,
 	AuditLogTypeSettingCreate,
 	AuditLogTypeSettingUpdate,
 	AuditLogTypeSettingStatusUpdate,
@@ -149,8 +157,12 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeAppDelete,
 	AuditLogTypeProjectEnvDelete,
 	AuditLogTypeClusterUpdate,
-	AuditLogTypeAppSecretRotate,
+	AuditLogTypeHivePaaSAppSecretRotate,
+	AuditLogTypeHivePaaSSecuritySettingsUpdate,
+	AuditLogTypeHivePaaSRoutingChangeConfirm,
+	AuditLogTypeHivePaaSRoutingChangeRevert,
 	AuditLogTypeHivePaaSSettingsUpdate,
+	AuditLogTypeHivePaaSAction,
 }
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.

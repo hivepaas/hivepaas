@@ -113,7 +113,7 @@ func (uc *UC) authorizeSecuritySettingsUpdate(
 		result = base.AuditLogResultDenied
 	}
 	err := uc.auditService.Record(ctx, uc.db, &auditservice.Entry{
-		Type:    base.AuditLogTypeSecuritySettingsUpdate,
+		Type:    base.AuditLogTypeHivePaaSSecuritySettingsUpdate,
 		Scope:   base.ObjectScopeHivepaas,
 		Source:  base.AuditLogSourceAPIUpdate,
 		Result:  result,

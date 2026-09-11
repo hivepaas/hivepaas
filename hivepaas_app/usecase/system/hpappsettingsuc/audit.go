@@ -68,7 +68,7 @@ func (uc *UC) recordAppSecretRotation(
 	}
 
 	err := uc.auditService.Record(ctx, uc.db, &auditservice.Entry{
-		Type:    base.AuditLogTypeAppSecretRotate,
+		Type:    base.AuditLogTypeHivePaaSAppSecretRotate,
 		Scope:   base.ObjectScopeHivepaas,
 		Source:  base.AuditLogSourceAPIUpdate,
 		Result:  result,

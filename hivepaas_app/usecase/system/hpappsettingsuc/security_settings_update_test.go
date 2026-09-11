@@ -180,7 +180,7 @@ func TestUpdateSecuritySettingsRejectsAWrongAppSecret(t *testing.T) {
 	// admin-only endpoint is somebody working from a session they should not have.
 	assert.Len(t, audit.entries, 1)
 	assert.Equal(t, base.AuditLogResultDenied, audit.entries[0].Result)
-	assert.Equal(t, base.AuditLogTypeSecuritySettingsUpdate, audit.entries[0].Type)
+	assert.Equal(t, base.AuditLogTypeHivePaaSSecuritySettingsUpdate, audit.entries[0].Type)
 	assert.NotContains(t, audit.entries[0].Detail, "app-secret", "the record must not carry the secret")
 }
 
@@ -398,7 +398,7 @@ func TestUpdateAppSecretRecordsBothOutcomes(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Len(t, audit.entries, 1)
-		assert.Equal(t, base.AuditLogTypeAppSecretRotate, audit.entries[0].Type)
+		assert.Equal(t, base.AuditLogTypeHivePaaSAppSecretRotate, audit.entries[0].Type)
 		assert.Equal(t, base.AuditLogResultDenied, audit.entries[0].Result)
 	})
 

@@ -69,7 +69,7 @@ func (s *service) Confirm(ctx context.Context, auth *basedto.Auth, in *settingsp
 			}
 		}
 
-		return s.recordOutcome(ctx, db, auth, base.AuditLogTypeRoutingChangeConfirm, setting)
+		return s.recordOutcome(ctx, db, auth, base.AuditLogTypeHivePaaSRoutingChangeConfirm, setting)
 	})
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -120,7 +120,7 @@ func (s *service) RevertNow(
 			return hperrors.Wrap(err)
 		}
 
-		return s.recordOutcome(ctx, db, auth, base.AuditLogTypeRoutingChangeRevert, setting)
+		return s.recordOutcome(ctx, db, auth, base.AuditLogTypeHivePaaSRoutingChangeRevert, setting)
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

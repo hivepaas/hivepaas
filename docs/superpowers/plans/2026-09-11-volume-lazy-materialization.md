@@ -370,7 +370,7 @@ func TestToEntityRecordsTheSpecification(t *testing.T) {
 	assert.Equal(t, "/data/pg", vol.DriverOpts["device"])
 	assert.Equal(t, "core", vol.Labels["team"])
 	// The docker name is a ULID, so the chosen name has to travel as a label.
-	assert.Equal(t, "pgdata", vol.Labels[VolumeNameLabel])
+	assert.Equal(t, "pgdata", vol.Labels[docker.VolumeNameLabel])
 }
 ```
 

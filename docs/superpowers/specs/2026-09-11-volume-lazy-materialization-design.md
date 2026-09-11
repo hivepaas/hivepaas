@@ -182,8 +182,18 @@ satisfies. That is a real contradiction rather than a subtle misconfiguration,
 so saving the storage settings is refused, naming both volumes, instead of
 leaving swarm with a task that can never be scheduled.
 
-Constraints are applied when an app's service spec is next written - a deploy, a
-placement change, a storage change. There is no sweep across existing apps.
+Constraints are applied wherever HivePaaS writes an app's service spec through
+`placementservice`: creating the app, deploying it (image or repo build), and
+saving its storage settings. The storage case is folded into the same
+`ServiceUpdate` that writes the mounts - that update reschedules the tasks, so a
+constraint arriving one update later would let a task land on a node with none
+of the data in the meantime.
+
+Saving an app's *placement* settings is not one of those moments, despite the
+name: `appplacementsettingsuc.UpdateAppPlacementSettings` stores the setting and
+writes no service spec, so that change reaches swarm at the app's next deploy.
+
+There is no sweep across existing apps.
 Sweeping would move a task that is running on the wrong node today, and the node
 it is running on may be where its data actually accumulated; correcting that
 belongs to a moment the operator is already looking at that app. A diagnostic

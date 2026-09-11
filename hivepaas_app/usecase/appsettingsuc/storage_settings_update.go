@@ -18,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -47,7 +48,7 @@ func (uc *UC) UpdateAppStorageSettings(
 			return hperrors.Wrap(err)
 		}
 
-		err = uc.applyAppStorageSettings(ctx, data)
+		err = uc.applyAppStorageSettings(ctx, db, data)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -272,13 +273,40 @@ func (uc *UC) useBindMountIfAppropriate(
 	dockerMnt.ImageOptions = nil
 }
 
+// applyAppStorageSettings writes the new mounts and the placement constraints
+// they imply in a single service update.
+//
+// Writing the mounts rolls the service's tasks, so the volume pin has to be in
+// the spec this call sends rather than in whatever spec is written next. Left to
+// the next deploy, a task rescheduled by this very update can land on a node
+// holding none of the data - the failure the pin exists to prevent, reached
+// through the branch's own primary flow.
+//
+// SkipSavingToDocker is what makes one update enough: it has ApplyPlacementSettings
+// mutate the spec and stop, instead of saving a second one and rolling the tasks
+// again. The call sits inside the callback because a retry re-inspects the
+// service and starts over from a spec carrying neither the mounts nor the
+// constraint.
 func (uc *UC) applyAppStorageSettings(
 	ctx context.Context,
+	db database.IDB,
 	data *updateAppStorageSettingsData,
 ) error {
 	err := uc.dockerManager.ServiceUpdateFunc(ctx, data.Service.ID, data.Service,
 		func(_ int, service *swarm.Service) (bool, error) {
 			service.Spec.TaskTemplate.ContainerSpec.Mounts = data.FinalMounts
+
+			// The pins are resolved from the mounts just written, so this reads the
+			// storage settings being saved and not the ones being replaced.
+			_, err := uc.placementService.ApplyPlacementSettings(ctx, db,
+				&placementservice.ApplyPlacementSettingsReq{
+					App:                data.App,
+					Service:            service,
+					SkipSavingToDocker: true,
+				})
+			if err != nil {
+				return false, hperrors.Wrap(err)
+			}
 			return true, nil
 		}, defaultServiceRetryMax, 0)
 	if err != nil {

@@ -70,3 +70,74 @@ func TestCreateVolumeNeverMutatesReqName(t *testing.T) {
 		return true
 	})
 }
+
+// CreateVolume must give the setting's own id to RefID. RefID is the volume's
+// name in docker, and nothing creates the volume any more - docker materializes
+// it when a task first mounts it - so the setting's id is the only identity in
+// existence at that point. Without the assignment RefID stays empty and every
+// later reader breaks in a different place: the mount is built with an empty
+// Source, VolumePinsForMounts matches every TypeVolume mount whose source is
+// also empty, and a backup repository on the volume cannot be inspected.
+//
+// Every helper this line sits between is covered on its own; the line that
+// connects them is not, and deleting it left `go test ./...` entirely green.
+//
+// The assertion is structural for the same reason TestCreateVolumeNeverMutatesReqName
+// above is: reaching the assignment behaviorally means driving uc.CreateSetting
+// through a real database transaction (settings.BaseUC.DB is a concrete
+// *database.DB, and CreateSetting touches ScopeService, SettingRepo,
+// SettingEventService and AuditService on the way), and no fake or in-memory DB
+// harness for usecase-level Create flows exists in this codebase.
+func TestCreateVolumeNamesTheDockerVolumeAfterTheSettingID(t *testing.T) {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "create.go", nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var fn *ast.FuncDecl
+	for _, decl := range file.Decls {
+		if fd, ok := decl.(*ast.FuncDecl); ok && fd.Name.Name == "CreateVolume" {
+			fn = fd
+			break
+		}
+	}
+	if fn == nil {
+		t.Fatal("CreateVolume not found in create.go")
+	}
+
+	found := false
+	ast.Inspect(fn, func(n ast.Node) bool {
+		assign, ok := n.(*ast.AssignStmt)
+		if !ok || len(assign.Lhs) != 1 || len(assign.Rhs) != 1 {
+			return true
+		}
+		if selectorPath(assign.Lhs[0]) == "pData.Setting.RefID" &&
+			selectorPath(assign.Rhs[0]) == "pData.Setting.ID" {
+			found = true
+		}
+		return true
+	})
+
+	if !found {
+		t.Error("CreateVolume must assign pData.Setting.RefID = pData.Setting.ID: the docker volume " +
+			"is named after the setting's own id, and nothing else creates it to name it later")
+	}
+}
+
+// selectorPath renders a chain like pData.Setting.RefID back into its source
+// spelling, and "" for anything that is not such a chain.
+func selectorPath(expr ast.Expr) string {
+	switch e := expr.(type) {
+	case *ast.Ident:
+		return e.Name
+	case *ast.SelectorExpr:
+		prefix := selectorPath(e.X)
+		if prefix == "" {
+			return ""
+		}
+		return prefix + "." + e.Sel.Name
+	default:
+		return ""
+	}
+}

@@ -40742,7 +40742,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -40760,7 +40760,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -44094,6 +44094,10 @@
           "scopeUser" : {
             "$ref" : "#/components/schemas/basedto.UserBaseResp"
           },
+          "section" : {
+            "description" : "Section survives in the listing where it used to be lost: it lived inside\nDetail, which the listing drops once it passes a hundred characters.",
+            "type" : "string"
+          },
           "sessionUid" : {
             "type" : "string"
           },
@@ -44110,7 +44114,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "actor", "clientIp", "createdAt", "detail", "hasDetail", "id", "remoteAddr", "requestId", "resource", "result", "scopeApp", "scopeProject", "scopeUser", "sessionUid", "source", "type", "userAgent", "viaApiKey" ],
+        "required" : [ "actor", "clientIp", "createdAt", "detail", "hasDetail", "id", "remoteAddr", "requestId", "resource", "result", "scopeApp", "scopeProject", "scopeUser", "section", "sessionUid", "source", "type", "userAgent", "viaApiKey" ],
         "type" : "object"
       },
       "auditlogdto.GetAuditLogResp" : {
@@ -44797,6 +44801,13 @@
           "nfsOptions" : {
             "$ref" : "#/components/schemas/cluster_volumedto.VolumeNfsOptionsReq"
           },
+          "nodeId" : {
+            "description" : "Which node the volume's data is on, by id or by label.\n\nEmpty is a claim, not an omission: it says the volume is reachable from\nevery node - a swarm cluster volume, or a bind whose directory comes from\nshared storage mounted at the same path everywhere. HivePaaS cannot tell\nthat from a directory on one node's disk, so the caller has to say.\n\nWhat it decides: where a directory is created for a bind volume, and where\na backup repository kept on this volume runs. Leaving it empty when the\ndata is in fact on one node gives no directory and a backup repo that\nrefuses the volume.\n\nNodeID takes \"current\" to mean the node HivePaaS itself is running on.",
+            "type" : "string"
+          },
+          "nodeLabel" : {
+            "type" : "string"
+          },
           "options" : {
             "additionalProperties" : {
               "type" : "string"
@@ -44807,7 +44818,7 @@
             "$ref" : "#/components/schemas/cluster_volumedto.VolumeTmpfsOptionsReq"
           }
         },
-        "required" : [ "bindOptions", "default", "driver", "inheritable", "labels", "name", "nfsOptions", "options", "tmpfsOptions" ],
+        "required" : [ "bindOptions", "default", "driver", "inheritable", "labels", "name", "nfsOptions", "nodeId", "nodeLabel", "options", "tmpfsOptions" ],
         "type" : "object"
       },
       "cluster_volumedto.CreateVolumeResp" : {
@@ -44878,11 +44889,18 @@
           "inheritable" : {
             "type" : "boolean"
           },
+          "nodeId" : {
+            "description" : "Where the volume's data is - see VolumeBaseReq.NodeID for what the pair\nmeans and what it decides.\n\nPointers, and the two move together: leaving both out keeps the pinning the\nvolume already has, while sending either one replaces the pair, reading the\none left out as empty. They are two spellings of a single answer, so\nupdating one half on its own would leave a volume claiming to be pinned two\nways at once.\n\nSending both empty is an answer too, not a way of skipping the field: it\nsays the volume is reachable from every node.",
+            "type" : "string"
+          },
+          "nodeLabel" : {
+            "type" : "string"
+          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "default", "inheritable", "updateVer" ],
+        "required" : [ "default", "inheritable", "nodeId", "nodeLabel", "updateVer" ],
         "type" : "object"
       },
       "cluster_volumedto.UpdateVolumeResp" : {
@@ -44932,12 +44950,6 @@
           "extraOptions" : {
             "type" : "string"
           },
-          "nodeId" : {
-            "type" : "string"
-          },
-          "nodeLabel" : {
-            "type" : "string"
-          },
           "propagation" : {
             "$ref" : "#/components/schemas/mount.Propagation"
           },
@@ -44945,7 +44957,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "directory", "extraOptions", "nodeId", "nodeLabel", "propagation", "readonly" ],
+        "required" : [ "directory", "extraOptions", "propagation", "readonly" ],
         "type" : "object"
       },
       "cluster_volumedto.VolumeBindOptionsResp" : {
@@ -44956,12 +44968,6 @@
           "extraOptions" : {
             "type" : "string"
           },
-          "nodeId" : {
-            "type" : "string"
-          },
-          "nodeLabel" : {
-            "type" : "string"
-          },
           "propagation" : {
             "$ref" : "#/components/schemas/mount.Propagation"
           },
@@ -44969,7 +44975,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "directory", "extraOptions", "nodeId", "nodeLabel", "propagation", "readonly" ],
+        "required" : [ "directory", "extraOptions", "propagation", "readonly" ],
         "type" : "object"
       },
       "cluster_volumedto.VolumeNfsOptionsReq" : {
@@ -45065,6 +45071,13 @@
           "nfsOptions" : {
             "$ref" : "#/components/schemas/cluster_volumedto.VolumeNfsOptionsResp"
           },
+          "nodeId" : {
+            "description" : "Pinned volume node",
+            "type" : "string"
+          },
+          "nodeLabel" : {
+            "type" : "string"
+          },
           "options" : {
             "additionalProperties" : {
               "type" : "string"
@@ -45096,7 +45109,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "bindOptions", "clusterVolumeSpec", "createdAt", "default", "driver", "expireAt", "id", "inheritable", "inherited", "kind", "labels", "mountpoint", "name", "nfsOptions", "options", "refCount", "scope", "size", "status", "tmpfsOptions", "type", "updateVer", "updatedAt" ],
+        "required" : [ "bindOptions", "clusterVolumeSpec", "createdAt", "default", "driver", "expireAt", "id", "inheritable", "inherited", "kind", "labels", "mountpoint", "name", "nfsOptions", "nodeId", "nodeLabel", "options", "refCount", "scope", "size", "status", "tmpfsOptions", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "cluster_volumedto.VolumeTmpfsOptionsReq" : {
@@ -55085,11 +55098,17 @@
       },
       "system_hpappsettingsdto.SecuritySettingsResp" : {
         "properties" : {
+          "alwaysReturnSecretTypes" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "returnSecretsViaApi" : {
             "type" : "boolean"
           }
         },
-        "required" : [ "returnSecretsViaApi" ],
+        "required" : [ "alwaysReturnSecretTypes", "returnSecretsViaApi" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.ServiceSettingsResp" : {
@@ -55216,6 +55235,13 @@
       },
       "system_hpappsettingsdto.UpdateSecuritySettingsReq" : {
         "properties" : {
+          "alwaysReturnSecretTypes" : {
+            "description" : "AlwaysReturnSecretTypes lists the kinds of secret that stay retrievable\nwhile ReturnSecretsViaAPI is off. It is behind the same app secret as the\nflag: an exemption is a hole in the flag, so it must not be easier to make\nthan the flag is to switch.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "appSecret" : {
             "description" : "AppSecret is the current app secret, re-entered. It is not authentication -\nthe endpoint is already admin-only - it is proof that the caller is the\noperator and not merely a session that reached an admin account. The flags\nbelow decide whether stored secrets may leave the server, so a stolen\nsession must not be enough to turn them on.",
             "type" : "string"
@@ -55224,7 +55250,7 @@
             "type" : "boolean"
           }
         },
-        "required" : [ "appSecret", "returnSecretsViaApi" ],
+        "required" : [ "alwaysReturnSecretTypes", "appSecret", "returnSecretsViaApi" ],
         "type" : "object"
       },
       "system_hpappsettingsdto.UpdateSecuritySettingsResp" : {
@@ -58011,9 +58037,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -60,7 +60,14 @@ func (s *service) SyncVolumes(
 				RefID:   volID,
 				Version: currentSettingVersion,
 			}
-			volEntity := &entity.ClusterVolume{}
+
+			volEntity, err := s.discoveredVolumePinning(ctx, vol)
+			if err != nil {
+				return nil, hperrors.Wrap(err)
+			}
+			// Through SetData, because the parsed struct and the stored JSON are
+			// not the same thing: Data is what is written, and nothing
+			// re-serializes it on the way out.
 			if err := setting.SetData(volEntity); err != nil {
 				return nil, hperrors.Wrap(err)
 			}
@@ -69,6 +76,10 @@ func (s *service) SyncVolumes(
 		}
 
 		delete(existingVols, volID)
+
+		// The pinning of a volume already recorded is left exactly as it is - see
+		// discoveredVolumePinning. Only what docker is authoritative about is
+		// carried over.
 		hasChanged := false
 		if setting.Kind != vol.Driver {
 			setting.Kind = vol.Driver
@@ -98,4 +109,36 @@ func (s *service) SyncVolumes(
 	}
 
 	return volList.Items, nil
+}
+
+// discoveredVolumePinning is where a volume HivePaaS has just learned about
+// lives, as far as docker can say.
+//
+// A swarm cluster volume belongs to no node in particular, so it is left
+// unpinned. Anything else was listed by the daemon this process talks to, so it
+// is on that node - which is a starting guess and not a fact. A bind mount whose
+// directory comes from shared storage, an NFS or Ceph mount present at the same
+// path on every node, looks exactly like one on a local disk: both are the local
+// driver with type=none and a device path. Docker cannot tell them apart and
+// neither can this.
+//
+// Which is why it runs once, for a volume being recorded for the first time.
+// From then on the field is the operator's answer to this same question, and
+// that includes leaving it empty - an empty pinning is the claim that the path
+// is the same everywhere, not a gap waiting to be filled in. A sync that
+// refreshed it every pass would overwrite that answer with this guess, every few
+// minutes, and the operator would have no way to make it stick.
+func (s *service) discoveredVolumePinning(
+	ctx context.Context,
+	vol *volume.Volume,
+) (*entity.ClusterVolume, error) {
+	if vol.ClusterVolume != nil && vol.ClusterVolume.ID != "" {
+		return &entity.ClusterVolume{}, nil
+	}
+
+	nodeID, err := s.dockerManager.NodeCurrentID(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &entity.ClusterVolume{NodeID: nodeID}, nil
 }

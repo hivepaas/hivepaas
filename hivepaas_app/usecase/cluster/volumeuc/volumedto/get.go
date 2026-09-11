@@ -42,6 +42,10 @@ type GetVolumeResp struct {
 type VolumeResp struct {
 	*settings.BaseSettingResp
 
+	// Pinned volume node
+	NodeID    string `json:"nodeId,omitempty"`
+	NodeLabel string `json:"nodeLabel,omitempty"`
+
 	Driver            docker.VolumeDriver    `json:"driver"`
 	Scope             docker.VolumeScope     `json:"scope"`
 	Mountpoint        string                 `json:"mountpoint"`
@@ -58,8 +62,6 @@ type VolumeResp struct {
 
 type VolumeBindOptionsResp struct {
 	Directory    string            `json:"directory"`
-	NodeID       string            `json:"nodeId,omitempty"`
-	NodeLabel    string            `json:"nodeLabel,omitempty"`
 	Propagation  mount.Propagation `json:"propagation"`
 	Readonly     bool              `json:"readonly"`
 	ExtraOptions string            `json:"extraOptions"`
@@ -117,7 +119,7 @@ func TransformVolume(
 		if resp.Driver == docker.VolumeDriverLocal {
 			switch vol.Options["type"] {
 			case "none":
-				resp.BindOptions = transformVolumeTypeBind(volEnt, vol)
+				resp.BindOptions = transformVolumeTypeBind(vol)
 				resp.Options = nil
 			case "nfs":
 				resp.NfsOptions = transformVolumeTypeNfs(vol)
@@ -141,7 +143,6 @@ func transformVolumeCreatedAt(createdAt string) time.Time {
 }
 
 func transformVolumeTypeBind(
-	volEnt *entity.ClusterVolume,
 	volDocker *volume.Volume,
 ) *VolumeBindOptionsResp {
 	opts := strings.Split(volDocker.Options["o"], ",")
@@ -150,8 +151,6 @@ func transformVolumeTypeBind(
 	}
 	resp := &VolumeBindOptionsResp{
 		Directory: volDocker.Options["device"],
-		NodeID:    volEnt.NodeID,
-		NodeLabel: volEnt.NodeLabel,
 	}
 	for _, opt := range opts {
 		if opt == "bind" {

@@ -186,6 +186,17 @@ var (
 	currentNodeID string
 )
 
+// NodeCurrentID is the swarm node id of the daemon this manager talks to.
+//
+// An empty id is an error here rather than a value. The daemon answers with one
+// when it is not part of a swarm, and every caller is asking this in order to
+// place something - a directory to create, a build to run, a volume to pin - so
+// an empty answer does not mean "unknown", it means the work gets placed nowhere
+// in particular. That is how a volume asked to pin to the current node quietly
+// became a volume pinned to none.
+//
+// Not cached until it is real, so a daemon that joins a swarm later starts
+// answering without a restart.
 func (m *manager) NodeCurrentID(ctx context.Context) (string, error) {
 	if currentNodeID != "" {
 		return currentNodeID, nil
@@ -193,6 +204,10 @@ func (m *manager) NodeCurrentID(ctx context.Context) (string, error) {
 	resp, err := m.SystemInfo(ctx)
 	if err != nil {
 		return "", hperrors.Wrap(err)
+	}
+	if resp.Info.Swarm.NodeID == "" {
+		return "", hperrors.NewNotFound("Swarm node").
+			WithMsgLog("docker daemon is not part of a swarm")
 	}
 	currentNodeID = resp.Info.Swarm.NodeID
 	return currentNodeID, nil

@@ -29,6 +29,22 @@ type VolumeBaseReq struct {
 	Name   string              `json:"name"`
 	Driver docker.VolumeDriver `json:"driver"`
 
+	// Which node the volume's data is on, by id or by label.
+	//
+	// Empty is a claim, not an omission: it says the volume is reachable from
+	// every node - a swarm cluster volume, or a bind whose directory comes from
+	// shared storage mounted at the same path everywhere. HivePaaS cannot tell
+	// that from a directory on one node's disk, so the caller has to say.
+	//
+	// What it decides: where a directory is created for a bind volume, and where
+	// a backup repository kept on this volume runs. Leaving it empty when the
+	// data is in fact on one node gives no directory and a backup repo that
+	// refuses the volume.
+	//
+	// NodeID takes "current" to mean the node HivePaaS itself is running on.
+	NodeID    string `json:"nodeId"`
+	NodeLabel string `json:"nodeLabel"`
+
 	// For `local` driver only
 	BindOptions  *VolumeBindOptionsReq  `json:"bindOptions"`
 	NfsOptions   *VolumeNfsOptionsReq   `json:"nfsOptions"`
@@ -46,6 +62,16 @@ func (req *VolumeBaseReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 	res = append(res, basedto.ValidateStr(&req.Name, true, 1, volumeNameMaxLen, field+"name")...)
+
+	// One or the other, never both. They are two ways of naming the same thing -
+	// where the data is - and the node exec service takes the id when both are
+	// there, so a request carrying both would have its label quietly dropped
+	// rather than answered. Neither one is still allowed: that is the claim that
+	// the volume is reachable from every node.
+	res = append(res, basedto.ValidateMutualExclusiveFields(
+		req.NodeID == "" || req.NodeLabel == "",
+		field+"nodeId", field+"nodeLabel")...)
+
 	res = append(res, req.BindOptions.validate(field+"bindOptions")...)
 	res = append(res, req.NfsOptions.validate(field+"nfsOptions")...)
 	res = append(res, req.TmpfsOptions.validate(field+"tmpfsOptions")...)
@@ -53,13 +79,14 @@ func (req *VolumeBaseReq) validate(field string) (res []vld.Validator) {
 }
 
 func (req *VolumeBaseReq) ToEntity() *entity.ClusterVolume {
-	return &entity.ClusterVolume{}
+	return &entity.ClusterVolume{
+		NodeID:    req.NodeID,
+		NodeLabel: req.NodeLabel,
+	}
 }
 
 type VolumeBindOptionsReq struct {
 	Directory    string            `json:"directory"`
-	NodeID       string            `json:"nodeId"`
-	NodeLabel    string            `json:"nodeLabel"`
 	Propagation  mount.Propagation `json:"propagation"`
 	Readonly     bool              `json:"readonly"`
 	ExtraOptions string            `json:"extraOptions"`

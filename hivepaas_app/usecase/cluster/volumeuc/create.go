@@ -30,7 +30,14 @@ func (uc *UC) CreateVolume(
 ) (*volumedto.CreateVolumeResp, error) {
 	req.Type = currentSettingType
 	req.Auth = auth
+
+	nodeID, err := uc.resolveCurrentNode(ctx, req.NodeID)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	req.NodeID = nodeID
 	volEntity := req.ToEntity()
+
 	resp, err := uc.CreateSetting(ctx, &req.CreateSettingReq, &settings.CreateSettingData{
 		VerifyingRefIDs: volEntity.GetRefObjectIDs(),
 		Version:         currentSettingVersion,
@@ -48,10 +55,6 @@ func (uc *UC) CreateVolume(
 				return hperrors.Wrap(err)
 			}
 			vol := &createResp.Volume
-			if req.BindOptions != nil {
-				volEntity.NodeID = req.BindOptions.NodeID
-				volEntity.NodeLabel = req.BindOptions.NodeLabel
-			}
 			pData.Setting.RefID = dockerhelper.GetVolumeID(vol)
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = vol.Driver
@@ -83,8 +86,10 @@ func (uc *UC) createVolumeInDocker(
 		return nil, hperrors.NewAlreadyExist("Cluster volume")
 	}
 
+	isPinnedToNode := req.NodeID != "" || req.NodeLabel != ""
+
 	// If this is node-local directory bind, create the dir
-	if req.BindOptions != nil && req.BindOptions.Directory != "" {
+	if isPinnedToNode && req.BindOptions != nil && req.BindOptions.Directory != "" {
 		err = uc.createBindDirectoryInNode(ctx, req)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
@@ -208,21 +213,11 @@ func (uc *UC) createBindDirectoryInNode(
 		return nil
 	}
 
-	nodeID := req.BindOptions.NodeID
-	nodeLabel := req.BindOptions.NodeLabel
-
-	if nodeID == "" && nodeLabel == "" {
-		nodeID, err = uc.dockerManager.NodeCurrentID(ctx)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-	}
-
 	targetDir := filepath.Join(volumeservice.HostPathPrefix, req.BindOptions.Directory)
 	mkdirCmd := fmt.Sprintf("mkdir -p '%s' && chmod -R 777 '%s'", targetDir, targetDir)
 	cmdReq := &nodeexecservice.CommandExecReq{
-		NodeID:    nodeID,
-		NodeLabel: nodeLabel,
+		NodeID:    req.NodeID,
+		NodeLabel: req.NodeLabel,
 		CommandExecOpts: &nodeexecservice.CommandExecOpts{
 			Command: []string{"sh", "-c", mkdirCmd},
 		},

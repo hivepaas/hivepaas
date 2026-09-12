@@ -1,0 +1,3 @@
+# Sample errors
+ERR_BASE = "base"
+ERR_DERIVED = "derived"

@@ -3,7 +3,7 @@
 # The sources are split between two files, because the engine packages declare
 # their own errors while the repository-level ones are still central:
 #   services/backup/backupmodel/errors.go   (ERR_BACKUP_ENGINE/COMMAND/SNAPSHOT/STORAGE/REPO_CONFIG)
-#   hivepaas_app/hperrors/constants.go      (ERR_BACKUP_REPO_*)
+#   hivepaas_app/hperrors/errors_settings.go      (ERR_BACKUP_REPO_*)
 # Adding or removing an error in either means editing this file.
 ERR_BACKUP_STORAGE_CONFIG_REQUIRED = "Backup storage configuration is required"
 ERR_BACKUP_STORAGE_TYPE_REQUIRED = "Backup storage must be either cloud storage or a volume"

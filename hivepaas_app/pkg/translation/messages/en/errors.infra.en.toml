@@ -1,0 +1,39 @@
+# Messages for the errors declared in hivepaas_app/hperrors/errors_infra.go.
+# Adding or removing an error there means editing this file.
+# Cluster error
+ERR_NODE_WITH_LABEL_NOT_AVAILABLE = "Node with label '{{.Label}}' is not found or not ready"
+ERR_SERVICE_NOT_RUNNING = "Service '{{.Name}}' is not running"
+ERR_SERVICE_MODE_REPLICATED_REQUIRED = "Service is required to be in 'replicated' mode"
+ERR_ACTIVE_CONTAINER_NOT_FOUND = "No active container found for app '{{.App}}'"
+ERR_SERVICE_MODE_CHANGE_REQUIRES_RUNNING_APP = "Changing the service mode recreates the service, which requires the app to be running"
+
+# File errors
+ERR_DIR_NOT_CREATED = "Directory '{{.Name}}' could not be created"
+ERR_FILE_SCOPE_UNSUPPORTED = "File scope '{{.Scope}}' is not supported"
+ERR_FILE_SIZE_TOO_BIG = "File size must be less than {{.MaxSize}}"
+ERR_FILE_TYPE_NOT_SUPPORTED = "File type must be one of {{.SupportedTypes}}"
+ERR_FILE_EXT_NOT_SUPPORTED = "File extension must be one of {{.SupportedExts}}"
+ERR_FILE_NAME_TOO_LONG = "File name must contain less than {{.MaxNameLen}} characters"
+ERR_ARCHIVE_FORMAT_UNSUPPORTED = "Archive format '{{.Format}}' is not supported"
+ERR_ENCRYPTION_FORMAT_UNSUPPORTED = "Encryption format '{{.Format}}' is not supported"
+ERR_STORAGE_TYPE_UNSUPPORTED = "Storage type '{{.Type}}' is not supported"
+
+# Infra errors
+ERR_INFRA = "{{.Error}}"
+ERR_INFRA_UNKNOWN = "{{.Error}}"
+ERR_INFRA_INTERNAL = "{{.Error}}"
+ERR_INFRA_ACTION_FAILED = "{{.Error}}"
+ERR_INFRA_INVALID_ARGUMENT = "{{.Error}}"
+ERR_INFRA_NOT_FOUND = "{{.Error}}"
+ERR_INFRA_ALREADY_EXISTS = "{{.Error}}"
+ERR_INFRA_PERMISSION_DENIED = "{{.Error}}"
+ERR_INFRA_RESOURCE_EXHAUSTED = "{{.Error}}"
+ERR_INFRA_FAILED_PRECONDITION = "{{.Error}}"
+ERR_INFRA_CONFLICT = "{{.Error}}"
+ERR_INFRA_NOT_MODIFIED = "{{.Error}}"
+ERR_INFRA_ABORTED = "{{.Error}}"
+ERR_INFRA_OUT_OF_RANGE = "{{.Error}}"
+ERR_INFRA_NOT_IMPLEMENTED = "{{.Error}}"
+ERR_INFRA_UNAVAILABLE = "{{.Error}}"
+ERR_INFRA_DATA_LOSS = "{{.Error}}"
+ERR_INFRA_UNAUTHORIZED = "{{.Error}}"

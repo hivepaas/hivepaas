@@ -1,0 +1,32 @@
+# Messages for the errors declared in hivepaas_app/hperrors/errors_project_app.go.
+# Adding or removing an error there means editing this file.
+# Project errors
+ERR_PROJECT_NOT_FOUND = "Project '{{.Name}}' is not found"
+ERR_PROJECT_ENV_NOT_FOUND = "Project env '{{.Name}}' is not found"
+ERR_PROJECT_INACTIVE = "Project '{{.Name}}' is inactive"
+ERR_PROJECT_ENV_INACTIVE = "Env '{{.Env}}' of project '{{.Project}}' is inactive"
+ERR_PROJECT_NAME_NOT_ALLOWED = "Project '{{.Name}}' is not allowed"
+ERR_PROJECT_NETWORK_UNAVAILABLE = "Project network '{{.Name}}' is not available"
+ERR_PROJECT_ENV_REMOVAL_UNALLOWED = "Project env '{{.Name}}' cannot be removed via this api. Please go to Danger Zone of the project."
+
+# App errors
+ERR_APP_NOT_FOUND = "App '{{.Name}}' is not found"
+ERR_APP_INACTIVE = "App '{{.Name}}' is inactive"
+ERR_APP_IS_CURRENT = "Input app must not be the current app"
+ERR_APPS_NOT_IN_SAME_PROJECT_ENV = "Apps must be in the same project environment"
+ERR_APP_CLONE_SETTING_REQUIRED = "Clone settings are required to configured in app '{{.Name}}'"
+ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES = "Multi-node cluster reuquires an accessible registry for the built images"
+ERR_DEPLOYMENT_METHOD_REPO_REQUIRED = "App is required to be deployed from a repo source"
+ERR_FEATURE_DISABLED = "Feature '{{.Name}}' is disabled"
+
+# Source errors
+ERR_REPO_NOT_FOUND = "Repo '{{.Repo}}' is not found"
+ERR_REPO_TYPE_UNSUPPORTED = "Repo type '{{.Type}}' is not supported"
+ERR_REPO_REF_NOT_FOUND = "Repo ref '{{.RepoRef}}' is not found"
+ERR_PULL_REQUEST_NOT_FOUND = "Pull request '{{.PullRequest}}' is not found"
+ERR_PULL_REQUEST_INVALID = "Pull request '{{.PullRequest}}' is invalid"
+ERR_GIT_TYPE_UNSUPPORTED = "Git type '{{.Type}}' is not supported"
+ERR_GIT_AUTH_METHOD_UNSUPPORTED = "Git authentication method '{{.AuthMethod}}' is not supported"
+ERR_GIT_LOG_OUTPUT_UNEXPECTED = "Git log output is unexpected: {{.Output}}"
+
+# Build errors

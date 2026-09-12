@@ -41,6 +41,7 @@ func (uc *UC) CreateNetwork(
 			if err != nil {
 				return hperrors.Wrap(err)
 			}
+			pData.Setting.ID = createResp.ID // NOTE: reuse docker network ID for simplicity
 			pData.Setting.RefID = createResp.ID
 			pData.Setting.Name = req.Name
 			pData.Setting.Kind = req.Driver

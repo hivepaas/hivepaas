@@ -5,14 +5,12 @@ import (
 	"time"
 
 	"github.com/moby/moby/api/types/network"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 )
 
 func (s *service) SyncNetworks(
@@ -49,7 +47,7 @@ func (s *service) SyncNetworks(
 
 		if setting == nil {
 			setting = &entity.Setting{
-				ID:          gofn.Must(ulid.NewStringULID()),
+				ID:          net.ID, // NOTE: reuse docker network ID for simplicity
 				Scope:       base.ObjectScopeGlobal,
 				Type:        currentSettingType,
 				Kind:        net.Driver,

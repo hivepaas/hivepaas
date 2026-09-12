@@ -49,8 +49,12 @@ func (s *service) SyncVolumes(
 		setting := existingVols[volID]
 
 		if setting == nil {
+			id := gofn.Must(ulid.NewStringULID())
+			if vol.ClusterVolume != nil && vol.ClusterVolume.ID != "" {
+				id = vol.ClusterVolume.ID // NOTE: reuse docker volume ID for simplicity
+			}
 			setting = &entity.Setting{
-				ID:      gofn.Must(ulid.NewStringULID()),
+				ID:      id,
 				Scope:   base.ObjectScopeGlobal,
 				Type:    currentSettingType,
 				Kind:    vol.Driver,

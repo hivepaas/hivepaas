@@ -6,7 +6,6 @@ import {
     Http401Exception,
     Http403Exception,
     Http404Exception,
-    Http406Exception,
     HttpException,
 } from "@infrastructure/exceptions/http";
 import { NetworkException } from "@infrastructure/exceptions/network";
@@ -99,13 +98,6 @@ export function isToManyLoginAttemptsException(error: Error): boolean {
         error instanceof Http403Exception &&
         ["ERR_TOO_MANY_LOGIN_FAILURES", "ERR_TOO_MANY_PASSCODE_ATTEMPTS"].includes(error.code)
     );
-}
-
-/**
- * Check if the error is a password reset token invalid error
- */
-export function isPasswordResetTokenInvalidException(error: Error): boolean {
-    return error instanceof Http406Exception && error.code === "ERR_PASSWORD_RESET_TOKEN_INVALID";
 }
 
 /**

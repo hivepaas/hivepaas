@@ -37,7 +37,14 @@ function toEndpoint(f: EndpointForm): HivePaaSLoggingEndpoint {
 export function toLoggingFormInput(s?: HivePaaSLoggingSettings): HivePaaSLoggingSettingsFormInput {
     return {
         enabled: s?.enabled ?? false,
-        sources: s?.sources ?? { apps: true, hivepaas: false, traefikAccess: false, nodes: false },
+        // One switch: container logs are collected as a set, so whichever of
+        // the two the server holds means the same thing here.
+        sources: {
+            apps: (s?.sources.apps ?? true) || (s?.sources.hivepaas ?? false),
+            hivepaas: s?.sources.hivepaas ?? false,
+            traefikAccess: false,
+            nodes: false,
+        },
         backendManaged: s?.backend.managed ?? true,
         nodeId: s?.backend.victoriaLogs?.nodeId ?? "",
         volumeId: s?.backend.victoriaLogs?.volumeId ?? "",
@@ -56,8 +63,9 @@ export function toLoggingFormInput(s?: HivePaaSLoggingSettings): HivePaaSLogging
 export function toLoggingPayload(v: HivePaaSLoggingSettingsFormOutput): HivePaaSLoggingSettings {
     return {
         enabled: v.enabled,
-        // Node logs are not collected yet: the collector does not mount /var/log.
-        sources: { ...v.sources, nodes: false },
+        // Only container logs are collected. The proxy's access log rides along
+        // in traefik's own container output; the host's logs are not mounted.
+        sources: { apps: v.sources.apps, hivepaas: v.sources.apps, traefikAccess: false, nodes: false },
         collector: { type: "vlagent", managed: true },
         backend: v.backendManaged
             ? {

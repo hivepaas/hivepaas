@@ -6,6 +6,7 @@ import { cn } from "@lib/utils";
 import { type FieldPath, FormProvider, useController, useForm, useFormContext, useWatch } from "react-hook-form";
 import { useNotificationSettingsSources } from "~/settings/module-shared/hooks";
 import type { SystemCleanupSettings } from "~/system-settings/domain";
+import { SectionHeader } from "~/system-settings/module-shared";
 
 import { InfoBlock, NextRunsField } from "@application/shared/components";
 import { ESettingStatus } from "@application/shared/enums";
@@ -31,12 +32,6 @@ import {
 
 type SchemaInput = SystemCleanupConfigurationFormInput;
 type SchemaOutput = SystemCleanupConfigurationFormOutput;
-
-function SectionHeader({ children }: PropsWithChildren) {
-    return (
-        <div className="sticky top-0 z-10 rounded-lg bg-accent px-3 py-2 text-sm font-medium shadow-xs">{children}</div>
-    );
-}
 
 function EnabledField() {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();

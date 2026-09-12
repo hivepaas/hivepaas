@@ -1,15 +1,8 @@
-import type { PropsWithChildren } from "react";
-
 import { useChangeKekDialogState } from "~/system-settings/dialogs";
+import { SectionHeader } from "~/system-settings/module-shared";
 import { ActionExecutePanel } from "~/system-settings/module-shared";
 
 import { MODULE_IDS } from "@application/shared/constants";
-
-function SectionHeader({ children }: PropsWithChildren) {
-    return (
-        <div className="sticky top-0 z-10 rounded-lg bg-accent px-3 py-2 text-sm font-medium shadow-xs">{children}</div>
-    );
-}
 
 export function DatabaseEncryptionSection() {
     const changeKekDialog = useChangeKekDialogState();

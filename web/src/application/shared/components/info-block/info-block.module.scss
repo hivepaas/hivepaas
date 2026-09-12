@@ -6,7 +6,7 @@
   .info {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 2px;
     min-width: 270px;
 
     .title {
@@ -21,9 +21,11 @@
       // padding-top: 8px;
     }
 
+    // Lighter than the title, not darker: it is the supporting line.
     .description {
-      color: var(--foreground);
+      color: var(--muted-foreground);
       font-size: 12px;
+      opacity: 0.85;
     }
   }
 

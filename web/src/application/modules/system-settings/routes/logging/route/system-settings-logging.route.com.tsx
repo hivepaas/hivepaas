@@ -10,7 +10,7 @@ import { LoggingStatusSection } from "../building-blocks";
 import { HivePaaSLoggingSettingsForm, toLoggingPayload } from "../form";
 import type { HivePaaSLoggingSettingsFormOutput } from "../schemas";
 
-export function SystemSettingsHivePaaSLoggingRoute() {
+export function SystemSettingsLoggingRoute() {
     const { canWrite } = useConditionalModule({ id: MODULE_IDS.System });
     const { data, isLoading } = HivePaaSLoggingSettingsQueries.useFindOne();
 
@@ -32,33 +32,32 @@ export function SystemSettingsHivePaaSLoggingRoute() {
     }
 
     return (
-        <div className="flex flex-col gap-8">
-            <HivePaaSLoggingSettingsForm
-                settings={data?.data.settings}
-                onSubmit={handleSubmit}
-                readOnly={!canWrite}
-            >
-                <FormActionBar>
-                    <PermissionTooltipAction
-                        id={MODULE_IDS.System}
-                        action="write"
-                    >
-                        {({ isDenied }) => (
-                            <Button
-                                type="submit"
-                                className="min-w-[100px]"
-                                // Saving deploys or removes the logging stack and
-                                // can take several seconds.
-                                disabled={isPending || isDenied}
-                                isLoading={isPending}
-                            >
-                                Save
-                            </Button>
-                        )}
-                    </PermissionTooltipAction>
-                </FormActionBar>
-            </HivePaaSLoggingSettingsForm>
+        <HivePaaSLoggingSettingsForm
+            settings={data?.data.settings}
+            onSubmit={handleSubmit}
+            readOnly={!canWrite}
+        >
+            {/* Inside the form, before the sticky action bar, so the Save bar stays last. */}
             {data?.data.status && <LoggingStatusSection status={data.data.status} />}
-        </div>
+            <FormActionBar>
+                <PermissionTooltipAction
+                    id={MODULE_IDS.System}
+                    action="write"
+                >
+                    {({ isDenied }) => (
+                        <Button
+                            type="submit"
+                            className="min-w-[100px]"
+                            // Saving deploys or removes the logging stack and
+                            // can take several seconds.
+                            disabled={isPending || isDenied}
+                            isLoading={isPending}
+                        >
+                            Save
+                        </Button>
+                    )}
+                </PermissionTooltipAction>
+            </FormActionBar>
+        </HivePaaSLoggingSettingsForm>
     );
 }

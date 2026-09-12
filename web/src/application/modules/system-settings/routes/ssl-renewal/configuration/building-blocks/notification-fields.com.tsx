@@ -1,10 +1,9 @@
 import { useNotificationSettingsSources } from "~/settings/module-shared/hooks";
+import { SectionHeader } from "~/system-settings/module-shared";
 
 import { NotificationSettings } from "@application/shared/form";
 
 import type { SystemSslRenewalConfigurationFormInput } from "../schemas";
-
-import { SectionHeader } from "./section-header.com";
 
 export function NotificationFields({ readOnly = false }: Props) {
     const { sources, manageLink } = useNotificationSettingsSources({ type: "settings" });

@@ -1,7 +1,8 @@
-import React, { type PropsWithChildren, useState } from "react";
+import React, { useState } from "react";
 
 import { toast } from "sonner";
 import { HivePaaSSecuritySettingsCommands, HivePaaSSecuritySettingsQueries } from "~/system-settings/data";
+import { SectionHeader } from "~/system-settings/module-shared";
 
 import { MODULE_IDS } from "@application/shared/constants";
 import { PermissionTooltipAction } from "@application/shared/permissions";
@@ -19,12 +20,6 @@ import {
 import { Field, FieldGroup } from "@/components/ui/field";
 import { PasswordInput } from "@/components/ui/input-password";
 import { Separator } from "@/components/ui/separator";
-
-function SectionHeader({ children }: PropsWithChildren) {
-    return (
-        <div className="sticky top-0 z-10 rounded-lg bg-accent px-3 py-2 text-sm font-medium shadow-xs">{children}</div>
-    );
-}
 
 export function ReturnSecretsViaApiSection() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);

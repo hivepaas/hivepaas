@@ -3,4 +3,5 @@ export * from "./data-cleanup";
 export * from "./ssl-renewal";
 export * from "./backup-repo-cleanup";
 export * from "./hivepaas";
+export * from "./logging";
 export * from "./traefik";

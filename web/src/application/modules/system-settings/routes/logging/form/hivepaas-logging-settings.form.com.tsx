@@ -1,0 +1,417 @@
+import { type PropsWithChildren, useEffect } from "react";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, Trash2 } from "lucide-react";
+import { Controller, FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
+import { ClusterVolumesQueries, NodesQueries } from "~/cluster/data/queries";
+import type { HivePaaSLoggingSettings } from "~/system-settings/domain";
+import { SectionHeader } from "~/system-settings/module-shared";
+
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+
+import {
+    Button,
+    Checkbox,
+    Input,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui";
+import { InputNumber } from "@/components/ui/input-number";
+
+import { EndpointFields, FieldMessage } from "../building-blocks";
+import {
+    type HivePaaSLoggingSettingsFormInput,
+    type HivePaaSLoggingSettingsFormOutput,
+    HivePaaSLoggingSettingsFormSchema,
+} from "../schemas";
+
+import { emptyLoggingEndpointForm, toLoggingFormInput } from "./hivepaas-logging-settings.form-mappers";
+
+type SchemaInput = HivePaaSLoggingSettingsFormInput;
+type SchemaOutput = HivePaaSLoggingSettingsFormOutput;
+
+const LIST_ALL = { pagination: { page: 1, size: 100 } };
+
+/** The rows of one section, indented under its header like every settings page. */
+function SectionBody({ children }: PropsWithChildren) {
+    return <div className="flex flex-col gap-6 px-3">{children}</div>;
+}
+
+export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, children }: Props) {
+    const methods = useForm<SchemaInput, unknown, SchemaOutput>({
+        defaultValues: toLoggingFormInput(settings),
+        resolver: zodResolver(HivePaaSLoggingSettingsFormSchema),
+        mode: "onSubmit",
+    });
+    const { control, register, reset } = methods;
+
+    // After a save the query refetches; show what the server now holds.
+    useEffect(() => {
+        reset(toLoggingFormInput(settings));
+    }, [reset, settings]);
+
+    const forwards = useFieldArray({ control, name: "forwards" });
+    const enabled = useWatch({ control, name: "enabled" });
+    const backendManaged = useWatch({ control, name: "backendManaged" });
+    const nodeId = useWatch({ control, name: "nodeId" });
+
+    const nodes = NodesQueries.useFindManyPaginated(LIST_ALL).data?.data ?? [];
+    const volumes = (ClusterVolumesQueries.useFindManyPaginated(LIST_ALL).data?.data ?? []).filter(
+        volume => !volume.nodeId || volume.nodeId === nodeId,
+    );
+
+    return (
+        <div className="pt-2">
+            <FormProvider {...methods}>
+                <form
+                    onSubmit={event => {
+                        event.preventDefault();
+                        if (readOnly) {
+                            return;
+                        }
+                        void methods.handleSubmit(onSubmit)(event);
+                    }}
+                    className="flex flex-col gap-6"
+                >
+                    <fieldset
+                        disabled={readOnly}
+                        className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
+                    >
+                        <SectionHeader>General</SectionHeader>
+                        <SectionBody>
+                            <InfoBlock
+                                titleWidth={220}
+                                title={
+                                    <LabelWithInfo
+                                        label="Enabled"
+                                        content="Collect logs on every node and keep them after containers are gone."
+                                    />
+                                }
+                            >
+                                <Controller
+                                    control={control}
+                                    name="enabled"
+                                    render={({ field }) => (
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={checked => {
+                                                field.onChange(checked === true);
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </InfoBlock>
+                        </SectionBody>
+
+                        {/* Nothing below applies while logging is off, the way every
+                            other settings page hides its configuration. The schema
+                            skips its checks too, so turning the feature off never
+                            demands a complete form. */}
+                        {enabled && (
+                            <>
+                                <SectionHeader>Sources</SectionHeader>
+                                <SectionBody>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Container logs"
+                                                content="Every container on every node: your apps and HivePaaS's own services. They are written into one directory under container ids, so they are collected together - which line belongs to which app is decided when the logs are read."
+                                            />
+                                        }
+                                    >
+                                        <Controller
+                                            control={control}
+                                            name="sources.apps"
+                                            render={({ field }) => (
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={checked => {
+                                                        field.onChange(checked === true);
+                                                    }}
+                                                />
+                                            )}
+                                        />
+                                        <FieldMessage name="sources.apps" />
+                                    </InfoBlock>
+                                </SectionBody>
+
+                                <SectionHeader>Backend</SectionHeader>
+                                <SectionBody>
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Where logs are stored"
+                                                content="HivePaaS can run VictoriaLogs for you, or ship to a backend you run yourself."
+                                            />
+                                        }
+                                    >
+                                        <Controller
+                                            control={control}
+                                            name="backendManaged"
+                                            render={({ field }) => (
+                                                <Select
+                                                    value={field.value ? "managed" : "external"}
+                                                    onValueChange={value => {
+                                                        field.onChange(value === "managed");
+                                                    }}
+                                                    disabled={readOnly}
+                                                >
+                                                    <SelectTrigger className="w-full max-w-[420px]">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="managed">
+                                                            Run VictoriaLogs in the cluster (managed)
+                                                        </SelectItem>
+                                                        <SelectItem value="external">Use my own endpoint</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        />
+                                    </InfoBlock>
+
+                                    {backendManaged ? (
+                                        <>
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={
+                                                    <LabelWithInfo
+                                                        label="Node"
+                                                        content="Where VictoriaLogs runs and keeps its data."
+                                                        isRequired
+                                                    />
+                                                }
+                                            >
+                                                <Controller
+                                                    control={control}
+                                                    name="nodeId"
+                                                    render={({ field }) => (
+                                                        <Select
+                                                            value={field.value || undefined}
+                                                            onValueChange={field.onChange}
+                                                            disabled={readOnly}
+                                                        >
+                                                            <SelectTrigger className="w-full max-w-[420px]">
+                                                                <SelectValue placeholder="Select a node" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {nodes.map(node => (
+                                                                    <SelectItem
+                                                                        key={node.id}
+                                                                        value={node.id}
+                                                                    >
+                                                                        {node.name || node.hostname || node.refId}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    )}
+                                                />
+                                                <FieldMessage name="nodeId" />
+                                            </InfoBlock>
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={
+                                                    <LabelWithInfo
+                                                        label="Data volume"
+                                                        content="Only volumes reachable from the chosen node. It is kept when logging is turned off."
+                                                        isRequired
+                                                    />
+                                                }
+                                            >
+                                                <Controller
+                                                    control={control}
+                                                    name="volumeId"
+                                                    render={({ field }) => (
+                                                        <Select
+                                                            value={field.value || undefined}
+                                                            onValueChange={field.onChange}
+                                                            disabled={readOnly}
+                                                        >
+                                                            <SelectTrigger className="w-full max-w-[420px]">
+                                                                <SelectValue placeholder="Select a volume" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {volumes.map(volume => (
+                                                                    <SelectItem
+                                                                        key={volume.id}
+                                                                        value={volume.id}
+                                                                    >
+                                                                        {volume.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    )}
+                                                />
+                                                <FieldMessage name="volumeId" />
+                                            </InfoBlock>
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={
+                                                    <LabelWithInfo
+                                                        label="Retention"
+                                                        content="Such as 30d or 12h. VictoriaLogs keeps at least one day."
+                                                    />
+                                                }
+                                            >
+                                                <Input
+                                                    {...register("retention")}
+                                                    className="max-w-[200px]"
+                                                />
+                                                <FieldMessage name="retention" />
+                                            </InfoBlock>
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={
+                                                    <LabelWithInfo
+                                                        label="Max disk usage %"
+                                                        content="Drop the oldest days once the disk is this full. Optional."
+                                                    />
+                                                }
+                                            >
+                                                <Controller
+                                                    control={control}
+                                                    name="maxDiskUsagePercent"
+                                                    render={({ field }) => (
+                                                        <InputNumber
+                                                            value={field.value ?? undefined}
+                                                            min={1}
+                                                            max={100}
+                                                            showControls={false}
+                                                            useGrouping={false}
+                                                            className="max-w-[110px]"
+                                                            onValueChange={value => {
+                                                                field.onChange(
+                                                                    typeof value === "number" ? value : null,
+                                                                );
+                                                            }}
+                                                        />
+                                                    )}
+                                                />
+                                                <FieldMessage name="maxDiskUsagePercent" />
+                                            </InfoBlock>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <EndpointFields
+                                                prefix="ingest"
+                                                urlLabel="Ingest URL"
+                                                urlInfo="Where the collector writes."
+                                            />
+                                            <EndpointFields
+                                                prefix="query"
+                                                urlLabel="Query URL"
+                                                urlInfo="Without it, stored logs cannot be shown in HivePaaS."
+                                            />
+                                        </>
+                                    )}
+                                </SectionBody>
+
+                                <SectionHeader>Forwards</SectionHeader>
+                                <SectionBody>
+                                    <p className="text-sm text-muted-foreground">
+                                        A copy of every collected line, sent to a system HivePaaS does not run.
+                                    </p>
+                                    {forwards.fields.map((item, index) => (
+                                        <div
+                                            key={item.id}
+                                            className="flex flex-col gap-6 rounded-lg border p-4"
+                                        >
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={
+                                                    <LabelWithInfo
+                                                        label="Name"
+                                                        content="How this destination is reported and removed. Must be unique."
+                                                        isRequired
+                                                    />
+                                                }
+                                            >
+                                                <Input {...register(`forwards.${index}.name`)} />
+                                                <FieldMessage name={`forwards.${index}.name`} />
+                                            </InfoBlock>
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={
+                                                    <LabelWithInfo
+                                                        label="Format"
+                                                        content="jsonline for anything that accepts NDJSON; native for another VictoriaLogs."
+                                                    />
+                                                }
+                                            >
+                                                <Controller
+                                                    control={control}
+                                                    name={`forwards.${index}.format`}
+                                                    render={({ field }) => (
+                                                        <Select
+                                                            value={field.value}
+                                                            onValueChange={field.onChange}
+                                                            disabled={readOnly}
+                                                        >
+                                                            <SelectTrigger className="w-[200px]">
+                                                                <SelectValue />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="jsonline">jsonline</SelectItem>
+                                                                <SelectItem value="native">native</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    )}
+                                                />
+                                            </InfoBlock>
+                                            <EndpointFields
+                                                prefix={`forwards.${index}`}
+                                                urlLabel="URL"
+                                                urlInfo="An HTTP endpoint that accepts the format above."
+                                                showBasicAuth={false}
+                                            />
+                                            <div>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => {
+                                                        forwards.remove(index);
+                                                    }}
+                                                >
+                                                    <Trash2 className="size-4" /> Remove
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div>
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            onClick={() => {
+                                                forwards.append({
+                                                    ...emptyLoggingEndpointForm,
+                                                    name: "",
+                                                    format: "jsonline",
+                                                });
+                                            }}
+                                        >
+                                            <Plus className="size-4" /> Add forward
+                                        </Button>
+                                    </div>
+                                </SectionBody>
+                            </>
+                        )}
+                    </fieldset>
+                    {children}
+                </form>
+            </FormProvider>
+        </div>
+    );
+}
+
+type Props = PropsWithChildren<{
+    settings?: HivePaaSLoggingSettings;
+    readOnly?: boolean;
+    onSubmit: (values: SchemaOutput) => void;
+}>;

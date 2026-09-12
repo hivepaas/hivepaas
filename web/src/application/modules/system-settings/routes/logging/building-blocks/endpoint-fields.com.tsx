@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { PasswordInput } from "@components/ui/input-password";
 import { Controller, type FieldPath, useFormContext } from "react-hook-form";
 
-import { InfoBlock } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { Checkbox, Input } from "@/components/ui";
 
@@ -14,7 +14,7 @@ import { FieldMessage } from "./field-message.com";
 type FormInput = HivePaaSLoggingSettingsFormInput;
 type EndpointField = "url" | "username" | "password" | "bearerToken" | "tlsSkipVerify";
 
-export function EndpointFields({ prefix, urlTitle, urlDescription, showBasicAuth = true }: Props) {
+export function EndpointFields({ prefix, urlLabel, urlInfo, showBasicAuth = true }: Props) {
     const { control, register } = useFormContext<FormInput>();
     const path = (field: EndpointField) => `${prefix}.${field}` as FieldPath<FormInput>;
 
@@ -22,8 +22,12 @@ export function EndpointFields({ prefix, urlTitle, urlDescription, showBasicAuth
         <>
             <InfoBlock
                 titleWidth={220}
-                title={urlTitle}
-                description={urlDescription}
+                title={
+                    <LabelWithInfo
+                        label={urlLabel}
+                        content={urlInfo}
+                    />
+                }
             >
                 <Input
                     {...register(path("url"))}
@@ -35,7 +39,7 @@ export function EndpointFields({ prefix, urlTitle, urlDescription, showBasicAuth
                 <>
                     <InfoBlock
                         titleWidth={220}
-                        title="Username"
+                        title={<LabelWithInfo label="Username" />}
                     >
                         <Input
                             {...register(path("username"))}
@@ -44,7 +48,12 @@ export function EndpointFields({ prefix, urlTitle, urlDescription, showBasicAuth
                     </InfoBlock>
                     <InfoBlock
                         titleWidth={220}
-                        title="Password"
+                        title={
+                            <LabelWithInfo
+                                label="Password"
+                                content="Left masked means the stored password is kept."
+                            />
+                        }
                     >
                         <Controller
                             control={control}
@@ -62,7 +71,12 @@ export function EndpointFields({ prefix, urlTitle, urlDescription, showBasicAuth
             )}
             <InfoBlock
                 titleWidth={220}
-                title="Bearer token"
+                title={
+                    <LabelWithInfo
+                        label="Bearer token"
+                        content="Left masked means the stored token is kept."
+                    />
+                }
             >
                 <Controller
                     control={control}
@@ -78,7 +92,12 @@ export function EndpointFields({ prefix, urlTitle, urlDescription, showBasicAuth
             </InfoBlock>
             <InfoBlock
                 titleWidth={220}
-                title="Skip TLS verification"
+                title={
+                    <LabelWithInfo
+                        label="Skip TLS verification"
+                        content="Accept a certificate this endpoint cannot prove. Only for a host you control."
+                    />
+                }
             >
                 <Controller
                     control={control}
@@ -99,7 +118,7 @@ export function EndpointFields({ prefix, urlTitle, urlDescription, showBasicAuth
 
 type Props = {
     prefix: "ingest" | "query" | `forwards.${number}`;
-    urlTitle: ReactNode;
-    urlDescription?: ReactNode;
+    urlLabel: ReactNode;
+    urlInfo?: ReactNode;
     showBasicAuth?: boolean;
 };

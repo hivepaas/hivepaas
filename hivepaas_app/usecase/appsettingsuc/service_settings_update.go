@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -105,6 +106,13 @@ func (uc *UC) prepareUpdatingAppServiceMode(
 	req *appsettingsdto.UpdateAppServiceSettingsReq,
 	data *updateAppServiceSettingsData,
 ) {
+	if req.ModeSpec == nil {
+		// Nothing says what the mode should become, so it stays as it is.
+		// Reading through the nil instead panics, and the request is not
+		// validated for this field.
+		return
+	}
+
 	service := data.Service
 	spec := &service.Spec
 	currMode := &spec.Mode
@@ -216,6 +224,22 @@ func (uc *UC) applyAppServiceSettings(
 		func(_ int, service *swarm.Service) (bool, error) {
 			data.Service = service
 			uc.prepareUpdatingAppServiceSettings(req, data)
+
+			// The request carries the constraints the operator keeps by hand,
+			// and writing them replaces the list wholesale - taking the ones
+			// HivePaaS put there with it: the volume pins and the placement
+			// settings. Re-applying inside the same callback puts them back
+			// into the spec being written, instead of leaving the app free to
+			// schedule anywhere until the next deploy rebuilds them.
+			_, err := uc.placementService.ApplyPlacementSettings(ctx, db,
+				&placementservice.ApplyPlacementSettingsReq{
+					App:                data.App,
+					Service:            service,
+					SkipSavingToDocker: true,
+				})
+			if err != nil {
+				return false, hperrors.Wrap(err)
+			}
 			return true, nil
 		}, defaultServiceRetryMax, 0)
 	if err != nil {
@@ -241,6 +265,19 @@ func (uc *UC) recreateAppServiceWithNewMode(
 	}
 
 	uc.prepareUpdatingAppServiceSettings(req, data)
+
+	// Same reason as applyAppServiceSettings, and it matters more here: this
+	// spec is what the replacement service is created from, so a constraint
+	// missing now is missing for the life of that service.
+	if _, err := uc.placementService.ApplyPlacementSettings(ctx, db,
+		&placementservice.ApplyPlacementSettingsReq{
+			App:                data.App,
+			Service:            data.Service,
+			SkipSavingToDocker: true,
+		}); err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	newSpec := data.Service.Spec
 
 	// The stored mode belongs to the mode being replaced, so starting the app later must not

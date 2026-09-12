@@ -98,3 +98,36 @@ func TestApplyWarnsWhenPinsConflictInsteadOfSilentlyDroppingTheConstraint(t *tes
 	assert.Contains(t, logger.warnings[0], "pgdata")
 	assert.Contains(t, logger.warnings[0], "uploads")
 }
+
+// The operator's label rules reach swarm as constraints, and are recorded as
+// HivePaaS-set so that a later change can take them back out.
+func TestApplyAddsNodeLabelRules(t *testing.T) {
+	data := applyData(nil, nil)
+	data.PlacementSettings.RequireNodeLabels = []string{"zone=eu", "disk"}
+	data.PlacementSettings.ExcludeNodeLabels = []string{"maintenance=true"}
+
+	(&service{}).applyPlacementSettings(data)
+
+	constraints := data.Service.Spec.TaskTemplate.Placement.Constraints
+	assert.Contains(t, constraints, "node.labels.zone==eu")
+	assert.Contains(t, constraints, "node.labels.disk==true")
+	assert.Contains(t, constraints, "node.labels.maintenance!=true")
+	recorded := data.Service.Spec.Labels["hivepaas.app.placementConstraints"]
+	assert.Contains(t, recorded, "node.labels.zone==eu")
+	assert.Contains(t, recorded, "node.labels.maintenance!=true")
+	assert.True(t, data.HasChanges)
+}
+
+// Rules that are removed from the settings must leave the service with them.
+func TestApplyRemovesNodeLabelRulesItAddedBefore(t *testing.T) {
+	data := applyData(nil, []string{"node.labels.zone==eu", "node.labels.keep==mine"})
+	data.Service.Spec.Labels = map[string]string{
+		"hivepaas.app.placementConstraints": "node.labels.zone==eu",
+	}
+
+	(&service{}).applyPlacementSettings(data)
+
+	constraints := data.Service.Spec.TaskTemplate.Placement.Constraints
+	assert.NotContains(t, constraints, "node.labels.zone==eu")
+	assert.Contains(t, constraints, "node.labels.keep==mine", "the operator set this one by hand")
+}

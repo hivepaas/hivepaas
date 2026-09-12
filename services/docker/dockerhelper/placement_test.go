@@ -95,3 +95,33 @@ func TestParsePlacementConstraint(t *testing.T) {
 		})
 	}
 }
+
+func TestNodeLabelConstraint(t *testing.T) {
+	cases := []struct {
+		label string
+		op    string
+		want  string
+	}{
+		{"zone=eu", "==", "node.labels.zone==eu"},
+		{"zone=eu", "!=", "node.labels.zone!=eu"},
+		{" zone = eu ", "==", "node.labels.zone==eu"},
+		// A label used as a flag: presence is written as =true, which is how
+		// build-node exclusions have always been read.
+		{"gpu", "==", "node.labels.gpu==true"},
+		{"gpu=", "!=", "node.labels.gpu!=true"},
+	}
+	for _, tc := range cases {
+		got, ok := NodeLabelConstraint(tc.label, tc.op)
+		assert.True(t, ok, tc.label)
+		assert.Equal(t, tc.want, got, tc.label)
+	}
+}
+
+func TestNodeLabelConstraintRefusesWhatCannotBeOne(t *testing.T) {
+	// A comma would not survive the comma-joined label HivePaaS records its own
+	// constraints in; a pasted operator would produce node.labels.node.labels.x.
+	for _, label := range []string{"", "  ", "=eu", "zone==eu", "zone!=eu", "a=1,b=2", ",", "zone=eu,"} {
+		_, ok := NodeLabelConstraint(label, "==")
+		assert.False(t, ok, "label %q", label)
+	}
+}

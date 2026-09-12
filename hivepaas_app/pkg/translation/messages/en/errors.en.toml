@@ -133,6 +133,7 @@ ERR_SERVICE_MODE_CHANGE_REQUIRES_RUNNING_APP = "Changing the service mode recrea
 
 # File errors
 ERR_DIR_NOT_CREATED = "Directory '{{.Name}}' could not be created"
+ERR_PLACEMENT_NO_MATCHING_NODE = "No node in the cluster matches these placement rules, so no app could be scheduled"
 ERR_FILE_SCOPE_UNSUPPORTED = "File scope '{{.Scope}}' is not supported"
 ERR_FILE_SIZE_TOO_BIG = "File size must be less than {{.MaxSize}}"
 ERR_FILE_TYPE_NOT_SUPPORTED = "File type must be one of {{.SupportedTypes}}"

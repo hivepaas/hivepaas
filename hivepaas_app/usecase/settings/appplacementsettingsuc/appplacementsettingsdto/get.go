@@ -31,8 +31,10 @@ type GetAppPlacementSettingsResp struct {
 
 type AppPlacementSettingsResp struct {
 	*settings.BaseSettingResp
-	ExcludeManagerNodes bool `json:"excludeManagerNodes,omitempty"`
-	ExcludeBuildNodes   bool `json:"excludeBuildNodes,omitempty"`
+	ExcludeManagerNodes bool     `json:"excludeManagerNodes,omitempty"`
+	ExcludeBuildNodes   bool     `json:"excludeBuildNodes,omitempty"`
+	RequireNodeLabels   []string `json:"requireNodeLabels,omitempty"`
+	ExcludeNodeLabels   []string `json:"excludeNodeLabels,omitempty"`
 }
 
 func TransformImageBuild(

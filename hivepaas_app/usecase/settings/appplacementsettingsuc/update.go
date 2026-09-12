@@ -17,6 +17,10 @@ func (uc *UC) UpdateAppPlacementSettings(
 ) (*appplacementsettingsdto.UpdateAppPlacementSettingsResp, error) {
 	req.Type = currentSettingType
 	req.Auth = auth
+
+	if err := uc.checkANodeMatches(ctx, req.ToEntity()); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
 		Name: string(currentSettingType),
 		PrepareUpdate: func(

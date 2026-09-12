@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -98,5 +99,53 @@ func TestApplyAppStorageSettingsPutsThePinConstraintInTheSameUpdateAsTheMounts(t
 	}
 	assert.True(t, placement.reqs[0].SkipSavingToDocker,
 		"placementservice must mutate this spec, not save one of its own")
+	assert.Equal(t, data.App, placement.reqs[0].App)
+}
+
+// The service settings form owns the constraint list, and saving it writes that
+// list wholesale - which drops the ones HivePaaS manages: volume pins and the
+// placement settings. They have to be put back in the same spec, or the app is
+// free to schedule anywhere until something else rebuilds them.
+func TestApplyAppServiceSettingsRestoresManagedConstraints(t *testing.T) {
+	dockerManager := &serviceUpdatingDockerManager{}
+	placement := &recordingPlacementService{}
+	uc := &UC{dockerManager: dockerManager, placementService: placement}
+
+	data := &updateAppServiceSettingsData{
+		App: &entity.App{ID: "app-1", ServiceID: "svc-1"},
+		Service: &swarm.Service{
+			ID: "svc-1",
+			Spec: swarm.ServiceSpec{
+				TaskTemplate: swarm.TaskSpec{
+					ContainerSpec: &swarm.ContainerSpec{},
+					// What HivePaaS had put there before this save.
+					Placement: &swarm.Placement{Constraints: []string{"node.id==node-2"}},
+				},
+			},
+		},
+	}
+	// A request with no placement of its own: the form sent none, so the
+	// preparation clears the list entirely.
+	req := &appsettingsdto.UpdateAppServiceSettingsReq{}
+
+	if err := uc.applyAppServiceSettings(context.Background(), database.Tx{}, req, data); err != nil {
+		t.Fatalf("applyAppServiceSettings failed: %v", err)
+	}
+
+	if dockerManager.updatedSpec == nil {
+		t.Fatal("the settings must actually have been written")
+	}
+	if dockerManager.updatedSpec.TaskTemplate.Placement == nil {
+		t.Fatal("the spec reached docker with no placement at all")
+	}
+	assert.Equal(t, []string{"node.id==node-2"},
+		dockerManager.updatedSpec.TaskTemplate.Placement.Constraints,
+		"the managed constraint has to be back in the spec that rolls the tasks")
+
+	if len(placement.reqs) != 1 {
+		t.Fatalf("expected one apply, got %d", len(placement.reqs))
+	}
+	assert.True(t, placement.reqs[0].SkipSavingToDocker,
+		"placementservice must mutate this spec, not save a second one")
 	assert.Equal(t, data.App, placement.reqs[0].App)
 }

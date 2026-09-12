@@ -216,7 +216,12 @@ var (
 	// resolves to nothing - and the apply path treats a missing reference as fatal,
 	// so each referencing object would fail at its next deploy, long after anybody
 	// could connect the two events.
-	ErrSettingInUse                 = NewErr(ErrPreconditionFailed, "ERR_SETTING_IN_USE")
+	ErrSettingInUse = NewErr(ErrPreconditionFailed, "ERR_SETTING_IN_USE")
+
+	// ErrPlacementNoMatchingNode refuses placement rules no node satisfies.
+	// Swarm's own answer to those is to leave every task Pending forever,
+	// without an error anywhere an operator would look.
+	ErrPlacementNoMatchingNode      = NewErr(ErrBadRequest, "ERR_PLACEMENT_NO_MATCHING_NODE")
 	ErrPasswordNotMeetRequirements  = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_NOT_MEET_REQUIREMENTS")
 	ErrPasswordHasWeakSequence      = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_HAS_WEAK_SEQUENCE")
 	ErrPasswordTooSimilarToPrevious = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_TOO_SIMILAR_TO_PREVIOUS")

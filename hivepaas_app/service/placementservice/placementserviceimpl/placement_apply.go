@@ -1,7 +1,6 @@
 package placementserviceimpl
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -68,25 +67,23 @@ func (s *service) applyPlacementSettings(
 		}
 
 		for _, label := range data.BuildSettings.Workers.NodeLabels {
-			if label == "" {
-				continue
+			if constraint, ok := dockerhelper.NodeLabelConstraint(label, "!="); ok {
+				newHivepaasConstraints = append(newHivepaasConstraints, constraint)
 			}
+		}
+	}
 
-			parts := strings.SplitN(label, "=", 2) //nolint:mnd
-			key := strings.TrimSpace(parts[0])
-			if key == "" {
-				continue
-			}
-			val := ""
-			if len(parts) == 2 { //nolint:mnd
-				val = strings.TrimSpace(parts[1])
-			}
-
-			if val != "" {
-				newHivepaasConstraints = append(newHivepaasConstraints, fmt.Sprintf("node.labels.%s!=%s", key, val))
-			} else {
-				newHivepaasConstraints = append(newHivepaasConstraints, fmt.Sprintf("node.labels.%s!=true", key))
-			}
+	// The operator's own label rules. A selector that cannot become a
+	// constraint was refused when the settings were saved; one that arrives
+	// here anyway is skipped rather than emitted half-formed.
+	for _, label := range data.PlacementSettings.RequireNodeLabels {
+		if constraint, ok := dockerhelper.NodeLabelConstraint(label, "=="); ok {
+			newHivepaasConstraints = append(newHivepaasConstraints, constraint)
+		}
+	}
+	for _, label := range data.PlacementSettings.ExcludeNodeLabels {
+		if constraint, ok := dockerhelper.NodeLabelConstraint(label, "!="); ok {
+			newHivepaasConstraints = append(newHivepaasConstraints, constraint)
 		}
 	}
 

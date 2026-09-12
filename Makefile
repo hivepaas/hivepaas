@@ -20,6 +20,7 @@ lint-goroutines:
 
 lint:
 	$(DEVTOOLS_CMD) go run ./tools/goroutinelint .
+	$(DEVTOOLS_CMD) go run ./tools/errcodelint
 	$(DEVTOOLS_CMD) golangci-lint --timeout=3m run -v ./...
 
 lint-local: lint-goroutines

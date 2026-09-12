@@ -13,7 +13,12 @@ import (
 
 // codePattern is what an error code identifier looks like. Anything else in a
 // string literal is not our business.
-var codePattern = regexp.MustCompile(`^ERR_[A-Z0-9_]+$`)
+// codePattern is what an error code identifier looks like: ERR_ followed by
+// underscore-separated segments. The segments matter - they reject a bare
+// prefix such as "ERR_VLD_", which is a constant naming a family of codes
+// rather than a code, and which a looser pattern reports as a missing
+// translation.
+var codePattern = regexp.MustCompile(`^ERR_[A-Z0-9]+(_[A-Z0-9]+)*$`)
 
 // declaringFuncs are the calls whose string argument declares a code rather
 // than merely mentioning one.
@@ -31,6 +36,11 @@ var skipDirs = map[string]bool{
 	"deployment":     true,
 	"dist-dashboard": true,
 	"test-results":   true,
+
+	// testdata holds fixtures, including this tool's own. A code in a fixture
+	// is not a code the product raises. It is still scannable by naming it as
+	// a root, which is how the tests here reach their sample package.
+	"testdata": true,
 }
 
 // codeUse is one appearance of an error code in Go source.
@@ -46,9 +56,8 @@ func skipDir(name string) bool {
 
 // scanGoDirs collects every error code appearing in Go sources under roots.
 //
-// testdata is scanned here, unlike in goroutinelint: this tool's own fixtures
-// live there, and a stray code in someone else's testdata is worth reporting
-// rather than hiding.
+// Fixtures are excluded: testdata directories and _test.go files hold codes
+// that exist to exercise something, not codes the product can raise.
 func scanGoDirs(fset *token.FileSet, roots []string) ([]codeUse, error) {
 	var uses []codeUse
 	for _, root := range roots {
@@ -62,7 +71,10 @@ func scanGoDirs(fset *token.FileSet, roots []string) ([]codeUse, error) {
 				}
 				return nil
 			}
-			if !strings.HasSuffix(path, ".go") {
+			// _test.go is skipped: a code appearing only in a test is a
+			// fixture, and requiring a translation for one would mean shipping
+			// message entries that exist to satisfy a test.
+			if !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 				return nil
 			}
 			file, err := parser.ParseFile(fset, path, nil, 0)

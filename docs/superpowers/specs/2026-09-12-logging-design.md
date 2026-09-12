@@ -501,6 +501,41 @@ from managed to unmanaged. Deleting it is a separate, explicit action. This
 matters concretely: a plain local volume holds its data inside the volume, so
 removing it destroys the logs, whereas a bind volume only loses a pointer.
 
+## What implementation changed
+
+Found while building plan 2, each verified against the repo or a real daemon
+rather than assumed. Where the sections above say otherwise, this wins.
+
+- **New apps used the `local` log driver, not json-file.** `appuc/create.go` set
+  `local`, which writes a binary format under `local-logs/` and no `*-json.log`,
+  so every app HivePaaS created was invisible to the collector. New apps now get
+  json-file with the same limits (`max-size=50m`, `max-file=20`,
+  `compress=true`). Existing apps are not migrated: an app still on `local` is
+  listed as not collected, and the operator switches it. Chosen over migrating
+  on enable, which would restart every app at once.
+- **Identity labels are container labels.** A service label named in the
+  json-file `labels` option produces no attrs - swarm does not pass service
+  labels to containers. Measured with one of each: only the container label
+  reached the line. They are stamped at creation, on every container settings
+  update, and on clone.
+- **Cloning shared its spec with the source.** `new(*srcSvc)` was a shallow copy,
+  and `stopSrcAppBeforeCloningVolumes` sends the source spec back to docker, so
+  edits to a clone - cleared env, init image, the clone's identity - reached the
+  source app. The clone is now a deep copy.
+- **Not collected has two causes.** A driver the collector cannot read, and a
+  readable driver whose app identity is missing or wrong - an app created before
+  the labels existed, or cloned before the fix above. The second is collected
+  but cannot be scoped to its app, which for the read path is as good as absent.
+- **Apply is idempotent and reconciles.** It runs on every save, so it creates
+  or updates in place, and removes the collector or backend HivePaaS no longer
+  runs. The data volume is never removed.
+- **The collector does not wait for the backend's health check.** Creation order
+  is kept, but vlagent buffers in a persistent queue until delivery succeeds, so
+  a wait would add a timeout for no lost line.
+- **Responses never reveal credentials.** They are always masked; revealing one
+  would go through the audited reveal path other settings use, which is not
+  offered here yet.
+
 ## Testing
 
 - The provenance properties in section 7 are regression tests, not one-off

@@ -157,6 +157,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/supportuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/logginguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc"
@@ -281,6 +282,7 @@ var Provides = []any{
 	gitcredentialuc.New,
 	githubappuc.New,
 	hpappsettingsuc.New,
+	logginguc.New,
 	hpappuc.New,
 	imagebuildsettingsuc.New,
 	imserviceuc.New,

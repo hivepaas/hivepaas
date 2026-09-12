@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/moby/moby/api/types/swarm"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -54,12 +56,30 @@ func (s *service) deploy(ctx context.Context, cfg *entity.Logging) error {
 		return hperrors.Wrap(err)
 	}
 
-	if !cfg.Collector.Managed {
-		// The collector is somebody else's. The backend is up and the operator
-		// points their own collector at it.
-		return nil
+	if cfg.Collector.Managed {
+		if err := s.deployCollector(ctx, cfg, ingestURL); err != nil {
+			return hperrors.Wrap(err)
+		}
+	} else {
+		// The collector is somebody else's now. One HivePaaS ran before would
+		// otherwise keep shipping alongside theirs.
+		if err := s.removeService(ctx, ServiceNameCollector); err != nil {
+			return hperrors.Wrap(err)
+		}
 	}
 
+	// Removed last, once no collector HivePaaS runs points at it any more. The
+	// data volume stays: see TearDown.
+	if !cfg.Backend.Managed {
+		if err := s.removeService(ctx, ServiceNameBackend); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	return nil
+}
+
+// deployCollector runs vlagent on every node, shipping to ingestURL.
+func (s *service) deployCollector(ctx context.Context, cfg *entity.Logging, ingestURL string) error {
 	spec, err := s.buildCollectSpec(cfg, ingestURL)
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -90,10 +110,7 @@ func (s *service) deploy(ctx context.Context, cfg *entity.Logging) error {
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	if _, err := s.dockerManager.ServiceCreate(ctx, svcSpec); err != nil {
-		return hperrors.Wrap(err)
-	}
-	return nil
+	return hperrors.Wrap(s.ensureService(ctx, svcSpec))
 }
 
 // deployBackend creates the backend when HivePaaS owns it, and reports where
@@ -148,7 +165,7 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging) (strin
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}
-	if _, err := s.dockerManager.ServiceCreate(ctx, svcSpec); err != nil {
+	if err := s.ensureService(ctx, svcSpec); err != nil {
 		return "", hperrors.Wrap(err)
 	}
 
@@ -166,13 +183,42 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging) (strin
 func (s *service) TearDown(ctx context.Context) error {
 	var errs error
 	for _, name := range []string{ServiceNameCollector, ServiceNameBackend} {
-		_, err := s.dockerManager.ServiceRemove(ctx, name)
-		if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		if err := s.removeService(ctx, name); err != nil {
 			errs = errors.Join(errs, err)
 		}
 	}
 	if errs != nil {
 		return hperrors.Wrap(errs)
+	}
+	return nil
+}
+
+// ensureService creates the service, or updates it in place when one by that
+// name already exists.
+//
+// Apply runs every time the settings are saved, so creating unconditionally
+// would fail the second save on a name clash. Updating in place also means a
+// changed retention or a new forward rolls the running service rather than
+// removing it and starting over.
+func (s *service) ensureService(ctx context.Context, spec *swarm.ServiceSpec) error {
+	existing, err := s.dockerManager.ServiceInspect(ctx, spec.Name)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
+	}
+	if err != nil || existing == nil {
+		_, err = s.dockerManager.ServiceCreate(ctx, spec)
+		return hperrors.Wrap(err)
+	}
+	_, err = s.dockerManager.ServiceUpdate(ctx, existing.Service.ID, &existing.Service.Version, spec)
+	return hperrors.Wrap(err)
+}
+
+// removeService removes the service by name, treating one that is not there as
+// already removed.
+func (s *service) removeService(ctx context.Context, name string) error {
+	_, err := s.dockerManager.ServiceRemove(ctx, name)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return hperrors.Wrap(err)
 	}
 	return nil
 }

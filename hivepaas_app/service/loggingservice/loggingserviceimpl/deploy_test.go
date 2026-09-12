@@ -10,6 +10,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
@@ -22,21 +23,50 @@ import (
 // of passing quietly.
 type fakeDocker struct {
 	docker.Manager
-	created []*swarm.ServiceSpec
-	removed []string
+	existing map[string]bool
+	created  []*swarm.ServiceSpec
+	updated  []*swarm.ServiceSpec
+	removed  []string
+}
+
+func (f *fakeDocker) ServiceInspect(
+	_ context.Context, serviceID string, _ ...docker.ServiceInspectOption,
+) (*client.ServiceInspectResult, error) {
+	if !f.existing[serviceID] {
+		return nil, hperrors.Wrap(hperrors.ErrNotFound)
+	}
+	return &client.ServiceInspectResult{Service: swarm.Service{ID: "svc-" + serviceID}}, nil
 }
 
 func (f *fakeDocker) ServiceCreate(
 	_ context.Context, spec *swarm.ServiceSpec, _ ...docker.ServiceCreateOption,
 ) (*client.ServiceCreateResult, error) {
+	if f.existing[spec.Name] {
+		return nil, hperrors.Wrap(hperrors.ErrConflict) // what docker says to a name clash
+	}
+	if f.existing == nil {
+		f.existing = map[string]bool{}
+	}
+	f.existing[spec.Name] = true
 	f.created = append(f.created, spec)
 	return &client.ServiceCreateResult{ID: "svc-" + spec.Name}, nil
+}
+
+func (f *fakeDocker) ServiceUpdate(
+	_ context.Context, _ string, _ *swarm.Version, spec *swarm.ServiceSpec, _ ...docker.ServiceUpdateOption,
+) (*client.ServiceUpdateResult, error) {
+	f.updated = append(f.updated, spec)
+	return &client.ServiceUpdateResult{}, nil
 }
 
 func (f *fakeDocker) ServiceRemove(
 	_ context.Context, serviceID string, _ ...docker.ServiceRemoveOption,
 ) (*client.ServiceRemoveResult, error) {
 	f.removed = append(f.removed, serviceID)
+	if !f.existing[serviceID] {
+		return nil, hperrors.Wrap(hperrors.ErrNotFound)
+	}
+	delete(f.existing, serviceID)
 	return &client.ServiceRemoveResult{}, nil
 }
 
@@ -186,7 +216,7 @@ func TestDeploySkipsAnUnmanagedBackend(t *testing.T) {
 }
 
 func TestTearDownRemovesCollectorBeforeBackend(t *testing.T) {
-	fd := &fakeDocker{}
+	fd := &fakeDocker{existing: map[string]bool{ServiceNameCollector: true, ServiceNameBackend: true}}
 	s := &service{dockerManager: fd}
 
 	if err := s.TearDown(context.Background()); err != nil {
@@ -201,7 +231,7 @@ func TestTearDownRemovesCollectorBeforeBackend(t *testing.T) {
 // data is inside the volume, so removing it is unrecoverable; removal is a
 // separate, explicit action through the volume API.
 func TestTearDownKeepsTheDataVolume(t *testing.T) {
-	fd := &fakeDocker{}
+	fd := &fakeDocker{existing: map[string]bool{ServiceNameCollector: true, ServiceNameBackend: true}}
 	s := &service{dockerManager: fd}
 
 	if err := s.TearDown(context.Background()); err != nil {
@@ -226,7 +256,7 @@ func TestApplyWithNoSettingDoesNothing(t *testing.T) {
 func TestApplyWhenDisabledTearsDown(t *testing.T) {
 	cfg := enabledConfig()
 	cfg.Enabled = false
-	fd := &fakeDocker{}
+	fd := &fakeDocker{existing: map[string]bool{ServiceNameCollector: true, ServiceNameBackend: true}}
 	s := &service{dockerManager: fd, settingRepo: &fakeSettingRepo{setting: storedSetting(t, cfg)}}
 
 	assert.NoError(t, s.Apply(context.Background(), nil))
@@ -240,4 +270,61 @@ func TestApplyWhenEnabledDeploys(t *testing.T) {
 
 	assert.NoError(t, s.Apply(context.Background(), nil))
 	assert.Len(t, fd.created, 2)
+}
+
+// Apply runs on every save. A second run must update what the first created,
+// not try to create it again and fail on the name.
+func TestDeployTwiceUpdatesInsteadOfCreating(t *testing.T) {
+	fd := &fakeDocker{}
+	s := &service{dockerManager: fd}
+
+	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+		t.Fatalf("first deploy: %v", err)
+	}
+	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+		t.Fatalf("second deploy: %v", err)
+	}
+
+	assert.Len(t, fd.created, 2, "each service created once")
+	assert.Len(t, fd.updated, 2, "and updated on the second run")
+}
+
+// Switching to the operator's own collector must stop HivePaaS's, or both ship.
+func TestDeployRemovesTheCollectorWhenItStopsBeingManaged(t *testing.T) {
+	fd := &fakeDocker{}
+	s := &service{dockerManager: fd}
+	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+		t.Fatalf("deploy: %v", err)
+	}
+
+	cfg := enabledConfig()
+	cfg.Collector.Managed = false
+	if err := s.deploy(context.Background(), cfg); err != nil {
+		t.Fatalf("redeploy: %v", err)
+	}
+
+	assert.Equal(t, []string{ServiceNameCollector}, fd.removed)
+}
+
+// Moving to a backend HivePaaS does not run removes the one it did - after the
+// collector has been repointed, and without touching the data volume.
+func TestDeployRemovesTheBackendWhenItStopsBeingManaged(t *testing.T) {
+	fd := &fakeDocker{}
+	s := &service{dockerManager: fd}
+	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+		t.Fatalf("deploy: %v", err)
+	}
+
+	cfg := enabledConfig()
+	cfg.Backend.Managed = false
+	cfg.Backend.VictoriaLogs = nil
+	cfg.Backend.Ingest = &entity.LoggingEndpoint{URL: "https://logs.example/insert"}
+	if err := s.deploy(context.Background(), cfg); err != nil {
+		t.Fatalf("redeploy: %v", err)
+	}
+
+	assert.Equal(t, []string{ServiceNameBackend}, fd.removed)
+	last := fd.updated[len(fd.updated)-1]
+	assert.Equal(t, ServiceNameCollector, last.Name, "the collector is repointed before the backend goes")
+	assert.Contains(t, last.TaskTemplate.ContainerSpec.Args, "-remoteWrite.url=https://logs.example/insert")
 }

@@ -35,12 +35,6 @@ type SchemaOutput = HivePaaSLoggingSettingsFormOutput;
 
 const LIST_ALL = { pagination: { page: 1, size: 100 } };
 
-const SOURCES = [
-    { name: "sources.apps", label: "Apps", info: "Every app's container output." },
-    { name: "sources.hivepaas", label: "HivePaaS", info: "HivePaaS's own services." },
-    { name: "sources.traefikAccess", label: "Traefik access log", info: "Requests through the proxy." },
-] as const;
-
 /** The rows of one section, indented under its header like every settings page. */
 function SectionBody({ children }: PropsWithChildren) {
     return <div className="flex flex-col gap-6 px-3">{children}</div>;
@@ -120,45 +114,28 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                             <>
                                 <SectionHeader>Sources</SectionHeader>
                                 <SectionBody>
-                                    {SOURCES.map(source => (
-                                        <InfoBlock
-                                            key={source.name}
-                                            titleWidth={220}
-                                            title={
-                                                <LabelWithInfo
-                                                    label={source.label}
-                                                    content={source.info}
-                                                />
-                                            }
-                                        >
-                                            <Controller
-                                                control={control}
-                                                name={source.name}
-                                                render={({ field }) => (
-                                                    <Checkbox
-                                                        checked={field.value}
-                                                        onCheckedChange={checked => {
-                                                            field.onChange(checked === true);
-                                                        }}
-                                                    />
-                                                )}
-                                            />
-                                            {source.name === "sources.apps" && <FieldMessage name="sources.apps" />}
-                                        </InfoBlock>
-                                    ))}
                                     <InfoBlock
                                         titleWidth={220}
                                         title={
                                             <LabelWithInfo
-                                                label="Node logs"
-                                                content="Not collected yet: the collector does not read the host's own logs. Reserved for a later release."
+                                                label="Container logs"
+                                                content="Every container on every node: your apps and HivePaaS's own services. They are written into one directory under container ids, so they are collected together - which line belongs to which app is decided when the logs are read."
                                             />
                                         }
                                     >
-                                        <Checkbox
-                                            checked={false}
-                                            disabled
+                                        <Controller
+                                            control={control}
+                                            name="sources.apps"
+                                            render={({ field }) => (
+                                                <Checkbox
+                                                    checked={field.value}
+                                                    onCheckedChange={checked => {
+                                                        field.onChange(checked === true);
+                                                    }}
+                                                />
+                                            )}
                                         />
+                                        <FieldMessage name="sources.apps" />
                                     </InfoBlock>
                                 </SectionBody>
 

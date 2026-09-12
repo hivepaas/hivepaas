@@ -30,7 +30,7 @@ export const HivePaaSLoggingSettingsFormSchema = z
         if (!v.enabled) {
             return;
         }
-        if (!Object.values(v.sources).some(Boolean)) {
+        if (!v.sources.apps && !v.sources.hivepaas) {
             ctx.addIssue({ code: "custom", path: ["sources", "apps"], message: "Select at least one source" });
         }
         if (v.backendManaged && !v.nodeId) {

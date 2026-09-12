@@ -112,9 +112,10 @@ services:
         monitor: 180s
         max_failure_ratio: 0.5
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 50m
+        max-file: "5"
         compress: "true"
 
   db:
@@ -148,9 +149,10 @@ services:
         delay: 5s
         window: 120s
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 50m
+        max-file: "5"
         compress: "true"
 
   redis:
@@ -173,9 +175,10 @@ services:
         delay: 5s
         window: 120s
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 50m
+        max-file: "5"
         compress: "true"
 
   adminer:
@@ -205,9 +208,10 @@ services:
         delay: 5s
         window: 120s
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 50m
+        max-file: "5"
         compress: "true"
 
   app:
@@ -311,9 +315,10 @@ services:
         delay: 5s
         window: 120s
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 50m
+        max-file: "5"
         compress: "true"
 
   worker:
@@ -381,9 +386,10 @@ services:
         monitor: 240s
         max_failure_ratio: 0.5
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 50m
+        max-file: "5"
         compress: "true"
 
   updater:
@@ -413,9 +419,10 @@ services:
         delay: 5s
         window: 120s
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 50m
+        max-file: "5"
         compress: "true"
 
   agent:
@@ -444,9 +451,10 @@ services:
         delay: 5s
         window: 120s
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 20m
+        max-file: "5"
         compress: "true"
 
 networks:

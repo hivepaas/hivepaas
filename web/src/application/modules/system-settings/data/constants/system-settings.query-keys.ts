@@ -9,6 +9,7 @@ export const QK = {
     "system-settings.hivepaas.routing-settings.probe": "system-settings.hivepaas.routing-settings.probe",
     "system-settings.hivepaas.http-settings.find-one": "system-settings.hivepaas.routing-settings.find-one",
     "system-settings.hivepaas.security-settings.find-one": "system-settings.hivepaas.security-settings.find-one",
+    "system-settings.hivepaas.logging.find-one": "system-settings.hivepaas.logging.find-one",
 
     "system-settings.traefik.service-settings.find-one": "system-settings.traefik.service-settings.find-one",
     "system-settings.traefik.config-options.find-one": "system-settings.traefik.config-options.find-one",

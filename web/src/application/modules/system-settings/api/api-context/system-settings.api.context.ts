@@ -3,6 +3,8 @@ import { createContext } from "react";
 import {
     HivePaaSAppSecretApi,
     HivePaaSAppSecretApiValidator,
+    HivePaaSLoggingSettingsApi,
+    HivePaaSLoggingSettingsApiValidator,
     HivePaaSRequestInfoApi,
     HivePaaSRequestInfoApiValidator,
     HivePaaSRestartApi,
@@ -41,6 +43,7 @@ function createApi() {
     const hivePaaSRoutingSettingsValidator = new HivePaaSRoutingSettingsApiValidator();
     const hivePaaSSecuritySettingsValidator = new HivePaaSSecuritySettingsApiValidator();
     const hivePaaSAppSecretValidator = new HivePaaSAppSecretApiValidator();
+    const hivePaaSLoggingSettingsValidator = new HivePaaSLoggingSettingsApiValidator();
     const hivePaaSRestartValidator = new HivePaaSRestartApiValidator();
     const hivePaaSRequestInfoValidator = new HivePaaSRequestInfoApiValidator();
     const traefikServiceSettingsValidator = new TraefikServiceSettingsApiValidator();
@@ -54,6 +57,7 @@ function createApi() {
             hivepaasHttpSettings: new HivePaaSRoutingSettingsApi(hivePaaSRoutingSettingsValidator),
             hivepaasSecuritySettings: new HivePaaSSecuritySettingsApi(hivePaaSSecuritySettingsValidator),
             hivepaasAppSecret: new HivePaaSAppSecretApi(hivePaaSAppSecretValidator),
+            hivepaasLoggingSettings: new HivePaaSLoggingSettingsApi(hivePaaSLoggingSettingsValidator),
             hivepaasRestart: new HivePaaSRestartApi(hivePaaSRestartValidator),
             hivepaasRequestInfo: new HivePaaSRequestInfoApi(hivePaaSRequestInfoValidator),
             traefikServiceSettings: new TraefikServiceSettingsApi(traefikServiceSettingsValidator),

@@ -76,6 +76,14 @@ export const systemSettingsRouter: RouteObject = {
                     },
                 },
                 {
+                    path: "logging",
+                    lazy: async () => {
+                        const { SystemSettingsHivePaaSLoggingRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsHivePaaSLoggingRoute };
+                    },
+                },
+                {
                     path: "actions",
                     lazy: async () => {
                         const { SystemSettingsHivePaaSActionsRoute } = await getLazyComponents();

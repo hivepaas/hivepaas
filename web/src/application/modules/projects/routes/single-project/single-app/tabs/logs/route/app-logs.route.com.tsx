@@ -18,9 +18,10 @@ import { ROUTE } from "@application/shared/constants";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
 
-import { AppLogsViewer } from "../building-blocks";
+import { AppLogsHistory, AppLogsViewer } from "../building-blocks";
 
 const AGGREGATION_TAB_ID = "aggregation";
+const HISTORY_TAB_ID = "history";
 const DEFAULT_LOG_LINES = 100;
 
 export function AppLogsRoute() {
@@ -64,6 +65,10 @@ export function AppLogsRoute() {
                 label: `I${index + 1}`,
                 taskId: task.id,
             })),
+            {
+                id: HISTORY_TAB_ID,
+                label: "History",
+            },
         ],
         [infoResponse?.data.tasks],
     );
@@ -228,31 +233,46 @@ export function AppLogsRoute() {
                                     isFullscreen && "flex-1 min-h-0 flex flex-col",
                                 )}
                             >
-                                <AppLogsViewer
-                                    tabID={tab.id}
-                                    projectID={projectID}
-                                    env={env}
-                                    appID={appID}
-                                    tabLabel={tab.label}
-                                    taskId={tab.taskId}
-                                    logs={tabState.logs}
-                                    lines={tabState.lines}
-                                    since={tabState.since}
-                                    duration={tabState.duration}
-                                    webSocketReadyState={tabState.readyState}
-                                    isActive={activeTab === tab.id}
-                                    shouldAutoStream={tab.id === AGGREGATION_TAB_ID}
-                                    fontSize={fontSize}
-                                    themeId={themeId}
-                                    height={isFullscreen ? "100%" : undefined}
-                                    isFullView={isFullView}
-                                    isFullHeight={isFullHeight}
-                                    onLogsChange={handleTabLogsChange}
-                                    onLinesChange={handleTabLinesChange}
-                                    onSinceChange={handleTabSinceChange}
-                                    onDurationChange={handleTabDurationChange}
-                                    onReadyStateChange={handleTabReadyStateChange}
-                                />
+                                {tab.id === HISTORY_TAB_ID ? (
+                                    <AppLogsHistory
+                                        projectID={projectID}
+                                        env={env}
+                                        appID={appID}
+                                        history={infoResponse?.data.history}
+                                        isActive={activeTab === tab.id}
+                                        fontSize={fontSize}
+                                        themeId={themeId}
+                                        height={isFullscreen ? "100%" : undefined}
+                                        isFullView={isFullView}
+                                        isFullHeight={isFullHeight}
+                                    />
+                                ) : (
+                                    <AppLogsViewer
+                                        tabID={tab.id}
+                                        projectID={projectID}
+                                        env={env}
+                                        appID={appID}
+                                        tabLabel={tab.label}
+                                        taskId={tab.taskId}
+                                        logs={tabState.logs}
+                                        lines={tabState.lines}
+                                        since={tabState.since}
+                                        duration={tabState.duration}
+                                        webSocketReadyState={tabState.readyState}
+                                        isActive={activeTab === tab.id}
+                                        shouldAutoStream={tab.id === AGGREGATION_TAB_ID}
+                                        fontSize={fontSize}
+                                        themeId={themeId}
+                                        height={isFullscreen ? "100%" : undefined}
+                                        isFullView={isFullView}
+                                        isFullHeight={isFullHeight}
+                                        onLogsChange={handleTabLogsChange}
+                                        onLinesChange={handleTabLinesChange}
+                                        onSinceChange={handleTabSinceChange}
+                                        onDurationChange={handleTabDurationChange}
+                                        onReadyStateChange={handleTabReadyStateChange}
+                                    />
+                                )}
                             </TabsContent>
                         );
                     })}

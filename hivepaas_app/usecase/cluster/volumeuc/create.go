@@ -38,9 +38,11 @@ func (uc *UC) CreateVolume(
 		// the wrong daemon anyway - and it only catches what actually gets
 		// persisted because req.Name is never rewritten before pData.Setting.Name
 		// is set to it below: same string, checked once and stored unchanged.
-		VerifyingName:   req.Name,
-		VerifyingRefIDs: (&entity.ClusterVolume{}).GetRefObjectIDs(),
-		Version:         currentSettingVersion,
+		// ClusterVolume.GetRefObjectIDs always returns an empty RefObjectIDs - a
+		// volume references no setting, app or user - so VerifyingRefIDs would be
+		// a no-op here and is left unset.
+		VerifyingName: req.Name,
+		Version:       currentSettingVersion,
 		PrepareCreation: func(
 			ctx context.Context,
 			db database.Tx,

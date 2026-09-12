@@ -256,6 +256,10 @@ func (uc *UC) preparePersistingAppService(
 					Command:  gofn.If(isDevEnv, nil, []string{"sleep", "infinity"}),
 					Hostname: app.Key,
 					Init:     new(true), // default to use `tini`
+					// The app's identity, for the log collector. Container labels
+					// rather than service ones: swarm does not pass service labels
+					// down, so only these can reach a log line's attrs.
+					Labels: appservice.WithAppLogLabels(nil, app),
 				},
 				Networks: []swarm.NetworkAttachmentConfig{
 					{

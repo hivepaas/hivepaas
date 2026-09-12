@@ -17,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
@@ -220,15 +221,26 @@ func (uc *UC) prepareUpdatingAppContainerLogDriver(
 	service := data.Service
 	taskSpec := &service.Spec.TaskTemplate
 
+	// The app's identity goes on the container every time, whatever driver is
+	// chosen: it costs nothing where it is unused, and it is already there when a
+	// driver the collector can read is picked later. It runs after
+	// ApplyUserLabels, which keeps hivepaas.* labels and refuses user-supplied
+	// ones, so an operator can neither remove nor forge it here.
+	if taskSpec.ContainerSpec != nil {
+		taskSpec.ContainerSpec.Labels = appservice.WithAppLogLabels(taskSpec.ContainerSpec.Labels, data.App)
+	}
+
 	if req.LogDriver == nil {
 		taskSpec.LogDriver = nil
 		return
 	}
-	if taskSpec.LogDriver == nil {
-		taskSpec.LogDriver = &swarm.Driver{}
-	}
-	taskSpec.LogDriver.Name = req.LogDriver.Name
-	taskSpec.LogDriver.Options = req.LogDriver.Options
+	// A driver the operator named is kept. When it is json-file the identity
+	// labels are added to its `labels` option, which is what makes the daemon
+	// copy them into each line; any other driver is left exactly as asked.
+	taskSpec.LogDriver = appservice.WithLogLabelsOption(&swarm.Driver{
+		Name:    req.LogDriver.Name,
+		Options: req.LogDriver.Options,
+	})
 }
 
 func (uc *UC) applyAppContainerSettings(

@@ -256,6 +256,10 @@ func (uc *UC) preparePersistingAppService(
 					Command:  gofn.If(isDevEnv, nil, []string{"sleep", "infinity"}),
 					Hostname: app.Key,
 					Init:     new(true), // default to use `tini`
+					// The app's identity, for the log collector. Container labels
+					// rather than service ones: swarm does not pass service labels
+					// down, so only these can reach a log line's attrs.
+					Labels: appservice.WithAppLogLabels(nil, app),
 				},
 				Networks: []swarm.NetworkAttachmentConfig{
 					{
@@ -263,16 +267,8 @@ func (uc *UC) preparePersistingAppService(
 						Aliases: []string{app.Key},
 					},
 				},
-				LogDriver: &swarm.Driver{
-					// Default driver is `json-file`, but Docker recommends `local`
-					// See: https://docs.docker.com/engine/logging/configure/
-					Name: "local",
-					Options: map[string]string{
-						"max-size": "50m",
-						"max-file": "20",
-						"compress": "true",
-					},
-				},
+				// See DefaultLogDriver for why this is not `local`.
+				LogDriver: appservice.DefaultLogDriver(),
 			},
 		},
 	}

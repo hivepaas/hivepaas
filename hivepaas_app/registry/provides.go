@@ -68,6 +68,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice/hpappserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice/loggingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice/networkserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice/notificationserviceimpl"
@@ -156,6 +157,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/supportuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/logginguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc"
@@ -280,6 +282,7 @@ var Provides = []any{
 	gitcredentialuc.New,
 	githubappuc.New,
 	hpappsettingsuc.New,
+	logginguc.New,
 	hpappuc.New,
 	imagebuildsettingsuc.New,
 	imserviceuc.New,
@@ -365,6 +368,7 @@ var Provides = []any{
 	taskserviceimpl.New,
 	traefikserviceimpl.New,
 	userserviceimpl.New,
+	loggingserviceimpl.New,
 	volumeserviceimpl.New,
 
 	// Repository

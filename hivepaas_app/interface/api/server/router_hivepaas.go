@@ -41,5 +41,9 @@ func (s *HTTPServer) registerHivePaaSRoutes(systemGroup *gin.RouterGroup) *gin.R
 	hivepaasGroup.GET("/security-settings", hivepaasHandler.GetSecuritySettings)
 	hivepaasGroup.PUT("/security-settings", hivepaasHandler.UpdateSecuritySettings)
 
+	// Logging settings. A PUT also deploys, updates or removes the logging stack.
+	hivepaasGroup.GET("/logging-settings", hivepaasHandler.GetLoggingSettings)
+	hivepaasGroup.PUT("/logging-settings", hivepaasHandler.UpdateLoggingSettings)
+
 	return hivepaasGroup
 }

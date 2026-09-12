@@ -13,10 +13,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/apphelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 )
 
-//nolint:gocognit
+//nolint:gocognit,funlen
 func (s *service) cloneSwarmService(
 	ctx context.Context,
 	db database.IDB,
@@ -30,7 +31,10 @@ func (s *service) cloneSwarmService(
 	srcSvc := &srcSvcRes.Service
 	data.SrcService = srcSvc
 
-	destSvc := new(*srcSvc)
+	destSvc, err := copyServiceForClone(srcSvc)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
 	data.DestService = destSvc
 
 	destSvc.ID = ""
@@ -63,6 +67,7 @@ func (s *service) cloneSwarmService(
 
 	// Update correct labels
 	setLabelsFunc := func() {
+		stampCloneLogIdentity(destSvc, destApp)
 		destSvc.Spec.Labels[appservice.LabelAppNamespace] = destApp.Project.Key
 		destSvc.Spec.Labels[appservice.LabelAppInfo] = apphelper.CalcAppInfoLabel(&apphelper.AppInfo{
 			Name: destApp.Name,
@@ -221,4 +226,35 @@ func (s *service) applyFinalContainerSettings(
 	}
 
 	return nil
+}
+
+// copyServiceForClone copies a service deeply enough that changing the copy
+// cannot change the original.
+//
+// It used to be new(*srcSvc), a shallow copy. That shares ContainerSpec and
+// EndpointSpec, both pointers, and the Spec.Labels map with the source. Every
+// edit made to the clone's spec - clearing env, configs and secrets, swapping
+// the image for the init one, dropping host-mode ports, rewriting labels - was
+// made to the source's spec as well. stopSrcAppBeforeCloningVolumes then sends
+// that spec back to docker for the source app, to scale it to zero before
+// copying volume data, and the restore that follows re-reads it from docker and
+// puts back only the replica count.
+func copyServiceForClone(src *swarm.Service) (*swarm.Service, error) {
+	dst, err := copier.CopyAs(*src)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &dst, nil
+}
+
+// stampCloneLogIdentity gives the clone its own identity for the log collector.
+//
+// The source's is copied over with the rest of the spec and would otherwise
+// attribute the clone's logs to the app it was cloned from. It is called from
+// setLabelsFunc, which runs again after a custom OnCloneService hook that may
+// have replaced the container spec.
+func stampCloneLogIdentity(destSvc *swarm.Service, destApp *entity.App) {
+	if cs := destSvc.Spec.TaskTemplate.ContainerSpec; cs != nil {
+		cs.Labels = appservice.WithAppLogLabels(cs.Labels, destApp)
+	}
 }

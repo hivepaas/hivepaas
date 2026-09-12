@@ -36744,6 +36744,96 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/hivepaas/logging-settings" : {
+      "get" : {
+        "description" : "Gets the logging configuration and what is actually running. Credentials always come back masked.",
+        "operationId" : "getHivePaaSLoggingSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_loggingdto.GetSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets HivePaaS logging settings",
+        "tags" : [ "system_hivepaas" ]
+      },
+      "put" : {
+        "description" : "Stores the logging configuration and deploys, updates or removes the logging stack to match.\nA credential sent as the masked placeholder keeps the stored value.",
+        "operationId" : "updateHivePaaSLoggingSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/system_loggingdto.UpdateSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/system_loggingdto.UpdateSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates HivePaaS logging settings",
+        "tags" : [ "system_hivepaas" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/system/hivepaas/release-info" : {
       "get" : {
         "description" : "Gets release info of the app",
@@ -44889,18 +44979,11 @@
           "inheritable" : {
             "type" : "boolean"
           },
-          "nodeId" : {
-            "description" : "Where the volume's data is - see VolumeBaseReq.NodeID for what the pair\nmeans and what it decides.\n\nPointers, and the two move together: leaving both out keeps the pinning the\nvolume already has, while sending either one replaces the pair, reading the\none left out as empty. They are two spellings of a single answer, so\nupdating one half on its own would leave a volume claiming to be pinned two\nways at once.\n\nSending both empty is an answer too, not a way of skipping the field: it\nsays the volume is reachable from every node.",
-            "type" : "string"
-          },
-          "nodeLabel" : {
-            "type" : "string"
-          },
           "updateVer" : {
             "type" : "integer"
           }
         },
-        "required" : [ "default", "inheritable", "nodeId", "nodeLabel", "updateVer" ],
+        "required" : [ "default", "inheritable", "updateVer" ],
         "type" : "object"
       },
       "cluster_volumedto.UpdateVolumeResp" : {
@@ -55389,6 +55472,217 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "system_loggingdto.BackendData" : {
+        "properties" : {
+          "ingest" : {
+            "$ref" : "#/components/schemas/system_loggingdto.EndpointData"
+          },
+          "managed" : {
+            "type" : "boolean"
+          },
+          "query" : {
+            "$ref" : "#/components/schemas/system_loggingdto.EndpointData"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "victoriaLogs" : {
+            "$ref" : "#/components/schemas/system_loggingdto.VictoriaLogsData"
+          }
+        },
+        "required" : [ "ingest", "managed", "query", "type", "victoriaLogs" ],
+        "type" : "object"
+      },
+      "system_loggingdto.CollectorData" : {
+        "properties" : {
+          "image" : {
+            "type" : "string"
+          },
+          "managed" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "image", "managed", "type" ],
+        "type" : "object"
+      },
+      "system_loggingdto.EndpointData" : {
+        "properties" : {
+          "bearerToken" : {
+            "type" : "string"
+          },
+          "headers" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "tlsSkipVerify" : {
+            "type" : "boolean"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "bearerToken", "headers", "password", "tlsSkipVerify", "url", "username" ],
+        "type" : "object"
+      },
+      "system_loggingdto.ExcludedAppData" : {
+        "properties" : {
+          "appId" : {
+            "type" : "string"
+          },
+          "driver" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appId", "driver", "name", "reason" ],
+        "type" : "object"
+      },
+      "system_loggingdto.ForwardData" : {
+        "properties" : {
+          "endpoint" : {
+            "$ref" : "#/components/schemas/system_loggingdto.EndpointData"
+          },
+          "format" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "endpoint", "format", "name" ],
+        "type" : "object"
+      },
+      "system_loggingdto.GetSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_loggingdto.SettingsData"
+          },
+          "secretMasked" : {
+            "description" : "SecretMasked says the credentials came back as the placeholder. Sending\nthe placeholder back in an update keeps what is stored.",
+            "type" : "boolean"
+          },
+          "status" : {
+            "$ref" : "#/components/schemas/system_loggingdto.SettingsStatus"
+          }
+        },
+        "required" : [ "data", "secretMasked", "status" ],
+        "type" : "object"
+      },
+      "system_loggingdto.SettingsData" : {
+        "properties" : {
+          "backend" : {
+            "$ref" : "#/components/schemas/system_loggingdto.BackendData"
+          },
+          "collector" : {
+            "$ref" : "#/components/schemas/system_loggingdto.CollectorData"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "forwards" : {
+            "items" : {
+              "$ref" : "#/components/schemas/system_loggingdto.ForwardData"
+            },
+            "type" : "array"
+          },
+          "sources" : {
+            "$ref" : "#/components/schemas/system_loggingdto.SourcesData"
+          }
+        },
+        "required" : [ "backend", "collector", "enabled", "forwards", "sources" ],
+        "type" : "object"
+      },
+      "system_loggingdto.SettingsStatus" : {
+        "properties" : {
+          "backendReady" : {
+            "type" : "boolean"
+          },
+          "excludedApps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/system_loggingdto.ExcludedAppData"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "backendReady", "excludedApps" ],
+        "type" : "object"
+      },
+      "system_loggingdto.SourcesData" : {
+        "properties" : {
+          "apps" : {
+            "type" : "boolean"
+          },
+          "hivepaas" : {
+            "type" : "boolean"
+          },
+          "nodes" : {
+            "type" : "boolean"
+          },
+          "traefikAccess" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "apps", "hivepaas", "nodes", "traefikAccess" ],
+        "type" : "object"
+      },
+      "system_loggingdto.UpdateSettingsReq" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_loggingdto.SettingsData"
+          }
+        },
+        "required" : [ "data" ],
+        "type" : "object"
+      },
+      "system_loggingdto.UpdateSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/system_loggingdto.SettingsData"
+          },
+          "secretMasked" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "data", "secretMasked" ],
+        "type" : "object"
+      },
+      "system_loggingdto.VictoriaLogsData" : {
+        "properties" : {
+          "image" : {
+            "type" : "string"
+          },
+          "maxDiskUsagePercent" : {
+            "type" : "integer"
+          },
+          "nodeId" : {
+            "type" : "string"
+          },
+          "retention" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "volumeId" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "image", "maxDiskUsagePercent", "nodeId", "retention", "volumeId" ],
+        "type" : "object"
+      },
       "system_syserrordto.DeleteSysErrorResp" : {
         "properties" : {
           "meta" : {
@@ -58037,9 +58331,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

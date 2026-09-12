@@ -144,12 +144,15 @@ func storedSetting(t *testing.T, cfg *entity.Logging) *entity.Setting {
 // newTestService builds the service with every dependency faked. setting may be
 // nil for "never configured".
 func newTestService(fd *fakeDocker, setting *entity.Setting) *service {
+	// The cluster HivePaaS runs in always has this network; a test for its
+	// absence removes it again.
+	fd.networks = append(fd.networks, network.Summary{Network: network.Network{
+		ID: "id-local", Name: base.NetworkHivepaasLocal,
+	}})
 	return &service{
-		dockerManager:  fd,
-		settingRepo:    &fakeSettingRepo{setting: setting},
-		appRepo:        &fakeAppRepo{},
-		hpAppService:   &fakeHpApp{networks: []string{testRoutingNetID, testLocalNetID}},
-		networkService: &fakeNetworkService{},
+		dockerManager: fd,
+		settingRepo:   &fakeSettingRepo{setting: setting},
+		appRepo:       &fakeAppRepo{},
 	}
 }
 

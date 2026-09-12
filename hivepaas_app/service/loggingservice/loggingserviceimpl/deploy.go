@@ -167,17 +167,16 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging, logNet
 		return "", hperrors.Wrap(err)
 	}
 
-	// The collector reaches it over the logging network, the API over its own
-	// private networks.
-	apiNets, err := s.apiPrivateNetworks(ctx)
-	if err != nil {
+	// The collector reaches it over the logging network, the API over the
+	// stack's internal one.
+	if err := s.checkInternalNetwork(ctx); err != nil {
 		return "", hperrors.Wrap(err)
 	}
 
 	svcSpec, err := toSwarmServiceSpec(rt, swarmSpecOpts{
 		Name:     ServiceNameBackend,
 		NodeID:   vl.NodeID,
-		Networks: append([]string{logNet}, apiNets...),
+		Networks: []string{logNet, base.NetworkHivepaasLocal},
 	})
 	if err != nil {
 		return "", hperrors.Wrap(err)

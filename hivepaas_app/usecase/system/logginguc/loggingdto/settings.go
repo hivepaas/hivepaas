@@ -6,8 +6,6 @@
 package loggingdto
 
 import (
-	vld "github.com/tiendc/go-validator"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -78,59 +76,6 @@ type ExcludedAppData struct {
 	Name   string `json:"name"`
 	Reason string `json:"reason"`
 	Driver string `json:"driver,omitempty"`
-}
-
-type GetSettingsReq struct{}
-
-func NewGetSettingsReq() *GetSettingsReq { return &GetSettingsReq{} }
-
-func (req *GetSettingsReq) Validate() hperrors.ValidationErrors { return nil }
-
-type GetSettingsResp struct {
-	Data *SettingsData `json:"data"`
-	// SecretMasked says the credentials came back as the placeholder. Sending
-	// the placeholder back in an update keeps what is stored.
-	SecretMasked bool            `json:"secretMasked,omitempty"`
-	Status       *SettingsStatus `json:"status"`
-}
-
-type UpdateSettingsReq struct {
-	Data *SettingsData `json:"data"`
-}
-
-func NewUpdateSettingsReq() *UpdateSettingsReq { return &UpdateSettingsReq{} }
-
-// Validate rejects a request missing its data, and any credential that looks
-// like ciphertext already: EncryptedField.Set would store such a value verbatim
-// and it could never be decrypted.
-func (req *UpdateSettingsReq) Validate() hperrors.ValidationErrors {
-	validators := []vld.Validator{
-		vld.Must(req.Data != nil).OnError(
-			vld.SetField("data", nil),
-			vld.SetCustomKey("ERR_VLD_FIELD_REQUIRED"),
-		),
-	}
-	if req.Data == nil {
-		return hperrors.NewValidationErrors(vld.Validate(validators...))
-	}
-	addEndpoint := func(ep *EndpointData, path string) {
-		if ep == nil {
-			return
-		}
-		validators = append(validators, basedto.ValidatePlainSecret(&ep.Password, path+".password")...)
-		validators = append(validators, basedto.ValidatePlainSecret(&ep.BearerToken, path+".bearerToken")...)
-	}
-	addEndpoint(req.Data.Backend.Ingest, "data.backend.ingest")
-	addEndpoint(req.Data.Backend.Query, "data.backend.query")
-	for i := range req.Data.Forwards {
-		addEndpoint(&req.Data.Forwards[i].Endpoint, "data.forwards.endpoint")
-	}
-	return hperrors.NewValidationErrors(vld.Validate(validators...))
-}
-
-type UpdateSettingsResp struct {
-	Data         *SettingsData `json:"data"`
-	SecretMasked bool          `json:"secretMasked,omitempty"`
 }
 
 // FromEntity renders the stored configuration for a response.

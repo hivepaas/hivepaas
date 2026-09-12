@@ -46,31 +46,25 @@ func (s *service) ensureLoggingNetwork(ctx context.Context) (string, error) {
 	return resp.ID, nil
 }
 
-// apiPrivateNetworks is every network HivePaaS's own API is on except the
-// routing network.
+// checkInternalNetwork makes sure the network the API is on exists, so that a
+// backend is not deployed where nothing can query it.
 //
-// The backend joins these so that the API can query it. The routing network is
-// left out because every publicly exposed app is on it, and the backend has no
-// authentication.
-func (s *service) apiPrivateNetworks(ctx context.Context) ([]string, error) {
-	svc, err := s.hpAppService.GetHpAppSwarmService(ctx)
+// The name is a constant rather than something read off the API's own service:
+// every other name in this codebase - hivepaas_app, hivepaas_db, hivepaas_net -
+// already assumes the stack is deployed under that one name, so deriving this
+// one would be a mechanism nothing else needs.
+func (s *service) checkInternalNetwork(ctx context.Context) error {
+	list, err := s.dockerManager.NetworkList(ctx, func(opts *client.NetworkListOptions) {
+		docker.FilterAdd(&opts.Filters, "name", base.NetworkHivepaasLocal)
+	})
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return hperrors.Wrap(err)
 	}
-	routingID, err := s.networkService.GetGlobalRoutingNetworkID(ctx)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	out := []string{}
-	for _, n := range svc.Spec.TaskTemplate.Networks {
-		if n.Target == routingID || n.Target == base.NetworkGlobalRouting {
-			continue
+	// The name filter matches substrings.
+	for i := range list.Items {
+		if list.Items[i].Name == base.NetworkHivepaasLocal {
+			return nil
 		}
-		out = append(out, n.Target)
 	}
-	if len(out) == 0 {
-		return nil, hperrors.Wrap(loggingservice.ErrAPINetworkMissing)
-	}
-	return out, nil
+	return hperrors.Wrap(loggingservice.ErrAPINetworkMissing).WithParam("Name", base.NetworkHivepaasLocal)
 }

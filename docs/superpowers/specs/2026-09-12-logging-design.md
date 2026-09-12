@@ -558,8 +558,11 @@ rather than assumed. Where the sections above say otherwise, this wins.
 - **The stack needs its own network.** Swarm services resolve each other only across a
   shared overlay, and plan 2 attached none - so vlagent could never reach VictoriaLogs
   and nothing was ever stored. The collector and the backend now share
-  `hivepaas_logging_net`; the backend also joins the API's own private networks, and
-  never the routing network every publicly exposed app is on.
+  `hivepaas_logging_net`, and the backend also joins `hivepaas_local_net`, the stack's
+  internal network, so the API can query it. It never joins the routing network every
+  publicly exposed app is on, and the collector - which runs on every node - never joins
+  the internal one, where the database lives. Enabling logging without that internal
+  network is refused rather than deploying a backend nothing can reach.
 - **The read path takes structured parameters only.** `QueryReq` has no query-text field
   at all, and the scope - the app's identity - is put in by the service from the app it
   loaded. Raw LogsQL is not offered to anyone, admins included.

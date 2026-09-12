@@ -9,40 +9,10 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
-
-const (
-	testRoutingNetID = "net-routing"
-	testLocalNetID   = "net-local"
-)
-
-// fakeHpApp is HivePaaS's own service, attached to the routing network and one
-// private network - the shape deployment/local/hivepaas.yaml gives it.
-type fakeHpApp struct {
-	hpappservice.Service
-	networks []string
-}
-
-func (f *fakeHpApp) GetHpAppSwarmService(_ context.Context) (*swarm.Service, error) {
-	svc := &swarm.Service{}
-	for _, n := range f.networks {
-		svc.Spec.TaskTemplate.Networks = append(svc.Spec.TaskTemplate.Networks,
-			swarm.NetworkAttachmentConfig{Target: n})
-	}
-	return svc, nil
-}
-
-type fakeNetworkService struct {
-	networkservice.Service
-}
-
-func (f *fakeNetworkService) GetGlobalRoutingNetworkID(_ context.Context) (string, error) {
-	return testRoutingNetID, nil
-}
 
 func (f *fakeDocker) NetworkList(
 	_ context.Context, _ ...docker.NetworkListOption,
@@ -101,22 +71,6 @@ func TestEnsureLoggingNetworkIgnoresANameThatOnlyContainsIt(t *testing.T) {
 	assert.Len(t, fd.networksCreated, 1)
 }
 
-func TestAPIPrivateNetworksLeavesTheRoutingNetworkOut(t *testing.T) {
-	s := newTestService(&fakeDocker{}, nil)
-
-	nets, err := s.apiPrivateNetworks(context.Background())
-	assert.NoError(t, err)
-	assert.Equal(t, []string{testLocalNetID}, nets)
-}
-
-func TestAPIPrivateNetworksRefusesWhenOnlyTheRoutingNetworkIsLeft(t *testing.T) {
-	s := newTestService(&fakeDocker{}, nil)
-	s.hpAppService = &fakeHpApp{networks: []string{testRoutingNetID}}
-
-	_, err := s.apiPrivateNetworks(context.Background())
-	assert.ErrorIs(t, err, loggingservice.ErrAPINetworkMissing)
-}
-
 func TestDeployJoinsTheStackOnlyToNetworksItNeeds(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, storedSetting(t, enabledConfig()))
@@ -136,7 +90,22 @@ func TestDeployJoinsTheStackOnlyToNetworksItNeeds(t *testing.T) {
 		t.Fatalf("expected both services, created %d", len(fd.created))
 	}
 	logNet := "id-" + NetworkLogging
-	assert.ElementsMatch(t, []string{logNet, testLocalNetID}, networkTargets(backend))
+	// The backend is the only thing that bridges the two: the collector runs on
+	// every node, and the internal network is where the database lives.
+	assert.ElementsMatch(t, []string{logNet, base.NetworkHivepaasLocal}, networkTargets(backend))
 	assert.Equal(t, []string{logNet}, networkTargets(collector))
-	assert.NotContains(t, networkTargets(backend), testRoutingNetID)
+	assert.NotContains(t, networkTargets(backend), base.NetworkGlobalRouting)
+}
+
+// Deploying a backend onto a network the API is not on would leave it running
+// and unreachable, which looks like success everywhere except the logs page.
+func TestDeployRefusesWhenTheInternalNetworkIsMissing(t *testing.T) {
+	fd := &fakeDocker{}
+	s := newTestService(fd, storedSetting(t, enabledConfig()))
+	fd.networks = nil // no hivepaas_local_net in this cluster
+
+	err := s.Apply(context.Background(), nil)
+
+	assert.ErrorIs(t, err, loggingservice.ErrAPINetworkMissing)
+	assert.Empty(t, fd.created, "nothing should have been deployed")
 }

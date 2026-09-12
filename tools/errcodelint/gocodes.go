@@ -48,6 +48,12 @@ type codeUse struct {
 	Code     string
 	Pos      token.Position
 	Declared bool
+
+	// Ident is the variable a declaration binds the code to, empty otherwise.
+	// Code is what the wire carries; Ident is what Go code refers to, and the
+	// two have to be tracked separately: a declaration mentions the string once
+	// and every use afterwards mentions only the name.
+	Ident string
 }
 
 func skipDir(name string) bool {
@@ -110,6 +116,32 @@ func codesInFile(fset *token.FileSet, file *ast.File) []codeUse {
 		return true
 	})
 
+	// The name each declaring literal is bound to. A ValueSpec pairs its names
+	// with its values by position, which is how "ErrX = NewErr(_, \"ERR_X\")"
+	// connects the two.
+	boundTo := map[*ast.BasicLit]string{}
+	ast.Inspect(file, func(n ast.Node) bool {
+		spec, ok := n.(*ast.ValueSpec)
+		if !ok {
+			return true
+		}
+		for i, value := range spec.Values {
+			if i >= len(spec.Names) {
+				break
+			}
+			call, ok := value.(*ast.CallExpr)
+			if !ok || !declaringFuncs[calleeName(call.Fun)] {
+				continue
+			}
+			for _, arg := range call.Args {
+				if lit, ok := arg.(*ast.BasicLit); ok && declared[lit] {
+					boundTo[lit] = spec.Names[i].Name
+				}
+			}
+		}
+		return true
+	})
+
 	var uses []codeUse
 	ast.Inspect(file, func(n ast.Node) bool {
 		lit, ok := n.(*ast.BasicLit)
@@ -124,6 +156,7 @@ func codesInFile(fset *token.FileSet, file *ast.File) []codeUse {
 			Code:     code,
 			Pos:      fset.Position(lit.Pos()),
 			Declared: declared[lit],
+			Ident:    boundTo[lit],
 		})
 		return true
 	})
@@ -152,4 +185,46 @@ func litValue(lit *ast.BasicLit) string {
 		return ""
 	}
 	return s
+}
+
+// scanIdentUses counts every appearance of the given identifiers, the
+// declaration included, so that a count of one means declared and referenced
+// nowhere.
+//
+// Unlike scanGoDirs this reads _test.go too. A code a test still names is not
+// one to report as abandoned, and counting conservatively costs only a finding
+// nobody needed.
+func scanIdentUses(fset *token.FileSet, roots []string, names map[string]bool) (map[string]int, error) {
+	counts := map[string]int{}
+	for _, root := range roots {
+		err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() {
+				if path != root && skipDir(d.Name()) {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if !strings.HasSuffix(path, ".go") {
+				return nil
+			}
+			file, err := parser.ParseFile(fset, path, nil, 0)
+			if err != nil {
+				return err
+			}
+			ast.Inspect(file, func(n ast.Node) bool {
+				if ident, ok := n.(*ast.Ident); ok && names[ident.Name] {
+					counts[ident.Name]++
+				}
+				return true
+			})
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return counts, nil
 }

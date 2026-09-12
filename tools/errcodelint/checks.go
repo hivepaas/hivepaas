@@ -19,6 +19,8 @@ type finding struct {
 	Msg   string
 }
 
+// check runs the checks that need no identifier counts. checkAll adds the one
+// that does.
 func check(uses []codeUse, entries []messageEntry, fileNames []string) []finding {
 	var findings []finding
 
@@ -121,4 +123,54 @@ func uniqueSorted(in []string) []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+// checkAll runs every check, including the one that needs to know how often each
+// declaring identifier is referenced.
+func checkAll(
+	uses []codeUse,
+	entries []messageEntry,
+	fileNames []string,
+	identUses map[string]int,
+) []finding {
+	findings := check(uses, entries, fileNames)
+
+	// 5. a code bound to a name nothing refers to.
+	//
+	// A declaration binds its name once, so a count of one means the constant is
+	// declared and never used: the product cannot raise it, and its translation
+	// ships for a message no caller can produce. Codes that bind no identifier -
+	// the ones reached as bare strings - cannot be judged this way and are left
+	// alone.
+	seen := map[string]bool{}
+	for _, u := range uses {
+		if !u.Declared || u.Ident == "" || seen[u.Code] {
+			continue
+		}
+		seen[u.Code] = true
+		if identUses[u.Ident] > 1 {
+			continue
+		}
+		where := u.Pos.Filename
+		if u.Pos.Line > 0 {
+			where = fmt.Sprintf("%s:%d", u.Pos.Filename, u.Pos.Line)
+		}
+		findings = append(findings, finding{
+			Where: where,
+			Msg: fmt.Sprintf("%s is declared as %s but %s is never referenced;"+
+				" nothing can raise it", u.Code, u.Ident, u.Ident),
+		})
+	}
+
+	sortFindings(findings)
+	return findings
+}
+
+func sortFindings(findings []finding) {
+	sort.Slice(findings, func(i, j int) bool {
+		if findings[i].Where != findings[j].Where {
+			return findings[i].Where < findings[j].Where
+		}
+		return findings[i].Msg < findings[j].Msg
+	})
 }

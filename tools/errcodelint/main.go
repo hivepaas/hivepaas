@@ -14,6 +14,8 @@
 //     package panics at startup.
 //  3. a translation no Go source mentions, except the ERR_VLD_ prefix, which
 //     the validation library generates at runtime
+//  5. a code declared as a constant nothing else refers to. Such a code cannot
+//     be raised, and its translation ships for a message no caller produces.
 //  4. a message file whose name does not yield a resolvable language. go-i18n
 //     reads the segment before the extension as the language tag and
 //     language.Make answers the undefined tag rather than failing, so
@@ -31,7 +33,6 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
-	"sort"
 )
 
 const defaultMessagesDir = "hivepaas_app/pkg/translation/messages"
@@ -64,13 +65,19 @@ func main() {
 		os.Exit(2)
 	}
 
-	findings := check(uses, entries, fileNames)
-	sort.Slice(findings, func(i, j int) bool {
-		if findings[i].Where != findings[j].Where {
-			return findings[i].Where < findings[j].Where
+	declaredIdents := map[string]bool{}
+	for _, u := range uses {
+		if u.Declared && u.Ident != "" {
+			declaredIdents[u.Ident] = true
 		}
-		return findings[i].Msg < findings[j].Msg
-	})
+	}
+	identUses, err := scanIdentUses(fset, roots, declaredIdents)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "errcodelint: %v\n", err)
+		os.Exit(2)
+	}
+
+	findings := checkAll(uses, entries, fileNames, identUses)
 	for _, f := range findings {
 		fmt.Printf("%s: %s\n", f.Where, f.Msg)
 	}

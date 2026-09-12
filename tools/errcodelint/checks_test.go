@@ -71,3 +71,35 @@ func TestCheckAcceptsReferencedCodeWithTranslation(t *testing.T) {
 
 	assert.Empty(t, check(uses, entries, nil))
 }
+
+// A code bound to a name nothing refers to is one the product cannot raise: the
+// declaration is the only thing keeping it alive, and its translation ships for
+// a message no caller can produce.
+func TestCheckReportsDeclaredButNeverReferenced(t *testing.T) {
+	uses := []codeUse{{
+		Code: "ERR_ABANDONED", Ident: "ErrAbandoned", Declared: true,
+		Pos: token.Position{Filename: "constants.go", Line: 9},
+	}}
+	entries := []messageEntry{{ID: "ERR_ABANDONED", File: "messages/en/errors.en.toml"}}
+
+	out := msgs(checkAll(uses, entries, nil, map[string]int{"ErrAbandoned": 1}))
+
+	assert.Contains(t, out, "ERR_ABANDONED")
+	assert.Contains(t, out, "never referenced")
+}
+
+func TestCheckAcceptsDeclaredAndReferenced(t *testing.T) {
+	uses := []codeUse{{Code: "ERR_LIVE", Ident: "ErrLive", Declared: true}}
+	entries := []messageEntry{{ID: "ERR_LIVE", File: "messages/en/errors.en.toml"}}
+
+	assert.Empty(t, checkAll(uses, entries, nil, map[string]int{"ErrLive": 4}))
+}
+
+// A code reached only as a bare string, such as the validation library's, binds
+// no identifier and cannot be judged this way.
+func TestCheckSkipsCodesThatBindNoIdentifier(t *testing.T) {
+	uses := []codeUse{{Code: "ERR_VLD_SOMETHING", Declared: false}}
+	entries := []messageEntry{{ID: "ERR_VLD_SOMETHING", File: "messages/en/errors.validation.en.toml"}}
+
+	assert.Empty(t, checkAll(uses, entries, nil, map[string]int{}))
+}

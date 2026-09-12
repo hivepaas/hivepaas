@@ -90,6 +90,13 @@ type LoggingVictoriaLogs struct {
 	NodeID   string `json:"nodeId,omitempty"`
 	VolumeID string `json:"volumeId,omitempty"`
 
+	// VolumeSubpath is the directory inside the volume the store keeps its data
+	// in, so one volume can serve more than logging. Empty means the volume's
+	// root, which is where the store wrote before this existed - changing it on
+	// a running backend points the store at a new, empty directory, and the
+	// logs collected so far stay where they were.
+	VolumeSubpath string `json:"volumeSubpath,omitempty"`
+
 	// Retention reaches VictoriaLogs as a command-line flag, so changing it
 	// restarts the service.
 	Retention timeutil.Duration `json:"retention"`

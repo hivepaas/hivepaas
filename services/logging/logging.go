@@ -27,6 +27,7 @@ var (
 	ErrNoSources              = loggingmodel.ErrNoSources
 	ErrForwardFormatInvalid   = loggingmodel.ErrForwardFormatInvalid
 	ErrDataVolumeRequired     = loggingmodel.ErrDataVolumeRequired
+	ErrDataSubpathInvalid     = loggingmodel.ErrDataSubpathInvalid
 	ErrQueryInvalid           = loggingmodel.ErrQueryInvalid
 	ErrBackendUnreachable     = loggingmodel.ErrBackendUnreachable
 	ErrQueryScopeRequired     = loggingmodel.ErrQueryScopeRequired

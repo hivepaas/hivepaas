@@ -40,6 +40,7 @@ type VictoriaLogsData struct {
 	Image               string            `json:"image,omitempty"`
 	NodeID              string            `json:"nodeId"`
 	VolumeID            string            `json:"volumeId"`
+	VolumeSubpath       string            `json:"volumeSubpath,omitempty"`
 	Retention           timeutil.Duration `json:"retention"`
 	MaxDiskUsagePercent int               `json:"maxDiskUsagePercent,omitempty"`
 }
@@ -178,7 +179,8 @@ func FromEntity(l *entity.Logging) (data *SettingsData, secretMasked bool) {
 	if vl := l.Backend.VictoriaLogs; vl != nil {
 		data.Backend.VictoriaLogs = &VictoriaLogsData{
 			Image: vl.Image, NodeID: vl.NodeID, VolumeID: vl.VolumeID,
-			Retention: vl.Retention, MaxDiskUsagePercent: vl.MaxDiskUsagePercent,
+			VolumeSubpath: vl.VolumeSubpath,
+			Retention:     vl.Retention, MaxDiskUsagePercent: vl.MaxDiskUsagePercent,
 		}
 	}
 	for i := range l.Forwards {
@@ -223,7 +225,8 @@ func ToEntity(d *SettingsData, current *entity.Logging) (*entity.Logging, error)
 	if vl := d.Backend.VictoriaLogs; vl != nil {
 		out.Backend.VictoriaLogs = &entity.LoggingVictoriaLogs{
 			Image: vl.Image, NodeID: vl.NodeID, VolumeID: vl.VolumeID,
-			Retention: vl.Retention, MaxDiskUsagePercent: vl.MaxDiskUsagePercent,
+			VolumeSubpath: vl.VolumeSubpath,
+			Retention:     vl.Retention, MaxDiskUsagePercent: vl.MaxDiskUsagePercent,
 		}
 	}
 

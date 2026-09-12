@@ -153,6 +153,7 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging, logNet
 		&logging.BackendConfig{VictoriaLogs: &victorialogs.Config{
 			Image:               vl.Image,
 			DataVolumeName:      vl.VolumeID,
+			DataSubpath:         vl.VolumeSubpath,
 			Retention:           vl.Retention.ToDuration(),
 			MaxDiskUsagePercent: vl.MaxDiskUsagePercent,
 		}},

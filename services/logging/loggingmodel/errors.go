@@ -18,6 +18,7 @@ var (
 	ErrNoSources              = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_NO_SOURCES")
 	ErrForwardFormatInvalid   = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_FORWARD_FORMAT_INVALID")
 	ErrDataVolumeRequired     = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_DATA_VOLUME_REQUIRED")
+	ErrDataSubpathInvalid     = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_DATA_SUBPATH_INVALID")
 
 	// Talking to a backend
 	ErrQueryInvalid       = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_QUERY_INVALID")

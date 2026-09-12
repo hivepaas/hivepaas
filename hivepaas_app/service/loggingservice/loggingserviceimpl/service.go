@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/services/docker"
+	logsvc "github.com/hivepaas/hivepaas/services/logging"
 )
 
 type service struct {
@@ -18,6 +19,9 @@ type service struct {
 	logger         logging.Logger
 	hpAppService   hpappservice.Service
 	networkService networkservice.Service
+
+	// newBackend builds a backend client; a field so tests can substitute one.
+	newBackend func(logsvc.BackendType, *logsvc.BackendConfig) (logsvc.Backend, error)
 }
 
 // New builds the logging service. fx wires the arguments from the provider list
@@ -39,5 +43,6 @@ func New(
 		logger:         logger,
 		hpAppService:   hpAppService,
 		networkService: networkService,
+		newBackend:     logsvc.NewBackend,
 	}
 }

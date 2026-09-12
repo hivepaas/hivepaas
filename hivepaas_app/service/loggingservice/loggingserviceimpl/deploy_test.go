@@ -33,6 +33,7 @@ type fakeDocker struct {
 
 	networks        []network.Summary
 	networksCreated []client.NetworkCreateOptions
+	inspected       map[string]swarm.Service
 }
 
 func (f *fakeDocker) ServiceList(
@@ -56,6 +57,9 @@ func (f *fakeAppRepo) List(
 func (f *fakeDocker) ServiceInspect(
 	_ context.Context, serviceID string, _ ...docker.ServiceInspectOption,
 ) (*client.ServiceInspectResult, error) {
+	if svc, ok := f.inspected[serviceID]; ok {
+		return &client.ServiceInspectResult{Service: svc}, nil
+	}
 	if !f.existing[serviceID] {
 		return nil, hperrors.Wrap(hperrors.ErrNotFound)
 	}

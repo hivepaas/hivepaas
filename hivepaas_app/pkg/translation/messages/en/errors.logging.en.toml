@@ -18,3 +18,5 @@ ERR_LOGGING_SVC_BACKEND_NODE_MISSING = "The logging backend has no node to run o
 ERR_LOGGING_SVC_VOLUME_MISSING = "The logging backend has no data volume"
 ERR_LOGGING_SVC_DEPLOY_FAILED = "Deploying the logging stack failed"
 ERR_LOGGING_SVC_API_NETWORK_MISSING = "HivePaaS's own service has no private network the logging backend can join"
+ERR_LOGGING_SVC_NOT_ENABLED = "Log collection is not enabled"
+ERR_LOGGING_SVC_QUERY_ENDPOINT_MISSING = "The logging backend has no query endpoint configured"

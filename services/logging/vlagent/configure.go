@@ -195,3 +195,10 @@ func joinFields(f map[string]string) string {
 	}
 	return strings.Join(parts, ",")
 }
+
+// AttrField is the field a container label named in json-file's `labels`
+// option is stored under. The daemon writes the label into the line's attrs
+// object, and vlagent flattens that object with this prefix.
+func AttrField(label string) string {
+	return "attrs." + label
+}

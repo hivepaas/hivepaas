@@ -1,0 +1,13 @@
+# Logging errors
+#
+# Not declared in hperrors/constants.go. The sources are:
+#   services/logging/loggingmodel/errors.go               (ERR_LOGGING_*)
+#   hivepaas_app/service/loggingservice/errors.go         (ERR_LOGGING_SVC_*)
+# Adding or removing an error in either file means editing this one.
+ERR_LOGGING_BACKEND_UNSUPPORTED = "Logging backend '{{.Name}}' is not supported"
+ERR_LOGGING_COLLECTOR_UNSUPPORTED = "Logging collector '{{.Name}}' is not supported"
+ERR_LOGGING_INGEST_ENDPOINT_REQUIRED = "An ingest endpoint is required to collect logs"
+ERR_LOGGING_NO_SOURCES = "At least one log source must be selected"
+ERR_LOGGING_FORWARD_FORMAT_INVALID = "Forward format '{{.Name}}' is not supported"
+ERR_LOGGING_QUERY_INVALID = "The log query is not valid"
+ERR_LOGGING_BACKEND_UNREACHABLE = "The logging backend cannot be reached"

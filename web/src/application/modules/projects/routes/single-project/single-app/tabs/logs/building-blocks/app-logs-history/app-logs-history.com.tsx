@@ -28,9 +28,8 @@ type LevelFilter = keyof typeof LEVEL_FILTERS;
 type StreamFilter = "all" | "stdout" | "stderr";
 
 const UNAVAILABLE_TEXT: Record<AppLogHistoryReason, string> = {
-    "disabled": "Stored logs are off. An administrator can turn them on in System → HivePaaS → Logging.",
-    "apps-not-collected":
-        "App logs are not collected. An administrator can turn them on in System → HivePaaS → Logging.",
+    "disabled": "Stored logs are off. An administrator can turn them on in System → Logging.",
+    "apps-not-collected": "App logs are not collected. An administrator can turn them on in System → Logging.",
     "no-query-endpoint": "Logs go to an external backend HivePaaS has no query endpoint for.",
     "driver-unreadable": "This app's log driver cannot be collected. Switch it to json-file in container settings.",
     "identity-missing":

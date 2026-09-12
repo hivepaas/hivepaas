@@ -11,6 +11,8 @@ export type AppPlacementSettings_UpdateOne_Payload = {
     default?: boolean;
     excludeManagerNodes: boolean;
     excludeBuildNodes: boolean;
+    requireNodeLabels: string[];
+    excludeNodeLabels: string[];
 };
 
 export type AppPlacementSettings_UpdateOne_Req = ApiRequestBase<{

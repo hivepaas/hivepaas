@@ -16,7 +16,7 @@ import { isValidationException } from "@infrastructure/api";
 
 import { ValidationException } from "@infrastructure/exceptions/validation";
 
-import { SettingsAppPlacementForm } from "../form";
+import { SettingsAppPlacementForm, toNodeLabelSelectors } from "../form";
 import type { SettingsAppPlacementFormSchemaOutput } from "../schemas";
 import type { SettingsAppPlacementFormRef } from "../types";
 
@@ -61,6 +61,8 @@ export function SettingsAppPlacementRoute() {
                 default: settings.default ?? true,
                 excludeManagerNodes: values.excludeManagerNodes,
                 excludeBuildNodes: values.excludeBuildNodes,
+                requireNodeLabels: toNodeLabelSelectors(values.requireNodeLabels),
+                excludeNodeLabels: toNodeLabelSelectors(values.excludeNodeLabels),
             },
         });
     }

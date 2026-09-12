@@ -17,17 +17,13 @@ const (
 	ServiceNameCollector = "hivepaas-vlagent"
 
 	// dockerContainersGlob matches every container's json-file log on a node.
+	//
+	// It is the only glob the collector is given. The proxy's access log and
+	// the host's own logs are not collected: traefik logs to stdout, which this
+	// glob already covers, and nothing outside /var/lib/docker/containers is
+	// mounted into the collector - a glob pointing there would match nothing
+	// and report no error.
 	dockerContainersGlob = "/var/lib/docker/containers/*/*-json.log"
-
-	// traefikAccessGlob is where the proxy writes its access log.
-	traefikAccessGlob = "/var/log/traefik/access.log"
-
-	// nodeLogGlob is the host's own logs.
-	nodeLogGlob = "/var/log/syslog"
-
-	// sourceLabelKey tags lines from sources other than app containers, whose
-	// own attrs already say which app they came from.
-	sourceLabelKey = "hivepaas_source"
 
 	// NetworkLogging is the overlay the collector and the backend talk over.
 	// Only the logging stack joins it.
@@ -71,41 +67,25 @@ func backendBaseURL() string {
 
 // buildCollectSpec turns the stored configuration into a collection job.
 func (s *service) buildCollectSpec(cfg *entity.Logging, ingestURL string) (*logging.CollectSpec, error) {
-	// The stack's own containers are skipped. Both write logs, and collecting
-	// them feeds the collector its own output - with a backend that logs each
-	// ingest, that is a loop rather than merely noise.
-	stackExclude := fmt.Sprintf("/var/lib/docker/containers/*%s*/*-json.log", ServiceNameCollector)
-
 	var sources []logging.Source
-	if cfg.Sources.Apps {
+	if cfg.Sources.Apps || cfg.Sources.HivePaaS {
+		// One source, not two. Apps and HivePaaS's own services write into the
+		// same directory under container ids, so no glob can separate them -
+		// and giving the same glob twice collects the file once anyway, with
+		// only the first slot's extra fields applied. Which line belongs to an
+		// app is decided at read time by the identity the daemon wrote into it.
+		kind := logging.SourceKindApp
+		if !cfg.Sources.Apps {
+			kind = logging.SourceKindHivePaaS
+		}
 		sources = append(sources, logging.Source{
-			Kind:    logging.SourceKindApp,
-			Glob:    dockerContainersGlob,
-			Exclude: stackExclude,
+			Kind: kind,
+			Glob: dockerContainersGlob,
+			// No extra field: the lines are a mix of both, so labeling them
+			// all as one or the other would be a lie stored on every line.
 		})
 	}
-	if cfg.Sources.HivePaaS {
-		sources = append(sources, logging.Source{
-			Kind:    logging.SourceKindHivePaaS,
-			Glob:    dockerContainersGlob,
-			Exclude: stackExclude,
-			Labels:  map[string]string{sourceLabelKey: string(logging.SourceKindHivePaaS)},
-		})
-	}
-	if cfg.Sources.TraefikAccess {
-		sources = append(sources, logging.Source{
-			Kind:   logging.SourceKindTraefikAccess,
-			Glob:   traefikAccessGlob,
-			Labels: map[string]string{sourceLabelKey: string(logging.SourceKindTraefikAccess)},
-		})
-	}
-	if cfg.Sources.Nodes {
-		sources = append(sources, logging.Source{
-			Kind:   logging.SourceKindNode,
-			Glob:   nodeLogGlob,
-			Labels: map[string]string{sourceLabelKey: string(logging.SourceKindNode)},
-		})
-	}
+
 	if len(sources) == 0 {
 		return nil, hperrors.Wrap(logging.ErrNoSources)
 	}

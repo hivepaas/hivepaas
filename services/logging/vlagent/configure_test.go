@@ -1,6 +1,7 @@
 package vlagent
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -110,6 +111,39 @@ func TestConfigureKeepsGlobAndExcludeAligned(t *testing.T) {
 
 	assert.Equal(t, []string{"/a/*.log", "/b/*.log"}, argsFor(spec.Args, "-fileCollector.glob"))
 	assert.Equal(t, []string{"", "/b/skip-*.log"}, argsFor(spec.Args, "-fileCollector.excludeGlob"))
+}
+
+// vlagent parses this flag as JSON and exits at startup on anything else:
+// `cannot parse -fileCollector.extraFields ... cannot parse JSON`, measured
+// against v1.52.0. A collector that exits is one swarm restarts forever.
+func TestConfigureRendersExtraFieldsAsJSON(t *testing.T) {
+	in := baseSpec()
+	in.Sources[0].Labels = map[string]string{"hivepaas_source": "hivepaas", "zone": "eu"}
+
+	spec, err := New(&Config{}).Configure(in)
+	if err != nil {
+		t.Fatalf("Configure: %v", err)
+	}
+
+	fields := argsFor(spec.Args, "-fileCollector.extraFields")
+	if len(fields) != 1 {
+		t.Fatalf("want one slot, got %d", len(fields))
+	}
+	assert.Equal(t, `{"hivepaas_source":"hivepaas","zone":"eu"}`, fields[0],
+		"JSON, with keys in a stable order")
+
+	var parsed map[string]string
+	assert.NoError(t, json.Unmarshal([]byte(fields[0]), &parsed), "vlagent must be able to parse it")
+	assert.Equal(t, in.Sources[0].Labels, parsed)
+}
+
+func TestConfigureLeavesExtraFieldsEmptyWithoutLabels(t *testing.T) {
+	spec, err := New(&Config{}).Configure(baseSpec())
+	if err != nil {
+		t.Fatalf("Configure: %v", err)
+	}
+
+	assert.Equal(t, []string{""}, argsFor(spec.Args, "-fileCollector.extraFields"))
 }
 
 func TestConfigureRejectsAnEmptySpec(t *testing.T) {

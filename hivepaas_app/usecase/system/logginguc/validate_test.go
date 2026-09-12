@@ -35,6 +35,14 @@ func TestValidateAcceptsDisabledAndEmpty(t *testing.T) {
 	assert.NoError(t, validateSettings(nil))
 }
 
+func TestValidateRejectsSourcesThatAreNotCollected(t *testing.T) {
+	cfg := validEnabled()
+	cfg.Sources = entity.LoggingSources{TraefikAccess: true, Nodes: true}
+
+	assert.ErrorIs(t, validateSettings(cfg), logging.ErrNoSources,
+		"neither is collected, so this would deploy a collector with no glob")
+}
+
 func TestValidateRejectsEnabledWithNoSources(t *testing.T) {
 	cfg := validEnabled()
 	cfg.Sources = entity.LoggingSources{}

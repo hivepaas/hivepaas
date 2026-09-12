@@ -16,7 +16,8 @@ func validateSettings(cfg *entity.Logging) error {
 		return nil
 	}
 
-	if !cfg.Sources.Apps && !cfg.Sources.HivePaaS && !cfg.Sources.TraefikAccess && !cfg.Sources.Nodes {
+	// Only container logs are collected, so only these two say anything.
+	if !cfg.Sources.Apps && !cfg.Sources.HivePaaS {
 		return hperrors.Wrap(logging.ErrNoSources)
 	}
 

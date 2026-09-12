@@ -29,6 +29,10 @@ func (uc *UC) GetAppLogHistory(
 	app, featureSettings, err := uc.appService.LoadAppWithFeatureSettings(ctx, uc.db, req.ProjectID, req.AppID,
 		true, true,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
 	)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

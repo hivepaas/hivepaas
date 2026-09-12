@@ -37,47 +37,50 @@ func TestToEndpointHandlesNil(t *testing.T) {
 	assert.Empty(t, got.URL)
 }
 
-func TestBuildCollectSpecIncludesOnlySelectedSources(t *testing.T) {
+// Apps and HivePaaS share one directory of container ids, so they are one
+// source. Two identical globs collect the file once and apply only the first
+// slot's extra fields - measured against vlagent v1.52.0 - so asking for two
+// would quietly drop the second source's label.
+func TestBuildCollectSpecCollectsContainerLogsAsOneSource(t *testing.T) {
 	s := &service{}
-	cfg := &entity.Logging{Sources: entity.LoggingSources{Apps: true, TraefikAccess: true}}
 
-	spec, err := s.buildCollectSpec(cfg, "http://vlogs:9428/internal/insert")
-	if err != nil {
-		t.Fatalf("buildCollectSpec: %v", err)
-	}
+	for _, tc := range []struct {
+		name    string
+		sources entity.LoggingSources
+		want    logging.SourceKind
+	}{
+		{"apps only", entity.LoggingSources{Apps: true}, logging.SourceKindApp},
+		{"hivepaas only", entity.LoggingSources{HivePaaS: true}, logging.SourceKindHivePaaS},
+		{"both", entity.LoggingSources{Apps: true, HivePaaS: true}, logging.SourceKindApp},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			spec, err := s.buildCollectSpec(&entity.Logging{Sources: tc.sources},
+				"http://vlogs:9428/internal/insert")
+			if err != nil {
+				t.Fatalf("buildCollectSpec: %v", err)
+			}
 
-	kinds := map[logging.SourceKind]bool{}
-	for _, src := range spec.Sources {
-		kinds[src.Kind] = true
+			if len(spec.Sources) != 1 {
+				t.Fatalf("want one source, got %d", len(spec.Sources))
+			}
+			assert.Equal(t, tc.want, spec.Sources[0].Kind)
+			assert.Equal(t, dockerContainersGlob, spec.Sources[0].Glob)
+			assert.Empty(t, spec.Sources[0].Labels,
+				"the lines are a mix of apps and HivePaaS; labeling them all one way would be a lie")
+		})
 	}
-	assert.True(t, kinds[logging.SourceKindApp])
-	assert.True(t, kinds[logging.SourceKindTraefikAccess])
-	assert.False(t, kinds[logging.SourceKindHivePaaS], "HivePaaS logs are opt-in")
-	assert.False(t, kinds[logging.SourceKindNode])
 }
 
-// The stack writes logs of its own, and collecting them feeds the collector its
-// own output. Excluding both is required, not an optimisation.
-func TestBuildCollectSpecExcludesTheLoggingStack(t *testing.T) {
+// A glob pointing outside the collector's only mount matches nothing and
+// reports no error, which is worse than not offering the source.
+func TestBuildCollectSpecCollectsNothingForSourcesItCannotRead(t *testing.T) {
 	s := &service{}
-	cfg := &entity.Logging{Sources: entity.LoggingSources{Apps: true}}
 
-	spec, err := s.buildCollectSpec(cfg, "http://vlogs:9428/internal/insert")
-	if err != nil {
-		t.Fatalf("buildCollectSpec: %v", err)
-	}
+	_, err := s.buildCollectSpec(
+		&entity.Logging{Sources: entity.LoggingSources{TraefikAccess: true, Nodes: true}},
+		"http://vlogs:9428/internal/insert")
 
-	var appSource *logging.Source
-	for i := range spec.Sources {
-		if spec.Sources[i].Kind == logging.SourceKindApp {
-			appSource = &spec.Sources[i]
-		}
-	}
-	if appSource == nil {
-		t.Fatal("no app source")
-	}
-	assert.NotEmpty(t, appSource.Exclude)
-	assert.Contains(t, appSource.Exclude, ServiceNameCollector)
+	assert.ErrorIs(t, err, logging.ErrNoSources)
 }
 
 func TestBuildCollectSpecCarriesForwards(t *testing.T) {

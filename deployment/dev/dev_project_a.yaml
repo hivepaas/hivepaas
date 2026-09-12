@@ -16,9 +16,10 @@ services:
         - "hivepaas.app.key=frontend"
         - "hivepaas.app.name=frontend"
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 50m
+        max-file: "5"
         compress: "true"
 
   backend:
@@ -33,9 +34,10 @@ services:
         - "hivepaas.app.key=backend"
         - "hivepaas.app.name=backend"
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 50m
+        max-file: "5"
         compress: "true"
 
   db:
@@ -50,9 +52,10 @@ services:
         - "hivepaas.app.key=db"
         - "hivepaas.app.name=db"
     logging:
-      driver: local
+      driver: json-file
       options:
         max-size: 50m
+        max-file: "5"
         compress: "true"
 
 networks:

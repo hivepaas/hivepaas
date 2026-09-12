@@ -2,6 +2,7 @@
 package vlagent
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -178,22 +179,24 @@ func joinHeaders(h map[string]string) string {
 	return strings.Join(parts, "^^")
 }
 
-// joinFields renders extra log fields as key=value pairs, stably ordered for
-// the same reason.
+// joinFields renders extra log fields as the JSON object vlagent expects.
+//
+// Not key=value pairs: vlagent parses this flag as JSON and exits at startup on
+// anything else - measured against v1.52.0, which answers `cannot parse
+// -fileCollector.extraFields ... cannot parse JSON`. A collector that exits is
+// a collector swarm restarts forever, so this format is load-bearing.
+//
+// encoding/json sorts map keys, so the same configuration always renders the
+// same command line - a spec that differs run to run redeploys for nothing.
 func joinFields(f map[string]string) string {
 	if len(f) == 0 {
 		return ""
 	}
-	keys := make([]string, 0, len(f))
-	for k := range f {
-		keys = append(keys, k)
+	out, err := json.Marshal(f)
+	if err != nil {
+		return ""
 	}
-	sort.Strings(keys)
-	parts := make([]string, 0, len(keys))
-	for _, k := range keys {
-		parts = append(parts, fmt.Sprintf("%s=%s", k, f[k]))
-	}
-	return strings.Join(parts, ",")
+	return string(out)
 }
 
 // AttrField is the field a container label named in json-file's `labels`

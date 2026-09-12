@@ -1,0 +1,24 @@
+# Backup errors
+#
+# The sources are split between two files, because the engine packages declare
+# their own errors while the repository-level ones are still central:
+#   services/backup/backupmodel/errors.go   (ERR_BACKUP_ENGINE/COMMAND/SNAPSHOT/STORAGE/REPO_CONFIG)
+#   hivepaas_app/hperrors/constants.go      (ERR_BACKUP_REPO_*)
+# Adding or removing an error in either means editing this file.
+ERR_BACKUP_STORAGE_CONFIG_REQUIRED = "Backup storage configuration is required"
+ERR_BACKUP_STORAGE_TYPE_REQUIRED = "Backup storage must be either cloud storage or a volume"
+ERR_BACKUP_ENGINE_UNSUPPORTED = "Backup engine '{{.Name}}' is not supported"
+ERR_BACKUP_COMMAND_REQUIRED = "Backup command is required"
+ERR_BACKUP_COMMAND_EXECUTOR_MISSING = "Backup command executor is not configured"
+ERR_BACKUP_COMMAND_FAILED = "Backup engine command failed"
+ERR_BACKUP_SNAPSHOT_NOT_FOUND = "Backup snapshot '{{.Name}}' is not found"
+ERR_BACKUP_SNAPSHOT_MANIFEST_INVALID = "Backup engine returned an unreadable snapshot manifest"
+ERR_BACKUP_REPO_CONFIG_UNREADABLE = "The backup repository settings could not be read back from the repository"
+ERR_BACKUP_REPO_STORAGE_REQUIRED = "Backup repository requires a cloud storage or a volume"
+ERR_BACKUP_REPO_STORAGE_AMBIGUOUS = "Backup repository accepts either a cloud storage or a volume, not both"
+ERR_BACKUP_REPO_PASSWORD_REQUIRED = "Backup repository password is required"
+ERR_BACKUP_REPO_VOLUME_PATH_UNRESOLVED = "Location of volume '{{.Name}}' on the host cannot be resolved"
+ERR_BACKUP_REPO_VOLUME_NODE_REQUIRED = "Volume '{{.Name}}' must be bound to a node to hold a backup repository"
+ERR_BACKUP_REPO_PASSWORD_OUT_OF_SYNC = "The backup repository was re-encrypted with the new password but it could not be saved, and restoring the previous password failed. The repository now only opens with the new password and has to be corrected manually."
+ERR_BACKUP_REPO_OPTIONS_NOT_APPLIED = "The settings were saved but the backup repository did not accept them. Backups keep using the previous compression and pack size until an update succeeds."
+ERR_BACKUP_REPO_CLEANUP_IN_PROGRESS = "A cleanup is already running for this backup repository. Wait for it to finish before starting another one."

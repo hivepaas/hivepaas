@@ -4,6 +4,12 @@ import "github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 
 const (
 	HostPathPrefix = "/host"
+
+	// VolumeRemovalRetryMax is what a caller that can afford to wait a few
+	// seconds passes to RemoveVolume. It is smaller than its clusterservice
+	// counterpart's budget per attempt because volume removal runs inside the
+	// transaction that deletes the volume's setting.
+	VolumeRemovalRetryMax = 4
 )
 
 type RsyncOptions struct {

@@ -2,6 +2,7 @@ package volumeservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/volume"
@@ -16,6 +17,8 @@ type Service interface {
 	EnsureVolumePermissions(ctx context.Context, volMount *mount.Mount, subpaths ...string) error
 
 	MakeSubDirInHost(ctx context.Context, baseDirInHost string, subpath string, requireBaseDirExist bool) error
+
+	RemoveVolume(ctx context.Context, volumeID string, force bool, retryMax int, retryDelay time.Duration) error
 
 	CreateProjectDefaultVolume(ctx context.Context, project *entity.Project) (*entity.Setting, error)
 	ListProjectVolumes(ctx context.Context, db database.IDB, project *entity.Project,

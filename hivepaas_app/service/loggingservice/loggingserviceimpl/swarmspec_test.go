@@ -90,6 +90,22 @@ func TestToSwarmServiceSpecLabelsWhatItOwns(t *testing.T) {
 	assert.Equal(t, "true", spec.Labels[LabelManagedBy])
 }
 
+// The collector globs *-json.log. Anything this package runs writes `local`
+// instead, so the stack cannot collect its own output - excluding it by path is
+// impossible, because the path is a container id, not a service name.
+func TestToSwarmServiceSpecKeepsTheStackOutOfTheCollector(t *testing.T) {
+	spec, err := toSwarmServiceSpec(&logging.RuntimeSpec{Image: "img"}, swarmSpecOpts{Name: "x"})
+	if err != nil {
+		t.Fatalf("toSwarmServiceSpec: %v", err)
+	}
+
+	if spec.TaskTemplate.LogDriver == nil {
+		t.Fatal("no log driver: the collector would read this service's own logs")
+	}
+	assert.Equal(t, logDriverLocal, spec.TaskTemplate.LogDriver.Name)
+	assert.NotEqual(t, "json-file", spec.TaskTemplate.LogDriver.Name)
+}
+
 func TestToSwarmServiceSpecRequiresAnImage(t *testing.T) {
 	_, err := toSwarmServiceSpec(&logging.RuntimeSpec{}, swarmSpecOpts{Name: "x"})
 

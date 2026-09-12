@@ -532,6 +532,29 @@ rather than assumed. Where the sections above say otherwise, this wins.
 - **The collector does not wait for the backend's health check.** Creation order
   is kept, but vlagent buffers in a persistent queue until delivery succeeds, so
   a wait would add a timeout for no lost line.
+- **`-fileCollector.extraFields` is JSON, not `key=value`.** vlagent parses it as
+  JSON and exits at startup otherwise (`cannot parse ... cannot parse JSON`,
+  v1.52.0), so every source carrying a label would have killed the collector -
+  and with it the collection of everything else.
+- **App and HivePaaS logs are one source.** Both live in
+  `/var/lib/docker/containers/<id>/`, and no glob separates a container id that
+  belongs to an app from one that does not. Giving the same glob twice was
+  measured: the file is collected once and only the first slot's extra fields
+  apply, so the second source's label is silently dropped. Which line belongs to
+  an app is decided at read time by the identity the daemon wrote into it.
+- **The proxy's access log and the host's logs are not collected.** Their globs
+  pointed outside `/var/lib/docker/containers`, the collector's only mount, so
+  they matched nothing and reported nothing. Traefik runs with `--accesslog=true`
+  in the shipped stack, which writes to its own stdout - already covered by the
+  container source.
+- **The stack hides its own logs with a log driver, not a glob.** Excluding by
+  path cannot work: the path is a container id, never a service name, so the
+  exclude glob naming `hivepaas-vlagent` matched nothing. Both logging services
+  now run the `local` driver, which writes no `*-json.log` for the collector to
+  find, and `docker service logs` still reads them. Verified on a real swarm:
+  with the stack running, its own output stops arriving while app lines keep
+  coming.
+
 - **The stack needs its own network.** Swarm services resolve each other only across a
   shared overlay, and plan 2 attached none - so vlagent could never reach VictoriaLogs
   and nothing was ever stored. The collector and the backend now share

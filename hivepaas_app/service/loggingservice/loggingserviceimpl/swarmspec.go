@@ -15,6 +15,15 @@ import (
 // later does not depend on their names staying the same.
 const LabelManagedBy = "hivepaas.logging.managed"
 
+// logDriverLocal keeps the logging stack's own output away from the collector.
+//
+// The collector globs *-json.log; `local` writes a different format under
+// local-logs/, so the stack's containers simply do not match. Excluding them by
+// path is not possible - the path is a container id, never a service name - and
+// collecting them feeds the collector its own output. `docker service logs`
+// still reads them.
+const logDriverLocal = "local"
+
 type swarmSpecOpts struct {
 	Name string
 	// Global runs one task per node. The collector needs this; nothing else
@@ -54,6 +63,7 @@ func toSwarmServiceSpec(rt *logging.RuntimeSpec, opts swarmSpecOpts) (*swarm.Ser
 		TaskTemplate: swarm.TaskSpec{
 			ContainerSpec: container,
 			RestartPolicy: &swarm.RestartPolicy{Condition: swarm.RestartPolicyConditionAny},
+			LogDriver:     &swarm.Driver{Name: logDriverLocal},
 		},
 	}
 

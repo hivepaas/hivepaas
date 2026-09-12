@@ -255,6 +255,22 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                 titleWidth={220}
                                                 title={
                                                     <LabelWithInfo
+                                                        label="Data directory"
+                                                        content="A directory inside the volume, so one volume can serve more than logging. Empty writes at the volume's root. Changing it on a running backend starts an empty store: the logs collected so far stay where they are, and stop being shown."
+                                                    />
+                                                }
+                                            >
+                                                <Input
+                                                    {...register("volumeSubpath")}
+                                                    placeholder="logs"
+                                                    className="max-w-[300px]"
+                                                />
+                                                <FieldMessage name="volumeSubpath" />
+                                            </InfoBlock>
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={
+                                                    <LabelWithInfo
                                                         label="Retention"
                                                         content="Such as 30d or 12h. VictoriaLogs keeps at least one day."
                                                     />

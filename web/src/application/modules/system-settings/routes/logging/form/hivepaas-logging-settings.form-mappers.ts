@@ -48,6 +48,7 @@ export function toLoggingFormInput(s?: HivePaaSLoggingSettings): HivePaaSLogging
         backendManaged: s?.backend.managed ?? true,
         nodeId: s?.backend.victoriaLogs?.nodeId ?? "",
         volumeId: s?.backend.victoriaLogs?.volumeId ?? "",
+        volumeSubpath: s?.backend.victoriaLogs?.volumeSubpath ?? "",
         retention: s?.backend.victoriaLogs?.retention ?? "30d",
         maxDiskUsagePercent: s?.backend.victoriaLogs?.maxDiskUsagePercent ?? null,
         ingest: toEndpointForm(s?.backend.ingest),
@@ -74,6 +75,7 @@ export function toLoggingPayload(v: HivePaaSLoggingSettingsFormOutput): HivePaaS
                   victoriaLogs: {
                       nodeId: v.nodeId,
                       volumeId: v.volumeId,
+                      ...(v.volumeSubpath ? { volumeSubpath: v.volumeSubpath } : {}),
                       retention: v.retention,
                       ...(v.maxDiskUsagePercent ? { maxDiskUsagePercent: v.maxDiskUsagePercent } : {}),
                   },

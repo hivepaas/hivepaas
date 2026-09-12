@@ -14,6 +14,8 @@ export type HivePaaSLoggingVictoriaLogs = {
     image?: string;
     nodeId: string;
     volumeId: string;
+    /** Directory inside the volume; empty means its root. */
+    volumeSubpath?: string;
     /** timeutil.Duration text: the server writes days as "30d", and accepts w/d/h/m/s. */
     retention: string;
     maxDiskUsagePercent?: number;

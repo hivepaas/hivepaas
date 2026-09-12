@@ -231,6 +231,10 @@ func (s *service) Status(ctx context.Context, db database.IDB) (*loggingservice.
 	}
 	out := &loggingservice.Status{}
 	if setting == nil {
+		out.ExcludedApps, err = s.listExcludedApps(ctx, db)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 		return out, nil
 	}
 	cfg, err := setting.AsLogging()
@@ -239,6 +243,13 @@ func (s *service) Status(ctx context.Context, db database.IDB) (*loggingservice.
 	}
 	if cfg != nil {
 		out.Enabled = cfg.Enabled
+	}
+
+	// Listed whether or not logging is on: the list is most useful before it is
+	// turned on, when there is still time to switch the apps it names.
+	out.ExcludedApps, err = s.listExcludedApps(ctx, db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
 	backend, inspectErr := s.clusterService.ServiceInspect(ctx, ServiceNameBackend, true)

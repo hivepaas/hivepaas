@@ -12,8 +12,33 @@ type Status struct {
 	BackendServiceID string
 	CollectorService string
 	BackendReady     bool
-	// ExcludedApps are apps whose own log driver keeps them out of collection.
-	ExcludedApps []string
+	// ExcludedApps are apps whose logs will not reach the backend usable.
+	ExcludedApps []ExcludedApp
+}
+
+// ExcludedReason is why an app is not collected.
+type ExcludedReason string
+
+const (
+	// ExcludedReasonDriverUnreadable is a log driver the collector cannot read:
+	// `local`, which new apps used until json-file became the default, or one
+	// the operator chose, such as syslog.
+	ExcludedReasonDriverUnreadable ExcludedReason = "driver-unreadable"
+
+	// ExcludedReasonIdentityMissing is a readable driver whose lines do not carry
+	// this app's identity - an app created before the identity labels existed,
+	// or cloned before clones were copied deeply. Its lines are collected but
+	// cannot be scoped to the app, which for the read path is as good as absent.
+	ExcludedReasonIdentityMissing ExcludedReason = "identity-missing"
+)
+
+// ExcludedApp is one app that logging will not show.
+type ExcludedApp struct {
+	AppID  string
+	Name   string
+	Reason ExcludedReason
+	// Driver is the log driver the service runs with, empty for the daemon's.
+	Driver string
 }
 
 type Service interface {

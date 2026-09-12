@@ -85,3 +85,32 @@ func TestWithLogLabelsOptionDoesNotTouchItsInput(t *testing.T) {
 
 	assert.NotContains(t, in.Options, "labels")
 }
+
+func TestHasLogIdentity(t *testing.T) {
+	labeled := WithLogLabelsOption(&swarm.Driver{Name: "json-file"})
+	cs := &swarm.ContainerSpec{Labels: map[string]string{LabelLogAppID: "app-1"}}
+
+	assert.True(t, HasLogIdentity(labeled, cs, "app-1"))
+	assert.False(t, HasLogIdentity(labeled, cs, "app-2"), "a clone still carrying its source's id")
+	assert.False(t, HasLogIdentity(&swarm.Driver{Name: "json-file"}, cs, "app-1"), "no labels option")
+	assert.False(t, HasLogIdentity(labeled, &swarm.ContainerSpec{}, "app-1"), "created before the labels")
+	assert.False(t, HasLogIdentity(nil, cs, "app-1"), "daemon default carries no labels option")
+	assert.False(t, HasLogIdentity(&swarm.Driver{Name: "local"}, cs, "app-1"))
+}
+
+// The default has to be something the collector reads and that names the
+// identity labels, with limits, or apps would go uncollected or grow unbounded.
+func TestDefaultLogDriverIsCollectibleAndBounded(t *testing.T) {
+	d := DefaultLogDriver()
+
+	assert.True(t, IsLogDriverCollectible(d))
+	assert.True(t, HasLogIdentity(d, &swarm.ContainerSpec{Labels: map[string]string{LabelLogAppID: "a"}}, "a"))
+	assert.Equal(t, "50m", d.Options["max-size"])
+	assert.Equal(t, "20", d.Options["max-file"])
+}
+
+func TestDefaultLogDriverIsANewValueEachTime(t *testing.T) {
+	DefaultLogDriver().Options["max-size"] = "changed"
+
+	assert.Equal(t, "50m", DefaultLogDriver().Options["max-size"])
+}

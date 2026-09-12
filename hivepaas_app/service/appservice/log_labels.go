@@ -86,3 +86,44 @@ func WithLogLabelsOption(d *swarm.Driver) *swarm.Driver {
 	opts["labels"] = strings.Join(list, ",")
 	return &swarm.Driver{Name: d.Name, Options: opts}
 }
+
+// HasLogIdentity reports whether a service's log lines will carry the given
+// app's identity.
+//
+// All three have to hold: a driver the collector reads, a `labels` option
+// naming the app id label, and the container carrying that label with this
+// app's id. A service created before the labels existed fails the last two,
+// and one cloned before clones were copied deeply carries its source's id.
+func HasLogIdentity(d *swarm.Driver, cs *swarm.ContainerSpec, appID string) bool {
+	if d == nil || d.Name != logDriverJSONFile || cs == nil {
+		return false
+	}
+	if cs.Labels[LabelLogAppID] != appID {
+		return false
+	}
+	for _, n := range strings.Split(d.Options["labels"], ",") {
+		if strings.TrimSpace(n) == LabelLogAppID {
+			return true
+		}
+	}
+	return false
+}
+
+// DefaultLogDriver is the log driver an app runs with unless the operator names
+// another.
+//
+// json-file rather than the `local` Docker recommends: `local` writes a binary
+// format under local-logs/ that the log collector cannot read. The limits match
+// what `local` had - compress only applies to rotated files, so at most one live
+// 50m file per container is uncompressed. It carries the `labels` option that
+// copies the app's identity into each line.
+func DefaultLogDriver() *swarm.Driver {
+	return WithLogLabelsOption(&swarm.Driver{
+		Name: logDriverJSONFile,
+		Options: map[string]string{
+			"max-size": "50m",
+			"max-file": "20",
+			"compress": "true",
+		},
+	})
+}

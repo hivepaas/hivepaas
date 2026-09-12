@@ -67,8 +67,16 @@ type SettingsData struct {
 }
 
 type SettingsStatus struct {
-	BackendReady bool     `json:"backendReady"`
-	ExcludedApps []string `json:"excludedApps"`
+	BackendReady bool              `json:"backendReady"`
+	ExcludedApps []ExcludedAppData `json:"excludedApps"`
+}
+
+// ExcludedAppData is an app logging will not show, and why.
+type ExcludedAppData struct {
+	AppID  string `json:"appId"`
+	Name   string `json:"name"`
+	Reason string `json:"reason"`
+	Driver string `json:"driver,omitempty"`
 }
 
 type GetSettingsReq struct{}

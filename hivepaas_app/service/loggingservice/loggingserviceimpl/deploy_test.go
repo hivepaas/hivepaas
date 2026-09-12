@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -24,9 +25,28 @@ import (
 type fakeDocker struct {
 	docker.Manager
 	existing map[string]bool
+	listed   []swarm.Service
 	created  []*swarm.ServiceSpec
 	updated  []*swarm.ServiceSpec
 	removed  []string
+}
+
+func (f *fakeDocker) ServiceList(
+	_ context.Context, _ ...docker.ServiceListOption,
+) (*client.ServiceListResult, error) {
+	return &client.ServiceListResult{Items: f.listed}, nil
+}
+
+// fakeAppRepo hands back a fixed set of apps.
+type fakeAppRepo struct {
+	repository.AppRepo
+	apps []*entity.App
+}
+
+func (f *fakeAppRepo) List(
+	_ context.Context, _ database.IDB, _ string, _ *basedto.Paging, _ ...bunex.SelectQueryOption,
+) ([]*entity.App, *basedto.PagingMeta, error) {
+	return f.apps, &basedto.PagingMeta{}, nil
 }
 
 func (f *fakeDocker) ServiceInspect(
@@ -327,4 +347,30 @@ func TestDeployRemovesTheBackendWhenItStopsBeingManaged(t *testing.T) {
 	last := fd.updated[len(fd.updated)-1]
 	assert.Equal(t, ServiceNameCollector, last.Name, "the collector is repointed before the backend goes")
 	assert.Contains(t, last.TaskTemplate.ContainerSpec.Args, "-remoteWrite.url=https://logs.example/insert")
+}
+
+// The list matters most before logging is turned on, so it is filled with no
+// setting stored at all.
+func TestStatusListsExcludedAppsEvenWhenNeverConfigured(t *testing.T) {
+	fd := &fakeDocker{listed: []swarm.Service{
+		{ID: "s1", Spec: swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{
+			LogDriver: &swarm.Driver{Name: "local"}, ContainerSpec: &swarm.ContainerSpec{},
+		}}},
+	}}
+	s := &service{
+		dockerManager: fd,
+		settingRepo:   &fakeSettingRepo{},
+		appRepo:       &fakeAppRepo{apps: []*entity.App{{ID: "a1", Name: "legacy", ServiceID: "s1"}}},
+	}
+
+	st, err := s.Status(context.Background(), nil)
+	if err != nil {
+		t.Fatalf("Status: %v", err)
+	}
+
+	if len(st.ExcludedApps) != 1 {
+		t.Fatalf("want one excluded app, got %d", len(st.ExcludedApps))
+	}
+	assert.Equal(t, "a1", st.ExcludedApps[0].AppID)
+	assert.Equal(t, loggingservice.ExcludedReasonDriverUnreadable, st.ExcludedApps[0].Reason)
 }

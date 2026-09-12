@@ -28,9 +28,11 @@ func (uc *UC) GetSettings(
 	}
 
 	data, masked := loggingdto.FromEntity(cfg)
-	excluded := status.ExcludedApps
-	if excluded == nil {
-		excluded = []string{}
+	excluded := make([]loggingdto.ExcludedAppData, 0, len(status.ExcludedApps))
+	for _, e := range status.ExcludedApps {
+		excluded = append(excluded, loggingdto.ExcludedAppData{
+			AppID: e.AppID, Name: e.Name, Reason: string(e.Reason), Driver: e.Driver,
+		})
 	}
 	return &loggingdto.GetSettingsResp{
 		Data:         data,

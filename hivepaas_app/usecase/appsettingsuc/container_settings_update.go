@@ -230,8 +230,11 @@ func (uc *UC) prepareUpdatingAppContainerLogDriver(
 		taskSpec.ContainerSpec.Labels = appservice.WithAppLogLabels(taskSpec.ContainerSpec.Labels, data.App)
 	}
 
-	if req.LogDriver == nil {
-		taskSpec.LogDriver = nil
+	// No driver named means HivePaaS's default, not the daemon's. The daemon
+	// default is json-file with no size limit and no `labels` option, so the
+	// app's logs would grow unbounded and arrive without its identity.
+	if req.LogDriver == nil || req.LogDriver.Name == "" {
+		taskSpec.LogDriver = appservice.DefaultLogDriver()
 		return
 	}
 	// A driver the operator named is kept. When it is json-file the identity

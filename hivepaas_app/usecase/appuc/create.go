@@ -267,16 +267,8 @@ func (uc *UC) preparePersistingAppService(
 						Aliases: []string{app.Key},
 					},
 				},
-				LogDriver: &swarm.Driver{
-					// Default driver is `json-file`, but Docker recommends `local`
-					// See: https://docs.docker.com/engine/logging/configure/
-					Name: "local",
-					Options: map[string]string{
-						"max-size": "50m",
-						"max-file": "20",
-						"compress": "true",
-					},
-				},
+				// See DefaultLogDriver for why this is not `local`.
+				LogDriver: appservice.DefaultLogDriver(),
 			},
 		},
 	}

@@ -32,6 +32,7 @@ const (
 	SettingTypeImageBuild        SettingType = "image-build"
 	SettingTypeIMService         SettingType = "im-service"
 	SettingTypeHivePaaSService   SettingType = "hivepaas-service"
+	SettingTypeLogging           SettingType = "logging"
 	SettingTypeNotification      SettingType = "notification"
 	SettingTypeOAuth             SettingType = "oauth"
 	SettingTypePeriodicJob       SettingType = "periodic-job"

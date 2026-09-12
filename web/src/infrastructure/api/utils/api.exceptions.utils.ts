@@ -32,9 +32,20 @@ export function isTokenExpiredException(error: AxiosError): boolean {
 
 /**
  * Check if the error is a invite token invalid error
+ *
+ * This matched ERR_USER_INVITE_TOKEN_INVALID on a 403, and neither half was
+ * ever sent: POST /users/signup-begin answers an unusable token with
+ * hperrors.ErrTokenInvalid, which carries the code ERR_TOKEN_INVALID and a 412,
+ * so the branch this guards could not run and an expired invite showed the
+ * generic error screen.
+ *
+ * 412 has no exception class of its own and lands on the HttpException
+ * catch-all, so the status is not what identifies it. The code is - and while
+ * ERR_TOKEN_INVALID is shared with other token checks, the only caller is the
+ * sign-up route, where the invite token is the only token in play.
  */
 export function isInviteTokenInvalidException(error: Error): boolean {
-    return error instanceof Http403Exception && error.code === "ERR_USER_INVITE_TOKEN_INVALID";
+    return error instanceof HttpException && error.code === "ERR_TOKEN_INVALID";
 }
 
 /**

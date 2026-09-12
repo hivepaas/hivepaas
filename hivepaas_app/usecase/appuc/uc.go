@@ -8,6 +8,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/containerexecservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
@@ -31,6 +32,7 @@ type UC struct {
 	networkService       networkservice.Service
 	placementService     placementservice.Service
 	settingService       settingservice.Service
+	loggingService       loggingservice.Service
 }
 
 func New(
@@ -50,6 +52,7 @@ func New(
 	networkService networkservice.Service,
 	placementService placementservice.Service,
 	settingService settingservice.Service,
+	loggingService loggingservice.Service,
 ) *UC {
 	return &UC{
 		db:            db,
@@ -68,5 +71,6 @@ func New(
 		networkService:       networkService,
 		placementService:     placementService,
 		settingService:       settingService,
+		loggingService:       loggingService,
 	}
 }

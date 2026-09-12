@@ -41,6 +41,12 @@ func (uc *UC) GetAppLogsInfo(
 		return resp, nil
 	}
 
+	history, err := uc.loggingService.AppHistory(ctx, uc.db, app)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	resp.Data.History = &appdto.AppLogHistoryInfoResp{Available: history.Available, Reason: string(history.Reason)}
+
 	taskList, err := uc.dockerManager.ServiceTaskList(ctx, app.ServiceID, []swarm.TaskState{swarm.TaskStateRunning})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

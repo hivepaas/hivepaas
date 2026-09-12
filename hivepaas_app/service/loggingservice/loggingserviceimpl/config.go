@@ -10,7 +10,7 @@ import (
 
 const (
 	// ServiceNameBackend and ServiceNameCollector are the swarm service names.
-	// They are also how the collector recognises the stack's own containers in
+	// They are also how the collector recognizes the stack's own containers in
 	// order to skip them.
 	ServiceNameBackend   = "hivepaas-victoria-logs"
 	ServiceNameCollector = "hivepaas-vlagent"
@@ -23,6 +23,10 @@ const (
 
 	// nodeLogGlob is the host's own logs.
 	nodeLogGlob = "/var/log/syslog"
+
+	// sourceLabelKey tags lines from sources other than app containers, whose
+	// own attrs already say which app they came from.
+	sourceLabelKey = "hivepaas_source"
 )
 
 // toEndpoint converts a stored endpoint into one services/logging can use.
@@ -74,21 +78,21 @@ func (s *service) buildCollectSpec(cfg *entity.Logging, ingestURL string) (*logg
 			Kind:    logging.SourceKindHivePaaS,
 			Glob:    dockerContainersGlob,
 			Exclude: stackExclude,
-			Labels:  map[string]string{"hivepaas_source": string(logging.SourceKindHivePaaS)},
+			Labels:  map[string]string{sourceLabelKey: string(logging.SourceKindHivePaaS)},
 		})
 	}
 	if cfg.Sources.TraefikAccess {
 		sources = append(sources, logging.Source{
 			Kind:   logging.SourceKindTraefikAccess,
 			Glob:   traefikAccessGlob,
-			Labels: map[string]string{"hivepaas_source": string(logging.SourceKindTraefikAccess)},
+			Labels: map[string]string{sourceLabelKey: string(logging.SourceKindTraefikAccess)},
 		})
 	}
 	if cfg.Sources.Nodes {
 		sources = append(sources, logging.Source{
 			Kind:   logging.SourceKindNode,
 			Glob:   nodeLogGlob,
-			Labels: map[string]string{"hivepaas_source": string(logging.SourceKindNode)},
+			Labels: map[string]string{sourceLabelKey: string(logging.SourceKindNode)},
 		})
 	}
 	if len(sources) == 0 {

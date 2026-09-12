@@ -68,6 +68,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/healthcheckservice/healthcheckserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice/hpappserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice/imagebuildserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice/loggingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice/networkserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice/nodeexecserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice/notificationserviceimpl"
@@ -365,6 +366,7 @@ var Provides = []any{
 	taskserviceimpl.New,
 	traefikserviceimpl.New,
 	userserviceimpl.New,
+	loggingserviceimpl.New,
 	volumeserviceimpl.New,
 
 	// Repository

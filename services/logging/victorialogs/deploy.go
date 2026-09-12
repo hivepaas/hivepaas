@@ -66,8 +66,7 @@ func (c *Client) RuntimeSpec() (*loggingmodel.RuntimeSpec, error) {
 	if c.cfg.DataVolumeName == "" {
 		// Without a volume the logs live in the container's writable layer and
 		// vanish on the next restart, silently.
-		return nil, hperrors.Wrap(loggingmodel.ErrIngestEndpointRequired).
-			WithExtraDetail("a data volume is required to run VictoriaLogs")
+		return nil, hperrors.Wrap(loggingmodel.ErrDataVolumeRequired)
 	}
 
 	args := []string{

@@ -12,6 +12,5 @@ var (
 	ErrNotConfigured      = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_SVC_NOT_CONFIGURED")
 	ErrBackendNodeMissing = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_SVC_BACKEND_NODE_MISSING")
 	ErrVolumeMissing      = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_SVC_VOLUME_MISSING")
-	ErrBackendNotReady    = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_SVC_BACKEND_NOT_READY")
 	ErrDeployFailed       = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_SVC_DEPLOY_FAILED")
 )

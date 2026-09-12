@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/services/logging/loggingmodel"
 )
 
 func TestRuntimeSpecCarriesRetentionAndStorage(t *testing.T) {
@@ -71,5 +73,5 @@ func TestRuntimeSpecRequiresAVolume(t *testing.T) {
 
 	_, err := c.RuntimeSpec()
 
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, loggingmodel.ErrDataVolumeRequired)
 }

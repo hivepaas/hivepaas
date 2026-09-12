@@ -26,6 +26,7 @@ var (
 	ErrIngestEndpointRequired = loggingmodel.ErrIngestEndpointRequired
 	ErrNoSources              = loggingmodel.ErrNoSources
 	ErrForwardFormatInvalid   = loggingmodel.ErrForwardFormatInvalid
+	ErrDataVolumeRequired     = loggingmodel.ErrDataVolumeRequired
 	ErrQueryInvalid           = loggingmodel.ErrQueryInvalid
 	ErrBackendUnreachable     = loggingmodel.ErrBackendUnreachable
 )

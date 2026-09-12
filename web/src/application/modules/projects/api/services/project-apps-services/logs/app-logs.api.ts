@@ -2,6 +2,8 @@ import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 import type {
     AppLogsApiValidator,
+    AppLogs_GetHistory_Req,
+    AppLogs_GetHistory_Res,
     AppLogs_GetInfo_Req,
     AppLogs_GetInfo_Res,
     AppLogs_GetLogs_Req,
@@ -57,6 +59,33 @@ export class AppLogsApi extends BaseApi {
                 }),
             ).pipe(
                 map(this.validator.getLogs),
+                map(res => Ok(res)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    async getHistory(
+        request: AppLogs_GetHistory_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppLogs_GetHistory_Res, Error>> {
+        const { projectID, env, appID, start, end, limit, search, levels, streams } = request.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/logs/history`, {
+                    params: {
+                        ...(start ? { start: start.toISOString() } : {}),
+                        ...(end ? { end: typeof end === "string" ? end : end.toISOString() } : {}),
+                        ...(limit ? { limit } : {}),
+                        ...(search ? { search } : {}),
+                        ...(levels?.length ? { levels: levels.join(",") } : {}),
+                        ...(streams?.length ? { streams: streams.join(",") } : {}),
+                    },
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.getHistory),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

@@ -296,17 +296,26 @@ Each file opens with a comment naming the Go files it mirrors.
 
 ### Prerequisite: `tools/errcodelint`
 
-Splitting the file does not create the duplicate-key risk - it exposes one that
-already exists. `i18n.Bundle.AddMessages` is a plain map assignment, so a
-repeated id silently overwrites, and which copy wins depends on directory walk
-order. Two identical keys in today's single file behave exactly the same way;
-the single file only makes them theoretically visible, and nobody scans 206
-lines for duplicates.
+Splitting the file removes a guarantee the single file was quietly providing,
+so the lint has to replace it first. Measured against the vendored libraries:
+
+- **Two ids repeated inside one file** are a TOML violation. BurntSushi returns
+  `Key 'X' has already been defined`, and `translation.localizerMap` panics on
+  that error during package initialisation. The process dies at startup - loud,
+  immediate, impossible to miss.
+- **The same id in two files** parses cleanly and silently overwrites, because
+  `i18n.Bundle.AddMessages` is a plain map assignment. Which copy wins depends
+  on directory walk order.
+
+So one file makes duplicates a startup crash; several files make them a wrong
+message nobody notices. That is a real regression, and it is the reason
+`errcodelint` is a prerequisite rather than an improvement to add afterwards.
 
 A new check under `tools/`, run from `make lint` beside `goroutinelint`:
 
 1. every `hperrors.NewErr(_, "ERR_X")` in the repo has an entry in some message file
-2. no id is defined in two files, or twice in one file
+2. no id is defined in two different files (a repeat inside one file is already
+   a TOML parse error, so the check only has to cover the cross-file case)
 3. no message id is orphaned - present in a file with no Go declaration
 4. every message file name parses to a valid language tag
 

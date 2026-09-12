@@ -40,6 +40,7 @@ const SettingsSchema = z.object({
                 image: z.string().optional(),
                 nodeId: z.string().catch(""),
                 volumeId: z.string().catch(""),
+                volumeSubpath: z.string().optional(),
                 retention: z.string().catch("30d"),
                 maxDiskUsagePercent: z.number().optional(),
             })

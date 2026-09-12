@@ -76,14 +76,6 @@ export const systemSettingsRouter: RouteObject = {
                     },
                 },
                 {
-                    path: "logging",
-                    lazy: async () => {
-                        const { SystemSettingsHivePaaSLoggingRoute } = await getLazyComponents();
-
-                        return { Component: SystemSettingsHivePaaSLoggingRoute };
-                    },
-                },
-                {
                     path: "actions",
                     lazy: async () => {
                         const { SystemSettingsHivePaaSActionsRoute } = await getLazyComponents();
@@ -143,6 +135,44 @@ export const systemSettingsRouter: RouteObject = {
                         const { SystemSettingsTraefikActionsRoute } = await getLazyComponents();
 
                         return { Component: SystemSettingsTraefikActionsRoute };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
+                const { LoggingLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Logging">
+                                <LoggingLayout>
+                                    <Outlet />
+                                </LoggingLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.systemSettings.logging.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.systemSettings.logging.configuration.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "configuration",
+                    lazy: async () => {
+                        const { SystemSettingsLoggingRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsLoggingRoute };
                     },
                 },
             ],

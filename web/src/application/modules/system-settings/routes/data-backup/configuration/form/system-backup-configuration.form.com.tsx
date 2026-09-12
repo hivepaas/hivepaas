@@ -9,6 +9,7 @@ import { CloudStorageQueries } from "~/settings/data";
 import { ConfirmRevealSecretsDialog, RevealSecretsButton } from "~/settings/module-shared/components";
 import { useNotificationSettingsSources, useSettingRevealSecrets } from "~/settings/module-shared/hooks";
 import type { SystemBackupSettings } from "~/system-settings/domain";
+import { SectionHeader } from "~/system-settings/module-shared";
 
 import { AppLink, Combobox, InfoBlock, NextRunsField } from "@application/shared/components";
 import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
@@ -37,12 +38,6 @@ import {
 
 type SchemaInput = SystemBackupConfigurationFormInput;
 type SchemaOutput = SystemBackupConfigurationFormOutput;
-
-function SectionHeader({ children }: PropsWithChildren) {
-    return (
-        <div className="sticky top-0 z-10 rounded-lg bg-accent px-3 py-2 text-sm font-medium shadow-xs">{children}</div>
-    );
-}
 
 function EnabledField() {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();

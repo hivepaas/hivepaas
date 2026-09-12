@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { type FieldPath, FormProvider, useController, useForm, useFormContext } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
 import type { TraefikServiceSettings } from "~/system-settings/domain";
+import { SectionHeader } from "~/system-settings/module-shared";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
@@ -23,12 +24,6 @@ import { mapTraefikServiceSettingsToFormInput } from "./traefik-general.form-map
 
 type SchemaInput = TraefikGeneralFormInput;
 type SchemaOutput = TraefikGeneralFormOutput;
-
-function SectionHeader({ children }: PropsWithChildren) {
-    return (
-        <div className="sticky top-0 z-10 rounded-lg bg-accent px-3 py-2 text-sm font-medium shadow-xs">{children}</div>
-    );
-}
 
 function ReplicasField() {
     const { control } = useFormContext<SchemaInput, unknown, SchemaOutput>();

@@ -1,11 +1,13 @@
 import { type PropsWithChildren, useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, Trash2 } from "lucide-react";
 import { Controller, FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
 import { ClusterVolumesQueries, NodesQueries } from "~/cluster/data/queries";
 import type { HivePaaSLoggingSettings } from "~/system-settings/domain";
+import { SectionHeader } from "~/system-settings/module-shared";
 
-import { InfoBlock } from "@application/shared/components";
+import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import {
     Button,
@@ -19,7 +21,7 @@ import {
 } from "@/components/ui";
 import { InputNumber } from "@/components/ui/input-number";
 
-import { EndpointFields, FieldMessage, SectionTitle } from "../building-blocks";
+import { EndpointFields, FieldMessage } from "../building-blocks";
 import {
     type HivePaaSLoggingSettingsFormInput,
     type HivePaaSLoggingSettingsFormOutput,
@@ -34,10 +36,15 @@ type SchemaOutput = HivePaaSLoggingSettingsFormOutput;
 const LIST_ALL = { pagination: { page: 1, size: 100 } };
 
 const SOURCES = [
-    { name: "sources.apps", title: "Apps", description: "Every app's container output." },
-    { name: "sources.hivepaas", title: "HivePaaS", description: "HivePaaS's own services." },
-    { name: "sources.traefikAccess", title: "Traefik access log", description: "Requests through the proxy." },
+    { name: "sources.apps", label: "Apps", info: "Every app's container output." },
+    { name: "sources.hivepaas", label: "HivePaaS", info: "HivePaaS's own services." },
+    { name: "sources.traefikAccess", label: "Traefik access log", info: "Requests through the proxy." },
 ] as const;
+
+/** The rows of one section, indented under its header like every settings page. */
+function SectionBody({ children }: PropsWithChildren) {
+    return <div className="flex flex-col gap-6 px-3">{children}</div>;
+}
 
 export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, children }: Props) {
     const methods = useForm<SchemaInput, unknown, SchemaOutput>({
@@ -78,33 +85,44 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                         disabled={readOnly}
                         className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                     >
-                        <InfoBlock
-                            titleWidth={220}
-                            title="Enabled"
-                            description="Collect logs on every node and keep them after containers are gone."
-                        >
-                            <Controller
-                                control={control}
-                                name="enabled"
-                                render={({ field }) => (
-                                    <Checkbox
-                                        checked={field.value}
-                                        onCheckedChange={checked => {
-                                            field.onChange(checked === true);
-                                        }}
+                        <SectionHeader>General</SectionHeader>
+                        <SectionBody>
+                            <InfoBlock
+                                titleWidth={220}
+                                title={
+                                    <LabelWithInfo
+                                        label="Enabled"
+                                        content="Collect logs on every node and keep them after containers are gone."
                                     />
-                                )}
-                            />
-                        </InfoBlock>
+                                }
+                            >
+                                <Controller
+                                    control={control}
+                                    name="enabled"
+                                    render={({ field }) => (
+                                        <Checkbox
+                                            checked={field.value}
+                                            onCheckedChange={checked => {
+                                                field.onChange(checked === true);
+                                            }}
+                                        />
+                                    )}
+                                />
+                            </InfoBlock>
+                        </SectionBody>
 
-                        <section className="flex flex-col gap-4">
-                            <SectionTitle>Sources</SectionTitle>
+                        <SectionHeader>Sources</SectionHeader>
+                        <SectionBody>
                             {SOURCES.map(source => (
                                 <InfoBlock
                                     key={source.name}
                                     titleWidth={220}
-                                    title={source.title}
-                                    description={source.description}
+                                    title={
+                                        <LabelWithInfo
+                                            label={source.label}
+                                            content={source.info}
+                                        />
+                                    }
                                 >
                                     <Controller
                                         control={control}
@@ -123,21 +141,30 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                             ))}
                             <InfoBlock
                                 titleWidth={220}
-                                title="Node logs"
-                                description="Not collected yet: reserved for a later release."
+                                title={
+                                    <LabelWithInfo
+                                        label="Node logs"
+                                        content="Not collected yet: the collector does not read the host's own logs. Reserved for a later release."
+                                    />
+                                }
                             >
                                 <Checkbox
                                     checked={false}
                                     disabled
                                 />
                             </InfoBlock>
-                        </section>
+                        </SectionBody>
 
-                        <section className="flex flex-col gap-4">
-                            <SectionTitle>Backend</SectionTitle>
+                        <SectionHeader>Backend</SectionHeader>
+                        <SectionBody>
                             <InfoBlock
                                 titleWidth={220}
-                                title="Where logs are stored"
+                                title={
+                                    <LabelWithInfo
+                                        label="Where logs are stored"
+                                        content="HivePaaS can run VictoriaLogs for you, or ship to a backend you run yourself."
+                                    />
+                                }
                             >
                                 <Controller
                                     control={control}
@@ -168,8 +195,13 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                 <>
                                     <InfoBlock
                                         titleWidth={220}
-                                        title="Node"
-                                        description="Where VictoriaLogs runs and keeps its data."
+                                        title={
+                                            <LabelWithInfo
+                                                label="Node"
+                                                content="Where VictoriaLogs runs and keeps its data."
+                                                isRequired
+                                            />
+                                        }
                                     >
                                         <Controller
                                             control={control}
@@ -200,8 +232,13 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                     </InfoBlock>
                                     <InfoBlock
                                         titleWidth={220}
-                                        title="Data volume"
-                                        description="Only volumes reachable from the chosen node. It is kept when logging is turned off."
+                                        title={
+                                            <LabelWithInfo
+                                                label="Data volume"
+                                                content="Only volumes reachable from the chosen node. It is kept when logging is turned off."
+                                                isRequired
+                                            />
+                                        }
                                     >
                                         <Controller
                                             control={control}
@@ -232,8 +269,12 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                     </InfoBlock>
                                     <InfoBlock
                                         titleWidth={220}
-                                        title="Retention"
-                                        description="Such as 30d or 12h. VictoriaLogs keeps at least one day."
+                                        title={
+                                            <LabelWithInfo
+                                                label="Retention"
+                                                content="Such as 30d or 12h. VictoriaLogs keeps at least one day."
+                                            />
+                                        }
                                     >
                                         <Input
                                             {...register("retention")}
@@ -243,8 +284,12 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                     </InfoBlock>
                                     <InfoBlock
                                         titleWidth={220}
-                                        title="Max disk usage %"
-                                        description="Drop the oldest days once the disk is this full. Optional."
+                                        title={
+                                            <LabelWithInfo
+                                                label="Max disk usage %"
+                                                content="Drop the oldest days once the disk is this full. Optional."
+                                            />
+                                        }
                                     >
                                         <Controller
                                             control={control}
@@ -256,7 +301,7 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                     max={100}
                                                     showControls={false}
                                                     useGrouping={false}
-                                                    className="w-[120px]"
+                                                    className="max-w-[110px]"
                                                     onValueChange={value => {
                                                         field.onChange(typeof value === "number" ? value : null);
                                                     }}
@@ -270,39 +315,49 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                 <>
                                     <EndpointFields
                                         prefix="ingest"
-                                        urlTitle="Ingest URL"
-                                        urlDescription="Where the collector writes."
+                                        urlLabel="Ingest URL"
+                                        urlInfo="Where the collector writes."
                                     />
                                     <EndpointFields
                                         prefix="query"
-                                        urlTitle="Query URL"
-                                        urlDescription="Without it, stored logs cannot be shown in HivePaaS."
+                                        urlLabel="Query URL"
+                                        urlInfo="Without it, stored logs cannot be shown in HivePaaS."
                                     />
                                 </>
                             )}
-                        </section>
+                        </SectionBody>
 
-                        <section className="flex flex-col gap-4">
-                            <SectionTitle>Forwards</SectionTitle>
+                        <SectionHeader>Forwards</SectionHeader>
+                        <SectionBody>
                             <p className="text-sm text-muted-foreground">
                                 A copy of every collected line, sent to a system HivePaaS does not run.
                             </p>
                             {forwards.fields.map((item, index) => (
                                 <div
                                     key={item.id}
-                                    className="flex flex-col gap-4 rounded-lg border p-4"
+                                    className="flex flex-col gap-6 rounded-lg border p-4"
                                 >
                                     <InfoBlock
                                         titleWidth={220}
-                                        title="Name"
+                                        title={
+                                            <LabelWithInfo
+                                                label="Name"
+                                                content="How this destination is reported and removed. Must be unique."
+                                                isRequired
+                                            />
+                                        }
                                     >
                                         <Input {...register(`forwards.${index}.name`)} />
                                         <FieldMessage name={`forwards.${index}.name`} />
                                     </InfoBlock>
                                     <InfoBlock
                                         titleWidth={220}
-                                        title="Format"
-                                        description="jsonline for anything that accepts NDJSON; native for another VictoriaLogs."
+                                        title={
+                                            <LabelWithInfo
+                                                label="Format"
+                                                content="jsonline for anything that accepts NDJSON; native for another VictoriaLogs."
+                                            />
+                                        }
                                     >
                                         <Controller
                                             control={control}
@@ -326,7 +381,8 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                     </InfoBlock>
                                     <EndpointFields
                                         prefix={`forwards.${index}`}
-                                        urlTitle="URL"
+                                        urlLabel="URL"
+                                        urlInfo="An HTTP endpoint that accepts the format above."
                                         showBasicAuth={false}
                                     />
                                     <div>
@@ -337,7 +393,7 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                 forwards.remove(index);
                                             }}
                                         >
-                                            Remove forward
+                                            <Trash2 className="size-4" /> Remove
                                         </Button>
                                     </div>
                                 </div>
@@ -350,10 +406,10 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                         forwards.append({ ...emptyLoggingEndpointForm, name: "", format: "jsonline" });
                                     }}
                                 >
-                                    Add forward
+                                    <Plus className="size-4" /> Add forward
                                 </Button>
                             </div>
-                        </section>
+                        </SectionBody>
                     </fieldset>
                     {children}
                 </form>

@@ -4,3 +4,4 @@ export * from "./ssl-renewal";
 export * from "./backup-repo-cleanup";
 export * from "./hivepaas";
 export * from "./traefik";
+export * from "./logging";

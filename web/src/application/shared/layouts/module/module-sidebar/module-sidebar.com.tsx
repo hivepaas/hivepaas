@@ -296,6 +296,12 @@ const navMain: SidebarItem[] = [
                         route: ROUTE.systemSettings.traefik.general.$route,
                         pattern: ROUTE.systemSettings.traefik.$pattern,
                     },
+                    {
+                        title: "Logging",
+                        icon: ScrollText,
+                        route: ROUTE.systemSettings.logging.configuration.$route,
+                        pattern: ROUTE.systemSettings.logging.$pattern,
+                    },
                 ],
             },
             {

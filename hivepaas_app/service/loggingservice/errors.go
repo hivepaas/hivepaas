@@ -13,4 +13,5 @@ var (
 	ErrBackendNodeMissing = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_SVC_BACKEND_NODE_MISSING")
 	ErrVolumeMissing      = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_SVC_VOLUME_MISSING")
 	ErrDeployFailed       = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_SVC_DEPLOY_FAILED")
+	ErrAPINetworkMissing  = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_SVC_API_NETWORK_MISSING")
 )

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 	"github.com/stretchr/testify/assert"
@@ -29,6 +30,9 @@ type fakeDocker struct {
 	created  []*swarm.ServiceSpec
 	updated  []*swarm.ServiceSpec
 	removed  []string
+
+	networks        []network.Summary
+	networksCreated []client.NetworkCreateOptions
 }
 
 func (f *fakeDocker) ServiceList(
@@ -133,9 +137,21 @@ func storedSetting(t *testing.T, cfg *entity.Logging) *entity.Setting {
 	return &entity.Setting{ID: s.ID, Type: s.Type, Data: s.Data}
 }
 
+// newTestService builds the service with every dependency faked. setting may be
+// nil for "never configured".
+func newTestService(fd *fakeDocker, setting *entity.Setting) *service {
+	return &service{
+		dockerManager:  fd,
+		settingRepo:    &fakeSettingRepo{setting: setting},
+		appRepo:        &fakeAppRepo{},
+		hpAppService:   &fakeHpApp{networks: []string{testRoutingNetID, testLocalNetID}},
+		networkService: &fakeNetworkService{},
+	}
+}
+
 func TestDeployCreatesBackendBeforeCollector(t *testing.T) {
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 
 	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
@@ -151,7 +167,7 @@ func TestDeployCreatesBackendBeforeCollector(t *testing.T) {
 
 func TestDeployRunsTheCollectorOnEveryNode(t *testing.T) {
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 
 	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
@@ -164,7 +180,7 @@ func TestDeployRunsTheCollectorOnEveryNode(t *testing.T) {
 
 func TestDeployPinsTheBackendToItsNode(t *testing.T) {
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 
 	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
@@ -181,7 +197,7 @@ func TestDeployPinsTheBackendToItsNode(t *testing.T) {
 // service name the overlay network resolves.
 func TestDeployPointsTheCollectorAtTheBackend(t *testing.T) {
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 
 	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
@@ -195,7 +211,7 @@ func TestDeployRefusesAManagedBackendWithNoVolume(t *testing.T) {
 	cfg := enabledConfig()
 	cfg.Backend.VictoriaLogs.VolumeID = ""
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 
 	err := s.deploy(context.Background(), cfg)
 
@@ -208,7 +224,7 @@ func TestDeployRefusesAManagedBackendWithNoVolume(t *testing.T) {
 func TestDeployRefusesAManagedBackendWithNoNode(t *testing.T) {
 	cfg := enabledConfig()
 	cfg.Backend.VictoriaLogs.NodeID = ""
-	s := &service{dockerManager: &fakeDocker{}}
+	s := newTestService(&fakeDocker{}, nil)
 
 	assert.ErrorIs(t, s.deploy(context.Background(), cfg), loggingservice.ErrBackendNodeMissing)
 }
@@ -221,7 +237,7 @@ func TestDeploySkipsAnUnmanagedBackend(t *testing.T) {
 	cfg.Backend.VictoriaLogs = nil
 	cfg.Backend.Ingest = &entity.LoggingEndpoint{URL: "https://logs.example/insert"}
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 
 	if err := s.deploy(context.Background(), cfg); err != nil {
 		t.Fatalf("deploy: %v", err)
@@ -237,7 +253,7 @@ func TestDeploySkipsAnUnmanagedBackend(t *testing.T) {
 
 func TestTearDownRemovesCollectorBeforeBackend(t *testing.T) {
 	fd := &fakeDocker{existing: map[string]bool{ServiceNameCollector: true, ServiceNameBackend: true}}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 
 	if err := s.TearDown(context.Background()); err != nil {
 		t.Fatalf("TearDown: %v", err)
@@ -252,7 +268,7 @@ func TestTearDownRemovesCollectorBeforeBackend(t *testing.T) {
 // separate, explicit action through the volume API.
 func TestTearDownKeepsTheDataVolume(t *testing.T) {
 	fd := &fakeDocker{existing: map[string]bool{ServiceNameCollector: true, ServiceNameBackend: true}}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 
 	if err := s.TearDown(context.Background()); err != nil {
 		t.Fatalf("TearDown: %v", err)
@@ -266,7 +282,7 @@ func TestTearDownKeepsTheDataVolume(t *testing.T) {
 // Never configured is the default state, and must deploy nothing.
 func TestApplyWithNoSettingDoesNothing(t *testing.T) {
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd, settingRepo: &fakeSettingRepo{}}
+	s := newTestService(fd, nil)
 
 	assert.NoError(t, s.Apply(context.Background(), nil))
 	assert.Empty(t, fd.created)
@@ -277,7 +293,7 @@ func TestApplyWhenDisabledTearsDown(t *testing.T) {
 	cfg := enabledConfig()
 	cfg.Enabled = false
 	fd := &fakeDocker{existing: map[string]bool{ServiceNameCollector: true, ServiceNameBackend: true}}
-	s := &service{dockerManager: fd, settingRepo: &fakeSettingRepo{setting: storedSetting(t, cfg)}}
+	s := newTestService(fd, storedSetting(t, cfg))
 
 	assert.NoError(t, s.Apply(context.Background(), nil))
 	assert.Empty(t, fd.created)
@@ -286,7 +302,7 @@ func TestApplyWhenDisabledTearsDown(t *testing.T) {
 
 func TestApplyWhenEnabledDeploys(t *testing.T) {
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd, settingRepo: &fakeSettingRepo{setting: storedSetting(t, enabledConfig())}}
+	s := newTestService(fd, storedSetting(t, enabledConfig()))
 
 	assert.NoError(t, s.Apply(context.Background(), nil))
 	assert.Len(t, fd.created, 2)
@@ -296,7 +312,7 @@ func TestApplyWhenEnabledDeploys(t *testing.T) {
 // not try to create it again and fail on the name.
 func TestDeployTwiceUpdatesInsteadOfCreating(t *testing.T) {
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 
 	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
 		t.Fatalf("first deploy: %v", err)
@@ -312,7 +328,7 @@ func TestDeployTwiceUpdatesInsteadOfCreating(t *testing.T) {
 // Switching to the operator's own collector must stop HivePaaS's, or both ship.
 func TestDeployRemovesTheCollectorWhenItStopsBeingManaged(t *testing.T) {
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
 	}
@@ -330,7 +346,7 @@ func TestDeployRemovesTheCollectorWhenItStopsBeingManaged(t *testing.T) {
 // collector has been repointed, and without touching the data volume.
 func TestDeployRemovesTheBackendWhenItStopsBeingManaged(t *testing.T) {
 	fd := &fakeDocker{}
-	s := &service{dockerManager: fd}
+	s := newTestService(fd, nil)
 	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
 	}
@@ -357,11 +373,8 @@ func TestStatusListsExcludedAppsEvenWhenNeverConfigured(t *testing.T) {
 			LogDriver: &swarm.Driver{Name: "local"}, ContainerSpec: &swarm.ContainerSpec{},
 		}}},
 	}}
-	s := &service{
-		dockerManager: fd,
-		settingRepo:   &fakeSettingRepo{},
-		appRepo:       &fakeAppRepo{apps: []*entity.App{{ID: "a1", Name: "legacy", ServiceID: "s1"}}},
-	}
+	s := newTestService(fd, nil)
+	s.appRepo = &fakeAppRepo{apps: []*entity.App{{ID: "a1", Name: "legacy", ServiceID: "s1"}}}
 
 	st, err := s.Status(context.Background(), nil)
 	if err != nil {

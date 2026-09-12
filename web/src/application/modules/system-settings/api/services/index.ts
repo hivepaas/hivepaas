@@ -12,3 +12,4 @@ export * from "./hivepaas-restart-services";
 export * from "./traefik-service-settings-services";
 export * from "./traefik-config-options-services";
 export * from "./traefik-restart-services";
+export * from "./hivepaas-logging-settings-services";

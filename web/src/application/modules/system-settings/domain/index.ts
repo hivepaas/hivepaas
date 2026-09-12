@@ -9,3 +9,4 @@ export * from "./hivepaas-service-settings.entity";
 export * from "./hivepaas-routing-settings.entity";
 export * from "./hivepaas-security-settings.entity";
 export * from "./traefik-service-settings.entity";
+export * from "./hivepaas-logging-settings.entity";

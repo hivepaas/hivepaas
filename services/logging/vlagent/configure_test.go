@@ -128,3 +128,9 @@ func TestConfigureRejectsAMissingIngestURL(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
+func TestAttrFieldIsWhereADaemonLabelLands(t *testing.T) {
+	// Measured: json-file writes the labels option's values into the line's
+	// attrs object, and vlagent flattens it with this prefix.
+	assert.Equal(t, "attrs.hivepaas.app.id", AttrField("hivepaas.app.id"))
+}

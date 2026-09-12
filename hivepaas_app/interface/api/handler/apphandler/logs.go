@@ -99,3 +99,47 @@ func (h *Handler) GetAppLogs(ctx *gin.Context) {
 		h.StreamAppLogs(ctx, resp.Data.StaticLogs, resp.Data.LogsStream, resp.Data.LogsStreamCloser)
 	}
 }
+
+// GetAppLogHistory Gets stored app logs
+// @Summary Gets stored app logs
+// @Description Searches the logs collected for the app, including those of containers that no longer exist.
+// @Description Parameters are structured; no query text is accepted.
+// @Tags    apps
+// @Produce json
+// @Id      getAppLogHistory
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   start query string false "`start=YYYY-MM-DDTHH:mm:SSZ`, default one hour before end"
+// @Param   end query string false "`end=YYYY-MM-DDTHH:mm:SSZ`, default now; pass `nextEnd` to page back"
+// @Param   limit query int false "lines to return, 1-5000, default 500"
+// @Param   search query string false "case-insensitive substring of the message"
+// @Param   levels query string false "comma-separated: trace,debug,info,warn,warning,error,fatal,panic"
+// @Param   streams query string false "comma-separated: stdout,stderr"
+// @Success 200 {object} appdto.GetAppLogHistoryResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/logs/history [get]
+func (h *Handler) GetAppLogHistory(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeRead)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appdto.NewGetAppLogHistoryReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appUC.GetAppLogHistory(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}

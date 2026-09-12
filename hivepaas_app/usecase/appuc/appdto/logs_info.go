@@ -33,6 +33,13 @@ type GetAppLogsInfoResp struct {
 type AppLogsInfoDataResp struct {
 	Enabled bool                `json:"enabled"`
 	Tasks   []*TaskLogsInfoResp `json:"tasks"`
+	// History says whether stored logs can be shown, and if not why.
+	History *AppLogHistoryInfoResp `json:"history"`
+}
+
+type AppLogHistoryInfoResp struct {
+	Available bool   `json:"available"`
+	Reason    string `json:"reason,omitempty"`
 }
 
 type TaskLogsInfoResp struct {

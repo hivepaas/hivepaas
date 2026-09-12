@@ -29,6 +29,7 @@ var (
 	ErrDataVolumeRequired     = loggingmodel.ErrDataVolumeRequired
 	ErrQueryInvalid           = loggingmodel.ErrQueryInvalid
 	ErrBackendUnreachable     = loggingmodel.ErrBackendUnreachable
+	ErrQueryScopeRequired     = loggingmodel.ErrQueryScopeRequired
 )
 
 // Re-exported types
@@ -52,4 +53,8 @@ type (
 	QueryReq      = loggingmodel.QueryReq
 	QueryResp     = loggingmodel.QueryResp
 	LogEntry      = loggingmodel.LogEntry
+	FieldMatch    = loggingmodel.FieldMatch
 )
+
+// MaxQueryLimit caps how many lines one query returns.
+const MaxQueryLimit = loggingmodel.MaxQueryLimit

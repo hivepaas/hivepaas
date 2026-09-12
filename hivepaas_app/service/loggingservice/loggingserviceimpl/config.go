@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/logging"
+	"github.com/hivepaas/hivepaas/services/logging/victorialogs"
 )
 
 const (
@@ -27,6 +28,10 @@ const (
 	// sourceLabelKey tags lines from sources other than app containers, whose
 	// own attrs already say which app they came from.
 	sourceLabelKey = "hivepaas_source"
+
+	// NetworkLogging is the overlay the collector and the backend talk over.
+	// Only the logging stack joins it.
+	NetworkLogging = "hivepaas_logging_net"
 )
 
 // toEndpoint converts a stored endpoint into one services/logging can use.
@@ -56,6 +61,12 @@ func toEndpoint(ep *entity.LoggingEndpoint) (logging.Endpoint, error) {
 		Headers:       ep.Headers,
 		TLSSkipVerify: ep.TLSSkipVerify,
 	}, nil
+}
+
+// backendBaseURL is where a HivePaaS-run backend answers, from any service on a
+// network it is attached to.
+func backendBaseURL() string {
+	return fmt.Sprintf("http://%s:%d", ServiceNameBackend, victorialogs.DefaultHTTPPort)
 }
 
 // buildCollectSpec turns the stored configuration into a collection job.

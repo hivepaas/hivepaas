@@ -112,11 +112,35 @@ type RuntimeSpec struct {
 	Resources Resources
 }
 
-// QueryReq is a search over stored logs.
+// MaxQueryLimit caps how many lines one query returns.
+const MaxQueryLimit = 5000
+
+// FieldMatch is one field that must equal one value exactly.
+type FieldMatch struct {
+	Field string
+	Value string
+}
+
+// QueryReq is a search over stored logs, in parameters rather than query text.
+//
+// There is deliberately no field for query text. A backend's query language has
+// operators that change how a prepended filter binds, so accepting text and
+// narrowing it is the SQL-concatenation flaw over again.
 type QueryReq struct {
-	Query string
-	Start time.Time
-	End   time.Time
+	// Match is the scope. Every entry must hold, and a request without one is
+	// refused: the caller - not whoever asked it - decides what may be seen,
+	// and puts that here.
+	Match []FieldMatch
+	// Contains is a case-insensitive substring of the message.
+	Contains string
+	// Levels keeps lines whose JSON message carries one of these levels,
+	// compared case-insensitively. Lines that are not JSON have no level.
+	Levels []string
+	// Streams keeps lines written to these streams: stdout, stderr.
+	Streams []string
+	Start   time.Time
+	End     time.Time
+	// Limit is how many of the newest matching lines to return.
 	Limit int
 }
 
@@ -124,10 +148,15 @@ type QueryReq struct {
 type LogEntry struct {
 	Time    time.Time
 	Message string
-	Fields  map[string]string
+	// Stream is stdout or stderr, empty when the source has no such notion.
+	Stream string
+	// Level is the message's own level when it is JSON carrying one.
+	Level string
 }
 
-// QueryResp is what a search found.
+// QueryResp is what a search found, oldest first.
 type QueryResp struct {
 	Entries []LogEntry
+	// Truncated says the limit was reached: older matching lines exist.
+	Truncated bool
 }

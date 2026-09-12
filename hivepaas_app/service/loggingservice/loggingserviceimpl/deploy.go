@@ -3,7 +3,6 @@ package loggingserviceimpl
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/moby/moby/api/types/swarm"
 
@@ -51,13 +50,18 @@ func (s *service) Apply(ctx context.Context, db database.IDB) error {
 // drains it once the backend answers. Waiting on a health check here would add
 // a failure mode, a timeout the API holds open, for no lost line.
 func (s *service) deploy(ctx context.Context, cfg *entity.Logging) error {
-	ingestURL, err := s.deployBackend(ctx, cfg)
+	logNet, err := s.ensureLoggingNetwork(ctx)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
+	ingestURL, err := s.deployBackend(ctx, cfg, logNet)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 
 	if cfg.Collector.Managed {
-		if err := s.deployCollector(ctx, cfg, ingestURL); err != nil {
+		if err := s.deployCollector(ctx, cfg, ingestURL, logNet); err != nil {
 			return hperrors.Wrap(err)
 		}
 	} else {
@@ -78,8 +82,9 @@ func (s *service) deploy(ctx context.Context, cfg *entity.Logging) error {
 	return nil
 }
 
-// deployCollector runs vlagent on every node, shipping to ingestURL.
-func (s *service) deployCollector(ctx context.Context, cfg *entity.Logging, ingestURL string) error {
+// deployCollector runs vlagent on every node, shipping to ingestURL over the
+// logging network.
+func (s *service) deployCollector(ctx context.Context, cfg *entity.Logging, ingestURL, logNet string) error {
 	spec, err := s.buildCollectSpec(cfg, ingestURL)
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -106,6 +111,9 @@ func (s *service) deployCollector(ctx context.Context, cfg *entity.Logging, inge
 		Name: ServiceNameCollector,
 		// One task per node; this is the only global service HivePaaS creates.
 		Global: true,
+		// Only the logging network. The API's private network holds the
+		// database, and this runs on every node.
+		Networks: []string{logNet},
 	})
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -115,7 +123,7 @@ func (s *service) deployCollector(ctx context.Context, cfg *entity.Logging, inge
 
 // deployBackend creates the backend when HivePaaS owns it, and reports where
 // the collector should write either way.
-func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging) (string, error) {
+func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging, logNet string) (string, error) {
 	if !cfg.Backend.Managed {
 		ep, err := toEndpoint(cfg.Backend.Ingest)
 		if err != nil {
@@ -158,9 +166,17 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging) (strin
 		return "", hperrors.Wrap(err)
 	}
 
+	// The collector reaches it over the logging network, the API over its own
+	// private networks.
+	apiNets, err := s.apiPrivateNetworks(ctx)
+	if err != nil {
+		return "", hperrors.Wrap(err)
+	}
+
 	svcSpec, err := toSwarmServiceSpec(rt, swarmSpecOpts{
-		Name:   ServiceNameBackend,
-		NodeID: vl.NodeID,
+		Name:     ServiceNameBackend,
+		NodeID:   vl.NodeID,
+		Networks: append([]string{logNet}, apiNets...),
 	})
 	if err != nil {
 		return "", hperrors.Wrap(err)
@@ -169,12 +185,14 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging) (strin
 		return "", hperrors.Wrap(err)
 	}
 
-	return fmt.Sprintf("http://%s:%d%s",
-		ServiceNameBackend, victorialogs.DefaultHTTPPort, victorialogs.IngestPath), nil
+	return backendBaseURL() + victorialogs.IngestPath, nil
 }
 
 // TearDown removes what Apply created, in the reverse order, and leaves the
 // data volume alone.
+//
+// The logging network stays too: an empty overlay costs nothing, and removing
+// it while a task is still draining fails.
 //
 // The volume is deliberately kept. Turning logging off, or moving to a backend
 // HivePaaS does not run, must not destroy what has been collected - for a plain

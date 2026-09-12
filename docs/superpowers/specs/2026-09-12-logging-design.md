@@ -532,6 +532,22 @@ rather than assumed. Where the sections above say otherwise, this wins.
 - **The collector does not wait for the backend's health check.** Creation order
   is kept, but vlagent buffers in a persistent queue until delivery succeeds, so
   a wait would add a timeout for no lost line.
+- **The stack needs its own network.** Swarm services resolve each other only across a
+  shared overlay, and plan 2 attached none - so vlagent could never reach VictoriaLogs
+  and nothing was ever stored. The collector and the backend now share
+  `hivepaas_logging_net`; the backend also joins the API's own private networks, and
+  never the routing network every publicly exposed app is on.
+- **The read path takes structured parameters only.** `QueryReq` has no query-text field
+  at all, and the scope - the app's identity - is put in by the service from the app it
+  loaded. Raw LogsQL is not offered to anyone, admins included.
+- **Search is a case-insensitive substring**, built as an escaped regular expression.
+  LogsQL's phrase filter matches whole words (`"info li"` does not match `info line`),
+  which is not what a search box promises.
+- **No `Tail` on `Backend`.** Live logs already stream from docker; stored logs are paged
+  backwards with a `nextEnd` cursor.
+- **Node logs are not collected yet** - the collector does not mount `/var/log`. The
+  toggle is shown disabled rather than silently doing nothing.
+
 - **Responses never reveal credentials.** They are always masked; revealing one
   would go through the audited reveal path other settings use, which is not
   offered here yet.

@@ -22,4 +22,5 @@ var (
 	// Talking to a backend
 	ErrQueryInvalid       = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_QUERY_INVALID")
 	ErrBackendUnreachable = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_BACKEND_UNREACHABLE")
+	ErrQueryScopeRequired = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_QUERY_SCOPE_REQUIRED")
 )

@@ -2,10 +2,9 @@
 package victorialogs
 
 import (
+	"fmt"
 	"math"
 	"time"
-
-	"fmt"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/logging/loggingmodel"
@@ -35,6 +34,9 @@ const (
 
 	// minRetentionDays is VictoriaLogs' own floor; it rejects anything shorter.
 	minRetentionDays = 1
+
+	// hoursPerDay is what -retentionPeriod is expressed in.
+	hoursPerDay = 24
 )
 
 type Config struct {
@@ -99,7 +101,7 @@ func (c *Client) RuntimeSpec() (*loggingmodel.RuntimeSpec, error) {
 // own one-day minimum: a shorter setting would otherwise produce a service that
 // refuses to start.
 func retentionDays(d time.Duration) int {
-	days := int(math.Ceil(d.Hours() / 24))
+	days := int(math.Ceil(d.Hours() / hoursPerDay))
 	if days < minRetentionDays {
 		return minRetentionDays
 	}

@@ -98,7 +98,17 @@ func (c *Collector) Configure(spec *loggingmodel.CollectSpec) (*loggingmodel.Run
 		})
 	}
 
-	args := make([]string, 0, len(dests)*6+len(spec.Sources)*3+2)
+	// One slot per destination for each of the six -remoteWrite.* arrays, one
+	// per source for each of the three -fileCollector.* arrays, plus the two
+	// path flags at the end.
+	const (
+		remoteWriteFlagsPerDest     = 6
+		fileCollectorFlagsPerSource = 3
+		trailingPathFlags           = 2
+	)
+	args := make([]string, 0,
+		len(dests)*remoteWriteFlagsPerDest+
+			len(spec.Sources)*fileCollectorFlagsPerSource+trailingPathFlags)
 	for _, d := range dests {
 		args = append(args, "-remoteWrite.url="+d.url)
 	}

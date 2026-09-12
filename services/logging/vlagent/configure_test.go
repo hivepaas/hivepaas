@@ -62,7 +62,9 @@ func TestConfigureKeepsPerDestinationArraysAligned(t *testing.T) {
 	in := baseSpec()
 	in.Forwards = []loggingmodel.ForwardTarget{
 		{Name: "no-auth", Format: FormatJSONLine, Endpoint: loggingmodel.Endpoint{URL: "http://a/ingest"}},
-		{Name: "with-token", Format: FormatJSONLine, Endpoint: loggingmodel.Endpoint{URL: "http://b/ingest", BearerToken: "SECRET"}},
+		{Name: "with-token", Format: FormatJSONLine, Endpoint: loggingmodel.Endpoint{
+			URL: "http://b/ingest", BearerToken: "SECRET",
+		}},
 	}
 
 	spec, err := New(&Config{}).Configure(in)

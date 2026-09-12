@@ -433,6 +433,11 @@ export const ROUTE = {
                 $route: "/system/hivepaas/security/",
             },
 
+            logging: {
+                $pattern: "system/hivepaas/logging",
+                $route: "/system/hivepaas/logging/",
+            },
+
             actions: {
                 $pattern: "system/hivepaas/actions",
                 $route: "/system/hivepaas/actions/",

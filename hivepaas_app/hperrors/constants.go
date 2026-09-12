@@ -98,7 +98,6 @@ var (
 	ErrActionNotAllowedByStatus = NewErr(ErrNotAllowed, "ERR_ACTION_NOT_ALLOWED_BY_STATUS")
 	ErrActionNotAllowedByAdmin  = NewErr(ErrNotAllowed, "ERR_ACTION_NOT_ALLOWED_BY_ADMIN")
 	ErrActionFailed             = NewErr(ErrPreconditionFailed, "ERR_ACTION_FAILED")
-	ErrHTTPRequestFailed        = NewErr(ErrActionFailed, "ERR_HTTP_REQUEST_FAILED")
 	ErrGRPCRequestFailed        = NewErr(ErrActionFailed, "ERR_GRPC_REQUEST_FAILED")
 	ErrUnavailable              = NewErr(ErrPreconditionFailed, "ERR_UNAVAILABLE")
 	ErrArgumentInvalid          = NewErr(ErrBadRequest, "ERR_ARGUMENT_INVALID")
@@ -132,13 +131,11 @@ var (
 	ErrUsernameUnavailable      = NewErr(ErrUnavailable, "ERR_USERNAME_UNAVAILABLE")
 	ErrUserDemoUnauthorized     = NewErr(ErrUnauthorized, "ERR_USER_DEMO_UNAUTHORIZED")
 	ErrUserStatusNotAllowAction = NewErr(ErrNotAllowed, "ERR_USER_STATUS_NOT_ALLOW_ACTION")
-	ErrUserAlreadySignUp        = NewErr(ErrPreconditionFailed, "ERR_USER_ALREADY_SIGN_UP")
 	ErrUserNotCompleteMFASetup  = NewErr(ErrPreconditionFailed, "ERR_USER_NOT_COMPLETE_MFA_SETUP")
 
 	// ErrUserAdminSecurityOptionWeak refuses to leave an admin authenticating with
 	// a password and nothing else. See base.SecurityOptionAllowedForRole.
 	ErrUserAdminSecurityOptionWeak          = NewErr(ErrPreconditionFailed, "ERR_USER_ADMIN_SECURITY_OPTION_WEAK")
-	ErrPasswordResetTokenInvalid            = NewErr(ErrArgumentInvalid, "ERR_PASSWORD_RESET_TOKEN_INVALID")
 	ErrEmailUnavailable                     = NewErr(ErrUnavailable, "ERR_EMAIL_UNAVAILABLE")
 	ErrEmailChangeUnallowed                 = NewErr(ErrNotAllowed, "ERR_EMAIL_CHANGE_UNALLOWED")
 	ErrUserNotHavePermissionOnResource      = NewErr(ErrUnauthorized, "ERR_USER_NOT_HAVE_PERMISSION_ON_RESOURCE")
@@ -160,12 +157,9 @@ var (
 // Errors for settings
 var (
 	ErrUnconfigured                         = NewErr(ErrPreconditionFailed, "ERR_UNCONFIGURED")
-	ErrSettingInactive                      = NewErr(ErrInactive, "ERR_SETTING_INACTIVE")
 	ErrSettingNotFound                      = NewErr(ErrNotFound, "ERR_SETTING_NOT_FOUND")
 	ErrSettingMissing                       = NewErr(ErrMissing, "ERR_SETTING_MISSING")
 	ErrSettingViolation                     = NewErr(ErrForbidden, "ERR_SETTING_VIOLATION")
-	ErrGlobalSettingRequired                = NewErr(ErrPreconditionRequired, "ERR_GLOBAL_SETTING_REQUIRED")
-	ErrScopeSettingRequired                 = NewErr(ErrPreconditionRequired, "ERR_SCOPE_SETTING_REQUIRED")
 	ErrObjectScopeInvalid                   = NewErr(ErrValueInvalid, "ERR_OBJECT_SCOPE_INVALID")
 	ErrInheritedSettingNonUpdatable         = NewErr(ErrNonEditable, "ERR_INHERITED_SETTING_NON_UPDATABLE")
 	ErrSettingTypeUnsupported               = NewErr(ErrUnsupported, "ERR_SETTING_TYPE_UNSUPPORTED")
@@ -213,8 +207,7 @@ var (
 	// another. Accepting a confirmation there would end the trial and leave the
 	// two disagreeing for good; refusing lets the deadline bring the database back
 	// to what is actually running.
-	ErrSettingsChangeNotLive     = NewErr(ErrPreconditionFailed, "ERR_SETTINGS_CHANGE_NOT_LIVE")
-	ErrSettingsProbationNotArmed = NewErr(ErrUnavailable, "ERR_SETTINGS_PROBATION_NOT_ARMED")
+	ErrSettingsChangeNotLive = NewErr(ErrPreconditionFailed, "ERR_SETTINGS_CHANGE_NOT_LIVE")
 
 	// ErrSettingInUse refuses to delete a setting something else still points at.
 	//
@@ -246,7 +239,6 @@ var (
 	ErrAppNotFound                              = NewErr(ErrNotFound, "ERR_APP_NOT_FOUND")
 	ErrAppInactive                              = NewErr(ErrInactive, "ERR_APP_INACTIVE")
 	ErrAppIsCurrent                             = NewErr(ErrInactive, "ERR_APP_IS_CURRENT")
-	ErrAppsNotInSameProject                     = NewErr(ErrNotAllowed, "ERR_APPS_NOT_IN_SAME_PROJECT")
 	ErrAppsNotInSameProjectEnv                  = NewErr(ErrNotAllowed, "ERR_APPS_NOT_IN_SAME_PROJECT_ENV")
 	ErrAppCloneSettingsRequired                 = NewErr(ErrPreconditionRequired, "ERR_APP_CLONE_SETTING_REQUIRED")
 	ErrMultiNodeClusterRequireRegistryForImages = NewErr(ErrPreconditionRequired, "ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES") //nolint:lll
@@ -258,7 +250,6 @@ var (
 var (
 	ErrNodeWithLabelNotAvailable     = NewErr(ErrUnavailable, "ERR_NODE_WITH_LABEL_NOT_AVAILABLE")
 	ErrServiceNotRunning             = NewErr(ErrServiceUnavailable, "ERR_SERVICE_NOT_RUNNING")
-	ErrMountTypeUnsupported          = NewErr(ErrUnsupported, "ERR_MOUNT_TYPE_UNSUPPORTED")
 	ErrServiceModeReplicatedRequired = NewErr(ErrPreconditionFailed, "ERR_SERVICE_MODE_REPLICATED_REQUIRED")
 	ErrActiveContainerNotFound       = NewErr(ErrNotFound, "ERR_ACTIVE_CONTAINER_NOT_FOUND")
 	// Swarm forbids changing the service mode variant in place, so HivePaaS has to recreate the
@@ -291,15 +282,12 @@ var (
 
 // Errors for files
 var (
-	ErrFileNotExist                = NewErr(ErrNotFound, "ERR_FILE_NOT_EXIST")
-	ErrDirNotExist                 = NewErr(ErrNotFound, "ERR_DIR_NOT_EXIST")
 	ErrDirNotCreated               = NewErr(ErrActionFailed, "ERR_DIR_NOT_CREATED")
 	ErrFileScopeUnsupported        = NewErr(ErrUnsupported, "ERR_FILE_SCOPE_UNSUPPORTED")
 	ErrFileSizeTooBig              = NewErr(ErrArgumentInvalid, "ERR_FILE_SIZE_TOO_BIG")
 	ErrFileTypeNotSupported        = NewErr(ErrUnsupported, "ERR_FILE_TYPE_NOT_SUPPORTED")
 	ErrFileExtNotSupported         = NewErr(ErrUnsupported, "ERR_FILE_EXT_NOT_SUPPORTED")
 	ErrFileNameTooLong             = NewErr(ErrArgumentInvalid, "ERR_FILE_NAME_TOO_LONG")
-	ErrFileTargetObjectUnavailable = NewErr(ErrArgumentInvalid, "ERR_FILE_TARGET_OBJECT_UNAVAILABLE")
 	ErrArchiveFormatUnsupported    = NewErr(ErrUnsupported, "ERR_ARCHIVE_FORMAT_UNSUPPORTED")
 	ErrEncryptionFormatUnsupported = NewErr(ErrUnsupported, "ERR_ENCRYPTION_FORMAT_UNSUPPORTED")
 	ErrStorageTypeUnsupported      = NewErr(ErrUnsupported, "ERR_STORAGE_TYPE_UNSUPPORTED")
@@ -318,9 +306,7 @@ var (
 )
 
 // Errors for build
-var (
-	ErrDockerfileNotFound = NewErr(ErrNotFound, "ERR_DOCKERFILE_NOT_FOUND")
-)
+var ()
 
 // nolint Errors from infrastructure
 var (

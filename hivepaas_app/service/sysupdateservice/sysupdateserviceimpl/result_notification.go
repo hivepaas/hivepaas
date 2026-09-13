@@ -6,6 +6,7 @@ import (
 
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -56,7 +57,7 @@ func (s *service) buildSystemUpdateNotifMsgData(
 		Succeeded:      isSucceeded,
 		StartedAt:      task.StartedAt.Truncate(time.Second),
 		Duration:       task.GetDuration().Truncate(time.Millisecond),
-		DashboardLink:  config.Current().DashboardTaskDetailsURL(task.ID),
+		DashboardLink:  config.Current().DashboardTaskDetailsURL("", task.ID, base.ObjectScopeGlobal),
 	}
 	data.NotifMsgData = msgData
 }

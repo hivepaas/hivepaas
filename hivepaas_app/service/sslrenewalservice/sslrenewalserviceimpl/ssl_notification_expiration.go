@@ -66,8 +66,8 @@ func (s *service) sslBuildExpiringNotificationMsgData(
 		msgData.AppName = app.Name
 	}
 
-	msgData.DashboardLink = config.Current().DashboardSchedTaskDetailsURL(item.Scope.GetBaseURLPath(),
-		data.RenewalJobSetting.ID, data.Task.ID)
+	msgData.DashboardLink = config.Current().DashboardTaskDetailsURL(item.Scope.GetBaseURLPath(),
+		data.Task.ID, item.Scope.ScopeType)
 
 	item.ExpiringNotifMsgData = msgData
 }

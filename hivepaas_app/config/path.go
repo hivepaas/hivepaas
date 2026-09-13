@@ -12,11 +12,15 @@ import (
 )
 
 const (
-	basePathSettings = "settings"
+	beBasePathSettings = "settings"
 )
 
 func (cfg *Config) BaseAPIURL() string {
 	return gofn.Must(url.JoinPath(cfg.BaseURL(), cfg.HTTPServer.BasePath))
+}
+
+func (cfg *Config) BaseDashboardURL() string {
+	return cfg.BaseURL()
 }
 
 /// FRONT-END DASHBOARD
@@ -24,53 +28,40 @@ func (cfg *Config) BaseAPIURL() string {
 // Users
 
 func (cfg *Config) DashboardSsoSuccessURL() string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL(), "auth/sso/success"))
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), "auth/sso/success"))
 }
 
 func (cfg *Config) DashboardUserSignupURL(token string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL(), "auth/sign-up")) +
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), "auth/sign-up")) +
 		fmt.Sprintf("?token=%s", token)
 }
 
 func (cfg *Config) DashboardPasswordResetURL(userID, token string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL(), "auth/reset-password")) +
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), "auth/reset-password")) +
 		fmt.Sprintf("?userID=%s&token=%s", userID, token)
 }
 
 // App deployments
 
 func (cfg *Config) DashboardAppDeploymentDetailsURL(basePath, deploymentID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL(), basePath, "deployments", deploymentID))
-}
-
-// Scheduled jobs
-
-func (cfg *Config) DashboardSchedTaskDetailsURL(basePath, schedJobID, taskID string) string {
-	if basePath == "" {
-		basePath = basePathSettings // global scope
-	}
-	return gofn.Must(url.JoinPath(cfg.BaseURL(), basePath, "sched-jobs", schedJobID, "tasks", taskID))
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), basePath, "deployments", deploymentID))
 }
 
 // Github Apps
 
 func (cfg *Config) DashboardGithubAppsURL(basePath string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL(), basePath, "sources/github-apps"))
-}
-
-// Periodic Jobs
-
-func (cfg *Config) DashboardPeriodicTaskDetailsURL(basePath, periodicJobID, taskID string) string {
-	if basePath == "" {
-		basePath = basePathSettings // global scope
-	}
-	return gofn.Must(url.JoinPath(cfg.BaseURL(), basePath, "periodic-jobs", periodicJobID, "tasks", taskID))
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), basePath, "integrations/github-apps"))
 }
 
 // Tasks
 
-func (cfg *Config) DashboardTaskDetailsURL(taskID string) string {
-	return gofn.Must(url.JoinPath(cfg.BaseURL(), "tasks", taskID))
+func (cfg *Config) DashboardTaskDetailsURL(basePath, taskID string, scope base.ObjectScopeType) string {
+	switch scope {
+	case base.ObjectScopeProject, base.ObjectScopeProjectEnv, base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		basePath += "/operations"
+	case base.ObjectScopeApp, base.ObjectScopeUser:
+	}
+	return gofn.Must(url.JoinPath(cfg.BaseDashboardURL(), basePath, "tasks", taskID))
 }
 
 /// BACK-END
@@ -89,7 +80,7 @@ func (cfg *Config) RepoWebhookURL(webhookID string) string {
 
 func (cfg *Config) GithubAppManifestFlowBeginURL(basePath, settingID, state string) string {
 	if basePath == "" {
-		basePath = basePathSettings // global scope
+		basePath = beBasePathSettings // global scope
 	}
 	return gofn.Must(url.JoinPath(cfg.BaseAPIURL(), basePath, "github-apps", settingID,
 		"manifest-flow/begin")) + "?state=" + state
@@ -97,7 +88,7 @@ func (cfg *Config) GithubAppManifestFlowBeginURL(basePath, settingID, state stri
 
 func (cfg *Config) GithubAppManifestFlowProgressURL(basePath, settingID string) string {
 	if basePath == "" {
-		basePath = basePathSettings // global scope
+		basePath = beBasePathSettings // global scope
 	}
 	return gofn.Must(url.JoinPath(cfg.BaseAPIURL(), basePath, "github-apps", settingID,
 		"manifest-flow/progress"))

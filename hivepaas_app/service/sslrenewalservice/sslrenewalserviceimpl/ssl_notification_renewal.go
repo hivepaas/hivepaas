@@ -74,8 +74,8 @@ func (s *service) sslBuildRenewalNotificationMsgData(
 		msgData.NextRenewalIn = timeutil.Duration(sslCert.RenewableFrom.Sub(timeNow).Truncate(time.Hour))
 	}
 
-	msgData.DashboardLink = config.Current().DashboardSchedTaskDetailsURL(item.Scope.GetBaseURLPath(),
-		data.RenewalJobSetting.ID, data.Task.ID)
+	msgData.DashboardLink = config.Current().DashboardTaskDetailsURL(item.Scope.GetBaseURLPath(),
+		data.Task.ID, item.Scope.ScopeType)
 
 	item.RenewalNotifMsgData = msgData
 }

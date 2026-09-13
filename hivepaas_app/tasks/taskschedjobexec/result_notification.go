@@ -77,8 +77,8 @@ func (e *Executor) buildNotificationMsgData(
 	if app := data.Scope.GetApp(); app != nil {
 		msgData.AppName = app.Name
 	}
-	msgData.DashboardLink = config.Current().DashboardSchedTaskDetailsURL(data.Scope.GetBaseURLPath(),
-		data.SchedJob.ID, data.Task.ID)
+	msgData.DashboardLink = config.Current().DashboardTaskDetailsURL(data.Scope.GetBaseURLPath(),
+		data.Task.ID, data.Scope.ScopeType)
 
 	data.NotifMsgData = msgData
 }

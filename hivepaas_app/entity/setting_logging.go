@@ -21,20 +21,6 @@ func (s *loggingParser) New() SettingData {
 	return &Logging{}
 }
 
-// LoggingBackendType names the kind of log store, independently of who runs it.
-type LoggingBackendType string
-
-const (
-	LoggingBackendTypeVictoriaLogs LoggingBackendType = "victoria-logs"
-)
-
-// LoggingCollectorType names the kind of collector, independently of who runs it.
-type LoggingCollectorType string
-
-const (
-	LoggingCollectorTypeVlagent LoggingCollectorType = "vlagent"
-)
-
 // Logging is the whole subsystem's configuration. It is global and, until
 // Enabled is set, nothing is deployed.
 type Logging struct {
@@ -63,8 +49,8 @@ type LoggingSources struct {
 // their own VictoriaLogs, which HivePaaS can still query because it speaks the
 // same protocol, but whose lifecycle it does not own.
 type LoggingBackend struct {
-	Type    LoggingBackendType `json:"type,omitempty"`
-	Managed bool               `json:"managed,omitempty"`
+	Type    base.LoggingBackendType `json:"type,omitempty"`
+	Managed bool                    `json:"managed,omitempty"`
 
 	// Ingest and Query are separate because they are separate in backends other
 	// than VictoriaLogs, and because a write proxy may sit in front of ingest.
@@ -76,19 +62,17 @@ type LoggingBackend struct {
 }
 
 type LoggingCollector struct {
-	Type    LoggingCollectorType     `json:"type,omitempty"`
-	Managed bool                     `json:"managed,omitempty"`
-	Vlagent *LoggingCollectorVlagent `json:"vlagent,omitempty"`
+	Type    base.LoggingCollectorType `json:"type,omitempty"`
+	Managed bool                      `json:"managed,omitempty"`
+	Vlagent *LoggingCollectorVlagent  `json:"vlagent,omitempty"`
 }
 
 type LoggingCollectorVlagent struct {
-	Image string `json:"image,omitempty"`
 }
 
 type LoggingVictoriaLogs struct {
-	Image    string `json:"image,omitempty"`
-	NodeID   string `json:"nodeId,omitempty"`
-	VolumeID string `json:"volumeId,omitempty"`
+	Node   ObjectID `json:"node,omitempty"`
+	Volume ObjectID `json:"volume,omitempty"`
 
 	// VolumeSubpath is the directory inside the volume the store keeps its data
 	// in, so one volume can serve more than logging. Empty means the volume's
@@ -132,8 +116,13 @@ func (s *Logging) GetType() base.SettingType {
 // link keeps that volume from being deleted while logging still uses it.
 func (s *Logging) GetRefObjectIDs() *RefObjectIDs {
 	ids := &RefObjectIDs{}
-	if s.Backend.VictoriaLogs != nil && s.Backend.VictoriaLogs.VolumeID != "" {
-		ids.RefSettingIDs = append(ids.RefSettingIDs, s.Backend.VictoriaLogs.VolumeID)
+	if s.Backend.VictoriaLogs != nil {
+		if s.Backend.VictoriaLogs.Node.ID != "" {
+			ids.RefSettingIDs = append(ids.RefSettingIDs, s.Backend.VictoriaLogs.Node.ID)
+		}
+		if s.Backend.VictoriaLogs.Volume.ID != "" {
+			ids.RefSettingIDs = append(ids.RefSettingIDs, s.Backend.VictoriaLogs.Volume.ID)
+		}
 	}
 	return ids
 }

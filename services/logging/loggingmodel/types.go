@@ -73,8 +73,8 @@ type ForwardTarget struct {
 // CollectSpec is the whole job: read these, ship there, copy to those.
 type CollectSpec struct {
 	Ingest   Endpoint
-	Forwards []ForwardTarget
-	Sources  []Source
+	Forwards []*ForwardTarget
+	Sources  []*Source
 }
 
 // Mount is a host path a container needs.
@@ -156,7 +156,7 @@ type LogEntry struct {
 
 // QueryResp is what a search found, oldest first.
 type QueryResp struct {
-	Entries []LogEntry
+	Entries []*LogEntry
 	// Truncated says the limit was reached: older matching lines exist.
 	Truncated bool
 }

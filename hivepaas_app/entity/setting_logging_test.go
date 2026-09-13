@@ -28,13 +28,15 @@ func TestLoggingSurvivesPersistence(t *testing.T) {
 		Enabled: true,
 		Sources: entity.LoggingSources{Apps: true, HivePaaS: true},
 		Collector: entity.LoggingCollector{
-			Type:    entity.LoggingCollectorTypeVlagent,
+			Type:    base.LoggingCollectorTypeVlagent,
 			Managed: true,
 		},
 		Backend: entity.LoggingBackend{
-			Type:         entity.LoggingBackendTypeVictoriaLogs,
-			Managed:      true,
-			VictoriaLogs: &entity.LoggingVictoriaLogs{NodeID: "node-1", VolumeID: "vol-1"},
+			Type:    base.LoggingBackendTypeVictoriaLogs,
+			Managed: true,
+			VictoriaLogs: &entity.LoggingVictoriaLogs{
+				Node: entity.ObjectID{ID: "node-1"}, Volume: entity.ObjectID{ID: "vol-1"},
+			},
 		},
 		Forwards: []entity.LoggingForward{{
 			Name:     "siem",
@@ -52,14 +54,14 @@ func TestLoggingSurvivesPersistence(t *testing.T) {
 	assert.True(t, got.Sources.Apps)
 	assert.True(t, got.Sources.HivePaaS)
 	assert.False(t, got.Sources.Nodes)
-	assert.Equal(t, entity.LoggingCollectorTypeVlagent, got.Collector.Type)
+	assert.Equal(t, base.LoggingCollectorTypeVlagent, got.Collector.Type)
 	assert.True(t, got.Collector.Managed)
-	assert.Equal(t, entity.LoggingBackendTypeVictoriaLogs, got.Backend.Type)
+	assert.Equal(t, base.LoggingBackendTypeVictoriaLogs, got.Backend.Type)
 	if got.Backend.VictoriaLogs == nil {
 		t.Fatal("VictoriaLogs block did not survive")
 	}
-	assert.Equal(t, "node-1", got.Backend.VictoriaLogs.NodeID)
-	assert.Equal(t, "vol-1", got.Backend.VictoriaLogs.VolumeID)
+	assert.Equal(t, "node-1", got.Backend.VictoriaLogs.Node.ID)
+	assert.Equal(t, "vol-1", got.Backend.VictoriaLogs.Volume.ID)
 	if len(got.Forwards) != 1 {
 		t.Fatalf("want one forward, got %d", len(got.Forwards))
 	}
@@ -72,14 +74,14 @@ func TestLoggingSurvivesPersistence(t *testing.T) {
 // what VerifyingRefIDs acts on, unlike ClusterVolume where it is always empty.
 func TestLoggingReferencesItsDataVolume(t *testing.T) {
 	l := &entity.Logging{Backend: entity.LoggingBackend{
-		VictoriaLogs: &entity.LoggingVictoriaLogs{VolumeID: "vol-9"},
+		VictoriaLogs: &entity.LoggingVictoriaLogs{Volume: entity.ObjectID{ID: "vol-9"}},
 	}}
 
 	assert.Equal(t, []string{"vol-9"}, l.GetRefObjectIDs().RefSettingIDs)
 }
 
 func TestLoggingReferencesNothingWithoutAManagedBackend(t *testing.T) {
-	l := &entity.Logging{Backend: entity.LoggingBackend{Type: entity.LoggingBackendTypeVictoriaLogs}}
+	l := &entity.Logging{Backend: entity.LoggingBackend{Type: base.LoggingBackendTypeVictoriaLogs}}
 
 	assert.Empty(t, l.GetRefObjectIDs().RefSettingIDs)
 }

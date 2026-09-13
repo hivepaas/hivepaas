@@ -49,7 +49,7 @@ func TestLiveQueryCannotLeaveItsScope(t *testing.T) {
 
 	c := New(&Config{Endpoint: loggingmodel.Endpoint{URL: base}})
 	scope := []loggingmodel.FieldMatch{{Field: field, Value: self}}
-	query := func(mod func(r *loggingmodel.QueryReq)) []loggingmodel.LogEntry {
+	query := func(mod func(r *loggingmodel.QueryReq)) []*loggingmodel.LogEntry {
 		r := &loggingmodel.QueryReq{Match: scope, Limit: 100}
 		if mod != nil {
 			mod(r)

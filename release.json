@@ -5,7 +5,8 @@
     "appImage": "hivepaas/hivepaas-dev:0.1.0",
     "redisImage": "redis:8.6-alpine",
     "dbImage": "postgres:18.3-alpine",
-    "traefikImage": "traefik:v3.6"
+    "traefikImage": "traefik:v3.6",
+    "VictoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0"
   },
   "beta": {
     "releaseDate": "2026-01-01",
@@ -13,6 +14,7 @@
     "appImage": "hivepaas/hivepaas-dev:0.1.0",
     "redisImage": "redis:8.6-alpine",
     "dbImage": "postgres:18.3-alpine",
-    "traefikImage": "traefik:v3.6"
+    "traefikImage": "traefik:v3.6",
+    "VictoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0"
   }
 }

@@ -34,7 +34,7 @@ func TestToEndpointHandlesNil(t *testing.T) {
 	got, err := toEndpoint(nil)
 
 	assert.NoError(t, err)
-	assert.Empty(t, got.URL)
+	assert.Empty(t, got)
 }
 
 // Apps and HivePaaS share one directory of container ids, so they are one

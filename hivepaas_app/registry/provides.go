@@ -157,12 +157,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/supportuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/logginguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/syserroruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/sysstatusuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefiksettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefikuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systemcleanupuc"
@@ -282,10 +282,10 @@ var Provides = []any{
 	gitcredentialuc.New,
 	githubappuc.New,
 	hpappsettingsuc.New,
-	logginguc.New,
 	hpappuc.New,
 	imagebuildsettingsuc.New,
 	imserviceuc.New,
+	logginguc.New,
 	networkuc.New,
 	nodeuc.New,
 	notificationuc.New,
@@ -345,6 +345,7 @@ var Provides = []any{
 	healthcheckserviceimpl.New,
 	hpappserviceimpl.New,
 	imagebuildserviceimpl.New,
+	loggingserviceimpl.New,
 	networkserviceimpl.New,
 	nodeexecserviceimpl.New,
 	notificationserviceimpl.New,
@@ -368,7 +369,6 @@ var Provides = []any{
 	taskserviceimpl.New,
 	traefikserviceimpl.New,
 	userserviceimpl.New,
-	loggingserviceimpl.New,
 	volumeserviceimpl.New,
 
 	// Repository

@@ -36,7 +36,6 @@ const (
 )
 
 type Config struct {
-	Image string
 }
 
 type Collector struct {
@@ -144,13 +143,8 @@ func (c *Collector) Configure(spec *loggingmodel.CollectSpec) (*loggingmodel.Run
 		"-remoteWrite.tmpDataPath="+TmpDataPath,
 	)
 
-	image := c.cfg.Image
-	if image == "" {
-		image = DefaultImage
-	}
-
 	return &loggingmodel.RuntimeSpec{
-		Image: image,
+		Image: DefaultImage,
 		Args:  args,
 		Mounts: []loggingmodel.Mount{{
 			Source:   ContainersPath,

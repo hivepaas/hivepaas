@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/services/logging"
@@ -68,7 +69,7 @@ func TestQueryAppLogsWhenDisabled(t *testing.T) {
 		withFakeBackend(s)
 		_, err := s.QueryAppLogs(context.Background(), nil, &entity.App{ID: "APP1"},
 			&loggingservice.AppLogQuery{Limit: 1})
-		assert.ErrorIs(t, err, loggingservice.ErrNotEnabled)
+		assert.ErrorIs(t, err, hperrors.ErrLoggingNotEnabled)
 	}
 }
 
@@ -80,7 +81,7 @@ func TestQueryAppLogsUsesTheQueryEndpointOfAnUnmanagedBackend(t *testing.T) {
 	withFakeBackend(s)
 
 	_, err := s.QueryAppLogs(context.Background(), nil, &entity.App{ID: "APP1"}, &loggingservice.AppLogQuery{Limit: 1})
-	assert.ErrorIs(t, err, loggingservice.ErrQueryEndpointMissing)
+	assert.ErrorIs(t, err, hperrors.ErrLoggingQueryEndpointMissing)
 
 	cfg.Backend.Query = &entity.LoggingEndpoint{URL: "http://theirs:9428"}
 	s = newTestService(&fakeDocker{}, storedSetting(t, cfg))

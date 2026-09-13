@@ -1,5 +1,6 @@
 # Messages for the errors declared in hivepaas_app/hperrors/errors_user.go.
 # Adding or removing an error there means editing this file.
+
 # Session errors
 ERR_NO_SESSION = "No session found"
 ERR_SESSION_JWT_INVALID = "Session JWT is invalid"

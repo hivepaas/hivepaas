@@ -1,5 +1,6 @@
 # Messages for the errors declared in hivepaas_app/hperrors/errors_base.go.
 # Adding or removing an error there means editing this file.
+
 # Base errors
 ERR_INTERNAL = "Unexpected error"
 ERR_BAD_REQUEST = "Bad request"

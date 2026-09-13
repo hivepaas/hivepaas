@@ -7,7 +7,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -66,5 +65,5 @@ func (s *service) checkInternalNetwork(ctx context.Context) error {
 			return nil
 		}
 	}
-	return hperrors.Wrap(loggingservice.ErrAPINetworkMissing).WithParam("Name", base.NetworkHivepaasLocal)
+	return hperrors.Wrap(hperrors.ErrLoggingAPINetworkMissing).WithParam("Name", base.NetworkHivepaasLocal)
 }

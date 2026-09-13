@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/moby/moby/api/types/swarm"
-
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -31,16 +28,18 @@ func (s *service) QueryAppLogs(
 		// An empty value would match every line that carries no app at all.
 		return nil, hperrors.Wrap(logging.ErrQueryScopeRequired)
 	}
-	cfg, err := s.loadEnabled(ctx, db)
+	cfg, err := s.loadEnabledSettings(ctx, db)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+
 	ep, err := queryEndpoint(cfg)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+
 	backend, err := s.newBackend(logging.BackendType(cfg.Backend.Type),
-		&logging.BackendConfig{VictoriaLogs: &victorialogs.Config{Endpoint: ep}})
+		&logging.BackendConfig{VictoriaLogs: &victorialogs.Config{Endpoint: *ep}})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -66,8 +65,8 @@ func (s *service) AppHistory(
 	db database.IDB,
 	app *entity.App,
 ) (*loggingservice.AppHistory, error) {
-	cfg, err := s.loadEnabled(ctx, db)
-	if errors.Is(err, loggingservice.ErrNotEnabled) {
+	cfg, err := s.loadEnabledSettings(ctx, db)
+	if errors.Is(err, hperrors.ErrLoggingNotEnabled) {
 		return &loggingservice.AppHistory{Reason: loggingservice.HistoryReasonDisabled}, nil
 	}
 	if err != nil {
@@ -86,9 +85,9 @@ func (s *service) AppHistory(
 			return nil, hperrors.Wrap(err)
 		}
 		if err == nil && inspect != nil {
-			excluded := excludedApps([]*entity.App{app}, []swarm.Service{inspect.Service})
-			if len(excluded) > 0 {
-				return &loggingservice.AppHistory{Reason: historyReason(excluded[0].Reason)}, nil
+			excludedReason := isAppExcluded(app, &inspect.Service)
+			if excludedReason != "" {
+				return &loggingservice.AppHistory{Reason: historyReason(excludedReason)}, nil
 			}
 		}
 	}
@@ -102,36 +101,14 @@ func historyReason(r loggingservice.ExcludedReason) loggingservice.HistoryUnavai
 	return loggingservice.HistoryReasonIdentityMissing
 }
 
-// loadEnabled returns the decrypted configuration, or ErrNotEnabled.
-func (s *service) loadEnabled(ctx context.Context, db database.IDB) (*entity.Logging, error) {
-	setting, err := s.settingRepo.GetSingle(ctx, db, nil, base.SettingTypeLogging, true)
-	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-		return nil, hperrors.Wrap(err)
-	}
-	if setting == nil {
-		return nil, hperrors.Wrap(loggingservice.ErrNotEnabled)
-	}
-	cfg, err := setting.AsLogging()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if cfg == nil || !cfg.Enabled {
-		return nil, hperrors.Wrap(loggingservice.ErrNotEnabled)
-	}
-	if err := cfg.Decrypt(); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	return cfg, nil
-}
-
 // queryEndpoint is where to read from: the backend HivePaaS runs, reached by
 // service name over the API's private network, or the one the operator named.
-func queryEndpoint(cfg *entity.Logging) (logging.Endpoint, error) {
+func queryEndpoint(cfg *entity.Logging) (*logging.Endpoint, error) {
 	if cfg.Backend.Managed {
-		return logging.Endpoint{URL: backendBaseURL()}, nil
+		return &logging.Endpoint{URL: backendBaseURL()}, nil
 	}
 	if !hasQueryEndpoint(cfg) {
-		return logging.Endpoint{}, hperrors.Wrap(loggingservice.ErrQueryEndpointMissing)
+		return nil, hperrors.Wrap(hperrors.ErrLoggingQueryEndpointMissing)
 	}
 	return toEndpoint(cfg.Backend.Query)
 }

@@ -3,7 +3,6 @@ package logginguc
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/services/logging"
 	"github.com/hivepaas/hivepaas/services/logging/victorialogs"
 )
@@ -25,13 +24,13 @@ func validateSettings(cfg *entity.Logging) error {
 	if cfg.Backend.Managed {
 		vl := cfg.Backend.VictoriaLogs
 		if vl == nil {
-			return hperrors.Wrap(loggingservice.ErrNotConfigured)
+			return hperrors.Wrap(hperrors.ErrLoggingNotConfigured)
 		}
-		if vl.NodeID == "" {
-			return hperrors.Wrap(loggingservice.ErrBackendNodeMissing)
+		if vl.Node.ID == "" {
+			return hperrors.Wrap(hperrors.ErrLoggingBackendNodeMissing)
 		}
-		if vl.VolumeID == "" {
-			return hperrors.Wrap(loggingservice.ErrVolumeMissing)
+		if vl.Volume.ID == "" {
+			return hperrors.Wrap(hperrors.ErrLoggingVolumeMissing)
 		}
 		if err := victorialogs.ValidateDataSubpath(vl.VolumeSubpath); err != nil {
 			return hperrors.Wrap(err)

@@ -36851,96 +36851,6 @@
         "x-codegen-request-body-name" : "body"
       }
     },
-    "/system/hivepaas/logging-settings" : {
-      "get" : {
-        "description" : "Gets the logging configuration and what is actually running. Credentials always come back masked.",
-        "operationId" : "getHivePaaSLoggingSettings",
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/system_loggingdto.GetSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets HivePaaS logging settings",
-        "tags" : [ "system_hivepaas" ]
-      },
-      "put" : {
-        "description" : "Stores the logging configuration and deploys, updates or removes the logging stack to match.\nA credential sent as the masked placeholder keeps the stored value.",
-        "operationId" : "updateHivePaaSLoggingSettings",
-        "requestBody" : {
-          "content" : {
-            "*/*" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/system_loggingdto.UpdateSettingsReq"
-              }
-            }
-          },
-          "description" : "request data",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/system_loggingdto.UpdateSettingsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Updates HivePaaS logging settings",
-        "tags" : [ "system_hivepaas" ],
-        "x-codegen-request-body-name" : "body"
-      }
-    },
     "/system/hivepaas/release-info" : {
       "get" : {
         "description" : "Gets release info of the app",
@@ -38233,6 +38143,96 @@
           }
         },
         "summary" : "Executes the cleanup",
+        "tags" : [ "system_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/settings/logging" : {
+      "get" : {
+        "description" : "Gets logging settings",
+        "operationId" : "getSystemLoggingSettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_loggingdto.GetLoggingSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets logging settings",
+        "tags" : [ "system_settings" ]
+      },
+      "put" : {
+        "description" : "Updates logging settings",
+        "operationId" : "updateSystemLoggingSettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/systemsettings_loggingdto.UpdateLoggingSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_loggingdto.UpdateLoggingSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates logging settings",
         "tags" : [ "system_settings" ],
         "x-codegen-request-body-name" : "body"
       }
@@ -40939,25 +40939,15 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
-          "ModeAppend" : "a: append-only",
-          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
-          "ModeDevice" : "D: device file",
-          "ModeDir" : "d: is a directory",
-          "ModeExclusive" : "l: exclusive use",
-          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
-          "ModeNamedPipe" : "p: named pipe (FIFO)",
           "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
-          "ModeSocket" : "S: Unix domain socket",
-          "ModeSticky" : "t: sticky",
-          "ModeSymlink" : "L: symbolic link",
-          "ModeTemporary" : "T: temporary file; Plan 9 only"
+          "ModeSticky" : "t: sticky"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -55654,220 +55644,6 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
-      "system_loggingdto.BackendData" : {
-        "properties" : {
-          "ingest" : {
-            "$ref" : "#/components/schemas/system_loggingdto.EndpointData"
-          },
-          "managed" : {
-            "type" : "boolean"
-          },
-          "query" : {
-            "$ref" : "#/components/schemas/system_loggingdto.EndpointData"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "victoriaLogs" : {
-            "$ref" : "#/components/schemas/system_loggingdto.VictoriaLogsData"
-          }
-        },
-        "required" : [ "ingest", "managed", "query", "type", "victoriaLogs" ],
-        "type" : "object"
-      },
-      "system_loggingdto.CollectorData" : {
-        "properties" : {
-          "image" : {
-            "type" : "string"
-          },
-          "managed" : {
-            "type" : "boolean"
-          },
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "image", "managed", "type" ],
-        "type" : "object"
-      },
-      "system_loggingdto.EndpointData" : {
-        "properties" : {
-          "bearerToken" : {
-            "type" : "string"
-          },
-          "headers" : {
-            "additionalProperties" : {
-              "type" : "string"
-            },
-            "type" : "object"
-          },
-          "password" : {
-            "type" : "string"
-          },
-          "tlsSkipVerify" : {
-            "type" : "boolean"
-          },
-          "url" : {
-            "type" : "string"
-          },
-          "username" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "bearerToken", "headers", "password", "tlsSkipVerify", "url", "username" ],
-        "type" : "object"
-      },
-      "system_loggingdto.ExcludedAppData" : {
-        "properties" : {
-          "appId" : {
-            "type" : "string"
-          },
-          "driver" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "reason" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "appId", "driver", "name", "reason" ],
-        "type" : "object"
-      },
-      "system_loggingdto.ForwardData" : {
-        "properties" : {
-          "endpoint" : {
-            "$ref" : "#/components/schemas/system_loggingdto.EndpointData"
-          },
-          "format" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "endpoint", "format", "name" ],
-        "type" : "object"
-      },
-      "system_loggingdto.GetSettingsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/system_loggingdto.SettingsData"
-          },
-          "secretMasked" : {
-            "description" : "SecretMasked says the credentials came back as the placeholder. Sending\nthe placeholder back in an update keeps what is stored.",
-            "type" : "boolean"
-          },
-          "status" : {
-            "$ref" : "#/components/schemas/system_loggingdto.SettingsStatus"
-          }
-        },
-        "required" : [ "data", "secretMasked", "status" ],
-        "type" : "object"
-      },
-      "system_loggingdto.SettingsData" : {
-        "properties" : {
-          "backend" : {
-            "$ref" : "#/components/schemas/system_loggingdto.BackendData"
-          },
-          "collector" : {
-            "$ref" : "#/components/schemas/system_loggingdto.CollectorData"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "forwards" : {
-            "items" : {
-              "$ref" : "#/components/schemas/system_loggingdto.ForwardData"
-            },
-            "type" : "array"
-          },
-          "sources" : {
-            "$ref" : "#/components/schemas/system_loggingdto.SourcesData"
-          }
-        },
-        "required" : [ "backend", "collector", "enabled", "forwards", "sources" ],
-        "type" : "object"
-      },
-      "system_loggingdto.SettingsStatus" : {
-        "properties" : {
-          "backendReady" : {
-            "type" : "boolean"
-          },
-          "excludedApps" : {
-            "items" : {
-              "$ref" : "#/components/schemas/system_loggingdto.ExcludedAppData"
-            },
-            "type" : "array"
-          }
-        },
-        "required" : [ "backendReady", "excludedApps" ],
-        "type" : "object"
-      },
-      "system_loggingdto.SourcesData" : {
-        "properties" : {
-          "apps" : {
-            "type" : "boolean"
-          },
-          "hivepaas" : {
-            "type" : "boolean"
-          },
-          "nodes" : {
-            "type" : "boolean"
-          },
-          "traefikAccess" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "apps", "hivepaas", "nodes", "traefikAccess" ],
-        "type" : "object"
-      },
-      "system_loggingdto.UpdateSettingsReq" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/system_loggingdto.SettingsData"
-          }
-        },
-        "required" : [ "data" ],
-        "type" : "object"
-      },
-      "system_loggingdto.UpdateSettingsResp" : {
-        "properties" : {
-          "data" : {
-            "$ref" : "#/components/schemas/system_loggingdto.SettingsData"
-          },
-          "secretMasked" : {
-            "type" : "boolean"
-          }
-        },
-        "required" : [ "data", "secretMasked" ],
-        "type" : "object"
-      },
-      "system_loggingdto.VictoriaLogsData" : {
-        "properties" : {
-          "image" : {
-            "type" : "string"
-          },
-          "maxDiskUsagePercent" : {
-            "type" : "integer"
-          },
-          "nodeId" : {
-            "type" : "string"
-          },
-          "retention" : {
-            "$ref" : "#/components/schemas/timeutil.Duration"
-          },
-          "volumeId" : {
-            "type" : "string"
-          },
-          "volumeSubpath" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "image", "maxDiskUsagePercent", "nodeId", "retention", "volumeId", "volumeSubpath" ],
-        "type" : "object"
-      },
       "system_syserrordto.DeleteSysErrorResp" : {
         "properties" : {
           "meta" : {
@@ -56474,6 +56250,370 @@
           }
         },
         "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.BackendReq" : {
+        "properties" : {
+          "ingest" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.EndpointReq"
+          },
+          "managed" : {
+            "type" : "boolean"
+          },
+          "query" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.EndpointReq"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "victoriaLogs" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.VictoriaLogsReq"
+          }
+        },
+        "required" : [ "ingest", "managed", "query", "type", "victoriaLogs" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.BackendResp" : {
+        "properties" : {
+          "ingest" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.EndpointResp"
+          },
+          "managed" : {
+            "type" : "boolean"
+          },
+          "query" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.EndpointResp"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "victoriaLogs" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.VictoriaLogsResp"
+          }
+        },
+        "required" : [ "ingest", "managed", "query", "type", "victoriaLogs" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.CollectorReq" : {
+        "properties" : {
+          "managed" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "managed", "type" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.CollectorResp" : {
+        "properties" : {
+          "managed" : {
+            "type" : "boolean"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "managed", "type" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.EndpointReq" : {
+        "properties" : {
+          "bearerToken" : {
+            "type" : "string"
+          },
+          "headers" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "tlsSkipVerify" : {
+            "type" : "boolean"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "bearerToken", "headers", "password", "tlsSkipVerify", "url", "username" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.EndpointResp" : {
+        "properties" : {
+          "bearerToken" : {
+            "type" : "string"
+          },
+          "headers" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "tlsSkipVerify" : {
+            "type" : "boolean"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "bearerToken", "headers", "password", "tlsSkipVerify", "url", "username" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.ForwardReq" : {
+        "properties" : {
+          "endpoint" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.EndpointReq"
+          },
+          "format" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "endpoint", "format", "name" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.ForwardResp" : {
+        "properties" : {
+          "endpoint" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.EndpointResp"
+          },
+          "format" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "endpoint", "format", "name" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.GetLoggingSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.LoggingSettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.LoggingSettingsResp" : {
+        "properties" : {
+          "backend" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.BackendResp"
+          },
+          "collector" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.CollectorResp"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "forwards" : {
+            "items" : {
+              "$ref" : "#/components/schemas/systemsettings_loggingdto.ForwardResp"
+            },
+            "type" : "array"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "loggingStatus" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.LoggingStatusResp"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "secretMasked" : {
+            "description" : "SecretMasked says the credentials came back as the placeholder. Sending\nthe placeholder back in an update keeps what is stored.",
+            "type" : "boolean"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "sources" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.SourcesResp"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "backend", "collector", "createdAt", "default", "enabled", "expireAt", "forwards", "id", "inheritable", "inherited", "kind", "loggingStatus", "name", "secretMasked", "size", "sources", "status", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.LoggingStatusResp" : {
+        "properties" : {
+          "backendReady" : {
+            "type" : "boolean"
+          },
+          "collectorReady" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "backendReady", "collectorReady" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.SourcesReq" : {
+        "properties" : {
+          "apps" : {
+            "type" : "boolean"
+          },
+          "hivepaas" : {
+            "type" : "boolean"
+          },
+          "nodes" : {
+            "type" : "boolean"
+          },
+          "traefikAccess" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "apps", "hivepaas", "nodes", "traefikAccess" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.SourcesResp" : {
+        "properties" : {
+          "apps" : {
+            "type" : "boolean"
+          },
+          "hivepaas" : {
+            "type" : "boolean"
+          },
+          "nodes" : {
+            "type" : "boolean"
+          },
+          "traefikAccess" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "apps", "hivepaas", "nodes", "traefikAccess" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.UpdateLoggingSettingsReq" : {
+        "properties" : {
+          "backend" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.BackendReq"
+          },
+          "collector" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.CollectorReq"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "forwards" : {
+            "items" : {
+              "$ref" : "#/components/schemas/systemsettings_loggingdto.ForwardReq"
+            },
+            "type" : "array"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "sources" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.SourcesReq"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "backend", "collector", "default", "enabled", "forwards", "inheritable", "sources", "updateVer" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.UpdateLoggingSettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.VictoriaLogsReq" : {
+        "properties" : {
+          "maxDiskUsagePercent" : {
+            "type" : "integer"
+          },
+          "nodeId" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "retention" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "volumeId" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "volumeSubpath" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "maxDiskUsagePercent", "nodeId", "retention", "volumeId", "volumeSubpath" ],
+        "type" : "object"
+      },
+      "systemsettings_loggingdto.VictoriaLogsResp" : {
+        "properties" : {
+          "maxDiskUsagePercent" : {
+            "type" : "integer"
+          },
+          "node" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          },
+          "retention" : {
+            "$ref" : "#/components/schemas/timeutil.Duration"
+          },
+          "volume" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          },
+          "volumeSubpath" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "maxDiskUsagePercent", "node", "retention", "volume", "volumeSubpath" ],
         "type" : "object"
       },
       "systemsettings_sslrenewaldto.ExecuteSSLRenewalDataResp" : {
@@ -58516,9 +58656,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

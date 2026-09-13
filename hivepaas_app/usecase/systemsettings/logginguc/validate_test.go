@@ -5,8 +5,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/logging"
 )
 
@@ -15,11 +16,13 @@ func validEnabled() *entity.Logging {
 		Enabled: true,
 		Sources: entity.LoggingSources{Apps: true},
 		Collector: entity.LoggingCollector{
-			Type: entity.LoggingCollectorTypeVlagent, Managed: true,
+			Type: base.LoggingCollectorTypeVlagent, Managed: true,
 		},
 		Backend: entity.LoggingBackend{
-			Type: entity.LoggingBackendTypeVictoriaLogs, Managed: true,
-			VictoriaLogs: &entity.LoggingVictoriaLogs{NodeID: "n1", VolumeID: "v1"},
+			Type: base.LoggingBackendTypeVictoriaLogs, Managed: true,
+			VictoriaLogs: &entity.LoggingVictoriaLogs{
+				Node: entity.ObjectID{ID: "n1"}, Volume: entity.ObjectID{ID: "n1"},
+			},
 		},
 	}
 }
@@ -52,16 +55,16 @@ func TestValidateRejectsEnabledWithNoSources(t *testing.T) {
 
 func TestValidateRejectsAManagedBackendWithNoVolume(t *testing.T) {
 	cfg := validEnabled()
-	cfg.Backend.VictoriaLogs.VolumeID = ""
+	cfg.Backend.VictoriaLogs.Volume.ID = ""
 
-	assert.ErrorIs(t, validateSettings(cfg), loggingservice.ErrVolumeMissing)
+	assert.ErrorIs(t, validateSettings(cfg), hperrors.ErrLoggingVolumeMissing)
 }
 
 func TestValidateRejectsAManagedBackendWithNoNode(t *testing.T) {
 	cfg := validEnabled()
-	cfg.Backend.VictoriaLogs.NodeID = ""
+	cfg.Backend.VictoriaLogs.Node.ID = ""
 
-	assert.ErrorIs(t, validateSettings(cfg), loggingservice.ErrBackendNodeMissing)
+	assert.ErrorIs(t, validateSettings(cfg), hperrors.ErrLoggingBackendNodeMissing)
 }
 
 func TestValidateRejectsAnUnmanagedBackendWithNoIngestURL(t *testing.T) {

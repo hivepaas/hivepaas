@@ -61,8 +61,7 @@ func toHistoryData(resp *logging.QueryResp) *appdto.AppLogHistoryDataResp {
 		Logs:      make([]*tasklog.LogFrame, 0, len(resp.Entries)),
 		Truncated: resp.Truncated,
 	}
-	for i := range resp.Entries {
-		e := &resp.Entries[i]
+	for _, e := range resp.Entries {
 		data.Logs = append(data.Logs, &tasklog.LogFrame{Type: historyFrameType(e), Data: e.Message, Ts: e.Time})
 	}
 	if resp.Truncated && len(resp.Entries) > 0 {

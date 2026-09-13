@@ -52,7 +52,7 @@ These were measured, not assumed. Do not redesign around a contradicting guess.
 | `hivepaas_app/entity/setting_logging.go` | The setting and its parser |
 | `hivepaas_app/entity/setting_logging_migration.go` | `Migrate` |
 | `hivepaas_app/service/loggingservice/service.go` | The service interface |
-| `hivepaas_app/service/loggingservice/errors.go` | `ERR_LOGGING_SVC_*` |
+| `hivepaas_app/service/loggingservice/errors.go` | `ERR_LOGGING_*` |
 | `hivepaas_app/service/loggingservice/loggingserviceimpl/config.go` | entity → loggingmodel, decrypting |
 | `hivepaas_app/service/loggingservice/loggingserviceimpl/swarmspec.go` | RuntimeSpec → swarm.ServiceSpec |
 | `hivepaas_app/service/loggingservice/loggingserviceimpl/deploy.go` | Apply / tear down |
@@ -284,7 +284,7 @@ Create `hivepaas_app/pkg/translation/messages/en/errors.logging.en.toml`:
 #
 # Not declared in hperrors/constants.go. The sources are:
 #   services/logging/loggingmodel/errors.go               (ERR_LOGGING_*)
-#   hivepaas_app/service/loggingservice/errors.go         (ERR_LOGGING_SVC_*)
+#   hivepaas_app/service/loggingservice/errors.go         (ERR_LOGGING_*)
 # Adding or removing an error in either file means editing this one.
 ERR_LOGGING_BACKEND_UNSUPPORTED = "Logging backend '{{.Name}}' is not supported"
 ERR_LOGGING_COLLECTOR_UNSUPPORTED = "Logging collector '{{.Name}}' is not supported"
@@ -1774,22 +1774,22 @@ import (
 // translation namespace, and a clash between them is a string collision the
 // compiler cannot see. Translations are in errors.logging.en.toml.
 var (
-	ErrNotConfigured      = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_SVC_NOT_CONFIGURED")
-	ErrBackendNodeMissing = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_SVC_BACKEND_NODE_MISSING")
-	ErrVolumeMissing      = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_SVC_VOLUME_MISSING")
-	ErrBackendNotReady    = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_SVC_BACKEND_NOT_READY")
-	ErrDeployFailed       = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_SVC_DEPLOY_FAILED")
+	ErrNotConfigured      = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_NOT_CONFIGURED")
+	ErrBackendNodeMissing = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_BACKEND_NODE_MISSING")
+	ErrVolumeMissing      = hperrors.NewErr(hperrors.ErrBadRequest, "ERR_LOGGING_VOLUME_MISSING")
+	ErrBackendNotReady    = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_BACKEND_NOT_READY")
+	ErrDeployFailed       = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_DEPLOY_FAILED")
 )
 ```
 
 Append to `hivepaas_app/pkg/translation/messages/en/errors.logging.en.toml`:
 
 ```toml
-ERR_LOGGING_SVC_NOT_CONFIGURED = "Logging is not configured"
-ERR_LOGGING_SVC_BACKEND_NODE_MISSING = "The logging backend has no node to run on"
-ERR_LOGGING_SVC_VOLUME_MISSING = "The logging backend has no data volume"
-ERR_LOGGING_SVC_BACKEND_NOT_READY = "The logging backend did not become ready"
-ERR_LOGGING_SVC_DEPLOY_FAILED = "Deploying the logging stack failed"
+ERR_LOGGING_NOT_CONFIGURED = "Logging is not configured"
+ERR_LOGGING_BACKEND_NODE_MISSING = "The logging backend has no node to run on"
+ERR_LOGGING_VOLUME_MISSING = "The logging backend has no data volume"
+ERR_LOGGING_BACKEND_NOT_READY = "The logging backend did not become ready"
+ERR_LOGGING_DEPLOY_FAILED = "Deploying the logging stack failed"
 ```
 
 - [ ] **Step 2: Write the failing test**

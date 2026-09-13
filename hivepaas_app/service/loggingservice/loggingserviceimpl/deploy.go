@@ -18,13 +18,12 @@ import (
 
 // Apply makes the cluster match the stored configuration.
 func (s *service) Apply(ctx context.Context, db database.IDB) error {
-	setting, err := s.settingRepo.GetSingle(ctx, db, nil, base.SettingTypeLogging, true)
-	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+	setting, err := s.loadSettings(ctx, db, false)
+	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	if setting == nil {
-		// Never configured, which is the default: there is nothing to run and
-		// nothing to remove.
+		// Never configured, which is the default: there is nothing to run and nothing to remove.
 		return nil
 	}
 
@@ -90,13 +89,9 @@ func (s *service) deployCollector(ctx context.Context, cfg *entity.Logging, inge
 		return hperrors.Wrap(err)
 	}
 
-	collectorImage := ""
-	if cfg.Collector.Vlagent != nil {
-		collectorImage = cfg.Collector.Vlagent.Image
-	}
 	collector, err := logging.NewCollector(
 		logging.CollectorType(cfg.Collector.Type),
-		&logging.CollectorConfig{Vlagent: &vlagent.Config{Image: collectorImage}},
+		&logging.CollectorConfig{Vlagent: &vlagent.Config{}},
 	)
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -137,22 +132,21 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging, logNet
 
 	vl := cfg.Backend.VictoriaLogs
 	if vl == nil {
-		return "", hperrors.Wrap(loggingservice.ErrNotConfigured)
+		return "", hperrors.Wrap(hperrors.ErrLoggingNotConfigured)
 	}
-	if vl.NodeID == "" {
-		return "", hperrors.Wrap(loggingservice.ErrBackendNodeMissing)
+	if vl.Node.ID == "" {
+		return "", hperrors.Wrap(hperrors.ErrLoggingBackendNodeMissing)
 	}
-	if vl.VolumeID == "" {
+	if vl.Volume.ID == "" {
 		// Without a volume the logs live in the container's writable layer and
 		// vanish on the next restart, silently.
-		return "", hperrors.Wrap(loggingservice.ErrVolumeMissing)
+		return "", hperrors.Wrap(hperrors.ErrLoggingVolumeMissing)
 	}
 
 	deployer, err := logging.NewDeployer(
 		logging.BackendType(cfg.Backend.Type),
 		&logging.BackendConfig{VictoriaLogs: &victorialogs.Config{
-			Image:               vl.Image,
-			DataVolumeName:      vl.VolumeID,
+			DataVolumeName:      vl.Volume.ID,
 			DataSubpath:         vl.VolumeSubpath,
 			Retention:           vl.Retention.ToDuration(),
 			MaxDiskUsagePercent: vl.MaxDiskUsagePercent,
@@ -175,7 +169,7 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging, logNet
 
 	svcSpec, err := toSwarmServiceSpec(rt, swarmSpecOpts{
 		Name:     ServiceNameBackend,
-		NodeID:   vl.NodeID,
+		NodeID:   vl.Node.ID,
 		Networks: []string{logNet, base.NetworkHivepaasLocal},
 	})
 	if err != nil {
@@ -242,42 +236,57 @@ func (s *service) removeService(ctx context.Context, name string) error {
 }
 
 // Status reports what is running.
-func (s *service) Status(ctx context.Context, db database.IDB) (*loggingservice.Status, error) {
-	setting, err := s.settingRepo.GetSingle(ctx, db, nil, base.SettingTypeLogging, true)
-	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-		return nil, hperrors.Wrap(err)
-	}
-	out := &loggingservice.Status{}
+func (s *service) Status(
+	ctx context.Context,
+	db database.IDB,
+	setting *entity.Setting,
+) (status *loggingservice.Status, err error) {
 	if setting == nil {
-		out.ExcludedApps, err = s.listExcludedApps(ctx, db)
+		setting, err = s.loadSettings(ctx, db, false)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		return out, nil
-	}
-	cfg, err := setting.AsLogging()
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	if cfg != nil {
-		out.Enabled = cfg.Enabled
 	}
 
-	// Listed whether or not logging is on: the list is most useful before it is
-	// turned on, when there is still time to switch the apps it names.
-	out.ExcludedApps, err = s.listExcludedApps(ctx, db)
+	status = &loggingservice.Status{}
+	if setting == nil {
+		return status, nil
+	}
+
+	loggingSettings, err := setting.AsLogging()
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+	status.Enabled = loggingSettings.Enabled
+	if !status.Enabled {
+		return status, nil
+	}
+
+	collector, inspectErr := s.clusterService.ServiceInspect(ctx, ServiceNameCollector, true)
+	if svc := collector; inspectErr == nil && svc != nil {
+		status.CollectorServiceID = svc.ID
+		switch {
+		case svc.Spec.Mode.Replicated != nil:
+			if svc.Spec.Mode.Replicated.Replicas != nil && *svc.Spec.Mode.Replicated.Replicas > 0 {
+				status.CollectorReady = true
+			}
+		case svc.Spec.Mode.Global != nil:
+			status.CollectorReady = true
+		}
 	}
 
 	backend, inspectErr := s.clusterService.ServiceInspect(ctx, ServiceNameBackend, true)
 	if svc := backend; inspectErr == nil && svc != nil {
-		out.BackendServiceID = svc.ID
-		out.BackendReady = true
+		status.BackendServiceID = svc.ID
+		switch {
+		case svc.Spec.Mode.Replicated != nil:
+			if svc.Spec.Mode.Replicated.Replicas != nil && *svc.Spec.Mode.Replicated.Replicas > 0 {
+				status.BackendReady = true
+			}
+		case svc.Spec.Mode.Global != nil:
+			status.BackendReady = true
+		}
 	}
-	collector, inspectErr := s.clusterService.ServiceInspect(ctx, ServiceNameCollector, true)
-	if svc := collector; inspectErr == nil && svc != nil {
-		out.CollectorService = svc.ID
-	}
-	return out, nil
+
+	return status, nil
 }

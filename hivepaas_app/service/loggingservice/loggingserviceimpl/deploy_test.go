@@ -16,7 +16,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -116,15 +115,15 @@ func enabledConfig() *entity.Logging {
 		Enabled: true,
 		Sources: entity.LoggingSources{Apps: true},
 		Collector: entity.LoggingCollector{
-			Type:    entity.LoggingCollectorTypeVlagent,
+			Type:    base.LoggingCollectorTypeVlagent,
 			Managed: true,
 		},
 		Backend: entity.LoggingBackend{
-			Type:    entity.LoggingBackendTypeVictoriaLogs,
+			Type:    base.LoggingBackendTypeVictoriaLogs,
 			Managed: true,
 			VictoriaLogs: &entity.LoggingVictoriaLogs{
-				NodeID:   "node-1",
-				VolumeID: "vol-1",
+				Node:   entity.ObjectID{ID: "node-1"},
+				Volume: entity.ObjectID{ID: "vol-1"},
 			},
 		},
 	}
@@ -216,7 +215,7 @@ func TestDeployPointsTheCollectorAtTheBackend(t *testing.T) {
 
 func TestDeployRefusesAManagedBackendWithNoVolume(t *testing.T) {
 	cfg := enabledConfig()
-	cfg.Backend.VictoriaLogs.VolumeID = ""
+	cfg.Backend.VictoriaLogs.Volume.ID = ""
 	fd := &fakeDocker{}
 	s := newTestService(fd, nil)
 
@@ -224,16 +223,16 @@ func TestDeployRefusesAManagedBackendWithNoVolume(t *testing.T) {
 
 	// The service layer refuses first, with its own code. The backend package
 	// refuses too, but reaching it would mean the check here had gone missing.
-	assert.ErrorIs(t, err, loggingservice.ErrVolumeMissing, "a backend with no volume loses every log on restart")
+	assert.ErrorIs(t, err, hperrors.ErrLoggingVolumeMissing, "a backend with no volume loses every log on restart")
 	assert.Empty(t, fd.created, "nothing should be half-deployed")
 }
 
 func TestDeployRefusesAManagedBackendWithNoNode(t *testing.T) {
 	cfg := enabledConfig()
-	cfg.Backend.VictoriaLogs.NodeID = ""
+	cfg.Backend.VictoriaLogs.Node.ID = ""
 	s := newTestService(&fakeDocker{}, nil)
 
-	assert.ErrorIs(t, s.deploy(context.Background(), cfg), loggingservice.ErrBackendNodeMissing)
+	assert.ErrorIs(t, s.deploy(context.Background(), cfg), hperrors.ErrLoggingBackendNodeMissing)
 }
 
 // An unmanaged backend is somebody else's service: HivePaaS ships to it and
@@ -370,27 +369,4 @@ func TestDeployRemovesTheBackendWhenItStopsBeingManaged(t *testing.T) {
 	last := fd.updated[len(fd.updated)-1]
 	assert.Equal(t, ServiceNameCollector, last.Name, "the collector is repointed before the backend goes")
 	assert.Contains(t, last.TaskTemplate.ContainerSpec.Args, "-remoteWrite.url=https://logs.example/insert")
-}
-
-// The list matters most before logging is turned on, so it is filled with no
-// setting stored at all.
-func TestStatusListsExcludedAppsEvenWhenNeverConfigured(t *testing.T) {
-	fd := &fakeDocker{listed: []swarm.Service{
-		{ID: "s1", Spec: swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{
-			LogDriver: &swarm.Driver{Name: "local"}, ContainerSpec: &swarm.ContainerSpec{},
-		}}},
-	}}
-	s := newTestService(fd, nil)
-	s.appRepo = &fakeAppRepo{apps: []*entity.App{{ID: "a1", Name: "legacy", ServiceID: "s1"}}}
-
-	st, err := s.Status(context.Background(), nil)
-	if err != nil {
-		t.Fatalf("Status: %v", err)
-	}
-
-	if len(st.ExcludedApps) != 1 {
-		t.Fatalf("want one excluded app, got %d", len(st.ExcludedApps))
-	}
-	assert.Equal(t, "a1", st.ExcludedApps[0].AppID)
-	assert.Equal(t, loggingservice.ExcludedReasonDriverUnreadable, st.ExcludedApps[0].Reason)
 }

@@ -1,5 +1,6 @@
 # Messages for the errors declared in hivepaas_app/hperrors/errors_infra.go.
 # Adding or removing an error there means editing this file.
+
 # Cluster error
 ERR_NODE_WITH_LABEL_NOT_AVAILABLE = "Node with label '{{.Label}}' is not found or not ready"
 ERR_SERVICE_NOT_RUNNING = "Service '{{.Name}}' is not running"

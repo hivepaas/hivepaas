@@ -35,6 +35,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systemcleanupuc"
@@ -67,6 +68,7 @@ type Handler struct {
 	GithubAppUC            *githubappuc.UC
 	ImageBuildUC           *imagebuildsettingsuc.UC
 	IMServiceUC            *imserviceuc.UC
+	LoggingUC              *logginguc.UC
 	NotificationUC         *notificationuc.UC
 	OAuthUC                *oauthuc.UC
 	PeriodicJobUC          *periodicjobuc.UC
@@ -108,6 +110,7 @@ func New(
 	githubAppUC *githubappuc.UC,
 	imageBuildUC *imagebuildsettingsuc.UC,
 	imServiceUC *imserviceuc.UC,
+	loggingUC *logginguc.UC,
 	notificationUC *notificationuc.UC,
 	oauthUC *oauthuc.UC,
 	periodicJobUC *periodicjobuc.UC,
@@ -148,6 +151,7 @@ func New(
 		GithubAppUC:            githubAppUC,
 		ImageBuildUC:           imageBuildUC,
 		IMServiceUC:            imServiceUC,
+		LoggingUC:              loggingUC,
 		NotificationUC:         notificationUC,
 		OAuthUC:                oauthUC,
 		PeriodicJobUC:          periodicJobUC,

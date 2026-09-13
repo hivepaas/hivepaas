@@ -108,10 +108,9 @@ func (c *Client) Query(ctx context.Context, req *loggingmodel.QueryReq) (*loggin
 
 // readEntries parses one JSON object per line, newest first as the query sorts
 // them, and returns them oldest first - the order a person reads.
-func readEntries(r io.Reader) ([]loggingmodel.LogEntry, error) {
+func readEntries(r io.Reader) (out []*loggingmodel.LogEntry, err error) {
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64*1024), maxLineBytes) //nolint:mnd // initial buffer
-	var out []loggingmodel.LogEntry
 	for sc.Scan() {
 		line := sc.Bytes()
 		if len(line) == 0 {
@@ -125,7 +124,7 @@ func readEntries(r io.Reader) ([]loggingmodel.LogEntry, error) {
 		if err != nil {
 			return nil, hperrors.Wrap(loggingmodel.ErrQueryInvalid).WithExtraDetail("unreadable _time: %s", err.Error())
 		}
-		out = append(out, loggingmodel.LogEntry{
+		out = append(out, &loggingmodel.LogEntry{
 			Time:    ts,
 			Message: row["_msg"],
 			Stream:  row["stream"],

@@ -1,5 +1,6 @@
 # Messages for the errors declared in hivepaas_app/hperrors/errors_project_app.go.
 # Adding or removing an error there means editing this file.
+
 # Project errors
 ERR_PROJECT_NOT_FOUND = "Project '{{.Name}}' is not found"
 ERR_PROJECT_ENV_NOT_FOUND = "Project env '{{.Name}}' is not found"

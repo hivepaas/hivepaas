@@ -7,7 +7,6 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/services/logging"
 )
 
@@ -42,7 +41,7 @@ type swarmSpecOpts struct {
 // This is the only place in the logging subsystem that knows what swarm is.
 func toSwarmServiceSpec(rt *logging.RuntimeSpec, opts swarmSpecOpts) (*swarm.ServiceSpec, error) {
 	if rt.Image == "" {
-		return nil, hperrors.Wrap(loggingservice.ErrDeployFailed).
+		return nil, hperrors.Wrap(hperrors.ErrLoggingDeployFailed).
 			WithExtraDetail("the runtime spec has no image")
 	}
 

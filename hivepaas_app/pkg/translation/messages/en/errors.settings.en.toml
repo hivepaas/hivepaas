@@ -1,5 +1,6 @@
 # Messages for the errors declared in hivepaas_app/hperrors/errors_settings.go.
 # Adding or removing an error there means editing this file.
+
 # Settings errors
 ERR_UNCONFIGURED = "{{.Name}} is not configured"
 ERR_SETTING_NOT_FOUND = "Setting '{{.Name}}' is not found"
@@ -30,11 +31,11 @@ ERR_SETTINGS_CHANGE_SUPERSEDED = "This is no longer the change that is waiting t
 ERR_SETTINGS_CONFIRM_TOO_EARLY = "Too early to confirm. The change is still being picked up by the proxy, so a confirmation now would vouch for the previous configuration. Try again from {{.ConfirmableFrom}}."
 ERR_SETTINGS_CHANGE_NOT_LIVE = "The change is not actually running, so it cannot be confirmed. Swarm most likely rolled the update back. Check the proxy service and apply the change again."
 ERR_SETTING_IN_USE = "'{{.Name}}' is still used by {{.Count}} other object(s) and cannot be deleted. Remove it from those first."
+ERR_DATA_VER_NEWER_THAN_SYSTEM_VER = "The version of data is newer than the system's"
 
 ERR_PASSWORD_NOT_MEET_REQUIREMENTS = "Password does not meet requirements. Must contain at least {{.MinLen}} characters with {{.Lowers}} lowercase, {{.Uppers}} uppercase, {{.Digits}} digit, and {{.Specials}} special characters."
 ERR_PASSWORD_HAS_WEAK_SEQUENCE = "Password contains an easily guessed sequence. Avoid more than {{.MaxRun}} characters in a row that are sequential (1234), repeated (aaaa), or side by side on the keyboard (qwer)."
 ERR_PASSWORD_TOO_SIMILAR_TO_PREVIOUS = "Password is too similar to the current one. They must not share more than {{.MaxRun}} characters in a row, in either direction."
-ERR_DATA_VER_NEWER_THAN_SYSTEM_VER = "The version of data is newer than the system's"
 
 # Placement errors
 ERR_PLACEMENT_NO_MATCHING_NODE = "No node in the cluster matches these placement rules, so no app could be scheduled"

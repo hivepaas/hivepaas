@@ -25,7 +25,7 @@ func argsFor(args []string, name string) []string {
 func baseSpec() *loggingmodel.CollectSpec {
 	return &loggingmodel.CollectSpec{
 		Ingest:  loggingmodel.Endpoint{URL: "http://vlogs:9428/internal/insert"},
-		Sources: []loggingmodel.Source{{Kind: loggingmodel.SourceKindApp, Glob: "/var/lib/docker/containers/*/*-json.log"}},
+		Sources: []*loggingmodel.Source{{Kind: loggingmodel.SourceKindApp, Glob: "/var/lib/docker/containers/*/*-json.log"}},
 	}
 }
 
@@ -61,7 +61,7 @@ func TestConfigureMountsTheContainerLogsReadOnly(t *testing.T) {
 // sends one target's token to another.
 func TestConfigureKeepsPerDestinationArraysAligned(t *testing.T) {
 	in := baseSpec()
-	in.Forwards = []loggingmodel.ForwardTarget{
+	in.Forwards = []*loggingmodel.ForwardTarget{
 		{Name: "no-auth", Format: FormatJSONLine, Endpoint: loggingmodel.Endpoint{URL: "http://a/ingest"}},
 		{Name: "with-token", Format: FormatJSONLine, Endpoint: loggingmodel.Endpoint{
 			URL: "http://b/ingest", BearerToken: "SECRET",
@@ -99,7 +99,7 @@ func TestConfigureExcludesTheLoggingStackItself(t *testing.T) {
 // to exclude still occupies a slot.
 func TestConfigureKeepsGlobAndExcludeAligned(t *testing.T) {
 	in := baseSpec()
-	in.Sources = []loggingmodel.Source{
+	in.Sources = []*loggingmodel.Source{
 		{Kind: loggingmodel.SourceKindApp, Glob: "/a/*.log"},
 		{Kind: loggingmodel.SourceKindHivePaaS, Glob: "/b/*.log", Exclude: "/b/skip-*.log"},
 	}

@@ -44,6 +44,7 @@ const (
 	ResourceTypeImage             ResourceType = "image"
 	ResourceTypeImageBuild        ResourceType = "image-build"
 	ResourceTypeIMService         ResourceType = "im-service"
+	ResourceTypeLogging           ResourceType = "logging"
 	ResourceTypeLogicalChildApp   ResourceType = "logical-child-app"
 	ResourceTypeModule            ResourceType = "module"
 	ResourceTypeNotification      ResourceType = "notification"

@@ -76,6 +76,9 @@ func (h *Handler) UpdateUniqueSettingStatus(
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.UpdateImageBuildSettingsStatus(reqCtx, auth, r) }
 
+	case base.ResourceTypeLogging:
+		err = hperrors.NewNotImplemented()
+
 	default:
 		// NOTE: not implemented
 		err = hperrors.NewNotImplemented()

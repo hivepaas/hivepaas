@@ -274,7 +274,7 @@ no app-layer package does, and logging extends the pattern there.
 
 ```
 services/logging/loggingmodel/errors.go        ERR_LOGGING_*
-hivepaas_app/service/loggingservice/errors.go  ERR_LOGGING_SVC_*
+hivepaas_app/service/loggingservice/errors.go  ERR_LOGGING_*
 ```
 
 `loggingmodel` rather than `logging`, for the reason `backupmodel/errors.go`

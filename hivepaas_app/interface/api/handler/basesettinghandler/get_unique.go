@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/appplacementsettingsuc/appplacementsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/domainsettingsuc/domainsettingsdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/imagebuildsettingsuc/imagebuildsettingsdto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc/loggingdto"
 )
 
 type GetUniqueSettingOptions struct {
@@ -85,6 +86,11 @@ func (h *Handler) GetUniqueSetting(
 		r := imagebuildsettingsdto.NewGetImageBuildSettingsReq()
 		r.Scope = scope
 		req, ucFunc = r, func() (any, error) { return h.ImageBuildUC.GetImageBuildSettings(reqCtx, auth, r) }
+
+	case base.ResourceTypeLogging:
+		r := loggingdto.NewGetLoggingSettingsReq()
+		r.Scope = scope
+		req, ucFunc = r, func() (any, error) { return h.LoggingUC.GetLoggingSettings(reqCtx, auth, r) }
 
 	default:
 		// NOTE: not implemented

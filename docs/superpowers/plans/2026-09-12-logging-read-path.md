@@ -88,13 +88,13 @@ Why two networks for the backend: the collector reaches VictoriaLogs over `hivep
 Append to the `var (...)` block in `hivepaas_app/service/loggingservice/errors.go`:
 
 ```go
-	ErrAPINetworkMissing  = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_SVC_API_NETWORK_MISSING")
+	ErrAPINetworkMissing  = hperrors.NewErr(hperrors.ErrActionFailed, "ERR_LOGGING_API_NETWORK_MISSING")
 ```
 
 Append to `errors.logging.en.toml`:
 
 ```toml
-ERR_LOGGING_SVC_API_NETWORK_MISSING = "HivePaaS's own service has no private network the logging backend can join"
+ERR_LOGGING_API_NETWORK_MISSING = "HivePaaS's own service has no private network the logging backend can join"
 ```
 
 - [ ] **Step 2: Write the failing tests**
@@ -1273,15 +1273,15 @@ In `hivepaas_app/service/loggingservice/service.go`, add the types from **Interf
 In `errors.go`:
 
 ```go
-	ErrNotEnabled           = hperrors.NewErr(hperrors.ErrUnavailable, "ERR_LOGGING_SVC_NOT_ENABLED")
-	ErrQueryEndpointMissing = hperrors.NewErr(hperrors.ErrUnavailable, "ERR_LOGGING_SVC_QUERY_ENDPOINT_MISSING")
+	ErrNotEnabled           = hperrors.NewErr(hperrors.ErrUnavailable, "ERR_LOGGING_NOT_ENABLED")
+	ErrQueryEndpointMissing = hperrors.NewErr(hperrors.ErrUnavailable, "ERR_LOGGING_QUERY_ENDPOINT_MISSING")
 ```
 
 In the toml:
 
 ```toml
-ERR_LOGGING_SVC_NOT_ENABLED = "Log collection is not enabled"
-ERR_LOGGING_SVC_QUERY_ENDPOINT_MISSING = "The logging backend has no query endpoint configured"
+ERR_LOGGING_NOT_ENABLED = "Log collection is not enabled"
+ERR_LOGGING_QUERY_ENDPOINT_MISSING = "The logging backend has no query endpoint configured"
 ```
 
 - [ ] **Step 3: Write the failing tests**

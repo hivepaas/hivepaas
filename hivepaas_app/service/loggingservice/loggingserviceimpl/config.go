@@ -1,10 +1,14 @@
 package loggingserviceimpl
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/services/logging"
 	"github.com/hivepaas/hivepaas/services/logging/victorialogs"
 )
@@ -33,23 +37,22 @@ const (
 // toEndpoint converts a stored endpoint into one services/logging can use.
 //
 // This is where credentials are decrypted, so that nothing under
-// services/logging ever sees an EncryptedField - the same boundary
-// buildS3Storage draws for backups.
-func toEndpoint(ep *entity.LoggingEndpoint) (logging.Endpoint, error) {
+// services/logging ever sees an EncryptedField.
+func toEndpoint(ep *entity.LoggingEndpoint) (*logging.Endpoint, error) {
 	if ep == nil {
-		return logging.Endpoint{}, nil
+		return nil, nil
 	}
 
 	password, err := ep.Password.GetPlain()
 	if err != nil {
-		return logging.Endpoint{}, hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	token, err := ep.BearerToken.GetPlain()
 	if err != nil {
-		return logging.Endpoint{}, hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 
-	return logging.Endpoint{
+	return &logging.Endpoint{
 		URL:           ep.URL,
 		Username:      ep.Username,
 		Password:      password,
@@ -67,7 +70,7 @@ func backendBaseURL() string {
 
 // buildCollectSpec turns the stored configuration into a collection job.
 func (s *service) buildCollectSpec(cfg *entity.Logging, ingestURL string) (*logging.CollectSpec, error) {
-	var sources []logging.Source
+	var sources []*logging.Source
 	if cfg.Sources.Apps || cfg.Sources.HivePaaS {
 		// One source, not two. Apps and HivePaaS's own services write into the
 		// same directory under container ids, so no glob can separate them -
@@ -78,7 +81,7 @@ func (s *service) buildCollectSpec(cfg *entity.Logging, ingestURL string) (*logg
 		if !cfg.Sources.Apps {
 			kind = logging.SourceKindHivePaaS
 		}
-		sources = append(sources, logging.Source{
+		sources = append(sources, &logging.Source{
 			Kind: kind,
 			Glob: dockerContainersGlob,
 			// No extra field: the lines are a mix of both, so labeling them
@@ -90,17 +93,17 @@ func (s *service) buildCollectSpec(cfg *entity.Logging, ingestURL string) (*logg
 		return nil, hperrors.Wrap(logging.ErrNoSources)
 	}
 
-	forwards := make([]logging.ForwardTarget, 0, len(cfg.Forwards))
+	forwards := make([]*logging.ForwardTarget, 0, len(cfg.Forwards))
 	for i := range cfg.Forwards {
 		f := &cfg.Forwards[i]
 		ep, err := toEndpoint(&f.Endpoint)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		forwards = append(forwards, logging.ForwardTarget{
+		forwards = append(forwards, &logging.ForwardTarget{
 			Name:     f.Name,
 			Format:   f.Format,
-			Endpoint: ep,
+			Endpoint: *ep,
 		})
 	}
 
@@ -109,4 +112,43 @@ func (s *service) buildCollectSpec(cfg *entity.Logging, ingestURL string) (*logg
 		Forwards: forwards,
 		Sources:  sources,
 	}, nil
+}
+
+func (s *service) loadSettings(
+	ctx context.Context,
+	db database.IDB,
+	requireExists bool,
+) (setting *entity.Setting, err error) {
+	setting, err = s.settingRepo.GetSingle(ctx, db, entity.NewObjectScopeGlobal(), base.SettingTypeLogging, true)
+	if err != nil {
+		if !requireExists && errors.Is(err, hperrors.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, hperrors.Wrap(err)
+	}
+	return setting, nil
+}
+
+// loadEnabledSettings returns the decrypted configuration, or ErrNotEnabled.
+func (s *service) loadEnabledSettings(ctx context.Context, db database.IDB) (*entity.Logging, error) {
+	setting, err := s.loadSettings(ctx, db, false)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if setting == nil {
+		return nil, hperrors.Wrap(hperrors.ErrLoggingNotEnabled)
+	}
+
+	cfg, err := setting.AsLogging()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if cfg == nil || !cfg.Enabled {
+		return nil, hperrors.Wrap(hperrors.ErrLoggingNotEnabled)
+	}
+
+	if err := cfg.Decrypt(); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return cfg, nil
 }

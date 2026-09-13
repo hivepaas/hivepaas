@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -106,6 +106,6 @@ func TestDeployRefusesWhenTheInternalNetworkIsMissing(t *testing.T) {
 
 	err := s.Apply(context.Background(), nil)
 
-	assert.ErrorIs(t, err, loggingservice.ErrAPINetworkMissing)
+	assert.ErrorIs(t, err, hperrors.ErrLoggingAPINetworkMissing)
 	assert.Empty(t, fd.created, "nothing should have been deployed")
 }

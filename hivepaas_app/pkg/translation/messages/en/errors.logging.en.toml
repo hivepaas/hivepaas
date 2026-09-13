@@ -2,7 +2,7 @@
 #
 # Not declared in hperrors/constants.go. The sources are:
 #   services/logging/loggingmodel/errors.go               (ERR_LOGGING_*)
-#   hivepaas_app/service/loggingservice/errors.go         (ERR_LOGGING_SVC_*)
+#   hivepaas_app/service/loggingservice/errors.go         (ERR_LOGGING_*)
 # Adding or removing an error in either file means editing this one.
 ERR_LOGGING_BACKEND_UNSUPPORTED = "Logging backend '{{.Name}}' is not supported"
 ERR_LOGGING_COLLECTOR_UNSUPPORTED = "Logging collector '{{.Name}}' is not supported"
@@ -14,10 +14,10 @@ ERR_LOGGING_DATA_SUBPATH_INVALID = "The data directory must be a path inside the
 ERR_LOGGING_QUERY_INVALID = "The log query is not valid"
 ERR_LOGGING_QUERY_SCOPE_REQUIRED = "A log query must be limited to what it may read"
 ERR_LOGGING_BACKEND_UNREACHABLE = "The logging backend cannot be reached"
-ERR_LOGGING_SVC_NOT_CONFIGURED = "Logging is not configured"
-ERR_LOGGING_SVC_BACKEND_NODE_MISSING = "The logging backend has no node to run on"
-ERR_LOGGING_SVC_VOLUME_MISSING = "The logging backend has no data volume"
-ERR_LOGGING_SVC_DEPLOY_FAILED = "Deploying the logging stack failed"
-ERR_LOGGING_SVC_API_NETWORK_MISSING = "The internal network '{{.Name}}' does not exist, so the logging backend would be unreachable"
-ERR_LOGGING_SVC_NOT_ENABLED = "Log collection is not enabled"
-ERR_LOGGING_SVC_QUERY_ENDPOINT_MISSING = "The logging backend has no query endpoint configured"
+ERR_LOGGING_NOT_CONFIGURED = "Logging is not configured"
+ERR_LOGGING_BACKEND_NODE_MISSING = "The logging backend has no node to run on"
+ERR_LOGGING_VOLUME_MISSING = "The logging backend has no data volume"
+ERR_LOGGING_DEPLOY_FAILED = "Deploying the logging stack failed"
+ERR_LOGGING_API_NETWORK_MISSING = "The internal network '{{.Name}}' does not exist, so the logging backend would be unreachable"
+ERR_LOGGING_NOT_ENABLED = "Log collection is not enabled"
+ERR_LOGGING_QUERY_ENDPOINT_MISSING = "The logging backend has no query endpoint configured"

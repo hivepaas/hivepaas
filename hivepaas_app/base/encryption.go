@@ -1,5 +1,7 @@
 package base
 
+import "strings"
+
 const (
 	// EncryptionSaltPrefix marks a value derived-key encrypted with a per-value
 	// salt. HashField still uses it; EncryptedField no longer does.
@@ -26,7 +28,7 @@ const MaskedSecret = "********"
 // secret. A form that loads a setting and posts it back unchanged returns the
 // placeholder, and storing it would destroy the secret it stands for.
 func IsMaskedSecret(value string) bool {
-	return value == MaskedSecret
+	return len(value) <= 16 && strings.Trim(value, "* ") == "" //nolint:mnd
 }
 
 type FileEncryptionFormat string

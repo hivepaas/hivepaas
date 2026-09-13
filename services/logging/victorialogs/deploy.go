@@ -42,7 +42,6 @@ const (
 )
 
 type Config struct {
-	Image          string
 	DataVolumeName string
 	Retention      time.Duration
 
@@ -97,13 +96,8 @@ func (c *Client) RuntimeSpec() (*loggingmodel.RuntimeSpec, error) {
 		args = append(args, fmt.Sprintf("-retention.maxDiskUsagePercent=%d", c.cfg.MaxDiskUsagePercent))
 	}
 
-	image := c.cfg.Image
-	if image == "" {
-		image = DefaultImage
-	}
-
 	return &loggingmodel.RuntimeSpec{
-		Image: image,
+		Image: DefaultImage,
 		Args:  args,
 		Mounts: []loggingmodel.Mount{{
 			VolumeName: c.cfg.DataVolumeName,

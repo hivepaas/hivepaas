@@ -32,7 +32,7 @@ func TestHistoryPage(t *testing.T) {
 	t1 := time.Date(2026, 9, 12, 8, 0, 1, 0, time.UTC)
 	t2 := t1.Add(time.Second)
 	data := toHistoryData(&logging.QueryResp{
-		Entries:   []logging.LogEntry{{Time: t1, Message: "a"}, {Time: t2, Message: "b"}},
+		Entries:   []*logging.LogEntry{{Time: t1, Message: "a"}, {Time: t2, Message: "b"}},
 		Truncated: true,
 	})
 	if assert.Len(t, data.Logs, 2) {
@@ -43,7 +43,7 @@ func TestHistoryPage(t *testing.T) {
 		assert.Equal(t, t1.Add(-time.Nanosecond), *data.NextEnd, "strictly before the oldest line shown")
 	}
 
-	data = toHistoryData(&logging.QueryResp{Entries: []logging.LogEntry{{Time: t1}}})
+	data = toHistoryData(&logging.QueryResp{Entries: []*logging.LogEntry{{Time: t1}}})
 	assert.Nil(t, data.NextEnd)
 	data = toHistoryData(&logging.QueryResp{})
 	assert.NotNil(t, data.Logs, "an empty page is [], not null")

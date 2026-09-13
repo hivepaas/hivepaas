@@ -76,6 +76,13 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		backupRepoCleanupGroup.POST("/exec", systemSettingsHandler.ExecuteBackupRepoCleanup)
 	}
 
+	// Logging settings
+	{
+		loggingGroup := systemSettingGroup.Group("/logging")
+		loggingGroup.GET("", systemSettingsHandler.GetLoggingSettings)
+		loggingGroup.PUT("", systemSettingsHandler.UpdateLoggingSettings)
+	}
+
 	_ = s.registerHivePaaSRoutes(systemGroup)
 	_ = s.registerTraefikRoutes(systemGroup)
 }

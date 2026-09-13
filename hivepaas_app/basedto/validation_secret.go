@@ -15,7 +15,7 @@ import (
 // prefixes as ciphertext without encrypting it, so such an input would be
 // persisted verbatim and could never be decrypted again.
 func ValidatePlainSecret(value *string, field string) []vld.Validator {
-	if value == nil {
+	if value == nil || *value == "" {
 		return nil
 	}
 	for _, prefix := range base.AllEncryptionPrefixes {

@@ -109,6 +109,11 @@ func (s *service) updateDbService(
 ) (err error) {
 	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 
+	upgrade, err := s.planDbMajorUpgrade(ctx, data, args.TargetVersion.DbImage, args.SkipBackup)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
 	// Moving postgres is optional; migrating is not. The schema and the data
 	// migrations belong to the application's version, so a release that changes
 	// them without changing the database image - or that names no database image
@@ -122,10 +127,34 @@ func (s *service) updateDbService(
 		},
 		Mutate: func(spec *swarm.ServiceSpec) {
 			spec.Mode.Replicated.Replicas = new(uint64(1))
+			if upgrade != nil {
+				upgrade.applyTo(spec)
+			}
 		},
 	})
 	if err != nil {
 		return hperrors.Wrap(err)
+	}
+
+	// From here a major upgrade has an empty new cluster running and the old one
+	// beside it, so anything that goes wrong is undone by putting the service
+	// back rather than by restoring into the cluster being left behind.
+	if upgrade != nil {
+		defer func() {
+			if err != nil {
+				err = errors.Join(err, s.revertDbMajorUpgrade(ctx, data, upgrade))
+			}
+		}()
+	}
+
+	// undo answers a failure the way this particular update can. A major upgrade
+	// has the deferred revert above; an ordinary one puts the database back from
+	// the dump taken before the migrations ran.
+	undo := func(cause error) error {
+		if upgrade != nil {
+			return cause
+		}
+		return errors.Join(cause, s.restoreDB(ctx, data))
 	}
 
 	dbSvc, err := s.hpAppService.GetHpDbSwarmService(ctx)
@@ -145,17 +174,37 @@ func (s *service) updateDbService(
 		return hperrors.Wrap(hperrors.ErrServiceNotRunning).WithParam("Name", "db")
 	}
 
+	// A new cluster comes up empty. This is how the data gets into it - the one
+	// place restoreDB is part of the plan rather than a recovery.
+	if upgrade != nil {
+		err = s.restoreDB(ctx, data)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+
 	// The only failure the update undoes. Everything after this step leaves the
 	// database migrated and working, and putting it back to answer a problem with
 	// traefik would trade one inconsistency for another while discarding work.
 	err = s.migrateDBSchema(ctx, data)
 	if err != nil {
-		return errors.Join(hperrors.Wrap(err), s.restoreDB(ctx, data))
+		return undo(hperrors.Wrap(err))
 	}
 
 	err = s.migrateDBData(ctx, db, data)
 	if err != nil {
-		return errors.Join(hperrors.Wrap(err), s.restoreDB(ctx, data))
+		return undo(hperrors.Wrap(err))
+	}
+
+	// Written last, once the new cluster has been loaded and migrated: before
+	// that point the upgrade might still be put back, and pointing a later stack
+	// deploy at a volume the database was never moved to would be worse than
+	// pointing it at the old one.
+	if upgrade != nil {
+		err = s.recordDbVolume(ctx, data, upgrade)
+		if err != nil {
+			return undo(hperrors.Wrap(err))
+		}
 	}
 
 	return nil

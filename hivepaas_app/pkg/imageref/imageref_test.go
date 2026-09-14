@@ -118,3 +118,18 @@ func TestMajorVersionReadsTheLeadingNumber(t *testing.T) {
 		assert.Equal(t, tt.want, got, tt.ref)
 	}
 }
+
+// Postgres publishes 19beta1 and 19beta2 long before 19, and those are exactly
+// the images a major-version check most needs to see.
+func TestVersionsAreReadOutOfPrereleaseTags(t *testing.T) {
+	got, known := imageref.MajorVersion("postgres:19beta2-alpine")
+	assert.True(t, known)
+	assert.Equal(t, 19, got)
+
+	upgrade, reason := imageref.IsUpgrade("postgres:18.6-alpine", "postgres:19beta2-alpine")
+	assert.True(t, upgrade, reason)
+
+	// And the other direction is still refused.
+	upgrade, reason = imageref.IsUpgrade("postgres:19beta2-alpine", "postgres:18.6-alpine")
+	assert.False(t, upgrade, reason)
+}

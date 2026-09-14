@@ -131,7 +131,7 @@ services:
       POSTGRES_DB: hivepaas
       POSTGRES_USER: hivepaas
       POSTGRES_PASSWORD: abc123
-      PGDATA: /var/lib/postgresql/18/docker
+      PGDATA: /var/lib/postgresql/${HP_DB_MAJOR:-18}/docker
     volumes:
       - db:/var/lib/postgresql
     deploy:
@@ -468,4 +468,14 @@ networks:
 
 volumes:
   db:
+    # The major version and the volume are variables so that a postgres major
+    # upgrade can move both and a later stack deploy follows it. The postgres 18+
+    # images refuse to start when they find another major's cluster in the
+    # volume - even renamed - so an upgrade writes the new cluster to a volume of
+    # its own and leaves the old one untouched as the way back.
+    #
+    # The updater records the new values in
+    # .appdata/hivepaas/system/update/db-volume.env, which install.sh reads; do
+    # not change them by hand while a cluster exists under the old ones.
+    name: ${HP_DB_VOLUME:-hivepaas_db}
     driver: local

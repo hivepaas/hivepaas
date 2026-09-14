@@ -59,6 +59,23 @@ docker network create \
   --opt com.docker.network.driver.mtu=1380 \
   hivepaas_net || true
 
+# Follow the database where an upgrade moved it.
+#
+# A postgres major upgrade writes the new cluster to a volume of its own and
+# repoints the running service at it. The stack file still says what it always
+# said, so deploying again without this would send the service back to the old
+# volume and, with it, back to the state the database was in before the upgrade.
+# The updater records the new values here; a fresh install has no such file.
+DB_VOLUME_ENV=$HIVEPAAS_DIR/system/update/db-volume.env
+if [ -f "$DB_VOLUME_ENV" ]; then
+  echo "Using the database volume recorded by a previous upgrade:"
+  cat "$DB_VOLUME_ENV"
+  set -a
+  # shellcheck disable=SC1090
+  . "$DB_VOLUME_ENV"
+  set +a
+fi
+
 # Deploy hivepaas stack
 #
 # The deploy runs from $HIVEPAAS_ROOT, which is why the stack file is copied there

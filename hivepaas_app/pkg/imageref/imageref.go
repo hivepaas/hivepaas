@@ -121,6 +121,12 @@ func compareTags(a, b string) (int, bool) {
 }
 
 // splitTag reads `v1.52.0` as ([1 52 0], "") and `8.6-alpine` as ([8 6], "-alpine").
+//
+// A segment that starts with digits and then stops being one ends the version
+// there: `19beta2-alpine` is ([19], "beta2-alpine"). Upstream prereleases are
+// spelled that way - postgres publishes 19beta1 and 19beta2 long before 19 - and
+// reading them as unversioned would quietly exempt exactly the images most worth
+// being careful with.
 func splitTag(tag string) (nums []int, suffix string, ok bool) {
 	if tag == "" {
 		return nil, "", false
@@ -136,13 +142,31 @@ func splitTag(tag string) (nums []int, suffix string, ok bool) {
 	}
 
 	for _, part := range strings.Split(rest, ".") {
-		n, err := strconv.Atoi(part)
-		if err != nil || n < 0 {
+		digits := leadingDigits(part)
+		if digits == "" {
+			return nil, "", false
+		}
+		n, err := strconv.Atoi(digits)
+		if err != nil {
 			return nil, "", false
 		}
 		nums = append(nums, n)
+
+		// The rest of this segment, and everything after it, is the suffix.
+		if len(digits) != len(part) {
+			return nums, part[len(digits):] + suffix, true
+		}
 	}
 	return nums, suffix, true
+}
+
+func leadingDigits(s string) string {
+	for i, r := range s {
+		if r < '0' || r > '9' {
+			return s[:i]
+		}
+	}
+	return s
 }
 
 // segment reads past the end as zero, so 1.2 and 1.2.0 compare equal.

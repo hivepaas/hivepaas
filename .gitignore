@@ -1,5 +1,8 @@
 /.idea
-/.cursor
+# Cursor rules are part of the repo; everything else under .cursor is local.
+/.cursor/*
+!/.cursor/rules/
+!/.cursor/rules/*.mdc
 /.run
 /mocks
 /build/*

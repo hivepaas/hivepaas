@@ -1,0 +1,26 @@
+---
+description: HivePaaS Go backend architecture, layering and DTO conventions
+globs: **/*.go
+alwaysApply: false
+---
+
+# Backend architecture
+
+These are the summary points of `docs/ARCHITECTURE.md`, copied verbatim because
+Cursor injects rule text rather than following links. `check-agent-setup.mjs`
+fails if they drift, so edit the document and copy again - never only this file.
+Read the document itself before changing a layer, and `AGENTS.md` for the checks
+to run before calling work done.
+
+- **One direction only.** `handler → dto → usecase → service → repository → entity → base`. A layer never imports one to its left.
+- **Two entry points, one core.** REST (`interface/api`) and agent gRPC (`interface/agent`) both stop at the DTO; everything below is shared and knows about neither.
+- **DTO is the wire contract.** Request and response are separate types, named `...Req` / `...Resp`, living in `<name>dto` next to their usecase.
+- **Links are objects, not ids.** `entity.ObjectID` in the entity, `basedto.ObjectIDReq` in a request, a `...Resp` object in a response — `{"volume": {"id": "…"}}`, never `{"volumeId": "…"}`.
+- **`ModifyRequest()` runs before `Validate()`.** Normalize in the first, check in the second, and never do both in one.
+- **Payload goes in `Data`.** A response is `Meta` + `Data`; new fields belong inside `Data`. Lists take `basedto.Paging` in and `basedto.ListMeta` out; everything else uses `basedto.Meta`.
+- **Entity becomes response through `Transform<X>()`**, which is also where secrets get masked.
+- **Secrets are masked by default.** Revealing one takes a decrypt, a capability and an audit entry.
+- **Entity and DTO move together.** Changing an entity field means finding every DTO that carries it.
+- **Extract a service the moment a second usecase could want it**, not after the copy exists.
+- **Usecases record audit logs** — except those going through `usecase/settings`, which already does.
+- **`services/` is the outside world**, with its own errors and its own translation file.

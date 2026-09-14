@@ -28,7 +28,8 @@ const MaskedSecret = "********"
 // secret. A form that loads a setting and posts it back unchanged returns the
 // placeholder, and storing it would destroy the secret it stands for.
 func IsMaskedSecret(value string) bool {
-	return len(value) <= 16 && strings.Trim(value, "* ") == "" //nolint:mnd
+	//nolint:mnd
+	return len(value) > 0 && len(value) <= 16 && strings.Trim(strings.Trim(value, " "), "*") == ""
 }
 
 type FileEncryptionFormat string

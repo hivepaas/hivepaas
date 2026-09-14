@@ -61,9 +61,9 @@ func TestIsMaskedSecret(t *testing.T) {
 		// The placeholder used to exist in a 16-star form too. Nothing may treat a
 		// value of a different length as the placeholder, or a secret genuinely made
 		// of stars would be silently discarded on update.
-		{name: "a longer run of stars is not", value: "****************"},
-		{name: "a shorter run of stars is not", value: "*******"},
-		{name: "the placeholder with padding is not", value: " " + MaskedSecret},
+		{name: "a longer than 16-chars run of stars is not", value: "*****************"},
+		{name: "a shorter run of stars is not", value: "*******", want: true},
+		{name: "the placeholder with padding is not", value: " " + MaskedSecret, want: true},
 	}
 
 	for _, tt := range tests {

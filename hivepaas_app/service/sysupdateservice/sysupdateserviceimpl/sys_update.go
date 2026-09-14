@@ -3,6 +3,9 @@ package sysupdateserviceimpl
 import (
 	"context"
 	"errors"
+	"time"
+
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -14,6 +17,11 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysupdateservice"
 )
+
+// afterUpdateTimeout bounds the restore-and-record step. It scales two services
+// and sends the result notifications, so it has to allow for the network; what it
+// must not do is run unbounded, since the update has already ended by then.
+const afterUpdateTimeout = 5 * time.Minute
 
 type sysUpdateData struct {
 	*sysupdateservice.SysUpdateReq
@@ -37,6 +45,15 @@ func (s *service) SysUpdate(
 	}
 
 	defer func() {
+		// A context of its own, and this is the whole point of it. Everything in
+		// here puts the system back and records what happened, and it is needed
+		// most when the update ended because ctx itself ran out: the task carries
+		// a one hour deadline, and scaling the app back up through an expired
+		// context does nothing at all, leaving an installation stopped with no
+		// dashboard to fix it from.
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), afterUpdateTimeout)
+		defer cancel()
+
 		// Finalize the update
 		err2 := s.onAfterSystemUpdate(ctx, data)
 		err = errors.Join(err, err2)
@@ -99,8 +116,8 @@ func (s *service) stopServices(
 }
 
 func (s *service) onBeforeSystemUpdate(
-	_ context.Context,
-	_ *sysUpdateData,
+	ctx context.Context,
+	data *sysUpdateData,
 ) (err error) {
 	// 1. Pull all images we need
 	// err = e.pullAllImages(ctx, data)
@@ -108,7 +125,24 @@ func (s *service) onBeforeSystemUpdate(
 	//	return hperrors.New(err)
 	// }
 
-	// TODO: backup DB data
+	// 2. Dump the database, so a migration that does not complete can be undone.
+	//
+	// A failure here stops the update rather than warning and carrying on. The
+	// dump is the only way back from a half-applied schema, and starting an
+	// update without one is the risk this exists to remove - which is also why
+	// skipping it has to be asked for explicitly.
+	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
+	if args.SkipBackup {
+		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
+			"Skipping the database backup, as requested - a failed migration cannot be undone",
+			tasklog.TsNow))
+		return nil
+	}
+
+	err = s.backupDB(ctx, data)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	return nil
 }
@@ -161,13 +195,21 @@ func (s *service) updateSystem(
 		return hperrors.Wrap(err)
 	}
 
-	// 4. Update main app then bring it back
+	// 4. Update the logging stack, if it is deployed at all. Before the app and
+	// the worker only because those two are what bring the system back up, and
+	// nothing here is a dependency of either.
+	err = s.updateLoggingService(ctx, data)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
+	// 5. Update main app then bring it back
 	err = s.updateMainAppService(ctx, data)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 
-	// 5. Update worker then bring it back
+	// 6. Update worker then bring it back
 	err = s.updateWorkerService(ctx, data)
 	if err != nil {
 		return hperrors.Wrap(err)

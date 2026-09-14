@@ -144,6 +144,12 @@ func (cfg *Config) DataPathSystemBackupFiles() LocalPath {
 	return cfg.DataPathSystemBackup().Join("files")
 }
 
+/// SYSTEM UPDATE
+
+func (cfg *Config) DataPathSystemUpdate() LocalPath {
+	return LocalPath(filepath.Join("system", "update"))
+}
+
 /// SYSTEM CACHE
 
 func (cfg *Config) DataPathSystemCache() LocalPath {

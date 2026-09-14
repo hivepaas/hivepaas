@@ -36,6 +36,9 @@ const (
 )
 
 type Config struct {
+	// Image overrides DefaultImage, for the same reason as victorialogs.Config:
+	// the image is part of the release, not of the user's settings.
+	Image string
 }
 
 type Collector struct {
@@ -143,8 +146,13 @@ func (c *Collector) Configure(spec *loggingmodel.CollectSpec) (*loggingmodel.Run
 		"-remoteWrite.tmpDataPath="+TmpDataPath,
 	)
 
+	image := c.cfg.Image
+	if image == "" {
+		image = DefaultImage
+	}
+
 	return &loggingmodel.RuntimeSpec{
-		Image: DefaultImage,
+		Image: image,
 		Args:  args,
 		Mounts: []loggingmodel.Mount{{
 			Source:   ContainersPath,

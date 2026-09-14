@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -17,8 +18,11 @@ const (
 	// ServiceNameBackend and ServiceNameCollector are the swarm service names.
 	// They are also how the collector recognizes the stack's own containers in
 	// order to skip them.
-	ServiceNameBackend   = "hivepaas-victoria-logs"
-	ServiceNameCollector = "hivepaas-vlagent"
+	//
+	// Defined in base because the system updater names the same two services and
+	// must not import this package to do it.
+	ServiceNameBackend   = base.HivepaasVictoriaLogsServiceName
+	ServiceNameCollector = base.HivepaasVlagentServiceName
 
 	// dockerContainersGlob matches every container's json-file log on a node.
 	//
@@ -29,6 +33,28 @@ const (
 	// and report no error.
 	dockerContainersGlob = "/var/lib/docker/containers/*/*-json.log"
 )
+
+// releaseImages returns the images this release runs the logging stack on.
+//
+// They come from the release rather than from the stored settings because the
+// system updater is what moves them, and because Apply rebuilds the whole swarm
+// spec: an image the updater had written straight into the spec would be put
+// back to whatever this returns the next time anyone saved a logging setting.
+//
+// The release the updater applies and the release compiled into the binary it
+// installs are the same one, so the two agree - as long as release.json and
+// base.ReleaseInfo are changed together, which is the contract stated there. An
+// empty value falls back to the pinned default in services/logging.
+func releaseImages() (backend, collector string) {
+	release := base.StableVersion
+	// config.Current() is nil until a config has been loaded, which is the case
+	// for tests exercising the deploy path on its own. Stable is the right answer
+	// to "no idea which channel this is".
+	if cfg := config.Current(); cfg != nil && cfg.IsBetaEnv() {
+		release = base.BetaVersion
+	}
+	return release.VictoriaLogsImage, release.VlagentImage
+}
 
 // toEndpoint converts a stored endpoint into one services/logging can use.
 //

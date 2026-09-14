@@ -42,6 +42,11 @@ const (
 )
 
 type Config struct {
+	// Image overrides DefaultImage. The image belongs to the release rather than
+	// to anything the user configures, and it is what the system updater moves;
+	// leaving it empty is what a caller with no release information does.
+	Image string
+
 	DataVolumeName string
 	Retention      time.Duration
 
@@ -100,8 +105,13 @@ func (c *Client) RuntimeSpec() (*loggingmodel.RuntimeSpec, error) {
 		args = append(args, fmt.Sprintf("-retention.maxDiskUsagePercent=%d", c.cfg.MaxDiskUsagePercent))
 	}
 
+	image := c.cfg.Image
+	if image == "" {
+		image = DefaultImage
+	}
+
 	return &loggingmodel.RuntimeSpec{
-		Image:     DefaultImage,
+		Image:     image,
 		Args:      args,
 		Resources: c.cfg.Resources,
 		Mounts: []loggingmodel.Mount{{

@@ -5,8 +5,12 @@
     "appImage": "hivepaas/hivepaas-dev:0.1.0",
     "redisImage": "redis:8.6-alpine",
     "dbImage": "postgres:18.3-alpine",
-    "traefikImage": "traefik:v3.6",
-    "VictoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0"
+    "traefikImage": "traefik:v3.7",
+    "victoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0",
+    "vlagentImage": "victoriametrics/vlagent:v1.52.0",
+    "blockMajorUpgrade": [
+      "db"
+    ]
   },
   "beta": {
     "releaseDate": "2026-01-01",
@@ -14,7 +18,11 @@
     "appImage": "hivepaas/hivepaas-dev:0.1.0",
     "redisImage": "redis:8.6-alpine",
     "dbImage": "postgres:18.3-alpine",
-    "traefikImage": "traefik:v3.6",
-    "VictoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0"
+    "traefikImage": "traefik:v3.7",
+    "victoriaLogsImage": "victoriametrics/victoria-logs:v1.52.0",
+    "vlagentImage": "victoriametrics/vlagent:v1.52.0",
+    "blockMajorUpgrade": [
+      "db"
+    ]
   }
 }

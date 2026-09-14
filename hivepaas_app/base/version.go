@@ -16,31 +16,68 @@ const StableVersionCode = VersionCodeV1
 
 // TODO: update these info later
 var StableVersion = &ReleaseInfo{
-	ReleaseDate:  timeutil.Date(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
-	AppVersion:   "v0.1.0",
-	AppImage:     "hivepaas/hivepaas-dev:0.1.0",
-	RedisImage:   "redis:8.6-alpine",
-	DbImage:      "postgres:18.3-alpine",
-	TraefikImage: "traefik:v3.6",
+	ReleaseDate:       timeutil.Date(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
+	AppVersion:        "v0.1.0",
+	AppImage:          "hivepaas/hivepaas-dev:0.1.0",
+	RedisImage:        "redis:8.6-alpine",
+	DbImage:           "postgres:18.3-alpine",
+	TraefikImage:      "traefik:v3.7",
+	VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
+	VlagentImage:      "victoriametrics/vlagent:v1.52.0",
+
+	BlockMajorUpgrade: []string{HivepaasDbKey},
 }
 
 const BetaVersionCode = VersionCodeV1
 
 // TODO: update these info later
 var BetaVersion = &ReleaseInfo{
-	ReleaseDate:  timeutil.Date(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
-	AppVersion:   "v0.1.0-beta1",
-	AppImage:     "hivepaas/hivepaas-dev:0.1.0",
-	RedisImage:   "redis:8.6-alpine",
-	DbImage:      "postgres:18.3-alpine",
-	TraefikImage: "traefik:v3.6",
+	ReleaseDate:       timeutil.Date(time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC)),
+	AppVersion:        "v0.1.0-beta1",
+	AppImage:          "hivepaas/hivepaas-dev:0.1.0",
+	RedisImage:        "redis:8.6-alpine",
+	DbImage:           "postgres:18.3-alpine",
+	TraefikImage:      "traefik:v3.7",
+	VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
+	VlagentImage:      "victoriametrics/vlagent:v1.52.0",
+
+	BlockMajorUpgrade: []string{HivepaasDbKey},
 }
 
+// ReleaseInfo is what a release says to run. It is mirrored by release.json,
+// which is the copy an installation fetches to find out a newer one exists; the
+// values below are the copy compiled into the binary, and the two have to be
+// changed together.
+//
+// The logging images are two, not one: the backend and the collector are
+// separate upstream repositories. They release in step today and still get a
+// field each, because a version derived from the other's tag would be wrong in
+// silence on the first release where they do not.
 type ReleaseInfo struct {
-	ReleaseDate  timeutil.Date `json:"releaseDate"`
-	AppVersion   string        `json:"appVersion"`
-	AppImage     string        `json:"appImage"`
-	RedisImage   string        `json:"redisImage"`
-	DbImage      string        `json:"dbImage"`
-	TraefikImage string        `json:"traefikImage"`
+	ReleaseDate       timeutil.Date `json:"releaseDate"`
+	AppVersion        string        `json:"appVersion"`
+	AppImage          string        `json:"appImage"`
+	RedisImage        string        `json:"redisImage"`
+	DbImage           string        `json:"dbImage"`
+	TraefikImage      string        `json:"traefikImage"`
+	VictoriaLogsImage string        `json:"victoriaLogsImage"`
+	VlagentImage      string        `json:"vlagentImage"`
+
+	// BlockMajorUpgrade names the components whose image may not cross a major
+	// version in this release, by the same keys as HivepaasDbKey and friends.
+	//
+	// Every component can be listed; the default is that none are. Crossing a
+	// major only matters where a component owns durable state it might convert,
+	// and where that conversion is not something this update knows how to do or
+	// to undo - swarm's rollback restores the image, never the data underneath.
+	//
+	// It is declared by the release rather than compiled in because the release
+	// is where the answer is actually known. By the time a release names a new
+	// major, whoever cut it has read the upstream notes; nobody earlier could.
+	//
+	// `db` is listed because postgres will not start on a data directory written
+	// by a different major - it needs pg_upgrade or a dump and reload, neither of
+	// which the updater performs. Removing it from the list is how that work,
+	// when it exists, is switched on.
+	BlockMajorUpgrade []string `json:"blockMajorUpgrade,omitempty"`
 }

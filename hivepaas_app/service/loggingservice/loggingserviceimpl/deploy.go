@@ -97,9 +97,10 @@ func (s *service) deployCollector(ctx context.Context, cfg *entity.LoggingSettin
 		return hperrors.Wrap(err)
 	}
 
+	_, collectorImage := releaseImages()
 	collector, err := logging.NewCollector(
 		logging.CollectorType(cfg.Collector.Type),
-		&logging.CollectorConfig{Vlagent: &vlagent.Config{}},
+		&logging.CollectorConfig{Vlagent: &vlagent.Config{Image: collectorImage}},
 	)
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -158,9 +159,11 @@ func (s *service) deployBackend(
 		return "", hperrors.Wrap(err)
 	}
 
+	backendImage, _ := releaseImages()
 	deployer, err := logging.NewDeployer(
 		logging.BackendType(cfg.Backend.Type),
 		&logging.BackendConfig{VictoriaLogs: &victorialogs.Config{
+			Image:               backendImage,
 			DataVolumeName:      vl.Volume.ID,
 			DataSubpath:         vl.VolumeSubpath,
 			Retention:           vl.Retention.ToDuration(),

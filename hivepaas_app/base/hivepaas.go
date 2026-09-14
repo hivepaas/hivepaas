@@ -24,6 +24,16 @@ const (
 
 	HivepaasAgentServiceName = "hivepaas_agent"
 	HivepaasAgentKey         = "agent"
+
+	// The logging stack is created by the app when logging is switched on, not
+	// by the stack file like everything above, which is why these two are spelled
+	// with hyphens and carry no stack prefix. Either being absent means logging
+	// is off, not that something is broken.
+	HivepaasVictoriaLogsServiceName = "hivepaas-victoria-logs"
+	HivepaasVictoriaLogsKey         = "victoria-logs"
+
+	HivepaasVlagentServiceName = "hivepaas-vlagent"
+	HivepaasVlagentKey         = "vlagent"
 )
 
 const (

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -24,6 +25,7 @@ func (s *service) UpdateSystemVersion(
 	ctx context.Context,
 	db database.IDB,
 	targetVersion *base.ReleaseInfo,
+	skipBackup bool,
 ) error {
 	timeNow := timeutil.NowUTC()
 
@@ -60,6 +62,7 @@ func (s *service) UpdateSystemVersion(
 	task.MustSetArgs(&entity.TaskSystemUpdateArgs{
 		CurrentVersion: gofn.If(config.Current().IsBetaEnv(), base.BetaVersion, base.StableVersion),
 		TargetVersion:  targetVersion,
+		SkipBackup:     skipBackup,
 	})
 
 	err = s.taskRepo.Insert(ctx, db, task)
@@ -77,13 +80,18 @@ func (s *service) UpdateSystemVersion(
 		return hperrors.Wrap(err)
 	}
 
-	updaterSvc.Spec.TaskTemplate.ContainerSpec.Image = targetVersion.AppImage
-	// Make sure the admin service has the same storages as the main service
-	updaterSvc.Spec.TaskTemplate.ContainerSpec.Mounts = appSvc.Spec.TaskTemplate.ContainerSpec.Mounts
-	// Turn on the updater service
-	updaterSvc.Spec.Mode.Replicated.Replicas = new(uint64(1))
-
-	_, err = s.dockerManager.ServiceUpdate(ctx, updaterSvc.ID, &updaterSvc.Version, &updaterSvc.Spec)
+	// Retried, because this one runs with the app fully up: the label sweep
+	// rewrites the app's own service while an operator may be changing others,
+	// which is the busiest moment any of these calls sees.
+	err = s.dockerManager.ServiceUpdateFunc(ctx, updaterSvc.ID, updaterSvc,
+		func(_ int, svc *swarm.Service) (bool, error) {
+			svc.Spec.TaskTemplate.ContainerSpec.Image = targetVersion.AppImage
+			// Make sure the admin service has the same storages as the main service
+			svc.Spec.TaskTemplate.ContainerSpec.Mounts = appSvc.Spec.TaskTemplate.ContainerSpec.Mounts
+			// Turn on the updater service
+			svc.Spec.Mode.Replicated.Replicas = new(uint64(1))
+			return true, nil
+		}, serviceUpdateRetryMax, 0)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

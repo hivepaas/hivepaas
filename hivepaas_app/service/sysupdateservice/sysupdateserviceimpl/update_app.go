@@ -3,19 +3,12 @@ package sysupdateserviceimpl
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-)
-
-const (
-	mainAppServiceUpdateCheckInterval = time.Second * 5
-	workerServiceUpdateCheckInterval  = time.Second * 5
 )
 
 func (s *service) scaleMainAppService(
@@ -27,11 +20,10 @@ func (s *service) scaleMainAppService(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	if data.CurrentAppReplicas == nil {
+	// Remembered before anything is changed: this is what onAfterSystemUpdate
+	// scales back to when the update ends, however it ends.
+	if data.CurrentAppReplicas == nil && mainAppSvc.Spec.Mode.Replicated != nil {
 		data.CurrentAppReplicas = mainAppSvc.Spec.Mode.Replicated.Replicas
-	}
-	if *mainAppSvc.Spec.Mode.Replicated.Replicas == replicas {
-		return nil
 	}
 
 	err = s.scaleServiceReplicas(ctx, mainAppSvc, replicas)
@@ -46,19 +38,16 @@ func (s *service) scaleWorkerService(
 	replicas uint64,
 	data *sysUpdateData,
 ) error {
-	workerSvc, err := s.hpAppService.GetHpWorkerSwarmService(ctx)
-	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+	workerSvc, err := s.getWorkerSwarmService(ctx)
+	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	if workerSvc == nil {
 		return nil
 	}
 
-	if data.CurrentWorkerReplicas == nil {
+	if data.CurrentWorkerReplicas == nil && workerSvc.Spec.Mode.Replicated != nil {
 		data.CurrentWorkerReplicas = workerSvc.Spec.Mode.Replicated.Replicas
-	}
-	if *workerSvc.Spec.Mode.Replicated.Replicas == replicas {
-		return nil
 	}
 
 	err = s.scaleServiceReplicas(ctx, workerSvc, replicas)
@@ -68,97 +57,54 @@ func (s *service) scaleWorkerService(
 	return nil
 }
 
+// getWorkerSwarmService reports a missing worker as no service rather than as an
+// error: an installation can run the worker inside the main app instead, and
+// then there is no second service to update or to scale.
+func (s *service) getWorkerSwarmService(ctx context.Context) (*swarm.Service, error) {
+	svc, err := s.hpAppService.GetHpWorkerSwarmService(ctx)
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
+		return nil, hperrors.Wrap(err)
+	}
+	return svc, nil
+}
+
 func (s *service) updateMainAppService(
 	ctx context.Context,
 	data *sysUpdateData,
-) (err error) {
+) error {
 	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 
-	start := timeutil.NowUTC()
-	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Updating hivepaas service...", tasklog.TsNow))
-	defer func() {
-		duration := timeutil.NowUTC().Sub(start)
-		if err != nil {
-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Updating hivepaas service finished in "+
-				duration.String()+" with error: "+err.Error(), tasklog.TsNow))
-		} else {
-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Updating hivepaas service finished in "+
-				duration.String(), tasklog.TsNow))
-		}
-	}()
-
-	appSvc, err := s.hpAppService.GetHpAppSwarmService(ctx)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	appSvc.Spec.TaskTemplate.ContainerSpec.Image = args.TargetVersion.AppImage
-	appSvc.Spec.Mode.Replicated.Replicas = data.CurrentAppReplicas
-
-	_, err = s.dockerManager.ServiceUpdate(ctx, appSvc.ID, &appSvc.Version, &appSvc.Spec)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	// Wait for the update to finish
-	appSvc, err = s.dockerManager.ServiceUpdateWait(ctx, appSvc.ID, mainAppServiceUpdateCheckInterval)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	if appSvc.UpdateStatus != nil && appSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
-		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("service hivepaas is rolled back",
-			tasklog.TsNow))
-		return hperrors.Wrap(hperrors.ErrActionFailed)
-	}
-
-	return nil
+	err := s.updateServiceImage(ctx, data, serviceImageUpdate{
+		What:        "hivepaas",
+		Component:   base.HivepaasAppKey,
+		TargetImage: args.TargetVersion.AppImage,
+		Fetch: func(ctx context.Context) (*swarm.Service, error) {
+			return s.hpAppService.GetHpAppSwarmService(ctx)
+		},
+		// stopServices scaled this to zero before any image moved; this is where
+		// it comes back. A step that decides the image is already current leaves
+		// that to onAfterSystemUpdate, which scales both services back either way.
+		Mutate: func(spec *swarm.ServiceSpec) {
+			spec.Mode.Replicated.Replicas = data.CurrentAppReplicas
+		},
+	})
+	return hperrors.Wrap(err)
 }
 
 func (s *service) updateWorkerService(
 	ctx context.Context,
 	data *sysUpdateData,
-) (err error) {
+) error {
 	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
 
-	start := timeutil.NowUTC()
-	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Updating hivepaas worker service...", tasklog.TsNow))
-	defer func() {
-		duration := timeutil.NowUTC().Sub(start)
-		if err != nil {
-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Updating hivepaas worker service finished in "+
-				duration.String()+" with error: "+err.Error(), tasklog.TsNow))
-		} else {
-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Updating hivepaas worker service finished in "+
-				duration.String(), tasklog.TsNow))
-		}
-	}()
-
-	workerSvc, err := s.hpAppService.GetHpWorkerSwarmService(ctx)
-	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-		return hperrors.Wrap(err)
-	}
-	if workerSvc == nil {
-		return nil
-	}
-
-	workerSvc.Spec.TaskTemplate.ContainerSpec.Image = args.TargetVersion.AppImage
-	workerSvc.Spec.Mode.Replicated.Replicas = data.CurrentWorkerReplicas
-
-	_, err = s.dockerManager.ServiceUpdate(ctx, workerSvc.ID, &workerSvc.Version, &workerSvc.Spec)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	// Wait for the update to finish
-	workerSvc, err = s.dockerManager.ServiceUpdateWait(ctx, workerSvc.ID, workerServiceUpdateCheckInterval)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	if workerSvc.UpdateStatus != nil && workerSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
-		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("service hivepaas worker is rolled back",
-			tasklog.TsNow))
-		return hperrors.Wrap(hperrors.ErrActionFailed)
-	}
-
-	return nil
+	err := s.updateServiceImage(ctx, data, serviceImageUpdate{
+		What:        "hivepaas worker",
+		Component:   base.HivepaasWorkerKey,
+		TargetImage: args.TargetVersion.AppImage,
+		Fetch:       s.getWorkerSwarmService,
+		Mutate: func(spec *swarm.ServiceSpec) {
+			spec.Mode.Replicated.Replicas = data.CurrentWorkerReplicas
+		},
+	})
+	return hperrors.Wrap(err)
 }

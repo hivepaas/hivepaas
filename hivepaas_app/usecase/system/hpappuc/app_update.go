@@ -45,7 +45,7 @@ func (uc *UC) UpdateHpApp(
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-		err = uc.hpAppService.UpdateSystemVersion(ctx, db, targetVersion)
+		err = uc.hpAppService.UpdateSystemVersion(ctx, db, targetVersion, req.SkipBackup)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

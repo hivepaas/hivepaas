@@ -19,6 +19,10 @@ type Service interface {
 	GetHpAppTasks(ctx context.Context) ([]swarm.Task, error)
 	RestartHpAppSwarmService(ctx context.Context) error
 
+	// EnsureHpAppRunning brings the main app back if it is scaled to zero,
+	// reporting whether it had to. See the implementation for why one replica.
+	EnsureHpAppRunning(ctx context.Context) (bool, error)
+
 	// ReloadHpAppConfig makes the main app re-read its configuration, by SIGHUP.
 	//
 	// NOTE: the main app only. The worker runs as its own swarm service and keeps
@@ -32,7 +36,8 @@ type Service interface {
 	SetupRoutingSettingsDefault(routingSettings *entity.AppRoutingSettings)
 
 	GetAppReleaseInfo(ctx context.Context) (*AppReleaseInfo, error)
-	UpdateSystemVersion(ctx context.Context, db database.IDB, targetVersion *base.ReleaseInfo) error
+	UpdateSystemVersion(ctx context.Context, db database.IDB, targetVersion *base.ReleaseInfo,
+		skipBackup bool) error
 
 	GetHpWorkerSwarmService(ctx context.Context) (*swarm.Service, error)
 	RestartHpWorkerSwarmService(ctx context.Context) error

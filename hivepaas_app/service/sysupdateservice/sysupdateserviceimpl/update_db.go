@@ -2,6 +2,7 @@ package sysupdateserviceimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -20,7 +22,8 @@ import (
 )
 
 const (
-	dbServiceUpdateCheckInterval     = time.Second * 5
+	// How long the database has to stay up before the migrations are run against
+	// it, so a task that starts and immediately dies is not mistaken for ready.
 	dbServiceRequiredRunningDuration = time.Second * 10
 )
 
@@ -105,55 +108,36 @@ func (s *service) updateDbService(
 	data *sysUpdateData,
 ) (err error) {
 	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
-	if args.TargetVersion.DbImage == "" {
-		return nil
-	}
 
-	start := timeutil.NowUTC()
-	_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Updating db service...", tasklog.TsNow))
-	defer func() {
-		duration := timeutil.NowUTC().Sub(start)
-		if err != nil {
-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Updating db service finished in "+duration.String()+
-				" with error: "+err.Error(), tasklog.TsNow))
-		} else {
-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame("Updating db service finished in "+duration.String(),
-				tasklog.TsNow))
-		}
-	}()
+	// Moving postgres is optional; migrating is not. The schema and the data
+	// migrations belong to the application's version, so a release that changes
+	// them without changing the database image - or that names no database image
+	// at all - still has to run them.
+	err = s.updateServiceImage(ctx, data, serviceImageUpdate{
+		What:        "db",
+		Component:   base.HivepaasDbKey,
+		TargetImage: args.TargetVersion.DbImage,
+		Fetch: func(ctx context.Context) (*swarm.Service, error) {
+			return s.hpAppService.GetHpDbSwarmService(ctx)
+		},
+		Mutate: func(spec *swarm.ServiceSpec) {
+			spec.Mode.Replicated.Replicas = new(uint64(1))
+		},
+	})
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	dbSvc, err := s.hpAppService.GetHpDbSwarmService(ctx)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 
-	dbSvc.Spec.TaskTemplate.ContainerSpec.Image = args.TargetVersion.DbImage
-	dbSvc.Spec.Mode.Replicated.Replicas = new(uint64(1))
-	if dbSvc.Spec.UpdateConfig == nil {
-		dbSvc.Spec.UpdateConfig = &swarm.UpdateConfig{}
-	}
-	dbSvc.Spec.UpdateConfig.FailureAction = swarm.UpdateFailureActionRollback
-	dbSvc.Spec.UpdateConfig.MaxFailureRatio = 0.5
-
-	_, err = s.dockerManager.ServiceUpdate(ctx, dbSvc.ID, &dbSvc.Version, &dbSvc.Spec)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	// Wait for the update to finish
-	dbSvc, err = s.dockerManager.ServiceUpdateWait(ctx, dbSvc.ID, dbServiceUpdateCheckInterval)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	if dbSvc.UpdateStatus != nil && dbSvc.UpdateStatus.State == swarm.UpdateStateRollbackCompleted {
-		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame("service db is rolled back",
-			tasklog.TsNow))
-		return hperrors.Wrap(hperrors.ErrActionFailed)
-	}
-
-	// Wait for the service up and running
+	// Checked even when the image did not move. The migrations are about to run
+	// against it, and a database that is not accepting connections turns that
+	// into a failed update with a half-applied schema.
 	running, err := s.dockerManager.ServiceWaitUntilRunning(ctx, dbSvc.ID, true,
-		dbServiceRequiredRunningDuration, dbServiceUpdateCheckInterval)
+		dbServiceRequiredRunningDuration, serviceUpdateCheckInterval)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -161,16 +145,17 @@ func (s *service) updateDbService(
 		return hperrors.Wrap(hperrors.ErrServiceNotRunning).WithParam("Name", "db")
 	}
 
-	// Migrate DB schema
+	// The only failure the update undoes. Everything after this step leaves the
+	// database migrated and working, and putting it back to answer a problem with
+	// traefik would trade one inconsistency for another while discarding work.
 	err = s.migrateDBSchema(ctx, data)
 	if err != nil {
-		return hperrors.Wrap(err)
+		return errors.Join(hperrors.Wrap(err), s.restoreDB(ctx, data))
 	}
 
-	// Migrate DB data
 	err = s.migrateDBData(ctx, db, data)
 	if err != nil {
-		return hperrors.Wrap(err)
+		return errors.Join(hperrors.Wrap(err), s.restoreDB(ctx, data))
 	}
 
 	return nil

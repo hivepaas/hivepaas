@@ -7,6 +7,10 @@ import (
 
 type UpdateHpAppReq struct {
 	TargetVersion string `json:"targetVersion"`
+
+	// SkipBackup updates without dumping the database first. See
+	// entity.TaskSystemUpdateArgs for what that gives up.
+	SkipBackup bool `json:"skipBackup"`
 }
 
 func NewUpdateHpAppReq() *UpdateHpAppReq {

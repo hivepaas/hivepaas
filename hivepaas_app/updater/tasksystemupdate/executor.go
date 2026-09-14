@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/tiendc/gofn"
 
@@ -22,6 +23,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
+
+// persistResultTimeout bounds writing the finished task and its logs. Local
+// database work only, so a minute is already generous.
+const persistResultTimeout = time.Minute
 
 type Executor struct {
 	logger    logging.Logger
@@ -87,6 +92,13 @@ func (e *Executor) Execute(
 		if data.Task == nil {
 			return
 		}
+		// Same reasoning as the restore step inside SysUpdate: a task that ended
+		// because its own deadline passed still has to be recorded, and writing it
+		// through the expired context writes nothing - leaving the task looking
+		// like it never started and losing every line of its log.
+		ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), persistResultTimeout)
+		defer cancel()
+
 		// Save task into the DB
 		err2 := e.taskRepo.Update(ctx, db, data.Task)
 		// Save all logs into the DB

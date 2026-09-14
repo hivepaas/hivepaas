@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/cors"
 	loggermiddleware "github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/logger"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/recovery"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/secretguard"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/middleware/secureheaders"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 )
@@ -80,6 +81,9 @@ func (s *HTTPServer) init() {
 
 	if s.config.IsDevEnv() {
 		engine.Use(ginlogger.SetLogger())
+		// Development only: it copies every JSON response body, and it panics.
+		// Registered after Recovery so the panic is caught and reported.
+		engine.Use(secretguard.Guard())
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}

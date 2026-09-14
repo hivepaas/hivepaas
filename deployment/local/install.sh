@@ -13,7 +13,10 @@ echo "---------------------------------------------------------------"
 # docker swarm leave --force || true
 # docker swarm init
 
-HIVEPAAS_DIR=.appdata/hivepaas
+# The stack is deployed from HIVEPAAS_ROOT, not from the repo root - see the
+# deploy step at the bottom for why that matters.
+HIVEPAAS_ROOT=.appdata
+HIVEPAAS_DIR=$HIVEPAAS_ROOT/hivepaas
 HIVEPAAS_SSL_CERTS=$HIVEPAAS_DIR/ssl/certs
 
 mkdir -p $HIVEPAAS_DIR
@@ -57,9 +60,35 @@ docker network create \
   hivepaas_net || true
 
 # Deploy hivepaas stack
+#
+# The deploy runs from $HIVEPAAS_ROOT, which is why the stack file is copied there
+# first. The file names host paths two different ways: traefik's volumes are
+# relative (./hivepaas/traefik/...) and the app's are ${PWD}/hivepaas, substituted
+# from the environment of the shell running the deploy. They only name the same
+# directory when that shell is sitting in $HIVEPAAS_ROOT. Deploy from the repo
+# root instead and docker accepts it without a word, having bound the app to an
+# empty <repo>/hivepaas while traefik reads the config written above.
 echo "Deploy hivepaas stack..."
-cp deployment/local/hivepaas.yaml $HIVEPAAS_DIR/../hivepaas.yaml
-docker stack deploy -c $HIVEPAAS_DIR/../hivepaas.yaml hivepaas
+cp deployment/local/hivepaas.yaml $HIVEPAAS_ROOT/hivepaas.yaml
+(cd $HIVEPAAS_ROOT && docker stack deploy -c hivepaas.yaml hivepaas)
+
+# Assert what the comment above explains, because the failure it describes is
+# silent: a stack that comes up, serves nothing it was given, and looks fine.
+#
+# Matched as a suffix rather than compared: Docker Desktop rewrites bind sources
+# to /host_mnt/<path>, so the absolute path is a tail of what the daemon reports.
+EXPECTED_DATA_DIR=$(cd $HIVEPAAS_DIR && pwd)
+APP_BIND=$(docker service inspect hivepaas_app \
+  --format '{{(index .Spec.TaskTemplate.ContainerSpec.Mounts 0).Source}}')
+case "$APP_BIND" in
+  *"$EXPECTED_DATA_DIR") ;;
+  *)
+    echo "ERROR: hivepaas_app is bound to '$APP_BIND', expected it to end in" >&2
+    echo "       '$EXPECTED_DATA_DIR'. The stack was deployed from the wrong" >&2
+    echo "       directory; re-run this script from the repository root." >&2
+    exit 1
+    ;;
+esac
 
 sleep 5
 make seed-data-with-clear

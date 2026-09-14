@@ -8,7 +8,7 @@ import (
 
 const (
 	taskQueueCtrlKey         = "task:queue:ctrl"
-	taskQueueCtrlReadTimeout = 10 * time.Minute
+	taskQueueCtrlReadTimeout = 5 * time.Second
 )
 
 type Message struct {

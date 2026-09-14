@@ -272,7 +272,7 @@ services:
       HP_CONFIG_FILE: config/config.development.toml
       HP_STORAGE_BIND_SOURCE: ${PWD}/hivepaas
       HP_USER_ADMIN_USERNAME: admin
-      HP_USER_ADMIN_EMAIL: admin@domain.name
+      HP_USER_ADMIN_EMAIL: admin@hivepaasdomain.name
       HP_USER_ADMIN_PASSWORD: abc123
       HP_AGENT_SECRET_TOKEN: abc123
     volumes:
@@ -355,7 +355,7 @@ services:
       HP_CONFIG_FILE: config/config.development.toml
       HP_RUN_MODE: worker
       HP_USER_ADMIN_USERNAME: admin
-      HP_USER_ADMIN_EMAIL: admin@domain.name
+      HP_USER_ADMIN_EMAIL: admin@hivepaasdomain.name
       HP_USER_ADMIN_PASSWORD: abc123
       HP_AGENT_SECRET_TOKEN: abc123
     volumes:

@@ -141,6 +141,10 @@ explains what catches what, and what to do by hand when nothing automatic can ru
 
 Contributions, issues, and feature requests are welcome!
 
+Setting up a development machine - the local cluster, the three ways to run the
+backend, and what to run before you push - is in
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'feat: Add some AmazingFeature'`)

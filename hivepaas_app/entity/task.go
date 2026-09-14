@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"reflect"
+	"sync"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -57,6 +58,19 @@ type Task struct {
 	TargetDeployment *Deployment `bun:"rel:belongs-to,join:target_id=id" json:"-"`
 
 	// NOTE: temporary fields
+	//
+	// parseMu guards the two caches below, and nothing else.
+	//
+	// This is not a claim that a Task is safe to share. Status, Runs and the
+	// timestamps are written during execution with no protection at all, and a
+	// mutex sitting in the struct must not be read as saying otherwise: steps
+	// running side by side still have to leave those alone.
+	//
+	// These two are guarded because they are the pair that surprises. ArgsAsX and
+	// OutputAsX read like getters, they are the natural thing for concurrent
+	// steps to call, and the first caller writes the cache - so the race only
+	// appears once something runs two of them at the same time.
+	parseMu      sync.Mutex
 	parsedArgs   any
 	parsedOutput any
 }
@@ -212,6 +226,7 @@ type TaskRun struct {
 	StackTrace string    `json:"stackTrace,omitempty"`
 }
 
+// parseArgs fills structPtr and caches it. The caller holds parseMu.
 func (t *Task) parseArgs(structPtr any) error {
 	if t == nil || len(t.Args) == 0 {
 		return nil
@@ -229,6 +244,10 @@ func (t *Task) SetArgs(args any) error {
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+
+	t.parseMu.Lock()
+	defer t.parseMu.Unlock()
+
 	t.Args = reflectutil.UnsafeBytesToStr(b)
 	t.parsedArgs = args
 	return nil
@@ -239,6 +258,9 @@ func (t *Task) MustSetArgs(args any) {
 }
 
 func parseTaskArgsAs[T any](t *Task, newFn func() T) (res T, error error) {
+	t.parseMu.Lock()
+	defer t.parseMu.Unlock()
+
 	if t.parsedArgs != nil {
 		res, ok := t.parsedArgs.(T)
 		if !ok {
@@ -255,6 +277,7 @@ func parseTaskArgsAs[T any](t *Task, newFn func() T) (res T, error error) {
 	return res, nil
 }
 
+// parseOutput fills structPtr and caches it. The caller holds parseMu.
 func (t *Task) parseOutput(structPtr any) error {
 	if t == nil || t.Output == "" {
 		return nil
@@ -272,6 +295,10 @@ func (t *Task) SetOutput(output any) error {
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+
+	t.parseMu.Lock()
+	defer t.parseMu.Unlock()
+
 	t.Output = reflectutil.UnsafeBytesToStr(b)
 	t.parsedOutput = output
 	return nil
@@ -282,6 +309,9 @@ func (t *Task) MustSetOutput(output any) {
 }
 
 func parseTaskOutputAs[T any](t *Task, newFn func() T) (res T, error error) {
+	t.parseMu.Lock()
+	defer t.parseMu.Unlock()
+
 	if t.parsedOutput != nil {
 		res, ok := t.parsedOutput.(T)
 		if !ok {

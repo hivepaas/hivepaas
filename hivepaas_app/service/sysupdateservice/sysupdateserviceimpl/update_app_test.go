@@ -6,6 +6,7 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -70,8 +71,8 @@ func TestAppAndWorkerUpdatesArmSwarmRollback(t *testing.T) {
 	data.CurrentAppReplicas = new(uint64(1))
 	data.CurrentWorkerReplicas = new(uint64(2))
 
-	assert.NoError(t, s.updateMainAppService(context.Background(), data))
-	assert.NoError(t, s.updateWorkerService(context.Background(), data))
+	assert.NoError(t, s.updateMainAppService(context.Background(), data, argsOf(t, data)))
+	assert.NoError(t, s.updateWorkerService(context.Background(), data, argsOf(t, data)))
 
 	for _, name := range []string{"hivepaas_app", "hivepaas_worker"} {
 		spec := f.specs[name]
@@ -92,7 +93,7 @@ func TestAppUpdateRestoresTheReplicasItStoppedWith(t *testing.T) {
 	data := loggingUpdateData(t, &base.ReleaseInfo{AppImage: "hivepaas/hivepaas-dev:0.2.0"})
 	data.CurrentAppReplicas = new(uint64(3))
 
-	assert.NoError(t, s.updateMainAppService(context.Background(), data))
+	assert.NoError(t, s.updateMainAppService(context.Background(), data, argsOf(t, data)))
 
 	spec := f.specs["hivepaas_app"]
 	if assert.NotNil(t, spec) {
@@ -107,7 +108,7 @@ func TestAppUpdateLeavesTheSameImageAlone(t *testing.T) {
 	s := &service{dockerManager: f, hpAppService: hp}
 	data := loggingUpdateData(t, &base.ReleaseInfo{AppImage: "hivepaas/hivepaas-dev:0.2.0"})
 
-	assert.NoError(t, s.updateMainAppService(context.Background(), data))
+	assert.NoError(t, s.updateMainAppService(context.Background(), data, argsOf(t, data)))
 
 	assert.Empty(t, f.updated)
 }
@@ -121,7 +122,7 @@ func TestWorkerUpdateSkipsAnInstallationWithoutOne(t *testing.T) {
 	}}
 	data := loggingUpdateData(t, &base.ReleaseInfo{AppImage: "hivepaas/hivepaas-dev:0.2.0"})
 
-	assert.NoError(t, s.updateWorkerService(context.Background(), data))
+	assert.NoError(t, s.updateWorkerService(context.Background(), data, argsOf(t, data)))
 
 	assert.Empty(t, f.updated)
 }
@@ -196,4 +197,45 @@ func TestScalingIgnoresANonReplicatedService(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Empty(t, f.replicaUpdates)
+}
+
+// argsOf parses the task args the way the update path does, so tests calling the
+// app and worker steps directly hand them what updateSystem would.
+func argsOf(t *testing.T, data *sysUpdateData) *entity.TaskSystemUpdateArgs {
+	t.Helper()
+
+	args, err := data.Task.ArgsAsSystemUpdate()
+	if err != nil {
+		t.Fatalf("ArgsAsSystemUpdate: %v", err)
+	}
+	return args
+}
+
+// updateSystem runs these two together, which is what saves a whole 240s update
+// monitor. Run here the same way, under -race, because the hazard is not the
+// docker calls - those touch different services - but anything the two steps
+// read from the shared task.
+func TestAppAndWorkerUpdateSideBySide(t *testing.T) {
+	f := &fakeDocker{}
+	s := &service{dockerManager: f, hpAppService: &fakeHpApp{
+		app:    swarmServiceOn("hivepaas_app", "hivepaas/hivepaas-dev:0.1.0", 1),
+		worker: swarmServiceOn("hivepaas_worker", "hivepaas/hivepaas-dev:0.1.0", 2),
+	}}
+	data := loggingUpdateData(t, &base.ReleaseInfo{AppImage: "hivepaas/hivepaas-dev:0.2.0"})
+	data.CurrentAppReplicas = new(uint64(1))
+	data.CurrentWorkerReplicas = new(uint64(2))
+	args := argsOf(t, data)
+
+	errMap := gofn.ExecTasksEx(context.Background(), 0, false,
+		func(ctx context.Context) error {
+			return s.updateMainAppService(ctx, data, args)
+		},
+		func(ctx context.Context) error {
+			return s.updateWorkerService(ctx, data, args)
+		},
+	)
+
+	assert.Empty(t, errMap)
+	assert.Equal(t, "hivepaas/hivepaas-dev:0.2.0", f.updated["hivepaas_app"])
+	assert.Equal(t, "hivepaas/hivepaas-dev:0.2.0", f.updated["hivepaas_worker"])
 }

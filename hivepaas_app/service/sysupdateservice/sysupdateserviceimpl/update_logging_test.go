@@ -2,6 +2,7 @@ package sysupdateserviceimpl
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -23,6 +24,11 @@ import (
 // a body; anything else panics loudly rather than passing quietly.
 type fakeDocker struct {
 	docker.Manager
+	// The app and the worker are updated concurrently, so the recording has to
+	// survive two goroutines. The code under test shares nothing between them;
+	// this bookkeeping does.
+	mu sync.Mutex
+
 	deployed map[string]string // service name -> running image
 	updated  map[string]string // service name -> image it was updated to
 	specs    map[string]*swarm.ServiceSpec
@@ -63,6 +69,9 @@ func (f *fakeDocker) ServiceUpdate(
 }
 
 func (f *fakeDocker) record(serviceID string, spec *swarm.ServiceSpec) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
 	if spec.Mode.Replicated != nil && spec.Mode.Replicated.Replicas != nil {
 		f.replicaUpdates = append(f.replicaUpdates, replicaUpdate{
 			replicas: *spec.Mode.Replicated.Replicas,
@@ -88,7 +97,10 @@ func (f *fakeDocker) ServiceUpdateFunc(
 	fn func(int, *swarm.Service) (bool, error), _ int, _ time.Duration,
 	_ ...docker.ServiceUpdateOption,
 ) error {
+	f.mu.Lock()
 	f.ctxErr = ctx.Err()
+	f.mu.Unlock()
+
 	apply, err := fn(0, service)
 	if err != nil || !apply {
 		return err

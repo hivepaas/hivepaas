@@ -77,6 +77,15 @@ func (s *service) SysUpdate(
 	}()
 	defer safego.RecoverTo(&err) // Early catch panic before the above defers
 
+	// Before anything stops. Pulling is the one part of an update that does not
+	// need the system to be down, and doing it here means a registry that cannot
+	// be reached is found out while the app is still serving.
+	if pullErr := s.pullAllImages(ctx, data); pullErr != nil {
+		_ = data.LogStore.Add(ctx, tasklog.NewWarnFrame(
+			"Some images could not be pulled ahead of time; swarm will fetch them as it needs them: "+
+				pullErr.Error(), tasklog.TsNow))
+	}
+
 	// Stop only services which need to be stopped (main app and workers)
 	err = s.stopServices(ctx, data)
 	if err != nil {
@@ -119,13 +128,7 @@ func (s *service) onBeforeSystemUpdate(
 	ctx context.Context,
 	data *sysUpdateData,
 ) (err error) {
-	// 1. Pull all images we need
-	// err = e.pullAllImages(ctx, data)
-	// if err != nil {
-	//	return hperrors.New(err)
-	// }
-
-	// 2. Dump the database, so a migration that does not complete can be undone.
+	// Dump the database, so a migration that does not complete can be undone.
 	//
 	// A failure here stops the update rather than warning and carrying on. The
 	// dump is the only way back from a half-applied schema, and starting an
@@ -203,19 +206,33 @@ func (s *service) updateSystem(
 		return hperrors.Wrap(err)
 	}
 
-	// 5. Update main app then bring it back
-	err = s.updateMainAppService(ctx, data)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
+	// 5. The app and the worker last, and together.
+	//
+	// They are what brings the system back, they run the same image, and each
+	// waits out its own 240s update monitor - so doing them one after the other
+	// spends four minutes twice for no reason. Nothing else in the update depends
+	// on either, and onAfterSystemUpdate already treats them as a pair.
+	//
+	// Their log lines interleave, which is readable only because every line one
+	// of these steps writes is prefixed with the service it is about.
+	//
+	// stopOnError is off: abandoning the worker halfway because the app failed
+	// saves nothing, and both failures are worth reporting.
+	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
+	errMap := gofn.ExecTasksEx(ctx, 0, false,
+		func(ctx context.Context) error {
+			return s.updateMainAppService(ctx, data, args)
+		},
+		func(ctx context.Context) error {
+			return s.updateWorkerService(ctx, data, args)
+		},
+	)
 
-	// 6. Update worker then bring it back
-	err = s.updateWorkerService(ctx, data)
-	if err != nil {
-		return hperrors.Wrap(err)
+	updateErrs := make([]error, 0, len(errMap))
+	for _, updateErr := range errMap {
+		updateErrs = append(updateErrs, updateErr)
 	}
-
-	return err
+	return hperrors.Wrap(errors.Join(updateErrs...))
 }
 
 func (s *service) sendResultNotifications(

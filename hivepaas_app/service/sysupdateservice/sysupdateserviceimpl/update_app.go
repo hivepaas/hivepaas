@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/moby/moby/api/types/swarm"
-	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
@@ -68,12 +68,16 @@ func (s *service) getWorkerSwarmService(ctx context.Context) (*swarm.Service, er
 	return svc, nil
 }
 
+// updateMainAppService and updateWorkerService take the parsed args rather than
+// reading them from the task, because they run concurrently with each other.
+// Task.ArgsAsSystemUpdate caches what it parses into the task, so the first call
+// writes - and two goroutines racing to be first is a data race that only shows
+// up on the day something reorders the steps before them.
 func (s *service) updateMainAppService(
 	ctx context.Context,
 	data *sysUpdateData,
+	args *entity.TaskSystemUpdateArgs,
 ) error {
-	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
-
 	err := s.updateServiceImage(ctx, data, serviceImageUpdate{
 		What:        "hivepaas",
 		Component:   base.HivepaasAppKey,
@@ -94,9 +98,8 @@ func (s *service) updateMainAppService(
 func (s *service) updateWorkerService(
 	ctx context.Context,
 	data *sysUpdateData,
+	args *entity.TaskSystemUpdateArgs,
 ) error {
-	args := gofn.Must(data.Task.ArgsAsSystemUpdate())
-
 	err := s.updateServiceImage(ctx, data, serviceImageUpdate{
 		What:        "hivepaas worker",
 		Component:   base.HivepaasWorkerKey,

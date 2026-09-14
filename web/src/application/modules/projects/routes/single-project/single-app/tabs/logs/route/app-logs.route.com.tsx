@@ -18,7 +18,7 @@ import { ROUTE } from "@application/shared/constants";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui";
 
-import { AppLogsHistory, AppLogsViewer } from "../building-blocks";
+import { AppLogsHistory, AppLogsViewer, DEFAULT_LOG_HISTORY_LINES } from "../building-blocks";
 
 const AGGREGATION_TAB_ID = "aggregation";
 const HISTORY_TAB_ID = "history";
@@ -40,7 +40,7 @@ export function AppLogsRoute() {
         changeTheme,
     } = useLogViewerControls();
     const [tabStates, setTabStates] = useState<AppLogTabStates>(() => ({
-        [AGGREGATION_TAB_ID]: createDefaultAppLogTabState(),
+        [AGGREGATION_TAB_ID]: createDefaultAppLogTabState(AGGREGATION_TAB_ID),
     }));
 
     invariant(projectID, "projectID must be defined");
@@ -90,14 +90,14 @@ export function AppLogsRoute() {
             }
 
             return Object.fromEntries(
-                tabs.map(tab => [tab.id, current[tab.id] ?? createDefaultAppLogTabState()] as const),
+                tabs.map(tab => [tab.id, current[tab.id] ?? createDefaultAppLogTabState(tab.id)] as const),
             );
         });
     }, [tabs]);
 
     const updateTabState = useCallback((tabID: string, updater: (current: AppLogTabState) => AppLogTabState) => {
         setTabStates(current => {
-            const currentTabState = current[tabID] ?? createDefaultAppLogTabState();
+            const currentTabState = current[tabID] ?? createDefaultAppLogTabState(tabID);
             const nextTabState = updater(currentTabState);
 
             if (nextTabState === currentTabState) {
@@ -221,7 +221,7 @@ export function AppLogsRoute() {
                     </div>
 
                     {tabs.map(tab => {
-                        const tabState = tabStates[tab.id] ?? createDefaultAppLogTabState();
+                        const tabState = tabStates[tab.id] ?? createDefaultAppLogTabState(tab.id);
 
                         return (
                             <TabsContent
@@ -235,16 +235,23 @@ export function AppLogsRoute() {
                             >
                                 {tab.id === HISTORY_TAB_ID ? (
                                     <AppLogsHistory
+                                        tabID={tab.id}
                                         projectID={projectID}
                                         env={env}
                                         appID={appID}
                                         history={infoResponse?.data.history}
+                                        lines={tabState.lines}
+                                        since={tabState.since}
+                                        duration={tabState.duration}
                                         isActive={activeTab === tab.id}
                                         fontSize={fontSize}
                                         themeId={themeId}
                                         height={isFullscreen ? "100%" : undefined}
                                         isFullView={isFullView}
                                         isFullHeight={isFullHeight}
+                                        onLinesChange={handleTabLinesChange}
+                                        onSinceChange={handleTabSinceChange}
+                                        onDurationChange={handleTabDurationChange}
                                     />
                                 ) : (
                                     <AppLogsViewer
@@ -296,10 +303,15 @@ export function AppLogsRoute() {
     );
 }
 
-function createDefaultAppLogTabState(): AppLogTabState {
+/**
+ * Every tab carries the same window, so the toolbar means one thing throughout.
+ * Only the line count differs: a tail for the stream, a page size for stored
+ * logs, where a bigger page is fewer round trips rather than a longer wait.
+ */
+function createDefaultAppLogTabState(tabID: string): AppLogTabState {
     return {
         logs: [],
-        lines: DEFAULT_LOG_LINES,
+        lines: tabID === HISTORY_TAB_ID ? DEFAULT_LOG_HISTORY_LINES : DEFAULT_LOG_LINES,
         since: undefined,
         duration: undefined,
         readyState: WebSocket.CLOSED,

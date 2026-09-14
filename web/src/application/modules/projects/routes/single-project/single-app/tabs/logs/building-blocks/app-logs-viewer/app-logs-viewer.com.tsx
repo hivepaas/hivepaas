@@ -47,7 +47,6 @@ export function AppLogsViewer({
     const { streams } = useAppLogsWsApi();
     const isConnectionActive = webSocketReadyState === WebSocket.CONNECTING || webSocketReadyState === WebSocket.OPEN;
     const isStreaming = webSocketReadyState === WebSocket.OPEN;
-    const hasTimeFilter = since !== undefined || duration !== undefined;
     const { appendFrames, reset, replaceFrames } = useBufferedLogFrames({
         frames: logs,
         onFramesChange: action => {
@@ -68,11 +67,11 @@ export function AppLogsViewer({
             env,
             appID,
             taskId,
-            tail: hasTimeFilter ? undefined : lines,
+            tail: lines,
             since,
             duration,
         }),
-        [appID, duration, env, hasTimeFilter, lines, projectID, since, taskId],
+        [appID, duration, env, lines, projectID, since, taskId],
     );
 
     const { refetch: refreshLogs, isFetching: isRefreshPending } = AppLogsQueries.useGetLogs(
@@ -213,7 +212,6 @@ export function AppLogsViewer({
     return (
         <LogsViewer
             frames={logs}
-            logViewerKey={`${tabID}:${isActive ? "active" : "inactive"}`}
             isStreaming={isStreaming}
             isRefreshPending={isRefreshPending}
             hasLineNumbers={false}
@@ -240,7 +238,6 @@ export function AppLogsViewer({
                     lines={lines}
                     since={since}
                     duration={duration}
-                    isLinesHidden={hasTimeFilter}
                     onLinesChange={value => {
                         onLinesChange(tabID, value);
                     }}

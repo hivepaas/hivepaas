@@ -7,15 +7,14 @@ import {
     Copy,
     Download,
     LoaderCircle,
-    Search,
     TextWrap,
-    X,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui";
 
 import type { LogsViewerToolbarProps } from "../../logs-viewer.types";
+import { CollapsibleSearchInput } from "../collapsible-search-input";
 import { LogsViewerToolbarIconButton } from "../logs-viewer-toolbar-icon-button";
 
 function downloadTextFile(fileName: string, content: string) {
@@ -40,10 +39,14 @@ export function LogsViewerToolbar({
     showDebugLogs,
     followLogs,
     searchTerm,
+    searchMode,
+    isSearchTermInvalid,
     searchResult,
     toolbarStart,
     toolbarFilters,
+    toolbarSearch,
     onSearchTermChange,
+    onSearchModeChange,
     onFindNext,
     onFindPrevious,
     onToggleTextWrap,
@@ -86,15 +89,19 @@ export function LogsViewerToolbar({
                 {/* Right group: Filter inputs, Search input and Action icons */}
                 <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 min-w-0">
                     {toolbarFilters}
-                    <div className="relative flex items-center min-w-0 w-full sm:w-56 max-w-full">
-                        <Search className="absolute left-2.5 size-3.5 text-muted-foreground pointer-events-none" />
-                        <input
-                            type="text"
-                            placeholder="Find in logs..."
+                    {/* Search sits in the icon group so that, collapsed, it is
+                        spaced like the icon it looks like. */}
+                    <div className="flex min-w-0 flex-wrap items-center gap-0.5 sm:gap-1">
+                        {toolbarSearch}
+                        <CollapsibleSearchInput
                             value={searchTerm}
-                            onChange={e => {
-                                onSearchTermChange(e.target.value);
-                            }}
+                            placeholder="Find in current view..."
+                            label="Find in current view..."
+                            expandedClassName="w-48 sm:w-72 mr-1.5 sm:mr-2"
+                            mode={searchMode}
+                            isInvalid={isSearchTermInvalid}
+                            onValueChange={onSearchTermChange}
+                            onModeChange={onSearchModeChange}
                             onKeyDown={e => {
                                 if (e.key === "Enter") {
                                     if (e.shiftKey) {
@@ -104,48 +111,39 @@ export function LogsViewerToolbar({
                                     }
                                 }
                             }}
-                            className="w-full h-8 sm:h-9 pl-8 pr-16 text-xs sm:text-sm rounded-md border border-input bg-background/50 focus:bg-background px-3 py-1 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                            onClear={() => {
+                                onSearchTermChange("");
+                            }}
+                            trailing={
+                                searchTerm ? (
+                                    <>
+                                        {searchResult && (
+                                            <span className="mr-1 font-mono text-[10px] text-muted-foreground sm:text-xs">
+                                                {searchResult.resultCount > 0
+                                                    ? `${searchResult.resultIndex + 1}/${searchResult.resultCount}`
+                                                    : "0/0"}
+                                            </span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            aria-label="Previous match"
+                                            className="rounded p-1 hover:bg-muted hover:text-foreground"
+                                            onClick={onFindPrevious}
+                                        >
+                                            <ChevronUp className="size-3 sm:size-3.5" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            aria-label="Next match"
+                                            className="rounded p-1 hover:bg-muted hover:text-foreground"
+                                            onClick={onFindNext}
+                                        >
+                                            <ChevronDown className="size-3 sm:size-3.5" />
+                                        </button>
+                                    </>
+                                ) : undefined
+                            }
                         />
-                        {searchTerm && (
-                            <div className="absolute right-1.5 flex items-center gap-0.5 text-muted-foreground">
-                                {searchResult && (
-                                    <span className="text-[10px] sm:text-xs font-mono mr-1 text-muted-foreground">
-                                        {searchResult.resultCount > 0
-                                            ? `${searchResult.resultIndex + 1}/${searchResult.resultCount}`
-                                            : "0/0"}
-                                    </span>
-                                )}
-                                <button
-                                    type="button"
-                                    aria-label="Previous match"
-                                    onClick={onFindPrevious}
-                                    className="p-1 hover:text-foreground rounded hover:bg-muted"
-                                >
-                                    <ChevronUp className="size-3 sm:size-3.5" />
-                                </button>
-                                <button
-                                    type="button"
-                                    aria-label="Next match"
-                                    onClick={onFindNext}
-                                    className="p-1 hover:text-foreground rounded hover:bg-muted"
-                                >
-                                    <ChevronDown className="size-3 sm:size-3.5" />
-                                </button>
-                                <button
-                                    type="button"
-                                    aria-label="Clear search"
-                                    onClick={() => {
-                                        onSearchTermChange("");
-                                    }}
-                                    className="p-1 hover:text-foreground rounded hover:bg-muted"
-                                >
-                                    <X className="size-3 sm:size-3.5" />
-                                </button>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-0.5 sm:gap-1">
                         <LogsViewerToolbarIconButton
                             label="Copy logs"
                             onClick={() => {

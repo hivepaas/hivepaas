@@ -1,4 +1,6 @@
-import type { Key, ReactNode } from "react";
+import type { ReactNode } from "react";
+
+import type { SearchMode } from "./building-blocks/collapsible-search-input";
 
 export const ELogsViewerFrameType = {
     In: "in",
@@ -18,7 +20,6 @@ export interface LogsViewerFrame {
 
 export interface LogsViewerProps {
     frames: LogsViewerFrame[];
-    logViewerKey?: Key;
     isStreaming?: boolean;
     isRefreshPending?: boolean;
     hasLineNumbers?: boolean;
@@ -35,6 +36,10 @@ export interface LogsViewerProps {
     defaultTextWrapped?: boolean;
     toolbarStart?: ReactNode;
     toolbarFilters?: ReactNode;
+    /** A search field of the view's own, placed beside "Find in logs". */
+    toolbarSearch?: ReactNode;
+    /** A line under the toolbar saying what is on screen and what is not. */
+    status?: ReactNode;
     className?: string;
     onRefresh?: () => void;
 }
@@ -55,10 +60,17 @@ export interface LogsViewerToolbarProps {
     followLogs: boolean;
     isFullscreen?: boolean;
     searchTerm: string;
+    searchMode: SearchMode;
+    isSearchTermInvalid: boolean;
     searchResult?: LogsViewerSearchResult | null;
     toolbarStart?: ReactNode;
     toolbarFilters?: ReactNode;
+    /** A search field of the view's own, placed beside "Find in logs". */
+    toolbarSearch?: ReactNode;
+    /** A line under the toolbar saying what is on screen and what is not. */
+    status?: ReactNode;
     onSearchTermChange: (term: string) => void;
+    onSearchModeChange: (mode: SearchMode) => void;
     onFindNext: () => void;
     onFindPrevious: () => void;
     onToggleTextWrap: () => void;

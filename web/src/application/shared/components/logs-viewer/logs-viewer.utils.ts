@@ -128,3 +128,71 @@ export function formatFrameForXterm(frame: LogsViewerFrame, showTimestamps: bool
 export function formatFramesForXterm(frames: LogsViewerFrame[], showTimestamps: boolean): string {
     return frames.map(frame => formatFrameForXterm(frame, showTimestamps)).join("");
 }
+
+/**
+ * logsViewerFrameSignature identifies a frame by value.
+ *
+ * The frames array is rebuilt from scratch whenever its source changes, so the
+ * objects in it are never the same objects twice and identity says nothing.
+ */
+export function logsViewerFrameSignature(frame: LogsViewerFrame | undefined): string {
+    if (!frame) {
+        return "";
+    }
+    return `${frame.ts?.getTime() ?? ""}|${frame.type}|${frame.data}`;
+}
+
+/**
+ * isLogsViewerFramesAppend says whether frames only grew at the end since the
+ * rendered state described by anchor.
+ *
+ * Everything that consumes frames does so incrementally, which is only sound
+ * when new frames arrive at the end - a live stream. Stored logs page backwards
+ * and put the new page at the FRONT, and an incremental consumer that assumes
+ * otherwise writes the wrong slice: the newest lines a second time, while the
+ * older ones it was asked for never appear. Whoever cannot prove an append has
+ * to rebuild from the whole array.
+ */
+export function isLogsViewerFramesAppend(frames: LogsViewerFrame[], anchor: LogsViewerFramesAnchor): boolean {
+    if (anchor.length === 0 || frames.length < anchor.length) {
+        return false;
+    }
+    return (
+        logsViewerFrameSignature(frames[0]) === anchor.first &&
+        logsViewerFrameSignature(frames[anchor.length - 1]) === anchor.last
+    );
+}
+
+/** anchorLogsViewerFrames records what a consumer has taken in, for the check above. */
+export function anchorLogsViewerFrames(frames: LogsViewerFrame[]): LogsViewerFramesAnchor {
+    return {
+        length: frames.length,
+        first: logsViewerFrameSignature(frames[0]),
+        last: logsViewerFrameSignature(frames[frames.length - 1]),
+    };
+}
+
+export interface LogsViewerFramesAnchor {
+    length: number;
+    first: string;
+    last: string;
+}
+
+/**
+ * isValidRegex says whether a pattern can be used as one yet.
+ *
+ * A pattern half-typed - "(err" - is not an error to report, it is a person
+ * mid-keystroke. Both search paths check this so that neither reports "no
+ * matches" for something that was never run.
+ */
+export function isValidRegex(pattern: string): boolean {
+    if (!pattern) {
+        return true;
+    }
+    try {
+        new RegExp(pattern);
+        return true;
+    } catch {
+        return false;
+    }
+}

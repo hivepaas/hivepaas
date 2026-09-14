@@ -28,11 +28,12 @@ const StatusSchema = z
 
 const VictoriaLogsSchema = z
     .object({
-        node: z.object({ id: z.string(), name: z.string().optional() }).nullish(),
         volume: z.object({ id: z.string(), name: z.string().optional() }).nullish(),
         volumeSubpath: z.string().optional(),
         retention: z.string().catch("30d"),
         maxDiskUsagePercent: z.number().optional(),
+        cpuLimit: z.number().optional(),
+        memoryLimit: z.string().optional(),
     })
     .nullish();
 

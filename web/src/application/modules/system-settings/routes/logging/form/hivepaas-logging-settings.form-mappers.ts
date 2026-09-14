@@ -3,6 +3,20 @@ import type { HivePaaSLoggingEndpoint, HivePaaSLoggingSettings } from "~/system-
 
 import type { HivePaaSLoggingSettingsFormInput, HivePaaSLoggingSettingsFormOutput } from "../schemas";
 
+/**
+ * What a backend nobody has configured yet starts with.
+ *
+ * Not a sizing recommendation - it is a starting point chosen to be safe in
+ * both directions. Unlimited is the worse default of the two: VictoriaLogs
+ * sizes its caches from the memory it is allowed (`-memory.allowedPercent`,
+ * 60 by default), so with no limit it sizes itself against the whole node and
+ * takes that from whatever runs beside it. Measured idle it holds ~8 MiB, and
+ * ~230 MiB serving three concurrent queries over 400k stored lines, so a
+ * gigabyte leaves real room while still being a ceiling.
+ */
+const DEFAULT_BACKEND_CPU_LIMIT = 2;
+const DEFAULT_BACKEND_MEMORY_LIMIT = "1gb";
+
 type EndpointForm = HivePaaSLoggingSettingsFormInput["ingest"];
 
 export const emptyLoggingEndpointForm: EndpointForm = {
@@ -72,6 +86,13 @@ function toEndpoint(f: EndpointForm): HivePaaSLoggingEndpoint {
 }
 
 export function toLoggingFormInput(s?: HivePaaSLoggingSettings): HivePaaSLoggingSettingsFormInput {
+    const vlogs = s?.backend.victoriaLogs;
+    // A default belongs to a backend that does not exist yet. Once one is
+    // saved the form shows exactly what it holds - otherwise a limit the user
+    // deliberately cleared would come back on the next load, and there would be
+    // no way to run without one.
+    const isUnconfigured = vlogs === undefined || vlogs === null;
+
     return {
         enabled: s?.enabled ?? false,
         // One switch: container logs are collected as a set, so whichever of
@@ -83,11 +104,12 @@ export function toLoggingFormInput(s?: HivePaaSLoggingSettings): HivePaaSLogging
             nodes: false,
         },
         backendManaged: s?.backend ? s.backend.managed || !s.backend.ingest?.url : true,
-        nodeId: s?.backend.victoriaLogs?.node?.id ?? "",
-        volumeId: s?.backend.victoriaLogs?.volume?.id ?? "",
-        volumeSubpath: s?.backend.victoriaLogs?.volumeSubpath ?? "",
-        retention: s?.backend.victoriaLogs?.retention ?? "30d",
-        maxDiskUsagePercent: s?.backend.victoriaLogs?.maxDiskUsagePercent ?? null,
+        volumeId: vlogs?.volume?.id ?? "",
+        volumeSubpath: vlogs?.volumeSubpath ?? "",
+        retention: vlogs?.retention ?? "30d",
+        maxDiskUsagePercent: vlogs?.maxDiskUsagePercent ?? null,
+        cpuLimit: vlogs?.cpuLimit ?? (isUnconfigured ? DEFAULT_BACKEND_CPU_LIMIT : null),
+        memoryLimit: vlogs?.memoryLimit ?? (isUnconfigured ? DEFAULT_BACKEND_MEMORY_LIMIT : ""),
         ingest: toEndpointForm(s?.backend.ingest),
         query: toEndpointForm(s?.backend.query),
         forwards: (s?.forwards ?? []).map(f => ({
@@ -114,11 +136,12 @@ export function toLoggingPayload(
                   type: "victoria-logs",
                   managed: true,
                   victoriaLogs: {
-                      nodeId: { id: v.nodeId },
-                      volumeId: { id: v.volumeId },
+                      volume: { id: v.volumeId },
                       ...(v.volumeSubpath ? { volumeSubpath: v.volumeSubpath } : {}),
                       retention: v.retention,
                       ...(v.maxDiskUsagePercent ? { maxDiskUsagePercent: v.maxDiskUsagePercent } : {}),
+                      ...(v.cpuLimit ? { cpuLimit: v.cpuLimit } : {}),
+                      ...(v.memoryLimit ? { memoryLimit: v.memoryLimit } : {}),
                   },
               }
             : {

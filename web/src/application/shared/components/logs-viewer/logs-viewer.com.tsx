@@ -8,7 +8,7 @@ import { WebglAddon } from "@xterm/addon-webgl";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 
-import { LogsViewerToolbar } from "./building-blocks";
+import { DEFAULT_SEARCH_MODE, LogsViewerToolbar, type SearchMode } from "./building-blocks";
 import {
     DEFAULT_DOWNLOAD_FILE_NAME,
     LOG_FONT_SIZES,
@@ -18,7 +18,15 @@ import {
 import styles from "./logs-viewer.module.scss";
 import { useTerminalTheme } from "./logs-viewer.themes";
 import type { LogsViewerProps, LogsViewerSearchResult } from "./logs-viewer.types";
-import { buildDisplayedLogFrames, formatFramesForXterm, getPlainLogLines } from "./logs-viewer.utils";
+import {
+    type LogsViewerFramesAnchor,
+    anchorLogsViewerFrames,
+    buildDisplayedLogFrames,
+    formatFramesForXterm,
+    getPlainLogLines,
+    isLogsViewerFramesAppend,
+    isValidRegex,
+} from "./logs-viewer.utils";
 import { useFullViewHeight } from "./use-full-view-height";
 
 export function LogsViewer({
@@ -36,6 +44,8 @@ export function LogsViewer({
     defaultTextWrapped = true,
     toolbarStart,
     toolbarFilters,
+    toolbarSearch,
+    status,
     className,
     onRefresh,
 }: LogsViewerProps) {
@@ -45,7 +55,9 @@ export function LogsViewer({
     const terminalRef = useRef<Terminal | null>(null);
     const fitAddonRef = useRef<FitAddon | null>(null);
     const searchAddonRef = useRef<SearchAddon | null>(null);
-    const renderedFramesCountRef = useRef(0);
+    // What the terminal currently holds, so an update can prove it only has to
+    // append rather than rewrite. See isLogsViewerFramesAppend.
+    const renderedFramesAnchorRef = useRef<LogsViewerFramesAnchor>({ length: 0, first: "", last: "" });
     const isTerminalReadyRef = useRef(false);
 
     const [fontSizeIndex] = useState(0);
@@ -55,6 +67,10 @@ export function LogsViewer({
     const [followLogs, setFollowLogs] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [searchMode, setSearchMode] = useState<SearchMode>(DEFAULT_SEARCH_MODE);
+    // xterm throws on a malformed pattern and reports no match, which reads as
+    // "nothing found" rather than "this is not a regular expression yet".
+    const isSearchTermInvalid = searchMode.isRegex && !isValidRegex(searchTerm);
     const [searchResult, setSearchResult] = useState<LogsViewerSearchResult | null>(null);
 
     const currentFontSize = controlledFontSize ?? LOG_FONT_SIZES[fontSizeIndex] ?? 14;
@@ -127,7 +143,7 @@ export function LogsViewer({
             return;
         }
 
-        renderedFramesCountRef.current = 0;
+        renderedFramesAnchorRef.current = { length: 0, first: "", last: "" };
 
         const terminal = new Terminal({
             allowTransparency: true,
@@ -183,7 +199,7 @@ export function LogsViewer({
         if (initialDisplayed.length > 0) {
             const content = formatFramesForXterm(initialDisplayed, showTimestamps);
             terminal.write(content);
-            renderedFramesCountRef.current = frames.length;
+            renderedFramesAnchorRef.current = anchorLogsViewerFrames(frames);
             if (followLogs) {
                 terminal.scrollToBottom();
             }
@@ -211,28 +227,37 @@ export function LogsViewer({
             return;
         }
 
-        const lastCount = renderedFramesCountRef.current;
+        const anchor = renderedFramesAnchorRef.current;
+        const isAppend = isLogsViewerFramesAppend(frames, anchor);
 
-        if (frames.length < lastCount || lastCount === 0) {
-            // Full re-render when frames are reset/replaced
+        if (!isAppend) {
+            // Frames were replaced, or grew somewhere other than the end - a
+            // page of older stored logs arrives at the front. xterm cannot
+            // prepend to its scrollback, so the whole buffer is written again.
             terminal.reset();
             const displayed = buildDisplayedLogFrames(frames, showDebugLogs);
             if (displayed.length > 0) {
                 terminal.write(formatFramesForXterm(displayed, showTimestamps));
             }
-            renderedFramesCountRef.current = frames.length;
-        } else if (frames.length > lastCount) {
+        } else if (frames.length > anchor.length) {
             // Incremental append for new streamed frames
-            const newRawFrames = frames.slice(lastCount);
+            const newRawFrames = frames.slice(anchor.length);
             const newDisplayed = buildDisplayedLogFrames(newRawFrames, showDebugLogs);
             if (newDisplayed.length > 0) {
                 terminal.write(formatFramesForXterm(newDisplayed, showTimestamps));
             }
-            renderedFramesCountRef.current = frames.length;
         }
+
+        const grewAtTheFront = !isAppend && anchor.length > 0 && frames.length > anchor.length;
+
+        renderedFramesAnchorRef.current = anchorLogsViewerFrames(frames);
 
         if (followLogs) {
             terminal.scrollToBottom();
+        } else if (grewAtTheFront) {
+            // Writing leaves the viewport at the bottom, which is the opposite
+            // of what someone who just asked for older lines wants to see.
+            terminal.scrollToTop();
         }
     }, [frames, showDebugLogs, showTimestamps, followLogs]);
 
@@ -254,7 +279,7 @@ export function LogsViewer({
         if (displayed.length > 0) {
             terminal.write(formatFramesForXterm(displayed, showTimestamps));
         }
-        renderedFramesCountRef.current = frames.length;
+        renderedFramesAnchorRef.current = anchorLogsViewerFrames(frames);
 
         if (followLogs) {
             terminal.scrollToBottom();
@@ -268,7 +293,7 @@ export function LogsViewer({
             return;
         }
 
-        if (!searchTerm.trim()) {
+        if (!searchTerm.trim() || isSearchTermInvalid) {
             try {
                 searchAddon.clearDecorations();
             } catch {
@@ -281,68 +306,68 @@ export function LogsViewer({
         try {
             searchAddon.findNext(searchTerm, {
                 incremental: true,
-                regex: false,
-                caseSensitive: false,
+                regex: searchMode.isRegex,
+                caseSensitive: searchMode.isCaseSensitive,
                 decorations: LOG_SEARCH_DECORATIONS,
             });
         } catch {
             try {
                 searchAddon.findNext(searchTerm, {
                     incremental: true,
-                    regex: false,
-                    caseSensitive: false,
+                    regex: searchMode.isRegex,
+                    caseSensitive: searchMode.isCaseSensitive,
                 });
             } catch {
                 setSearchResult(null);
             }
         }
-    }, [searchTerm]);
+    }, [searchTerm, searchMode, isSearchTermInvalid]);
 
     const handleFindNext = useCallback(() => {
-        if (!searchTerm.trim()) {
+        if (!searchTerm.trim() || isSearchTermInvalid) {
             return;
         }
         try {
             searchAddonRef.current?.findNext(searchTerm, {
                 incremental: false,
-                regex: false,
-                caseSensitive: false,
+                regex: searchMode.isRegex,
+                caseSensitive: searchMode.isCaseSensitive,
                 decorations: LOG_SEARCH_DECORATIONS,
             });
         } catch {
             try {
                 searchAddonRef.current?.findNext(searchTerm, {
                     incremental: false,
-                    regex: false,
-                    caseSensitive: false,
+                    regex: searchMode.isRegex,
+                    caseSensitive: searchMode.isCaseSensitive,
                 });
             } catch {
                 // Ignore search error
             }
         }
-    }, [searchTerm]);
+    }, [searchTerm, searchMode, isSearchTermInvalid]);
 
     const handleFindPrevious = useCallback(() => {
-        if (!searchTerm.trim()) {
+        if (!searchTerm.trim() || isSearchTermInvalid) {
             return;
         }
         try {
             searchAddonRef.current?.findPrevious(searchTerm, {
-                regex: false,
-                caseSensitive: false,
+                regex: searchMode.isRegex,
+                caseSensitive: searchMode.isCaseSensitive,
                 decorations: LOG_SEARCH_DECORATIONS,
             });
         } catch {
             try {
                 searchAddonRef.current?.findPrevious(searchTerm, {
-                    regex: false,
-                    caseSensitive: false,
+                    regex: searchMode.isRegex,
+                    caseSensitive: searchMode.isCaseSensitive,
                 });
             } catch {
                 // Ignore search error
             }
         }
-    }, [searchTerm]);
+    }, [searchTerm, searchMode, isSearchTermInvalid]);
 
     // Handle ESC to exit fullscreen
     useEffect(() => {
@@ -375,7 +400,7 @@ export function LogsViewer({
         if (displayed.length > 0) {
             terminal.write(formatFramesForXterm(displayed, showTimestamps));
         }
-        renderedFramesCountRef.current = frames.length;
+        renderedFramesAnchorRef.current = anchorLogsViewerFrames(frames);
 
         if (followLogs) {
             terminal.scrollToBottom();
@@ -432,7 +457,11 @@ export function LogsViewer({
                     searchResult={searchResult}
                     toolbarStart={toolbarStart}
                     toolbarFilters={toolbarFilters}
+                    toolbarSearch={toolbarSearch}
+                    searchMode={searchMode}
+                    isSearchTermInvalid={isSearchTermInvalid}
                     onSearchTermChange={setSearchTerm}
+                    onSearchModeChange={setSearchMode}
                     onFindNext={handleFindNext}
                     onFindPrevious={handleFindPrevious}
                     onToggleTextWrap={() => {
@@ -453,6 +482,10 @@ export function LogsViewer({
                     }}
                     onRefresh={onRefresh}
                 />
+            )}
+
+            {status !== undefined && (
+                <div className="pb-2 text-[11px] text-muted-foreground sm:pb-2.5 sm:text-xs">{status}</div>
             )}
 
             <div

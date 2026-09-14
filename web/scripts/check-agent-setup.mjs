@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,6 +21,9 @@ const requiredFiles = [
     ".agents/skills/backend-dev/SKILL.md",
     ".agents/skills/backend-dev/agents/openai.yaml",
     "hivepaas/.gitignore",
+    "hivepaas/AGENTS.md",
+    "hivepaas/CLAUDE.md",
+    "hivepaas/docs/ARCHITECTURE.md",
     "hivepaas/.cursor/rules/backend-architecture.mdc",
     "hivepaas/.cursor/rules/backend-api.mdc",
     "hivepaas/.cursor/rules/backend-data-migrations.mdc",
@@ -106,8 +109,11 @@ function display(path) {
     return relative(repoRoot, path);
 }
 
+// A missing file is already reported by assertExists. Returning empty here lets
+// the run finish and list every gap at once, instead of dying on the first one
+// and hiding the rest.
 function read(path) {
-    return readFileSync(path, "utf8");
+    return existsSync(path) ? readFileSync(path, "utf8") : "";
 }
 
 function parseFrontmatter(content) {
@@ -238,6 +244,47 @@ function checkStaleRefs() {
                 fail(`Stale reference ${spec.label} found in ${display(absolutePath)}`);
             }
         }
+    }
+}
+
+// Nothing auto-loads docs/. Agents read AGENTS.md (most tools), CLAUDE.md
+// (Claude Code) or .cursor/rules (Cursor), so those have to point at the docs
+// or the docs are read by nobody.
+function checkEntryPoints() {
+    const agents = read(repoPath("hivepaas/AGENTS.md"));
+    if (agents && !agents.includes("docs/ARCHITECTURE.md")) {
+        fail("hivepaas/AGENTS.md must point at docs/ARCHITECTURE.md");
+    }
+
+    const claudePath = repoPath("hivepaas/CLAUDE.md");
+    // One source of truth: a copy drifts from AGENTS.md and nobody notices.
+    if (existsSync(claudePath) && !lstatSync(claudePath).isSymbolicLink() && read(claudePath) !== agents) {
+        fail("hivepaas/CLAUDE.md must be a symlink to AGENTS.md, or hold the same text");
+    }
+}
+
+// Cursor injects rule text instead of following links, so the backend rule has
+// to repeat the document's summary. A repeated thing drifts unless something
+// compares it, and a stale rule is worse than none: it teaches the old shape
+// with the authority of a committed file.
+function checkCursorRuleMirrorsArchitecture() {
+    const arch = read(repoPath("hivepaas/docs/ARCHITECTURE.md"));
+    const rule = read(repoPath("hivepaas/.cursor/rules/backend-architecture.mdc"));
+    if (!arch || !rule) return;
+
+    const glance = arch.match(/^## At a glance\n\n((?:- .*\n)+)/m);
+    if (!glance) {
+        fail("hivepaas/docs/ARCHITECTURE.md must open with an '## At a glance' bullet list");
+        return;
+    }
+
+    const bullets = glance[1].split("\n").filter(line => line.startsWith("- "));
+    const missing = bullets.filter(bullet => !rule.includes(bullet));
+    if (missing.length > 0) {
+        fail(
+            `hivepaas/.cursor/rules/backend-architecture.mdc is out of date with ARCHITECTURE.md; ` +
+                `${missing.length} of ${bullets.length} summary points differ, starting with: ${missing[0].slice(0, 80)}…`,
+        );
     }
 }
 
@@ -372,15 +419,17 @@ checkSkills();
 checkRules();
 checkRuleInventories();
 checkStaleRefs();
+checkEntryPoints();
+checkCursorRuleMirrorsArchitecture();
 checkRequiredContent();
 checkReferencedPaths();
 
-// if (errors.length > 0) {
-//     console.error("Agent setup check failed:");
-//     for (const error of errors) {
-//         console.error(`- ${error}`);
-//     }
-//     process.exit(1);
-// }
+if (errors.length > 0) {
+    console.error("Agent setup check failed:");
+    for (const error of errors) {
+        console.error(`- ${error}`);
+    }
+    process.exit(1);
+}
 
-// console.log("Agent setup check passed.");
+console.log("Agent setup check passed.");

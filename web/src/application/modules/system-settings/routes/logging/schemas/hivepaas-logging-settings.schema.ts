@@ -20,7 +20,9 @@ export const HivePaaSLoggingSettingsFormSchema = z
         enabled: z.boolean(),
         sources: z.object({ apps: z.boolean(), hivepaas: z.boolean(), traefikAccess: z.boolean(), nodes: z.boolean() }),
         backendManaged: z.boolean(),
-        nodeId: z.string(),
+        // The selected volume's id, because that is what a Select holds. On the
+        // wire it is `volume`, an object either way: { id } in a request, the
+        // whole setting in a response. The form mappers convert at both ends.
         volumeId: z.string(),
         volumeSubpath: z
             .string()
@@ -34,6 +36,11 @@ export const HivePaaSLoggingSettingsFormSchema = z
             .trim()
             .regex(/^(\d+(w|d|h|m|s))+$/, "Use a duration such as 30d or 12h"),
         maxDiskUsagePercent: z.number().int().min(1).max(100).nullable(),
+        cpuLimit: z.number().min(0.25).max(256).nullable(),
+        memoryLimit: z
+            .string()
+            .trim()
+            .regex(/^$|^\d+(b|kb|mb|gb|tb)$/i, "Use a size such as 1gb or 512mb"),
         ingest: EndpointForm,
         query: EndpointForm,
         forwards: z.array(EndpointForm.extend({ name: z.string().trim().min(1, "Required"), format: z.string() })),
@@ -46,9 +53,6 @@ export const HivePaaSLoggingSettingsFormSchema = z
         }
         if (!v.sources.apps && !v.sources.hivepaas) {
             ctx.addIssue({ code: "custom", path: ["sources", "apps"], message: "Select at least one source" });
-        }
-        if (v.backendManaged && !v.nodeId) {
-            ctx.addIssue({ code: "custom", path: ["nodeId"], message: "Required" });
         }
         if (v.backendManaged && !v.volumeId) {
             ctx.addIssue({ code: "custom", path: ["volumeId"], message: "Required" });

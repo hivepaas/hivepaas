@@ -19,11 +19,12 @@ export type HivePaaSLoggingSettings_UpdateOnePayload = {
         ingest?: HivePaaSLoggingEndpoint | null;
         query?: HivePaaSLoggingEndpoint | null;
         victoriaLogs?: {
-            nodeId: { id: string };
-            volumeId: { id: string };
+            volume: { id: string };
             volumeSubpath?: string;
             retention: string;
             maxDiskUsagePercent?: number;
+            cpuLimit?: number;
+            memoryLimit?: string;
         } | null;
     };
     forwards: { name: string; format?: string; endpoint: HivePaaSLoggingEndpoint }[];

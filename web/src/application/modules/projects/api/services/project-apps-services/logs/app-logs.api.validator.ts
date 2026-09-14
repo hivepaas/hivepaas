@@ -22,6 +22,11 @@ const AppLogHistoryInfoSchema = z
             .nullish()
             .transform(value => value ?? null)
             .catch(null),
+        retention: z
+            .string()
+            .nullish()
+            .transform(value => (value?.trim() ? value : undefined))
+            .catch(undefined),
     })
     .nullish()
     // An older server says nothing; treat that as "not available" rather than

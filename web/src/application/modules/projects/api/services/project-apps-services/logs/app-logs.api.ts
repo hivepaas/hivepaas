@@ -69,7 +69,7 @@ export class AppLogsApi extends BaseApi {
         request: AppLogs_GetHistory_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppLogs_GetHistory_Res, Error>> {
-        const { projectID, env, appID, start, end, limit, search, levels, streams } = request.data;
+        const { projectID, env, appID, start, end, limit, search, regex, matchCase, levels, streams } = request.data;
 
         return lastValueFrom(
             from(
@@ -78,7 +78,7 @@ export class AppLogsApi extends BaseApi {
                         ...(start ? { start: start.toISOString() } : {}),
                         ...(end ? { end: typeof end === "string" ? end : end.toISOString() } : {}),
                         ...(limit ? { limit } : {}),
-                        ...(search ? { search } : {}),
+                        ...(search ? { search, regex: Boolean(regex), matchCase: Boolean(matchCase) } : {}),
                         ...(levels?.length ? { levels: levels.join(",") } : {}),
                         ...(streams?.length ? { streams: streams.join(",") } : {}),
                     },

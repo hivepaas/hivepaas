@@ -37,18 +37,19 @@ function useGetLogs(request: GetLogsReq, options: GetLogsOptions = {}) {
     });
 }
 
-type GetHistoryReq = Omit<AppLogs_GetHistory_Req["data"], "end">;
+type GetHistoryReq = AppLogs_GetHistory_Req["data"];
 
 /**
- * Stored logs, newest page first. Each further page is older: its `end` is the
- * previous page's `nextEnd`, passed back as the server wrote it.
+ * Stored logs, newest page first. The first page ends where the caller's window
+ * ends; each further page is older, ending at the previous page's `nextEnd`,
+ * passed back as the server wrote it.
  */
 function useGetHistory(request: GetHistoryReq, options: { enabled?: boolean } = {}) {
     const { queries } = useAppLogsApi();
 
     return useInfiniteQuery({
         queryKey: [QK["projects.apps.logs.$.get-history"], request],
-        queryFn: ({ signal, pageParam }) => queries.getHistory({ ...request, end: pageParam }, signal),
+        queryFn: ({ signal, pageParam }) => queries.getHistory({ ...request, end: pageParam ?? request.end }, signal),
         initialPageParam: undefined as string | undefined,
         getNextPageParam: last => (last.data.truncated && last.data.nextEnd ? last.data.nextEnd : undefined),
         ...options,

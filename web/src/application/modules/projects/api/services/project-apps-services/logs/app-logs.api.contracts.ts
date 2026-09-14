@@ -49,6 +49,12 @@ export type AppLogHistoryReason =
 export interface AppLogHistoryInfo {
     available: boolean;
     reason: AppLogHistoryReason | null;
+    /**
+     * How far back stored logs reach, as a duration such as `30d`. Undefined
+     * when the backend is not one HivePaaS keeps, and the depth is then
+     * unknown rather than unlimited.
+     */
+    retention?: string;
 }
 
 export type AppLogs_GetHistory_Req = ApiRequestBase<{
@@ -60,6 +66,10 @@ export type AppLogs_GetHistory_Req = ApiRequestBase<{
     end?: Date | string;
     limit?: number;
     search?: string;
+    /** Reads `search` as a regular expression. Slower: the backend reads it row
+     *  by row instead of from its index, and a malformed one is rejected. */
+    regex?: boolean;
+    matchCase?: boolean;
     levels?: string[];
     streams?: string[];
 }>;

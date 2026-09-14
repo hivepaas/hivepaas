@@ -1,9 +1,17 @@
 import { useMemo, useRef } from "react";
 
 import type { LogsViewerFrame } from "./logs-viewer.types";
-import { buildDisplayedLogFrames, getAnsiLogLines, getPlainLogLines } from "./logs-viewer.utils";
+import {
+    type LogsViewerFramesAnchor,
+    anchorLogsViewerFrames,
+    buildDisplayedLogFrames,
+    getAnsiLogLines,
+    getPlainLogLines,
+    isLogsViewerFramesAppend,
+} from "./logs-viewer.utils";
 
 interface DisplayedLogLinesCache {
+    anchor: LogsViewerFramesAnchor;
     framesLength: number;
     showDebugLogs: boolean;
     showTimestamps: boolean;
@@ -19,6 +27,7 @@ function buildDisplayedLogLinesCache(
     const displayedFrames = buildDisplayedLogFrames(frames, showDebugLogs);
 
     return {
+        anchor: anchorLogsViewerFrames(frames),
         framesLength: frames.length,
         showDebugLogs,
         showTimestamps,
@@ -49,7 +58,11 @@ export function useDisplayedLogLines(
             return next;
         }
 
-        if (frames.length < cache.framesLength) {
+        // Appending to the cached lines is only correct when the frames
+        // themselves only grew at the end. Stored logs page backwards and put
+        // the older page at the front, and appending there would copy the
+        // newest lines a second time - into what Copy and Download hand over.
+        if (!isLogsViewerFramesAppend(frames, cache.anchor)) {
             const next = buildDisplayedLogLinesCache(frames, showDebugLogs, showTimestamps);
             cacheRef.current = next;
             return next;
@@ -61,6 +74,7 @@ export function useDisplayedLogLines(
 
         const appendedFrames = buildDisplayedLogFrames(frames.slice(cache.framesLength), showDebugLogs);
         const next: DisplayedLogLinesCache = {
+            anchor: anchorLogsViewerFrames(frames),
             framesLength: frames.length,
             showDebugLogs,
             showTimestamps,

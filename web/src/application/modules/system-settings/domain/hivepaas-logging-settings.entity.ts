@@ -13,13 +13,17 @@ export type HivePaaSLoggingEndpoint = {
 };
 
 export type HivePaaSLoggingVictoriaLogs = {
-    node?: { id: string; name?: string } | null;
+    /** The volume decides both where logs are stored and which node the backend runs on. */
     volume?: { id: string; name?: string } | null;
     /** Directory inside the volume; empty means its root. */
     volumeSubpath?: string;
     /** timeutil.Duration text: the server writes days as "30d", and accepts w/d/h/m/s. */
     retention: string;
     maxDiskUsagePercent?: number;
+    /** Cores. Absent means the backend may take whatever its node has. */
+    cpuLimit?: number;
+    /** A size carrying its unit, such as "1gb". Absent means no cap. */
+    memoryLimit?: string;
 };
 
 export type HivePaaSLoggingStatus = {

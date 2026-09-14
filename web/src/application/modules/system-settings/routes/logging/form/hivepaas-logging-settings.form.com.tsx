@@ -1,9 +1,11 @@
 import { type PropsWithChildren, useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { Plus, Trash2 } from "lucide-react";
 import { Controller, FormProvider, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { ClusterVolumesQueries, NodesQueries } from "~/cluster/data/queries";
+import { ClusterVolumesQueries } from "~/cluster/data/queries";
 import type { HivePaaSLoggingSettings } from "~/system-settings/domain";
 import { SectionHeader } from "~/system-settings/module-shared";
 
@@ -56,12 +58,15 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
     const forwards = useFieldArray({ control, name: "forwards" });
     const enabled = useWatch({ control, name: "enabled" });
     const backendManaged = useWatch({ control, name: "backendManaged" });
-    const nodeId = useWatch({ control, name: "nodeId" });
+    const volumeId = useWatch({ control, name: "volumeId" });
 
-    const nodes = NodesQueries.useFindManyPaginated(LIST_ALL).data?.data ?? [];
-    const volumes = (ClusterVolumesQueries.useFindManyPaginated(LIST_ALL).data?.data ?? []).filter(
-        volume => !volume.nodeId || volume.nodeId === nodeId,
-    );
+    const volumes = ClusterVolumesQueries.useFindManyPaginated(LIST_ALL).data?.data ?? [];
+    // The backend runs wherever its volume is, so a volume that names no node -
+    // by id or by label - leaves that open. Not gated on the cluster having
+    // more than one node: a warning about losing logs must not be suppressed by
+    // whether some other query has loaded its rows yet.
+    const selectedVolume = volumes.find(volume => volume.id === volumeId);
+    const isVolumeUnpinned = selectedVolume !== undefined && !selectedVolume.nodeId && !selectedVolume.nodeLabel;
 
     return (
         <div className="pt-2">
@@ -80,6 +85,13 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                         disabled={readOnly}
                         className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                     >
+                        <div className={cn(dashedBorderBox)}>
+                            <span className="font-semibold text-orange-500">Note:</span> Default Docker logs are stored
+                            locally on each host, which risks disk exhaustion, loses history when containers are
+                            removed, and lacks centralized search across nodes. You can use the configuration below to
+                            collect, persist, and centralize logs across your cluster.
+                        </div>
+
                         <SectionHeader>General</SectionHeader>
                         <SectionBody>
                             <InfoBlock
@@ -177,49 +189,25 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
 
                                     {backendManaged ? (
                                         <>
-                                            <InfoBlock
-                                                titleWidth={220}
-                                                title={
-                                                    <LabelWithInfo
-                                                        label="Node"
-                                                        content="Where VictoriaLogs runs and keeps its data."
-                                                        isRequired
-                                                    />
-                                                }
-                                            >
-                                                <Controller
-                                                    control={control}
-                                                    name="nodeId"
-                                                    render={({ field }) => (
-                                                        <Select
-                                                            value={field.value || undefined}
-                                                            onValueChange={field.onChange}
-                                                            disabled={readOnly}
-                                                        >
-                                                            <SelectTrigger className="w-full max-w-[420px]">
-                                                                <SelectValue placeholder="Select a node" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {nodes.map(node => (
-                                                                    <SelectItem
-                                                                        key={node.id}
-                                                                        value={node.id}
-                                                                    >
-                                                                        {node.name || node.hostname || node.refId}
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
-                                                    )}
-                                                />
-                                                <FieldMessage name="nodeId" />
-                                            </InfoBlock>
+                                            {isVolumeUnpinned && (
+                                                <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                                                    <span className="font-medium">
+                                                        This volume is not pinned to a node.
+                                                    </span>{" "}
+                                                    The logging backend runs wherever its volume is, so it is free to
+                                                    start on any node in the cluster. Make sure every node can reach
+                                                    this volume — a networked or shared-storage driver — or pin the
+                                                    volume to a node. If the volume is local to one node, the backend
+                                                    can come up elsewhere on an empty directory: the logs collected so
+                                                    far stay behind on the old node and stop being shown.
+                                                </div>
+                                            )}
                                             <InfoBlock
                                                 titleWidth={220}
                                                 title={
                                                     <LabelWithInfo
                                                         label="Data volume"
-                                                        content="Only volumes reachable from the chosen node. It is kept when logging is turned off."
+                                                        content="Where the logs are stored, and what decides which node the backend runs on. It is kept when logging is turned off."
                                                         isRequired
                                                     />
                                                 }
@@ -278,6 +266,7 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                             >
                                                 <Input
                                                     {...register("retention")}
+                                                    placeholder="30d"
                                                     className="max-w-[200px]"
                                                 />
                                                 <FieldMessage name="retention" />
@@ -287,7 +276,7 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                 title={
                                                     <LabelWithInfo
                                                         label="Max disk usage %"
-                                                        content="Drop the oldest days once the disk is this full. Optional."
+                                                        content="Drop the oldest days once the disk is this full. A plain number, not a percent sign. Empty means the retention period is the only limit."
                                                     />
                                                 }
                                             >
@@ -297,6 +286,7 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                     render={({ field }) => (
                                                         <InputNumber
                                                             value={field.value ?? undefined}
+                                                            placeholder="80"
                                                             min={1}
                                                             max={100}
                                                             showControls={false}
@@ -311,6 +301,54 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                     )}
                                                 />
                                                 <FieldMessage name="maxDiskUsagePercent" />
+                                            </InfoBlock>
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={
+                                                    <LabelWithInfo
+                                                        label="CPU limit"
+                                                        content="Cores the backend may use, as a number: 2, or 0.5 for half a core. Empty means no limit, and a heavy query can then take whatever the node has from the apps running beside it."
+                                                    />
+                                                }
+                                            >
+                                                <Controller
+                                                    control={control}
+                                                    name="cpuLimit"
+                                                    render={({ field }) => (
+                                                        <InputNumber
+                                                            value={field.value ?? undefined}
+                                                            placeholder="2"
+                                                            min={0.25}
+                                                            max={256}
+                                                            step={0.25}
+                                                            showControls={false}
+                                                            useGrouping={false}
+                                                            className="max-w-[200px]"
+                                                            onValueChange={value => {
+                                                                field.onChange(
+                                                                    typeof value === "number" ? value : null,
+                                                                );
+                                                            }}
+                                                        />
+                                                    )}
+                                                />
+                                                <FieldMessage name="cpuLimit" />
+                                            </InfoBlock>
+                                            <InfoBlock
+                                                titleWidth={220}
+                                                title={
+                                                    <LabelWithInfo
+                                                        label="Memory limit"
+                                                        content="Memory the backend may use, written with its unit: 1gb, 512mb. VictoriaLogs sizes its caches from what it is allowed, so this is not only a ceiling - with no limit it sizes itself against the whole node. Set it too low and the container is killed mid-query rather than slowed down."
+                                                    />
+                                                }
+                                            >
+                                                <Input
+                                                    {...register("memoryLimit")}
+                                                    placeholder="1gb"
+                                                    className="max-w-[200px]"
+                                                />
+                                                <FieldMessage name="memoryLimit" />
                                             </InfoBlock>
                                         </>
                                     ) : (

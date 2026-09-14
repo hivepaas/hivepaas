@@ -25,8 +25,10 @@ var (
 
 // GetAppLogHistoryReq is a search over an app's stored logs.
 //
-// Levels and Streams are comma-separated. There is no field for query text:
-// see services/logging/victorialogs/query.go.
+// Levels and Streams arrive comma-separated and are split by the decoder's
+// StringToSliceHookFunc, so one value and many look the same here. Search is a value, never query text:
+// see services/logging/victorialogs/query.go. Regex widens how that value is
+// read, not where it is placed, so the scope still cannot be escaped.
 type GetAppLogHistoryReq struct {
 	ProjectID    string    `json:"-"`
 	ProjectEnvID string    `json:"-"`
@@ -35,12 +37,31 @@ type GetAppLogHistoryReq struct {
 	End          time.Time `json:"-" mapstructure:"end"`
 	Limit        int       `json:"-" mapstructure:"limit"`
 	Search       string    `json:"-" mapstructure:"search"`
-	Levels       string    `json:"-" mapstructure:"levels"`
-	Streams      string    `json:"-" mapstructure:"streams"`
+	// Regex reads Search as a regular expression instead of plain text. Plain
+	// is the default because it is the filter the backend can answer from its
+	// index; a regular expression is read row by row.
+	Regex bool `json:"-" mapstructure:"regex"`
+	// MatchCase compares Search case-sensitively, in either mode.
+	MatchCase bool     `json:"-" mapstructure:"matchCase"`
+	Levels    []string `json:"-" mapstructure:"levels"`
+	Streams   []string `json:"-" mapstructure:"streams"`
 }
 
 func NewGetAppLogHistoryReq() *GetAppLogHistoryReq {
 	return &GetAppLogHistoryReq{}
+}
+
+// ModifyRequest implements interface basedto.ReqModifier.
+//
+// It folds the lists to the spelling the allowed values are written in, so that
+// `levels=ERROR, warn` is the request it obviously means rather than two
+// validation errors about capitalization and a stray space. The handler calls
+// this before Validate, so everything downstream - the check included - reads
+// one spelling.
+func (req *GetAppLogHistoryReq) ModifyRequest() error {
+	req.Levels = normalizeList(req.Levels)
+	req.Streams = normalizeList(req.Streams)
+	return nil
 }
 
 // ApplyDefaults fills what was not asked: the last hour, up to now.
@@ -56,14 +77,11 @@ func (req *GetAppLogHistoryReq) ApplyDefaults(now time.Time) {
 	}
 }
 
-func (req *GetAppLogHistoryReq) LevelList() []string  { return splitList(req.Levels) }
-func (req *GetAppLogHistoryReq) StreamList() []string { return splitList(req.Streams) }
-
-func splitList(s string) []string {
-	out := []string{}
-	for _, p := range strings.Split(s, ",") {
-		if p = strings.ToLower(strings.TrimSpace(p)); p != "" {
-			out = append(out, p)
+func normalizeList(values []string) []string {
+	out := make([]string, 0, len(values))
+	for _, v := range values {
+		if v = strings.ToLower(strings.TrimSpace(v)); v != "" {
+			out = append(out, v)
 		}
 	}
 	return out
@@ -76,8 +94,8 @@ func (req *GetAppLogHistoryReq) Validate() hperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
 	validators = append(validators, basedto.ValidateNumber(&req.Limit, false, 0, MaxLogHistoryLimit, "limit")...)
 	validators = append(validators, basedto.ValidateStr(&req.Search, false, 0, maxLogHistorySearchLen, "search")...)
-	validators = append(validators, basedto.ValidateSlice(req.LevelList(), false, 0, logHistoryLevels, "levels")...)
-	validators = append(validators, basedto.ValidateSlice(req.StreamList(), false, 0, logHistoryStreams, "streams")...)
+	validators = append(validators, basedto.ValidateSlice(req.Levels, false, 0, logHistoryLevels, "levels")...)
+	validators = append(validators, basedto.ValidateSlice(req.Streams, false, 0, logHistoryStreams, "streams")...)
 	validators = append(validators, basedto.ValidateCond(
 		req.Start.IsZero() || req.End.IsZero() || req.Start.Before(req.End), "end")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))

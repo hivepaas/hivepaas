@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/copier"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
@@ -87,11 +88,14 @@ func (resp *EndpointResp) CopyBearerToken(field entity.EncryptedField) error {
 }
 
 type VictoriaLogsResp struct {
-	Node                *settings.BaseSettingResp `json:"node"`
 	Volume              *settings.BaseSettingResp `json:"volume"`
 	VolumeSubpath       string                    `json:"volumeSubpath,omitempty"`
 	Retention           timeutil.Duration         `json:"retention"`
 	MaxDiskUsagePercent int                       `json:"maxDiskUsagePercent,omitempty"`
+	CPULimit            float64                   `json:"cpuLimit,omitempty"`
+	// A size with its unit, such as "1gb". swaggertype says so because swag
+	// sees the int64 underneath rather than what MarshalJSON writes.
+	MemoryLimit unit.DataSize `json:"memoryLimit,omitempty" swaggertype:"string"`
 }
 
 type ForwardResp struct {
@@ -173,13 +177,6 @@ func TransformLoggingBackend(
 	vlogs := loggingSettings.Backend.VictoriaLogs
 	if vlogs != nil {
 		vlogsResp := resp.Backend.VictoriaLogs
-		if vlogs.Node.ID != "" {
-			itemResp, _ := settings.TransformSettingBase(input.RefObjects.RefSettings[vlogs.Node.ID])
-			if itemResp == nil {
-				itemResp = settings.NewMissingSetting(vlogs.Node.ID, base.SettingTypeClusterNode)
-			}
-			vlogsResp.Node = itemResp
-		}
 		if vlogs.Volume.ID != "" {
 			itemResp, _ := settings.TransformSettingBase(input.RefObjects.RefSettings[vlogs.Volume.ID])
 			if itemResp == nil {

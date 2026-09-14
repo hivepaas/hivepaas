@@ -61,6 +61,10 @@ type Config struct {
 	// something else counts that something else against this cap.
 	MaxDiskUsagePercent int
 
+	// Resources caps what the container may take from its node. The zero value
+	// is no cap, which is what running without this setting means.
+	Resources loggingmodel.Resources
+
 	// Endpoint is how to reach an already-running instance. It is what the read
 	// path uses, and is unset while only RuntimeSpec is needed.
 	Endpoint loggingmodel.Endpoint
@@ -97,8 +101,9 @@ func (c *Client) RuntimeSpec() (*loggingmodel.RuntimeSpec, error) {
 	}
 
 	return &loggingmodel.RuntimeSpec{
-		Image: DefaultImage,
-		Args:  args,
+		Image:     DefaultImage,
+		Args:      args,
+		Resources: c.cfg.Resources,
 		Mounts: []loggingmodel.Mount{{
 			VolumeName: c.cfg.DataVolumeName,
 			Target:     DataPath,

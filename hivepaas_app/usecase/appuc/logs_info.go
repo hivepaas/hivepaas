@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
 )
 
@@ -45,7 +46,11 @@ func (uc *UC) GetAppLogsInfo(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	resp.Data.History = &appdto.AppLogHistoryInfoResp{Available: history.Available, Reason: string(history.Reason)}
+	resp.Data.History = &appdto.AppLogHistoryInfoResp{
+		Available: history.Available,
+		Reason:    string(history.Reason),
+		Retention: historyRetention(history.Retention),
+	}
 
 	taskList, err := uc.dockerManager.ServiceTaskList(ctx, app.ServiceID, []swarm.TaskState{swarm.TaskStateRunning})
 	if err != nil {
@@ -59,4 +64,14 @@ func (uc *UC) GetAppLogsInfo(
 	}
 
 	return resp, nil
+}
+
+// historyRetention writes a retention the way the logging setting writes it,
+// and writes nothing at all for the zero the service reports when it does not
+// know - "0s" would read as "kept for no time".
+func historyRetention(d timeutil.Duration) string {
+	if d <= 0 {
+		return ""
+	}
+	return d.String()
 }

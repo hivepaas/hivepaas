@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/services/logging"
 )
 
 type SettingApplyReq struct {
@@ -41,12 +43,12 @@ const (
 // AppLogQuery is a search over one app's stored logs. The app is not a field:
 // the service puts it into the query itself, which is the point.
 type AppLogQuery struct {
-	Contains string
-	Levels   []string
-	Streams  []string
-	Start    time.Time
-	End      time.Time
-	Limit    int
+	Search  *logging.TextSearch
+	Levels  []string
+	Streams []string
+	Start   time.Time
+	End     time.Time
+	Limit   int
 }
 
 // HistoryUnavailableReason is why an app's stored logs cannot be shown.
@@ -64,4 +66,7 @@ const (
 type AppHistory struct {
 	Available bool
 	Reason    HistoryUnavailableReason
+	// Retention is how far back the stored logs reach. It is zero when the
+	// backend is not one HivePaaS keeps: see retentionOf.
+	Retention timeutil.Duration
 }

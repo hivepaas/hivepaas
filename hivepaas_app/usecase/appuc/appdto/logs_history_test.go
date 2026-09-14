@@ -31,10 +31,10 @@ func TestLogHistoryReqValidate(t *testing.T) {
 		ok   bool
 	}{
 		{"defaults", func(*GetAppLogHistoryReq) {}, true},
-		{"levels", func(r *GetAppLogHistoryReq) { r.Levels = "error, WARN" }, true},
-		{"unknown level", func(r *GetAppLogHistoryReq) { r.Levels = "error,verbose" }, false},
-		{"streams", func(r *GetAppLogHistoryReq) { r.Streams = "stderr" }, true},
-		{"unknown stream", func(r *GetAppLogHistoryReq) { r.Streams = "stdin" }, false},
+		{"levels", func(r *GetAppLogHistoryReq) { r.Levels = []string{"error", " WARN"} }, true},
+		{"unknown level", func(r *GetAppLogHistoryReq) { r.Levels = []string{"error", "verbose"} }, false},
+		{"streams", func(r *GetAppLogHistoryReq) { r.Streams = []string{"stderr"} }, true},
+		{"unknown stream", func(r *GetAppLogHistoryReq) { r.Streams = []string{"stdin"} }, false},
 		{"limit too big", func(r *GetAppLogHistoryReq) { r.Limit = 5001 }, false},
 		{"limit negative", func(r *GetAppLogHistoryReq) { r.Limit = -1 }, false},
 		{"search too long", func(r *GetAppLogHistoryReq) { r.Search = string(make([]byte, 257)) }, false},
@@ -44,6 +44,9 @@ func TestLogHistoryReqValidate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			r := validReq()
 			tc.mod(r)
+			// The handler modifies before it validates; a case that reads as
+			// valid only without that step is not the behavior being checked.
+			assert.NoError(t, r.ModifyRequest())
 			errs := r.Validate()
 			if tc.ok {
 				assert.Empty(t, errs)
@@ -54,10 +57,17 @@ func TestLogHistoryReqValidate(t *testing.T) {
 	}
 }
 
-func TestLogHistoryReqSplitsLists(t *testing.T) {
+// Splitting is the decoder's job - see TestParseQuerySplitsListsEitherWayTheyAreWritten.
+// What is left here is folding the pieces to the spelling the allowed values
+// use, which ModifyRequest does before the handler validates.
+func TestLogHistoryReqModifyRequestNormalizesLists(t *testing.T) {
 	r := validReq()
-	r.Levels = " error, WARN ,,"
-	r.Streams = "stderr"
-	assert.Equal(t, []string{"error", "warn"}, r.LevelList())
-	assert.Equal(t, []string{"stderr"}, r.StreamList())
+	r.Levels = []string{" error", "WARN ", ""}
+	r.Streams = []string{"stderr"}
+
+	assert.NoError(t, r.ModifyRequest())
+
+	assert.Equal(t, []string{"error", "warn"}, r.Levels)
+	assert.Equal(t, []string{"stderr"}, r.Streams)
+	assert.Empty(t, r.Validate(), "the folded values are the allowed ones")
 }

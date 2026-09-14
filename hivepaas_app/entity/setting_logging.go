@@ -6,6 +6,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 )
 
 const (
@@ -88,7 +89,11 @@ type LoggingCollectorVlagent struct {
 }
 
 type LoggingVictoriaLogs struct {
-	Node   ObjectID `json:"node,omitempty"`
+	// Volume decides both what the backend writes to and where it runs: the
+	// placement constraint is derived from the volume's own pin, so the two can
+	// never disagree. A volume pinned to nowhere leaves the backend unpinned
+	// too - which on a cluster of more than one node means swarm may move it,
+	// and a local volume on the new node is empty.
 	Volume ObjectID `json:"volume,omitempty"`
 
 	// VolumeSubpath is the directory inside the volume the store keeps its data
@@ -105,6 +110,19 @@ type LoggingVictoriaLogs struct {
 	// MaxDiskUsagePercent drops the oldest days once the filesystem is this
 	// full. Zero leaves it unset.
 	MaxDiskUsagePercent int `json:"maxDiskUsagePercent,omitempty"`
+
+	// CPULimit is in cores, the way app resource settings express it. Zero is
+	// no cap, which is what running without this setting meant: a heavy query
+	// could take whatever the node had, from the apps running beside it.
+	CPULimit float64 `json:"cpuLimit,omitempty"`
+
+	// MemoryLimit is written the way every other size in HivePaaS is - "1gb",
+	// "512mb" - so the unit travels with the value and cannot be mistaken for
+	// another. Zero is no cap.
+	//
+	// It is more than a ceiling: VictoriaLogs sizes its caches from the memory
+	// it is allowed, so with no limit it sizes itself against the whole node.
+	MemoryLimit unit.DataSize `json:"memoryLimit,omitempty"`
 }
 
 type LoggingEndpoint struct {
@@ -133,13 +151,8 @@ func (s *LoggingSettings) GetType() base.SettingType {
 // link keeps that volume from being deleted while logging still uses it.
 func (s *LoggingSettings) GetRefObjectIDs() *RefObjectIDs {
 	ids := &RefObjectIDs{}
-	if s.Backend.VictoriaLogs != nil {
-		if s.Backend.VictoriaLogs.Node.ID != "" {
-			ids.RefSettingIDs = append(ids.RefSettingIDs, s.Backend.VictoriaLogs.Node.ID)
-		}
-		if s.Backend.VictoriaLogs.Volume.ID != "" {
-			ids.RefSettingIDs = append(ids.RefSettingIDs, s.Backend.VictoriaLogs.Volume.ID)
-		}
+	if s.Backend.VictoriaLogs != nil && s.Backend.VictoriaLogs.Volume.ID != "" {
+		ids.RefSettingIDs = append(ids.RefSettingIDs, s.Backend.VictoriaLogs.Volume.ID)
 	}
 	return ids
 }

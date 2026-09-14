@@ -35,7 +35,7 @@ func TestLoggingSurvivesPersistence(t *testing.T) {
 			Type:    base.LoggingBackendTypeVictoriaLogs,
 			Managed: true,
 			VictoriaLogs: &entity.LoggingVictoriaLogs{
-				Node: entity.ObjectID{ID: "node-1"}, Volume: entity.ObjectID{ID: "vol-1"},
+				Volume: entity.ObjectID{ID: "vol-1"},
 			},
 		},
 		Forwards: []entity.LoggingForward{{
@@ -60,7 +60,6 @@ func TestLoggingSurvivesPersistence(t *testing.T) {
 	if got.Backend.VictoriaLogs == nil {
 		t.Fatal("VictoriaLogs block did not survive")
 	}
-	assert.Equal(t, "node-1", got.Backend.VictoriaLogs.Node.ID)
 	assert.Equal(t, "vol-1", got.Backend.VictoriaLogs.Volume.ID)
 	if len(got.Forwards) != 1 {
 		t.Fatalf("want one forward, got %d", len(got.Forwards))

@@ -20,25 +20,26 @@ import (
 // Not attachable: a container started by hand has no business on it.
 func (s *service) ensureLoggingNetwork(ctx context.Context) (string, error) {
 	list, err := s.dockerManager.NetworkList(ctx, func(opts *client.NetworkListOptions) {
-		docker.FilterAdd(&opts.Filters, "name", NetworkLogging)
+		docker.FilterAdd(&opts.Filters, "name", base.NetworkLogging)
 	})
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}
 	// The name filter matches substrings.
 	for i := range list.Items {
-		if list.Items[i].Name == NetworkLogging {
+		if list.Items[i].Name == base.NetworkLogging {
 			return list.Items[i].ID, nil
 		}
 	}
 
-	resp, err := s.dockerManager.NetworkCreate(ctx, NetworkLogging, func(opts *client.NetworkCreateOptions) {
-		opts.Driver = docker.NetworkDriverOverlay
-		opts.Scope = docker.NetworkScopeSwarm
-		opts.Attachable = false
-		opts.Options = map[string]string{docker.NetworkOptionDriverMTU: docker.DefaultOverlayNetworkMTU}
-		opts.Labels = map[string]string{LabelManagedBy: "true"}
-	})
+	resp, err := s.dockerManager.NetworkCreate(ctx, base.NetworkLogging,
+		func(opts *client.NetworkCreateOptions) {
+			opts.Driver = docker.NetworkDriverOverlay
+			opts.Scope = docker.NetworkScopeSwarm
+			opts.Attachable = false
+			opts.Options = map[string]string{docker.NetworkOptionDriverMTU: docker.DefaultOverlayNetworkMTU}
+			opts.Labels = map[string]string{LabelManagedBy: "true"}
+		})
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}

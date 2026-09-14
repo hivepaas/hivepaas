@@ -74,14 +74,40 @@ func TestLiveQueryCannotLeaveItsScope(t *testing.T) {
 		assert.NotContains(t, e.Message, "secret of other")
 	}
 
-	for _, hostile := range []string{
+	hostile := []string{
 		`x" OR "` + field + `":="` + other,
 		`") OR ("` + field + `":="` + other,
 		"secret of other",
-	} {
-		got := query(func(r *loggingmodel.QueryReq) { r.Contains = hostile })
+	}
+	for _, h := range hostile {
+		got := query(func(r *loggingmodel.QueryReq) {
+			r.Search = &loggingmodel.TextSearch{Value: h}
+		})
 		for _, e := range got {
-			assert.NotContains(t, e.Message, "secret of other", hostile)
+			assert.NotContains(t, e.Message, "secret of other", h)
+		}
+	}
+
+	// The same inputs read as regular expressions. Handing the value to a regex
+	// engine cannot move it out of the literal it sits in, so the query either
+	// runs within its scope or the backend rejects the expression as malformed
+	// - `") OR ("` has unbalanced parentheses. Neither outcome shows another
+	// app's line, and a rejection has to arrive as an invalid query rather than
+	// as a backend that is down, or the dashboard tells the user the wrong
+	// thing about their own typing.
+	for _, h := range hostile {
+		r := &loggingmodel.QueryReq{
+			Match:  scope,
+			Limit:  100,
+			Search: &loggingmodel.TextSearch{Value: h, IsRegex: true},
+		}
+		got, err := c.Query(context.Background(), r)
+		if err != nil {
+			assert.ErrorIs(t, err, loggingmodel.ErrQueryInvalid, h)
+			continue
+		}
+		for _, e := range got.Entries {
+			assert.NotContains(t, e.Message, "secret of other", h)
 		}
 	}
 

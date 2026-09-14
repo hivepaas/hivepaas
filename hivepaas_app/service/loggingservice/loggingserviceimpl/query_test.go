@@ -40,12 +40,16 @@ func TestQueryAppLogsScopesToTheLoadedApp(t *testing.T) {
 	fb := withFakeBackend(s)
 
 	_, err := s.QueryAppLogs(context.Background(), nil, &entity.App{ID: "APP1"},
-		&loggingservice.AppLogQuery{Contains: "boom", Levels: []string{"error"}, Limit: 50})
+		&loggingservice.AppLogQuery{
+			Search: &logging.TextSearch{Value: "boom", IsRegex: true},
+			Levels: []string{"error"}, Limit: 50,
+		})
 	assert.NoError(t, err)
 
 	if assert.NotNil(t, fb.got) {
 		assert.Equal(t, []logging.FieldMatch{{Field: "attrs." + appservice.LabelLogAppID, Value: "APP1"}}, fb.got.Match)
-		assert.Equal(t, "boom", fb.got.Contains)
+		assert.Equal(t, &logging.TextSearch{Value: "boom", IsRegex: true}, fb.got.Search,
+			"the search mode reaches the backend as the caller set it")
 		assert.Equal(t, []string{"error"}, fb.got.Levels)
 		assert.Equal(t, 50, fb.got.Limit)
 	}

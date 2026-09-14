@@ -28,10 +28,6 @@ const (
 	// mounted into the collector - a glob pointing there would match nothing
 	// and report no error.
 	dockerContainersGlob = "/var/lib/docker/containers/*/*-json.log"
-
-	// NetworkLogging is the overlay the collector and the backend talk over.
-	// Only the logging stack joins it.
-	NetworkLogging = "hivepaas_logging_net"
 )
 
 // toEndpoint converts a stored endpoint into one services/logging can use.
@@ -69,7 +65,10 @@ func backendBaseURL() string {
 }
 
 // buildCollectSpec turns the stored configuration into a collection job.
-func (s *service) buildCollectSpec(cfg *entity.LoggingSettings, ingestURL string) (*logging.CollectSpec, error) {
+func (s *service) buildCollectSpec(
+	cfg *entity.LoggingSettings,
+	ingestURL string,
+) (*logging.CollectSpec, error) {
 	var sources []*logging.Source
 	if cfg.Sources.Apps || cfg.Sources.HivePaaS {
 		// One source, not two. Apps and HivePaaS's own services write into the
@@ -130,7 +129,10 @@ func (s *service) loadSettings(
 }
 
 // loadEnabledSettings returns the decrypted configuration, or ErrNotEnabled.
-func (s *service) loadEnabledSettings(ctx context.Context, db database.IDB) (*entity.LoggingSettings, error) {
+func (s *service) loadEnabledSettings(
+	ctx context.Context,
+	db database.IDB,
+) (*entity.LoggingSettings, error) {
 	setting, err := s.loadSettings(ctx, db, false)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

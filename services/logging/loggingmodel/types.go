@@ -131,8 +131,8 @@ type QueryReq struct {
 	// refused: the caller - not whoever asked it - decides what may be seen,
 	// and puts that here.
 	Match []FieldMatch
-	// Contains is a case-insensitive substring of the message.
-	Contains string
+	// Search is the free-text part of the query.
+	Search *TextSearch
 	// Levels keeps lines whose JSON message carries one of these levels,
 	// compared case-insensitively. Lines that are not JSON have no level.
 	Levels []string
@@ -143,6 +143,22 @@ type QueryReq struct {
 	// Limit is how many of the newest matching lines to return.
 	Limit int
 }
+
+// TextSearch is free text to match a message against.
+//
+// The mode decides more than what matches. Plain text is a token filter the
+// backend answers from its index; a regular expression is read row by row, and
+// measured about five times slower over the same data. So plain is the default,
+// and a regular expression is something a person turns on knowing why.
+type TextSearch struct {
+	// Value is matched from the start of a token when plain, and as a regular
+	// expression when IsRegex. Empty means no text filter at all.
+	Value         string
+	IsRegex       bool
+	CaseSensitive bool
+}
+
+func (s *TextSearch) IsEmpty() bool { return s == nil || s.Value == "" }
 
 // LogEntry is one stored line.
 type LogEntry struct {

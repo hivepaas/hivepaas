@@ -62,7 +62,7 @@ func TestEnsureLoggingNetworkCreatesAnOverlayOnce(t *testing.T) {
 func TestEnsureLoggingNetworkIgnoresANameThatOnlyContainsIt(t *testing.T) {
 	// docker's name filter matches substrings
 	fd := &fakeDocker{networks: []network.Summary{{Network: network.Network{
-		ID: "other", Name: "p1_" + NetworkLogging + "_copy",
+		ID: "other", Name: "p1_" + base.NetworkLogging + "_copy",
 	}}}}
 	s := newTestService(fd, nil)
 
@@ -91,7 +91,7 @@ func TestDeployJoinsTheStackOnlyToNetworksItNeeds(t *testing.T) {
 	if backend == nil || collector == nil {
 		t.Fatalf("expected both services, created %d", len(fd.created))
 	}
-	logNet := "id-" + NetworkLogging
+	logNet := "id-" + base.NetworkLogging
 	// The backend is the only thing that bridges the two: the collector runs on
 	// every node, and the internal network is where the database lives.
 	assert.ElementsMatch(t, []string{logNet, base.NetworkHivepaasLocal}, networkTargets(backend))

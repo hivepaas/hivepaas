@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/services/logging"
 	"github.com/hivepaas/hivepaas/services/logging/victorialogs"
 	"github.com/hivepaas/hivepaas/services/logging/vlagent"
@@ -44,7 +45,7 @@ func (s *service) Apply(
 	if err := cfg.Decrypt(); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return nil, s.deploy(ctx, cfg)
+	return nil, s.deploy(ctx, db, cfg)
 }
 
 // deploy creates the backend before the collector.
@@ -55,13 +56,13 @@ func (s *service) Apply(
 // -remoteWrite.tmpDataPath - observed opening with persistence enabled - and
 // drains it once the backend answers. Waiting on a health check here would add
 // a failure mode, a timeout the API holds open, for no lost line.
-func (s *service) deploy(ctx context.Context, cfg *entity.LoggingSettings) error {
+func (s *service) deploy(ctx context.Context, db database.IDB, cfg *entity.LoggingSettings) error {
 	logNet, err := s.ensureLoggingNetwork(ctx)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 
-	ingestURL, err := s.deployBackend(ctx, cfg, logNet)
+	ingestURL, err := s.deployBackend(ctx, db, cfg, logNet)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
@@ -125,7 +126,12 @@ func (s *service) deployCollector(ctx context.Context, cfg *entity.LoggingSettin
 
 // deployBackend creates the backend when HivePaaS owns it, and reports where
 // the collector should write either way.
-func (s *service) deployBackend(ctx context.Context, cfg *entity.LoggingSettings, logNet string) (string, error) {
+func (s *service) deployBackend(
+	ctx context.Context,
+	db database.IDB,
+	cfg *entity.LoggingSettings,
+	logNet string,
+) (string, error) {
 	if !cfg.Backend.Managed {
 		ep, err := toEndpoint(cfg.Backend.Ingest)
 		if err != nil {
@@ -141,13 +147,15 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.LoggingSettings
 	if vl == nil {
 		return "", hperrors.Wrap(hperrors.ErrLoggingNotConfigured)
 	}
-	if vl.Node.ID == "" {
-		return "", hperrors.Wrap(hperrors.ErrLoggingBackendNodeMissing)
-	}
 	if vl.Volume.ID == "" {
 		// Without a volume the logs live in the container's writable layer and
 		// vanish on the next restart, silently.
 		return "", hperrors.Wrap(hperrors.ErrLoggingVolumeMissing)
+	}
+
+	constraint, err := s.backendPlacement(ctx, db, vl.Volume.ID)
+	if err != nil {
+		return "", hperrors.Wrap(err)
 	}
 
 	deployer, err := logging.NewDeployer(
@@ -157,6 +165,7 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.LoggingSettings
 			DataSubpath:         vl.VolumeSubpath,
 			Retention:           vl.Retention.ToDuration(),
 			MaxDiskUsagePercent: vl.MaxDiskUsagePercent,
+			Resources:           toLoggingResources(vl),
 		}},
 	)
 	if err != nil {
@@ -175,9 +184,10 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.LoggingSettings
 	}
 
 	svcSpec, err := toSwarmServiceSpec(rt, swarmSpecOpts{
-		Name:     ServiceNameBackend,
-		NodeID:   vl.Node.ID,
-		Networks: []string{logNet, base.NetworkHivepaasLocal},
+		Name:       ServiceNameBackend,
+		Constraint: constraint,
+		Resources:  rt.Resources,
+		Networks:   []string{logNet, base.NetworkHivepaasLocal},
 	})
 	if err != nil {
 		return "", hperrors.Wrap(err)
@@ -187,6 +197,43 @@ func (s *service) deployBackend(ctx context.Context, cfg *entity.LoggingSettings
 	}
 
 	return backendBaseURL() + victorialogs.IngestPath, nil
+}
+
+// backendPlacement is where the backend must run, taken from the volume it
+// writes to rather than asked for separately.
+//
+// One answer cannot disagree with itself: a placement chosen apart from the
+// volume can name a node the volume is not on, and the backend then starts on
+// an empty directory. A volume pinned to nowhere returns no constraint, which
+// leaves swarm free to place - and free to move - the backend.
+func (s *service) backendPlacement(ctx context.Context, db database.IDB, volumeID string) (string, error) {
+	setting, err := s.settingRepo.GetByID(ctx, db, entity.NewObjectScopeGlobal(),
+		base.SettingTypeClusterVolume, volumeID, true)
+	if err != nil {
+		return "", hperrors.Wrap(err)
+	}
+	if setting == nil {
+		return "", hperrors.Wrap(hperrors.ErrLoggingVolumeMissing)
+	}
+	vol, err := setting.AsClusterVolume()
+	if err != nil {
+		return "", hperrors.Wrap(err)
+	}
+
+	constraint, conflict := placementservice.VolumePinConstraint([]placementservice.VolumePin{{
+		VolumeName: setting.Name,
+		NodeID:     vol.NodeID,
+		NodeLabel:  vol.NodeLabel,
+	}})
+	if conflict != nil {
+		// One volume cannot conflict with itself; the signature allows many.
+		return "", hperrors.Wrap(hperrors.ErrLoggingDeployFailed).WithExtraDetail("%s", conflict.Error())
+	}
+	return constraint, nil
+}
+
+func toLoggingResources(vl *entity.LoggingVictoriaLogs) logging.Resources {
+	return logging.Resources{CPULimit: vl.CPULimit, MemoryLimit: vl.MemoryLimit.Bytes()}
 }
 
 // TearDown removes what Apply created, in the reverse order, and leaves the

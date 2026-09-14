@@ -2,6 +2,7 @@ package loggingserviceimpl
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/moby/moby/api/types/network"
@@ -15,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -102,6 +104,34 @@ func (f *fakeDocker) ServiceRemove(
 type fakeSettingRepo struct {
 	repository.SettingRepo
 	setting *entity.Setting
+	// volume is what a lookup by id returns; nil means the volume is pinned to
+	// nowhere, which is a placement answer rather than a failure.
+	volume *entity.Setting
+}
+
+func (f *fakeSettingRepo) GetByID(
+	_ context.Context, _ database.IDB, _ *entity.ObjectScope, _ base.SettingType,
+	_ string, _ bool, _ ...bunex.SelectQueryOption,
+) (*entity.Setting, error) {
+	if f.volume != nil {
+		return f.volume, nil
+	}
+	return unpinnedVolumeSetting(), nil
+}
+
+// unpinnedVolumeSetting is a volume that names no node, so placement is free.
+func unpinnedVolumeSetting() *entity.Setting {
+	return volumeSetting(&entity.ClusterVolume{})
+}
+
+func volumeSetting(vol *entity.ClusterVolume) *entity.Setting {
+	raw, err := json.Marshal(vol)
+	if err != nil {
+		panic(err)
+	}
+	return &entity.Setting{
+		ID: "vol-1", Name: "logs-data", Type: base.SettingTypeClusterVolume, Data: string(raw),
+	}
 }
 
 func (f *fakeSettingRepo) GetSingle(
@@ -123,7 +153,6 @@ func enabledConfig() *entity.LoggingSettings {
 			Type:    base.LoggingBackendTypeVictoriaLogs,
 			Managed: true,
 			VictoriaLogs: &entity.LoggingVictoriaLogs{
-				Node:   entity.ObjectID{ID: "node-1"},
 				Volume: entity.ObjectID{ID: "vol-1"},
 			},
 		},
@@ -160,7 +189,7 @@ func TestDeployCreatesBackendBeforeCollector(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, nil)
 
-	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+	if err := s.deploy(context.Background(), nil, enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
 	}
 
@@ -176,7 +205,7 @@ func TestDeployRunsTheCollectorOnEveryNode(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, nil)
 
-	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+	if err := s.deploy(context.Background(), nil, enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
 	}
 
@@ -185,28 +214,13 @@ func TestDeployRunsTheCollectorOnEveryNode(t *testing.T) {
 	assert.Nil(t, collector.Mode.Replicated)
 }
 
-func TestDeployPinsTheBackendToItsNode(t *testing.T) {
-	fd := &fakeDocker{}
-	s := newTestService(fd, nil)
-
-	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
-		t.Fatalf("deploy: %v", err)
-	}
-
-	backend := fd.created[0]
-	if backend.TaskTemplate.Placement == nil {
-		t.Fatal("the backend is not pinned")
-	}
-	assert.Contains(t, backend.TaskTemplate.Placement.Constraints, "node.id==node-1")
-}
-
 // The collector must write to the backend it was deployed beside, by the
 // service name the overlay network resolves.
 func TestDeployPointsTheCollectorAtTheBackend(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, nil)
 
-	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+	if err := s.deploy(context.Background(), nil, enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
 	}
 
@@ -220,7 +234,7 @@ func TestDeployRefusesAManagedBackendWithNoVolume(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, nil)
 
-	err := s.deploy(context.Background(), cfg)
+	err := s.deploy(context.Background(), nil, cfg)
 
 	// The service layer refuses first, with its own code. The backend package
 	// refuses too, but reaching it would mean the check here had gone missing.
@@ -228,12 +242,66 @@ func TestDeployRefusesAManagedBackendWithNoVolume(t *testing.T) {
 	assert.Empty(t, fd.created, "nothing should be half-deployed")
 }
 
-func TestDeployRefusesAManagedBackendWithNoNode(t *testing.T) {
-	cfg := enabledConfig()
-	cfg.Backend.VictoriaLogs.Node.ID = ""
-	s := newTestService(&fakeDocker{}, nil)
+// Placement follows the volume, so the two can never name different nodes.
+func TestDeployPinsTheBackendWhereItsVolumeIs(t *testing.T) {
+	fd := &fakeDocker{}
+	s := newTestService(fd, nil)
+	s.settingRepo = &fakeSettingRepo{volume: volumeSetting(&entity.ClusterVolume{NodeID: "node-7"})}
 
-	assert.ErrorIs(t, s.deploy(context.Background(), cfg), hperrors.ErrLoggingBackendNodeMissing)
+	if err := s.deploy(context.Background(), nil, enabledConfig()); err != nil {
+		t.Fatalf("deploy: %v", err)
+	}
+	backend := fd.created[0]
+	if assert.NotNil(t, backend.TaskTemplate.Placement) {
+		assert.Equal(t, []string{"node.id==node-7"}, backend.TaskTemplate.Placement.Constraints)
+	}
+}
+
+// A volume pinned by label pins the backend the same way - something the node
+// field this replaced could not express at all.
+func TestDeployPinsTheBackendByVolumeNodeLabel(t *testing.T) {
+	fd := &fakeDocker{}
+	s := newTestService(fd, nil)
+	s.settingRepo = &fakeSettingRepo{volume: volumeSetting(&entity.ClusterVolume{NodeLabel: "storage=fast"})}
+
+	if err := s.deploy(context.Background(), nil, enabledConfig()); err != nil {
+		t.Fatalf("deploy: %v", err)
+	}
+	backend := fd.created[0]
+	if assert.NotNil(t, backend.TaskTemplate.Placement) {
+		assert.Equal(t, []string{"node.labels.storage==fast"}, backend.TaskTemplate.Placement.Constraints)
+	}
+}
+
+// An unpinned volume leaves the backend unpinned: the volume decides placement
+// completely, including deciding not to.
+func TestDeployLeavesTheBackendUnpinnedForAnUnpinnedVolume(t *testing.T) {
+	fd := &fakeDocker{}
+	s := newTestService(fd, nil)
+
+	if err := s.deploy(context.Background(), nil, enabledConfig()); err != nil {
+		t.Fatalf("deploy: %v", err)
+	}
+	assert.Nil(t, fd.created[0].TaskTemplate.Placement)
+}
+
+func TestDeployAppliesBackendResourceLimits(t *testing.T) {
+	fd := &fakeDocker{}
+	s := newTestService(fd, nil)
+	cfg := enabledConfig()
+	cfg.Backend.VictoriaLogs.CPULimit = 2
+	cfg.Backend.VictoriaLogs.MemoryLimit = unit.MustParseDataSizeString("1gb")
+
+	if err := s.deploy(context.Background(), nil, cfg); err != nil {
+		t.Fatalf("deploy: %v", err)
+	}
+	backend := fd.created[0]
+	if assert.NotNil(t, backend.TaskTemplate.Resources) {
+		assert.Equal(t, int64(2*docker.UnitCPUNano), backend.TaskTemplate.Resources.Limits.NanoCPUs)
+		assert.Equal(t, int64(1<<30), backend.TaskTemplate.Resources.Limits.MemoryBytes)
+		assert.Nil(t, backend.TaskTemplate.Resources.Reservations,
+			"a reservation could leave the backend unschedulable")
+	}
 }
 
 // An unmanaged backend is somebody else's service: HivePaaS ships to it and
@@ -246,7 +314,7 @@ func TestDeploySkipsAnUnmanagedBackend(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, nil)
 
-	if err := s.deploy(context.Background(), cfg); err != nil {
+	if err := s.deploy(context.Background(), nil, cfg); err != nil {
 		t.Fatalf("deploy: %v", err)
 	}
 
@@ -324,10 +392,10 @@ func TestDeployTwiceUpdatesInsteadOfCreating(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, nil)
 
-	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+	if err := s.deploy(context.Background(), nil, enabledConfig()); err != nil {
 		t.Fatalf("first deploy: %v", err)
 	}
-	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+	if err := s.deploy(context.Background(), nil, enabledConfig()); err != nil {
 		t.Fatalf("second deploy: %v", err)
 	}
 
@@ -339,13 +407,13 @@ func TestDeployTwiceUpdatesInsteadOfCreating(t *testing.T) {
 func TestDeployRemovesTheCollectorWhenItStopsBeingManaged(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, nil)
-	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+	if err := s.deploy(context.Background(), nil, enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
 	}
 
 	cfg := enabledConfig()
 	cfg.Collector.Managed = false
-	if err := s.deploy(context.Background(), cfg); err != nil {
+	if err := s.deploy(context.Background(), nil, cfg); err != nil {
 		t.Fatalf("redeploy: %v", err)
 	}
 
@@ -357,7 +425,7 @@ func TestDeployRemovesTheCollectorWhenItStopsBeingManaged(t *testing.T) {
 func TestDeployRemovesTheBackendWhenItStopsBeingManaged(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, nil)
-	if err := s.deploy(context.Background(), enabledConfig()); err != nil {
+	if err := s.deploy(context.Background(), nil, enabledConfig()); err != nil {
 		t.Fatalf("deploy: %v", err)
 	}
 
@@ -365,7 +433,7 @@ func TestDeployRemovesTheBackendWhenItStopsBeingManaged(t *testing.T) {
 	cfg.Backend.Managed = false
 	cfg.Backend.VictoriaLogs = nil
 	cfg.Backend.Ingest = &entity.LoggingEndpoint{URL: "https://logs.example/insert"}
-	if err := s.deploy(context.Background(), cfg); err != nil {
+	if err := s.deploy(context.Background(), nil, cfg); err != nil {
 		t.Fatalf("redeploy: %v", err)
 	}
 

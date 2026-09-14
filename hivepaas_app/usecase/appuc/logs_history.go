@@ -43,12 +43,16 @@ func (uc *UC) GetAppLogHistory(
 
 	req.ApplyDefaults(timeutil.NowUTC())
 	resp, err := uc.loggingService.QueryAppLogs(ctx, uc.db, app, &loggingservice.AppLogQuery{
-		Contains: req.Search,
-		Levels:   req.LevelList(),
-		Streams:  req.StreamList(),
-		Start:    req.Start,
-		End:      req.End,
-		Limit:    req.Limit,
+		Search: &logging.TextSearch{
+			Value:         req.Search,
+			IsRegex:       req.Regex,
+			CaseSensitive: req.MatchCase,
+		},
+		Levels:  req.Levels,
+		Streams: req.Streams,
+		Start:   req.Start,
+		End:     req.End,
+		Limit:   req.Limit,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

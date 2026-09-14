@@ -44,7 +44,7 @@ func TestToSwarmServiceSpecReplicatedByDefault(t *testing.T) {
 func TestToSwarmServiceSpecPinsToANode(t *testing.T) {
 	rt := &logging.RuntimeSpec{Image: "img"}
 
-	spec, err := toSwarmServiceSpec(rt, swarmSpecOpts{Name: ServiceNameBackend, NodeID: "node-7"})
+	spec, err := toSwarmServiceSpec(rt, swarmSpecOpts{Name: ServiceNameBackend, Constraint: "node.id==node-7"})
 	if err != nil {
 		t.Fatalf("toSwarmServiceSpec: %v", err)
 	}

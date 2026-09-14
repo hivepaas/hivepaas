@@ -40,6 +40,11 @@ type AppLogsInfoDataResp struct {
 type AppLogHistoryInfoResp struct {
 	Available bool   `json:"available"`
 	Reason    string `json:"reason,omitempty"`
+	// Retention is how far back stored logs reach, written the way a duration
+	// is written everywhere else - "30d", "12h", "1d12h". It is empty when the
+	// backend is not one HivePaaS keeps, and the caller then knows nothing
+	// about the depth rather than assuming a default.
+	Retention string `json:"retention,omitempty"`
 }
 
 type TaskLogsInfoResp struct {

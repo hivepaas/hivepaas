@@ -47,17 +47,51 @@ func TestBuildQueryRefusesALimitOutOfRange(t *testing.T) {
 
 func TestBuildQueryEveryParameter(t *testing.T) {
 	q, err := BuildQuery(scoped(func(r *loggingmodel.QueryReq) {
-		r.Contains = "Timeout (x+y)"
+		r.Search = &loggingmodel.TextSearch{Value: "Timeout (x+y)"}
 		r.Streams = []string{"stderr"}
 		r.Levels = []string{"error", "warn"}
 	}))
 	assert.NoError(t, err)
 	assert.Equal(t,
-		`"attrs.hivepaas.app.id":="APP1" AND stream:in("stderr") AND ~"(?i)Timeout \\(x\\+y\\)"`+
+		`"attrs.hivepaas.app.id":="APP1" AND stream:in("stderr") AND i("Timeout (x+y)"*)`+
+			` AND (i("error") OR i("warn"))`+
 			` | unpack_json from _msg fields (level) result_prefix "app."`+
 			` | filter "app.level":~"(?i)^(error|warn)$"`+
 			` | sort by (_time desc) | limit 100 | fields _time, _msg, stream, app.level`,
 		q)
+}
+
+// The four modes, as verified against VictoriaLogs v1.52.0: plain finds
+// "timeouts" but not "connection_timeout", and only the regex modes find the
+// latter. Nothing here is escaped into a regular expression by accident.
+func TestBuildQuerySearchModes(t *testing.T) {
+	cases := []struct {
+		search *loggingmodel.TextSearch
+		want   string
+	}{
+		{&loggingmodel.TextSearch{Value: "timeout"}, `i("timeout"*)`},
+		{&loggingmodel.TextSearch{Value: "timeout", CaseSensitive: true}, `"timeout"*`},
+		{&loggingmodel.TextSearch{Value: "time.*out", IsRegex: true}, `~"(?i)time.*out"`},
+		{&loggingmodel.TextSearch{Value: "time.*out", IsRegex: true, CaseSensitive: true}, `~"time.*out"`},
+	}
+	for _, c := range cases {
+		q, err := BuildQuery(scoped(func(r *loggingmodel.QueryReq) { r.Search = c.search }))
+		assert.NoError(t, err)
+		assert.Contains(t, q, `"attrs.hivepaas.app.id":="APP1" AND `+c.want, c.search)
+	}
+}
+
+// The prefilter only ever narrows what reaches unpack_json, so it is absent
+// when there is no level to narrow to.
+func TestBuildQueryLevelPrefilterIsAddedOnlyWithLevels(t *testing.T) {
+	q, err := BuildQuery(scoped(nil))
+	assert.NoError(t, err)
+	assert.NotContains(t, q, " OR ")
+	assert.NotContains(t, q, "| filter")
+
+	q, err = BuildQuery(scoped(func(r *loggingmodel.QueryReq) { r.Levels = []string{"error", "fatal", "panic"} }))
+	assert.NoError(t, err)
+	assert.Contains(t, q, `AND (i("error") OR i("fatal") OR i("panic")) | unpack_json`)
 }
 
 // Each of these tries to break out of the literal it is placed in. Built with
@@ -72,7 +106,9 @@ func TestBuildQueryKeepsHostileInputInsideItsLiteral(t *testing.T) {
 		`"""`,
 	}
 	for _, h := range hostile {
-		q, err := BuildQuery(scoped(func(r *loggingmodel.QueryReq) { r.Contains = h }))
+		q, err := BuildQuery(scoped(func(r *loggingmodel.QueryReq) {
+			r.Search = &loggingmodel.TextSearch{Value: h, IsRegex: true}
+		}))
 		assert.NoError(t, err)
 		assert.Contains(t, q, `"attrs.hivepaas.app.id":="APP1" AND ~`, h)
 		// The scope and the pipes after it are untouched: nothing the input

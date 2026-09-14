@@ -40,4 +40,7 @@ const (
 	NetworkGlobalRouting = "hivepaas_net"
 	NetworkDockerProxy   = "hivepaas_docker_proxy_net"
 	NetworkHivepaasLocal = "hivepaas_local_net"
+	// NetworkLogging is the overlay the collector and the backend talk over.
+	// Only the logging stack joins it.
+	NetworkLogging = "hivepaas_logging_net"
 )

@@ -7,6 +7,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/services/logging"
@@ -45,13 +46,13 @@ func (s *service) QueryAppLogs(
 	}
 
 	resp, err := backend.Query(ctx, &logging.QueryReq{
-		Match:    []logging.FieldMatch{{Field: vlagent.AttrField(appservice.LabelLogAppID), Value: app.ID}},
-		Contains: q.Contains,
-		Levels:   q.Levels,
-		Streams:  q.Streams,
-		Start:    q.Start,
-		End:      q.End,
-		Limit:    q.Limit,
+		Match:   []logging.FieldMatch{{Field: vlagent.AttrField(appservice.LabelLogAppID), Value: app.ID}},
+		Search:  q.Search,
+		Levels:  q.Levels,
+		Streams: q.Streams,
+		Start:   q.Start,
+		End:     q.End,
+		Limit:   q.Limit,
 	})
 	return resp, hperrors.Wrap(err)
 }
@@ -91,7 +92,19 @@ func (s *service) AppHistory(
 			}
 		}
 	}
-	return &loggingservice.AppHistory{Available: true}, nil
+	return &loggingservice.AppHistory{Available: true, Retention: retentionOf(cfg)}, nil
+}
+
+// retentionOf is how long stored logs are kept, when HivePaaS is the one
+// keeping them.
+//
+// An unmanaged backend expires on a schedule HivePaaS has no way to read, so it
+// reports nothing there rather than a number the operator never set.
+func retentionOf(cfg *entity.LoggingSettings) timeutil.Duration {
+	if !cfg.Backend.Managed || cfg.Backend.VictoriaLogs == nil {
+		return 0
+	}
+	return cfg.Backend.VictoriaLogs.Retention
 }
 
 func historyReason(r loggingservice.ExcludedReason) loggingservice.HistoryUnavailableReason {

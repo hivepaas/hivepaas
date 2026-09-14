@@ -49,7 +49,9 @@ func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
 
 // GetAppLogs Stream app logs via websocket
 // @Summary Stream app logs via websocket
-// @Description Stream app logs via websocket
+// @Description Stream app logs via websocket.
+// @Description Every read is bounded: `tail` defaults to 1000 lines and may not exceed 5000.
+// @Description Reading further back than one response holds is the history endpoint, which pages.
 // @Tags    apps
 // @Produce json
 // @Id      getAppLogs
@@ -60,7 +62,7 @@ func (h *Handler) GetAppLogsInfo(ctx *gin.Context) {
 // @Param   follow query string false "`follow=true/false`"
 // @Param   since query string false "`since=YYYY-MM-DDTHH:mm:SSZ`"
 // @Param   duration query int false "`duration=` logs within the period"
-// @Param   tail query int false "`tail=1000` to get last 1000 lines of logs"
+// @Param   tail query int false "`tail=1000` for the last 1000 lines, 1-5000, default 1000"
 // @Success 200 {object} appdto.GetAppLogsResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -104,6 +106,9 @@ func (h *Handler) GetAppLogs(ctx *gin.Context) {
 // @Summary Gets stored app logs
 // @Description Searches the logs collected for the app, including those of containers that no longer exist.
 // @Description Parameters are structured; no query text is accepted.
+// @Description `search` is matched from the start of a token, which the backend answers from its index.
+// @Description `regex=true` reads it as a regular expression instead: slower, because it is read row by
+// @Description row, and a malformed expression comes back as an invalid query, not as an empty result.
 // @Tags    apps
 // @Produce json
 // @Id      getAppLogHistory
@@ -113,7 +118,9 @@ func (h *Handler) GetAppLogs(ctx *gin.Context) {
 // @Param   start query string false "`start=YYYY-MM-DDTHH:mm:SSZ`, default one hour before end"
 // @Param   end query string false "`end=YYYY-MM-DDTHH:mm:SSZ`, default now; pass `nextEnd` to page back"
 // @Param   limit query int false "lines to return, 1-5000, default 500"
-// @Param   search query string false "case-insensitive substring of the message"
+// @Param   search query string false "text to match in the message"
+// @Param   regex query bool false "`regex=true` reads search as a regular expression"
+// @Param   matchCase query bool false "`matchCase=true` compares case-sensitively"
 // @Param   levels query string false "comma-separated: trace,debug,info,warn,warning,error,fatal,panic"
 // @Param   streams query string false "comma-separated: stdout,stderr"
 // @Success 200 {object} appdto.GetAppLogHistoryResp

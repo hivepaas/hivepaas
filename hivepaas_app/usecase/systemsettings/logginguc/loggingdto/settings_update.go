@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -16,6 +17,12 @@ const (
 	nameMaxLen = 100
 	urlMaxLen  = 255
 	pathMaxLen = 255
+
+	// maxBackendCPULimit and maxBackendMemoryLimit are sanity bounds, not a
+	// judgement about the right size: they exist so a typo cannot ask swarm for
+	// a limit no node could ever satisfy, leaving the task unschedulable.
+	maxBackendCPULimit    = 256
+	maxBackendMemoryLimit = 4 * unit.TB
 )
 
 type UpdateLoggingSettingsReq struct {
@@ -163,11 +170,14 @@ func (req *BackendReq) validate(field string) (res []vld.Validator) {
 }
 
 type VictoriaLogsReq struct {
-	Node                basedto.ObjectIDReq `json:"nodeId"`
-	Volume              basedto.ObjectIDReq `json:"volumeId"`
+	Volume              basedto.ObjectIDReq `json:"volume"`
 	VolumeSubpath       string              `json:"volumeSubpath,omitempty"`
 	Retention           timeutil.Duration   `json:"retention"`
 	MaxDiskUsagePercent int                 `json:"maxDiskUsagePercent,omitempty"`
+	// CPULimit is in cores. MemoryLimit carries its own unit - "1gb", "512mb" -
+	// and also accepts a bare number of bytes. Zero in either means no cap.
+	CPULimit    float64       `json:"cpuLimit,omitempty"`
+	MemoryLimit unit.DataSize `json:"memoryLimit,omitempty" swaggertype:"string"`
 }
 
 func (req *VictoriaLogsReq) ToEntity() *entity.LoggingVictoriaLogs {
@@ -175,11 +185,12 @@ func (req *VictoriaLogsReq) ToEntity() *entity.LoggingVictoriaLogs {
 		return nil
 	}
 	return &entity.LoggingVictoriaLogs{
-		Node:                *req.Node.ToEntity(),
 		Volume:              *req.Volume.ToEntity(),
 		VolumeSubpath:       req.VolumeSubpath,
 		Retention:           req.Retention,
 		MaxDiskUsagePercent: req.MaxDiskUsagePercent,
+		CPULimit:            req.CPULimit,
+		MemoryLimit:         req.MemoryLimit,
 	}
 }
 
@@ -190,12 +201,14 @@ func (req *VictoriaLogsReq) validate(field string) (res []vld.Validator) {
 	if field != "" {
 		field += "."
 	}
-	res = append(res, basedto.ValidateObjectIDReq(&req.Node, true, field+"node")...)
 	res = append(res, basedto.ValidateObjectIDReq(&req.Volume, true, field+"volume")...)
 	res = append(res, basedto.ValidateStr(&req.VolumeSubpath, false, 1, pathMaxLen,
 		field+"volumeSubpath")...)
 	res = append(res, basedto.ValidateNumber(&req.MaxDiskUsagePercent, false, 0, 100, //nolint:mnd
 		field+"maxDiskUsagePercent")...)
+	res = append(res, basedto.ValidateNumber(&req.CPULimit, false, 0, maxBackendCPULimit, field+"cpuLimit")...)
+	res = append(res, basedto.ValidateNumber(&req.MemoryLimit, false, 0, maxBackendMemoryLimit,
+		field+"memoryLimit")...)
 	return res
 }
 

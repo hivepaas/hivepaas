@@ -26,9 +26,6 @@ func validateSettings(cfg *entity.LoggingSettings) error {
 		if vl == nil {
 			return hperrors.Wrap(hperrors.ErrLoggingNotConfigured)
 		}
-		if vl.Node.ID == "" {
-			return hperrors.Wrap(hperrors.ErrLoggingBackendNodeMissing)
-		}
 		if vl.Volume.ID == "" {
 			return hperrors.Wrap(hperrors.ErrLoggingVolumeMissing)
 		}

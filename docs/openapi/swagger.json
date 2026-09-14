@@ -16382,7 +16382,7 @@
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/logs" : {
       "get" : {
-        "description" : "Stream app logs via websocket",
+        "description" : "Stream app logs via websocket.\nEvery read is bounded: `tail` defaults to 1000 lines and may not exceed 5000.\nReading further back than one response holds is the history endpoint, which pages.",
         "operationId" : "getAppLogs",
         "parameters" : [ {
           "description" : "project ID",
@@ -16437,7 +16437,7 @@
             "type" : "integer"
           }
         }, {
-          "description" : "`tail=1000` to get last 1000 lines of logs",
+          "description" : "`tail=1000` for the last 1000 lines, 1-5000, default 1000",
           "in" : "query",
           "name" : "tail",
           "schema" : {
@@ -16482,7 +16482,7 @@
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/logs/history" : {
       "get" : {
-        "description" : "Searches the logs collected for the app, including those of containers that no longer exist.\nParameters are structured; no query text is accepted.",
+        "description" : "Searches the logs collected for the app, including those of containers that no longer exist.\nParameters are structured; no query text is accepted.\n`search` is matched from the start of a token, which the backend answers from its index.\n`regex=true` reads it as a regular expression instead: slower, because it is read row by\nrow, and a malformed expression comes back as an invalid query, not as an empty result.",
         "operationId" : "getAppLogHistory",
         "parameters" : [ {
           "description" : "project ID",
@@ -16530,11 +16530,25 @@
             "type" : "integer"
           }
         }, {
-          "description" : "case-insensitive substring of the message",
+          "description" : "text to match in the message",
           "in" : "query",
           "name" : "search",
           "schema" : {
             "type" : "string"
+          }
+        }, {
+          "description" : "`regex=true` reads search as a regular expression",
+          "in" : "query",
+          "name" : "regex",
+          "schema" : {
+            "type" : "boolean"
+          }
+        }, {
+          "description" : "`matchCase=true` compares case-sensitively",
+          "in" : "query",
+          "name" : "matchCase",
+          "schema" : {
+            "type" : "boolean"
           }
         }, {
           "description" : "comma-separated: trace,debug,info,warn,warning,error,fatal,panic",
@@ -40939,15 +40953,25 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
+          "ModeAppend" : "a: append-only",
+          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
+          "ModeDevice" : "D: device file",
+          "ModeDir" : "d: is a directory",
+          "ModeExclusive" : "l: exclusive use",
+          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
+          "ModeNamedPipe" : "p: named pipe (FIFO)",
           "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
-          "ModeSticky" : "t: sticky"
+          "ModeSocket" : "S: Unix domain socket",
+          "ModeSticky" : "t: sticky",
+          "ModeSymlink" : "L: symbolic link",
+          "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -43870,9 +43894,13 @@
           },
           "reason" : {
             "type" : "string"
+          },
+          "retention" : {
+            "description" : "Retention is how far back stored logs reach, written the way a duration\nis written everywhere else - \"30d\", \"12h\", \"1d12h\". It is empty when the\nbackend is not one HivePaaS keeps, and the caller then knows nothing\nabout the depth rather than assuming a default.",
+            "type" : "string"
           }
         },
-        "required" : [ "available", "reason" ],
+        "required" : [ "available", "reason", "retention" ],
         "type" : "object"
       },
       "appdto.AppLogsDataResp" : {
@@ -56576,32 +56604,40 @@
       },
       "systemsettings_loggingdto.VictoriaLogsReq" : {
         "properties" : {
+          "cpuLimit" : {
+            "description" : "CPULimit is in cores. MemoryLimit carries its own unit - \"1gb\", \"512mb\" -\nand also accepts a bare number of bytes. Zero in either means no cap.",
+            "type" : "number"
+          },
           "maxDiskUsagePercent" : {
             "type" : "integer"
           },
-          "nodeId" : {
-            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          "memoryLimit" : {
+            "type" : "string"
           },
           "retention" : {
             "$ref" : "#/components/schemas/timeutil.Duration"
           },
-          "volumeId" : {
+          "volume" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           },
           "volumeSubpath" : {
             "type" : "string"
           }
         },
-        "required" : [ "maxDiskUsagePercent", "nodeId", "retention", "volumeId", "volumeSubpath" ],
+        "required" : [ "cpuLimit", "maxDiskUsagePercent", "memoryLimit", "retention", "volume", "volumeSubpath" ],
         "type" : "object"
       },
       "systemsettings_loggingdto.VictoriaLogsResp" : {
         "properties" : {
+          "cpuLimit" : {
+            "type" : "number"
+          },
           "maxDiskUsagePercent" : {
             "type" : "integer"
           },
-          "node" : {
-            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          "memoryLimit" : {
+            "description" : "A size with its unit, such as \"1gb\". swaggertype says so because swag\nsees the int64 underneath rather than what MarshalJSON writes.",
+            "type" : "string"
           },
           "retention" : {
             "$ref" : "#/components/schemas/timeutil.Duration"
@@ -56613,7 +56649,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "maxDiskUsagePercent", "node", "retention", "volume", "volumeSubpath" ],
+        "required" : [ "cpuLimit", "maxDiskUsagePercent", "memoryLimit", "retention", "volume", "volumeSubpath" ],
         "type" : "object"
       },
       "systemsettings_sslrenewaldto.ExecuteSSLRenewalDataResp" : {
@@ -58656,9 +58692,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

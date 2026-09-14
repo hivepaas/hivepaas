@@ -50,6 +50,8 @@ func (uc *UC) GetAppLogs(
 	}
 	serviceID := app.ServiceID
 
+	req.ApplyDefaults()
+
 	var since, until, tail string
 	if req.Duration > 0 && req.Since.IsZero() {
 		req.Since = timeutil.NowUTC().Add(-req.Duration.ToDuration())

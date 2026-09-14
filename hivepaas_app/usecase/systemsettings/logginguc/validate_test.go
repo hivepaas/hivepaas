@@ -21,7 +21,7 @@ func validEnabled() *entity.LoggingSettings {
 		Backend: entity.LoggingBackend{
 			Type: base.LoggingBackendTypeVictoriaLogs, Managed: true,
 			VictoriaLogs: &entity.LoggingVictoriaLogs{
-				Node: entity.ObjectID{ID: "n1"}, Volume: entity.ObjectID{ID: "n1"},
+				Volume: entity.ObjectID{ID: "n1"},
 			},
 		},
 	}
@@ -58,13 +58,6 @@ func TestValidateRejectsAManagedBackendWithNoVolume(t *testing.T) {
 	cfg.Backend.VictoriaLogs.Volume.ID = ""
 
 	assert.ErrorIs(t, validateSettings(cfg), hperrors.ErrLoggingVolumeMissing)
-}
-
-func TestValidateRejectsAManagedBackendWithNoNode(t *testing.T) {
-	cfg := validEnabled()
-	cfg.Backend.VictoriaLogs.Node.ID = ""
-
-	assert.ErrorIs(t, validateSettings(cfg), hperrors.ErrLoggingBackendNodeMissing)
 }
 
 func TestValidateRejectsAnUnmanagedBackendWithNoIngestURL(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/services/docker"
 	"github.com/hivepaas/hivepaas/services/logging"
 )
 
@@ -30,10 +31,13 @@ type swarmSpecOpts struct {
 	// docs/superpowers/notes/2026-09-12-global-mode-audit.md for what that was
 	// checked against.
 	Global bool
-	// NodeID pins the service to one node, for a component whose data is on
-	// that node's disk.
-	NodeID   string
-	Networks []string
+	// Constraint pins the service where its data is, in swarm's own spelling.
+	// For the backend it is derived from the data volume, so the two can never
+	// name different nodes.
+	Constraint string
+	// Resources caps what the task may take. Zero in a field is no cap.
+	Resources logging.Resources
+	Networks  []string
 }
 
 // toSwarmServiceSpec turns a description of a container into a swarm service.
@@ -75,10 +79,22 @@ func toSwarmServiceSpec(rt *logging.RuntimeSpec, opts swarmSpecOpts) (*swarm.Ser
 		spec.Mode.Replicated = &swarm.ReplicatedService{Replicas: &replicas}
 	}
 
-	if opts.NodeID != "" {
+	if opts.Constraint != "" {
 		spec.TaskTemplate.Placement = &swarm.Placement{
-			Constraints: []string{"node.id==" + opts.NodeID},
+			Constraints: []string{opts.Constraint},
 		}
+	}
+
+	// Limits only. A reservation would make swarm refuse to schedule the task
+	// at all on a busy node, and a logging backend that will not start is worse
+	// than one sharing a node under pressure.
+	if opts.Resources.CPULimit > 0 || opts.Resources.MemoryLimit > 0 {
+		limits := &swarm.Limit{}
+		if opts.Resources.CPULimit > 0 {
+			limits.NanoCPUs = docker.TruncateCPUsAsNano(opts.Resources.CPULimit, docker.MinCPUFraction)
+		}
+		limits.MemoryBytes = opts.Resources.MemoryLimit
+		spec.TaskTemplate.Resources = &swarm.ResourceRequirements{Limits: limits}
 	}
 
 	for _, n := range opts.Networks {

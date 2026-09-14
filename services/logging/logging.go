@@ -52,6 +52,7 @@ type (
 	Port          = loggingmodel.Port
 	Resources     = loggingmodel.Resources
 	QueryReq      = loggingmodel.QueryReq
+	TextSearch    = loggingmodel.TextSearch
 	QueryResp     = loggingmodel.QueryResp
 	LogEntry      = loggingmodel.LogEntry
 	FieldMatch    = loggingmodel.FieldMatch

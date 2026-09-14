@@ -1,12 +1,19 @@
 import { z } from "zod";
 
+/** The one way an endpoint authenticates. Only the selected mode is stored. */
+export const LOGGING_AUTH_MODES = ["none", "basic", "bearer"] as const;
+
 const EndpointForm = z.object({
     url: z.string().trim(),
+    authMode: z.enum(LOGGING_AUTH_MODES),
     username: z.string().trim(),
     password: z.string(),
     bearerToken: z.string(),
+    headers: z.array(z.object({ key: z.string().trim(), value: z.string() })),
     tlsSkipVerify: z.boolean(),
 });
+
+type EndpointFormOutput = z.output<typeof EndpointForm>;
 
 export const HivePaaSLoggingSettingsFormSchema = z
     .object({
@@ -46,8 +53,22 @@ export const HivePaaSLoggingSettingsFormSchema = z
         if (v.backendManaged && !v.volumeId) {
             ctx.addIssue({ code: "custom", path: ["volumeId"], message: "Required" });
         }
-        if (!v.backendManaged && !v.ingest.url) {
-            ctx.addIssue({ code: "custom", path: ["ingest", "url"], message: "Required" });
+        // Basic auth with no username sends no credentials at all: the request
+        // would go out unauthenticated while the form claims otherwise.
+        const requireBasicUsername = (ep: EndpointFormOutput, path: (string | number)[]) => {
+            if (ep.authMode === "basic" && !ep.username) {
+                ctx.addIssue({ code: "custom", path: [...path, "username"], message: "Required" });
+            }
+        };
+        if (!v.backendManaged) {
+            if (!v.ingest.url) {
+                ctx.addIssue({ code: "custom", path: ["ingest", "url"], message: "Required" });
+            }
+            requireBasicUsername(v.ingest, ["ingest"]);
+            // The query endpoint is optional, and is only sent when it has a URL.
+            if (v.query.url) {
+                requireBasicUsername(v.query, ["query"]);
+            }
         }
         const seen = new Set<string>();
         v.forwards.forEach((f, i) => {
@@ -58,6 +79,7 @@ export const HivePaaSLoggingSettingsFormSchema = z
             if (!f.url) {
                 ctx.addIssue({ code: "custom", path: ["forwards", i, "url"], message: "Required" });
             }
+            requireBasicUsername(f, ["forwards", i]);
         });
     });
 

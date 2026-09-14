@@ -1,5 +1,6 @@
 import { type AxiosResponse } from "axios";
 import { z } from "zod";
+import { SettingsBaseEntitySchema } from "~/settings/module-shared/schemas";
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
@@ -17,7 +18,34 @@ const EndpointSchema = z.object({
     tlsSkipVerify: z.boolean().optional(),
 });
 
-const SettingsSchema = z.object({
+const StatusSchema = z
+    .object({
+        collectorReady: z.boolean().catch(false),
+        backendReady: z.boolean().catch(false),
+    })
+    .nullish()
+    .transform(value => value ?? { collectorReady: false, backendReady: false });
+
+const VictoriaLogsSchema = z
+    .object({
+        node: z.object({ id: z.string(), name: z.string().optional() }).nullish(),
+        volume: z.object({ id: z.string(), name: z.string().optional() }).nullish(),
+        volumeSubpath: z.string().optional(),
+        retention: z.string().catch("30d"),
+        maxDiskUsagePercent: z.number().optional(),
+    })
+    .nullish();
+
+const SettingsSchema = SettingsBaseEntitySchema.omit({ description: true }).extend({
+    id: z.string().catch(""),
+    name: z
+        .string()
+        .nullish()
+        .transform(val => val ?? ""),
+    status: z.string().catch("active"),
+    type: z.string().catch("logging"),
+    updateVer: z.number().catch(0),
+    createdAt: z.coerce.date().catch(() => new Date()),
     enabled: z.boolean().catch(false),
     sources: z.object({
         apps: z.boolean().catch(false),
@@ -28,51 +56,24 @@ const SettingsSchema = z.object({
     collector: z.object({
         type: z.string().catch("vlagent"),
         managed: z.boolean().catch(true),
-        image: z.string().optional(),
     }),
     backend: z.object({
         type: z.string().catch("victoria-logs"),
         managed: z.boolean().catch(true),
         ingest: EndpointSchema.nullish(),
         query: EndpointSchema.nullish(),
-        victoriaLogs: z
-            .object({
-                image: z.string().optional(),
-                nodeId: z.string().catch(""),
-                volumeId: z.string().catch(""),
-                volumeSubpath: z.string().optional(),
-                retention: z.string().catch("30d"),
-                maxDiskUsagePercent: z.number().optional(),
-            })
-            .nullish(),
+        victoriaLogs: VictoriaLogsSchema,
     }),
     forwards: z
         .array(z.object({ name: z.string(), format: z.string().optional(), endpoint: EndpointSchema }))
         .nullish()
         .transform(value => value ?? []),
+    secretMasked: z.boolean().optional(),
+    loggingStatus: StatusSchema,
 });
-
-const StatusSchema = z
-    .object({
-        backendReady: z.boolean().catch(false),
-        excludedApps: z
-            .array(
-                z.object({
-                    appId: z.string(),
-                    name: z.string(),
-                    reason: z.string(),
-                    driver: z.string().optional(),
-                }),
-            )
-            .nullish()
-            .transform(value => value ?? []),
-    })
-    .nullish()
-    .transform(value => value ?? { backendReady: false, excludedApps: [] });
 
 const FindOneSchema = z.object({
     data: SettingsSchema,
-    status: StatusSchema,
     meta: BaseMetaApiSchema.nullish(),
 });
 
@@ -82,8 +83,8 @@ const MetaOnlySchema = z.object({
 
 export class HivePaaSLoggingSettingsApiValidator {
     findOne = (response: AxiosResponse): HivePaaSLoggingSettings_FindOne_Res => {
-        const { data, status, meta } = parseApiResponse({ response, schema: FindOneSchema });
-        return { data: { settings: data, status }, meta };
+        const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
+        return { data: { settings: data, loggingStatus: data.loggingStatus }, meta };
     };
 
     updateOne = (response: AxiosResponse): HivePaaSLoggingSettings_UpdateOne_Res => {

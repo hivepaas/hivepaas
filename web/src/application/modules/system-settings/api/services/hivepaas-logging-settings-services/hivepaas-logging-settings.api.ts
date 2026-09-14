@@ -21,7 +21,7 @@ export class HivePaaSLoggingSettingsApi extends BaseApi {
         signal?: AbortSignal,
     ): Promise<Result<HivePaaSLoggingSettings_FindOne_Res, Error>> {
         return lastValueFrom(
-            from(this.client.v1.get("/system/hivepaas/logging-settings", { signal })).pipe(
+            from(this.client.v1.get("/system/settings/logging", { signal })).pipe(
                 map(this.validator.findOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
@@ -38,7 +38,7 @@ export class HivePaaSLoggingSettingsApi extends BaseApi {
         // Saving also deploys, updates or removes the logging stack, so this can
         // take several seconds.
         return lastValueFrom(
-            from(this.client.v1.put("/system/hivepaas/logging-settings", { data: payload }, { signal })).pipe(
+            from(this.client.v1.put("/system/settings/logging", payload, { signal })).pipe(
                 map(this.validator.updateOne),
                 map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),

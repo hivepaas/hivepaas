@@ -263,7 +263,7 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                 <Input
                                                     {...register("volumeSubpath")}
                                                     placeholder="logs"
-                                                    className="max-w-[300px]"
+                                                    className="max-w-[420px]"
                                                 />
                                                 <FieldMessage name="volumeSubpath" />
                                             </InfoBlock>
@@ -301,7 +301,7 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                             max={100}
                                                             showControls={false}
                                                             useGrouping={false}
-                                                            className="max-w-[110px]"
+                                                            className="max-w-[200px]"
                                                             onValueChange={value => {
                                                                 field.onChange(
                                                                     typeof value === "number" ? value : null,
@@ -385,7 +385,6 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                 prefix={`forwards.${index}`}
                                                 urlLabel="URL"
                                                 urlInfo="An HTTP endpoint that accepts the format above."
-                                                showBasicAuth={false}
                                             />
                                             <div>
                                                 <Button

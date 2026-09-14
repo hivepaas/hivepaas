@@ -1,3 +1,4 @@
+import type { HivePaaSLoggingSettings_UpdateOnePayload } from "~/system-settings/api/services";
 import type { HivePaaSLoggingEndpoint, HivePaaSLoggingSettings } from "~/system-settings/domain";
 
 import type { HivePaaSLoggingSettingsFormInput, HivePaaSLoggingSettingsFormOutput } from "../schemas";
@@ -6,30 +7,66 @@ type EndpointForm = HivePaaSLoggingSettingsFormInput["ingest"];
 
 export const emptyLoggingEndpointForm: EndpointForm = {
     url: "",
+    authMode: "none",
     username: "",
     password: "",
     bearerToken: "",
+    headers: [],
     tlsSkipVerify: false,
 };
+
+// Which mode the stored endpoint is already in. A bearer token outranks basic
+// auth because that is the order the client tries them in.
+function toAuthMode(ep?: HivePaaSLoggingEndpoint | null): EndpointForm["authMode"] {
+    if (ep?.bearerToken) {
+        return "bearer";
+    }
+    if (ep?.username) {
+        return "basic";
+    }
+    return "none";
+}
+
+// Headers are a map on the wire and a list in the form: a list is what the
+// editor can hold a half-typed row in, and what keeps rows from reordering.
+function toHeaderForms(headers?: Record<string, string>): EndpointForm["headers"] {
+    return Object.entries(headers ?? {}).map(([key, value]) => ({ key, value }));
+}
 
 // Secrets arrive masked and are kept masked: sending the placeholder back is
 // how the server knows to keep the stored value.
 function toEndpointForm(ep?: HivePaaSLoggingEndpoint | null): EndpointForm {
     return {
         url: ep?.url ?? "",
+        authMode: toAuthMode(ep),
         username: ep?.username ?? "",
         password: ep?.password ?? "",
         bearerToken: ep?.bearerToken ?? "",
+        headers: toHeaderForms(ep?.headers),
         tlsSkipVerify: ep?.tlsSkipVerify ?? false,
     };
 }
 
+// Only the selected mode's credentials go out. What is left out the server
+// clears, so the mode on screen is the mode that ends up stored: switching
+// away from bearer does not leave a token behind to be sent by a later change.
 function toEndpoint(f: EndpointForm): HivePaaSLoggingEndpoint {
+    const basic = f.authMode === "basic";
+    const bearer = f.authMode === "bearer";
+    const headers: Record<string, string> = {};
+    for (const h of f.headers) {
+        // A row with no name has nothing to send under, and the map would key
+        // it as "" and drop whichever such row came first.
+        if (h.key) {
+            headers[h.key] = h.value;
+        }
+    }
     return {
         url: f.url,
-        ...(f.username ? { username: f.username } : {}),
-        ...(f.password ? { password: f.password } : {}),
-        ...(f.bearerToken ? { bearerToken: f.bearerToken } : {}),
+        ...(basic && f.username ? { username: f.username } : {}),
+        ...(basic && f.password ? { password: f.password } : {}),
+        ...(bearer && f.bearerToken ? { bearerToken: f.bearerToken } : {}),
+        ...(Object.keys(headers).length > 0 ? { headers } : {}),
         tlsSkipVerify: f.tlsSkipVerify,
     };
 }
@@ -45,9 +82,9 @@ export function toLoggingFormInput(s?: HivePaaSLoggingSettings): HivePaaSLogging
             traefikAccess: false,
             nodes: false,
         },
-        backendManaged: s?.backend.managed ?? true,
-        nodeId: s?.backend.victoriaLogs?.nodeId ?? "",
-        volumeId: s?.backend.victoriaLogs?.volumeId ?? "",
+        backendManaged: s?.backend ? s.backend.managed || !s.backend.ingest?.url : true,
+        nodeId: s?.backend.victoriaLogs?.node?.id ?? "",
+        volumeId: s?.backend.victoriaLogs?.volume?.id ?? "",
         volumeSubpath: s?.backend.victoriaLogs?.volumeSubpath ?? "",
         retention: s?.backend.victoriaLogs?.retention ?? "30d",
         maxDiskUsagePercent: s?.backend.victoriaLogs?.maxDiskUsagePercent ?? null,
@@ -61,8 +98,12 @@ export function toLoggingFormInput(s?: HivePaaSLoggingSettings): HivePaaSLogging
     };
 }
 
-export function toLoggingPayload(v: HivePaaSLoggingSettingsFormOutput): HivePaaSLoggingSettings {
+export function toLoggingPayload(
+    v: HivePaaSLoggingSettingsFormOutput,
+    updateVer: number = 0,
+): HivePaaSLoggingSettings_UpdateOnePayload {
     return {
+        updateVer,
         enabled: v.enabled,
         // Only container logs are collected. The proxy's access log rides along
         // in traefik's own container output; the host's logs are not mounted.
@@ -73,8 +114,8 @@ export function toLoggingPayload(v: HivePaaSLoggingSettingsFormOutput): HivePaaS
                   type: "victoria-logs",
                   managed: true,
                   victoriaLogs: {
-                      nodeId: v.nodeId,
-                      volumeId: v.volumeId,
+                      nodeId: { id: v.nodeId },
+                      volumeId: { id: v.volumeId },
                       ...(v.volumeSubpath ? { volumeSubpath: v.volumeSubpath } : {}),
                       retention: v.retention,
                       ...(v.maxDiskUsagePercent ? { maxDiskUsagePercent: v.maxDiskUsagePercent } : {}),

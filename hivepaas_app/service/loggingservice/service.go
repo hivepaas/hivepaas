@@ -9,9 +9,8 @@ import (
 )
 
 type Service interface {
-	// Apply makes the cluster match the stored configuration, deploying or
-	// removing as needed.
-	Apply(ctx context.Context, db database.IDB) error
+	// Apply makes the cluster match the stored configuration, deploying or removing as needed.
+	Apply(ctx context.Context, db database.IDB, req *SettingApplyReq) (*SettingApplyResp, error)
 
 	// TearDown removes the collector and the backend, keeping the data volume.
 	TearDown(ctx context.Context) error

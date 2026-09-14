@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -110,8 +111,8 @@ func (f *fakeSettingRepo) GetSingle(
 	return f.setting, nil
 }
 
-func enabledConfig() *entity.Logging {
-	return &entity.Logging{
+func enabledConfig() *entity.LoggingSettings {
+	return &entity.LoggingSettings{
 		Enabled: true,
 		Sources: entity.LoggingSources{Apps: true},
 		Collector: entity.LoggingCollector{
@@ -131,7 +132,7 @@ func enabledConfig() *entity.Logging {
 
 // storedSetting is shaped like a database row, with no parsed cache, so Apply
 // reads what would really have persisted.
-func storedSetting(t *testing.T, cfg *entity.Logging) *entity.Setting {
+func storedSetting(t *testing.T, cfg *entity.LoggingSettings) *entity.Setting {
 	t.Helper()
 	s := &entity.Setting{ID: "s1", Type: base.SettingTypeLogging}
 	if err := s.SetData(cfg); err != nil {
@@ -290,7 +291,8 @@ func TestApplyWithNoSettingDoesNothing(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, nil)
 
-	assert.NoError(t, s.Apply(context.Background(), nil))
+	_, e := s.Apply(context.Background(), nil, &loggingservice.SettingApplyReq{})
+	assert.NoError(t, e)
 	assert.Empty(t, fd.created)
 	assert.Empty(t, fd.removed)
 }
@@ -301,7 +303,8 @@ func TestApplyWhenDisabledTearsDown(t *testing.T) {
 	fd := &fakeDocker{existing: map[string]bool{ServiceNameCollector: true, ServiceNameBackend: true}}
 	s := newTestService(fd, storedSetting(t, cfg))
 
-	assert.NoError(t, s.Apply(context.Background(), nil))
+	_, e := s.Apply(context.Background(), nil, &loggingservice.SettingApplyReq{})
+	assert.NoError(t, e)
 	assert.Empty(t, fd.created)
 	assert.Equal(t, []string{ServiceNameCollector, ServiceNameBackend}, fd.removed)
 }
@@ -310,7 +313,8 @@ func TestApplyWhenEnabledDeploys(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, storedSetting(t, enabledConfig()))
 
-	assert.NoError(t, s.Apply(context.Background(), nil))
+	_, e := s.Apply(context.Background(), nil, &loggingservice.SettingApplyReq{})
+	assert.NoError(t, e)
 	assert.Len(t, fd.created, 2)
 }
 

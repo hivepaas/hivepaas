@@ -107,7 +107,6 @@ func (uc *UC) loadSettingData(
 			Status:    base.SettingStatusActive,
 			Name:      cleanupSettingName,
 			Version:   entity.CurrentSystemCleanupVersion,
-			Data:      "{}", // NOTE: this is necessary to make the parse not to fail
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}

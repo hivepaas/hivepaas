@@ -13,7 +13,7 @@ import (
 // no parsed cache. Reading back through the same *Setting that SetData was
 // called on would return the cached struct without ever touching Data, so a
 // round-trip through it proves nothing about what persists.
-func storedLogging(t *testing.T, data *entity.Logging) *entity.Setting {
+func storedLogging(t *testing.T, data *entity.LoggingSettings) *entity.Setting {
 	t.Helper()
 
 	s := &entity.Setting{ID: "s1", Type: base.SettingTypeLogging}
@@ -24,7 +24,7 @@ func storedLogging(t *testing.T, data *entity.Logging) *entity.Setting {
 }
 
 func TestLoggingSurvivesPersistence(t *testing.T) {
-	stored := storedLogging(t, &entity.Logging{
+	stored := storedLogging(t, &entity.LoggingSettings{
 		Enabled: true,
 		Sources: entity.LoggingSources{Apps: true, HivePaaS: true},
 		Collector: entity.LoggingCollector{
@@ -45,7 +45,7 @@ func TestLoggingSurvivesPersistence(t *testing.T) {
 		}},
 	})
 
-	got, err := stored.AsLogging()
+	got, err := stored.AsLoggingSettings()
 	if err != nil {
 		t.Fatalf("AsLogging: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestLoggingSurvivesPersistence(t *testing.T) {
 // does not exist, and it must not be deletable while logging uses it. This is
 // what VerifyingRefIDs acts on, unlike ClusterVolume where it is always empty.
 func TestLoggingReferencesItsDataVolume(t *testing.T) {
-	l := &entity.Logging{Backend: entity.LoggingBackend{
+	l := &entity.LoggingSettings{Backend: entity.LoggingBackend{
 		VictoriaLogs: &entity.LoggingVictoriaLogs{Volume: entity.ObjectID{ID: "vol-9"}},
 	}}
 
@@ -81,15 +81,15 @@ func TestLoggingReferencesItsDataVolume(t *testing.T) {
 }
 
 func TestLoggingReferencesNothingWithoutAManagedBackend(t *testing.T) {
-	l := &entity.Logging{Backend: entity.LoggingBackend{Type: base.LoggingBackendTypeVictoriaLogs}}
+	l := &entity.LoggingSettings{Backend: entity.LoggingBackend{Type: base.LoggingBackendTypeVictoriaLogs}}
 
 	assert.Empty(t, l.GetRefObjectIDs().RefSettingIDs)
 }
 
 func TestLoggingIsDisabledByDefault(t *testing.T) {
-	stored := storedLogging(t, &entity.Logging{})
+	stored := storedLogging(t, &entity.LoggingSettings{})
 
-	got, err := stored.AsLogging()
+	got, err := stored.AsLoggingSettings()
 	if err != nil {
 		t.Fatalf("AsLogging: %v", err)
 	}
@@ -100,7 +100,7 @@ func TestLoggingIsDisabledByDefault(t *testing.T) {
 // Credentials are stored encrypted and read back as plaintext, which is what
 // lets the service layer hand services/logging plain strings.
 func TestLoggingDecryptsEveryEndpoint(t *testing.T) {
-	l := &entity.Logging{
+	l := &entity.LoggingSettings{
 		Backend:  entity.LoggingBackend{Ingest: &entity.LoggingEndpoint{URL: "https://a"}},
 		Forwards: []entity.LoggingForward{{Name: "f", Endpoint: entity.LoggingEndpoint{URL: "https://b"}}},
 	}

@@ -17,27 +17,34 @@ import (
 )
 
 // Apply makes the cluster match the stored configuration.
-func (s *service) Apply(ctx context.Context, db database.IDB) error {
-	setting, err := s.loadSettings(ctx, db, false)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
+func (s *service) Apply(
+	ctx context.Context,
+	db database.IDB,
+	req *loggingservice.SettingApplyReq,
+) (_ *loggingservice.SettingApplyResp, err error) {
+	setting := req.Setting
 	if setting == nil {
-		// Never configured, which is the default: there is nothing to run and nothing to remove.
-		return nil
+		setting, err = s.loadSettings(ctx, db, false)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		if setting == nil {
+			// Never configured, which is the default: there is nothing to run and nothing to remove.
+			return nil, nil
+		}
 	}
 
-	cfg, err := setting.AsLogging()
+	cfg, err := setting.AsLoggingSettings()
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	if cfg == nil || !cfg.Enabled {
-		return s.TearDown(ctx)
+		return nil, s.TearDown(ctx)
 	}
 	if err := cfg.Decrypt(); err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
-	return s.deploy(ctx, cfg)
+	return nil, s.deploy(ctx, cfg)
 }
 
 // deploy creates the backend before the collector.
@@ -48,7 +55,7 @@ func (s *service) Apply(ctx context.Context, db database.IDB) error {
 // -remoteWrite.tmpDataPath - observed opening with persistence enabled - and
 // drains it once the backend answers. Waiting on a health check here would add
 // a failure mode, a timeout the API holds open, for no lost line.
-func (s *service) deploy(ctx context.Context, cfg *entity.Logging) error {
+func (s *service) deploy(ctx context.Context, cfg *entity.LoggingSettings) error {
 	logNet, err := s.ensureLoggingNetwork(ctx)
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -83,7 +90,7 @@ func (s *service) deploy(ctx context.Context, cfg *entity.Logging) error {
 
 // deployCollector runs vlagent on every node, shipping to ingestURL over the
 // logging network.
-func (s *service) deployCollector(ctx context.Context, cfg *entity.Logging, ingestURL, logNet string) error {
+func (s *service) deployCollector(ctx context.Context, cfg *entity.LoggingSettings, ingestURL, logNet string) error {
 	spec, err := s.buildCollectSpec(cfg, ingestURL)
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -118,7 +125,7 @@ func (s *service) deployCollector(ctx context.Context, cfg *entity.Logging, inge
 
 // deployBackend creates the backend when HivePaaS owns it, and reports where
 // the collector should write either way.
-func (s *service) deployBackend(ctx context.Context, cfg *entity.Logging, logNet string) (string, error) {
+func (s *service) deployBackend(ctx context.Context, cfg *entity.LoggingSettings, logNet string) (string, error) {
 	if !cfg.Backend.Managed {
 		ep, err := toEndpoint(cfg.Backend.Ingest)
 		if err != nil {
@@ -253,7 +260,7 @@ func (s *service) Status(
 		return status, nil
 	}
 
-	loggingSettings, err := setting.AsLogging()
+	loggingSettings, err := setting.AsLoggingSettings()
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

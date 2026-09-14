@@ -54,7 +54,7 @@ func TestBuildCollectSpecCollectsContainerLogsAsOneSource(t *testing.T) {
 		{"both", entity.LoggingSources{Apps: true, HivePaaS: true}, logging.SourceKindApp},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			spec, err := s.buildCollectSpec(&entity.Logging{Sources: tc.sources},
+			spec, err := s.buildCollectSpec(&entity.LoggingSettings{Sources: tc.sources},
 				"http://vlogs:9428/internal/insert")
 			if err != nil {
 				t.Fatalf("buildCollectSpec: %v", err)
@@ -77,7 +77,7 @@ func TestBuildCollectSpecCollectsNothingForSourcesItCannotRead(t *testing.T) {
 	s := &service{}
 
 	_, err := s.buildCollectSpec(
-		&entity.Logging{Sources: entity.LoggingSources{TraefikAccess: true, Nodes: true}},
+		&entity.LoggingSettings{Sources: entity.LoggingSources{TraefikAccess: true, Nodes: true}},
 		"http://vlogs:9428/internal/insert")
 
 	assert.ErrorIs(t, err, logging.ErrNoSources)
@@ -85,7 +85,7 @@ func TestBuildCollectSpecCollectsNothingForSourcesItCannotRead(t *testing.T) {
 
 func TestBuildCollectSpecCarriesForwards(t *testing.T) {
 	s := &service{}
-	cfg := &entity.Logging{
+	cfg := &entity.LoggingSettings{
 		Sources: entity.LoggingSources{Apps: true},
 		Forwards: []entity.LoggingForward{{
 			Name:     "siem",
@@ -110,7 +110,7 @@ func TestBuildCollectSpecCarriesForwards(t *testing.T) {
 func TestBuildCollectSpecRefusesWithNoSources(t *testing.T) {
 	s := &service{}
 
-	_, err := s.buildCollectSpec(&entity.Logging{}, "http://vlogs:9428/internal/insert")
+	_, err := s.buildCollectSpec(&entity.LoggingSettings{}, "http://vlogs:9428/internal/insert")
 
 	assert.Error(t, err)
 }
@@ -120,7 +120,7 @@ func TestBuildCollectSpecRefusesWithNoSources(t *testing.T) {
 func TestAppSourceGlobPointsAtDockerLogs(t *testing.T) {
 	s := &service{}
 
-	spec, err := s.buildCollectSpec(&entity.Logging{Sources: entity.LoggingSources{Apps: true}},
+	spec, err := s.buildCollectSpec(&entity.LoggingSettings{Sources: entity.LoggingSources{Apps: true}},
 		"http://vlogs:9428/internal/insert")
 	if err != nil {
 		t.Fatalf("buildCollectSpec: %v", err)

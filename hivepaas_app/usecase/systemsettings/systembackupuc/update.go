@@ -108,7 +108,6 @@ func (uc *UC) loadSettingData(
 			Status:    base.SettingStatusActive,
 			Name:      backupSettingName,
 			Version:   entity.CurrentSystemBackupVersion,
-			Data:      "{}", // NOTE: this is necessary to make the parse not to fail
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}

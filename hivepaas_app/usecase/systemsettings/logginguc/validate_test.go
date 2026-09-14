@@ -11,8 +11,8 @@ import (
 	"github.com/hivepaas/hivepaas/services/logging"
 )
 
-func validEnabled() *entity.Logging {
-	return &entity.Logging{
+func validEnabled() *entity.LoggingSettings {
+	return &entity.LoggingSettings{
 		Enabled: true,
 		Sources: entity.LoggingSources{Apps: true},
 		Collector: entity.LoggingCollector{
@@ -34,7 +34,7 @@ func TestValidateAcceptsAWorkingConfiguration(t *testing.T) {
 // Disabled is the default and must stay valid however empty it is, or an
 // operator could not turn logging off without filling in a form first.
 func TestValidateAcceptsDisabledAndEmpty(t *testing.T) {
-	assert.NoError(t, validateSettings(&entity.Logging{}))
+	assert.NoError(t, validateSettings(&entity.LoggingSettings{}))
 	assert.NoError(t, validateSettings(nil))
 }
 

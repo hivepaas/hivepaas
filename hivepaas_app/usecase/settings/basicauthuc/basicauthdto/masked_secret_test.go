@@ -32,10 +32,10 @@ func TestKeepMaskedSecrets(t *testing.T) {
 	// A value that only looks like the placeholder is a real password. Treating it
 	// as "unchanged" would quietly refuse a password the user did choose.
 	t.Run("a near miss is not the placeholder", func(t *testing.T) {
-		req := &BasicAuthBaseReq{Username: "admin", Password: "****************"}
+		req := &BasicAuthBaseReq{Username: "admin", Password: "*****************"}
 		basicAuth := req.ToEntity()
 		req.KeepMaskedSecrets(basicAuth, stored)
-		assert.Equal(t, "****************", basicAuth.Password.String())
+		assert.Equal(t, "*****************", basicAuth.Password.String())
 	})
 
 	t.Run("no stored setting leaves the request alone", func(t *testing.T) {

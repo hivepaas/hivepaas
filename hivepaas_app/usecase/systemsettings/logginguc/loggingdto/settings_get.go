@@ -128,7 +128,7 @@ func TransformLoggingSettings(
 	if err = copier.Copy(&resp, input.LoggingSetting); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	loggingSettings := input.LoggingSetting.MustAsLogging()
+	loggingSettings := input.LoggingSetting.MustAsLoggingSettings()
 	if err = copier.Copy(&resp, loggingSettings); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -147,11 +147,16 @@ func TransformLoggingSettings(
 
 func TransformLoggingBackend(
 	input *LoggingSettingsTransformationInput,
-	loggingSettings *entity.Logging,
+	loggingSettings *entity.LoggingSettings,
 	resp *LoggingSettingsResp,
 ) {
 	if loggingSettings == nil {
 		return
+	}
+
+	if resp.Backend.Type == "" && resp.Backend.Ingest == nil {
+		resp.Backend.Type = base.LoggingBackendTypeVictoriaLogs
+		resp.Backend.Managed = true
 	}
 
 	if input.MaskSecrets {
@@ -187,7 +192,7 @@ func TransformLoggingBackend(
 
 func TransformLoggingForwards(
 	input *LoggingSettingsTransformationInput,
-	loggingSettings *entity.Logging,
+	loggingSettings *entity.LoggingSettings,
 	resp *LoggingSettingsResp,
 ) {
 	if loggingSettings == nil {

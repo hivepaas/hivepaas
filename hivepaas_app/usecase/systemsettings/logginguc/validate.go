@@ -11,7 +11,7 @@ import (
 //
 // Nothing is checked while logging is disabled: that is the default state, and
 // requiring a complete form to turn the feature off would be perverse.
-func validateSettings(cfg *entity.Logging) error {
+func validateSettings(cfg *entity.LoggingSettings) error {
 	if cfg == nil || !cfg.Enabled {
 		return nil
 	}

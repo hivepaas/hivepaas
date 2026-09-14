@@ -31,11 +31,11 @@ type UpdateSettingsBaseReq struct {
 	Forwards  []*ForwardReq `json:"forwards"`
 }
 
-func (req *UpdateSettingsBaseReq) ToEntity() *entity.Logging {
+func (req *UpdateSettingsBaseReq) ToEntity() *entity.LoggingSettings {
 	if req == nil {
 		return nil
 	}
-	return &entity.Logging{
+	return &entity.LoggingSettings{
 		Enabled:   req.Enabled,
 		Sources:   req.Sources.ToEntity(),
 		Collector: req.Collector.ToEntity(),
@@ -46,7 +46,7 @@ func (req *UpdateSettingsBaseReq) ToEntity() *entity.Logging {
 	}
 }
 
-func (req *UpdateSettingsBaseReq) KeepMaskedSecrets(newSettings, current *entity.Logging) {
+func (req *UpdateSettingsBaseReq) KeepMaskedSecrets(newSettings, current *entity.LoggingSettings) {
 	if newSettings == nil || current == nil {
 		return
 	}

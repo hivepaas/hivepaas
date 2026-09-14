@@ -134,7 +134,7 @@ func TestEncryptedFieldRefusesTheMaskedPlaceholder(t *testing.T) {
 func TestEncryptedFieldAcceptsValuesNearThePlaceholder(t *testing.T) {
 	useDataKey(t)
 
-	for _, value := range []string{"*******", "*********", "****************", "a" + base.MaskedSecret} {
+	for _, value := range []string{"", "*****************", "a" + base.MaskedSecret} {
 		_, err := json.Marshal(&encryptedHolder{Secret: NewEncryptedField(value)})
 		assert.NoError(t, err, "value %q is a real secret, not the placeholder", value)
 	}

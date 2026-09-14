@@ -11,6 +11,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -75,7 +76,8 @@ func TestDeployJoinsTheStackOnlyToNetworksItNeeds(t *testing.T) {
 	fd := &fakeDocker{}
 	s := newTestService(fd, storedSetting(t, enabledConfig()))
 
-	assert.NoError(t, s.Apply(context.Background(), nil))
+	_, e := s.Apply(context.Background(), nil, &loggingservice.SettingApplyReq{})
+	assert.NoError(t, e)
 
 	var backend, collector *swarm.ServiceSpec
 	for _, spec := range fd.created {
@@ -104,7 +106,7 @@ func TestDeployRefusesWhenTheInternalNetworkIsMissing(t *testing.T) {
 	s := newTestService(fd, storedSetting(t, enabledConfig()))
 	fd.networks = nil // no hivepaas_local_net in this cluster
 
-	err := s.Apply(context.Background(), nil)
+	_, err := s.Apply(context.Background(), nil, &loggingservice.SettingApplyReq{})
 
 	assert.ErrorIs(t, err, hperrors.ErrLoggingAPINetworkMissing)
 	assert.Empty(t, fd.created, "nothing should have been deployed")

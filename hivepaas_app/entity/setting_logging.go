@@ -9,21 +9,35 @@ import (
 )
 
 const (
-	CurrentLoggingVersion = 1
+	CurrentLoggingSettingsVersion = 1
 )
 
-var _ = registerSettingParser(base.SettingTypeLogging, &loggingParser{})
+var _ = registerSettingParser(base.SettingTypeLogging, &loggingSettingsParser{})
 
-type loggingParser struct {
+type loggingSettingsParser struct {
 }
 
-func (s *loggingParser) New() SettingData {
-	return &Logging{}
+// New is both the never-configured default and the struct stored data is
+// unmarshalled into, so every field defaulted here to a non-zero value must be
+// written unconditionally - with `omitempty`, a stored false is left out of the
+// JSON and the default below survives the unmarshal as a silent true.
+func (s *loggingSettingsParser) New() SettingData {
+	return &LoggingSettings{
+		Collector: LoggingCollector{
+			Type:    base.LoggingCollectorTypeVlagent,
+			Managed: true,
+		},
+		Sources: LoggingSources{Apps: true},
+		Backend: LoggingBackend{
+			Type:    base.LoggingBackendTypeVictoriaLogs,
+			Managed: true,
+		},
+	}
 }
 
-// Logging is the whole subsystem's configuration. It is global and, until
+// LoggingSettings is the whole subsystem's configuration. It is global and, until
 // Enabled is set, nothing is deployed.
-type Logging struct {
+type LoggingSettings struct {
 	Enabled   bool             `json:"enabled,omitempty"`
 	Sources   LoggingSources   `json:"sources"`
 	Collector LoggingCollector `json:"collector"`
@@ -36,7 +50,8 @@ type Logging struct {
 }
 
 type LoggingSources struct {
-	Apps          bool `json:"apps,omitempty"`
+	// Apps defaults to true in New, so it carries no omitempty.
+	Apps          bool `json:"apps"`
 	HivePaaS      bool `json:"hivepaas,omitempty"`
 	TraefikAccess bool `json:"traefikAccess,omitempty"`
 	Nodes         bool `json:"nodes,omitempty"`
@@ -49,8 +64,9 @@ type LoggingSources struct {
 // their own VictoriaLogs, which HivePaaS can still query because it speaks the
 // same protocol, but whose lifecycle it does not own.
 type LoggingBackend struct {
-	Type    base.LoggingBackendType `json:"type,omitempty"`
-	Managed bool                    `json:"managed,omitempty"`
+	Type base.LoggingBackendType `json:"type,omitempty"`
+	// Managed defaults to true in New, so it carries no omitempty.
+	Managed bool `json:"managed"`
 
 	// Ingest and Query are separate because they are separate in backends other
 	// than VictoriaLogs, and because a write proxy may sit in front of ingest.
@@ -62,9 +78,10 @@ type LoggingBackend struct {
 }
 
 type LoggingCollector struct {
-	Type    base.LoggingCollectorType `json:"type,omitempty"`
-	Managed bool                      `json:"managed,omitempty"`
-	Vlagent *LoggingCollectorVlagent  `json:"vlagent,omitempty"`
+	Type base.LoggingCollectorType `json:"type,omitempty"`
+	// Managed defaults to true in New, so it carries no omitempty.
+	Managed bool                     `json:"managed"`
+	Vlagent *LoggingCollectorVlagent `json:"vlagent,omitempty"`
 }
 
 type LoggingCollectorVlagent struct {
@@ -105,7 +122,7 @@ type LoggingForward struct {
 	Endpoint LoggingEndpoint `json:"endpoint"`
 }
 
-func (s *Logging) GetType() base.SettingType {
+func (s *LoggingSettings) GetType() base.SettingType {
 	return base.SettingTypeLogging
 }
 
@@ -114,7 +131,7 @@ func (s *Logging) GetType() base.SettingType {
 // Unlike most settings this one genuinely references another, so VerifyingRefIDs
 // does something: it refuses a volume id that does not exist, and the resource
 // link keeps that volume from being deleted while logging still uses it.
-func (s *Logging) GetRefObjectIDs() *RefObjectIDs {
+func (s *LoggingSettings) GetRefObjectIDs() *RefObjectIDs {
 	ids := &RefObjectIDs{}
 	if s.Backend.VictoriaLogs != nil {
 		if s.Backend.VictoriaLogs.Node.ID != "" {
@@ -127,12 +144,12 @@ func (s *Logging) GetRefObjectIDs() *RefObjectIDs {
 	return ids
 }
 
-func (s *Logging) GetResourceLinks(setting *Setting) []*ResLink {
+func (s *LoggingSettings) GetResourceLinks(setting *Setting) []*ResLink {
 	return s.GetRefObjectIDs().GetResourceLinks(base.ResourceTypeSetting, setting.ID)
 }
 
 // Decrypt resolves every stored credential, so that a caller can read them.
-func (s *Logging) Decrypt() error {
+func (s *LoggingSettings) Decrypt() error {
 	for _, ep := range s.allEndpoints() {
 		if _, err := ep.Password.GetPlain(); err != nil {
 			return hperrors.Wrap(err)
@@ -146,7 +163,7 @@ func (s *Logging) Decrypt() error {
 
 // allEndpoints is every place a credential can be stored, so that Decrypt and
 // anything like it cannot miss one as the schema grows.
-func (s *Logging) allEndpoints() []*LoggingEndpoint {
+func (s *LoggingSettings) allEndpoints() []*LoggingEndpoint {
 	eps := make([]*LoggingEndpoint, 0, len(s.Forwards)+2) //nolint:mnd // Ingest and Query
 	if s.Backend.Ingest != nil {
 		eps = append(eps, s.Backend.Ingest)
@@ -160,10 +177,10 @@ func (s *Logging) allEndpoints() []*LoggingEndpoint {
 	return eps
 }
 
-func (s *Setting) AsLogging() (*Logging, error) {
-	return parseSettingAs[*Logging](s)
+func (s *Setting) AsLoggingSettings() (*LoggingSettings, error) {
+	return parseSettingAs[*LoggingSettings](s)
 }
 
-func (s *Setting) MustAsLogging() *Logging {
-	return gofn.Must(s.AsLogging())
+func (s *Setting) MustAsLoggingSettings() *LoggingSettings {
+	return gofn.Must(s.AsLoggingSettings())
 }

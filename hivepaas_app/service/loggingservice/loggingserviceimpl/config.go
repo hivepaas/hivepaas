@@ -69,7 +69,7 @@ func backendBaseURL() string {
 }
 
 // buildCollectSpec turns the stored configuration into a collection job.
-func (s *service) buildCollectSpec(cfg *entity.Logging, ingestURL string) (*logging.CollectSpec, error) {
+func (s *service) buildCollectSpec(cfg *entity.LoggingSettings, ingestURL string) (*logging.CollectSpec, error) {
 	var sources []*logging.Source
 	if cfg.Sources.Apps || cfg.Sources.HivePaaS {
 		// One source, not two. Apps and HivePaaS's own services write into the
@@ -130,7 +130,7 @@ func (s *service) loadSettings(
 }
 
 // loadEnabledSettings returns the decrypted configuration, or ErrNotEnabled.
-func (s *service) loadEnabledSettings(ctx context.Context, db database.IDB) (*entity.Logging, error) {
+func (s *service) loadEnabledSettings(ctx context.Context, db database.IDB) (*entity.LoggingSettings, error) {
 	setting, err := s.loadSettings(ctx, db, false)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -139,7 +139,7 @@ func (s *service) loadEnabledSettings(ctx context.Context, db database.IDB) (*en
 		return nil, hperrors.Wrap(hperrors.ErrLoggingNotEnabled)
 	}
 
-	cfg, err := setting.AsLogging()
+	cfg, err := setting.AsLoggingSettings()
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

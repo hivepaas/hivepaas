@@ -106,11 +106,11 @@ func TestReencryptDataLeavesHashedValuesAlone(t *testing.T) {
 	assert.NoError(t, reloaded.MustAsAPIKey().SecretKey.VerifyHash(apiKeySecretHex))
 }
 
-// Logging keeps secrets inside a slice of structs, a shape no other setting
+// LoggingSettings keeps secrets inside a slice of structs, a shape no other setting
 // has. Missing one at key rotation would leave it encrypted under a key that is
 // about to go away, which is data loss rather than a failed test.
 func TestReencryptDataReachesSecretsInsideASlice(t *testing.T) {
-	setting := newStoredSetting(t, &Logging{
+	setting := newStoredSetting(t, &LoggingSettings{
 		Backend: LoggingBackend{
 			Ingest: &LoggingEndpoint{URL: "https://a", BearerToken: NewEncryptedField("ingest-token")},
 		},
@@ -124,7 +124,7 @@ func TestReencryptDataReachesSecretsInsideASlice(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, changed, "three secrets should have been rewritten")
 
-	got, err := setting.AsLogging()
+	got, err := setting.AsLoggingSettings()
 	if err != nil {
 		t.Fatalf("AsLogging: %v", err)
 	}

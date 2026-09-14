@@ -2,7 +2,16 @@ package loggingservice
 
 import (
 	"time"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 )
+
+type SettingApplyReq struct {
+	Setting *entity.Setting // if nil, it will be loaded from DB
+}
+
+type SettingApplyResp struct {
+}
 
 // Status is what the logging stack is currently doing.
 type Status struct {

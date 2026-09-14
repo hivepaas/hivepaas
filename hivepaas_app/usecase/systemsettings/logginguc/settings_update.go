@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc/loggingdto"
 )
@@ -63,7 +64,10 @@ func (uc *UC) UpdateLoggingSettings(
 		) error {
 			// Make the cluster match what was just saved. Apply is idempotent, so a
 			// failure here leaves a stored configuration that the next save retries.
-			if err := uc.loggingService.Apply(ctx, db); err != nil {
+			_, err := uc.loggingService.Apply(ctx, db, &loggingservice.SettingApplyReq{
+				Setting: pData.Setting,
+			})
+			if err != nil {
 				return hperrors.Wrap(err)
 			}
 			return nil
@@ -78,7 +82,7 @@ func (uc *UC) UpdateLoggingSettings(
 
 type updateSettingData struct {
 	*settings.UpdateUniqueSettingData
-	NewSettings *entity.Logging
+	NewSettings *entity.LoggingSettings
 }
 
 type persistingSettingData struct {
@@ -105,19 +109,16 @@ func (uc *UC) loadSettingData(
 			Type:      currentSettingType,
 			Status:    base.SettingStatusActive,
 			Name:      loggingSettingName,
-			Version:   entity.CurrentLoggingVersion,
+			Version:   entity.CurrentLoggingSettingsVersion,
 			CreatedAt: timeNow,
 			UpdatedAt: timeNow,
 		}
 	}
 	data.Setting = setting
 
-	currSettings, err := setting.AsLogging()
+	currSettings, err := setting.AsLoggingSettings()
 	if err != nil {
 		return hperrors.Wrap(err)
-	}
-	if currSettings == nil {
-		currSettings = &entity.Logging{}
 	}
 	req.KeepMaskedSecrets(data.NewSettings, currSettings)
 

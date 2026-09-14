@@ -103,7 +103,7 @@ func historyReason(r loggingservice.ExcludedReason) loggingservice.HistoryUnavai
 
 // queryEndpoint is where to read from: the backend HivePaaS runs, reached by
 // service name over the API's private network, or the one the operator named.
-func queryEndpoint(cfg *entity.Logging) (*logging.Endpoint, error) {
+func queryEndpoint(cfg *entity.LoggingSettings) (*logging.Endpoint, error) {
 	if cfg.Backend.Managed {
 		return &logging.Endpoint{URL: backendBaseURL()}, nil
 	}
@@ -114,6 +114,6 @@ func queryEndpoint(cfg *entity.Logging) (*logging.Endpoint, error) {
 }
 
 // hasQueryEndpoint says whether there is anywhere to read from.
-func hasQueryEndpoint(cfg *entity.Logging) bool {
+func hasQueryEndpoint(cfg *entity.LoggingSettings) bool {
 	return cfg.Backend.Managed || (cfg.Backend.Query != nil && cfg.Backend.Query.URL != "")
 }

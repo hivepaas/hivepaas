@@ -103,18 +103,6 @@ func (s *Setting) IsTypeIn(types ...base.SettingType) bool {
 	return gofn.Contain(types, s.Type)
 }
 
-func (s *Setting) parseData(structPtr SettingData) error {
-	if s == nil || s.Data == "" {
-		return nil
-	}
-	err := json.Unmarshal(reflectutil.UnsafeStrToBytes(s.Data), structPtr)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	s.parsedData = structPtr
-	return nil
-}
-
 func (s *Setting) SetData(data SettingData) error {
 	if data.GetType() != s.Type {
 		return hperrors.NewMismatch("Setting type", s.Type)
@@ -160,12 +148,14 @@ func parseSettingAs[T SettingData](s *Setting) (res T, err error) {
 		}
 		return res, nil
 	}
+	res = settingParserMap[s.Type].New().(T) //nolint:forcetypeassert
+	if res.GetType() != s.Type {
+		return res, hperrors.NewMismatch("Setting type", s.Type)
+	}
+	s.parsedData = res
 	if s.Data != "" {
-		res = settingParserMap[s.Type].New().(T) //nolint:forcetypeassert
-		if res.GetType() != s.Type {
-			return res, hperrors.NewMismatch("Setting type", s.Type)
-		}
-		if err := s.parseData(res); err != nil {
+		err = json.Unmarshal(reflectutil.UnsafeStrToBytes(s.Data), res)
+		if err != nil {
 			return res, hperrors.Wrap(err)
 		}
 	}

@@ -3,6 +3,7 @@ package envvarserviceimpl
 import (
 	"context"
 	"sort"
+	"strconv"
 
 	"github.com/tiendc/gofn"
 
@@ -11,26 +12,45 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
+//nolint:funlen
 func (s *service) BuildSystemEnvVarsInApp(
 	ctx context.Context,
 	db database.IDB,
 	req *envvarservice.BuildSystemEnvVarsInAppReq,
 ) ([]*envvarservice.EnvVar, error) {
-	routeLinks, _, err := s.resLinkRepo.List(ctx, db, nil,
-		bunex.SelectJoin("JOIN settings ON settings.id = res_link.src_id AND settings.deleted_at IS NULL"),
-		bunex.SelectWhere("res_link.src_type = ?", base.ResourceTypeSetting),
-		bunex.SelectWhere("settings.type = ?", base.SettingTypeAppRouting),
+	settings, _, err := s.settingRepo.List(ctx, db, nil, nil,
+		bunex.SelectWhere("settings.status = ?", base.SettingStatusActive),
+		bunex.SelectWhereIn("settings.type IN (?)", base.SettingTypeAppRouting, base.SettingTypeAppKind),
 		bunex.SelectWhere("settings.object_id = ?", req.App.ID),
-		bunex.SelectWhereIn("res_link.dst_type IN (?)", base.ResourceTypePort, base.ResourceTypeDomain),
-		bunex.SelectOrder("res_link.index"),
 	)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	routeResLinks := entity.ResLinks(routeLinks)
+
+	routingSetting := settinghelper.FindSettingByType(settings, base.SettingTypeAppRouting)
+	var routingSettings *entity.AppRoutingSettings
+	if routingSetting != nil {
+		routingSettings = routingSetting.MustAsAppRoutingSettings()
+	}
+
+	portStr := ""
+	activeDomain := ""
+	if routingSettings != nil {
+		if routingSettings.Port > 0 {
+			portStr = strconv.Itoa(routingSettings.Port)
+		}
+		activeDomain = gofn.FirstOr(routingSettings.GetActiveDomainNames(), "")
+	}
+
+	kindSetting := settinghelper.FindSettingByType(settings, base.SettingTypeAppKind)
+	var kindSettings *entity.AppKindSettings
+	if kindSetting != nil {
+		kindSettings = kindSetting.MustAsAppKindSettings()
+	}
 
 	result := []*envvarservice.EnvVar{
 		{
@@ -43,14 +63,14 @@ func (s *service) BuildSystemEnvVarsInApp(
 		{
 			EnvVar: &entity.EnvVar{
 				Key:      base.AppSystemEnvVarPort,
-				Value:    gofn.Head(routeResLinks.GetDstIDByDstType(base.ResourceTypePort)),
+				Value:    portStr,
 				IsShared: true,
 			},
 		},
 		{
 			EnvVar: &entity.EnvVar{
 				Key:      base.AppSystemEnvVarDomain,
-				Value:    gofn.Head(routeResLinks.GetDstIDByDstType(base.ResourceTypeDomain)),
+				Value:    activeDomain,
 				IsShared: true,
 			},
 		},
@@ -76,6 +96,50 @@ func (s *service) BuildSystemEnvVarsInApp(
 			},
 		},
 	}
+
+	if kindSettings != nil && kindSettings.Category == base.AppCategoryDatabase && kindSettings.Database != nil {
+		if err := kindSettings.Decrypt(); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		result = append(result,
+			&envvarservice.EnvVar{
+				EnvVar: &entity.EnvVar{
+					Key:      base.AppSystemEnvVarUser,
+					Value:    kindSettings.Database.Username,
+					IsShared: true,
+				},
+			},
+			&envvarservice.EnvVar{
+				EnvVar: &entity.EnvVar{
+					Key:      base.AppSystemEnvVarPassword,
+					Value:    gofn.Must(kindSettings.Database.Password.GetPlain()),
+					IsShared: true,
+				},
+			},
+			&envvarservice.EnvVar{
+				EnvVar: &entity.EnvVar{
+					Key:      base.AppSystemEnvVarRootPassword,
+					Value:    gofn.Must(kindSettings.Database.RootPassword.GetPlain()),
+					IsShared: false, // NOTE: do not share this env with other apps
+				},
+			},
+			&envvarservice.EnvVar{
+				EnvVar: &entity.EnvVar{
+					Key:      base.AppSystemEnvVarDatabaseName,
+					Value:    kindSettings.Database.DbName,
+					IsShared: true,
+				},
+			},
+			&envvarservice.EnvVar{
+				EnvVar: &entity.EnvVar{
+					Key:      base.AppSystemEnvVarSSLMode,
+					Value:    string(kindSettings.Database.SSLMode),
+					IsShared: true,
+				},
+			})
+	}
+
+	// TODO: envs for cache app
 
 	for _, env := range result {
 		env.IsLiteral = true

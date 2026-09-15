@@ -45,17 +45,28 @@ const (
 	AppSystemEnvVarEnv    = "HIVEPAAS_ENV"
 	AppSystemEnvVarName   = "HIVEPAAS_APP_NAME"
 	AppSystemEnvVarID     = "HIVEPAAS_APP_ID"
+
+	AppSystemEnvVarUser         = "HIVEPAAS_USER"
+	AppSystemEnvVarPassword     = "HIVEPAAS_PASSWORD"      //nolint:gosec // G101: env name
+	AppSystemEnvVarRootPassword = "HIVEPAAS_ROOT_PASSWORD" //nolint:gosec // G101: env name
+	AppSystemEnvVarDatabaseName = "HIVEPAAS_DATABASE_NAME"
+	AppSystemEnvVarSSLMode      = "HIVEPAAS_SSL_MODE"
 )
 
 var (
 	mapAppUnallowedVar = func() map[string]struct{} {
 		theMap := map[string]struct{}{
-			AppSystemEnvVarHost:   {},
-			AppSystemEnvVarPort:   {},
-			AppSystemEnvVarDomain: {},
-			AppSystemEnvVarEnv:    {},
-			AppSystemEnvVarName:   {},
-			AppSystemEnvVarID:     {},
+			AppSystemEnvVarHost:         {},
+			AppSystemEnvVarPort:         {},
+			AppSystemEnvVarDomain:       {},
+			AppSystemEnvVarEnv:          {},
+			AppSystemEnvVarName:         {},
+			AppSystemEnvVarID:           {},
+			AppSystemEnvVarUser:         {},
+			AppSystemEnvVarPassword:     {},
+			AppSystemEnvVarRootPassword: {},
+			AppSystemEnvVarDatabaseName: {},
+			AppSystemEnvVarSSLMode:      {},
 		}
 		maps.Copy(theMap, mapProjectUnallowedVar)
 		return theMap

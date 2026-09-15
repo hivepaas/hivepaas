@@ -41,7 +41,10 @@ func (s *EncryptedField) String() string {
 	if s.decrypted != "" {
 		return s.decrypted
 	}
-	return s.encrypted
+	if s.encrypted != "" {
+		return base.MaskedSecret
+	}
+	return ""
 }
 
 func (s *EncryptedField) IsEmpty() bool {

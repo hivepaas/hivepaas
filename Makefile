@@ -15,15 +15,15 @@ mod:
 lint:
 	$(DEVTOOLS_CMD) go run ./tools/goroutinelint .
 	$(DEVTOOLS_CMD) go run ./tools/errcodelint
-	$(DEVTOOLS_CMD) golangci-lint --timeout=3m run -v ./...
+	$(DEVTOOLS_CMD) golangci-lint --timeout=5m run -v ./...
 
 lint-local:
 	@go run ./tools/goroutinelint .
 	@go run ./tools/errcodelint
 	# Run this cmd locally once to install golangci-lint binary
 	# curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.13.0
-	# FASTER golangci-lint --timeout=3m run -v --new-from-rev=HEAD~1
-	golangci-lint --timeout=3m run -v ./...
+	# FASTER golangci-lint --timeout=5m run -v --new-from-rev=HEAD~1
+	golangci-lint --timeout=5m run -v ./...
 
 # The everyday one. Cached: a package nothing touched is not run again.
 test:

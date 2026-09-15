@@ -125,6 +125,10 @@ func (s *Setting) Parse() (SettingData, error) {
 	return parseSettingAs[SettingData](s)
 }
 
+func (s *Setting) ResetParsedData() {
+	s.parsedData = nil
+}
+
 func (s *Setting) GetRefObjectIDs() (*RefObjectIDs, error) {
 	settingData, err := s.Parse()
 	if err != nil {

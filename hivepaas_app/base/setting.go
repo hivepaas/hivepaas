@@ -12,6 +12,7 @@ const (
 	SettingTypeAppClone          SettingType = "app-clone"
 	SettingTypeAppDeployment     SettingType = "app-deployment"
 	SettingTypeAppFeatures       SettingType = "app-features"
+	SettingTypeAppKind           SettingType = "app-kind"
 	SettingTypeAppPlacement      SettingType = "app-placement"
 	SettingTypeAppRouting        SettingType = "app-routing"
 	SettingTypeBackupRepo        SettingType = "backup-repo"

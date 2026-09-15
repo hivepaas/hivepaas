@@ -40,6 +40,8 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	}
 
 	{ // Settings
+		appGroup.GET("/:appID/kind-settings", appSettingsHandler.GetAppKindSettings)
+		appGroup.PUT("/:appID/kind-settings", appSettingsHandler.UpdateAppKindSettings)
 		appGroup.GET("/:appID/deployment-settings", appSettingsHandler.GetAppDeploymentSettings)
 		appGroup.PUT("/:appID/deployment-settings", appSettingsHandler.UpdateAppDeploymentSettings)
 		appGroup.GET("/:appID/deployment-settings/dockerfile-template",

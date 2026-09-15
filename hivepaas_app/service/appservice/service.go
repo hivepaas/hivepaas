@@ -6,6 +6,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
@@ -42,6 +43,9 @@ type Service interface {
 	// persist. See the implementation for the failure/rollback behavior.
 	RecreateServiceWithSpec(ctx context.Context, app *entity.App,
 		oldSpec, newSpec *swarm.ServiceSpec) (string, error)
+
+	RevealSecrets(ctx context.Context, db database.IDB, auth *basedto.Auth, app *entity.App,
+		setting *entity.Setting) error
 
 	ExecuteInTx(ctx context.Context, app *entity.App, requireUpdateVerMatch bool, fn func(database.Tx) error) error
 }

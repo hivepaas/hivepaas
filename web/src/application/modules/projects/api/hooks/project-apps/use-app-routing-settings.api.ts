@@ -49,4 +49,3 @@ function createHook() {
 }
 
 export const useAppRoutingSettingsApi = createHook();
-export { useAppRoutingSettingsApi as useAppHttpSettingsApi };

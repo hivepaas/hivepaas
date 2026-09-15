@@ -1325,19 +1325,19 @@
       "complexity": "simple"
     },
     {
-      "id": "file:src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts",
+      "id": "file:src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts",
       "type": "file",
-      "name": "use-app-http-settings.api.ts",
-      "filePath": "src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts",
-      "summary": "use-app-http-settings.api.ts implements typed API service calls for app http settings api in the projects module.",
+      "name": "use-app-routing-settings.api.ts",
+      "filePath": "src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts",
+      "summary": "use-app-routing-settings.api.ts implements typed API service calls for app http settings api in the projects module.",
       "tags": ["api-service", "hook"],
       "complexity": "simple"
     },
     {
-      "id": "function:src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts:createHook",
+      "id": "function:src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts:createHook",
       "type": "function",
       "name": "createHook",
-      "filePath": "src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts",
+      "filePath": "src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts",
       "lineRange": [10, 49],
       "summary": "createHook implements app http settings api behavior for the projects module.",
       "tags": ["mutation", "typescript"],
@@ -1495,19 +1495,19 @@
       "complexity": "simple"
     },
     {
-      "id": "file:src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts",
+      "id": "file:src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts",
       "type": "file",
-      "name": "app-http-settings.commands.ts",
-      "filePath": "src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts",
-      "summary": "app-http-settings.commands.ts exposes mutation commands and cache invalidation for app http settings commands.",
+      "name": "app-routing-settings.commands.ts",
+      "filePath": "src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts",
+      "summary": "app-routing-settings.commands.ts exposes mutation commands and cache invalidation for app http settings commands.",
       "tags": ["mutation"],
       "complexity": "simple"
     },
     {
-      "id": "function:src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts:useUpdateOne",
+      "id": "function:src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts:useUpdateOne",
       "type": "function",
       "name": "useUpdateOne",
-      "filePath": "src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts",
+      "filePath": "src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts",
       "lineRange": [11, 28],
       "summary": "useUpdateOne implements app http settings commands behavior for the projects module.",
       "tags": ["hook", "mutation", "typescript"],
@@ -1637,19 +1637,19 @@
       "complexity": "simple"
     },
     {
-      "id": "file:src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts",
+      "id": "file:src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts",
       "type": "file",
-      "name": "app-http-settings.queries.ts",
-      "filePath": "src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts",
-      "summary": "app-http-settings.queries.ts exposes TanStack Query read hooks for app http settings queries.",
+      "name": "app-routing-settings.queries.ts",
+      "filePath": "src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts",
+      "summary": "app-routing-settings.queries.ts exposes TanStack Query read hooks for app http settings queries.",
       "tags": ["query"],
       "complexity": "simple"
     },
     {
-      "id": "function:src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts:useFindOne",
+      "id": "function:src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts:useFindOne",
       "type": "function",
       "name": "useFindOne",
-      "filePath": "src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts",
+      "filePath": "src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts",
       "lineRange": [7, 19],
       "summary": "useFindOne implements app http settings queries behavior for the projects module.",
       "tags": ["hook", "query", "typescript"],
@@ -2122,12 +2122,12 @@
       "complexity": "moderate"
     },
     {
-      "id": "function:src/application/modules/projects/routes/single-project/single-app/configuration/http-settings/form/app-config-http-settings.form-mappers.ts:mapAppHttpSettingsToFormInput",
+      "id": "function:src/application/modules/projects/routes/single-project/single-app/configuration/http-settings/form/app-config-http-settings.form-mappers.ts:mapAppRoutingSettingsToFormInput",
       "type": "function",
-      "name": "mapAppHttpSettingsToFormInput",
+      "name": "mapAppRoutingSettingsToFormInput",
       "filePath": "src/application/modules/projects/routes/single-project/single-app/configuration/http-settings/form/app-config-http-settings.form-mappers.ts",
       "lineRange": [120, 125],
-      "summary": "mapAppHttpSettingsToFormInput implements http settings form mappers behavior for the projects module.",
+      "summary": "mapAppRoutingSettingsToFormInput implements http settings form mappers behavior for the projects module.",
       "tags": ["mapping", "typescript"],
       "complexity": "simple"
     },
@@ -8534,109 +8534,109 @@
       "complexity": "simple"
     },
     {
-      "id": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.contracts.ts",
+      "id": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.contracts.ts",
       "type": "file",
-      "name": "app-http-settings.api.contracts.ts",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.contracts.ts",
-      "summary": "app-http-settings.api.contracts.ts defines request and response contracts for http settings api contracts.",
+      "name": "app-routing-settings.api.contracts.ts",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.contracts.ts",
+      "summary": "app-routing-settings.api.contracts.ts defines request and response contracts for http settings api contracts.",
       "tags": ["api-service", "api-contracts", "type-definition"],
       "complexity": "simple"
     },
     {
-      "id": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts",
+      "id": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts",
       "type": "file",
-      "name": "app-http-settings.api.ts",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts",
-      "summary": "app-http-settings.api.ts implements typed API service calls for app http settings api in the projects module.",
+      "name": "app-routing-settings.api.ts",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts",
+      "summary": "app-routing-settings.api.ts implements typed API service calls for app http settings api in the projects module.",
       "tags": ["api-service"],
       "complexity": "simple"
     },
     {
-      "id": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts:AppHttpSettingsApi",
+      "id": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts:AppRoutingSettingsApi",
       "type": "class",
-      "name": "AppHttpSettingsApi",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts",
+      "name": "AppRoutingSettingsApi",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts",
       "lineRange": [14, 57],
-      "summary": "AppHttpSettingsApi encapsulates app http settings api responsibilities in the projects module.",
+      "summary": "AppRoutingSettingsApi encapsulates app http settings api responsibilities in the projects module.",
       "tags": ["class", "api-service"],
       "complexity": "simple"
     },
     {
-      "id": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+      "id": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
       "type": "file",
-      "name": "app-http-settings.api.validator.ts",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
-      "summary": "app-http-settings.api.validator.ts validates and normalizes backend API responses for http settings api validator.",
+      "name": "app-routing-settings.api.validator.ts",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
+      "summary": "app-routing-settings.api.validator.ts validates and normalizes backend API responses for http settings api validator.",
       "tags": ["api-service", "validation", "api-boundary"],
       "complexity": "complex"
     },
     {
-      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapClientConfig",
+      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapClientConfig",
       "type": "function",
       "name": "mapClientConfig",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
       "lineRange": [104, 114],
       "summary": "mapClientConfig implements http settings api validator behavior for the projects module.",
       "tags": ["mapping", "typescript"],
       "complexity": "simple"
     },
     {
-      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapHeaderConfig",
+      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapHeaderConfig",
       "type": "function",
       "name": "mapHeaderConfig",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
       "lineRange": [116, 127],
       "summary": "mapHeaderConfig implements http settings api validator behavior for the projects module.",
       "tags": ["mapping", "typescript"],
       "complexity": "simple"
     },
     {
-      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapCompressionConfig",
+      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapCompressionConfig",
       "type": "function",
       "name": "mapCompressionConfig",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
       "lineRange": [129, 142],
       "summary": "mapCompressionConfig implements http settings api validator behavior for the projects module.",
       "tags": ["mapping", "typescript"],
       "complexity": "simple"
     },
     {
-      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapRateLimitConfig",
+      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapRateLimitConfig",
       "type": "function",
       "name": "mapRateLimitConfig",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
       "lineRange": [144, 157],
       "summary": "mapRateLimitConfig implements http settings api validator behavior for the projects module.",
       "tags": ["mapping", "typescript"],
       "complexity": "simple"
     },
     {
-      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapPath",
+      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapPath",
       "type": "function",
       "name": "mapPath",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
       "lineRange": [184, 195],
       "summary": "mapPath implements http settings api validator behavior for the projects module.",
       "tags": ["mapping", "typescript"],
       "complexity": "simple"
     },
     {
-      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapDomain",
+      "id": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapDomain",
       "type": "function",
       "name": "mapDomain",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
       "lineRange": [197, 213],
       "summary": "mapDomain implements http settings api validator behavior for the projects module.",
       "tags": ["mapping", "typescript"],
       "complexity": "simple"
     },
     {
-      "id": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:AppHttpSettingsApiValidator",
+      "id": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:AppRoutingSettingsApiValidator",
       "type": "class",
-      "name": "AppHttpSettingsApiValidator",
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+      "name": "AppRoutingSettingsApiValidator",
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
       "lineRange": [215, 229],
-      "summary": "AppHttpSettingsApiValidator encapsulates http settings api validator responsibilities in the projects module.",
+      "summary": "AppRoutingSettingsApiValidator encapsulates http settings api validator responsibilities in the projects module.",
       "tags": ["class", "api-service", "validation"],
       "complexity": "simple"
     },
@@ -17842,11 +17842,11 @@
       "complexity": "simple"
     },
     {
-      "id": "file:src/application/modules/projects/domain/apps/http-settings/app-http-settings.entity.ts",
+      "id": "file:src/application/modules/projects/domain/apps/http-settings/app-routing-settings.entity.ts",
       "type": "file",
-      "name": "app-http-settings.entity.ts",
-      "filePath": "src/application/modules/projects/domain/apps/http-settings/app-http-settings.entity.ts",
-      "summary": "app-http-settings.entity.ts is a source file for app http settings entity in the projects module.",
+      "name": "app-routing-settings.entity.ts",
+      "filePath": "src/application/modules/projects/domain/apps/http-settings/app-routing-settings.entity.ts",
+      "summary": "app-routing-settings.entity.ts is a source file for app http settings entity in the projects module.",
       "tags": ["domain-model"],
       "complexity": "moderate"
     },
@@ -33548,22 +33548,22 @@
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts",
+      "source": "file:src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts",
       "target": "file:src/application/modules/projects/api/api-context/projects.api.context.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts",
+      "source": "file:src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts",
       "target": "file:src/application/modules/projects/api/services/index.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts",
-      "target": "function:src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts:createHook",
+      "source": "file:src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts",
+      "target": "function:src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts:createHook",
       "type": "contains",
       "direction": "forward",
       "weight": 1
@@ -33716,29 +33716,29 @@
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts",
+      "source": "file:src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts",
       "target": "file:src/application/modules/projects/api/hooks/project-apps/index.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts",
+      "source": "file:src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts",
       "target": "file:src/application/modules/projects/api/services/index.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts",
+      "source": "file:src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts",
       "target": "file:src/application/modules/projects/data/constants/projects.query-keys.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts",
-      "target": "function:src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts:useUpdateOne",
+      "source": "file:src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts",
+      "target": "function:src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts:useUpdateOne",
       "type": "contains",
       "direction": "forward",
       "weight": 1
@@ -33912,29 +33912,29 @@
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts",
+      "source": "file:src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts",
       "target": "file:src/application/modules/projects/api/hooks/project-apps/index.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts",
+      "source": "file:src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts",
       "target": "file:src/application/modules/projects/api/services/index.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts",
+      "source": "file:src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts",
       "target": "file:src/application/modules/projects/data/constants/projects.query-keys.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts",
-      "target": "function:src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts:useFindOne",
+      "source": "file:src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts",
+      "target": "function:src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts:useFindOne",
       "type": "contains",
       "direction": "forward",
       "weight": 1
@@ -34480,14 +34480,14 @@
     },
     {
       "source": "file:src/application/modules/projects/routes/single-project/single-app/configuration/http-settings/form/app-config-http-settings.form-mappers.ts",
-      "target": "function:src/application/modules/projects/routes/single-project/single-app/configuration/http-settings/form/app-config-http-settings.form-mappers.ts:mapAppHttpSettingsToFormInput",
+      "target": "function:src/application/modules/projects/routes/single-project/single-app/configuration/http-settings/form/app-config-http-settings.form-mappers.ts:mapAppRoutingSettingsToFormInput",
       "type": "contains",
       "direction": "forward",
       "weight": 1
     },
     {
       "source": "file:src/application/modules/projects/routes/single-project/single-app/configuration/http-settings/form/app-config-http-settings.form-mappers.ts",
-      "target": "function:src/application/modules/projects/routes/single-project/single-app/configuration/http-settings/form/app-config-http-settings.form-mappers.ts:mapAppHttpSettingsToFormInput",
+      "target": "function:src/application/modules/projects/routes/single-project/single-app/configuration/http-settings/form/app-config-http-settings.form-mappers.ts:mapAppRoutingSettingsToFormInput",
       "type": "exports",
       "direction": "forward",
       "weight": 0.8
@@ -40408,92 +40408,92 @@
       "weight": 0.8
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts",
-      "target": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.contracts.ts",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts",
+      "target": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.contracts.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts",
-      "target": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts",
+      "target": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts",
-      "target": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts:AppHttpSettingsApi",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts",
+      "target": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts:AppRoutingSettingsApi",
       "type": "contains",
       "direction": "forward",
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts",
-      "target": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts:AppHttpSettingsApi",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts",
+      "target": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts:AppRoutingSettingsApi",
       "type": "exports",
       "direction": "forward",
       "weight": 0.8
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
-      "target": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.contracts.ts",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
+      "target": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.contracts.ts",
       "type": "imports",
       "direction": "forward",
       "weight": 0.7
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
-      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapClientConfig",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
+      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapClientConfig",
       "type": "contains",
       "direction": "forward",
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
-      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapHeaderConfig",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
+      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapHeaderConfig",
       "type": "contains",
       "direction": "forward",
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
-      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapCompressionConfig",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
+      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapCompressionConfig",
       "type": "contains",
       "direction": "forward",
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
-      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapRateLimitConfig",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
+      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapRateLimitConfig",
       "type": "contains",
       "direction": "forward",
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
-      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapPath",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
+      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapPath",
       "type": "contains",
       "direction": "forward",
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
-      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:mapDomain",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
+      "target": "function:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:mapDomain",
       "type": "contains",
       "direction": "forward",
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
-      "target": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:AppHttpSettingsApiValidator",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
+      "target": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:AppRoutingSettingsApiValidator",
       "type": "contains",
       "direction": "forward",
       "weight": 1
     },
     {
-      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
-      "target": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts:AppHttpSettingsApiValidator",
+      "source": "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
+      "target": "class:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts:AppRoutingSettingsApiValidator",
       "type": "exports",
       "direction": "forward",
       "weight": 0.8
@@ -51563,7 +51563,7 @@
         "file:src/application/modules/projects/api/hooks/project-apps/use-app-config-files.api.ts",
         "file:src/application/modules/projects/api/hooks/project-apps/use-app-container-settings.api.ts",
         "file:src/application/modules/projects/api/hooks/project-apps/use-app-deployment-settings.api.ts",
-        "file:src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts",
+        "file:src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts",
         "file:src/application/modules/projects/api/hooks/project-apps/use-app-network-settings.api.ts",
         "file:src/application/modules/projects/api/hooks/project-apps/use-app-resource-settings.api.ts",
         "file:src/application/modules/projects/api/hooks/project-apps/use-app-service-settings.api.ts",
@@ -51627,9 +51627,9 @@
         "file:src/application/modules/projects/api/services/project-apps-services/env-vars/project-app-env-vars.api.contracts.ts",
         "file:src/application/modules/projects/api/services/project-apps-services/env-vars/project-app-env-vars.api.ts",
         "file:src/application/modules/projects/api/services/project-apps-services/env-vars/project-app-env-vars.api.validator.ts",
-        "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.contracts.ts",
-        "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts",
-        "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+        "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.contracts.ts",
+        "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts",
+        "file:src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
         "file:src/application/modules/projects/api/services/project-apps-services/http-settings/index.ts",
         "file:src/application/modules/projects/api/services/project-apps-services/index.ts",
         "file:src/application/modules/projects/api/services/project-apps-services/network-settings/app-network-settings.api.contracts.ts",
@@ -51744,7 +51744,7 @@
         "file:src/application/modules/projects/data/commands/project-apps/app-config-files.commands.ts",
         "file:src/application/modules/projects/data/commands/project-apps/app-container-settings.commands.ts",
         "file:src/application/modules/projects/data/commands/project-apps/app-deployment-settings.commands.ts",
-        "file:src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts",
+        "file:src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts",
         "file:src/application/modules/projects/data/commands/project-apps/app-network-settings.commands.ts",
         "file:src/application/modules/projects/data/commands/project-apps/app-resource-settings.commands.ts",
         "file:src/application/modules/projects/data/commands/project-apps/app-service-settings.commands.ts",
@@ -51792,7 +51792,7 @@
         "file:src/application/modules/projects/data/queries/project-apps/app-config-files.queries.ts",
         "file:src/application/modules/projects/data/queries/project-apps/app-container-settings.queries.ts",
         "file:src/application/modules/projects/data/queries/project-apps/app-deployment-settings.queries.ts",
-        "file:src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts",
+        "file:src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts",
         "file:src/application/modules/projects/data/queries/project-apps/app-network-settings.queries.ts",
         "file:src/application/modules/projects/data/queries/project-apps/app-resource-settings.queries.ts",
         "file:src/application/modules/projects/data/queries/project-apps/app-service-settings.queries.ts",
@@ -51955,7 +51955,7 @@
         "file:src/application/modules/projects/domain/apps/container-settings/index.ts",
         "file:src/application/modules/projects/domain/apps/deployment-settings/app-deployment-settings.entity.ts",
         "file:src/application/modules/projects/domain/apps/deployment-settings/index.ts",
-        "file:src/application/modules/projects/domain/apps/http-settings/app-http-settings.entity.ts",
+        "file:src/application/modules/projects/domain/apps/http-settings/app-routing-settings.entity.ts",
         "file:src/application/modules/projects/domain/apps/http-settings/index.ts",
         "file:src/application/modules/projects/domain/apps/index.ts",
         "file:src/application/modules/projects/domain/apps/network-settings/app-network-settings.entity.ts",

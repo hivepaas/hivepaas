@@ -193,8 +193,6 @@ export function mapAppRoutingSettingsToFormInput(data: AppRoutingSettings): AppC
     };
 }
 
-export const mapAppHttpSettingsToFormInput = mapAppRoutingSettingsToFormInput;
-
 export function mapFormValuesToPayload(
     values: AppConfigRoutingSettingsFormSchemaOutput,
 ): AppRoutingSettingsUpdatePayload {

@@ -21,5 +21,3 @@ function useFindOne(
 export const AppRoutingSettingsQueries = Object.freeze({
     useFindOne,
 });
-
-export { AppRoutingSettingsQueries as AppHttpSettingsQueries };

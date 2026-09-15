@@ -425,11 +425,15 @@ checkRequiredContent();
 checkReferencedPaths();
 
 if (errors.length > 0) {
+    // eslint-disable-next-line no-undef
     console.error("Agent setup check failed:");
     for (const error of errors) {
+        // eslint-disable-next-line no-undef
         console.error(`- ${error}`);
     }
+    // eslint-disable-next-line no-undef
     process.exit(1);
 }
 
+// eslint-disable-next-line no-undef
 console.log("Agent setup check passed.");

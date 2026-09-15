@@ -324,5 +324,3 @@ export class AppRoutingSettingsApiValidator {
         };
     };
 }
-
-export { AppRoutingSettingsApiValidator as AppHttpSettingsApiValidator };

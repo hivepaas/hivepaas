@@ -29,5 +29,3 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
 export const AppRoutingSettingsCommands = Object.freeze({
     useUpdateOne,
 });
-
-export { AppRoutingSettingsCommands as AppHttpSettingsCommands };

@@ -4446,7 +4446,7 @@
         },
         {
           "source": "~/projects/api/services/project-apps-services/http-settings",
-          "specifiers": ["AppHttpSettingsApi", "AppHttpSettingsApiValidator"]
+          "specifiers": ["AppRoutingSettingsApi", "AppRoutingSettingsApiValidator"]
         },
         {
           "source": "~/projects/api/services/project-apps-services/network-settings",
@@ -4666,8 +4666,8 @@
       "totalLines": 52,
       "hasStructuralAnalysis": true
     },
-    "src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts": {
-      "filePath": "src/application/modules/projects/api/hooks/project-apps/use-app-http-settings.api.ts",
+    "src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts": {
+      "filePath": "src/application/modules/projects/api/hooks/project-apps/use-app-routing-settings.api.ts",
       "contentHash": "b738b0c6c92910b707b472b650210eee117fd12ed4751a0de7d17c56d4cba008",
       "functions": [
         {
@@ -4693,14 +4693,14 @@
         },
         {
           "source": "../../../api/services",
-          "specifiers": ["AppHttpSettings_UpdateOne_Req"]
+          "specifiers": ["AppRoutingSettings_UpdateOne_Req"]
         },
         {
           "source": "../../api-context/projects.api.context",
           "specifiers": ["ProjectsApiContext"]
         }
       ],
-      "exports": ["useAppHttpSettingsApi"],
+      "exports": ["useAppRoutingSettingsApi"],
       "totalLines": 52,
       "hasStructuralAnalysis": true
     },
@@ -6473,15 +6473,15 @@
       "totalLines": 90,
       "hasStructuralAnalysis": true
     },
-    "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.contracts.ts": {
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.contracts.ts",
+    "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.contracts.ts": {
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.contracts.ts",
       "contentHash": "cd293f5a286b4d30f9e2daabcbba31d81a0bbd1ecf3ba8edd45b1dab9387cf63",
       "functions": [],
       "classes": [],
       "imports": [
         {
           "source": "~/projects/domain",
-          "specifiers": ["AppHttpSettings", "AppHttpSettingsUpdatePayload"]
+          "specifiers": ["AppRoutingSettings", "AppRoutingSettingsUpdatePayload"]
         },
         {
           "source": "@infrastructure/api",
@@ -6492,13 +6492,13 @@
       "totalLines": 14,
       "hasStructuralAnalysis": true
     },
-    "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts": {
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.ts",
+    "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts": {
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.ts",
       "contentHash": "dcb99fa7d9a9270cd37e01ddd374375337dd8312ee0b77ca315e2ada7357f98e",
       "functions": [],
       "classes": [
         {
-          "name": "AppHttpSettingsApi",
+          "name": "AppRoutingSettingsApi",
           "methods": ["constructor", "findOne", "updateOne"],
           "properties": [],
           "exported": true,
@@ -6519,59 +6519,59 @@
           "specifiers": ["BaseApi", "parseApiError"]
         },
         {
-          "source": "./app-http-settings.api.contracts",
+          "source": "./app-routing-settings.api.contracts",
           "specifiers": [
-            "AppHttpSettings_FindOne_Req",
-            "AppHttpSettings_FindOne_Res",
-            "AppHttpSettings_UpdateOne_Req",
-            "AppHttpSettings_UpdateOne_Res"
+            "AppRoutingSettings_FindOne_Req",
+            "AppRoutingSettings_FindOne_Res",
+            "AppRoutingSettings_UpdateOne_Req",
+            "AppRoutingSettings_UpdateOne_Res"
           ]
         },
         {
-          "source": "./app-http-settings.api.validator",
-          "specifiers": ["AppHttpSettingsApiValidator"]
+          "source": "./app-routing-settings.api.validator",
+          "specifiers": ["AppRoutingSettingsApiValidator"]
         }
       ],
-      "exports": ["AppHttpSettingsApi"],
+      "exports": ["AppRoutingSettingsApi"],
       "totalLines": 58,
       "hasStructuralAnalysis": true
     },
-    "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts": {
-      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-http-settings.api.validator.ts",
+    "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts": {
+      "filePath": "src/application/modules/projects/api/services/project-apps-services/http-settings/app-routing-settings.api.validator.ts",
       "contentHash": "7b63ff5dcd923dd6a027e988a02a4f063b4438dd53d0f5117eda4c4e44eb5af0",
       "functions": [
         {
           "name": "mapClientConfig",
           "params": ["raw"],
-          "returnType": "AppHttpClientConfig | null",
+          "returnType": "AppRoutingClientConfig | null",
           "exported": false,
           "lineCount": 11
         },
         {
           "name": "mapHeaderConfig",
           "params": ["raw"],
-          "returnType": "AppHttpHeaderConfig | null",
+          "returnType": "AppRoutingHeaderConfig | null",
           "exported": false,
           "lineCount": 12
         },
         {
           "name": "mapCompressionConfig",
           "params": ["raw"],
-          "returnType": "AppHttpCompressionConfig | null",
+          "returnType": "AppRoutingCompressionConfig | null",
           "exported": false,
           "lineCount": 14
         },
         {
           "name": "mapRateLimitConfig",
           "params": ["raw"],
-          "returnType": "AppHttpRateLimitConfig | null",
+          "returnType": "AppRoutingRateLimitConfig | null",
           "exported": false,
           "lineCount": 14
         },
         {
           "name": "mapLBConfig",
           "params": ["raw"],
-          "returnType": "AppHttpLBConfig | null",
+          "returnType": "AppRoutingLBConfig | null",
           "exported": false,
           "lineCount": 8
         },
@@ -6592,21 +6592,21 @@
         {
           "name": "mapPath",
           "params": ["raw"],
-          "returnType": "AppHttpPathConfig",
+          "returnType": "AppRoutingPathConfig",
           "exported": false,
           "lineCount": 12
         },
         {
           "name": "mapDomain",
           "params": ["raw"],
-          "returnType": "AppHttpDomain",
+          "returnType": "AppRoutingDomain",
           "exported": false,
           "lineCount": 17
         }
       ],
       "classes": [
         {
-          "name": "AppHttpSettingsApiValidator",
+          "name": "AppRoutingSettingsApiValidator",
           "methods": [],
           "properties": ["findOne"],
           "exported": true,
@@ -6625,13 +6625,13 @@
         {
           "source": "~/projects/domain",
           "specifiers": [
-            "AppHttpClientConfig",
-            "AppHttpCompressionConfig",
-            "AppHttpDomain",
-            "AppHttpHeaderConfig",
-            "AppHttpLBConfig",
-            "AppHttpPathConfig",
-            "AppHttpRateLimitConfig"
+            "AppRoutingClientConfig",
+            "AppRoutingCompressionConfig",
+            "AppRoutingDomain",
+            "AppRoutingHeaderConfig",
+            "AppRoutingLBConfig",
+            "AppRoutingPathConfig",
+            "AppRoutingRateLimitConfig"
           ]
         },
         {
@@ -6643,11 +6643,11 @@
           "specifiers": ["BaseMetaApiSchema", "parseApiResponse"]
         },
         {
-          "source": "./app-http-settings.api.contracts",
-          "specifiers": ["AppHttpSettings_FindOne_Res"]
+          "source": "./app-routing-settings.api.contracts",
+          "specifiers": ["AppRoutingSettings_FindOne_Res"]
         }
       ],
-      "exports": ["AppHttpSettingsApiValidator"],
+      "exports": ["AppRoutingSettingsApiValidator"],
       "totalLines": 230,
       "hasStructuralAnalysis": true
     },
@@ -9971,8 +9971,8 @@
       "totalLines": 36,
       "hasStructuralAnalysis": true
     },
-    "src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts": {
-      "filePath": "src/application/modules/projects/data/commands/project-apps/app-http-settings.commands.ts",
+    "src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts": {
+      "filePath": "src/application/modules/projects/data/commands/project-apps/app-routing-settings.commands.ts",
       "contentHash": "a3c32dda829988ab0ffc93b42132a8d3bc3e46f8650f9370b78b3bf4fcf34064",
       "functions": [
         {
@@ -9990,18 +9990,18 @@
         },
         {
           "source": "../../../api/hooks/project-apps",
-          "specifiers": ["useAppHttpSettingsApi"]
+          "specifiers": ["useAppRoutingSettingsApi"]
         },
         {
           "source": "../../../api/services",
-          "specifiers": ["AppHttpSettings_UpdateOne_Req", "AppHttpSettings_UpdateOne_Res"]
+          "specifiers": ["AppRoutingSettings_UpdateOne_Req", "AppRoutingSettings_UpdateOne_Res"]
         },
         {
           "source": "../../constants/projects.query-keys",
           "specifiers": ["QK"]
         }
       ],
-      "exports": ["AppHttpSettingsCommands"],
+      "exports": ["AppRoutingSettingsCommands"],
       "totalLines": 33,
       "hasStructuralAnalysis": true
     },
@@ -11483,8 +11483,8 @@
       "totalLines": 24,
       "hasStructuralAnalysis": true
     },
-    "src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts": {
-      "filePath": "src/application/modules/projects/data/queries/project-apps/app-http-settings.queries.ts",
+    "src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts": {
+      "filePath": "src/application/modules/projects/data/queries/project-apps/app-routing-settings.queries.ts",
       "contentHash": "ad731b332588706fd92e3e6bf1ed26560ad7645b07675a6c192287a24b73aa4b",
       "functions": [
         {
@@ -11502,18 +11502,18 @@
         },
         {
           "source": "../../../api/hooks/project-apps",
-          "specifiers": ["useAppHttpSettingsApi"]
+          "specifiers": ["useAppRoutingSettingsApi"]
         },
         {
           "source": "../../../api/services",
-          "specifiers": ["AppHttpSettings_FindOne_Res"]
+          "specifiers": ["AppRoutingSettings_FindOne_Res"]
         },
         {
           "source": "../../constants/projects.query-keys",
           "specifiers": ["QK"]
         }
       ],
-      "exports": ["AppHttpSettingsQueries"],
+      "exports": ["AppRoutingSettingsQueries"],
       "totalLines": 24,
       "hasStructuralAnalysis": true
     },
@@ -15691,8 +15691,8 @@
       "totalLines": 2,
       "hasStructuralAnalysis": true
     },
-    "src/application/modules/projects/domain/apps/http-settings/app-http-settings.entity.ts": {
-      "filePath": "src/application/modules/projects/domain/apps/http-settings/app-http-settings.entity.ts",
+    "src/application/modules/projects/domain/apps/http-settings/app-routing-settings.entity.ts": {
+      "filePath": "src/application/modules/projects/domain/apps/http-settings/app-routing-settings.entity.ts",
       "contentHash": "a05afcb68a530cb5dd99fe16e01fa0b14140bdb12ae4fb8feae354e262fe0a86",
       "functions": [],
       "classes": [],
@@ -23144,7 +23144,7 @@
           "lineCount": 104
         },
         {
-          "name": "mapAppHttpSettingsToFormInput",
+          "name": "mapAppRoutingSettingsToFormInput",
           "params": ["data"],
           "returnType": "AppConfigHttpSettingsFormSchemaInput",
           "exported": true,
@@ -23153,7 +23153,7 @@
         {
           "name": "mapFormValuesToPayload",
           "params": ["values"],
-          "returnType": "AppHttpSettingsUpdatePayload",
+          "returnType": "AppRoutingSettingsUpdatePayload",
           "exported": true,
           "lineCount": 135
         }
@@ -23162,7 +23162,7 @@
       "imports": [
         {
           "source": "~/projects/domain",
-          "specifiers": ["AppHttpDomain", "AppHttpSettings", "AppHttpSettingsUpdatePayload"]
+          "specifiers": ["AppRoutingDomain", "AppRoutingSettings", "AppRoutingSettingsUpdatePayload"]
         },
         {
           "source": "~/projects/module-shared/enums",
@@ -23178,7 +23178,7 @@
           ]
         }
       ],
-      "exports": ["mapAppHttpSettingsToFormInput", "mapFormValuesToPayload", "emptyDomain"],
+      "exports": ["mapAppRoutingSettingsToFormInput", "mapFormValuesToPayload", "emptyDomain"],
       "totalLines": 264,
       "hasStructuralAnalysis": true
     },
@@ -23227,7 +23227,7 @@
         },
         {
           "source": "~/projects/domain",
-          "specifiers": ["AppHttpSettings"]
+          "specifiers": ["AppRoutingSettings"]
         },
         {
           "source": "@application/shared/components",
@@ -23266,7 +23266,7 @@
         },
         {
           "source": "./app-config-http-settings.form-mappers",
-          "specifiers": ["mapAppHttpSettingsToFormInput"]
+          "specifiers": ["mapAppRoutingSettingsToFormInput"]
         }
       ],
       "exports": ["AppConfigHttpSettingsForm"],
@@ -23324,7 +23324,7 @@
         },
         {
           "source": "~/projects/data",
-          "specifiers": ["AppHttpSettingsCommands", "AppHttpSettingsQueries"]
+          "specifiers": ["AppRoutingSettingsCommands", "AppRoutingSettingsQueries"]
         },
         {
           "source": "~/projects/module-shared/components",

@@ -55,5 +55,3 @@ export class AppRoutingSettingsApi extends BaseApi {
         );
     }
 }
-
-export { AppRoutingSettingsApi as AppHttpSettingsApi };

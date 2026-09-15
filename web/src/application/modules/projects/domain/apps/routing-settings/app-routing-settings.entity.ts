@@ -173,18 +173,3 @@ export type AppRoutingSettingsUpdatePayload = {
     domains: AppRoutingSettingsUpdateDomain[];
     updateVer: number;
 };
-
-// Aliases for backwards-compatibility if needed
-export type AppHttpSettings = AppRoutingSettings;
-export type AppHttpDomain = AppRoutingDomain;
-export type AppHttpBasicAuthConfig = AppRoutingBasicAuthConfig;
-export type AppHttpLBConfig = AppRoutingLBConfig;
-export type AppHttpClientConfig = AppRoutingClientConfig;
-export type AppHttpHeaderConfig = AppRoutingHeaderConfig;
-export type AppHttpCompressionConfig = AppRoutingCompressionConfig;
-export type AppHttpRateLimitConfig = AppRoutingRateLimitConfig;
-export type AppHttpPathRewriteConfig = AppRoutingPathRewriteConfig;
-export type AppHttpCircuitBreakerConfig = AppRoutingCircuitBreakerConfig;
-export type AppHttpWebsocketConfig = AppRoutingWebsocketConfig;
-export type AppHttpPathConfig = AppRoutingPathConfig;
-export type AppHttpSettingsUpdatePayload = AppRoutingSettingsUpdatePayload;

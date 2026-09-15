@@ -12,9 +12,3 @@ export type AppRoutingSettings_UpdateOne_Req = ApiRequestBase<{
     payload: AppRoutingSettingsUpdatePayload;
 }>;
 export type AppRoutingSettings_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
-
-// Aliases
-export type AppHttpSettings_FindOne_Req = AppRoutingSettings_FindOne_Req;
-export type AppHttpSettings_FindOne_Res = AppRoutingSettings_FindOne_Res;
-export type AppHttpSettings_UpdateOne_Req = AppRoutingSettings_UpdateOne_Req;
-export type AppHttpSettings_UpdateOne_Res = AppRoutingSettings_UpdateOne_Res;

@@ -4,4 +4,3 @@ export * from "./general-fields.com";
 export * from "./notification-fields.com";
 export * from "./schedule-fields.com";
 export * from "./scheduling-mode-field.com";
-export * from "./section-header.com";

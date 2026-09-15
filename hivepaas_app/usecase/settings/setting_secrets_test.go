@@ -7,47 +7,35 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/datakey"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 )
 
 /// Fakes
 
-type fakeAuditService struct {
-	entries []*auditservice.Entry
-	err     error
-}
-
-func (f *fakeAuditService) Record(_ context.Context, _ database.IDB, entry *auditservice.Entry) error {
-	f.entries = append(f.entries, entry)
-	return f.err
-}
-
+// fakePermissionManager stands in for the gate, which is tested where it lives -
+// permissionimpl. What matters here is whether this layer asks at all, and what
+// it says the secret is when it does.
 type fakePermissionManager struct {
 	permission.Manager
-	granted bool
-	err     error
+	err      error
+	subjects []*permission.RevealSubject
 }
 
-func (f *fakePermissionManager) CheckAccess(_ context.Context, _ database.IDB,
-	_ *basedto.Auth, _ permission.AccessCheck) (bool, error) {
-	return f.granted, f.err
+func (f *fakePermissionManager) AuthorizeSecretReveal(
+	_ context.Context, _ database.IDB, _ *basedto.Auth, subject *permission.RevealSubject,
+) error {
+	f.subjects = append(f.subjects, subject)
+	return f.err
 }
 
 /// Helpers
 
-func newRevealUC(t *testing.T, granted bool, auditErr error) (*BaseUC, *fakeAuditService) {
-	t.Helper()
-	audit := &fakeAuditService{err: auditErr}
-	return &BaseUC{
-		AuditService:      audit,
-		PermissionManager: &fakePermissionManager{granted: granted},
-	}, audit
+func newRevealUC(refusal error) (*BaseUC, *fakePermissionManager) {
+	perms := &fakePermissionManager{err: refusal}
+	return &BaseUC{PermissionManager: perms}, perms
 }
 
 // newBasicAuthSetting builds a stored setting whose password is encrypted, the
@@ -86,13 +74,6 @@ func storedPassword(t *testing.T, setting *entity.Setting) *entity.EncryptedFiel
 	return &basicAuth.Password
 }
 
-func enableReveal(t *testing.T, enabled bool) {
-	t.Helper()
-	prev := config.Current()
-	config.SetCurrent(&config.Config{Security: config.Security{ReturnSecretsViaAPI: enabled}})
-	t.Cleanup(func() { config.SetCurrent(prev) })
-}
-
 // revealScope is the scope the reveal is being asked for. It is what the audit
 // entry is filed under, and an entry filed under the wrong scope is invisible to
 // the scoped audit log listing - which is where somebody would go looking for it.
@@ -100,85 +81,64 @@ var revealScope = &entity.ObjectScope{ScopeType: base.ObjectScopeApp, AppID: "ob
 
 /// Tests
 
-func TestRevealSecretsAllowed(t *testing.T) {
-	enableReveal(t, true)
-	uc, audit := newRevealUC(t, true, nil)
+func TestRevealSecretsDecryptsWhenAuthorized(t *testing.T) {
+	uc, perms := newRevealUC(nil)
 	setting := newBasicAuthSetting(t)
 
 	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting); err != nil {
 		t.Fatalf("reveal must succeed: %v", err)
 	}
+
 	if got := storedPassword(t, setting).String(); got != "the-real-password" {
 		t.Errorf("secret was not revealed, got %q", got)
 	}
-	if len(audit.entries) != 1 || audit.entries[0].Result != base.AuditLogResultAllowed {
-		t.Fatalf("expected one allowed entry, got %+v", audit.entries)
-	}
-	if audit.entries[0].ResID != "set_1" || audit.entries[0].ResName != "web-auth" {
-		t.Error("the entry must name the setting it is about")
-	}
-	if audit.entries[0].Scope != base.ObjectScopeApp || audit.entries[0].ObjectID != "obj_1" {
-		t.Errorf("the entry must be filed under the scope the reveal was asked for, got %v/%q",
-			audit.entries[0].Scope, audit.entries[0].ObjectID)
+	if len(perms.subjects) != 1 {
+		t.Fatalf("want one authorization, got %d", len(perms.subjects))
 	}
 }
 
-// A refusal is the more interesting half of the record: it is the only sign that
-// somebody is trying doors.
-func TestRevealSecretsDeniedIsStillRecorded(t *testing.T) {
-	enableReveal(t, true)
-	uc, audit := newRevealUC(t, false, nil)
+// The subject is what the audit entry is built from, so getting it wrong here
+// files the record under something nobody will search for.
+func TestRevealSecretsNamesTheSettingItIsAbout(t *testing.T) {
+	uc, perms := newRevealUC(nil)
+	setting := newBasicAuthSetting(t)
+
+	_ = uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
+
+	subject := perms.subjects[0]
+	if subject.Scope != base.ObjectScopeApp || subject.ObjectID != "obj_1" {
+		t.Errorf("asked under %v/%q, want the scope the reveal was for", subject.Scope, subject.ObjectID)
+	}
+	if subject.ResType != base.ResourceTypeSetting || subject.ResID != "set_1" || subject.ResName != "web-auth" {
+		t.Errorf("subject = %q/%q/%q", subject.ResType, subject.ResID, subject.ResName)
+	}
+	if subject.Source != base.AuditLogSourceAPIGet {
+		t.Errorf("source = %q", subject.Source)
+	}
+	// A stored setting carries no secret type, which is what binds it to the
+	// operator's flag rather than to any exemption.
+	if subject.SecretType != "" {
+		t.Errorf("a stored setting must have no secret type, got %q", subject.SecretType)
+	}
+}
+
+func TestRevealSecretsLeavesTheSecretEncryptedWhenRefused(t *testing.T) {
+	refusal := errors.New("not allowed")
+	uc, _ := newRevealUC(refusal)
 	setting := newBasicAuthSetting(t)
 
 	err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
-	if err == nil {
-		t.Fatal("a caller without the permission must be refused")
+
+	if !errors.Is(err, refusal) {
+		t.Fatalf("the refusal must come back, got %v", err)
 	}
-	if storedPassword(t, setting).IsEncrypted() != true {
+	if !storedPassword(t, setting).IsEncrypted() {
 		t.Error("the secret must stay encrypted when the caller is refused")
-	}
-	if len(audit.entries) != 1 || audit.entries[0].Result != base.AuditLogResultDenied {
-		t.Fatalf("expected one denied entry, got %+v", audit.entries)
-	}
-}
-
-// The whole point of the record is that a reveal cannot happen without one.
-func TestRevealSecretsFailsClosedWhenNotRecordable(t *testing.T) {
-	enableReveal(t, true)
-	uc, _ := newRevealUC(t, true, errors.New("database is down"))
-	setting := newBasicAuthSetting(t)
-
-	err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
-	if err == nil {
-		t.Fatal("a reveal that cannot be recorded must not happen")
-	}
-	if !storedPassword(t, setting).IsEncrypted() {
-		t.Error("the secret was revealed even though the record failed")
-	}
-}
-
-// The config flag is the operator's, and it outranks the account's permissions -
-// including an admin's, who passes every permission check.
-func TestRevealSecretsRefusedWhenDisabledByConfig(t *testing.T) {
-	enableReveal(t, false)
-	uc, audit := newRevealUC(t, true, nil)
-	setting := newBasicAuthSetting(t)
-
-	err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
-	if !errors.Is(err, hperrors.ErrRevealSecretsDisabled) {
-		t.Fatalf("expected the disabled-by-config error, got %v", err)
-	}
-	if !storedPassword(t, setting).IsEncrypted() {
-		t.Error("the secret must stay encrypted when the server disables reveal")
-	}
-	if len(audit.entries) != 1 || audit.entries[0].Result != base.AuditLogResultDenied {
-		t.Error("a refusal by config must be recorded like any other")
 	}
 }
 
 func TestRevealSecretsNotRequested(t *testing.T) {
-	enableReveal(t, true)
-	uc, audit := newRevealUC(t, true, nil)
+	uc, perms := newRevealUC(nil)
 	setting := newBasicAuthSetting(t)
 
 	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, false, setting); err != nil {
@@ -187,15 +147,14 @@ func TestRevealSecretsNotRequested(t *testing.T) {
 	if !storedPassword(t, setting).IsEncrypted() {
 		t.Error("nothing may be decrypted when reveal was not asked for")
 	}
-	if len(audit.entries) != 0 {
-		t.Error("an ordinary read is not an audit event")
+	if len(perms.subjects) != 0 {
+		t.Error("an ordinary read must not cost an authorization or an audit row")
 	}
 }
 
 // An inherited setting is read through this scope, not owned by it.
 func TestRevealSecretsInheritedIsNeverRevealed(t *testing.T) {
-	enableReveal(t, true)
-	uc, audit := newRevealUC(t, true, nil)
+	uc, perms := newRevealUC(nil)
 	setting := newBasicAuthSetting(t)
 	setting.CurrentObjectID = "obj_2"
 
@@ -205,15 +164,14 @@ func TestRevealSecretsInheritedIsNeverRevealed(t *testing.T) {
 	if !storedPassword(t, setting).IsEncrypted() {
 		t.Error("an inherited setting must not hand out its secrets")
 	}
-	if len(audit.entries) != 0 {
-		t.Error("nothing was revealed, so there is nothing to record")
+	if len(perms.subjects) != 0 {
+		t.Error("nothing was revealed, so there is nothing to authorize")
 	}
 }
 
 // A setting type with no secrets must not cost a permission check or a row.
 func TestRevealSecretsOnTypeWithoutSecrets(t *testing.T) {
-	enableReveal(t, true)
-	uc, audit := newRevealUC(t, false, nil)
+	uc, perms := newRevealUC(errors.New("would refuse if asked"))
 
 	setting := &entity.Setting{ID: "set_2", Name: "features", Type: base.SettingTypeAppFeatures}
 	if err := setting.SetData(&entity.AppFeatureSettings{}); err != nil {
@@ -224,116 +182,7 @@ func TestRevealSecretsOnTypeWithoutSecrets(t *testing.T) {
 	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting); err != nil {
 		t.Fatalf("a type without secrets must not be refused: %v", err)
 	}
-	if len(audit.entries) != 0 {
-		t.Error("nothing was revealed, so there is nothing to record")
-	}
-}
-
-// AuthorizeSecretReveal is the same gate the setting path uses, reached directly
-// by callers whose secret is not a stored setting - the Swarm join token.
-func TestAuthorizeSecretRevealRecordsSubjectAndDenial(t *testing.T) {
-	enableReveal(t, true)
-	uc, audit := newRevealUC(t, false, nil)
-
-	subject := &RevealSubject{
-		Scope:   base.ObjectScopeGlobal,
-		Source:  base.AuditLogSourceAPIGet,
-		ResType: base.ResourceTypeCluster,
-		Detail:  `{"tokenRole":"manager"}`,
-	}
-	err := uc.AuthorizeSecretReveal(context.Background(), nil, &basedto.Auth{}, subject)
-	if err == nil {
-		t.Fatal("want the refusal to come back")
-	}
-
-	if len(audit.entries) != 1 {
-		t.Fatalf("want 1 entry, got %d", len(audit.entries))
-	}
-	entry := audit.entries[0]
-	// A refused attempt is the only sign of somebody trying doors, so it has to
-	// be recorded rather than only refused.
-	if entry.Result != base.AuditLogResultDenied {
-		t.Errorf("result = %q", entry.Result)
-	}
-	if entry.Type != base.AuditLogTypeSecretReveal {
-		t.Errorf("type = %q", entry.Type)
-	}
-	if entry.ResType != base.ResourceTypeCluster || entry.Detail != subject.Detail {
-		t.Errorf("subject was not carried through: %q / %q", entry.ResType, entry.Detail)
-	}
-}
-
-// The config flag is the operator's, and it refuses before the capability is even
-// looked at - so an endpoint behind this gate stops working when it is off.
-func TestAuthorizeSecretRevealRefusedWhenDisabledByConfig(t *testing.T) {
-	enableReveal(t, false)
-	uc, audit := newRevealUC(t, true, nil)
-
-	err := uc.AuthorizeSecretReveal(context.Background(), nil, &basedto.Auth{}, &RevealSubject{
-		Scope:   base.ObjectScopeGlobal,
-		ResType: base.ResourceTypeCluster,
-	})
-	if !errors.Is(err, hperrors.ErrRevealSecretsDisabled) {
-		t.Fatalf("want ErrRevealSecretsDisabled, got %v", err)
-	}
-	if len(audit.entries) != 1 || audit.entries[0].Result != base.AuditLogResultDenied {
-		t.Error("the refusal must still be recorded")
-	}
-}
-
-// The exemption is the whole point of naming a secret type: node onboarding has
-// to keep working while the operator's flag stays off for everything else.
-func TestAuthorizeSecretRevealHonoursTheTypeExemption(t *testing.T) {
-	prev := config.Current()
-	config.SetCurrent(&config.Config{Security: config.Security{
-		ReturnSecretsViaAPI:     false,
-		AlwaysReturnSecretTypes: []string{string(base.SecretTypeSwarmJoinToken)},
-	}})
-	t.Cleanup(func() { config.SetCurrent(prev) })
-
-	uc, audit := newRevealUC(t, true, nil)
-	err := uc.AuthorizeSecretReveal(context.Background(), nil, &basedto.Auth{}, &RevealSubject{
-		Scope:      base.ObjectScopeGlobal,
-		SecretType: base.SecretTypeSwarmJoinToken,
-		ResType:    base.ResourceTypeCluster,
-	})
-	if err != nil {
-		t.Fatalf("the exempt type must pass: %v", err)
-	}
-	if len(audit.entries) != 1 || audit.entries[0].Result != base.AuditLogResultAllowed {
-		t.Fatal("an exempt reveal is still recorded")
-	}
-
-	// A stored setting rides on the flag alone, and must not be let through by
-	// somebody else's exemption.
-	audit.entries = nil
-	err = uc.AuthorizeSecretReveal(context.Background(), nil, &basedto.Auth{}, &RevealSubject{
-		Scope:   base.ObjectScopeGlobal,
-		ResType: base.ResourceTypeSetting,
-	})
-	if !errors.Is(err, hperrors.ErrRevealSecretsDisabled) {
-		t.Fatalf("want the flag to still bind stored secrets, got %v", err)
-	}
-}
-
-// An exemption stands down the operator's flag, not the account's permission.
-func TestAuthorizeSecretRevealStillNeedsTheCapability(t *testing.T) {
-	prev := config.Current()
-	config.SetCurrent(&config.Config{Security: config.Security{
-		AlwaysReturnSecretTypes: []string{string(base.SecretTypeSwarmJoinToken)},
-	}})
-	t.Cleanup(func() { config.SetCurrent(prev) })
-
-	uc, audit := newRevealUC(t, false, nil)
-	err := uc.AuthorizeSecretReveal(context.Background(), nil, &basedto.Auth{}, &RevealSubject{
-		Scope:      base.ObjectScopeGlobal,
-		SecretType: base.SecretTypeSwarmJoinToken,
-		ResType:    base.ResourceTypeCluster,
-	})
-	if !errors.Is(err, hperrors.ErrUserNotHavePermissionOnRevealSecrets) {
-		t.Fatalf("want the capability to still bind, got %v", err)
-	}
-	if len(audit.entries) != 1 || audit.entries[0].Result != base.AuditLogResultDenied {
-		t.Fatal("the refusal must be recorded")
+	if len(perms.subjects) != 0 {
+		t.Error("nothing was revealed, so there is nothing to authorize")
 	}
 }

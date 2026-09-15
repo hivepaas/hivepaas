@@ -82,3 +82,28 @@ type AppAccessCheck struct {
 	ParentID   string
 	AppID      string
 }
+
+// RevealSubject identifies the secret being asked for.
+//
+// It exists because a stored setting is not the only secret the API hands out in
+// the clear - the Swarm join token is another, and it is not a setting at all -
+// and every one of them has to pass the same two gates and leave the same record.
+type RevealSubject struct {
+	Scope    base.ObjectScopeType
+	ObjectID string
+	Source   base.AuditLogSource
+
+	// SecretType is the kind of secret being asked for, and decides whether the
+	// operator's ReturnSecretsViaAPI flag can be stood down for it. Empty - which
+	// is every stored setting - is always bound by the flag.
+	SecretType base.SecretType
+
+	ResType base.ResourceType
+	ResID   string
+	// ResName is stored as it reads now, because the object may be renamed or
+	// deleted long before anyone comes to read the entry.
+	ResName string
+
+	// Detail is free-form JSON, and must never carry the secret it describes.
+	Detail string
+}

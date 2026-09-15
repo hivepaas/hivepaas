@@ -24,6 +24,14 @@ type Manager interface {
 	AuthorizeAccessChanges(ctx context.Context, db database.IDB, auth *basedto.Auth,
 		desired []*entity.ACLPermission, current []*entity.ACLPermission) ([]*entity.ACLPermission, error)
 
+	// HasCapability reports whether the caller holds a capability
+	HasCapability(ctx context.Context, db database.IDB, auth *basedto.Auth,
+		capability base.ResourceCapability) (bool, error)
+
+	// AuthorizeSecretReveal decides whether the caller may see a secret in the clear,
+	// and records the answer either way.
+	AuthorizeSecretReveal(ctx context.Context, db database.IDB, auth *basedto.Auth, subject *RevealSubject) error
+
 	// NOTE: this func should be called within a transaction
 	UpdateACLPermissions(ctx context.Context, db database.IDB, perms []*entity.ACLPermission) error
 	DeleteACLPermissions(ctx context.Context, db database.IDB, perms []*base.PermissionResource) error

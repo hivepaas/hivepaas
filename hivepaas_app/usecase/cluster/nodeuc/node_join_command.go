@@ -10,9 +10,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/cluster/nodeuc/nodedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
 func (uc *UC) GetNodeJoinCommand(
@@ -33,7 +33,7 @@ func (uc *UC) GetNodeJoinCommand(
 		role = "manager"
 	}
 	detail := auditdetail.New().Set("tokenRole", role).String()
-	err := uc.AuthorizeSecretReveal(ctx, uc.DB, auth, &settings.RevealSubject{
+	err := uc.PermissionManager.AuthorizeSecretReveal(ctx, uc.DB, auth, &permission.RevealSubject{
 		Scope:      base.ObjectScopeGlobal,
 		Source:     base.AuditLogSourceAPIGet,
 		SecretType: base.SecretTypeSwarmJoinToken,

@@ -95,7 +95,7 @@ func (uc *UC) CreateAPIKey(
 // behind to find, while an attempt that was turned down leaves nothing at all
 // unless it is written down here.
 func (uc *UC) authorizeAPIKeyCreate(ctx context.Context, auth *basedto.Auth) error {
-	hasCap, capErr := uc.HasCapability(ctx, uc.DB, auth, base.ResourceCapAPIKeyCreate)
+	hasCap, capErr := uc.PermissionManager.HasCapability(ctx, uc.DB, auth, base.ResourceCapAPIKeyCreate)
 	if capErr != nil {
 		return hperrors.Wrap(capErr)
 	}

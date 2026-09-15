@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 )
@@ -35,4 +37,24 @@ func (p *manager) checkCapability(
 // requires.
 func normalizeCapabilityCheck(check *permission.CapabilityCheck) {
 	check.Action, check.AllOf, check.AnyOf = capabilityAction, nil, nil
+}
+
+// HasCapability reports whether the caller holds a capability.
+//
+// It answers only that: the caller picks the error a refusal turns into, because
+// "you may not reveal secrets" and "you may not mint API keys" are different
+// things to tell someone even though the lookup behind them is the same.
+func (p *manager) HasCapability(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	capability base.ResourceCapability,
+) (bool, error) {
+	hasPerm, err := p.CheckAccess(ctx, db, auth, &permission.CapabilityCheck{
+		Capability: capability,
+	})
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	return hasPerm, nil
 }

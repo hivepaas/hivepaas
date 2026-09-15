@@ -11,11 +11,27 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/datakey"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 )
 
 /// Helpers
+
+// fakeAuditService records what it was handed. It lives here because the audit
+// entry is what these tests are about; the reveal path writes its entries from
+// permissionimpl now, and its tests keep their own copy.
+type fakeAuditService struct {
+	auditservice.Service
+	entries []*auditservice.Entry
+	err     error
+}
+
+func (f *fakeAuditService) Record(_ context.Context, _ database.IDB, entry *auditservice.Entry) error {
+	f.entries = append(f.entries, entry)
+	return f.err
+}
 
 func newAuditUC(auditErr error) (*BaseUC, *fakeAuditService) {
 	audit := &fakeAuditService{err: auditErr}

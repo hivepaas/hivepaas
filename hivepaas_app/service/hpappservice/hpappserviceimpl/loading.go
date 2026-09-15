@@ -28,7 +28,7 @@ func (s *service) LoadAppByKey(
 		return nil, hperrors.Wrap(err)
 	}
 	if len(apps) == 0 {
-		return nil, hperrors.NewNotFound("App")
+		return nil, hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", appKey)
 	}
 	return apps[0], nil
 }

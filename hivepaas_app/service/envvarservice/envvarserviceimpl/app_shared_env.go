@@ -51,7 +51,7 @@ func (s *service) buildSharedEnvVarsInApp(
 		return nil, hperrors.Wrap(err)
 	}
 	if len(apps) == 0 {
-		return nil, hperrors.NewNotFound("App")
+		return nil, hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", appKey)
 	}
 	return s.BuildSharedEnvVarsInApp(ctx, db, apps[0], buildOptions)
 }

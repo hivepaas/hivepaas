@@ -36,7 +36,7 @@ func (s *service) GetPreview(
 			return app, nil
 		}
 	}
-	return nil, hperrors.NewNotFound("App")
+	return nil, hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", appID)
 }
 
 func (s *service) GetPreviews(

@@ -54,7 +54,7 @@ func (repo *projectEnvRepo) GetByID(ctx context.Context, db database.IDB, projec
 
 	err := query.Scan(ctx)
 	if projectEnv == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, hperrors.NewNotFound("ProjectEnv").WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", id).WithCause(err)
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -72,7 +72,7 @@ func (repo *projectEnvRepo) GetByName(ctx context.Context, db database.IDB, proj
 
 	err := query.Scan(ctx)
 	if projectEnv == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, hperrors.NewNotFound("ProjectEnv").WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", name).WithCause(err)
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -91,7 +91,7 @@ func (repo *projectEnvRepo) GetByKey(ctx context.Context, db database.IDB, proje
 
 	err := query.Scan(ctx)
 	if projectEnv == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, hperrors.NewNotFound("ProjectEnv").WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", key).WithCause(err)
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)

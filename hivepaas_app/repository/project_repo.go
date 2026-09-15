@@ -54,7 +54,7 @@ func (repo *projectRepo) GetByID(ctx context.Context, db database.IDB, id string
 
 	err := query.Scan(ctx)
 	if project == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, hperrors.NewNotFound("Project").WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrProjectNotFound).WithParam("Name", id).WithCause(err)
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -72,6 +72,7 @@ func (repo *projectRepo) GetByIDAndOwner(ctx context.Context, db database.IDB, p
 
 	err := query.Scan(ctx)
 	if project == nil || errors.Is(err, sql.ErrNoRows) {
+		// NOTE: Just return a general message without detail of which project
 		return nil, hperrors.NewNotFound("Project").WithCause(err)
 	}
 	if err != nil {
@@ -88,7 +89,7 @@ func (repo *projectRepo) GetByName(ctx context.Context, db database.IDB, name st
 
 	err := query.Scan(ctx)
 	if project == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, hperrors.NewNotFound("Project").WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrProjectNotFound).WithParam("Name", name).WithCause(err)
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -104,7 +105,7 @@ func (repo *projectRepo) GetByKey(ctx context.Context, db database.IDB, key stri
 
 	err := query.Scan(ctx)
 	if project == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, hperrors.NewNotFound("Project").WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrProjectNotFound).WithParam("Name", key).WithCause(err)
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)

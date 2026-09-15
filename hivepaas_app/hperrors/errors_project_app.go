@@ -17,6 +17,7 @@ var (
 	ErrAppInactive                              = NewErr(ErrInactive, "ERR_APP_INACTIVE")
 	ErrAppIsCurrent                             = NewErr(ErrInactive, "ERR_APP_IS_CURRENT")
 	ErrAppsNotInSameProjectEnv                  = NewErr(ErrNotAllowed, "ERR_APPS_NOT_IN_SAME_PROJECT_ENV")
+	ErrAppServiceUnavailable                    = NewErr(ErrUnavailable, "ERR_APP_SERVICE_UNAVAILABLE")
 	ErrAppCloneSettingsRequired                 = NewErr(ErrPreconditionRequired, "ERR_APP_CLONE_SETTING_REQUIRED")
 	ErrMultiNodeClusterRequireRegistryForImages = NewErr(ErrPreconditionRequired, "ERR_MULTI_NODE_CLUSTER_REQUIRE_REGISTRY_FOR_IMAGES") //nolint:lll
 	ErrDeploymentMethodRepoRequired             = NewErr(ErrUnconfigured, "ERR_DEPLOYMENT_METHOD_REPO_REQUIRED")
@@ -34,6 +35,3 @@ var (
 	ErrGitAuthMethodUnsupported = NewErr(ErrUnsupported, "ERR_GIT_AUTH_METHOD_UNSUPPORTED")
 	ErrGitLogOutputUnexpected   = NewErr(ErrPreconditionFailed, "ERR_GIT_LOG_OUTPUT_UNEXPECTED")
 )
-
-// Errors for build
-var ()

@@ -56,7 +56,7 @@ func (repo *appRepo) GetByID(ctx context.Context, db database.IDB, projectID, id
 
 	err := query.Scan(ctx)
 	if app == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, hperrors.NewNotFound("App").WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", id).WithCause(err)
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -75,7 +75,7 @@ func (repo *appRepo) GetByName(ctx context.Context, db database.IDB, projectID, 
 
 	err := query.Scan(ctx)
 	if app == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, hperrors.NewNotFound("App").WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", name).WithCause(err)
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -94,7 +94,7 @@ func (repo *appRepo) GetByGlobalKey(ctx context.Context, db database.IDB, projec
 
 	err := query.Scan(ctx)
 	if app == nil || errors.Is(err, sql.ErrNoRows) {
-		return nil, hperrors.NewNotFound("App").WithCause(err)
+		return nil, hperrors.Wrap(hperrors.ErrAppNotFound).WithParam("Name", gKey).WithCause(err)
 	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)

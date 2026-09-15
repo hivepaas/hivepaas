@@ -37,8 +37,11 @@ func (s *service) RecreateServiceWithSpec(
 	oldSpec *swarm.ServiceSpec,
 	newSpec *swarm.ServiceSpec,
 ) (string, error) {
-	if app == nil || app.ServiceID == "" {
+	if app == nil {
 		return "", hperrors.Wrap(hperrors.ErrAppNotFound)
+	}
+	if app.ServiceID == "" {
+		return "", hperrors.Wrap(hperrors.ErrAppServiceUnavailable)
 	}
 	if oldSpec == nil || newSpec == nil {
 		return "", hperrors.Wrap(hperrors.ErrInfraInternal).

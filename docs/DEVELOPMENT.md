@@ -235,9 +235,28 @@ make seed-data-with-clear               # wipe first - this is destructive
 ```bash
 make fmt                  # gofmt + import grouping, in place
 golangci-lint run ./...   # or `make lint` to run it in the devtools image
-make test
+make test                 # and `make test-race` if you touched anything concurrent
 make gen-swag             # only if a DTO changed
 ```
+
+There are three test targets. All three cache, so the second column is what you
+pay when nothing has changed since the last run:
+
+| | what it runs | re-run | from cold |
+|---|---|---|---|
+| `make test` | `go test ./...` | ~1s | ~64s |
+| `make test-race` | `go test -race ./...` | ~2s | ~114s |
+| `make test-cover` | race plus the coverage report; what CI runs | ~12s | ~107s |
+
+The race detector is close to free in the everyday loop - only the packages you
+touched are re-run - so `make test-race` before a push is a second well spent,
+not only when the change is about concurrency.
+
+If the coverage number ever needs to count a package's lines as covered by tests
+in *other* packages, do it in `codecov.yml`, not with `go test -coverpkg`. That
+flag turns caching off for the whole run, and on this repo it also wrote a 1.2GB
+profile - 12.9M lines, 40k of them distinct - to move the total from 13.0% to
+13.5%.
 
 Run the linter over the **whole** repo, not the packages you touched. It enforces
 a 120-character line limit and US spelling, and both are easy to miss in a file

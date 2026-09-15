@@ -43,7 +43,7 @@ jobs:
         run: make lint-local
 
       - name: Test
-        run: make test
+        run: make test-cover
 
   govulncheck:
     name: Govulncheck

@@ -25,7 +25,16 @@ lint-local:
 	# FASTER golangci-lint --timeout=3m run -v --new-from-rev=HEAD~1
 	golangci-lint --timeout=3m run -v ./...
 
+# The everyday one. Cached: a package nothing touched is not run again.
 test:
+	@go test ./...
+
+# Before pushing anything that touches concurrency.
+test-race:
+	@go test -race ./...
+
+# Race plus the coverage report. This is what CI runs.
+test-cover:
 	@./scripts/test.sh
 
 nilaway:
@@ -80,16 +89,7 @@ gen-proto:
 gen-swag:
 	@./tools/swag/swag.sh
 
-# Applies exactly the formatters .golangci.yaml enables - gofmt, and gci with the
-# local prefix - so this and `make lint` can never disagree about what formatted
-# means. The previous body ran gofmt and goimports as two processes per file:
-# identical output to the byte, 25s instead of 1s across 2367 files, and it needed
-# goimports on the host, which nothing in this repo installs.
-#
-# Formatting is not on the honor system. `golangci-lint run` reports an
-# unformatted file as an issue of its own, so CI already fails on one. This target
-# is the convenience that fixes them, not the gate that catches them.
-fmt: ## format all go files
+fmt:
 	golangci-lint fmt ./...
 
 # ----- DB migration -----
@@ -162,19 +162,6 @@ local-build-dashboard:
 # ----- Running the local build on the host -----
 #
 # The everyday way to work: `go run` with the environment the local install needs.
-#
-# HP_CONFIG_FILE on its own is not enough, and what it misses is silent. The app
-# path is resolved before any config file is read - resolveAppPath() reads
-# HP_APP_PATH and falls back to /var/lib/hivepaas - and it is what locates
-# hivepaas.toml, the file the app writes for itself. That file holds `secret`, the
-# key that decrypts every stored secret. Without HP_APP_PATH the process reads a
-# hivepaas.toml that is not there, keeps the `secret` from config.local.toml, and
-# anything encrypted since the app rotated its own key stops being readable.
-# `app_path` in the config file cannot help: by the time it is parsed the lookup
-# has already happened.
-#
-# One consequence worth knowing: with HP_APP_PATH set, a config.toml sitting in
-# that directory outranks HP_CONFIG_FILE. There is none by default.
 LOCAL_CONFIG := config/config.local.toml
 # Absolute, because HP_STORAGE_BIND_SOURCE is handed to docker as the source of a
 # bind mount and the daemon resolves it on the host, not against this process's
@@ -191,10 +178,7 @@ local-app-run:
 		go run ./hivepaas_app/cmd/app/...
 
 # No HP_APP_PATH here, on purpose. Nothing on the agent side decrypts anything:
-# the app decrypts and sends plaintext over gRPC, which is what
-# HP_AGENT_SECRET_TOKEN exists to protect, so the key in hivepaas.toml is of no
-# use to the agent. HP_AGENT_NODE_ID and HP_AGENT_NODE_NAME, which the stack file
-# sets, are read by nothing in the Go code at all.
+# the app decrypts and sends plaintext over gRPC.
 local-agent-run:
 	HP_CONFIG_FILE=$(LOCAL_CONFIG) go run ./hivepaas_app/cmd/agent/...
 
@@ -219,9 +203,7 @@ LOCAL_APP_CTX := tmp/img-app
 LOCAL_AGENT_IMAGE := hivepaas/hivepaas-agent-dev:local
 LOCAL_AGENT_IMAGE_BASE := hivepaas/hivepaas-agent-dev:latest
 LOCAL_AGENT_CTX := tmp/img-agent
-# The daemon's arch, not the host's - on a mac they are the same answer spelled
-# two different ways, and on a remote daemon they are not the same answer at all.
-# Assigned with `=` so `docker version` only runs for the targets below.
+# The daemon's arch, not the host's
 LOCAL_IMAGE_ARCH = $(shell docker version --format '{{.Server.Arch}}')
 
 # --no-resolve-image: a :local tag exists on this daemon and nowhere else, and
@@ -243,10 +225,6 @@ LOCAL_SVC_UPDATE := docker service update --detach --quiet --force --no-resolve-
 # An empty dist-dashboard means the dashboard was never built here - copying it
 # would replace the base image's with nothing and serve a blank page, so that
 # layer is left out instead.
-#
-# PROD_LDFLAGS takes the binary from 116MB to 83MB. This layer is rebuilt every
-# time, so its size is the loop: about 17s end to end once the base image is
-# local, of which roughly 7s is the link and 8s the image build.
 local-app-image:
 	@mkdir -p $(LOCAL_APP_CTX)
 	@GOOS=linux GOARCH=$(LOCAL_IMAGE_ARCH) CGO_ENABLED=0 \
@@ -325,10 +303,6 @@ local-agent-image:
 # Unlike the app, this service is meant to be up: it is global, the stack starts
 # it, and nothing else answers the app's gRPC calls for a node. So there is no
 # scaling it to zero - local-agent-down puts the published image back instead.
-#
-# HP_AGENT_NODE_ID and HP_AGENT_NODE_NAME are swarm templates (`{{.Node.ID}}`),
-# and an update carries them across as the templates they are, not as whatever
-# this node resolved them to.
 local-agent-up: local-agent-image
 	@prev=$$(docker service ps hivepaas_agent --filter desired-state=running -q | head -1); \
 	img=$$(docker service inspect hivepaas_agent --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}'); \
@@ -388,6 +362,7 @@ local-node-down-all:
 	@docker node ls
 
 # ----- Smee.io config -----
+
 smee-run:
 	# RUN ONCE go install -v github.com/chmouel/gosmee@latest
 	# github app id: 01JAB9XED0GTXBSQDFVYAJ8WJ1

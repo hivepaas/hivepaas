@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc/specdto"
 )
@@ -36,6 +37,19 @@ func (uc *UC) ExportSpec(
 	scope, err := buildScope(req)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+
+	// Refuse a malformed request before the reveal gate, not after it. The gate
+	// writes an audit entry, and running it first recorded "secret-reveal:
+	// allowed" for an encrypted export that then failed for want of a
+	// passphrase - an audit trail saying secrets were released when nothing was.
+	// specservice repeats these checks as a backstop for other callers.
+	if !req.SecretsMode.IsValid() {
+		return nil, hperrors.Wrap(hperrors.ErrSpecSecretsModeInvalid).
+			WithParam("Mode", string(req.SecretsMode))
+	}
+	if req.SecretsMode == specmodel.SecretsModeEncrypted && req.Passphrase == "" {
+		return nil, hperrors.Wrap(hperrors.ErrSpecPassphraseRequired)
 	}
 
 	if req.SecretsMode.RevealsSecrets() {

@@ -222,3 +222,23 @@ func TestExportSpecReqCarriesThePassphraseInTheBodyOnly(t *testing.T) {
 	assert.Empty(t, field.Tag.Get("mapstructure"),
 		"a mapstructure tag would make it bindable from the query string, which the access log records")
 }
+
+// Found against a running instance: an encrypted export with no passphrase was
+// refused, yet the audit log already said "secret-reveal: allowed", because the
+// gate ran before the request was checked. An audit trail must not claim
+// secrets were released when nothing was.
+func TestExportSpecRecordsNoRevealForARequestThatWillBeRefused(t *testing.T) {
+	allowSecretReveal(t, true)
+
+	for name, req := range map[string]*specdto.ExportSpecReq{
+		"encrypted without passphrase": {SecretsMode: specmodel.SecretsModeEncrypted},
+		"unknown mode":                 {SecretsMode: specmodel.SecretsMode("none")},
+	} {
+		uc, audit, svc := newTestUC(t)
+
+		_, err := uc.ExportSpec(context.Background(), adminAuth(), req)
+		assert.Error(t, err, name)
+		assert.Empty(t, audit.entries, "%s: nothing was revealed, so nothing may be recorded", name)
+		assert.Nil(t, svc.lastReq, name)
+	}
+}

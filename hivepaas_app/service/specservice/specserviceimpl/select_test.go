@@ -106,3 +106,12 @@ func TestSelectSettingsPutsTheScopePathInTheReport(t *testing.T) {
 		"projects/project_a/envs/dev/apps/backend/api-key/deploy-key",
 		report.Issues[0].Path)
 }
+
+// base.ObjectScopeGlobal is the empty string, which reads as `scope: ""` in a
+// document that a person is meant to open.
+func TestSpecScopeNameNamesTheGlobalScope(t *testing.T) {
+	assert.Equal(t, "global", specScopeName(base.ObjectScopeGlobal))
+	assert.Equal(t, "project", specScopeName(base.ObjectScopeProject))
+	assert.Equal(t, "project-env", specScopeName(base.ObjectScopeProjectEnv))
+	assert.Equal(t, "app", specScopeName(base.ObjectScopeApp))
+}

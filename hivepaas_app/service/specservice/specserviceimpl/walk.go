@@ -120,7 +120,7 @@ func (s *service) buildBundle(
 		ExportedAt:        timeutil.NowUTC(),
 		SourceAppVersion:  base.StableVersion.AppVersion,
 		SourceVersionCode: base.CurrentVersion,
-		Scope:             string(req.Scope.ScopeType),
+		Scope:             specScopeName(req.Scope.ScopeType),
 		SecretsMode:       req.SecretsMode,
 		Files:             sortedFilenames(bundle.Files),
 	}
@@ -296,7 +296,7 @@ func (s *service) writeDocs(
 			return hperrors.Wrap(err)
 		}
 		doc := &specmodel.GlobalDoc{
-			DocHeader: specmodel.NewDocHeader(string(base.ObjectScopeGlobal)),
+			DocHeader: specmodel.NewDocHeader(specScopeName(base.ObjectScopeGlobal)),
 			Settings:  assembled,
 		}
 		if err = addFile(bundle, globalFilename, doc); err != nil {
@@ -318,7 +318,7 @@ func (s *service) writeDocs(
 			return hperrors.Wrap(err)
 		}
 		doc := &specmodel.ProjectDoc{
-			DocHeader: specmodel.NewDocHeader(string(base.ObjectScopeProject)),
+			DocHeader: specmodel.NewDocHeader(specScopeName(base.ObjectScopeProject)),
 			Project:   projUnit.project.Key,
 			Name:      projUnit.project.Name,
 			Note:      projUnit.project.Note,
@@ -356,7 +356,7 @@ func (s *service) writeEnvDoc(
 	}
 
 	doc := &specmodel.EnvDoc{
-		DocHeader: specmodel.NewDocHeader(string(base.ObjectScopeProjectEnv)),
+		DocHeader: specmodel.NewDocHeader(specScopeName(base.ObjectScopeProjectEnv)),
 		Project:   projUnit.project.Key,
 		Env:       env.env.Key,
 		Name:      env.env.Name,
@@ -502,7 +502,7 @@ func (s *service) loadOwnedFromRepo(
 ) ([]*entity.Setting, error) {
 	opts := []bunex.SelectQueryOption{
 		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
-		bunex.SelectWhereIn("setting.scope IN (?)", scopes),
+		bunex.SelectWhereIn("setting.scope IN (?)", scopes...),
 	}
 	if objectID == "" {
 		opts = append(opts, bunex.SelectWhere("setting.object_id IS NULL"))
@@ -577,6 +577,18 @@ func indexSettings(index *refIndex, settings []*entity.Setting, scopePath string
 		}
 		index.addPath(setting.ID, scopePath+"/"+block)
 	}
+}
+
+// specScopeName names a scope in a document.
+//
+// base.ObjectScopeGlobal is the empty string, which is fine as a database value
+// and useless in a file somebody reads: "scope: """ says nothing. Every other
+// scope already names itself.
+func specScopeName(scope base.ObjectScopeType) string {
+	if scope == base.ObjectScopeGlobal {
+		return "global"
+	}
+	return string(scope)
 }
 
 func addFile(bundle *specmodel.Bundle, name string, doc any) error {

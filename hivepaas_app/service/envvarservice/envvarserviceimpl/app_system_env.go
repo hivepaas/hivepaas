@@ -23,9 +23,9 @@ func (s *service) BuildSystemEnvVarsInApp(
 	req *envvarservice.BuildSystemEnvVarsInAppReq,
 ) ([]*envvarservice.EnvVar, error) {
 	settings, _, err := s.settingRepo.List(ctx, db, nil, nil,
-		bunex.SelectWhere("settings.status = ?", base.SettingStatusActive),
-		bunex.SelectWhereIn("settings.type IN (?)", base.SettingTypeAppRouting, base.SettingTypeAppKind),
-		bunex.SelectWhere("settings.object_id = ?", req.App.ID),
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+		bunex.SelectWhereIn("setting.type IN (?)", base.SettingTypeAppRouting, base.SettingTypeAppKind),
+		bunex.SelectWhere("setting.object_id = ?", req.App.ID),
 	)
 	if err != nil {
 		return nil, hperrors.Wrap(err)

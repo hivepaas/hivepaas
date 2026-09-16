@@ -716,7 +716,7 @@ export function AppCloneSettingsForm({
                             </div>
                         </ContentBlock>
 
-                        <ContentBlock label="Clone Deployment Settings">
+                        <ContentBlock label="Clone Deployment Configuration">
                             <div className="flex flex-col gap-6">
                                 <SectionEnabledField name="cloneDeploymentSettings" />
                                 <ConditionalSection enabled={cloneDeploymentSettings}>
@@ -743,7 +743,7 @@ export function AppCloneSettingsForm({
                             </div>
                         </ContentBlock>
 
-                        <ContentBlock label="Clone Routing Settings">
+                        <ContentBlock label="Clone Routing Configuration">
                             <div className="flex flex-col gap-6">
                                 <SectionEnabledField name="cloneRoutingSettings" />
                                 <ConditionalSection enabled={cloneRoutingSettings}>

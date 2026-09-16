@@ -84,14 +84,14 @@ export function AppConfigNetworksForm({ ref, defaultValues, onSubmit, readOnly =
                         disabled={readOnly}
                         className="contents"
                     >
-                        <ContentBlock label="Network Settings">
+                        <ContentBlock label="Network Configuration">
                             <div className="flex flex-col gap-6">
                                 <NetworksFields readOnly={readOnly} />
                                 <HostsFileEntriesFields readOnly={readOnly} />
                                 <DNSFields readOnly={readOnly} />
                             </div>
                         </ContentBlock>
-                        <ContentBlock label="Endpoint & Port Config">
+                        <ContentBlock label="Endpoint & Port Configuration">
                             <div className="flex flex-col gap-6">
                                 <EndpointPortConfigFields readOnly={readOnly} />
                             </div>

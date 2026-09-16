@@ -161,179 +161,43 @@ local-deploy:
 	mkdir -p tmp
 	bash deployment/local/install.sh
 
-ifndef HP_FE_DIR
-HP_FE_DIR=../hivepaas-dashboard
-endif
-
 local-build-dashboard:
-	cd ${HP_FE_DIR} && git pull && yarn install && yarn build
-	rm -rf dist-dashboard
-	mv ${HP_FE_DIR}/dist dist-dashboard
+	@HP_FE_DIR="$(HP_FE_DIR)" ./scripts/dev/local-build-dashboard.sh
 
 # ----- Running the local build on the host -----
-#
-# The everyday way to work: `go run` with the environment the local install needs.
-LOCAL_CONFIG := config/config.local.toml
-# Absolute, because HP_STORAGE_BIND_SOURCE is handed to docker as the source of a
-# bind mount and the daemon resolves it on the host, not against this process's
-# working directory. In the stack the two are deliberately different - the
-# container sees its data at /var/lib/hivepaas while docker binds it from the host
-# path - but running on the host there is no boundary between them.
-LOCAL_APP_PATH := $(PWD)/.appdata/hivepaas
-
+# The everyday way to work. See scripts/dev/local-run.sh.
 local-app-run:
-	@mkdir -p $(LOCAL_APP_PATH)
-	HP_CONFIG_FILE=$(LOCAL_CONFIG) \
-	HP_APP_PATH=$(LOCAL_APP_PATH) \
-	HP_STORAGE_BIND_SOURCE=$(LOCAL_APP_PATH) \
-		go run ./hivepaas_app/cmd/app/...
+	@./scripts/dev/local-run.sh app
 
-# No HP_APP_PATH here, on purpose. Nothing on the agent side decrypts anything:
-# the app decrypts and sends plaintext over gRPC.
 local-agent-run:
-	HP_CONFIG_FILE=$(LOCAL_CONFIG) go run ./hivepaas_app/cmd/agent/...
+	@./scripts/dev/local-run.sh agent
 
 # ----- Run the local build as swarm services -----
-#
-# Day to day these run straight from the IDE. These targets are for what that
-# cannot reach: code that reads the app's own swarm service, the updater paths,
-# placement constraints, the agent's view of the node it sits on, or anything
-# gated on `platform = "remote"`.
-#
-# Each image is one layer on top of the published dev image, which already carries
-# every runtime dependency (kopia, docker-cli, sql-migrate, git-lfs, dashboard).
-# Building deployment/dev/Dockerfile instead would clone the dashboard repo and
-# run a yarn build to pick up a change to one Go file.
-#
-# The :local tags exist on this daemon and nowhere else, which is fine for a
-# single-node local swarm and is the whole of why this does not work on a
-# multi-node one: the other nodes have nothing to pull.
-LOCAL_APP_IMAGE := hivepaas/hivepaas-dev:local
-LOCAL_APP_IMAGE_BASE := hivepaas/hivepaas-dev:latest
-LOCAL_APP_CTX := tmp/img-app
-LOCAL_AGENT_IMAGE := hivepaas/hivepaas-agent-dev:local
-LOCAL_AGENT_IMAGE_BASE := hivepaas/hivepaas-agent-dev:latest
-LOCAL_AGENT_CTX := tmp/img-agent
-# The daemon's arch, not the host's
-LOCAL_IMAGE_ARCH = $(shell docker version --format '{{.Server.Arch}}')
-
-# --no-resolve-image: a :local tag exists on this daemon and nowhere else, and
-#   swarm's default is to ask a registry to resolve a tag to a digest first.
-# --force: the tag never changes, so without it swarm reads the spec as unchanged
-#   and leaves the task running the previous binary.
-# --detach: an attached update does not return until swarm calls the rollout
-#   converged, and converged means update_config's monitor has elapsed - 240s for
-#   hivepaas_app, measured at 4m13s for an update whose container was serving
-#   within seconds. The monitor is what arms the rollback and is not worth
-#   shortening, so tools/swarm/wait-for-task.sh waits for the task instead.
-LOCAL_SVC_UPDATE := docker service update --detach --quiet --force --no-resolve-image
-
-# Its own context directory rather than the repo root: .dockerignore only drops
-# README.*, so a root context would ship vendor/ and .git/ on every build.
-#
-# config/ and hivepaas_app/db are copied in so local edits to settings and
-# migrations take effect; the base image's copies are from whenever it was built.
-# An empty dist-dashboard means the dashboard was never built here - copying it
-# would replace the base image's with nothing and serve a blank page, so that
-# layer is left out instead.
+# For what running on the host cannot reach: the app's own swarm service, the
+# updater, placement, `platform = "remote"`. See scripts/dev/local-swarm.sh.
 local-app-image:
-	@mkdir -p $(LOCAL_APP_CTX)
-	@GOOS=linux GOARCH=$(LOCAL_IMAGE_ARCH) CGO_ENABLED=0 \
-		go build -ldflags="$(PROD_LDFLAGS)" -o $(LOCAL_APP_CTX)/hivepaas ./hivepaas_app/cmd/app/...
-	@rm -rf $(LOCAL_APP_CTX)/config $(LOCAL_APP_CTX)/hivepaas_app $(LOCAL_APP_CTX)/dist-dashboard
-	@cp -R config $(LOCAL_APP_CTX)/config
-	@mkdir -p $(LOCAL_APP_CTX)/hivepaas_app
-	@cp -R hivepaas_app/db $(LOCAL_APP_CTX)/hivepaas_app/db
-	@printf 'FROM %s\nWORKDIR /hivepaas\nCOPY hivepaas ./hivepaas\nCOPY config ./config\nCOPY hivepaas_app/db ./hivepaas_app/db\n' \
-		$(LOCAL_APP_IMAGE_BASE) > $(LOCAL_APP_CTX)/Dockerfile
-	@if [ -n "$$(ls -A dist-dashboard 2>/dev/null)" ]; then \
-		cp -R dist-dashboard $(LOCAL_APP_CTX)/dist-dashboard; \
-		printf 'COPY dist-dashboard ./dist-dashboard\n' >> $(LOCAL_APP_CTX)/Dockerfile; \
-	else \
-		echo "dist-dashboard is empty, keeping the one in $(LOCAL_APP_IMAGE_BASE) - build yours with 'make local-build-dashboard'"; \
-	fi
-	@docker build -q -t $(LOCAL_APP_IMAGE) $(LOCAL_APP_CTX) > /dev/null && echo "built $(LOCAL_APP_IMAGE)"
+	@./scripts/dev/local-swarm.sh image app
 
-# HP_RUN_MODE=app+worker: what the stack itself runs this service as, so the task
-# is the whole thing rather than half of it - the deploy, clone and periodic-job
-# executors all live on the worker side. Set explicitly rather than left to
-# config.development.toml so `docker service inspect` says what the task is doing.
-# Note that the IDE build is usually still up on the same database, and then both
-# are pulling from the same task queue; stop one of them when that matters.
-#
-# The URL is whatever domain the install itself holds, not the `app.dev.localhost`
-# in deployment/local/hivepaas.yaml: the app rewrites its own traefik labels from
-# the domains in the database, so the stack's static labels are replaced the first
-# time it runs. Both builds read the same database, so both answer on the same
-# host - `docker service inspect hivepaas_app` shows the labels in force.
-#
-# The image being replaced is remembered so local-app-down can put it back.
-# `docker service rollback` cannot be used for that: run this twice and the spec
-# it rolls back to is the previous :local one.
-local-app-up: local-app-image
-	@prev=$$(docker service ps hivepaas_app --filter desired-state=running -q | head -1); \
-	img=$$(docker service inspect hivepaas_app --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}'); \
-	case "$$img" in *:local|*:local@*) ;; *) echo "$$img" > $(LOCAL_APP_CTX)/.previous-image ;; esac; \
-	$(LOCAL_SVC_UPDATE) --image $(LOCAL_APP_IMAGE) --env-add HP_RUN_MODE=app+worker --replicas 1 hivepaas_app > /dev/null; \
-	bash tools/swarm/wait-for-task.sh hivepaas_app "$$prev"
-	@echo "hivepaas_app is running the local build - https://localhost"
-	@echo "logs: make local-app-logs   stop: make local-app-down"
+local-app-up:
+	@./scripts/dev/local-swarm.sh up app
 
-# Back to the stack's own image, environment and replica count. Nothing waits for
-# a task here - there is not going to be one.
-#
-# With nothing remembered, the image is left exactly as it is rather than set to
-# $(LOCAL_APP_IMAGE_BASE): `docker stack deploy` pins this service to a digest and
-# the bare tag does not resolve on this daemon at all, so writing it would trade a
-# reference that works for one that has to be fetched.
 local-app-down:
-	@if [ -f $(LOCAL_APP_CTX)/.previous-image ]; then \
-		img=$$(cat $(LOCAL_APP_CTX)/.previous-image); \
-		$(LOCAL_SVC_UPDATE) --image "$$img" --env-rm HP_RUN_MODE --replicas 0 hivepaas_app > /dev/null; \
-		echo "hivepaas_app scaled to 0, image back to $$img"; \
-	else \
-		$(LOCAL_SVC_UPDATE) --env-rm HP_RUN_MODE --replicas 0 hivepaas_app > /dev/null; \
-		echo "hivepaas_app scaled to 0; no remembered image, run 'make local-deploy' to restore the stack's"; \
-	fi
+	@./scripts/dev/local-swarm.sh down app
 
 local-app-logs:
-	@docker service logs -f --tail 100 hivepaas_app
+	@./scripts/dev/local-swarm.sh logs app
 
-# The agent image holds only the binary and config - no dashboard, no migrations -
-# so this context is the binary plus a few kilobytes.
 local-agent-image:
-	@mkdir -p $(LOCAL_AGENT_CTX)
-	@GOOS=linux GOARCH=$(LOCAL_IMAGE_ARCH) CGO_ENABLED=0 \
-		go build -ldflags="$(PROD_LDFLAGS)" -o $(LOCAL_AGENT_CTX)/hivepaas-agent ./hivepaas_app/cmd/agent/...
-	@rm -rf $(LOCAL_AGENT_CTX)/config
-	@cp -R config $(LOCAL_AGENT_CTX)/config
-	@printf 'FROM %s\nWORKDIR /hivepaas\nCOPY hivepaas-agent ./hivepaas-agent\nCOPY config ./config\n' \
-		$(LOCAL_AGENT_IMAGE_BASE) > $(LOCAL_AGENT_CTX)/Dockerfile
-	@docker build -q -t $(LOCAL_AGENT_IMAGE) $(LOCAL_AGENT_CTX) > /dev/null && echo "built $(LOCAL_AGENT_IMAGE)"
+	@./scripts/dev/local-swarm.sh image agent
 
-# Unlike the app, this service is meant to be up: it is global, the stack starts
-# it, and nothing else answers the app's gRPC calls for a node. So there is no
-# scaling it to zero - local-agent-down puts the published image back instead.
-local-agent-up: local-agent-image
-	@prev=$$(docker service ps hivepaas_agent --filter desired-state=running -q | head -1); \
-	img=$$(docker service inspect hivepaas_agent --format '{{.Spec.TaskTemplate.ContainerSpec.Image}}'); \
-	case "$$img" in *:local|*:local@*) ;; *) echo "$$img" > $(LOCAL_AGENT_CTX)/.previous-image ;; esac; \
-	$(LOCAL_SVC_UPDATE) --image $(LOCAL_AGENT_IMAGE) hivepaas_agent > /dev/null; \
-	bash tools/swarm/wait-for-task.sh hivepaas_agent "$$prev"
-	@echo "hivepaas_agent is running the local build on every node"
-	@echo "logs: make local-agent-logs   stop: make local-agent-down"
+local-agent-up:
+	@./scripts/dev/local-swarm.sh up agent
 
-# The agent has to be running something, so with nothing remembered this does fall
-# back to $(LOCAL_AGENT_IMAGE_BASE) - unlike the app above, that tag does resolve.
 local-agent-down:
-	@prev=$$(docker service ps hivepaas_agent --filter desired-state=running -q | head -1); \
-	img=$$(cat $(LOCAL_AGENT_CTX)/.previous-image 2>/dev/null || echo $(LOCAL_AGENT_IMAGE_BASE)); \
-	$(LOCAL_SVC_UPDATE) --image "$$img" hivepaas_agent > /dev/null; \
-	bash tools/swarm/wait-for-task.sh hivepaas_agent "$$prev"; \
-	echo "hivepaas_agent is back on $$img"
+	@./scripts/dev/local-swarm.sh down agent
 
 local-agent-logs:
-	@docker service logs -f --tail 100 hivepaas_agent
+	@./scripts/dev/local-swarm.sh logs agent
 
 # ----- Extra swarm nodes -----
 #

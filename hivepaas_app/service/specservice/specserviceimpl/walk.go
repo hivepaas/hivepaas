@@ -1,0 +1,598 @@
+package specserviceimpl
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"sort"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+)
+
+const (
+	globalFilename    = "global.yaml"
+	projectFilename   = "project.yaml"
+	filenameTimestamp = "20060102T150405Z"
+)
+
+// scopeUnit is one scope's worth of exportable settings, gathered before any
+// document is written.
+//
+// Collecting everything first is what makes references resolve regardless of
+// walk order. Assembling as the walk goes would leave an env setting unable to
+// reference a project setting simply because the project document had not been
+// reached yet - a correctness bug that would look like a nondeterministic one.
+type scopeUnit struct {
+	path     string
+	settings []*entity.Setting
+}
+
+// Export builds a configuration bundle for a scope.
+func (s *service) Export(
+	ctx context.Context,
+	db database.IDB,
+	req *specservice.ExportReq,
+) (*specservice.ExportResp, error) {
+	if !req.SecretsMode.IsValid() {
+		return nil, hperrors.Wrap(hperrors.ErrSpecSecretsModeInvalid).
+			WithParam("Mode", string(req.SecretsMode))
+	}
+	if req.SecretsMode == specmodel.SecretsModeEncrypted && req.Passphrase == "" {
+		return nil, hperrors.Wrap(hperrors.ErrSpecPassphraseRequired)
+	}
+
+	bundle, err := s.buildBundle(ctx, db, req)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	path, err := writeBundle(req.WorkDir, bundle)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	filename := fmt.Sprintf("hivepaas-spec-%s.tar.gz",
+		bundle.Manifest.ExportedAt.Format(filenameTimestamp))
+
+	if req.SecretsMode == specmodel.SecretsModeEncrypted {
+		sealed := path + ".age"
+		if err = encryptBundle(path, sealed, req.Passphrase); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		// The unencrypted archive must not outlive the encrypted one.
+		if err = os.Remove(path); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		path, filename = sealed, filename+".age"
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	return &specservice.ExportResp{
+		Path: path, Filename: filename, Size: info.Size(), Report: bundle.Report,
+	}, nil
+}
+
+// buildBundle gathers every scope, indexes them all, and only then writes the
+// documents.
+func (s *service) buildBundle(
+	ctx context.Context,
+	db database.IDB,
+	req *specservice.ExportReq,
+) (*specmodel.Bundle, error) {
+	bundle := &specmodel.Bundle{Files: map[string][]byte{}, Report: &specmodel.Report{}}
+
+	netNames, err := s.loadNetworkNames(ctx, db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	tree, err := s.gather(ctx, db, req.Scope, bundle.Report)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	// Pass one: every setting in the export gets a path before anything is
+	// written, so a reference from any scope to any other resolves.
+	index := newRefIndex()
+	for _, unit := range tree.units {
+		indexSettings(index, unit.settings, unit.path)
+	}
+
+	// Pass two: write the documents.
+	if err = s.writeDocs(ctx, req, tree, netNames, index, bundle); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	bundle.Manifest = &specmodel.Manifest{
+		APIVersion:        specmodel.APIVersion,
+		Kind:              specmodel.KindSpec,
+		ExportedAt:        timeutil.NowUTC(),
+		SourceAppVersion:  base.StableVersion.AppVersion,
+		SourceVersionCode: base.CurrentVersion,
+		Scope:             string(req.Scope.ScopeType),
+		SecretsMode:       req.SecretsMode,
+		Files:             sortedFilenames(bundle.Files),
+	}
+	return bundle, nil
+}
+
+// exportTree is everything the walk found, in the order documents are written.
+type exportTree struct {
+	global   *scopeUnit
+	projects []*projectUnit
+	units    []*scopeUnit
+}
+
+type projectUnit struct {
+	project *entity.Project
+	unit    *scopeUnit
+	envs    []*envUnit
+}
+
+type envUnit struct {
+	env  *entity.ProjectEnv
+	unit *scopeUnit
+	apps []*appUnit
+}
+
+type appUnit struct {
+	app  *entity.App
+	unit *scopeUnit
+}
+
+func (s *service) gather(
+	ctx context.Context,
+	db database.IDB,
+	scope *entity.ObjectScope,
+	report *specmodel.Report,
+) (*exportTree, error) {
+	tree := &exportTree{}
+	add := func(unit *scopeUnit) *scopeUnit {
+		tree.units = append(tree.units, unit)
+		return unit
+	}
+
+	if scope.ScopeType == base.ObjectScopeGlobal {
+		settings, err := s.loadOwned(ctx, db,
+			[]base.ObjectScopeType{base.ObjectScopeGlobal, base.ObjectScopeHivepaas}, "")
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		tree.global = add(&scopeUnit{
+			path: "global", settings: selectSettings(settings, "global", report),
+		})
+	}
+
+	projects, err := s.projectsInScope(ctx, db, scope)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	for _, project := range projects {
+		projUnit, err := s.gatherProject(ctx, db, scope, project, add, report)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		tree.projects = append(tree.projects, projUnit)
+	}
+	return tree, nil
+}
+
+func (s *service) gatherProject(
+	ctx context.Context,
+	db database.IDB,
+	scope *entity.ObjectScope,
+	project *entity.Project,
+	add func(*scopeUnit) *scopeUnit,
+	report *specmodel.Report,
+) (*projectUnit, error) {
+	path := "projects/" + project.Key
+
+	settings, err := s.loadOwned(ctx, db,
+		[]base.ObjectScopeType{base.ObjectScopeProject}, project.ID)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	out := &projectUnit{
+		project: project,
+		unit:    add(&scopeUnit{path: path, settings: selectSettings(settings, path, report)}),
+	}
+
+	envs, _, err := s.projectEnvRepo.List(ctx, db, project.ID, nil)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	sort.SliceStable(envs, func(i, j int) bool {
+		if envs[i].Index != envs[j].Index {
+			return envs[i].Index < envs[j].Index
+		}
+		return envs[i].Key < envs[j].Key
+	})
+
+	for _, env := range envs {
+		if scope.ProjectEnvID != "" && env.ID != scope.ProjectEnvID {
+			continue
+		}
+		envOut, err := s.gatherEnv(ctx, db, scope, project, env, add, report)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		out.envs = append(out.envs, envOut)
+	}
+	return out, nil
+}
+
+func (s *service) gatherEnv(
+	ctx context.Context,
+	db database.IDB,
+	scope *entity.ObjectScope,
+	project *entity.Project,
+	env *entity.ProjectEnv,
+	add func(*scopeUnit) *scopeUnit,
+	report *specmodel.Report,
+) (*envUnit, error) {
+	path := "projects/" + project.Key + "/envs/" + env.Key
+
+	settings, err := s.loadOwned(ctx, db,
+		[]base.ObjectScopeType{base.ObjectScopeProjectEnv}, env.ID)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	out := &envUnit{
+		env:  env,
+		unit: add(&scopeUnit{path: path, settings: selectSettings(settings, path, report)}),
+	}
+
+	apps, _, err := s.appRepo.List(ctx, db, project.ID, nil,
+		bunex.SelectWhere("app.project_env_id = ?", env.ID),
+	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	for _, app := range selectApps(apps, path, report) {
+		if scope.AppID != "" && app.ID != scope.AppID {
+			continue
+		}
+		appPath := path + "/apps/" + app.Key
+
+		appSettings, err := s.loadOwned(ctx, db,
+			[]base.ObjectScopeType{base.ObjectScopeApp}, app.ID)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		out.apps = append(out.apps, &appUnit{
+			app: app,
+			unit: add(&scopeUnit{
+				path: appPath, settings: selectSettings(appSettings, appPath, report),
+			}),
+		})
+	}
+	return out, nil
+}
+
+func (s *service) writeDocs(
+	ctx context.Context,
+	req *specservice.ExportReq,
+	tree *exportTree,
+	netNames map[string]string,
+	index *refIndex,
+	bundle *specmodel.Bundle,
+) error {
+	if tree.global != nil {
+		assembled, err := s.assembleScope(tree.global.settings, index, req.SecretsMode)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		doc := &specmodel.GlobalDoc{
+			DocHeader: specmodel.NewDocHeader(string(base.ObjectScopeGlobal)),
+			Settings:  assembled,
+		}
+		if err = addFile(bundle, globalFilename, doc); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+
+	for _, projUnit := range tree.projects {
+		envNames := make([]string, 0, len(projUnit.envs))
+		for _, envUnit := range projUnit.envs {
+			if err := s.writeEnvDoc(ctx, req, projUnit, envUnit, netNames, index, bundle); err != nil {
+				return hperrors.Wrap(err)
+			}
+			envNames = append(envNames, envUnit.env.Key+".yaml")
+		}
+
+		assembled, err := s.assembleScope(projUnit.unit.settings, index, req.SecretsMode)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		doc := &specmodel.ProjectDoc{
+			DocHeader: specmodel.NewDocHeader(string(base.ObjectScopeProject)),
+			Project:   projUnit.project.Key,
+			Name:      projUnit.project.Name,
+			Note:      projUnit.project.Note,
+			Envs:      envNames,
+			Settings:  assembled,
+		}
+		if err = addFile(bundle, projUnit.unit.path+"/"+projectFilename, doc); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	return nil
+}
+
+func (s *service) writeEnvDoc(
+	ctx context.Context,
+	req *specservice.ExportReq,
+	projUnit *projectUnit,
+	env *envUnit,
+	netNames map[string]string,
+	index *refIndex,
+	bundle *specmodel.Bundle,
+) error {
+	appDocs := map[string]*specmodel.AppDoc{}
+	for _, app := range env.apps {
+		doc, err := s.buildAppDoc(ctx, req, app, netNames, index, bundle.Report)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		appDocs[app.app.Key] = doc
+	}
+
+	assembled, err := s.assembleScope(env.unit.settings, index, req.SecretsMode)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
+	doc := &specmodel.EnvDoc{
+		DocHeader: specmodel.NewDocHeader(string(base.ObjectScopeProjectEnv)),
+		Project:   projUnit.project.Key,
+		Env:       env.env.Key,
+		Name:      env.env.Name,
+		Color:     env.env.Color,
+		Index:     env.env.Index,
+		Apps:      appDocs,
+		Settings:  assembled,
+	}
+	return addFile(bundle, env.unit.path+".yaml", doc)
+}
+
+func (s *service) buildAppDoc(
+	ctx context.Context,
+	req *specservice.ExportReq,
+	app *appUnit,
+	netNames map[string]string,
+	index *refIndex,
+	report *specmodel.Report,
+) (*specmodel.AppDoc, error) {
+	assembled, err := s.assembleScope(app.unit.settings, index, req.SecretsMode)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	doc := &specmodel.AppDoc{
+		App:      app.app.Key,
+		Name:     app.app.Name,
+		Status:   string(app.app.Status),
+		Note:     app.app.Note,
+		Settings: assembled,
+	}
+
+	// The app-deployment setting is lifted out of the flat block map and placed
+	// beside the Swarm-derived blocks, which is where a reader expects it.
+	sourceBlock := specmodel.SingletonBlockName(base.SettingTypeAppDeployment)
+	deployment := &specmodel.Deployment{}
+	if source, ok := assembled[sourceBlock]; ok {
+		if body, isMap := source.(map[string]any); isMap {
+			deployment.Source = body
+		}
+		delete(assembled, sourceBlock)
+	}
+
+	if err = s.addSwarmBlocks(ctx, app.app, app.unit.path, netNames, deployment, report); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if deployment.Source != nil || deployment.Container != nil {
+		doc.Deployment = deployment
+	}
+	return doc, nil
+}
+
+// addSwarmBlocks fills the parts of a deployment that live in the Swarm service
+// rather than in settings.
+//
+// An app that has never been deployed has no service to read. That is a real
+// state rather than an edge case - two of five user apps in a development
+// installation are in it - so the blocks are simply absent and the report says
+// why, rather than the export failing.
+func (s *service) addSwarmBlocks(
+	ctx context.Context,
+	app *entity.App,
+	scopePath string,
+	netNames map[string]string,
+	deployment *specmodel.Deployment,
+	report *specmodel.Report,
+) error {
+	if app.ServiceID == "" {
+		report.Add(specmodel.Issue{
+			Severity: specmodel.SeverityFixable,
+			Code:     specmodel.CodeServiceUnavailable,
+			Path:     scopePath,
+			Action:   "the app has never been deployed; its settings are exported alone",
+		})
+		return nil
+	}
+
+	svc, err := s.clusterService.ServiceInspect(ctx, app.ServiceID, true)
+	if err != nil {
+		// Swallowed on purpose. One unreadable service must not fail an export
+		// of forty apps: the operator gets everything that could be read, plus
+		// a report entry naming what could not. That is the same leniency the
+		// import contract specifies, applied at the other end.
+		report.Add(specmodel.Issue{
+			Severity: specmodel.SeverityFixable,
+			Code:     specmodel.CodeServiceUnavailable,
+			Path:     scopePath,
+			Detail:   map[string]any{"serviceId": app.ServiceID},
+			Action:   "the swarm service could not be read; its settings are exported alone",
+		})
+		return nil //nolint:nilerr // reported rather than raised; see above
+	}
+
+	mapped, err := mapSwarmService(svc, netNames)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if mapped == nil {
+		return nil
+	}
+	deployment.Container = mapped.Container
+	deployment.Resources = mapped.Resources
+	deployment.Storage = mapped.Storage
+	deployment.Networks = mapped.Networks
+	deployment.Service = mapped.Service
+	return nil
+}
+
+// loadNetworkNames maps Docker network id to name.
+//
+// The cluster-network settings sync writes carry both - RefID is the Docker id,
+// Name is the Docker name - so this needs no round trip to Docker.
+func (s *service) loadNetworkNames(
+	ctx context.Context,
+	db database.IDB,
+) (map[string]string, error) {
+	settings, _, err := s.settingRepo.List(ctx, db, nil, nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterNetwork),
+	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	names := make(map[string]string, len(settings))
+	for _, setting := range settings {
+		if setting.RefID != "" && setting.Name != "" {
+			names[setting.RefID] = setting.Name
+		}
+	}
+	return names, nil
+}
+
+// loadOwnedFromRepo is the production settingLoader.
+//
+// It passes a nil scope on purpose. The repository's own scope filters widen a
+// query to include what an outer scope defines, which is right for reading
+// configuration and wrong for exporting it: each scope's document carries only
+// what that scope defines.
+func (s *service) loadOwnedFromRepo(
+	ctx context.Context,
+	db database.IDB,
+	scopes []base.ObjectScopeType,
+	objectID string,
+) ([]*entity.Setting, error) {
+	opts := []bunex.SelectQueryOption{
+		bunex.SelectWhere("setting.status = ?", base.SettingStatusActive),
+		bunex.SelectWhereIn("setting.scope IN (?)", scopes),
+	}
+	if objectID == "" {
+		opts = append(opts, bunex.SelectWhere("setting.object_id IS NULL"))
+	} else {
+		opts = append(opts, bunex.SelectWhere("setting.object_id = ?", objectID))
+	}
+
+	settings, _, err := s.settingRepo.List(ctx, db, nil, nil, opts...)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return settings, nil
+}
+
+func (s *service) projectsInScope(
+	ctx context.Context,
+	db database.IDB,
+	scope *entity.ObjectScope,
+) ([]*entity.Project, error) {
+	switch scope.ScopeType {
+	case base.ObjectScopeGlobal:
+		projects, _, err := s.projectRepo.List(ctx, db, nil)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		return selectProjects(projects), nil
+
+	case base.ObjectScopeProject, base.ObjectScopeProjectEnv, base.ObjectScopeApp:
+		project, err := s.projectRepo.GetByID(ctx, db, scope.ProjectID)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		return selectProjects([]*entity.Project{project}), nil
+
+	case base.ObjectScopeHivepaas:
+		// The hivepaas scope's settings travel in global.yaml; it owns no
+		// projects of its own.
+		return nil, nil
+
+	case base.ObjectScopeUser:
+		// Nothing there but api-key, which is skipped, so the scope is empty by
+		// construction.
+		return nil, nil
+
+	default:
+		return nil, nil
+	}
+}
+
+// assembleScope decrypts what the mode calls for and turns the settings into
+// the block map a document carries.
+func (s *service) assembleScope(
+	settings []*entity.Setting,
+	index *refIndex,
+	mode specmodel.SecretsMode,
+) (map[string]any, error) {
+	for _, setting := range settings {
+		if err := revealSettingSecrets(setting, mode); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
+	return assembleSettings(settings, index, mode)
+}
+
+// indexSettings records the path each setting can be referenced by.
+func indexSettings(index *refIndex, settings []*entity.Setting, scopePath string) {
+	keys := specmodel.DeriveSettingKeys(settings)
+	for _, setting := range settings {
+		block := specmodel.SingletonBlockName(setting.Type)
+		if block == "" {
+			block = specmodel.CollectionBlockName(setting.Type) + "/" + keys[setting.ID]
+		}
+		index.addPath(setting.ID, scopePath+"/"+block)
+	}
+}
+
+func addFile(bundle *specmodel.Bundle, name string, doc any) error {
+	content, err := marshalDoc(doc)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	bundle.Files[name] = content
+	return nil
+}
+
+func sortedFilenames(files map[string][]byte) []string {
+	names := make([]string, 0, len(files))
+	for name := range files {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}

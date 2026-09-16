@@ -5,4 +5,5 @@ var (
 	ErrSpecMountTargetDuplicated   = NewErr(ErrValueInvalid, "ERR_SPEC_MOUNT_TARGET_DUPLICATED")
 	ErrSpecSettingTypeUnclassified = NewErr(ErrInternal, "ERR_SPEC_SETTING_TYPE_UNCLASSIFIED")
 	ErrSpecPassphraseRequired      = NewErr(ErrPreconditionRequired, "ERR_SPEC_PASSPHRASE_REQUIRED")
+	ErrSpecSecretsModeInvalid      = NewErr(ErrArgumentInvalid, "ERR_SPEC_SECRETS_MODE_INVALID")
 )

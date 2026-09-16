@@ -1,0 +1,381 @@
+package specserviceimpl
+
+import (
+	"context"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/moby/moby/api/types/swarm"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+)
+
+// The fakes embed the real interfaces, so a method the exporter starts calling
+// without a stub panics loudly instead of silently returning a zero value.
+
+// fakeSettingRepo serves only loadNetworkNames, which asks for every
+// cluster-network row. Scope queries go through the settingLoader seam instead,
+// because bunex options are closures a double cannot read.
+type fakeSettingRepo struct {
+	repository.SettingRepo
+	networks []*entity.Setting
+}
+
+func (f *fakeSettingRepo) List(
+	_ context.Context, _ database.IDB, _ *entity.ObjectScope, _ *basedto.Paging,
+	_ ...bunex.SelectQueryOption,
+) ([]*entity.Setting, *basedto.PagingMeta, error) {
+	return f.networks, nil, nil
+}
+
+type fakeProjectRepo struct {
+	repository.ProjectRepo
+	projects []*entity.Project
+}
+
+func (f *fakeProjectRepo) List(
+	_ context.Context, _ database.IDB, _ *basedto.Paging, _ ...bunex.SelectQueryOption,
+) ([]*entity.Project, *basedto.PagingMeta, error) {
+	return f.projects, nil, nil
+}
+
+type fakeProjectEnvRepo struct {
+	repository.ProjectEnvRepo
+	envs []*entity.ProjectEnv
+}
+
+func (f *fakeProjectEnvRepo) List(
+	_ context.Context, _ database.IDB, projectID string, _ *basedto.Paging,
+	_ ...bunex.SelectQueryOption,
+) ([]*entity.ProjectEnv, *basedto.PagingMeta, error) {
+	var out []*entity.ProjectEnv
+	for _, env := range f.envs {
+		if env.ProjectID == projectID {
+			out = append(out, env)
+		}
+	}
+	return out, nil, nil
+}
+
+type fakeAppRepo struct {
+	repository.AppRepo
+	apps []*entity.App
+}
+
+func (f *fakeAppRepo) List(
+	_ context.Context, _ database.IDB, projectID string, _ *basedto.Paging,
+	_ ...bunex.SelectQueryOption,
+) ([]*entity.App, *basedto.PagingMeta, error) {
+	var out []*entity.App
+	for _, app := range f.apps {
+		if app.ProjectID == projectID {
+			out = append(out, app)
+		}
+	}
+	return out, nil, nil
+}
+
+type fakeClusterService struct {
+	clusterservice.Service
+	services map[string]*swarm.Service
+}
+
+func (f *fakeClusterService) ServiceInspect(
+	_ context.Context, serviceID string, _ bool,
+) (*swarm.Service, error) {
+	if svc, ok := f.services[serviceID]; ok {
+		return svc, nil
+	}
+	return nil, notFoundError{}
+}
+
+type notFoundError struct{}
+
+func (notFoundError) Error() string { return "service not found" }
+
+// exportFixture builds a small but realistic installation: one exportable
+// project with one env and two apps, one of which has never been deployed;
+// plus the hivepaas project, which must not appear.
+func exportFixture(t *testing.T) specservice.Service {
+	t.Helper()
+	useDataKey(t)
+
+	cert := &entity.Setting{
+		ID: "cert_1", Type: base.SettingTypeSSLCert, Scope: base.ObjectScopeGlobal,
+		Name: "localhost", Kind: "self-signed", Status: base.SettingStatusActive,
+	}
+	assert.NoError(t, cert.SetData(&entity.SSLCert{Domain: "localhost"}))
+
+	// An app setting referencing a global one. Resolving it proves the index is
+	// complete before any document is written.
+	routing := &entity.Setting{
+		ID: "routing_1", Type: base.SettingTypeAppRouting, Scope: base.ObjectScopeApp,
+		ObjectID: "app_1", Status: base.SettingStatusActive,
+	}
+	assert.NoError(t, routing.SetData(&entity.AppRoutingSettings{
+		Port:    8080,
+		Domains: []*entity.AppDomain{{Domain: "api.example.com", SSLCert: entity.ObjectID{ID: "cert_1"}}},
+	}))
+
+	secret := &entity.Setting{
+		ID: "secret_1", Type: base.SettingTypeSecret, Scope: base.ObjectScopeApp,
+		ObjectID: "app_1", Name: "db-password", Status: base.SettingStatusActive,
+	}
+	assert.NoError(t, secret.SetData(&entity.Secret{
+		Key: "DB_PASSWORD", Value: entity.NewEncryptedField("hunter2"),
+	}))
+
+	apiKey := &entity.Setting{
+		ID: "key_1", Type: base.SettingTypeAPIKey, Scope: base.ObjectScopeGlobal,
+		Name: "ci", Status: base.SettingStatusActive,
+	}
+	assert.NoError(t, apiKey.SetData(&entity.APIKey{KeyID: "abc"}))
+
+	settingRepo := &fakeSettingRepo{}
+
+	proj := &entity.Project{ID: "p1", Key: "project_a", Name: "Project A"}
+	hive := &entity.Project{ID: "p2", Key: base.HivepaasProjectKey, Name: "HivePaaS"}
+	env := &entity.ProjectEnv{ID: "p1:dev", ProjectID: "p1", Key: "dev", Name: "development"}
+
+	deployed := &entity.App{
+		ID: "app_1", Key: "backend", Name: "Backend", ProjectID: "p1",
+		ProjectEnvID: "p1:dev", ServiceID: "svc_1", Status: base.AppStatusActive,
+	}
+	undeployed := &entity.App{
+		ID: "app_2", Key: "frontend", Name: "Frontend", ProjectID: "p1",
+		ProjectEnvID: "p1:dev", Status: base.AppStatusActive,
+	}
+	preview := &entity.App{
+		ID: "app_3", Key: "backend-pr-42", Name: "PR 42", ProjectID: "p1",
+		ProjectEnvID: "p1:dev", ParentID: "app_1",
+	}
+
+	all := []*entity.Setting{cert, apiKey, routing, secret}
+
+	svc := New(
+		settingRepo,
+		&fakeProjectRepo{projects: []*entity.Project{proj, hive}},
+		&fakeProjectEnvRepo{envs: []*entity.ProjectEnv{env}},
+		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview}},
+		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
+	)
+
+	// The seam does what the repository's SQL would: return the settings this
+	// scope defines, and none it merely inherits.
+	impl, _ := svc.(*service)
+	impl.loadOwned = func(
+		_ context.Context, _ database.IDB,
+		scopes []base.ObjectScopeType, objectID string,
+	) ([]*entity.Setting, error) {
+		var out []*entity.Setting
+		for _, setting := range all {
+			if !containsScope(scopes, setting.Scope) {
+				continue
+			}
+			if setting.ObjectID != objectID {
+				continue
+			}
+			out = append(out, setting)
+		}
+		return out, nil
+	}
+	return svc
+}
+
+func containsScope(scopes []base.ObjectScopeType, want base.ObjectScopeType) bool {
+	for _, scope := range scopes {
+		if scope == want {
+			return true
+		}
+	}
+	return false
+}
+
+func runExport(t *testing.T, mode specmodel.SecretsMode, passphrase string) (string, *specmodel.Report) {
+	t.Helper()
+	svc := exportFixture(t)
+	dir := t.TempDir()
+
+	resp, err := svc.Export(context.Background(), nil, &specservice.ExportReq{
+		Scope:       entity.NewObjectScopeGlobal(),
+		SecretsMode: mode,
+		Passphrase:  passphrase,
+		WorkDir:     dir,
+	})
+	assert.NoError(t, err)
+	assert.FileExists(t, resp.Path)
+	return resp.Path, resp.Report
+}
+
+func TestExportProducesThePerEnvLayout(t *testing.T) {
+	path, _ := runExport(t, specmodel.SecretsModeOmit, "")
+
+	listing, err := exec.Command("tar", "-tzf", path).Output()
+	assert.NoError(t, err)
+	for _, want := range []string{
+		"spec.yaml",
+		"global.yaml",
+		"projects/project_a/project.yaml",
+		"projects/project_a/envs/dev.yaml",
+	} {
+		assert.Contains(t, string(listing), want)
+	}
+}
+
+func TestExportExcludesTheHivePaaSProject(t *testing.T) {
+	path, _ := runExport(t, specmodel.SecretsModeOmit, "")
+
+	listing, err := exec.Command("tar", "-tzf", path).Output()
+	assert.NoError(t, err)
+	assert.NotContains(t, string(listing), "projects/hivepaas",
+		"that project holds HivePaaS's own stack")
+}
+
+// The index must be complete before any document is written, or an app setting
+// referencing a global one would resolve or not depending on walk order.
+func TestExportResolvesCrossScopeReferences(t *testing.T) {
+	path, _ := runExport(t, specmodel.SecretsModeOmit, "")
+	env := readFromArchive(t, path, "projects/project_a/envs/dev.yaml")
+
+	assert.Contains(t, env, "global/sslCerts/localhost",
+		"the app's certificate reference became a path into global.yaml")
+	assert.NotContains(t, env, "cert_1", "and no raw identifier survived")
+}
+
+func TestExportOmitsSecretsInOmitMode(t *testing.T) {
+	path, _ := runExport(t, specmodel.SecretsModeOmit, "")
+	env := readFromArchive(t, path, "projects/project_a/envs/dev.yaml")
+
+	assert.Contains(t, env, "DB_PASSWORD", "the key stays so a reader sees a secret is missing")
+	assert.NotContains(t, env, "hunter2")
+	assert.NotContains(t, env, "hpenc", "and no installation-specific ciphertext either")
+}
+
+func TestExportRevealsSecretsInPlaintextMode(t *testing.T) {
+	path, _ := runExport(t, specmodel.SecretsModePlaintext, "")
+	env := readFromArchive(t, path, "projects/project_a/envs/dev.yaml")
+	assert.Contains(t, env, "hunter2")
+}
+
+func TestExportSkipsApiKeysAndPreviewApps(t *testing.T) {
+	path, report := runExport(t, specmodel.SecretsModeOmit, "")
+
+	global := readFromArchive(t, path, "global.yaml")
+	assert.NotContains(t, global, "apiKeys", "an imported hash authenticates nobody")
+
+	env := readFromArchive(t, path, "projects/project_a/envs/dev.yaml")
+	assert.NotContains(t, env, "backend-pr-42", "preview apps are not configuration")
+
+	codes := map[string]int{}
+	for _, issue := range report.Issues {
+		codes[issue.Code]++
+	}
+	assert.Positive(t, codes[specmodel.CodeTypeSkipped], "the api key is reported")
+	assert.Positive(t, codes[specmodel.CodePreviewAppSkipped], "so is the preview app")
+}
+
+// An app with no service is normal, not an error: two of five user apps in a
+// development installation are in that state.
+func TestExportHandlesAnUndeployedApp(t *testing.T) {
+	path, report := runExport(t, specmodel.SecretsModeOmit, "")
+	env := readFromArchive(t, path, "projects/project_a/envs/dev.yaml")
+
+	assert.Contains(t, env, "frontend", "the app is still exported")
+
+	var found bool
+	for _, issue := range report.Issues {
+		if issue.Code == specmodel.CodeServiceUnavailable && strings.Contains(issue.Path, "frontend") {
+			found = true
+			assert.Equal(t, specmodel.SeverityFixable, issue.Severity)
+		}
+	}
+	assert.True(t, found, "and the report says why it has no deployment block")
+}
+
+func TestExportEncryptedModeProducesAnAgeFile(t *testing.T) {
+	path, _ := runExport(t, specmodel.SecretsModeEncrypted, "correct horse battery staple")
+
+	assert.True(t, strings.HasSuffix(path, ".tar.gz.age"))
+	head, err := os.ReadFile(path)
+	assert.NoError(t, err)
+	assert.True(t, strings.HasPrefix(string(head), "age-encryption.org/"))
+
+	// The unencrypted archive must not be left behind beside it.
+	assert.NoFileExists(t, strings.TrimSuffix(path, ".age"))
+}
+
+func TestExportRefusesEncryptedWithoutAPassphrase(t *testing.T) {
+	svc := exportFixture(t)
+	_, err := svc.Export(context.Background(), nil, &specservice.ExportReq{
+		Scope:       entity.NewObjectScopeGlobal(),
+		SecretsMode: specmodel.SecretsModeEncrypted,
+		WorkDir:     t.TempDir(),
+	})
+	assert.Error(t, err)
+}
+
+func TestExportRefusesAnUnknownMode(t *testing.T) {
+	svc := exportFixture(t)
+	_, err := svc.Export(context.Background(), nil, &specservice.ExportReq{
+		Scope:       entity.NewObjectScopeGlobal(),
+		SecretsMode: specmodel.SecretsMode("none"),
+		WorkDir:     t.TempDir(),
+	})
+	assert.Error(t, err, "none was renamed to omit and must not be silently accepted")
+}
+
+func readFromArchive(t *testing.T, archive, name string) string {
+	t.Helper()
+	dir := t.TempDir()
+	out, err := exec.Command("tar", "-xzf", archive, "-C", dir).CombinedOutput()
+	assert.NoError(t, err, string(out))
+
+	content, err := os.ReadFile(filepath.Join(dir, name))
+	assert.NoError(t, err)
+	return string(content)
+}
+
+// Two exports of unchanged data must differ only in the manifest's timestamp,
+// or the format is useless for review and for git.
+func TestExportIsDeterministicApartFromTheTimestamp(t *testing.T) {
+	first, _ := runExport(t, specmodel.SecretsModeOmit, "")
+	second, _ := runExport(t, specmodel.SecretsModeOmit, "")
+
+	for _, name := range []string{
+		"global.yaml",
+		"projects/project_a/project.yaml",
+		"projects/project_a/envs/dev.yaml",
+	} {
+		assert.Equal(t,
+			readFromArchive(t, first, name),
+			readFromArchive(t, second, name),
+			"%s differs between two exports of the same data", name)
+	}
+
+	// The manifest differs only where it should.
+	firstManifest := stripLine(readFromArchive(t, first, "spec.yaml"), "exportedAt:")
+	secondManifest := stripLine(readFromArchive(t, second, "spec.yaml"), "exportedAt:")
+	assert.Equal(t, firstManifest, secondManifest)
+}
+
+func stripLine(content, prefix string) string {
+	var kept []string
+	for _, line := range strings.Split(content, "\n") {
+		if !strings.HasPrefix(line, prefix) {
+			kept = append(kept, line)
+		}
+	}
+	return strings.Join(kept, "\n")
+}

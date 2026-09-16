@@ -30,6 +30,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectsettingshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/sessionhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/settinghandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/spechandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/supporthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/systemhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/systemsettingshandler"
@@ -84,6 +85,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice/settingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsprobationservice/settingsprobationserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingsrevertservice/settingsrevertserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslrenewalservice/sslrenewalserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice/sslserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/startupservice/startupserviceimpl"
@@ -154,6 +156,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sshkeyuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslcertuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/supportuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappsettingsuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/hpappuc"
@@ -247,6 +250,7 @@ var Provides = []any{
 	supporthandler.New,
 	systemhandler.New,
 	systemsettingshandler.New,
+	spechandler.New,
 	taskhandler.New,
 	traefikhandler.New,
 	userhandler.New,
@@ -310,6 +314,7 @@ var Provides = []any{
 	sysstatusuc.New,
 	systembackupuc.New,
 	systemcleanupuc.New,
+	specuc.New,
 	taskuc.New,
 	traefiksettingsuc.New,
 	traefikuc.New,
@@ -358,6 +363,7 @@ var Provides = []any{
 	scopeserviceimpl.New,
 	settingeventserviceimpl.New,
 	settinginitserviceimpl.New,
+	specserviceimpl.New,
 	settingserviceimpl.New,
 	sslrenewalserviceimpl.New,
 	sslserviceimpl.New,

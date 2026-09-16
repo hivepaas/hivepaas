@@ -28,6 +28,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/projectsettingshandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/sessionhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/settinghandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/spechandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/supporthandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/systemhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/systemsettingshandler"
@@ -58,6 +59,7 @@ type HandlerRegistry struct {
 	projectSettingsHandler    *projectsettingshandler.Handler
 	sessionHandler            *sessionhandler.Handler
 	settingHandler            *settinghandler.Handler
+	specHandler               *spechandler.Handler
 	supportHandler            *supporthandler.Handler
 	systemHandler             *systemhandler.Handler
 	systemSettingsHandler     *systemsettingshandler.Handler
@@ -88,6 +90,7 @@ func NewHandlerRegistry(
 	projectSettingsHandler *projectsettingshandler.Handler,
 	sessionHandler *sessionhandler.Handler,
 	settingHandler *settinghandler.Handler,
+	specHandler *spechandler.Handler,
 	supportHandler *supporthandler.Handler,
 	systemHandler *systemhandler.Handler,
 	systemSettingsHandler *systemsettingshandler.Handler,
@@ -117,6 +120,7 @@ func NewHandlerRegistry(
 		projectSettingsHandler:    projectSettingsHandler,
 		sessionHandler:            sessionHandler,
 		settingHandler:            settingHandler,
+		specHandler:               specHandler,
 		supportHandler:            supportHandler,
 		systemHandler:             systemHandler,
 		systemSettingsHandler:     systemSettingsHandler,
@@ -172,6 +176,7 @@ func (s *HTTPServer) registerRoutes() {
 	s.registerFileRoutes(apiGroup)
 	s.registerImageRoutes(apiGroup)
 	s.registerSupportRoutes(apiGroup)
+	s.registerSpecRoutes(apiGroup)
 }
 
 func routePing(c *gin.Context) {

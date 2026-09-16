@@ -10347,6 +10347,27 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/spec/export" : {
+      "get" : {
+        "parameters" : [ {
+          "description" : "Project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : { },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Export one project as a configuration spec",
+        "tags" : [ "spec" ]
+      }
+    },
     "/projects/{projectID}/ssh-keys" : {
       "get" : {
         "description" : "Lists ssh-key settings",
@@ -16380,6 +16401,146 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/kind-settings" : {
+      "get" : {
+        "description" : "Gets app kind settings",
+        "operationId" : "getAppKindSettings",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.GetAppKindSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets app kind settings",
+        "tags" : [ "app_settings" ]
+      },
+      "put" : {
+        "description" : "Updates app kind settings",
+        "operationId" : "updateAppKindSettings",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/appsettingsdto.UpdateAppKindSettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/appsettingsdto.UpdateAppKindSettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates app kind settings",
+        "tags" : [ "app_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/logs" : {
       "get" : {
         "description" : "Stream app logs via websocket.\nEvery read is bounded: `tail` defaults to 1000 lines and may not exceed 5000.\nReading further back than one response holds is the history endpoint, which pages.",
@@ -19492,6 +19653,43 @@
         },
         "summary" : "Gets app service tasks",
         "tags" : [ "app_settings" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/spec/export" : {
+      "get" : {
+        "parameters" : [ {
+          "description" : "Project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "App ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : { },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Export one app as a configuration spec",
+        "tags" : [ "spec" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/status" : {
@@ -27165,6 +27363,35 @@
         "summary" : "Imports settings from global to a project",
         "tags" : [ "project_env_settings" ],
         "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/spec/export" : {
+      "get" : {
+        "parameters" : [ {
+          "description" : "Project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : { },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Export one project env as a configuration spec",
+        "tags" : [ "spec" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/ssh-keys" : {
@@ -36352,6 +36579,33 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/spec/export" : {
+      "get" : {
+        "parameters" : [ {
+          "description" : "omit (default), encrypted or plaintext",
+          "in" : "query",
+          "name" : "secretsMode",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "required when secretsMode is encrypted",
+          "in" : "query",
+          "name" : "passphrase",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : { },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Export the whole installation as a configuration spec",
+        "tags" : [ "spec" ]
+      }
+    },
     "/support/feedbacks" : {
       "post" : {
         "description" : "Creates a feedback",
@@ -40953,7 +41207,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -40971,7 +41225,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -41557,6 +41811,141 @@
           }
         },
         "required" : [ "cloneConfigFiles", "cloneDeploymentSettings", "cloneEnvVars", "clonePeriodicJobs", "cloneRoutingDomains", "cloneRoutingSettings", "cloneSchedJobs", "cloneSecrets", "cloneVolumeData", "cloneVolumes", "commandPipes", "excludedVolumes", "includedVolumes", "liveVolumeClone", "notification", "targetEnv", "targetName", "targetReplicas", "targetStatus", "updateVer" ],
+        "type" : "object"
+      },
+      "appsettingsdto.AppKindCacheReq" : {
+        "properties" : {
+          "evictionRule" : {
+            "type" : "string"
+          },
+          "maxMemory" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "persistenceMode" : {
+            "type" : "string"
+          },
+          "sslCert" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          }
+        },
+        "required" : [ "evictionRule", "maxMemory", "password", "persistenceMode", "sslCert" ],
+        "type" : "object"
+      },
+      "appsettingsdto.AppKindCacheResp" : {
+        "properties" : {
+          "evictionRule" : {
+            "type" : "string"
+          },
+          "maxMemory" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "persistenceMode" : {
+            "type" : "string"
+          },
+          "sslCert" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          }
+        },
+        "required" : [ "evictionRule", "maxMemory", "password", "persistenceMode", "sslCert" ],
+        "type" : "object"
+      },
+      "appsettingsdto.AppKindDatabaseReq" : {
+        "properties" : {
+          "dbName" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "rootPassword" : {
+            "type" : "string"
+          },
+          "sslCert" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDReq"
+          },
+          "sslMode" : {
+            "type" : "string"
+          },
+          "tlsPassthrough" : {
+            "type" : "boolean"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "dbName", "password", "rootPassword", "sslCert", "sslMode", "tlsPassthrough", "username" ],
+        "type" : "object"
+      },
+      "appsettingsdto.AppKindDatabaseResp" : {
+        "properties" : {
+          "dbName" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "rootPassword" : {
+            "type" : "string"
+          },
+          "sslCert" : {
+            "$ref" : "#/components/schemas/settings.BaseSettingResp"
+          },
+          "sslMode" : {
+            "type" : "string"
+          },
+          "tlsPassthrough" : {
+            "type" : "boolean"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "dbName", "password", "rootPassword", "sslCert", "sslMode", "tlsPassthrough", "username" ],
+        "type" : "object"
+      },
+      "appsettingsdto.AppKindSettingsResp" : {
+        "properties" : {
+          "cache" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppKindCacheResp"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "database" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppKindDatabaseResp"
+          },
+          "engine" : {
+            "type" : "string"
+          },
+          "port" : {
+            "type" : "integer"
+          },
+          "secretMasked" : {
+            "type" : "boolean"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "version" : {
+            "type" : "string"
+          },
+          "webapp" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppKindWebappResp"
+          }
+        },
+        "required" : [ "cache", "category", "database", "engine", "port", "secretMasked", "updateVer", "version", "webapp" ],
+        "type" : "object"
+      },
+      "appsettingsdto.AppKindWebappReq" : {
+        "type" : "object"
+      },
+      "appsettingsdto.AppKindWebappResp" : {
         "type" : "object"
       },
       "appsettingsdto.BindOptions" : {
@@ -42302,6 +42691,18 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/appsettingsdto.EnvVarsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "appsettingsdto.GetAppKindSettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppKindSettingsResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -43644,6 +44045,45 @@
         "type" : "object"
       },
       "appsettingsdto.UpdateAppEnvVarsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
+      "appsettingsdto.UpdateAppKindSettingsReq" : {
+        "properties" : {
+          "cache" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppKindCacheReq"
+          },
+          "category" : {
+            "type" : "string"
+          },
+          "database" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppKindDatabaseReq"
+          },
+          "engine" : {
+            "type" : "string"
+          },
+          "port" : {
+            "type" : "integer"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "version" : {
+            "type" : "string"
+          },
+          "webapp" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppKindWebappReq"
+          }
+        },
+        "required" : [ "cache", "category", "database", "engine", "port", "updateVer", "version", "webapp" ],
+        "type" : "object"
+      },
+      "appsettingsdto.UpdateAppKindSettingsResp" : {
         "properties" : {
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -58709,9 +59149,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

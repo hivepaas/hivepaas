@@ -33,6 +33,10 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.POST("/:appID/photo-detect", appHandler.DetectAppPhoto)
 	}
 
+	{ // Configuration spec export
+		appGroup.GET("/:appID/spec/export", s.handlerRegistry.specHandler.ExportAppSpec)
+	}
+
 	{ // Tags
 		tagGroup := appGroup.Group("/:appID/tags")
 		tagGroup.POST("", appSettingsHandler.CreateAppTag)

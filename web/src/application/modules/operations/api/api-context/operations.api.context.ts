@@ -3,6 +3,7 @@ import { createContext } from "react";
 import {
     AuditLogsApi,
     AuditLogsApiValidator,
+    SpecExportApi,
     SystemTaskLogsWsApi,
     SystemTasksApi,
     SystemTasksApiValidator,
@@ -18,6 +19,7 @@ function createApi() {
             $: new SystemTaskLogsWsApi(),
         },
         auditLogs: new AuditLogsApi(auditLogsValidator),
+        specExport: new SpecExportApi(),
     };
 
     return {

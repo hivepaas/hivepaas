@@ -1430,6 +1430,16 @@ export const projectsRouter: RouteObject = {
                                 };
                             },
                         },
+                        {
+                            path: ROUTE.projects.single.operations.export.$pattern,
+                            lazy: async () => {
+                                const { ProjectExportRoute } = await getLazyComponents();
+
+                                return {
+                                    Component: ProjectExportRoute,
+                                };
+                            },
+                        },
                     ],
                 },
                 {

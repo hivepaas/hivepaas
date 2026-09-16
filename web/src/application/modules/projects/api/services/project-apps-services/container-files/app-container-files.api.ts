@@ -1,8 +1,8 @@
-import { AxiosError, type AxiosResponse, isAxiosError } from "axios";
+import type { AxiosResponse } from "axios";
 import { Err, Ok, type Result } from "oxide.ts";
 import { catchError, from, lastValueFrom, map, of } from "rxjs";
 
-import { BaseApi, parseApiError } from "@infrastructure/api";
+import { BaseApi, parseApiError, parseBlobApiError } from "@infrastructure/api";
 
 import type {
     AppContainerFiles_DownloadOne_Req,
@@ -38,26 +38,6 @@ function mapDownloadResponse(response: AxiosResponse<Blob>): AppContainerFiles_D
             ),
         },
     };
-}
-
-async function parseBlobApiError(error: unknown): Promise<Error> {
-    if (!isAxiosError(error) || !(error.response?.data instanceof Blob)) {
-        return parseApiError(error);
-    }
-
-    try {
-        const text = await error.response.data.text();
-        const data: unknown = JSON.parse(text);
-        const nextError = new AxiosError(error.message, error.code, error.config, error.request, {
-            ...error.response,
-            data,
-        });
-        nextError.status = error.status;
-
-        return parseApiError(nextError);
-    } catch {
-        return parseApiError(error);
-    }
 }
 
 export class AppContainerFilesApi extends BaseApi {

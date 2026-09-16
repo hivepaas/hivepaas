@@ -1,4 +1,4 @@
 /**
  * Operations
  */
-export { SystemAuditLogsRoute, SystemTaskDetailsRoute, SystemTasksRoute } from "./routes";
+export { OperationsExportRoute, SystemAuditLogsRoute, SystemTaskDetailsRoute, SystemTasksRoute } from "./routes";

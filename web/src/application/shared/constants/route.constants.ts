@@ -556,6 +556,11 @@ export const ROUTE = {
             $pattern: "operations/audit-logs",
             $route: "/operations/audit-logs/",
         },
+
+        export: {
+            $pattern: "operations/export",
+            $route: "/operations/export/",
+        },
     },
 
     /**
@@ -1166,6 +1171,11 @@ export const ROUTE = {
                 auditLogs: {
                     $pattern: "projects/:id/operations/audit-logs",
                     $route: (id: string) => `/projects/${id}/operations/audit-logs/`,
+                },
+
+                export: {
+                    $pattern: "projects/:id/operations/export",
+                    $route: (id: string) => `/projects/${id}/operations/export/`,
                 },
             },
         },

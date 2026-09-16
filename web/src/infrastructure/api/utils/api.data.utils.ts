@@ -162,3 +162,31 @@ export function parseApiError(error: unknown): Error {
      */
     return new UnexpectedApiErrorException();
 }
+
+/**
+ * parseApiError for an endpoint that returns a blob.
+ *
+ * A failing blob request still carries a JSON error body, but axios has already
+ * wrapped it as a Blob because responseType said so - so parseApiError alone
+ * would report the transport failure and lose the message the server sent.
+ * This reads the blob back as text first.
+ */
+export async function parseBlobApiError(error: unknown): Promise<Error> {
+    if (!isAxiosError(error) || !(error.response?.data instanceof Blob)) {
+        return parseApiError(error);
+    }
+
+    try {
+        const text = await error.response.data.text();
+        const data: unknown = JSON.parse(text);
+        const nextError = new AxiosError(error.message, error.code, error.config, error.request, {
+            ...error.response,
+            data,
+        });
+        nextError.status = error.status;
+
+        return parseApiError(nextError);
+    } catch {
+        return parseApiError(error);
+    }
+}

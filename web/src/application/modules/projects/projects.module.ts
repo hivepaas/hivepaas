@@ -51,6 +51,7 @@ export {
     ProjectTasksRoute,
     ProjectTaskDetailsRoute,
     ProjectAuditLogsRoute,
+    ProjectExportRoute,
     ProjectCloudStorageEditRoute,
     ProjectCloudStorageCreateRoute,
     ProjectRegistryAuthEditRoute,

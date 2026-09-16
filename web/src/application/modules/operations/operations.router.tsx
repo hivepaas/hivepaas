@@ -67,6 +67,22 @@ export const operationsRouter: RouteObject = {
             },
         },
         {
+            path: ROUTE.operations.export.$pattern,
+            lazy: async () => {
+                const { OperationsExportRoute } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Export">
+                                <OperationsExportRoute />
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+        },
+        {
             path: ROUTE.operations.auditLogs.$pattern,
             lazy: async () => {
                 const { SystemAuditLogsRoute } = await getLazyComponents();

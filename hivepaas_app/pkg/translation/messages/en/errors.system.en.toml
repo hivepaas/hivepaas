@@ -1,0 +1,9 @@
+# Messages for the errors declared in hivepaas_app/hperrors/errors_system.go.
+# Adding or removing an error there means editing this file.
+
+# System errors
+ERR_UPDATE_VER_MISMATCHED = "Mismatching update version. Please reload the page."
+ERR_VERSION_NOT_NEWER = "The target version is not newer than the running version"
+ERR_RELEASE_SIGNATURE_INVALID = "Release information could not be verified"
+ERR_RELEASE_SIGNING_KEY_INVALID = "Release signing key is misconfigured"
+ERR_RELEASE_INFO_INVALID = "Release information is invalid"

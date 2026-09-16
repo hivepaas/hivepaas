@@ -40771,6 +40771,24 @@
         "required" : [ "delete", "execute", "read", "write" ],
         "type" : "object"
       },
+      "base.TemplatesRef" : {
+        "properties" : {
+          "commit" : {
+            "description" : "Commit is the full 40-character commit sha the files are read at.",
+            "type" : "string"
+          },
+          "indexSha256" : {
+            "description" : "IndexSHA256 is the hex sha256 of index.json at Commit.",
+            "type" : "string"
+          },
+          "repo" : {
+            "description" : "Repo is the GitHub repository, as owner/name.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "commit", "indexSha256", "repo" ],
+        "type" : "object"
+      },
       "basedto.BaseEventNotificationReq" : {
         "properties" : {
           "failure" : {
@@ -41272,6 +41290,13 @@
           "releaseDate" : {
             "type" : "string"
           },
+          "templates" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/base.TemplatesRef"
+            } ],
+            "description" : "Templates pins the app templates this release offers. It is only ever read\nfrom release info, never from the copy compiled in: templates are released\non their own schedule, and the binary has no use for a pin it cannot fetch.\nAbsent means the release offers no templates.",
+            "type" : "object"
+          },
           "traefikImage" : {
             "type" : "string"
           },
@@ -41282,7 +41307,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "redisImage", "releaseDate", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
+        "required" : [ "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "redisImage", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
         "type" : "object"
       },
       "service_specservice_specmodel.SecretsMode" : {

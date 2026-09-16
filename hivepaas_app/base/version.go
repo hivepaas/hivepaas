@@ -80,4 +80,28 @@ type ReleaseInfo struct {
 	// which the updater performs. Removing it from the list is how that work,
 	// when it exists, is switched on.
 	BlockMajorUpgrade []string `json:"blockMajorUpgrade,omitempty"`
+
+	// Templates pins the app templates this release offers. It is only ever read
+	// from release info, never from the copy compiled in: templates are released
+	// on their own schedule, and the binary has no use for a pin it cannot fetch.
+	// Absent means the release offers no templates.
+	Templates *TemplatesRef `json:"templates,omitempty"`
+}
+
+// TemplatesRef pins a revision of the app templates repository.
+//
+// A commit alone does not pin content for us: the files are fetched over HTTPS
+// from GitHub, and nothing on this side can check a git object id against what
+// comes back. The pin is therefore a chain of sha256 hashes, rooted in the signed
+// release info. IndexSHA256 is the hash of the repository's index.json at
+// Commit, and the index lists every template file with its own sha256. A file
+// whose hash does not match the index, or an index whose hash does not match
+// this, is refused.
+type TemplatesRef struct {
+	// Repo is the GitHub repository, as owner/name.
+	Repo string `json:"repo"`
+	// Commit is the full 40-character commit sha the files are read at.
+	Commit string `json:"commit"`
+	// IndexSHA256 is the hex sha256 of index.json at Commit.
+	IndexSHA256 string `json:"indexSha256"`
 }

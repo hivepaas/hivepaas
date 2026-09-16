@@ -75,11 +75,29 @@ func parseReleaseInfo(envelope []byte, keys map[string][]byte) (*hpappservice.Ap
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	return decodeReleaseInfo(data)
+}
 
+// decodeReleaseInfo decodes and checks release.json. data must already have been
+// verified; see parseReleaseInfo.
+//
+// A malformed field refuses the whole file rather than being dropped. The file is
+// signed, so a malformed field is a mistake made at release - and a release that
+// quietly lost its templates pin is worse to diagnose than one that fails.
+func decodeReleaseInfo(data []byte) (*hpappservice.AppReleaseInfo, error) {
 	info := &hpappservice.AppReleaseInfo{}
-	err = json.Unmarshal(data, info)
+	err := json.Unmarshal(data, info)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+
+	for channel, release := range map[string]*hpappservice.ReleaseInfo{"stable": info.Stable, "beta": info.Beta} {
+		if release == nil || release.Templates == nil {
+			continue
+		}
+		if err = validateTemplatesRef(release.Templates); err != nil {
+			return nil, hperrors.Wrap(err).WithExtraDetail("%s templates", channel)
+		}
 	}
 
 	if info.Stable != nil && info.Stable.AppVersion != "" {

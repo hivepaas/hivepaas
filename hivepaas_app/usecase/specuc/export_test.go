@@ -10,31 +10,47 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
-	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission/permissionimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc/specdto"
 )
 
-type fakePermissionManager struct {
-	permission.Manager
-	revealCalls int
-	lastSubject *permission.RevealSubject
-	denyReveal  bool
+// The permission manager is the real one. A double would only prove the export
+// calls something - not that a user without the capability is actually refused,
+// which is the property worth having.
+//
+// Only the audit service and the ACL repository are faked, the way
+// permissionimpl's own tests do it: embedding the interface means a method this
+// path does not reach panics rather than silently passing.
+
+type fakeAuditService struct {
+	auditservice.Service
+	entries []*auditservice.Entry
 }
 
-func (f *fakePermissionManager) AuthorizeSecretReveal(
-	_ context.Context, _ database.IDB, _ *basedto.Auth, subject *permission.RevealSubject,
+func (f *fakeAuditService) Record(
+	_ context.Context, _ database.IDB, entry *auditservice.Entry,
 ) error {
-	f.revealCalls++
-	f.lastSubject = subject
-	if f.denyReveal {
-		return hperrors.Wrap(hperrors.ErrForbidden)
-	}
+	f.entries = append(f.entries, entry)
 	return nil
+}
+
+// fakeACLRepo grants nothing, so the capability has to come from the role.
+type fakeACLRepo struct {
+	repository.ACLPermissionRepo
+}
+
+func (f *fakeACLRepo) ListByResources(
+	_ context.Context, _ database.IDB, _ []*base.PermissionResource, _ ...bunex.SelectQueryOption,
+) ([]*entity.ACLPermission, error) {
+	return nil, nil
 }
 
 type fakeSpecService struct {
@@ -55,65 +71,99 @@ func (f *fakeSpecService) Export(
 	}, nil
 }
 
-func newTestUC(t *testing.T) (*UC, *fakePermissionManager, *fakeSpecService) {
+func newTestUC(t *testing.T) (*UC, *fakeAuditService, *fakeSpecService) {
 	t.Helper()
-	perm := &fakePermissionManager{}
+	audit := &fakeAuditService{}
+	manager := permissionimpl.NewManager(&fakeACLRepo{}, nil, nil, nil, audit)
 	svc := &fakeSpecService{}
-	return New(nil, perm, svc), perm, svc
+	return New(nil, manager, svc), audit, svc
 }
 
-func testAuth() *basedto.Auth {
-	return &basedto.Auth{User: &basedto.User{User: &entity.User{ID: "u1", Role: base.UserRoleMember}}}
+// allowSecretReveal sets the operator flag that gates every stored secret.
+// Without it even an admin is refused.
+func allowSecretReveal(t *testing.T, enabled bool) {
+	t.Helper()
+	prev := config.Current()
+	config.SetCurrent(&config.Config{Security: config.Security{ReturnSecretsViaAPI: enabled}})
+	t.Cleanup(func() { config.SetCurrent(prev) })
+}
+
+func adminAuth() *basedto.Auth {
+	return &basedto.Auth{User: &basedto.User{User: &entity.User{
+		ID: "usr_admin", Role: base.UserRoleAdmin,
+	}}}
+}
+
+func plainAuth() *basedto.Auth {
+	return &basedto.Auth{User: &basedto.User{User: &entity.User{
+		ID: "usr_1", Role: base.UserRoleMember,
+	}}}
 }
 
 func exportReq(mode specmodel.SecretsMode) *specdto.ExportSpecReq {
 	req := specdto.NewExportSpecReq()
 	req.SecretsMode = mode
+	req.Passphrase = "correct horse battery staple"
 	return req
 }
 
-func TestExportSpecNeedsNoRevealForOmitMode(t *testing.T) {
-	uc, perm, _ := newTestUC(t)
-	perm.denyReveal = true
+// The question this answers: does a user without the reveal capability actually
+// get refused, or is the gate only being called?
+func TestExportSpecRefusesAUserWithoutTheRevealCapability(t *testing.T) {
+	allowSecretReveal(t, true)
 
-	resp, err := uc.ExportSpec(context.Background(), testAuth(), exportReq(specmodel.SecretsModeOmit))
-	assert.NoError(t, err)
-	assert.NoError(t, resp.Data.Content.Close())
-	assert.Equal(t, 0, perm.revealCalls, "omit decrypts nothing")
-}
-
-func TestExportSpecRequiresRevealForBothSecretModes(t *testing.T) {
 	for _, mode := range []specmodel.SecretsMode{
 		specmodel.SecretsModePlaintext,
 		specmodel.SecretsModeEncrypted,
 	} {
-		uc, perm, _ := newTestUC(t)
-		perm.denyReveal = true
+		uc, audit, svc := newTestUC(t)
 
-		req := exportReq(mode)
-		req.Passphrase = "pw"
+		_, err := uc.ExportSpec(context.Background(), plainAuth(), exportReq(mode))
+		assert.Error(t, err, "mode %v must refuse a user without cap::secret::reveal", mode)
+		assert.Nil(t, svc.lastReq, "and must not reach the exporter at all")
 
-		_, err := uc.ExportSpec(context.Background(), testAuth(), req)
-		assert.Error(t, err, "mode %v must be gated", mode)
-		assert.Equal(t, 1, perm.revealCalls)
+		assert.Len(t, audit.entries, 1, "the refusal is recorded")
+		assert.Equal(t, base.AuditLogResultDenied, audit.entries[0].Result)
 	}
 }
 
-// The subject is what the audit entry is written from, so it has to name the
-// scope and say which mode was asked for.
-func TestExportSpecRecordsAMeaningfulRevealSubject(t *testing.T) {
-	uc, perm, _ := newTestUC(t)
+func TestExportSpecAllowsAUserWhoHasTheCapability(t *testing.T) {
+	allowSecretReveal(t, true)
+	uc, audit, svc := newTestUC(t)
 
-	req := exportReq(specmodel.SecretsModePlaintext)
-	req.ProjectID = "01JAB9XED0GTXBSQDFVYAJ8WB1"
+	resp, err := uc.ExportSpec(context.Background(), adminAuth(),
+		exportReq(specmodel.SecretsModePlaintext))
+	assert.NoError(t, err)
+	assert.NoError(t, resp.Data.Content.Close())
+	assert.NotNil(t, svc.lastReq)
 
-	resp, err := uc.ExportSpec(context.Background(), testAuth(), req)
+	assert.Len(t, audit.entries, 1)
+	assert.Equal(t, base.AuditLogResultAllowed, audit.entries[0].Result)
+}
+
+// The operator flag outranks the capability: with secrets disabled system-wide,
+// even an admin is refused.
+func TestExportSpecHonorsTheOperatorSecretsFlag(t *testing.T) {
+	allowSecretReveal(t, false)
+	uc, _, svc := newTestUC(t)
+
+	_, err := uc.ExportSpec(context.Background(), adminAuth(),
+		exportReq(specmodel.SecretsModePlaintext))
+	assert.Error(t, err)
+	assert.Nil(t, svc.lastReq)
+}
+
+// omit reads nothing, so it is ungated - which is what makes it a safe default.
+func TestExportSpecNeedsNoCapabilityForOmitMode(t *testing.T) {
+	allowSecretReveal(t, false)
+	uc, audit, svc := newTestUC(t)
+
+	resp, err := uc.ExportSpec(context.Background(), plainAuth(), exportReq(specmodel.SecretsModeOmit))
 	assert.NoError(t, err)
 	assert.NoError(t, resp.Data.Content.Close())
 
-	assert.Equal(t, base.ObjectScopeProject, perm.lastSubject.Scope)
-	assert.Equal(t, "01JAB9XED0GTXBSQDFVYAJ8WB1", perm.lastSubject.ObjectID)
-	assert.Contains(t, perm.lastSubject.ResName, "plaintext")
+	assert.NotNil(t, svc.lastReq)
+	assert.Empty(t, audit.entries, "nothing was revealed, so there is nothing to record")
 }
 
 func TestExportSpecBuildsTheScopeFromTheRequest(t *testing.T) {
@@ -124,7 +174,7 @@ func TestExportSpecBuildsTheScopeFromTheRequest(t *testing.T) {
 	req.ProjectEnvID = "01JAB9XED0GTXBSQDFVYAJ8WB1:dev"
 	req.AppID = "01JAB9XED0GTXBSQDFVYAJ8WD1"
 
-	resp, err := uc.ExportSpec(context.Background(), testAuth(), req)
+	resp, err := uc.ExportSpec(context.Background(), plainAuth(), req)
 	assert.NoError(t, err)
 	assert.NoError(t, resp.Data.Content.Close())
 
@@ -137,7 +187,7 @@ func TestExportSpecBuildsTheScopeFromTheRequest(t *testing.T) {
 func TestExportSpecRemovesTheWorkDirOnClose(t *testing.T) {
 	uc, _, svc := newTestUC(t)
 
-	resp, err := uc.ExportSpec(context.Background(), testAuth(), exportReq(specmodel.SecretsModeOmit))
+	resp, err := uc.ExportSpec(context.Background(), plainAuth(), exportReq(specmodel.SecretsModeOmit))
 	assert.NoError(t, err)
 
 	workDir := svc.lastReq.WorkDir
@@ -150,7 +200,7 @@ func TestExportSpecRemovesTheWorkDirOnClose(t *testing.T) {
 func TestExportSpecSetsTheDownloadFilename(t *testing.T) {
 	uc, _, _ := newTestUC(t)
 
-	resp, err := uc.ExportSpec(context.Background(), testAuth(), exportReq(specmodel.SecretsModeOmit))
+	resp, err := uc.ExportSpec(context.Background(), plainAuth(), exportReq(specmodel.SecretsModeOmit))
 	assert.NoError(t, err)
 	defer resp.Data.Content.Close()
 

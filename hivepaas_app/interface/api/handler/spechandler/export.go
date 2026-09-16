@@ -77,12 +77,53 @@ func (h *Handler) ExportAppSpec(ctx *gin.Context) {
 	h.export(ctx, req)
 }
 
+// accessCheckForScope picks the check that matches what is being exported.
+//
+// The same check for every route would be wrong in both directions at once:
+// gating a single project on the system module locks out a project member who
+// can already read every setting the export would contain, and lets anyone with
+// system read export a project they have no access to. Each scope is gated the
+// way every other handler gates it - ProjectAccessCheck for a project or env,
+// AppAccessCheck for an app.
+//
+// The global export keeps the system-module check because it genuinely crosses
+// every project, which is the same reason the audit log listing uses it.
+func accessCheckForScope(req *specdto.ExportSpecReq) permission.AccessCheck {
+	read := permission.BaseAccessCheck{Action: base.ActionTypeRead}
+
+	switch {
+	case req.AppID != "":
+		return &permission.AppAccessCheck{
+			BaseAccessCheck: read,
+			ProjectID:       req.ProjectID,
+			ProjectEnv:      req.ProjectEnvID,
+			AppID:           req.AppID,
+		}
+
+	case req.ProjectEnvID != "":
+		return &permission.ProjectAccessCheck{
+			BaseAccessCheck: read,
+			ProjectID:       req.ProjectID,
+			ProjectEnv:      &req.ProjectEnvID,
+		}
+
+	case req.ProjectID != "":
+		return &permission.ProjectAccessCheck{
+			BaseAccessCheck: read,
+			ProjectID:       req.ProjectID,
+		}
+
+	default:
+		return &permission.GeneralResourceAccessCheck{
+			BaseAccessCheck: read,
+			Module:          base.ResourceModuleSystem,
+			ResourceType:    base.ResourceTypeSetting,
+		}
+	}
+}
+
 func (h *Handler) export(ctx *gin.Context, req *specdto.ExportSpecReq) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, &permission.GeneralResourceAccessCheck{
-		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeRead},
-		Module:          base.ResourceModuleSystem,
-		ResourceType:    base.ResourceTypeSetting,
-	})
+	auth, err := h.authHandler.GetCurrentAuth(ctx, accessCheckForScope(req))
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

@@ -22,9 +22,17 @@ const KindSpec Kind = "Spec"
 type SecretsMode string
 
 const (
-	// SecretsModeNone omits every secret. It needs no capability and leaks
-	// nothing, which is why it is the default.
-	SecretsModeNone SecretsMode = "none"
+	// SecretsModeOmit clears every secret rather than merely leaving it
+	// encrypted. It needs no capability and leaks nothing, which is why it is
+	// the default.
+	//
+	// Leaving the stored ciphertext in place was the obvious alternative and is
+	// worse: an EncryptedField marshals as the ciphertext it was loaded with,
+	// which is readable only by the installation holding that data key. Nothing
+	// guarantees a bundle is imported back where it came from, so that value
+	// would be present, look like a secret, and silently fail everywhere else.
+	// An empty field says plainly that the secret was not exported.
+	SecretsModeOmit SecretsMode = "omit"
 	// SecretsModeEncrypted includes secrets and wraps the whole bundle with age
 	// under a passphrase the operator supplies.
 	SecretsModeEncrypted SecretsMode = "encrypted"
@@ -34,7 +42,7 @@ const (
 
 func (m SecretsMode) IsValid() bool {
 	switch m {
-	case SecretsModeNone, SecretsModeEncrypted, SecretsModePlaintext:
+	case SecretsModeOmit, SecretsModeEncrypted, SecretsModePlaintext:
 		return true
 	default:
 		return false

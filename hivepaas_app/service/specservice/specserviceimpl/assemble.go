@@ -47,7 +47,11 @@ func (r *refIndex) addExternal(setting *entity.Setting) {
 // rather than guessed at, for the same reason an unregistered SpecPolicy is: a
 // setting type added later should stop somebody, not appear under a name nobody
 // chose.
-func assembleSettings(settings []*entity.Setting, index *refIndex) (map[string]any, error) {
+func assembleSettings(
+	settings []*entity.Setting,
+	index *refIndex,
+	mode specmodel.SecretsMode,
+) (map[string]any, error) {
 	byType := map[base.SettingType][]*entity.Setting{}
 	for _, setting := range settings {
 		byType[setting.Type] = append(byType[setting.Type], setting)
@@ -59,7 +63,7 @@ func assembleSettings(settings []*entity.Setting, index *refIndex) (map[string]a
 
 		switch {
 		case specmodel.IsSingletonType(typ):
-			body, err := renderSetting(group[0], index)
+			body, err := renderSetting(group[0], index, mode)
 			if err != nil {
 				return nil, hperrors.Wrap(err)
 			}
@@ -69,7 +73,7 @@ func assembleSettings(settings []*entity.Setting, index *refIndex) (map[string]a
 			keys := specmodel.DeriveSettingKeys(group)
 			entries := map[string]any{}
 			for _, setting := range group {
-				body, err := renderSetting(setting, index)
+				body, err := renderSetting(setting, index, mode)
 				if err != nil {
 					return nil, hperrors.Wrap(err)
 				}
@@ -93,7 +97,11 @@ func assembleSettings(settings []*entity.Setting, index *refIndex) (map[string]a
 // out-of-scope one becomes a nested block, which a string swap cannot produce -
 // so that pass runs over the generic map, after marshaling, where changing the
 // structure is possible.
-func renderSetting(setting *entity.Setting, index *refIndex) (map[string]any, error) {
+func renderSetting(
+	setting *entity.Setting,
+	index *refIndex,
+	mode specmodel.SecretsMode,
+) (map[string]any, error) {
 	data, err := setting.Parse()
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -102,8 +110,27 @@ func renderSetting(setting *entity.Setting, index *refIndex) (map[string]any, er
 		policy.Strip(data)
 	}
 
+	// In omit mode the secrets are cleared here rather than skipped. An
+	// EncryptedField marshals as the ciphertext it was loaded with, so leaving
+	// it alone would write a value only the exporting installation can read -
+	// present, secret-looking, and silently useless anywhere else.
+	if mode == specmodel.SecretsModeOmit {
+		if _, err = entity.OmitSecrets(data); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
+
 	if err = entity.RemapRefs(data, index.paths); err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+
+	// Collected before marshaling, because marshaling is what turns a secret
+	// back into ciphertext. See entity.SecretPlaintexts.
+	var plaintexts map[string]string
+	if mode != specmodel.SecretsModeOmit {
+		if plaintexts, err = entity.SecretPlaintexts(data); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
 
 	encoded, err := json.Marshal(data)
@@ -116,7 +143,46 @@ func renderSetting(setting *entity.Setting, index *refIndex) (map[string]any, er
 	}
 
 	replaceExternalRefs(body, index)
+	// Both secret-bearing modes substitute. Leaving the stored ciphertext in an
+	// encrypted bundle would defeat the point: unwrapping the age envelope on
+	// another installation would yield a value sealed with a data key that
+	// installation does not have. age protects the bundle; the values inside it
+	// are plain so that they travel.
+	if mode.RevealsSecrets() {
+		replaceStrings(body, plaintexts)
+	}
 	return body, nil
+}
+
+// replaceStrings swaps exact string values throughout a decoded document. It is
+// how plaintext mode substitutes secrets, which cannot be marshaled in the
+// clear.
+func replaceStrings(node any, replacements map[string]string) {
+	if len(replacements) == 0 {
+		return
+	}
+	switch typed := node.(type) {
+	case map[string]any:
+		for key, value := range typed {
+			if text, ok := value.(string); ok {
+				if replacement, found := replacements[text]; found {
+					typed[key] = replacement
+					continue
+				}
+			}
+			replaceStrings(value, replacements)
+		}
+	case []any:
+		for i, value := range typed {
+			if text, ok := value.(string); ok {
+				if replacement, found := replacements[text]; found {
+					typed[i] = replacement
+					continue
+				}
+			}
+			replaceStrings(value, replacements)
+		}
+	}
 }
 
 // replaceExternalRefs swaps any identifier the index could not resolve for the

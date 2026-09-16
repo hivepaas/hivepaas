@@ -16,7 +16,7 @@ func TestManifestMarshalsWithStableFieldOrder(t *testing.T) {
 		SourceAppVersion:  "v0.1.0",
 		SourceVersionCode: "v000001",
 		Scope:             "global",
-		SecretsMode:       SecretsModeNone,
+		SecretsMode:       SecretsModeOmit,
 		Files:             []string{"global.yaml", "projects/project_a/project.yaml"},
 	}
 
@@ -28,7 +28,7 @@ exportedAt: 2026-09-16T10:15:00Z
 sourceAppVersion: v0.1.0
 sourceVersionCode: v000001
 scope: global
-secretsMode: none
+secretsMode: omit
 files:
     - global.yaml
     - projects/project_a/project.yaml
@@ -36,16 +36,17 @@ files:
 }
 
 func TestSecretsModeIsValid(t *testing.T) {
-	assert.True(t, SecretsModeNone.IsValid())
+	assert.True(t, SecretsModeOmit.IsValid())
 	assert.True(t, SecretsModeEncrypted.IsValid())
 	assert.True(t, SecretsModePlaintext.IsValid())
 	assert.False(t, SecretsMode("").IsValid())
+	assert.False(t, SecretsMode("none").IsValid(), "none was renamed to omit")
 	assert.False(t, SecretsMode("clear").IsValid())
 }
 
 func TestSecretsModeRevealsSecrets(t *testing.T) {
-	assert.False(t, SecretsModeNone.RevealsSecrets(),
-		"none decrypts nothing, so it needs no capability")
+	assert.False(t, SecretsModeOmit.RevealsSecrets(),
+		"omit decrypts nothing, so it needs no capability")
 	assert.True(t, SecretsModeEncrypted.RevealsSecrets())
 	assert.True(t, SecretsModePlaintext.RevealsSecrets())
 }

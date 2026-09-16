@@ -17,3 +17,5 @@
 .env
 .envrc
 .DS_Store
+# Release signing keys belong offline, never in the repo.
+*.key

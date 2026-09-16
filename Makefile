@@ -51,6 +51,16 @@ trivy:
 		docker run --rm -v "$(PWD)":/app -w /app aquasec/trivy:latest fs --skip-dirs "vendor,.temp,tmp,temp" --severity CRITICAL,HIGH .; \
 	fi
 
+# ----- Release signing -----
+# Signs release.json with the offline release keys (ed25519 and ML-DSA-65),
+# writing release.json.sig. The tool is built from RELEASESIGN_SHA, not the
+# working tree: moving the pin is how a reviewed change to tools/releasesign
+# reaches the keys. See the script.
+#   make release-sign KEYS="/offline/2026-ed.key /offline/2026-ml.key"
+RELEASESIGN_SHA := <RELEASESIGN_COMMIT_SHA>
+release-sign:
+	@RELEASESIGN_SHA="$(RELEASESIGN_SHA)" KEYS="$(KEYS)" IN="$(IN)" ./scripts/release-sign.sh
+
 # ----- Build flags -----
 PROD_LDFLAGS := -s -w
 PROD_FLAGS := -trimpath -ldflags="$(PROD_LDFLAGS)"

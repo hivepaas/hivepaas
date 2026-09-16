@@ -7,17 +7,44 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httputil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/releasesig"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/version"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 )
 
 const (
-	urlAppReleaseInfo = "https://raw.githubusercontent.com/hivepaas/hivepaas/main/release.json"
+	urlAppReleaseInfo    = "https://raw.githubusercontent.com/hivepaas/hivepaas/main/release.json"
+	urlAppReleaseInfoSig = urlAppReleaseInfo + ".sig"
 )
 
 func (s *service) GetAppReleaseInfo(ctx context.Context) (*hpappservice.AppReleaseInfo, error) {
 	data, err := httputil.HTTPGet(ctx, urlAppReleaseInfo)
 	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	sig, err := httputil.HTTPGet(ctx, urlAppReleaseInfoSig)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	keys, err := loadReleaseSigningKeys(releaseKeysFS)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return parseReleaseInfo(data, sig, keys)
+}
+
+// parseReleaseInfo accepts release.json only if sig carries the signatures
+// releasesig requires, by keys given as PEM by key id, and only then decodes it.
+//
+// Nothing in release.json is looked at before the signature verifies: it names
+// the images the updater will run, so an unverified file is not to be trusted
+// for anything - not even for deciding that there is nothing to update.
+func parseReleaseInfo(data, sig []byte, keys map[string][]byte) (*hpappservice.AppReleaseInfo, error) {
+	publicKeys, err := releasesig.ParsePublicKeys(keys)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if err = releasesig.Verify(publicKeys, data, sig); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 

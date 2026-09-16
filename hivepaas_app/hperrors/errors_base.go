@@ -105,5 +105,8 @@ var (
 	ErrTokenInvalid             = NewErr(ErrValueInvalid, "ERR_TOKEN_INVALID")
 	ErrMismatch                 = NewErr(ErrPreconditionFailed, "ERR_MISMATCH")
 	ErrUpdateVerMismatched      = NewErr(ErrMismatch, "ERR_UPDATE_VER_MISMATCHED")
+	ErrVersionNotNewer          = NewErr(ErrPreconditionFailed, "ERR_VERSION_NOT_NEWER")
+	ErrReleaseSignatureInvalid  = NewErr(ErrPreconditionFailed, "ERR_RELEASE_SIGNATURE_INVALID")
+	ErrReleaseSigningKeyInvalid = NewErr(ErrInternal, "ERR_RELEASE_SIGNING_KEY_INVALID")
 	ErrValidation               = NewErr(ErrBadRequest, "ERR_VALIDATION")
 )

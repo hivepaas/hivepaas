@@ -28,15 +28,24 @@ func (uc *UC) UpdateHpApp(
 		return nil, hperrors.Wrap(err)
 	}
 
-	var targetVersion *base.ReleaseInfo
+	var target *hpappservice.ReleaseInfo
 	switch {
 	case info.Stable != nil && info.Stable.AppVersion == req.TargetVersion:
-		targetVersion = &info.Stable.ReleaseInfo
+		target = info.Stable
 	case info.Beta != nil && info.Beta.AppVersion == req.TargetVersion:
-		targetVersion = &info.Beta.ReleaseInfo
+		target = info.Beta
 	default:
 		return nil, hperrors.Wrap(hperrors.ErrUpdateVerMismatched)
 	}
+	// Naming a version release.json lists is not enough: a release.json that lists
+	// an older one - stale, reverted, or not ours - would otherwise walk the install
+	// back onto it, and swarm restores images, never the data a newer one migrated.
+	// CanUpdate is the same comparison the dashboard shows the button by, so the
+	// API refuses exactly what the UI does not offer.
+	if !target.CanUpdate {
+		return nil, hperrors.Wrap(hperrors.ErrVersionNotNewer)
+	}
+	targetVersion := &target.ReleaseInfo
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		_, err := uc.lockRepo.GetByID(ctx, db, lockIDSystemVersionUpdate,

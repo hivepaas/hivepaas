@@ -71,15 +71,19 @@ func entry(key *testKey, data []byte) Entry {
 	return Entry{KeyID: key.id, Algorithm: key.alg, Sig: base64.StdEncoding.EncodeToString(key.sign(data, Context))}
 }
 
-func sigFile(t *testing.T, data []byte, entries ...Entry) []byte {
+func envelope(t *testing.T, data []byte, entries ...Entry) []byte {
 	t.Helper()
 	sum := sha256.Sum256(data)
-	content, err := json.Marshal(File{SHA256: hex.EncodeToString(sum[:]), Signatures: entries})
+	content, err := json.Marshal(Envelope{
+		Payload:    base64.StdEncoding.EncodeToString(data),
+		SHA256:     hex.EncodeToString(sum[:]),
+		Signatures: entries,
+	})
 	assert.NoError(t, err)
 	return content
 }
 
-func TestVerify(t *testing.T) {
+func TestOpen(t *testing.T) {
 	ed := newEd25519(t, "2026-ed")
 	ml := newMLDSA65(t, "2026-ml")
 	keys := trust(t, ed, ml)
@@ -87,40 +91,52 @@ func TestVerify(t *testing.T) {
 	changed := []byte(`{"stable":{"appVersion":"v0.1.0"}}`)
 
 	t.Run("accepts both signatures by trusted keys", func(t *testing.T) {
-		assert.NoError(t, Verify(keys, data, sigFile(t, data, entry(ed, data), entry(ml, data))))
+		opened, err := Open(keys, envelope(t, data, entry(ed, data), entry(ml, data)))
+		assert.NoError(t, err)
+		assert.Equal(t, data, opened, "the payload comes back byte for byte")
 	})
 
 	t.Run("passes over a signature by a key it does not know", func(t *testing.T) {
 		// A release signed with a key only newer binaries trust, during a rotation.
 		next := newMLDSA65(t, "2027-ml")
-		assert.NoError(t, Verify(keys, data,
-			sigFile(t, data, entry(next, data), entry(ed, data), entry(ml, data))))
+		_, err := Open(keys, envelope(t, data, entry(next, data), entry(ed, data), entry(ml, data)))
+		assert.NoError(t, err)
 	})
 
 	cases := map[string][]byte{
-		"ed25519 signature missing": sigFile(t, data, entry(ml, data)),
-		"ml-dsa signature missing":  sigFile(t, data, entry(ed, data)),
-		"no signatures":             sigFile(t, data),
-		"only unknown keys": sigFile(t, data,
+		"ed25519 signature missing": envelope(t, data, entry(ml, data)),
+		"ml-dsa signature missing":  envelope(t, data, entry(ed, data)),
+		"no signatures":             envelope(t, data),
+		"only unknown keys": envelope(t, data,
 			entry(newEd25519(t, "x-ed"), data), entry(newMLDSA65(t, "x-ml"), data)),
-		"file changed after signing": sigFile(t, data, entry(ed, changed), entry(ml, changed)),
-		"one of two signatures over another file": sigFile(t, data,
+		"file changed after signing": envelope(t, data, entry(ed, changed), entry(ml, changed)),
+		"one of two signatures over another file": envelope(t, data,
 			entry(ed, data), entry(ml, changed)),
-		"other key under a trusted id": sigFile(t, data,
+		"other key under a trusted id": envelope(t, data,
 			entry(newEd25519(t, ed.id), data), entry(ml, data)),
-		"algorithm claimed differs from the key": sigFile(t, data,
+		"algorithm claimed differs from the key": envelope(t, data,
 			entry(ed, data), Entry{KeyID: ml.id, Algorithm: AlgEd25519, Sig: entry(ml, data).Sig}),
-		"signed without context": sigFile(t, data,
+		"signed without context": envelope(t, data,
 			Entry{KeyID: ed.id, Algorithm: AlgEd25519, Sig: base64.StdEncoding.EncodeToString(ed.sign(data, ""))},
 			entry(ml, data)),
-		"signed for another purpose": sigFile(t, data,
+		"signed for another purpose": envelope(t, data,
 			entry(ed, data),
 			Entry{KeyID: ml.id, Algorithm: AlgMLDSA65,
 				Sig: base64.StdEncoding.EncodeToString(ml.sign(data, "hivepaas-templates-v1"))}),
-		"malformed signature": sigFile(t, data,
+		"malformed signature": envelope(t, data,
 			Entry{KeyID: ed.id, Algorithm: AlgEd25519, Sig: "!!"}, entry(ml, data)),
+		"payload replaced, sha256 kept": func() []byte {
+			sum := sha256.Sum256(data)
+			content, _ := json.Marshal(Envelope{
+				Payload:    base64.StdEncoding.EncodeToString(changed),
+				SHA256:     hex.EncodeToString(sum[:]),
+				Signatures: []Entry{entry(ed, data), entry(ml, data)},
+			})
+			return content
+		}(),
 		"sha256 field mismatch": func() []byte {
-			content, _ := json.Marshal(File{
+			content, _ := json.Marshal(Envelope{
+				Payload:    base64.StdEncoding.EncodeToString(data),
 				SHA256:     hex.EncodeToString(make([]byte, sha256.Size)),
 				Signatures: []Entry{entry(ed, data), entry(ml, data)},
 			})
@@ -131,14 +147,18 @@ func TestVerify(t *testing.T) {
 			for range maxSignatures {
 				entries = append(entries, Entry{KeyID: "filler", Algorithm: AlgEd25519})
 			}
-			return sigFile(t, data, entries...)
+			return envelope(t, data, entries...)
 		}(),
-		"malformed file": []byte(`not json`),
-		"empty file":     nil,
+		"malformed payload": []byte(`{"payload":"!!","signatures":[]}`),
+		"empty payload":     []byte(`{"payload":"","signatures":[]}`),
+		"malformed file":    []byte(`not json`),
+		"empty file":        nil,
 	}
 	for name, content := range cases {
 		t.Run("refuses "+name, func(t *testing.T) {
-			assert.ErrorIs(t, Verify(keys, data, content), hperrors.ErrReleaseSignatureInvalid)
+			opened, err := Open(keys, content)
+			assert.Nil(t, opened)
+			assert.ErrorIs(t, err, hperrors.ErrReleaseSignatureInvalid)
 		})
 	}
 }

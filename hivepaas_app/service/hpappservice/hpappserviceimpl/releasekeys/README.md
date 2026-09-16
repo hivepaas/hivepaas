@@ -2,7 +2,7 @@
 
 The public keys `release.json` is accepted from. Every `*.pub.pem` file here is
 compiled into the binary; the file name without `.pub.pem` is the key id that
-`release.json.sig` refers to.
+`release.signed.json` refers to.
 
 `release.json` must carry a valid **ed25519** and a valid **ML-DSA-65** signature,
 each by a key in this directory (see `hivepaas_app/pkg/releasesig`). A binary built

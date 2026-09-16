@@ -3,8 +3,10 @@ package hpappserviceimpl
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/httputil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/releasesig"
@@ -13,16 +15,30 @@ import (
 )
 
 const (
-	urlAppReleaseInfo    = "https://raw.githubusercontent.com/hivepaas/hivepaas/main/release.json"
-	urlAppReleaseInfoSig = urlAppReleaseInfo + ".sig"
+	// releaseInfoURLFormat is filled in with the branch release info is read from.
+	releaseInfoURLFormat = "https://raw.githubusercontent.com/hivepaas/hivepaas/%s/release.signed.json"
+
+	// releaseInfoBranch is where installations learn of releases. It is a branch
+	// rather than a tag because it has to move with every release; what makes
+	// what it serves trustworthy is the signatures, not the ref.
+	releaseInfoBranch = "release"
+
+	// releaseInfoBranchDev lets a development build see release info before it
+	// is released. The signatures are required all the same.
+	releaseInfoBranchDev = "main"
 )
 
-func (s *service) GetAppReleaseInfo(ctx context.Context) (*hpappservice.AppReleaseInfo, error) {
-	data, err := httputil.HTTPGet(ctx, urlAppReleaseInfo)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
+// releaseInfoURL is compiled into every binary, so an installation keeps reading
+// release info from this branch until it runs a binary that says otherwise.
+func releaseInfoURL() string {
+	if cfg := config.Current(); cfg != nil && cfg.IsDevEnv() {
+		return fmt.Sprintf(releaseInfoURLFormat, releaseInfoBranchDev)
 	}
-	sig, err := httputil.HTTPGet(ctx, urlAppReleaseInfoSig)
+	return fmt.Sprintf(releaseInfoURLFormat, releaseInfoBranch)
+}
+
+func (s *service) GetAppReleaseInfo(ctx context.Context) (*hpappservice.AppReleaseInfo, error) {
+	envelope, err := httputil.HTTPGet(ctx, releaseInfoURL())
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -30,21 +46,22 @@ func (s *service) GetAppReleaseInfo(ctx context.Context) (*hpappservice.AppRelea
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return parseReleaseInfo(data, sig, keys)
+	return parseReleaseInfo(envelope, keys)
 }
 
-// parseReleaseInfo accepts release.json only if sig carries the signatures
-// releasesig requires, by keys given as PEM by key id, and only then decodes it.
+// parseReleaseInfo opens release.signed.json with keys given as PEM by key id,
+// and decodes the release.json it carries.
 //
-// Nothing in release.json is looked at before the signature verifies: it names
+// Nothing in release.json is looked at before the signatures verify: it names
 // the images the updater will run, so an unverified file is not to be trusted
 // for anything - not even for deciding that there is nothing to update.
-func parseReleaseInfo(data, sig []byte, keys map[string][]byte) (*hpappservice.AppReleaseInfo, error) {
+func parseReleaseInfo(envelope []byte, keys map[string][]byte) (*hpappservice.AppReleaseInfo, error) {
 	publicKeys, err := releasesig.ParsePublicKeys(keys)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if err = releasesig.Verify(publicKeys, data, sig); err != nil {
+	data, err := releasesig.Open(publicKeys, envelope)
+	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 

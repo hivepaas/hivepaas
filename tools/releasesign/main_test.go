@@ -6,6 +6,7 @@ import (
 	"crypto/mldsa"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"slices"
 	"strings"
@@ -38,25 +39,32 @@ func publicOf(keys []*privateKey) []*publicKey {
 	return pubs
 }
 
-func TestSignVerify(t *testing.T) {
+func TestSignOpen(t *testing.T) {
 	keys := newKeys(t, "2026")
 	data := []byte(`{"stable":{"appVersion":"v0.1.1"}}`)
 
-	sigFile, err := Sign(keys, data)
+	env, err := Sign(keys, data)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = Verify(publicOf(keys), data, sigFile); err != nil {
-		t.Fatalf("a fresh signature file must verify: %v", err)
+	content := FormatEnvelope(env)
+	opened, err := Open(publicOf(keys), content)
+	if err != nil {
+		t.Fatalf("a fresh envelope must open: %v", err)
+	}
+	if string(opened) != string(data) {
+		t.Fatal("the envelope must carry the signed file byte for byte")
 	}
 
-	if Verify(publicOf(keys), []byte(`{"stable":{"appVersion":"v0.1.0"}}`), sigFile) == nil {
-		t.Fatal("a changed file must not verify")
+	changed := *env
+	changed.Payload = base64.StdEncoding.EncodeToString([]byte(`{"stable":{"appVersion":"v0.1.0"}}`))
+	if _, err = Open(publicOf(keys), FormatEnvelope(&changed)); err == nil {
+		t.Fatal("a changed payload must not open")
 	}
-	if Verify(publicOf(newKeys(t, "2026")), data, sigFile) == nil {
-		t.Fatal("other keys under the same ids must not verify")
+	if _, err = Open(publicOf(newKeys(t, "2026")), content); err == nil {
+		t.Fatal("other keys under the same ids must not open it")
 	}
-	if Verify(publicOf(keys[:1]), data, sigFile) == nil {
+	if _, err = Open(publicOf(keys[:1]), content); err == nil {
 		t.Fatal("trusting only one algorithm's key must not satisfy both")
 	}
 
@@ -84,7 +92,7 @@ func TestSignatureAcceptedByApp(t *testing.T) {
 
 	keys := newKeys(t, "2026")
 	data := []byte(`{"stable":{"appVersion":"v0.1.1"}}`)
-	sigFile, err := Sign(keys, data)
+	env, err := Sign(keys, data)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -97,23 +105,38 @@ func TestSignatureAcceptedByApp(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err = releasesig.Verify(trusted, data, FormatSigFile(sigFile)); err != nil {
+	opened, err := releasesig.Open(trusted, FormatEnvelope(env))
+	if err != nil {
 		t.Fatalf("the app must accept what the tool signs: %v", err)
+	}
+	if string(opened) != string(data) {
+		t.Fatal("the app must get back the file the tool signed")
 	}
 }
 
-func TestFormatSigFile_OneSignaturePerLine(t *testing.T) {
-	sigFile, err := Sign(newKeys(t, "2026"), []byte(`{}`))
+func TestFormatEnvelope_OneFieldPerLine(t *testing.T) {
+	env, err := Sign(newKeys(t, "2026"), []byte(`{}`))
 	if err != nil {
 		t.Fatal(err)
 	}
-	lines := strings.Split(string(FormatSigFile(sigFile)), "\n")
-	for _, entry := range sigFile.Signatures {
-		found := slices.ContainsFunc(lines, func(line string) bool {
-			return strings.Contains(line, `"keyId":"`+entry.KeyID+`"`) && strings.Contains(line, entry.Sig)
+	lines := strings.Split(string(FormatEnvelope(env)), "\n")
+	onOneLine := func(parts ...string) bool {
+		return slices.ContainsFunc(lines, func(line string) bool {
+			for _, part := range parts {
+				if !strings.Contains(line, part) {
+					return false
+				}
+			}
+			return true
 		})
-		if !found {
-			t.Fatalf("signature by %q is not on one line; scripts/release-sign.sh relies on that", entry.KeyID)
+	}
+	// scripts/release-sign.sh reads these with sed.
+	if !onOneLine(`"payload": "`+env.Payload+`"`) {
+		t.Fatal("payload is not on one line")
+	}
+	for _, entry := range env.Signatures {
+		if !onOneLine(`{"keyId":"`+entry.KeyID+`","alg":"`+entry.Algorithm+`","sig":"`+entry.Sig+`"}`) {
+			t.Fatalf("signature by %q is not on one line", entry.KeyID)
 		}
 	}
 }

@@ -3,7 +3,9 @@
 # Signs release.json with the offline release keys. Run through `make release-sign`.
 #
 # release.json is signed with an ed25519 key and an ML-DSA-65 key; the app
-# requires both (see hivepaas_app/pkg/releasesig).
+# requires both (see hivepaas_app/pkg/releasesig). The result is
+# release.signed.json - release.json and its signatures in one file - which is
+# what installations fetch. release.json stays as the readable, reviewed copy.
 #
 # The signing tool is not run from the working tree. It is built from
 # tools/releasesign/main.go as of RELEASESIGN_SHA - a commit that was reviewed -
@@ -12,21 +14,23 @@
 # someone reviews it and moves the pin, and an import from outside the standard
 # library fails the build instead of being fetched.
 #
-# Every signature is then checked a second time with openssl, against a public key
-# openssl derives from the private key itself. A tool that signed something other
-# than the file it was given, or with a key other than the one it was given, passes
+# The envelope is then checked a second time without the tool: its payload must be
+# release.json byte for byte, and every signature must verify with openssl against
+# a public key openssl derives from the private key itself. A tool that signed or
+# packed something other than the file it was given, or used another key, passes
 # its own check but not this one.
 #
 # Environment:
 #   RELEASESIGN_SHA  full commit sha to build the tool from (required)
 #   KEYS             space-separated private key files, <key-id>.key, one per
 #                    algorithm (required)
-#   IN               file to sign (default: release.json); signatures go to $IN.sig
+#   IN               file to sign (default: release.json)
+#   OUT              envelope to write (default: release.signed.json)
 
 set -euo pipefail
 
 IN="${IN:-release.json}"
-SIG="$IN.sig"
+OUT="${OUT:-${IN%.json}.signed.json}"
 # Must match signContext in tools/releasesign/main.go.
 SIGN_CONTEXT="hivepaas-release-v1"
 
@@ -86,11 +90,20 @@ SIGN_ARGS=()
 for key in "${KEY_FILES[@]}"; do
   SIGN_ARGS+=(-key "$key")
 done
-"$TMP/releasesign" sign "${SIGN_ARGS[@]}" -in "$IN" -out "$SIG"
+"$TMP/releasesign" sign "${SIGN_ARGS[@]}" -in "$IN" -out "$OUT"
 
 echo "---------------------------------------------------------------"
 echo "Independent check with $("$OPENSSL" version | cut -d' ' -f1-2):"
 echo "---------------------------------------------------------------"
+
+# releasesign writes the payload and each signature on a line of its own:
+#   "payload": "<base64>",
+#   {"keyId":"<id>","alg":"<alg>","sig":"<base64>"}
+payload_b64="$(sed -n 's/^ *"payload": *"\([^"]*\)",*$/\1/p' "$OUT")"
+[[ -n "$payload_b64" ]] || fail "$OUT has no payload"
+printf '%s' "$payload_b64" | "$OPENSSL" base64 -d -A >"$TMP/payload"
+cmp -s "$TMP/payload" "$IN" || fail "$OUT does not carry $IN byte for byte; do not publish it"
+echo "payload:                 identical to $IN"
 
 for key in "${KEY_FILES[@]}"; do
   key_id="$(basename "$key" .key)"
@@ -101,18 +114,17 @@ for key in "${KEY_FILES[@]}"; do
   *) fail "$key: unexpected key type '$key_type'" ;;
   esac
 
-  # releasesign writes one signature per line: {"keyId":"<id>","alg":"<alg>","sig":"<base64>"}
-  sig_b64="$(sed -n "s/.*{\"keyId\":\"${key_id}\",\"alg\":\"[^\"]*\",\"sig\":\"\([^\"]*\)\"}.*/\1/p" "$SIG")"
-  [[ -n "$sig_b64" ]] || fail "$SIG has no signature by key $key_id"
+  sig_b64="$(sed -n "s/.*{\"keyId\":\"${key_id}\",\"alg\":\"[^\"]*\",\"sig\":\"\([^\"]*\)\"}.*/\1/p" "$OUT")"
+  [[ -n "$sig_b64" ]] || fail "$OUT has no signature by key $key_id"
   printf '%s' "$sig_b64" | "$OPENSSL" base64 -d -A >"$TMP/$key_id.sig"
   "$OPENSSL" pkey -in "$key" -pubout -out "$TMP/$key_id.pub.pem"
 
   printf '%-24s ' "$key_id (${key_type%% *}):"
-  "$OPENSSL" pkeyutl -verify -pubin -inkey "$TMP/$key_id.pub.pem" -rawin -in "$IN" \
+  "$OPENSSL" pkeyutl -verify -pubin -inkey "$TMP/$key_id.pub.pem" -rawin -in "$TMP/payload" \
     -sigfile "$TMP/$key_id.sig" "${opts[@]}" ||
-    fail "openssl does not accept the signature by $key_id; do not publish $SIG"
+    fail "openssl does not accept the signature by $key_id; do not publish $OUT"
 done
 
 echo "sha256 (openssl): $("$OPENSSL" dgst -sha256 -r "$IN" | cut -d' ' -f1)"
 echo
-echo "Done. Commit $SIG together with $IN."
+echo "Done. Commit $OUT together with $IN."

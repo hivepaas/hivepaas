@@ -8,7 +8,12 @@
 //
 // release.json is signed twice, with ed25519 and with ML-DSA-65, and the app
 // requires both (see hivepaas_app/pkg/releasesig for why). `sign` therefore
-// refuses to write a signature file that lacks either.
+// refuses to write an envelope that lacks either.
+//
+// What gets published is release.signed.json: release.json itself, base64, with
+// the signatures beside it in one file, so a CDN cannot serve a new release.json
+// with an old signature. release.json stays in the repository as the readable
+// copy that is reviewed; release.signed.json is generated from it.
 //
 // This file is deliberately one file importing only the standard library, and it
 // must stay that way. `make release-sign` builds it from a pinned commit outside
@@ -30,11 +35,14 @@
 //
 //	releasesign keygen -alg ed25519   -key-id 2026-ed -dir /offline
 //	releasesign keygen -alg ml-dsa-65 -key-id 2026-ml -dir /offline
-//	releasesign sign   -key /offline/2026-ed.key -key /offline/2026-ml.key [-in release.json] [-out release.json.sig]
-//	releasesign verify -pub 2026-ed.pub.pem -pub 2026-ml.pub.pem [-in release.json] [-sig release.json.sig]
+//	releasesign sign   -key /offline/2026-ed.key -key /offline/2026-ml.key \
+//	                   [-in release.json] [-out release.signed.json]
+//	releasesign verify -pub 2026-ed.pub.pem -pub 2026-ml.pub.pem \
+//	                   [-in release.signed.json] [-expect release.json]
 package main
 
 import (
+	"bytes"
 	"crypto"
 	"crypto/ed25519"
 	"crypto/mldsa"
@@ -68,9 +76,11 @@ var requiredAlgorithms = []string{algEd25519, algMLDSA65}
 // keyIDPattern keeps key ids short and safe to put in file names and JSON.
 var keyIDPattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$`)
 
-// SigFile is the content of release.json.sig. SHA256 is for a person to compare
-// against the commit being released; the signatures cover the file itself.
-type SigFile struct {
+// Envelope is the content of release.signed.json. Payload is release.json,
+// base64, exactly the bytes signed; SHA256 is their hash, for a person to compare
+// against the commit being released.
+type Envelope struct {
+	Payload    string     `json:"payload"`
 	SHA256     string     `json:"sha256"`
 	Signatures []SigEntry `json:"signatures"`
 }
@@ -185,11 +195,11 @@ func runSign(args []string) error {
 	var keyFiles multiFlag
 	fs.Var(&keyFiles, "key", "private key file <key-id>.key (repeat: one per algorithm)")
 	in := fs.String("in", "release.json", "file to sign")
-	out := fs.String("out", "", "signature file to write (default <in>.sig)")
+	out := fs.String("out", "", "envelope to write (default <in without .json>.signed.json)")
 	_ = fs.Parse(args)
 
 	if *out == "" {
-		*out = *in + ".sig"
+		*out = strings.TrimSuffix(*in, ".json") + ".signed.json"
 	}
 
 	keys := make([]*privateKey, 0, len(keyFiles))
@@ -208,28 +218,33 @@ func runSign(args []string) error {
 		return fmt.Errorf("%s is not valid JSON; refusing to sign it", *in)
 	}
 
-	sigFile, err := Sign(keys, data)
+	env, err := Sign(keys, data)
 	if err != nil {
 		return err
 	}
+	content := FormatEnvelope(env)
 
-	// Check the signatures before writing them, against the public halves of the
-	// keys just used, so a file the app would refuse never reaches disk.
+	// Open what is about to be written, with the public halves of the keys just
+	// used, so an envelope the app would refuse never reaches disk.
 	pubs := make([]*publicKey, 0, len(keys))
 	for _, key := range keys {
 		pubs = append(pubs, &publicKey{id: key.id, alg: key.alg, key: key.key.Public()})
 	}
-	if err = Verify(pubs, data, sigFile); err != nil {
+	opened, err := Open(pubs, content)
+	if err != nil {
 		return fmt.Errorf("self-check failed: %w", err)
 	}
+	if !bytes.Equal(opened, data) {
+		return errors.New("self-check failed: the envelope does not carry the file that was signed")
+	}
 
-	if err = os.WriteFile(*out, FormatSigFile(sigFile), 0o644); err != nil { //nolint:gosec
+	if err = os.WriteFile(*out, content, 0o644); err != nil { //nolint:gosec
 		return err
 	}
 
 	fmt.Printf("signed:  %s\n", *in)
-	fmt.Printf("sha256:  %s  <- compare with `git show <release-ref>:%s | shasum -a 256`\n", sigFile.SHA256, *in)
-	for _, entry := range sigFile.Signatures {
+	fmt.Printf("sha256:  %s  <- compare with `git show <release-ref>:%s | shasum -a 256`\n", env.SHA256, *in)
+	for _, entry := range env.Signatures {
 		fmt.Printf("key:     %s (%s)\n", entry.KeyID, entry.Algorithm)
 	}
 	fmt.Printf("written: %s\n", *out)
@@ -240,13 +255,10 @@ func runVerify(args []string) error {
 	fs := flag.NewFlagSet("verify", flag.ExitOnError)
 	var pubFiles multiFlag
 	fs.Var(&pubFiles, "pub", "public key file <key-id>.pub.pem (repeat)")
-	in := fs.String("in", "release.json", "signed file")
-	sigPath := fs.String("sig", "", "signature file (default <in>.sig)")
+	in := fs.String("in", "release.signed.json", "envelope to verify")
+	expect := fs.String("expect", "", "file the envelope must carry, byte for byte (e.g. release.json)")
 	_ = fs.Parse(args)
 
-	if *sigPath == "" {
-		*sigPath = *in + ".sig"
-	}
 	pubs := make([]*publicKey, 0, len(pubFiles))
 	for _, path := range pubFiles {
 		pub, err := readPublicKey(path)
@@ -255,20 +267,22 @@ func runVerify(args []string) error {
 		}
 		pubs = append(pubs, pub)
 	}
-	data, err := os.ReadFile(*in)
+	content, err := os.ReadFile(*in)
 	if err != nil {
 		return err
 	}
-	content, err := os.ReadFile(*sigPath)
+	opened, err := Open(pubs, content)
 	if err != nil {
 		return err
 	}
-	var sigFile SigFile
-	if err = json.Unmarshal(content, &sigFile); err != nil {
-		return fmt.Errorf("%s: %w", *sigPath, err)
-	}
-	if err = Verify(pubs, data, &sigFile); err != nil {
-		return err
+	if *expect != "" {
+		want, err := os.ReadFile(*expect)
+		if err != nil {
+			return err
+		}
+		if !bytes.Equal(opened, want) {
+			return fmt.Errorf("%s is validly signed but does not carry %s as it is now", *in, *expect)
+		}
 	}
 	fmt.Printf("OK: %s carries valid %s signatures\n", *in, strings.Join(requiredAlgorithms, " and "))
 	return nil
@@ -276,7 +290,7 @@ func runVerify(args []string) error {
 
 // Sign signs data with every key, and refuses unless the keys cover every
 // required algorithm exactly once.
-func Sign(keys []*privateKey, data []byte) (*SigFile, error) {
+func Sign(keys []*privateKey, data []byte) (*Envelope, error) {
 	seen := map[string]string{}
 	for _, key := range keys {
 		if other, dup := seen[key.alg]; dup {
@@ -292,7 +306,10 @@ func Sign(keys []*privateKey, data []byte) (*SigFile, error) {
 	}
 
 	sum := sha256.Sum256(data)
-	sigFile := &SigFile{SHA256: hex.EncodeToString(sum[:])}
+	env := &Envelope{
+		Payload: base64.StdEncoding.EncodeToString(data),
+		SHA256:  hex.EncodeToString(sum[:]),
+	}
 	for _, key := range keys {
 		var sig []byte
 		var err error
@@ -308,43 +325,52 @@ func Sign(keys []*privateKey, data []byte) (*SigFile, error) {
 		if err != nil {
 			return nil, err
 		}
-		sigFile.Signatures = append(sigFile.Signatures, SigEntry{
+		env.Signatures = append(env.Signatures, SigEntry{
 			KeyID:     key.id,
 			Algorithm: key.alg,
 			Sig:       base64.StdEncoding.EncodeToString(sig),
 		})
 	}
-	sort.Slice(sigFile.Signatures, func(i, j int) bool {
-		return sigFile.Signatures[i].KeyID < sigFile.Signatures[j].KeyID
+	sort.Slice(env.Signatures, func(i, j int) bool {
+		return env.Signatures[i].KeyID < env.Signatures[j].KeyID
 	})
-	return sigFile, nil
+	return env, nil
 }
 
-// Verify applies the app's rule: for every required algorithm, a valid signature
-// by one of pubs. A signature by a key not in pubs is passed over; one by a key
-// in pubs that does not verify, or names the wrong algorithm, fails the file.
-func Verify(pubs []*publicKey, data []byte, sigFile *SigFile) error {
+// Open applies the app's rule and returns the payload: for every required
+// algorithm, a valid signature by one of pubs. A signature by a key not in pubs
+// is passed over; one by a key in pubs that does not verify, or names the wrong
+// algorithm, fails the envelope.
+func Open(pubs []*publicKey, content []byte) ([]byte, error) {
+	var env Envelope
+	if err := json.Unmarshal(content, &env); err != nil {
+		return nil, fmt.Errorf("malformed envelope: %w", err)
+	}
+	data, err := base64.StdEncoding.DecodeString(env.Payload)
+	if err != nil || len(data) == 0 {
+		return nil, errors.New("malformed payload")
+	}
+	sum := sha256.Sum256(data)
+	if env.SHA256 != hex.EncodeToString(sum[:]) {
+		return nil, errors.New("sha256 does not match the payload")
+	}
+
 	byID := map[string]*publicKey{}
 	for _, pub := range pubs {
 		byID[pub.id] = pub
 	}
-	sum := sha256.Sum256(data)
-	if sigFile.SHA256 != hex.EncodeToString(sum[:]) {
-		return errors.New("sha256 does not match the file")
-	}
-
 	satisfied := map[string]bool{}
-	for _, entry := range sigFile.Signatures {
+	for _, entry := range env.Signatures {
 		pub, found := byID[entry.KeyID]
 		if !found {
 			continue
 		}
 		if entry.Algorithm != pub.alg {
-			return fmt.Errorf("key %q is %s, signature claims %q", entry.KeyID, pub.alg, entry.Algorithm)
+			return nil, fmt.Errorf("key %q is %s, signature claims %q", entry.KeyID, pub.alg, entry.Algorithm)
 		}
 		sig, err := base64.StdEncoding.DecodeString(entry.Sig)
 		if err != nil {
-			return fmt.Errorf("signature by key %q is malformed", entry.KeyID)
+			return nil, fmt.Errorf("signature by key %q is malformed", entry.KeyID)
 		}
 		switch k := pub.key.(type) {
 		case ed25519.PublicKey:
@@ -355,28 +381,29 @@ func Verify(pubs []*publicKey, data []byte, sigFile *SigFile) error {
 			err = fmt.Errorf("unsupported key type %T", pub.key)
 		}
 		if err != nil {
-			return fmt.Errorf("signature by key %q does not verify: %w", entry.KeyID, err)
+			return nil, fmt.Errorf("signature by key %q does not verify: %w", entry.KeyID, err)
 		}
 		satisfied[pub.alg] = true
 	}
 	for _, alg := range requiredAlgorithms {
 		if !satisfied[alg] {
-			return fmt.Errorf("no valid %s signature by the given keys", alg)
+			return nil, fmt.Errorf("no valid %s signature by the given keys", alg)
 		}
 	}
-	return nil
+	return data, nil
 }
 
-// FormatSigFile writes one signature per line, so a diff of release.json.sig
-// shows which key's signature changed and scripts can pick one out by key id.
-func FormatSigFile(sigFile *SigFile) []byte {
+// FormatEnvelope writes the payload and each signature on a line of its own, so
+// a diff of release.signed.json shows what changed and scripts can pick a field
+// out by line.
+func FormatEnvelope(env *Envelope) []byte {
 	var b strings.Builder
-	fmt.Fprintf(&b, "{\n  \"sha256\": %q,\n  \"signatures\": [\n", sigFile.SHA256)
-	for i, entry := range sigFile.Signatures {
+	fmt.Fprintf(&b, "{\n  \"payload\": %q,\n  \"sha256\": %q,\n  \"signatures\": [\n", env.Payload, env.SHA256)
+	for i, entry := range env.Signatures {
 		line, _ := json.Marshal(entry)
 		b.WriteString("    ")
 		b.Write(line)
-		if i < len(sigFile.Signatures)-1 {
+		if i < len(env.Signatures)-1 {
 			b.WriteString(",")
 		}
 		b.WriteString("\n")

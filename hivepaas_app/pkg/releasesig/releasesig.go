@@ -1,5 +1,12 @@
 // Package releasesig verifies the signatures on release.json.
 //
+// What an installation fetches is release.signed.json: release.json itself,
+// base64, together with its signatures. One file rather than release.json plus a
+// signature file beside it, because the two are fetched through a CDN that caches
+// each on its own - for a few minutes after a release, a separate pair can come
+// back as a new file with the old signature, and the update check fails for no
+// reason anybody can see. A single file cannot be half-updated.
+//
 // release.json tells an installation which version exists and which images that
 // version runs, and the updater acts on it. It is fetched from the repository,
 // so anybody who can write there - or tamper with the file on its way - could
@@ -60,13 +67,14 @@ func RequiredAlgorithms() []string {
 	return []string{AlgEd25519, AlgMLDSA65}
 }
 
-// File is the content of release.json.sig.
+// Envelope is the content of release.signed.json.
 //
-// SHA256 is covered by the signatures only indirectly - they are over the file -
-// and is there so a person can compare the signed file with the one in the
-// commit being released without running anything. It is checked all the same,
-// so it can never disagree with a file that was accepted.
-type File struct {
+// Payload is release.json, base64, exactly the bytes that were signed. SHA256 is
+// the hash of those bytes, there so a person can compare the envelope with the
+// release.json in the commit being released without decoding anything. It is
+// checked all the same, so it can never disagree with a payload that was accepted.
+type Envelope struct {
+	Payload    string  `json:"payload"`
 	SHA256     string  `json:"sha256"`
 	Signatures []Entry `json:"signatures"`
 }
@@ -147,54 +155,56 @@ func (k *PublicKey) verify(data, sig []byte) bool {
 	}
 }
 
-// Verify accepts data if sigFile carries, for every required algorithm, a valid
-// signature over it by a trusted key of that algorithm.
+// Open returns the release.json carried by envelope, if the envelope carries,
+// for every required algorithm, a valid signature over it by a trusted key of
+// that algorithm. Nothing in the payload should be read before Open returns it.
 //
 // A signature by a key this binary does not know is passed over: it is how a
 // release signs with a key that only newer binaries trust, during a rotation or
 // once another algorithm is added. A signature by a known key that does not
 // verify, or claims a different algorithm than the key has, refuses the whole
-// file - nothing legitimate produces one.
-//
-// data must be the bytes exactly as fetched: the signatures cover bytes, not the
-// JSON they decode to, so verify first and unmarshal after.
-func Verify(keys PublicKeys, data, sigFile []byte) error {
+// envelope - nothing legitimate produces one.
+func Open(keys PublicKeys, envelope []byte) ([]byte, error) {
 	invalid := func(format string, args ...any) error {
 		return hperrors.Wrap(hperrors.ErrReleaseSignatureInvalid).WithExtraDetail(format, args...)
 	}
 
-	var file File
-	if err := json.Unmarshal(sigFile, &file); err != nil {
-		return invalid("malformed signature file")
+	var env Envelope
+	if err := json.Unmarshal(envelope, &env); err != nil {
+		return nil, invalid("malformed envelope")
 	}
-	if len(file.Signatures) > maxSignatures {
-		return invalid("too many signatures")
+	if len(env.Signatures) > maxSignatures {
+		return nil, invalid("too many signatures")
+	}
+	data, err := base64.StdEncoding.DecodeString(env.Payload)
+	if err != nil || len(data) == 0 {
+		return nil, invalid("malformed payload")
 	}
 	sum := sha256.Sum256(data)
-	if subtle.ConstantTimeCompare([]byte(hex.EncodeToString(sum[:])), []byte(file.SHA256)) != 1 {
-		return invalid("sha256 does not match")
+	if subtle.ConstantTimeCompare([]byte(hex.EncodeToString(sum[:])), []byte(env.SHA256)) != 1 {
+		return nil, invalid("sha256 does not match")
 	}
 
 	satisfied := map[string]bool{}
-	for _, entry := range file.Signatures {
+	for _, entry := range env.Signatures {
 		key, found := keys[entry.KeyID]
 		if !found {
 			continue
 		}
 		if entry.Algorithm != key.Algorithm {
-			return invalid("key %q is %s, signature claims %q", entry.KeyID, key.Algorithm, entry.Algorithm)
+			return nil, invalid("key %q is %s, signature claims %q", entry.KeyID, key.Algorithm, entry.Algorithm)
 		}
 		sig, err := base64.StdEncoding.DecodeString(entry.Sig)
 		if err != nil || !key.verify(data, sig) {
-			return invalid("signature by key %q does not verify", entry.KeyID)
+			return nil, invalid("signature by key %q does not verify", entry.KeyID)
 		}
 		satisfied[key.Algorithm] = true
 	}
 
 	for _, alg := range RequiredAlgorithms() {
 		if !satisfied[alg] {
-			return invalid("no valid %s signature by a trusted key", alg)
+			return nil, invalid("no valid %s signature by a trusted key", alg)
 		}
 	}
-	return nil
+	return data, nil
 }

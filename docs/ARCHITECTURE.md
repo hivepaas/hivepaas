@@ -14,6 +14,7 @@
 - **Extract a service the moment a second usecase could want it**, not after the copy exists.
 - **Usecases record audit logs** — except those going through `usecase/settings`, which already does.
 - **`services/` is the outside world**, with its own errors and its own translation file.
+- **No `//nolint:exhaustive` on this repo's own enums.** List every value; group the ones that share a branch — see §7.
 
 ---
 
@@ -155,3 +156,47 @@ Rules that make it separate rather than just another folder:
 - **Its own `errors.go`,** built with `hperrors.NewErr(base, "ERR_…")` so every error already carries the code the dashboard maps.
 - **Its own translation file,** `pkg/translation/messages/en/errors.<domain>.en.toml`.
 - **A model package** (`backupmodel`, `loggingmodel`) holding interfaces and types that depend on no implementation, so a second backend is a new package rather than an edit.
+
+## 7. Switches over enums
+
+**List every value. Do not reach for `//nolint:exhaustive`.**
+
+The `exhaustive` linter is what turns adding an enum value into a list of every
+place that has to decide what the new value means. A suppression opts that
+switch out for good: the next `SettingType` or `ObjectScopeType` falls silently
+into `default`, and nobody is told the switch was ever relevant.
+
+Values that behave the same go on one `case`. Keep a `default` as well when the
+value comes from outside the type system - a database column, a request - since
+a string-based type can hold something no constant names:
+
+```go
+switch scope {
+case base.ObjectScopeProject:
+    return base.ResourceTypeProject
+case base.ObjectScopeApp:
+    return base.ResourceTypeApp
+case base.ObjectScopeUser, base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+    fallthrough
+default:
+    return ""
+}
+```
+
+A long enum is not a reason on its own. `SettingType` has forty-odd values and
+`ResourceType` more; a switch that handles five of them and lists the rest is
+long, and it is also the switch that will be flagged, correctly, the day one more
+is added.
+
+**The one case that justifies it** is an enum declared outside this repo whose
+values mostly have no meaning for the switch - `reflect.Kind` in a reflection
+walk, which would otherwise list complex numbers, channels and unsafe pointers
+to say nothing about them. Even then the directive carries its reason, so a
+reviewer can check it:
+
+```go
+switch value.Kind() { //nolint:exhaustive // reflect.Kind: only containers and strings matter to this walk
+```
+
+An enum defined in `base`, `entity` or anywhere else in this repository never
+qualifies.

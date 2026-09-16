@@ -70,7 +70,7 @@ func collectRefIDs(data SettingData) []string {
 // The shape of this walk follows reencryptValue in setting_reencrypt.go, which
 // solved the same traversal problem for encrypted fields.
 func remapStringValues(value reflect.Value, mapping map[string]string) {
-	switch value.Kind() { //nolint:exhaustive
+	switch value.Kind() { //nolint:exhaustive // reflect.Kind: only containers and strings matter to this walk
 	case reflect.Pointer, reflect.Interface:
 		if !value.IsNil() {
 			remapStringValues(value.Elem(), mapping)

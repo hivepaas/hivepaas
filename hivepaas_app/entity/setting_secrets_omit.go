@@ -34,7 +34,7 @@ func OmitSecrets(data SettingData) (int, error) {
 // A textual pass would also hit HashField, which shares the stored prefix but
 // is a hash rather than a secret.
 func omitSecretsIn(value reflect.Value) (int, error) {
-	switch value.Kind() { //nolint:exhaustive
+	switch value.Kind() { //nolint:exhaustive // reflect.Kind: only containers and EncryptedField matter to this walk
 	case reflect.Pointer, reflect.Interface:
 		if value.IsNil() {
 			return 0, nil
@@ -135,7 +135,7 @@ func SecretPlaintexts(data SettingData) (map[string]string, error) {
 }
 
 func collectSecretPlaintexts(value reflect.Value, out map[string]string) error {
-	switch value.Kind() { //nolint:exhaustive
+	switch value.Kind() { //nolint:exhaustive // reflect.Kind: only containers and EncryptedField matter to this walk
 	case reflect.Pointer, reflect.Interface:
 		if value.IsNil() {
 			return nil

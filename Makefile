@@ -57,8 +57,8 @@ trivy:
 # branch (`main` for development builds). The tool is built from RELEASESIGN_SHA, not the
 # working tree: moving the pin is how a reviewed change to tools/releasesign
 # reaches the keys. See the script.
-#   make release-sign KEYS="/offline/2026-ed.key /offline/2026-ml.key"
-RELEASESIGN_SHA := 471c10b299826ca76957090fa27f81c7e69b5d1c
+#   make release-sign KEYS="/offline/2026_ed.key /offline/2026_ml.key"
+RELEASESIGN_SHA := 921f4a7263a6819aed7e8d8f69fcc1259af46255
 release-sign:
 	@RELEASESIGN_SHA="$(RELEASESIGN_SHA)" KEYS="$(KEYS)" IN="$(IN)" OUT="$(OUT)" ./scripts/release-sign.sh
 

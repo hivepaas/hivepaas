@@ -1,0 +1,4 @@
+# Messages for the errors declared in hivepaas_app/hperrors/errors_spec.go.
+# Adding or removing an error there means editing this file.
+
+ERR_SPEC_MOUNT_TARGET_DUPLICATED = "Two volume mounts use the same target path '{{.Target}}'"

@@ -11,9 +11,6 @@ import {
     SelectValue,
 } from "@components/ui";
 import { PasswordInput } from "@components/ui/input-password";
-import { dashedBorderBox } from "@lib/styles";
-import { cn } from "@lib/utils";
-import { AlertTriangleIcon } from "lucide-react";
 import { SpecExportCommands } from "~/operations/data";
 import type { SpecExportResult, SpecExportScope, SpecSecretsMode } from "~/operations/domain";
 
@@ -161,23 +158,21 @@ export function SpecExportPanel({ scope, scopeLabel, permissionModuleId = MODULE
                     )}
 
                     {needsAcknowledgement && (
-                        <div className={cn(dashedBorderBox, "w-full")}>
-                            <label className="flex items-start gap-3 text-sm">
-                                <input
-                                    type="checkbox"
-                                    className="mt-1"
-                                    checked={acknowledgedPlaintext}
-                                    onChange={event => {
-                                        setAcknowledgedPlaintext(event.target.checked);
-                                    }}
-                                />
-                                <span>
-                                    <AlertTriangleIcon className="mr-1 inline size-4 text-orange-500" />I understand
-                                    that every secret in this scope will be readable by anyone who opens the downloaded
-                                    file.
-                                </span>
-                            </label>
-                        </div>
+                        <label className="flex w-full items-start gap-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+                            <input
+                                type="checkbox"
+                                className="mt-1"
+                                checked={acknowledgedPlaintext}
+                                onChange={event => {
+                                    setAcknowledgedPlaintext(event.target.checked);
+                                }}
+                            />
+                            <span>
+                                <span className="font-medium">Secrets will be readable in the file.</span> I understand
+                                that every secret in this scope will be readable by anyone who opens the downloaded
+                                file.
+                            </span>
+                        </label>
                     )}
 
                     <PermissionTooltipAction

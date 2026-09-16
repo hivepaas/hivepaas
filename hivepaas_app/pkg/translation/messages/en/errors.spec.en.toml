@@ -2,3 +2,4 @@
 # Adding or removing an error there means editing this file.
 
 ERR_SPEC_MOUNT_TARGET_DUPLICATED = "Two volume mounts use the same target path '{{.Target}}'"
+ERR_SPEC_SETTING_TYPE_UNCLASSIFIED = "Setting type '{{.Type}}' has no spec block name, so it cannot be exported"

@@ -3,6 +3,7 @@ package entity
 import (
 	"encoding/json"
 	"reflect"
+	"sort"
 	"time"
 
 	"github.com/tiendc/gofn"
@@ -27,6 +28,21 @@ type SettingParser interface {
 var (
 	settingParserMap = make(map[base.SettingType]SettingParser, 30) //nolint:mnd
 )
+
+// AllParsedSettingTypes lists every setting type that has a registered parser,
+// which is every type that can appear as stored data.
+//
+// It exists so that code outside this package can be checked for completeness
+// against the real list rather than against a copy of it - the spec exporter
+// asserts that each of these has both an export policy and a block name.
+func AllParsedSettingTypes() []base.SettingType {
+	types := make([]base.SettingType, 0, len(settingParserMap))
+	for typ := range settingParserMap {
+		types = append(types, typ)
+	}
+	sort.Slice(types, func(i, j int) bool { return types[i] < types[j] })
+	return types
+}
 
 //nolint:unparam
 func registerSettingParser(typ base.SettingType, parser SettingParser) bool {

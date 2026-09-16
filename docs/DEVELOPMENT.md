@@ -240,11 +240,17 @@ what is configured. The design is in
 [specs/2026-09-16-config-spec-export-design.md](superpowers/specs/2026-09-16-config-spec-export-design.md).
 
 ```
-GET /_/spec/export
-GET /_/projects/:projectID/spec/export
-GET /_/projects/:projectID/:projectEnv/spec/export
-GET /_/projects/:projectID/:projectEnv/apps/:appID/spec/export
+POST /_/spec/export
+POST /_/projects/:projectID/spec/export
+POST /_/projects/:projectID/:projectEnv/spec/export
+POST /_/projects/:projectID/:projectEnv/apps/:appID/spec/export
 ```
+
+POST rather than GET for a read, because the passphrase travels in the body.
+The access log records the full path including its query string, and this
+installation's own logging subsystem ships those lines to a searchable store -
+a passphrase in the URL would be retained there in plain text. It also keeps a
+response that may contain every secret in the scope out of any cache.
 
 Exporting a scope exports everything below it, and nothing beside it.
 
@@ -263,8 +269,9 @@ TOKEN=$(curl -sS -u hivepaas:abc123 -X POST \
   "http://localhost:10000/_/internal/dev-helper/dev-mode-login?userId=$USER_ID" \
   | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["accessToken"])')
 
-curl -sS -D headers.txt -H "Authorization: Bearer $TOKEN" \
-  -o spec.tar.gz 'http://localhost:10000/_/spec/export?secretsMode=omit'
+curl -sS -D headers.txt -X POST -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' -d '{"secretsMode":"omit"}' \
+  -o spec.tar.gz 'http://localhost:10000/_/spec/export'
 
 mkdir -p out && tar -xzf spec.tar.gz -C out
 ```

@@ -10348,7 +10348,7 @@
       }
     },
     "/projects/{projectID}/spec/export" : {
-      "get" : {
+      "post" : {
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -19656,7 +19656,7 @@
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/spec/export" : {
-      "get" : {
+      "post" : {
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -27366,7 +27366,7 @@
       }
     },
     "/projects/{projectID}/{projectEnv}/spec/export" : {
-      "get" : {
+      "post" : {
         "parameters" : [ {
           "description" : "Project ID",
           "in" : "path",
@@ -36580,22 +36580,18 @@
       }
     },
     "/spec/export" : {
-      "get" : {
-        "parameters" : [ {
-          "description" : "omit (default), encrypted or plaintext",
-          "in" : "query",
-          "name" : "secretsMode",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "required when secretsMode is encrypted",
-          "in" : "query",
-          "name" : "passphrase",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ExportSpecReq"
+              }
+            }
+          },
+          "description" : "secretsMode and passphrase",
+          "required" : false
+        },
         "responses" : {
           "200" : {
             "content" : { },
@@ -36603,7 +36599,8 @@
           }
         },
         "summary" : "Export the whole installation as a configuration spec",
-        "tags" : [ "spec" ]
+        "tags" : [ "spec" ],
+        "x-codegen-request-body-name" : "body"
       }
     },
     "/support/feedbacks" : {
@@ -41287,6 +41284,11 @@
         },
         "required" : [ "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "redisImage", "releaseDate", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
         "type" : "object"
+      },
+      "service_specservice_specmodel.SecretsMode" : {
+        "enum" : [ "omit", "encrypted", "plaintext" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "SecretsModeOmit", "SecretsModeEncrypted", "SecretsModePlaintext" ]
       },
       "appactiondto.DeployAppDataResp" : {
         "properties" : {
@@ -55335,6 +55337,23 @@
         "required" : [ "meta" ],
         "type" : "object"
       },
+      "specdto.ExportSpecReq" : {
+        "properties" : {
+          "passphrase" : {
+            "description" : "Passphrase is required when SecretsMode is encrypted, and arrives in the\nrequest body rather than the query string.\n\nThat is why these endpoints are POST rather than GET. The access log\nrecords the full path including the query - verified against a running\ninstance, which logged `path=/_/spec/export?secretsMode=omit` - and this\ninstallation's own logging subsystem ships those lines to a searchable\nstore along with Traefik's access logs. A passphrase in the URL would be\nretained there in plain text. Being a POST also keeps the response, which\nmay contain every secret in the scope, out of any intermediary cache.",
+            "type" : "string"
+          },
+          "secretsMode" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/service_specservice_specmodel.SecretsMode"
+            } ],
+            "description" : "SecretsMode is omit, encrypted or plaintext. It defaults to omit, the one\nmode that needs no capability and leaks nothing.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "passphrase", "secretsMode" ],
+        "type" : "object"
+      },
       "supportdto.CreateFeedbackReq" : {
         "properties" : {
           "company" : {
@@ -59149,9 +59168,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

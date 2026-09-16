@@ -30,10 +30,9 @@ const reportHeader = "X-HivePaaS-Spec-Report"
 //	@Summary	Export the whole installation as a configuration spec
 //	@Tags		spec
 //	@Produce	application/gzip
-//	@Param		secretsMode	query	string	false	"omit (default), encrypted or plaintext"
-//	@Param		passphrase	query	string	false	"required when secretsMode is encrypted"
+//	@Param		body	body	specdto.ExportSpecReq	false	"secretsMode and passphrase"
 //	@Success	200
-//	@Router		/spec/export [get]
+//	@Router		/spec/export [post]
 func (h *Handler) ExportGlobalSpec(ctx *gin.Context) {
 	h.export(ctx, specdto.NewExportSpecReq())
 }
@@ -45,7 +44,7 @@ func (h *Handler) ExportGlobalSpec(ctx *gin.Context) {
 //	@Produce	application/gzip
 //	@Param		projectID	path	string	true	"Project ID"
 //	@Success	200
-//	@Router		/projects/{projectID}/spec/export [get]
+//	@Router		/projects/{projectID}/spec/export [post]
 func (h *Handler) ExportProjectSpec(ctx *gin.Context) {
 	req := specdto.NewExportSpecReq()
 	req.ProjectID = ctx.Param("projectID")
@@ -60,7 +59,7 @@ func (h *Handler) ExportProjectSpec(ctx *gin.Context) {
 //	@Param		projectID	path	string	true	"Project ID"
 //	@Param		projectEnv	path	string	true	"Project env"
 //	@Success	200
-//	@Router		/projects/{projectID}/{projectEnv}/spec/export [get]
+//	@Router		/projects/{projectID}/{projectEnv}/spec/export [post]
 func (h *Handler) ExportProjectEnvSpec(ctx *gin.Context) {
 	req := specdto.NewExportSpecReq()
 	req.ProjectID = ctx.Param("projectID")
@@ -77,7 +76,7 @@ func (h *Handler) ExportProjectEnvSpec(ctx *gin.Context) {
 //	@Param		projectEnv	path	string	true	"Project env"
 //	@Param		appID		path	string	true	"App ID"
 //	@Success	200
-//	@Router		/projects/{projectID}/{projectEnv}/apps/{appID}/spec/export [get]
+//	@Router		/projects/{projectID}/{projectEnv}/apps/{appID}/spec/export [post]
 func (h *Handler) ExportAppSpec(ctx *gin.Context) {
 	req := specdto.NewExportSpecReq()
 	req.ProjectID = ctx.Param("projectID")
@@ -138,6 +137,12 @@ func (h *Handler) export(ctx *gin.Context, req *specdto.ExportSpecReq) {
 		return
 	}
 
+	// The body, not the query string: the passphrase must not reach an access
+	// log. See specdto.ExportSpecReq.
+	if err = h.ParseJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
 	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
 		h.RenderError(ctx, err)
 		return

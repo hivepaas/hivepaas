@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -206,4 +207,18 @@ func TestExportSpecSetsTheDownloadFilename(t *testing.T) {
 
 	assert.Equal(t, "application/gzip", resp.Data.ContentType)
 	assert.Contains(t, resp.Data.ExtraHeaders["Content-Disposition"], "hivepaas-spec.tar.gz")
+}
+
+// The passphrase must never be reachable as a query parameter. The access log
+// records the full path including the query - a running instance logged
+// `path=/_/spec/export?secretsMode=omit` - and this installation's own logging
+// subsystem ships those lines to a searchable store.
+func TestExportSpecReqCarriesThePassphraseInTheBodyOnly(t *testing.T) {
+	field, ok := reflect.TypeFor[specdto.ExportSpecReq]().FieldByName("Passphrase")
+	assert.True(t, ok)
+
+	assert.Equal(t, "passphrase", field.Tag.Get("json"),
+		"the passphrase is read from the JSON body")
+	assert.Empty(t, field.Tag.Get("mapstructure"),
+		"a mapstructure tag would make it bindable from the query string, which the access log records")
 }

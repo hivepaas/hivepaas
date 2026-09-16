@@ -25,7 +25,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	projectGroup.POST("/:projectID/settings-import", projectSettingsHandler.ImportSettings)
 
 	// Configuration spec export
-	projectGroup.GET("/:projectID/spec/export", s.handlerRegistry.specHandler.ExportProjectSpec)
+	projectGroup.POST("/:projectID/spec/export", s.handlerRegistry.specHandler.ExportProjectSpec)
 
 	{ // Tags
 		tagGroup := projectGroup.Group("/:projectID/tags")

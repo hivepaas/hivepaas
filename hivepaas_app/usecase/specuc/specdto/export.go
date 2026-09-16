@@ -17,9 +17,19 @@ type ExportSpecReq struct {
 
 	// SecretsMode is omit, encrypted or plaintext. It defaults to omit, the one
 	// mode that needs no capability and leaks nothing.
-	SecretsMode specmodel.SecretsMode `json:"-" mapstructure:"secretsMode"`
-	// Passphrase is required when SecretsMode is encrypted.
-	Passphrase string `json:"-" mapstructure:"passphrase"`
+	SecretsMode specmodel.SecretsMode `json:"secretsMode"`
+
+	// Passphrase is required when SecretsMode is encrypted, and arrives in the
+	// request body rather than the query string.
+	//
+	// That is why these endpoints are POST rather than GET. The access log
+	// records the full path including the query - verified against a running
+	// instance, which logged `path=/_/spec/export?secretsMode=omit` - and this
+	// installation's own logging subsystem ships those lines to a searchable
+	// store along with Traefik's access logs. A passphrase in the URL would be
+	// retained there in plain text. Being a POST also keeps the response, which
+	// may contain every secret in the scope, out of any intermediary cache.
+	Passphrase string `json:"passphrase"`
 }
 
 func NewExportSpecReq() *ExportSpecReq {

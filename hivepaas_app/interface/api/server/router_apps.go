@@ -34,7 +34,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 	}
 
 	{ // Configuration spec export
-		appGroup.GET("/:appID/spec/export", s.handlerRegistry.specHandler.ExportAppSpec)
+		appGroup.POST("/:appID/spec/export", s.handlerRegistry.specHandler.ExportAppSpec)
 	}
 
 	{ // Tags

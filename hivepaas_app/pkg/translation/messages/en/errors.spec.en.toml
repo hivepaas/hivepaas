@@ -3,3 +3,4 @@
 
 ERR_SPEC_MOUNT_TARGET_DUPLICATED = "Two volume mounts use the same target path '{{.Target}}'"
 ERR_SPEC_SETTING_TYPE_UNCLASSIFIED = "Setting type '{{.Type}}' has no spec block name, so it cannot be exported"
+ERR_SPEC_PASSPHRASE_REQUIRED = "A passphrase is required to export with encrypted secrets"

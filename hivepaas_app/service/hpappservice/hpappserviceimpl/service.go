@@ -25,4 +25,6 @@ type service struct {
 	taskRepo repository.TaskRepo
 
 	dockerManager docker.Manager
+
+	releaseInfoCache releaseInfoCache
 }

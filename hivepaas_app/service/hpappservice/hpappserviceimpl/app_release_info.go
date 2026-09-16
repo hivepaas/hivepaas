@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
@@ -38,11 +39,21 @@ func releaseInfoURL() string {
 }
 
 func (s *service) GetAppReleaseInfo(ctx context.Context) (*hpappservice.AppReleaseInfo, error) {
-	envelope, err := httputil.HTTPGet(ctx, releaseInfoURL())
+	keys, err := loadReleaseSigningKeys(releaseKeysFS)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	keys, err := loadReleaseSigningKeys(releaseKeysFS)
+	fetch := func(ctx context.Context, url string) ([]byte, error) {
+		ctx, cancel := context.WithTimeout(ctx, releaseInfoFetchTimeout)
+		defer cancel()
+		return httputil.HTTPGet(ctx, url)
+	}
+	accept := func(envelope []byte) error {
+		_, err := parseReleaseInfo(envelope, keys)
+		return err
+	}
+
+	envelope, err := s.releaseInfoCache.get(ctx, releaseInfoURL(), time.Now(), fetch, accept)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

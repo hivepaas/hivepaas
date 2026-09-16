@@ -32,6 +32,7 @@ export const AuditLogType = {
     HivePaaSSettingsUpdateRevert: "hivepaas-settings-update-revert",
     HivePaaSSettingsUpdate: "hivepaas-settings-update",
     HivePaaSAction: "hivepaas-action",
+    SpecExport: "spec-export",
 } as const;
 
 export type AuditLogType = (typeof AuditLogType)[keyof typeof AuditLogType];

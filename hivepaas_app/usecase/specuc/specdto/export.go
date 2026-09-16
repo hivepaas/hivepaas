@@ -4,16 +4,19 @@ import (
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
+const (
+	passphraseMaxLen = 64
+)
+
 // ExportSpecReq asks for a configuration bundle at one scope.
 type ExportSpecReq struct {
-	ProjectID    string `json:"-"`
-	ProjectEnvID string `json:"-"`
-	AppID        string `json:"-"`
+	Scope *entity.ObjectScope `json:"-"`
 
 	// SecretsMode is omit, encrypted or plaintext. It defaults to omit, the one
 	// mode that needs no capability and leaks nothing.
@@ -45,13 +48,11 @@ func (req *ExportSpecReq) ModifyRequest() {
 }
 
 func (req *ExportSpecReq) Validate() hperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 4) //nolint:mnd
-	if req.ProjectID != "" {
-		validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
-	}
-	if req.AppID != "" {
-		validators = append(validators, basedto.ValidateID(&req.AppID, true, "appId")...)
-	}
+	validators := make([]vld.Validator, 0, 5) //nolint:mnd
+	validators = append(validators, basedto.ValidateStrIn(&req.SecretsMode, true,
+		specmodel.AllSecretsModes, "secretsMode")...)
+	validators = append(validators, basedto.ValidateStr(&req.Passphrase, false,
+		1, passphraseMaxLen, "passphrase")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

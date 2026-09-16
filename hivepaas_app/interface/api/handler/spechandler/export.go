@@ -7,8 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc/specdto"
 )
 
@@ -34,7 +35,9 @@ const reportHeader = "X-HivePaaS-Spec-Report"
 //	@Success	200
 //	@Router		/spec/export [post]
 func (h *Handler) ExportGlobalSpec(ctx *gin.Context) {
-	h.export(ctx, specdto.NewExportSpecReq())
+	req := specdto.NewExportSpecReq()
+	req.Scope = entity.NewObjectScopeGlobal()
+	h.export(ctx, req)
 }
 
 // ExportProjectSpec godoc
@@ -47,7 +50,12 @@ func (h *Handler) ExportGlobalSpec(ctx *gin.Context) {
 //	@Router		/projects/{projectID}/spec/export [post]
 func (h *Handler) ExportProjectSpec(ctx *gin.Context) {
 	req := specdto.NewExportSpecReq()
-	req.ProjectID = ctx.Param("projectID")
+	projectID, err := h.ParseStringParam(ctx, "projectID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	req.Scope = entity.NewObjectScopeProject(projectID)
 	h.export(ctx, req)
 }
 
@@ -62,8 +70,17 @@ func (h *Handler) ExportProjectSpec(ctx *gin.Context) {
 //	@Router		/projects/{projectID}/{projectEnv}/spec/export [post]
 func (h *Handler) ExportProjectEnvSpec(ctx *gin.Context) {
 	req := specdto.NewExportSpecReq()
-	req.ProjectID = ctx.Param("projectID")
-	req.ProjectEnvID = projecthelper.CalcProjectEnvID(req.ProjectID, ctx.Param("projectEnv"))
+	projectID, err := h.ParseStringParam(ctx, "projectID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	projectEnv, err := h.ParseStringParam(ctx, "projectEnv")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	req.Scope = entity.NewObjectScopeProjectEnv(projectID, projectEnv)
 	h.export(ctx, req)
 }
 
@@ -79,9 +96,22 @@ func (h *Handler) ExportProjectEnvSpec(ctx *gin.Context) {
 //	@Router		/projects/{projectID}/{projectEnv}/apps/{appID}/spec/export [post]
 func (h *Handler) ExportAppSpec(ctx *gin.Context) {
 	req := specdto.NewExportSpecReq()
-	req.ProjectID = ctx.Param("projectID")
-	req.ProjectEnvID = projecthelper.CalcProjectEnvID(req.ProjectID, ctx.Param("projectEnv"))
-	req.AppID = ctx.Param("appID")
+	projectID, err := h.ParseStringParam(ctx, "projectID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	projectEnv, err := h.ParseStringParam(ctx, "projectEnv")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	appID, err := h.ParseStringParam(ctx, "appID")
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	req.Scope = entity.NewObjectScopeApp(appID, "", projectID, projectEnv)
 	h.export(ctx, req)
 }
 
@@ -96,42 +126,50 @@ func (h *Handler) ExportAppSpec(ctx *gin.Context) {
 //
 // The global export keeps the system-module check because it genuinely crosses
 // every project, which is the same reason the audit log listing uses it.
-func accessCheckForScope(req *specdto.ExportSpecReq) permission.AccessCheck {
+func accessCheckForScope(req *specdto.ExportSpecReq) (permission.AccessCheck, error) {
 	read := permission.BaseAccessCheck{Action: base.ActionTypeRead}
 
-	switch {
-	case req.AppID != "":
+	switch req.Scope.ScopeType {
+	case base.ObjectScopeProject:
+		return &permission.ProjectAccessCheck{
+			BaseAccessCheck: read,
+			ProjectID:       req.Scope.ProjectID,
+		}, nil
+
+	case base.ObjectScopeProjectEnv:
+		return &permission.ProjectAccessCheck{
+			BaseAccessCheck: read,
+			ProjectID:       req.Scope.ProjectID,
+			ProjectEnv:      &req.Scope.ProjectEnvID,
+		}, nil
+
+	case base.ObjectScopeApp:
 		return &permission.AppAccessCheck{
 			BaseAccessCheck: read,
-			ProjectID:       req.ProjectID,
-			ProjectEnv:      req.ProjectEnvID,
-			AppID:           req.AppID,
-		}
+			ProjectID:       req.Scope.ProjectID,
+			ProjectEnv:      req.Scope.ProjectEnvID,
+			AppID:           req.Scope.AppID,
+		}, nil
 
-	case req.ProjectEnvID != "":
-		return &permission.ProjectAccessCheck{
-			BaseAccessCheck: read,
-			ProjectID:       req.ProjectID,
-			ProjectEnv:      &req.ProjectEnvID,
-		}
-
-	case req.ProjectID != "":
-		return &permission.ProjectAccessCheck{
-			BaseAccessCheck: read,
-			ProjectID:       req.ProjectID,
-		}
-
-	default:
+	case base.ObjectScopeGlobal:
 		return &permission.GeneralResourceAccessCheck{
 			BaseAccessCheck: read,
 			Module:          base.ResourceModuleSystem,
 			ResourceType:    base.ResourceTypeSetting,
-		}
+		}, nil
+
+	case base.ObjectScopeUser, base.ObjectScopeHivepaas:
 	}
+	return nil, hperrors.Wrap(hperrors.ErrObjectScopeInvalid)
 }
 
 func (h *Handler) export(ctx *gin.Context, req *specdto.ExportSpecReq) {
-	auth, err := h.authHandler.GetCurrentAuth(ctx, accessCheckForScope(req))
+	accessCheck, err := accessCheckForScope(req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+	auth, err := h.authHandler.GetCurrentAuth(ctx, accessCheck)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -139,11 +177,7 @@ func (h *Handler) export(ctx *gin.Context, req *specdto.ExportSpecReq) {
 
 	// The body, not the query string: the passphrase must not reach an access
 	// log. See specdto.ExportSpecReq.
-	if err = h.ParseJSONBody(ctx, req); err != nil {
-		h.RenderError(ctx, err)
-		return
-	}
-	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}

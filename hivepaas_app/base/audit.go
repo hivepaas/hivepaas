@@ -232,6 +232,26 @@ const (
 	// as well as a type would - and every type added is one more value in a
 	// filter that has to stay readable.
 	AuditLogTypeHivePaaSAction AuditLogType = "hivepaas-action"
+
+	// AuditLogTypeSpecExport records a configuration spec being taken away -
+	// settings, apps and how they are deployed, packed into one archive.
+	//
+	// It is recorded whatever the secrets mode. An export with every secret
+	// emptied still hands over the complete shape of an installation or a
+	// project: which services exist, what they connect to, where they are
+	// exposed. "Who took a copy, and when" is the question it leaves behind,
+	// which is the same reason a manual system backup run is recorded.
+	//
+	// A type of its own rather than a section of hivepaas-action, because an
+	// export can be scoped to a single project or app, and hivepaas-action is
+	// for acts on HivePaaS itself.
+	//
+	// An export that includes secrets also leaves a secret-reveal entry, written
+	// by the reveal gate before anything is decrypted. The two answer different
+	// questions and are filtered on separately: secret-reveal is who was handed
+	// secrets, from any endpoint; spec-export is who took a copy of the
+	// configuration.
+	AuditLogTypeSpecExport AuditLogType = "spec-export"
 )
 
 var AllAuditLogTypes = []AuditLogType{
@@ -261,6 +281,7 @@ var AllAuditLogTypes = []AuditLogType{
 	AuditLogTypeHivePaaSSettingsUpdateRevert,
 	AuditLogTypeHivePaaSSettingsUpdate,
 	AuditLogTypeHivePaaSAction,
+	AuditLogTypeSpecExport,
 }
 
 // AuditLogSource is the way in - which endpoint, or which subsystem.

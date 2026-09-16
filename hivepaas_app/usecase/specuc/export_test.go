@@ -2,6 +2,7 @@ package specuc
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -34,11 +35,17 @@ import (
 type fakeAuditService struct {
 	auditservice.Service
 	entries []*auditservice.Entry
+	// failType makes Record fail for one entry type, to test what an export does
+	// when its record cannot be written.
+	failType base.AuditLogType
 }
 
 func (f *fakeAuditService) Record(
 	_ context.Context, _ database.IDB, entry *auditservice.Entry,
 ) error {
+	if f.failType != "" && entry.Type == f.failType {
+		return errors.New("audit store unavailable")
+	}
 	f.entries = append(f.entries, entry)
 	return nil
 }
@@ -56,12 +63,16 @@ func (f *fakeACLRepo) ListByResources(
 
 type fakeSpecService struct {
 	lastReq *specservice.ExportReq
+	err     error
 }
 
 func (f *fakeSpecService) Export(
 	_ context.Context, _ database.IDB, req *specservice.ExportReq,
 ) (*specservice.ExportResp, error) {
 	f.lastReq = req
+	if f.err != nil {
+		return nil, f.err
+	}
 
 	path := filepath.Join(req.WorkDir, "bundle.tar.gz")
 	if err := os.WriteFile(path, []byte("archive"), 0o600); err != nil {
@@ -77,7 +88,7 @@ func newTestUC(t *testing.T) (*UC, *fakeAuditService, *fakeSpecService) {
 	audit := &fakeAuditService{}
 	manager := permissionimpl.NewManager(&fakeACLRepo{}, nil, nil, nil, audit)
 	svc := &fakeSpecService{}
-	return New(nil, manager, svc), audit, svc
+	return New(nil, manager, audit, svc), audit, svc
 }
 
 // allowSecretReveal sets the operator flag that gates every stored secret.
@@ -101,8 +112,11 @@ func plainAuth() *basedto.Auth {
 	}}}
 }
 
+// exportReq builds a global-scope request. The handler resolves the scope from
+// the route before the usecase runs, so a request always arrives with one.
 func exportReq(mode specmodel.SecretsMode) *specdto.ExportSpecReq {
 	req := specdto.NewExportSpecReq()
+	req.Scope = entity.NewObjectScopeGlobal()
 	req.SecretsMode = mode
 	req.Passphrase = "correct horse battery staple"
 	return req
@@ -138,8 +152,10 @@ func TestExportSpecAllowsAUserWhoHasTheCapability(t *testing.T) {
 	assert.NoError(t, resp.Data.Content.Close())
 	assert.NotNil(t, svc.lastReq)
 
-	assert.Len(t, audit.entries, 1)
-	assert.Equal(t, base.AuditLogResultAllowed, audit.entries[0].Result)
+	reveals := entriesOfType(audit, base.AuditLogTypeSecretReveal)
+	assert.Len(t, reveals, 1)
+	assert.Equal(t, base.AuditLogResultAllowed, reveals[0].Result)
+	assert.Len(t, entriesOfType(audit, base.AuditLogTypeSpecExport), 1)
 }
 
 // The operator flag outranks the capability: with secrets disabled system-wide,
@@ -164,16 +180,20 @@ func TestExportSpecNeedsNoCapabilityForOmitMode(t *testing.T) {
 	assert.NoError(t, resp.Data.Content.Close())
 
 	assert.NotNil(t, svc.lastReq)
-	assert.Empty(t, audit.entries, "nothing was revealed, so there is nothing to record")
+	assert.Empty(t, entriesOfType(audit, base.AuditLogTypeSecretReveal),
+		"nothing was revealed, so no reveal is recorded")
+	assert.Len(t, entriesOfType(audit, base.AuditLogTypeSpecExport), 1,
+		"but the export itself still is")
 }
 
-func TestExportSpecBuildsTheScopeFromTheRequest(t *testing.T) {
+// The usecase no longer derives the scope - the handler does - so what matters
+// here is that it reaches the exporter unchanged.
+func TestExportSpecPassesTheScopeThroughToTheExporter(t *testing.T) {
 	uc, _, svc := newTestUC(t)
 
 	req := exportReq(specmodel.SecretsModeOmit)
-	req.ProjectID = "01JAB9XED0GTXBSQDFVYAJ8WB1"
-	req.ProjectEnvID = "01JAB9XED0GTXBSQDFVYAJ8WB1:dev"
-	req.AppID = "01JAB9XED0GTXBSQDFVYAJ8WD1"
+	req.Scope = entity.NewObjectScopeApp("01JAB9XED0GTXBSQDFVYAJ8WD1", "",
+		"01JAB9XED0GTXBSQDFVYAJ8WB1", "01JAB9XED0GTXBSQDFVYAJ8WB1:dev")
 
 	resp, err := uc.ExportSpec(context.Background(), plainAuth(), req)
 	assert.NoError(t, err)
@@ -231,8 +251,14 @@ func TestExportSpecRecordsNoRevealForARequestThatWillBeRefused(t *testing.T) {
 	allowSecretReveal(t, true)
 
 	for name, req := range map[string]*specdto.ExportSpecReq{
-		"encrypted without passphrase": {SecretsMode: specmodel.SecretsModeEncrypted},
-		"unknown mode":                 {SecretsMode: specmodel.SecretsMode("none")},
+		"encrypted without passphrase": {
+			Scope:       entity.NewObjectScopeGlobal(),
+			SecretsMode: specmodel.SecretsModeEncrypted,
+		},
+		"unknown mode": {
+			Scope:       entity.NewObjectScopeGlobal(),
+			SecretsMode: specmodel.SecretsMode("none"),
+		},
 	} {
 		uc, audit, svc := newTestUC(t)
 
@@ -241,4 +267,114 @@ func TestExportSpecRecordsNoRevealForARequestThatWillBeRefused(t *testing.T) {
 		assert.Empty(t, audit.entries, "%s: nothing was revealed, so nothing may be recorded", name)
 		assert.Nil(t, svc.lastReq, name)
 	}
+}
+
+// The audit entry is written from the reveal subject, so it has to name the
+// scope the request carried - now that the handler, not the usecase, builds it.
+func TestExportSpecNamesTheRequestScopeInTheRevealAudit(t *testing.T) {
+	allowSecretReveal(t, true)
+	uc, audit, _ := newTestUC(t)
+
+	req := exportReq(specmodel.SecretsModePlaintext)
+	req.Scope = entity.NewObjectScopeProject("01JAB9XED0GTXBSQDFVYAJ8WB1")
+
+	resp, err := uc.ExportSpec(context.Background(), adminAuth(), req)
+	assert.NoError(t, err)
+	assert.NoError(t, resp.Data.Content.Close())
+
+	reveals := entriesOfType(audit, base.AuditLogTypeSecretReveal)
+	assert.Len(t, reveals, 1)
+	assert.Equal(t, base.ObjectScopeProject, reveals[0].Scope)
+	assert.Equal(t, "01JAB9XED0GTXBSQDFVYAJ8WB1", reveals[0].ObjectID)
+	assert.Contains(t, reveals[0].ResName, "plaintext")
+}
+
+// entriesOfType picks one kind of entry out of everything recorded, since an
+// export that reveals secrets writes two.
+func entriesOfType(audit *fakeAuditService, typ base.AuditLogType) []*auditservice.Entry {
+	var out []*auditservice.Entry
+	for _, entry := range audit.entries {
+		if entry.Type == typ {
+			out = append(out, entry)
+		}
+	}
+	return out
+}
+
+// Every export is recorded, whatever the secrets mode. One with every secret
+// emptied still hands over the full shape of what it covers.
+func TestExportSpecRecordsTheExportInEveryMode(t *testing.T) {
+	allowSecretReveal(t, true)
+
+	for _, mode := range []specmodel.SecretsMode{
+		specmodel.SecretsModeOmit,
+		specmodel.SecretsModeEncrypted,
+		specmodel.SecretsModePlaintext,
+	} {
+		uc, audit, _ := newTestUC(t)
+
+		req := exportReq(mode)
+		req.Scope = entity.NewObjectScopeApp("01JAB9XED0GTXBSQDFVYAJ8WD1", "",
+			"01JAB9XED0GTXBSQDFVYAJ8WB1", "dev")
+
+		resp, err := uc.ExportSpec(context.Background(), adminAuth(), req)
+		assert.NoError(t, err, mode)
+		assert.NoError(t, resp.Data.Content.Close())
+
+		exports := entriesOfType(audit, base.AuditLogTypeSpecExport)
+		assert.Len(t, exports, 1, mode)
+		entry := exports[0]
+
+		assert.Equal(t, base.AuditLogResultAllowed, entry.Result)
+		assert.Equal(t, base.AuditLogSourceAPIAction, entry.Source)
+		assert.Equal(t, base.ObjectScopeApp, entry.Scope)
+		assert.Equal(t, "01JAB9XED0GTXBSQDFVYAJ8WD1", entry.ObjectID)
+		assert.Equal(t, base.ResourceTypeApp, entry.ResType)
+		assert.Contains(t, entry.Detail, `"secretsMode":"`+string(mode)+`"`)
+		assert.Contains(t, entry.Detail, "hivepaas-spec.tar.gz")
+	}
+}
+
+// The passphrase must not reach the audit log any more than an access log.
+func TestExportSpecNeverRecordsThePassphrase(t *testing.T) {
+	allowSecretReveal(t, true)
+	uc, audit, _ := newTestUC(t)
+
+	req := exportReq(specmodel.SecretsModeEncrypted)
+	req.Passphrase = "sentinel-passphrase-Zq9"
+
+	resp, err := uc.ExportSpec(context.Background(), adminAuth(), req)
+	assert.NoError(t, err)
+	assert.NoError(t, resp.Data.Content.Close())
+
+	assert.NotEmpty(t, audit.entries)
+	for _, entry := range audit.entries {
+		assert.NotContains(t, entry.Detail, "sentinel-passphrase-Zq9")
+		assert.NotContains(t, entry.ResName, "sentinel-passphrase-Zq9")
+	}
+}
+
+// An export whose record cannot be written is not handed over, and its staging
+// directory does not linger: delivering the archive without the record would
+// leave exactly the gap the record exists to close.
+func TestExportSpecIsAbortedWhenItCannotBeRecorded(t *testing.T) {
+	uc, audit, svc := newTestUC(t)
+	audit.failType = base.AuditLogTypeSpecExport
+
+	resp, err := uc.ExportSpec(context.Background(), plainAuth(), exportReq(specmodel.SecretsModeOmit))
+	assert.Error(t, err)
+	assert.Nil(t, resp)
+
+	assert.NotNil(t, svc.lastReq, "precondition: the bundle was built")
+	assert.NoDirExists(t, svc.lastReq.WorkDir, "and its staging directory was removed")
+}
+
+// A failed export took nothing away, so there is nothing to record.
+func TestExportSpecRecordsNothingWhenTheExportFails(t *testing.T) {
+	uc, audit, svc := newTestUC(t)
+	svc.err = errors.New("walk failed")
+
+	_, err := uc.ExportSpec(context.Background(), plainAuth(), exportReq(specmodel.SecretsModeOmit))
+	assert.Error(t, err)
+	assert.Empty(t, entriesOfType(audit, base.AuditLogTypeSpecExport))
 }

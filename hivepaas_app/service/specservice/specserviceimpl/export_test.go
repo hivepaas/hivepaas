@@ -165,10 +165,10 @@ func exportFixture(t *testing.T) specservice.Service {
 	all := []*entity.Setting{cert, apiKey, routing, secret}
 
 	svc := New(
-		settingRepo,
-		&fakeProjectRepo{projects: []*entity.Project{proj, hive}},
-		&fakeProjectEnvRepo{envs: []*entity.ProjectEnv{env}},
 		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview}},
+		&fakeProjectEnvRepo{envs: []*entity.ProjectEnv{env}},
+		&fakeProjectRepo{projects: []*entity.Project{proj, hive}},
+		settingRepo,
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
 	)
 

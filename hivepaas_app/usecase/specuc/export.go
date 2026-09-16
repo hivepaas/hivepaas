@@ -8,7 +8,6 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
@@ -33,12 +32,7 @@ func (uc *UC) ExportSpec(
 	ctx context.Context,
 	auth *basedto.Auth,
 	req *specdto.ExportSpecReq,
-) (*specdto.ExportSpecResp, error) {
-	scope, err := buildScope(req)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
+) (_ *specdto.ExportSpecResp, err error) {
 	// Refuse a malformed request before the reveal gate, not after it. The gate
 	// writes an audit entry, and running it first recorded "secret-reveal:
 	// allowed" for an encrypted export that then failed for want of a
@@ -54,9 +48,9 @@ func (uc *UC) ExportSpec(
 
 	if req.SecretsMode.RevealsSecrets() {
 		err = uc.permissionManager.AuthorizeSecretReveal(ctx, uc.db, auth, &permission.RevealSubject{
-			Scope:    scope.ScopeType,
-			ObjectID: scope.ScopeObjectID(),
-			Source:   base.AuditLogSourceAPIGet,
+			Scope:    req.Scope.ScopeType,
+			ObjectID: req.Scope.ScopeObjectID(),
+			Source:   base.AuditLogSourceAPIAction,
 			ResType:  base.ResourceTypeSetting,
 			ResName:  fmt.Sprintf("configuration spec export (%s)", req.SecretsMode),
 		})
@@ -69,21 +63,28 @@ func (uc *UC) ExportSpec(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	defer func() {
+		if err != nil {
+			_ = os.RemoveAll(workDir)
+		}
+	}()
 
 	resp, err := uc.specService.Export(ctx, uc.db, &specservice.ExportReq{
-		Scope:       scope,
+		Scope:       req.Scope,
 		SecretsMode: req.SecretsMode,
 		Passphrase:  req.Passphrase,
 		WorkDir:     workDir,
 	})
 	if err != nil {
-		_ = os.RemoveAll(workDir)
+		return nil, hperrors.Wrap(err)
+	}
+
+	if err = uc.recordSpecExport(ctx, uc.db, auth, req.Scope, req.SecretsMode, resp); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
 	content, err := openBundle(resp.Path, workDir)
 	if err != nil {
-		_ = os.RemoveAll(workDir)
 		return nil, hperrors.Wrap(err)
 	}
 
@@ -98,30 +99,6 @@ func (uc *UC) ExportSpec(
 		},
 		Summary: resp.Summary,
 	}, nil
-}
-
-// buildScope turns the request's identifiers into the scope to export.
-func buildScope(req *specdto.ExportSpecReq) (*entity.ObjectScope, error) {
-	switch {
-	case req.AppID != "":
-		if req.ProjectID == "" || req.ProjectEnvID == "" {
-			return nil, hperrors.NewMissing("Project or env")
-		}
-		scope := entity.NewObjectScopeApp(req.AppID, "", req.ProjectID, req.ProjectEnvID)
-		return scope, nil
-
-	case req.ProjectEnvID != "":
-		if req.ProjectID == "" {
-			return nil, hperrors.NewMissing("Project")
-		}
-		return entity.NewObjectScopeProjectEnv(req.ProjectID, req.ProjectEnvID), nil
-
-	case req.ProjectID != "":
-		return entity.NewObjectScopeProject(req.ProjectID), nil
-
-	default:
-		return entity.NewObjectScopeGlobal(), nil
-	}
 }
 
 // bundleFile hands the archive to the transport and removes the staging

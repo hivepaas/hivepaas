@@ -18,18 +18,18 @@ import (
 // with RefID set to the Docker id and Name to the Docker name - so the mapping
 // comes from the database rather than from a round trip to Docker.
 func New(
-	settingRepo repository.SettingRepo,
-	projectRepo repository.ProjectRepo,
-	projectEnvRepo repository.ProjectEnvRepo,
 	appRepo repository.AppRepo,
+	projectEnvRepo repository.ProjectEnvRepo,
+	projectRepo repository.ProjectRepo,
+	settingRepo repository.SettingRepo,
 
 	clusterService clusterservice.Service,
 ) specservice.Service {
 	svc := &service{
-		settingRepo:    settingRepo,
-		projectRepo:    projectRepo,
-		projectEnvRepo: projectEnvRepo,
 		appRepo:        appRepo,
+		projectEnvRepo: projectEnvRepo,
+		projectRepo:    projectRepo,
+		settingRepo:    settingRepo,
 
 		clusterService: clusterService,
 	}
@@ -54,10 +54,10 @@ type settingLoader func(
 ) ([]*entity.Setting, error)
 
 type service struct {
-	settingRepo    repository.SettingRepo
-	projectRepo    repository.ProjectRepo
-	projectEnvRepo repository.ProjectEnvRepo
 	appRepo        repository.AppRepo
+	projectEnvRepo repository.ProjectEnvRepo
+	projectRepo    repository.ProjectRepo
+	settingRepo    repository.SettingRepo
 
 	clusterService clusterservice.Service
 

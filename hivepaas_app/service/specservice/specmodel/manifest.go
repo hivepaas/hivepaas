@@ -40,6 +40,10 @@ const (
 	SecretsModePlaintext SecretsMode = "plaintext"
 )
 
+var (
+	AllSecretsModes = []SecretsMode{SecretsModeOmit, SecretsModeEncrypted, SecretsModePlaintext}
+)
+
 func (m SecretsMode) IsValid() bool {
 	switch m {
 	case SecretsModeOmit, SecretsModeEncrypted, SecretsModePlaintext:

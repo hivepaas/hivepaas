@@ -1,6 +1,7 @@
 package specmodel
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -65,4 +66,21 @@ func TestReportCountsBySeverity(t *testing.T) {
 
 	r.Add(Issue{Severity: SeverityBlocked, Code: "X", Path: "d"})
 	assert.True(t, r.HasBlocked())
+}
+
+// A report travels as YAML inside a bundle and as JSON in a response header, so
+// it needs both sets of tags. With yaml tags alone the header came out with Go
+// field names and an empty string for every unset field.
+func TestReportMarshalsAsCamelCaseJSON(t *testing.T) {
+	out, err := json.Marshal(&Report{Issues: []Issue{{
+		Severity: SeverityFixable,
+		Code:     CodeRefNotSelected,
+		Path:     "projects/a/envs/dev/apps/api/routing",
+	}}})
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"issues":[{
+		"severity":"fixable",
+		"code":"REF_NOT_SELECTED",
+		"path":"projects/a/envs/dev/apps/api/routing"
+	}]}`, string(out))
 }

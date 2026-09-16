@@ -26,21 +26,26 @@ const (
 
 // Issue is one thing that did not go cleanly, written to be both read by a
 // person and acted on by a UI.
+// The json tags are not decoration. A report reaches a caller two ways: inside
+// a bundle as YAML, and over the wire as the X-HivePaaS-Spec-Report header,
+// which is JSON. With yaml tags alone the header came out with Go field names
+// and empty strings for every unset field - "Issues", "AvailableIn": "" - which
+// matches nothing else this API returns.
 type Issue struct {
-	Severity Severity       `yaml:"severity"`
-	Code     string         `yaml:"code"`
-	Path     string         `yaml:"path"`
-	Detail   map[string]any `yaml:"detail,omitempty"`
+	Severity Severity       `yaml:"severity"          json:"severity"`
+	Code     string         `yaml:"code"              json:"code"`
+	Path     string         `yaml:"path"              json:"path"`
+	Detail   map[string]any `yaml:"detail,omitempty"  json:"detail,omitempty"`
 	// AvailableIn names the bundle file holding what the issue could not reach,
 	// which is what separates "go and create this" from "select one more file".
-	AvailableIn string `yaml:"availableIn,omitempty"`
-	Action      string `yaml:"action,omitempty"`
-	Hint        string `yaml:"hint,omitempty"`
+	AvailableIn string `yaml:"availableIn,omitempty" json:"availableIn,omitempty"`
+	Action      string `yaml:"action,omitempty"      json:"action,omitempty"`
+	Hint        string `yaml:"hint,omitempty"        json:"hint,omitempty"`
 }
 
 // Report collects issues for one export or import run.
 type Report struct {
-	Issues []Issue `yaml:"issues,omitempty"`
+	Issues []Issue `yaml:"issues,omitempty" json:"issues,omitempty"`
 }
 
 func (r *Report) Add(issue Issue) {

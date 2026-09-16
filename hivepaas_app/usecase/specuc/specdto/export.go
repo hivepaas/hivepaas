@@ -48,6 +48,8 @@ func (req *ExportSpecReq) Validate() hperrors.ValidationErrors {
 // ExportSpecResp carries the bundle itself. The body is the archive, so the
 // report travels in a header - see spechandler.
 type ExportSpecResp struct {
-	Data   *settings.BaseDownloadDataResp
-	Report *specmodel.Report
+	Data *settings.BaseDownloadDataResp
+	// Summary is what the response header carries. The full report is inside
+	// the bundle as report.yaml, because a header cannot hold it.
+	Summary *specmodel.ReportSummary
 }

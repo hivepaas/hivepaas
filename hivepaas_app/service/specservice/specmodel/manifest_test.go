@@ -84,3 +84,51 @@ func TestReportMarshalsAsCamelCaseJSON(t *testing.T) {
 		"path":"projects/a/envs/dev/apps/api/routing"
 	}]}`, string(out))
 }
+
+// The full report cannot travel in a response header: on a development
+// installation of three projects and five apps it already reached 6.8 KB,
+// inside nginx's 8 KB default for the whole header block. The summary must stay
+// small however many issues there are.
+func TestReportSummaryStaysSmallAtScale(t *testing.T) {
+	report := &Report{}
+	for i := range 2000 {
+		report.Add(Issue{
+			Severity: SeveritySkipped,
+			Code:     CodeTypeSkipped,
+			Path:     "projects/p/envs/dev/apps/app-" + string(rune('a'+i%26)) + "/some/long/setting/path",
+			Detail:   map[string]any{"type": "ssl-cert", "id": "01JAB9XED0GTXBSQDFVYAJ8WM2"},
+			Action:   "a reason long enough to be useful to somebody reading it later",
+		})
+	}
+
+	full, err := json.Marshal(report)
+	assert.NoError(t, err)
+	assert.Greater(t, len(full), 100_000, "precondition: the full report is far too big for a header")
+
+	encoded, err := json.Marshal(report.Summarize(12, "report.yaml"))
+	assert.NoError(t, err)
+	assert.Less(t, len(encoded), 512,
+		"the summary is bounded by the number of issue codes, not by the number of issues")
+}
+
+func TestReportSummaryCountsAndPointsAtTheFile(t *testing.T) {
+	report := &Report{}
+	report.Add(Issue{Severity: SeveritySkipped, Code: CodeTypeSkipped})
+	report.Add(Issue{Severity: SeveritySkipped, Code: CodeTypeSkipped})
+	report.Add(Issue{Severity: SeverityFixable, Code: CodeServiceUnavailable})
+
+	summary := report.Summarize(9, "report.yaml")
+	assert.Equal(t, 9, summary.Files)
+	assert.Equal(t, 3, summary.Issues)
+	assert.Equal(t, 2, summary.ByCode[CodeTypeSkipped])
+	assert.Equal(t, 1, summary.ByCode[CodeServiceUnavailable])
+	assert.Equal(t, 2, summary.BySeverity[string(SeveritySkipped)])
+	assert.Equal(t, "report.yaml", summary.ReportFile)
+}
+
+// A clean export names no report file, so a UI has nothing to point at.
+func TestReportSummaryNamesNoFileWhenThereAreNoIssues(t *testing.T) {
+	summary := (&Report{}).Summarize(9, "report.yaml")
+	assert.Equal(t, 0, summary.Issues)
+	assert.Empty(t, summary.ReportFile)
+}

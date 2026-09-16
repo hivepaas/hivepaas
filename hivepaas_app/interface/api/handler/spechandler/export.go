@@ -12,8 +12,17 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc/specdto"
 )
 
-// reportHeader carries what the export skipped or could not resolve. The body
-// is the archive itself, so there is nowhere else to put it.
+// reportHeader carries a summary of what the export skipped or could not
+// resolve: counts, not detail.
+//
+// The detail is inside the bundle as report.yaml. It cannot travel here -
+// measured against a development installation of three projects and five apps
+// the full report already reached 6.8 KB, inside nginx's 8 KB default for the
+// entire header block. A real installation would exceed it and the failure
+// would be a truncated header or a proxy error rather than anything legible.
+//
+// The header must also be listed in the CORS ExposeHeaders, or a dashboard
+// running on its own dev origin cannot read it - see middleware/cors.
 const reportHeader = "X-HivePaaS-Spec-Report"
 
 // ExportGlobalSpec godoc
@@ -141,8 +150,8 @@ func (h *Handler) export(ctx *gin.Context, req *specdto.ExportSpecReq) {
 	}
 	defer resp.Data.Content.Close()
 
-	if resp.Report != nil && len(resp.Report.Issues) > 0 {
-		if encoded, encodeErr := json.Marshal(resp.Report); encodeErr == nil {
+	if resp.Summary != nil {
+		if encoded, encodeErr := json.Marshal(resp.Summary); encodeErr == nil {
 			ctx.Header(reportHeader, string(encoded))
 		}
 	}

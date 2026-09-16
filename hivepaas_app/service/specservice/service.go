@@ -35,5 +35,8 @@ type ExportResp struct {
 	// Filename is what the download should be called.
 	Filename string
 	Size     int64
-	Report   *specmodel.Report
+	// Report is the full detail, also written into the bundle as report.yaml.
+	Report *specmodel.Report
+	// Summary is what a response header can carry.
+	Summary *specmodel.ReportSummary
 }

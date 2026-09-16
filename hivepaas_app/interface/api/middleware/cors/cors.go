@@ -16,7 +16,10 @@ func CORS(cfg *config.Config) gin.HandlerFunc {
 		AllowHeaders: []string{"Content-Length", "Origin", "cookie", "access-control-allow-origin",
 			"authorization, origin, content-type, accept", "X-CSRF-Token", "Pragma",
 			"HIVEPAAS-API-KEY-ID", "HIVEPAAS-API-SECRET-KEY"},
-		ExposeHeaders:    []string{"Content-Length", "Content-Disposition"},
+		// A response header the browser may read. Anything not listed here is
+		// invisible to a cross-origin caller - which the dashboard is whenever
+		// it runs on its own dev server rather than being served by the backend.
+		ExposeHeaders:    []string{"Content-Length", "Content-Disposition", "X-HivePaaS-Spec-Report"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour, //nolint:mnd
 	}

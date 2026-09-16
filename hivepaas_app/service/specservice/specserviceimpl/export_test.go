@@ -379,3 +379,15 @@ func stripLine(content, prefix string) string {
 	}
 	return strings.Join(kept, "\n")
 }
+
+// The detail belongs in the bundle, where somebody opening the archive later
+// can still read it without having kept the HTTP response.
+func TestExportWritesTheReportIntoTheBundle(t *testing.T) {
+	path, report := runExport(t, specmodel.SecretsModeOmit, "")
+	assert.NotEmpty(t, report.Issues, "precondition: this fixture skips things")
+
+	content := readFromArchive(t, path, "report.yaml")
+	assert.Contains(t, content, "issues:")
+	assert.Contains(t, content, specmodel.CodePreviewAppSkipped)
+	assert.Contains(t, content, specmodel.CodeServiceUnavailable)
+}

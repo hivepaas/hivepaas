@@ -79,7 +79,11 @@ func (s *service) Export(
 	}
 
 	return &specservice.ExportResp{
-		Path: path, Filename: filename, Size: info.Size(), Report: bundle.Report,
+		Path:     path,
+		Filename: filename,
+		Size:     info.Size(),
+		Report:   bundle.Report,
+		Summary:  bundle.Report.Summarize(len(bundle.Files), reportFilename),
 	}, nil
 }
 

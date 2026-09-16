@@ -16,6 +16,7 @@ const (
 	manifestFilename = "spec.yaml"
 	stageDirName     = "stage"
 	bundleFilename   = "bundle.tar.gz"
+	reportFilename   = "report.yaml"
 
 	stageDirPerm  = 0o700
 	stageFilePerm = 0o600
@@ -35,6 +36,20 @@ func writeBundle(dir string, bundle *specmodel.Bundle) (string, error) {
 	}
 	for name, content := range bundle.Files {
 		if err = writeStagedFile(stage, name, content); err != nil {
+			return "", hperrors.Wrap(err)
+		}
+	}
+
+	// The report goes in the bundle rather than only in a response header,
+	// which cannot hold it - see specmodel.ReportSummary. It is also the right
+	// place for it: somebody opening this archive later should be able to see
+	// what was left out without having kept the HTTP response.
+	if bundle.Report != nil && len(bundle.Report.Issues) > 0 {
+		reportBytes, reportErr := marshalDoc(bundle.Report)
+		if reportErr != nil {
+			return "", hperrors.Wrap(reportErr)
+		}
+		if err = writeStagedFile(stage, reportFilename, reportBytes); err != nil {
 			return "", hperrors.Wrap(err)
 		}
 	}

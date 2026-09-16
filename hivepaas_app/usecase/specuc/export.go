@@ -82,7 +82,7 @@ func (uc *UC) ExportSpec(
 				"Content-Disposition": fmt.Sprintf("attachment; filename=%q", resp.Filename),
 			},
 		},
-		Report: resp.Report,
+		Summary: resp.Summary,
 	}, nil
 }
 

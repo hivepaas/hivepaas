@@ -65,3 +65,44 @@ func (r *Report) CountBySeverity(s Severity) int {
 func (r *Report) HasBlocked() bool {
 	return r.CountBySeverity(SeverityBlocked) > 0
 }
+
+// ReportSummary is the report reduced to counts.
+//
+// The full report cannot travel in a response header. Measured against a
+// development installation of three projects and five apps it already reached
+// 6.8 KB, which is inside nginx's 8 KB default for the whole header block - a
+// real installation would exceed it, and the failure would be a truncated
+// header or a 502 from the proxy rather than anything legible.
+//
+// So the detail goes into the bundle as report.yaml, where it belongs anyway -
+// somebody opening the archive months later should be able to see what was left
+// out - and the header carries this instead. Its size is bounded by the number
+// of declared issue codes, which is fixed.
+type ReportSummary struct {
+	Files  int `yaml:"files"            json:"files"`
+	Issues int `yaml:"issues"           json:"issues"`
+	// BySeverity and ByCode are counts, so a UI can say what happened without
+	// the detail.
+	BySeverity map[string]int `yaml:"bySeverity,omitempty" json:"bySeverity,omitempty"`
+	ByCode     map[string]int `yaml:"byCode,omitempty"     json:"byCode,omitempty"`
+	// ReportFile names where the detail is, inside the bundle.
+	ReportFile string `yaml:"reportFile,omitempty" json:"reportFile,omitempty"`
+}
+
+// Summarize reduces a report to what fits in a header.
+func (r *Report) Summarize(files int, reportFile string) *ReportSummary {
+	summary := &ReportSummary{
+		Files:      files,
+		Issues:     len(r.Issues),
+		BySeverity: map[string]int{},
+		ByCode:     map[string]int{},
+	}
+	for _, issue := range r.Issues {
+		summary.BySeverity[string(issue.Severity)]++
+		summary.ByCode[issue.Code]++
+	}
+	if len(r.Issues) > 0 {
+		summary.ReportFile = reportFile
+	}
+	return summary
+}

@@ -58,12 +58,23 @@
 **Files:**
 - Create: `hivepaas_app/service/specservice/specmodel/manifest.go`
 - Create: `hivepaas_app/service/specservice/specmodel/issue.go`
-- Create: `hivepaas_app/hperrors/errors_spec.go`
 - Test: `hivepaas_app/service/specservice/specmodel/manifest_test.go`
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: `specmodel.APIVersion`, `specmodel.KindSpec`, `specmodel.SecretsMode` (+ the three constants), `specmodel.Manifest`, `specmodel.Severity` (+ three constants), `specmodel.Issue`, `specmodel.Report`. `hperrors.ErrSpecAPIVersionUnsupported`, `ErrSpecSettingTypeUnclassified`, `ErrSpecMountTargetDuplicated`, `ErrSpecSecretsModeInvalid`.
+- Produces: `specmodel.APIVersion`, `specmodel.KindSpec`, `specmodel.SecretsMode` (+ the three constants), `specmodel.Manifest`, `specmodel.Severity` (+ three constants), `specmodel.Issue`, `specmodel.Report`.
+
+**Error codes are not declared here.** `tools/errcodelint` refuses a code that
+nothing references - "declared as X but X is never referenced; nothing can raise
+it" - so each `ERR_SPEC_…` is added in the task that first raises it, together
+with its translation:
+
+| error | declared in |
+|---|---|
+| `ErrSpecMountTargetDuplicated` | Task 6, `mapStorage` |
+| `ErrSpecSettingTypeUnclassified` | Task 7, `assembleSettings` |
+| `ErrSpecSecretsModeInvalid`, `ErrSpecPassphraseRequired` | Task 12, the usecase |
+| `ErrSpecAPIVersionUnsupported` | not at all - only import raises it, and import is not built here |
 
 - [ ] **Step 1: Write the failing test**
 
@@ -269,24 +280,6 @@ func (r *Report) HasBlocked() bool {
 }
 ```
 
-```go
-// hivepaas_app/hperrors/errors_spec.go
-package hperrors
-
-// Errors for configuration spec export and import
-var (
-	ErrSpecAPIVersionUnsupported   = NewErr(ErrNotAllowed, "ERR_SPEC_API_VERSION_UNSUPPORTED")
-	ErrSpecSettingTypeUnclassified = NewErr(ErrInternal, "ERR_SPEC_SETTING_TYPE_UNCLASSIFIED")
-	ErrSpecMountTargetDuplicated   = NewErr(ErrDataInvalid, "ERR_SPEC_MOUNT_TARGET_DUPLICATED")
-	ErrSpecSecretsModeInvalid      = NewErr(ErrArgumentInvalid, "ERR_SPEC_SECRETS_MODE_INVALID")
-	ErrSpecPassphraseRequired      = NewErr(ErrPreconditionRequired, "ERR_SPEC_PASSPHRASE_REQUIRED")
-)
-```
-
-Before writing the file, confirm the base errors exist:
-`grep -n "ErrDataInvalid\|ErrArgumentInvalid\|ErrPreconditionRequired\|ErrNotAllowed\|ErrInternal" hivepaas_app/hperrors/*.go`
-If a base error has a different name, use the one that is there rather than adding a new base.
-
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `go test ./hivepaas_app/service/specservice/specmodel/ -v`
@@ -294,23 +287,26 @@ Expected: PASS, three tests.
 
 If `TestManifestMarshalsWithStableFieldOrder` fails on indentation, adjust the expected string to what `yaml.v3` actually emits rather than fighting the encoder — the point of the test is field *order*, which follows struct order.
 
-- [ ] **Step 5: Add the translations for the new error codes**
+- [ ] **Step 5: Verify lint and commit**
 
-Each `ERR_…` code needs an entry in the translation TOMLs. Find them and follow the existing shape:
-
-Run: `grep -rn "ERR_PROJECT_NOT_FOUND" --include="*.toml" .`
-
-Add one line per new code to the same files, with an English message such as
-`ERR_SPEC_MOUNT_TARGET_DUPLICATED = "Two volume mounts use the same target path '{{.Target}}'"`.
-
-- [ ] **Step 6: Verify lint and commit**
+`make lint` runs golangci-lint, goroutinelint and errcodelint inside the
+`hivepaas-devtools` container. If that container fails with
+`failed to initialize build cache at /.cache/go-build: mkdir /.cache: permission denied`,
+use `make lint-local`, which runs the same three tools on the host.
 
 ```bash
-make fmt && make lint
-go test ./hivepaas_app/service/specservice/... ./hivepaas_app/hperrors/...
-git add hivepaas_app/service/specservice/specmodel hivepaas_app/hperrors/errors_spec.go
-git commit -m "feat(spec): add spec model foundations and error codes"
+make fmt && make lint-local
+go test ./hivepaas_app/service/specservice/...
+git add hivepaas_app/service/specservice/specmodel
+git commit -m "feat(spec): add spec model foundations"
 ```
+
+**The pattern every later task follows.** An `ERR_SPEC_…` code is added in the
+same commit as the code that raises it, along with one line in
+`hivepaas_app/pkg/translation/messages/en/errors.spec.en.toml` (create it on
+first use; the loader embeds `messages/*` and picks up new files with no
+registration). Adding the code earlier fails errcodelint; adding it later means
+a commit that does not build.
 
 ---
 

@@ -77,11 +77,16 @@ export class SpecExportApi extends BaseApi {
 
         return lastValueFrom(
             from(
-                this.client.v1.get(resolveSpecExportEndpoint(scope), {
-                    params: { secretsMode, passphrase },
-                    responseType: "blob",
-                    signal,
-                }),
+                // POST, not GET, and the passphrase travels in the body: the
+                // server's access log records the full path including its query
+                // string, and those lines are shipped to a searchable log store.
+                // It also keeps a response that may contain every secret in the
+                // scope out of any intermediary cache.
+                this.client.v1.post(
+                    resolveSpecExportEndpoint(scope),
+                    { secretsMode, passphrase },
+                    { responseType: "blob", signal },
+                ),
             ).pipe(
                 map(mapExportResponse),
                 map(res => Ok(res)),

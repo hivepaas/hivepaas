@@ -1,12 +1,15 @@
+import { cn } from "@/lib/utils";
+import { listBox } from "@lib/styles";
+
 import { SpecExportPanel } from "../building-blocks";
 
 export function OperationsExportRoute() {
     return (
-        <div className="flex flex-col gap-6">
+        <section className={cn(listBox)}>
             <SpecExportPanel
                 scope={{ type: "global" }}
                 scopeLabel="this installation"
             />
-        </div>
+        </section>
     );
 }

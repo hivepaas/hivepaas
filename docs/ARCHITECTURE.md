@@ -120,6 +120,21 @@ Apply(ctx context.Context, db database.IDB, req *SettingApplyReq) (*SettingApply
 
 Adding a field then costs one line and breaks nobody.
 
+**A service must not import a DTO.** The table in §1 puts `dto` above `service`,
+and the reason is not tidiness: a DTO is the dashboard's wire shape and is
+expected to move when the UI does. `specservice` is the case that makes this
+concrete. It exports app configuration that lives in the Swarm service, which
+`appsettingsdto.Transform*` already reads - and it deliberately does not call
+them, because a spec is read back by versions of HivePaaS that do not exist yet
+and must not change shape for a reason that has nothing to do with it.
+
+Owning a shape that way has a cost, and it is paid in tests rather than in
+imports: the Get and Update DTOs carry identical field sets, so anything
+readable through them was writable, and a service with its own types gives that
+up. `specserviceimpl`'s coverage oracle compares the two field sets in both
+directions and fails when they drift. Test code may import anything - a test is
+not a layer.
+
 ## 5. Usecase
 
 One usecase is one operation, start to finish: load, authorise, act, **record the audit log**.

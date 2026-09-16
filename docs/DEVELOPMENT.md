@@ -13,6 +13,7 @@ run the backend you want for the change you are making.
 | The dashboard, hot reload | `yarn dev` in `../hivepaas-dashboard`       | http://localhost:4321 |
 | The backend as a real swarm service | `make local-app-up` + `make local-agent-up` | https://localhost |
 | Extra swarm nodes | `make local-node-up` | `docker node ls` |
+| A configuration snapshot | `GET /_/spec/export` | a `.tar.gz` of YAML, §6 |
 
 Sign in with `admin` / `abc123`.
 
@@ -230,7 +231,100 @@ make seed-data                          # migrate, then load seed data
 make seed-data-with-clear               # wipe first - this is destructive
 ```
 
-## 6. Before you push
+## 6. Exporting a configuration spec
+
+A **spec** is a snapshot of configuration - settings, plus the parts of an app
+that live in its Swarm service - written as YAML and packed into one `.tar.gz`.
+It is meant for restoring an installation, moving a project, or just reading
+what is configured. The design is in
+[specs/2026-09-16-config-spec-export-design.md](superpowers/specs/2026-09-16-config-spec-export-design.md).
+
+```
+GET /_/spec/export
+GET /_/projects/:projectID/spec/export
+GET /_/projects/:projectID/:projectEnv/spec/export
+GET /_/projects/:projectID/:projectEnv/apps/:appID/spec/export
+```
+
+Exporting a scope exports everything below it, and nothing beside it.
+
+### Trying it locally
+
+Dev routes sit under `/_/internal` behind basic auth, and `dev-mode-login` takes
+its argument as a **query parameter**, not a JSON body:
+
+```bash
+make local-app-run
+
+USER_ID=$(PGPASSWORD=abc123 psql -h localhost -p 35432 -U hivepaas -d hivepaas \
+  -tAc "SELECT id FROM users WHERE deleted_at IS NULL ORDER BY created_at LIMIT 1")
+
+TOKEN=$(curl -sS -u hivepaas:abc123 -X POST \
+  "http://localhost:10000/_/internal/dev-helper/dev-mode-login?userId=$USER_ID" \
+  | python3 -c 'import json,sys; print(json.load(sys.stdin)["data"]["accessToken"])')
+
+curl -sS -D headers.txt -H "Authorization: Bearer $TOKEN" \
+  -o spec.tar.gz 'http://localhost:10000/_/spec/export?secretsMode=omit'
+
+mkdir -p out && tar -xzf spec.tar.gz -C out
+```
+
+### Secrets
+
+`secretsMode` takes one of three values. There is deliberately no mode that
+leaves the stored ciphertext in place: it is readable only by the installation
+holding that data key, and nothing guarantees a bundle is imported back where it
+came from.
+
+| mode | what happens | needs |
+|---|---|---|
+| `omit` *(default)* | secret fields are cleared; the key stays so a reader sees one is missing | nothing |
+| `encrypted` | secrets in the clear, whole bundle wrapped with `age` | `cap::secret::reveal`, audited |
+| `plaintext` | secrets in the clear, bundle unwrapped | `cap::secret::reveal`, audited |
+
+`encrypted` needs `passphrase` too, and produces `….tar.gz.age`, which the
+standard `age` CLI opens without HivePaaS running:
+
+```bash
+age -d -o spec.tar.gz spec.tar.gz.age
+```
+
+Both secret-bearing modes decrypt exactly the same values - they differ only in
+whether the result lands on disk - so both pass the same capability gate and
+leave the same audit entry. The operator's `security.return_secrets_via_api`
+flag refuses both even for an admin.
+
+### The report
+
+What the export skipped or could not resolve travels in the
+`X-HivePaaS-Spec-Report` response header, because the body is the archive:
+
+```bash
+python3 -c "import json,re,io; \
+  h=io.open('headers.txt').read(); \
+  print(json.dumps(json.loads(re.search(r'X-Hivepaas-Spec-Report:\s*(.*)',h,re.I).group(1)),indent=1))"
+```
+
+It is worth reading. An app with no Swarm service is reported rather than
+failing the export, and so is every setting type left out on purpose.
+
+### What is not in a bundle
+
+Three setting types are always skipped: `api-key`, whose secret is a one-way
+hash that would authenticate nobody; `backup-snapshot`, which a repository scan
+rediscovers; and `app`, a declared type with no parser.
+
+`cluster-node`, `cluster-network` and `cluster-volume` are exported only where
+HivePaaS authored them - a project or env scope - and never where cluster sync
+discovered them, since sync rebuilds those and deletes any row whose Docker
+object is missing.
+
+The `hivepaas` project is never exported. It holds HivePaaS's own stack, and
+importing it elsewhere would redeploy its database and proxy over the ones
+`install.sh` had just created. Preview apps are skipped too; they belong to the
+pull request that created them.
+
+## 7. Before you push
 
 ```bash
 make fmt                  # gofmt + import grouping, in place

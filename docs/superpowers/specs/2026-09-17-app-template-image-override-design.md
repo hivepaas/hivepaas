@@ -35,7 +35,7 @@ this spec is the escape hatch for when automation lags, and the discovery that m
 | What may the user override to? | Any tag in the **same repository** as the template's pinned image, except `latest` | Everything else in the template - `POSTGRES_*` variables, `pg_isready`, the mount at `/var/lib/postgresql`, `settings.kind.engine` - is only correct for that software. A free-form image is a footgun wearing a feature's clothes |
 | A moving tag such as `postgres:18`? | Allowed, labelled as moving | The user is choosing the risk for one app, knowingly. The template itself still may not use one: that would impose the risk on everybody |
 | A different major line? | Allowed, with a different warning | The template's overrides were written for the lines it declares. For another line they may be wrong in ways nobody has tested |
-| A digest (`@sha256:…`)? | Allowed | It is the strongest pin there is |
+| A digest (`@sha256:…`)? | Allowed beside a tag, not on its own | A digest is the strongest pin there is, but it carries no version. `postgres:18.7-alpine3.24@sha256:…` records both; a bare digest would leave the binding and the UI with nothing a person can read back |
 | How does the user find a newer tag? | A button that scans the registry on demand | No background polling: rate limits are only reached when somebody asks, an air-gapped install gets an error on one button instead of a broken store, and nothing calls out on its own |
 | Which registries in phase 1? | Those that answer anonymously - Docker Hub and public V2 registries | Private registries reuse the existing `registry-auth` setting later (§10) |
 | Who decides the repository to scan? | The server, from template + version + variant | A client that could name the address would turn the endpoint into a probe for the cluster's internal network |
@@ -67,10 +67,10 @@ Rules, in order:
 1. Both references are parsed with `imageref.Parse`.
 2. The repository - registry host included - must be equal. Anything else is
    `ERR_APP_TEMPLATE_IMAGE_NOT_ALLOWED`, naming the repository the template uses.
-3. An empty tag, or the tag `latest`, is refused by the same error: both mean "whatever is newest",
-   which is a moving tag with no version to record.
-4. A reference carrying a digest, or a tag `IsPinnedImage` accepts, whose leading number equals the
-   chosen version's major → `same-line`.
+3. An empty tag - which includes a digest-only reference - or the tag `latest` is refused by the
+   same error: the first leaves no version to record, the second means "whatever is newest".
+4. A reference whose tag `IsPinnedImage` accepts, and whose leading number equals the template
+   image's major, is `same-line`. A digest alongside the tag does not change the class.
 5. Same, but a different leading number → `other-major`.
 6. A tag `IsPinnedImage` refuses (`18`, `18-alpine`) → `moving`.
 

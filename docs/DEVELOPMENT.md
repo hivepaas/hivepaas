@@ -360,6 +360,7 @@ go run ./tools/apptemplate render -param dataVolume=<volume-id> ../app-templates
 go run ./tools/apptemplate index  ../app-templates           # rewrite index.json
 go run ./tools/apptemplate index  -check ../app-templates    # what CI runs
 go run ./tools/apptemplate pin    ../app-templates           # on the merged commit
+go run ./tools/apptemplate bump   -dry-run ../app-templates  # what the weekly job would change
 ```
 
 The tool renders with the packages HivePaaS renders with, so a template that
@@ -368,6 +369,10 @@ lints here renders there.
 ### Publishing
 
 1. A pull request to `app-templates`; its CI runs `lint` and `index -check`.
+   A scheduled job there runs `bump` every Monday and opens such a pull request
+   when a version line has a newer release - within the line the template declares,
+   and only as far as every variant reaches. New major lines are still a person's
+   job: they need a `versions` entry, and often an `override`.
 2. On the merged commit, `go run ./tools/apptemplate pin ../app-templates`.
 3. Put the printed object into `release.json` as `templates` under `beta`,
    `make release-sign`, and commit both files to the `release` branch.

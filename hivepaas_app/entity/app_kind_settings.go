@@ -29,6 +29,7 @@ type AppKindSettings struct {
 	Database *AppKindDatabase `json:"database,omitempty"`
 	Webapp   *AppKindWebapp   `json:"webapp,omitempty"`
 	Cache    *AppKindCache    `json:"cache,omitempty"`
+	Storage  *AppKindStorage  `json:"storage,omitempty"`
 }
 
 type AppKindDatabase struct {
@@ -47,6 +48,20 @@ type AppKindCache struct {
 	MaxMemory       unit.DataSize  `json:"maxMemory,omitempty"`
 	EvictionRule    string         `json:"evictionRule,omitempty"`
 	PersistenceMode string         `json:"persistenceMode,omitempty"`
+}
+
+// AppKindStorage is a store other apps put objects in: the credentials they
+// authenticate with, and where what they send lands.
+//
+// KeyID and Secret are named for what they are rather than for S3, because not
+// every store speaks S3: they carry an access key and a secret key for
+// SeaweedFS or MinIO, and an ordinary user and password for a server that
+// authenticates over HTTP, such as restic's.
+type AppKindStorage struct {
+	KeyID  string         `json:"keyId,omitempty"`
+	Secret EncryptedField `json:"secret,omitzero"`
+	Bucket string         `json:"bucket,omitempty"`
+	Region string         `json:"region,omitempty"`
 }
 
 func (s *AppKindSettings) GetType() base.SettingType {
@@ -72,6 +87,11 @@ func (s *AppKindSettings) Decrypt() error {
 	}
 	if s.Cache != nil {
 		if _, err := s.Cache.Password.GetPlain(); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	if s.Storage != nil {
+		if _, err := s.Storage.Secret.GetPlain(); err != nil {
 			return hperrors.Wrap(err)
 		}
 	}

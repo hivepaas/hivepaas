@@ -41677,7 +41677,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -42411,6 +42411,9 @@
           "secretMasked" : {
             "type" : "boolean"
           },
+          "storage" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppKindStorageResp"
+          },
           "updateVer" : {
             "type" : "integer"
           },
@@ -42421,7 +42424,43 @@
             "$ref" : "#/components/schemas/appsettingsdto.AppKindWebappResp"
           }
         },
-        "required" : [ "cache", "category", "database", "engine", "port", "secretMasked", "updateVer", "version", "webapp" ],
+        "required" : [ "cache", "category", "database", "engine", "port", "secretMasked", "storage", "updateVer", "version", "webapp" ],
+        "type" : "object"
+      },
+      "appsettingsdto.AppKindStorageReq" : {
+        "properties" : {
+          "bucket" : {
+            "type" : "string"
+          },
+          "keyId" : {
+            "type" : "string"
+          },
+          "region" : {
+            "type" : "string"
+          },
+          "secret" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "bucket", "keyId", "region", "secret" ],
+        "type" : "object"
+      },
+      "appsettingsdto.AppKindStorageResp" : {
+        "properties" : {
+          "bucket" : {
+            "type" : "string"
+          },
+          "keyId" : {
+            "type" : "string"
+          },
+          "region" : {
+            "type" : "string"
+          },
+          "secret" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "bucket", "keyId", "region", "secret" ],
         "type" : "object"
       },
       "appsettingsdto.AppKindWebappReq" : {
@@ -44552,6 +44591,9 @@
           "port" : {
             "type" : "integer"
           },
+          "storage" : {
+            "$ref" : "#/components/schemas/appsettingsdto.AppKindStorageReq"
+          },
           "updateVer" : {
             "type" : "integer"
           },
@@ -44562,7 +44604,7 @@
             "$ref" : "#/components/schemas/appsettingsdto.AppKindWebappReq"
           }
         },
-        "required" : [ "cache", "category", "database", "engine", "port", "updateVer", "version", "webapp" ],
+        "required" : [ "cache", "category", "database", "engine", "port", "storage", "updateVer", "version", "webapp" ],
         "type" : "object"
       },
       "appsettingsdto.UpdateAppKindSettingsResp" : {
@@ -60157,9 +60199,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

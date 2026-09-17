@@ -51,6 +51,11 @@ const (
 	AppSystemEnvVarRootPassword = "HIVEPAAS_ROOT_PASSWORD" //nolint:gosec // G101: env name
 	AppSystemEnvVarDatabaseName = "HIVEPAAS_DATABASE_NAME"
 	AppSystemEnvVarSSLMode      = "HIVEPAAS_SSL_MODE"
+
+	AppSystemEnvVarKeyID  = "HIVEPAAS_KEY_ID"
+	AppSystemEnvVarSecret = "HIVEPAAS_SECRET" //nolint:gosec // G101: env name
+	AppSystemEnvVarBucket = "HIVEPAAS_BUCKET"
+	AppSystemEnvVarRegion = "HIVEPAAS_REGION"
 )
 
 var (
@@ -67,6 +72,10 @@ var (
 			AppSystemEnvVarRootPassword: {},
 			AppSystemEnvVarDatabaseName: {},
 			AppSystemEnvVarSSLMode:      {},
+			AppSystemEnvVarKeyID:        {},
+			AppSystemEnvVarSecret:       {},
+			AppSystemEnvVarBucket:       {},
+			AppSystemEnvVarRegion:       {},
 		}
 		maps.Copy(theMap, mapProjectUnallowedVar)
 		return theMap

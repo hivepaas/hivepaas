@@ -84,12 +84,43 @@ func TestKindEnvVars_CacheWithoutPassword(t *testing.T) {
 	assert.Equal(t, "", byKey[base.AppSystemEnvVarPassword].Value)
 }
 
+func TestKindEnvVars_Storage(t *testing.T) {
+	kind := &entity.AppKindSettings{
+		Category: base.AppCategoryStorage,
+		Engine:   "seaweedfs",
+		Storage: &entity.AppKindStorage{
+			KeyID:  "AKIAEXAMPLE",
+			Secret: entity.NewEncryptedField("s3cret"),
+			Bucket: "app",
+			Region: "us-east-1",
+		},
+	}
+
+	envs, err := kindEnvVars(kind)
+	assert.NoError(t, err)
+
+	byKey := envByKey(t, envs)
+	assert.Equal(t, "AKIAEXAMPLE", byKey[base.AppSystemEnvVarKeyID].Value)
+	assert.Equal(t, "s3cret", byKey[base.AppSystemEnvVarSecret].Value)
+	assert.Equal(t, "app", byKey[base.AppSystemEnvVarBucket].Value)
+	assert.Equal(t, "us-east-1", byKey[base.AppSystemEnvVarRegion].Value)
+	assert.True(t, byKey[base.AppSystemEnvVarSecret].IsShared,
+		"both halves of the pair are shared: it is the only way into the store")
+
+	// A store has no user, no database and no root account.
+	for _, key := range []string{base.AppSystemEnvVarUser, base.AppSystemEnvVarPassword,
+		base.AppSystemEnvVarDatabaseName, base.AppSystemEnvVarRootPassword} {
+		assert.NotContains(t, byKey, key)
+	}
+}
+
 func TestKindEnvVars_NothingToPublish(t *testing.T) {
 	tests := map[string]*entity.AppKindSettings{
 		"no kind setting":            nil,
 		"webapp":                     {Category: base.AppCategoryWebapp, Webapp: &entity.AppKindWebapp{}},
 		"database without its block": {Category: base.AppCategoryDatabase},
 		"cache without its block":    {Category: base.AppCategoryCache},
+		"storage without its block":  {Category: base.AppCategoryStorage},
 	}
 
 	for name, kind := range tests {

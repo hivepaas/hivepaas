@@ -46,6 +46,7 @@ type AppKindSettingsResp struct {
 	Webapp   *AppKindWebappResp   `json:"webapp,omitempty"`
 	Database *AppKindDatabaseResp `json:"database,omitempty"`
 	Cache    *AppKindCacheResp    `json:"cache,omitempty"`
+	Storage  *AppKindStorageResp  `json:"storage,omitempty"`
 
 	SecretMasked bool `json:"secretMasked"`
 	UpdateVer    int  `json:"updateVer"`
@@ -84,6 +85,18 @@ type AppKindCacheResp struct {
 
 func (resp *AppKindCacheResp) CopyPassword(field entity.EncryptedField) error {
 	resp.Password = field.String()
+	return nil
+}
+
+type AppKindStorageResp struct {
+	KeyID  string `json:"keyId,omitempty"`
+	Secret string `json:"secret,omitempty" copy:"-"`
+	Bucket string `json:"bucket,omitempty"`
+	Region string `json:"region,omitempty"`
+}
+
+func (resp *AppKindStorageResp) CopySecret(field entity.EncryptedField) error {
+	resp.Secret = field.String()
 	return nil
 }
 

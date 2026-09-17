@@ -33,6 +33,7 @@ type AppKindSettingsReq struct {
 	Webapp   *AppKindWebappReq   `json:"webapp"`
 	Database *AppKindDatabaseReq `json:"database"`
 	Cache    *AppKindCacheReq    `json:"cache"`
+	Storage  *AppKindStorageReq  `json:"storage"`
 
 	UpdateVer int `json:"updateVer"`
 }
@@ -56,6 +57,11 @@ func (req *AppKindSettingsReq) KeepMaskedSecrets(newSettings, current *entity.Ap
 			newSettings.Cache.Password = current.Cache.Password
 		}
 	}
+	if newSettings.Storage != nil && current.Storage != nil && req.Storage != nil {
+		if basedto.IsMaskedSecret(req.Storage.Secret) {
+			newSettings.Storage.Secret = current.Storage.Secret
+		}
+	}
 }
 
 func (req *AppKindSettingsReq) ToEntity() *entity.AppKindSettings {
@@ -67,6 +73,7 @@ func (req *AppKindSettingsReq) ToEntity() *entity.AppKindSettings {
 		Database: req.Database.ToEntity(),
 		Webapp:   req.Webapp.ToEntity(),
 		Cache:    req.Cache.ToEntity(),
+		Storage:  req.Storage.ToEntity(),
 	}
 }
 
@@ -91,6 +98,9 @@ func (req *AppKindSettingsReq) validate(field string) (res []vld.Validator) {
 	case base.AppCategoryCache:
 		res = append(res, basedto.ValidateCond(req.Cache != nil, field+"cache")...)
 		res = append(res, req.Cache.validate(field+"cache")...)
+	case base.AppCategoryStorage:
+		res = append(res, basedto.ValidateCond(req.Storage != nil, field+"storage")...)
+		res = append(res, req.Storage.validate(field+"storage")...)
 	}
 	return res
 }
@@ -194,4 +204,37 @@ func (req *UpdateAppKindSettingsReq) Validate() hperrors.ValidationErrors {
 
 type UpdateAppKindSettingsResp struct {
 	Meta *basedto.Meta `json:"meta"`
+}
+
+type AppKindStorageReq struct {
+	KeyID  string `json:"keyId"`
+	Secret string `json:"secret" copy:"-"`
+	Bucket string `json:"bucket"`
+	Region string `json:"region"`
+}
+
+func (req *AppKindStorageReq) ToEntity() *entity.AppKindStorage {
+	if req == nil {
+		return nil
+	}
+	return &entity.AppKindStorage{
+		KeyID:  req.KeyID,
+		Secret: entity.NewEncryptedField(req.Secret),
+		Bucket: req.Bucket,
+		Region: req.Region,
+	}
+}
+
+func (req *AppKindStorageReq) validate(field string) (res []vld.Validator) {
+	if req == nil {
+		return
+	}
+	if field != "" {
+		field += "."
+	}
+	res = append(res, basedto.ValidateStr(&req.KeyID, false, 1, nameMaxLen, field+"keyId")...)
+	res = append(res, basedto.ValidatePlainSecret(&req.Secret, field+"secret")...)
+	res = append(res, basedto.ValidateStr(&req.Bucket, false, 1, nameMaxLen, field+"bucket")...)
+	res = append(res, basedto.ValidateStr(&req.Region, false, 1, nameMaxLen, field+"region")...)
+	return res
 }

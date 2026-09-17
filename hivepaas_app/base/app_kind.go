@@ -6,10 +6,12 @@ const (
 	AppCategoryDatabase AppCategory = "database"
 	AppCategoryWebapp   AppCategory = "webapp"
 	AppCategoryCache    AppCategory = "cache"
+	AppCategoryStorage  AppCategory = "storage"
 )
 
 var (
-	AllAppCategories = []AppCategory{AppCategoryDatabase, AppCategoryWebapp, AppCategoryCache}
+	AllAppCategories = []AppCategory{AppCategoryDatabase, AppCategoryWebapp, AppCategoryCache,
+		AppCategoryStorage}
 )
 
 type DatabaseSSLMode string

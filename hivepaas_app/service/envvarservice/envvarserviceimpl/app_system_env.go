@@ -148,6 +148,23 @@ func kindEnvVars(kindSettings *entity.AppKindSettings) ([]*envvarservice.EnvVar,
 			sharedEnv(base.AppSystemEnvVarSSLMode, string(db.SSLMode)),
 		}, nil
 
+	case kindSettings.Category == base.AppCategoryStorage && kindSettings.Storage != nil:
+		if err := kindSettings.Decrypt(); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		// A store authenticates with a pair - an S3 access key and secret key, or a
+		// user and password over HTTP - and a client needs both halves plus somewhere
+		// to put the objects. Both halves are shared: unlike a database's root
+		// password, the pair is the only way in, so an app that may use the store at
+		// all needs all of it.
+		store := kindSettings.Storage
+		return []*envvarservice.EnvVar{
+			sharedEnv(base.AppSystemEnvVarKeyID, store.KeyID),
+			sharedEnv(base.AppSystemEnvVarSecret, gofn.Must(store.Secret.GetPlain())),
+			sharedEnv(base.AppSystemEnvVarBucket, store.Bucket),
+			sharedEnv(base.AppSystemEnvVarRegion, store.Region),
+		}, nil
+
 	case kindSettings.Category == base.AppCategoryCache && kindSettings.Cache != nil:
 		if err := kindSettings.Decrypt(); err != nil {
 			return nil, hperrors.Wrap(err)

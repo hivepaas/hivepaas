@@ -240,7 +240,9 @@ func (uc *UC) updateRoutingSettingsOnKindChange(
 			routingSettings.ExposePublicly = false
 			routingSettings.Domains = nil
 		}
-	case base.AppCategoryWebapp:
+	case base.AppCategoryWebapp, base.AppCategoryStorage:
+		// Their domains are the ordinary routing ones, changed on the routing
+		// screen; nothing here decides them from the kind.
 	}
 
 	routingSetting.UpdateVer++

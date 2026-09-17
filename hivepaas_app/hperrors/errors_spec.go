@@ -6,4 +6,5 @@ var (
 	ErrSpecSettingTypeUnclassified = NewErr(ErrInternal, "ERR_SPEC_SETTING_TYPE_UNCLASSIFIED")
 	ErrSpecPassphraseRequired      = NewErr(ErrPreconditionRequired, "ERR_SPEC_PASSPHRASE_REQUIRED")
 	ErrSpecSecretsModeInvalid      = NewErr(ErrArgumentInvalid, "ERR_SPEC_SECRETS_MODE_INVALID")
+	ErrSpecBlockUnsupported        = NewErr(ErrUnsupported, "ERR_SPEC_BLOCK_UNSUPPORTED")
 )

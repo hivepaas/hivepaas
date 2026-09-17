@@ -14,6 +14,7 @@ run the backend you want for the change you are making.
 | The backend as a real swarm service | `make local-app-up` + `make local-agent-up` | https://localhost |
 | Extra swarm nodes | `make local-node-up` | `docker node ls` |
 | A configuration snapshot | `GET /_/spec/export` | a `.tar.gz` of YAML, §6 |
+| App templates from a local checkout | `HP_TEMPLATES_DIR=../app-templates make local-app-run` | the project Store tab, §7 |
 
 Sign in with `admin` / `abc123`.
 
@@ -331,7 +332,50 @@ importing it elsewhere would redeploy its database and proxy over the ones
 `install.sh` had just created. Preview apps are skipped too; they belong to the
 pull request that created them.
 
-## 7. Before you push
+## 7. App templates
+
+Templates live in their own repository,
+[hivepaas/app-templates](https://github.com/hivepaas/app-templates), cloned next to
+this one as `../app-templates`. The design is in
+[specs/2026-09-17-app-templates-design.md](superpowers/specs/2026-09-17-app-templates-design.md).
+
+An installation only reads templates pinned by the signed release info. To try a
+template before it is published, point a development backend at the checkout:
+
+```bash
+HP_TEMPLATES_DIR=../app-templates make local-app-run
+```
+
+`HP_TEMPLATES_DIR` is read with no signature and no hashes, re-read on every
+request, and ignored - with a warning in the log - anywhere `env` is not
+`development`. The store shows the checkout's templates with source `local`.
+
+### The tool
+
+```bash
+go run ./tools/apptemplate lint   ../app-templates
+go run ./tools/apptemplate render -param dataVolume=<volume-id> ../app-templates postgres
+go run ./tools/apptemplate index  ../app-templates           # rewrite index.json
+go run ./tools/apptemplate index  -check ../app-templates    # what CI runs
+go run ./tools/apptemplate pin    ../app-templates           # on the merged commit
+```
+
+The tool renders with the packages HivePaaS renders with, so a template that
+lints here renders there.
+
+### Publishing
+
+1. A pull request to `app-templates`; its CI runs `lint` and `index -check`.
+2. On the merged commit, `go run ./tools/apptemplate pin ../app-templates`.
+3. Put the printed object into `release.json` as `templates` under `beta`,
+   `make release-sign`, and commit both files to the `release` branch.
+4. Check the store on a beta installation, then copy the pin to `stable` and
+   sign again.
+
+A template reaches installations without a HivePaaS release, but never without
+the offline signature: a template decides which images run.
+
+## 8. Before you push
 
 ```bash
 make fmt                  # gofmt + import grouping, in place

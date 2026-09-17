@@ -1,13 +1,11 @@
 package apptemplatedto
 
 import (
-	"fmt"
 	"strings"
 
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 )
@@ -25,8 +23,6 @@ const (
 // file read into memory, so there is no database to sort by, and a sort parameter
 // would be accepted and silently ignored.
 type ListAppTemplatesReq struct {
-	ProjectID string `json:"-"`
-
 	// Categories match a template in any of them. A parent such as `databases`
 	// matches every child under it; `databases/sql` matches exactly.
 	Categories []string `json:"-" mapstructure:"category"`
@@ -64,7 +60,6 @@ func trimValues(values []string) []string {
 // Validate implements interface basedto.ReqValidator
 func (req *ListAppTemplatesReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 4+len(req.Categories)+len(req.Tags)) //nolint:mnd
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateStr(&req.Search, false, 1, searchMaxLen, "search")...)
 	validators = append(validators, validateFilterValues(req.Categories, "category")...)
 	validators = append(validators, validateFilterValues(req.Tags, "tag")...)
@@ -137,7 +132,7 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 		Categories:          entry.Categories,
 		Tags:                entry.Tags,
 		Aliases:             entry.Aliases,
-		IconURL:             AppTemplateIconURL(entry.Icon.SHA256),
+		IconURL:             AppTemplateIconURL(entry),
 		Variants:            make([]*AppTemplateVariantSummaryResp, 0, len(entry.Variants)),
 		Versions:            make([]*AppTemplateVersionResp, 0, len(entry.Versions)),
 		Compatible:          templatemodel.IsCompatible(entry.Requires, currentVersionCode),
@@ -157,11 +152,4 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 		})
 	}
 	return summary
-}
-
-// AppTemplateIconURL is where the dashboard loads an icon from. The route is
-// public, because an <img> cannot send the Authorization header, and addressed by
-// hash, so the response can be cached forever.
-func AppTemplateIconURL(sha256Hex string) string {
-	return fmt.Sprintf("%v/app-templates/icons/%v", config.Current().HTTPServer.BasePath, sha256Hex)
 }

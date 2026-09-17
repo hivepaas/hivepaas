@@ -19,14 +19,130 @@
     "url" : "/_"
   } ],
   "paths" : {
-    "/app-templates/icons/{sha256}" : {
+    "/app-templates" : {
+      "get" : {
+        "description" : "Lists the templates a project can create apps from, a page at a time, ordered by name.\nThe categories and tags to filter by come from the app template catalog.",
+        "operationId" : "listAppTemplates",
+        "parameters" : [ {
+          "description" : "categories, comma separated; a parent matches every child",
+          "in" : "query",
+          "name" : "category",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "tags, comma separated; a template carrying any of them matches",
+          "in" : "query",
+          "name" : "tag",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "matches name, title, tagline, tags and aliases, ignoring case",
+          "in" : "query",
+          "name" : "search",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "`pageOffset=offset`",
+          "in" : "query",
+          "name" : "pageOffset",
+          "schema" : {
+            "type" : "integer"
+          }
+        }, {
+          "description" : "`pageLimit=limit`",
+          "in" : "query",
+          "name" : "pageLimit",
+          "schema" : {
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apptemplatedto.ListAppTemplatesResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists app templates",
+        "tags" : [ "app_templates" ]
+      }
+    },
+    "/app-templates/catalog" : {
+      "get" : {
+        "description" : "The source, its revision, and the categories and tags the template list can be filtered by.",
+        "operationId" : "getAppTemplateCatalog",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apptemplatedto.GetAppTemplateCatalogResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets the app template catalog",
+        "tags" : [ "app_templates" ]
+      }
+    },
+    "/app-templates/icons/{file}" : {
       "get" : {
         "description" : "Public: an <img> cannot send the Authorization header. Only icons the current index lists are served.",
         "operationId" : "getAppTemplateIcon",
         "parameters" : [ {
-          "description" : "icon sha256",
+          "description" : "icon file name, such as postgres.3a18fec853.svg",
           "in" : "path",
-          "name" : "sha256",
+          "name" : "file",
           "required" : true,
           "schema" : {
             "type" : "string"
@@ -36,6 +152,21 @@
           "200" : {
             "content" : { },
             "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "image/svg+xml" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              },
+              "image/png" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
           },
           "404" : {
             "content" : {
@@ -54,6 +185,138 @@
           }
         },
         "summary" : "Gets an app template icon",
+        "tags" : [ "app_templates" ]
+      }
+    },
+    "/app-templates/{templateName}" : {
+      "get" : {
+        "description" : "Gets one app template: its description, versions, variants and parameters.",
+        "operationId" : "getAppTemplate",
+        "parameters" : [ {
+          "description" : "template name",
+          "in" : "path",
+          "name" : "templateName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apptemplatedto.GetAppTemplateResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets an app template",
+        "tags" : [ "app_templates" ]
+      }
+    },
+    "/app-templates/{templateName}/image-tags" : {
+      "get" : {
+        "description" : "Reads the registry on demand. The repository comes from the template, never from the request.",
+        "operationId" : "getAppTemplateImageTags",
+        "parameters" : [ {
+          "description" : "template name",
+          "in" : "path",
+          "name" : "templateName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "template version; empty for the default",
+          "in" : "query",
+          "name" : "version",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "template variant; empty for the default",
+          "in" : "query",
+          "name" : "variant",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apptemplatedto.GetAppTemplateImageTagsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "412" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Precondition Failed"
+          }
+        },
+        "summary" : "Lists the image tags a template version could use",
         "tags" : [ "app_templates" ]
       }
     },
@@ -2884,287 +3147,6 @@
         "summary" : "Updates ACME DNS provider status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
-      }
-    },
-    "/projects/{projectID}/app-template-catalog" : {
-      "get" : {
-        "description" : "The source, its revision, and the categories and tags the template list can be filtered by.",
-        "operationId" : "getAppTemplateCatalog",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apptemplatedto.GetAppTemplateCatalogResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets the app template catalog",
-        "tags" : [ "app_templates" ]
-      }
-    },
-    "/projects/{projectID}/app-templates" : {
-      "get" : {
-        "description" : "Lists the templates a project can create apps from, a page at a time, ordered by name.\nThe categories and tags to filter by come from the app template catalog.",
-        "operationId" : "listAppTemplates",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "categories, comma separated; a parent matches every child",
-          "in" : "query",
-          "name" : "category",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "tags, comma separated; a template carrying any of them matches",
-          "in" : "query",
-          "name" : "tag",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "matches name, title, tagline, tags and aliases, ignoring case",
-          "in" : "query",
-          "name" : "search",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "`pageOffset=offset`",
-          "in" : "query",
-          "name" : "pageOffset",
-          "schema" : {
-            "type" : "integer"
-          }
-        }, {
-          "description" : "`pageLimit=limit`",
-          "in" : "query",
-          "name" : "pageLimit",
-          "schema" : {
-            "type" : "integer"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apptemplatedto.ListAppTemplatesResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Lists app templates",
-        "tags" : [ "app_templates" ]
-      }
-    },
-    "/projects/{projectID}/app-templates/{templateName}" : {
-      "get" : {
-        "description" : "Gets one app template: its description, versions, variants and parameters.",
-        "operationId" : "getAppTemplate",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "template name",
-          "in" : "path",
-          "name" : "templateName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apptemplatedto.GetAppTemplateResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "404" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Not Found"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Gets an app template",
-        "tags" : [ "app_templates" ]
-      }
-    },
-    "/projects/{projectID}/app-templates/{templateName}/image-tags" : {
-      "get" : {
-        "description" : "Reads the registry on demand. The repository comes from the template, never from the request.",
-        "operationId" : "getAppTemplateImageTags",
-        "parameters" : [ {
-          "description" : "project ID",
-          "in" : "path",
-          "name" : "projectID",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "template name",
-          "in" : "path",
-          "name" : "templateName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "template version; empty for the default",
-          "in" : "query",
-          "name" : "version",
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "description" : "template variant; empty for the default",
-          "in" : "query",
-          "name" : "variant",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/apptemplatedto.GetAppTemplateImageTagsResp"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "404" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Not Found"
-          },
-          "412" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
-                }
-              }
-            },
-            "description" : "Precondition Failed"
-          }
-        },
-        "summary" : "Lists the image tags a template version could use",
-        "tags" : [ "app_templates" ]
       }
     },
     "/projects/{projectID}/apps" : {
@@ -41695,7 +41677,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -41713,7 +41695,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {

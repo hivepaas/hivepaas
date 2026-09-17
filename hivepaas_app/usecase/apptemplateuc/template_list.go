@@ -1,13 +1,32 @@
 package apptemplateuc
 
 import (
+	"context"
 	"slices"
 	"strings"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 )
+
+func (uc *UC) ListAppTemplates(
+	ctx context.Context,
+	_ *basedto.Auth,
+	req *apptemplatedto.ListAppTemplatesReq,
+) (*apptemplatedto.ListAppTemplatesResp, error) {
+	index, err := uc.appTemplateService.Index(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	page, pagingMeta := pageTemplates(filterTemplates(index.Index.Templates, req), req.Paging)
+	return &apptemplatedto.ListAppTemplatesResp{
+		Meta: &basedto.ListMeta{Page: pagingMeta},
+		Data: apptemplatedto.TransformAppTemplateSummaries(page, base.CurrentVersion),
+	}, nil
+}
 
 // filterTemplates keeps the templates matching every filter the request sets. The
 // catalog is one verified file already in memory - a few hundred entries at most -

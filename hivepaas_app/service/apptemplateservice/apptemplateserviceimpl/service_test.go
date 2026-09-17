@@ -122,10 +122,35 @@ func TestServiceIcon(t *testing.T) {
 	svc, _ := newServiceTest(t, config.EnvDev, testRepoDir)
 	index, err := svc.Index(context.Background())
 	assert.NoError(t, err)
+	sha := index.Index.FindTemplate("demo").Icon.SHA256
 
-	icon, err := svc.Icon(context.Background(), index.Index.FindTemplate("demo").Icon.SHA256)
+	icon, err := svc.Icon(context.Background(), &apptemplateservice.IconReq{
+		Name: "demo", SHA256Prefix: sha[:apptemplateservice.IconHashLen], Ext: "svg",
+	})
 
 	assert.NoError(t, err)
 	assert.Equal(t, "image/svg+xml", icon.ContentType)
 	assert.Contains(t, string(icon.Content), "<svg")
+}
+
+// An icon URL names a template and a piece of its icon's hash. Anything that does
+// not describe the icon the index lists now is not served: a URL is cached as
+// immutable, so serving new bytes under an old hash would pin the wrong image.
+func TestServiceIconRefusesWhatTheIndexDoesNotList(t *testing.T) {
+	svc, _ := newServiceTest(t, config.EnvDev, testRepoDir)
+	index, err := svc.Index(context.Background())
+	assert.NoError(t, err)
+	prefix := index.Index.FindTemplate("demo").Icon.SHA256[:apptemplateservice.IconHashLen]
+
+	for name, req := range map[string]*apptemplateservice.IconReq{
+		"unknown template":     {Name: "nope", SHA256Prefix: prefix, Ext: "svg"},
+		"stale hash":           {Name: "demo", SHA256Prefix: "0000000000", Ext: "svg"},
+		"another extension":    {Name: "demo", SHA256Prefix: prefix, Ext: "png"},
+		"a shorter hash piece": {Name: "demo", SHA256Prefix: prefix[:4], Ext: "svg"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := svc.Icon(context.Background(), req)
+			assert.ErrorIs(t, err, hperrors.ErrNotFound)
+		})
+	}
 }

@@ -5,7 +5,9 @@ import "context"
 type Service interface {
 	Index(ctx context.Context) (*IndexResp, error)
 	Template(ctx context.Context, name string) (*TemplateResp, error)
-	Icon(ctx context.Context, sha256 string) (*IconResp, error)
+	// Icon serves a template's icon only while the index still lists it with that
+	// hash and extension, so a URL never starts answering with different bytes.
+	Icon(ctx context.Context, req *IconReq) (*IconResp, error)
 	// Render loads a template and renders it for creating an app. A template that
 	// needs a newer HivePaaS is refused, and so is a deprecated version.
 	Render(ctx context.Context, req *RenderReq) (*RenderResp, error)

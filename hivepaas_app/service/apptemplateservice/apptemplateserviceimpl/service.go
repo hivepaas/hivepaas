@@ -3,6 +3,7 @@ package apptemplateserviceimpl
 import (
 	"context"
 	"path"
+	"strings"
 	"sync"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -103,22 +104,23 @@ func (s *service) Template(ctx context.Context, name string) (*apptemplateservic
 	return &apptemplateservice.TemplateResp{Source: src.ID(), Revision: revision, Entry: entry, Template: tmpl}, nil
 }
 
-func (s *service) Icon(ctx context.Context, sha256Hex string) (*apptemplateservice.IconResp, error) {
+func (s *service) Icon(ctx context.Context, req *apptemplateservice.IconReq) (*apptemplateservice.IconResp, error) {
 	src := s.source()
 	index, err := src.Index(ctx)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	entry := index.FindIcon(sha256Hex)
-	if entry == nil {
+	entry := index.FindTemplate(req.Name)
+	if entry == nil || len(req.SHA256Prefix) != apptemplateservice.IconHashLen ||
+		!strings.HasPrefix(entry.Icon.SHA256, req.SHA256Prefix) || path.Ext(entry.Icon.Path) != "."+req.Ext {
 		return nil, hperrors.NewNotFound("Icon")
 	}
-	content, err := src.Icon(ctx, sha256Hex)
+	content, err := src.Icon(ctx, entry.Icon.SHA256)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	contentType := contentTypePNG
-	if path.Ext(entry.Icon.Path) == ".svg" {
+	if req.Ext == "svg" {
 		contentType = contentTypeSVG
 	}
 	return &apptemplateservice.IconResp{Content: content, ContentType: contentType}, nil

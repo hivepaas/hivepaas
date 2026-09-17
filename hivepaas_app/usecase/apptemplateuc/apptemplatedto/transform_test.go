@@ -19,9 +19,10 @@ func useBasePath(t *testing.T) {
 
 func testEntry(versionCode string) *templatemodel.IndexEntry {
 	return &templatemodel.IndexEntry{
-		Name:       "postgres",
-		File:       templatemodel.FileRef{Path: "templates/postgres.yaml", SHA256: "file-sha"},
-		Icon:       templatemodel.FileRef{Path: "icons/postgres.svg", SHA256: "icon-sha"},
+		Name: "postgres",
+		File: templatemodel.FileRef{Path: "templates/postgres.yaml", SHA256: "file-sha"},
+		Icon: templatemodel.FileRef{Path: "icons/postgres.svg",
+			SHA256: "3a18fec8536075187ba89eabce24855f2d2f4861ab790daf49cda264cb8ec137"},
 		Title:      "PostgreSQL",
 		Tagline:    "A database",
 		Categories: []string{"databases/sql"},
@@ -63,7 +64,8 @@ func TestTransformAppTemplateSummaries(t *testing.T) {
 		[]*templatemodel.IndexEntry{testEntry("v000001"), testEntry("v999999")}, "v000001")
 
 	summary := resp[0]
-	assert.Equal(t, "/api/app-templates/icons/icon-sha", summary.IconURL)
+	assert.Equal(t, "/api/app-templates/icons/postgres.3a18fec853.svg", summary.IconURL,
+		"the name says which template, the hash piece changes whenever the icon does")
 	assert.True(t, summary.Compatible)
 	assert.Equal(t, []string{"alpine"}, summary.Versions[0].Variants)
 	assert.False(t, resp[1].Compatible, "a template needing a newer HivePaaS is listed but locked")
@@ -121,4 +123,29 @@ func TestTransformAppTemplateImageTags(t *testing.T) {
 				Class: "other-major", Newer: true},
 		},
 	}, resp, "the dashboard posts Image back as imageOverride, so it never builds a reference itself")
+}
+
+func TestParseAppTemplateIconFile(t *testing.T) {
+	req := NewGetAppTemplateIconReq()
+	req.File = "postgres.3a18fec853.svg"
+	assert.NoError(t, req.ModifyRequest())
+	assert.Empty(t, req.Validate())
+	assert.Equal(t, "postgres", req.Name)
+	assert.Equal(t, "3a18fec853", req.SHA256Prefix)
+	assert.Equal(t, "svg", req.Ext)
+
+	for _, file := range []string{
+		"postgres.svg",               // no hash
+		"postgres.3a18fec8536.svg",   // hash too long
+		"postgres.3A18FEC853.svg",    // hash not lowercase
+		"postgres.3a18fec853.jpg",    // not an icon format
+		"Postgres.3a18fec853.svg",    // not a template name
+		"../postgres.3a18fec853.svg", // not a file name
+		"3a18fec8536075187ba89eabce24855f2d2f4861ab790daf49cda264cb8ec137", // the old URL
+	} {
+		bad := NewGetAppTemplateIconReq()
+		bad.File = file
+		assert.NoError(t, bad.ModifyRequest())
+		assert.NotEmpty(t, bad.Validate(), file)
+	}
 }

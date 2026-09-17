@@ -12,8 +12,7 @@ import (
 const templateNameMaxLen = 63
 
 type GetAppTemplateReq struct {
-	ProjectID string `json:"-"`
-	Name      string `json:"-"`
+	Name string `json:"-"`
 }
 
 func NewGetAppTemplateReq() *GetAppTemplateReq {
@@ -23,7 +22,6 @@ func NewGetAppTemplateReq() *GetAppTemplateReq {
 // Validate implements interface basedto.ReqValidator
 func (req *GetAppTemplateReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 2) //nolint:mnd
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1, templateNameMaxLen, "name")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }

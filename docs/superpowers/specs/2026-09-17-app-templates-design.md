@@ -497,12 +497,15 @@ file cached, and an icon is verified like every other file. Responses carry
 `Content-Security-Policy: sandbox` and `X-Content-Type-Options: nosniff`, since
 an SVG can carry script.
 
-The icon route is public, addressed by the icon's sha256:
-`GET /app-templates/icons/:sha256`. The dashboard shows icons with `<img>`, which
-cannot send the `Authorization` header this API authenticates with - the same
-reason `/images/:imageID` is public. Only a hash listed as an icon in the current
-index is served, so the route exposes exactly the icons of the public templates
-repository and nothing else from the cache.
+The icon route is public, addressed by template name and a piece of the icon's
+sha256: `GET /app-templates/icons/postgres.3a18fec853.svg`. The name makes the URL
+readable; the first ten hex characters of the hash change whenever the icon does,
+which is what makes an immutable cache safe. The dashboard shows icons with
+`<img>`, which cannot send the `Authorization` header this API authenticates with -
+the same reason `/images/:imageID` is public. An icon is served only while the
+current index lists that template with that hash and extension, so the route
+exposes exactly the icons of the public templates repository and never answers an
+old URL with new bytes.
 
 ### The local directory source
 
@@ -791,9 +794,10 @@ other app.
 
 | Endpoint | Access | Returns |
 |---|---|---|
-| `GET /projects/:projectID/app-templates` | project read | The index: categories, tags, template summaries with `iconUrl` and `compatible`, plus `source` and `revision`. |
+| `GET /projects/:projectID/app-template-catalog` | project read | `source`, `revision`, and the categories and tags to filter by. |
+| `GET /projects/:projectID/app-templates` | project read | Template summaries with `iconUrl` and `compatible`, a page at a time; filters `category`, `tag`, `search`. |
 | `GET /projects/:projectID/app-templates/:name` | project read | The template: metadata with description, variants, versions, parameter schema. Secret defaults are never included. |
-| `GET /app-templates/icons/:sha256` | public | The icon. Content-addressed, so `Cache-Control: immutable` is safe. See section 3 for why it is public. |
+| `GET /app-templates/icons/:name.:hash10.:ext` | public | The icon. The name carries a piece of its hash, so `Cache-Control: immutable` is safe. See section 3 for why it is public. |
 | `POST /projects/:projectID/:projectEnv/apps/from-template` | as creating an app | `{appId, deploymentId}` |
 | `GET /projects/:projectID/:projectEnv/apps/:appID/template` | as reading the app | The app's template: template, title, version, release, variant, revision, appliedAt. `404` for an app not created from a template. |
 

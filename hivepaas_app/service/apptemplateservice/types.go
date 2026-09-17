@@ -18,6 +18,19 @@ type TemplateResp struct {
 	Template *templatemodel.Template
 }
 
+// IconHashLen is how much of an icon's sha256 its file name carries. The name has
+// to change whenever the icon does, so a response can be cached as immutable, and
+// 40 bits of hash is far beyond what one template's icon history will ever collide
+// on. The rest of the hash stays in the index, where verification needs it.
+const IconHashLen = 10
+
+// IconReq names an icon the way its URL does: postgres.3a18fec853.svg.
+type IconReq struct {
+	Name         string
+	SHA256Prefix string
+	Ext          string
+}
+
 type IconResp struct {
 	Content     []byte
 	ContentType string

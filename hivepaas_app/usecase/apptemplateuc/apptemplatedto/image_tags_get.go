@@ -9,8 +9,7 @@ import (
 )
 
 type GetAppTemplateImageTagsReq struct {
-	ProjectID string `json:"-"`
-	Name      string `json:"-"`
+	Name string `json:"-"`
 
 	Version string `json:"-" mapstructure:"version"`
 	Variant string `json:"-" mapstructure:"variant"`
@@ -23,7 +22,6 @@ func NewGetAppTemplateImageTagsReq() *GetAppTemplateImageTagsReq {
 // Validate implements interface basedto.ReqValidator
 func (req *GetAppTemplateImageTagsReq) Validate() hperrors.ValidationErrors {
 	validators := make([]vld.Validator, 0, 4) //nolint:mnd
-	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1, templateNameMaxLen, "name")...)
 	validators = append(validators, basedto.ValidateStr(&req.Version, false, 1, choiceNameMaxLen, "version")...)
 	validators = append(validators, basedto.ValidateStr(&req.Variant, false, 1, choiceNameMaxLen, "variant")...)

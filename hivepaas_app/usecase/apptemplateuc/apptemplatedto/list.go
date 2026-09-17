@@ -2,51 +2,91 @@ package apptemplatedto
 
 import (
 	"fmt"
+	"strings"
 
 	vld "github.com/tiendc/go-validator"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 )
 
+const (
+	maxFilterValues   = 20
+	filterValueMaxLen = 127
+	searchMaxLen      = 100
+)
+
+// ListAppTemplatesReq lists the templates a project can create apps from, a page
+// at a time. The categories and tags to filter by come from GetAppTemplateCatalog.
+//
+// Ordering is by template name and cannot be changed: the catalog is one verified
+// file read into memory, so there is no database to sort by, and a sort parameter
+// would be accepted and silently ignored.
 type ListAppTemplatesReq struct {
 	ProjectID string `json:"-"`
+
+	// Categories match a template in any of them. A parent such as `databases`
+	// matches every child under it; `databases/sql` matches exactly.
+	Categories []string `json:"-" mapstructure:"category"`
+	// Tags match a template carrying any of them.
+	Tags []string `json:"-" mapstructure:"tag"`
+	// Search matches name, title, tagline, tags and aliases, ignoring case.
+	Search string `json:"-" mapstructure:"search"`
+
+	Paging basedto.Paging `json:"-"`
 }
 
 func NewListAppTemplatesReq() *ListAppTemplatesReq {
 	return &ListAppTemplatesReq{}
 }
 
+// ModifyRequest implements interface basedto.ReqModifier
+func (req *ListAppTemplatesReq) ModifyRequest() error {
+	req.Search = strings.TrimSpace(req.Search)
+	req.Categories = trimValues(req.Categories)
+	req.Tags = trimValues(req.Tags)
+	return nil
+}
+
+// trimValues drops the empty values `?category=a,,b` leaves behind.
+func trimValues(values []string) []string {
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		if trimmed := strings.TrimSpace(value); trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
+}
+
 // Validate implements interface basedto.ReqValidator
 func (req *ListAppTemplatesReq) Validate() hperrors.ValidationErrors {
-	return hperrors.NewValidationErrors(vld.Validate(basedto.ValidateID(&req.ProjectID, true, "projectId")...))
+	validators := make([]vld.Validator, 0, 4+len(req.Categories)+len(req.Tags)) //nolint:mnd
+	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
+	validators = append(validators, basedto.ValidateStr(&req.Search, false, 1, searchMaxLen, "search")...)
+	validators = append(validators, validateFilterValues(req.Categories, "category")...)
+	validators = append(validators, validateFilterValues(req.Tags, "tag")...)
+	return hperrors.NewValidationErrors(vld.Validate(validators...))
+}
+
+func validateFilterValues(values []string, field string) []vld.Validator {
+	validators := []vld.Validator{
+		vld.SliceLen(values, 0, maxFilterValues).OnError(
+			vld.SetField(field, nil),
+			vld.SetCustomKey("ERR_VLD_FIELD_LENGTH_INVALID"),
+		),
+	}
+	for i := range values {
+		validators = append(validators, basedto.ValidateStr(&values[i], true, 1, filterValueMaxLen, field)...)
+	}
+	return validators
 }
 
 type ListAppTemplatesResp struct {
-	Meta *basedto.Meta           `json:"meta"`
-	Data *AppTemplateCatalogResp `json:"data"`
-}
-
-type AppTemplateCatalogResp struct {
-	Source     string                     `json:"source"`
-	Revision   string                     `json:"revision"`
-	Categories []*AppTemplateCategoryResp `json:"categories"`
-	Tags       []*AppTemplateTagResp      `json:"tags"`
-	Templates  []*AppTemplateSummaryResp  `json:"templates"`
-}
-
-type AppTemplateCategoryResp struct {
-	ID       string                     `json:"id"`
-	Title    string                     `json:"title"`
-	Children []*AppTemplateCategoryResp `json:"children,omitempty"`
-}
-
-type AppTemplateTagResp struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
+	Meta *basedto.ListMeta         `json:"meta"`
+	Data []*AppTemplateSummaryResp `json:"data"`
 }
 
 type AppTemplateSummaryResp struct {
@@ -78,34 +118,13 @@ type AppTemplateVersionResp struct {
 	Variants   []string `json:"variants"`
 }
 
-func TransformAppTemplateCatalog(
-	index *apptemplateservice.IndexResp,
+func TransformAppTemplateSummaries(
+	entries []*templatemodel.IndexEntry,
 	currentVersionCode string,
-) *AppTemplateCatalogResp {
-	resp := &AppTemplateCatalogResp{
-		Source:     index.Source,
-		Revision:   index.Revision,
-		Categories: transformCategories(index.Index.Categories),
-		Tags:       make([]*AppTemplateTagResp, 0, len(index.Index.Tags)),
-		Templates:  make([]*AppTemplateSummaryResp, 0, len(index.Index.Templates)),
-	}
-	for _, tag := range index.Index.Tags {
-		resp.Tags = append(resp.Tags, &AppTemplateTagResp{ID: tag.ID, Title: tag.Title})
-	}
-	for _, entry := range index.Index.Templates {
-		resp.Templates = append(resp.Templates, transformSummary(entry, currentVersionCode))
-	}
-	return resp
-}
-
-func transformCategories(categories []*templatemodel.Category) []*AppTemplateCategoryResp {
-	out := make([]*AppTemplateCategoryResp, 0, len(categories))
-	for _, category := range categories {
-		out = append(out, &AppTemplateCategoryResp{
-			ID:       category.ID,
-			Title:    category.Title,
-			Children: transformCategories(category.Children),
-		})
+) []*AppTemplateSummaryResp {
+	out := make([]*AppTemplateSummaryResp, 0, len(entries))
+	for _, entry := range entries {
+		out = append(out, transformSummary(entry, currentVersionCode))
 	}
 	return out
 }

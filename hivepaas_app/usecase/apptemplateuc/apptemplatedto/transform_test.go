@@ -34,7 +34,6 @@ func testEntry(versionCode string) *templatemodel.IndexEntry {
 }
 
 func TestTransformAppTemplateCatalog(t *testing.T) {
-	useBasePath(t)
 	index := &apptemplateservice.IndexResp{
 		Source:   "official",
 		Revision: "abc",
@@ -42,20 +41,33 @@ func TestTransformAppTemplateCatalog(t *testing.T) {
 			Categories: []*templatemodel.Category{{ID: "databases", Title: "Databases",
 				Children: []*templatemodel.Category{{ID: "sql", Title: "SQL"}}}},
 			Tags:      []*templatemodel.Tag{{ID: "sql", Title: "SQL"}},
-			Templates: []*templatemodel.IndexEntry{testEntry("v000001"), testEntry("v999999")},
+			Templates: []*templatemodel.IndexEntry{testEntry("v000001")},
 		},
 	}
 
-	resp := TransformAppTemplateCatalog(index, "v000001")
+	resp := TransformAppTemplateCatalog(index)
 
-	assert.Equal(t, "official", resp.Source)
-	assert.Equal(t, "SQL", resp.Categories[0].Children[0].Title)
-	summary := resp.Templates[0]
+	assert.Equal(t, &AppTemplateCatalogResp{
+		Source:   "official",
+		Revision: "abc",
+		Categories: []*AppTemplateCategoryResp{{ID: "databases", Title: "Databases",
+			Children: []*AppTemplateCategoryResp{{ID: "sql", Title: "SQL", Children: []*AppTemplateCategoryResp{}}}}},
+		Tags: []*AppTemplateTagResp{{ID: "sql", Title: "SQL"}},
+	}, resp, "the catalog carries no templates: those are listed a page at a time")
+}
+
+func TestTransformAppTemplateSummaries(t *testing.T) {
+	useBasePath(t)
+
+	resp := TransformAppTemplateSummaries(
+		[]*templatemodel.IndexEntry{testEntry("v000001"), testEntry("v999999")}, "v000001")
+
+	summary := resp[0]
 	assert.Equal(t, "/api/app-templates/icons/icon-sha", summary.IconURL)
 	assert.True(t, summary.Compatible)
 	assert.Equal(t, []string{"alpine"}, summary.Versions[0].Variants)
-	assert.False(t, resp.Templates[1].Compatible, "a template needing a newer HivePaaS is listed but locked")
-	assert.Equal(t, "v999999", resp.Templates[1].RequiresVersionCode)
+	assert.False(t, resp[1].Compatible, "a template needing a newer HivePaaS is listed but locked")
+	assert.Equal(t, "v999999", resp[1].RequiresVersionCode)
 }
 
 func TestTransformAppTemplateNeverSendsASecretDefault(t *testing.T) {

@@ -10,13 +10,19 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 )
 
-// ListAppTemplates Lists the app template catalog
-// @Summary Lists the app template catalog
-// @Description Lists categories, tags and a summary of every app template a project can create apps from.
+// ListAppTemplates Lists app templates
+// @Summary Lists app templates
+// @Description Lists the templates a project can create apps from, a page at a time, ordered by name.
+// @Description The categories and tags to filter by come from the app template catalog.
 // @Tags    app_templates
 // @Produce json
 // @Id      listAppTemplates
 // @Param   projectID path string true "project ID"
+// @Param   category query string false "categories, comma separated; a parent matches every child"
+// @Param   tag query string false "tags, comma separated; a template carrying any of them matches"
+// @Param   search query string false "matches name, title, tagline, tags and aliases, ignoring case"
+// @Param   pageOffset query int false "`pageOffset=offset`"
+// @Param   pageLimit query int false "`pageLimit=limit`"
 // @Success 200 {object} apptemplatedto.ListAppTemplatesResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -30,7 +36,7 @@ func (h *Handler) ListAppTemplates(ctx *gin.Context) {
 
 	req := apptemplatedto.NewListAppTemplatesReq()
 	req.ProjectID = projectID
-	if err = h.ParseAndValidateRequest(ctx, req, nil); err != nil {
+	if err = h.ParseAndValidateRequest(ctx, req, &req.Paging); err != nil {
 		h.RenderError(ctx, err)
 		return
 	}

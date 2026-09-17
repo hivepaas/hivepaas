@@ -27,7 +27,9 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	// Configuration spec export
 	projectGroup.POST("/:projectID/spec/export", s.handlerRegistry.specHandler.ExportProjectSpec)
 
-	// App templates catalog
+	// App templates. The catalog sits outside /app-templates on purpose: a static
+	// segment beside /app-templates/:templateName would hide a template of that name.
+	projectGroup.GET("/:projectID/app-template-catalog", s.handlerRegistry.appTemplateHandler.GetAppTemplateCatalog)
 	projectGroup.GET("/:projectID/app-templates", s.handlerRegistry.appTemplateHandler.ListAppTemplates)
 	projectGroup.GET("/:projectID/app-templates/:templateName", s.handlerRegistry.appTemplateHandler.GetAppTemplate)
 	projectGroup.GET("/:projectID/app-templates/:templateName/image-tags",

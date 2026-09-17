@@ -12,14 +12,32 @@ import (
 func (uc *UC) ListAppTemplates(
 	ctx context.Context,
 	_ *basedto.Auth,
-	_ *apptemplatedto.ListAppTemplatesReq,
+	req *apptemplatedto.ListAppTemplatesReq,
 ) (*apptemplatedto.ListAppTemplatesResp, error) {
 	index, err := uc.appTemplateService.Index(ctx)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	page, pagingMeta := pageTemplates(filterTemplates(index.Index.Templates, req), req.Paging)
 	return &apptemplatedto.ListAppTemplatesResp{
-		Data: apptemplatedto.TransformAppTemplateCatalog(index, base.CurrentVersion),
+		Meta: &basedto.ListMeta{Page: pagingMeta},
+		Data: apptemplatedto.TransformAppTemplateSummaries(page, base.CurrentVersion),
+	}, nil
+}
+
+// GetAppTemplateCatalog returns what the store needs once when it opens: the source,
+// its revision, and the categories and tags to filter the list by.
+func (uc *UC) GetAppTemplateCatalog(
+	ctx context.Context,
+	_ *basedto.Auth,
+	_ *apptemplatedto.GetAppTemplateCatalogReq,
+) (*apptemplatedto.GetAppTemplateCatalogResp, error) {
+	index, err := uc.appTemplateService.Index(ctx)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &apptemplatedto.GetAppTemplateCatalogResp{
+		Data: apptemplatedto.TransformAppTemplateCatalog(index),
 	}, nil
 }
 

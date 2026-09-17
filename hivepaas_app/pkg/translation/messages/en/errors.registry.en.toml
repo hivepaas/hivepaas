@@ -1,0 +1,5 @@
+# Messages for the errors declared in hivepaas_app/hperrors/errors_registry.go.
+# Adding or removing an error there means editing this file.
+
+ERR_REGISTRY_UNAVAILABLE = "The image registry could not be reached"
+ERR_REGISTRY_RATE_LIMITED = "The image registry is rate limiting this installation. Try again in a few minutes."

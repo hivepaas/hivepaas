@@ -27,6 +27,12 @@ type Request struct {
 	// ImageOverride replaces the image this version pins, for this app only. It
 	// must come from the same repository; ClassifyImageOverride decides.
 	ImageOverride string
+	// ResolvedParams, when set, are used instead of resolving Params. A caller that
+	// renders a template's dependencies from its parameters resolves them first,
+	// and this render must use the same generated secrets.
+	ResolvedParams map[string]*Value
+	// Deps binds every dependency the template declares to its app.
+	Deps map[string]*DepBinding
 }
 
 type Result struct {
@@ -65,9 +71,17 @@ func Render(req *Request) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	params, err := ResolveParams(tmpl.Parameters, req.Params)
-	if err != nil {
-		return nil, err
+	params := req.ResolvedParams
+	if params == nil {
+		if params, err = ResolveParams(tmpl.Parameters, req.Params); err != nil {
+			return nil, err
+		}
+	}
+	for _, dep := range tmpl.Dependencies {
+		if req.Deps[dep.Name] == nil {
+			return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).
+				WithExtraDetail("%s: dependency %q is not bound to an app", tmpl.Metadata.Name, dep.Name)
+		}
 	}
 
 	tree := deepCopy(tmpl.App)
@@ -79,7 +93,7 @@ func Render(req *Request) (*Result, error) {
 	vars := templateVars(version, variant, image)
 	name := tmpl.Metadata.Name
 
-	applied, err := Substitute(tree, resolver(name, vars, params, false))
+	applied, err := Substitute(tree, resolver(name, vars, params, req.Deps, false))
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +109,7 @@ func Render(req *Request) (*Result, error) {
 		return nil, err
 	}
 
-	baseTree, err := Substitute(tree, resolver(name, vars, params, true))
+	baseTree, err := Substitute(tree, resolver(name, vars, params, req.Deps, true))
 	if err != nil {
 		return nil, err
 	}
@@ -211,10 +225,21 @@ func templateVars(version *templatemodel.Version, variant *templatemodel.Variant
 	return vars
 }
 
-// resolver answers placeholders from the version, the variant and the resolved
-// parameters. keepSecrets leaves secret placeholders as they are - the base render.
-func resolver(template string, vars map[string]any, params map[string]*Value, keepSecrets bool) Resolver {
+// resolver answers placeholders from the version, the variant, the resolved
+// parameters and the dependencies' bindings. keepSecrets leaves secret
+// placeholders as they are - the base render.
+func resolver(
+	template string,
+	vars map[string]any,
+	params map[string]*Value,
+	deps map[string]*DepBinding,
+	keepSecrets bool,
+) Resolver {
 	return func(ref string) (any, bool, error) {
+		if strings.HasPrefix(ref, "deps.") {
+			value, err := resolveDep(template, ref, deps)
+			return value, false, err
+		}
 		if paramName, isParam := strings.CutPrefix(ref, "params."); isParam {
 			value, found := params[paramName]
 			if !found {

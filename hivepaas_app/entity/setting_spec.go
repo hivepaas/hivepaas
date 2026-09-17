@@ -156,6 +156,7 @@ var (
 		base.SettingTypeAppFeatures,
 		base.SettingTypeAppKind,
 		base.SettingTypeAppPlacement,
+		base.SettingTypeAppTemplate,
 		base.SettingTypeBackupRepo,
 		base.SettingTypeBackupRepoCleanup,
 		base.SettingTypeBasicAuth,

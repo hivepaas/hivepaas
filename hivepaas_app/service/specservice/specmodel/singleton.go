@@ -24,6 +24,7 @@ var singletonBlockNames = map[base.SettingType]string{
 	base.SettingTypeAppKind:       "kind",
 	base.SettingTypeAppPlacement:  "placement",
 	base.SettingTypeAppRouting:    "routing",
+	base.SettingTypeAppTemplate:   "template",
 	base.SettingTypeEnvVar:        "envVars",
 	base.SettingTypeProject:       "project",
 

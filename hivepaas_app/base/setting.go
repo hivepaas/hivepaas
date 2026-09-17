@@ -15,6 +15,7 @@ const (
 	SettingTypeAppKind           SettingType = "app-kind"
 	SettingTypeAppPlacement      SettingType = "app-placement"
 	SettingTypeAppRouting        SettingType = "app-routing"
+	SettingTypeAppTemplate       SettingType = "app-template"
 	SettingTypeBackupRepo        SettingType = "backup-repo"
 	SettingTypeBackupRepoCleanup SettingType = "backup-repo-cleanup"
 	SettingTypeBackupSnapshot    SettingType = "backup-snapshot"

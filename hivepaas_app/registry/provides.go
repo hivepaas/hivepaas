@@ -48,6 +48,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice/appcloneserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice/appdeploymentserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice/apppreviewserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice/appprovisionserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice/approutingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice/auditserviceimpl"
@@ -327,6 +328,7 @@ var Provides = []any{
 	auditserviceimpl.New,
 	appcloneserviceimpl.New,
 	appdeploymentserviceimpl.New,
+	appprovisionserviceimpl.New,
 	apppreviewserviceimpl.New,
 	approutingserviceimpl.New,
 	settingsprobationserviceimpl.New,

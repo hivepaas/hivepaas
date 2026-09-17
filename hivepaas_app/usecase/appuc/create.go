@@ -5,31 +5,17 @@ import (
 	"errors"
 	"time"
 
-	"github.com/moby/moby/api/types/swarm"
-	"github.com/tiendc/gofn"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
-	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/apphelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc/appdto"
-)
-
-const (
-	dockerImageInit    = "busybox:latest"
-	dockerImageInitDev = "crccheck/hello-world:latest"
 )
 
 func (uc *UC) CreateApp(
@@ -50,44 +36,28 @@ func (uc *UC) CreateApp(
 	}()
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		appData := &createAppData{}
-		err := uc.loadAppData(ctx, db, req, appData)
+		provisioned, err := uc.appProvisionService.ProvisionApp(ctx, db, &appprovisionservice.ProvisionAppReq{
+			ProjectID:    req.ProjectID,
+			ProjectEnvID: req.ProjectEnvID,
+			Name:         req.Name,
+			Status:       req.Status,
+			Note:         req.Note,
+			Tags:         req.Tags,
+		})
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-
-		persistingData := &persistingAppData{}
-		err = uc.preparePersistingApp(ctx, db, req, appData, persistingData)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-
-		createdApp = persistingData.UpsertingApps[0]
+		createdApp = provisioned.App
 		resp.Data = &basedto.ObjectIDResp{ID: createdApp.ID}
 
-		// Create a service in docker for the app
-		res, err := uc.dockerManager.ServiceCreate(ctx, appData.ServiceSpec)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		if res.ID == "" { // should never happen
-			return hperrors.Wrap(hperrors.ErrInfraInternal).
-				WithParam("Error", "empty service ID returned")
-		}
-		createdApp.ServiceID = res.ID
-
-		if err := uc.persistData(ctx, db, persistingData); err != nil {
-			return hperrors.Wrap(err)
-		}
-
-		// After persisting and still inside the transaction. The Swarm service is
-		// already up by this point, but a record that fails errors the call, and
-		// the deferred cleanup above tears that service back down - so there is no
-		// path here that leaves a live app behind with nothing recorded.
+		// After persisting and still inside the transaction. ProvisionApp removes
+		// the service itself when it fails; a record that fails here errors the
+		// call and the deferred cleanup above removes it - so there is no path
+		// that leaves a live app behind with nothing recorded.
 		return uc.recordAppWrite(ctx, db, auth, createdApp,
 			base.AuditLogTypeAppCreate, base.AuditLogSourceAPICreate, "create", auditdetail.New().
-				Set("projectId", appData.Project.ID).
-				Set("envId", appData.ProjectEnv.ID).
+				Set("projectId", createdApp.ProjectID).
+				Set("envId", createdApp.ProjectEnvID).
 				Set("serviceId", createdApp.ServiceID))
 	})
 	if err != nil {
@@ -97,97 +67,8 @@ func (uc *UC) CreateApp(
 	return resp, nil
 }
 
-type createAppData struct {
-	Project      *entity.Project
-	ProjectEnv   *entity.ProjectEnv
-	AppGlobalKey string
-	AppKey       string
-	ServiceSpec  *swarm.ServiceSpec
-}
-
-func (uc *UC) loadAppData(
-	ctx context.Context,
-	db database.IDB,
-	req *appdto.CreateAppReq,
-	data *createAppData,
-) error {
-	project, err := uc.projectRepo.GetByID(ctx, db, req.ProjectID,
-		bunex.SelectFor("UPDATE OF project"),
-		bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
-		bunex.SelectRelation("ProjectEnvs",
-			bunex.SelectWhere("project_env.id = ?", req.ProjectEnvID),
-		),
-	)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	if project.Status != base.ProjectStatusActive {
-		return hperrors.Wrap(hperrors.ErrProjectInactive).WithParam("Name", project.Name)
-	}
-	if len(project.ProjectEnvs) == 0 {
-		return hperrors.Wrap(hperrors.ErrProjectEnvNotFound).WithParam("Name", req.ProjectEnvID)
-	}
-	projectEnv := project.ProjectEnvs[0]
-	if projectEnv.Status != base.ProjectStatusActive {
-		return hperrors.Wrap(hperrors.ErrProjectEnvInactive).WithParam("Project", project.Name).
-			WithParam("Env", projectEnv.Name)
-	}
-
-	data.Project = project
-	data.ProjectEnv = projectEnv
-	data.AppKey = projecthelper.CalcAppKey(req.Name)
-	data.AppGlobalKey = projecthelper.CalcAppGlobalKey(project.Key, data.AppKey, projectEnv.Key)
-
-	// App keys must be unique globally
-	conflictApp, err := uc.appRepo.GetByGlobalKey(ctx, db, "", data.AppGlobalKey, bunex.SelectColumns("id"))
-	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
-		return hperrors.Wrap(err)
-	}
-	if conflictApp != nil {
-		return hperrors.NewAlreadyExist("App").
-			WithMsgLog("app unique key '%s' already exists", data.AppGlobalKey)
-	}
-
-	// Create local network for the app to attach
-	_, _, err = uc.networkService.GetOrCreateProjectNetwork(ctx, db, project, projectEnv.Key)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	return nil
-}
-
 type persistingAppData struct {
 	appservice.PersistingAppData
-}
-
-func (uc *UC) preparePersistingApp(
-	ctx context.Context,
-	db database.IDB,
-	req *appdto.CreateAppReq,
-	data *createAppData,
-	persistingData *persistingAppData,
-) error {
-	timeNow := timeutil.NowUTC()
-	project := data.Project
-	app := &entity.App{
-		ID:           gofn.Must(ulid.NewStringULID()),
-		ProjectID:    project.ID,
-		ProjectEnvID: data.ProjectEnv.ID,
-		Key:          data.AppKey,
-		GlobalKey:    data.AppGlobalKey,
-		CreatedAt:    timeNow,
-	}
-
-	uc.preparePersistingAppBase(app, req.AppBaseReq, timeNow, persistingData)
-	uc.preparePersistingAppTags(app, req.Tags, 0, persistingData)
-	uc.preparePersistingAppSettingsDefault(app, timeNow, persistingData)
-
-	err := uc.preparePersistingAppService(ctx, db, app, data)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	return nil
 }
 
 func (uc *UC) preparePersistingAppBase(
@@ -220,107 +101,6 @@ func (uc *UC) preparePersistingAppTags(
 			})
 		index++
 	}
-}
-
-func (uc *UC) preparePersistingAppService(
-	ctx context.Context,
-	db database.IDB,
-	app *entity.App,
-	data *createAppData,
-) error {
-	isDevEnv := config.Current().IsDevEnv()
-
-	appInfo := &apphelper.AppInfo{
-		Name: app.Name,
-		Key:  app.Key,
-		Env:  data.ProjectEnv.Name,
-	}
-
-	service := &swarm.Service{
-		Spec: swarm.ServiceSpec{
-			Mode: swarm.ServiceMode{
-				Replicated: &swarm.ReplicatedService{
-					Replicas: new(uint64(1)),
-				},
-			},
-			Annotations: swarm.Annotations{
-				Name: app.GlobalKey,
-				Labels: map[string]string{
-					appservice.LabelAppNamespace: data.Project.Key,
-					appservice.LabelAppInfo:      apphelper.CalcAppInfoLabel(appInfo),
-				},
-			},
-			TaskTemplate: swarm.TaskSpec{
-				ContainerSpec: &swarm.ContainerSpec{
-					Image:    gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit),
-					Command:  gofn.If(isDevEnv, nil, []string{"sleep", "infinity"}),
-					Hostname: app.Key,
-					Init:     new(true), // default to use `tini`
-					// The app's identity, for the log collector. Container labels
-					// rather than service ones: swarm does not pass service labels
-					// down, so only these can reach a log line's attrs.
-					Labels: appservice.WithAppLogLabels(nil, app),
-				},
-				Networks: []swarm.NetworkAttachmentConfig{
-					{
-						Target:  uc.networkService.GetProjectNetworkName(data.Project, data.ProjectEnv.Name),
-						Aliases: []string{app.Key},
-					},
-				},
-				// See DefaultLogDriver for why this is not `local`.
-				LogDriver: appservice.DefaultLogDriver(),
-			},
-		},
-	}
-
-	_, err := uc.placementService.ApplyPlacementSettings(ctx, db, &placementservice.ApplyPlacementSettingsReq{
-		App:                app,
-		Service:            service,
-		SkipSavingToDocker: true,
-	})
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
-	data.ServiceSpec = &service.Spec
-	return nil
-}
-
-func (uc *UC) preparePersistingAppSettingsDefault(
-	app *entity.App,
-	timeNow time.Time,
-	persistingData *persistingAppData,
-) {
-	// Init empty routing settings
-	routingSettings := &entity.AppRoutingSettings{}
-	dbRoutingSetting := &entity.Setting{
-		ID:          gofn.Must(ulid.NewStringULID()),
-		Scope:       base.ObjectScopeApp,
-		Type:        base.SettingTypeAppRouting,
-		Status:      base.SettingStatusActive,
-		ObjectID:    app.ID,
-		Inheritable: true,
-		CreatedAt:   timeNow,
-		UpdatedAt:   timeNow,
-	}
-	dbRoutingSetting.MustSetData(routingSettings)
-	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbRoutingSetting)
-
-	// Init feature settings
-	featureSettings := &entity.AppFeatureSettings{}
-	entity.InitAppFeatureSettingsDefault(featureSettings)
-	dbFeatureSetting := &entity.Setting{
-		ID:          gofn.Must(ulid.NewStringULID()),
-		Scope:       base.ObjectScopeApp,
-		Type:        base.SettingTypeAppFeatures,
-		Status:      base.SettingStatusActive,
-		ObjectID:    app.ID,
-		Inheritable: true,
-		CreatedAt:   timeNow,
-		UpdatedAt:   timeNow,
-	}
-	dbFeatureSetting.MustSetData(featureSettings)
-	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, dbFeatureSetting)
 }
 
 func (uc *UC) persistData(

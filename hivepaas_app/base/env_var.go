@@ -58,6 +58,30 @@ const (
 	AppSystemEnvVarRegion = "HIVEPAAS_REGION"
 )
 
+// AppCommonSharedEnvVars are shared by every app, whatever its kind.
+var AppCommonSharedEnvVars = []string{
+	AppSystemEnvVarHost, AppSystemEnvVarPort, AppSystemEnvVarDomain,
+	AppSystemEnvVarEnv, AppSystemEnvVarName, AppSystemEnvVarID,
+}
+
+// AppKindSharedEnvVars are what an app of a kind shares on top of the common
+// variables - what another app's ${<app>.VAR} may name. envvarserviceimpl
+// publishes exactly these, and a test there holds the two together.
+func AppKindSharedEnvVars(category AppCategory) []string {
+	switch category {
+	case AppCategoryDatabase:
+		return []string{AppSystemEnvVarUser, AppSystemEnvVarPassword, AppSystemEnvVarDatabaseName,
+			AppSystemEnvVarSSLMode}
+	case AppCategoryCache:
+		return []string{AppSystemEnvVarPassword}
+	case AppCategoryStorage:
+		return []string{AppSystemEnvVarKeyID, AppSystemEnvVarSecret, AppSystemEnvVarBucket, AppSystemEnvVarRegion}
+	case AppCategoryWebapp:
+		return nil
+	}
+	return nil
+}
+
 var (
 	mapAppUnallowedVar = func() map[string]struct{} {
 		theMap := map[string]struct{}{

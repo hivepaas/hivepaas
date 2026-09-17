@@ -131,3 +131,27 @@ func TestKindEnvVars_NothingToPublish(t *testing.T) {
 		})
 	}
 }
+
+// What a kind publishes is read in two places: here, and by the template
+// renderer deciding what ${{ deps.<name>.ref.VAR }} may name. This keeps them
+// from drifting apart.
+func TestKindEnvVars_SharedNamesMatchBase(t *testing.T) {
+	kinds := map[base.AppCategory]*entity.AppKindSettings{
+		base.AppCategoryDatabase: {Category: base.AppCategoryDatabase, Database: &entity.AppKindDatabase{}},
+		base.AppCategoryCache:    {Category: base.AppCategoryCache, Cache: &entity.AppKindCache{}},
+		base.AppCategoryStorage:  {Category: base.AppCategoryStorage, Storage: &entity.AppKindStorage{}},
+		base.AppCategoryWebapp:   {Category: base.AppCategoryWebapp, Webapp: &entity.AppKindWebapp{}},
+	}
+	for _, category := range base.AllAppCategories {
+		envs, err := kindEnvVars(kinds[category])
+		assert.NoError(t, err)
+
+		var shared []string
+		for _, env := range envs {
+			if env.IsShared {
+				shared = append(shared, env.Key)
+			}
+		}
+		assert.ElementsMatch(t, base.AppKindSharedEnvVars(category), shared, string(category))
+	}
+}

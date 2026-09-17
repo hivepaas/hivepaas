@@ -27,6 +27,10 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	// Configuration spec export
 	projectGroup.POST("/:projectID/spec/export", s.handlerRegistry.specHandler.ExportProjectSpec)
 
+	// App templates catalog
+	projectGroup.GET("/:projectID/app-templates", s.handlerRegistry.appTemplateHandler.ListAppTemplates)
+	projectGroup.GET("/:projectID/app-templates/:templateName", s.handlerRegistry.appTemplateHandler.GetAppTemplate)
+
 	{ // Tags
 		tagGroup := projectGroup.Group("/:projectID/tags")
 		tagGroup.POST("", projectSettingsHandler.CreateProjectTag)

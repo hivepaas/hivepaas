@@ -19,6 +19,44 @@
     "url" : "/_"
   } ],
   "paths" : {
+    "/app-templates/icons/{sha256}" : {
+      "get" : {
+        "description" : "Public: an <img> cannot send the Authorization header. Only icons the current index lists are served.",
+        "operationId" : "getAppTemplateIcon",
+        "parameters" : [ {
+          "description" : "icon sha256",
+          "in" : "path",
+          "name" : "sha256",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : { },
+            "description" : "OK"
+          },
+          "404" : {
+            "content" : {
+              "image/svg+xml" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              },
+              "image/png" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          }
+        },
+        "summary" : "Gets an app template icon",
+        "tags" : [ "app_templates" ]
+      }
+    },
     "/auth/login-options" : {
       "get" : {
         "description" : "Gets login options",
@@ -2846,6 +2884,122 @@
         "summary" : "Updates ACME DNS provider status",
         "tags" : [ "project_settings" ],
         "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/projects/{projectID}/app-templates" : {
+      "get" : {
+        "description" : "Lists categories, tags and a summary of every app template a project can create apps from.",
+        "operationId" : "listAppTemplates",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apptemplatedto.ListAppTemplatesResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Lists the app template catalog",
+        "tags" : [ "app_templates" ]
+      }
+    },
+    "/projects/{projectID}/app-templates/{templateName}" : {
+      "get" : {
+        "description" : "Gets one app template: its description, versions, variants and parameters.",
+        "operationId" : "getAppTemplate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "template name",
+          "in" : "path",
+          "name" : "templateName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apptemplatedto.GetAppTemplateResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets an app template",
+        "tags" : [ "app_templates" ]
       }
     },
     "/projects/{projectID}/apps" : {
@@ -41222,25 +41376,15 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
-          "ModeAppend" : "a: append-only",
-          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
-          "ModeDevice" : "D: device file",
-          "ModeDir" : "d: is a directory",
-          "ModeExclusive" : "l: exclusive use",
-          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
-          "ModeNamedPipe" : "p: named pipe (FIFO)",
           "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
-          "ModeSocket" : "S: Unix domain socket",
-          "ModeSticky" : "t: sticky",
-          "ModeSymlink" : "L: symbolic link",
-          "ModeTemporary" : "T: temporary file; Plan 9 only"
+          "ModeSticky" : "t: sticky"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -44321,6 +44465,345 @@
           }
         },
         "required" : [ "driverConfig", "labels", "noCopy", "subpath" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateCatalogResp" : {
+        "properties" : {
+          "categories" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateCategoryResp"
+            },
+            "type" : "array"
+          },
+          "revision" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateTagResp"
+            },
+            "type" : "array"
+          },
+          "templates" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateSummaryResp"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "categories", "revision", "source", "tags", "templates" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateCategoryResp" : {
+        "properties" : {
+          "children" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateCategoryResp"
+            },
+            "type" : "array"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "children", "id", "title" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateLinksResp" : {
+        "properties" : {
+          "documentation" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "website" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "documentation", "source", "website" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateParamOptionResp" : {
+        "properties" : {
+          "title" : {
+            "type" : "string"
+          },
+          "value" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "title", "value" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateParamResp" : {
+        "properties" : {
+          "default" : {
+            "description" : "Default is never set for a secret.",
+            "type" : "object"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "generated" : {
+            "description" : "Generated says a secret left empty is generated.",
+            "type" : "boolean"
+          },
+          "max" : {
+            "type" : "object"
+          },
+          "maxLength" : {
+            "type" : "integer"
+          },
+          "min" : {
+            "type" : "object"
+          },
+          "minLength" : {
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "optional" : {
+            "type" : "boolean"
+          },
+          "options" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateParamOptionResp"
+            },
+            "type" : "array"
+          },
+          "pattern" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "default", "description", "generated", "max", "maxLength", "min", "minLength", "name", "optional", "options", "pattern", "title", "type" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateResp" : {
+        "properties" : {
+          "categories" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "compatible" : {
+            "type" : "boolean"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "iconUrl" : {
+            "type" : "string"
+          },
+          "license" : {
+            "type" : "string"
+          },
+          "links" : {
+            "$ref" : "#/components/schemas/apptemplatedto.AppTemplateLinksResp"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "parameters" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateParamResp"
+            },
+            "type" : "array"
+          },
+          "requiresVersionCode" : {
+            "type" : "string"
+          },
+          "revision" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "tagline" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "variants" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateVariantResp"
+            },
+            "type" : "array"
+          },
+          "versions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateVersionResp"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "categories", "compatible", "description", "iconUrl", "license", "links", "name", "parameters", "requiresVersionCode", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateSummaryResp" : {
+        "properties" : {
+          "aliases" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "categories" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "compatible" : {
+            "description" : "Compatible is false for a template needing a newer HivePaaS: the store\nlists it, locked, rather than hiding it.",
+            "type" : "boolean"
+          },
+          "iconUrl" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "requiresVersionCode" : {
+            "type" : "string"
+          },
+          "tagline" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "variants" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateVariantSummaryResp"
+            },
+            "type" : "array"
+          },
+          "versions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateVersionResp"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "aliases", "categories", "compatible", "iconUrl", "name", "requiresVersionCode", "tagline", "tags", "title", "variants", "versions" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateTagResp" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "title" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateVariantResp" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "default", "description", "name", "title" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateVariantSummaryResp" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "default", "name" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateVersionResp" : {
+        "properties" : {
+          "default" : {
+            "type" : "boolean"
+          },
+          "deprecated" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "release" : {
+            "type" : "string"
+          },
+          "variants" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "default", "deprecated", "name", "release", "variants" ],
+        "type" : "object"
+      },
+      "apptemplatedto.GetAppTemplateResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/apptemplatedto.AppTemplateResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "apptemplatedto.ListAppTemplatesResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/apptemplatedto.AppTemplateCatalogResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "appdto.AppBaseResp" : {
@@ -59193,9 +59676,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apppreviewhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appsettingshandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apptemplatehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/auditloghandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/clusterhandler"
@@ -47,6 +48,7 @@ type HandlerRegistry struct {
 	appHandler                *apphandler.Handler
 	appPreviewHandler         *apppreviewhandler.Handler
 	appSettingsHandler        *appsettingshandler.Handler
+	appTemplateHandler        *apptemplatehandler.Handler
 	auditLogHandler           *auditloghandler.Handler
 	clusterHandler            *clusterhandler.Handler
 	devHelperHandler          *devhelperhandler.Handler
@@ -78,6 +80,7 @@ func NewHandlerRegistry(
 	appHandler *apphandler.Handler,
 	appPreviewHandler *apppreviewhandler.Handler,
 	appSettingsHandler *appsettingshandler.Handler,
+	appTemplateHandler *apptemplatehandler.Handler,
 	auditLogHandler *auditloghandler.Handler,
 	clusterHandler *clusterhandler.Handler,
 	devHelperHandler *devhelperhandler.Handler,
@@ -108,6 +111,7 @@ func NewHandlerRegistry(
 		appHandler:                appHandler,
 		appPreviewHandler:         appPreviewHandler,
 		appSettingsHandler:        appSettingsHandler,
+		appTemplateHandler:        appTemplateHandler,
 		auditLogHandler:           auditLogHandler,
 		clusterHandler:            clusterHandler,
 		devHelperHandler:          devHelperHandler,
@@ -175,6 +179,7 @@ func (s *HTTPServer) registerRoutes() {
 	s.registerWebhookRoutes(apiGroup)
 	s.registerFileRoutes(apiGroup)
 	s.registerImageRoutes(apiGroup)
+	s.registerAppTemplateRoutes(apiGroup)
 	s.registerSupportRoutes(apiGroup)
 	s.registerSpecRoutes(apiGroup)
 }

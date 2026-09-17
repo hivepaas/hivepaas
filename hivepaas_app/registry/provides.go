@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apphandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apppreviewhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/appsettingshandler"
+	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/apptemplatehandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/auditloghandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/basesettinghandler"
@@ -117,6 +118,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appdeploymentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apppreviewuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/auditloguc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/binobjectuc"
@@ -232,6 +234,7 @@ var Provides = []any{
 	apphandler.New,
 	apppreviewhandler.New,
 	appsettingshandler.New,
+	apptemplatehandler.New,
 	auditloghandler.New,
 	authhandler.New,
 	basesettinghandler.New,
@@ -270,6 +273,7 @@ var Provides = []any{
 	appplacementsettingsuc.New,
 	apppreviewuc.New,
 	appsettingsuc.New,
+	apptemplateuc.New,
 	appuc.New,
 	auditloguc.New,
 	backuprepocleanupuc.New,

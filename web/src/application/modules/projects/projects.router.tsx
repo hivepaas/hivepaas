@@ -1452,6 +1452,26 @@ export const projectsRouter: RouteObject = {
                         };
                     },
                 },
+                {
+                    path: ROUTE.projects.single.appTemplates.$pattern,
+                    lazy: async () => {
+                        const { AppTemplatesView } = await import("~/app-templates");
+
+                        return {
+                            Component: AppTemplatesView,
+                        };
+                    },
+                },
+                {
+                    path: ROUTE.projects.single.appTemplates.single.$pattern,
+                    lazy: async () => {
+                        const { AppTemplatesView } = await import("~/app-templates");
+
+                        return {
+                            Component: AppTemplatesView,
+                        };
+                    },
+                },
             ],
         },
         /**

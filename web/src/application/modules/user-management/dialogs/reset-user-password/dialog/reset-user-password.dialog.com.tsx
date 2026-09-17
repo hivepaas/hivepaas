@@ -5,10 +5,12 @@ import {
     Dialog,
     DialogActionFooter,
     DialogBody,
+    DialogDescription,
     DialogFixedContent,
     DialogHeader,
     DialogTitle,
 } from "@components/ui/dialog";
+import { Separator } from "@components/ui/separator";
 import { UsersCommands } from "~/user-management/data/commands";
 
 import { LinkGenerate } from "../building-blocks";
@@ -54,6 +56,10 @@ export function ResetUserPasswordDialog() {
                 <DialogHeader>
                     <DialogTitle>Reset Password</DialogTitle>
                 </DialogHeader>
+                <DialogDescription className="sr-only">Generate a password reset link for the user</DialogDescription>
+                <div className="px-4">
+                    <Separator className="opacity-50" />
+                </div>
 
                 <DialogBody className="flex flex-col gap-6">
                     <LinkGenerate resetLink={resetLink} />

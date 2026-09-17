@@ -1178,6 +1178,16 @@ export const ROUTE = {
                     $route: (id: string) => `/projects/${id}/operations/export/`,
                 },
             },
+
+            appTemplates: {
+                $pattern: "projects/:id/app-templates",
+                $route: (id: string) => `/projects/${id}/app-templates/`,
+
+                single: {
+                    $pattern: "projects/:id/app-templates/:templateName",
+                    $route: (id: string, templateName: string) => `/projects/${id}/app-templates/${templateName}/`,
+                },
+            },
         },
     },
 } as const;

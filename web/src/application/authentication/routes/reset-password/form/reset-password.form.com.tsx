@@ -8,7 +8,7 @@ import { PasswordStrengthMeter } from "@application/shared/components";
 import { BackToSignIn } from "@application/authentication/components";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 
 const Schema = z
@@ -90,7 +90,6 @@ export function ResetPasswordForm({ isPending, onSubmit }: Props) {
             <Card>
                 <CardHeader>
                     <CardTitle>Set your new password</CardTitle>
-                    <CardDescription>Enter your new password</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form

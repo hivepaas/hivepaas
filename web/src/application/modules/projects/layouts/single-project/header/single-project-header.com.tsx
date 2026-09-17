@@ -79,6 +79,11 @@ function View({ projectId }: Props) {
             label: "Operations",
             activePathPrefixes: [ROUTE.projects.single.operations.$route(projectId), `/projects/${projectId}/status`],
         },
+        {
+            route: ROUTE.projects.single.appTemplates.$route(projectId),
+            label: "App Templates",
+            activePathPrefixes: [ROUTE.projects.single.appTemplates.$route(projectId)],
+        },
     ];
 
     function openProjectUserAccessesDialog() {

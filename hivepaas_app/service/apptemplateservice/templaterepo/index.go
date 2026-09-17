@@ -38,6 +38,7 @@ func BuildIndex(repo *Repo) (*templatemodel.Index, error) {
 			Categories: tmpl.Metadata.Categories,
 			Tags:       tmpl.Metadata.Tags,
 			Aliases:    tmpl.Metadata.Aliases,
+			License:    tmpl.Metadata.License,
 			Requires:   tmpl.Metadata.Requires,
 		}
 		for _, variant := range tmpl.Variants {

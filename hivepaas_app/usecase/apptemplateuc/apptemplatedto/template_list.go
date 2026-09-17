@@ -92,6 +92,7 @@ type AppTemplateSummaryResp struct {
 	Tags       []string                         `json:"tags"`
 	Aliases    []string                         `json:"aliases"`
 	IconURL    string                           `json:"iconUrl"`
+	License    string                           `json:"license"`
 	Variants   []*AppTemplateVariantSummaryResp `json:"variants"`
 	Versions   []*AppTemplateVersionResp        `json:"versions"`
 	// Compatible is false for a template needing a newer HivePaaS: the store
@@ -129,6 +130,7 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 		Name:                entry.Name,
 		Title:               entry.Title,
 		Tagline:             entry.Tagline,
+		License:             entry.License,
 		Categories:          entry.Categories,
 		Tags:                entry.Tags,
 		Aliases:             entry.Aliases,

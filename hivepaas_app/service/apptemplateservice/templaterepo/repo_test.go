@@ -42,6 +42,7 @@ metadata:
   categories: [databases/sql]
   tags: [sql]
   icon: icons/demo.svg
+  license: Apache-2.0
   requires: {versionCode: v000001}
 parameters:
   - {name: password, title: Password, type: secret, generate: {length: 16}}
@@ -168,6 +169,7 @@ func TestBuildIndex(t *testing.T) {
 		{Name: "2", Release: "2.1", Default: true},
 		{Name: "1", Release: "1.9", Deprecated: true},
 	}, entry.Versions)
+	assert.Equal(t, "Apache-2.0", entry.License, "the store lists the license without reading every template file")
 	assert.Equal(t, "Cache & Queues", index.Categories[0].Children[1].Title)
 
 	data, err := MarshalIndex(index)

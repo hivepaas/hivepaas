@@ -23,17 +23,22 @@ type FileRef struct {
 }
 
 type IndexEntry struct {
-	Name       string          `json:"name"`
-	File       FileRef         `json:"file"`
-	Icon       FileRef         `json:"icon"`
-	Title      string          `json:"title"`
-	Tagline    string          `json:"tagline"`
-	Categories []string        `json:"categories"`
-	Tags       []string        `json:"tags,omitempty"`
-	Aliases    []string        `json:"aliases,omitempty"`
-	Variants   []*IndexVariant `json:"variants,omitempty"`
-	Versions   []*IndexVersion `json:"versions"`
-	Requires   Requires        `json:"requires"`
+	Name       string   `json:"name"`
+	File       FileRef  `json:"file"`
+	Icon       FileRef  `json:"icon"`
+	Title      string   `json:"title"`
+	Tagline    string   `json:"tagline"`
+	Categories []string `json:"categories"`
+	Tags       []string `json:"tags,omitempty"`
+	Aliases    []string `json:"aliases,omitempty"`
+	// License is an SPDX identifier where one fits, and the license's own name
+	// where it does not - Timescale-License, BUSL-1.1. It is in the index because
+	// the store lists it: what a template costs to run is part of choosing it, and
+	// reading every template file to find out would defeat the index.
+	License  string          `json:"license,omitempty"`
+	Variants []*IndexVariant `json:"variants,omitempty"`
+	Versions []*IndexVersion `json:"versions"`
+	Requires Requires        `json:"requires"`
 }
 
 type IndexVariant struct {

@@ -2,9 +2,6 @@ package appsettingsuc
 
 import (
 	"context"
-	"fmt"
-	"path/filepath"
-	"strings"
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
@@ -16,9 +13,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -34,19 +31,17 @@ func (uc *UC) UpdateAppStorageSettings(
 			return hperrors.Wrap(err)
 		}
 
-		err = uc.prepareUpdatingAppStorageSettings(ctx, data)
+		// Building the mounts also refuses a set that pins the service to more
+		// than one node, which has to happen before the mounts reach the service.
+		built, err := uc.volumeService.BuildAppMounts(ctx, db, &volumeservice.BuildAppMountsReq{
+			App:  data.App,
+			Kept: data.KeptMounts,
+			New:  data.NewMounts,
+		})
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
-
-		// data.FinalMounts is only complete once prepare has appended the new
-		// mounts to the ones the load phase kept unchanged, so this is the
-		// earliest point - and it has to run before the mounts reach the
-		// service, since applying a contradictory pin set silently drops the
-		// placement constraint instead of failing.
-		if err := refuseConflictingVolumePins(data.FinalMounts, data.ScopeVolumes); err != nil {
-			return hperrors.Wrap(err)
-		}
+		data.FinalMounts = built.Mounts
 
 		err = uc.applyAppStorageSettings(ctx, db, data)
 		if err != nil {
@@ -64,17 +59,11 @@ func (uc *UC) UpdateAppStorageSettings(
 }
 
 type updateAppStorageSettingsData struct {
-	App       *entity.App
-	Service   *swarm.Service
-	DBVolumes map[string]*entity.Setting
-	// ScopeVolumes is every cluster-volume setting visible to the app's scope,
-	// not just the ones named in this request - a pinned volume behind an
-	// unchanged bind mount carries no id in the request to look it up by, so
-	// resolving FinalMounts back to their pins (see refuseConflictingVolumePins)
-	// needs the same candidate set placementserviceimpl matches mounts against.
-	ScopeVolumes []*entity.Setting
-	FinalMounts  []mount.Mount
-	NewMountReqs []*appsettingsdto.Mount
+	App         *entity.App
+	Service     *swarm.Service
+	KeptMounts  []mount.Mount
+	NewMounts   []*volumeservice.AppMountReq
+	FinalMounts []mount.Mount
 }
 
 func (uc *UC) loadAppStorageSettingsForUpdate(
@@ -114,163 +103,45 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 		mapCurrMountByKey[uc.calcMountKey(mnt)] = mnt
 	}
 
-	var newDBVolIDs []string
 	for _, reqMnt := range req.Mounts {
 		if existingMount, exists := mapCurrMountByKey[reqMnt.Key]; reqMnt.Key != "" && exists {
-			data.FinalMounts = append(data.FinalMounts, *existingMount) // unchanged mount
+			data.KeptMounts = append(data.KeptMounts, *existingMount) // unchanged mount
 			continue
 		}
-
-		// For custom mounts, only support type Volume and Cluster
-		if reqMnt.Type != mount.TypeVolume && reqMnt.Type != mount.TypeCluster {
-			return hperrors.Wrap(hperrors.ErrUnsupported).
-				WithParam("Name", fmt.Sprintf("Mount type '%v'", reqMnt.Type))
-		}
-		dbVolID := reqMnt.Source
-		data.NewMountReqs = append(data.NewMountReqs, reqMnt)
-		newDBVolIDs = append(newDBVolIDs, dbVolID)
-	}
-
-	// Validate volumes can be used by the project
-	dbVols, err := uc.settingRepo.ListByIDs(ctx, db, app.GetObjectScope(), newDBVolIDs, true,
-		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
-	)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	dbVolMap := entityutil.SliceToIDMap(dbVols)
-	for _, dbVolID := range newDBVolIDs {
-		if _, ok := dbVolMap[dbVolID]; !ok {
-			return hperrors.NewNotFound("Volume").WithMsgLog("volume %v not found", dbVolID)
-		}
-	}
-	data.DBVolumes = dbVolMap
-
-	// Loaded here rather than in prepare because only the load phase has db, and
-	// scoped the same way as the mounts themselves are validated so a volume
-	// mountable by this app - including one inherited from a parent scope - is
-	// always among the candidates refuseConflictingVolumePins matches against.
-	scopeVols, _, err := uc.settingRepo.List(ctx, db, app.GetObjectScope(), nil,
-		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
-	)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-	data.ScopeVolumes = scopeVols
-
-	return nil
-}
-
-func (uc *UC) prepareUpdatingAppStorageSettings(
-	ctx context.Context,
-	data *updateAppStorageSettingsData,
-) error {
-	for _, reqMnt := range data.NewMountReqs {
-		dbVol := data.DBVolumes[reqMnt.Source]
-		vol, err := dbVol.AsClusterVolume()
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		dockerMnt := &mount.Mount{
-			Type:        reqMnt.Type,
-			Source:      dbVol.RefID,
-			Target:      reqMnt.Target,
-			ReadOnly:    reqMnt.ReadOnly,
-			Consistency: reqMnt.Consistency,
-		}
-
-		uc.buildDockerMount(ctx, dockerMnt, reqMnt, vol, dbVol, data)
-
-		// Ensure full permissions (0777) on all mounted volume subpaths before starting/updating the service
-		if dockerMnt.Type == mount.TypeVolume || dockerMnt.Type == mount.TypeCluster {
-			subpath := ""
-			if dockerMnt.VolumeOptions != nil {
-				subpath = dockerMnt.VolumeOptions.Subpath
-			}
-			_ = uc.volumeService.EnsureVolumePermissions(ctx, dockerMnt, subpath)
-		}
-
-		data.FinalMounts = append(data.FinalMounts, *dockerMnt)
+		data.NewMounts = append(data.NewMounts, toAppMountReq(reqMnt))
 	}
 	return nil
 }
 
-func (uc *UC) buildDockerMount(
-	ctx context.Context,
-	dockerMnt *mount.Mount,
-	reqMnt *appsettingsdto.Mount,
-	vol *entity.ClusterVolume,
-	dbVol *entity.Setting,
-	data *updateAppStorageSettingsData,
-) {
-	app := data.App
-	subpath := calcMountSubpath(app, reqMnt, dbVol)
-	uc.useBindMountIfAppropriate(ctx, dockerMnt, vol, subpath)
-
-	switch dockerMnt.Type {
-	case mount.TypeVolume:
-		if reqMnt.VolumeOptions != nil {
-			dockerMnt.VolumeOptions = &mount.VolumeOptions{
-				Subpath: subpath,
-				NoCopy:  reqMnt.VolumeOptions.NoCopy,
-				Labels:  reqMnt.VolumeOptions.Labels,
-			}
-			if reqMnt.VolumeOptions.DriverConfig != nil {
-				dockerMnt.VolumeOptions.DriverConfig = &mount.Driver{
-					Name:    reqMnt.VolumeOptions.DriverConfig.Name,
-					Options: reqMnt.VolumeOptions.DriverConfig.Options,
-				}
-			}
-		}
-		applyVolumeDriverConfigUnlessOverridden(dockerMnt, vol)
-	case mount.TypeCluster:
-		if reqMnt.ClusterOptions != nil {
-			dockerMnt.VolumeOptions = &mount.VolumeOptions{
-				Subpath: subpath,
-				NoCopy:  reqMnt.ClusterOptions.NoCopy,
-				Labels:  reqMnt.ClusterOptions.Labels,
-			}
-			if reqMnt.ClusterOptions.DriverConfig != nil {
-				dockerMnt.VolumeOptions.DriverConfig = &mount.Driver{
-					Name:    reqMnt.ClusterOptions.DriverConfig.Name,
-					Options: reqMnt.ClusterOptions.DriverConfig.Options,
-				}
-			}
-		}
-	case mount.TypeBind, mount.TypeImage, mount.TypeTmpfs, mount.TypeNamedPipe:
+// toAppMountReq carries a requested mount to volumeservice, which cannot take
+// the DTO.
+func toAppMountReq(reqMnt *appsettingsdto.Mount) *volumeservice.AppMountReq {
+	out := &volumeservice.AppMountReq{
+		Type:        reqMnt.Type,
+		Source:      reqMnt.Source,
+		Target:      reqMnt.Target,
+		ReadOnly:    reqMnt.ReadOnly,
+		Consistency: reqMnt.Consistency,
 	}
+	if opts := reqMnt.VolumeOptions; opts != nil {
+		out.VolumeOptions = toAppMountVolumeOptions(opts)
+	}
+	if opts := reqMnt.ClusterOptions; opts != nil {
+		out.ClusterOptions = toAppMountVolumeOptions(&opts.VolumeOptions)
+	}
+	return out
 }
 
-func (uc *UC) useBindMountIfAppropriate(
-	ctx context.Context,
-	dockerMnt *mount.Mount,
-	vol *entity.ClusterVolume,
-	subpath string,
-) {
-	directory, propagation, ok := bindMountTarget(vol, subpath)
-	if !ok {
-		return
+func toAppMountVolumeOptions(opts *appsettingsdto.VolumeOptions) *volumeservice.AppMountVolumeOptions {
+	out := &volumeservice.AppMountVolumeOptions{
+		Subpath: opts.Subpath,
+		NoCopy:  opts.NoCopy,
+		Labels:  opts.Labels,
 	}
-	if err := uc.volumeService.MakeSubDirInHost(ctx, vol.DriverOpts["device"], subpath, true); err != nil {
-		return
+	if driver := opts.DriverConfig; driver != nil {
+		out.DriverConfig = &mount.Driver{Name: driver.Name, Options: driver.Options}
 	}
-
-	dockerMnt.Type = mount.TypeBind
-	dockerMnt.Source = directory
-	dockerMnt.BindOptions = &mount.BindOptions{
-		// Kept for volumes with no pin, which claim every node reaches the same
-		// data: creating the directory there is the right thing. A pinned volume
-		// is kept on its node by a placement constraint instead.
-		CreateMountpoint: true,
-	}
-	if propagation != "" {
-		dockerMnt.BindOptions.Propagation = propagation
-	}
-	// Reset all other kind of options
-	dockerMnt.VolumeOptions = nil
-	dockerMnt.ClusterOptions = nil
-	dockerMnt.TmpfsOptions = nil
-	dockerMnt.ImageOptions = nil
+	return out
 }
 
 // applyAppStorageSettings writes the new mounts and the placement constraints
@@ -313,44 +184,4 @@ func (uc *UC) applyAppStorageSettings(
 		return hperrors.Wrap(err)
 	}
 	return nil
-}
-
-func calcMountSubpath(
-	app *entity.App,
-	reqMnt *appsettingsdto.Mount,
-	dbVol *entity.Setting,
-) string {
-	var subpath string
-	switch dbVol.Scope {
-	case base.ObjectScopeGlobal:
-		subpath = fmt.Sprintf("%v/%v/%v", app.Project.Key, app.ProjectEnv.Key, app.Key)
-	case base.ObjectScopeProject:
-		subpath = fmt.Sprintf("%v/%v", app.ProjectEnv.Key, app.Key)
-	case base.ObjectScopeProjectEnv, base.ObjectScopeApp:
-		subpath = app.Key
-	case base.ObjectScopeUser, base.ObjectScopeHivepaas:
-	}
-
-	if reqMnt.Type == mount.TypeVolume && reqMnt.VolumeOptions != nil {
-		subpath = filepath.Join(subpath, reqMnt.VolumeOptions.Subpath)
-	}
-	if reqMnt.Type == mount.TypeCluster && reqMnt.ClusterOptions != nil {
-		subpath = filepath.Join(subpath, reqMnt.ClusterOptions.Subpath)
-	}
-
-	return subpath
-}
-
-func getConfiguredPropagation(o string) mount.Propagation {
-	parts := strings.Split(o, ",")
-	for _, part := range parts {
-		// Go case clauses don't fall through: every valid propagation value has to
-		// share this one case, or only the last of them would ever be returned.
-		switch mount.Propagation(part) {
-		case mount.PropagationRPrivate, mount.PropagationPrivate, mount.PropagationRSlave,
-			mount.PropagationSlave, mount.PropagationRShared, mount.PropagationShared:
-			return mount.Propagation(part)
-		}
-	}
-	return "" // to use default one
 }

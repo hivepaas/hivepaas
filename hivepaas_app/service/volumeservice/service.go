@@ -16,6 +16,14 @@ type Service interface {
 	Rsync(ctx context.Context, source, target *mount.Mount, options ...RsyncOption) error
 	EnsureVolumePermissions(ctx context.Context, volMount *mount.Mount, subpaths ...string) error
 
+	// BuildAppMounts turns requested mounts of cluster-volume settings into the
+	// docker mounts an app's service carries: it checks every volume is usable
+	// from the app's scope, derives each subpath, rewrites a bind volume into a
+	// bind mount, fills in driver config, opens up permissions, and refuses a set
+	// of mounts that pins the service to more than one node. It does not write the
+	// mounts to the service.
+	BuildAppMounts(ctx context.Context, db database.IDB, req *BuildAppMountsReq) (*BuildAppMountsResp, error)
+
 	MakeSubDirInHost(ctx context.Context, baseDirInHost string, subpath string, requireBaseDirExist bool) error
 
 	RemoveVolume(ctx context.Context, volumeID string, force bool, retryMax int, retryDelay time.Duration) error

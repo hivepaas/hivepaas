@@ -1,6 +1,11 @@
 package volumeservice
 
-import "github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+import (
+	"github.com/moby/moby/api/types/mount"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+)
 
 const (
 	HostPathPrefix = "/host"
@@ -63,4 +68,38 @@ type CloneVolumeReq struct {
 }
 
 type CloneVolumeResp struct {
+}
+
+// AppMountReq asks for one cluster-volume setting to be mounted into an app.
+type AppMountReq struct {
+	Type mount.Type
+	// Source is the id of the cluster-volume setting, not a docker volume name.
+	Source         string
+	Target         string
+	ReadOnly       bool
+	Consistency    mount.Consistency
+	VolumeOptions  *AppMountVolumeOptions
+	ClusterOptions *AppMountVolumeOptions
+}
+
+type AppMountVolumeOptions struct {
+	Subpath      string
+	NoCopy       bool
+	Labels       map[string]string
+	DriverConfig *mount.Driver
+}
+
+type BuildAppMountsReq struct {
+	// App has Project and ProjectEnv loaded: the subpath a volume gets depends on them.
+	App *entity.App
+	// Kept are mounts the app already has and keeps as they are. They are not
+	// rebuilt, but they take part in the pin conflict check - an unchanged mount
+	// pinned to one node conflicts with a new one pinned to another.
+	Kept []mount.Mount
+	New  []*AppMountReq
+}
+
+type BuildAppMountsResp struct {
+	// Mounts are Kept followed by the built New mounts.
+	Mounts []mount.Mount
 }

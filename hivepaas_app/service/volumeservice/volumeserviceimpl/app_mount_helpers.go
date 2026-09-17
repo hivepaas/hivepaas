@@ -1,7 +1,8 @@
-package appsettingsuc
+package volumeserviceimpl
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/moby/moby/api/types/mount"
 
@@ -90,4 +91,18 @@ func refuseConflictingVolumePins(mounts []mount.Mount, volumes []*entity.Setting
 		return hperrors.NewArgumentInvalid("Mounts").WithExtraDetail("%s", conflict.Error())
 	}
 	return nil
+}
+
+func getConfiguredPropagation(o string) mount.Propagation {
+	parts := strings.Split(o, ",")
+	for _, part := range parts {
+		// Go case clauses don't fall through: every valid propagation value has to
+		// share this one case, or only the last of them would ever be returned.
+		switch mount.Propagation(part) {
+		case mount.PropagationRPrivate, mount.PropagationPrivate, mount.PropagationRSlave,
+			mount.PropagationSlave, mount.PropagationRShared, mount.PropagationShared:
+			return mount.Propagation(part)
+		}
+	}
+	return "" // to use default one
 }

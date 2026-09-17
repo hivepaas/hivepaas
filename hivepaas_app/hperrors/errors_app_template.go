@@ -8,4 +8,6 @@ var (
 	ErrAppTemplateVersionNotFound    = NewErr(ErrNotFound, "ERR_APP_TEMPLATE_VERSION_NOT_FOUND")
 	ErrAppTemplateVersionDeprecated  = NewErr(ErrNotAllowed, "ERR_APP_TEMPLATE_VERSION_DEPRECATED")
 	ErrAppTemplateVariantUnavailable = NewErr(ErrNotFound, "ERR_APP_TEMPLATE_VARIANT_UNAVAILABLE")
+
+	ErrAppTemplateFileTooLarge = NewErr(ErrTooBig, "ERR_APP_TEMPLATE_FILE_TOO_LARGE")
 )

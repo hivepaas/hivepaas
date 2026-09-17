@@ -136,10 +136,11 @@ func (s *service) Render(
 		return nil, hperrors.Wrap(hperrors.ErrAppTemplateIncompatible).WithParam("Name", req.Name)
 	}
 	result, err := templaterender.Render(&templaterender.Request{
-		Template: loaded.Template,
-		Version:  req.Version,
-		Variant:  req.Variant,
-		Params:   req.Params,
+		Template:      loaded.Template,
+		Version:       req.Version,
+		Variant:       req.Variant,
+		Params:        req.Params,
+		ImageOverride: req.ImageOverride,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -28,6 +28,9 @@ type RenderReq struct {
 	Version string
 	Variant string
 	Params  map[string]any
+	// ImageOverride is an image the user chose instead of the template's, empty to
+	// use the template's own.
+	ImageOverride string
 }
 
 type RenderResp struct {

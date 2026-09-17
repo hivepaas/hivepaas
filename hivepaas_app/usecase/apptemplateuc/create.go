@@ -269,6 +269,7 @@ func newAppTemplateSetting(
 	if result.Variant != nil {
 		data.Variant = result.Variant.Name
 	}
+	data.ImageOverride = result.ImageOverride
 	for name, value := range result.Params {
 		if value.Value == nil {
 			continue

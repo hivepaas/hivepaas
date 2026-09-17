@@ -373,11 +373,36 @@ func TestTransformAppTemplateBinding(t *testing.T) {
 	appliedAt := time.Date(2026, 9, 17, 0, 0, 0, 0, time.UTC)
 	resp := apptemplatedto.TransformAppTemplateBinding(&entity.AppTemplateSettings{
 		Source: "official", Template: "pg", Title: "PG", Version: "18", Variant: "alpine",
-		Params: map[string]*entity.AppTemplateParam{"password": {Secret: entity.NewEncryptedField("x")}},
-		Base:   entity.AppTemplateBase{Revision: "abc", Release: "18.6", AppliedAt: appliedAt},
+		ImageOverride: "postgres:18.7-alpine3.24",
+		Params:        map[string]*entity.AppTemplateParam{"password": {Secret: entity.NewEncryptedField("x")}},
+		Base:          entity.AppTemplateBase{Revision: "abc", Release: "18.6", AppliedAt: appliedAt},
 	})
 	assert.Equal(t, &apptemplatedto.AppTemplateBindingResp{
 		Source: "official", Template: "pg", Title: "PG", Version: "18", Release: "18.6",
 		Variant: "alpine", Revision: "abc", AppliedAt: appliedAt,
+		ImageOverride: "postgres:18.7-alpine3.24",
 	}, resp, "parameters are not part of the response")
+}
+
+func TestProvisionFromTemplateRecordsAnImageOverride(t *testing.T) {
+	uc, fakes := newCreateTest(t)
+	rendered := fakes.templates.resp
+	rendered.Result.ImageOverride = "postgres:18.7-alpine3.24"
+	rendered.Result.ImageOverrideClass = templatemodel.ImageOverrideSameLine
+
+	created := provision(t, uc, fakes)
+
+	var binding *entity.Setting
+	for _, setting := range created.app.Settings {
+		if setting.Type == base.SettingTypeAppTemplate {
+			binding = setting
+		}
+	}
+	stored := &entity.Setting{Type: base.SettingTypeAppTemplate, Data: binding.Data}
+	data, err := stored.AsAppTemplateSettings()
+	assert.NoError(t, err)
+	assert.Equal(t, "postgres:18.7-alpine3.24", data.ImageOverride)
+	assert.Equal(t, "18", data.Version, "the version still describes the template, not the override")
+
+	assert.Contains(t, fakes.audit.entries[0].Detail, `"imageOverride":"postgres:18.7-alpine3.24"`)
 }

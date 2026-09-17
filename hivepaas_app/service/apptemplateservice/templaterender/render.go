@@ -24,6 +24,9 @@ type Request struct {
 	// AllowDeprecated renders a deprecated version, which creating an app never
 	// does. The linter and phase 2's updates of existing apps do.
 	AllowDeprecated bool
+	// ImageOverride replaces the image this version pins, for this app only. It
+	// must come from the same repository; ClassifyImageOverride decides.
+	ImageOverride string
 }
 
 type Result struct {
@@ -34,6 +37,11 @@ type Result struct {
 	// Variant is nil for a template without variants.
 	Variant *templatemodel.Variant
 	Image   string
+	// ImageOverride is the image the user chose instead of Image, empty when the
+	// template's own image is in use. Image stays what the template pinned, because
+	// the version and release recorded on the app describe the template.
+	ImageOverride      string
+	ImageOverrideClass templatemodel.ImageOverrideClass
 
 	// Base is the same render with every secret placeholder left in, as canonical
 	// YAML: the base phase 2's three-way merge compares against. It is stored, so
@@ -82,6 +90,10 @@ func Render(req *Request) (*Result, error) {
 	if err = specmodel.CheckBuildable(doc); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	overrideClass, err := applyImageOverride(doc, name, image, req.ImageOverride)
+	if err != nil {
+		return nil, err
+	}
 
 	baseTree, err := Substitute(tree, resolver(name, vars, params, true))
 	if err != nil {
@@ -94,14 +106,47 @@ func Render(req *Request) (*Result, error) {
 	sum := sha256.Sum256(base)
 
 	return &Result{
-		Doc:        doc,
-		Params:     params,
-		Version:    version,
-		Variant:    variant,
-		Image:      image,
-		Base:       base,
-		BaseSHA256: hex.EncodeToString(sum[:]),
+		Doc:                doc,
+		Params:             params,
+		Version:            version,
+		Variant:            variant,
+		Image:              image,
+		ImageOverride:      req.ImageOverride,
+		ImageOverrideClass: overrideClass,
+		Base:               base,
+		BaseSHA256:         hex.EncodeToString(sum[:]),
 	}, nil
+}
+
+// applyImageOverride swaps the image in the document the app is built from.
+//
+// It runs after CheckBuildable, so the document has already been accepted as
+// something this HivePaaS can build; all that changes is which release of the same
+// repository it deploys. It does not touch the tree the base render walks - the
+// base is the template's own output, and phase 2 needs to see the override as the
+// user's change rather than as something the template did.
+func applyImageOverride(
+	doc *specmodel.AppDoc,
+	templateName, templateImage, override string,
+) (templatemodel.ImageOverrideClass, error) {
+	if override == "" {
+		return "", nil
+	}
+	class, err := templatemodel.ClassifyImageOverride(templateImage, override)
+	if err != nil {
+		return "", hperrors.Wrap(err)
+	}
+
+	var imageSource map[string]any
+	if doc.Deployment != nil && doc.Deployment.Source != nil {
+		imageSource, _ = doc.Deployment.Source["imageSource"].(map[string]any)
+	}
+	if imageSource == nil {
+		return "", hperrors.Wrap(hperrors.ErrAppTemplateInvalid).
+			WithExtraDetail("%s: the template deploys no image to replace", templateName)
+	}
+	imageSource["image"] = override
+	return class, nil
 }
 
 func selectVersion(tmpl *templatemodel.Template, req *Request) (

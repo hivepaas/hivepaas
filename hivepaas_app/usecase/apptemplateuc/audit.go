@@ -36,6 +36,9 @@ func (uc *UC) recordCreateFromTemplate(
 	if result.Variant != nil {
 		detail.Set("variant", result.Variant.Name)
 	}
+	if result.ImageOverride != "" {
+		detail.Set("imageOverride", result.ImageOverride)
+	}
 
 	err := auditservice.RecordAllowed(ctx, uc.auditService, db, &auditservice.Entry{
 		Type:     base.AuditLogTypeAppCreate,

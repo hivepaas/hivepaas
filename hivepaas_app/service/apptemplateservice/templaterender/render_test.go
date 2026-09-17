@@ -201,3 +201,49 @@ func TestRenderRefusesInvalidParameters(t *testing.T) {
 	_, err = render(t, &Request{})
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid, "dataVolume is required")
 }
+
+func TestRenderAppliesAnImageOverride(t *testing.T) {
+	result, err := render(t, &Request{
+		Params:        map[string]any{"dataVolume": "vol-1"},
+		ImageOverride: "postgres:17.9-alpine3.22",
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]any{"image": "postgres:17.9-alpine3.22"},
+		result.Doc.Deployment.Source["imageSource"])
+	assert.Equal(t, "postgres:17.9-alpine3.22", result.ImageOverride)
+	assert.Equal(t, templatemodel.ImageOverrideSameLine, result.ImageOverrideClass)
+
+	assert.Equal(t, "postgres:17.6-alpine3.22", result.Image, "Image stays what the template pinned")
+	assert.Contains(t, string(result.Base), "postgres:17.6-alpine3.22",
+		"the base is what the template rendered, so phase 2 can tell the two apart")
+	assert.NotContains(t, string(result.Base), "17.9")
+}
+
+func TestRenderClassifiesAnOverrideFromAnotherMajorLine(t *testing.T) {
+	result, err := render(t, &Request{
+		Params:        map[string]any{"dataVolume": "vol-1"},
+		ImageOverride: "postgres:18.2-alpine3.22",
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, templatemodel.ImageOverrideOtherMajor, result.ImageOverrideClass,
+		"the template describes 17 here, so 18 is a line it was never tested against")
+}
+
+func TestRenderRefusesAnImageFromAnotherRepository(t *testing.T) {
+	_, err := render(t, &Request{
+		Params:        map[string]any{"dataVolume": "vol-1"},
+		ImageOverride: "mariadb:11.8.9-noble",
+	})
+
+	assert.ErrorIs(t, err, hperrors.ErrAppTemplateImageNotAllowed)
+}
+
+func TestRenderWithoutAnOverrideSaysSo(t *testing.T) {
+	result, err := render(t, &Request{Params: map[string]any{"dataVolume": "vol-1"}})
+
+	assert.NoError(t, err)
+	assert.Empty(t, result.ImageOverride)
+	assert.Empty(t, result.ImageOverrideClass)
+}

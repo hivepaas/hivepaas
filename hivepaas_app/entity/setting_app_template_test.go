@@ -12,11 +12,12 @@ import (
 
 func newTestAppTemplateSettings() *AppTemplateSettings {
 	return &AppTemplateSettings{
-		Source:   "official",
-		Template: "postgres",
-		Title:    "PostgreSQL",
-		Version:  "17",
-		Variant:  "alpine",
+		Source:        "official",
+		Template:      "postgres",
+		Title:         "PostgreSQL",
+		Version:       "17",
+		Variant:       "alpine",
+		ImageOverride: "postgres:18.7-alpine3.24",
 		Params: map[string]*AppTemplateParam{
 			"username": {Value: "app"},
 			"password": {Secret: NewEncryptedField("generated-password")},
@@ -48,6 +49,7 @@ func TestAppTemplateSettingsRoundTrip(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "generated-password", password)
 	assert.Equal(t, "17.6", parsed.Base.Release)
+	assert.Equal(t, "postgres:18.7-alpine3.24", parsed.ImageOverride)
 }
 
 func TestAppTemplateSettingsOmitsSecrets(t *testing.T) {

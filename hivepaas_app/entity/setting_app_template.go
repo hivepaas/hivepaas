@@ -39,6 +39,10 @@ type AppTemplateSettings struct {
 	// Version is the major line, such as "17".
 	Version string `json:"version"`
 	Variant string `json:"variant,omitempty"`
+	// ImageOverride is the image the user chose instead of the template's, empty
+	// when the template's own image is in use. It is stored so phase 2's update can
+	// say "you chose this" rather than guessing from a string comparison.
+	ImageOverride string `json:"imageOverride,omitempty"`
 
 	// Params are the values given at creation, secrets encrypted. Parameters are
 	// fixed after creation: a change is made on the app, and phase 2's merge sees

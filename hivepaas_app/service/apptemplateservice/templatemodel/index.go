@@ -99,10 +99,19 @@ func (i *Index) FindIcon(sha256 string) *IndexEntry {
 	return nil
 }
 
+// DecodeIndex parses index.json. Unlike a template file, it accepts fields it
+// does not know.
+//
+// Every installation reads the index its channel pins, whatever HivePaaS version
+// it runs, so an index gains fields older installations have never heard of.
+// Refusing them would take the store down on every one of those installations
+// the moment a newer index is pinned. That is safe here and would not be for a
+// template: the index only lists, and nothing is provisioned from what an older
+// HivePaaS skipped in it. Template files stay strict, and requires.versionCode is
+// what keeps an older HivePaaS from provisioning a template it cannot read.
 func DecodeIndex(data []byte) (*Index, error) {
 	index := &Index{}
 	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(index); err != nil {
 		return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).WithExtraDetail("index.json: %s", err.Error())
 	}

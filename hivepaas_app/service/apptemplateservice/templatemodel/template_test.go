@@ -95,12 +95,26 @@ func TestDecodeIndex(t *testing.T) {
 	assert.Nil(t, index.FindIcon("aa"), "a template file is not an icon")
 }
 
-func TestDecodeIndexRefusesAnotherKindAndUnknownFields(t *testing.T) {
+func TestDecodeIndexRefusesAnotherKind(t *testing.T) {
 	_, err := DecodeIndex([]byte(`{"apiVersion": "hivepaas.com/v1", "kind": "AppTemplate"}`))
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateInvalid)
+}
 
-	_, err = DecodeIndex([]byte(`{"apiVersion": "hivepaas.com/v1", "kind": "TemplateIndex", "extra": 1}`))
-	assert.ErrorIs(t, err, hperrors.ErrAppTemplateInvalid)
+// Every installation reads the index its channel pins, whatever version it
+// runs. A field added later must not take an older installation's store down.
+func TestDecodeIndexAcceptsFieldsItDoesNotKnow(t *testing.T) {
+	index, err := DecodeIndex([]byte(`{
+		"apiVersion": "hivepaas.com/v1", "kind": "TemplateIndex", "addedLater": true,
+		"categories": [], "tags": [],
+		"templates": [{"name": "demo", "somethingNew": {"a": 1},
+			"file": {"path": "templates/demo.yaml", "sha256": "aa"},
+			"icon": {"path": "icons/demo.svg", "sha256": "bb"},
+			"title": "Demo", "tagline": "A demo", "categories": ["databases/sql"],
+			"versions": [], "requires": {"versionCode": "v000001"}}]
+	}`))
+
+	assert.NoError(t, err)
+	assert.Equal(t, "Demo", index.FindTemplate("demo").Title)
 }
 
 func TestDecodeCategoriesAndTags(t *testing.T) {

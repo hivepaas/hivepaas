@@ -77,6 +77,7 @@ func (t *Template) Validate(fileName string) error {
 	validateParameters(t.Parameters, &p)
 	variants := validateVariants(t.Variants, &p)
 	validateVersions(t.Versions, variants, &p)
+	validateDependencies(t, &p)
 	if len(t.App) == 0 {
 		p.add("app is required")
 	}

@@ -31,8 +31,11 @@ type Template struct {
 	Kind       string       `yaml:"kind"`
 	Metadata   Metadata     `yaml:"metadata"`
 	Parameters []*Parameter `yaml:"parameters,omitempty"`
-	Variants   []*Variant   `yaml:"variants,omitempty"`
-	Versions   []*Version   `yaml:"versions"`
+	// Dependencies are templates of the same repository whose apps are created
+	// alongside this one.
+	Dependencies []*Dependency `yaml:"dependencies,omitempty"`
+	Variants     []*Variant    `yaml:"variants,omitempty"`
+	Versions     []*Version    `yaml:"versions"`
 
 	// App is a specmodel.AppDoc with placeholders in it. It stays an untyped tree
 	// until it is rendered: version overrides and placeholders apply to the tree,

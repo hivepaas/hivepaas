@@ -2,3 +2,4 @@
 # Adding or removing an error there means editing this file.
 
 ERR_APP_TEMPLATE_INVALID = "The app template is invalid"
+ERR_APP_TEMPLATE_PARAM_INVALID = "Parameter '{{.Name}}' is invalid"

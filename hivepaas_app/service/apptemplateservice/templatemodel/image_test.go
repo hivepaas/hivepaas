@@ -123,3 +123,37 @@ func TestSelectTagCandidatesWithoutASuffixFamily(t *testing.T) {
 
 	assert.Equal(t, []TagCandidate{{Tag: "11.8.10-noble", Class: ImageOverrideSameLine, Newer: true}}, got)
 }
+
+// A Postgres extension image names the server it is built for in its tag. Another
+// major of PostgreSQL is a different product to the app running on this one - it
+// will not open the data directory - so it must not be offered as another build.
+func TestSelectTagCandidatesKeepsThePostgresMajorApart(t *testing.T) {
+	tags := []string{
+		"0.8.7-pg18-bookworm", "0.8.7-pg17-bookworm", "0.8.7-pg18-trixie",
+		"0.8.6-pg17-bookworm", "0.9.0-pg18-bookworm", "pg18-bookworm", "pg18",
+	}
+
+	got := SelectTagCandidates("0.8", "pgvector/pgvector:0.8.6-pg18-bookworm", tags, 0)
+
+	assert.Equal(t, []TagCandidate{
+		{Tag: "0.9.0-pg18-bookworm", Class: ImageOverrideOtherMajor, Newer: true},
+		{Tag: "0.8.7-pg18-bookworm", Class: ImageOverrideSameLine, Newer: true},
+	}, got)
+}
+
+// The rule is narrow on purpose: a base image still moves on its own schedule,
+// and alpine3.24 is another build of alpine3.22.
+func TestTagFamily(t *testing.T) {
+	tests := map[string]string{
+		"18.6-alpine3.24":     "alpine",
+		"11.8.9-noble":        "noble",
+		"18.6":                "",
+		"0.8.6-pg18-bookworm": "pg18-bookworm",
+		"2.30.1-pg17":         "pg17",
+		"2.30.1-pg17-oss":     "pg17-oss",
+	}
+
+	for tag, want := range tests {
+		assert.Equal(t, want, tagFamily(tag), tag)
+	}
+}

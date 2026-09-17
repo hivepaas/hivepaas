@@ -1,6 +1,7 @@
 package templatemodel
 
 import (
+	"regexp"
 	"slices"
 	"strings"
 
@@ -161,6 +162,12 @@ func SelectTagCandidates(line, templateImage string, tags []string, maxCandidate
 // 17.11-alpine3.22 are both "alpine", 11.8.9-noble is "noble", and 18.6 has no
 // family at all. The numbers go because a base image moves on its own schedule -
 // alpine3.24 succeeds alpine3.22 without the app's version changing.
+//
+// A pgNN part is the exception and keeps its number. The Postgres extension
+// images - pgvector, TimescaleDB, ParadeDB - name the server they are built for
+// that way, and 0.8.6-pg18 is not a newer build of 0.8.6-pg17: it is the same
+// extension on the next major of PostgreSQL, which will not open the data
+// directory the app already has.
 func tagFamily(tag string) string {
 	start := strings.IndexAny(tag, "-_+")
 	if start < 0 {
@@ -171,9 +178,16 @@ func tagFamily(tag string) string {
 	})
 	families := make([]string, 0, len(parts))
 	for _, part := range parts {
+		if pgMajorPattern.MatchString(part) {
+			families = append(families, part)
+			continue
+		}
 		if trimmed := strings.TrimRight(part, "0123456789."); trimmed != "" {
 			families = append(families, trimmed)
 		}
 	}
 	return strings.Join(families, "-")
 }
+
+// pgMajorPattern matches the pgNN part of a tag such as 0.8.6-pg18-bookworm.
+var pgMajorPattern = regexp.MustCompile(`^pg[0-9]+$`)

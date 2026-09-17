@@ -25,6 +25,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		appGroup.GET("/base", appHandler.ListAppBaseInEnv)
 		// Creation & Update
 		appGroup.POST("", appHandler.CreateApp)
+		appGroup.POST("/from-template", s.handlerRegistry.appTemplateHandler.CreateAppFromTemplate)
 		appGroup.PUT("/:appID", appHandler.UpdateApp)
 		appGroup.PUT("/:appID/status", appHandler.UpdateAppStatus)
 		appGroup.DELETE("/:appID", appHandler.DeleteApp)
@@ -35,6 +36,9 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 
 	{ // Configuration spec export
 		appGroup.POST("/:appID/spec/export", s.handlerRegistry.specHandler.ExportAppSpec)
+
+		// App templates
+		appGroup.GET("/:appID/template", s.handlerRegistry.appTemplateHandler.GetAppTemplateBinding)
 	}
 
 	{ // Tags

@@ -13607,6 +13607,85 @@
         "tags" : [ "apps" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/from-template" : {
+      "post" : {
+        "description" : "Provisions the app with the template's configuration and queues its first deployment.",
+        "operationId" : "createAppFromTemplate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/apptemplatedto.CreateAppFromTemplateReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apptemplatedto.CreateAppFromTemplateResp"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Creates an app from an app template",
+        "tags" : [ "app_templates" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}" : {
       "delete" : {
         "description" : "Deletes an app",
@@ -20730,6 +20809,81 @@
         },
         "summary" : "Gets task status",
         "tags" : [ "app_tasks" ]
+      }
+    },
+    "/projects/{projectID}/{projectEnv}/apps/{appID}/template" : {
+      "get" : {
+        "description" : "404 for an app that was not created from a template.",
+        "operationId" : "getAppTemplateBinding",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "app ID",
+          "in" : "path",
+          "name" : "appID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apptemplatedto.GetAppTemplateBindingResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets the template an app was created from",
+        "tags" : [ "app_templates" ]
       }
     },
     "/projects/{projectID}/{projectEnv}/apps/{appID}/terminal" : {
@@ -41376,15 +41530,25 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
+          "ModeAppend" : "a: append-only",
+          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
+          "ModeDevice" : "D: device file",
+          "ModeDir" : "d: is a directory",
+          "ModeExclusive" : "l: exclusive use",
+          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
+          "ModeNamedPipe" : "p: named pipe (FIFO)",
           "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
-          "ModeSticky" : "t: sticky"
+          "ModeSocket" : "S: Unix domain socket",
+          "ModeSticky" : "t: sticky",
+          "ModeSymlink" : "L: symbolic link",
+          "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -44467,6 +44631,36 @@
         "required" : [ "driverConfig", "labels", "noCopy", "subpath" ],
         "type" : "object"
       },
+      "apptemplatedto.AppTemplateBindingResp" : {
+        "properties" : {
+          "appliedAt" : {
+            "type" : "string"
+          },
+          "release" : {
+            "type" : "string"
+          },
+          "revision" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "template" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "variant" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appliedAt", "release", "revision", "source", "template", "title", "variant", "version" ],
+        "type" : "object"
+      },
       "apptemplatedto.AppTemplateCatalogResp" : {
         "properties" : {
           "categories" : {
@@ -44780,6 +44974,72 @@
           }
         },
         "required" : [ "default", "deprecated", "name", "release", "variants" ],
+        "type" : "object"
+      },
+      "apptemplatedto.CreateAppFromTemplateDataResp" : {
+        "properties" : {
+          "app" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "deployment" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+            } ],
+            "description" : "Deployment is the app's first deployment, already queued: it pulls the\ntemplate's image.",
+            "type" : "object"
+          }
+        },
+        "required" : [ "app", "deployment" ],
+        "type" : "object"
+      },
+      "apptemplatedto.CreateAppFromTemplateReq" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "params" : {
+            "additionalProperties" : {
+              "type" : "object"
+            },
+            "description" : "Params are JSON values of each parameter's type; a size is a string such as \"1GB\".",
+            "type" : "object"
+          },
+          "template" : {
+            "type" : "string"
+          },
+          "variant" : {
+            "type" : "string"
+          },
+          "version" : {
+            "description" : "Version and Variant are empty for the template's defaults.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "params", "template", "variant", "version" ],
+        "type" : "object"
+      },
+      "apptemplatedto.CreateAppFromTemplateResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/apptemplatedto.CreateAppFromTemplateDataResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "apptemplatedto.GetAppTemplateBindingResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/apptemplatedto.AppTemplateBindingResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "apptemplatedto.GetAppTemplateResp" : {
@@ -59676,9 +59936,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

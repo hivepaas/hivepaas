@@ -41677,7 +41677,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -41695,7 +41695,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -44820,10 +44820,36 @@
         "required" : [ "driverConfig", "labels", "noCopy", "subpath" ],
         "type" : "object"
       },
+      "apptemplatedto.AppTemplateBindingDependencyResp" : {
+        "properties" : {
+          "appId" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "template" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appId", "name", "template" ],
+        "type" : "object"
+      },
       "apptemplatedto.AppTemplateBindingResp" : {
         "properties" : {
           "appliedAt" : {
             "type" : "string"
+          },
+          "createdForAppId" : {
+            "description" : "CreatedForAppID is the app this one was created to serve, empty when it was\ncreated on its own.",
+            "type" : "string"
+          },
+          "dependencies" : {
+            "description" : "Dependencies are the apps created alongside this one.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateBindingDependencyResp"
+            },
+            "type" : "array"
           },
           "imageOverride" : {
             "description" : "ImageOverride is empty when the app runs the image the template pinned.",
@@ -44851,7 +44877,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appliedAt", "imageOverride", "release", "revision", "source", "template", "title", "variant", "version" ],
+        "required" : [ "appliedAt", "createdForAppId", "dependencies", "imageOverride", "release", "revision", "source", "template", "title", "variant", "version" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateCatalogResp" : {
@@ -44894,6 +44920,53 @@
           }
         },
         "required" : [ "children", "id", "title" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateDependencyResp" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "parameters" : {
+            "description" : "Parameters are only those the person is asked: the template fixes the rest,\nor they have defaults, or HivePaaS generates them.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateParamResp"
+            },
+            "type" : "array"
+          },
+          "template" : {
+            "type" : "string"
+          },
+          "templateTitle" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "variant" : {
+            "type" : "string"
+          },
+          "version" : {
+            "description" : "Version and Variant are empty for the dependency template's defaults.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "parameters", "template", "templateTitle", "title", "variant", "version" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateDependencySummaryResp" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "template" : {
+            "type" : "string"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "template", "title" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateImageTagResp" : {
@@ -45026,6 +45099,13 @@
           "compatible" : {
             "type" : "boolean"
           },
+          "dependencies" : {
+            "description" : "Dependencies are the apps creating this template also creates, each with the\nparameters a person has to fill in for it.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateDependencyResp"
+            },
+            "type" : "array"
+          },
           "description" : {
             "type" : "string"
           },
@@ -45081,7 +45161,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "categories", "compatible", "description", "iconUrl", "license", "links", "name", "parameters", "requiresVersionCode", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "categories", "compatible", "dependencies", "description", "iconUrl", "license", "links", "name", "parameters", "requiresVersionCode", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateSummaryResp" : {
@@ -45101,6 +45181,13 @@
           "compatible" : {
             "description" : "Compatible is false for a template needing a newer HivePaaS: the store\nlists it, locked, rather than hiding it.",
             "type" : "boolean"
+          },
+          "dependencies" : {
+            "description" : "Dependencies are the apps creating this template also creates.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateDependencySummaryResp"
+            },
+            "type" : "array"
           },
           "iconUrl" : {
             "type" : "string"
@@ -45139,7 +45226,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "aliases", "categories", "compatible", "iconUrl", "license", "name", "requiresVersionCode", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "aliases", "categories", "compatible", "dependencies", "iconUrl", "license", "name", "requiresVersionCode", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateTagResp" : {
@@ -45213,6 +45300,13 @@
           "app" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDResp"
           },
+          "dependencies" : {
+            "description" : "Dependencies are the apps created alongside, each with its first deployment.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.CreatedDependencyResp"
+            },
+            "type" : "array"
+          },
           "deployment" : {
             "allOf" : [ {
               "$ref" : "#/components/schemas/basedto.ObjectIDResp"
@@ -45221,11 +45315,21 @@
             "type" : "object"
           }
         },
-        "required" : [ "app", "deployment" ],
+        "required" : [ "app", "dependencies", "deployment" ],
         "type" : "object"
       },
       "apptemplatedto.CreateAppFromTemplateReq" : {
         "properties" : {
+          "dependencyParams" : {
+            "additionalProperties" : {
+              "additionalProperties" : {
+                "type" : "object"
+              },
+              "type" : "object"
+            },
+            "description" : "DependencyParams are the values a person gave for each dependency the\ntemplate declares, by the dependency's name: in practice its data volume.",
+            "type" : "object"
+          },
           "imageOverride" : {
             "description" : "ImageOverride replaces the image the template pins, for this app only. It\nmust come from the same repository; the service refuses anything else.",
             "type" : "string"
@@ -45251,7 +45355,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "imageOverride", "name", "params", "template", "variant", "version" ],
+        "required" : [ "dependencyParams", "imageOverride", "name", "params", "template", "variant", "version" ],
         "type" : "object"
       },
       "apptemplatedto.CreateAppFromTemplateResp" : {
@@ -45264,6 +45368,22 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "apptemplatedto.CreatedDependencyResp" : {
+        "properties" : {
+          "app" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "deployment" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "name" : {
+            "description" : "Name is the dependency's role in the template: db, cache.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "deployment", "name" ],
         "type" : "object"
       },
       "apptemplatedto.GetAppTemplateBindingResp" : {

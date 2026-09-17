@@ -51,18 +51,36 @@ type AppTemplateBindingResp struct {
 	ImageOverride string    `json:"imageOverride"`
 	Revision      string    `json:"revision"`
 	AppliedAt     time.Time `json:"appliedAt"`
+	// Dependencies are the apps created alongside this one.
+	Dependencies []*AppTemplateBindingDependencyResp `json:"dependencies"`
+	// CreatedForAppID is the app this one was created to serve, empty when it was
+	// created on its own.
+	CreatedForAppID string `json:"createdForAppId"`
+}
+
+type AppTemplateBindingDependencyResp struct {
+	Name     string `json:"name"`
+	AppID    string `json:"appId"`
+	Template string `json:"template"`
 }
 
 func TransformAppTemplateBinding(settings *entity.AppTemplateSettings) *AppTemplateBindingResp {
-	return &AppTemplateBindingResp{
-		Source:        settings.Source,
-		Template:      settings.Template,
-		Title:         settings.Title,
-		Version:       settings.Version,
-		Release:       settings.Base.Release,
-		Variant:       settings.Variant,
-		ImageOverride: settings.ImageOverride,
-		Revision:      settings.Base.Revision,
-		AppliedAt:     settings.Base.AppliedAt,
+	resp := &AppTemplateBindingResp{
+		Source:          settings.Source,
+		Template:        settings.Template,
+		Title:           settings.Title,
+		Version:         settings.Version,
+		Release:         settings.Base.Release,
+		Variant:         settings.Variant,
+		ImageOverride:   settings.ImageOverride,
+		Revision:        settings.Base.Revision,
+		AppliedAt:       settings.Base.AppliedAt,
+		CreatedForAppID: settings.CreatedForAppID,
+		Dependencies:    make([]*AppTemplateBindingDependencyResp, 0, len(settings.Dependencies)),
 	}
+	for _, dep := range settings.Dependencies {
+		resp.Dependencies = append(resp.Dependencies,
+			&AppTemplateBindingDependencyResp{Name: dep.Name, AppID: dep.AppID, Template: dep.Template})
+	}
+	return resp
 }

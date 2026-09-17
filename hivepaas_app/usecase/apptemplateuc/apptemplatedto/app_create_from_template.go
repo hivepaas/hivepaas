@@ -7,6 +7,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 )
 
 const (
@@ -52,7 +53,7 @@ func (req *CreateAppFromTemplateReq) ModifyRequest() error {
 
 // Validate implements interface basedto.ReqValidator
 func (req *CreateAppFromTemplateReq) Validate() hperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 7) //nolint:mnd
+	validators := make([]vld.Validator, 0, 8) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1, appNameMaxLen, "name")...)
@@ -62,6 +63,8 @@ func (req *CreateAppFromTemplateReq) Validate() hperrors.ValidationErrors {
 	validators = append(validators, basedto.ValidateStr(&req.Variant, false, 1, choiceNameMaxLen, "variant")...)
 	validators = append(validators,
 		basedto.ValidateStr(&req.ImageOverride, false, 1, imageRefMaxLen, "imageOverride")...)
+	validators = append(validators,
+		basedto.ValidateCond(len(req.DependencyParams) <= templatemodel.MaxDependencies, "dependencyParams")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

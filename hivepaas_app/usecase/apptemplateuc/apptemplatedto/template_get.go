@@ -48,6 +48,22 @@ type AppTemplateResp struct {
 	Variants            []*AppTemplateVariantResp `json:"variants"`
 	Versions            []*AppTemplateVersionResp `json:"versions"`
 	Parameters          []*AppTemplateParamResp   `json:"parameters"`
+	// Dependencies are the apps creating this template also creates, each with the
+	// parameters a person has to fill in for it.
+	Dependencies []*AppTemplateDependencyResp `json:"dependencies"`
+}
+
+type AppTemplateDependencyResp struct {
+	Name          string `json:"name"`
+	Title         string `json:"title"`
+	Template      string `json:"template"`
+	TemplateTitle string `json:"templateTitle"`
+	// Version and Variant are empty for the dependency template's defaults.
+	Version string `json:"version"`
+	Variant string `json:"variant"`
+	// Parameters are only those the person is asked: the template fixes the rest,
+	// or they have defaults, or HivePaaS generates them.
+	Parameters []*AppTemplateParamResp `json:"parameters"`
 }
 
 type AppTemplateLinksResp struct {
@@ -118,6 +134,23 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 	}
 	for _, param := range tmpl.Template.Parameters {
 		resp.Parameters = append(resp.Parameters, transformParam(param))
+	}
+	resp.Dependencies = make([]*AppTemplateDependencyResp, 0, len(tmpl.Dependencies))
+	for _, dep := range tmpl.Dependencies {
+		asked := dep.Dependency.AskedParams(dep.Template)
+		depResp := &AppTemplateDependencyResp{
+			Name:          dep.Dependency.Name,
+			Title:         dep.Dependency.Title,
+			Template:      dep.Dependency.Template,
+			TemplateTitle: dep.Template.Metadata.Title,
+			Version:       dep.Dependency.Version,
+			Variant:       dep.Dependency.Variant,
+			Parameters:    make([]*AppTemplateParamResp, 0, len(asked)),
+		}
+		for _, param := range asked {
+			depResp.Parameters = append(depResp.Parameters, transformParam(param))
+		}
+		resp.Dependencies = append(resp.Dependencies, depResp)
 	}
 	return resp
 }

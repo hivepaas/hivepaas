@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 )
@@ -148,4 +149,59 @@ func TestParseAppTemplateIconFile(t *testing.T) {
 		assert.NoError(t, bad.ModifyRequest())
 		assert.NotEmpty(t, bad.Validate(), file)
 	}
+}
+
+func TestTransformAppTemplateSummaryListsDependencies(t *testing.T) {
+	useBasePath(t)
+	entry := testEntry("v000001")
+	entry.Dependencies = []*templatemodel.IndexDependency{{Name: "db", Title: "Database", Template: "mysql"}}
+
+	summary := transformSummary(entry, "v000001")
+
+	assert.Equal(t, []*AppTemplateDependencySummaryResp{{Name: "db", Title: "Database", Template: "mysql"}},
+		summary.Dependencies)
+}
+
+func TestTransformAppTemplateAsksOnlyWhatADependencyNeeds(t *testing.T) {
+	useBasePath(t)
+	mysql := &templatemodel.Template{
+		Metadata: templatemodel.Metadata{Name: "mysql", Title: "MySQL"},
+		Parameters: []*templatemodel.Parameter{
+			{Name: "dbName", Title: "Database name", Type: templatemodel.ParamTypeString, Default: "app"},
+			{Name: "password", Title: "Password", Type: templatemodel.ParamTypeSecret,
+				Generate: &templatemodel.Generate{Length: 32}},
+			{Name: "dataVolume", Title: "Data volume", Type: templatemodel.ParamTypeVolume},
+		},
+	}
+	dep := &templatemodel.Dependency{Name: "db", Title: "Database", Template: "mysql", Version: "8.4"}
+	tmpl := &apptemplateservice.TemplateResp{
+		Entry: testEntry("v000001"),
+		Template: &templatemodel.Template{
+			Metadata:     templatemodel.Metadata{Name: "wordpress"},
+			Dependencies: []*templatemodel.Dependency{dep},
+		},
+		Dependencies: []*apptemplateservice.DependencyTemplate{
+			{Dependency: dep, Entry: testEntry("v000001"), Template: mysql},
+		},
+	}
+
+	resp := TransformAppTemplate(tmpl, "v000001")
+
+	assert.Len(t, resp.Dependencies, 1)
+	db := resp.Dependencies[0]
+	assert.Equal(t, "MySQL", db.TemplateTitle)
+	assert.Equal(t, "8.4", db.Version)
+	assert.Len(t, db.Parameters, 1)
+	assert.Equal(t, "dataVolume", db.Parameters[0].Name, "defaulted and generated parameters are not asked")
+}
+
+func TestTransformAppTemplateBindingLinks(t *testing.T) {
+	resp := TransformAppTemplateBinding(&entity.AppTemplateSettings{
+		Dependencies:    []entity.AppTemplateDependency{{Name: "db", AppID: "app-db", Template: "mysql"}},
+		CreatedForAppID: "app-web",
+	})
+
+	assert.Equal(t, []*AppTemplateBindingDependencyResp{{Name: "db", AppID: "app-db", Template: "mysql"}},
+		resp.Dependencies)
+	assert.Equal(t, "app-web", resp.CreatedForAppID)
 }

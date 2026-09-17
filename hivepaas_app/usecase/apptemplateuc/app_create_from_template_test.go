@@ -411,6 +411,7 @@ func TestTransformAppTemplateBinding(t *testing.T) {
 		Source: "official", Template: "pg", Title: "PG", Version: "18", Release: "18.6",
 		Variant: "alpine", Revision: "abc", AppliedAt: appliedAt,
 		ImageOverride: "postgres:18.7-alpine3.24",
+		Dependencies:  []*apptemplatedto.AppTemplateBindingDependencyResp{},
 	}, resp, "parameters are not part of the response")
 }
 

@@ -84,17 +84,25 @@ type ListAppTemplatesResp struct {
 	Data []*AppTemplateSummaryResp `json:"data"`
 }
 
+type AppTemplateDependencySummaryResp struct {
+	Name     string `json:"name"`
+	Title    string `json:"title"`
+	Template string `json:"template"`
+}
+
 type AppTemplateSummaryResp struct {
-	Name       string                           `json:"name"`
-	Title      string                           `json:"title"`
-	Tagline    string                           `json:"tagline"`
-	Categories []string                         `json:"categories"`
-	Tags       []string                         `json:"tags"`
-	Aliases    []string                         `json:"aliases"`
-	IconURL    string                           `json:"iconUrl"`
-	License    string                           `json:"license"`
-	Variants   []*AppTemplateVariantSummaryResp `json:"variants"`
-	Versions   []*AppTemplateVersionResp        `json:"versions"`
+	Name       string   `json:"name"`
+	Title      string   `json:"title"`
+	Tagline    string   `json:"tagline"`
+	Categories []string `json:"categories"`
+	Tags       []string `json:"tags"`
+	Aliases    []string `json:"aliases"`
+	IconURL    string   `json:"iconUrl"`
+	License    string   `json:"license"`
+	// Dependencies are the apps creating this template also creates.
+	Dependencies []*AppTemplateDependencySummaryResp `json:"dependencies"`
+	Variants     []*AppTemplateVariantSummaryResp    `json:"variants"`
+	Versions     []*AppTemplateVersionResp           `json:"versions"`
 	// Compatible is false for a template needing a newer HivePaaS: the store
 	// lists it, locked, rather than hiding it.
 	Compatible          bool   `json:"compatible"`
@@ -135,6 +143,7 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 		Tags:                entry.Tags,
 		Aliases:             entry.Aliases,
 		IconURL:             AppTemplateIconURL(entry),
+		Dependencies:        make([]*AppTemplateDependencySummaryResp, 0, len(entry.Dependencies)),
 		Variants:            make([]*AppTemplateVariantSummaryResp, 0, len(entry.Variants)),
 		Versions:            make([]*AppTemplateVersionResp, 0, len(entry.Versions)),
 		Compatible:          templatemodel.IsCompatible(entry.Requires, currentVersionCode),
@@ -152,6 +161,10 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 			Deprecated: version.Deprecated,
 			Variants:   version.Variants,
 		})
+	}
+	for _, dep := range entry.Dependencies {
+		summary.Dependencies = append(summary.Dependencies,
+			&AppTemplateDependencySummaryResp{Name: dep.Name, Title: dep.Title, Template: dep.Template})
 	}
 	return summary
 }

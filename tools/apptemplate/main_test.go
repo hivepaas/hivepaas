@@ -45,7 +45,7 @@ func TestLintAndIndex(t *testing.T) {
 	var out bytes.Buffer
 
 	assert.NoError(t, runLint([]string{dir}, &out))
-	assert.Contains(t, out.String(), "OK: 1 template(s)")
+	assert.Contains(t, out.String(), "OK: 2 template(s)", "demo, and demoweb, which depends on it")
 
 	assert.ErrorIs(t, runIndex([]string{"-check", dir}, &out), errIndexStale, "there is no index.json yet")
 	assert.NoError(t, runIndex([]string{dir}, &out))

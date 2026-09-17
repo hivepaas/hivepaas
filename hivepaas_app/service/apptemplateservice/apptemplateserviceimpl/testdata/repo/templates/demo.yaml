@@ -1,0 +1,25 @@
+apiVersion: hivepaas.com/v1
+kind: AppTemplate
+metadata:
+  name: demo
+  title: Demo
+  tagline: A demo database
+  description: Demo.
+  categories: [databases/sql]
+  tags: [sql]
+  icon: icons/demo.svg
+  requires: {versionCode: v000001}
+parameters:
+  - {name: password, title: Password, type: secret, generate: {length: 16}}
+  - {name: dataVolume, title: Data volume, type: volume}
+versions:
+  - {name: "2", release: "2.1", default: true, image: "demo:2.1.0"}
+  - {name: "1", release: "1.9", deprecated: true, image: "demo:1.9.3"}
+app:
+  deployment:
+    source: {activeMethod: image, imageSource: {image: "${{ image }}"}}
+    storage:
+      mounts:
+        /data: {type: volume, source: "${{ params.dataVolume }}"}
+  settings:
+    kind: {category: database, engine: demo, database: {password: "${{ params.password }}"}}

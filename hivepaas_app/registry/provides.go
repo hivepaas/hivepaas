@@ -51,6 +51,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice/appprovisionserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice/approutingserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice/appserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/apptemplateserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice/auditserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backuprepocleanupservice/backuprepocleanupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/backupreposervice/backupreposerviceimpl"
@@ -329,6 +330,7 @@ var Provides = []any{
 	appcloneserviceimpl.New,
 	appdeploymentserviceimpl.New,
 	appprovisionserviceimpl.New,
+	apptemplateserviceimpl.New,
 	apppreviewserviceimpl.New,
 	approutingserviceimpl.New,
 	settingsprobationserviceimpl.New,

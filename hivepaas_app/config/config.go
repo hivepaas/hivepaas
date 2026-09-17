@@ -111,6 +111,8 @@ type Config struct {
 	Security   Security   `toml:"security"`
 	Agent      Agent      `toml:"agent"`
 
+	AppTemplates AppTemplates `toml:"app_templates"`
+
 	DevMode DevMode `toml:"dev_mode"`
 }
 

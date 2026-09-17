@@ -1,0 +1,4 @@
+apiVersion: hivepaas.com/v1
+kind: TemplateTags
+tags:
+  - {id: sql, title: SQL}

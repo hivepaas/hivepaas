@@ -1,0 +1,7 @@
+apiVersion: hivepaas.com/v1
+kind: TemplateCategories
+categories:
+  - id: databases
+    title: Databases
+    children:
+      - {id: sql, title: SQL}

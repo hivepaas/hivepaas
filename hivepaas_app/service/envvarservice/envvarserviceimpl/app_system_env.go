@@ -16,7 +16,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
-//nolint:funlen
 func (s *service) BuildSystemEnvVarsInApp(
 	ctx context.Context,
 	db database.IDB,
@@ -97,49 +96,11 @@ func (s *service) BuildSystemEnvVarsInApp(
 		},
 	}
 
-	if kindSettings != nil && kindSettings.Category == base.AppCategoryDatabase && kindSettings.Database != nil {
-		if err := kindSettings.Decrypt(); err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-		result = append(result,
-			&envvarservice.EnvVar{
-				EnvVar: &entity.EnvVar{
-					Key:      base.AppSystemEnvVarUser,
-					Value:    kindSettings.Database.Username,
-					IsShared: true,
-				},
-			},
-			&envvarservice.EnvVar{
-				EnvVar: &entity.EnvVar{
-					Key:      base.AppSystemEnvVarPassword,
-					Value:    gofn.Must(kindSettings.Database.Password.GetPlain()),
-					IsShared: true,
-				},
-			},
-			&envvarservice.EnvVar{
-				EnvVar: &entity.EnvVar{
-					Key:      base.AppSystemEnvVarRootPassword,
-					Value:    gofn.Must(kindSettings.Database.RootPassword.GetPlain()),
-					IsShared: false, // NOTE: do not share this env with other apps
-				},
-			},
-			&envvarservice.EnvVar{
-				EnvVar: &entity.EnvVar{
-					Key:      base.AppSystemEnvVarDatabaseName,
-					Value:    kindSettings.Database.DbName,
-					IsShared: true,
-				},
-			},
-			&envvarservice.EnvVar{
-				EnvVar: &entity.EnvVar{
-					Key:      base.AppSystemEnvVarSSLMode,
-					Value:    string(kindSettings.Database.SSLMode),
-					IsShared: true,
-				},
-			})
+	kindEnvs, err := kindEnvVars(kindSettings)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
-
-	// TODO: envs for cache app
+	result = append(result, kindEnvs...)
 
 	for _, env := range result {
 		env.IsLiteral = true
@@ -153,4 +114,68 @@ func (s *service) BuildSystemEnvVarsInApp(
 	}
 
 	return result, nil
+}
+
+// kindEnvVars is the part of an app's system environment that comes from its
+// kind: the credentials other apps connect with. It is a function of the kind
+// setting alone, so the rules of who may read what are readable in one place.
+//
+// A webapp contributes nothing, and neither does a kind whose sub-block is
+// missing - an app half configured is not a reason to publish empty credentials
+// other apps would then refer to.
+func kindEnvVars(kindSettings *entity.AppKindSettings) ([]*envvarservice.EnvVar, error) {
+	if kindSettings == nil {
+		return nil, nil
+	}
+
+	switch {
+	case kindSettings.Category == base.AppCategoryDatabase && kindSettings.Database != nil:
+		if err := kindSettings.Decrypt(); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		db := kindSettings.Database
+		return []*envvarservice.EnvVar{
+			sharedEnv(base.AppSystemEnvVarUser, db.Username),
+			sharedEnv(base.AppSystemEnvVarPassword, gofn.Must(db.Password.GetPlain())),
+			{
+				EnvVar: &entity.EnvVar{
+					Key:      base.AppSystemEnvVarRootPassword,
+					Value:    gofn.Must(db.RootPassword.GetPlain()),
+					IsShared: false, // NOTE: do not share this env with other apps
+				},
+			},
+			sharedEnv(base.AppSystemEnvVarDatabaseName, db.DbName),
+			sharedEnv(base.AppSystemEnvVarSSLMode, string(db.SSLMode)),
+		}, nil
+
+	case kindSettings.Category == base.AppCategoryCache && kindSettings.Cache != nil:
+		if err := kindSettings.Decrypt(); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		// Only the password. A cache has no user to name - Redis and Valkey
+		// authenticate as the built-in `default` user, and Memcached has no
+		// accounts at all - no database to select, and no root account whose
+		// password would have to be kept out of other apps' reach.
+		//
+		// The variable is published even when the password is empty, which is
+		// how a cache with authentication turned off looks: an app referring to
+		// ${cache.HIVEPAAS_PASSWORD} then reads an empty value rather than
+		// failing on a variable that does not exist.
+		return []*envvarservice.EnvVar{
+			sharedEnv(base.AppSystemEnvVarPassword, gofn.Must(kindSettings.Cache.Password.GetPlain())),
+		}, nil
+
+	default:
+		return nil, nil
+	}
+}
+
+func sharedEnv(key, value string) *envvarservice.EnvVar {
+	return &envvarservice.EnvVar{
+		EnvVar: &entity.EnvVar{
+			Key:      key,
+			Value:    value,
+			IsShared: true,
+		},
+	}
 }

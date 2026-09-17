@@ -5,7 +5,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	_ "github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/interface/api/handler/authhandler"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
@@ -28,7 +27,7 @@ import (
 // @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /app-templates [get]
 func (h *Handler) ListAppTemplates(ctx *gin.Context) {
-	auth, _, err := h.GetAuthInProject(ctx, base.ActionTypeRead)
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return
@@ -62,7 +61,7 @@ func (h *Handler) ListAppTemplates(ctx *gin.Context) {
 // @Failure 500 {object} hperrors.ErrorInfo
 // @Router  /app-templates/{templateName} [get]
 func (h *Handler) GetAppTemplate(ctx *gin.Context) {
-	auth, _, err := h.GetAuthInProject(ctx, base.ActionTypeRead)
+	auth, err := h.AuthHandler.GetCurrentAuth(ctx, authhandler.NoAccessCheck)
 	if err != nil {
 		h.RenderError(ctx, err)
 		return

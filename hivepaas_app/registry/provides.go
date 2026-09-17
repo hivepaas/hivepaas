@@ -182,6 +182,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
 	"github.com/hivepaas/hivepaas/services/docker"
+	imageregistry "github.com/hivepaas/hivepaas/services/registry"
 )
 
 var Provides = []any{
@@ -335,6 +336,7 @@ var Provides = []any{
 	appdeploymentserviceimpl.New,
 	appprovisionserviceimpl.New,
 	apptemplateserviceimpl.New,
+	imageregistry.New,
 	apppreviewserviceimpl.New,
 	approutingserviceimpl.New,
 	settingsprobationserviceimpl.New,

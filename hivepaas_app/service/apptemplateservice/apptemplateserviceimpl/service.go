@@ -13,6 +13,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterender"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
+	"github.com/hivepaas/hivepaas/services/registry"
 )
 
 const (
@@ -20,20 +21,31 @@ const (
 	contentTypePNG = "image/png"
 )
 
+// tagLister is the part of the registry client this service uses. It is an
+// interface so a test can answer with a tag list instead of a fake registry.
+type tagLister interface {
+	ListTags(ctx context.Context, ref registry.Reference, maxTags int) (*registry.ListTagsResult, error)
+}
+
 func New(
 	hpAppService hpappservice.Service,
+	registryClient *registry.Client,
 	logger logging.Logger,
 ) apptemplateservice.Service {
 	return &service{
-		official: newOfficialSource(hpAppService),
-		logger:   logger,
+		official:       newOfficialSource(hpAppService),
+		registryClient: registryClient,
+		tagCache:       newImageTagsCache(),
+		logger:         logger,
 	}
 }
 
 type service struct {
-	official apptemplateservice.Source
-	logger   logging.Logger
-	warnOnce sync.Once
+	official       apptemplateservice.Source
+	registryClient tagLister
+	tagCache       *imageTagsCache
+	logger         logging.Logger
+	warnOnce       sync.Once
 }
 
 // source picks where templates come from. HP_TEMPLATES_DIR is read with no

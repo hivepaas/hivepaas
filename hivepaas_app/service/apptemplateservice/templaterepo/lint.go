@@ -55,7 +55,11 @@ func Lint(repo *Repo) []Problem {
 			report("%s", ErrorText(err))
 			continue
 		}
-		problems = append(problems, lintRenders(file)...)
+		if depProblems := lintDependencies(repo, file); len(depProblems) > 0 {
+			problems = append(problems, depProblems...)
+			continue
+		}
+		problems = append(problems, lintRenders(repo, file)...)
 	}
 	return problems
 }
@@ -94,8 +98,30 @@ func categoryRefs(categories []*templatemodel.Category) map[string]bool {
 	return refs
 }
 
-func lintRenders(file *TemplateFile) []Problem {
+func lintRenders(repo *Repo, file *TemplateFile) []Problem {
 	tmpl := file.Template
+	request := func(version, variant string) *templaterender.Request {
+		return &templaterender.Request{
+			Template: tmpl, Version: version, Variant: variant,
+			Params: lintParams(tmpl), AllowDeprecated: true,
+		}
+	}
+	if len(tmpl.Dependencies) > 0 {
+		owner, err := templaterender.ResolveParams(tmpl.Parameters, lintParams(tmpl))
+		if err != nil {
+			return []Problem{{Path: file.Path, Message: ErrorText(err)}}
+		}
+		deps, depProblems := lintBindings(repo, file, owner)
+		if len(depProblems) > 0 {
+			return depProblems
+		}
+		request = func(version, variant string) *templaterender.Request {
+			return &templaterender.Request{
+				Template: tmpl, Version: version, Variant: variant,
+				ResolvedParams: owner, Deps: deps, AllowDeprecated: true,
+			}
+		}
+	}
 	variants := []string{""}
 	if len(tmpl.Variants) > 0 {
 		variants = variants[:0]
@@ -110,13 +136,7 @@ func lintRenders(file *TemplateFile) []Problem {
 			if variant != "" && version.ImageFor(variant) == "" {
 				continue
 			}
-			_, err := templaterender.Render(&templaterender.Request{
-				Template:        tmpl,
-				Version:         version.Name,
-				Variant:         variant,
-				Params:          lintParams(tmpl),
-				AllowDeprecated: true,
-			})
+			_, err := templaterender.Render(request(version.Name, variant))
 			if err != nil {
 				label := "version " + version.Name
 				if variant != "" {

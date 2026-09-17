@@ -45,6 +45,10 @@ func BuildIndex(repo *Repo) (*templatemodel.Index, error) {
 			entry.Variants = append(entry.Variants,
 				&templatemodel.IndexVariant{Name: variant.Name, Default: variant.Default})
 		}
+		for _, dep := range tmpl.Dependencies {
+			entry.Dependencies = append(entry.Dependencies,
+				&templatemodel.IndexDependency{Name: dep.Name, Title: dep.Title, Template: dep.Template})
+		}
 		for _, version := range tmpl.Versions {
 			indexVersion := &templatemodel.IndexVersion{
 				Name:       version.Name,

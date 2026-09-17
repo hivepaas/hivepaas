@@ -132,8 +132,12 @@ func (s *service) newApp(
 	projectEnv *entity.ProjectEnv,
 	timeNow time.Time,
 ) (*entity.App, error) {
+	id := req.AppID
+	if id == "" {
+		id = gofn.Must(ulid.NewStringULID())
+	}
 	app := &entity.App{
-		ID:           gofn.Must(ulid.NewStringULID()),
+		ID:           id,
 		ProjectID:    project.ID,
 		Project:      project,
 		ProjectEnvID: projectEnv.ID,

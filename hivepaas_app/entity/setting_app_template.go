@@ -44,6 +44,13 @@ type AppTemplateSettings struct {
 	// say "you chose this" rather than guessing from a string comparison.
 	ImageOverride string `json:"imageOverride,omitempty"`
 
+	// Dependencies are the apps created alongside this one because its template
+	// named them, in the order they were created.
+	Dependencies []AppTemplateDependency `json:"dependencies,omitempty"`
+	// CreatedForAppID is the app this one was created to serve, empty when it was
+	// created on its own. Deleting that app leaves this one where it is.
+	CreatedForAppID string `json:"createdForAppId,omitempty"`
+
 	// Params are the values given at creation, secrets encrypted. Parameters are
 	// fixed after creation: a change is made on the app, and phase 2's merge sees
 	// it as a user change.
@@ -55,6 +62,13 @@ type AppTemplateSettings struct {
 type AppTemplateParam struct {
 	Value  string         `json:"value,omitempty"`
 	Secret EncryptedField `json:"secret,omitzero"`
+}
+
+type AppTemplateDependency struct {
+	// Name is the role the template gave it: db, cache.
+	Name     string `json:"name"`
+	AppID    string `json:"appId"`
+	Template string `json:"template"`
 }
 
 // AppTemplateBase is what the template rendered to when it was last applied:

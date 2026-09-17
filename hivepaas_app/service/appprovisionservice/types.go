@@ -20,10 +20,14 @@ type ConfigureFunc func(ctx context.Context, db database.IDB, app *entity.App, s
 type ProvisionAppReq struct {
 	ProjectID    string
 	ProjectEnvID string
-	Name         string
-	Status       base.AppStatus
-	Note         string
-	Tags         []string
+	// AppID is the id the app is created with, generated when empty. The apps a
+	// template creates together name each other by id, so their ids are chosen
+	// before the first of them exists.
+	AppID  string
+	Name   string
+	Status base.AppStatus
+	Note   string
+	Tags   []string
 	// Configure is nil for an empty app.
 	Configure ConfigureFunc
 }

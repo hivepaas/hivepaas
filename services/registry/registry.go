@@ -15,9 +15,12 @@ import (
 
 const (
 	requestTimeout = 10 * time.Second
-	pageSize       = 100
-	maxPages       = 20
-	maxBodySize    = 4 << 20
+	// pageSize is what a registry is asked for at once. Docker Hub honors 1000,
+	// and a repository the size of library/postgres - 1421 tags - is then two
+	// requests instead of fifteen.
+	pageSize    = 1000
+	maxPages    = 10
+	maxBodySize = 4 << 20
 )
 
 // challengeParamPattern reads key="value" out of a WWW-Authenticate header.

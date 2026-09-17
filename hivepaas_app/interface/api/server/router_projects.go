@@ -30,6 +30,8 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	// App templates catalog
 	projectGroup.GET("/:projectID/app-templates", s.handlerRegistry.appTemplateHandler.ListAppTemplates)
 	projectGroup.GET("/:projectID/app-templates/:templateName", s.handlerRegistry.appTemplateHandler.GetAppTemplate)
+	projectGroup.GET("/:projectID/app-templates/:templateName/image-tags",
+		s.handlerRegistry.appTemplateHandler.GetAppTemplateImageTags)
 
 	{ // Tags
 		tagGroup := projectGroup.Group("/:projectID/tags")

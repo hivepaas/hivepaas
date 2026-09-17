@@ -123,8 +123,10 @@ This is inference, not law. `pkg/imageref` says so in its own doc comment - tags
 versions and it answers only where it is confident. So the endpoint offers candidates and the
 person chooses; it never picks for them.
 
-**Limits.** At most 1000 tags read (paginating with `n=` and `Link`), at most 50 returned, with
-`truncated` saying when more existed. Results are cached per repository for ten minutes in memory,
+**Limits.** At most 5000 tags read (paginating with `n=` and `Link`), at most 50 returned, with
+`truncated` saying when more existed. The read has to reach the end of the repository: a registry
+answers in lexical order, so `18.6` sorts after every `17.x`, and `library/postgres` alone
+publishes 1421 tags. Results are cached per repository for ten minutes in memory,
 the way `hpappserviceimpl` caches release info. A `429` surfaces as
 `ERR_REGISTRY_RATE_LIMITED`; anything else unreachable as `ERR_REGISTRY_UNAVAILABLE`. A failed
 scan never blocks creating an app from the template's own pinned image.

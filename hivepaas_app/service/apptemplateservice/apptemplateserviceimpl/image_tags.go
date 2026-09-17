@@ -13,7 +13,13 @@ import (
 const (
 	// maxScannedTags bounds what is read from a registry; maxOfferedTags bounds
 	// what a person is asked to choose from.
-	maxScannedTags = 1000
+	//
+	// The scan has to reach the end of the repository, not just the start: a
+	// registry answers in lexical order, so 18.6 sorts after every 17.x, and a cap
+	// that cuts the list short hides exactly the releases somebody opened this to
+	// find. library/postgres publishes 1421 tags today, and 5000 leaves room for a
+	// repository several times that before the answer is marked truncated.
+	maxScannedTags = 5000
 	maxOfferedTags = 50
 )
 

@@ -19,7 +19,7 @@
 - **`make gen-swag`** whenever a DTO changes; `docs/openapi/swagger.json` is committed.
 - **The override rule, verbatim from the spec:** same repository as the template's pinned image; a tag is required and may not be `latest`; a digest is allowed only alongside a tag; a moving tag and a different major line are allowed but classified so the dashboard can warn differently.
 - **The scan rule:** the repository is derived on the server from template + version + variant. No endpoint accepts an image or a URL from the client - that would turn it into a probe for the cluster's internal network.
-- **Limits:** at most 1000 tags read from a registry, at most 50 returned, cache 10 minutes.
+- **Limits:** at most 5000 tags read from a registry, at most 50 returned, cache 10 minutes.
 - **Deferred work** is marked `// TODO: app templates phase 2|later - <what>. See docs/superpowers/specs/2026-09-17-app-template-image-override-design.md §10.`
 - **Commits:** the steps below commit per task, on a branch off `main`.
 

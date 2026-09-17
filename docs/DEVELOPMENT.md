@@ -263,8 +263,10 @@ its argument as a **query parameter**, not a JSON body:
 ```bash
 make local-app-run
 
+# Ask for admin by name: the seeded users all share a created_at, so ordering by it
+# returns whichever row postgres feels like - often a member with no project access.
 USER_ID=$(PGPASSWORD=abc123 psql -h localhost -p 35432 -U hivepaas -d hivepaas \
-  -tAc "SELECT id FROM users WHERE deleted_at IS NULL ORDER BY created_at LIMIT 1")
+  -tAc "SELECT id FROM users WHERE username = 'admin' AND deleted_at IS NULL")
 
 TOKEN=$(curl -sS -u hivepaas:abc123 -X POST \
   "http://localhost:10000/_/internal/dev-helper/dev-mode-login?userId=$USER_ID" \

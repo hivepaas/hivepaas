@@ -111,8 +111,13 @@ func SelectTagCandidates(templateImage string, tags []string, maxCandidates int)
 		if err != nil || class == ImageOverrideMoving {
 			continue
 		}
-		newer, _ := imageref.IsUpgrade(templateImage, candidate)
-		candidates = append(candidates, TagCandidate{Tag: tag, Class: class, Newer: newer})
+		// Newer is ordered, not decided the way IsUpgrade decides: that function
+		// applies a tag it cannot order, which is right for a release the updater
+		// was told to install and wrong for a list somebody reads. 18.6-alpine3.23
+		// against 18.6-alpine3.24 cannot be ordered - same release, different base -
+		// and calling it newer would be a lie on screen.
+		order, ordered := imageref.CompareTags(current.Tag, tag)
+		candidates = append(candidates, TagCandidate{Tag: tag, Class: class, Newer: ordered && order < 0})
 	}
 
 	slices.SortFunc(candidates, func(a, b TagCandidate) int {

@@ -86,3 +86,27 @@ func TestTransformAppTemplateNeverSendsASecretDefault(t *testing.T) {
 	assert.Equal(t, "Alpine", resp.Variants[0].Title)
 	assert.Equal(t, "17.6", resp.Versions[0].Release)
 }
+
+func TestTransformAppTemplateImageTags(t *testing.T) {
+	resp := TransformAppTemplateImageTags(&apptemplateservice.ImageTagsResp{
+		Repository: "registry-1.docker.io/library/postgres",
+		CurrentTag: "18.6-alpine3.24",
+		Truncated:  true,
+		Tags: []*apptemplateservice.ImageTag{
+			{Tag: "18.7-alpine3.24", Class: templatemodel.ImageOverrideSameLine, Newer: true},
+			{Tag: "19.0-alpine3.24", Class: templatemodel.ImageOverrideOtherMajor, Newer: true},
+		},
+	})
+
+	assert.Equal(t, &AppTemplateImageTagsResp{
+		Repository: "registry-1.docker.io/library/postgres",
+		CurrentTag: "18.6-alpine3.24",
+		Truncated:  true,
+		Tags: []*AppTemplateImageTagResp{
+			{Tag: "18.7-alpine3.24", Image: "registry-1.docker.io/library/postgres:18.7-alpine3.24",
+				Class: "same-line", Newer: true},
+			{Tag: "19.0-alpine3.24", Image: "registry-1.docker.io/library/postgres:19.0-alpine3.24",
+				Class: "other-major", Newer: true},
+		},
+	}, resp, "the dashboard posts Image back as imageOverride, so it never builds a reference itself")
+}

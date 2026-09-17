@@ -71,6 +71,22 @@ func TestSelectTagCandidates(t *testing.T) {
 	}, got)
 }
 
+// Same release, different base image: nothing orders those two, and the list must
+// not claim the older base is an upgrade.
+func TestSelectTagCandidatesDoesNotCallAnUnorderableTagNewer(t *testing.T) {
+	got := SelectTagCandidates(pgImage, []string{"18.6-alpine3.23", "18.6-alpine", "18.7-alpine3.24"}, 0)
+
+	newerByTag := map[string]bool{}
+	for _, candidate := range got {
+		newerByTag[candidate.Tag] = candidate.Newer
+	}
+	assert.Equal(t, map[string]bool{
+		"18.7-alpine3.24": true,
+		"18.6-alpine3.23": false,
+		"18.6-alpine":     false,
+	}, newerByTag)
+}
+
 func TestSelectTagCandidatesCapsAndDeduplicates(t *testing.T) {
 	tags := []string{"18.7-alpine3.24", "18.7-alpine3.24", "18.8-alpine3.24", "18.9-alpine3.24"}
 

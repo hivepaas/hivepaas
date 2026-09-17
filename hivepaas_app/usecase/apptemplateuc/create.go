@@ -40,10 +40,11 @@ func (uc *UC) CreateAppFromTemplate(
 	// Before the transaction: rendering may reach GitHub, and nothing is locked
 	// while it does.
 	rendered, err := uc.appTemplateService.Render(ctx, &apptemplateservice.RenderReq{
-		Name:    req.Template,
-		Version: req.Version,
-		Variant: req.Variant,
-		Params:  req.Params,
+		Name:          req.Template,
+		Version:       req.Version,
+		Variant:       req.Variant,
+		Params:        req.Params,
+		ImageOverride: req.ImageOverride,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

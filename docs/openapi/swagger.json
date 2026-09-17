@@ -3002,6 +3002,87 @@
         "tags" : [ "app_templates" ]
       }
     },
+    "/projects/{projectID}/app-templates/{templateName}/image-tags" : {
+      "get" : {
+        "description" : "Reads the registry on demand. The repository comes from the template, never from the request.",
+        "operationId" : "getAppTemplateImageTags",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "template name",
+          "in" : "path",
+          "name" : "templateName",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "template version; empty for the default",
+          "in" : "query",
+          "name" : "version",
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "template variant; empty for the default",
+          "in" : "query",
+          "name" : "variant",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apptemplatedto.GetAppTemplateImageTagsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "412" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Precondition Failed"
+          }
+        },
+        "summary" : "Lists the image tags a template version could use",
+        "tags" : [ "app_templates" ]
+      }
+    },
     "/projects/{projectID}/apps" : {
       "get" : {
         "description" : "Lists apps of a project",
@@ -41530,7 +41611,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -41548,7 +41629,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -44636,6 +44717,10 @@
           "appliedAt" : {
             "type" : "string"
           },
+          "imageOverride" : {
+            "description" : "ImageOverride is empty when the app runs the image the template pinned.",
+            "type" : "string"
+          },
           "release" : {
             "type" : "string"
           },
@@ -44658,7 +44743,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appliedAt", "release", "revision", "source", "template", "title", "variant", "version" ],
+        "required" : [ "appliedAt", "imageOverride", "release", "revision", "source", "template", "title", "variant", "version" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateCatalogResp" : {
@@ -44707,6 +44792,48 @@
           }
         },
         "required" : [ "children", "id", "title" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateImageTagResp" : {
+        "properties" : {
+          "class" : {
+            "description" : "Class is one of same-line, other-major or moving, and decides which warning\nthe dashboard shows before creating the app.",
+            "type" : "string"
+          },
+          "image" : {
+            "description" : "Image is the full reference to post back as imageOverride.",
+            "type" : "string"
+          },
+          "newer" : {
+            "type" : "boolean"
+          },
+          "tag" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "class", "image", "newer", "tag" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateImageTagsResp" : {
+        "properties" : {
+          "currentTag" : {
+            "type" : "string"
+          },
+          "repository" : {
+            "type" : "string"
+          },
+          "tags" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateImageTagResp"
+            },
+            "type" : "array"
+          },
+          "truncated" : {
+            "description" : "Truncated says the repository has more tags than were read.",
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "currentTag", "repository", "tags", "truncated" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateLinksResp" : {
@@ -44994,6 +45121,10 @@
       },
       "apptemplatedto.CreateAppFromTemplateReq" : {
         "properties" : {
+          "imageOverride" : {
+            "description" : "ImageOverride replaces the image the template pins, for this app only. It\nmust come from the same repository; the service refuses anything else.",
+            "type" : "string"
+          },
           "name" : {
             "type" : "string"
           },
@@ -45015,7 +45146,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "name", "params", "template", "variant", "version" ],
+        "required" : [ "imageOverride", "name", "params", "template", "variant", "version" ],
         "type" : "object"
       },
       "apptemplatedto.CreateAppFromTemplateResp" : {
@@ -45034,6 +45165,18 @@
         "properties" : {
           "data" : {
             "$ref" : "#/components/schemas/apptemplatedto.AppTemplateBindingResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "apptemplatedto.GetAppTemplateImageTagsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/apptemplatedto.AppTemplateImageTagsResp"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -59936,9 +60079,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

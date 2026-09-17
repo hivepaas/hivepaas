@@ -13,6 +13,8 @@ const (
 	appNameMaxLen      = 100
 	choiceNameMaxLen   = 32
 	templateNameMinLen = 1
+	// imageRefMaxLen is a registry host, a repository path, a tag and a digest.
+	imageRefMaxLen = 512
 )
 
 type CreateAppFromTemplateReq struct {
@@ -24,6 +26,9 @@ type CreateAppFromTemplateReq struct {
 	// Version and Variant are empty for the template's defaults.
 	Version string `json:"version"`
 	Variant string `json:"variant"`
+	// ImageOverride replaces the image the template pins, for this app only. It
+	// must come from the same repository; the service refuses anything else.
+	ImageOverride string `json:"imageOverride"`
 	// Params are JSON values of each parameter's type; a size is a string such as "1GB".
 	Params map[string]any `json:"params"`
 }
@@ -38,12 +43,13 @@ func (req *CreateAppFromTemplateReq) ModifyRequest() error {
 	req.Template = strings.TrimSpace(req.Template)
 	req.Version = strings.TrimSpace(req.Version)
 	req.Variant = strings.TrimSpace(req.Variant)
+	req.ImageOverride = strings.TrimSpace(req.ImageOverride)
 	return nil
 }
 
 // Validate implements interface basedto.ReqValidator
 func (req *CreateAppFromTemplateReq) Validate() hperrors.ValidationErrors {
-	validators := make([]vld.Validator, 0, 6) //nolint:mnd
+	validators := make([]vld.Validator, 0, 7) //nolint:mnd
 	validators = append(validators, basedto.ValidateID(&req.ProjectID, true, "projectId")...)
 	validators = append(validators, basedto.ValidateID(&req.ProjectEnvID, true, "projectEnv")...)
 	validators = append(validators, basedto.ValidateStr(&req.Name, true, 1, appNameMaxLen, "name")...)
@@ -51,6 +57,8 @@ func (req *CreateAppFromTemplateReq) Validate() hperrors.ValidationErrors {
 		basedto.ValidateStr(&req.Template, true, templateNameMinLen, templateNameMaxLen, "template")...)
 	validators = append(validators, basedto.ValidateStr(&req.Version, false, 1, choiceNameMaxLen, "version")...)
 	validators = append(validators, basedto.ValidateStr(&req.Variant, false, 1, choiceNameMaxLen, "variant")...)
+	validators = append(validators,
+		basedto.ValidateStr(&req.ImageOverride, false, 1, imageRefMaxLen, "imageOverride")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))
 }
 

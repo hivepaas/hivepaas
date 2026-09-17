@@ -30,11 +30,18 @@ var (
 	choiceNamePattern   = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$`)
 	categoryRefPattern  = regexp.MustCompile(`^[a-z0-9-]+/[a-z0-9-]+$`)
 	versionCodePattern  = regexp.MustCompile(`^v[0-9]{6}$`)
-	// pinnedTagPattern is what separates 17.6-alpine from 17-alpine: a tag naming
-	// one release carries at least major.minor, or a date the way minio's
-	// RELEASE.2025-09-07T16-13-09Z does. It cannot know the patch level an image
-	// publishes, so it is a floor, not proof.
-	pinnedTagPattern = regexp.MustCompile(`[0-9]+\.[0-9]+|\.[0-9]{4}-[0-9]{2}-[0-9]{2}`)
+	// pinnedVersionPattern is what separates 17.6-alpine from 17-alpine: a tag
+	// naming one release carries at least major.minor. It is anchored and read
+	// against the tag's version part alone, because the base image in the suffix
+	// carries a version of its own - 18-alpine3.24 names a moving postgres tag on
+	// a pinned alpine, and matching anywhere in the tag would call that pinned.
+	//
+	// It cannot know the patch level an image publishes, so it is a floor, not proof.
+	pinnedVersionPattern = regexp.MustCompile(`^v?[0-9]+\.[0-9]+`)
+	// pinnedDatePattern is the other shape a release takes: a date, the way minio's
+	// RELEASE.2025-09-07T16-13-09Z does it. It reads the whole tag, since the date's
+	// own dashes would cut a version part short.
+	pinnedDatePattern = regexp.MustCompile(`\.[0-9]{4}-[0-9]{2}-[0-9]{2}`)
 )
 
 // problems collects everything wrong with one file, so an author sees all of it
@@ -339,6 +346,19 @@ func validateVersionImages(prefix string, version *Version, variants map[string]
 	}
 }
 
+// isPinnedTag reports whether a tag names one release. The version part is
+// everything before the first separator: `18.6` of `18.6-alpine3.24`.
+func isPinnedTag(tag string) bool {
+	if pinnedDatePattern.MatchString(tag) {
+		return true
+	}
+	version := tag
+	if i := strings.IndexAny(tag, "-_+"); i >= 0 {
+		version = tag[:i]
+	}
+	return pinnedVersionPattern.MatchString(version)
+}
+
 func checkPinned(field, image string, p *problems) {
 	if image != "" && !IsPinnedImage(image) {
 		p.add("%s %q must name an exact release, not a moving tag", field, image)
@@ -354,10 +374,10 @@ func IsPinnedImage(image string) bool {
 	if ref.Digest != "" {
 		return true
 	}
-	if ref.Tag == "" || ref.Tag == "latest" {
+	if ref.Tag == "" || ref.Tag == latestTag {
 		return false
 	}
-	return pinnedTagPattern.MatchString(ref.Tag)
+	return isPinnedTag(ref.Tag)
 }
 
 // ToInt64 accepts the integer shapes a YAML or JSON decode produces.

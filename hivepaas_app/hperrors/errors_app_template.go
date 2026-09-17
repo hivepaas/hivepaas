@@ -15,4 +15,5 @@ var (
 	ErrAppTemplateNotFound           = NewErr(ErrNotFound, "ERR_APP_TEMPLATE_NOT_FOUND")
 	ErrAppTemplateVerificationFailed = NewErr(ErrPreconditionFailed, "ERR_APP_TEMPLATE_VERIFICATION_FAILED")
 	ErrAppTemplateIncompatible       = NewErr(ErrNotAllowed, "ERR_APP_TEMPLATE_INCOMPATIBLE")
+	ErrAppTemplateImageNotAllowed    = NewErr(ErrNotAllowed, "ERR_APP_TEMPLATE_IMAGE_NOT_ALLOWED")
 )

@@ -133,3 +133,23 @@ func TestVersionsAreReadOutOfPrereleaseTags(t *testing.T) {
 	upgrade, reason = imageref.IsUpgrade("postgres:19beta2-alpine", "postgres:18.6-alpine")
 	assert.False(t, upgrade, reason)
 }
+
+func TestCompareTagsOrdersWhatItCan(t *testing.T) {
+	for _, tc := range []struct {
+		a, b string
+		want int
+		ok   bool
+	}{
+		{"18.6", "18.7", -1, true},
+		{"18.7-alpine3.24", "18.6-alpine3.24", 1, true},
+		{"18.6", "18.6", 0, true},
+		{"18.6-alpine", "18.6", 0, false},
+		{"stable", "18.6", 0, false},
+	} {
+		got, ok := imageref.CompareTags(tc.a, tc.b)
+		assert.Equal(t, tc.ok, ok, "%s vs %s", tc.a, tc.b)
+		if tc.ok {
+			assert.Equal(t, tc.want, got, "%s vs %s", tc.a, tc.b)
+		}
+	}
+}

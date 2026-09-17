@@ -89,6 +89,15 @@ func IsUpgrade(current, target string) (bool, string) {
 	return true, "upgrading " + tgt.Repository + " from " + cur.Tag + " to " + tgt.Tag
 }
 
+// CompareTags orders two tags the way IsUpgrade does, reporting whether it could.
+//
+// It is exported for callers that sort a registry's tags rather than compare two
+// references: sorting needs an ordering, and IsUpgrade answers a different
+// question - whether one reference should replace another.
+func CompareTags(a, b string) (int, bool) {
+	return compareTags(a, b)
+}
+
 // compareTags orders two tags, reporting whether it could.
 //
 // A tag is read as an optional `v`, dot-separated numbers, and an optional

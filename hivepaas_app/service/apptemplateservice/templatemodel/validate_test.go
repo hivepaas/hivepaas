@@ -90,11 +90,15 @@ func TestIsPinnedImage(t *testing.T) {
 		"minio/minio:RELEASE.2025-09-07T16-13-09Z":   true,
 		"registry.example:5000/app:1.2.3":            true,
 		"postgres@sha256:" + strings.Repeat("a", 64): true,
-		"postgres:17":                                false,
-		"postgres:17-alpine":                         false,
-		"postgres:latest":                            false,
-		"postgres":                                   false,
-		"registry.example:5000/app":                  false,
+		// The base image in the suffix carries a version of its own, and a tag is
+		// only pinned when the software's own version part is.
+		"postgres:18-alpine3.24":      false,
+		"postgres:19beta1-alpine3.24": false,
+		"postgres:17":                 false,
+		"postgres:17-alpine":          false,
+		"postgres:latest":             false,
+		"postgres":                    false,
+		"registry.example:5000/app":   false,
 	} {
 		assert.Equal(t, pinned, IsPinnedImage(image), image)
 	}

@@ -1,6 +1,6 @@
 # App template dependencies
 
-**Status:** draft, for review
+**Status:** approved, implemented
 **Depends on:** [2026-09-17-app-templates-design.md](2026-09-17-app-templates-design.md) (phase 1, implemented)
 
 ## 1. The problem
@@ -83,20 +83,27 @@ can see both templates.
  "dependencyParams": {"db": {"dataVolume": "01J…"}}}
 ```
 
-In one transaction, in order:
+In order:
 
-1. The main template's parameters are resolved, so dependency `params` can refer to them.
-2. For each dependency, in declaration order: the named template is loaded from the same
-   verified revision, its parameters are resolved from `params` plus `dependencyParams`, and
-   an app is provisioned from it exactly as a direct creation would - settings, environment,
-   routing, first deployment. Its name is `<main app name>-<dependency name>`.
-3. The main template is rendered with `deps` bound to the apps just created, and its app is
-   provisioned.
+1. The template's parameters are resolved, so the dependencies' `params` can refer to them.
+2. Each dependency, in declaration order, is loaded from the same index - so from the same
+   revision - and rendered from what the template fixes plus `dependencyParams`, bound to
+   the key its app will have: the slug of `<app name>-<dependency name>`, so `blog-db`
+   becomes `blog_db`, which is what the references resolve against.
+3. The template is rendered with `deps` bound to those keys and to what each dependency's
+   kind shares.
+4. Only then, in one transaction, the apps are provisioned - dependencies first - each exactly
+   as a direct creation would be: settings, environment, routing, first deployment. Their
+   ids are chosen before the first one exists, so each binding can name the others.
 
-The key of a created dependency is the slug of its name, so `blog-db` becomes `blog_db`, and
-that is what the references resolve against. A name whose key is taken is refused before
-anything is created, naming the app in the way: retrying with a different name is the fix,
-and a generated suffix would hide a collision that means something.
+Every app of the request is rendered before any is created, so a parameter it refuses or a
+reference that cannot resolve fails the request with nothing to clean up.
+
+A request whose apps would share a key - slugifying truncates long names - is refused while
+rendering, before anything is created. A name already taken by an app in the project is
+refused when that app is provisioned, and the apps provisioned before it in the same request
+are removed with the transaction. Retrying with a different name is the fix; a generated
+suffix would hide a collision that means something.
 
 **When it fails.** Everything runs inside the existing transaction, and the deferred cleanup
 that removes a half-created app's swarm service today walks a list, newest first. A failure
@@ -142,6 +149,11 @@ creation carries the dependency app ids beside `template`, `version` and `revisi
 "also creates: MySQL" on the card and in the dialog without reading every template file -
 the same reason the license moved into the index. The linter fills it from the template.
 
+`index.json` is read by every installation of a channel whatever its version, so it is
+decoded tolerantly: an older HivePaaS ignores `dependencies` rather than refusing the whole
+index. Template files stay strict, and `requires.versionCode` keeps an older HivePaaS from
+provisioning a template it cannot read.
+
 The creation dialog shows one section per dependency: what will be created, which template
 and version it comes from, and the parameters it still needs. The confirmation names every
 app that is about to exist, because this is the first template that creates more than one.
@@ -175,6 +187,10 @@ requires permission on the database app.
 
 The cap of three and the refusal of nested dependencies bound the work one request can
 create: at most four apps, known before anything starts.
+
+A dependency's `params` may take the declaring template's parameters, but never one of its
+secrets: a secret belongs to one app, and copying it into another's parameters would store it
+twice.
 
 ## 9. Testing
 

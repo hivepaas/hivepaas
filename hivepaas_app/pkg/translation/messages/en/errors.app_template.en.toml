@@ -1,0 +1,4 @@
+# Messages for the errors declared in hivepaas_app/hperrors/errors_app_template.go.
+# Adding or removing an error there means editing this file.
+
+ERR_APP_TEMPLATE_INVALID = "The app template is invalid"

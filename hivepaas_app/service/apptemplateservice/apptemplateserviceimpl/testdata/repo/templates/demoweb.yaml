@@ -1,0 +1,28 @@
+apiVersion: hivepaas.com/v1
+kind: AppTemplate
+metadata:
+  name: demoweb
+  title: Demo Web
+  tagline: A demo web app
+  description: Demo web app.
+  categories: [databases/sql]
+  tags: [sql]
+  icon: icons/demoweb.svg
+  requires: {versionCode: v000001}
+parameters:
+  - {name: dataVolume, title: Site files, type: volume}
+dependencies:
+  - {name: db, title: Database, template: demo}
+versions:
+  - {name: "1", release: "1.0", default: true, image: "demoweb:1.0.0"}
+app:
+  deployment:
+    source: {activeMethod: image, imageSource: {image: "${{ image }}"}}
+    storage:
+      mounts:
+        /srv: {type: volume, source: "${{ params.dataVolume }}"}
+  settings:
+    kind: {category: webapp, engine: demoweb, webapp: {}}
+    envVars:
+      data:
+        - {k: DB_PASSWORD, v: "${{ deps.db.ref.HIVEPAAS_PASSWORD }}"}

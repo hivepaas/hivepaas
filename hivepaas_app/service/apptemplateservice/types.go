@@ -16,6 +16,15 @@ type TemplateResp struct {
 	Revision string
 	Entry    *templatemodel.IndexEntry
 	Template *templatemodel.Template
+	// Dependencies are the templates this one depends on, loaded from the same
+	// revision, in declaration order.
+	Dependencies []*DependencyTemplate
+}
+
+type DependencyTemplate struct {
+	Dependency *templatemodel.Dependency
+	Entry      *templatemodel.IndexEntry
+	Template   *templatemodel.Template
 }
 
 // IconHashLen is how much of an icon's sha256 its file name carries. The name has
@@ -37,10 +46,16 @@ type IconResp struct {
 }
 
 type RenderReq struct {
-	Name    string
+	Name string
+	// AppName is the name the app will have. A template with dependencies needs
+	// it: each dependency's app is named after it, and referred to by key.
+	AppName string
 	Version string
 	Variant string
 	Params  map[string]any
+	// DependencyParams are what the person was asked for each dependency, by the
+	// dependency's name.
+	DependencyParams map[string]map[string]any
 	// ImageOverride is an image the user chose instead of the template's, empty to
 	// use the template's own.
 	ImageOverride string
@@ -49,6 +64,17 @@ type RenderReq struct {
 type RenderResp struct {
 	TemplateResp
 	Result *templaterender.Result
+	// Dependencies are rendered, and created, before the app that needs them. The
+	// field shadows TemplateResp.Dependencies, the templates they were rendered
+	// from, which stay reachable through the embedded TemplateResp.
+	Dependencies []*RenderedDependency
+}
+
+type RenderedDependency struct {
+	// Name is the dependency's role in the template that declares it.
+	Name    string
+	AppName string
+	Render  *RenderResp
 }
 
 type ImageTagsReq struct {

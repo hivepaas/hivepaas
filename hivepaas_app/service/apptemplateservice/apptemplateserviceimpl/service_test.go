@@ -154,3 +154,61 @@ func TestServiceIconRefusesWhatTheIndexDoesNotList(t *testing.T) {
 		})
 	}
 }
+
+func TestServiceTemplateLoadsDependencies(t *testing.T) {
+	svc, _ := newServiceTest(t, config.EnvDev, testRepoDir)
+
+	resp, err := svc.Template(context.Background(), "demoweb")
+
+	assert.NoError(t, err)
+	assert.Len(t, resp.Dependencies, 1)
+	assert.Equal(t, "db", resp.Dependencies[0].Dependency.Name)
+	assert.Equal(t, "demo", resp.Dependencies[0].Template.Metadata.Name)
+	assert.Equal(t, "templates/demo.yaml", resp.Dependencies[0].Entry.File.Path)
+}
+
+func TestServiceRenderRendersDependenciesFirst(t *testing.T) {
+	svc, _ := newServiceTest(t, config.EnvDev, testRepoDir)
+
+	resp, err := svc.Render(context.Background(), &apptemplateservice.RenderReq{
+		Name:             "demoweb",
+		AppName:          "blog",
+		Params:           map[string]any{"dataVolume": "vol-web"},
+		DependencyParams: map[string]map[string]any{"db": {"dataVolume": "vol-db"}},
+	})
+
+	assert.NoError(t, err)
+	assert.Len(t, resp.Dependencies, 1)
+	db := resp.Dependencies[0]
+	assert.Equal(t, "db", db.Name)
+	assert.Equal(t, "blog-db", db.AppName)
+	assert.Equal(t, "vol-db", db.Render.Result.Doc.Deployment.Storage.Mounts["/data"].Source)
+	assert.Equal(t, localRevision, db.Render.Revision, "one revision for every app of the request")
+
+	envVars := resp.Result.Doc.Settings["envVars"].(map[string]any)["data"].([]any)
+	assert.Equal(t, "${blog_db.HIVEPAAS_PASSWORD}", envVars[0].(map[string]any)["v"])
+}
+
+func TestServiceRenderRefusesWhatADependencyDoesNotAsk(t *testing.T) {
+	svc, _ := newServiceTest(t, config.EnvDev, testRepoDir)
+	cases := map[string]*apptemplateservice.RenderReq{
+		"no app name": {
+			Name: "demoweb", Params: map[string]any{"dataVolume": "v"},
+			DependencyParams: map[string]map[string]any{"db": {"dataVolume": "v"}},
+		},
+		"unknown dependency": {
+			Name: "demoweb", AppName: "blog", Params: map[string]any{"dataVolume": "v"},
+			DependencyParams: map[string]map[string]any{"cache": {"dataVolume": "v"}},
+		},
+		"dependency parameters for a template without dependencies": {
+			Name: "demo", AppName: "blog", Params: map[string]any{"dataVolume": "v"},
+			DependencyParams: map[string]map[string]any{"db": {"dataVolume": "v"}},
+		},
+	}
+	for name, req := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := svc.Render(context.Background(), req)
+			assert.Error(t, err)
+		})
+	}
+}

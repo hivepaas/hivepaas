@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
 
 // New builds the spec exporter.
@@ -24,6 +25,7 @@ func New(
 	settingRepo repository.SettingRepo,
 
 	clusterService clusterservice.Service,
+	volumeService volumeservice.Service,
 ) specservice.Service {
 	svc := &service{
 		appRepo:        appRepo,
@@ -32,6 +34,7 @@ func New(
 		settingRepo:    settingRepo,
 
 		clusterService: clusterService,
+		volumeService:  volumeService,
 	}
 	svc.loadOwned = svc.loadOwnedFromRepo
 	return svc
@@ -60,6 +63,7 @@ type service struct {
 	settingRepo    repository.SettingRepo
 
 	clusterService clusterservice.Service
+	volumeService  volumeservice.Service
 
 	loadOwned settingLoader
 }

@@ -7,6 +7,10 @@
 package specservice
 
 import (
+	"time"
+
+	"github.com/moby/moby/api/types/swarm"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
@@ -31,4 +35,19 @@ type ExportResp struct {
 	Report *specmodel.Report
 	// Summary is what a response header can carry.
 	Summary *specmodel.ReportSummary
+}
+
+// BuildAppReq asks for an AppDoc to be built into an app being provisioned.
+type BuildAppReq struct {
+	// App is the app being provisioned: ID, Key, Project and ProjectEnv set.
+	App *entity.App
+	Doc *specmodel.AppDoc
+	// Spec is the app's initial service spec. The build writes into it.
+	Spec    *swarm.ServiceSpec
+	TimeNow time.Time
+}
+
+type BuildAppResp struct {
+	// Settings replace the app's default settings of the same type.
+	Settings []*entity.Setting
 }

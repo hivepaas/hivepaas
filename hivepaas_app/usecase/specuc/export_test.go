@@ -62,6 +62,7 @@ func (f *fakeACLRepo) ListByResources(
 }
 
 type fakeSpecService struct {
+	specservice.Service
 	lastReq *specservice.ExportReq
 	err     error
 }

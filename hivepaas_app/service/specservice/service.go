@@ -15,4 +15,11 @@ import (
 type Service interface {
 	// Export builds a configuration bundle for a scope. It reads only.
 	Export(ctx context.Context, db database.IDB, req *ExportReq) (*ExportResp, error)
+
+	// BuildApp turns an AppDoc into the settings and service spec of an app being
+	// provisioned. It persists nothing and creates no service: the caller does.
+	// Only what specmodel.CheckBuildable accepts can be built.
+	//
+	// TODO: spec import - import builds each app of a bundle through this.
+	BuildApp(ctx context.Context, db database.IDB, req *BuildAppReq) (*BuildAppResp, error)
 }

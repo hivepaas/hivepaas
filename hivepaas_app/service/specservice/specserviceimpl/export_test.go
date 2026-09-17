@@ -170,6 +170,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		&fakeProjectRepo{projects: []*entity.Project{proj, hive}},
 		settingRepo,
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
+		nil,
 	)
 
 	// The seam does what the repository's SQL would: return the settings this

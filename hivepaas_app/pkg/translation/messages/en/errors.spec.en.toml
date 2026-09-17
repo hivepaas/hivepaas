@@ -6,3 +6,4 @@ ERR_SPEC_SETTING_TYPE_UNCLASSIFIED = "Setting type '{{.Type}}' has no spec block
 ERR_SPEC_PASSPHRASE_REQUIRED = "A passphrase is required to export with encrypted secrets"
 ERR_SPEC_SECRETS_MODE_INVALID = "Unknown secrets mode '{{.Mode}}'. Use omit, encrypted or plaintext."
 ERR_SPEC_BLOCK_UNSUPPORTED = "Part of this configuration cannot be built into an app yet"
+ERR_SPEC_BLOCK_INVALID = "Part of this configuration is invalid"

@@ -22,6 +22,7 @@ func (uc *UC) recordCreateFromTemplate(
 	auth *basedto.Auth,
 	app *entity.App,
 	rendered *apptemplateservice.RenderResp,
+	links appTemplateLinks,
 ) error {
 	result := rendered.Result
 	detail := auditdetail.New().
@@ -39,6 +40,14 @@ func (uc *UC) recordCreateFromTemplate(
 	if result.ImageOverride != "" {
 		detail.Set("imageOverride", result.ImageOverride)
 	}
+	if len(links.dependencies) > 0 {
+		deps := make([]map[string]string, 0, len(links.dependencies))
+		for _, dep := range links.dependencies {
+			deps = append(deps, map[string]string{"name": dep.Name, "appId": dep.AppID, "template": dep.Template})
+		}
+		detail.Set("dependencies", deps)
+	}
+	detail.Set("createdFor", links.createdForAppID)
 
 	err := auditservice.RecordAllowed(ctx, uc.auditService, db, &auditservice.Entry{
 		Type:     base.AuditLogTypeAppCreate,

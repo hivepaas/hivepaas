@@ -31,6 +31,9 @@ type CreateAppFromTemplateReq struct {
 	ImageOverride string `json:"imageOverride"`
 	// Params are JSON values of each parameter's type; a size is a string such as "1GB".
 	Params map[string]any `json:"params"`
+	// DependencyParams are the values a person gave for each dependency the
+	// template declares, by the dependency's name: in practice its data volume.
+	DependencyParams map[string]map[string]any `json:"dependencyParams"`
 }
 
 func NewCreateAppFromTemplateReq() *CreateAppFromTemplateReq {
@@ -71,5 +74,14 @@ type CreateAppFromTemplateDataResp struct {
 	App *basedto.ObjectIDResp `json:"app"`
 	// Deployment is the app's first deployment, already queued: it pulls the
 	// template's image.
+	Deployment *basedto.ObjectIDResp `json:"deployment"`
+	// Dependencies are the apps created alongside, each with its first deployment.
+	Dependencies []*CreatedDependencyResp `json:"dependencies"`
+}
+
+type CreatedDependencyResp struct {
+	// Name is the dependency's role in the template: db, cache.
+	Name       string                `json:"name"`
+	App        *basedto.ObjectIDResp `json:"app"`
 	Deployment *basedto.ObjectIDResp `json:"deployment"`
 }

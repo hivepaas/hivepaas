@@ -38,39 +38,46 @@ func (uc *UC) CreateAppFromTemplate(
 	req *apptemplatedto.CreateAppFromTemplateReq,
 ) (resp *apptemplatedto.CreateAppFromTemplateResp, err error) {
 	// Before the transaction: rendering may reach GitHub, and nothing is locked
-	// while it does.
+	// while it does. Every app of the request is rendered here, before any exists.
 	rendered, err := uc.appTemplateService.Render(ctx, &apptemplateservice.RenderReq{
-		Name:          req.Template,
-		Version:       req.Version,
-		Variant:       req.Variant,
-		Params:        req.Params,
-		ImageOverride: req.ImageOverride,
+		Name:             req.Template,
+		AppName:          req.Name,
+		Version:          req.Version,
+		Variant:          req.Variant,
+		Params:           req.Params,
+		DependencyParams: req.DependencyParams,
+		ImageOverride:    req.ImageOverride,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	if doc := rendered.Result.Doc; doc.Deployment == nil || doc.Deployment.Source == nil {
-		return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).
-			WithExtraDetail("%s: the template deploys no image", req.Template)
+	apps := planApps(req, rendered)
+	for _, target := range apps {
+		if doc := target.rendered.Result.Doc; doc.Deployment == nil || doc.Deployment.Source == nil {
+			return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).
+				WithExtraDetail("%s: the template deploys no image", target.rendered.Template.Metadata.Name)
+		}
 	}
 
-	var created *createdFromTemplate
+	var created []*createdFromTemplate
 	committed := false
 	defer func() {
 		if rec := recover(); rec != nil {
 			err = errors.Join(err, hperrors.NewPanic(rec))
 		}
-		// The swarm service is created inside the transaction but is not part of
-		// it: a rolled-back app would leave it running with nothing recorded.
-		if err != nil && !committed && created != nil && created.app.ServiceID != "" {
-			_ = uc.clusterService.ServiceRemove(context.WithoutCancel(ctx), created.app.ServiceID,
-				clusterservice.ItemRemovalRetryMax, 0)
+		// The swarm services are created inside the transaction but are not part
+		// of it: a rolled-back request would leave them running with nothing
+		// recorded.
+		if err != nil && !committed {
+			if removeErr := uc.removeServices(context.WithoutCancel(ctx), created); removeErr != nil {
+				err = errors.Join(err, removeErr)
+			}
 		}
 	}()
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		var txErr error
-		created, txErr = uc.provisionFromTemplate(ctx, db, auth, req, rendered)
+		created, txErr = uc.provisionAll(ctx, db, auth, req, apps)
 		return txErr
 	})
 	if err != nil {
@@ -78,24 +85,127 @@ func (uc *UC) CreateAppFromTemplate(
 	}
 	committed = true
 
-	// The task can be picked up only once its row exists, which is once the
-	// transaction has committed.
-	if err = uc.taskQueue.ScheduleTask(ctx, created.deploymentTask); err != nil {
-		return nil, hperrors.Wrap(err)
+	// A task can be picked up only once its row exists, which is once the
+	// transaction has committed. The dependencies' deployments go first.
+	for _, one := range created {
+		if err = uc.taskQueue.ScheduleTask(ctx, one.deploymentTask); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
+	return transformCreated(created), nil
+}
 
-	return &apptemplatedto.CreateAppFromTemplateResp{
-		Data: &apptemplatedto.CreateAppFromTemplateDataResp{
-			App:        &basedto.ObjectIDResp{ID: created.app.ID},
-			Deployment: &basedto.ObjectIDResp{ID: created.deployment.ID},
-		},
-	}, nil
+// transformCreated describes what a request created: the app it asked for is the
+// one without a role, and the others are its dependencies.
+func transformCreated(created []*createdFromTemplate) *apptemplatedto.CreateAppFromTemplateResp {
+	data := &apptemplatedto.CreateAppFromTemplateDataResp{
+		Dependencies: make([]*apptemplatedto.CreatedDependencyResp, 0, len(created)),
+	}
+	for _, one := range created {
+		app := &basedto.ObjectIDResp{ID: one.app.ID}
+		deployment := &basedto.ObjectIDResp{ID: one.deployment.ID}
+		if one.role == "" {
+			data.App, data.Deployment = app, deployment
+			continue
+		}
+		data.Dependencies = append(data.Dependencies,
+			&apptemplatedto.CreatedDependencyResp{Name: one.role, App: app, Deployment: deployment})
+	}
+	return &apptemplatedto.CreateAppFromTemplateResp{Data: data}
 }
 
 type createdFromTemplate struct {
+	// role is the dependency's name, empty for the app the request asked for.
+	role           string
 	app            *entity.App
 	deployment     *entity.Deployment
 	deploymentTask *entity.Task
+}
+
+// appToProvision is one app of a creation request: the one it asked for, or a
+// dependency created for it.
+type appToProvision struct {
+	id       string
+	name     string
+	role     string
+	rendered *apptemplateservice.RenderResp
+	links    appTemplateLinks
+}
+
+// appTemplateLinks are what an app's binding records about the other apps of the
+// same request.
+type appTemplateLinks struct {
+	dependencies    []entity.AppTemplateDependency
+	createdForAppID string
+}
+
+// planApps lists the apps a request creates, dependencies first. Their ids are
+// chosen here, so that each binding can name the others before any exists.
+func planApps(
+	req *apptemplatedto.CreateAppFromTemplateReq,
+	rendered *apptemplateservice.RenderResp,
+) []*appToProvision {
+	main := &appToProvision{id: gofn.Must(ulid.NewStringULID()), name: req.Name, rendered: rendered}
+	apps := make([]*appToProvision, 0, len(rendered.Dependencies)+1)
+	for _, dep := range rendered.Dependencies {
+		depApp := &appToProvision{
+			id:       gofn.Must(ulid.NewStringULID()),
+			name:     dep.AppName,
+			role:     dep.Name,
+			rendered: dep.Render,
+			links:    appTemplateLinks{createdForAppID: main.id},
+		}
+		main.links.dependencies = append(main.links.dependencies, entity.AppTemplateDependency{
+			Name: dep.Name, AppID: depApp.id, Template: dep.Render.Template.Metadata.Name,
+		})
+		apps = append(apps, depApp)
+	}
+	return append(apps, main)
+}
+
+// provisionAll provisions the apps of a request in order. It returns what it
+// created even when it fails part way, so the caller can remove their services.
+func (uc *UC) provisionAll(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	req *apptemplatedto.CreateAppFromTemplateReq,
+	apps []*appToProvision,
+) ([]*createdFromTemplate, error) {
+	created := make([]*createdFromTemplate, 0, len(apps))
+	for _, target := range apps {
+		one, err := uc.provisionFromTemplate(ctx, db, auth, req, target)
+		if one != nil {
+			created = append(created, one)
+		}
+		if err != nil {
+			if target.role != "" {
+				return created, hperrors.Wrap(err).WithExtraDetail(
+					"while creating %s, which the template creates for %s", target.name, req.Name)
+			}
+			return created, hperrors.Wrap(err)
+		}
+	}
+	return created, nil
+}
+
+// removeServices removes the services of apps whose transaction did not commit,
+// newest first. Their records were rolled back, so a service that cannot be
+// removed is running with nothing recorded, and the error names it.
+func (uc *UC) removeServices(ctx context.Context, created []*createdFromTemplate) error {
+	var errs []error
+	for i := len(created) - 1; i >= 0; i-- {
+		app := created[i].app
+		if app == nil || app.ServiceID == "" {
+			continue
+		}
+		err := uc.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
+		if err != nil {
+			errs = append(errs, hperrors.Wrap(err).WithExtraDetail(
+				"%s was created and could not be removed: remove service %s by hand", app.Name, app.ServiceID))
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // provisionFromTemplate is everything that happens inside the transaction. It
@@ -106,13 +216,15 @@ func (uc *UC) provisionFromTemplate(
 	db database.IDB,
 	auth *basedto.Auth,
 	req *apptemplatedto.CreateAppFromTemplateReq,
-	rendered *apptemplateservice.RenderResp,
+	target *appToProvision,
 ) (*createdFromTemplate, error) {
 	timeNow := timeutil.NowUTC()
+	rendered := target.rendered
 	provisioned, err := uc.appProvisionService.ProvisionApp(ctx, db, &appprovisionservice.ProvisionAppReq{
 		ProjectID:    req.ProjectID,
 		ProjectEnvID: req.ProjectEnvID,
-		Name:         req.Name,
+		AppID:        target.id,
+		Name:         target.name,
 		Status:       base.AppStatusActive,
 		Configure: func(configureCtx context.Context, configureDB database.IDB, app *entity.App,
 			spec *swarm.ServiceSpec) ([]*entity.Setting, error) {
@@ -125,7 +237,7 @@ func (uc *UC) provisionFromTemplate(
 			if buildErr != nil {
 				return nil, hperrors.Wrap(buildErr)
 			}
-			binding, bindErr := newAppTemplateSetting(app, rendered, timeNow)
+			binding, bindErr := newAppTemplateSetting(app, rendered, target.links, timeNow)
 			if bindErr != nil {
 				return nil, hperrors.Wrap(bindErr)
 			}
@@ -135,7 +247,7 @@ func (uc *UC) provisionFromTemplate(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	created := &createdFromTemplate{app: provisioned.App}
+	created := &createdFromTemplate{role: target.role, app: provisioned.App}
 	app := created.app
 
 	if err = uc.applyEnvVars(ctx, db, app); err != nil {
@@ -147,7 +259,7 @@ func (uc *UC) provisionFromTemplate(
 	if err = uc.createFirstDeployment(ctx, db, auth, created); err != nil {
 		return created, hperrors.Wrap(err)
 	}
-	return created, uc.recordCreateFromTemplate(ctx, db, auth, app, rendered)
+	return created, uc.recordCreateFromTemplate(ctx, db, auth, app, rendered, target.links)
 }
 
 // applyEnvVars builds and applies the environment of every app in the new app's
@@ -249,6 +361,7 @@ func (uc *UC) createFirstDeployment(
 func newAppTemplateSetting(
 	app *entity.App,
 	rendered *apptemplateservice.RenderResp,
+	links appTemplateLinks,
 	timeNow time.Time,
 ) (*entity.Setting, error) {
 	result := rendered.Result
@@ -271,6 +384,8 @@ func newAppTemplateSetting(
 		data.Variant = result.Variant.Name
 	}
 	data.ImageOverride = result.ImageOverride
+	data.Dependencies = links.dependencies
+	data.CreatedForAppID = links.createdForAppID
 	for name, value := range result.Params {
 		if value.Value == nil {
 			continue

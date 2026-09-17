@@ -15,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/datakey"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
@@ -23,6 +24,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterender"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
@@ -58,7 +60,10 @@ app:
     routing: {port: 5432}
 `
 
-var errTestRouting = errors.New("traefik unavailable")
+var (
+	errTestRouting   = errors.New("traefik unavailable")
+	errTestProvision = errors.New("provisioning failed")
+)
 
 type fakeTemplateService struct {
 	apptemplateservice.Service
@@ -73,18 +78,29 @@ func (f *fakeTemplateService) Render(
 }
 
 // fakeProvisionService runs Configure the way ProvisionApp does and hands back
-// the app with what it returned.
+// the app with what it returned. Each app it provisions is its own, and one
+// named failName fails.
 type fakeProvisionService struct {
 	appprovisionservice.Service
-	called bool
+	called   bool
+	names    []string
+	failName string
 }
 
 func (f *fakeProvisionService) ProvisionApp(
 	ctx context.Context, db database.IDB, req *appprovisionservice.ProvisionAppReq,
 ) (*appprovisionservice.ProvisionAppResp, error) {
 	f.called = true
+	f.names = append(f.names, req.Name)
+	if f.failName != "" && req.Name == f.failName {
+		return nil, errTestProvision
+	}
+	id := req.AppID
+	if id == "" {
+		id = "app-1"
+	}
 	app := &entity.App{
-		ID: "app-1", Name: req.Name, Key: "main-db", ServiceID: "svc-1",
+		ID: id, Name: req.Name, Key: req.Name, ServiceID: "svc-" + req.Name,
 		ProjectID: req.ProjectID, ProjectEnvID: req.ProjectEnvID,
 		Project:    &entity.Project{ID: req.ProjectID, Key: "shop"},
 		ProjectEnv: &entity.ProjectEnv{ID: req.ProjectEnvID, Key: "prod", Name: "prod"},
@@ -247,12 +263,26 @@ func testAuth() *basedto.Auth {
 	return &basedto.Auth{User: &basedto.User{User: &entity.User{ID: "user-1"}}}
 }
 
+// singleApp is the request's own app, with the id the fake provisions under.
+func singleApp(fakes *createFakes) *appToProvision {
+	return &appToProvision{id: "app-1", name: testCreateReq().Name, rendered: fakes.templates.resp}
+}
+
 func provision(t *testing.T, uc *UC, fakes *createFakes) *createdFromTemplate {
 	t.Helper()
 	created, err := uc.provisionFromTemplate(context.Background(), nil, testAuth(), testCreateReq(),
-		fakes.templates.resp)
+		singleApp(fakes))
 	assert.NoError(t, err)
 	return created
+}
+
+func errDetail(t *testing.T, err error) string {
+	t.Helper()
+	var hpErr hperrors.HPError
+	if !errors.As(err, &hpErr) {
+		t.Fatalf("expected an hperrors.HPError, got %T: %v", err, err)
+	}
+	return hpErr.Build("en").Detail
 }
 
 func TestProvisionFromTemplateRecordsTheTemplate(t *testing.T) {
@@ -327,10 +357,10 @@ func TestProvisionFromTemplateReturnsWhatItCreatedWhenItFails(t *testing.T) {
 	fakes.routing.err = errTestRouting
 
 	created, err := uc.provisionFromTemplate(context.Background(), nil, testAuth(), testCreateReq(),
-		fakes.templates.resp)
+		singleApp(fakes))
 
 	assert.ErrorIs(t, err, errTestRouting)
-	assert.Equal(t, "svc-1", created.app.ServiceID, "the caller needs the service to remove it")
+	assert.Equal(t, "svc-main-db", created.app.ServiceID, "the caller needs the service to remove it")
 }
 
 // Swarm is still writing to a service it has just created, so the first routing
@@ -342,7 +372,7 @@ func TestProvisionFromTemplateRetriesRoutingWhileSwarmSettles(t *testing.T) {
 	fakes.routing.failTimes = routingApplyRetryMax
 
 	created, err := uc.provisionFromTemplate(context.Background(), nil, testAuth(), testCreateReq(),
-		fakes.templates.resp)
+		singleApp(fakes))
 
 	assert.NoError(t, err)
 	assert.Equal(t, routingApplyRetryMax+1, fakes.routing.calls)
@@ -405,4 +435,99 @@ func TestProvisionFromTemplateRecordsAnImageOverride(t *testing.T) {
 	assert.Equal(t, "18", data.Version, "the version still describes the template, not the override")
 
 	assert.Contains(t, fakes.audit.entries[0].Detail, `"imageOverride":"postgres:18.7-alpine3.24"`)
+}
+
+// renderedWithDependency is what the service returns for a web app whose
+// database is the test template.
+func renderedWithDependency(t *testing.T, fakes *createFakes) *apptemplateservice.RenderResp {
+	t.Helper()
+	database := fakes.templates.resp
+	web := *database
+	web.Template = &templatemodel.Template{Metadata: templatemodel.Metadata{Name: "blog", Title: "Blog"}}
+	web.Dependencies = []*apptemplateservice.RenderedDependency{
+		{Name: "db", AppName: "blog-db", Render: database},
+	}
+	return &web
+}
+
+func TestPlanAppsPutsDependenciesFirstAndLinksThem(t *testing.T) {
+	_, fakes := newCreateTest(t)
+	req := testCreateReq()
+	req.Name = "blog"
+
+	apps := planApps(req, renderedWithDependency(t, fakes))
+
+	assert.Len(t, apps, 2)
+	db, blog := apps[0], apps[1]
+	assert.Equal(t, "blog-db", db.name)
+	assert.Equal(t, "db", db.role)
+	assert.Equal(t, blog.id, db.links.createdForAppID)
+	assert.Equal(t, "blog", blog.name)
+	assert.Equal(t, []entity.AppTemplateDependency{{Name: "db", AppID: db.id, Template: "pg"}},
+		blog.links.dependencies)
+}
+
+func TestProvisionAllRecordsBothDirections(t *testing.T) {
+	uc, fakes := newCreateTest(t)
+	req := testCreateReq()
+	req.Name = "blog"
+
+	created, err := uc.provisionAll(context.Background(), nil, testAuth(), req,
+		planApps(req, renderedWithDependency(t, fakes)))
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"blog-db", "blog"}, fakes.provision.names, "the database first")
+	binding := func(app *entity.App) *entity.AppTemplateSettings {
+		setting := settinghelper.FindSettingByType(app.Settings, base.SettingTypeAppTemplate)
+		stored := &entity.Setting{Type: base.SettingTypeAppTemplate, Data: setting.Data}
+		return stored.MustAsAppTemplateSettings()
+	}
+	db, blog := created[0].app, created[1].app
+	assert.Equal(t, blog.ID, binding(db).CreatedForAppID)
+	assert.Equal(t, db.ID, binding(blog).Dependencies[0].AppID)
+	assert.Len(t, fakes.audit.entries, 2)
+	assert.Contains(t, fakes.audit.entries[1].Detail, db.ID, "the app's creation names its database")
+}
+
+func TestProvisionAllNamesTheDependencyThatFailed(t *testing.T) {
+	uc, fakes := newCreateTest(t)
+	fakes.provision.failName = "blog-db"
+	req := testCreateReq()
+	req.Name = "blog"
+
+	created, err := uc.provisionAll(context.Background(), nil, testAuth(), req,
+		planApps(req, renderedWithDependency(t, fakes)))
+
+	assert.ErrorIs(t, err, errTestProvision)
+	assert.Contains(t, errDetail(t, err), "blog-db")
+	assert.Empty(t, created)
+}
+
+type fakeClusterService struct {
+	clusterservice.Service
+	removed []string
+	failID  string
+}
+
+func (f *fakeClusterService) ServiceRemove(_ context.Context, serviceID string, _ int, _ time.Duration) error {
+	f.removed = append(f.removed, serviceID)
+	if serviceID == f.failID {
+		return errTestProvision
+	}
+	return nil
+}
+
+func TestRemoveServicesNewestFirstAndNamesWhatStays(t *testing.T) {
+	cluster := &fakeClusterService{failID: "svc-blog-db"}
+	uc := &UC{clusterService: cluster}
+	created := []*createdFromTemplate{
+		{app: &entity.App{Name: "blog-db", ServiceID: "svc-blog-db"}},
+		{app: &entity.App{Name: "blog", ServiceID: "svc-blog"}},
+	}
+
+	err := uc.removeServices(context.Background(), created)
+
+	assert.Equal(t, []string{"svc-blog", "svc-blog-db"}, cluster.removed)
+	assert.ErrorIs(t, err, errTestProvision)
+	assert.Contains(t, errDetail(t, err), "blog-db", "an orphan nobody is told about is worse than an orphan")
 }

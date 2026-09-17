@@ -352,11 +352,7 @@ func isPinnedTag(tag string) bool {
 	if pinnedDatePattern.MatchString(tag) {
 		return true
 	}
-	version := tag
-	if i := strings.IndexAny(tag, "-_+"); i >= 0 {
-		version = tag[:i]
-	}
-	return pinnedVersionPattern.MatchString(version)
+	return pinnedVersionPattern.MatchString(tagVersion(tag))
 }
 
 func checkPinned(field, image string, p *problems) {

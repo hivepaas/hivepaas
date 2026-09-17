@@ -90,7 +90,7 @@ func Render(req *Request) (*Result, error) {
 	if err = specmodel.CheckBuildable(doc); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	overrideClass, err := applyImageOverride(doc, name, image, req.ImageOverride)
+	overrideClass, err := applyImageOverride(doc, name, version.Name, image, req.ImageOverride)
 	if err != nil {
 		return nil, err
 	}
@@ -127,12 +127,12 @@ func Render(req *Request) (*Result, error) {
 // user's change rather than as something the template did.
 func applyImageOverride(
 	doc *specmodel.AppDoc,
-	templateName, templateImage, override string,
+	templateName, versionName, templateImage, override string,
 ) (templatemodel.ImageOverrideClass, error) {
 	if override == "" {
 		return "", nil
 	}
-	class, err := templatemodel.ClassifyImageOverride(templateImage, override)
+	class, err := templatemodel.ClassifyImageOverride(versionName, templateImage, override)
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}

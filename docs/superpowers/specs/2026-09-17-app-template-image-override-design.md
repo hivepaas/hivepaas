@@ -59,7 +59,8 @@ dashboard both need the same answer:
 // templatemodel
 type ImageOverrideClass string   // "same-line" | "other-major" | "moving"
 
-func ClassifyImageOverride(templateImage, override string) (ImageOverrideClass, error)
+// line is the template version's name: 18 for postgres, 11.8 for mariadb.
+func ClassifyImageOverride(line, templateImage, override string) (ImageOverrideClass, error)
 ```
 
 Rules, in order:
@@ -69,10 +70,14 @@ Rules, in order:
    `ERR_APP_TEMPLATE_IMAGE_NOT_ALLOWED`, naming the repository the template uses.
 3. An empty tag - which includes a digest-only reference - or the tag `latest` is refused by the
    same error: the first leaves no version to record, the second means "whatever is newest".
-4. A reference whose tag `IsPinnedImage` accepts, and whose leading number equals the template
-   image's major, is `same-line`. A digest alongside the tag does not change the class.
-5. Same, but a different leading number → `other-major`.
-6. A tag `IsPinnedImage` refuses (`18`, `18-alpine`) → `moving`.
+4. A tag `IsPinnedImage` refuses (`18`, `18-alpine`) → `moving`. Only the version part of the tag
+   is read for that: `18-alpine3.24` is moving, however pinned its alpine is.
+5. A tag whose version part is the template version's name, or starts with that name and a dot,
+   → `same-line`. The line is what the template declares rather than a rule about segments,
+   because no rule holds across projects: PostgreSQL's `18.6` is a patch of line `18`, MariaDB's
+   `11.8.9` a patch of line `11.8`, and a semver image's `2.2.0` a release within line `2`.
+   A digest alongside the tag does not change the class.
+6. Anything else → `other-major`.
 
 The class reaches the dashboard in the error-free case too, so the confirmation can say the right
 thing. The wording matters more than the mechanism:

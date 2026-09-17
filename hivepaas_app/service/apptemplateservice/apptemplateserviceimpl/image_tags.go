@@ -27,7 +27,7 @@ func (s *service) ImageTags(
 	ctx context.Context,
 	req *apptemplateservice.ImageTagsReq,
 ) (*apptemplateservice.ImageTagsResp, error) {
-	image, err := s.templateImage(ctx, req)
+	line, image, err := s.templateImage(ctx, req)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -41,7 +41,7 @@ func (s *service) ImageTags(
 		s.tagCache.put(ref.String(), tags)
 	}
 
-	candidates := templatemodel.SelectTagCandidates(image, tags.Tags, maxOfferedTags)
+	candidates := templatemodel.SelectTagCandidates(line, image, tags.Tags, maxOfferedTags)
 	resp := &apptemplateservice.ImageTagsResp{
 		Repository: ref.String(),
 		CurrentTag: imageref.Parse(image).Tag,
@@ -56,13 +56,17 @@ func (s *service) ImageTags(
 	return resp, nil
 }
 
-// templateImage is the image the chosen version and variant pin. A deprecated
-// version is allowed here: somebody running one is exactly who needs to see what
-// else the repository publishes.
-func (s *service) templateImage(ctx context.Context, req *apptemplateservice.ImageTagsReq) (string, error) {
+// templateImage is the image the chosen version and variant pin, and the version's
+// name - the line its tags are classified against. A deprecated version is allowed
+// here: somebody running one is exactly who needs to see what else the repository
+// publishes.
+func (s *service) templateImage(
+	ctx context.Context,
+	req *apptemplateservice.ImageTagsReq,
+) (line, image string, err error) {
 	loaded, err := s.Template(ctx, req.Name)
 	if err != nil {
-		return "", hperrors.Wrap(err)
+		return "", "", hperrors.Wrap(err)
 	}
 	tmpl := loaded.Template
 
@@ -71,7 +75,7 @@ func (s *service) templateImage(ctx context.Context, req *apptemplateservice.Ima
 		version = tmpl.FindVersion(req.Version)
 	}
 	if version == nil {
-		return "", hperrors.Wrap(hperrors.ErrAppTemplateVersionNotFound).
+		return "", "", hperrors.Wrap(hperrors.ErrAppTemplateVersionNotFound).
 			WithParam("Template", req.Name).WithParam("Version", req.Version)
 	}
 
@@ -81,10 +85,10 @@ func (s *service) templateImage(ctx context.Context, req *apptemplateservice.Ima
 			variantName = variant.Name
 		}
 	}
-	image := version.ImageFor(variantName)
+	image = version.ImageFor(variantName)
 	if image == "" {
-		return "", hperrors.Wrap(hperrors.ErrAppTemplateVariantUnavailable).
+		return "", "", hperrors.Wrap(hperrors.ErrAppTemplateVariantUnavailable).
 			WithParam("Template", req.Name).WithParam("Version", version.Name).WithParam("Variant", variantName)
 	}
-	return image, nil
+	return version.Name, image, nil
 }

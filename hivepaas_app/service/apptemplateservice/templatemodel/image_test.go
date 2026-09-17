@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	pgLine  = "18"
 	pgImage = "postgres:18.6-alpine3.24"
 	hex64   = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 )
@@ -28,10 +29,31 @@ func TestClassifyImageOverride(t *testing.T) {
 		"major and base tag moves": {"postgres:18-alpine", ImageOverrideMoving},
 	} {
 		t.Run(name, func(t *testing.T) {
-			class, err := ClassifyImageOverride(pgImage, tc.override)
+			class, err := ClassifyImageOverride(pgLine, pgImage, tc.override)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want, class)
 		})
+	}
+}
+
+// The line is what the template declares, not a rule about segments: MariaDB's
+// 11.8 line does not cover 11.9, while a template declaring line 2 covers 2.2.0.
+func TestClassifyImageOverrideReadsTheDeclaredLine(t *testing.T) {
+	for _, tc := range []struct {
+		line, image, override string
+		want                  ImageOverrideClass
+	}{
+		{"11.8", "mariadb:11.8.9-noble", "mariadb:11.8.10-noble", ImageOverrideSameLine},
+		{"11.8", "mariadb:11.8.9-noble", "mariadb:11.9.1-noble", ImageOverrideOtherMajor},
+		{"11.8", "mariadb:11.8.9-noble", "mariadb:11.80.1-noble", ImageOverrideOtherMajor},
+		{"2", "demo:2.1.0", "demo:2.2.0", ImageOverrideSameLine},
+		{"2", "demo:2.1.0", "demo:v2.3.0", ImageOverrideSameLine},
+		{"2", "demo:2.1.0", "demo:3.0.0", ImageOverrideOtherMajor},
+		{"", "demo:2.1.0", "demo:2.2.0", ImageOverrideOtherMajor},
+	} {
+		class, err := ClassifyImageOverride(tc.line, tc.image, tc.override)
+		assert.NoError(t, err, tc.override)
+		assert.Equal(t, tc.want, class, "line %q, %s", tc.line, tc.override)
 	}
 }
 
@@ -45,7 +67,7 @@ func TestClassifyImageOverrideRefuses(t *testing.T) {
 		"empty":              "",
 	} {
 		t.Run(name, func(t *testing.T) {
-			_, err := ClassifyImageOverride(pgImage, override)
+			_, err := ClassifyImageOverride(pgLine, pgImage, override)
 			assert.ErrorIs(t, err, hperrors.ErrAppTemplateImageNotAllowed)
 		})
 	}
@@ -60,7 +82,7 @@ func TestSelectTagCandidates(t *testing.T) {
 		"18.7-trixie", "19.0-alpine3.24", "19beta1-alpine3.24", "17.11-alpine3.24",
 	}
 
-	got := SelectTagCandidates(pgImage, tags, 0)
+	got := SelectTagCandidates(pgLine, pgImage, tags, 0)
 
 	assert.Equal(t, []TagCandidate{
 		{Tag: "19.0-alpine3.24", Class: ImageOverrideOtherMajor, Newer: true},
@@ -74,7 +96,7 @@ func TestSelectTagCandidates(t *testing.T) {
 // Same release, different base image: nothing orders those two, and the list must
 // not claim the older base is an upgrade.
 func TestSelectTagCandidatesDoesNotCallAnUnorderableTagNewer(t *testing.T) {
-	got := SelectTagCandidates(pgImage, []string{"18.6-alpine3.23", "18.6-alpine", "18.7-alpine3.24"}, 0)
+	got := SelectTagCandidates(pgLine, pgImage, []string{"18.6-alpine3.23", "18.6-alpine", "18.7-alpine3.24"}, 0)
 
 	newerByTag := map[string]bool{}
 	for _, candidate := range got {
@@ -90,14 +112,14 @@ func TestSelectTagCandidatesDoesNotCallAnUnorderableTagNewer(t *testing.T) {
 func TestSelectTagCandidatesCapsAndDeduplicates(t *testing.T) {
 	tags := []string{"18.7-alpine3.24", "18.7-alpine3.24", "18.8-alpine3.24", "18.9-alpine3.24"}
 
-	got := SelectTagCandidates(pgImage, tags, 2)
+	got := SelectTagCandidates(pgLine, pgImage, tags, 2)
 
 	assert.Equal(t, []string{"18.9-alpine3.24", "18.8-alpine3.24"}, []string{got[0].Tag, got[1].Tag})
 	assert.Len(t, got, 2)
 }
 
 func TestSelectTagCandidatesWithoutASuffixFamily(t *testing.T) {
-	got := SelectTagCandidates("mariadb:11.8.9-noble", []string{"11.8.10-noble", "11.8.10-ubi", "latest"}, 0)
+	got := SelectTagCandidates("11.8", "mariadb:11.8.9-noble", []string{"11.8.10-noble", "11.8.10-ubi", "latest"}, 0)
 
 	assert.Equal(t, []TagCandidate{{Tag: "11.8.10-noble", Class: ImageOverrideSameLine, Newer: true}}, got)
 }

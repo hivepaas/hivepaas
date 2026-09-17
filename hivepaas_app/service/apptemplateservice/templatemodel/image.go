@@ -17,14 +17,15 @@ const latestTag = "latest"
 type ImageOverrideClass string
 
 const (
-	// ImageOverrideSameLine is another release of the major line the template
-	// describes. The template's configuration applies; HivePaaS has not tested
-	// this exact release.
+	// ImageOverrideSameLine is another release of the version line the template
+	// declares. The template's configuration applies; HivePaaS has not tested this
+	// exact release.
 	ImageOverrideSameLine ImageOverrideClass = "same-line"
-	// ImageOverrideOtherMajor is a line the template says nothing about, so the
-	// overrides written for the declared lines may not apply - PostgreSQL 18 moved
-	// its data directory, and a template that does not know about a line cannot
-	// carry the mount change it needs.
+	// ImageOverrideOtherMajor is a release line the template says nothing about -
+	// another major, or another minor for a template that declares major.minor
+	// lines - so the overrides written for the declared lines may not apply.
+	// PostgreSQL 18 moved its data directory, and a template that does not know
+	// about a line cannot carry the mount change it needs.
 	ImageOverrideOtherMajor ImageOverrideClass = "other-major"
 	// ImageOverrideMoving is a tag that changes what it points at, so what runs
 	// can change on a redeploy with nothing recorded to say it did.
@@ -35,7 +36,9 @@ var AllImageOverrideClasses = []ImageOverrideClass{
 	ImageOverrideSameLine, ImageOverrideOtherMajor, ImageOverrideMoving,
 }
 
-// ClassifyImageOverride checks an image a user wants instead of the template's.
+// ClassifyImageOverride checks an image a user wants instead of the one a template
+// version pins. line is that version's name - 18 for postgres, 11.8 for mariadb -
+// which is how the template's author declared what the version covers.
 //
 // The repository has to be the same one: everything else the template says - the
 // environment variables, the health check, the mount path, the app kind - is only
@@ -46,7 +49,7 @@ var AllImageOverrideClasses = []ImageOverrideClass{
 // accepting the risk for one app of theirs. What is refused is only what cannot be
 // recorded: a reference with no tag - a digest on its own included - has no version
 // to show in the app's binding, and latest names whatever is newest today.
-func ClassifyImageOverride(templateImage, override string) (ImageOverrideClass, error) {
+func ClassifyImageOverride(line, templateImage, override string) (ImageOverrideClass, error) {
 	templateRef, overrideRef := imageref.Parse(templateImage), imageref.Parse(override)
 	switch {
 	case override == "" || overrideRef.Repository != templateRef.Repository:
@@ -60,14 +63,36 @@ func ClassifyImageOverride(templateImage, override string) (ImageOverrideClass, 
 			"latest names whatever is newest at the time, which is not a version")
 	case !isPinnedTag(overrideRef.Tag):
 		return ImageOverrideMoving, nil
-	}
-
-	templateMajor, templateOK := imageref.MajorVersion(templateImage)
-	overrideMajor, overrideOK := imageref.MajorVersion(override)
-	if !templateOK || !overrideOK || templateMajor != overrideMajor {
+	case !inVersionLine(line, overrideRef.Tag):
 		return ImageOverrideOtherMajor, nil
+	default:
+		return ImageOverrideSameLine, nil
 	}
-	return ImageOverrideSameLine, nil
+}
+
+// inVersionLine reports whether a tag is a release within a declared line.
+//
+// The line comes from the template rather than from a rule about segments,
+// because no such rule holds across projects: PostgreSQL's 18.6 is a patch of line
+// 18, MariaDB's 11.8.9 is a patch of line 11.8, and a semver image's 2.2.0 is a
+// minor release within line 2. The author already wrote down which one applies.
+// The dot after the line keeps 11.80 out of 11.8.
+func inVersionLine(line, tag string) bool {
+	if line == "" {
+		return false
+	}
+	version := tagVersion(tag)
+	return version == line || strings.HasPrefix(version, line+".")
+}
+
+// tagVersion is the version part of a tag - everything before the first
+// separator, without a leading v: 18.6 of 18.6-alpine3.24.
+func tagVersion(tag string) string {
+	version := tag
+	if i := strings.IndexAny(tag, "-_+"); i >= 0 {
+		version = tag[:i]
+	}
+	return strings.TrimPrefix(strings.TrimPrefix(version, "v"), "V")
 }
 
 func imageNotAllowed(image, repository, reason string) error {
@@ -85,6 +110,7 @@ type TagCandidate struct {
 
 // SelectTagCandidates picks, out of everything a repository has ever published,
 // the tags a person would read as another build of the image in front of them.
+// line is the template version's name, as for ClassifyImageOverride.
 //
 // A registry answers with thousands of tags: every release, every base image,
 // every alias. Three rules cut that down. A tag that does not name a release is
@@ -94,7 +120,7 @@ type TagCandidate struct {
 // the answer to the question the user asked by opening it.
 //
 // maxCandidates of 0 means all of them.
-func SelectTagCandidates(templateImage string, tags []string, maxCandidates int) []TagCandidate {
+func SelectTagCandidates(line, templateImage string, tags []string, maxCandidates int) []TagCandidate {
 	current := imageref.Parse(templateImage)
 	family := tagFamily(current.Tag)
 
@@ -106,8 +132,7 @@ func SelectTagCandidates(templateImage string, tags []string, maxCandidates int)
 		}
 		seen[tag] = true
 
-		candidate := current.Repository + ":" + tag
-		class, err := ClassifyImageOverride(templateImage, candidate)
+		class, err := ClassifyImageOverride(line, templateImage, current.Repository+":"+tag)
 		if err != nil || class == ImageOverrideMoving {
 			continue
 		}

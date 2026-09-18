@@ -38,6 +38,26 @@ func TestMountSubpathIsWhatAnAppOwnsInAVolume(t *testing.T) {
 			mount.Mount{Type: mount.TypeVolume, Source: "vol-1", VolumeOptions: &mount.VolumeOptions{}},
 			"",
 		},
+		"a subpath that climbs out of the volume": {
+			mount.Mount{Type: mount.TypeVolume, Source: "vol-1",
+				VolumeOptions: &mount.VolumeOptions{Subpath: "blog/../../etc"}},
+			"",
+		},
+		"a subpath that is nothing but a traversal": {
+			mount.Mount{Type: mount.TypeVolume, Source: "vol-1",
+				VolumeOptions: &mount.VolumeOptions{Subpath: ".."}},
+			"",
+		},
+		"a subpath carrying a shell command": {
+			mount.Mount{Type: mount.TypeVolume, Source: "vol-1",
+				VolumeOptions: &mount.VolumeOptions{Subpath: "blog'; rm -rf /; echo '"}},
+			"",
+		},
+		"a subpath with an empty segment": {
+			mount.Mount{Type: mount.TypeVolume, Source: "vol-1",
+				VolumeOptions: &mount.VolumeOptions{Subpath: "blog//data"}},
+			"",
+		},
 		"a bind mount": {
 			mount.Mount{Type: mount.TypeBind, Source: "/srv/data"},
 			"",
@@ -50,14 +70,16 @@ func TestMountSubpathIsWhatAnAppOwnsInAVolume(t *testing.T) {
 	}
 }
 
-// Nothing is removed for a mount with no subpath of its own. That is the whole
-// volume, which belongs to whoever created it and may be shared, and a bind
-// mount is a path on the host that HivePaaS did not make.
+// Nothing is removed for a mount with no usable subpath of its own. That is the
+// whole volume, which belongs to whoever created it and may be shared; a bind
+// mount is a path on the host that HivePaaS did not make; and a subpath that
+// points outside the volume is not this app's to delete.
 func TestRemoveAppStorageLeavesAWholeVolumeAlone(t *testing.T) {
 	svc := &service{}
 
 	err := svc.RemoveAppStorage(t.Context(), []mount.Mount{
 		{Type: mount.TypeVolume, Source: "vol-1"},
+		{Type: mount.TypeVolume, Source: "vol-2", VolumeOptions: &mount.VolumeOptions{Subpath: "../elsewhere"}},
 		{Type: mount.TypeBind, Source: "/srv/data"},
 		{Type: mount.TypeTmpfs, Target: "/tmp"},
 	})

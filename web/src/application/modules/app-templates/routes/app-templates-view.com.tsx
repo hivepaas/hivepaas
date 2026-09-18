@@ -22,21 +22,28 @@ export function AppTemplatesView() {
     // Active filters
     const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
     const [searchQuery, setSearchQuery] = useState<string>("");
-    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+    const [submittedSearch, setSubmittedSearch] = useState<string>("");
     const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
 
     // Cached template summary when clicked from card for instant rendering
     const [selectedTemplateSummary, setSelectedTemplateSummary] = useState<AppTemplateSummary | undefined>(undefined);
 
-    // Debounce search query by 300ms
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearch(searchQuery.trim());
-        }, 300);
-        return () => {
-            clearTimeout(timer);
-        };
-    }, [searchQuery]);
+    // Handlers for search submit (Enter) and clear
+    const handleSearchSubmit = () => {
+        setSubmittedSearch(searchQuery.trim());
+    };
+
+    const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleSearchSubmit();
+        }
+    };
+
+    const handleClearSearch = () => {
+        setSearchQuery("");
+        setSubmittedSearch("");
+    };
 
     // 2. Fetch templates with infinite pagination (50 items per page)
     const {
@@ -47,7 +54,7 @@ export function AppTemplatesView() {
         fetchNextPage,
     } = useListAppTemplatesInfinite({
         category: selectedCategory,
-        search: debouncedSearch,
+        search: submittedSearch,
         tag: selectedTag,
     });
 
@@ -65,14 +72,14 @@ export function AppTemplatesView() {
     useEffect(() => {
         if (
             !selectedCategory &&
-            !debouncedSearch &&
+            !submittedSearch &&
             !selectedTag &&
             templatesData?.pages[0]?.meta.total !== undefined &&
             templatesData.pages[0].meta.total > 0
         ) {
             setAllTemplatesTotal(templatesData.pages[0].meta.total);
         }
-    }, [selectedCategory, debouncedSearch, selectedTag, templatesData]);
+    }, [selectedCategory, submittedSearch, selectedTag, templatesData]);
 
     // Calculate sum of categories from catalog as fallback when BE does not return a total
     const categoriesSum = useMemo(() => {
@@ -87,7 +94,7 @@ export function AppTemplatesView() {
     const allTemplatesCount =
         allTemplatesTotal && allTemplatesTotal > 0
             ? allTemplatesTotal
-            : !selectedCategory && !debouncedSearch && !selectedTag && totalTemplates > 0
+            : !selectedCategory && !submittedSearch && !selectedTag && totalTemplates > 0
               ? totalTemplates
               : categoriesSum;
 
@@ -176,22 +183,31 @@ export function AppTemplatesView() {
                             <div className="sticky top-[95px] md:top-[56px] z-10 bg-canvas/95 backdrop-blur-md py-2 border-b border-border/40 space-y-2">
                                 <div className="flex items-center gap-3">
                                     <div className="relative flex-1">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                                        <button
+                                            type="button"
+                                            onClick={handleSearchSubmit}
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                            title="Search (Enter)"
+                                            aria-label="Submit search"
+                                        >
+                                            <Search className="size-4" />
+                                        </button>
                                         <Input
                                             value={searchQuery}
                                             onChange={e => {
                                                 setSearchQuery(e.target.value);
                                             }}
-                                            placeholder="Search templates by name, tagline, or tags..."
+                                            onKeyDown={handleSearchKeyDown}
+                                            placeholder="Search templates by name, tagline, or tags (press Enter)..."
                                             className="pl-9 pr-8 h-9 text-sm bg-card border-border/70 focus-visible:ring-amber-500/30"
                                         />
                                         {searchQuery && (
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    setSearchQuery("");
-                                                }}
-                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                                onClick={handleClearSearch}
+                                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                                                title="Clear search"
+                                                aria-label="Clear search"
                                             >
                                                 <X className="size-3.5" />
                                             </button>
@@ -266,12 +282,16 @@ export function AppTemplatesView() {
                                         We couldn&apos;t find any templates matching your search or category filter. Try
                                         clearing filters.
                                     </p>
-                                    {(Boolean(searchQuery) || Boolean(selectedCategory) || Boolean(selectedTag)) && (
+                                    {(Boolean(submittedSearch) ||
+                                        Boolean(searchQuery) ||
+                                        Boolean(selectedCategory) ||
+                                        Boolean(selectedTag)) && (
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() => {
                                                 setSearchQuery("");
+                                                setSubmittedSearch("");
                                                 setSelectedCategory(undefined);
                                                 setSelectedTag(undefined);
                                             }}

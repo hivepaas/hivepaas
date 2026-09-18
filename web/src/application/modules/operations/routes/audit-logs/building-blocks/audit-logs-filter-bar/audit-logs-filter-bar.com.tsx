@@ -1,5 +1,8 @@
+import { useMemo, useState } from "react";
+
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Check, ChevronDown } from "lucide-react";
 import { AuditLogsQueries } from "~/operations/data";
 import { AuditLogResult, type AuditLogScope, AuditLogSource, AuditLogType } from "~/operations/domain";
 
@@ -7,10 +10,111 @@ import { AppsPublicQueries, ProjectsPublicQueries, UsersPublicQueries } from "@a
 
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { ResultBadge } from "../audit-log-summary-card/audit-log-summary-card.com";
+
+interface SearchableFilterItem {
+    value: string;
+    label: string;
+    avatar?: {
+        name: string;
+        src?: string | null;
+    };
+}
+
+interface SearchableFilterSelectProps {
+    value: string;
+    onValueChange: (value: string) => void;
+    placeholder: string;
+    searchPlaceholder: string;
+    emptyText: string;
+    items: SearchableFilterItem[];
+}
+
+function SearchableFilterSelect({
+    value,
+    onValueChange,
+    placeholder,
+    searchPlaceholder,
+    emptyText,
+    items,
+}: SearchableFilterSelectProps) {
+    const [open, setOpen] = useState(false);
+
+    const selectedItem = useMemo(() => items.find(item => item.value === value), [items, value]);
+
+    return (
+        <Popover
+            open={open}
+            onOpenChange={setOpen}
+        >
+            <PopoverTrigger asChild>
+                <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="h-9 w-full justify-between gap-2 px-3 py-2 text-sm font-normal border-input bg-transparent dark:bg-input/15 dark:hover:bg-input/25 overflow-hidden shadow-xs"
+                >
+                    <span className="flex items-center gap-2 min-w-0 flex-1 truncate text-left">
+                        {selectedItem?.avatar && (
+                            <Avatar
+                                name={selectedItem.avatar.name}
+                                src={selectedItem.avatar.src}
+                                className="size-4.5 text-[9px] shrink-0"
+                            />
+                        )}
+                        <span className="truncate">{selectedItem ? selectedItem.label : placeholder}</span>
+                    </span>
+                    <ChevronDown className="size-4 shrink-0 opacity-50 text-muted-foreground" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent
+                className="w-60 min-w-[var(--radix-popover-trigger-width)] p-0"
+                align="start"
+            >
+                <Command>
+                    <CommandInput placeholder={searchPlaceholder} />
+                    <CommandList className="max-h-60">
+                        <CommandEmpty className="p-2 text-xs text-muted-foreground text-center">
+                            {emptyText}
+                        </CommandEmpty>
+                        <CommandGroup>
+                            {items.map(item => (
+                                <CommandItem
+                                    key={item.value}
+                                    value={`${item.label} ${item.value}`}
+                                    onSelect={() => {
+                                        onValueChange(item.value);
+                                        setOpen(false);
+                                    }}
+                                    className="flex items-center justify-between gap-2 py-1.5 cursor-pointer"
+                                >
+                                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                                        {item.avatar && (
+                                            <Avatar
+                                                name={item.avatar.name}
+                                                src={item.avatar.src}
+                                                className="size-4.5 text-[9px] shrink-0"
+                                            />
+                                        )}
+                                        <span className="truncate">{item.label}</span>
+                                    </div>
+                                    {value === item.value && <Check className="size-4 shrink-0 text-primary" />}
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </PopoverContent>
+        </Popover>
+    );
+}
 
 export interface AuditLogFilterValues {
     type?: string;
@@ -46,21 +150,65 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
 
     // 2. Fetch users for actor filter
     const { data: usersResponse } = UsersPublicQueries.useFindManyBase({});
-    const users = usersResponse?.data ?? [];
 
     // 3. Fetch projects for project filter (global scope only)
     const { data: projectsResponse } = ProjectsPublicQueries.useFindManyPaginated({}, { enabled: isGlobalScope });
-    const projects = projectsResponse?.data ?? [];
 
     // 4. Fetch apps for app filter (project / project-env scope only)
     const { data: appsResponse } = AppsPublicQueries.useFindManyBase(
         { projectID },
         { enabled: isProjectOrEnvScope && Boolean(projectID) },
     );
-    const apps = appsResponse?.data ?? [];
 
     const projectSelectValue = filters.scopeOnly ? "scope-only" : (filters.projectId ?? "all");
     const appSelectValue = filters.scopeOnly ? "scope-only" : (filters.appId ?? "all");
+
+    const projectItems: SearchableFilterItem[] = useMemo(() => {
+        const projects = projectsResponse?.data ?? [];
+        return [
+            { value: "all", label: "All Projects" },
+            { value: "scope-only", label: "Global Only" },
+            ...projects.map(project => ({
+                value: project.id,
+                label: project.name,
+                searchKey: project.name,
+                avatar: { name: project.name },
+            })),
+        ];
+    }, [projectsResponse?.data]);
+
+    const appItems: SearchableFilterItem[] = useMemo(() => {
+        const apps = appsResponse?.data ?? [];
+        return [
+            { value: "all", label: "All Apps" },
+            { value: "scope-only", label: "Project Only" },
+            ...apps.map(app => ({
+                value: app.id,
+                label: app.name,
+                searchKey: app.name,
+                avatar: { name: app.name },
+            })),
+        ];
+    }, [appsResponse?.data]);
+
+    const actorItems: SearchableFilterItem[] = useMemo(() => {
+        const users = usersResponse?.data ?? [];
+        return [
+            { value: "all", label: "All Actors" },
+            ...users.map(user => {
+                const userName = user.fullName ? user.fullName : user.username;
+                return {
+                    value: user.id,
+                    label: userName,
+                    searchKey: `${userName} ${user.username} ${user.email}`,
+                    avatar: {
+                        name: userName,
+                        src: user.photo,
+                    },
+                };
+            }),
+        ];
+    }, [usersResponse?.data]);
 
     function handleProjectChange(val: string) {
         if (val === "scope-only") {
@@ -165,36 +313,14 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                         <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                             Project
                         </span>
-                        <Select
+                        <SearchableFilterSelect
                             value={projectSelectValue}
                             onValueChange={handleProjectChange}
-                        >
-                            <SelectTrigger className="h-9 w-full">
-                                <SelectValue placeholder="All Projects" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    <span>All Projects</span>
-                                </SelectItem>
-                                <SelectItem value="scope-only">
-                                    <span>Global Only</span>
-                                </SelectItem>
-                                {projects.map(project => (
-                                    <SelectItem
-                                        key={project.id}
-                                        value={project.id}
-                                    >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <Avatar
-                                                name={project.name}
-                                                className="size-4.5 text-[9px] shrink-0"
-                                            />
-                                            <span className="truncate">{project.name}</span>
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            placeholder="All Projects"
+                            searchPlaceholder="Search projects..."
+                            emptyText="No projects found."
+                            items={projectItems}
+                        />
                     </div>
                 )}
 
@@ -204,36 +330,14 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                         <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                             App
                         </span>
-                        <Select
+                        <SearchableFilterSelect
                             value={appSelectValue}
                             onValueChange={handleAppChange}
-                        >
-                            <SelectTrigger className="h-9 w-full">
-                                <SelectValue placeholder="All Apps" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    <span>All Apps</span>
-                                </SelectItem>
-                                <SelectItem value="scope-only">
-                                    <span>Project Only</span>
-                                </SelectItem>
-                                {apps.map(app => (
-                                    <SelectItem
-                                        key={app.id}
-                                        value={app.id}
-                                    >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <Avatar
-                                                name={app.name}
-                                                className="size-4.5 text-[9px] shrink-0"
-                                            />
-                                            <span className="truncate">{app.name}</span>
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                            placeholder="All Apps"
+                            searchPlaceholder="Search apps..."
+                            emptyText="No apps found."
+                            items={appItems}
+                        />
                     </div>
                 )}
 
@@ -334,37 +438,14 @@ export function AuditLogsFilterBar({ scope, filters, onChange, className }: Audi
                     <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                         Actor
                     </span>
-                    <Select
+                    <SearchableFilterSelect
                         value={filters.actorId ?? "all"}
                         onValueChange={handleActorChange}
-                    >
-                        <SelectTrigger className="h-9 w-full">
-                            <SelectValue placeholder="All Actors" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">
-                                <span>All Actors</span>
-                            </SelectItem>
-                            {users.map(user => {
-                                const userName = user.fullName ? user.fullName : user.username;
-                                return (
-                                    <SelectItem
-                                        key={user.id}
-                                        value={user.id}
-                                    >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <Avatar
-                                                name={userName}
-                                                src={user.photo}
-                                                className="size-4.5 text-[9px] shrink-0"
-                                            />
-                                            <span className="truncate">{userName}</span>
-                                        </div>
-                                    </SelectItem>
-                                );
-                            })}
-                        </SelectContent>
-                    </Select>
+                        placeholder="All Actors"
+                        searchPlaceholder="Search actors..."
+                        emptyText="No actors found."
+                        items={actorItems}
+                    />
                 </div>
 
                 {/* 5. From Date */}

@@ -3,9 +3,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, Loader2, RefreshCw, X } from "lucide-react";
-
-import { useDebouncedSearch } from "@application/shared/hooks";
+import { Check, ChevronsUpDown, Loader2, RefreshCw, Search, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -98,7 +96,7 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
     placeholder = "Select...",
     disabled = false,
     searchable = true,
-    debounceMs = 250,
+    "debounceMs": _debounceMs = 250,
     className,
     emptyText = "No options available",
     closeOnSelect = true,
@@ -112,17 +110,12 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
     renderSelectedOption,
     renderOption,
 }: ComboboxProps<T>) {
+    void _debounceMs;
     const [open, setOpen] = React.useState(false);
-    const [debouncedSearch, setSearch, searchValue] = useDebouncedSearch(debounceMs, "");
+    const [searchValue, setSearchValue] = React.useState("");
+    const [lastSubmittedSearch, setLastSubmittedSearch] = React.useState("");
 
     const showRefresh = Boolean(onRefresh);
-
-    // Call onSearch callback when debounced search changes
-    React.useEffect(() => {
-        if (onSearch) {
-            onSearch(debouncedSearch);
-        }
-    }, [debouncedSearch, onSearch]);
 
     const normalizedValue = normalizeValue(value);
 
@@ -132,7 +125,13 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
     }, [options, normalizedValue, valueKey]);
 
     const handleOpenChange = (nextOpen: boolean) => {
-        setSearch("");
+        if (!nextOpen) {
+            setSearchValue("");
+            if (onSearch && lastSubmittedSearch !== "") {
+                setLastSubmittedSearch("");
+                onSearch("");
+            }
+        }
         setOpen(nextOpen);
     };
 
@@ -149,7 +148,11 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
         onChange?.(newValue, selectedOptionData);
 
         if (closeOnSelect) {
-            setSearch("");
+            setSearchValue("");
+            if (onSearch && lastSubmittedSearch !== "") {
+                setLastSubmittedSearch("");
+                onSearch("");
+            }
             setOpen(false);
         }
     };
@@ -160,8 +163,41 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
         e.preventDefault();
         e.stopPropagation();
         onChange?.(null, null);
-        setSearch("");
+        setSearchValue("");
+        if (onSearch && lastSubmittedSearch !== "") {
+            setLastSubmittedSearch("");
+            onSearch("");
+        }
         setOpen(false);
+    };
+
+    const handleSearchSubmit = () => {
+        if (!onSearch) return;
+        const trimmed = searchValue.trim();
+        setLastSubmittedSearch(trimmed);
+        onSearch(trimmed);
+    };
+
+    const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" && onSearch) {
+            const trimmed = searchValue.trim();
+            if (trimmed !== lastSubmittedSearch || loading) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (trimmed !== lastSubmittedSearch) {
+                    setLastSubmittedSearch(trimmed);
+                    onSearch(trimmed);
+                }
+            }
+        }
+    };
+
+    const handleClearSearchInput = () => {
+        setSearchValue("");
+        if (onSearch && lastSubmittedSearch !== "") {
+            setLastSubmittedSearch("");
+            onSearch("");
+        }
     };
 
     return (
@@ -208,16 +244,50 @@ export function Combobox<T extends Record<string, unknown> = Record<string, unkn
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent
-                        className="w-fit p-0"
+                        className="w-fit min-w-[var(--radix-popover-trigger-width)] p-0"
                         align="start"
                     >
                         <Command shouldFilter={!onSearch}>
                             {searchable && (
-                                <CommandInput
-                                    placeholder="Search"
-                                    value={searchValue}
-                                    onValueChange={setSearch}
-                                />
+                                <div className="relative w-full [&_[data-slot=command-input-wrapper]]:w-full">
+                                    <CommandInput
+                                        placeholder={onSearch ? "Search (press Enter)..." : "Search"}
+                                        value={searchValue}
+                                        onValueChange={setSearchValue}
+                                        onKeyDown={handleInputKeyDown}
+                                        className={cn(
+                                            onSearch && searchValue.trim() !== lastSubmittedSearch
+                                                ? "pr-14"
+                                                : searchValue
+                                                  ? "pr-8"
+                                                  : "",
+                                        )}
+                                    />
+                                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                        {onSearch && searchValue.trim() !== lastSubmittedSearch && (
+                                            <button
+                                                type="button"
+                                                onClick={handleSearchSubmit}
+                                                className="text-muted-foreground hover:text-foreground p-0.5 rounded transition-colors cursor-pointer"
+                                                title="Search (press Enter)"
+                                                aria-label="Search"
+                                            >
+                                                <Search className="size-3.5" />
+                                            </button>
+                                        )}
+                                        {searchValue && (
+                                            <button
+                                                type="button"
+                                                onClick={handleClearSearchInput}
+                                                className="text-muted-foreground hover:text-foreground p-0.5 rounded transition-colors cursor-pointer"
+                                                title="Clear search"
+                                                aria-label="Clear search"
+                                            >
+                                                <X className="size-3.5" />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
                             )}
                             <CommandList>
                                 {loading ? (

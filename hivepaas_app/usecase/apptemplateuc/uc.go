@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
@@ -27,6 +28,7 @@ type UC struct {
 	appService           appservice.Service
 	appTemplateService   apptemplateservice.Service
 	auditService         auditservice.Service
+	clusterSecretService clustersecretservice.Service
 	clusterService       clusterservice.Service
 	envVarService        envvarservice.Service
 	specService          specservice.Service
@@ -44,6 +46,7 @@ func New(
 	appService appservice.Service,
 	appTemplateService apptemplateservice.Service,
 	auditService auditservice.Service,
+	clusterSecretService clustersecretservice.Service,
 	clusterService clusterservice.Service,
 	envVarService envvarservice.Service,
 	specService specservice.Service,
@@ -60,6 +63,7 @@ func New(
 		appService:           appService,
 		appTemplateService:   appTemplateService,
 		auditService:         auditService,
+		clusterSecretService: clusterSecretService,
 		clusterService:       clusterService,
 		envVarService:        envVarService,
 		specService:          specService,

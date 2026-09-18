@@ -256,6 +256,9 @@ func (uc *UC) provisionFromTemplate(
 	if err = uc.applyRouting(ctx, db, app); err != nil {
 		return created, hperrors.Wrap(err).WithExtraDetail("while applying routing settings")
 	}
+	if err = uc.applySecretsAndConfigFiles(ctx, db, app); err != nil {
+		return created, hperrors.Wrap(err).WithExtraDetail("while applying secrets and config files")
+	}
 	if err = uc.createFirstDeployment(ctx, db, auth, created); err != nil {
 		return created, hperrors.Wrap(err)
 	}
@@ -317,6 +320,67 @@ func (uc *UC) applyRouting(ctx context.Context, db database.IDB, app *entity.App
 		}
 	}
 	return hperrors.Wrap(err)
+}
+
+// applySecretsAndConfigFiles creates the docker objects for the secrets and
+// config files the template declared, and attaches them to the service.
+//
+// It runs before the first deployment, so the first container the app ever
+// starts already has its files. Only entries with a file target become docker
+// objects: a secret without one is read through the environment, where an
+// ${ITS_KEY} reference resolves it at deploy time. Creating an object fills in
+// the ids it was created with, and the settings are written again so the app
+// keeps them - without them nothing could find the object again to remove it.
+func (uc *UC) applySecretsAndConfigFiles(ctx context.Context, db database.IDB, app *entity.App) error {
+	var (
+		secretSettings []*entity.Setting
+		secrets        []*entity.Secret
+		configSettings []*entity.Setting
+		configFiles    []*entity.ConfigFile
+	)
+	for _, setting := range app.Settings {
+		switch setting.Type { //nolint:exhaustive
+		case base.SettingTypeSecret:
+			secret, err := setting.AsSecret()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			secretSettings = append(secretSettings, setting)
+			secrets = append(secrets, secret)
+		case base.SettingTypeConfigFile:
+			configFile, err := setting.AsConfigFile()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			configSettings = append(configSettings, setting)
+			configFiles = append(configFiles, configFile)
+		}
+	}
+	if len(secrets) == 0 && len(configFiles) == 0 {
+		return nil
+	}
+
+	if _, err := uc.clusterSecretService.CreateSecretsForApp(ctx, db, app, secrets); err != nil {
+		return hperrors.Wrap(err)
+	}
+	if _, err := uc.clusterSecretService.CreateConfigsForApp(ctx, db, app, configFiles); err != nil {
+		return hperrors.Wrap(err)
+	}
+
+	persisting := &appservice.PersistingAppData{}
+	for i, setting := range secretSettings {
+		if err := setting.SetData(secrets[i]); err != nil {
+			return hperrors.Wrap(err)
+		}
+		persisting.UpsertingSettings = append(persisting.UpsertingSettings, setting)
+	}
+	for i, setting := range configSettings {
+		if err := setting.SetData(configFiles[i]); err != nil {
+			return hperrors.Wrap(err)
+		}
+		persisting.UpsertingSettings = append(persisting.UpsertingSettings, setting)
+	}
+	return hperrors.Wrap(uc.appService.PersistAppData(ctx, db, persisting))
 }
 
 // createFirstDeployment queues the deployment that replaces the placeholder

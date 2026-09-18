@@ -55,6 +55,7 @@ func Lint(repo *Repo) []Problem {
 			report("%s", ErrorText(err))
 			continue
 		}
+		problems = append(problems, lintConfigFileSecrets(file)...)
 		if depProblems := lintDependencies(repo, file); len(depProblems) > 0 {
 			problems = append(problems, depProblems...)
 			continue

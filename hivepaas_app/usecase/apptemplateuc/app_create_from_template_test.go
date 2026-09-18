@@ -24,6 +24,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterender"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
@@ -531,4 +532,115 @@ func TestRemoveServicesNewestFirstAndNamesWhatStays(t *testing.T) {
 	assert.Equal(t, []string{"svc-blog", "svc-blog-db"}, cluster.removed)
 	assert.ErrorIs(t, err, errTestProvision)
 	assert.Contains(t, errDetail(t, err), "blog-db", "an orphan nobody is told about is worse than an orphan")
+}
+
+// fakeClusterSecretService fills in what docker would have returned: an id for
+// every entry that asked to be mounted as a file, and nothing for the rest.
+type fakeClusterSecretService struct {
+	clustersecretservice.Service
+	secrets []*entity.Secret
+	configs []*entity.ConfigFile
+}
+
+func (f *fakeClusterSecretService) CreateSecretsForApp(
+	_ context.Context, _ database.IDB, _ *entity.App, secrets []*entity.Secret,
+) ([]*entity.SwarmSecretRef, error) {
+	f.secrets = secrets
+	refs := make([]*entity.SwarmSecretRef, 0, len(secrets))
+	for _, secret := range secrets {
+		if secret.SwarmRef == nil || secret.SwarmRef.File == nil {
+			refs = append(refs, nil)
+			continue
+		}
+		secret.SwarmRef.SecretID = "docker-secret-" + secret.Key
+		refs = append(refs, secret.SwarmRef)
+	}
+	return refs, nil
+}
+
+func (f *fakeClusterSecretService) CreateConfigsForApp(
+	_ context.Context, _ database.IDB, _ *entity.App, configs []*entity.ConfigFile,
+) ([]*entity.SwarmConfigRef, error) {
+	f.configs = configs
+	refs := make([]*entity.SwarmConfigRef, 0, len(configs))
+	for _, config := range configs {
+		if config.SwarmRef == nil || config.SwarmRef.File == nil {
+			refs = append(refs, nil)
+			continue
+		}
+		config.SwarmRef.ConfigID = "docker-config-" + config.Name
+		refs = append(refs, config.SwarmRef)
+	}
+	return refs, nil
+}
+
+func secretSetting(t *testing.T, id string, secret *entity.Secret) *entity.Setting {
+	t.Helper()
+	setting := &entity.Setting{ID: id, Type: base.SettingTypeSecret, Name: secret.Key, ObjectID: "app-1"}
+	assert.NoError(t, setting.SetData(secret))
+	return setting
+}
+
+func configFileSetting(t *testing.T, id string, configFile *entity.ConfigFile) *entity.Setting {
+	t.Helper()
+	setting := &entity.Setting{ID: id, Type: base.SettingTypeConfigFile, Name: configFile.Name, ObjectID: "app-1"}
+	assert.NoError(t, setting.SetData(configFile))
+	return setting
+}
+
+func TestApplySecretsAndConfigFilesKeepsTheIDsDockerCreatedThemWith(t *testing.T) {
+	uc, fakes := newCreateTest(t)
+	cluster := &fakeClusterSecretService{}
+	uc.clusterSecretService = cluster
+	app := &entity.App{ID: "app-1", ServiceID: "svc-1", Settings: []*entity.Setting{
+		secretSetting(t, "set-env", &entity.Secret{Key: "ADMIN_PASSWORD", Value: entity.NewEncryptedField("s3cret")}),
+		secretSetting(t, "set-file", &entity.Secret{Key: "LICENSE_KEY", Value: entity.NewEncryptedField("abc"),
+			SwarmRef: &entity.SwarmSecretRef{File: &entity.SwarmRefFileTarget{Name: "/etc/app/license"}}}),
+		configFileSetting(t, "set-conf", &entity.ConfigFile{Name: "app.conf", Content: "listen = 8080",
+			SwarmRef: &entity.SwarmConfigRef{File: &entity.SwarmRefFileTarget{Name: "/etc/app/app.conf"}}}),
+	}}
+
+	assert.NoError(t, uc.applySecretsAndConfigFiles(t.Context(), nil, app))
+
+	// Both secrets are handed over: which of them becomes a docker object is the
+	// cluster service's decision, taken from the file target.
+	assert.Len(t, cluster.secrets, 2)
+	assert.Len(t, cluster.configs, 1)
+
+	// What docker returned is written back to the settings, so the app can find
+	// its objects again.
+	assert.Len(t, fakes.apps.persisted.UpsertingSettings, 3)
+	stored := settinghelper.FindSettingByType(fakes.apps.persisted.UpsertingSettings, base.SettingTypeSecret)
+	assert.Equal(t, "ADMIN_PASSWORD", stored.Name)
+	envSecret, err := stored.AsSecret()
+	assert.NoError(t, err)
+	assert.Nil(t, envSecret.SwarmRef)
+
+	fileSecret, err := fakes.apps.persisted.UpsertingSettings[1].AsSecret()
+	assert.NoError(t, err)
+	assert.Equal(t, "docker-secret-LICENSE_KEY", fileSecret.SwarmRef.SecretID)
+	configFile, err := fakes.apps.persisted.UpsertingSettings[2].AsConfigFile()
+	assert.NoError(t, err)
+	assert.Equal(t, "docker-config-app.conf", configFile.SwarmRef.ConfigID)
+
+	// The value survives the round trip through the setting, still encrypted.
+	assert.NotContains(t, fakes.apps.persisted.UpsertingSettings[1].Data, "abc")
+	plain, err := fileSecret.Value.GetPlain()
+	assert.NoError(t, err)
+	assert.Equal(t, "abc", plain)
+}
+
+func TestApplySecretsAndConfigFilesDoesNothingWithoutThem(t *testing.T) {
+	uc, fakes := newCreateTest(t)
+	cluster := &fakeClusterSecretService{}
+	uc.clusterSecretService = cluster
+	app := &entity.App{ID: "app-1", ServiceID: "svc-1", Settings: []*entity.Setting{
+		{ID: "set-routing", Type: base.SettingTypeAppRouting, ObjectID: "app-1"},
+	}}
+
+	assert.NoError(t, uc.applySecretsAndConfigFiles(t.Context(), nil, app))
+
+	assert.Nil(t, cluster.secrets)
+	assert.Nil(t, cluster.configs)
+	assert.Nil(t, fakes.apps.persisted)
 }

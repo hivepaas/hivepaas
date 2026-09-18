@@ -117,7 +117,7 @@ export function ConfirmEnvDangerActionForm({ action, envName, isPending = false,
                         />
                         <span>
                             <span className="block">Also delete the stored data</span>
-                            <span className="block text-muted-foreground">
+                            <span className="block text-xs text-muted-foreground leading-normal">
                                 The volumes this environment owns, and what is on them, are kept unless you tick this.
                             </span>
                         </span>

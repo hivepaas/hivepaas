@@ -20,13 +20,17 @@ function mapDomainToFormInput(
     domain: AppRoutingDomain,
     topLevelPort?: number,
 ): AppConfigRoutingSettingsFormSchemaInput["domains"][number] {
-    const isOverridePort =
-        topLevelPort !== undefined && topLevelPort > 0 ? domain.containerPort !== topLevelPort : false;
+    // A domain that names no port of its own answers on the app's. Apps created from a
+    // template before that was written in carry a zero here, which is not a port: read as an
+    // override it would show an empty field the form then refuses to save.
+    const appPort = topLevelPort !== undefined && topLevelPort > 0 ? topLevelPort : 0;
+    const containerPort = domain.containerPort > 0 ? domain.containerPort : appPort;
+    const isOverridePort = appPort > 0 && containerPort !== appPort;
     return {
         enabled: domain.enabled,
         domain: domain.domain,
         protocol: domain.protocol ?? ERoutingProtocol.HTTP,
-        containerPort: domain.containerPort,
+        containerPort,
         overridePort: isOverridePort,
         tlsPassthrough: domain.tlsPassthrough ?? false,
         domainRedirect: domain.domainRedirect ?? "",

@@ -51,7 +51,7 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 		}
 	}
 
-	if err := s.deleteAppInDocker(ctx, app, removeStorage); err != nil {
+	if err := s.deleteAppInDocker(ctx, db, app, removeStorage); err != nil {
 		return hperrors.Wrap(err)
 	}
 
@@ -154,7 +154,8 @@ func (s *service) getDockerSecretsAndConfigs(
 // What has to be read has to be read before the service goes: the secrets, the
 // configs and the mounts are all recorded on it, and afterwards nothing says
 // where they were.
-func (s *service) deleteAppInDocker(ctx context.Context, app *entity.App, removeStorage bool) error {
+func (s *service) deleteAppInDocker(ctx context.Context, db database.IDB, app *entity.App,
+	removeStorage bool) error {
 	if app.ServiceID == "" {
 		return nil
 	}
@@ -179,7 +180,7 @@ func (s *service) deleteAppInDocker(ctx context.Context, app *entity.App, remove
 	// would leave an app half deleted.
 	_ = s.deleteDockerSecretsAndConfigs(ctx, secrets, configs)
 	if removeStorage {
-		_ = s.volumeService.RemoveAppStorage(ctx, mounts)
+		_ = s.volumeService.RemoveAppStorage(ctx, db, app, mounts)
 	}
 	return nil
 }

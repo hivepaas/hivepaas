@@ -30,9 +30,14 @@ type Service interface {
 	// volumes it had mounted. The volumes themselves stay: one volume holds a
 	// directory per app, and the other apps are still using theirs.
 	//
-	// A mount carrying no subpath is left alone. That is the whole volume, which
-	// belongs to whoever created it.
-	RemoveAppStorage(ctx context.Context, mounts []mount.Mount) error
+	// A mount carrying nothing of the app's own is left alone: the whole volume,
+	// which belongs to whoever created it, and a bind that is not a managed
+	// volume's directory, which HivePaaS did not make.
+	//
+	// The mounts are matched against the app's volume settings, so the deletion
+	// happens on the node the data is pinned to rather than wherever this process
+	// runs.
+	RemoveAppStorage(ctx context.Context, db database.IDB, app *entity.App, mounts []mount.Mount) error
 
 	RemoveVolume(ctx context.Context, volumeID string, force bool, retryMax int, retryDelay time.Duration) error
 

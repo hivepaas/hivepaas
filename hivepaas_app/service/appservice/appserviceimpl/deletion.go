@@ -90,7 +90,7 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 	}
 
 	// Resource links
-	err = s.resLinkRepo.DeleteAllBySourceIDs(ctx, db, base.ResourceTypeApp, appIDs)
+	err = s.resLinkRepo.DeleteAllByScope(ctx, db, base.ObjectScopeApp, appIDs)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

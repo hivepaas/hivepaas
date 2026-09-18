@@ -32,6 +32,11 @@ type ResLinkRepo interface {
 
 	DeleteAllBySourceIDs(ctx context.Context, db database.IDB, sourceType base.ResourceType, sourceIDs []string,
 		opts ...bunex.DeleteQueryOption) error
+	// DeleteAllByScope deletes every link an object owns, its settings' links
+	// included. Deleting an object uses this rather than DeleteAllBySourceIDs,
+	// which reaches only links the object is itself the source of.
+	DeleteAllByScope(ctx context.Context, db database.IDB, scope base.ObjectScopeType, objectIDs []string,
+		opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
 
@@ -150,6 +155,75 @@ func (repo *resLinkRepo) DeleteAllBySourceIDs(ctx context.Context, db database.I
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// DeleteAllByScope deletes the links an object owns: the ones it is the source
+// of, and the ones any of its settings is.
+//
+// The settings are what makes this necessary. Every link HivePaaS writes today
+// is written by a setting - the routing setting records the domains and ports an
+// app answers at, and each setting records what it refers to - so an app's links
+// cannot be reached through the app's own id at all. Deleting the app without
+// them leaves its domains and ports recorded as taken and the certificates it
+// used impossible to remove.
+//
+// The settings are read including deleted ones, so it does not matter whether
+// this runs before or after they are deleted.
+func (repo *resLinkRepo) DeleteAllByScope(ctx context.Context, db database.IDB,
+	scope base.ObjectScopeType, objectIDs []string, opts ...bunex.DeleteQueryOption) error {
+	if len(objectIDs) == 0 {
+		return nil
+	}
+	_, err := repo.deleteAllByScopeQuery(db, scope, objectIDs, opts...).Exec(ctx)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	return nil
+}
+
+// deleteAllByScopeQuery is the query DeleteAllByScope runs, apart so that what it
+// matches can be read without a database.
+func (repo *resLinkRepo) deleteAllByScopeQuery(db database.IDB, scope base.ObjectScopeType,
+	objectIDs []string, opts ...bunex.DeleteQueryOption) *bun.DeleteQuery {
+	settingIDs := db.NewSelect().Model((*entity.Setting)(nil)).
+		Column("id").
+		WhereAllWithDeleted().
+		Where("setting.scope = ?", scope).
+		Where("setting.object_id IN (?)", bun.List(objectIDs))
+
+	// One group, so that the two sources stay an alternative to each other rather
+	// than to whatever the caller's options add.
+	query := db.NewDelete().Model((*entity.ResLink)(nil)).
+		WhereGroup(" AND ", func(q *bun.DeleteQuery) *bun.DeleteQuery {
+			q = q.Where("res_link.src_type = ? AND res_link.src_id IN (?)",
+				base.ResourceTypeSetting, settingIDs)
+			if srcType := scopeSourceType(scope); srcType != "" {
+				q = q.WhereOr("res_link.src_type = ? AND res_link.src_id IN (?)",
+					srcType, bun.List(objectIDs))
+			}
+			return q
+		})
+	return bunex.ApplyDelete(query, opts...)
+}
+
+// scopeSourceType is the resource an object of a scope is, for the links it is
+// itself the source of. Nothing writes those today, and deleting them is what
+// the callers of this asked for before it existed.
+func scopeSourceType(scope base.ObjectScopeType) base.ResourceType {
+	switch scope {
+	case base.ObjectScopeApp:
+		return base.ResourceTypeApp
+	case base.ObjectScopeProject:
+		return base.ResourceTypeProject
+	case base.ObjectScopeProjectEnv:
+		return base.ResourceTypeProjectEnv
+	case base.ObjectScopeUser:
+		return base.ResourceTypeUser
+	case base.ObjectScopeGlobal, base.ObjectScopeHivepaas:
+		return ""
+	default:
+		return ""
+	}
 }
 
 func (repo *resLinkRepo) DeleteHard(ctx context.Context, db database.IDB,

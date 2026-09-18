@@ -65,7 +65,7 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 	}
 
 	// Resource links
-	err = s.resLinkRepo.DeleteAllBySourceIDs(ctx, db, base.ResourceTypeProject, projectIDs)
+	err = s.resLinkRepo.DeleteAllByScope(ctx, db, base.ObjectScopeProject, projectIDs)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { AppTemplateSummary } from "../api";
 import { AppTemplateCard, AppTemplatesDetailsView, AppTemplatesSidebar } from "../components";
 import { useGetAppTemplateCatalog, useListAppTemplatesInfinite } from "../data";
+import { DeployTemplateDialog } from "../dialogs";
 
 export function AppTemplatesView() {
     const { id, templateName } = useParams<{ id: string; templateName?: string }>();
@@ -349,6 +350,9 @@ export function AppTemplatesView() {
                     )}
                 </div>
             </div>
+
+            {/* Deploy Template Modal */}
+            <DeployTemplateDialog />
         </div>
     );
 }

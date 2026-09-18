@@ -1,14 +1,23 @@
 import {
     type InfiniteData,
     type UseInfiniteQueryResult,
+    type UseMutationOptions,
+    type UseMutationResult,
     type UseQueryResult,
     useInfiniteQuery,
+    useMutation,
     useQuery,
+    useQueryClient,
 } from "@tanstack/react-query";
+import { QK } from "~/projects/data/constants";
 
 import {
     type AppTemplateCatalog,
     type AppTemplateDetail,
+    type AppTemplateImageTagsResponse,
+    type CreateAppFromTemplateReq,
+    type CreateAppFromTemplateResp,
+    type GetAppTemplateImageTagsParams,
     type ListAppTemplatesFilter,
     type ListAppTemplatesResponse,
     appTemplatesApi,
@@ -18,6 +27,8 @@ export const APP_TEMPLATES_QUERY_KEYS = {
     catalog: () => ["app-templates", "catalog"] as const,
     list: (filter?: ListAppTemplatesFilter) => ["app-templates", "list", filter] as const,
     detail: (name: string) => ["app-templates", "detail", name] as const,
+    imageTags: (params: GetAppTemplateImageTagsParams) =>
+        ["app-templates", "image-tags", params.templateName, params.version, params.variant] as const,
 };
 
 export const PAGE_LIMIT_DEFAULT = 50;
@@ -77,5 +88,43 @@ export function useGetAppTemplate(name?: string): UseQueryResult<AppTemplateDeta
         },
         enabled: Boolean(name),
         staleTime: 5 * 60 * 1000,
+    });
+}
+
+/**
+ * Query hook to fetch scanned registry image tags for a template version/variant.
+ */
+export function useGetAppTemplateImageTags(
+    params: GetAppTemplateImageTagsParams,
+    options?: { enabled?: boolean },
+): UseQueryResult<AppTemplateImageTagsResponse> {
+    return useQuery<AppTemplateImageTagsResponse>({
+        queryKey: APP_TEMPLATES_QUERY_KEYS.imageTags(params),
+        queryFn: ({ signal }) => appTemplatesApi.getImageTags(params, signal),
+        enabled: options?.enabled ?? Boolean(params.templateName),
+        staleTime: 60 * 1000,
+    });
+}
+
+/**
+ * Mutation hook to create a new app from a template.
+ */
+export function useCreateAppFromTemplate(
+    options?: Omit<UseMutationOptions<CreateAppFromTemplateResp, Error, CreateAppFromTemplateReq>, "mutationFn">,
+): UseMutationResult<CreateAppFromTemplateResp, Error, CreateAppFromTemplateReq> {
+    const queryClient = useQueryClient();
+    const { onSuccess, ...restOptions } = options ?? {};
+
+    return useMutation({
+        mutationFn: (req: CreateAppFromTemplateReq) => appTemplatesApi.createAppFromTemplate(req),
+        onSuccess: (response, ...rest) => {
+            void queryClient.invalidateQueries({
+                queryKey: [QK["projects.apps.$.find-many-paginated"]],
+            });
+            if (onSuccess) {
+                onSuccess(response, ...rest);
+            }
+        },
+        ...restOptions,
     });
 }

@@ -18,6 +18,7 @@ import {
     Sliders,
     Tag,
 } from "lucide-react";
+import { useParams } from "react-router";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 import type { AppTemplateDetail, AppTemplateSummary } from "../api";
 import { useGetAppTemplate } from "../data";
+import { useDeployTemplateDialogState } from "../dialogs";
 
 interface AppTemplatesDetailsViewProps {
     templateName: string;
@@ -170,9 +172,15 @@ export function AppTemplatesDetailsView({
     const variants = templateDetail?.variants ?? [];
 
     const primaryCategory = template ? (template.categories[0]?.split("/").pop() ?? template.categories[0]) : undefined;
+    const { id: projectId } = useParams<{ id: string }>();
+    const { open: openDeployDialog } = useDeployTemplateDialogState();
 
     const handleDeployClick = () => {
-        // Deploy handler placeholder for current stage
+        if (!template || !template.compatible || !projectId) return;
+        openDeployDialog(projectId, {
+            templateName: template.name,
+            initialVersion: selectedVersionName,
+        });
     };
 
     if (!template && isLoading) {

@@ -102,6 +102,16 @@ export interface AppTemplateParam {
     options?: AppTemplateParamOption[];
 }
 
+export interface AppTemplateDependency {
+    name: string;
+    title: string;
+    template: string;
+    templateTitle?: string;
+    version?: string;
+    variant?: string;
+    parameters?: AppTemplateParam[];
+}
+
 export interface AppTemplateDetail {
     source: string;
     revision: string;
@@ -118,6 +128,52 @@ export interface AppTemplateDetail {
     variants: AppTemplateVariant[];
     versions: AppTemplateVersionSummary[];
     parameters: AppTemplateParam[];
+    dependencies?: AppTemplateDependency[];
+}
+
+export interface AppTemplateImageTag {
+    tag: string;
+    image: string;
+    class: string;
+    newer: boolean;
+}
+
+export interface AppTemplateImageTagsResponse {
+    repository: string;
+    currentTag: string;
+    truncated: boolean;
+    tags: AppTemplateImageTag[];
+}
+
+export interface GetAppTemplateImageTagsParams {
+    templateName: string;
+    version?: string;
+    variant?: string;
+}
+
+export interface CreateAppFromTemplateReq {
+    projectID: string;
+    projectEnv: string;
+    name: string;
+    template: string;
+    version?: string;
+    variant?: string;
+    imageOverride?: string;
+    params?: Record<string, unknown>;
+    dependencyParams?: Record<string, Record<string, unknown>>;
+}
+
+export interface CreateAppFromTemplateResp {
+    meta?: unknown;
+    data: {
+        app: { id: string };
+        deployment: { id: string };
+        dependencies?: {
+            name: string;
+            app: { id: string };
+            deployment: { id: string };
+        }[];
+    };
 }
 
 export class AppTemplatesApi extends BaseApi {
@@ -174,6 +230,52 @@ export class AppTemplatesApi extends BaseApi {
                 { signal },
             );
             return res.data.data;
+        } catch (error) {
+            throw parseApiError(error);
+        }
+    }
+
+    /**
+     * GET /app-templates/{templateName}/image-tags
+     * Scans Docker registry for image tags of the template's pinned repository.
+     */
+    async getImageTags(
+        params: GetAppTemplateImageTagsParams,
+        signal?: AbortSignal,
+    ): Promise<AppTemplateImageTagsResponse> {
+        try {
+            const res = await this.client.v1.get<{ meta?: unknown; data: AppTemplateImageTagsResponse }>(
+                `/app-templates/${encodeURIComponent(params.templateName)}/image-tags`,
+                {
+                    params: {
+                        version: params.version ?? undefined,
+                        variant: params.variant ?? undefined,
+                    },
+                    signal,
+                },
+            );
+            return res.data.data;
+        } catch (error) {
+            throw parseApiError(error);
+        }
+    }
+
+    /**
+     * POST /projects/{projectID}/{projectEnv}/apps/from-template
+     * Provisions a new app from an app template and queues its first deployment.
+     */
+    async createAppFromTemplate(
+        req: CreateAppFromTemplateReq,
+        signal?: AbortSignal,
+    ): Promise<CreateAppFromTemplateResp> {
+        try {
+            const { projectID, projectEnv, ...body } = req;
+            const res = await this.client.v1.post<CreateAppFromTemplateResp>(
+                `/projects/${encodeURIComponent(projectID)}/${encodeURIComponent(projectEnv)}/apps/from-template`,
+                body,
+                { signal },
+            );
+            return res.data;
         } catch (error) {
             throw parseApiError(error);
         }

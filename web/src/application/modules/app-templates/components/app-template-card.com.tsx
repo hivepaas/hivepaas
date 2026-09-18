@@ -2,12 +2,14 @@ import React, { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Boxes, Lock, Rocket, Scale } from "lucide-react";
+import { useParams } from "react-router";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import type { AppTemplateSummary, AppTemplateVersionSummary } from "../api";
+import { useDeployTemplateDialogState } from "../dialogs";
 
 interface AppTemplateCardProps {
     template: AppTemplateSummary;
@@ -19,6 +21,8 @@ interface AppTemplateCardProps {
 
 export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, className }: AppTemplateCardProps) {
     const [imageError, setImageError] = useState(false);
+    const { id: projectId } = useParams<{ id: string }>();
+    const { open: openDeployDialog } = useDeployTemplateDialogState();
 
     // Find default version or first available version
     const defaultVer = template.versions.find(v => v.default) ?? template.versions[0];
@@ -31,7 +35,11 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
 
     const handleDeployClick = (e: React.MouseEvent) => {
         e.stopPropagation();
-        // Action handler for Deploy is deliberately left unhandled for now per requirement
+        if (!template.compatible || !projectId) return;
+        openDeployDialog(projectId, {
+            templateName: template.name,
+            initialVersion: selectedVersionName,
+        });
     };
 
     return (

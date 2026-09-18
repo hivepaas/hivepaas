@@ -154,6 +154,24 @@ func TestBuildAppAlwaysGivesAVolumeMountOptions(t *testing.T) {
 		"without options a non-bind volume mount would get no app subpath and share the volume's root")
 }
 
+// An image that ships a directory at the mount point has docker copy it into an
+// empty volume, ownership and all, over the permissions the volume was prepared
+// with - and an unprivileged process then cannot write. A template for such an
+// image says no to the copy.
+func TestBuildAppCarriesNoCopyToTheMount(t *testing.T) {
+	useDataKey(t)
+	volumes := &fakeBuildVolumeService{}
+	svc := &service{volumeService: volumes}
+
+	_, err := svc.BuildApp(context.Background(), nil, buildReq(t,
+		"deployment:\n  storage:\n    mounts:\n"+
+			"      /data: {type: volume, source: vol-1, volumeOptions: {subpath: db, noCopy: true}}\n"))
+
+	assert.NoError(t, err)
+	assert.True(t, volumes.req.New[0].VolumeOptions.NoCopy)
+	assert.Equal(t, "db", volumes.req.New[0].VolumeOptions.Subpath)
+}
+
 func TestBuildAppSplitsACmdHealthcheck(t *testing.T) {
 	useDataKey(t)
 	svc := &service{volumeService: &fakeBuildVolumeService{}}

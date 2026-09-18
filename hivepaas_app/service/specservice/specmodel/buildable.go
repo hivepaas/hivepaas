@@ -210,7 +210,12 @@ func checkStorage(s *Storage) error {
 			return err
 		}
 		if m.VolumeOptions != nil {
-			if err := onlyFields(path+"volumeOptions.", m.VolumeOptions, "subpath"); err != nil {
+			// noCopy alongside subpath: docker copies what an image holds at the mount
+			// point into an empty volume the first time it is mounted there, ownership
+			// included, which overwrites the permissions the volume was prepared with and
+			// leaves an unprivileged process unable to write. A template whose image ships
+			// a directory at that path says no to the copy.
+			if err := onlyFields(path+"volumeOptions.", m.VolumeOptions, "subpath", "noCopy"); err != nil {
 				return err
 			}
 		}

@@ -22,7 +22,8 @@ deployment:
     workingDir: /
   storage:
     mounts:
-      /var/lib/postgresql/data: {type: volume, source: vol-1, readOnly: false, volumeOptions: {subpath: data}}
+      /var/lib/postgresql/data:
+        {type: volume, source: vol-1, readOnly: false, volumeOptions: {subpath: data, noCopy: true}}
   container:
     healthcheck: {enabled: true, mode: CMD-SHELL, command: pg_isready, interval: 10s, retries: 5}
     init: false

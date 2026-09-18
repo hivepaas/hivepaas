@@ -118,6 +118,7 @@ func (s *service) buildStorage(ctx context.Context, state *buildState) error {
 		options := &volumeservice.AppMountVolumeOptions{}
 		if m.VolumeOptions != nil {
 			options.Subpath = m.VolumeOptions.Subpath
+			options.NoCopy = m.VolumeOptions.NoCopy
 		}
 		requests = append(requests, &volumeservice.AppMountReq{
 			Type:          m.Type,

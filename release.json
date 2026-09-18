@@ -10,7 +10,12 @@
     "vlagentImage": "victoriametrics/vlagent:v1.52.0",
     "blockMajorUpgrade": [
       "db"
-    ]
+    ],
+    "templates": {
+      "repo": "hivepaas/app-templates",
+      "commit": "814917c4414b73cfe742904dd779b871a086e7d1",
+      "indexSha256": "375f4ae6c03d4a771e261aeef6b07798dd8d0e0db8e3a6ebf269ab7ff51e8604"
+    }
   },
   "beta": {
     "releaseDate": "2026-01-01",
@@ -23,6 +28,11 @@
     "vlagentImage": "victoriametrics/vlagent:v1.52.0",
     "blockMajorUpgrade": [
       "db"
-    ]
+    ],
+    "templates": {
+      "repo": "hivepaas/app-templates",
+      "commit": "814917c4414b73cfe742904dd779b871a086e7d1",
+      "indexSha256": "375f4ae6c03d4a771e261aeef6b07798dd8d0e0db8e3a6ebf269ab7ff51e8604"
+    }
   }
 }

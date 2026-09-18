@@ -26,6 +26,12 @@ var StableVersion = &ReleaseInfo{
 	VlagentImage:      "victoriametrics/vlagent:v1.52.0",
 
 	BlockMajorUpgrade: []string{HivepaasDbKey},
+
+	Templates: &TemplatesRef{
+		Repo:        "hivepaas/app-templates",
+		Commit:      "814917c4414b73cfe742904dd779b871a086e7d1",
+		IndexSHA256: "375f4ae6c03d4a771e261aeef6b07798dd8d0e0db8e3a6ebf269ab7ff51e8604",
+	},
 }
 
 const BetaVersionCode = VersionCodeV1

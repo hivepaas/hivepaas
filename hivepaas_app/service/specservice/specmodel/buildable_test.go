@@ -2,6 +2,8 @@ package specmodel
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,6 +31,13 @@ deployment:
 settings:
   kind: {category: database, engine: postgres}
   envVars: {data: [{k: A, v: b}]}
+  secrets:
+    ADMIN_PASSWORD: {value: hunter2}
+    LICENSE: {value: abc, base64: false, swarmRef: {file: {name: /run/secrets/license, uid: "0", gid: "0", mode: 400}}}
+  configFiles:
+    postgresql.conf:
+      content: "max_connections = 200\n"
+      swarmRef: {file: {name: /etc/postgresql/postgresql.conf, mode: 444}}
   routing: {port: 5432}
 `
 
@@ -57,6 +66,9 @@ func TestCheckBuildableAcceptsTheSupportedSubset(t *testing.T) {
 func TestPresentBlocks(t *testing.T) {
 	assert.Equal(t, BuildableBlocks, PresentBlocks(decodeDoc(t, buildableDocYAML)))
 	assert.Equal(t, []Block{BlockSettingsKind}, PresentBlocks(decodeDoc(t, "settings:\n  kind: {category: cache}\n")))
+	assert.Equal(t, []Block{BlockSettingsSecrets},
+		PresentBlocks(decodeDoc(t, "settings:\n  secrets:\n    A: {value: x}\n")))
+	assert.Empty(t, PresentBlocks(decodeDoc(t, "settings:\n  secrets: {}\n")), "an empty block builds nothing")
 	assert.Empty(t, PresentBlocks(&AppDoc{}))
 }
 
@@ -80,15 +92,58 @@ func TestCheckBuildableRefusesTheRest(t *testing.T) {
 		"volume labels": {"deployment:\n  storage:\n    mounts:\n" +
 			"      /data: {type: volume, source: v, volumeOptions: {labels: {a: b}}}\n",
 			"deployment.storage.mounts./data.volumeOptions.labels"},
-		"networks":        {"deployment:\n  networks:\n    dnsConfig: {nameservers: [1.1.1.1]}\n", "deployment.networks"},
-		"service mode":    {"deployment:\n  service:\n    modeSpec: {mode: global}\n", "deployment.service"},
-		"config files":    {"settings:\n  configFiles: {}\n", "settings.configFiles"},
+		"networks":     {"deployment:\n  networks:\n    dnsConfig: {nameservers: [1.1.1.1]}\n", "deployment.networks"},
+		"service mode": {"deployment:\n  service:\n    modeSpec: {mode: global}\n", "deployment.service"},
+		"secret swarm id": {"settings:\n  secrets:\n    A: {value: x, swarmRef: {secretId: abc}}\n",
+			"settings.secrets.A.swarmRef.secretId"},
+		"config swarm id": {"settings:\n  configFiles:\n    a.conf: {content: x, swarmRef: {configId: abc}}\n",
+			"settings.configFiles.a.conf.swarmRef.configId"},
 		"routing domains": {"settings:\n  routing: {port: 80, domains: []}\n", "settings.routing.domains"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
 			err := CheckBuildable(decodeDoc(t, tc.doc))
 			assert.ErrorIs(t, err, hperrors.ErrSpecBlockUnsupported)
+			assert.Contains(t, buildableErrorDetail(t, err), tc.path)
+		})
+	}
+}
+
+// A template can put a generated password where it is encrypted at rest, and
+// mount a file; what it cannot do is name docker objects that do not exist yet.
+func TestCheckBuildableRefusesOversizedOrMalformedSecretsAndConfigs(t *testing.T) {
+	cases := map[string]struct {
+		doc  string
+		path string
+	}{
+		"too many secrets": {
+			"settings:\n  secrets:\n" + func() string {
+				out := ""
+				for i := range MaxSettingsPerBlock + 1 {
+					out += fmt.Sprintf("    S%d: {value: x}\n", i)
+				}
+				return out
+			}(),
+			"settings.secrets",
+		},
+		"secret too large": {
+			"settings:\n  secrets:\n    A: {value: \"" + strings.Repeat("x", MaxSecretValueBytes+1) + "\"}\n",
+			"settings.secrets.A.value",
+		},
+		"config too large": {
+			"settings:\n  configFiles:\n    a.conf: {content: \"" +
+				strings.Repeat("x", MaxConfigFileBytes+1) + "\"}\n",
+			"settings.configFiles.a.conf.content",
+		},
+		"relative mount path": {
+			"settings:\n  configFiles:\n    a.conf: {content: x, swarmRef: {file: {name: etc/a.conf}}}\n",
+			"settings.configFiles.a.conf.swarmRef.file.name",
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := CheckBuildable(decodeDoc(t, tc.doc))
+			assert.Error(t, err)
 			assert.Contains(t, buildableErrorDetail(t, err), tc.path)
 		})
 	}

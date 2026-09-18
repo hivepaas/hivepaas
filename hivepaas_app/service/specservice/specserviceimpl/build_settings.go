@@ -2,6 +2,7 @@ package specserviceimpl
 
 import (
 	"context"
+	"maps"
 	"slices"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -60,4 +61,56 @@ func (s *service) buildRouting(_ context.Context, state *buildState) error {
 		return invalidBlock(block, "port %d is out of range", routing.Port)
 	}
 	return state.addSetting(base.SettingTypeAppRouting, entity.CurrentAppRoutingSettingsVersion, true, routing)
+}
+
+// buildSecrets and buildConfigFiles build the two collection blocks. Each entry
+// is keyed by the name its setting takes, which is also what a secret is
+// referred to by - ${THAT_KEY} in an environment variable - and what a config
+// file is called. A body may repeat the key, and disagreeing with it is refused
+// rather than resolved: one of the two would be silently ignored.
+func (s *service) buildSecrets(_ context.Context, state *buildState) error {
+	block := specmodel.BlockSettingsSecrets
+	entries, _ := state.req.Doc.Settings[specmodel.CollectionBlockName(base.SettingTypeSecret)].(map[string]any)
+	for _, name := range slices.Sorted(maps.Keys(entries)) {
+		secret := &entity.Secret{}
+		if err := decodeBlock(block, entries[name], secret); err != nil {
+			return err
+		}
+		if secret.Key == "" {
+			secret.Key = name
+		}
+		if secret.Key != name {
+			return invalidBlock(block, "%s: key %q does not match the name it is listed under", name, secret.Key)
+		}
+		if !base.IsAppRuntimeEnvAllowed(secret.Key) {
+			return invalidBlock(block, "%s is reserved for HivePaaS", secret.Key)
+		}
+		if err := state.addNamedSetting(base.SettingTypeSecret, secret.Key,
+			entity.CurrentSecretVersion, false, secret); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *service) buildConfigFiles(_ context.Context, state *buildState) error {
+	block := specmodel.BlockSettingsConfigFiles
+	entries, _ := state.req.Doc.Settings[specmodel.CollectionBlockName(base.SettingTypeConfigFile)].(map[string]any)
+	for _, name := range slices.Sorted(maps.Keys(entries)) {
+		configFile := &entity.ConfigFile{}
+		if err := decodeBlock(block, entries[name], configFile); err != nil {
+			return err
+		}
+		if configFile.Name == "" {
+			configFile.Name = name
+		}
+		if configFile.Name != name {
+			return invalidBlock(block, "%s: name %q does not match the name it is listed under", name, configFile.Name)
+		}
+		if err := state.addNamedSetting(base.SettingTypeConfigFile, configFile.Name,
+			entity.CurrentConfigFileVersion, false, configFile); err != nil {
+			return err
+		}
+	}
+	return nil
 }

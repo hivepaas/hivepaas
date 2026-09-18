@@ -40,6 +40,8 @@ func (s *service) builders() map[specmodel.Block]blockBuilder {
 		specmodel.BlockDeploymentResources:  s.buildResources,
 		specmodel.BlockSettingsKind:         s.buildKind,
 		specmodel.BlockSettingsEnvVars:      s.buildEnvVars,
+		specmodel.BlockSettingsSecrets:      s.buildSecrets,
+		specmodel.BlockSettingsConfigFiles:  s.buildConfigFiles,
 		specmodel.BlockSettingsRouting:      s.buildRouting,
 	}
 }
@@ -81,11 +83,24 @@ func (state *buildState) addSetting(
 	inheritable bool,
 	data entity.SettingData,
 ) error {
+	return state.addNamedSetting(typ, "", version, inheritable, data)
+}
+
+// addNamedSetting creates a setting that carries a name: the key a collection
+// type is found and referred to by - a secret's key, a config file's name.
+func (state *buildState) addNamedSetting(
+	typ base.SettingType,
+	name string,
+	version int,
+	inheritable bool,
+	data entity.SettingData,
+) error {
 	setting := &entity.Setting{
 		ID:          gofn.Must(ulid.NewStringULID()),
 		Scope:       base.ObjectScopeApp,
 		ObjectID:    state.req.App.ID,
 		Type:        typ,
+		Name:        name,
 		Status:      base.SettingStatusActive,
 		Inheritable: inheritable,
 		Version:     version,

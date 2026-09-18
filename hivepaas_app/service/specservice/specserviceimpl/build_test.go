@@ -2,6 +2,7 @@ package specserviceimpl
 
 import (
 	"context"
+	"errors"
 	"maps"
 	"slices"
 	"testing"
@@ -231,6 +232,95 @@ func TestBuildAppRefuses(t *testing.T) {
 			svc := &service{volumeService: &fakeBuildVolumeService{}}
 			_, err := svc.BuildApp(context.Background(), nil, buildReq(t, tc.doc))
 			assert.ErrorIs(t, err, tc.want)
+		})
+	}
+}
+
+const buildSecretsDocYAML = `
+deployment:
+  source:
+    activeMethod: image
+    imageSource: {image: "keycloak:26.7.4"}
+settings:
+  secrets:
+    KC_BOOTSTRAP_ADMIN_PASSWORD: {value: hunter2}
+    LICENSE:
+      value: a-license
+      swarmRef: {file: {name: /run/secrets/license, mode: 400}}
+  configFiles:
+    prometheus.yml:
+      content: "scrape_interval: 30s\n"
+      swarmRef: {file: {name: /etc/prometheus/prometheus.yml, mode: 444}}
+`
+
+func TestBuildAppBuildsSecretsAndConfigFiles(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+
+	resp, err := svc.BuildApp(context.Background(), nil, buildReq(t, buildSecretsDocYAML))
+
+	assert.NoError(t, err)
+	byName := map[string]*entity.Setting{}
+	for _, setting := range resp.Settings {
+		byName[string(setting.Type)+"/"+setting.Name] = setting
+	}
+
+	admin := byName["secret/KC_BOOTSTRAP_ADMIN_PASSWORD"]
+	if admin == nil {
+		t.Fatal("a secret is built under the name it is listed by, which is what ${...} refers to")
+	}
+	secret, err := admin.AsSecret()
+	assert.NoError(t, err)
+	assert.Equal(t, "KC_BOOTSTRAP_ADMIN_PASSWORD", secret.Key)
+	value, err := secret.Value.GetPlain()
+	assert.NoError(t, err)
+	assert.Equal(t, "hunter2", value)
+	assert.NotContains(t, admin.Data, "hunter2", "a secret is stored encrypted")
+	assert.Nil(t, secret.SwarmRef, "a secret with no file is read through the environment, not mounted")
+
+	license, err := byName["secret/LICENSE"].AsSecret()
+	assert.NoError(t, err)
+	assert.Equal(t, "/run/secrets/license", license.SwarmRef.File.Name)
+
+	configFile, err := byName["config-file/prometheus.yml"].AsConfigFile()
+	assert.NoError(t, err)
+	assert.Equal(t, "prometheus.yml", configFile.Name)
+	assert.Equal(t, "scrape_interval: 30s\n", configFile.Content)
+	assert.Equal(t, "/etc/prometheus/prometheus.yml", configFile.SwarmRef.File.Name)
+}
+
+// buildErrorDetail is the explanation a person reads; Error() carries the code.
+func buildErrorDetail(t *testing.T, err error) string {
+	t.Helper()
+	var hpErr hperrors.HPError
+	if !errors.As(err, &hpErr) {
+		t.Fatalf("expected an hperrors.HPError, got %T: %v", err, err)
+	}
+	return hpErr.Build("en").Detail
+}
+
+func TestBuildAppRefusesSecretsAndConfigFilesItCannotApply(t *testing.T) {
+	useDataKey(t)
+	cases := map[string]struct {
+		doc  string
+		want string
+	}{
+		"key disagrees with the name": {
+			"settings:\n  secrets:\n    A: {key: B, value: x}\n", "does not match the name",
+		},
+		"name disagrees with the key": {
+			"settings:\n  configFiles:\n    a.conf: {name: b.conf, content: x}\n", "does not match the name",
+		},
+		"reserved secret key": {
+			"settings:\n  secrets:\n    HIVEPAAS_PASSWORD: {value: x}\n", "reserved for HivePaaS",
+		},
+	}
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := svc.BuildApp(context.Background(), nil, buildReq(t, tc.doc))
+			assert.ErrorIs(t, err, hperrors.ErrSpecBlockInvalid)
+			assert.Contains(t, buildErrorDetail(t, err), tc.want)
 		})
 	}
 }

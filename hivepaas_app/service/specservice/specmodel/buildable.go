@@ -22,7 +22,23 @@ const (
 	BlockDeploymentResources  Block = "deployment.resources"
 	BlockSettingsKind         Block = "settings.kind"
 	BlockSettingsEnvVars      Block = "settings.envVars"
+	BlockSettingsSecrets      Block = "settings.secrets"
+	BlockSettingsConfigFiles  Block = "settings.configFiles"
 	BlockSettingsRouting      Block = "settings.routing"
+)
+
+const (
+	// MaxSettingsPerBlock caps how many secrets or config files one app may be
+	// built with. An app that needs more of either is being configured, not
+	// provisioned.
+	MaxSettingsPerBlock = 10
+	// MaxSecretValueBytes is what a secret may hold: a password, a key, a
+	// certificate - never a file somebody meant to mount.
+	MaxSecretValueBytes = 64 << 10
+	// MaxConfigFileBytes is what one config file may hold. Docker's own limit is
+	// 500KB; a configuration file a template writes is far smaller than that, and
+	// every byte here is copied into the swarm and into every task.
+	MaxConfigFileBytes = 128 << 10
 )
 
 // BuildableBlocks is every block specservice.BuildApp builds, in the order it
@@ -32,7 +48,8 @@ const (
 // bind mounts, config files, secrets, scheduled jobs, routing domains. See
 // docs/superpowers/specs/2026-09-17-app-templates-design.md §12.
 var BuildableBlocks = []Block{BlockDeploymentSource, BlockDeploymentStorage, BlockContainerHealthcheck,
-	BlockDeploymentResources, BlockSettingsKind, BlockSettingsEnvVars, BlockSettingsRouting}
+	BlockDeploymentResources, BlockSettingsKind, BlockSettingsEnvVars, BlockSettingsSecrets,
+	BlockSettingsConfigFiles, BlockSettingsRouting}
 
 // CheckBuildable refuses any part of doc that phase 1 cannot build.
 //
@@ -85,6 +102,21 @@ func PresentBlocks(doc *AppDoc) []Block {
 			blocks = append(blocks, pair.block)
 		}
 	}
+	// A collection block with no entries builds nothing, so it is not present.
+	for _, pair := range []struct {
+		typ   base.SettingType
+		block Block
+	}{
+		{base.SettingTypeSecret, BlockSettingsSecrets},
+		{base.SettingTypeConfigFile, BlockSettingsConfigFiles},
+	} {
+		if entries, ok := doc.Settings[CollectionBlockName(pair.typ)].(map[string]any); ok && len(entries) > 0 {
+			blocks = append(blocks, pair.block)
+		}
+	}
+	slices.SortFunc(blocks, func(a, b Block) int {
+		return slices.Index(BuildableBlocks, a) - slices.Index(BuildableBlocks, b)
+	})
 	return blocks
 }
 
@@ -183,9 +215,20 @@ func checkSettings(settings map[string]any) error {
 	envVars := SingletonBlockName(base.SettingTypeEnvVar)
 	routing := SingletonBlockName(base.SettingTypeAppRouting)
 
+	secrets := CollectionBlockName(base.SettingTypeSecret)
+	configFiles := CollectionBlockName(base.SettingTypeConfigFile)
+
 	for _, key := range slices.Sorted(maps.Keys(settings)) {
 		switch key {
 		case kind, envVars:
+		case secrets:
+			if err := checkSecrets(settings[key]); err != nil {
+				return err
+			}
+		case configFiles:
+			if err := checkConfigFiles(settings[key]); err != nil {
+				return err
+			}
 		case routing:
 			body, ok := settings[key].(map[string]any)
 			if !ok {
@@ -227,4 +270,119 @@ func onlyFields(prefix string, value any, allowed ...string) error {
 
 func unsupported(path string) error {
 	return hperrors.Wrap(hperrors.ErrSpecBlockUnsupported).WithExtraDetail("%s", path)
+}
+
+// checkSecrets and checkConfigFiles read the two collection blocks a template
+// may write. Both are keyed maps, the key being the setting's name, and both
+// refuse the swarm ids: those name docker objects that exist only once the app
+// does, and a template that set them would point at somebody else's.
+func checkSecrets(body any) error {
+	entries, err := collectionEntries(BlockSettingsSecrets, body)
+	if err != nil {
+		return err
+	}
+	for _, name := range slices.Sorted(maps.Keys(entries)) {
+		path := string(BlockSettingsSecrets) + "." + name
+		entry, ok := entries[name].(map[string]any)
+		if !ok {
+			return unsupported(path)
+		}
+		for _, field := range slices.Sorted(maps.Keys(entry)) {
+			switch field {
+			case "key", "base64":
+			case "value":
+				if text, isText := entry[field].(string); isText && len(text) > MaxSecretValueBytes {
+					return tooLarge(path+".value", len(text), MaxSecretValueBytes)
+				}
+			case "swarmRef":
+				if err := checkSwarmRef(path+".swarmRef", entry[field]); err != nil {
+					return err
+				}
+			default:
+				return unsupported(path + "." + field)
+			}
+		}
+	}
+	return nil
+}
+
+func checkConfigFiles(body any) error {
+	entries, err := collectionEntries(BlockSettingsConfigFiles, body)
+	if err != nil {
+		return err
+	}
+	for _, name := range slices.Sorted(maps.Keys(entries)) {
+		path := string(BlockSettingsConfigFiles) + "." + name
+		entry, ok := entries[name].(map[string]any)
+		if !ok {
+			return unsupported(path)
+		}
+		for _, field := range slices.Sorted(maps.Keys(entry)) {
+			switch field {
+			case "name", "base64":
+			case "content":
+				if text, isText := entry[field].(string); isText && len(text) > MaxConfigFileBytes {
+					return tooLarge(path+".content", len(text), MaxConfigFileBytes)
+				}
+			case "swarmRef":
+				if err := checkSwarmRef(path+".swarmRef", entry[field]); err != nil {
+					return err
+				}
+			default:
+				return unsupported(path + "." + field)
+			}
+		}
+	}
+	return nil
+}
+
+func collectionEntries(block Block, body any) (map[string]any, error) {
+	entries, ok := body.(map[string]any)
+	if !ok {
+		return nil, unsupported(string(block))
+	}
+	if len(entries) > MaxSettingsPerBlock {
+		return nil, hperrors.Wrap(hperrors.ErrSpecBlockUnsupported).WithExtraDetail(
+			"%s: at most %d, and this has %d", block, MaxSettingsPerBlock, len(entries))
+	}
+	return entries, nil
+}
+
+// checkSwarmRef allows the file a secret or config is mounted as, and nothing
+// else - which is what refuses the swarm ids, since they are fields of the ref
+// rather than of the file. The path has to be absolute: docker reads a relative one against the
+// container's working directory, which the image chooses and a template does not.
+func checkSwarmRef(path string, body any) error {
+	ref, ok := body.(map[string]any)
+	if !ok {
+		return unsupported(path)
+	}
+	for _, field := range slices.Sorted(maps.Keys(ref)) {
+		if field != "file" {
+			return unsupported(path + "." + field)
+		}
+	}
+	file, ok := ref["file"].(map[string]any)
+	if !ok {
+		return unsupported(path + ".file")
+	}
+	for _, field := range slices.Sorted(maps.Keys(file)) {
+		switch field {
+		case "uid", "gid", "mode":
+		case "name":
+			target, _ := file[field].(string)
+			if !strings.HasPrefix(target, "/") {
+				return hperrors.Wrap(hperrors.ErrSpecBlockUnsupported).WithExtraDetail(
+					"%s.file.name %q must be an absolute path", path, target)
+			}
+		default:
+			return unsupported(path + ".file." + field)
+		}
+	}
+	return nil
+}
+
+func tooLarge(path string, size, limit int) error {
+	return hperrors.Wrap(hperrors.ErrSpecBlockUnsupported).WithExtraDetail(
+		"%s is %d bytes, and at most %d is allowed", path, size, limit)
 }

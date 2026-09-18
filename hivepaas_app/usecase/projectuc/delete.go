@@ -44,13 +44,14 @@ func (uc *UC) DeleteProject(
 				Set("ownerId", project.OwnerID).
 				Set("status", project.Status).
 				Set("envCount", len(project.ProjectEnvs)).
-				Set("appCount", appCount))
+				Set("appCount", appCount).
+				Set("removeStorage", req.RemoveStorage))
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 
 		// Remove project and its envs/apps in infra
-		err = uc.projectService.DeleteProject(ctx, db, project)
+		err = uc.projectService.DeleteProject(ctx, db, project, req.RemoveStorage)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

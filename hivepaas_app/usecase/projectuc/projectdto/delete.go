@@ -8,7 +8,8 @@ import (
 )
 
 type DeleteProjectReq struct {
-	ProjectID string `json:"-"`
+	ProjectID     string `json:"-"`
+	RemoveStorage bool   `json:"-" mapstructure:"removeStorage"`
 }
 
 func NewDeleteProjectReq() *DeleteProjectReq {

@@ -114,7 +114,9 @@ func (uc *UC) deleteAppPreview(
 	}
 
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
-		if err = uc.appService.DeleteApp(ctx, db, app); err != nil {
+		// A preview app goes when its pull request does, and so does what it wrote:
+		// nothing else will ever look at it.
+		if err = uc.appService.DeleteApp(ctx, db, app, true); err != nil {
 			return hperrors.Wrap(err)
 		}
 		return nil

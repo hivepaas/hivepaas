@@ -8,8 +8,9 @@ import (
 )
 
 type DeleteProjectEnvReq struct {
-	ProjectID    string `json:"-"`
-	ProjectEnvID string `json:"-"`
+	ProjectID     string `json:"-"`
+	ProjectEnvID  string `json:"-"`
+	RemoveStorage bool   `json:"-" mapstructure:"removeStorage"`
 }
 
 func NewDeleteProjectEnvReq() *DeleteProjectEnvReq {

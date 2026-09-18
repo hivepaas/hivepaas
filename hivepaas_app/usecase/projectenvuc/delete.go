@@ -38,13 +38,14 @@ func (uc *UC) DeleteProjectEnv(
 			base.AuditLogTypeProjectEnvDelete, base.AuditLogSourceAPIDelete, "env-delete",
 			auditdetail.New().
 				Set("status", projectEnv.Status).
-				Set("appCount", len(projectEnv.Apps)))
+				Set("appCount", len(projectEnv.Apps)).
+				Set("removeStorage", req.RemoveStorage))
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 
 		// Remove project env and its apps in infra
-		err = uc.projectService.DeleteProjectEnv(ctx, db, projectEnv)
+		err = uc.projectService.DeleteProjectEnv(ctx, db, projectEnv, req.RemoveStorage)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

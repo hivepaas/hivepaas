@@ -8,9 +8,10 @@ import (
 )
 
 type DeleteAppReq struct {
-	ProjectID    string `json:"-"`
-	ProjectEnvID string `json:"-"`
-	AppID        string `json:"-"`
+	ProjectID     string `json:"-"`
+	ProjectEnvID  string `json:"-"`
+	AppID         string `json:"-"`
+	RemoveStorage bool   `json:"-" mapstructure:"removeStorage"`
 }
 
 func NewDeleteAppReq() *DeleteAppReq {

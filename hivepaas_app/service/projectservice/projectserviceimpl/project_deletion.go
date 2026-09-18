@@ -13,7 +13,8 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
-func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *entity.Project) error {
+func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *entity.Project,
+	removeStorage bool) error {
 	// Remove all envs
 	var wg sync.WaitGroup
 	for _, env := range project.ProjectEnvs {
@@ -21,7 +22,7 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 		wg.Go(func() {
 			defer safego.Recover("projectservice.deleteProjectEnv")
 			_ = s.ExecuteEnvInTx(ctx, env, true, func(db database.Tx) error {
-				if err := s.DeleteProjectEnv(ctx, db, env); err != nil {
+				if err := s.DeleteProjectEnv(ctx, db, env, removeStorage); err != nil {
 					return hperrors.Wrap(err)
 				}
 				return nil
@@ -37,10 +38,14 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 		return hperrors.Wrap(err)
 	}
 
-	// Remove all project local volumes
-	err = s.volumeService.RemoveAllProjectVolumes(ctx, db, project, false)
-	if err != nil {
-		return hperrors.Wrap(err)
+	// Remove all project local volumes, if asked. The volumes outlive the project
+	// otherwise: what is on them is the only copy of it, and a project can be
+	// removed because it was a mistake as easily as because it is finished.
+	if removeStorage {
+		err = s.volumeService.RemoveAllProjectVolumes(ctx, db, project, false)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
 	}
 
 	// Delete ref resources in DB

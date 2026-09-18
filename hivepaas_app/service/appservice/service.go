@@ -35,7 +35,10 @@ type Service interface {
 		extraAppOpts ...bunex.SelectQueryOption) ([]*entity.App, error)
 
 	PersistAppData(ctx context.Context, db database.IDB, data *PersistingAppData) error
-	DeleteApp(ctx context.Context, db database.IDB, app *entity.App) error
+	// DeleteApp removes an app, its service and everything recorded about it.
+	// removeStorage also deletes the directories it kept its data in, inside the
+	// volumes it mounted; without it those are left where they are.
+	DeleteApp(ctx context.Context, db database.IDB, app *entity.App, removeStorage bool) error
 	SetAppStatus(ctx context.Context, db database.IDB, app *entity.App, status base.AppStatus, recursive bool) error
 	SetAppRunning(ctx context.Context, app *entity.App, running bool) error
 	// RecreateServiceWithSpec deletes and recreates the app swarm service, which is the only way to

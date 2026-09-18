@@ -37,13 +37,14 @@ func (uc *UC) DeleteApp(
 				Set("projectId", app.ProjectID).
 				Set("envId", app.ProjectEnvID).
 				Set("status", app.Status).
-				Set("serviceId", app.ServiceID))
+				Set("serviceId", app.ServiceID).
+				Set("removeStorage", req.RemoveStorage))
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 
 		// Remove app and its data from the infra
-		err = uc.appService.DeleteApp(ctx, db, app)
+		err = uc.appService.DeleteApp(ctx, db, app, req.RemoveStorage)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

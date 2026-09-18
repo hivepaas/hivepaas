@@ -26,6 +26,14 @@ type Service interface {
 
 	MakeSubDirInHost(ctx context.Context, baseDirInHost string, subpath string, requireBaseDirExist bool) error
 
+	// RemoveAppStorage deletes the directories an app kept its data in, inside the
+	// volumes it had mounted. The volumes themselves stay: one volume holds a
+	// directory per app, and the other apps are still using theirs.
+	//
+	// A mount carrying no subpath is left alone. That is the whole volume, which
+	// belongs to whoever created it.
+	RemoveAppStorage(ctx context.Context, mounts []mount.Mount) error
+
 	RemoveVolume(ctx context.Context, volumeID string, force bool, retryMax int, retryDelay time.Duration) error
 
 	CreateProjectDefaultVolume(ctx context.Context, project *entity.Project) (*entity.Setting, error)

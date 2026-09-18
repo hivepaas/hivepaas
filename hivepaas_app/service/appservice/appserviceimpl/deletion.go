@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -16,7 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 )
 
-func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.App) error {
+func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.App, removeStorage bool) error {
 	// Delete all child apps and their resources
 	if !app.IsChildApp() {
 		childApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
@@ -27,7 +28,7 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 			return hperrors.Wrap(err)
 		}
 		for _, childApp := range childApps {
-			if err := s.DeleteApp(ctx, db, childApp); err != nil {
+			if err := s.DeleteApp(ctx, db, childApp, removeStorage); err != nil {
 				return hperrors.Wrap(err).WithMsgLog("failed to delete child app %s", childApp.ID)
 			}
 		}
@@ -45,27 +46,13 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 		return hperrors.Wrap(err)
 	}
 	for _, childApp := range logicalChildApps {
-		if err := s.DeleteApp(ctx, db, childApp); err != nil {
+		if err := s.DeleteApp(ctx, db, childApp, removeStorage); err != nil {
 			return hperrors.Wrap(err).WithMsgLog("failed to delete logical child app %s", childApp.ID)
 		}
 	}
 
-	if app.ServiceID != "" {
-		// Gets secrets, configs used by the app to remove later
-		secrets, configs, err := s.getDockerSecretsAndConfigs(ctx, app, nil)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-
-		// Remove service for the app in docker swarm
-		err = s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-
-		// After the service is removed, we can safely remove the configs/secrets
-		// NOTE: just ignore the returning error if there is
-		_ = s.deleteDockerSecretsAndConfigs(ctx, secrets, configs)
+	if err := s.deleteAppInDocker(ctx, app, removeStorage); err != nil {
+		return hperrors.Wrap(err)
 	}
 
 	// Delete ref resources in DB
@@ -158,6 +145,60 @@ func (s *service) getDockerSecretsAndConfigs(
 	configs := service.Spec.TaskTemplate.ContainerSpec.Configs
 
 	return secrets, configs, nil
+}
+
+// deleteAppInDocker removes everything the app has outside the database: its
+// service, the secrets and config files created for it, and - when asked - the
+// directories it kept its data in.
+//
+// What has to be read has to be read before the service goes: the secrets, the
+// configs and the mounts are all recorded on it, and afterwards nothing says
+// where they were.
+func (s *service) deleteAppInDocker(ctx context.Context, app *entity.App, removeStorage bool) error {
+	if app.ServiceID == "" {
+		return nil
+	}
+	secrets, configs, err := s.getDockerSecretsAndConfigs(ctx, app, nil)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	var mounts []mount.Mount
+	if removeStorage {
+		if mounts, err = s.getAppMounts(ctx, app); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+
+	err = s.clusterService.ServiceRemove(ctx, app.ServiceID, clusterservice.ItemRemovalRetryMax, 0)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
+	// Now that nothing is holding them open. Neither of these is fatal: what they
+	// leave behind is something to clean up by hand, and failing here instead
+	// would leave an app half deleted.
+	_ = s.deleteDockerSecretsAndConfigs(ctx, secrets, configs)
+	if removeStorage {
+		_ = s.volumeService.RemoveAppStorage(ctx, mounts)
+	}
+	return nil
+}
+
+// getAppMounts reads the volumes an app has mounted, from the service itself: it
+// is what the app actually ran with, which the settings need not still agree
+// with.
+func (s *service) getAppMounts(ctx context.Context, app *entity.App) ([]mount.Mount, error) {
+	inspect, err := s.dockerManager.ServiceInspect(ctx, app.ServiceID)
+	if err != nil {
+		if errors.Is(err, hperrors.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, hperrors.Wrap(err)
+	}
+	if inspect.Service.Spec.TaskTemplate.ContainerSpec == nil {
+		return nil, nil
+	}
+	return inspect.Service.Spec.TaskTemplate.ContainerSpec.Mounts, nil
 }
 
 func (s *service) deleteDockerSecretsAndConfigs(

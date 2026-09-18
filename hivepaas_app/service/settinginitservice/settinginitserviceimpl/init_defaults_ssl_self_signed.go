@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/reflectutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
@@ -28,11 +29,29 @@ const (
 	sslSelfSignedRenewBeforeExp = timeutil.Day * 30
 )
 
+// initDefaultSSLSelfSigned creates the certificate an app is served with until a
+// real one exists for its domain - once, and never again.
+//
+// InitDefaults is not only run at installation: GetUniqueSettingOrEmpty runs it
+// whenever a unique setting is asked for and is missing, which is what happens
+// the first time somebody opens a settings screen whose defaults were added
+// after their installation. Every other default here is created only when it is
+// absent; this one used to be inserted every time, so a system collected a
+// certificate for the same domain per visit.
 func (s *service) initDefaultSSLSelfSigned(
 	ctx context.Context,
 	db database.IDB,
 	timeNow time.Time,
 ) (err error) {
+	domain := gofn.Coalesce(config.Current().RootDomain, sslSelfSignedCN)
+	existing, err := s.selfSignedCertFor(ctx, db, domain)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if existing {
+		return nil
+	}
+
 	certDir := config.Current().DataPathSslCerts().AbsPath()
 	certFile := filepath.Join(certDir, sslSelfSignedBaseName+".crt")
 	keyFile := filepath.Join(certDir, sslSelfSignedBaseName+".key")
@@ -41,7 +60,6 @@ func (s *service) initDefaultSSLSelfSigned(
 	regenerate := !certFileExists || !keyFileExists
 
 	var certBytes, keyBytes []byte
-	domain := gofn.Coalesce(config.Current().RootDomain, sslSelfSignedCN)
 	validTo := timeNow.Add(sslSelfSignedValidPeriod)
 	if regenerate {
 		certBytes, keyBytes, err = s.sslService.GenerateCertAsPEM(&pkix.Name{CommonName: domain},
@@ -106,4 +124,22 @@ func (s *service) initDefaultSSLSelfSigned(
 	}
 
 	return nil
+}
+
+// selfSignedCertFor reports whether this installation already has the default
+// self-signed certificate for a domain. The domain is part of the question: a
+// system whose root domain changed needs one for the new name, and the old one
+// stays for whatever still answers at the old.
+func (s *service) selfSignedCertFor(ctx context.Context, db database.IDB, domain string) (bool, error) {
+	certs, _, err := s.settingRepo.List(ctx, db, entity.NewObjectScopeGlobal(), nil,
+		bunex.SelectColumns("id"),
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeSSLCert),
+		bunex.SelectWhere("setting.kind = ?", string(base.SSLCertTypeSelfSigned)),
+		bunex.SelectWhere("setting.name = ?", domain),
+		bunex.SelectWhere("setting.is_default = ?", true),
+	)
+	if err != nil {
+		return false, hperrors.Wrap(err)
+	}
+	return len(certs) > 0, nil
 }

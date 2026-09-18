@@ -70,3 +70,41 @@ func TestCopyServiceForCloneKeepsTheContent(t *testing.T) {
 	assert.NotSame(t, src.Spec.TaskTemplate.ContainerSpec, dst.Spec.TaskTemplate.ContainerSpec)
 	assert.NotSame(t, src.Spec.EndpointSpec, dst.Spec.EndpointSpec)
 }
+
+// The spec restored at the end of a clone was captured before the service
+// existed, with the environment, secrets and config files cleared - the same
+// three that applying the copy's configuration writes onto the service between
+// then and now. Writing the captured spec back whole undid all of it, so a clone
+// asked for its secrets got docker objects attached to nothing and a container
+// without the files.
+func TestFinalContainerSettingsKeepWhatWasAppliedToTheService(t *testing.T) {
+	captured := &swarm.ContainerSpec{
+		Image: "registry/src:1", Hostname: "copy",
+		Env: nil, Configs: nil, Secrets: nil,
+	}
+	live := &swarm.ContainerSpec{
+		Image: "busybox:latest",
+		Env:   []string{"DATABASE_URL=postgres://copy"},
+		Configs: []*swarm.ConfigReference{
+			{ConfigName: "copy_note.txt", File: &swarm.ConfigReferenceFileTarget{Name: "/data/note.txt"}},
+		},
+		Secrets: []*swarm.SecretReference{
+			{SecretName: "copy_license", File: &swarm.SecretReferenceFileTarget{Name: "/run/secrets/license"}},
+		},
+	}
+
+	restored := restoreContainerSpec(captured, live)
+
+	assert.Equal(t, "registry/src:1", restored.Image, "the image the clone is meant to run")
+	assert.Equal(t, "copy", restored.Hostname)
+	assert.Equal(t, live.Env, restored.Env)
+	assert.Equal(t, live.Configs, restored.Configs)
+	assert.Equal(t, live.Secrets, restored.Secrets)
+}
+
+func TestFinalContainerSettingsSurviveAServiceWithNoContainerSpec(t *testing.T) {
+	captured := &swarm.ContainerSpec{Image: "registry/src:1"}
+
+	assert.Same(t, captured, restoreContainerSpec(captured, nil))
+	assert.Nil(t, restoreContainerSpec(nil, &swarm.ContainerSpec{Env: []string{"A=b"}}))
+}

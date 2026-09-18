@@ -100,42 +100,60 @@ func (s *service) onCloneVolumesDefault(
 		}
 	}
 
-	// Clone volume data
 	for _, mounts := range mountsToCopyData {
-		destMount, srcMount := mounts[0], mounts[1]
-		if data.LogStore != nil {
-			srcPath := srcMount.Source
-			if srcMount.VolumeOptions != nil && srcMount.VolumeOptions.Subpath != "" {
-				srcPath = filepath.Join(srcPath, srcMount.VolumeOptions.Subpath)
-			}
-			dstPath := destMount.Source
-			if destMount.VolumeOptions != nil && destMount.VolumeOptions.Subpath != "" {
-				dstPath = filepath.Join(dstPath, destMount.VolumeOptions.Subpath)
-			}
-			_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
-				fmt.Sprintf("Cloning volume data from '%s' to '%s'...", srcPath, dstPath),
-				tasklog.TsNow,
-			))
-		}
-
-		rsyncOpts := []volumeservice.RsyncOption{
-			volumeservice.WithRsyncLogStore(data.LogStore),
-			volumeservice.WithRsyncDelete(true),
-		}
-		if srcMount.VolumeOptions != nil && srcMount.VolumeOptions.Subpath != "" {
-			rsyncOpts = append(rsyncOpts, volumeservice.WithSourceSubpath(srcMount.VolumeOptions.Subpath))
-		}
-		if destMount.VolumeOptions != nil && destMount.VolumeOptions.Subpath != "" {
-			rsyncOpts = append(rsyncOpts, volumeservice.WithDestSubpath(destMount.VolumeOptions.Subpath))
-		}
-
-		err = s.volumeService.Rsync(ctx, srcMount, destMount, rsyncOpts...)
-		if err != nil {
+		if err = s.cloneVolumeData(ctx, mounts[1], mounts[0], data); err != nil {
 			return nil, hperrors.Wrap(err)
 		}
 	}
 
 	return destMounts, nil
+}
+
+// cloneVolumeData copies what one of the source app's mounts holds into the
+// mount the copy was given for it.
+func (s *service) cloneVolumeData(
+	ctx context.Context,
+	srcMount, destMount *mount.Mount,
+	data *appCloneData,
+) error {
+	if data.LogStore != nil {
+		_ = data.LogStore.Add(ctx, tasklog.NewOutFrame(
+			fmt.Sprintf("Cloning volume data from '%s' to '%s'...",
+				mountPath(srcMount), mountPath(destMount)),
+			tasklog.TsNow,
+		))
+	}
+
+	// The destination subpath is a directory named after the copy, inside a
+	// volume that has only ever held the source's. Nothing has created it yet,
+	// and rsync into a path that is not there fails before it starts.
+	if destMount.VolumeOptions != nil && destMount.VolumeOptions.Subpath != "" {
+		err := s.volumeService.EnsureVolumePermissions(ctx, destMount, destMount.VolumeOptions.Subpath)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+
+	rsyncOpts := []volumeservice.RsyncOption{
+		volumeservice.WithRsyncLogStore(data.LogStore),
+		volumeservice.WithRsyncDelete(true),
+	}
+	if srcMount.VolumeOptions != nil && srcMount.VolumeOptions.Subpath != "" {
+		rsyncOpts = append(rsyncOpts, volumeservice.WithSourceSubpath(srcMount.VolumeOptions.Subpath))
+	}
+	if destMount.VolumeOptions != nil && destMount.VolumeOptions.Subpath != "" {
+		rsyncOpts = append(rsyncOpts, volumeservice.WithDestSubpath(destMount.VolumeOptions.Subpath))
+	}
+
+	return hperrors.Wrap(s.volumeService.Rsync(ctx, srcMount, destMount, rsyncOpts...))
+}
+
+// mountPath is where a mount reads, for saying so in the task log.
+func mountPath(m *mount.Mount) string {
+	if m.VolumeOptions != nil && m.VolumeOptions.Subpath != "" {
+		return filepath.Join(m.Source, m.VolumeOptions.Subpath)
+	}
+	return m.Source
 }
 
 func (s *service) stopSrcAppBeforeCloningVolumes(
@@ -211,6 +229,13 @@ func (s *service) calcVolumeMountSubpath(
 	}
 	if destMount.VolumeOptions == nil {
 		destMount.VolumeOptions = &mount.VolumeOptions{}
+	} else {
+		// The caller made destMount by copying srcMount, and a mount's options
+		// are behind a pointer: this one is still the source app's own. Writing
+		// the copy's subpath into it moves the source app's data directory to a
+		// path named after the copy - and leaves nothing for the next clone to
+		// rename, so that one silently gets no volume at all.
+		destMount.VolumeOptions = new(*destMount.VolumeOptions)
 	}
 	destApp, srcApp := data.DestApp, data.SrcApp
 	subpath := srcMount.VolumeOptions.Subpath

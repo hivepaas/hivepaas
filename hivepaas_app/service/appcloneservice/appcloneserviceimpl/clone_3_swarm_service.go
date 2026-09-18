@@ -218,7 +218,8 @@ func (s *service) applyFinalContainerSettings(
 	// Restore service mode
 	updatingSpec.Mode = data.DestService.Spec.Mode
 	// Restore container spec
-	updatingSpec.TaskTemplate.ContainerSpec = data.DestService.Spec.TaskTemplate.ContainerSpec
+	updatingSpec.TaskTemplate.ContainerSpec = restoreContainerSpec(
+		data.DestService.Spec.TaskTemplate.ContainerSpec, updatingSpec.TaskTemplate.ContainerSpec)
 
 	_, err = s.dockerManager.ServiceUpdate(ctx, destService.ID, &destService.Version, updatingSpec)
 	if err != nil {
@@ -226,6 +227,24 @@ func (s *service) applyFinalContainerSettings(
 	}
 
 	return nil
+}
+
+// restoreContainerSpec puts back the container spec a clone is meant to run,
+// keeping what was applied to the service in the meantime.
+//
+// The captured spec is from before the service existed, and has the environment,
+// the secrets and the config files deliberately cleared - the same three that
+// applying the copy's configuration writes onto the service. Putting the capture
+// back whole undid all of it: a clone asked for its secrets ended up with docker
+// objects attached to nothing and a container without the files.
+func restoreContainerSpec(captured, live *swarm.ContainerSpec) *swarm.ContainerSpec {
+	if captured == nil || live == nil {
+		return captured
+	}
+	captured.Env = live.Env
+	captured.Configs = live.Configs
+	captured.Secrets = live.Secrets
+	return captured
 }
 
 // copyServiceForClone copies a service deeply enough that changing the copy

@@ -180,6 +180,18 @@ func (s *service) execDirectHostRsync(
 	return nil
 }
 
+// mountWholeVolume copies a mount with any subpath dropped, so that mounting it
+// gives the volume itself. The copy is what keeps clearing the subpath from
+// reaching the mount the caller passed in, which belongs to a running app.
+func mountWholeVolume(mnt *mount.Mount) mount.Mount {
+	out := *mnt
+	if out.VolumeOptions != nil && out.VolumeOptions.Subpath != "" {
+		out.VolumeOptions = new(*out.VolumeOptions)
+		out.VolumeOptions.Subpath = ""
+	}
+	return out
+}
+
 // execContainerRsync executes rsync via a temporary helper Swarm Task using hivepaas_agent image (Fallback-Path)
 func (s *service) execContainerRsync(
 	ctx context.Context,
@@ -190,11 +202,17 @@ func (s *service) execContainerRsync(
 	image := gofn.Coalesce(s.hpAppService.GetHpAgentImage(ctx), opts.Image)
 
 	// 1. Prepare mount specs for temporary helper container
-	srcMnt := *source
+	//
+	// The helper sees each volume whole, and the command below reaches into the
+	// subpath itself - which is the same contract the direct host path follows,
+	// and what makes mkdir -p of a destination that does not exist yet possible.
+	// Leaving the subpath on the mount would apply it twice: docker would mount
+	// inside it, and the command would look for it again in there.
+	srcMnt := mountWholeVolume(source)
 	srcMnt.Target = "/from"
 	srcMnt.ReadOnly = true
 
-	destMnt := *dest
+	destMnt := mountWholeVolume(dest)
 	destMnt.Target = "/to"
 	destMnt.ReadOnly = false
 

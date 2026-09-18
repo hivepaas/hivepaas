@@ -144,8 +144,27 @@ func (s *service) loadAppCloneData(
 			return hperrors.Wrap(err)
 		}
 		data.SrcApp = app
+
+		// The settings this task was scheduled for. They are what the app is
+		// loaded with above, and nothing else reads them.
+		//
+		// Missing is an error rather than a clone of nothing: a task exists
+		// because somebody saved these settings and asked for them to run, and
+		// the name the request validated as available comes from them. Without
+		// them the clone would quietly be a different app than the one asked for.
+		if data.CloneSettings == nil {
+			cloneSetting := app.GetSettingByType(base.SettingTypeAppClone)
+			if cloneSetting == nil {
+				return hperrors.NewNotFound("App clone settings")
+			}
+			if data.CloneSettings, err = cloneSetting.AsAppCloneSettings(); err != nil {
+				return hperrors.Wrap(err)
+			}
+		}
 	}
 
+	// A caller that brought its own source app decides for itself what to clone;
+	// creating a preview app is the one that does.
 	if data.CloneSettings == nil {
 		data.CloneSettings = &entity.AppCloneSettings{}
 	}

@@ -37,6 +37,9 @@ type ResLinkRepo interface {
 	// which reaches only links the object is itself the source of.
 	DeleteAllByScope(ctx context.Context, db database.IDB, scope base.ObjectScopeType, objectIDs []string,
 		opts ...bunex.DeleteQueryOption) error
+	// DeleteAll deletes the links matching the options, which is how a caller
+	// deletes by something other than a source: the table has no id of its own.
+	DeleteAll(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 	DeleteHard(ctx context.Context, db database.IDB, opts ...bunex.DeleteQueryOption) error
 }
 
@@ -224,6 +227,20 @@ func scopeSourceType(scope base.ObjectScopeType) base.ResourceType {
 	default:
 		return ""
 	}
+}
+
+func (repo *resLinkRepo) DeleteAll(ctx context.Context, db database.IDB,
+	opts ...bunex.DeleteQueryOption) error {
+	if len(opts) == 0 {
+		return hperrors.NewArgumentInvalid("opts").WithMsgLog("DeleteAll requires at least one condition")
+	}
+	query := bunex.ApplyDelete(db.NewDelete().Model((*entity.ResLink)(nil)), opts...)
+
+	_, err := query.Exec(ctx)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	return nil
 }
 
 func (repo *resLinkRepo) DeleteHard(ctx context.Context, db database.IDB,

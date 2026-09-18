@@ -49,15 +49,23 @@ func (s *service) VerifyDomainsAvailable(
 	if len(domains) == 0 {
 		return nil
 	}
+	// A domain is held by the setting that records it, never by the app itself,
+	// so both of these ask about the setting behind the link. One that is gone
+	// holds nothing: a link outliving its setting would otherwise make a domain
+	// unusable by anything, with no way to see why.
 	listOpts := []bunex.SelectQueryOption{
 		bunex.SelectWhere("res_link.dst_type = ?", base.ResourceTypeDomain),
 		bunex.SelectWhereIn("res_link.dst_id IN (?)", domains...),
+		bunex.SelectWhere("EXISTS (SELECT 1 FROM settings" +
+			" WHERE settings.id = res_link.src_id AND settings.deleted_at IS NULL)"),
 		bunex.SelectLimit(1),
 	}
 	if len(ignoreAppIDs) > 0 {
 		listOpts = append(listOpts,
-			bunex.SelectWhere("res_link.src_type = ?", base.ResourceTypeApp),
-			bunex.SelectWhereNotIn("res_link.src_id NOT IN (?)", ignoreAppIDs...),
+			bunex.SelectWhere("NOT EXISTS (SELECT 1 FROM settings"+
+				" WHERE settings.id = res_link.src_id AND settings.scope = ?"+
+				" AND settings.object_id IN (?))",
+				base.ObjectScopeApp, bunex.List(ignoreAppIDs)),
 		)
 	}
 	conflictDomains, _, err := s.resLinkRepo.List(ctx, db, nil, listOpts...)

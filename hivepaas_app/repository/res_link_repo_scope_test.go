@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,6 +9,9 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 )
 
 // renderDeleteByScope builds the SQL DeleteAllByScope runs, without a database.
@@ -74,4 +78,36 @@ func TestDeleteAllByScopeWritesNoObjectBranchForGlobalSettings(t *testing.T) {
 
 	assert.Contains(t, sql, `res_link.src_type = 'setting'`)
 	assert.NotContains(t, sql, " OR ")
+}
+
+// renderDeleteAll builds the SQL DeleteAll runs, without a database.
+func renderDeleteAll(opts ...bunex.DeleteQueryOption) string {
+	db := bun.NewDB(nil, pgdialect.New())
+	return bunex.ApplyDelete(db.NewDelete().Model((*entity.ResLink)(nil)), opts...).String()
+}
+
+// The orphan cleanup deletes links whose setting is gone. Its condition lives in
+// the cleanup service; what this holds is that DeleteAll carries it through as a
+// soft delete rather than a hard one.
+func TestDeleteAllSoftDeletesWhatTheConditionsMatch(t *testing.T) {
+	sql := renderDeleteAll(
+		bunex.DeleteWhere("res_link.src_type = ?", base.ResourceTypeSetting),
+		bunex.DeleteWhere("NOT EXISTS (SELECT 1 FROM settings"+
+			" WHERE settings.id = res_link.src_id AND settings.deleted_at IS NULL)"),
+	)
+
+	assert.Contains(t, sql, `UPDATE "res_links"`)
+	assert.Contains(t, sql, `SET "deleted_at"`)
+	assert.Contains(t, sql, `res_link.src_type = 'setting'`)
+	assert.Contains(t, sql, `NOT EXISTS (SELECT 1 FROM settings`)
+	assert.Contains(t, sql, `AND "res_link"."deleted_at" IS NULL`)
+}
+
+// Deleting every link is never what a caller means, so it takes a condition.
+func TestDeleteAllRefusesToRunWithoutACondition(t *testing.T) {
+	repo := &resLinkRepo{}
+
+	err := repo.DeleteAll(context.Background(), nil)
+
+	assert.ErrorIs(t, err, hperrors.ErrArgumentInvalid)
 }

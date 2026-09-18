@@ -117,6 +117,12 @@ func (s *service) sysCleanupDB(
 		err = errors.Join(err, e)
 	}
 
+	// Soft delete all orphaned resource links whose setting is gone
+	e = s.sysCleanupDBDeleteOrphanedResLinks(ctx, db)
+	if e != nil {
+		err = errors.Join(err, e)
+	}
+
 	// Hard delete all old deleted objects from the DB
 	e = s.sysCleanupDBOldDeletedObjects(ctx, db, retentionSetting, timeNow)
 	if e != nil {
@@ -193,6 +199,24 @@ func (s *service) sysCleanupDBDeleteOrphanedTasksAndDeployments(
 	}
 
 	return hperrors.Wrap(err)
+}
+
+// sysCleanupDBDeleteOrphanedResLinks deletes the links whose setting is gone.
+//
+// A link is written by a setting and says what that setting refers to: the
+// domains and ports an app answers at, the certificate it is served with.
+// Deleting the setting's owner deletes them with it, but installations that ran
+// before that was true still hold links to nothing - and a domain recorded as
+// taken by a link nobody owns cannot be used by anything, ever.
+func (s *service) sysCleanupDBDeleteOrphanedResLinks(
+	ctx context.Context,
+	db database.IDB,
+) error {
+	return hperrors.Wrap(s.resLinkRepo.DeleteAll(ctx, db,
+		bunex.DeleteWhere("res_link.src_type = ?", base.ResourceTypeSetting),
+		bunex.DeleteWhere("NOT EXISTS (SELECT 1 FROM settings"+
+			" WHERE settings.id = res_link.src_id AND settings.deleted_at IS NULL)"),
+	))
 }
 
 func (s *service) sysCleanupDBOldDeletedObjects(

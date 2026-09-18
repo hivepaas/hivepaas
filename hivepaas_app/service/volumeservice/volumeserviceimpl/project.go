@@ -139,25 +139,20 @@ func (s *service) RemoveAllProjectVolumes(
 	project *entity.Project,
 	force bool,
 ) error {
-	settings, volumes, err := s.ListProjectVolumes(ctx, db, project)
+	settings, _, err := s.ListProjectVolumes(ctx, db, project)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 
+	// Every volume is removed on the node that holds it. A failure does not stop
+	// the others - they are removed and then every error is reported together,
+	// rather than the first one deciding which volumes were even attempted.
 	for _, setting := range settings {
 		if setting.ObjectID != project.ID { // imported/inherited volume, skip it
 			continue
 		}
-		vol := volumes[setting.RefID]
-		if vol == nil {
-			continue
-		}
-
-		// TODO: if the vol is a local and uses a custom directory, we may need to
-		// remove the directory manually.
-
-		_, e := s.dockerManager.VolumeRemove(ctx, dockerhelper.GetVolumeID(vol), force)
-		if e != nil && !errors.Is(e, hperrors.ErrNotFound) {
+		// The data goes too: this is only reached when the deletion asked for it.
+		if e := s.RemoveVolumeInCluster(ctx, setting, true, force, 0, 0); e != nil {
 			err = errors.Join(err, e)
 		}
 	}

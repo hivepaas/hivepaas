@@ -36,28 +36,24 @@ func (s *service) DeleteProjectEnv(ctx context.Context, db database.IDB, project
 	}
 	wg.Wait()
 
-	// Remove all project env local networks
-	err := s.networkService.RemoveAllProjectEnvNetworks(ctx, db, projectEnv)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
+	// Remove all project env local networks.
+	// Neither of these is fatal: what they leave behind is something to clean up by hand,
+	// and failing here instead would leave an app half deleted.
+	_ = s.networkService.RemoveAllProjectEnvNetworks(ctx, db, projectEnv)
 
 	// Remove all project env local volumes, if asked. The volumes outlive the
 	// environment otherwise: what is on them is the only copy of it, and an
 	// environment can be removed because it was a mistake as easily as because it
 	// is finished.
 	if removeStorage {
-		err = s.volumeService.RemoveAllProjectEnvVolumes(ctx, db, projectEnv, false)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
+		_ = s.volumeService.RemoveAllProjectEnvVolumes(ctx, db, projectEnv, false)
 	}
 
 	// Delete ref resources in DB
 	projectEnvIDs := []string{projectEnv.ID}
 
 	// ACL permissions related to the project env
-	err = s.permissionManager.DeleteACLPermissionsByObjects(ctx, db, projectEnvIDs)
+	err := s.permissionManager.DeleteACLPermissionsByObjects(ctx, db, projectEnvIDs)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

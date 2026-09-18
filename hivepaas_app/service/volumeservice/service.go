@@ -41,6 +41,20 @@ type Service interface {
 
 	RemoveVolume(ctx context.Context, volumeID string, force bool, retryMax int, retryDelay time.Duration) error
 
+	// RemoveVolumeInCluster removes a volume on the node its data is on.
+	//
+	// A volume HivePaaS creates lives on the node its pin names and nowhere else,
+	// so a removal issued against the manager's daemon usually finds nothing and
+	// reports success while the volume stays where it is. This one goes to the
+	// right node, through its agent.
+	//
+	// removeData asks for the data to go as well. It only means anything for a
+	// volume made of a host directory, which keeps every byte when the volume
+	// itself is removed; for any other volume docker's removal is the data's
+	// removal and there is nothing left to ask for.
+	RemoveVolumeInCluster(ctx context.Context, setting *entity.Setting, removeData bool,
+		force bool, retryMax int, retryDelay time.Duration) error
+
 	CreateProjectDefaultVolume(ctx context.Context, project *entity.Project) (*entity.Setting, error)
 	ListProjectVolumes(ctx context.Context, db database.IDB, project *entity.Project,
 		extraOpts ...bunex.SelectQueryOption) ([]*entity.Setting, map[string]*volume.Volume, error)

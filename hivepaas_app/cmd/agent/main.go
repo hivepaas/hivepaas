@@ -27,6 +27,7 @@ func main() {
 				agentproto.RegisterNodeCleanupServiceServer(s, agentSrv)
 				agentproto.RegisterImageBuildServiceServer(s, agentSrv)
 				agentproto.RegisterNodeServiceServer(s, agentSrv)
+				agentproto.RegisterVolumeServiceServer(s, agentSrv)
 			}
 		})
 	provides = append(provides, registry.Provides...)

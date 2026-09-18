@@ -32,27 +32,23 @@ func (s *service) DeleteProject(ctx context.Context, db database.IDB, project *e
 	}
 	wg.Wait()
 
-	// Remove all project local networks
-	err := s.networkService.RemoveAllProjectNetworks(ctx, db, project)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
+	// Remove all project local networks.
+	// Neither of these is fatal: what they leave behind is something to clean up by hand,
+	// and failing here instead would leave an app half deleted.
+	_ = s.networkService.RemoveAllProjectNetworks(ctx, db, project)
 
 	// Remove all project local volumes, if asked. The volumes outlive the project
 	// otherwise: what is on them is the only copy of it, and a project can be
 	// removed because it was a mistake as easily as because it is finished.
 	if removeStorage {
-		err = s.volumeService.RemoveAllProjectVolumes(ctx, db, project, false)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
+		_ = s.volumeService.RemoveAllProjectVolumes(ctx, db, project, false)
 	}
 
 	// Delete ref resources in DB
 	projectIDs := []string{project.ID}
 
 	// ACL permissions related to the project
-	err = s.permissionManager.DeleteACLPermissionsByObjects(ctx, db, projectIDs)
+	err := s.permissionManager.DeleteACLPermissionsByObjects(ctx, db, projectIDs)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

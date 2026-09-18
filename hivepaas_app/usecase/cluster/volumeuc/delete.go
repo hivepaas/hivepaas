@@ -32,7 +32,11 @@ func (uc *UC) DeleteVolume(
 				// treats an already-missing volume as success, which is the
 				// common case now that volumes materialize lazily on whichever
 				// node runs the task rather than here.
-				err := uc.volumeService.RemoveVolume(ctx, data.Setting.RefID, true,
+				// The volume goes on whichever node holds it. What it was made
+				// of stays: a volume made of a host directory keeps its data
+				// when it is removed, and nothing here asked for that data to
+				// be deleted.
+				err := uc.volumeService.RemoveVolumeInCluster(ctx, data.Setting, false, true,
 					volumeservice.VolumeRemovalRetryMax, 0)
 				if err != nil {
 					return hperrors.Wrap(err)

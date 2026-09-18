@@ -6,6 +6,7 @@ import (
 	"github.com/moby/moby/api/types/mount"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -14,12 +15,14 @@ import (
 func New(
 	dockerManager docker.Manager,
 	hpAppService hpappservice.Service,
+	agentService agentservice.Service,
 
 	settingRepo repository.SettingRepo,
 ) volumeservice.Service {
 	svc := &service{
 		dockerManager: dockerManager,
 		hpAppService:  hpAppService,
+		agentService:  agentService,
 
 		settingRepo: settingRepo,
 	}
@@ -31,6 +34,7 @@ func New(
 type service struct {
 	dockerManager docker.Manager
 	hpAppService  hpappservice.Service
+	agentService  agentservice.Service
 
 	settingRepo repository.SettingRepo
 

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+service VolumeService {
+  rpc RemoveVolume(RemoveVolumeReq) returns (RemoveVolumeResp);
+}
+
+message RemoveVolumeReq {
+  string volume_id = 1;
+  bool force = 2;
+}
+
+message RemoveVolumeResp {}

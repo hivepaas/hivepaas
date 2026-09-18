@@ -174,10 +174,13 @@ func bindStorageTarget(mnt *mount.Mount, volumes []*entity.Setting) (storageTarg
 	if subpath == "" {
 		return storageTarget{}, false
 	}
-	return storageTarget{
-		mount:   mount.Mount{Type: mount.TypeBind, Source: device, Target: volumeHelperTarget},
-		subpath: subpath,
-	}, true
+	return storageTarget{mount: bindMountWhole(device), subpath: subpath}, true
+}
+
+// bindMountWhole is how the helper sees a host directory it has to delete
+// something inside of.
+func bindMountWhole(directory string) mount.Mount {
+	return mount.Mount{Type: mount.TypeBind, Source: directory, Target: volumeHelperTarget}
 }
 
 // subpathPattern is what a directory inside a volume is allowed to look like:

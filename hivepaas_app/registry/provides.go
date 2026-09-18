@@ -181,6 +181,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodeagentuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/nodecleanupagentuc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/volumeagentuc"
 	"github.com/hivepaas/hivepaas/services/docker"
 	imageregistry "github.com/hivepaas/hivepaas/services/registry"
 )
@@ -430,4 +431,5 @@ var Provides = []any{
 	imagebuildagentuc.New,
 	nodeagentuc.New,
 	nodecleanupagentuc.New,
+	volumeagentuc.New,
 }

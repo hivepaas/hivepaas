@@ -85,6 +85,7 @@ const (
 	ParamTypeBool   ParamType = "bool"
 	ParamTypeSelect ParamType = "select"
 	ParamTypeVolume ParamType = "volume"
+	ParamTypeDomain ParamType = "domain"
 )
 
 // AllParamTypes is closed on purpose: the dashboard generates a form field per
@@ -93,7 +94,7 @@ const (
 // TODO: app templates phase 3 - more parameter types (ssl-cert, registry-auth,
 // domain). See docs/superpowers/specs/2026-09-17-app-templates-design.md §12.
 var AllParamTypes = []ParamType{ParamTypeString, ParamTypeSecret, ParamTypeInt, ParamTypeSize,
-	ParamTypeBool, ParamTypeSelect, ParamTypeVolume}
+	ParamTypeBool, ParamTypeSelect, ParamTypeVolume, ParamTypeDomain}
 
 type Parameter struct {
 	Name        string    `yaml:"name"`

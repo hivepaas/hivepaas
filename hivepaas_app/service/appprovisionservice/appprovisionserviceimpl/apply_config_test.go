@@ -138,3 +138,65 @@ func TestApplyAppConfigurationSchedulesTheAppsJobs(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []*entity.Setting{job}, taskQueue.scheduled)
 }
+
+func routedApp(t *testing.T, domain string) *entity.App {
+	t.Helper()
+	return appWithSettings(settingWithData(t, "set-routing", &entity.AppRoutingSettings{
+		Port: 2368, ExposePublicly: true,
+		Domains: []*entity.AppDomain{{Domain: domain, Enabled: true, Protocol: base.NetworkProtocolHTTP}},
+	}))
+}
+
+func certSetting(id, domain string) *entity.Setting {
+	setting := &entity.Setting{ID: id, Type: base.SettingTypeSSLCert, Name: domain}
+	setting.MustSetData(&entity.SSLCert{Domain: domain})
+	return setting
+}
+
+// An app created with a domain has nobody to pick a certificate for it, and a
+// wildcard is usually why the domain could be handed out at all.
+func TestApplyAppConfigurationAttachesACertificateTheSystemAlreadyHas(t *testing.T) {
+	svc, fakes := newProvisionTest(t)
+	cert := certSetting("ssl-1", "*.example.com")
+	fakes.domains.certs = map[string]*entity.Setting{"blog.example.com": cert}
+	app := routedApp(t, "blog.example.com")
+
+	_, err := svc.ApplyAppConfiguration(context.Background(), nil,
+		&appprovisionservice.ApplyAppConfigurationReq{App: app})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"blog.example.com"}, fakes.domains.asked)
+	assert.Equal(t, "ssl-1", fakes.routing.req.RoutingSettings.Domains[0].SSLCert.ID)
+	assert.Same(t, cert, fakes.routing.req.RefObjects.RefSettings["ssl-1"],
+		"the certificate has to be loaded for the routing service to write its files")
+
+	// The choice is the app's from now on, so it is written back rather than
+	// re-decided on every deployment.
+	stored := &entity.Setting{Type: base.SettingTypeAppRouting,
+		Data: fakes.apps.persisted.UpsertingSettings[0].Data}
+	assert.Equal(t, "ssl-1", stored.MustAsAppRoutingSettings().Domains[0].SSLCert.ID)
+}
+
+func TestApplyAppConfigurationRoutesADomainNothingCovers(t *testing.T) {
+	svc, fakes := newProvisionTest(t)
+	app := routedApp(t, "blog.example.com")
+
+	_, err := svc.ApplyAppConfiguration(context.Background(), nil,
+		&appprovisionservice.ApplyAppConfigurationReq{App: app})
+
+	assert.NoError(t, err)
+	assert.Empty(t, fakes.routing.req.RoutingSettings.Domains[0].SSLCert.ID)
+	assert.Nil(t, fakes.apps.persisted, "nothing was chosen, so nothing is written back")
+	assert.Equal(t, 1, fakes.routing.calls, "the app is still routed")
+}
+
+func TestApplyAppConfigurationLooksForNoCertificateWithoutADomain(t *testing.T) {
+	svc, fakes := newProvisionTest(t)
+	app := appWithSettings(settingWithData(t, "set-routing", &entity.AppRoutingSettings{Port: 2368}))
+
+	_, err := svc.ApplyAppConfiguration(context.Background(), nil,
+		&appprovisionservice.ApplyAppConfigurationReq{App: app})
+
+	assert.NoError(t, err)
+	assert.Empty(t, fakes.domains.asked)
+}

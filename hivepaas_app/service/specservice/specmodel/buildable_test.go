@@ -38,7 +38,8 @@ settings:
     postgresql.conf:
       content: "max_connections = 200\n"
       swarmRef: {file: {name: /etc/postgresql/postgresql.conf, mode: 444}}
-  routing: {port: 5432}
+  routing:
+    port: 5432
 `
 
 func decodeDoc(t *testing.T, text string) *AppDoc {
@@ -98,7 +99,7 @@ func TestCheckBuildableRefusesTheRest(t *testing.T) {
 			"settings.secrets.A.swarmRef.secretId"},
 		"config swarm id": {"settings:\n  configFiles:\n    a.conf: {content: x, swarmRef: {configId: abc}}\n",
 			"settings.configFiles.a.conf.swarmRef.configId"},
-		"routing domains": {"settings:\n  routing: {port: 80, domains: []}\n", "settings.routing.domains"},
+		"routing reset": {"settings:\n  routing: {port: 80, reset: true}\n", "settings.routing.reset"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -147,4 +148,39 @@ func TestCheckBuildableRefusesOversizedOrMalformedSecretsAndConfigs(t *testing.T
 			assert.Contains(t, buildableErrorDetail(t, err), tc.path)
 		})
 	}
+}
+
+func TestCheckBuildableAcceptsRoutingDomains(t *testing.T) {
+	doc := decodeDoc(t, buildableDocYAML+`    domains:
+      - {domain: app.example.com, enabled: true, protocol: http, forceHttps: true}
+    exposePublicly: true
+`)
+	assert.NoError(t, CheckBuildable(doc))
+}
+
+func TestCheckBuildableRefusesWhatADomainMustNotCarry(t *testing.T) {
+	cases := map[string]string{
+		"a certificate chosen by hand": "    domains:\n      - {domain: app.example.com, sslCert: {id: s1}}\n",
+		"basic authentication":         "    domains:\n      - {domain: app.example.com, basicAuth: {enabled: true}}\n",
+		"a path rewrite":               "    domains:\n      - {domain: app.example.com, pathRewriteConfig: {}}\n",
+		"a redirect": "    domains:\n" +
+			"      - {domain: app.example.com, domainRedirect: other.example.com}\n",
+	}
+	for name, extra := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := CheckBuildable(decodeDoc(t, buildableDocYAML+extra))
+			assert.ErrorIs(t, err, hperrors.ErrSpecBlockUnsupported)
+		})
+	}
+}
+
+func TestCheckBuildableCapsRoutingDomains(t *testing.T) {
+	entries := "    domains:\n"
+	for i := range MaxRoutingDomains + 1 {
+		entries += fmt.Sprintf("      - {domain: app%d.example.com}\n", i)
+	}
+
+	err := CheckBuildable(decodeDoc(t, buildableDocYAML+entries))
+
+	assert.ErrorIs(t, err, hperrors.ErrSpecBlockUnsupported)
 }

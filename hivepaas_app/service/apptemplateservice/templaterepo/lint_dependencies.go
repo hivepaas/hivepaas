@@ -99,6 +99,8 @@ func lintStandIn(param *templatemodel.Parameter) any {
 		return lintVolumeID
 	case templatemodel.ParamTypeSecret:
 		return lintSecret
+	case templatemodel.ParamTypeDomain:
+		return lintDomain
 	case templatemodel.ParamTypeInt, templatemodel.ParamTypeSize:
 		if param.Min != nil {
 			return param.Min

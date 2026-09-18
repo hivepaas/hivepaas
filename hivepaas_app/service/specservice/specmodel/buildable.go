@@ -1,6 +1,7 @@
 package specmodel
 
 import (
+	"fmt"
 	"maps"
 	"reflect"
 	"slices"
@@ -32,6 +33,9 @@ const (
 	// built with. An app that needs more of either is being configured, not
 	// provisioned.
 	MaxSettingsPerBlock = 10
+	// MaxRoutingDomains is what one app may answer at. A template names the
+	// address an app is created with, not every address it will ever have.
+	MaxRoutingDomains = 5
 	// MaxSecretValueBytes is what a secret may hold: a password, a key, a
 	// certificate - never a file somebody meant to mount.
 	MaxSecretValueBytes = 64 << 10
@@ -230,17 +234,55 @@ func checkSettings(settings map[string]any) error {
 				return err
 			}
 		case routing:
-			body, ok := settings[key].(map[string]any)
-			if !ok {
-				return unsupported("settings." + key)
-			}
-			for _, field := range slices.Sorted(maps.Keys(body)) {
-				if field != "port" {
-					return unsupported("settings." + key + "." + field)
-				}
+			if err := checkRouting(settings[key]); err != nil {
+				return err
 			}
 		default:
 			return unsupported("settings." + key)
+		}
+	}
+	return nil
+}
+
+// checkRouting accepts the port an app listens on and the domains it answers at.
+//
+// A domain entry carries only what names the address: everything else an
+// AppDomain can hold - basic authentication, rate limits, path rewrites, a
+// certificate chosen by hand - points at another object, and choosing those
+// belongs in the app's routing settings rather than in a template.
+func checkRouting(body any) error {
+	routing := SingletonBlockName(base.SettingTypeAppRouting)
+	fields, ok := body.(map[string]any)
+	if !ok {
+		return unsupported("settings." + routing)
+	}
+	for _, field := range slices.Sorted(maps.Keys(fields)) {
+		switch field {
+		case "port", "exposePublicly":
+		case "domains":
+			entries, ok := fields[field].([]any)
+			if !ok {
+				return unsupported("settings." + routing + ".domains")
+			}
+			if len(entries) > MaxRoutingDomains {
+				return hperrors.Wrap(hperrors.ErrSpecBlockUnsupported).WithExtraDetail(
+					"settings.%s.domains: at most %d, and this has %d", routing, MaxRoutingDomains, len(entries))
+			}
+			for i, entry := range entries {
+				domain, ok := entry.(map[string]any)
+				if !ok {
+					return unsupported(fmt.Sprintf("settings.%s.domains[%d]", routing, i))
+				}
+				for _, name := range slices.Sorted(maps.Keys(domain)) {
+					switch name {
+					case "domain", "enabled", "protocol", "containerPort", "forceHttps":
+					default:
+						return unsupported(fmt.Sprintf("settings.%s.domains[%d].%s", routing, i, name))
+					}
+				}
+			}
+		default:
+			return unsupported("settings." + routing + "." + field)
 		}
 	}
 	return nil

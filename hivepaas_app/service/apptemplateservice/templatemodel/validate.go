@@ -200,6 +200,14 @@ func validateParameterType(prefix string, param *Parameter, p *problems) {
 			p.add("%s: a volume has no default", prefix)
 		}
 		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "min", "max", "generate", "options")
+	case ParamTypeDomain:
+		if param.Default != nil {
+			p.add("%s: a domain has no default", prefix)
+		}
+		if !param.Optional {
+			p.add("%s: a domain is optional, because an app can be created before it has one", prefix)
+		}
+		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "min", "max", "generate", "options")
 	default:
 		p.add("%s.type %q is not one of %v", prefix, param.Type, AllParamTypes)
 	}

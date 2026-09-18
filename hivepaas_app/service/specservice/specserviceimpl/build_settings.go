@@ -4,6 +4,7 @@ import (
 	"context"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -60,7 +61,41 @@ func (s *service) buildRouting(_ context.Context, state *buildState) error {
 	if routing.Port < 0 || routing.Port > maxPort {
 		return invalidBlock(block, "port %d is out of range", routing.Port)
 	}
+	if err := normalizeRoutingDomains(block, routing); err != nil {
+		return err
+	}
 	return state.addSetting(base.SettingTypeAppRouting, entity.CurrentAppRoutingSettingsVersion, true, routing)
+}
+
+// normalizeRoutingDomains drops the domains an app was created without.
+//
+// A template names its address through a parameter, and that parameter is
+// optional: somebody creating the app before pointing DNS at it leaves it empty,
+// and the placeholder resolves to nothing. Dropping the entry here is what lets
+// the template say it once, with no condition around it, and still describe both
+// cases. An app left with no domain is not exposed publicly either, because
+// there is no address for that to mean.
+func normalizeRoutingDomains(block specmodel.Block, routing *entity.AppRoutingSettings) error {
+	kept := make([]*entity.AppDomain, 0, len(routing.Domains))
+	for i, domain := range routing.Domains {
+		if domain == nil || strings.TrimSpace(domain.Domain) == "" {
+			continue
+		}
+		domain.Domain = strings.ToLower(strings.TrimSpace(domain.Domain))
+		if strings.HasPrefix(domain.Domain, "*.") {
+			return invalidBlock(block, "domains[%d]: %s is what a certificate covers, not an address"+
+				" a request arrives at", i, domain.Domain)
+		}
+		if domain.Protocol == "" {
+			domain.Protocol = base.NetworkProtocolHTTP
+		}
+		kept = append(kept, domain)
+	}
+	routing.Domains = kept
+	if len(kept) == 0 {
+		routing.ExposePublicly = false
+	}
+	return nil
 }
 
 // buildSecrets and buildConfigFiles build the two collection blocks. Each entry

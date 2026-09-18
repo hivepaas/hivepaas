@@ -14,6 +14,7 @@ import (
 const (
 	lintVolumeID = "lint-volume"
 	lintSecret   = "lint-secret-value"
+	lintDomain   = "lint.example.com"
 )
 
 // Lint checks what Load could read: each template on its own, against the
@@ -153,6 +154,10 @@ func lintRenders(repo *Repo, file *TemplateFile) []Problem {
 // lintParams fills in what defaults cannot: a volume, and a secret that has no
 // generate. Everything else renders from its default, and a required parameter
 // without one fails the render - which is the point.
+//
+// A domain is deliberately left empty. It is optional, and the render that
+// matters is the one somebody creating an app without a domain gets: the entry
+// has to disappear rather than become an address with no name.
 func lintParams(tmpl *templatemodel.Template) map[string]any {
 	params := map[string]any{}
 	for _, param := range tmpl.Parameters {
@@ -164,7 +169,7 @@ func lintParams(tmpl *templatemodel.Template) map[string]any {
 				params[param.Name] = lintSecret
 			}
 		case templatemodel.ParamTypeString, templatemodel.ParamTypeInt, templatemodel.ParamTypeSize,
-			templatemodel.ParamTypeBool, templatemodel.ParamTypeSelect:
+			templatemodel.ParamTypeBool, templatemodel.ParamTypeSelect, templatemodel.ParamTypeDomain:
 		}
 	}
 	return params

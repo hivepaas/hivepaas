@@ -3,6 +3,7 @@ package specserviceimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"maps"
 	"slices"
 	"testing"
@@ -17,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -323,4 +325,58 @@ func TestBuildAppRefusesSecretsAndConfigFilesItCannotApply(t *testing.T) {
 			assert.Contains(t, buildErrorDetail(t, err), tc.want)
 		})
 	}
+}
+
+// routingDocYAML is the routing block a web app template writes: one domain,
+// taken from a parameter that a person may leave empty.
+const routingDocYAML = `
+deployment:
+  source: {activeMethod: image, imageSource: {image: "ghost:6.64.0-alpine"}}
+settings:
+  routing:
+    port: 2368
+    exposePublicly: true
+    domains:
+      - {domain: "%s", enabled: true, forceHttps: true}
+`
+
+func buildRoutingSettings(t *testing.T, domain string) *entity.AppRoutingSettings {
+	t.Helper()
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+	resp, err := svc.BuildApp(context.Background(), nil, buildReq(t, fmt.Sprintf(routingDocYAML, domain)))
+	assert.NoError(t, err)
+	setting := settinghelper.FindSettingByType(resp.Settings, base.SettingTypeAppRouting)
+	assert.NotNil(t, setting)
+	stored := &entity.Setting{Type: base.SettingTypeAppRouting, Data: setting.Data}
+	return stored.MustAsAppRoutingSettings()
+}
+
+func TestBuildAppKeepsADomainItWasGiven(t *testing.T) {
+	routing := buildRoutingSettings(t, "blog.example.com")
+
+	assert.Equal(t, 2368, routing.Port)
+	assert.True(t, routing.ExposePublicly)
+	assert.Equal(t, []string{"blog.example.com"}, routing.GetActiveDomainNames())
+	assert.Equal(t, base.NetworkProtocolHTTP, routing.Domains[0].Protocol, "http unless the template says otherwise")
+	assert.True(t, routing.Domains[0].ForceHttps)
+}
+
+// The domain parameter is optional, and an app created without one has to come
+// out exactly as an app whose template never mentioned a domain.
+func TestBuildAppDropsADomainLeftEmpty(t *testing.T) {
+	routing := buildRoutingSettings(t, "")
+
+	assert.Equal(t, 2368, routing.Port)
+	assert.Empty(t, routing.Domains)
+	assert.False(t, routing.ExposePublicly, "there is no address for being exposed to mean")
+}
+
+func TestBuildAppRefusesAWildcardAsAnAddress(t *testing.T) {
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+
+	_, err := svc.BuildApp(context.Background(), nil,
+		buildReq(t, fmt.Sprintf(routingDocYAML, "*.example.com")))
+
+	assert.ErrorIs(t, err, hperrors.ErrSpecBlockInvalid)
+	assert.Contains(t, buildErrorDetail(t, err), "*.example.com")
 }

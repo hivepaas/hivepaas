@@ -155,6 +155,9 @@ func (s *service) applyRouting(
 	if refObjects == nil {
 		refObjects = entity.NewRefObjects()
 	}
+	if err = s.attachCerts(ctx, db, app, routingSetting, routingSettings, refObjects); err != nil {
+		return hperrors.Wrap(err)
+	}
 
 	for attempt := range routingApplyRetryMax + 1 {
 		if attempt > 0 {
@@ -176,6 +179,63 @@ func (s *service) applyRouting(
 		}
 	}
 	return hperrors.Wrap(err)
+}
+
+// attachCerts gives each domain that has no certificate of its own one the
+// system already holds for it - the certificate issued for that exact name, or a
+// wildcard covering it.
+//
+// An app created with a domain has nobody to pick a certificate for it, and a
+// wildcard is usually the reason the domain could be handed out at all. Choosing
+// it here is what makes such an app served over TLS from its first deployment
+// rather than after somebody opens its routing settings. A domain nothing covers
+// is left as it is: the app is still routed, and a certificate can be obtained
+// for it later.
+func (s *service) attachCerts(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	setting *entity.Setting,
+	routing *entity.AppRoutingSettings,
+	refObjects *entity.RefObjects,
+) error {
+	var wanted []string
+	for _, domain := range routing.GetActiveDomains() {
+		if domain.SSLCert.ID == "" {
+			wanted = append(wanted, domain.Domain)
+		}
+	}
+	if len(wanted) == 0 {
+		return nil
+	}
+
+	certs, err := s.domainService.FindCertsForDomains(ctx, db, app.GetObjectScope(), wanted)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	attached := false
+	for _, domain := range routing.GetActiveDomains() {
+		cert := certs[domain.Domain]
+		if domain.SSLCert.ID != "" || cert == nil {
+			continue
+		}
+		domain.SSLCert = entity.ObjectID{ID: cert.ID}
+		refObjects.RefSettings[cert.ID] = cert
+		attached = true
+	}
+	if !attached {
+		return nil
+	}
+
+	// The choice is written back, because it is the app's from now on: removing
+	// the certificate has to find the apps using it, and the routing screen has
+	// to show which one is serving the domain.
+	if err = setting.SetData(routing); err != nil {
+		return hperrors.Wrap(err)
+	}
+	return hperrors.Wrap(s.appService.PersistAppData(ctx, db, &appservice.PersistingAppData{
+		UpsertingSettings: []*entity.Setting{setting},
+	}))
 }
 
 // applySchedJobs queues the first run of each job the app's settings schedule.

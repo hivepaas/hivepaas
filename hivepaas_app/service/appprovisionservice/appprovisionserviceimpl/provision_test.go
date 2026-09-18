@@ -25,6 +25,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
@@ -228,6 +229,27 @@ func (f *fakeDeploymentService) CreateDeploymentAndTask(
 		&entity.Task{ID: "task-1"}, nil
 }
 
+// fakeDomainService hands back whatever certificate a test put in it, keyed by
+// the domain it covers.
+type fakeDomainService struct {
+	domainservice.Service
+	certs map[string]*entity.Setting
+	asked []string
+}
+
+func (f *fakeDomainService) FindCertsForDomains(
+	_ context.Context, _ database.IDB, _ *entity.ObjectScope, domains []string,
+) (map[string]*entity.Setting, error) {
+	f.asked = append(f.asked, domains...)
+	found := map[string]*entity.Setting{}
+	for _, domain := range domains {
+		if cert := f.certs[domain]; cert != nil {
+			found[domain] = cert
+		}
+	}
+	return found, nil
+}
+
 type provisionFakes struct {
 	docker       *fakeDockerManager
 	cluster      *fakeClusterService
@@ -236,6 +258,7 @@ type provisionFakes struct {
 	envVars      *fakeEnvVarService
 	routing      *fakeRoutingService
 	clusterFiles *fakeClusterSecretService
+	domains      *fakeDomainService
 }
 
 func newProvisionTest(t *testing.T) (*service, *provisionFakes) {
@@ -256,6 +279,7 @@ func newProvisionTest(t *testing.T) (*service, *provisionFakes) {
 		envVars:      &fakeEnvVarService{},
 		routing:      &fakeRoutingService{},
 		clusterFiles: &fakeClusterSecretService{},
+		domains:      &fakeDomainService{},
 	}
 	svc := &service{
 		dockerManager:        fakes.docker,
@@ -266,6 +290,7 @@ func newProvisionTest(t *testing.T) (*service, *provisionFakes) {
 		appService:           fakes.apps,
 		clusterSecretService: fakes.clusterFiles,
 		clusterService:       fakes.cluster,
+		domainService:        fakes.domains,
 		envVarService:        fakes.envVars,
 		networkService:       &fakeNetworkService{},
 		placementService:     fakes.placement,

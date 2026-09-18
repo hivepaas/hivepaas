@@ -106,6 +106,11 @@ func resolveParam(def *templatemodel.Parameter, raw any) (*Value, error) {
 	return &Value{Param: def, Value: value}, nil
 }
 
+// domainPattern is the host name an app can be reached at. A wildcard is not one
+// of them: it is what a certificate covers, not what a request arrives at.
+var domainPattern = regexp.MustCompile(
+	`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$`)
+
 func isBlank(v any) bool {
 	if v == nil {
 		return true
@@ -152,6 +157,16 @@ func convertParam(def *templatemodel.Parameter, raw any) (any, error) {
 		text, ok := raw.(string)
 		if !ok || strings.TrimSpace(text) == "" {
 			return nil, paramInvalid(def.Name, "must name a volume")
+		}
+		return text, nil
+	case templatemodel.ParamTypeDomain:
+		text, ok := raw.(string)
+		if !ok {
+			return nil, paramInvalid(def.Name, "must be a host name")
+		}
+		text = strings.TrimSpace(strings.ToLower(text))
+		if !domainPattern.MatchString(text) {
+			return nil, paramInvalid(def.Name, "must be a host name such as app.example.com")
 		}
 		return text, nil
 	default:

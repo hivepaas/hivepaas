@@ -2,6 +2,7 @@ package apptemplateuc
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 )
 
@@ -48,6 +50,9 @@ func (uc *UC) CreateAppFromTemplate(
 			return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).
 				WithExtraDetail("%s: the template deploys no image", target.rendered.Template.Metadata.Name)
 		}
+	}
+	if err = uc.checkDomains(ctx, req, apps); err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
 	var provisioned *appprovisionservice.ProvisionAppsResp
@@ -84,6 +89,62 @@ func (uc *UC) CreateAppFromTemplate(
 		}
 	}
 	return transformCreated(apps, provisioned.Apps), nil
+}
+
+// checkDomains refuses a request whose domains cannot be served before anything
+// is created for it.
+//
+// These are the two checks the app's routing settings run - the project allows
+// the domain, and no other app holds it - plus one this request needs and they
+// do not: two apps created together must not ask for the same address. Running
+// them here rather than while provisioning is what keeps a request that names a
+// taken domain from leaving a database app behind.
+func (uc *UC) checkDomains(
+	ctx context.Context,
+	req *apptemplatedto.CreateAppFromTemplateReq,
+	apps []*appToProvision,
+) error {
+	claimed := map[string]string{}
+	var domains []string
+	for _, target := range apps {
+		for _, domain := range renderedDomains(target) {
+			if by, taken := claimed[domain]; taken {
+				return hperrors.Wrap(hperrors.ErrDomainInUse).WithParam("Domain", domain).
+					WithExtraDetail("%s and %s are created together and ask for the same address", by, target.name)
+			}
+			claimed[domain] = target.name
+			domains = append(domains, domain)
+		}
+	}
+	if len(domains) == 0 {
+		return nil
+	}
+	if err := uc.domainService.VerifyProjectDomains(ctx, uc.db, req.ProjectID, domains); err != nil {
+		return hperrors.Wrap(err)
+	}
+	return hperrors.Wrap(uc.domainService.VerifyDomainsAvailable(ctx, uc.db, domains, nil))
+}
+
+// renderedDomains reads the addresses an app was rendered with, from the
+// document rather than from a built setting: nothing has been built yet.
+func renderedDomains(target *appToProvision) []string {
+	doc := target.rendered.Result.Doc
+	if doc == nil {
+		return nil
+	}
+	routing := &entity.AppRoutingSettings{}
+	body, ok := doc.Settings[specmodel.SingletonBlockName(base.SettingTypeAppRouting)]
+	if !ok {
+		return nil
+	}
+	encoded, err := json.Marshal(body)
+	if err != nil {
+		return nil
+	}
+	if err = json.Unmarshal(encoded, routing); err != nil {
+		return nil
+	}
+	return routing.GetActiveDomainNames()
 }
 
 // provisionAll is everything that happens inside the transaction: the apps of

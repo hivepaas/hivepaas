@@ -65,8 +65,12 @@ export function useListAppTemplatesInfinite(
         },
         initialPageParam: 0,
         getNextPageParam: (lastPage: ListAppTemplatesResponse) => {
-            const nextOffset = lastPage.meta.pageOffset + lastPage.meta.count;
-            if (nextOffset < lastPage.meta.total) {
+            const pageOffset = lastPage.meta.page?.offset ?? lastPage.meta.pageOffset ?? 0;
+            const count = lastPage.data.length;
+            const total = lastPage.meta.page?.total ?? lastPage.meta.total ?? 0;
+
+            const nextOffset = pageOffset + count;
+            if (nextOffset < total) {
                 return nextOffset;
             }
             return undefined;

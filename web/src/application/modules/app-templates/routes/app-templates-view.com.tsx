@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 
 import { ROUTE } from "@/application/shared/constants";
-import { Loader2, Search, Tag, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ArrowDownCircle, Loader2, Search, Tag, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 
 import { Button } from "@/components/ui/button";
@@ -65,20 +66,23 @@ export function AppTemplatesView() {
         return templatesData.pages.flatMap(page => page.data);
     }, [templatesData]);
 
-    const totalTemplates = templatesData?.pages[0]?.meta.total ?? 0;
+    const firstPage = templatesData?.pages[0];
+    const totalTemplates = firstPage?.meta.page?.total ?? firstPage?.meta.total ?? 0;
 
     // Cache the total count of all templates from the first unfiltered query
     const [allTemplatesTotal, setAllTemplatesTotal] = useState<number | undefined>(undefined);
 
     useEffect(() => {
+        const firstPageMeta = templatesData?.pages[0]?.meta;
+        const firstPageTotal = firstPageMeta?.page?.total ?? firstPageMeta?.total;
         if (
             !selectedCategory &&
             !submittedSearch &&
             !selectedTag &&
-            templatesData?.pages[0]?.meta.total !== undefined &&
-            templatesData.pages[0].meta.total > 0
+            firstPageTotal !== undefined &&
+            firstPageTotal > 0
         ) {
-            setAllTemplatesTotal(templatesData.pages[0].meta.total);
+            setAllTemplatesTotal(firstPageTotal);
         }
     }, [selectedCategory, submittedSearch, selectedTag, templatesData]);
 
@@ -315,33 +319,64 @@ export function AppTemplatesView() {
                                                 selectedTag={selectedTag}
                                             />
                                         ))}
-                                    </div>
 
-                                    {/* Footer / Pagination */}
-                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-border/50 text-xs text-muted-foreground">
-                                        <span>
-                                            Showing {templates.length} of {totalTemplates} templates
-                                        </span>
-
+                                        {/* Load More Card (Identical grid card dimensions and rhythm) */}
                                         {hasNextPage && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
+                                            <button
+                                                type="button"
+                                                disabled={isFetchingNextPage}
                                                 onClick={() => {
                                                     void fetchNextPage();
                                                 }}
-                                                disabled={isFetchingNextPage}
-                                                className="text-xs px-4 border-border/80 hover:bg-muted/70 min-w-[140px]"
-                                            >
-                                                {isFetchingNextPage ? (
-                                                    <>
-                                                        <Loader2 className="size-3.5 mr-2 animate-spin" />
-                                                        Loading more...
-                                                    </>
-                                                ) : (
-                                                    "Load more templates"
+                                                className={cn(
+                                                    "group relative flex flex-col items-center justify-center gap-3.5 rounded-xl border-2 border-dashed border-border/80 bg-card/40 p-6 text-center transition-all duration-200 min-h-[220px] h-full",
+                                                    "hover:border-amber-500/60 hover:bg-amber-500/5 hover:shadow-md cursor-pointer",
+                                                    "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500/40",
+                                                    isFetchingNextPage && "opacity-80 cursor-wait",
                                                 )}
-                                            </Button>
+                                            >
+                                                <div className="flex size-12 items-center justify-center rounded-full border border-border/80 bg-muted/60 text-muted-foreground group-hover:border-amber-500/40 group-hover:bg-amber-500/10 group-hover:text-amber-600 dark:group-hover:text-amber-400 group-hover:scale-105 transition-all shadow-2xs">
+                                                    {isFetchingNextPage ? (
+                                                        <Loader2 className="size-6 animate-spin text-amber-500" />
+                                                    ) : (
+                                                        <ArrowDownCircle className="size-6 text-muted-foreground group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors" />
+                                                    )}
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <span className="text-sm font-semibold text-foreground group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors block">
+                                                        {isFetchingNextPage
+                                                            ? "Loading more templates..."
+                                                            : "Load More Templates"}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground block">
+                                                        {totalTemplates > templates.length
+                                                            ? `${totalTemplates - templates.length} more available`
+                                                            : "Click to load more"}
+                                                    </span>
+                                                </div>
+
+                                                <div className="inline-flex items-center gap-1.5 rounded-md border border-border/60 bg-background/80 px-2.5 py-1 text-xs font-medium text-muted-foreground group-hover:border-amber-500/30 group-hover:text-foreground transition-all">
+                                                    <span>
+                                                        Showing {templates.length} of {totalTemplates}
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Footer Status Summary */}
+                                    <div className="flex items-center justify-between pt-4 border-t border-border/50 text-xs text-muted-foreground">
+                                        <span>
+                                            Showing {templates.length}
+                                            {totalTemplates > 0 ? ` of ${totalTemplates}` : ""} templates
+                                        </span>
+                                        {hasNextPage && (
+                                            <span className="text-amber-600 dark:text-amber-400 font-medium">
+                                                {totalTemplates > templates.length
+                                                    ? `${totalTemplates - templates.length} more templates available`
+                                                    : ""}
+                                            </span>
                                         )}
                                     </div>
                                 </>

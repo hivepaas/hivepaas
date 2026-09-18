@@ -56,11 +56,18 @@ export interface ListAppTemplatesFilter {
     pageLimit?: number;
 }
 
-export interface ListAppTemplatesMeta {
+export interface ListAppTemplatesPageMeta {
+    offset: number;
+    limit: number;
     total: number;
-    count: number;
-    pageOffset: number;
-    pageLimit: number;
+}
+
+export interface ListAppTemplatesMeta {
+    page?: ListAppTemplatesPageMeta;
+    total?: number;
+    count?: number;
+    pageOffset?: number;
+    pageLimit?: number;
 }
 
 export interface ListAppTemplatesResponse {
@@ -213,7 +220,14 @@ export class AppTemplatesApi extends BaseApi {
                 },
                 signal,
             });
-            return res.data;
+            const { data } = res;
+            if (data.meta.page) {
+                data.meta.total = data.meta.page.total;
+                data.meta.pageOffset = data.meta.page.offset;
+                data.meta.pageLimit = data.meta.page.limit;
+                data.meta.count = data.data.length;
+            }
+            return data;
         } catch (error) {
             throw parseApiError(error);
         }

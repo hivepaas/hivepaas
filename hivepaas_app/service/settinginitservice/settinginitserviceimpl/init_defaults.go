@@ -134,11 +134,5 @@ func (s *service) InitDefaultsWithTx(
 		}
 	}
 
-	// Default self-signed SSL cert
-	err = s.initDefaultSSLSelfSigned(ctx, db, timeNow)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
-
 	return nil
 }

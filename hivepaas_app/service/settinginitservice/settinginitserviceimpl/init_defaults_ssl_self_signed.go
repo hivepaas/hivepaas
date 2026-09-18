@@ -5,7 +5,6 @@ import (
 	"crypto/x509/pkix"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/tiendc/gofn"
 
@@ -29,20 +28,23 @@ const (
 	sslSelfSignedRenewBeforeExp = timeutil.Day * 30
 )
 
-// initDefaultSSLSelfSigned creates the certificate an app is served with until a
-// real one exists for its domain - once, and never again.
+// InitSelfSignedCert creates the certificate an app is served with until a real
+// one exists for its domain.
 //
-// InitDefaults is not only run at installation: GetUniqueSettingOrEmpty runs it
-// whenever a unique setting is asked for and is missing, which is what happens
-// the first time somebody opens a settings screen whose defaults were added
-// after their installation. Every other default here is created only when it is
-// absent; this one used to be inserted every time, so a system collected a
-// certificate for the same domain per visit.
-func (s *service) initDefaultSSLSelfSigned(
+// It runs while HivePaaS is being installed and at no other time. It used to be
+// one of the defaults, which are filled in whenever a unique setting is found
+// missing - GetUniqueSettingOrEmpty does that the first time somebody opens a
+// settings screen whose default did not exist yet - and a certificate was
+// created on each of those visits. An operator who deletes this certificate has
+// decided something, and nothing should undo that decision for them.
+//
+// Creating it twice for the same domain is refused as well, for an installation
+// whose steps are run again.
+func (s *service) InitSelfSignedCert(
 	ctx context.Context,
-	db database.IDB,
-	timeNow time.Time,
+	db database.Tx,
 ) (err error) {
+	timeNow := timeutil.NowUTC()
 	domain := gofn.Coalesce(config.Current().RootDomain, sslSelfSignedCN)
 	existing, err := s.selfSignedCertFor(ctx, db, domain)
 	if err != nil {

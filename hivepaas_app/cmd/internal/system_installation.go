@@ -93,6 +93,10 @@ func sysInstallationInitData(
 			return fmt.Errorf("failed to initialize default settings: %w", err)
 		}
 
+		if err = settingInitService.InitSelfSignedCert(ctx, db); err != nil {
+			return fmt.Errorf("failed to initialize the self-signed certificate: %w", err)
+		}
+
 		if postInitFunc, err = projectService.InitRootProject(ctx, db); err != nil {
 			return fmt.Errorf("failed to initialize root project: %w", err)
 		}

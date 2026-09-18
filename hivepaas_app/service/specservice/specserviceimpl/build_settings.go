@@ -67,7 +67,8 @@ func (s *service) buildRouting(_ context.Context, state *buildState) error {
 	return state.addSetting(base.SettingTypeAppRouting, entity.CurrentAppRoutingSettingsVersion, true, routing)
 }
 
-// normalizeRoutingDomains drops the domains an app was created without.
+// normalizeRoutingDomains drops the domains an app was created without, and
+// gives the ones it keeps the port they answer on.
 //
 // A template names its address through a parameter, and that parameter is
 // optional: somebody creating the app before pointing DNS at it leaves it empty,
@@ -75,6 +76,12 @@ func (s *service) buildRouting(_ context.Context, state *buildState) error {
 // the template say it once, with no condition around it, and still describe both
 // cases. An app left with no domain is not exposed publicly either, because
 // there is no address for that to mean.
+//
+// A domain carries its own container port, which a template need not repeat: it
+// is the app's port unless that domain answers on a different one. Writing it in
+// rather than leaving a zero is what keeps the rest of HivePaaS able to read the
+// setting - the routing screen refuses a port below 1, and a zero also reaches
+// the resource links as a port nobody listens on.
 func normalizeRoutingDomains(block specmodel.Block, routing *entity.AppRoutingSettings) error {
 	kept := make([]*entity.AppDomain, 0, len(routing.Domains))
 	for i, domain := range routing.Domains {
@@ -88,6 +95,9 @@ func normalizeRoutingDomains(block specmodel.Block, routing *entity.AppRoutingSe
 		}
 		if domain.Protocol == "" {
 			domain.Protocol = base.NetworkProtocolHTTP
+		}
+		if domain.ContainerPort <= 0 {
+			domain.ContainerPort = routing.Port
 		}
 		kept = append(kept, domain)
 	}

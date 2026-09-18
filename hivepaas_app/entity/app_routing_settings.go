@@ -199,10 +199,16 @@ func (s *AppRoutingSettings) GetActiveDomainNames() (res []string) {
 	return res
 }
 
+// GetActivePorts is every port this app answers on: its own, and any a domain
+// overrides it with.
+//
+// A domain that names no port of its own answers on the app's, which is already
+// in the list - and is stored as a zero, which is not a port and must not reach
+// a caller as one.
 func (s *AppRoutingSettings) GetActivePorts() []int {
 	activePorts := []int{s.Port}
 	for _, domain := range s.GetActiveDomains() {
-		if gofn.Contain(activePorts, domain.ContainerPort) {
+		if domain.ContainerPort <= 0 || gofn.Contain(activePorts, domain.ContainerPort) {
 			continue
 		}
 		activePorts = append(activePorts, domain.ContainerPort)

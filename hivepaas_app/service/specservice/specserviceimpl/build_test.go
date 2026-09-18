@@ -373,6 +373,9 @@ func TestBuildAppKeepsADomainItWasGiven(t *testing.T) {
 	assert.Equal(t, []string{"blog.example.com"}, routing.GetActiveDomainNames())
 	assert.Equal(t, base.NetworkProtocolHTTP, routing.Domains[0].Protocol, "http unless the template says otherwise")
 	assert.True(t, routing.Domains[0].ForceHttps)
+	assert.Equal(t, 2368, routing.Domains[0].ContainerPort,
+		"a domain that names no port of its own answers on the app's")
+	assert.Equal(t, []int{2368}, routing.GetActivePorts(), "and adds no second port")
 }
 
 // The domain parameter is optional, and an app created without one has to come

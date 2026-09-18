@@ -1,6 +1,7 @@
 package apptemplatedto
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -52,8 +53,10 @@ func TestTransformAppTemplateCatalog(t *testing.T) {
 	assert.Equal(t, &AppTemplateCatalogResp{
 		Source:   "official",
 		Revision: "abc",
-		Categories: []*AppTemplateCategoryResp{{ID: "databases", Title: "Databases",
-			Children: []*AppTemplateCategoryResp{{ID: "sql", Title: "SQL", Children: []*AppTemplateCategoryResp{}}}}},
+		Categories: []*AppTemplateCategoryResp{{ID: "databases", Title: "Databases", Count: 1,
+			Children: []*AppTemplateCategoryResp{
+				{ID: "sql", Title: "SQL", Count: 1, Children: []*AppTemplateCategoryResp{}},
+			}}},
 		Tags: []*AppTemplateTagResp{{ID: "sql", Title: "SQL"}},
 	}, resp, "the catalog carries no templates: those are listed a page at a time")
 }
@@ -70,7 +73,6 @@ func TestTransformAppTemplateSummaries(t *testing.T) {
 	assert.True(t, summary.Compatible)
 	assert.Equal(t, []string{"alpine"}, summary.Versions[0].Variants)
 	assert.False(t, resp[1].Compatible, "a template needing a newer HivePaaS is listed but locked")
-	assert.Equal(t, "v999999", resp[1].RequiresVersionCode)
 }
 
 func TestTransformAppTemplateNeverSendsASecretDefault(t *testing.T) {
@@ -204,4 +206,82 @@ func TestTransformAppTemplateBindingLinks(t *testing.T) {
 	assert.Equal(t, []*AppTemplateBindingDependencyResp{{Name: "db", AppID: "app-db", Template: "mysql"}},
 		resp.Dependencies)
 	assert.Equal(t, "app-web", resp.CreatedForAppID)
+}
+
+// catalogWith builds a catalog over one vocabulary and the categories each
+// template is listed in.
+func catalogWith(t *testing.T, templateCategories ...[]string) *AppTemplateCatalogResp {
+	t.Helper()
+	entries := make([]*templatemodel.IndexEntry, 0, len(templateCategories))
+	for i, categories := range templateCategories {
+		entry := testEntry("v000001")
+		entry.Name = fmt.Sprintf("tmpl-%d", i)
+		entry.Categories = categories
+		entries = append(entries, entry)
+	}
+	return TransformAppTemplateCatalog(&apptemplateservice.IndexResp{
+		Source: "official", Revision: "abc",
+		Index: &templatemodel.Index{
+			Categories: []*templatemodel.Category{
+				{ID: "webapps", Title: "Web Apps", Children: []*templatemodel.Category{
+					{ID: "cms", Title: "CMS"},
+					{ID: "ai", Title: "AI"},
+				}},
+				{ID: "databases", Title: "Databases", Children: []*templatemodel.Category{
+					{ID: "sql", Title: "SQL"},
+				}},
+			},
+			Templates: entries,
+		},
+	})
+}
+
+func categoryCounts(resp *AppTemplateCatalogResp) map[string]int {
+	counts := map[string]int{}
+	for _, parent := range resp.Categories {
+		counts[parent.ID] = parent.Count
+		for _, child := range parent.Children {
+			counts[parent.ID+"/"+child.ID] = child.Count
+		}
+	}
+	return counts
+}
+
+func TestCatalogCountsTemplatesPerCategory(t *testing.T) {
+	useBasePath(t)
+
+	resp := catalogWith(t,
+		[]string{"webapps/cms"},
+		[]string{"webapps/cms"},
+		[]string{"webapps/ai"},
+		[]string{"databases/sql"},
+	)
+
+	assert.Equal(t, map[string]int{
+		"webapps": 3, "webapps/cms": 2, "webapps/ai": 1,
+		"databases": 1, "databases/sql": 1,
+	}, categoryCounts(resp))
+}
+
+// Opening a parent shows each template once, however many of its children the
+// template is listed in, so the parent counts it once too.
+func TestCatalogCountsATemplateOnceForItsParent(t *testing.T) {
+	useBasePath(t)
+
+	resp := catalogWith(t, []string{"webapps/cms", "webapps/ai"})
+
+	counts := categoryCounts(resp)
+	assert.Equal(t, 1, counts["webapps"])
+	assert.Equal(t, 1, counts["webapps/cms"])
+	assert.Equal(t, 1, counts["webapps/ai"])
+}
+
+// A category nothing is listed in is still offered, with nothing in it.
+func TestCatalogCountsAnEmptyCategoryAsZero(t *testing.T) {
+	useBasePath(t)
+
+	counts := categoryCounts(catalogWith(t, []string{"webapps/cms"}))
+
+	assert.Equal(t, 0, counts["databases"])
+	assert.Equal(t, 0, counts["databases/sql"])
 }

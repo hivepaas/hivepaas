@@ -105,8 +105,12 @@ type AppTemplateSummaryResp struct {
 	Versions     []*AppTemplateVersionResp           `json:"versions"`
 	// Compatible is false for a template needing a newer HivePaaS: the store
 	// lists it, locked, rather than hiding it.
-	Compatible          bool   `json:"compatible"`
-	RequiresVersionCode string `json:"requiresVersionCode"`
+	//
+	// What it needs is not part of the answer. The version it names is a code
+	// this installation cannot turn into anything a person would recognize, and
+	// the only thing to do about an incompatible template is update - which is
+	// the same whichever version it asked for.
+	Compatible bool `json:"compatible"`
 }
 
 type AppTemplateVariantSummaryResp struct {
@@ -135,19 +139,18 @@ func TransformAppTemplateSummaries(
 
 func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string) *AppTemplateSummaryResp {
 	summary := &AppTemplateSummaryResp{
-		Name:                entry.Name,
-		Title:               entry.Title,
-		Tagline:             entry.Tagline,
-		License:             entry.License,
-		Categories:          entry.Categories,
-		Tags:                entry.Tags,
-		Aliases:             entry.Aliases,
-		IconURL:             AppTemplateIconURL(entry),
-		Dependencies:        make([]*AppTemplateDependencySummaryResp, 0, len(entry.Dependencies)),
-		Variants:            make([]*AppTemplateVariantSummaryResp, 0, len(entry.Variants)),
-		Versions:            make([]*AppTemplateVersionResp, 0, len(entry.Versions)),
-		Compatible:          templatemodel.IsCompatible(entry.Requires, currentVersionCode),
-		RequiresVersionCode: entry.Requires.VersionCode,
+		Name:         entry.Name,
+		Title:        entry.Title,
+		Tagline:      entry.Tagline,
+		License:      entry.License,
+		Categories:   entry.Categories,
+		Tags:         entry.Tags,
+		Aliases:      entry.Aliases,
+		IconURL:      AppTemplateIconURL(entry),
+		Dependencies: make([]*AppTemplateDependencySummaryResp, 0, len(entry.Dependencies)),
+		Variants:     make([]*AppTemplateVariantSummaryResp, 0, len(entry.Variants)),
+		Versions:     make([]*AppTemplateVersionResp, 0, len(entry.Versions)),
+		Compatible:   templatemodel.IsCompatible(entry.Requires, currentVersionCode),
 	}
 	for _, variant := range entry.Variants {
 		summary.Variants = append(summary.Variants,

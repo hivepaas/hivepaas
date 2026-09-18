@@ -32,22 +32,21 @@ type GetAppTemplateResp struct {
 }
 
 type AppTemplateResp struct {
-	Source              string                    `json:"source"`
-	Revision            string                    `json:"revision"`
-	Name                string                    `json:"name"`
-	Title               string                    `json:"title"`
-	Tagline             string                    `json:"tagline"`
-	Description         string                    `json:"description"`
-	Categories          []string                  `json:"categories"`
-	Tags                []string                  `json:"tags"`
-	IconURL             string                    `json:"iconUrl"`
-	Links               *AppTemplateLinksResp     `json:"links"`
-	License             string                    `json:"license"`
-	Compatible          bool                      `json:"compatible"`
-	RequiresVersionCode string                    `json:"requiresVersionCode"`
-	Variants            []*AppTemplateVariantResp `json:"variants"`
-	Versions            []*AppTemplateVersionResp `json:"versions"`
-	Parameters          []*AppTemplateParamResp   `json:"parameters"`
+	Source      string                    `json:"source"`
+	Revision    string                    `json:"revision"`
+	Name        string                    `json:"name"`
+	Title       string                    `json:"title"`
+	Tagline     string                    `json:"tagline"`
+	Description string                    `json:"description"`
+	Categories  []string                  `json:"categories"`
+	Tags        []string                  `json:"tags"`
+	IconURL     string                    `json:"iconUrl"`
+	Links       *AppTemplateLinksResp     `json:"links"`
+	License     string                    `json:"license"`
+	Compatible  bool                      `json:"compatible"`
+	Variants    []*AppTemplateVariantResp `json:"variants"`
+	Versions    []*AppTemplateVersionResp `json:"versions"`
+	Parameters  []*AppTemplateParamResp   `json:"parameters"`
 	// Dependencies are the apps creating this template also creates, each with the
 	// parameters a person has to fill in for it.
 	Dependencies []*AppTemplateDependencyResp `json:"dependencies"`
@@ -106,21 +105,20 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 	metadata := tmpl.Template.Metadata
 	summary := transformSummary(tmpl.Entry, currentVersionCode)
 	resp := &AppTemplateResp{
-		Source:              tmpl.Source,
-		Revision:            tmpl.Revision,
-		Name:                metadata.Name,
-		Title:               metadata.Title,
-		Tagline:             metadata.Tagline,
-		Description:         metadata.Description,
-		Categories:          metadata.Categories,
-		Tags:                metadata.Tags,
-		IconURL:             summary.IconURL,
-		License:             metadata.License,
-		Compatible:          summary.Compatible,
-		RequiresVersionCode: summary.RequiresVersionCode,
-		Versions:            summary.Versions,
-		Variants:            make([]*AppTemplateVariantResp, 0, len(tmpl.Template.Variants)),
-		Parameters:          make([]*AppTemplateParamResp, 0, len(tmpl.Template.Parameters)),
+		Source:      tmpl.Source,
+		Revision:    tmpl.Revision,
+		Name:        metadata.Name,
+		Title:       metadata.Title,
+		Tagline:     metadata.Tagline,
+		Description: metadata.Description,
+		Categories:  metadata.Categories,
+		Tags:        metadata.Tags,
+		IconURL:     summary.IconURL,
+		License:     metadata.License,
+		Compatible:  summary.Compatible,
+		Versions:    summary.Versions,
+		Variants:    make([]*AppTemplateVariantResp, 0, len(tmpl.Template.Variants)),
+		Parameters:  make([]*AppTemplateParamResp, 0, len(tmpl.Template.Parameters)),
 	}
 	if links := metadata.Links; links != nil {
 		resp.Links = &AppTemplateLinksResp{

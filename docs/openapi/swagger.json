@@ -44912,6 +44912,10 @@
             },
             "type" : "array"
           },
+          "count" : {
+            "description" : "Count is how many templates listing this category the store would show.\n\nA parent counts a template once however many of its children the template\nis listed in, because that is what opening the parent reveals: the filter\na parent stands for matches every child under it, and the same template\ncannot be shown twice.",
+            "type" : "integer"
+          },
           "id" : {
             "type" : "string"
           },
@@ -44919,7 +44923,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "children", "id", "title" ],
+        "required" : [ "children", "count", "id", "title" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateDependencyResp" : {
@@ -45127,9 +45131,6 @@
             },
             "type" : "array"
           },
-          "requiresVersionCode" : {
-            "type" : "string"
-          },
           "revision" : {
             "type" : "string"
           },
@@ -45161,7 +45162,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "categories", "compatible", "dependencies", "description", "iconUrl", "license", "links", "name", "parameters", "requiresVersionCode", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "categories", "compatible", "dependencies", "description", "iconUrl", "license", "links", "name", "parameters", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateSummaryResp" : {
@@ -45179,7 +45180,7 @@
             "type" : "array"
           },
           "compatible" : {
-            "description" : "Compatible is false for a template needing a newer HivePaaS: the store\nlists it, locked, rather than hiding it.",
+            "description" : "Compatible is false for a template needing a newer HivePaaS: the store\nlists it, locked, rather than hiding it.\n\nWhat it needs is not part of the answer. The version it names is a code\nthis installation cannot turn into anything a person would recognize, and\nthe only thing to do about an incompatible template is update - which is\nthe same whichever version it asked for.",
             "type" : "boolean"
           },
           "dependencies" : {
@@ -45196,9 +45197,6 @@
             "type" : "string"
           },
           "name" : {
-            "type" : "string"
-          },
-          "requiresVersionCode" : {
             "type" : "string"
           },
           "tagline" : {
@@ -45226,7 +45224,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "aliases", "categories", "compatible", "dependencies", "iconUrl", "license", "name", "requiresVersionCode", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "aliases", "categories", "compatible", "dependencies", "iconUrl", "license", "name", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateTagResp" : {

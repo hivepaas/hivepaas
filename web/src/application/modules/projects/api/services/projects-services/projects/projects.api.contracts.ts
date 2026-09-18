@@ -43,6 +43,8 @@ export type Projects_FindOneById_Res = ApiResponseBase<ProjectDetailsEntity>;
  */
 export type Projects_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
+    /** Also delete the volumes the project owns and the data its apps kept. */
+    removeStorage?: boolean;
 }>;
 
 export type Projects_DeleteOne_Res = ApiResponseBase<{
@@ -122,6 +124,8 @@ export type Projects_UpdateEnvStatus_Res = ApiResponseBase<{
 export type Projects_DeleteEnv_Req = ApiRequestBase<{
     projectID: string;
     envName: string;
+    /** Also delete the volumes the environment owns and the data its apps kept. */
+    removeStorage?: boolean;
 }>;
 
 export type Projects_DeleteEnv_Res = ApiResponseBase<{

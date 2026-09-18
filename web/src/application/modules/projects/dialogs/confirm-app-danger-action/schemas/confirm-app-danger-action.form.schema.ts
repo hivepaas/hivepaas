@@ -2,6 +2,8 @@ import { z } from "zod";
 
 const ConfirmAppDangerActionFormBaseSchema = z.object({
     appName: z.string(),
+    /** Delete what the apps stored as well. Off unless somebody ticks it. */
+    removeStorage: z.boolean(),
 });
 
 export type ConfirmAppDangerActionFormInput = z.input<typeof ConfirmAppDangerActionFormBaseSchema>;

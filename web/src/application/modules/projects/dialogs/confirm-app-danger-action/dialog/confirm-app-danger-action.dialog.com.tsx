@@ -71,7 +71,7 @@ export function ConfirmAppDangerActionDialog() {
 
     const isPending = isUpdating || isDeleting;
 
-    function handleSubmit(_values: ConfirmAppDangerActionFormOutput) {
+    function handleSubmit(values: ConfirmAppDangerActionFormOutput) {
         if (!canWrite || !target || !action) {
             return;
         }
@@ -81,6 +81,7 @@ export function ConfirmAppDangerActionDialog() {
                 projectID: target.projectId,
                 env: target.env,
                 appID: target.appId,
+                removeStorage: values.removeStorage,
             });
             return;
         }

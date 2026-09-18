@@ -7,7 +7,7 @@ import { AlertTriangle } from "lucide-react";
 import { type FieldErrors, useForm } from "react-hook-form";
 import { ConfirmDangerTargetBadge } from "~/projects/module-shared/components";
 
-import { Button, Field, FieldError, Input } from "@/components/ui";
+import { Button, Checkbox, Field, FieldError, Input } from "@/components/ui";
 
 import {
     type ConfirmAppDangerActionFormInput,
@@ -49,10 +49,12 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
         handleSubmit,
         register,
         reset,
+        setValue,
         watch,
     } = useForm<ConfirmAppDangerActionFormInput, unknown, ConfirmAppDangerActionFormOutput>({
         defaultValues: {
             appName: "",
+            removeStorage: false,
         },
         resolver: zodResolver(createConfirmAppDangerActionFormSchema(appName)),
         mode: "onSubmit",
@@ -61,11 +63,13 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
     useEffect(() => {
         reset({
             appName: "",
+            removeStorage: false,
         });
     }, [action, appName, reset]);
 
     const enteredAppName = watch("appName");
     const isConfirmed = enteredAppName === appName;
+    const removeStorage = watch("removeStorage");
     const copy = actionCopy[action];
 
     function onInvalid(_errors: FieldErrors<ConfirmAppDangerActionFormInput>) {
@@ -95,6 +99,30 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
                         <AlertTriangle className="size-4 shrink-0 text-destructive" />
                         <span>Warning: {copy.warning}</span>
                     </div>
+                )}
+
+                {action === AppDangerAction.Delete && (
+                    <label
+                        className="flex items-start gap-2.5 text-sm leading-6 text-foreground"
+                        htmlFor="app-remove-storage"
+                    >
+                        <Checkbox
+                            id="app-remove-storage"
+                            className="mt-1"
+                            checked={removeStorage}
+                            disabled={readOnly || isPending}
+                            onCheckedChange={checked => {
+                                setValue("removeStorage", checked === true);
+                            }}
+                        />
+                        <span>
+                            <span className="block">Also delete the stored data</span>
+                            <span className="block text-muted-foreground">
+                                The volumes this app kept its data in, and what is on them, are kept unless you tick
+                                this.
+                            </span>
+                        </span>
+                    </label>
                 )}
 
                 <Field>

@@ -70,7 +70,7 @@ export function ConfirmProjectDangerActionDialog() {
     const hasRequiredAccess =
         action === ProjectDangerAction.Delete ? projectPermissions.canDelete : projectPermissions.canWrite;
 
-    function handleSubmit(_values: ConfirmProjectDangerActionFormOutput) {
+    function handleSubmit(values: ConfirmProjectDangerActionFormOutput) {
         if (!hasRequiredAccess || !target || !action) {
             return;
         }
@@ -78,6 +78,7 @@ export function ConfirmProjectDangerActionDialog() {
         if (action === ProjectDangerAction.Delete) {
             deleteProject({
                 projectID: target.projectId,
+                removeStorage: values.removeStorage,
             });
             return;
         }

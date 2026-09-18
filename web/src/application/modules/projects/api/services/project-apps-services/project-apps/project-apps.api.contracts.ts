@@ -50,6 +50,8 @@ export type ProjectApps_DeleteOne_Req = ApiRequestBase<{
     projectID: string;
     env: string;
     appID: string;
+    /** Also delete the directories the app kept its data in. */
+    removeStorage?: boolean;
 }>;
 
 export type ProjectApps_DeleteOne_Res = ApiResponseBase<{

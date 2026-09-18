@@ -117,7 +117,11 @@ export class ProjectsApi extends BaseApi {
      */
     async deleteOne(request: Projects_DeleteOne_Req): Promise<Result<Projects_DeleteOne_Res, Error>> {
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${request.data.projectID}`)).pipe(
+            from(
+                this.client.v1.delete(`/projects/${request.data.projectID}`, {
+                    params: { removeStorage: request.data.removeStorage ?? false },
+                }),
+            ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
@@ -248,10 +252,14 @@ export class ProjectsApi extends BaseApi {
      * Delete a project env
      */
     async deleteEnv(request: Projects_DeleteEnv_Req): Promise<Result<Projects_DeleteEnv_Res, Error>> {
-        const { projectID, envName } = request.data;
+        const { projectID, envName, removeStorage } = request.data;
 
         return lastValueFrom(
-            from(this.client.v1.delete(`/projects/${projectID}/${envName}`)).pipe(
+            from(
+                this.client.v1.delete(`/projects/${projectID}/${envName}`, {
+                    params: { removeStorage: removeStorage ?? false },
+                }),
+            ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),

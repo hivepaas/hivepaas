@@ -7,7 +7,7 @@ import { AlertTriangle } from "lucide-react";
 import { type FieldErrors, useForm } from "react-hook-form";
 import { ConfirmDangerTargetBadge } from "~/projects/module-shared/components";
 
-import { Button, Field, FieldError, Input } from "@/components/ui";
+import { Button, Checkbox, Field, FieldError, Input } from "@/components/ui";
 
 import {
     type ConfirmProjectDangerActionFormInput,
@@ -55,10 +55,12 @@ export function ConfirmProjectDangerActionForm({
         handleSubmit,
         register,
         reset,
+        setValue,
         watch,
     } = useForm<ConfirmProjectDangerActionFormInput, unknown, ConfirmProjectDangerActionFormOutput>({
         defaultValues: {
             projectName: "",
+            removeStorage: false,
         },
         resolver: zodResolver(createConfirmProjectDangerActionFormSchema(projectName)),
         mode: "onSubmit",
@@ -67,11 +69,13 @@ export function ConfirmProjectDangerActionForm({
     useEffect(() => {
         reset({
             projectName: "",
+            removeStorage: false,
         });
     }, [action, projectName, reset]);
 
     const enteredProjectName = watch("projectName");
     const isConfirmed = enteredProjectName === projectName;
+    const removeStorage = watch("removeStorage");
     const copy = actionCopy[action];
 
     function onInvalid(_errors: FieldErrors<ConfirmProjectDangerActionFormInput>) {
@@ -101,6 +105,29 @@ export function ConfirmProjectDangerActionForm({
                         <AlertTriangle className="size-4 shrink-0 text-destructive" />
                         <span>Warning: {copy.warning}</span>
                     </div>
+                )}
+
+                {action === ProjectDangerAction.Delete && (
+                    <label
+                        className="flex items-start gap-2.5 text-sm leading-6 text-foreground"
+                        htmlFor="project-remove-storage"
+                    >
+                        <Checkbox
+                            id="project-remove-storage"
+                            className="mt-1"
+                            checked={removeStorage}
+                            disabled={readOnly || isPending}
+                            onCheckedChange={checked => {
+                                setValue("removeStorage", checked === true);
+                            }}
+                        />
+                        <span>
+                            <span className="block">Also delete the stored data</span>
+                            <span className="block text-muted-foreground">
+                                The volumes this project owns, and what is on them, are kept unless you tick this.
+                            </span>
+                        </span>
+                    </label>
                 )}
 
                 <Field>

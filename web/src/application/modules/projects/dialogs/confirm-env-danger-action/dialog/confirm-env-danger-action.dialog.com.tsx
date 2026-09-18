@@ -53,7 +53,7 @@ export function ConfirmEnvDangerActionDialog() {
     const hasRequiredAccess =
         action === EnvDangerAction.Delete ? projectPermissions.canDelete : projectPermissions.canWrite;
 
-    function handleSubmit(_values: ConfirmEnvDangerActionFormOutput) {
+    function handleSubmit(values: ConfirmEnvDangerActionFormOutput) {
         if (!hasRequiredAccess || !target || !action) {
             return;
         }
@@ -62,6 +62,7 @@ export function ConfirmEnvDangerActionDialog() {
             deleteEnv({
                 projectID: target.projectId,
                 envName: target.envName,
+                removeStorage: values.removeStorage,
             });
             return;
         }

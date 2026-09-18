@@ -7,7 +7,7 @@ import { AlertTriangle } from "lucide-react";
 import { type FieldErrors, useForm } from "react-hook-form";
 import { ConfirmDangerTargetBadge } from "~/projects/module-shared/components";
 
-import { Button, Field, FieldError, Input } from "@/components/ui";
+import { Button, Checkbox, Field, FieldError, Input } from "@/components/ui";
 
 import {
     type ConfirmEnvDangerActionFormInput,
@@ -49,10 +49,12 @@ export function ConfirmEnvDangerActionForm({ action, envName, isPending = false,
         handleSubmit,
         register,
         reset,
+        setValue,
         watch,
     } = useForm<ConfirmEnvDangerActionFormInput, unknown, ConfirmEnvDangerActionFormOutput>({
         defaultValues: {
             envName: "",
+            removeStorage: false,
         },
         resolver: zodResolver(createConfirmEnvDangerActionFormSchema(envName)),
         mode: "onSubmit",
@@ -61,11 +63,13 @@ export function ConfirmEnvDangerActionForm({ action, envName, isPending = false,
     useEffect(() => {
         reset({
             envName: "",
+            removeStorage: false,
         });
     }, [action, envName, reset]);
 
     const enteredEnvName = watch("envName");
     const isConfirmed = enteredEnvName === envName;
+    const removeStorage = watch("removeStorage");
     const copy = actionCopy[action];
 
     function onInvalid(_errors: FieldErrors<ConfirmEnvDangerActionFormInput>) {
@@ -95,6 +99,29 @@ export function ConfirmEnvDangerActionForm({ action, envName, isPending = false,
                         <AlertTriangle className="size-4 shrink-0 text-destructive" />
                         <span>Warning: {copy.warning}</span>
                     </div>
+                )}
+
+                {action === EnvDangerAction.Delete && (
+                    <label
+                        className="flex items-start gap-2.5 text-sm leading-6 text-foreground"
+                        htmlFor="env-remove-storage"
+                    >
+                        <Checkbox
+                            id="env-remove-storage"
+                            className="mt-1"
+                            checked={removeStorage}
+                            disabled={readOnly || isPending}
+                            onCheckedChange={checked => {
+                                setValue("removeStorage", checked === true);
+                            }}
+                        />
+                        <span>
+                            <span className="block">Also delete the stored data</span>
+                            <span className="block text-muted-foreground">
+                                The volumes this environment owns, and what is on them, are kept unless you tick this.
+                            </span>
+                        </span>
+                    </label>
                 )}
 
                 <Field>

@@ -42,6 +42,14 @@ var (
 	// RELEASE.2025-09-07T16-13-09Z does it. It reads the whole tag, since the date's
 	// own dashes would cut a version part short.
 	pinnedDatePattern = regexp.MustCompile(`\.[0-9]{4}-[0-9]{2}-[0-9]{2}`)
+	// pinnedPrefixedVersionPattern is a third shape: a word, then the version, the
+	// way fireflyiii/core publishes version-6.7.2 and nothing else. The version part
+	// alone would be the word, so this reads the tag from the start instead.
+	//
+	// The word has to be followed immediately by major.minor, which is what keeps
+	// stable-alpine3.24 and 18-alpine3.24 out: the first has no version after the
+	// word, and the second's version is a suffix's rather than the image's.
+	pinnedPrefixedVersionPattern = regexp.MustCompile(`^[a-zA-Z]+-v?[0-9]+\.[0-9]+`)
 )
 
 // problems collects everything wrong with one file, so an author sees all of it
@@ -358,7 +366,7 @@ func validateVersionImages(prefix string, version *Version, variants map[string]
 // isPinnedTag reports whether a tag names one release. The version part is
 // everything before the first separator: `18.6` of `18.6-alpine3.24`.
 func isPinnedTag(tag string) bool {
-	if pinnedDatePattern.MatchString(tag) {
+	if pinnedDatePattern.MatchString(tag) || pinnedPrefixedVersionPattern.MatchString(tag) {
 		return true
 	}
 	return pinnedVersionPattern.MatchString(tagVersion(tag))

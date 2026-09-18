@@ -90,15 +90,25 @@ func TestIsPinnedImage(t *testing.T) {
 		"minio/minio:RELEASE.2025-09-07T16-13-09Z":   true,
 		"registry.example:5000/app:1.2.3":            true,
 		"postgres@sha256:" + strings.Repeat("a", 64): true,
+		// A word in front of the version is the only shape some repositories
+		// publish: fireflyiii/core has version-6.7.2 and nothing plainer.
+		"fireflyiii/core:version-6.7.2": true,
+		"example/app:release-2.4":       true,
+		"example/app:v-1.2.3":           true,
 		// The base image in the suffix carries a version of its own, and a tag is
 		// only pinned when the software's own version part is.
-		"postgres:18-alpine3.24":      false,
-		"postgres:19beta1-alpine3.24": false,
-		"postgres:17":                 false,
-		"postgres:17-alpine":          false,
-		"postgres:latest":             false,
-		"postgres":                    false,
-		"registry.example:5000/app":   false,
+		"postgres:18-alpine3.24": false,
+		// A word and then something that is not a version is still a moving tag,
+		// whatever the suffix carries.
+		"example/app:stable-alpine3.24": false,
+		"example/app:version-6":         false,
+		"example/app:edge":              false,
+		"postgres:19beta1-alpine3.24":   false,
+		"postgres:17":                   false,
+		"postgres:17-alpine":            false,
+		"postgres:latest":               false,
+		"postgres":                      false,
+		"registry.example:5000/app":     false,
 	} {
 		assert.Equal(t, pinned, IsPinnedImage(image), image)
 	}

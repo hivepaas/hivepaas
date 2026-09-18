@@ -88,27 +88,11 @@ func (s *service) CloneApp(
 
 	// Post cloning steps
 
-	err = s.applyEnvVars(ctx, db, data)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	err = s.applySwarmConfigFiles(ctx, db, data)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	err = s.applySwarmSecrets(ctx, db, data)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	err = s.applyAppRoutingSettings(ctx, db, data)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	err = s.applySchedJobSettings(ctx, db, data)
+	// The copy's environment, config files, secrets, routing and scheduled jobs
+	// are what its settings describe, which provisioning applies the same way to
+	// an app made from a template. What is left below is cloning's own: a clone
+	// has a source app, and nothing created from nothing does.
+	err = s.applyClonedConfiguration(ctx, db, data)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}

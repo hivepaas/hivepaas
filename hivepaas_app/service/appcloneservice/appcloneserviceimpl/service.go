@@ -3,6 +3,7 @@ package appcloneserviceimpl
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
@@ -26,6 +27,7 @@ type service struct {
 	appRepo     repository.AppRepo
 	settingRepo repository.SettingRepo
 
+	appProvisionService    appprovisionservice.Service
 	appRoutingService      approutingservice.Service
 	appService             appservice.Service
 	clusterSecretService   clustersecretservice.Service
@@ -47,6 +49,7 @@ func New(
 	appRepo repository.AppRepo,
 	settingRepo repository.SettingRepo,
 
+	appProvisionService appprovisionservice.Service,
 	appRoutingService approutingservice.Service,
 	appService appservice.Service,
 	clusterSecretService clustersecretservice.Service,
@@ -67,6 +70,7 @@ func New(
 		appRepo:     appRepo,
 		settingRepo: settingRepo,
 
+		appProvisionService:    appProvisionService,
 		appRoutingService:      appRoutingService,
 		appService:             appService,
 		clusterSecretService:   clusterSecretService,

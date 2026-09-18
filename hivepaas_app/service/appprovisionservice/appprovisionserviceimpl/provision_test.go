@@ -19,15 +19,23 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/networkservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
-var errTestPersist = errors.New("database unavailable")
+var (
+	errTestPersist   = errors.New("database unavailable")
+	errTestRouting   = errors.New("traefik unavailable")
+	errTestProvision = errors.New("provisioning failed")
+)
 
 type fakeProjectRepo struct {
 	repository.ProjectRepo
@@ -113,11 +121,121 @@ func (f *fakeAppService) PersistAppData(
 	return f.err
 }
 
+// fakeEnvVarService records that the environment was rebuilt.
+type fakeEnvVarService struct {
+	envvarservice.Service
+	applied bool
+}
+
+func (f *fakeEnvVarService) BuildEnvVarsForAllAppsInScope(
+	context.Context, database.IDB, *entity.ObjectScope, bool, []string, bool, bool,
+) ([]*envvarservice.AppEnvVarData, error) {
+	return nil, nil
+}
+
+func (f *fakeEnvVarService) ApplyEnvVarsForApps(
+	context.Context, database.IDB, []*envvarservice.AppEnvVarData, bool, bool,
+) map[int]error {
+	f.applied = true
+	return nil
+}
+
+type fakeRoutingService struct {
+	approutingservice.Service
+	req *approutingservice.ApplyAppRoutingReq
+	err error
+	// failTimes is how many of the first calls fail with err before it succeeds;
+	// err alone fails every call.
+	failTimes int
+	calls     int
+}
+
+func (f *fakeRoutingService) ApplyRoutingSettings(
+	_ context.Context, _ database.IDB, req *approutingservice.ApplyAppRoutingReq,
+) (*approutingservice.ApplyAppRoutingResp, error) {
+	f.req = req
+	f.calls++
+	if f.err != nil && (f.failTimes == 0 || f.calls <= f.failTimes) {
+		return nil, f.err
+	}
+	return &approutingservice.ApplyAppRoutingResp{}, nil
+}
+
+// fakeClusterSecretService fills in what docker would have returned: an id for
+// every entry that asked to be mounted as a file, and nothing for the rest.
+type fakeClusterSecretService struct {
+	clustersecretservice.Service
+	secrets        []*entity.Secret
+	configs        []*entity.ConfigFile
+	removedSecrets []string
+	removedConfigs []string
+}
+
+func (f *fakeClusterSecretService) CreateSecretsForApp(
+	_ context.Context, _ database.IDB, _ *entity.App, secrets []*entity.Secret,
+) ([]*entity.SwarmSecretRef, error) {
+	f.secrets = secrets
+	refs := make([]*entity.SwarmSecretRef, 0, len(secrets))
+	for _, secret := range secrets {
+		if secret.SwarmRef == nil || secret.SwarmRef.File == nil {
+			refs = append(refs, nil)
+			continue
+		}
+		secret.SwarmRef.SecretID = "docker-secret-" + secret.Key
+		refs = append(refs, secret.SwarmRef)
+	}
+	return refs, nil
+}
+
+func (f *fakeClusterSecretService) CreateConfigsForApp(
+	_ context.Context, _ database.IDB, _ *entity.App, configs []*entity.ConfigFile,
+) ([]*entity.SwarmConfigRef, error) {
+	f.configs = configs
+	refs := make([]*entity.SwarmConfigRef, 0, len(configs))
+	for _, config := range configs {
+		if config.SwarmRef == nil || config.SwarmRef.File == nil {
+			refs = append(refs, nil)
+			continue
+		}
+		config.SwarmRef.ConfigID = "docker-config-" + config.Name
+		refs = append(refs, config.SwarmRef)
+	}
+	return refs, nil
+}
+
+func (f *fakeClusterSecretService) SecretsRemove(
+	_ context.Context, secretIDs []string, _ int, _ time.Duration,
+) error {
+	f.removedSecrets = append(f.removedSecrets, secretIDs...)
+	return nil
+}
+
+func (f *fakeClusterSecretService) ConfigsRemove(
+	_ context.Context, configIDs []string, _ int, _ time.Duration,
+) error {
+	f.removedConfigs = append(f.removedConfigs, configIDs...)
+	return nil
+}
+
+type fakeDeploymentService struct {
+	appdeploymentservice.Service
+}
+
+func (f *fakeDeploymentService) CreateDeploymentAndTask(
+	app *entity.App, settings *entity.AppDeploymentSettings,
+) (*entity.Deployment, *entity.Task, error) {
+	return &entity.Deployment{ID: "dep-1", AppID: app.ID, Settings: settings},
+		&entity.Task{ID: "task-1"}, nil
+}
+
 type provisionFakes struct {
-	docker    *fakeDockerManager
-	cluster   *fakeClusterService
-	apps      *fakeAppService
-	placement *fakePlacementService
+	docker       *fakeDockerManager
+	cluster      *fakeClusterService
+	apps         *fakeAppService
+	placement    *fakePlacementService
+	envVars      *fakeEnvVarService
+	routing      *fakeRoutingService
+	clusterFiles *fakeClusterSecretService
 }
 
 func newProvisionTest(t *testing.T) (*service, *provisionFakes) {
@@ -131,19 +249,26 @@ func newProvisionTest(t *testing.T) (*service, *provisionFakes) {
 		ProjectEnvs: []*entity.ProjectEnv{env}}
 
 	fakes := &provisionFakes{
-		docker:    &fakeDockerManager{},
-		cluster:   &fakeClusterService{},
-		apps:      &fakeAppService{},
-		placement: &fakePlacementService{},
+		docker:       &fakeDockerManager{},
+		cluster:      &fakeClusterService{},
+		apps:         &fakeAppService{},
+		placement:    &fakePlacementService{},
+		envVars:      &fakeEnvVarService{},
+		routing:      &fakeRoutingService{},
+		clusterFiles: &fakeClusterSecretService{},
 	}
 	svc := &service{
-		dockerManager:    fakes.docker,
-		appRepo:          &fakeAppRepo{},
-		projectRepo:      &fakeProjectRepo{project: project},
-		appService:       fakes.apps,
-		clusterService:   fakes.cluster,
-		networkService:   &fakeNetworkService{},
-		placementService: fakes.placement,
+		dockerManager:        fakes.docker,
+		appRepo:              &fakeAppRepo{},
+		projectRepo:          &fakeProjectRepo{project: project},
+		appDeploymentService: &fakeDeploymentService{},
+		appRoutingService:    fakes.routing,
+		appService:           fakes.apps,
+		clusterSecretService: fakes.clusterFiles,
+		clusterService:       fakes.cluster,
+		envVarService:        fakes.envVars,
+		networkService:       &fakeNetworkService{},
+		placementService:     fakes.placement,
 	}
 	return svc, fakes
 }

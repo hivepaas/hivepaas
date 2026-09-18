@@ -39,11 +39,15 @@ func (s *service) ProvisionApp(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	// From here on the response is returned even when provisioning fails: it
+	// carries what was created in docker, which no rollback of the caller's
+	// transaction can undo. Created stays nil until there is something to undo.
+	resp = &appprovisionservice.ProvisionAppResp{}
 
 	timeNow := timeutil.NowUTC()
 	app, err := s.newApp(ctx, db, req, project, projectEnv, timeNow)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return resp, hperrors.Wrap(err)
 	}
 
 	svc := initialService(app, s.networkService.GetProjectNetworkName(project, projectEnv.Name))
@@ -51,7 +55,7 @@ func (s *service) ProvisionApp(
 	if req.Configure != nil {
 		configured, configureErr := req.Configure(ctx, db, app, &svc.Spec)
 		if configureErr != nil {
-			return nil, hperrors.Wrap(configureErr)
+			return resp, hperrors.Wrap(configureErr)
 		}
 		settings = replaceSettingsByType(settings, configured)
 	}
@@ -64,22 +68,30 @@ func (s *service) ProvisionApp(
 		SkipSavingToDocker: true,
 	})
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return resp, hperrors.Wrap(err)
 	}
 
-	created, err := s.dockerManager.ServiceCreate(ctx, &svc.Spec)
+	createdSvc, err := s.dockerManager.ServiceCreate(ctx, &svc.Spec)
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return resp, hperrors.Wrap(err)
 	}
-	if created.ID == "" { // should never happen
-		return nil, hperrors.Wrap(hperrors.ErrInfraInternal).WithParam("Error", "empty service ID returned")
+	if createdSvc.ID == "" { // should never happen
+		return resp, hperrors.Wrap(hperrors.ErrInfraInternal).WithParam("Error", "empty service ID returned")
 	}
-	app.ServiceID = created.ID
+	app.ServiceID = createdSvc.ID
+	resp.App = app
+	resp.Created = &appprovisionservice.CreatedInDocker{ServiceID: createdSvc.ID}
 
+	// What this call made in docker is undone here, where the app it belongs to
+	// has no record yet. Once it has one, a failure is the caller's: the records
+	// go with its transaction and what is in docker does not, which is what the
+	// response carries for it.
+	persisted := false
 	defer func() {
-		if err != nil {
+		if err != nil && !persisted {
 			_ = s.clusterService.ServiceRemove(context.WithoutCancel(ctx), app.ServiceID,
 				clusterservice.ItemRemovalRetryMax, 0)
+			resp.Created = nil
 		}
 	}()
 
@@ -89,10 +101,68 @@ func (s *service) ProvisionApp(
 		UpsertingSettings: settings,
 	})
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return resp, hperrors.Wrap(err)
+	}
+	persisted = true
+
+	applied, err := s.ApplyAppConfiguration(ctx, db, &appprovisionservice.ApplyAppConfigurationReq{App: app})
+	if applied != nil {
+		resp.Created.Configs, resp.Created.Secrets = applied.Configs, applied.Secrets
+	}
+	if err != nil {
+		return resp, hperrors.Wrap(err)
 	}
 
-	return &appprovisionservice.ProvisionAppResp{App: app}, nil
+	if err = s.createFirstDeployment(ctx, db, req, resp); err != nil {
+		return resp, hperrors.Wrap(err)
+	}
+	return resp, nil
+}
+
+// createFirstDeployment queues the deployment that replaces the placeholder
+// service image with the one the app's deployment settings name.
+//
+// The task it writes is not scheduled: a task row can be picked up only once the
+// transaction it was written in has committed, and that is the caller's.
+func (s *service) createFirstDeployment(
+	ctx context.Context,
+	db database.IDB,
+	req *appprovisionservice.ProvisionAppReq,
+	resp *appprovisionservice.ProvisionAppResp,
+) error {
+	if req.Deployment == nil {
+		return nil
+	}
+	app := resp.App
+	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
+	if deploymentSetting == nil {
+		// The caller asked for a deployment and its Configure wrote no deployment
+		// settings, which is a mistake in the caller rather than in the request.
+		return hperrors.Wrap(hperrors.ErrInternal).
+			WithMsgLog("app '%s' has no deployment settings to deploy", app.Name)
+	}
+	deploymentSettings, err := deploymentSetting.AsAppDeploymentSettings()
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+
+	deployment, task, err := s.appDeploymentService.CreateDeploymentAndTask(app, deploymentSettings)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	deployment.Trigger = &entity.AppDeploymentTrigger{
+		Source:   req.Deployment.Source,
+		SourceID: req.Deployment.SourceID,
+	}
+	err = s.appService.PersistAppData(ctx, db, &appservice.PersistingAppData{
+		UpsertingDeployments: []*entity.Deployment{deployment},
+		UpsertingTasks:       []*entity.Task{task},
+	})
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	resp.Deployment, resp.DeploymentTask = deployment, task
+	return nil
 }
 
 func (s *service) loadProjectEnv(

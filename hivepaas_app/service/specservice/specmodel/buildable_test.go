@@ -25,6 +25,7 @@ deployment:
       /var/lib/postgresql/data: {type: volume, source: vol-1, readOnly: false, volumeOptions: {subpath: data}}
   container:
     healthcheck: {enabled: true, mode: CMD-SHELL, command: pg_isready, interval: 10s, retries: 5}
+    init: false
   resources:
     reservations: {cpus: 0.5, memory: 256mb}
     limits: {cpus: 1, memory: 512mb, pids: 100}

@@ -166,6 +166,20 @@ func TestBuildAppSplitsACmdHealthcheck(t *testing.T) {
 	assert.Equal(t, []string{"CMD", "pg_isready", "-U", "app"}, req.Spec.TaskTemplate.ContainerSpec.Healthcheck.Test)
 }
 
+// An s6-overlay image - most of the linuxserver.io catalog, and Firefly III -
+// refuses to start behind the init process an app is otherwise created with,
+// saying "can only run as pid 1". So a template has to be able to say no to it.
+func TestBuildAppCarriesTheTemplatesAnswerOnInit(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+	req := buildReq(t, "deployment:\n  container:\n    init: false\n")
+
+	_, err := svc.BuildApp(context.Background(), nil, req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, new(false), req.Spec.TaskTemplate.ContainerSpec.Init)
+}
+
 // Export maps a service back into an AppDoc; BuildApp maps an AppDoc into a
 // service. For the swarm-side blocks the two must agree, or a template and an
 // export of the app it created would disagree about the same app.

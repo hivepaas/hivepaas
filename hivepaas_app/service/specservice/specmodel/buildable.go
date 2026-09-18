@@ -20,6 +20,7 @@ const (
 	BlockDeploymentSource     Block = "deployment.source"
 	BlockDeploymentStorage    Block = "deployment.storage"
 	BlockContainerHealthcheck Block = "deployment.container.healthcheck"
+	BlockContainerInit        Block = "deployment.container.init"
 	BlockDeploymentResources  Block = "deployment.resources"
 	BlockSettingsKind         Block = "settings.kind"
 	BlockSettingsEnvVars      Block = "settings.envVars"
@@ -52,8 +53,8 @@ const (
 // bind mounts, config files, secrets, scheduled jobs, routing domains. See
 // docs/superpowers/specs/2026-09-17-app-templates-design.md §12.
 var BuildableBlocks = []Block{BlockDeploymentSource, BlockDeploymentStorage, BlockContainerHealthcheck,
-	BlockDeploymentResources, BlockSettingsKind, BlockSettingsEnvVars, BlockSettingsSecrets,
-	BlockSettingsConfigFiles, BlockSettingsRouting}
+	BlockContainerInit, BlockDeploymentResources, BlockSettingsKind, BlockSettingsEnvVars,
+	BlockSettingsSecrets, BlockSettingsConfigFiles, BlockSettingsRouting}
 
 // CheckBuildable refuses any part of doc that phase 1 cannot build.
 //
@@ -89,6 +90,9 @@ func PresentBlocks(doc *AppDoc) []Block {
 		}
 		if d.Container != nil && d.Container.Healthcheck != nil {
 			blocks = append(blocks, BlockContainerHealthcheck)
+		}
+		if d.Container != nil && d.Container.Init != nil {
+			blocks = append(blocks, BlockContainerInit)
 		}
 		if d.Resources != nil {
 			blocks = append(blocks, BlockDeploymentResources)
@@ -135,7 +139,7 @@ func checkDeployment(d *Deployment) error {
 		return err
 	}
 	if d.Container != nil {
-		if err := onlyFields("deployment.container.", d.Container, "healthcheck"); err != nil {
+		if err := onlyFields("deployment.container.", d.Container, "healthcheck", "init"); err != nil {
 			return err
 		}
 	}

@@ -37,6 +37,7 @@ func (s *service) builders() map[specmodel.Block]blockBuilder {
 		specmodel.BlockDeploymentSource:     s.buildSource,
 		specmodel.BlockDeploymentStorage:    s.buildStorage,
 		specmodel.BlockContainerHealthcheck: s.buildHealthcheck,
+		specmodel.BlockContainerInit:        s.buildInit,
 		specmodel.BlockDeploymentResources:  s.buildResources,
 		specmodel.BlockSettingsKind:         s.buildKind,
 		specmodel.BlockSettingsEnvVars:      s.buildEnvVars,

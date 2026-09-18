@@ -138,3 +138,16 @@ func (s *service) buildStorage(ctx context.Context, state *buildState) error {
 	state.req.Spec.TaskTemplate.ContainerSpec.Mounts = built.Mounts
 	return nil
 }
+
+// buildInit decides whether docker puts an init process - tini - in front of
+// the image's own command.
+//
+// An app is created with one, which reaps the orphans a process left behind
+// and passes signals on. Some images bring their own supervisor that has to be
+// process 1 itself: an s6-overlay image, which most of the linuxserver.io
+// catalog and Firefly III are built on, refuses to start behind tini with
+// "can only run as pid 1".
+func (s *service) buildInit(_ context.Context, state *buildState) error {
+	state.req.Spec.TaskTemplate.ContainerSpec.Init = state.req.Doc.Deployment.Container.Init
+	return nil
+}

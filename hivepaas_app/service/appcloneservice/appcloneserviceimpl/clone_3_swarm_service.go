@@ -187,7 +187,6 @@ func (s *service) createSwarmService(
 	createSpec.TaskTemplate.ContainerSpec.Command = nil
 	createSpec.TaskTemplate.ContainerSpec.Args = []string{"sleep", "infinity"}
 	createSpec.TaskTemplate.ContainerSpec.Dir = ""
-	createSpec.TaskTemplate.ContainerSpec.Init = new(true)
 	createSpec.TaskTemplate.ContainerSpec.StopGracePeriod = new(time.Duration(0))
 
 	// Create a service in docker for the app

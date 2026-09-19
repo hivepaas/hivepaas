@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { useParams } from "react-router";
 
+import { AppLink } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,7 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-import type { AppTemplateDetail, AppTemplateSummary } from "../api";
+import type { AppTemplateDependency, AppTemplateDetail, AppTemplateParam, AppTemplateSummary } from "../api";
 import { useGetAppTemplate } from "../data";
 import { useDeployTemplateDialogState } from "../dialogs";
 
@@ -142,6 +145,113 @@ function MarkdownRenderer({ content, className }: { content: string; className?:
     );
 }
 
+function ParametersTable({ parameters }: { parameters: AppTemplateParam[] }) {
+    return (
+        <div className="rounded-lg border border-border/60 overflow-hidden">
+            <Table>
+                <TableHeader className="bg-muted/50 text-xs">
+                    <TableRow>
+                        <TableHead className="font-semibold text-foreground">Parameter</TableHead>
+                        <TableHead className="font-semibold text-foreground">Type</TableHead>
+                        <TableHead className="font-semibold text-foreground">Default Value</TableHead>
+                        <TableHead className="font-semibold text-foreground">Required</TableHead>
+                        <TableHead className="font-semibold text-foreground">Description</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody className="text-xs">
+                    {parameters.map(param => {
+                        const defaultValueStr = formatParamValue(param.default);
+                        const minStr = param.min !== undefined ? formatParamValue(param.min) : "";
+                        return (
+                            <TableRow
+                                key={param.name}
+                                className="hover:bg-muted/30"
+                            >
+                                {/* Name & Title */}
+                                <TableCell className="font-mono font-medium text-foreground py-2.5">
+                                    <div className="flex flex-col">
+                                        <span>{param.name}</span>
+                                        {param.title && param.title !== param.name && (
+                                            <span className="font-sans text-[11px] text-muted-foreground">
+                                                {param.title}
+                                            </span>
+                                        )}
+                                    </div>
+                                </TableCell>
+
+                                {/* Type */}
+                                <TableCell className="py-2.5">
+                                    <Badge
+                                        variant="outline"
+                                        className={cn(
+                                            "text-[11px] font-mono px-1.5 py-0.5",
+                                            param.type === "secret"
+                                                ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                                                : param.type === "volume"
+                                                  ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30"
+                                                  : param.type === "size"
+                                                    ? "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30"
+                                                    : param.type === "domain"
+                                                      ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+                                                      : "bg-muted/60 text-muted-foreground",
+                                        )}
+                                    >
+                                        {param.type === "secret" && <KeyRound className="size-2.5 mr-1 inline" />}
+                                        {param.type === "domain" && <Globe className="size-2.5 mr-1 inline" />}
+                                        {param.type === "volume" && <HardDrive className="size-2.5 mr-1 inline" />}
+                                        {param.type}
+                                    </Badge>
+                                </TableCell>
+
+                                {/* Default value */}
+                                <TableCell className="py-2.5 font-mono text-muted-foreground">
+                                    {param.generated ? (
+                                        <span className="italic text-amber-700/80 dark:text-amber-400/80 text-[11px]">
+                                            Auto-generated
+                                        </span>
+                                    ) : defaultValueStr !== "" ? (
+                                        <span className="rounded bg-muted/60 px-1.5 py-0.5 text-[11px] text-foreground/90">
+                                            {defaultValueStr}
+                                        </span>
+                                    ) : (
+                                        <span className="text-muted-foreground/40">—</span>
+                                    )}
+                                </TableCell>
+
+                                {/* Required / Optional */}
+                                <TableCell className="py-2.5">
+                                    {param.optional ? (
+                                        <span className="text-muted-foreground text-[11px]">Optional</span>
+                                    ) : (
+                                        <span className="text-amber-700 dark:text-amber-400 font-semibold text-[11px]">
+                                            Required
+                                        </span>
+                                    )}
+                                </TableCell>
+
+                                {/* Description & Constraints */}
+                                <TableCell className="py-2.5 max-w-[260px] text-muted-foreground">
+                                    <div className="space-y-0.5">
+                                        {param.description && <p>{param.description}</p>}
+                                        {param.pattern && (
+                                            <p className="font-mono text-[10px] text-muted-foreground/70">
+                                                Pattern: {param.pattern}
+                                            </p>
+                                        )}
+                                        {minStr !== "" && (
+                                            <p className="text-[10px] text-muted-foreground/70">Min: {minStr}</p>
+                                        )}
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        );
+                    })}
+                </TableBody>
+            </Table>
+        </div>
+    );
+}
+
 export function AppTemplatesDetailsView({
     templateName,
     templateSummary,
@@ -163,10 +273,8 @@ export function AppTemplatesDetailsView({
     const [selectedVersionName, setSelectedVersionName] = useState<string>(defaultVer?.name ?? "");
 
     useEffect(() => {
-        if (defaultVer?.name && !selectedVersionName) {
-            setSelectedVersionName(defaultVer.name);
-        }
-    }, [defaultVer?.name, selectedVersionName]);
+        setSelectedVersionName(defaultVer?.name ?? "");
+    }, [templateName, defaultVer?.name]);
 
     // Variants (if detailed data is loaded)
     const variants = templateDetail?.variants ?? [];
@@ -467,119 +575,7 @@ export function AppTemplatesDetailsView({
                                     <Skeleton className="h-8 w-full" />
                                 </div>
                             ) : templateDetail?.parameters && templateDetail.parameters.length > 0 ? (
-                                <div className="rounded-lg border border-border/60 overflow-hidden">
-                                    <Table>
-                                        <TableHeader className="bg-muted/50 text-xs">
-                                            <TableRow>
-                                                <TableHead className="font-semibold text-foreground">
-                                                    Parameter
-                                                </TableHead>
-                                                <TableHead className="font-semibold text-foreground">Type</TableHead>
-                                                <TableHead className="font-semibold text-foreground">
-                                                    Default Value
-                                                </TableHead>
-                                                <TableHead className="font-semibold text-foreground">
-                                                    Required
-                                                </TableHead>
-                                                <TableHead className="font-semibold text-foreground">
-                                                    Description
-                                                </TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody className="text-xs">
-                                            {templateDetail.parameters.map(param => {
-                                                const defaultValueStr = formatParamValue(param.default);
-                                                const minStr =
-                                                    param.min !== undefined ? formatParamValue(param.min) : "";
-                                                return (
-                                                    <TableRow
-                                                        key={param.name}
-                                                        className="hover:bg-muted/30"
-                                                    >
-                                                        {/* Name & Title */}
-                                                        <TableCell className="font-mono font-medium text-foreground py-2.5">
-                                                            <div className="flex flex-col">
-                                                                <span>{param.name}</span>
-                                                                {param.title && param.title !== param.name && (
-                                                                    <span className="font-sans text-[11px] text-muted-foreground">
-                                                                        {param.title}
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </TableCell>
-
-                                                        {/* Type */}
-                                                        <TableCell className="py-2.5">
-                                                            <Badge
-                                                                variant="outline"
-                                                                className={cn(
-                                                                    "text-[11px] font-mono px-1.5 py-0.5",
-                                                                    param.type === "secret"
-                                                                        ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30"
-                                                                        : param.type === "volume"
-                                                                          ? "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30"
-                                                                          : param.type === "size"
-                                                                            ? "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30"
-                                                                            : "bg-muted/60 text-muted-foreground",
-                                                                )}
-                                                            >
-                                                                {param.type === "secret" && (
-                                                                    <KeyRound className="size-2.5 mr-1 inline" />
-                                                                )}
-                                                                {param.type}
-                                                            </Badge>
-                                                        </TableCell>
-
-                                                        {/* Default value */}
-                                                        <TableCell className="py-2.5 font-mono text-muted-foreground">
-                                                            {param.generated ? (
-                                                                <span className="italic text-amber-700/80 dark:text-amber-400/80 text-[11px]">
-                                                                    Auto-generated
-                                                                </span>
-                                                            ) : defaultValueStr !== "" ? (
-                                                                <span className="rounded bg-muted/60 px-1.5 py-0.5 text-[11px] text-foreground/90">
-                                                                    {defaultValueStr}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-muted-foreground/40">—</span>
-                                                            )}
-                                                        </TableCell>
-
-                                                        {/* Required / Optional */}
-                                                        <TableCell className="py-2.5">
-                                                            {param.optional ? (
-                                                                <span className="text-muted-foreground text-[11px]">
-                                                                    Optional
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-amber-700 dark:text-amber-400 font-semibold text-[11px]">
-                                                                    Required
-                                                                </span>
-                                                            )}
-                                                        </TableCell>
-
-                                                        {/* Description & Constraints */}
-                                                        <TableCell className="py-2.5 max-w-[260px] text-muted-foreground">
-                                                            <div className="space-y-0.5">
-                                                                {param.description && <p>{param.description}</p>}
-                                                                {param.pattern && (
-                                                                    <p className="font-mono text-[10px] text-muted-foreground/70">
-                                                                        Pattern: {param.pattern}
-                                                                    </p>
-                                                                )}
-                                                                {minStr !== "" && (
-                                                                    <p className="text-[10px] text-muted-foreground/70">
-                                                                        Min: {minStr}
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                <ParametersTable parameters={templateDetail.parameters} />
                             ) : (
                                 <p className="text-xs text-muted-foreground italic">
                                     No custom configuration parameters declared for this template.
@@ -588,7 +584,106 @@ export function AppTemplatesDetailsView({
                         </CardContent>
                     </Card>
 
-                    {/* SECTION 3: Supported Versions & Variants */}
+                    {/* SECTION 3: Dependent Services */}
+                    {!isLoading && templateDetail?.dependencies && templateDetail.dependencies.length > 0 && (
+                        <Card className="border-border/70 shadow-xs py-0 gap-0">
+                            <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/40 min-h-[46px]">
+                                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                                    <Boxes className="size-4 text-amber-600 dark:text-amber-400" />
+                                    Dependent Services
+                                </h3>
+                                <span className="text-xs text-muted-foreground">
+                                    {templateDetail.dependencies.length}{" "}
+                                    {templateDetail.dependencies.length === 1
+                                        ? "companion service"
+                                        : "companion services"}
+                                </span>
+                            </div>
+                            <CardContent className="px-4 sm:px-5 py-4 space-y-4">
+                                <p className="text-xs text-muted-foreground leading-relaxed">
+                                    This template automatically deploys companion services needed for operation.
+                                </p>
+
+                                <div className="space-y-4">
+                                    {templateDetail.dependencies.map((dep: AppTemplateDependency) => (
+                                        <div
+                                            key={dep.name}
+                                            className="rounded-xl border border-border/70 bg-muted/20 p-4 space-y-3.5"
+                                        >
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/40 pb-3">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background p-1.5 shadow-2xs">
+                                                        <HardDrive className="size-4 text-amber-500" />
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-sm font-semibold text-foreground">
+                                                                {dep.title ? dep.title : dep.name}
+                                                            </span>
+                                                            {projectId ? (
+                                                                <AppLink.Basic
+                                                                    to={ROUTE.projects.single.appTemplates.single.$route(
+                                                                        projectId,
+                                                                        dep.template,
+                                                                    )}
+                                                                    className="text-xs font-mono text-amber-600 dark:text-amber-400 hover:underline inline-flex items-center gap-1"
+                                                                    title={`View ${dep.templateTitle ?? dep.template} template`}
+                                                                >
+                                                                    <span>({dep.template})</span>
+                                                                    <ExternalLink className="size-3" />
+                                                                </AppLink.Basic>
+                                                            ) : (
+                                                                <span className="text-xs font-mono text-muted-foreground">
+                                                                    ({dep.template})
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {dep.templateTitle && dep.templateTitle !== dep.title && (
+                                                            <span className="text-[11px] text-muted-foreground block">
+                                                                Template: {dep.templateTitle}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-1.5">
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="text-[10px] font-mono px-2 py-0.5 bg-background"
+                                                    >
+                                                        {dep.version ? `v${dep.version}` : "default"}
+                                                    </Badge>
+                                                    {dep.variant && (
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="text-[10px] px-2 py-0.5"
+                                                        >
+                                                            {dep.variant}
+                                                        </Badge>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {dep.parameters && dep.parameters.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                                        Service Parameters
+                                                    </span>
+                                                    <ParametersTable parameters={dep.parameters} />
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-muted-foreground italic">
+                                                    No additional configuration parameters required for this service.
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* SECTION 4: Supported Versions & Variants */}
                     <Card className="border-border/70 shadow-xs py-0 gap-0">
                         <div className="flex items-center px-4 sm:px-5 py-3 border-b border-border/40 min-h-[46px]">
                             <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">

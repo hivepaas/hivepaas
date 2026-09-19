@@ -84,8 +84,8 @@ export function DeployTemplateDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="sm:max-w-[900px] w-full">
-                <DialogHeader className="border-b border-border/50 px-6 py-4">
+            <DialogFixedContent className="sm:max-w-[850px] w-full">
+                <DialogHeader className="border-b border-border/50 px-3.5 py-4">
                     <div className="flex items-center gap-3.5">
                         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-muted/30 p-2 overflow-hidden shadow-2xs">
                             {!imageError && template?.iconUrl ? (
@@ -114,7 +114,7 @@ export function DeployTemplateDialog() {
                 </DialogHeader>
 
                 {isTemplateLoading || !template ? (
-                    <div className="p-8 space-y-4">
+                    <div className="px-3.5 py-6 space-y-4">
                         <div className="flex items-center justify-center py-8 gap-3 text-sm text-muted-foreground">
                             <Loader2 className="size-5 animate-spin text-amber-500" />
                             <span>Loading template configuration...</span>

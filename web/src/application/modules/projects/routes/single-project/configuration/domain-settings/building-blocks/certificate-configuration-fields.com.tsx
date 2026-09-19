@@ -204,13 +204,15 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
                 }
             >
                 <Field>
-                    <Checkbox
-                        checked={autoObtain.value}
-                        onCheckedChange={checked => {
-                            autoObtain.onChange(checked === true);
-                        }}
-                        disabled={readOnly}
-                    />
+                    <div className="flex items-center h-9">
+                        <Checkbox
+                            checked={autoObtain.value}
+                            onCheckedChange={checked => {
+                                autoObtain.onChange(checked === true);
+                            }}
+                            disabled={readOnly}
+                        />
+                    </div>
                     <FieldError errors={[errors.certSettings?.autoObtain]} />
                 </Field>
             </InfoBlock>

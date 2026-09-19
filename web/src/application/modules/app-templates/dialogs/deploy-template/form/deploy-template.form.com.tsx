@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Boxes, Database, HardDrive, Loader2, Rocket, Search, Sparkles } from "lucide-react";
+import { AlertTriangle, Boxes, Database, Globe, HardDrive, Loader2, Rocket, Search, Sparkles } from "lucide-react";
 import { type Control, Controller, type UseFormSetValue, useForm } from "react-hook-form";
 import { type ProjectEnvEntity } from "~/projects/domain";
 import { ProjectEnvBadge } from "~/projects/module-shared/components";
@@ -58,6 +58,31 @@ function generateRandomPassword(length: number = 24): string {
     return Array.from(array, byte => chars[byte % chars.length]).join("");
 }
 
+/**
+ * Computes default domain for template parameters based on current window domain.
+ * - Current domain `abc.xyz.tuv` -> `<template-name>.xyz.tuv`
+ * - Current domain `tuv` -> `<template-name>.tuv`
+ */
+function getDefaultDomain(templateName: string): string {
+    if (typeof window === "undefined" || !window.location.hostname) {
+        return "";
+    }
+    let hostname = window.location.hostname.trim().toLowerCase();
+    if (hostname.includes(":")) {
+        hostname = hostname.split(":")[0] ?? "";
+    }
+    if (!hostname) {
+        return "";
+    }
+
+    const tName = templateName.trim().toLowerCase() || "app";
+    const segments = hostname.split(".");
+    if (segments.length > 1) {
+        return `${tName}.${segments.slice(1).join(".")}`;
+    }
+    return `${tName}.${hostname}`;
+}
+
 export function DeployTemplateForm({
     template,
     projectId,
@@ -73,10 +98,10 @@ export function DeployTemplateForm({
 }: DeployTemplateFormProps) {
     // 1. Initial defaults calculation
     const defaultEnv = useMemo(() => {
-        if (initialEnv && envs.some(e => e.name === initialEnv)) {
+        if (initialEnv && envs.some((e: ProjectEnvEntity) => e.name === initialEnv)) {
             return initialEnv;
         }
-        return envs[0]?.name ?? "production";
+        return envs[0]?.name ?? "";
     }, [envs, initialEnv]);
 
     const { versions } = template;
@@ -95,7 +120,7 @@ export function DeployTemplateForm({
         return variants.find((v: AppTemplateVariant) => v.default)?.name ?? variants[0]?.name ?? "";
     }, [variants, initialVariant]);
 
-    // Initial parameter values
+    // Initial parameter values (domain is left empty by default)
     const defaultParams = useMemo(() => {
         const result: Record<string, unknown> = {};
         const firstVol = clusterVolumes[0];
@@ -138,7 +163,7 @@ export function DeployTemplateForm({
     // 2. React Hook Form Setup
     const { control, handleSubmit, watch, setValue } = useForm<FormState>({
         defaultValues: {
-            name: template.name ? `${template.name}-app` : "",
+            name: template.name,
             env: defaultEnv,
             version: defaultVersion,
             variant: defaultVariant,
@@ -157,13 +182,52 @@ export function DeployTemplateForm({
     const [scannedTags, setScannedTags] = useState<AppTemplateImageTag[]>([]);
     const [isFetchingTags, setIsFetchingTags] = useState<boolean>(false);
 
+    // Clear scanned tags whenever variant changes, and reset version if it was a custom scanned tag
+    const prevVariantRef = useRef<string | undefined>(selectedVariant);
+    useEffect(() => {
+        if (prevVariantRef.current !== undefined && prevVariantRef.current !== selectedVariant) {
+            setScannedTags([]);
+            const isOfficial = versions.some((v: AppTemplateVersionSummary) => v.name === selectedVersion);
+            if (!isOfficial) {
+                const fallbackVer =
+                    versions.find(
+                        (v: AppTemplateVersionSummary) =>
+                            (v.variants.length === 0 || v.variants.includes(selectedVariant)) && v.default,
+                    )?.name ??
+                    versions.find(
+                        (v: AppTemplateVersionSummary) =>
+                            v.variants.length === 0 || v.variants.includes(selectedVariant),
+                    )?.name ??
+                    versions.find((v: AppTemplateVersionSummary) => v.default)?.name ??
+                    versions[0]?.name ??
+                    "";
+                setValue("version", fallbackVer);
+                setValue("imageOverride", "");
+            }
+        }
+        prevVariantRef.current = selectedVariant;
+    }, [selectedVariant, versions, selectedVersion, setValue]);
+
     const handleFetchMoreTags = async () => {
         if (isFetchingTags) return;
         setIsFetchingTags(true);
         try {
+            const officialVer = versions.some((v: AppTemplateVersionSummary) => v.name === selectedVersion)
+                ? selectedVersion
+                : (versions.find(
+                      (v: AppTemplateVersionSummary) =>
+                          (v.variants.length === 0 || v.variants.includes(selectedVariant)) && v.default,
+                  )?.name ??
+                  versions.find(
+                      (v: AppTemplateVersionSummary) => v.variants.length === 0 || v.variants.includes(selectedVariant),
+                  )?.name ??
+                  versions.find((v: AppTemplateVersionSummary) => v.default)?.name ??
+                  versions[0]?.name ??
+                  "");
+
             const data = await appTemplatesApi.getImageTags({
                 templateName: template.name,
-                version: selectedVersion,
+                version: officialVer,
                 variant: selectedVariant,
             });
             setScannedTags(data.tags);
@@ -240,7 +304,7 @@ export function DeployTemplateForm({
             }}
             className="flex flex-col h-full overflow-hidden"
         >
-            <DialogBody className="space-y-6 px-6 py-5 overflow-y-auto">
+            <DialogBody className="space-y-6 px-3.5 py-5 overflow-y-auto">
                 {/* ========================================================================= */}
                 {/* SECTION 1: APPLICATION BASICS & VERSION / VARIANT SELECTION               */}
                 {/* ========================================================================= */}
@@ -348,7 +412,35 @@ export function DeployTemplateForm({
                                                     type="button"
                                                     disabled={!isAvailable || readOnly || isPending}
                                                     onClick={() => {
-                                                        field.onChange(v.name);
+                                                        if (field.value !== v.name) {
+                                                            field.onChange(v.name);
+                                                            setScannedTags([]);
+                                                            const isOfficial = versions.some(
+                                                                (ver: AppTemplateVersionSummary) =>
+                                                                    ver.name === selectedVersion,
+                                                            );
+                                                            if (!isOfficial) {
+                                                                const fallbackVer =
+                                                                    versions.find(
+                                                                        (ver: AppTemplateVersionSummary) =>
+                                                                            (ver.variants.length === 0 ||
+                                                                                ver.variants.includes(v.name)) &&
+                                                                            ver.default,
+                                                                    )?.name ??
+                                                                    versions.find(
+                                                                        (ver: AppTemplateVersionSummary) =>
+                                                                            ver.variants.length === 0 ||
+                                                                            ver.variants.includes(v.name),
+                                                                    )?.name ??
+                                                                    versions.find(
+                                                                        (ver: AppTemplateVersionSummary) => ver.default,
+                                                                    )?.name ??
+                                                                    versions[0]?.name ??
+                                                                    "";
+                                                                setValue("version", fallbackVer);
+                                                                setValue("imageOverride", "");
+                                                            }
+                                                        }
                                                     }}
                                                     className={cn(
                                                         "relative inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all",
@@ -540,6 +632,7 @@ export function DeployTemplateForm({
                             <ParameterRow
                                 key={param.name}
                                 param={param}
+                                templateName={template.name}
                                 control={control}
                                 setValue={setValue}
                                 clusterVolumes={clusterVolumes}
@@ -646,7 +739,7 @@ export function DeployTemplateForm({
             </DialogBody>
 
             {/* Fixed Action Footer */}
-            <div className="shrink-0 border-t border-border/50 bg-background/95 px-6 py-3.5 flex items-center justify-between">
+            <div className="shrink-0 border-t border-border/50 bg-background/95 px-3.5 py-3.5 flex items-center justify-between">
                 <Button
                     type="button"
                     variant="outline"
@@ -686,13 +779,14 @@ export function DeployTemplateForm({
 // =========================================================================
 interface ParameterRowProps {
     param: AppTemplateParam;
+    templateName: string;
     control: Control<FormState>;
     setValue: UseFormSetValue<FormState>;
     clusterVolumes: { id: string; name: string }[];
     readOnly?: boolean;
 }
 
-function ParameterRow({ param, control, setValue, clusterVolumes, readOnly }: ParameterRowProps) {
+function ParameterRow({ param, templateName, control, setValue, clusterVolumes, readOnly }: ParameterRowProps) {
     const isRequired = !param.optional;
 
     return (
@@ -913,6 +1007,41 @@ function ParameterRow({ param, control, setValue, clusterVolumes, readOnly }: Pa
                                 />
                             )}
 
+                            {/* Type: Domain */}
+                            {(param.type === "domain" || param.name.toLowerCase() === "domain") && (
+                                <div className="flex items-center gap-2 w-full">
+                                    <div className="flex-1 min-w-0">
+                                        <Input
+                                            value={typeof field.value === "string" ? field.value : ""}
+                                            onChange={field.onChange}
+                                            placeholder="e.g. app.example.com"
+                                            disabled={readOnly}
+                                            className="h-9 text-xs w-full"
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        title="Suggest domain based on current hostname"
+                                        disabled={readOnly}
+                                        onClick={() => {
+                                            const suggested = getDefaultDomain(templateName);
+                                            if (suggested) {
+                                                setValue(`params.${param.name}`, suggested, {
+                                                    shouldValidate: true,
+                                                    shouldDirty: true,
+                                                });
+                                            }
+                                        }}
+                                        className="h-9 px-3 text-xs font-medium border-border/80 hover:bg-muted/80 text-muted-foreground hover:text-foreground shrink-0"
+                                    >
+                                        <Globe className="size-3.5 mr-1 text-emerald-500" />
+                                        Suggest Domain
+                                    </Button>
+                                </div>
+                            )}
+
                             {/* Type: String or fallback */}
                             {param.type !== "secret" &&
                                 param.type !== "volume" &&
@@ -920,7 +1049,9 @@ function ParameterRow({ param, control, setValue, clusterVolumes, readOnly }: Pa
                                 param.type !== "size" &&
                                 param.type !== "bool" &&
                                 param.type !== "int" &&
-                                param.type !== "integer" && (
+                                param.type !== "integer" &&
+                                param.type !== "domain" &&
+                                param.name.toLowerCase() !== "domain" && (
                                     <Input
                                         value={typeof field.value === "string" ? field.value : ""}
                                         onChange={field.onChange}

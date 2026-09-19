@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 
 import { CircleHelp, Plus } from "lucide-react";
+import { useNavigate } from "react-router";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
 import { useCreateProjectAppDialog } from "~/projects/dialogs/create-project-app";
 import type { ProjectEnvEntity } from "~/projects/domain";
@@ -14,7 +15,7 @@ import {
 } from "~/projects/module-shared/hooks";
 
 import { TableActions } from "@application/shared/components";
-import { DEFAULT_PAGINATED_DATA, MODULE_IDS } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useTableState } from "@application/shared/hooks/table";
 import { PermissionTooltipAction, useConditionalModule } from "@application/shared/permissions";
 
@@ -31,6 +32,7 @@ function getScopeTooltip(selectedEnv: string): string {
 }
 
 export function ProjectAppsTable({ projectId }: Props) {
+    const navigate = useNavigate();
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
     const selectedEnv = useSelectedProjectEnv(projectId);
     const env = getProjectEnvFilterParam(selectedEnv);
@@ -64,6 +66,18 @@ export function ProjectAppsTable({ projectId }: Props) {
     const isProjectActive = project?.status === EProjectStatus.Active;
     const isAddButtonDisabled = !isProjectActive || !canWrite;
 
+    const newFromTemplateButton = (
+        <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+                void navigate(ROUTE.projects.single.appTemplates.$route(projectId));
+            }}
+        >
+            <Plus /> New From Template
+        </Button>
+    );
+
     const addNewAppButton = (
         <Button
             disabled={isAddButtonDisabled}
@@ -79,7 +93,7 @@ export function ProjectAppsTable({ projectId }: Props) {
         </Button>
     );
 
-    const renderActions = !canWrite ? (
+    const renderAddButton = !canWrite ? (
         <PermissionTooltipAction
             id={MODULE_IDS.Project}
             action="write"
@@ -95,6 +109,13 @@ export function ProjectAppsTable({ projectId }: Props) {
         </Tooltip>
     ) : (
         addNewAppButton
+    );
+
+    const renderActions = (
+        <>
+            {newFromTemplateButton}
+            {renderAddButton}
+        </>
     );
 
     return (

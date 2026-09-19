@@ -7,6 +7,7 @@ import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ESslCertType, ESslKeyType } from "@application/shared/enums";
 
 import {
+    Checkbox,
     Field,
     FieldError,
     Input,
@@ -76,6 +77,10 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
         fieldState: { invalid: isKeyTypeInvalid },
     } = useController({
         name: "certSettings.keyType",
+        control,
+    });
+    const { field: autoObtain } = useController({
+        name: "certSettings.autoObtain",
         control,
     });
 
@@ -186,6 +191,27 @@ export function CertificateConfigurationFields({ readOnly = false }: Props) {
                         </SelectContent>
                     </Select>
                     <FieldError errors={[errors.certSettings?.keyType]} />
+                </Field>
+            </InfoBlock>
+
+            <InfoBlock
+                titleWidth={220}
+                title={
+                    <LabelWithInfo
+                        label="Automatic Certificates"
+                        content="Get a certificate for a domain nothing already covers, instead of serving the app over plain HTTP until one is created by hand. Local names and addresses are skipped: no authority issues for them."
+                    />
+                }
+            >
+                <Field>
+                    <Checkbox
+                        checked={autoObtain.value}
+                        onCheckedChange={checked => {
+                            autoObtain.onChange(checked === true);
+                        }}
+                        disabled={readOnly}
+                    />
+                    <FieldError errors={[errors.certSettings?.autoObtain]} />
                 </Field>
             </InfoBlock>
         </div>

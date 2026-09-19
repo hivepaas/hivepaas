@@ -74,6 +74,7 @@ export function ProjectDomainSettingsRoute() {
                     email: values.certSettings.email,
                     validPeriod: settings.certSettings?.validPeriod,
                     autoRenew: settings.certSettings?.autoRenew,
+                    autoObtain: values.certSettings.autoObtain,
                 },
             },
         });

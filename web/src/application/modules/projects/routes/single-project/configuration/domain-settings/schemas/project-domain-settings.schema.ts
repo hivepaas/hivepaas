@@ -41,6 +41,7 @@ export const ProjectDomainSettingsFormSchema = z.object({
         certType: CertTypeSchema,
         email: z.string().transform(value => value.trim()),
         keyType: KeyTypeSchema,
+        autoObtain: z.boolean(),
     }),
 });
 
@@ -53,5 +54,6 @@ export const emptyProjectDomainSettingsFormDefaults: ProjectDomainSettingsFormSc
         certType: ESslCertType.LetsEncrypt,
         email: "",
         keyType: ESslKeyType.ECP256,
+        autoObtain: true,
     },
 };

@@ -9,6 +9,8 @@ export interface DomainCertSettings {
     validPeriod?: string;
     email: string;
     autoRenew?: boolean;
+    /** Get a certificate automatically for a domain nothing already covers. */
+    autoObtain?: boolean;
 }
 
 export interface SettingDomainSettings extends SettingsBaseEntity {

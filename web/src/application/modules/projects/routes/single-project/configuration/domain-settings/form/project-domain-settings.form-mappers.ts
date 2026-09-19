@@ -13,6 +13,7 @@ export function mapProjectDomainSettingsToFormInput(data: ProjectDomainSettings)
             keyType: data.certSettings
                 ? (data.certSettings.keyType ?? ProjectDomainSettingsKeyTypeUnspecified)
                 : ESslKeyType.ECP256,
+            autoObtain: data.certSettings?.autoObtain ?? false,
         },
     };
 }

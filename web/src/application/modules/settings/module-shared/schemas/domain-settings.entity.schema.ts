@@ -13,6 +13,7 @@ const DomainCertSettingsSchema = z.object({
     validPeriod: z.string().optional(),
     email: z.string(),
     autoRenew: z.boolean().optional(),
+    autoObtain: z.boolean().optional(),
 });
 
 export const DomainSettingsEntitySchema = SettingsBaseEntitySchema.omit({ description: true }).extend({

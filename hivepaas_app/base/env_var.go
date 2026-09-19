@@ -49,6 +49,12 @@ const (
 	AppSystemEnvVarHost   = "HIVEPAAS_HOST"
 	AppSystemEnvVarPort   = "HIVEPAAS_PORT"
 	AppSystemEnvVarDomain = "HIVEPAAS_DOMAIN"
+	// AppSystemEnvVarAppURL is where the app answers from outside - scheme and
+	// domain - and is empty while it has no domain. An app that has to be told
+	// its own address usually wants this rather than the domain alone, and the
+	// empty value is what such a setting expects when there is nothing to tell
+	// it: many of them refuse to start on a scheme with no host after it.
+	AppSystemEnvVarAppURL = "HIVEPAAS_APP_URL"
 	AppSystemEnvVarEnv    = "HIVEPAAS_ENV"
 	AppSystemEnvVarName   = "HIVEPAAS_APP_NAME"
 	AppSystemEnvVarID     = "HIVEPAAS_APP_ID"
@@ -67,7 +73,7 @@ const (
 
 // AppCommonSharedEnvVars are shared by every app, whatever its kind.
 var AppCommonSharedEnvVars = []string{
-	AppSystemEnvVarHost, AppSystemEnvVarPort, AppSystemEnvVarDomain,
+	AppSystemEnvVarHost, AppSystemEnvVarPort, AppSystemEnvVarDomain, AppSystemEnvVarAppURL,
 	AppSystemEnvVarEnv, AppSystemEnvVarName, AppSystemEnvVarID,
 }
 
@@ -95,6 +101,7 @@ var (
 			AppSystemEnvVarHost:         {},
 			AppSystemEnvVarPort:         {},
 			AppSystemEnvVarDomain:       {},
+			AppSystemEnvVarAppURL:       {},
 			AppSystemEnvVarEnv:          {},
 			AppSystemEnvVarName:         {},
 			AppSystemEnvVarID:           {},

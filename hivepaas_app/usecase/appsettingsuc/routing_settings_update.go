@@ -147,23 +147,19 @@ func (uc *UC) loadAppRoutingSettingsForUpdate(
 	}
 
 	// Detect some changes
+	// The app's address as a whole, not the name alone: HIVEPAAS_APP_URL carries
+	// the scheme as well, so turning HTTPS on for a domain that keeps its name
+	// changes what the app has to be told about itself.
 	var oldPort, newPort int
-	var oldDomain, newDomain string
+	var oldURL string
 	if data.RoutingSetting != nil {
 		oldRoutingSettings := data.RoutingSetting.MustAsAppRoutingSettings()
 		oldPort = oldRoutingSettings.Port
-		if oldRoutingSettings.ExposePublicly && len(oldRoutingSettings.Domains) > 0 &&
-			oldRoutingSettings.Domains[0].Enabled {
-			oldDomain = oldRoutingSettings.Domains[0].Domain
-		}
+		oldURL = oldRoutingSettings.GetAppURL()
 	}
 	newPort = newRoutingSettings.Port
-	if newRoutingSettings.ExposePublicly && len(newRoutingSettings.Domains) > 0 &&
-		newRoutingSettings.Domains[0].Enabled {
-		newDomain = newRoutingSettings.Domains[0].Domain
-	}
 	data.PortChanged = oldPort != newPort
-	data.DomainChanged = oldDomain != newDomain
+	data.DomainChanged = oldURL != newRoutingSettings.GetAppURL()
 
 	return nil
 }

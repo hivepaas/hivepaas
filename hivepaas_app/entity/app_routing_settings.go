@@ -190,6 +190,28 @@ func (s *AppRoutingSettings) GetActiveDomains() (res []*AppDomain) {
 	return res
 }
 
+// GetAppURL is where the app answers from outside: the first address it is
+// routed at, with the scheme it is served over. It is empty while the app has
+// no domain, which is not the same as an address with nothing in it - an app
+// told "https://" refuses to start, and an app told nothing serves whoever
+// reaches it.
+//
+// TLS decides the scheme. A domain with a certificate is served over it, one
+// that forces HTTPS redirects to it, and one that passes TLS through is not
+// terminated here at all; anything else is answered over plain HTTP.
+func (s *AppRoutingSettings) GetAppURL() string {
+	domains := s.GetActiveDomains()
+	if len(domains) == 0 {
+		return ""
+	}
+	domain := domains[0]
+	scheme := "http"
+	if domain.ForceHttps || domain.TLSPassthrough || domain.SSLCert.ID != "" {
+		scheme = "https"
+	}
+	return scheme + "://" + domain.Domain
+}
+
 func (s *AppRoutingSettings) GetActiveDomainNames() (res []string) {
 	activeDomains := s.GetActiveDomains()
 	res = make([]string, 0, len(activeDomains))

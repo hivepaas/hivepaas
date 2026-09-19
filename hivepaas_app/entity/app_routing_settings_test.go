@@ -30,3 +30,44 @@ func TestActivePortsOfAnAppWithNoDomains(t *testing.T) {
 
 	assert.Equal(t, []int{5432}, settings.GetActivePorts())
 }
+
+// An app that has to be told its own address gets one only when it has a
+// domain: what an app with none needs to be told is nothing at all.
+func TestAppURLIsTheFirstAddressWithTheSchemeItIsServedOver(t *testing.T) {
+	cases := map[string]struct {
+		settings *AppRoutingSettings
+		want     string
+	}{
+		"no routing at all": {nil, ""},
+		"not exposed": {&AppRoutingSettings{
+			Domains: []*AppDomain{{Domain: "app.example.com", Enabled: true, ForceHttps: true}},
+		}, ""},
+		"exposed with no domain": {&AppRoutingSettings{ExposePublicly: true}, ""},
+		"a domain that is not enabled": {&AppRoutingSettings{ExposePublicly: true,
+			Domains: []*AppDomain{{Domain: "app.example.com"}},
+		}, ""},
+		"plain http": {&AppRoutingSettings{ExposePublicly: true,
+			Domains: []*AppDomain{{Domain: "app.example.com", Enabled: true}},
+		}, "http://app.example.com"},
+		"forced https": {&AppRoutingSettings{ExposePublicly: true,
+			Domains: []*AppDomain{{Domain: "app.example.com", Enabled: true, ForceHttps: true}},
+		}, "https://app.example.com"},
+		"a certificate of its own": {&AppRoutingSettings{ExposePublicly: true,
+			Domains: []*AppDomain{{Domain: "app.example.com", Enabled: true, SSLCert: ObjectID{ID: "cert-1"}}},
+		}, "https://app.example.com"},
+		"tls passed through": {&AppRoutingSettings{ExposePublicly: true,
+			Domains: []*AppDomain{{Domain: "app.example.com", Enabled: true, TLSPassthrough: true}},
+		}, "https://app.example.com"},
+		"the first of several": {&AppRoutingSettings{ExposePublicly: true,
+			Domains: []*AppDomain{
+				{Domain: "first.example.com", Enabled: true, ForceHttps: true},
+				{Domain: "second.example.com", Enabled: true},
+			},
+		}, "https://first.example.com"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.want, tc.settings.GetAppURL())
+		})
+	}
+}

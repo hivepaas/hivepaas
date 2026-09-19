@@ -39,11 +39,13 @@ func (s *service) BuildSystemEnvVarsInApp(
 
 	portStr := ""
 	activeDomain := ""
+	appURL := ""
 	if routingSettings != nil {
 		if routingSettings.Port > 0 {
 			portStr = strconv.Itoa(routingSettings.Port)
 		}
 		activeDomain = gofn.FirstOr(routingSettings.GetActiveDomainNames(), "")
+		appURL = routingSettings.GetAppURL()
 	}
 
 	kindSetting := settinghelper.FindSettingByType(settings, base.SettingTypeAppKind)
@@ -71,6 +73,13 @@ func (s *service) BuildSystemEnvVarsInApp(
 			EnvVar: &entity.EnvVar{
 				Key:      base.AppSystemEnvVarDomain,
 				Value:    activeDomain,
+				IsShared: true,
+			},
+		},
+		{
+			EnvVar: &entity.EnvVar{
+				Key:      base.AppSystemEnvVarAppURL,
+				Value:    appURL,
 				IsShared: true,
 			},
 		},

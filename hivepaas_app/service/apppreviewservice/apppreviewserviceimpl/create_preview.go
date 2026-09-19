@@ -19,7 +19,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
 type createPreviewData struct {
@@ -96,12 +95,10 @@ func (s *service) CreatePreview(
 	cloneTask.MustSetArgs(&entity.TaskAppCloneArgs{SrcApp: entity.ObjectID{ID: data.App.ID}})
 
 	cloneResp, err = s.appCloneService.CloneApp(ctx, db, &appcloneservice.AppCloneReq{
-		TaskExecData: &queue.TaskExecData{
-			Task:       cloneTask,
-			RefObjects: data.RefObjects,
-			LogStore:   data.LogStore,
-		},
-		SrcApp: data.App,
+		// The clone is logged against a task of its own, inside this one: the
+		// transaction, and its end, stay the preview's.
+		TaskExecData: data.SubTask(cloneTask),
+		SrcApp:       data.App,
 		OnCloneApp: func(targetApp, srcApp *entity.App) error {
 			data.PreviewApp = targetApp
 			return s.onCloneApp(targetApp, srcApp, data)
@@ -134,7 +131,7 @@ func (s *service) CreatePreview(
 	}
 
 	if s.taskQueue != nil && data.DeploymentTask != nil {
-		data.OnPostTransaction(func() { //nolint:contextcheck
+		data.OnPostTx(func() { //nolint:contextcheck
 			_ = s.taskQueue.ScheduleTask(context.Background(), data.DeploymentTask)
 		})
 	}

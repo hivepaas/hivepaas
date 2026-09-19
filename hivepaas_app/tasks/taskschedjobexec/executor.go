@@ -104,7 +104,7 @@ func (e *Executor) execute(
 		TaskExecData: task,
 		SchedJob:     task.Task.TargetJob,
 	}
-	data.OnPostTransaction(func() { e.onPostTransaction(context.Background(), data) }) //nolint:contextcheck
+	data.OnPostTx(func() { e.onPostTx(context.Background(), data) }) //nolint:contextcheck
 	e.initLogStore(data)
 
 	err = e.loadSchedJobData(ctx, db, data)
@@ -280,7 +280,7 @@ func (e *Executor) saveLogFramesToDB(
 	return nil
 }
 
-func (e *Executor) onPostTransaction(
+func (e *Executor) onPostTx(
 	ctx context.Context,
 	data *taskData,
 ) {

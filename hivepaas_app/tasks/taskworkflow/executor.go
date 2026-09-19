@@ -62,9 +62,7 @@ func (e *Executor) execute(
 		Args:     step.Args,
 	}
 
-	subTaskExecData := &queue.TaskExecData{
-		Task: subTask,
-	}
+	subTaskExecData := execData.SubTask(subTask)
 
 	// Execute the current step
 	err = e.taskQueue.ExecuteTaskType(ctx, db, step.Type, subTaskExecData)
@@ -83,7 +81,7 @@ func (e *Executor) execute(
 
 	// If there are remaining steps, re-enqueue workflow task for next step
 	if wfArgs.CurrentStep < len(wfArgs.Steps) {
-		execData.OnPostTransaction(func() { //nolint:contextcheck
+		execData.OnPostTx(func() { //nolint:contextcheck
 			_ = e.taskQueue.ScheduleTask(context.Background(), task)
 		})
 	}

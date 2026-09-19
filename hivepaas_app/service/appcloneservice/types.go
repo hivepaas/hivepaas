@@ -9,6 +9,11 @@ import (
 )
 
 type AppCloneReq struct {
+	// TaskExecData is the clone's own: the task it is logged against, and the
+	// callbacks that reach the end of the transaction it runs in. A caller that
+	// is a task passes its own; a caller doing this inside another task - a
+	// preview - passes queue.TaskExecData.SubTask, which names the clone without
+	// losing where the transaction ends.
 	*queue.TaskExecData
 
 	SrcApp *entity.App

@@ -14,7 +14,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/imagebuildservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecaseagent/imagebuildagentuc/imagebuildagentdto"
 )
 
@@ -36,11 +35,10 @@ func (s *service) repoDeployStepImageBuild(
 	defer s.addStepEndLog(ctx, data.appDeploymentData, timeutil.NowUTC(), err)
 
 	buildReq := &imagebuildservice.ImageBuildReq{
-		TaskExecData: &queue.TaskExecData{
-			Task:       data.Task,
-			RefObjects: data.RefObjects,
-			LogStore:   data.LogStore,
-		},
+		// The build is a step of this deployment rather than a task of its own, so
+		// it is given this task under its own exec data - which keeps whatever it
+		// registers reaching the deployment's transaction.
+		TaskExecData:       data.SubTask(data.Task),
 		App:                data.App,
 		CommitHash:         repoSource.CommitHash,
 		Dockerfile:         repoSource.Dockerfile,

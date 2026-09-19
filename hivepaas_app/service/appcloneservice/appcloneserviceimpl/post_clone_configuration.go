@@ -35,14 +35,14 @@ func (s *service) applyClonedConfiguration(
 //
 // The tasks' rows are written in the transaction this clone runs in, and a task
 // can be claimed only once its row is there - so they are queued from the hook
-// that runs after it commits. Without one - a clone driven from something other
-// than a task - they are left to the queue's own scan, which is later rather
-// than never.
+// that runs after it commits. A clone driven from something that is not a task
+// has no such hook, and leaves them to the queue's own scan, which is later
+// rather than never.
 func (s *service) scheduleCertTasks(data *appCloneData, tasks []*entity.Task) {
 	if s.taskQueue == nil || len(tasks) == 0 || data.TaskExecData == nil {
 		return
 	}
-	data.OnPostTransaction(func() {
+	data.OnPostTx(func() {
 		_ = s.taskQueue.ScheduleTask(context.Background(), tasks...)
 	})
 }

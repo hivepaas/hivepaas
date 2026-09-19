@@ -17,7 +17,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
 type cloneDBAppData struct {
@@ -126,12 +125,9 @@ func (s *service) cloneDBApp(
 	cloneTask.MustSetArgs(&entity.TaskAppCloneArgs{SrcApp: entity.ObjectID{ID: dbApp.ID}})
 
 	cloneResp, err = s.appCloneService.CloneApp(ctx, db, &appcloneservice.AppCloneReq{
-		TaskExecData: &queue.TaskExecData{
-			Task:       cloneTask,
-			RefObjects: data.RefObjects,
-			LogStore:   data.LogStore,
-		},
-		SrcApp: dbApp,
+		// A task of its own inside the preview's, as in createPreview.
+		TaskExecData: data.SubTask(cloneTask),
+		SrcApp:       dbApp,
 		OnCloneApp: func(targetApp, srcApp *entity.App) error {
 			return s.onCloneDBApp(targetApp, srcApp, data)
 		},

@@ -23,9 +23,38 @@ type TaskExecData struct {
 	CancelFunc        context.CancelFunc
 
 	// Callback functions
-	OnCommandFunc         func(base.TaskCommand, ...any)
-	OnEndTransactionFunc  func()
-	OnPostTransactionFunc func()
+	OnCommandFunc func(base.TaskCommand, ...any)
+	OnEndTxFunc   func()
+	OnPostTxFunc  func()
+
+	// owner is the task whose transaction this one runs inside, when this data
+	// belongs to work that is a task of its own but not a task of the queue's: a
+	// workflow step, or the clone a preview makes. Only the queue calls these
+	// callbacks, and only on the data it created, so a callback registered on
+	// such a child has to reach the owner or it is never called at all. See
+	// SubTask, which is the only way to set this.
+	owner *TaskExecData
+}
+
+// SubTask is exec data for work that is a task of its own but runs inside this
+// one: a workflow step, the clone a preview makes, the image build inside a
+// deployment. It carries this task's references and log store, and anything
+// registered on it through OnCommand, OnEndTx or OnPostTx is
+// registered on this task - because the transaction, and its end, are this
+// task's, and nothing else will ever call the child's.
+//
+// Build child exec data with this rather than with a literal. A literal's
+// callbacks go nowhere, and say nothing about it.
+func (t *TaskExecData) SubTask(task *entity.Task) *TaskExecData {
+	if t == nil {
+		return &TaskExecData{Task: task}
+	}
+	return &TaskExecData{
+		Task:       task,
+		RefObjects: t.RefObjects,
+		LogStore:   t.LogStore,
+		owner:      t,
+	}
 }
 
 func (t *TaskExecData) IsTaskCanceled() bool {
@@ -45,6 +74,10 @@ func (t *TaskExecData) AddRefObjects(refObjects *entity.RefObjects) {
 }
 
 func (t *TaskExecData) OnCommand(fn func(base.TaskCommand, ...any)) {
+	if t.owner != nil {
+		t.owner.OnCommand(fn)
+		return
+	}
 	if t.OnCommandFunc == nil {
 		t.OnCommandFunc = fn
 		return
@@ -56,25 +89,39 @@ func (t *TaskExecData) OnCommand(fn func(base.TaskCommand, ...any)) {
 	}
 }
 
-func (t *TaskExecData) OnEndTransaction(fn func()) {
-	if t.OnEndTransactionFunc == nil {
-		t.OnEndTransactionFunc = fn
+func (t *TaskExecData) OnEndTx(fn func()) {
+	if t.owner != nil {
+		t.owner.OnEndTx(fn)
 		return
 	}
-	currFunc := t.OnEndTransactionFunc
-	t.OnEndTransactionFunc = func() {
+	if fn == nil {
+		return
+	}
+	if t.OnEndTxFunc == nil {
+		t.OnEndTxFunc = fn
+		return
+	}
+	currFunc := t.OnEndTxFunc
+	t.OnEndTxFunc = func() {
 		currFunc()
 		fn()
 	}
 }
 
-func (t *TaskExecData) OnPostTransaction(fn func()) {
-	if t.OnPostTransactionFunc == nil {
-		t.OnPostTransactionFunc = fn
+func (t *TaskExecData) OnPostTx(fn func()) {
+	if t.owner != nil {
+		t.owner.OnPostTx(fn)
 		return
 	}
-	currFunc := t.OnPostTransactionFunc
-	t.OnPostTransactionFunc = func() {
+	if fn == nil {
+		return
+	}
+	if t.OnPostTxFunc == nil {
+		t.OnPostTxFunc = fn
+		return
+	}
+	currFunc := t.OnPostTxFunc
+	t.OnPostTxFunc = func() {
 		currFunc()
 		fn()
 	}

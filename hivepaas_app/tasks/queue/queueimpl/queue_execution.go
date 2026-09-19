@@ -136,8 +136,8 @@ func (q *taskQueue) executeTask(
 				task.Status = gofn.If(taskData.TaskCanceled, base.TaskStatusCanceled, base.TaskStatusDone)
 			}
 			// Post execution event
-			if taskData.OnEndTransactionFunc != nil {
-				taskData.OnEndTransactionFunc()
+			if taskData.OnEndTxFunc != nil {
+				taskData.OnEndTxFunc()
 			}
 			// Remove canceled status from context
 			ctx = context.WithoutCancel(ctx)
@@ -156,8 +156,8 @@ func (q *taskQueue) executeTask(
 	}
 
 	// Post transaction event
-	if taskData != nil && taskData.OnPostTransactionFunc != nil {
-		taskData.OnPostTransactionFunc()
+	if taskData != nil && taskData.OnPostTxFunc != nil {
+		taskData.OnPostTxFunc()
 	}
 
 	return rescheduleAt

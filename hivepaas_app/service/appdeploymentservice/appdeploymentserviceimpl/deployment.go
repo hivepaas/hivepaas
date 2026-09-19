@@ -43,7 +43,7 @@ func (s *service) Deploy(
 	data := &appDeploymentData{
 		AppDeploymentReq: req,
 	}
-	data.OnPostTransaction(func() { s.onPostTransaction(context.Background(), data) }) //nolint:contextcheck
+	data.OnPostTx(func() { s.onPostTx(context.Background(), data) }) //nolint:contextcheck
 	s.initLogStore(data)
 
 	err = s.loadDeploymentData(ctx, db, data)
@@ -240,7 +240,7 @@ func (s *service) addStepEndLog(
 	}
 }
 
-func (s *service) onPostTransaction(
+func (s *service) onPostTx(
 	ctx context.Context,
 	data *appDeploymentData,
 ) {
@@ -248,7 +248,7 @@ func (s *service) onPostTransaction(
 	defer func() {
 		_ = s.saveLogs(ctx, db, data, false)
 	}()
-	defer safego.Recover("appdeployment.onPostTransaction")
+	defer safego.Recover("appdeployment.onPostTx")
 
 	if data.Task.IsDone() || data.Task.IsFailedCompletely() {
 		if err := s.notifyForDeployment(ctx, db, data); err != nil {

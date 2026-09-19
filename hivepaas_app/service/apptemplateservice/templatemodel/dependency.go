@@ -8,9 +8,16 @@ import (
 )
 
 // MaxDependencies caps what one template creates besides its own app. One
-// database is the common case, a database and a cache the next; the cap is what
-// lets a creation dialog show everything a request is about to create.
-const MaxDependencies = 3
+// database is the common case, a database and a cache the next, and an app that
+// converts documents needs those plus the two services that do the converting -
+// which is where this number comes from. It stays small because every
+// dependency is a whole app, with its own container, volume and deployment, and
+// because a creation dialog has to show everything a request is about to make.
+//
+// What keeps this from becoming a fan-out is not the number but the rule beside
+// it: a template used as a dependency may not have dependencies of its own, so
+// what a request creates is this list and nothing further.
+const MaxDependencies = 5
 
 // dependencyNamePattern is narrower than a parameter name. The name becomes the
 // suffix of an app name, and that app's key is what environment references use,

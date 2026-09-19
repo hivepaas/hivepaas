@@ -28,10 +28,10 @@ func TestValidateRefusesABadDependency(t *testing.T) {
 		want   string
 	}{
 		"too many": {func(tm *Template) {
-			for _, name := range []string{"cache", "search", "queue"} {
+			for _, name := range []string{"cache", "search", "queue", "convert", "extract"} {
 				tm.Dependencies = append(tm.Dependencies, &Dependency{Name: name, Title: name, Template: "redis"})
 			}
-		}, "at most 3"},
+		}, "at most 5"},
 		"uppercase name": {func(tm *Template) { tm.Dependencies[0].Name = "DB" }, "lowercase letters and digits"},
 		"dashed name":    {func(tm *Template) { tm.Dependencies[0].Name = "my-db" }, "lowercase letters and digits"},
 		"no title":       {func(tm *Template) { tm.Dependencies[0].Title = "" }, "title is required"},

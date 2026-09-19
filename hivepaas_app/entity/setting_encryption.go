@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/tiendc/gofn"
@@ -32,9 +33,37 @@ func (s *EncryptedField) MarshalJSON() (res []byte, err error) {
 	return reflectutil.UnsafeStrToBytes(gofn.StringWrap(encrypted, "\"")), nil
 }
 
+// UnmarshalJSON reads the field as JSON text rather than as the bytes between
+// the quotes.
+//
+// The difference only shows on a value that carries an escape: a ciphertext has
+// none, but a plaintext one does the moment it holds a newline, a quote or a
+// backslash - a configuration file delivered as a secret, a PEM key pasted into
+// a request. Stripping the quotes and keeping the rest left "\n" in the value as
+// two characters, and what reached the container was one long line.
 func (s *EncryptedField) UnmarshalJSON(data []byte) error {
-	s.Set(gofn.StringUnwrap(reflectutil.UnsafeBytesToStr(data), "\""))
+	text := strings.TrimSpace(reflectutil.UnsafeBytesToStr(data))
+	if text == "" || text == "null" {
+		s.Set("")
+		return nil
+	}
+	if value, isText := jsonString(data); isText {
+		s.Set(value)
+		return nil
+	}
+	// Not JSON text - a number, a bare token - which is not something this field
+	// is ever given. Keep what the old reader did rather than lose the value.
+	s.Set(gofn.StringUnwrap(text, "\""))
 	return nil
+}
+
+// jsonString reports whether data is JSON text, and what it says.
+func jsonString(data []byte) (string, bool) {
+	var value string
+	if err := json.Unmarshal(data, &value); err != nil {
+		return "", false
+	}
+	return value, true
 }
 
 func (s *EncryptedField) String() string {

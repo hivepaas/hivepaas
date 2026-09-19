@@ -139,3 +139,41 @@ func TestEncryptedFieldAcceptsValuesNearThePlaceholder(t *testing.T) {
 		assert.NoError(t, err, "value %q is a real secret, not the placeholder", value)
 	}
 }
+
+// A secret is not always a password. A configuration file delivered as one, or a
+// PEM key, carries newlines - and what reaches the container has to carry them
+// too.
+func TestEncryptedFieldReadsTextWithEscapesInIt(t *testing.T) {
+	cases := map[string]struct {
+		body string
+		want string
+	}{
+		"a password":     {`"hunter2"`, "hunter2"},
+		"lines":          {`"[options]\nadmin_passwd = x\n"`, "[options]\nadmin_passwd = x\n"},
+		"a quote":        {`"say \"hello\""`, `say "hello"`},
+		"a backslash":    {`"C:\\path"`, `C:\path`},
+		"a tab":          {`"a\tb"`, "a\tb"},
+		"empty":          {`""`, ""},
+		"null":           {`null`, ""},
+		"unicode escape": {`"caf\u00e9"`, "café"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			field := &EncryptedField{}
+			assert.NoError(t, json.Unmarshal([]byte(tc.body), field))
+			plain, err := field.GetPlain()
+			assert.NoError(t, err)
+			assert.Equal(t, tc.want, plain)
+		})
+	}
+}
+
+// A value that is already encrypted stays encrypted: it is read back as it was
+// stored rather than as something to encrypt again.
+func TestEncryptedFieldKeepsCiphertextAsCiphertext(t *testing.T) {
+	field := &EncryptedField{}
+
+	assert.NoError(t, json.Unmarshal([]byte(`"hpenc:abc123"`), field))
+
+	assert.True(t, field.IsEncrypted())
+}

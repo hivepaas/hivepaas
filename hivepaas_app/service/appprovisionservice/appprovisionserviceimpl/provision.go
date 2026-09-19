@@ -108,6 +108,7 @@ func (s *service) ProvisionApp(
 	applied, err := s.ApplyAppConfiguration(ctx, db, &appprovisionservice.ApplyAppConfigurationReq{App: app})
 	if applied != nil {
 		resp.Created.Configs, resp.Created.Secrets = applied.Configs, applied.Secrets
+		resp.CertTasks = applied.CertTasks
 	}
 	if err != nil {
 		return resp, hperrors.Wrap(err)

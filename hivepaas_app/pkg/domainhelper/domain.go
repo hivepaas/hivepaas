@@ -36,3 +36,26 @@ func IsDomainAllowed(domain string, allowedList []string) bool {
 	}
 	return false
 }
+
+// IsDomainCoveredByCert reports whether a certificate issued for certDomain can
+// be served for domain.
+//
+// A wildcard stands for exactly one label, which is the rule TLS clients apply:
+// *.example.com is the certificate for app.example.com, and neither for
+// example.com itself nor for one.more.example.com.
+func IsDomainCoveredByCert(domain, certDomain string) bool {
+	domain = strings.ToLower(strings.TrimSpace(domain))
+	certDomain = strings.ToLower(strings.TrimSpace(certDomain))
+	if domain == "" || certDomain == "" {
+		return false
+	}
+	if certDomain == domain {
+		return true
+	}
+	parent, ok := strings.CutPrefix(certDomain, "*.")
+	if !ok {
+		return false
+	}
+	_, rest, found := strings.Cut(domain, ".")
+	return found && rest == parent
+}

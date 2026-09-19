@@ -32,6 +32,13 @@ type DomainCertSettings struct {
 	ValidPeriod timeutil.Duration `json:"validPeriod,omitempty"`
 	Email       string            `json:"email"`
 	AutoRenew   bool              `json:"autoRenew,omitempty"`
+
+	// AutoObtain asks HivePaaS to get a certificate for a domain nothing already
+	// covers, rather than leaving the app on plain HTTP until somebody creates one
+	// by hand. It is off where nothing can be obtained - an installation not
+	// reachable from the internet, or one whose domains are internal names - and
+	// an attempt there would only spend a certificate authority's patience.
+	AutoObtain bool `json:"autoObtain,omitempty"`
 }
 
 func (s *DomainSettings) GetType() base.SettingType {

@@ -55,6 +55,9 @@ type ProvisionAppResp struct {
 	// caller's to wait for.
 	Deployment     *entity.Deployment
 	DeploymentTask *entity.Task
+	// CertTasks obtain the certificates the app's domains have none for, and are
+	// unscheduled for the same reason.
+	CertTasks []*entity.Task
 	// Created is what provisioning made in docker, for a caller undoing it.
 	Created *CreatedInDocker
 }
@@ -100,4 +103,7 @@ type ApplyAppConfigurationResp struct {
 	// be mounted, which is a secret read through the environment.
 	Secrets []*entity.SwarmSecretRef
 	Configs []*entity.SwarmConfigRef
+	// CertTasks obtain the certificates the app's domains have none for. Like
+	// DeploymentTask they are created but not scheduled - see ProvisionAppResp.
+	CertTasks []*entity.Task
 }

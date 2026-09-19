@@ -51466,6 +51466,9 @@
       },
       "settings_domainsettingsdto.DomainCertSettingsReq" : {
         "properties" : {
+          "autoObtain" : {
+            "type" : "boolean"
+          },
           "autoRenew" : {
             "type" : "boolean"
           },
@@ -51482,11 +51485,14 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "autoRenew", "certType", "email", "keyType", "validPeriod" ],
+        "required" : [ "autoObtain", "autoRenew", "certType", "email", "keyType", "validPeriod" ],
         "type" : "object"
       },
       "settings_domainsettingsdto.DomainCertSettingsResp" : {
         "properties" : {
+          "autoObtain" : {
+            "type" : "boolean"
+          },
           "autoRenew" : {
             "type" : "boolean"
           },
@@ -51503,7 +51509,7 @@
             "$ref" : "#/components/schemas/timeutil.Duration"
           }
         },
-        "required" : [ "autoRenew", "certType", "email", "keyType", "validPeriod" ],
+        "required" : [ "autoObtain", "autoRenew", "certType", "email", "keyType", "validPeriod" ],
         "type" : "object"
       },
       "settings_domainsettingsdto.DomainSettingsResp" : {

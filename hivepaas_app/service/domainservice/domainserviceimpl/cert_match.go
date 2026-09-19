@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/domainhelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 )
 
@@ -58,24 +59,8 @@ func (s *service) FindCertsForDomains(
 
 // certCovers reports whether a certificate issued for certDomain can be served
 // for domain.
-//
-// A wildcard stands for exactly one label, which is the rule TLS clients apply:
-// *.example.com is the certificate for app.example.com, and neither for
-// example.com itself nor for one.more.example.com.
 func certCovers(certDomain, domain string) bool {
-	certDomain = strings.ToLower(strings.TrimSpace(certDomain))
-	if certDomain == "" {
-		return false
-	}
-	if certDomain == domain {
-		return true
-	}
-	parent, ok := strings.CutPrefix(certDomain, "*.")
-	if !ok {
-		return false
-	}
-	_, rest, found := strings.Cut(domain, ".")
-	return found && rest == parent
+	return domainhelper.IsDomainCoveredByCert(domain, certDomain)
 }
 
 func expired(cert *entity.SSLCert, timeNow time.Time) bool {

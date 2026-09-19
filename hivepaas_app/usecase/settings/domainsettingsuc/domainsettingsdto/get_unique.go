@@ -44,6 +44,7 @@ type DomainCertSettingsResp struct {
 	ValidPeriod timeutil.Duration `json:"validPeriod,omitempty"`
 	Email       string            `json:"email"`
 	AutoRenew   bool              `json:"autoRenew,omitempty"`
+	AutoObtain  bool              `json:"autoObtain,omitempty"`
 }
 
 func TransformDomainSettings(

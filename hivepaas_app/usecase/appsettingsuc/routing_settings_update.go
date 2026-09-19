@@ -18,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -30,6 +31,11 @@ func (uc *UC) UpdateAppRoutingSettings(
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		data = &updateAppRoutingSettingsData{}
 		err := uc.loadAppRoutingSettingsForUpdate(ctx, db, req, data)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		err = uc.ensureDomainCerts(ctx, db, data)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -54,6 +60,12 @@ func (uc *UC) UpdateAppRoutingSettings(
 		return nil, hperrors.Wrap(err)
 	}
 
+	// A task can be picked up only once its row exists, which is once the
+	// transaction has committed. A failure here is not the caller's problem: the
+	// settings are saved, and the queue's own scan finds the task at its next
+	// pass - what is lost is how soon.
+	_ = uc.taskQueue.ScheduleTask(ctx, data.CertTasks...)
+
 	resp := &appsettingsdto.UpdateAppRoutingSettingsResp{
 		Meta: &basedto.Meta{},
 	}
@@ -75,6 +87,11 @@ type updateAppRoutingSettingsData struct {
 
 	PortChanged   bool
 	DomainChanged bool
+
+	// CertTasks obtain the certificates the new domains have none for. They are
+	// scheduled after the transaction commits, because that is when their rows
+	// exist for the worker to claim.
+	CertTasks []*entity.Task
 }
 
 func (uc *UC) loadAppRoutingSettingsForUpdate(
@@ -148,6 +165,53 @@ func (uc *UC) loadAppRoutingSettingsForUpdate(
 	data.PortChanged = oldPort != newPort
 	data.DomainChanged = oldDomain != newDomain
 
+	return nil
+}
+
+// ensureDomainCerts gives each domain nobody picked a certificate for one that
+// covers it, and starts obtaining what the system does not hold yet.
+//
+// Choosing here is what makes a domain somebody has just typed in served over
+// TLS: a wildcard covering it is attached and applied with this change, and
+// anything that has to be obtained arrives as a task, which attaches it and
+// applies the routing again. A domain left without one is not an error - the app
+// is still routed, over plain HTTP until a certificate exists.
+func (uc *UC) ensureDomainCerts(
+	ctx context.Context,
+	db database.Tx,
+	data *updateAppRoutingSettingsData,
+) error {
+	activeDomains := data.NewRoutingSettings.GetActiveDomains()
+	var wanted []string
+	for _, domain := range activeDomains {
+		if domain.SSLCert.ID == "" {
+			wanted = append(wanted, domain.Domain)
+		}
+	}
+	if len(wanted) == 0 {
+		return nil
+	}
+
+	app := data.App
+	resp, err := uc.domainService.EnsureCertsForDomains(ctx, db, &domainservice.EnsureCertsReq{
+		Scope:     app.GetObjectScope(),
+		ProjectID: app.ProjectID,
+		AppID:     app.ID,
+		Domains:   wanted,
+	})
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	data.CertTasks = resp.Tasks
+
+	for _, domain := range activeDomains {
+		cert := resp.Matched[domain.Domain]
+		if domain.SSLCert.ID != "" || cert == nil {
+			continue
+		}
+		domain.SSLCert = entity.ObjectID{ID: cert.ID}
+		data.RefObjects.RefSettings[cert.ID] = cert
+	}
 	return nil
 }
 

@@ -21,6 +21,11 @@ const (
 	domainCertKeyTypeDefault     = base.SSLKeyTypeECP256
 	domainCertValidPeriodDefault = timeutil.Day * 3650 // For self-signed certs only
 	domainCertAutoRenewDefault   = true
+	// A new installation gets certificates for the domains it is given. What
+	// cannot be obtained is skipped rather than attempted - a local name, an
+	// address - so this costs nothing where it cannot work, and an installation
+	// that wants none turns it off.
+	domainCertAutoObtainDefault = true
 )
 
 func (s *service) initDefaultDomainSettings(
@@ -48,6 +53,7 @@ func (s *service) initDefaultDomainSettings(
 			ValidPeriod: timeutil.Duration(domainCertValidPeriodDefault),
 			Email:       config.Current().Users.Admin.Email,
 			AutoRenew:   domainCertAutoRenewDefault,
+			AutoObtain:  domainCertAutoObtainDefault,
 		},
 	}
 	domainSetting.MustSetData(domain)

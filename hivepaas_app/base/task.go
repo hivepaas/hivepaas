@@ -22,12 +22,20 @@ const (
 	// were left out while the change was on trial.
 	// See usecase/system/hpappsettingsuc/settings_probation_confirm.go.
 	TaskTypeAppLabelsSweep TaskType = "task:app-labels-sweep"
+
+	// TaskTypeSSLObtain gets a certificate for a domain an app was given and
+	// nothing already covered. It is a task because a certificate authority takes
+	// its time - a DNS challenge waits for a record to propagate - and because a
+	// failure has to be remembered rather than retried on every deployment.
+	// See service/domainservice.
+	TaskTypeSSLObtain TaskType = "task:ssl-obtain"
 )
 
 var (
 	AllTaskTypes = []TaskType{TaskTypeDummy, TaskTypeAppDeploy, TaskTypeAppClone,
 		TaskTypeAppPreview, TaskTypeSchedJobExec, TaskTypePeriodicExec,
-		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert, TaskTypeAppLabelsSweep}
+		TaskTypeSystemUpdate, TaskTypeWorkflow, TaskTypeSettingsRevert, TaskTypeAppLabelsSweep,
+		TaskTypeSSLObtain}
 
 	// These are listing types for front-end to show
 	AllGlobalTaskTypes   = gofn.Drop(AllTaskTypes, TaskTypeDummy)

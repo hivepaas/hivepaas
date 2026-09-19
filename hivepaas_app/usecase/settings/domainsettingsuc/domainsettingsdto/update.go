@@ -50,6 +50,7 @@ type DomainCertSettingsReq struct {
 	ValidPeriod timeutil.Duration `json:"validPeriod,omitempty"`
 	Email       string            `json:"email"`
 	AutoRenew   bool              `json:"autoRenew,omitempty"`
+	AutoObtain  bool              `json:"autoObtain,omitempty"`
 }
 
 func (req *DomainCertSettingsReq) ToEntity() *entity.DomainCertSettings {
@@ -62,6 +63,7 @@ func (req *DomainCertSettingsReq) ToEntity() *entity.DomainCertSettings {
 		ValidPeriod: req.ValidPeriod,
 		Email:       req.Email,
 		AutoRenew:   req.AutoRenew,
+		AutoObtain:  req.AutoObtain,
 	}
 }
 

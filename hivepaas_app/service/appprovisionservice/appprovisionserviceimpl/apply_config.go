@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/approutingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 )
 
 const (
@@ -36,7 +37,7 @@ func (s *service) ApplyAppConfiguration(
 	if err != nil {
 		return resp, hperrors.Wrap(err).WithExtraDetail("while applying secrets and config files")
 	}
-	if err := s.applyRouting(ctx, db, app, req.RefObjects); err != nil {
+	if err := s.applyRouting(ctx, db, app, req.RefObjects, &resp.CertTasks); err != nil {
 		return resp, hperrors.Wrap(err).WithExtraDetail("while applying routing settings")
 	}
 	if err := s.applySchedJobs(ctx, db, app); err != nil {
@@ -143,6 +144,7 @@ func (s *service) applyRouting(
 	db database.IDB,
 	app *entity.App,
 	refObjects *entity.RefObjects,
+	tasks *[]*entity.Task,
 ) error {
 	routingSetting := app.GetSettingByType(base.SettingTypeAppRouting)
 	if routingSetting == nil {
@@ -155,9 +157,11 @@ func (s *service) applyRouting(
 	if refObjects == nil {
 		refObjects = entity.NewRefObjects()
 	}
-	if err = s.attachCerts(ctx, db, app, routingSetting, routingSettings, refObjects); err != nil {
+	certTasks, err := s.attachCerts(ctx, db, app, routingSetting, routingSettings, refObjects)
+	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	*tasks = append(*tasks, certTasks...)
 
 	for attempt := range routingApplyRetryMax + 1 {
 		if attempt > 0 {
@@ -181,16 +185,17 @@ func (s *service) applyRouting(
 	return hperrors.Wrap(err)
 }
 
-// attachCerts gives each domain that has no certificate of its own one the
-// system already holds for it - the certificate issued for that exact name, or a
-// wildcard covering it.
+// attachCerts gives each domain that has no certificate of its own one that
+// covers it - the certificate issued for that exact name, or a wildcard - and
+// starts obtaining one where the system holds none.
 //
 // An app created with a domain has nobody to pick a certificate for it, and a
 // wildcard is usually the reason the domain could be handed out at all. Choosing
 // it here is what makes such an app served over TLS from its first deployment
-// rather than after somebody opens its routing settings. A domain nothing covers
-// is left as it is: the app is still routed, and a certificate can be obtained
-// for it later.
+// rather than after somebody opens its routing settings. A domain whose
+// certificate has to be obtained is left as it is for now: the app is routed
+// over plain HTTP, and the task attaches the certificate and routes it again
+// when the authority has answered.
 func (s *service) attachCerts(
 	ctx context.Context,
 	db database.IDB,
@@ -198,7 +203,7 @@ func (s *service) attachCerts(
 	setting *entity.Setting,
 	routing *entity.AppRoutingSettings,
 	refObjects *entity.RefObjects,
-) error {
+) ([]*entity.Task, error) {
 	var wanted []string
 	for _, domain := range routing.GetActiveDomains() {
 		if domain.SSLCert.ID == "" {
@@ -206,16 +211,21 @@ func (s *service) attachCerts(
 		}
 	}
 	if len(wanted) == 0 {
-		return nil
+		return nil, nil
 	}
 
-	certs, err := s.domainService.FindCertsForDomains(ctx, db, app.GetObjectScope(), wanted)
+	certs, err := s.domainService.EnsureCertsForDomains(ctx, db, &domainservice.EnsureCertsReq{
+		Scope:     app.GetObjectScope(),
+		ProjectID: app.ProjectID,
+		AppID:     app.ID,
+		Domains:   wanted,
+	})
 	if err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
 	attached := false
 	for _, domain := range routing.GetActiveDomains() {
-		cert := certs[domain.Domain]
+		cert := certs.Matched[domain.Domain]
 		if domain.SSLCert.ID != "" || cert == nil {
 			continue
 		}
@@ -224,18 +234,21 @@ func (s *service) attachCerts(
 		attached = true
 	}
 	if !attached {
-		return nil
+		return certs.Tasks, nil
 	}
 
 	// The choice is written back, because it is the app's from now on: removing
 	// the certificate has to find the apps using it, and the routing screen has
 	// to show which one is serving the domain.
 	if err = setting.SetData(routing); err != nil {
-		return hperrors.Wrap(err)
+		return nil, hperrors.Wrap(err)
 	}
-	return hperrors.Wrap(s.appService.PersistAppData(ctx, db, &appservice.PersistingAppData{
+	if err = s.appService.PersistAppData(ctx, db, &appservice.PersistingAppData{
 		UpsertingSettings: []*entity.Setting{setting},
-	}))
+	}); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return certs.Tasks, nil
 }
 
 // applySchedJobs queues the first run of each job the app's settings schedule.

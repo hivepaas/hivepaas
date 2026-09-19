@@ -87,6 +87,9 @@ func (uc *UC) CreateAppFromTemplate(
 		if err = uc.taskQueue.ScheduleTask(ctx, one.DeploymentTask); err != nil {
 			return nil, hperrors.Wrap(err)
 		}
+		if err = uc.taskQueue.ScheduleTask(ctx, one.CertTasks...); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
 	return transformCreated(apps, provisioned.Apps), nil
 }

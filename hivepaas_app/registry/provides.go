@@ -110,6 +110,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskperiodicjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskschedjobexec"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/tasksettingsrevert"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/tasksslobtain"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/taskworkflow"
 	"github.com/hivepaas/hivepaas/hivepaas_app/updater/tasksystemupdate"
 	"github.com/hivepaas/hivepaas/hivepaas_app/updater/updaterimpl"
@@ -222,6 +223,7 @@ var Provides = []any{
 	taskperiodicjobexec.NewExecutor,
 	taskschedjobexec.NewExecutor,
 	tasksettingsrevert.NewExecutor,
+	tasksslobtain.NewExecutor,
 	taskworkflow.NewExecutor,
 
 	// Updater

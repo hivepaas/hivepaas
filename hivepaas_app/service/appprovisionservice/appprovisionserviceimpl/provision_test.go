@@ -233,8 +233,9 @@ func (f *fakeDeploymentService) CreateDeploymentAndTask(
 // the domain it covers.
 type fakeDomainService struct {
 	domainservice.Service
-	certs map[string]*entity.Setting
-	asked []string
+	certs     map[string]*entity.Setting
+	asked     []string
+	obtaining []string
 }
 
 func (f *fakeDomainService) FindCertsForDomains(
@@ -248,6 +249,22 @@ func (f *fakeDomainService) FindCertsForDomains(
 		}
 	}
 	return found, nil
+}
+
+func (f *fakeDomainService) EnsureCertsForDomains(
+	ctx context.Context, db database.IDB, req *domainservice.EnsureCertsReq,
+) (*domainservice.EnsureCertsResp, error) {
+	matched, err := f.FindCertsForDomains(ctx, db, req.Scope, req.Domains)
+	if err != nil {
+		return nil, err
+	}
+	resp := &domainservice.EnsureCertsResp{Matched: matched, Skipped: map[string]string{}}
+	for _, domain := range req.Domains {
+		if matched[domain] == nil {
+			f.obtaining = append(f.obtaining, domain)
+		}
+	}
+	return resp, nil
 }
 
 type provisionFakes struct {

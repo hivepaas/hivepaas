@@ -17,4 +17,37 @@ type Service interface {
 	// an error - an app can be routed without one.
 	FindCertsForDomains(ctx context.Context, db database.IDB, scope *entity.ObjectScope,
 		domains []string) (map[string]*entity.Setting, error)
+
+	// EnsureCertsForDomains gives every domain a certificate: the one the system
+	// already holds, or one it starts obtaining in the background.
+	//
+	// What comes back in Matched can be attached now. What comes back in
+	// Obtaining has a task behind it and nothing to serve yet; the task attaches
+	// it and applies the routing again when there is. Skipped says, per domain,
+	// why neither happened - a local name no authority issues for, automatic
+	// certificates turned off, an attempt already in flight.
+	EnsureCertsForDomains(ctx context.Context, db database.IDB,
+		req *EnsureCertsReq) (*EnsureCertsResp, error)
+}
+
+type EnsureCertsReq struct {
+	// Scope is where certificates are looked for: an app's scope sees its
+	// project's and the installation's as well.
+	Scope     *entity.ObjectScope
+	ProjectID string
+	// AppID is whose routing gets applied again once a certificate arrives.
+	AppID   string
+	Domains []string
+}
+
+type EnsureCertsResp struct {
+	Matched   map[string]*entity.Setting
+	Obtaining []*entity.Setting
+	Skipped   map[string]string
+	// Tasks are the obtain tasks written for Obtaining. They are created but not
+	// scheduled: a task row can be picked up only once the transaction it was
+	// written in has committed, which is the caller's to wait for. A caller that
+	// schedules none of them loses nothing but time - the queue's own scan finds
+	// them at its next pass.
+	Tasks []*entity.Task
 }

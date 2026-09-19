@@ -32,15 +32,23 @@ type SSLCert struct {
 	CACertificate string           `json:"caCertificate,omitempty"`
 	KeyType       base.SSLKeyType  `json:"keyType"`
 
-	ValidPeriod   timeutil.Duration      `json:"validPeriod"`
-	Email         string                 `json:"email"`
-	BaseFilename  string                 `json:"baseFilename,omitempty"`
-	AutoRenew     bool                   `json:"autoRenew,omitempty"`
-	AcmeProvider  ObjectID               `json:"acmeProvider,omitzero"`
-	RenewableFrom time.Time              `json:"renewableFrom,omitzero"`
-	ExpireAt      time.Time              `json:"expireAt,omitzero"`
-	NotifyFrom    time.Time              `json:"notifyFrom,omitzero"`
-	Notification  *BaseEventNotification `json:"notification,omitempty"`
+	ValidPeriod   timeutil.Duration `json:"validPeriod"`
+	Email         string            `json:"email"`
+	BaseFilename  string            `json:"baseFilename,omitempty"`
+	AutoRenew     bool              `json:"autoRenew,omitempty"`
+	AcmeProvider  ObjectID          `json:"acmeProvider,omitzero"`
+	RenewableFrom time.Time         `json:"renewableFrom,omitzero"`
+	ExpireAt      time.Time         `json:"expireAt,omitzero"`
+
+	// LastError and RetryAfter are what a failed attempt leaves behind, so the
+	// next one waits instead of asking again immediately. A certificate authority
+	// counts failures: Let's Encrypt allows five identical certificates a week and
+	// fifty per registered domain, and a redeploy loop that reissues on every
+	// attempt spends that allowance in minutes and locks the domain out for days.
+	LastError    string                 `json:"lastError,omitempty"`
+	RetryAfter   time.Time              `json:"retryAfter,omitzero"`
+	NotifyFrom   time.Time              `json:"notifyFrom,omitzero"`
+	Notification *BaseEventNotification `json:"notification,omitempty"`
 }
 
 func (s *SSLCert) GetType() base.SettingType {

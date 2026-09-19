@@ -24,6 +24,7 @@ const (
 	timeoutSystemUpdate   = time.Hour
 	timeoutSettingsRevert = 5 * time.Minute
 	timeoutAppLabelsSweep = 15 * time.Minute
+	timeoutSSLObtain      = 15 * time.Minute
 )
 
 var taskTypeTimeouts = map[base.TaskType]time.Duration{
@@ -47,6 +48,9 @@ var taskTypeTimeouts = map[base.TaskType]time.Duration{
 	// by anything converging - but it is a fan-out, so it gets more room than the
 	// single-service types above.
 	base.TaskTypeAppLabelsSweep: timeoutAppLabelsSweep,
+	// A certificate authority answers an HTTP challenge in seconds and a DNS one
+	// only after the record has propagated, which is minutes on an unlucky zone.
+	base.TaskTypeSSLObtain: timeoutSSLObtain,
 
 	// NOTE: the types below keep the long ceiling on purpose.
 	//

@@ -122,7 +122,8 @@ func (s *service) loadVarDataInApp(
 
 	// Inject system env vars in app
 	sysVars, err := s.BuildSystemEnvVarsInApp(ctx, db, &envvarservice.BuildSystemEnvVarsInAppReq{
-		App: app,
+		App:         app,
+		MaskSecrets: req.BuildOptions.MaskSecrets,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

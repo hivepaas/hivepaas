@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
@@ -35,6 +36,15 @@ func (s *service) BuildSystemEnvVarsInProject(
 	for _, env := range result {
 		env.IsLiteral = true
 		env.IsSystem = true
+	}
+
+	// Mask the secrets if instructed
+	if req.MaskSecrets {
+		for _, env := range result {
+			if base.IsProjectSecretEnv(env.Key) {
+				env.Value = basedto.MaskedSecret
+			}
+		}
 	}
 
 	if req.Sort {

@@ -110,7 +110,8 @@ func (s *service) loadVarDataInProjectEnv(
 
 	// Inject system env vars in env
 	sysVars, err := s.BuildSystemEnvVarsInProjectEnv(ctx, db, &envvarservice.BuildSystemEnvVarsInProjectEnvReq{
-		ProjectEnv: projectEnv,
+		ProjectEnv:  projectEnv,
+		MaskSecrets: req.BuildOptions.MaskSecrets,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)

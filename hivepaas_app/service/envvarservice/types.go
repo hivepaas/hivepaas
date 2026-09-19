@@ -116,8 +116,9 @@ type BuildEnvVarsInAppResp struct {
 }
 
 type BuildSystemEnvVarsInAppReq struct {
-	App  *entity.App
-	Sort bool
+	App         *entity.App
+	Sort        bool
+	MaskSecrets bool
 }
 
 type BuildEnvVarsInProjectReq struct {
@@ -135,8 +136,9 @@ type BuildEnvVarsInProjectResp struct {
 }
 
 type BuildSystemEnvVarsInProjectReq struct {
-	Project *entity.Project
-	Sort    bool
+	Project     *entity.Project
+	Sort        bool
+	MaskSecrets bool
 }
 
 type BuildEnvVarsInProjectEnvReq struct {
@@ -157,6 +159,7 @@ type BuildEnvVarsInProjectEnvResp struct {
 }
 
 type BuildSystemEnvVarsInProjectEnvReq struct {
-	ProjectEnv *entity.ProjectEnv
-	Sort       bool
+	ProjectEnv  *entity.ProjectEnv
+	Sort        bool
+	MaskSecrets bool
 }

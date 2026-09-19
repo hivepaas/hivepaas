@@ -8,6 +8,7 @@ import (
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
@@ -105,6 +106,15 @@ func (s *service) BuildSystemEnvVarsInApp(
 	for _, env := range result {
 		env.IsLiteral = true
 		env.IsSystem = true
+	}
+
+	// Mask the secrets if instructed
+	if req.MaskSecrets {
+		for _, env := range result {
+			if base.IsAppSecretEnv(env.Key) {
+				env.Value = basedto.MaskedSecret
+			}
+		}
 	}
 
 	if req.Sort {

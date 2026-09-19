@@ -43,6 +43,17 @@ func (req *AppEnvVarsBaseReq) modifyRequest() error {
 		}
 	}
 	req.SharedEnvVars = adjSharedEnvVars
+
+	adjRuntimeEnvVars := make([]*basedto.EnvVarReq, 0, len(req.RuntimeEnvVars))
+	for _, env := range req.RuntimeEnvVars {
+		env.Key = strings.TrimSpace(env.Key)
+		env.Value = strings.TrimSpace(env.Value)
+		if base.IsAppRuntimeEnvAllowed(env.Key) {
+			adjRuntimeEnvVars = append(adjRuntimeEnvVars, env)
+		}
+	}
+	req.RuntimeEnvVars = adjRuntimeEnvVars
+
 	return nil
 }
 

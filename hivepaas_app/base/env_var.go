@@ -25,6 +25,8 @@ var (
 		ProjectSystemEnvVarName: {},
 		ProjectSystemEnvVarID:   {},
 	}
+
+	mapProjectSecretVar = map[string]struct{}{}
 )
 
 func IsProjectRuntimeEnvAllowed(env string) bool {
@@ -35,6 +37,11 @@ func IsProjectRuntimeEnvAllowed(env string) bool {
 func IsProjectBuildEnvAllowed(env string) bool {
 	_, exists := mapProjectUnallowedVar[env]
 	return !exists
+}
+
+func IsProjectSecretEnv(env string) bool {
+	_, exists := mapProjectSecretVar[env]
+	return exists
 }
 
 const (
@@ -104,6 +111,12 @@ var (
 		maps.Copy(theMap, mapProjectUnallowedVar)
 		return theMap
 	}()
+
+	mapAppSecretVar = map[string]struct{}{
+		AppSystemEnvVarPassword:     {},
+		AppSystemEnvVarRootPassword: {},
+		AppSystemEnvVarSecret:       {},
+	}
 )
 
 func IsAppRuntimeEnvAllowed(env string) bool {
@@ -124,4 +137,9 @@ func IsAppSharedEnvSettable(env string) bool {
 func IsAppBuildEnvAllowed(env string) bool {
 	_, exists := mapAppUnallowedVar[env]
 	return !exists
+}
+
+func IsAppSecretEnv(env string) bool {
+	_, exists := mapAppSecretVar[env]
+	return exists
 }

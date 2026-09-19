@@ -53,6 +53,7 @@ func (s *service) repoDeployStepServiceApply(
 			contSpec.Image = data.Deployment.Output.ImageTags[0]
 			contSpec.Dir = deployment.Settings.WorkingDir
 			dockerhelper.ContainerCommandApply(contSpec, deployment.Settings.Command)
+			s.applyContainerInit(ctx, data.appDeploymentData, contSpec)
 
 			placementReq.Service = svc
 			_, err := s.placementService.ApplyPlacementSettings(ctx, db, placementReq)

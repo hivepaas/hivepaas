@@ -267,7 +267,10 @@ func initialService(app *entity.App, networkName string) *swarm.Service {
 					Image:    gofn.If(isDevEnv, dockerImageInitDev, dockerImageInit),
 					Command:  gofn.If(isDevEnv, nil, []string{"sleep", "infinity"}),
 					Hostname: app.Key,
-					Init:     new(true), // default to use `tini`
+					// Init is left undecided on purpose: whether a container needs
+					// docker's init depends on whether its image starts with one of
+					// its own, and the image is not here yet - the first deployment
+					// pulls or builds it, and decides then. See applyContainerInit.
 					// The app's identity, for the log collector. Container labels
 					// rather than service ones: swarm does not pass service labels
 					// down, so only these can reach a log line's attrs.

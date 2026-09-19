@@ -17,7 +17,7 @@ export function mapAppContainerSettingsToFormInput(
             hostname: data.hostname,
             user: data.user,
             groups: data.groups.join(" "),
-            init: data.init,
+            init: data.init == null ? "auto" : data.init ? "on" : "off",
             tty: data.tty,
             openStdin: data.openStdin,
             readOnly: data.readOnly,

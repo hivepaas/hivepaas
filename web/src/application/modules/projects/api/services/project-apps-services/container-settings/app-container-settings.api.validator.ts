@@ -102,7 +102,9 @@ export class AppContainerSettingsApiValidator {
                 serviceLabels: data.data.serviceLabels ?? {},
                 containerLabels: data.data.containerLabels ?? {},
                 groups: data.data.groups ?? [],
-                init: data.data.init ?? false,
+                // null is a real answer here: nobody has chosen, so the image decides at
+                // the next deployment.
+                init: data.data.init ?? null,
                 logDriver: data.data.logDriver
                     ? { ...data.data.logDriver, options: data.data.logDriver.options ?? {} }
                     : null,

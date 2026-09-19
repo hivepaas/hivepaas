@@ -16,7 +16,7 @@ export const ContainerSettingsFormGeneralSchema = z.object({
     user: z.string(),
     /** Space-separated; mapped to `string[]` on submit */
     groups: z.string(),
-    init: z.boolean(),
+    init: z.enum(["auto", "on", "off"]),
     tty: z.boolean(),
     openStdin: z.boolean(),
     readOnly: z.boolean(),
@@ -102,7 +102,7 @@ export const emptyAppConfigContainerSettingsFormDefaults: AppConfigContainerSett
         hostname: "",
         user: "",
         groups: "",
-        init: false,
+        init: "auto",
         tty: false,
         openStdin: false,
         readOnly: false,

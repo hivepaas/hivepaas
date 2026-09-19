@@ -1,4 +1,13 @@
-import { Checkbox, FieldError, Input } from "@components/ui";
+import {
+    Checkbox,
+    FieldError,
+    Input,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@components/ui";
 import { useController, useFormContext } from "react-hook-form";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
@@ -10,7 +19,9 @@ import {
 } from "../schemas";
 
 const DOCKER_INIT_TOOLTIP =
-    "Runs an init process (Tini) as PID 1 to reap zombie processes and forward signals for a graceful shutdown.";
+    "Runs an init process (Tini) as PID 1 to reap zombie processes and forward signals for a graceful shutdown. " +
+    "Automatic leaves it to the image: one that starts with an init of its own keeps it, because two of them in " +
+    "one container is what makes Tini warn and s6 refuse to start.";
 const ALLOCATE_TTY_TOOLTIP =
     "Allocates a pseudo-TTY (virtual terminal) to the container. Allows for terminal-like text styling (colors, formatting) and interactive shell sessions (e.g., bash/sh) when attaching to the container.";
 const KEEP_STDIN_OPEN_TOOLTIP =
@@ -175,14 +186,21 @@ export function GeneralFields() {
                     />
                 }
             >
-                <div className="flex items-center gap-2">
-                    <Checkbox
-                        checked={dockerInit.value}
-                        onCheckedChange={v => {
-                            dockerInit.onChange(v === true);
-                        }}
-                    />
-                </div>
+                <Select
+                    value={dockerInit.value}
+                    onValueChange={value => {
+                        dockerInit.onChange(value);
+                    }}
+                >
+                    <SelectTrigger className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="auto">Automatic (the image decides)</SelectItem>
+                        <SelectItem value="on">On</SelectItem>
+                        <SelectItem value="off">Off</SelectItem>
+                    </SelectContent>
+                </Select>
             </InfoBlock>
 
             <InfoBlock

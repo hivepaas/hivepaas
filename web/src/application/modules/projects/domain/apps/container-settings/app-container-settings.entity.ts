@@ -20,7 +20,8 @@ export type ContainerSpec = {
     groups: string[];
     stopSignal: string;
     tty: boolean;
-    init: boolean;
+    /** null: not decided - the image's own init decides at the next deployment. */
+    init: boolean | null;
     openStdin: boolean;
     readOnly: boolean;
     stopGracePeriod: string | null;

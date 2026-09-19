@@ -3,6 +3,7 @@ package appcloneserviceimpl
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
@@ -25,6 +26,23 @@ func (s *service) applyClonedConfiguration(
 		})
 	if resp != nil {
 		data.DestConfig, data.DestSecrets = resp.Configs, resp.Secrets
+		s.scheduleCertTasks(data, resp.CertTasks) //nolint:contextcheck // queued after this transaction
 	}
 	return hperrors.Wrap(err)
+}
+
+// scheduleCertTasks asks for the certificates the copy's domains have none for.
+//
+// The tasks' rows are written in the transaction this clone runs in, and a task
+// can be claimed only once its row is there - so they are queued from the hook
+// that runs after it commits. Without one - a clone driven from something other
+// than a task - they are left to the queue's own scan, which is later rather
+// than never.
+func (s *service) scheduleCertTasks(data *appCloneData, tasks []*entity.Task) {
+	if s.taskQueue == nil || len(tasks) == 0 || data.TaskExecData == nil {
+		return
+	}
+	data.OnPostTransaction(func() {
+		_ = s.taskQueue.ScheduleTask(context.Background(), tasks...)
+	})
 }

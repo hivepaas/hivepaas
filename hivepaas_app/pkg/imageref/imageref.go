@@ -54,6 +54,57 @@ func Parse(ref string) Ref {
 	return out
 }
 
+// dockerHubHosts are the names Docker Hub answers to. A reference written by hand
+// usually names none of them; one read back from a daemon or copied from a
+// registry UI usually names one.
+var dockerHubHosts = map[string]bool{
+	"docker.io":               true,
+	"index.docker.io":         true,
+	"registry-1.docker.io":    true,
+	"registry.hub.docker.com": true,
+}
+
+const dockerHubHost = "docker.io"
+
+// NormalizeRepository is a repository name in the single form two of them can be
+// compared in.
+//
+// Docker lets one repository be written several ways, and which way a person uses
+// depends on where they copied it from: postgres, docker.io/library/postgres and
+// registry-1.docker.io/library/postgres are the same thing, and a template's image
+// and the image somebody typed instead of it are rarely written the same way.
+// Comparing the strings refuses an image that is in fact the template's own.
+//
+// The rule for telling a registry host from a first path segment is Docker's: a
+// segment containing a dot or a colon, or the word localhost, is a host. That is
+// why docker.io/library counts as host and namespace while myorg/postgres is two
+// path segments on Docker Hub.
+func NormalizeRepository(repository string) string {
+	if repository == "" {
+		return ""
+	}
+	host, remainder := "", repository
+	if first, rest, found := strings.Cut(repository, "/"); found &&
+		(strings.ContainsAny(first, ".:") || first == "localhost") {
+		host, remainder = first, rest
+	}
+	if host != "" && !dockerHubHosts[host] {
+		return host + "/" + remainder
+	}
+	// On Docker Hub a name with no namespace is an official image, which lives
+	// under library.
+	if !strings.Contains(remainder, "/") {
+		remainder = "library/" + remainder
+	}
+	return dockerHubHost + "/" + remainder
+}
+
+// SameRepository reports whether two references name the same repository,
+// however each of them was written.
+func SameRepository(a, b string) bool {
+	return NormalizeRepository(Parse(a).Repository) == NormalizeRepository(Parse(b).Repository)
+}
+
 // IsUpgrade says whether target should replace current, and why.
 //
 // The reason is meant to be read by whoever is watching the update, so it is
@@ -72,7 +123,7 @@ func IsUpgrade(current, target string) (bool, string) {
 	// A different repository is a decision the release made - moving to a fork, a
 	// mirror, or a different distribution of the same thing. There is no version
 	// line shared between the two to compare along.
-	if cur.Repository != tgt.Repository {
+	if NormalizeRepository(cur.Repository) != NormalizeRepository(tgt.Repository) {
 		return true, "image changed from " + cur.Repository + " to " + tgt.Repository
 	}
 	if cur.Tag == tgt.Tag {

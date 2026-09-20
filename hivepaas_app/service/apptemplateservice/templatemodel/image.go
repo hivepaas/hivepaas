@@ -53,7 +53,10 @@ var AllImageOverrideClasses = []ImageOverrideClass{
 func ClassifyImageOverride(line, templateImage, override string) (ImageOverrideClass, error) {
 	templateRef, overrideRef := imageref.Parse(templateImage), imageref.Parse(override)
 	switch {
-	case override == "" || overrideRef.Repository != templateRef.Repository:
+	// The repositories are compared in canonical form, because the same one is
+	// written several ways: a template says postgres and a person pasting from a
+	// registry says registry-1.docker.io/library/postgres.
+	case override == "" || !imageref.SameRepository(override, templateImage):
 		return "", imageNotAllowed(override, templateRef.Repository,
 			"the image must come from the same repository as the template's")
 	case overrideRef.Tag == "":

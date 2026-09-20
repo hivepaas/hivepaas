@@ -153,3 +153,44 @@ func TestCompareTagsOrdersWhatItCan(t *testing.T) {
 		}
 	}
 }
+
+func TestNormalizeRepository(t *testing.T) {
+	cases := map[string]string{
+		// Docker Hub, written the four ways people write it.
+		"postgres":                              "docker.io/library/postgres",
+		"docker.io/library/postgres":            "docker.io/library/postgres",
+		"index.docker.io/library/postgres":      "docker.io/library/postgres",
+		"registry-1.docker.io/library/postgres": "docker.io/library/postgres",
+		// A namespace on Docker Hub, with and without the host.
+		"grafana/grafana-oss":           "docker.io/grafana/grafana-oss",
+		"docker.io/grafana/grafana-oss": "docker.io/grafana/grafana-oss",
+		// Another registry is left alone: its first segment is a host because it
+		// carries a dot, and nothing is added under it.
+		"ghcr.io/immich-app/immich-server": "ghcr.io/immich-app/immich-server",
+		"quay.io/coreos/etcd":              "quay.io/coreos/etcd",
+		// A host is a host because of the dot, the colon or the word localhost.
+		"registry.example:5000/redis": "registry.example:5000/redis",
+		"localhost/redis":             "localhost/redis",
+		"":                            "",
+	}
+	for input, want := range cases {
+		t.Run(input, func(t *testing.T) {
+			assert.Equal(t, want, imageref.NormalizeRepository(input))
+		})
+	}
+}
+
+func TestSameRepository(t *testing.T) {
+	// The report that prompted this: a template pinning postgres, and an image
+	// pasted in the form a registry shows it.
+	assert.True(t, imageref.SameRepository(
+		"postgres:18.6-alpine3.24",
+		"registry-1.docker.io/library/postgres:18.6-alpine3.23"))
+	assert.True(t, imageref.SameRepository("postgres:18.6-alpine3.24", "docker.io/library/postgres:18.6"))
+	assert.True(t, imageref.SameRepository("grafana/grafana-oss:13.0.2", "docker.io/grafana/grafana-oss:13.1.0"))
+
+	// Still different repositories, however they are spelled.
+	assert.False(t, imageref.SameRepository("postgres:18.6", "mysql:8.4.11"))
+	assert.False(t, imageref.SameRepository("postgres:18.6", "ghcr.io/library/postgres:18.6"))
+	assert.False(t, imageref.SameRepository("postgres:18.6", "mirror.example.com/library/postgres:18.6"))
+}

@@ -157,3 +157,22 @@ func TestTagFamily(t *testing.T) {
 		assert.Equal(t, want, tagFamily(tag), tag)
 	}
 }
+
+func TestClassifyImageOverrideAcceptsTheSameRepositoryWrittenDifferently(t *testing.T) {
+	// A person pasting from a registry writes the canonical form; a template
+	// writes the short one. Refusing that is refusing the template's own image.
+	class, err := ClassifyImageOverride("18", "postgres:18.6-alpine3.24",
+		"registry-1.docker.io/library/postgres:18.6-alpine3.23")
+	assert.NoError(t, err)
+	assert.Equal(t, ImageOverrideSameLine, class)
+
+	class, err = ClassifyImageOverride("18", "postgres:18.6-alpine3.24", "docker.io/library/postgres:17.11-alpine3.24")
+	assert.NoError(t, err)
+	assert.Equal(t, ImageOverrideOtherMajor, class)
+
+	// And a different repository is still refused, canonical or not.
+	_, err = ClassifyImageOverride("18", "postgres:18.6-alpine3.24", "docker.io/library/mysql:8.4.11")
+	assert.ErrorIs(t, err, hperrors.ErrAppTemplateImageNotAllowed)
+	_, err = ClassifyImageOverride("18", "postgres:18.6-alpine3.24", "ghcr.io/library/postgres:18.6")
+	assert.ErrorIs(t, err, hperrors.ErrAppTemplateImageNotAllowed)
+}

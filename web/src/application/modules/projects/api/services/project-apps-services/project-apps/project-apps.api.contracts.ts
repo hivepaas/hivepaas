@@ -14,6 +14,7 @@ export type ProjectApps_FindManyPaginated_Req = ApiRequestBase<{
     search?: string;
     env?: string;
     getStats?: boolean;
+    getChildApps?: boolean;
 }>;
 
 export type ProjectApps_FindManyPaginated_Res = ApiResponsePaginated<ProjectAppDetails>;

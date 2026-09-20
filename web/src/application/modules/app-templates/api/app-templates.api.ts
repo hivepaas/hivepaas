@@ -105,8 +105,31 @@ export interface AppTemplateParam {
     maxLength?: number;
     min?: unknown;
     max?: unknown;
+    /** Set on an "app" parameter: the engine the apps offered for it must run. */
+    engine?: string;
     generated: boolean;
     options?: AppTemplateParamOption[];
+}
+
+/** An app of the environment, as a parameter that names one offers it. */
+export interface EnvApp {
+    id: string;
+    name: string;
+    key: string;
+    env: string;
+    /** What the app runs, absent for an app created without a template. */
+    engine?: string;
+    /** Apps created to serve this one - a template's dependencies. */
+    logicalChildApps?: EnvApp[];
+    /** Apps that name this one as their parent - a preview deployment. */
+    childApps?: EnvApp[];
+}
+
+export interface ListEnvAppsParams {
+    projectID: string;
+    projectEnv: string;
+    search?: string;
+    pageLimit?: number;
 }
 
 export interface AppTemplateDependency {
@@ -216,7 +239,7 @@ export class AppTemplatesApi extends BaseApi {
                     tag: params.tag ?? undefined,
                     search: params.search?.trim() ?? undefined,
                     pageOffset: params.pageOffset ?? 0,
-                    pageLimit: params.pageLimit ?? 50,
+                    pageLimit: params.pageLimit ?? undefined,
                 },
                 signal,
             });
@@ -290,6 +313,35 @@ export class AppTemplatesApi extends BaseApi {
                 { signal },
             );
             return res.data;
+        } catch (error) {
+            throw parseApiError(error);
+        }
+    }
+
+    /**
+     * GET /projects/{projectID}/{projectEnv}/apps
+     * The environment's apps, for a parameter that names one. The full listing
+     * rather than the base one, because only this carries `engine` - which is what
+     * the list is narrowed by. Searching is the server's, so a long list stays one
+     * page.
+     *
+     * Children are asked for and flattened: a database created as the dependency of
+     * another app is exactly the kind of thing a replica is pointed at, and the
+     * listing nests those rather than returning them on their own.
+     */
+    async listEnvApps(params: ListEnvAppsParams, signal?: AbortSignal): Promise<EnvApp[]> {
+        try {
+            const res = await this.client.v1.get<{ meta?: unknown; data: EnvApp[] }>(
+                `/projects/${encodeURIComponent(params.projectID)}/${encodeURIComponent(params.projectEnv)}/apps`,
+                {
+                    params: {
+                        search: params.search ?? undefined,
+                        pageLimit: params.pageLimit ?? undefined,
+                    },
+                    signal,
+                },
+            );
+            return res.data.data;
         } catch (error) {
             throw parseApiError(error);
         }

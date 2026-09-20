@@ -10,4 +10,7 @@ export interface ProjectAppDetails extends ProjectAppBase {
         desiredTasks: number;
         completedTasks: number;
     } | null;
+    childApps?: ProjectAppDetails[];
+    logicalChildApps?: ProjectAppDetails[];
+    subApps?: ProjectAppDetails[];
 }

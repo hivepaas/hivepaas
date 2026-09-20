@@ -4,7 +4,7 @@ import { CircleHelp, Plus } from "lucide-react";
 import { useNavigate } from "react-router";
 import { ProjectAppsQueries, ProjectsQueries } from "~/projects/data/queries";
 import { useCreateProjectAppDialog } from "~/projects/dialogs/create-project-app";
-import type { ProjectEnvEntity } from "~/projects/domain";
+import type { ProjectAppDetails, ProjectEnvEntity } from "~/projects/domain";
 import { ProjectEnvScopeBadge } from "~/projects/module-shared/components";
 import { ProjectAppsTableDefs } from "~/projects/module-shared/definitions/tables/project-apps";
 import { EProjectStatus } from "~/projects/module-shared/enums";
@@ -48,16 +48,35 @@ export function ProjectAppsTable({ projectId }: Props) {
         setPagination(prev => ({ ...prev, page: 1 }));
     }, [env, setPagination]);
 
-    const { data: { data: apps, meta } = DEFAULT_PAGINATED_DATA, isFetching } = ProjectAppsQueries.useFindManyPaginated(
-        {
+    const { data: { data: rawApps, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
+        ProjectAppsQueries.useFindManyPaginated({
             projectID: projectId,
             pagination,
             sorting,
             search,
             env,
             getStats: true,
-        },
-    );
+            getChildApps: true,
+        });
+
+    const apps = useMemo(() => {
+        if (rawApps.length === 0) return [];
+
+        const attachCombinedSubApps = (app: ProjectAppDetails): ProjectAppDetails => {
+            const combined = [...(app.childApps ?? []), ...(app.logicalChildApps ?? [])];
+
+            const uniqueSubApps = Array.from(
+                new Map(combined.map(child => [child.id, attachCombinedSubApps(child)])).values(),
+            );
+
+            return {
+                ...app,
+                subApps: uniqueSubApps.length > 0 ? uniqueSubApps : undefined,
+            };
+        };
+
+        return rawApps.map(attachCombinedSubApps);
+    }, [rawApps]);
     const { data: projectData } = ProjectsQueries.useFindOneById({ projectID: projectId });
 
     const project = projectData?.data;
@@ -157,6 +176,7 @@ export function ProjectAppsTable({ projectId }: Props) {
                 manualSorting
                 enableSorting
                 isLoading={isFetching}
+                getSubRows={row => row.subApps}
                 onPaginationChange={value => {
                     setPagination(value);
                 }}

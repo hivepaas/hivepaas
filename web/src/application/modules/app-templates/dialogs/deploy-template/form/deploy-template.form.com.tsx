@@ -1,18 +1,39 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { AlertTriangle, Boxes, Database, Globe, HardDrive, Loader2, Rocket, Search, Sparkles } from "lucide-react";
+import {
+    AlertTriangle,
+    Boxes,
+    Check,
+    ChevronDown,
+    Database,
+    Globe,
+    HardDrive,
+    Loader2,
+    Rocket,
+    Search,
+    Sparkles,
+} from "lucide-react";
 import { type Control, Controller, type UseFormSetValue, useForm } from "react-hook-form";
 import { type ProjectEnvEntity } from "~/projects/domain";
 import { ProjectEnvBadge } from "~/projects/module-shared/components";
 
+import { useDebouncedSearch } from "@application/shared/hooks";
+import {
+    formatDataSizeCompact,
+    generateDataSizePresets,
+    parseDataSizeToBytes,
+} from "@application/shared/utils/data-size";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DialogBody } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/input-password";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import {
@@ -26,6 +47,7 @@ import {
     type CreateAppFromTemplateReq,
     appTemplatesApi,
 } from "../../../api";
+import { useListEnvApps } from "../../../data";
 
 export interface DeployTemplateFormProps {
     template: AppTemplateDetail;
@@ -126,7 +148,16 @@ export function DeployTemplateForm({
         const firstVol = clusterVolumes[0];
         for (const param of template.parameters) {
             if (param.default !== undefined && param.default !== null) {
-                result[param.name] = param.default;
+                if (param.type === "size") {
+                    result[param.name] =
+                        typeof param.default === "number"
+                            ? formatDataSizeCompact(param.default) || String(param.default)
+                            : typeof param.default === "string"
+                              ? param.default
+                              : "";
+                } else {
+                    result[param.name] = param.default;
+                }
             } else if (param.type === "bool") {
                 result[param.name] = false;
             } else if (param.type === "volume" && firstVol) {
@@ -174,6 +205,7 @@ export function DeployTemplateForm({
         mode: "onSubmit",
     });
 
+    const selectedEnv = watch("env");
     const selectedVersion = watch("version");
     const selectedVariant = watch("variant");
     const imageOverride = watch("imageOverride");
@@ -636,6 +668,8 @@ export function DeployTemplateForm({
                                 control={control}
                                 setValue={setValue}
                                 clusterVolumes={clusterVolumes}
+                                projectId={projectId}
+                                projectEnv={selectedEnv}
                                 readOnly={readOnly || isPending}
                             />
                         ))}
@@ -777,17 +811,206 @@ export function DeployTemplateForm({
 // =========================================================================
 // SINGLE PARAMETER ROW COMPONENT (1 ROW PER PARAMETER)
 // =========================================================================
+/**
+ * The field for a parameter that names an app. One row: the environment's
+ * matching apps to choose from, and a way out for an app the list does not
+ * offer - one or the other, never both.
+ *
+ * The list is the short one the base endpoint answers, searched on the server,
+ * so a project with hundreds of apps still fetches one page.
+ */
+function AppParamField({
+    value,
+    onChange,
+    projectId,
+    projectEnv,
+    engine,
+    readOnly,
+}: {
+    value: string;
+    onChange: (value: string) => void;
+    projectId: string;
+    projectEnv: string;
+    engine?: string;
+    readOnly?: boolean;
+}) {
+    const checkboxId = useId();
+    const [typeKey, setTypeKey] = useState(false);
+    const [open, setOpen] = useState(false);
+    const [debouncedSearch, setSearch, search] = useDebouncedSearch();
+
+    const { data: apps = [], isFetching } = useListEnvApps(
+        { projectID: projectId, projectEnv, search: debouncedSearch },
+        !typeKey,
+    );
+
+    // An app that declares no engine is offered too: most were created without a
+    // template, and saying nothing is not the same as saying something else.
+    const candidates = useMemo(
+        () => (engine ? apps.filter(app => !app.engine || app.engine === engine) : apps),
+        [apps, engine],
+    );
+
+    // With nothing to offer there is no choice to make, so the field is the key
+    // itself - whatever the checkbox says. A search that found nothing is not
+    // that: the list is empty because of the words typed into it.
+    const nothingToOffer = candidates.length === 0 && !debouncedSearch && !isFetching;
+    const typing = typeKey || nothingToOffer;
+    const selected = candidates.find(app => app.key === value);
+
+    return (
+        <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+                {typing ? (
+                    <Input
+                        value={value}
+                        onChange={e => {
+                            onChange(e.target.value);
+                        }}
+                        placeholder="app key, as it appears on the app"
+                        disabled={readOnly}
+                        className="h-9 text-xs flex-1 min-w-[180px] order-2"
+                    />
+                ) : (
+                    <Popover
+                        open={open}
+                        onOpenChange={setOpen}
+                    >
+                        <PopoverTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={open}
+                                disabled={readOnly}
+                                className="h-9 flex-1 min-w-[180px] order-1 justify-between gap-2 px-3 text-xs font-normal border-input bg-transparent dark:bg-input/15 dark:hover:bg-input/25 overflow-hidden shadow-xs"
+                            >
+                                <span className="flex items-center gap-2 min-w-0 flex-1 truncate text-left">
+                                    {value ? (
+                                        <>
+                                            <Boxes className="size-3.5 shrink-0 text-muted-foreground" />
+                                            <span className="truncate">{selected ? selected.name : value}</span>
+                                        </>
+                                    ) : (
+                                        <span className="text-muted-foreground">Select an app</span>
+                                    )}
+                                </span>
+                                <ChevronDown className="size-4 shrink-0 opacity-50 text-muted-foreground" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent
+                            className="w-72 min-w-[var(--radix-popover-trigger-width)] p-0"
+                            align="start"
+                        >
+                            {/* The server does the searching, so the list itself must not filter again. */}
+                            <Command shouldFilter={false}>
+                                <CommandInput
+                                    placeholder="Search apps..."
+                                    value={search}
+                                    onValueChange={setSearch}
+                                />
+                                <CommandList className="max-h-60">
+                                    <CommandEmpty className="p-2 text-xs text-muted-foreground text-center">
+                                        {isFetching ? "Searching..." : "No apps found."}
+                                    </CommandEmpty>
+                                    <CommandGroup>
+                                        {candidates.map(app => (
+                                            <CommandItem
+                                                key={app.key}
+                                                value={app.key}
+                                                onSelect={() => {
+                                                    onChange(app.key);
+                                                    setOpen(false);
+                                                }}
+                                                className="flex items-center justify-between gap-2 py-1.5 cursor-pointer"
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                    <Boxes className="size-3.5 shrink-0 text-muted-foreground" />
+                                                    <span className="truncate text-xs">{app.name}</span>
+                                                    {app.engine && (
+                                                        <span className="text-[10px] text-muted-foreground shrink-0">
+                                                            {app.engine}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {value === app.key && (
+                                                    <Check className="size-4 shrink-0 text-primary" />
+                                                )}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                )}
+
+                <div
+                    className={cn(
+                        "flex items-center gap-1.5 text-xs text-muted-foreground shrink-0",
+                        typing ? "order-1" : "order-2",
+                    )}
+                >
+                    <Checkbox
+                        id={checkboxId}
+                        checked={typing}
+                        onCheckedChange={checked => {
+                            const next = Boolean(checked);
+                            setTypeKey(next);
+                            // Leaving the key behind would leave the list showing nothing,
+                            // because a value it does not carry has no row to highlight.
+                            if (!next && value && !candidates.some(app => app.key === value)) {
+                                onChange("");
+                            }
+                        }}
+                        disabled={Boolean(readOnly) || nothingToOffer}
+                    />
+                    <label
+                        htmlFor={checkboxId}
+                        className="cursor-pointer select-none"
+                    >
+                        Type the key
+                    </label>
+                </div>
+            </div>
+
+            {nothingToOffer && (
+                <p className="text-[11px] text-muted-foreground/70">
+                    ℹ This environment has no {engine ? `${engine} ` : ""}app to offer. Deploy one first, or type the
+                    key of the app to use.
+                </p>
+            )}
+        </div>
+    );
+}
+
 interface ParameterRowProps {
     param: AppTemplateParam;
     templateName: string;
     control: Control<FormState>;
     setValue: UseFormSetValue<FormState>;
     clusterVolumes: { id: string; name: string }[];
+    projectId: string;
+    projectEnv: string;
     readOnly?: boolean;
 }
 
-function ParameterRow({ param, templateName, control, setValue, clusterVolumes, readOnly }: ParameterRowProps) {
+function ParameterRow({
+    param,
+    templateName,
+    control,
+    setValue,
+    clusterVolumes,
+    projectId,
+    projectEnv,
+    readOnly,
+}: ParameterRowProps) {
     const isRequired = !param.optional;
+
+    const sizePresets = useMemo(() => {
+        if (param.type !== "size") return [];
+        return generateDataSizePresets(param.min, param.default, 6, param.max);
+    }, [param.type, param.min, param.default, param.max]);
 
     return (
         <Controller
@@ -807,6 +1030,41 @@ function ParameterRow({ param, templateName, control, setValue, clusterVolumes, 
                 pattern: param.pattern
                     ? { value: new RegExp(param.pattern), message: "Format does not match pattern" }
                     : undefined,
+                validate: (val: unknown) => {
+                    if (param.type === "size" && typeof val === "string" && val.trim() !== "") {
+                        const bytes = parseDataSizeToBytes(val);
+                        if (bytes === null) {
+                            return "Invalid size format (e.g. 512MB, 1GB)";
+                        }
+                        if (param.min !== undefined && param.min !== null) {
+                            const minBytes = parseDataSizeToBytes(param.min);
+                            if (minBytes !== null && bytes < minBytes) {
+                                const minLabel =
+                                    formatDataSizeCompact(minBytes) ||
+                                    (typeof param.min === "string"
+                                        ? param.min
+                                        : typeof param.min === "number"
+                                          ? String(param.min)
+                                          : "");
+                                return `Minimum size is ${minLabel}`;
+                            }
+                        }
+                        if (param.max !== undefined && param.max !== null) {
+                            const maxBytes = parseDataSizeToBytes(param.max);
+                            if (maxBytes !== null && bytes > maxBytes) {
+                                const maxLabel =
+                                    formatDataSizeCompact(maxBytes) ||
+                                    (typeof param.max === "string"
+                                        ? param.max
+                                        : typeof param.max === "number"
+                                          ? String(param.max)
+                                          : "");
+                                return `Maximum size is ${maxLabel}`;
+                            }
+                        }
+                    }
+                    return true;
+                },
             }}
             render={({ field, fieldState }) => {
                 return (
@@ -867,12 +1125,6 @@ function ParameterRow({ param, templateName, control, setValue, clusterVolumes, 
                                             Generate
                                         </Button>
                                     </div>
-                                    {param.generated && (
-                                        <p className="text-[11px] text-muted-foreground/70">
-                                            ℹ A secure password will be automatically generated by HivePaaS if left
-                                            empty.
-                                        </p>
-                                    )}
                                 </div>
                             )}
 
@@ -916,6 +1168,18 @@ function ParameterRow({ param, templateName, control, setValue, clusterVolumes, 
                                 </div>
                             )}
 
+                            {/* Type: App */}
+                            {param.type === "app" && (
+                                <AppParamField
+                                    value={typeof field.value === "string" ? field.value : ""}
+                                    onChange={field.onChange}
+                                    projectId={projectId}
+                                    projectEnv={projectEnv}
+                                    engine={param.engine}
+                                    readOnly={readOnly}
+                                />
+                            )}
+
                             {/* Type: Select */}
                             {param.type === "select" && (
                                 <Select
@@ -946,18 +1210,25 @@ function ParameterRow({ param, templateName, control, setValue, clusterVolumes, 
                                     <Input
                                         value={typeof field.value === "string" ? field.value : ""}
                                         onChange={field.onChange}
-                                        placeholder="e.g. 512MB, 1GB, 2GB"
+                                        placeholder={
+                                            sizePresets.length > 0
+                                                ? `e.g. ${sizePresets.slice(0, 3).join(", ")}`
+                                                : "e.g. 512MB, 1GB, 2GB"
+                                        }
                                         disabled={readOnly}
                                         className="h-9 text-xs flex-1"
                                     />
-                                    <div className="hidden sm:flex items-center gap-1 shrink-0">
-                                        {["512MB", "1GB", "2GB", "4GB"].map(preset => (
+                                    <div className="hidden sm:flex items-center gap-1 shrink-0 flex-wrap">
+                                        {sizePresets.map(preset => (
                                             <button
                                                 key={preset}
                                                 type="button"
                                                 disabled={readOnly}
                                                 onClick={() => {
-                                                    setValue(`params.${param.name}`, preset);
+                                                    setValue(`params.${param.name}`, preset, {
+                                                        shouldValidate: true,
+                                                        shouldDirty: true,
+                                                    });
                                                 }}
                                                 className={cn(
                                                     "h-7 px-2 text-[11px] rounded border transition-colors",
@@ -1051,6 +1322,7 @@ function ParameterRow({ param, templateName, control, setValue, clusterVolumes, 
                                 param.type !== "int" &&
                                 param.type !== "integer" &&
                                 param.type !== "domain" &&
+                                param.type !== "app" &&
                                 param.name.toLowerCase() !== "domain" && (
                                     <Input
                                         value={typeof field.value === "string" ? field.value : ""}

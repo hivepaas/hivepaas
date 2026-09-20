@@ -6,11 +6,13 @@ import {
     type ColumnDef,
     type ColumnFiltersState,
     type Header,
+    type Row,
     type SortingState,
     type Table as TanstackTable,
     type VisibilityState,
     flexRender,
     getCoreRowModel,
+    getExpandedRowModel,
     getFilteredRowModel,
     getPaginationRowModel,
     getSortedRowModel,
@@ -138,6 +140,7 @@ export interface DataTableProps<TData, TValue> {
     headerClassName?: string;
     bodyClassName?: string;
     rowClassName?: string | ((row: TData) => string);
+    subRowClassName?: string | ((row: Row<TData>) => string);
     showTotalCount?: boolean;
     showPageSizeSelector?: boolean;
     totalCount?: number;
@@ -145,6 +148,7 @@ export interface DataTableProps<TData, TValue> {
     manualSorting?: boolean;
     manualFiltering?: boolean;
     isLoading?: boolean;
+    getSubRows?: (row: TData, index: number) => TData[] | undefined;
 }
 
 function DataTable<TData, TValue>({
@@ -165,6 +169,7 @@ function DataTable<TData, TValue>({
     headerClassName,
     bodyClassName,
     rowClassName,
+    subRowClassName,
     showTotalCount = true,
     showPageSizeSelector = true,
     totalCount,
@@ -172,6 +177,7 @@ function DataTable<TData, TValue>({
     manualSorting = false,
     manualFiltering = false,
     isLoading = false,
+    getSubRows,
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = React.useState<SortingState>(initialSorting);
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -218,6 +224,8 @@ function DataTable<TData, TValue>({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
+        getSubRows,
+        getExpandedRowModel: getSubRows ? getExpandedRowModel() : undefined,
         getPaginationRowModel: enablePagination && !manualPagination ? getPaginationRowModel() : undefined,
         getSortedRowModel: enableSorting && !manualSorting ? getSortedRowModel() : undefined,
         getFilteredRowModel: enableFiltering && !manualFiltering ? getFilteredRowModel() : undefined,
@@ -403,7 +411,16 @@ function DataTable<TData, TValue>({
                                 <TableRow
                                     key={row.id}
                                     data-state={row.getIsSelected() && "selected"}
-                                    className={cn(onRowClick && "cursor-pointer", getRowClassName(row.original))}
+                                    className={cn(
+                                        onRowClick && "cursor-pointer",
+                                        row.depth > 0 &&
+                                            (subRowClassName
+                                                ? typeof subRowClassName === "function"
+                                                    ? subRowClassName(row)
+                                                    : subRowClassName
+                                                : "bg-muted/40 hover:bg-muted/65 transition-colors"),
+                                        getRowClassName(row.original),
+                                    )}
                                     onClick={() => onRowClick?.(row.original)}
                                 >
                                     {row.getVisibleCells().map(cell => {

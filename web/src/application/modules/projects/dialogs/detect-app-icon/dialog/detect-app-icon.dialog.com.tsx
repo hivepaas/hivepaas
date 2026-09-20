@@ -9,8 +9,7 @@ import {
     DialogTitle,
 } from "@components/ui/dialog";
 import { Separator } from "@components/ui/separator";
-import { dashedBorderBox } from "@lib/styles";
-import { cn } from "@lib/utils";
+import { AlertTriangle } from "lucide-react";
 
 interface DetectAppIconDialogProps {
     open: boolean;
@@ -58,10 +57,11 @@ export function DetectAppIconDialog({
                             />
                         </div>
                     ) : (
-                        <div className={cn(dashedBorderBox, "px-2.5 py-1.5 sm:px-3.5 sm:py-2")}>
-                            <p className="text-destructive">
+                        <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400 flex items-start gap-2.5 transition-all">
+                            <AlertTriangle className="size-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                            <div className="text-xs leading-relaxed">
                                 We couldn&apos;t find a matching icon for your app name or Docker image.
-                            </p>
+                            </div>
                         </div>
                     )}
                 </DialogBody>

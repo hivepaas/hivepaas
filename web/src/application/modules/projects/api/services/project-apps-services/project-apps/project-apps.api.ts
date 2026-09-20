@@ -41,7 +41,7 @@ export class ProjectAppsApi extends BaseApi {
         request: ProjectApps_FindManyPaginated_Req,
         signal?: AbortSignal,
     ): Promise<Result<ProjectApps_FindManyPaginated_Res, Error>> {
-        const { projectID, search, pagination, sorting, env, getStats } = request.data;
+        const { projectID, search, pagination, sorting, env, getStats, getChildApps } = request.data;
 
         const query = this.queryBuilder.getInstance();
 
@@ -55,6 +55,7 @@ export class ProjectAppsApi extends BaseApi {
                     params: {
                         ...query.build(),
                         ...(getStats === undefined ? {} : { getStats }),
+                        ...(getChildApps === undefined ? {} : { getChildApps }),
                     },
                     signal,
                 }),

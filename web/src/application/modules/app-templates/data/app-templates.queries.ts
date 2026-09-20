@@ -17,9 +17,11 @@ import {
     type AppTemplateImageTagsResponse,
     type CreateAppFromTemplateReq,
     type CreateAppFromTemplateResp,
+    type EnvApp,
     type GetAppTemplateImageTagsParams,
     type ListAppTemplatesFilter,
     type ListAppTemplatesResponse,
+    type ListEnvAppsParams,
     appTemplatesApi,
 } from "../api";
 
@@ -29,6 +31,8 @@ export const APP_TEMPLATES_QUERY_KEYS = {
     detail: (name: string) => ["app-templates", "detail", name] as const,
     imageTags: (params: GetAppTemplateImageTagsParams) =>
         ["app-templates", "image-tags", params.templateName, params.version, params.variant] as const,
+    envApps: (params: ListEnvAppsParams) =>
+        ["app-templates", "env-apps", params.projectID, params.projectEnv, params.search ?? ""] as const,
 };
 
 export const PAGE_LIMIT_DEFAULT = 50;
@@ -130,5 +134,18 @@ export function useCreateAppFromTemplate(
             }
         },
         ...restOptions,
+    });
+}
+
+/**
+ * Query hook for the environment's apps, for a parameter that names one. Held
+ * briefly: the list is a picker's, and a deploy dialog is open for a minute.
+ */
+export function useListEnvApps(params: ListEnvAppsParams, enabled: boolean): UseQueryResult<EnvApp[]> {
+    return useQuery<EnvApp[]>({
+        queryKey: APP_TEMPLATES_QUERY_KEYS.envApps(params),
+        queryFn: ({ signal }) => appTemplatesApi.listEnvApps(params, signal),
+        enabled: enabled && Boolean(params.projectID) && Boolean(params.projectEnv),
+        staleTime: 30 * 1000,
     });
 }

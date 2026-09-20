@@ -3,7 +3,7 @@ import { type Dispatch, type SetStateAction, useState } from "react";
 import { useDebounce } from "react-use";
 
 export function useDebouncedSearch(
-    ms: number = 250,
+    ms: number = 500,
     initialValue: string = "",
 ): [string, Dispatch<SetStateAction<string>>, string] {
     const [search, setSearch] = useState(initialValue);

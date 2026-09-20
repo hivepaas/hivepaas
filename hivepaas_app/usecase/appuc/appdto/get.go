@@ -51,9 +51,6 @@ type AppResp struct {
 	Note      string                      `json:"note"`
 	Tags      []string                    `json:"tags" copy:"-"` // manual copy AppTag -> string
 	UpdateVer int                         `json:"updateVer"`
-	// Engine is what the app says it runs - postgres, mysql, n8n - and is empty
-	// for an app that was not created from a template, which declares no kind.
-	Engine string `json:"engine,omitempty" copy:"-"` // manual copy, from the kind setting
 
 	// Stats of app, only returns when req.getStats=true
 	Stats *AppStatsResp `json:"stats"`
@@ -83,6 +80,10 @@ type AppBaseResp struct {
 	Status base.AppStatus `json:"status"`
 	Env    string         `json:"env"`
 	Photo  string         `json:"photo"`
+	// Engine is what the app says it runs - postgres, mysql, n8n - and is empty
+	// both for an app that declares no kind and wherever the kind setting was not
+	// loaded. Only the base listing loads it.
+	Engine string `json:"engine,omitempty"`
 }
 
 type AppTransformationInput struct {
@@ -102,7 +103,6 @@ func TransformApp(app *entity.App, input *AppTransformationInput) (resp *AppResp
 	resp.Tags = gofn.MapSlice(app.Tags, func(t *entity.Tag) string { return t.Tag })
 	resp.Stats = TransformAppStats(app, input)
 	resp.AccessLinks = TransformAppAccessLinks(app)
-	resp.Engine = TransformAppEngine(app)
 	if app.IsChildApp() {
 		resp.ParentApp = gofn.Coalesce(TransformAppBase(app.ParentApp), &AppBaseResp{ID: app.ParentID})
 	} else {
@@ -178,6 +178,7 @@ func TransformAppBase(app *entity.App) *AppBaseResp {
 		Status: app.Status,
 		Env:    app.ProjectEnv.Name,
 		Photo:  basedto.TransformObjectIcon(app.Photo),
+		Engine: TransformAppEngine(app),
 	}
 }
 

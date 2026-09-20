@@ -3,6 +3,7 @@ package appuc
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -31,6 +32,11 @@ func (uc *UC) ListAppBase(
 	listOpts := []bunex.SelectQueryOption{
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 		bunex.SelectRelation("ProjectEnv"),
+		// The kind says what each app runs, which is what a picker narrows its list
+		// by. It is one small row per app, and this listing carries nothing else.
+		bunex.SelectRelation("Settings",
+			bunex.SelectWhere("setting.type = ?", base.SettingTypeAppKind),
+		),
 	}
 
 	if req.ParentID != "" {

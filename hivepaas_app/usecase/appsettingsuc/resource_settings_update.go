@@ -223,10 +223,10 @@ func (uc *UC) prepareUpdatingAppCapabilities(
 
 	containerSpec.CapabilityAdd = req.Capabilities.CapabilityAdd
 	containerSpec.CapabilityDrop = req.Capabilities.CapabilityDrop
-	if req.Capabilities.EnableGPU && !gofn.Contain(containerSpec.CapabilityAdd, "[gpu]") {
-		containerSpec.CapabilityAdd = append(containerSpec.CapabilityAdd, "[gpu]")
+	if req.Capabilities.EnableGPU && !gofn.Contain(containerSpec.CapabilityAdd, docker.CapabilityGPU) {
+		containerSpec.CapabilityAdd = append(containerSpec.CapabilityAdd, docker.CapabilityGPU)
 	} else if !req.Capabilities.EnableGPU {
-		containerSpec.CapabilityAdd = gofn.Drop(containerSpec.CapabilityAdd, "[gpu]")
+		containerSpec.CapabilityAdd = gofn.Drop(containerSpec.CapabilityAdd, docker.CapabilityGPU)
 	}
 
 	containerSpec.OomScoreAdj = req.Capabilities.OomScoreAdj

@@ -93,6 +93,7 @@ func (t *Template) Validate(fileName string) error {
 	if len(t.App) == 0 {
 		p.add("app is required")
 	}
+	validateCapabilities(t, &p)
 
 	name := t.Metadata.Name
 	if name == "" {

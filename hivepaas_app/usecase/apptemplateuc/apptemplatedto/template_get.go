@@ -50,6 +50,31 @@ type AppTemplateResp struct {
 	// Dependencies are the apps creating this template also creates, each with the
 	// parameters a person has to fill in for it.
 	Dependencies []*AppTemplateDependencyResp `json:"dependencies"`
+	// Capabilities is what creating this template grants the app beyond what a
+	// container ordinarily gets, and is null for the templates that ask for
+	// nothing. It is shown before anybody deploys, and creating one needs Write
+	// on the cluster module.
+	Capabilities *AppTemplateCapabilitiesResp `json:"capabilities"`
+}
+
+// AppTemplateCapabilitiesResp is the capabilities block of the template, as the
+// template wrote it. A version cannot override it, so this is what will be
+// granted whichever version is chosen.
+type AppTemplateCapabilitiesResp struct {
+	// CapabilityAdd and CapabilityDrop are named as docker names them, without
+	// the CAP_ prefix: NET_ADMIN, SYS_NICE.
+	CapabilityAdd  []string                 `json:"capabilityAdd,omitempty"`
+	CapabilityDrop []string                 `json:"capabilityDrop,omitempty"`
+	Sysctls        map[string]string        `json:"sysctls,omitempty"`
+	Ulimits        []*AppTemplateUlimitResp `json:"ulimits,omitempty"`
+	EnableGPU      bool                     `json:"enableGPU,omitempty"`
+	OomScoreAdj    int64                    `json:"oomScoreAdj,omitempty"`
+}
+
+type AppTemplateUlimitResp struct {
+	Name string `json:"name"`
+	Soft int64  `json:"soft"`
+	Hard int64  `json:"hard"`
 }
 
 type AppTemplateDependencyResp struct {
@@ -63,6 +88,9 @@ type AppTemplateDependencyResp struct {
 	// Parameters are only those the person is asked: the template fixes the rest,
 	// or they have defaults, or HivePaaS generates them.
 	Parameters []*AppTemplateParamResp `json:"parameters"`
+	// Capabilities is what this dependency's app is granted. It is gated on the
+	// same permission as the main app's: both are created by the one request.
+	Capabilities *AppTemplateCapabilitiesResp `json:"capabilities"`
 }
 
 type AppTemplateLinksResp struct {
@@ -136,6 +164,7 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 	for _, param := range tmpl.Template.Parameters {
 		resp.Parameters = append(resp.Parameters, transformParam(param))
 	}
+	resp.Capabilities = transformCapabilities(tmpl.Template)
 	resp.Dependencies = make([]*AppTemplateDependencyResp, 0, len(tmpl.Dependencies))
 	for _, dep := range tmpl.Dependencies {
 		asked := dep.Dependency.AskedParams(dep.Template)
@@ -147,11 +176,38 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 			Version:       dep.Dependency.Version,
 			Variant:       dep.Dependency.Variant,
 			Parameters:    make([]*AppTemplateParamResp, 0, len(asked)),
+			Capabilities:  transformCapabilities(dep.Template),
 		}
 		for _, param := range asked {
 			depResp.Parameters = append(depResp.Parameters, transformParam(param))
 		}
 		resp.Dependencies = append(resp.Dependencies, depResp)
+	}
+	return resp
+}
+
+// transformCapabilities reads the block out of the template. A block that
+// cannot be read is left out: validation refuses such a template, so rendering
+// it would fail before anything was created, and there is nothing truthful to
+// show about what it would have granted.
+func transformCapabilities(tmpl *templatemodel.Template) *AppTemplateCapabilitiesResp {
+	capabilities, err := tmpl.Capabilities()
+	if err != nil || capabilities == nil {
+		return nil
+	}
+	resp := &AppTemplateCapabilitiesResp{
+		CapabilityAdd:  capabilities.CapabilityAdd,
+		CapabilityDrop: capabilities.CapabilityDrop,
+		Sysctls:        capabilities.Sysctls,
+		EnableGPU:      capabilities.EnableGPU,
+		OomScoreAdj:    capabilities.OomScoreAdj,
+	}
+	for _, ulimit := range capabilities.Ulimits {
+		if ulimit == nil {
+			continue
+		}
+		resp.Ulimits = append(resp.Ulimits,
+			&AppTemplateUlimitResp{Name: ulimit.Name, Soft: ulimit.Soft, Hard: ulimit.Hard})
 	}
 	return resp
 }

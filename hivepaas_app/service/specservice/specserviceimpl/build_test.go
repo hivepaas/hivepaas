@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +23,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 const buildDocYAML = `
@@ -414,4 +416,45 @@ func TestBuildAppRefusesAWildcardAsAnAddress(t *testing.T) {
 
 	assert.ErrorIs(t, err, hperrors.ErrSpecBlockInvalid)
 	assert.Contains(t, buildErrorDetail(t, err), "*.example.com")
+}
+
+// A template that asks for capabilities is how an app first gets them: nobody
+// can add them afterwards without Write on the cluster module, and the same
+// permission is checked before a template carrying this block is provisioned.
+func TestBuildAppGrantsTheCapabilitiesTheDocumentAsksFor(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+	req := buildReq(t, `
+deployment:
+  resources:
+    capabilities:
+      capabilityAdd: [NET_ADMIN]
+      capabilityDrop: [MKNOD]
+      sysctls: {vm.max_map_count: "262144"}
+      ulimits: [{name: memlock, soft: -1, hard: -1}]
+      enableGPU: true
+      oomScoreAdj: -500
+`)
+
+	_, err := svc.BuildApp(context.Background(), nil, req)
+
+	assert.NoError(t, err)
+	containerSpec := req.Spec.TaskTemplate.ContainerSpec
+	assert.Equal(t, []string{"NET_ADMIN", docker.CapabilityGPU}, containerSpec.CapabilityAdd)
+	assert.Equal(t, []string{"MKNOD"}, containerSpec.CapabilityDrop)
+	assert.Equal(t, map[string]string{"vm.max_map_count": "262144"}, containerSpec.Sysctls)
+	assert.Equal(t, []*container.Ulimit{{Name: "memlock", Soft: -1, Hard: -1}}, containerSpec.Ulimits)
+	assert.Equal(t, int64(-500), containerSpec.OomScoreAdj)
+}
+
+func TestBuildAppLeavesCapabilitiesAloneWhenTheDocumentAsksForNone(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+	req := buildReq(t, "deployment:\n  resources:\n    limits: {cpus: 1}\n")
+
+	_, err := svc.BuildApp(context.Background(), nil, req)
+
+	assert.NoError(t, err)
+	assert.Empty(t, req.Spec.TaskTemplate.ContainerSpec.CapabilityAdd)
+	assert.Empty(t, req.Spec.TaskTemplate.ContainerSpec.Ulimits)
 }

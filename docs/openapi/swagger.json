@@ -41705,7 +41705,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -44908,6 +44908,43 @@
         "required" : [ "appliedAt", "createdForAppId", "dependencies", "imageOverride", "release", "revision", "source", "template", "title", "variant", "version" ],
         "type" : "object"
       },
+      "apptemplatedto.AppTemplateCapabilitiesResp" : {
+        "properties" : {
+          "capabilityAdd" : {
+            "description" : "CapabilityAdd and CapabilityDrop are named as docker names them, without\nthe CAP_ prefix: NET_ADMIN, SYS_NICE.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "capabilityDrop" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "enableGPU" : {
+            "type" : "boolean"
+          },
+          "oomScoreAdj" : {
+            "type" : "integer"
+          },
+          "sysctls" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "ulimits" : {
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateUlimitResp"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "capabilityAdd", "capabilityDrop", "enableGPU", "oomScoreAdj", "sysctls", "ulimits" ],
+        "type" : "object"
+      },
       "apptemplatedto.AppTemplateCatalogResp" : {
         "properties" : {
           "categories" : {
@@ -44956,6 +44993,13 @@
       },
       "apptemplatedto.AppTemplateDependencyResp" : {
         "properties" : {
+          "capabilities" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateCapabilitiesResp"
+            } ],
+            "description" : "Capabilities is what this dependency's app is granted. It is gated on the\nsame permission as the main app's: both are created by the one request.",
+            "type" : "object"
+          },
           "name" : {
             "type" : "string"
           },
@@ -44983,7 +45027,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "name", "parameters", "template", "templateTitle", "title", "variant", "version" ],
+        "required" : [ "capabilities", "name", "parameters", "template", "templateTitle", "title", "variant", "version" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateDependencySummaryResp" : {
@@ -45122,6 +45166,13 @@
       },
       "apptemplatedto.AppTemplateResp" : {
         "properties" : {
+          "capabilities" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateCapabilitiesResp"
+            } ],
+            "description" : "Capabilities is what creating this template grants the app beyond what a\ncontainer ordinarily gets, and is null for the templates that ask for\nnothing. It is shown before anybody deploys, and creating one needs Write\non the cluster module.",
+            "type" : "object"
+          },
           "categories" : {
             "items" : {
               "type" : "string"
@@ -45190,7 +45241,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "categories", "compatible", "dependencies", "description", "iconUrl", "license", "links", "name", "parameters", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "capabilities", "categories", "compatible", "dependencies", "description", "iconUrl", "license", "links", "name", "parameters", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateSummaryResp" : {
@@ -45227,6 +45278,10 @@
           "name" : {
             "type" : "string"
           },
+          "requiresCapabilities" : {
+            "description" : "RequiresCapabilities says creating this template grants the app kernel\ncapabilities, sysctls, ulimits or the GPU. The store marks those, and only\nsomeone with Write on the cluster module can create one.",
+            "type" : "boolean"
+          },
           "tagline" : {
             "type" : "string"
           },
@@ -45252,7 +45307,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "aliases", "categories", "compatible", "dependencies", "iconUrl", "license", "name", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "aliases", "categories", "compatible", "dependencies", "iconUrl", "license", "name", "requiresCapabilities", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateTagResp" : {
@@ -45265,6 +45320,21 @@
           }
         },
         "required" : [ "id", "title" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateUlimitResp" : {
+        "properties" : {
+          "hard" : {
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "soft" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "hard", "name", "soft" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateVariantResp" : {
@@ -60367,9 +60437,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

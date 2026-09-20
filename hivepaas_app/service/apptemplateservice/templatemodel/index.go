@@ -42,6 +42,12 @@ type IndexEntry struct {
 	Variants     []*IndexVariant    `json:"variants,omitempty"`
 	Versions     []*IndexVersion    `json:"versions"`
 	Requires     Requires           `json:"requires"`
+	// RequiresCapabilities says the template asks for kernel capabilities,
+	// sysctls, ulimits or the GPU, which only someone who may change an app's
+	// capabilities can grant. It is in the index so that the store can say so
+	// before anybody opens the template, and what exactly it asks for is in the
+	// template file.
+	RequiresCapabilities bool `json:"requiresCapabilities,omitempty"`
 }
 
 type IndexVariant struct {

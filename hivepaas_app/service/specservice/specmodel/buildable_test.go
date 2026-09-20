@@ -30,6 +30,13 @@ deployment:
   resources:
     reservations: {cpus: 0.5, memory: 256mb}
     limits: {cpus: 1, memory: 512mb, pids: 100}
+    capabilities:
+      capabilityAdd: [NET_ADMIN]
+      capabilityDrop: [MKNOD]
+      sysctls: {vm.max_map_count: "262144"}
+      ulimits: [{name: memlock, soft: -1, hard: -1}]
+      enableGPU: true
+      oomScoreAdj: -500
 settings:
   kind: {category: database, engine: postgres}
   envVars: {data: [{k: A, v: b}]}
@@ -185,4 +192,43 @@ func TestCheckBuildableCapsRoutingDomains(t *testing.T) {
 	err := CheckBuildable(decodeDoc(t, buildableDocYAML+entries))
 
 	assert.ErrorIs(t, err, hperrors.ErrSpecBlockUnsupported)
+}
+
+// The capabilities block is what hands an app more of the host than a container
+// ordinarily gets. It is buildable so that a template can ask for what its
+// software needs - opensearch its memlock, a VPN its NET_ADMIN - and what is
+// refused here is only a block that does not say what it wants.
+func TestCheckBuildableRefusesAMalformedCapabilitiesBlock(t *testing.T) {
+	cases := map[string]struct {
+		doc  string
+		path string
+	}{
+		"everything at once": {"deployment:\n  resources:\n    capabilities: {capabilityAdd: [ALL]}\n",
+			`deployment.resources.capabilities.capabilityAdd: "ALL"`},
+		"the CAP_ prefix": {"deployment:\n  resources:\n    capabilities: {capabilityAdd: [CAP_NET_ADMIN]}\n",
+			"is not a capability such as NET_ADMIN"},
+		"lowercase": {"deployment:\n  resources:\n    capabilities: {capabilityDrop: [net_admin]}\n",
+			"deployment.resources.capabilities.capabilityDrop"},
+		"a nameless ulimit": {"deployment:\n  resources:\n    capabilities: {ulimits: [{soft: 1, hard: 2}]}\n",
+			"deployment.resources.capabilities.ulimits"},
+		"too many": {"deployment:\n  resources:\n    capabilities:\n      capabilityAdd: [" +
+			strings.Repeat("NET_ADMIN,", MaxCapabilityEntries+1) + "]\n",
+			"deployment.resources.capabilities.capabilityAdd"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := CheckBuildable(decodeDoc(t, tc.doc))
+			assert.ErrorIs(t, err, hperrors.ErrSpecBlockUnsupported)
+			assert.Contains(t, buildableErrorDetail(t, err), tc.path)
+		})
+	}
+}
+
+func TestCapabilitiesProblemPassesWhatATemplateWouldAsk(t *testing.T) {
+	assert.Empty(t, CapabilitiesProblem(nil))
+	assert.Empty(t, CapabilitiesProblem(&Capabilities{
+		CapabilityAdd: []string{"NET_ADMIN", "SYS_NICE"},
+		Sysctls:       map[string]string{"vm.max_map_count": "262144"},
+		Ulimits:       []*Ulimit{{Name: "memlock", Soft: -1, Hard: -1}},
+	}))
 }

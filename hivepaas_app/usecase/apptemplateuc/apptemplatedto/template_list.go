@@ -103,6 +103,10 @@ type AppTemplateSummaryResp struct {
 	Dependencies []*AppTemplateDependencySummaryResp `json:"dependencies"`
 	Variants     []*AppTemplateVariantSummaryResp    `json:"variants"`
 	Versions     []*AppTemplateVersionResp           `json:"versions"`
+	// RequiresCapabilities says creating this template grants the app kernel
+	// capabilities, sysctls, ulimits or the GPU. The store marks those, and only
+	// someone with Write on the cluster module can create one.
+	RequiresCapabilities bool `json:"requiresCapabilities"`
 	// Compatible is false for a template needing a newer HivePaaS: the store
 	// lists it, locked, rather than hiding it.
 	//
@@ -151,6 +155,8 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 		Variants:     make([]*AppTemplateVariantSummaryResp, 0, len(entry.Variants)),
 		Versions:     make([]*AppTemplateVersionResp, 0, len(entry.Versions)),
 		Compatible:   templatemodel.IsCompatible(entry.Requires, currentVersionCode),
+
+		RequiresCapabilities: entry.RequiresCapabilities,
 	}
 	for _, variant := range entry.Variants {
 		summary.Variants = append(summary.Variants,

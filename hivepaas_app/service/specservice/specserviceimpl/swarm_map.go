@@ -228,7 +228,7 @@ func mapCapabilities(cs *swarm.ContainerSpec) *specmodel.Capabilities {
 		}),
 		CapabilityAdd:  cs.CapabilityAdd,
 		CapabilityDrop: cs.CapabilityDrop,
-		EnableGPU:      gofn.Contain(cs.CapabilityAdd, "[gpu]"),
+		EnableGPU:      gofn.Contain(cs.CapabilityAdd, docker.CapabilityGPU),
 		OomScoreAdj:    cs.OomScoreAdj,
 		Sysctls:        cs.Sysctls,
 	}

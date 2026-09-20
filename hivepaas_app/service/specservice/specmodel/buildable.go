@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -40,10 +41,28 @@ const (
 	// MaxSecretValueBytes is what a secret may hold: a password, a key, a
 	// certificate - never a file somebody meant to mount.
 	MaxSecretValueBytes = 64 << 10
+	// MaxCapabilityEntries is how many capabilities, sysctls or ulimits one
+	// document may carry. A template asks for the few its software cannot run
+	// without; a list longer than this is not that.
+	MaxCapabilityEntries = 10
 	// MaxConfigFileBytes is what one config file may hold. Docker's own limit is
 	// 500KB; a configuration file a template writes is far smaller than that, and
 	// every byte here is copied into the swarm and into every task.
 	MaxConfigFileBytes = 128 << 10
+)
+
+// capabilityNamePattern is how docker names a capability in a service spec:
+// the name without the CAP_ prefix, which is what the app's resource settings
+// screen takes as well.
+var capabilityNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,31}$`)
+
+const (
+	// capabilityAll is the wildcard docker accepts and a document may not use.
+	capabilityAll = "ALL"
+	// capabilityPrefix is the spelling docker's own API uses and this format does
+	// not. The daemon takes either, and one spelling everywhere is what keeps the
+	// app's resource settings screen showing what the template asked for.
+	capabilityPrefix = "CAP_"
 )
 
 // BuildableBlocks is every block specservice.BuildApp builds, in the order it
@@ -179,7 +198,7 @@ func checkResources(r *Resources) error {
 	if r == nil {
 		return nil
 	}
-	if err := onlyFields("deployment.resources.", r, "reservations", "limits"); err != nil {
+	if err := onlyFields("deployment.resources.", r, "reservations", "limits", "capabilities"); err != nil {
 		return err
 	}
 	if r.Reservations != nil {
@@ -188,9 +207,76 @@ func checkResources(r *Resources) error {
 		}
 	}
 	if r.Limits != nil {
-		return onlyFields("deployment.resources.limits.", r.Limits, "cpus", "memory", "pids")
+		if err := onlyFields("deployment.resources.limits.", r.Limits, "cpus", "memory", "pids"); err != nil {
+			return err
+		}
+	}
+	return CheckCapabilities(r.Capabilities)
+}
+
+// CheckCapabilities is the one part of a document that hands an app more of the
+// host than a container ordinarily gets: kernel capabilities, sysctls, resource
+// limits the daemon would otherwise cap, the GPU. Everything in the block is
+// buildable, and everything in it is privileged - whoever provisions a document
+// carrying one has to be allowed to change capabilities, which is what
+// apptemplateuc checks before it creates anything.
+func CheckCapabilities(c *Capabilities) error {
+	if problem := CapabilitiesProblem(c); problem != "" {
+		return hperrors.Wrap(hperrors.ErrSpecBlockUnsupported).WithExtraDetail("%s", problem)
 	}
 	return nil
+}
+
+// CapabilitiesProblem says what is wrong with a capabilities block, in words,
+// and is empty when nothing is. A template linter prints it; CheckCapabilities
+// turns it into the error the API answers with.
+//
+// What it checks is only that the block is well formed and small. A capability
+// is named as docker names it, without the CAP_ prefix, and ALL is refused: a
+// document that grants everything is not describing what it needs.
+func CapabilitiesProblem(c *Capabilities) string {
+	const prefix = "deployment.resources.capabilities."
+	if c == nil {
+		return ""
+	}
+	if field := extraField(prefix, c,
+		"ulimits", "capabilityAdd", "capabilityDrop", "enableGPU", "oomScoreAdj", "sysctls"); field != "" {
+		return field + " is not supported"
+	}
+	for _, counted := range []struct {
+		field string
+		count int
+	}{
+		{"ulimits", len(c.Ulimits)}, {"capabilityAdd", len(c.CapabilityAdd)},
+		{"capabilityDrop", len(c.CapabilityDrop)}, {"sysctls", len(c.Sysctls)},
+	} {
+		if counted.count > MaxCapabilityEntries {
+			return fmt.Sprintf("%s%s: at most %d, and this has %d",
+				prefix, counted.field, MaxCapabilityEntries, counted.count)
+		}
+	}
+	for _, listed := range []struct {
+		field string
+		names []string
+	}{
+		{"capabilityAdd", c.CapabilityAdd}, {"capabilityDrop", c.CapabilityDrop},
+	} {
+		for _, name := range listed.names {
+			if !capabilityNamePattern.MatchString(name) || name == capabilityAll ||
+				strings.HasPrefix(name, capabilityPrefix) {
+				return fmt.Sprintf("%s%s: %q is not a capability such as NET_ADMIN", prefix, listed.field, name)
+			}
+		}
+	}
+	for _, ulimit := range c.Ulimits {
+		if ulimit == nil || ulimit.Name == "" {
+			return prefix + "ulimits: every entry needs a name"
+		}
+	}
+	if _, unnamed := c.Sysctls[""]; unnamed {
+		return prefix + "sysctls: every entry needs a name"
+	}
+	return ""
 }
 
 func checkStorage(s *Storage) error {
@@ -300,9 +386,18 @@ func checkRouting(body any) error {
 // onlyFields refuses the first non-zero field of a struct not named in allowed,
 // naming it by its yaml key under prefix.
 func onlyFields(prefix string, value any, allowed ...string) error {
+	if field := extraField(prefix, value, allowed...); field != "" {
+		return unsupported(field)
+	}
+	return nil
+}
+
+// extraField names the first non-zero field of a struct not in allowed, by its
+// yaml key under prefix, and is empty when every field is allowed.
+func extraField(prefix string, value any, allowed ...string) string {
 	v := reflect.Indirect(reflect.ValueOf(value))
 	if !v.IsValid() || v.Kind() != reflect.Struct {
-		return nil
+		return ""
 	}
 	typ := v.Type()
 	for i := range typ.NumField() {
@@ -314,9 +409,9 @@ func onlyFields(prefix string, value any, allowed ...string) error {
 		if slices.Contains(allowed, name) || v.Field(i).IsZero() {
 			continue
 		}
-		return unsupported(prefix + name)
+		return prefix + name
 	}
-	return nil
+	return ""
 }
 
 func unsupported(path string) error {

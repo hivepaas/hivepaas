@@ -199,7 +199,7 @@ func TransformCapabilities(containerSpec *swarm.ContainerSpec) *Capabilities {
 		}),
 		CapabilityAdd:  containerSpec.CapabilityAdd,
 		CapabilityDrop: containerSpec.CapabilityDrop,
-		EnableGPU:      gofn.Contain(containerSpec.CapabilityAdd, "[gpu]"),
+		EnableGPU:      gofn.Contain(containerSpec.CapabilityAdd, docker.CapabilityGPU),
 		OomScoreAdj:    containerSpec.OomScoreAdj,
 		Sysctls:        containerSpec.Sysctls,
 	}

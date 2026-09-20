@@ -40,6 +40,8 @@ func BuildIndex(repo *Repo) (*templatemodel.Index, error) {
 			Aliases:    tmpl.Metadata.Aliases,
 			License:    tmpl.Metadata.License,
 			Requires:   tmpl.Metadata.Requires,
+
+			RequiresCapabilities: requiresCapabilities(repo, tmpl),
 		}
 		for _, variant := range tmpl.Variants {
 			entry.Variants = append(entry.Variants,
@@ -66,6 +68,26 @@ func BuildIndex(repo *Repo) (*templatemodel.Index, error) {
 		index.Templates = append(index.Templates, entry)
 	}
 	return index, nil
+}
+
+// requiresCapabilities reports whether creating this template grants
+// capabilities to any app it creates - its own, or one of the dependencies
+// created alongside it, since those are provisioned by the same request and
+// gated on the same permission.
+//
+// A dependency naming a template this repository does not have is Lint's
+// problem; here it simply grants nothing.
+func requiresCapabilities(repo *Repo, tmpl *templatemodel.Template) bool {
+	if tmpl.RequiresCapabilities() {
+		return true
+	}
+	for _, dep := range tmpl.Dependencies {
+		target := repo.FindTemplate(dep.Template)
+		if target != nil && target.Template.RequiresCapabilities() {
+			return true
+		}
+	}
+	return false
 }
 
 // MarshalIndex writes index.json: indented, without HTML escaping, ending in a

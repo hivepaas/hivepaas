@@ -185,3 +185,62 @@ func TestBuildIndex(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, index, decoded)
 }
+
+// capsTemplateYAML is a template that asks the host for something, and
+// appTemplateYAML one that only depends on it. The store marks both: the app is
+// created together with the dependency, and whoever cannot grant IPC_LOCK to one
+// cannot grant it to the other.
+const capsTemplateYAML = `
+apiVersion: hivepaas.com/v1
+kind: AppTemplate
+metadata:
+  name: search
+  title: Search
+  tagline: A search engine
+  description: Search.
+  categories: [databases/sql]
+  icon: icons/demo.svg
+  requires: {versionCode: v000001}
+versions:
+  - {name: "3", release: "3.0", default: true, image: "search:3.0.0"}
+app:
+  deployment:
+    source: {activeMethod: image, imageSource: {image: "${{ image }}"}}
+    resources:
+      capabilities: {capabilityAdd: [IPC_LOCK]}
+`
+
+const appTemplateYAML = `
+apiVersion: hivepaas.com/v1
+kind: AppTemplate
+metadata:
+  name: site
+  title: Site
+  tagline: A site that searches
+  description: Site.
+  categories: [databases/sql]
+  icon: icons/demo.svg
+  requires: {versionCode: v000001}
+dependencies:
+  - {name: search, title: Search, template: search}
+versions:
+  - {name: "1", release: "1.0", default: true, image: "site:1.0.0"}
+app:
+  deployment:
+    source: {activeMethod: image, imageSource: {image: "${{ image }}"}}
+`
+
+func TestBuildIndexMarksWhatNeedsCapabilities(t *testing.T) {
+	fsys := withFile(withFile(validRepoFS(), "templates/search.yaml", capsTemplateYAML),
+		"templates/site.yaml", appTemplateYAML)
+	repo, problems := loadAndLint(t, fsys)
+	assert.Empty(t, problems)
+
+	index, err := BuildIndex(repo)
+	assert.NoError(t, err)
+
+	assert.True(t, index.FindTemplate("search").RequiresCapabilities)
+	assert.True(t, index.FindTemplate("site").RequiresCapabilities,
+		"a dependency's capabilities are granted by the same request")
+	assert.False(t, index.FindTemplate("demo").RequiresCapabilities)
+}

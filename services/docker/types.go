@@ -3,6 +3,9 @@ package docker
 const (
 	UnitCPUNano    = 1000 * 1000 * 1000
 	MinCPUFraction = 0.25
+	// CapabilityGPU is how a service spec asks for the GPU: docker carries the
+	// request in the capability list, under a name no real capability has.
+	CapabilityGPU = "[gpu]"
 )
 
 type ServiceMode string

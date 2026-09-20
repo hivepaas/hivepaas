@@ -96,7 +96,36 @@ func (s *service) buildResources(_ context.Context, state *buildState) error {
 			Pids:        limits.Pids,
 		}
 	}
+	buildCapabilities(resources.Capabilities, &state.req.Spec.TaskTemplate)
 	return nil
+}
+
+// buildCapabilities writes the privileged part of the resources block onto the
+// container, the way the app's resource settings screen writes it.
+//
+// Who is allowed to ask for this is decided before anything is built - a
+// document carrying capabilities is provisioned only by someone who may change
+// them - so there is nothing left to refuse here.
+//
+// The GPU is requested the way docker asks for it, by a capability spelled
+// "[gpu]", which is why it is not a name the capability grammar would accept.
+func buildCapabilities(capabilities *specmodel.Capabilities, task *swarm.TaskSpec) {
+	if capabilities == nil {
+		return
+	}
+	contSpec := task.ContainerSpec
+	contSpec.Ulimits = make([]*container.Ulimit, 0, len(capabilities.Ulimits))
+	for _, ulimit := range capabilities.Ulimits {
+		contSpec.Ulimits = append(contSpec.Ulimits,
+			&container.Ulimit{Name: ulimit.Name, Hard: ulimit.Hard, Soft: ulimit.Soft})
+	}
+	contSpec.CapabilityAdd = slices.Clone(capabilities.CapabilityAdd)
+	contSpec.CapabilityDrop = slices.Clone(capabilities.CapabilityDrop)
+	if capabilities.EnableGPU {
+		contSpec.CapabilityAdd = append(contSpec.CapabilityAdd, docker.CapabilityGPU)
+	}
+	contSpec.OomScoreAdj = capabilities.OomScoreAdj
+	contSpec.Sysctls = maps.Clone(capabilities.Sysctls)
 }
 
 // buildStorage hands the mounts to volumeservice, which builds them the way the

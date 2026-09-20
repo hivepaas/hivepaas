@@ -24,7 +24,8 @@ func NewListAppBaseReq() *ListAppBaseReq {
 		Status: []base.AppStatus{base.AppStatusActive},
 		Paging: basedto.Paging{
 			// Default paging if unset by client
-			Sort: basedto.Orders{{Direction: basedto.DirectionAsc, ColumnName: "name"}},
+			Sort:  basedto.Orders{{Direction: basedto.DirectionAsc, ColumnName: "name"}},
+			Limit: basedto.PageLimitMax,
 		},
 	}
 }

@@ -20,7 +20,8 @@ func NewListProjectBaseReq() *ListProjectBaseReq {
 		Status: []base.ProjectStatus{base.ProjectStatusActive},
 		Paging: basedto.Paging{
 			// Default paging if unset by client
-			Sort: basedto.Orders{{Direction: basedto.DirectionAsc, ColumnName: "name"}},
+			Sort:  basedto.Orders{{Direction: basedto.DirectionAsc, ColumnName: "name"}},
+			Limit: basedto.PageLimitMax,
 		},
 	}
 }

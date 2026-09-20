@@ -190,7 +190,11 @@ func (uc *UC) provisionRequests(
 			AppID:        target.id,
 			Name:         target.name,
 			Status:       base.AppStatusActive,
-			Configure:    uc.configureFromTemplate(target, timeNow),
+			// A dependency belongs to the app it was created with, which is what
+			// keeps it out of a listing of apps and takes it along when that app
+			// is deleted.
+			LogicalParentID: target.logicalParentID,
+			Configure:       uc.configureFromTemplate(target, timeNow),
 			Deployment: &appprovisionservice.FirstDeployment{
 				Source:   base.DeploymentTriggerSourceAPI,
 				SourceID: auth.User.ID,
@@ -266,11 +270,14 @@ func transformCreated(
 // appToProvision is one app of a creation request: the one it asked for, or a
 // dependency created for it.
 type appToProvision struct {
-	id       string
-	name     string
-	role     string
-	rendered *apptemplateservice.RenderResp
-	links    appTemplateLinks
+	id   string
+	name string
+	role string
+	// logicalParentID is the app this one is created to serve, empty for the app
+	// the request is about.
+	logicalParentID string
+	rendered        *apptemplateservice.RenderResp
+	links           appTemplateLinks
 }
 
 // appTemplateLinks are what an app's binding records about the other apps of the
@@ -290,11 +297,12 @@ func planApps(
 	apps := make([]*appToProvision, 0, len(rendered.Dependencies)+1)
 	for _, dep := range rendered.Dependencies {
 		depApp := &appToProvision{
-			id:       gofn.Must(ulid.NewStringULID()),
-			name:     dep.AppName,
-			role:     dep.Name,
-			rendered: dep.Render,
-			links:    appTemplateLinks{createdForAppID: main.id},
+			id:              gofn.Must(ulid.NewStringULID()),
+			name:            dep.AppName,
+			role:            dep.Name,
+			rendered:        dep.Render,
+			logicalParentID: main.id,
+			links:           appTemplateLinks{createdForAppID: main.id},
 		}
 		main.links.dependencies = append(main.links.dependencies, entity.AppTemplateDependency{
 			Name: dep.Name, AppID: depApp.id, Template: dep.Render.Template.Metadata.Name,

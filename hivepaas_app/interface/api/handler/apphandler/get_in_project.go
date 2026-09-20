@@ -22,6 +22,7 @@ import (
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
+// @Param   getChildApps query bool false "`getChildApps=true` to include apps that belong to another"
 // @Success 200 {object} appdto.ListAppBaseResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo
@@ -61,6 +62,7 @@ func (h *Handler) ListAppBaseInProject(ctx *gin.Context) {
 // @Param   pageOffset query int false "`pageOffset=offset`"
 // @Param   pageLimit query int false "`pageLimit=limit`"
 // @Param   sort query string false "`sort=[-]field1|field2...`"
+// @Param   getChildApps query bool false "`getChildApps=true` to include apps that belong to another"
 // @Success 200 {object} appdto.ListAppResp
 // @Failure 400 {object} hperrors.ErrorInfo
 // @Failure 500 {object} hperrors.ErrorInfo

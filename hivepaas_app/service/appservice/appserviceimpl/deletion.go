@@ -34,13 +34,11 @@ func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.Ap
 		}
 	}
 
-	// Query all logical-child-apps to delete (a preview app can have logical-child-apps linked via res_links)
+	// The apps created to serve this one go with it: a preview app's cloned
+	// databases, and the dependencies a template created alongside it.
 	logicalChildApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
 		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		bunex.SelectJoin("JOIN res_links AS res_link ON res_link.dst_id = app.id"),
-		bunex.SelectWhere("res_link.src_type = ?", base.ResourceTypeApp),
-		bunex.SelectWhere("res_link.src_id = ?", app.ID),
-		bunex.SelectWhere("res_link.dst_type = ?", base.ResourceTypeLogicalChildApp),
+		bunex.SelectWhere("app.logical_parent_id = ?", app.ID),
 	)
 	if err != nil {
 		return hperrors.Wrap(err)

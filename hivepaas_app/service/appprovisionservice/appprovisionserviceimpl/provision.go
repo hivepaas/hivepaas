@@ -208,17 +208,18 @@ func (s *service) newApp(
 		id = gofn.Must(ulid.NewStringULID())
 	}
 	app := &entity.App{
-		ID:           id,
-		ProjectID:    project.ID,
-		Project:      project,
-		ProjectEnvID: projectEnv.ID,
-		ProjectEnv:   projectEnv,
-		Key:          projecthelper.CalcAppKey(req.Name),
-		Name:         req.Name,
-		Status:       req.Status,
-		Note:         req.Note,
-		CreatedAt:    timeNow,
-		UpdatedAt:    timeNow,
+		ID:              id,
+		LogicalParentID: req.LogicalParentID,
+		ProjectID:       project.ID,
+		Project:         project,
+		ProjectEnvID:    projectEnv.ID,
+		ProjectEnv:      projectEnv,
+		Key:             projecthelper.CalcAppKey(req.Name),
+		Name:            req.Name,
+		Status:          req.Status,
+		Note:            req.Note,
+		CreatedAt:       timeNow,
+		UpdatedAt:       timeNow,
 	}
 	app.GlobalKey = projecthelper.CalcAppGlobalKey(project.Key, app.Key, projectEnv.Key)
 

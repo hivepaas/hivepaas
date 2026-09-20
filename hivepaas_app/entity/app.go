@@ -17,31 +17,37 @@ var (
 )
 
 type App struct {
-	ID           string         `bun:",pk" json:"id"`
-	Name         string         `json:"name"`
-	Key          string         `json:"key"`
-	GlobalKey    string         `json:"globalKey"`
-	ProjectID    string         `json:"projectId"`
-	ProjectEnvID string         `json:"projectEnvId"`
-	ParentID     string         `bun:",nullzero" json:"parentId,omitempty"`
-	ServiceID    string         `bun:",nullzero" json:"serviceId"`
-	Status       base.AppStatus `json:"status"`
-	Photo        string         `bun:",nullzero" json:"photo,omitempty"`
-	Note         string         `bun:",nullzero" json:"note,omitempty"`
-	UpdateVer    int            `json:"updateVer"`
+	ID           string `bun:",pk" json:"id"`
+	Name         string `json:"name"`
+	Key          string `json:"key"`
+	GlobalKey    string `json:"globalKey"`
+	ProjectID    string `json:"projectId"`
+	ProjectEnvID string `json:"projectEnvId"`
+	ParentID     string `bun:",nullzero" json:"parentId,omitempty"`
+	// LogicalParentID is the app this one was created to serve, empty for an app
+	// created on its own. A template's dependencies carry it, and so do the
+	// database apps a preview deployment clones for itself. It is not ParentID:
+	// that one says this app is a copy of another, and the two can both be set.
+	LogicalParentID string         `bun:",nullzero" json:"logicalParentId,omitempty"`
+	ServiceID       string         `bun:",nullzero" json:"serviceId"`
+	Status          base.AppStatus `json:"status"`
+	Photo           string         `bun:",nullzero" json:"photo,omitempty"`
+	Note            string         `bun:",nullzero" json:"note,omitempty"`
+	UpdateVer       int            `json:"updateVer"`
 
 	CreatedAt time.Time `bun:",default:current_timestamp" json:"createdAt"`
 	UpdatedAt time.Time `bun:",default:current_timestamp" json:"updatedAt"`
 	DeletedAt time.Time `bun:",soft_delete,nullzero" json:"deletedAt,omitzero"`
 
-	PhotoData   *BinObject  `bun:"rel:has-one,join:photo=id" json:"-"`
-	Project     *Project    `bun:"rel:has-one,join:project_id=id" json:"-"`
-	ProjectEnv  *ProjectEnv `bun:"rel:has-one,join:project_env_id=id" json:"-"`
-	ParentApp   *App        `bun:"rel:has-one,join:parent_id=id" json:"-"`
-	Settings    []*Setting  `bun:"rel:has-many,join:id=object_id" json:"-"`
-	Tags        []*Tag      `bun:"rel:has-many,join:id=object_id" json:"-"`
-	SrcResLinks []*ResLink  `bun:"rel:has-many,join:id=dst_id" json:"-"`
-	DstResLinks []*ResLink  `bun:"rel:has-many,join:id=src_id" json:"-"`
+	PhotoData        *BinObject  `bun:"rel:has-one,join:photo=id" json:"-"`
+	Project          *Project    `bun:"rel:has-one,join:project_id=id" json:"-"`
+	ProjectEnv       *ProjectEnv `bun:"rel:has-one,join:project_env_id=id" json:"-"`
+	ParentApp        *App        `bun:"rel:has-one,join:parent_id=id" json:"-"`
+	LogicalParentApp *App        `bun:"rel:has-one,join:logical_parent_id=id" json:"-"`
+	Settings         []*Setting  `bun:"rel:has-many,join:id=object_id" json:"-"`
+	Tags             []*Tag      `bun:"rel:has-many,join:id=object_id" json:"-"`
+	SrcResLinks      []*ResLink  `bun:"rel:has-many,join:id=dst_id" json:"-"`
+	DstResLinks      []*ResLink  `bun:"rel:has-many,join:id=src_id" json:"-"`
 }
 
 // GetID implements IDEntity interface
@@ -56,6 +62,11 @@ func (app *App) GetName() string {
 
 func (app *App) IsChildApp() bool {
 	return app.ParentID != ""
+}
+
+// IsLogicalChildApp reports whether the app was created to serve another.
+func (app *App) IsLogicalChildApp() bool {
+	return app.LogicalParentID != ""
 }
 
 func (app *App) GetObjectScope() *ObjectScope {

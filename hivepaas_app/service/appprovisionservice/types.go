@@ -28,6 +28,10 @@ type ProvisionAppReq struct {
 	Status base.AppStatus
 	Note   string
 	Tags   []string
+	// LogicalParentID is the app this one is being created to serve, empty for an
+	// app created on its own. A template's dependencies carry the id of the app
+	// they were created with.
+	LogicalParentID string
 	// Configure is nil for an empty app.
 	Configure ConfigureFunc
 	// Deployment asks for the deployment that replaces the placeholder image with

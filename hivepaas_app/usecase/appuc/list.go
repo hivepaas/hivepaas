@@ -55,8 +55,11 @@ func (uc *UC) ListApp(
 			),
 		)
 	} else {
+		// The apps of an environment are the ones somebody made, not the ones made
+		// underneath them. Whichever way a child belongs to its owner, it is shown
+		// beside that owner instead - see attachChildApps.
+		listOpts = append(listOpts, excludeChildApps()...)
 		listOpts = append(listOpts,
-			bunex.SelectWhere("app.parent_id IS NULL"),
 			// The kind alone here: what an app runs is what a list is filtered by,
 			// and loading routing settings as well would change what every other
 			// caller of this list receives.
@@ -125,6 +128,12 @@ func (uc *UC) ListApp(
 	resp, err := appdto.TransformApps(apps, transformationInput)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+
+	if req.GetChildApps {
+		if err = uc.attachChildApps(ctx, uc.db, req.ProjectID, apps, resp); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
 
 	return &appdto.ListAppResp{

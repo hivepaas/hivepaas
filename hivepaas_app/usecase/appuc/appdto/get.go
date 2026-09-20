@@ -55,6 +55,9 @@ type AppResp struct {
 	// for an app that was not created from a template, which declares no kind.
 	Engine string `json:"engine,omitempty" copy:"-"` // manual copy, from the kind setting
 
+	ChildApps        []*AppResp `json:"childApps,omitempty"`
+	LogicalChildApps []*AppResp `json:"logicalChildApps,omitempty"`
+
 	// Stats of app, only returns when req.getStats=true
 	Stats *AppStatsResp `json:"stats"`
 

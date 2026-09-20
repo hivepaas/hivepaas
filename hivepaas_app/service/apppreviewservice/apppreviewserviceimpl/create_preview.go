@@ -304,23 +304,18 @@ func (s *service) persistAppPreviewData(
 		return hperrors.Wrap(err)
 	}
 
-	// If there are cloned db apps, we will add some res-links for them as logical-child-apps
-	resLinks := make([]*entity.ResLink, 0, len(data.CloneDBAppsData))
-	timeNow := time.Now()
+	// The cloned database apps were created to serve this preview app, and say so.
+	// It is recorded now rather than while cloning, because the preview app does
+	// not exist until here.
 	for _, appData := range data.CloneDBAppsData {
-		resLinks = append(resLinks, &entity.ResLink{
-			SrcType:   base.ResourceTypeApp,
-			SrcID:     data.PreviewApp.ID,
-			DstType:   base.ResourceTypeLogicalChildApp,
-			DstID:     appData.CloneResp.TargetApp.ID,
-			CreatedAt: timeNow,
-			UpdatedAt: timeNow,
-		})
-	}
-	err = s.resLinkRepo.UpsertMulti(ctx, db, resLinks,
-		entity.ResLinkUpsertingConflictCols, entity.ResLinkUpsertingUpdateCols)
-	if err != nil {
-		return hperrors.Wrap(err)
+		clonedApp := appData.CloneResp.TargetApp
+		clonedApp.LogicalParentID = data.PreviewApp.ID
+		clonedApp.UpdatedAt = time.Now()
+		err = s.appRepo.Update(ctx, db, clonedApp,
+			bunex.UpdateColumns("logical_parent_id", "updated_at"))
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
 	}
 
 	return nil

@@ -2,7 +2,6 @@ package volumeserviceimpl
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -56,7 +55,7 @@ func (s *service) EnsureVolumePermissions(
 		if sub == "" {
 			continue
 		}
-		_, _ = fmt.Fprintf(&cmdBuilder, " && mkdir -p '/mnt/vol/%s' && chmod -R 777 '/mnt/vol/%s'", sub, sub)
+		cmdBuilder.WriteString(" && " + makeDirWritableCmd("/mnt/vol/"+sub))
 	}
 	shCmd := []string{"sh", "-c", cmdBuilder.String()}
 

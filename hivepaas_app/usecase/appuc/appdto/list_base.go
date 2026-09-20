@@ -15,6 +15,7 @@ type ListAppBaseReq struct {
 	Status       []base.AppStatus `json:"-" mapstructure:"status"`
 	Env          string           `json:"-" mapstructure:"env"`
 	Search       string           `json:"-" mapstructure:"search"`
+	GetChildApps bool             `json:"-" mapstructure:"getChildApps"`
 
 	Paging basedto.Paging `json:"-"`
 }

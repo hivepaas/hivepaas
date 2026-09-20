@@ -37,10 +37,11 @@ func (uc *UC) ListAppBase(
 		listOpts = append(listOpts,
 			bunex.SelectWhere("app.parent_id = ?", req.ParentID),
 		)
-	} else {
-		listOpts = append(listOpts,
-			bunex.SelectWhere("app.parent_id IS NULL"),
-		)
+	} else if !req.GetChildApps {
+		// An app that belongs to another is not offered on its own, the same as in
+		// the full listing. This one has nowhere to nest them, so asking for them
+		// here simply lets them through as rows of their own.
+		listOpts = append(listOpts, excludeChildApps()...)
 	}
 	if len(req.Status) > 0 {
 		listOpts = append(listOpts,

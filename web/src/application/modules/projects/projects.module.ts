@@ -83,6 +83,7 @@ export {
     SingleAppTasksRoute,
     // Single App Configuration
     AppConfigGeneralRoute,
+    AppConfigKindSettingsRoute,
     AppConfigDeploymentSettingsRoute,
     AppConfigContainerSettingsRoute,
     AppConfigRoutingSettingsRoute,

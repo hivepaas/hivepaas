@@ -84,7 +84,7 @@ export function DeployTemplateDialog() {
             open={open}
             onOpenChange={handleClose}
         >
-            <DialogFixedContent className="sm:max-w-[850px] w-full">
+            <DialogFixedContent className="sm:max-w-[800px] w-full">
                 <DialogHeader className="border-b border-border/50 px-3.5 py-4">
                     <div className="flex items-center gap-3.5">
                         <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-muted/30 p-2 overflow-hidden shadow-2xs">

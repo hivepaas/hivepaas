@@ -5,6 +5,7 @@ import { cn } from "@lib/utils";
 import {
     AlertTriangle,
     Box,
+    Boxes,
     CalendarClock,
     Copy,
     Cpu,
@@ -86,6 +87,15 @@ function View({ children }: PropsWithChildren) {
                         label: "General",
                         icon: Settings,
                         route: ROUTE.projects.single.apps.single.configuration.general.$route(projectId, env, appId),
+                    },
+                    {
+                        label: "App Kind",
+                        icon: Boxes,
+                        route: ROUTE.projects.single.apps.single.configuration.kindSettings.$route(
+                            projectId,
+                            env,
+                            appId,
+                        ),
                     },
                     {
                         label: "Deployment Settings",

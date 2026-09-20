@@ -153,6 +153,20 @@ export interface AppTemplateCapabilities {
     oomScoreAdj?: number;
 }
 
+/** One address a template claims on the cluster itself, beside the web
+ *  addresses the reverse proxy serves. Two apps cannot share one. */
+export interface AppTemplatePort {
+    /** Inside the container, and on the nodes. */
+    target: number;
+    published: number;
+    /** The parameter that chooses the published port, when one does: `published`
+     *  is then only its default, and what the person types is what is claimed. */
+    publishedParam?: string;
+    protocol: string;
+    /** "ingress" answers on every node, "host" only on the node running the app. */
+    publishMode: string;
+}
+
 export interface AppTemplateDependency {
     name: string;
     title: string;
@@ -163,6 +177,8 @@ export interface AppTemplateDependency {
     parameters?: AppTemplateParam[];
     /** What this dependency's app is granted: the same request creates it. */
     capabilities?: AppTemplateCapabilities | null;
+    /** Ports this dependency's app claims on the cluster. */
+    publishedPorts?: AppTemplatePort[] | null;
 }
 
 export interface AppTemplateDetail {
@@ -184,6 +200,8 @@ export interface AppTemplateDetail {
     dependencies?: AppTemplateDependency[];
     /** Null for the templates that ask for nothing, which is most of them. */
     capabilities?: AppTemplateCapabilities | null;
+    /** Empty for the templates that publish nothing, which is most of them. */
+    publishedPorts?: AppTemplatePort[] | null;
 }
 
 export interface AppTemplateImageTag {

@@ -593,6 +593,12 @@ export const ROUTE = {
                                 `/projects/${id}/${env}/apps/${appId}/general/`,
                         },
 
+                        kindSettings: {
+                            $pattern: "projects/:id/:env/apps/:appId/kind-settings",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/kind-settings/`,
+                        },
+
                         deploymentSettings: {
                             $pattern: "projects/:id/:env/apps/:appId/deployment-settings",
                             $route: (id: string, env: string, appId: string) =>

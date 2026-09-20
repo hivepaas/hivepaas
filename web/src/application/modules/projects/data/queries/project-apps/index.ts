@@ -15,6 +15,7 @@ export * from "./app-service-tasks.queries";
 export * from "./app-resource-settings.queries";
 export * from "./app-storage-settings.queries";
 export * from "./app-routing-settings.queries";
+export * from "./app-kind-settings.queries";
 
 export * from "./app-periodic-jobs.queries";
 export * from "./app-scheduled-jobs.queries";

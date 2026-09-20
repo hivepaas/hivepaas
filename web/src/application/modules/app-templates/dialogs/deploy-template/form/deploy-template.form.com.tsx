@@ -10,6 +10,7 @@ import {
     Globe,
     HardDrive,
     Loader2,
+    Network,
     Rocket,
     Search,
     ShieldAlert,
@@ -51,7 +52,14 @@ import {
     appTemplatesApi,
 } from "../../../api";
 import { useListEnvApps } from "../../../data";
-import { type GrantedCapabilities, describeCapabilities, grantedByTemplate } from "../../../utils";
+import {
+    type ClaimedPort,
+    type GrantedCapabilities,
+    describeCapabilities,
+    describePort,
+    grantedByTemplate,
+    portsClaimedByTemplate,
+} from "../../../utils";
 
 export interface DeployTemplateFormProps {
     template: AppTemplateDetail;
@@ -212,8 +220,14 @@ export function DeployTemplateForm({
     // What this request would grant the host, and whether the person may grant
     // it: the same permission the app's resource settings screen asks for.
     const granted = useMemo(() => grantedByTemplate(template), [template]);
+    // Ports are a shared resource of the cluster: another app already on one is
+    // what refuses this deployment, so they are shown with the number the person
+    // is actually about to claim.
+    const claimedPorts = useMemo(() => portsClaimedByTemplate(template), [template]);
     const { canWrite: canGrantCapabilities } = useConditionalModule({ id: MODULE_IDS.Cluster });
     const capabilitiesBlocked = granted.length > 0 && !canGrantCapabilities;
+
+    const paramValues = watch("params");
 
     const selectedEnv = watch("env");
     const selectedVersion = watch("version");
@@ -348,6 +362,11 @@ export function DeployTemplateForm({
                 <CapabilitiesNotice
                     granted={granted}
                     canGrant={canGrantCapabilities}
+                />
+
+                <PublishedPortsNotice
+                    claimed={claimedPorts}
+                    paramValues={paramValues}
                 />
 
                 {/* ========================================================================= */}
@@ -1426,6 +1445,52 @@ function CapabilitiesNotice({ granted, canGrant }: { granted: GrantedCapabilitie
                     it, or choose a template that asks for no capabilities.
                 </p>
             )}
+        </div>
+    );
+}
+
+/**
+ * What the app will claim on the cluster itself. It is not a permission
+ * question - publishing a port is what the app's network settings do - but it is
+ * a resource nothing else can have at the same time, so it is said before
+ * deploying rather than after the cluster refuses it.
+ */
+function PublishedPortsNotice({
+    claimed,
+    paramValues,
+}: {
+    claimed: ClaimedPort[];
+    paramValues?: Record<string, unknown>;
+}) {
+    if (claimed.length === 0) {
+        return null;
+    }
+    return (
+        <div className="space-y-2 rounded-xl border border-border/70 bg-card/60 p-4 shadow-2xs">
+            <div className="flex items-center gap-2">
+                <Network className="size-4 text-amber-500" />
+                <h4 className="text-sm font-semibold tracking-tight">Ports on the cluster</h4>
+            </div>
+
+            {claimed.map(one => (
+                <div
+                    key={`${one.app}-${one.port.target}-${one.port.protocol}`}
+                    className="flex flex-wrap items-center gap-1.5"
+                >
+                    <span className="text-xs text-muted-foreground">{one.app} answers at</span>
+                    <Badge
+                        variant="outline"
+                        className="h-5 px-1.5 font-mono text-[10px]"
+                    >
+                        {describePort(one, paramValues)}
+                    </Badge>
+                </div>
+            ))}
+
+            <p className="text-[11px] leading-relaxed text-muted-foreground">
+                No other app on this installation can use the same port. Open it in the node&apos;s firewall for
+                anything outside to reach it.
+            </p>
         </div>
     );
 }

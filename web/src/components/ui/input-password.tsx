@@ -16,10 +16,21 @@ export interface PasswordInputProps extends InputProps {
     defaultShowPassword?: boolean;
     showPassword?: boolean;
     onShowPasswordChange?: (show: boolean) => void;
+    containerClassName?: string;
 }
 
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
-    ({ className, defaultShowPassword, showPassword: showPasswordProp, onShowPasswordChange, ...props }, ref) => {
+    (
+        {
+            className,
+            containerClassName,
+            defaultShowPassword,
+            showPassword: showPasswordProp,
+            onShowPasswordChange,
+            ...props
+        },
+        ref,
+    ) => {
         const { isRevealed } = React.useContext(RevealSecretsContext);
         const [internalShowPassword, setInternalShowPassword] = React.useState(defaultShowPassword ?? isRevealed);
 
@@ -41,8 +52,20 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
             }
         };
 
+        const containerWidthClasses = React.useMemo(() => {
+            if (!className) return "";
+            const matches = className.split(/\s+/).filter(c => /^(max-w-|w-|min-w-)/.test(c));
+            if (matches.length === 0) return "";
+            const hasWidth = matches.some(c => /^w-/.test(c));
+            const hasMaxWidth = matches.some(c => /^max-w-/.test(c));
+            if (hasMaxWidth && !hasWidth) {
+                matches.unshift("w-full");
+            }
+            return matches.join(" ");
+        }, [className]);
+
         return (
-            <div className="relative">
+            <div className={cn("relative", containerWidthClasses, containerClassName)}>
                 <Input
                     type={showPassword ? "text" : "password"}
                     className={cn("hide-password-toggle pr-10", className)}

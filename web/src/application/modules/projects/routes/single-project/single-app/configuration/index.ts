@@ -1,4 +1,5 @@
 export * from "./general";
+export * from "./kind-settings";
 export * from "./deployment-settings";
 export * from "./container-settings";
 export * from "./routing-settings";

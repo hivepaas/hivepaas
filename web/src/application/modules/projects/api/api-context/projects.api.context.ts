@@ -97,6 +97,10 @@ import {
     ProjectsApiValidator,
 } from "~/projects/api/services";
 import {
+    AppKindSettingsApi,
+    AppKindSettingsApiValidator,
+} from "~/projects/api/services/project-apps-services/kind-settings";
+import {
     AppNetworkSettingsApi,
     AppNetworkSettingsApiValidator,
 } from "~/projects/api/services/project-apps-services/network-settings";
@@ -153,6 +157,7 @@ function createApi() {
     const appResourceSettingsApiValidator = new AppResourceSettingsApiValidator();
     const appStorageSettingsApiValidator = new AppStorageSettingsApiValidator();
     const appRoutingSettingsApiValidator = new AppRoutingSettingsApiValidator();
+    const appKindSettingsApiValidator = new AppKindSettingsApiValidator();
     const appServiceSettingsApiValidator = new AppServiceSettingsApiValidator();
     const appServiceTasksApiValidator = new AppServiceTasksApiValidator();
     const appSecretsApiValidator = new AppSecretsApiValidator();
@@ -247,6 +252,9 @@ function createApi() {
                 },
                 routingSettings: {
                     $: new AppRoutingSettingsApi(appRoutingSettingsApiValidator),
+                },
+                kindSettings: {
+                    $: new AppKindSettingsApi(appKindSettingsApiValidator),
                 },
                 serviceSettings: {
                     $: new AppServiceSettingsApi(appServiceSettingsApiValidator),

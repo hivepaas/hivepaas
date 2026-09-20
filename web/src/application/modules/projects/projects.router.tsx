@@ -1653,6 +1653,14 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.kindSettings.$pattern,
+                            lazy: async () => {
+                                const { AppConfigKindSettingsRoute } = await getLazyComponents();
+
+                                return { Component: AppConfigKindSettingsRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.deploymentSettings.$pattern,
                             lazy: async () => {
                                 const { AppConfigDeploymentSettingsRoute } = await getLazyComponents();

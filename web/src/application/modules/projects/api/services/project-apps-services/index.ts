@@ -16,6 +16,7 @@ export * from "./network-settings";
 export * from "./resource-settings";
 export * from "./storage-settings";
 export * from "./routing-settings";
+export * from "./kind-settings";
 
 export * from "./periodic-jobs";
 export * from "./scheduled-jobs";

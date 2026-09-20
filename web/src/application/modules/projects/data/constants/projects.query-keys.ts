@@ -94,6 +94,10 @@ export const QK = {
      * Project App Routing Settings
      */
     "projects.apps.routing-settings.$.find-one": "projects.apps.routing-settings.$.find-one",
+    /*
+     * Project App Kind Settings
+     */
+    "projects.apps.kind-settings.$.find-one": "projects.apps.kind-settings.$.find-one",
 
     /*
      * Project App Periodic Jobs (health checks)

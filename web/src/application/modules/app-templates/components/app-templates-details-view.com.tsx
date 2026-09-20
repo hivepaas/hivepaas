@@ -15,13 +15,15 @@ import {
     Lock,
     Rocket,
     Scale,
+    ShieldAlert,
     Sliders,
     Tag,
 } from "lucide-react";
 import { useParams } from "react-router";
 
 import { AppLink } from "@application/shared/components";
-import { ROUTE } from "@application/shared/constants";
+import { MODULE_IDS, ROUTE } from "@application/shared/constants";
+import { useConditionalModule } from "@application/shared/permissions";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +35,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { AppTemplateDependency, AppTemplateDetail, AppTemplateParam, AppTemplateSummary } from "../api";
 import { useGetAppTemplate } from "../data";
 import { useDeployTemplateDialogState } from "../dialogs";
+import { describeCapabilities, grantedByTemplate } from "../utils";
 
 interface AppTemplatesDetailsViewProps {
     templateName: string;
@@ -530,6 +533,11 @@ export function AppTemplatesDetailsView({
                 </div>
             </div>
 
+            {/* What this template asks the host for. It sits above the license
+                block because it is the one thing on this page that changes who
+                may deploy the template at all. */}
+            {!isLoading && templateDetail && <CapabilitiesSection template={templateDetail} />}
+
             {/* Main Content Layout: Left 3/4 and Right 1/4 */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                 {/* Left Column: Sections (Description, Template Parameters, Versions Matrix) */}
@@ -917,6 +925,70 @@ export function AppTemplatesDetailsView({
                             </CardContent>
                         </Card>
                     )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/**
+ * What deploying this template grants the apps it creates, and the permission
+ * needed to grant it. It says nothing at all for the templates that ask for
+ * nothing, which is nearly all of them.
+ */
+function CapabilitiesSection({ template }: { template: AppTemplateDetail }) {
+    const granted = useMemo(() => grantedByTemplate(template), [template]);
+    const { canWrite: canGrant } = useConditionalModule({ id: MODULE_IDS.Cluster });
+
+    if (granted.length === 0) {
+        return null;
+    }
+    return (
+        <div className="rounded-xl border border-orange-500/40 bg-orange-500/5 dark:bg-orange-500/10 p-4 shadow-xs">
+            <div className="flex items-start gap-3.5">
+                <div className="rounded-lg bg-orange-500/15 p-2 text-orange-700 dark:text-orange-400 shrink-0">
+                    <ShieldAlert className="size-5" />
+                </div>
+
+                <div className="flex-1 space-y-2 text-xs">
+                    <h4 className="text-sm font-semibold text-foreground">Elevated container privileges</h4>
+
+                    {granted.map(one => (
+                        <div
+                            key={one.app}
+                            className="flex flex-wrap items-center gap-1.5"
+                        >
+                            <span className="text-muted-foreground">{one.app} gets</span>
+                            {describeCapabilities(one.capabilities).map(item => (
+                                <Badge
+                                    key={item}
+                                    variant="outline"
+                                    className="h-5 px-1.5 font-mono text-[10px] border-orange-500/40 text-orange-700 dark:text-orange-400"
+                                >
+                                    {item}
+                                </Badge>
+                            ))}
+                        </div>
+                    ))}
+
+                    <p className="leading-relaxed text-foreground/90 font-medium">
+                        Capabilities give a container access the host would otherwise keep from it, and can introduce
+                        severe security risks. Deploy this only if you understand what it is being given.
+                    </p>
+
+                    <p className="leading-relaxed text-muted-foreground">
+                        {canGrant ? (
+                            <>
+                                Granting this needs <span className="font-medium text-orange-500">Write</span>{" "}
+                                permission on the <span className="font-medium text-orange-500">Cluster</span> module,
+                                which you have.
+                            </>
+                        ) : (
+                            <span className="font-medium text-destructive">
+                                You need Write permission on the Cluster module to deploy this template.
+                            </span>
+                        )}
+                    </p>
                 </div>
             </div>
         </div>

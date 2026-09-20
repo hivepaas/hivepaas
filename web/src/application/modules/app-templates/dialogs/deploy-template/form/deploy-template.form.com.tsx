@@ -12,13 +12,16 @@ import {
     Loader2,
     Rocket,
     Search,
+    ShieldAlert,
     Sparkles,
 } from "lucide-react";
 import { type Control, Controller, type UseFormSetValue, useForm } from "react-hook-form";
 import { type ProjectEnvEntity } from "~/projects/domain";
 import { ProjectEnvBadge } from "~/projects/module-shared/components";
 
+import { MODULE_IDS } from "@application/shared/constants";
 import { useDebouncedSearch } from "@application/shared/hooks";
+import { useConditionalModule } from "@application/shared/permissions";
 import {
     formatDataSizeCompact,
     generateDataSizePresets,
@@ -48,6 +51,7 @@ import {
     appTemplatesApi,
 } from "../../../api";
 import { useListEnvApps } from "../../../data";
+import { type GrantedCapabilities, describeCapabilities, grantedByTemplate } from "../../../utils";
 
 export interface DeployTemplateFormProps {
     template: AppTemplateDetail;
@@ -205,6 +209,12 @@ export function DeployTemplateForm({
         mode: "onSubmit",
     });
 
+    // What this request would grant the host, and whether the person may grant
+    // it: the same permission the app's resource settings screen asks for.
+    const granted = useMemo(() => grantedByTemplate(template), [template]);
+    const { canWrite: canGrantCapabilities } = useConditionalModule({ id: MODULE_IDS.Cluster });
+    const capabilitiesBlocked = granted.length > 0 && !canGrantCapabilities;
+
     const selectedEnv = watch("env");
     const selectedVersion = watch("version");
     const selectedVariant = watch("variant");
@@ -335,6 +345,11 @@ export function DeployTemplateForm({
             className="flex flex-col h-full overflow-hidden"
         >
             <DialogBody className="space-y-6 px-3.5 py-5 overflow-y-auto">
+                <CapabilitiesNotice
+                    granted={granted}
+                    canGrant={canGrantCapabilities}
+                />
+
                 {/* ========================================================================= */}
                 {/* SECTION 1: APPLICATION BASICS & VERSION / VARIANT SELECTION               */}
                 {/* ========================================================================= */}
@@ -783,7 +798,10 @@ export function DeployTemplateForm({
                 <Button
                     type="submit"
                     size="sm"
-                    disabled={readOnly || isPending}
+                    disabled={readOnly || isPending || capabilitiesBlocked}
+                    title={
+                        capabilitiesBlocked ? "This template needs Write permission on the Cluster module" : undefined
+                    }
                     className="h-9 px-5 text-xs font-semibold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white shadow-xs disabled:opacity-50"
                 >
                     {isPending ? (
@@ -1340,5 +1358,74 @@ function ParameterRow({
                 );
             }}
         />
+    );
+}
+
+// =========================================================================
+// CAPABILITIES NOTICE
+// =========================================================================
+
+/**
+ * The warning shown before a template that asks for more of the host than a
+ * container ordinarily gets is deployed.
+ *
+ * It says the same two things the app's resource settings screen says about the
+ * same block - this carries security risk, and changing it needs Write on the
+ * Cluster module - and names what is actually asked for, so the decision is made
+ * on the list rather than on the word "capabilities".
+ */
+function CapabilitiesNotice({ granted, canGrant }: { granted: GrantedCapabilities[]; canGrant: boolean }) {
+    if (granted.length === 0) {
+        return null;
+    }
+    return (
+        <div
+            className={cn(
+                "space-y-3 rounded-xl border p-4 shadow-2xs",
+                canGrant ? "border-orange-500/40 bg-orange-500/5" : "border-destructive/50 bg-destructive/5",
+            )}
+        >
+            <div className="flex items-center gap-2">
+                <ShieldAlert className={cn("size-4", canGrant ? "text-orange-500" : "text-destructive")} />
+                <h4 className="text-sm font-semibold tracking-tight">Elevated container privileges</h4>
+            </div>
+
+            <div className="space-y-2">
+                {granted.map(one => (
+                    <div
+                        key={one.app}
+                        className="flex flex-wrap items-center gap-1.5"
+                    >
+                        <span className="text-xs text-muted-foreground">{one.app} gets</span>
+                        {describeCapabilities(one.capabilities).map(item => (
+                            <Badge
+                                key={item}
+                                variant="outline"
+                                className="h-5 px-1.5 font-mono text-[10px] border-orange-500/40 text-orange-600 dark:text-orange-400"
+                            >
+                                {item}
+                            </Badge>
+                        ))}
+                    </div>
+                ))}
+            </div>
+
+            <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Capabilities give a container access the host would otherwise keep from it, and can introduce severe
+                security risks. Deploy this only if you understand what it is being given.
+            </p>
+
+            {canGrant ? (
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Granting this needs <span className="font-medium text-orange-500">Write</span> permission on the{" "}
+                    <span className="font-medium text-orange-500">Cluster</span> module, which you have.
+                </p>
+            ) : (
+                <p className="text-[11px] leading-relaxed font-medium text-destructive">
+                    You need Write permission on the Cluster module to deploy this template. Ask an administrator for
+                    it, or choose a template that asks for no capabilities.
+                </p>
+            )}
+        </div>
     );
 }

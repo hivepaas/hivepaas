@@ -46,6 +46,9 @@ export interface AppTemplateSummary {
     variants: AppTemplateVariantSummary[];
     versions: AppTemplateVersionSummary[];
     compatible: boolean;
+    /** Deploying this grants the app kernel capabilities, sysctls, ulimits or
+     *  the GPU, which needs Write on the Cluster module. */
+    requiresCapabilities?: boolean;
 }
 
 export interface ListAppTemplatesFilter {
@@ -132,6 +135,24 @@ export interface ListEnvAppsParams {
     pageLimit?: number;
 }
 
+export interface AppTemplateUlimit {
+    name: string;
+    soft: number;
+    hard: number;
+}
+
+/** What deploying a template grants the app beyond what a container ordinarily
+ *  gets. A version cannot change it, so this is what will be granted. */
+export interface AppTemplateCapabilities {
+    /** Named as docker names them, without the CAP_ prefix: NET_ADMIN. */
+    capabilityAdd?: string[];
+    capabilityDrop?: string[];
+    sysctls?: Record<string, string>;
+    ulimits?: AppTemplateUlimit[];
+    enableGPU?: boolean;
+    oomScoreAdj?: number;
+}
+
 export interface AppTemplateDependency {
     name: string;
     title: string;
@@ -140,6 +161,8 @@ export interface AppTemplateDependency {
     version?: string;
     variant?: string;
     parameters?: AppTemplateParam[];
+    /** What this dependency's app is granted: the same request creates it. */
+    capabilities?: AppTemplateCapabilities | null;
 }
 
 export interface AppTemplateDetail {
@@ -159,6 +182,8 @@ export interface AppTemplateDetail {
     versions: AppTemplateVersionSummary[];
     parameters: AppTemplateParam[];
     dependencies?: AppTemplateDependency[];
+    /** Null for the templates that ask for nothing, which is most of them. */
+    capabilities?: AppTemplateCapabilities | null;
 }
 
 export interface AppTemplateImageTag {

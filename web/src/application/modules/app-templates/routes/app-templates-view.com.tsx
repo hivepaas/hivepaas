@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import { ROUTE } from "@/application/shared/constants";
 import { cn } from "@/lib/utils";
 import { ArrowDownCircle, Loader2, Search, Tag, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
+import { useDebounce } from "react-use";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,27 +25,36 @@ export function AppTemplatesView() {
     // Active filters
     const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
     const [searchQuery, setSearchQuery] = useState<string>("");
-    const [submittedSearch, setSubmittedSearch] = useState<string>("");
+    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
     const [selectedTag, setSelectedTag] = useState<string | undefined>(undefined);
 
     // Cached template summary when clicked from card for instant rendering
     const [selectedTemplateSummary, setSelectedTemplateSummary] = useState<AppTemplateSummary | undefined>(undefined);
 
-    // Handlers for search submit (Enter) and clear
-    const handleSearchSubmit = () => {
-        setSubmittedSearch(searchQuery.trim());
-    };
+    const isFirstRender = useRef(true);
+
+    useDebounce(
+        () => {
+            if (isFirstRender.current) {
+                isFirstRender.current = false;
+                return;
+            }
+            setDebouncedSearch(searchQuery.trim());
+        },
+        350,
+        [searchQuery],
+    );
 
     const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
             e.preventDefault();
-            handleSearchSubmit();
+            setDebouncedSearch(searchQuery.trim());
         }
     };
 
     const handleClearSearch = () => {
         setSearchQuery("");
-        setSubmittedSearch("");
+        setDebouncedSearch("");
     };
 
     // 2. Fetch templates with infinite pagination (50 items per page)
@@ -56,7 +66,7 @@ export function AppTemplatesView() {
         fetchNextPage,
     } = useListAppTemplatesInfinite({
         category: selectedCategory,
-        search: submittedSearch,
+        search: debouncedSearch,
         tag: selectedTag,
     });
 
@@ -77,14 +87,14 @@ export function AppTemplatesView() {
         const firstPageTotal = firstPageMeta?.page?.total ?? firstPageMeta?.total;
         if (
             !selectedCategory &&
-            !submittedSearch &&
+            !debouncedSearch &&
             !selectedTag &&
             firstPageTotal !== undefined &&
             firstPageTotal > 0
         ) {
             setAllTemplatesTotal(firstPageTotal);
         }
-    }, [selectedCategory, submittedSearch, selectedTag, templatesData]);
+    }, [selectedCategory, debouncedSearch, selectedTag, templatesData]);
 
     // Calculate sum of categories from catalog as fallback when BE does not return a total
     const categoriesSum = useMemo(() => {
@@ -99,7 +109,7 @@ export function AppTemplatesView() {
     const allTemplatesCount =
         allTemplatesTotal && allTemplatesTotal > 0
             ? allTemplatesTotal
-            : !selectedCategory && !submittedSearch && !selectedTag && totalTemplates > 0
+            : !selectedCategory && !debouncedSearch && !selectedTag && totalTemplates > 0
               ? totalTemplates
               : categoriesSum;
 
@@ -188,22 +198,16 @@ export function AppTemplatesView() {
                             <div className="sticky top-[95px] md:top-[56px] z-10 bg-canvas/95 backdrop-blur-md py-2 border-b border-border/40 space-y-2">
                                 <div className="flex items-center gap-3">
                                     <div className="relative flex-1">
-                                        <button
-                                            type="button"
-                                            onClick={handleSearchSubmit}
-                                            className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
-                                            title="Search (Enter)"
-                                            aria-label="Submit search"
-                                        >
+                                        <div className="text-muted-foreground pointer-events-none absolute left-3 top-1/2 -translate-y-1/2">
                                             <Search className="size-4" />
-                                        </button>
+                                        </div>
                                         <Input
                                             value={searchQuery}
                                             onChange={e => {
                                                 setSearchQuery(e.target.value);
                                             }}
                                             onKeyDown={handleSearchKeyDown}
-                                            placeholder="Search templates by name, tagline, or tags (press Enter)..."
+                                            placeholder="Search templates by name, tagline, or tags..."
                                             className="pl-9 pr-8 h-9 text-sm bg-card border-border/70 focus-visible:ring-amber-500/30"
                                         />
                                         {searchQuery && (
@@ -287,7 +291,7 @@ export function AppTemplatesView() {
                                         We couldn&apos;t find any templates matching your search or category filter. Try
                                         clearing filters.
                                     </p>
-                                    {(Boolean(submittedSearch) ||
+                                    {(Boolean(debouncedSearch) ||
                                         Boolean(searchQuery) ||
                                         Boolean(selectedCategory) ||
                                         Boolean(selectedTag)) && (
@@ -296,7 +300,7 @@ export function AppTemplatesView() {
                                             size="sm"
                                             onClick={() => {
                                                 setSearchQuery("");
-                                                setSubmittedSearch("");
+                                                setDebouncedSearch("");
                                                 setSelectedCategory(undefined);
                                                 setSelectedTag(undefined);
                                             }}

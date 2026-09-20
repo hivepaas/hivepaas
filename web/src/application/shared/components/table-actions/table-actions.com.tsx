@@ -2,10 +2,14 @@ import React, { type PropsWithChildren, useEffect, useRef, useState } from "reac
 
 import { Input } from "@components/ui/input";
 import { SearchIcon, X } from "lucide-react";
+import { useDebounce } from "react-use";
 
 export function TableActions({ children, search, renderActions = null, renderAfterSearch = null }: Props) {
     const [internalSearch, setInternalSearch] = useState(search?.value ?? "");
     const inputRef = useRef<HTMLInputElement>(null);
+    const isFirstRender = useRef(true);
+    const searchOnChangeRef = useRef(search?.onChange);
+    searchOnChangeRef.current = search?.onChange;
 
     useEffect(() => {
         if (search?.autoFocus) {
@@ -17,14 +21,28 @@ export function TableActions({ children, search, renderActions = null, renderAft
         setInternalSearch(search?.value ?? "");
     }, [search?.value]);
 
-    const handleSearch = () => {
-        search?.onChange(internalSearch.trim());
-    };
+    useDebounce(
+        () => {
+            if (isFirstRender.current) {
+                isFirstRender.current = false;
+                return;
+            }
+            const trimmed = internalSearch.trim();
+            if (trimmed !== (search?.value ?? "")) {
+                searchOnChangeRef.current?.(trimmed);
+            }
+        },
+        350,
+        [internalSearch, search?.value],
+    );
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
             e.preventDefault();
-            handleSearch();
+            const trimmed = internalSearch.trim();
+            if (trimmed !== (search?.value ?? "")) {
+                searchOnChangeRef.current?.(trimmed);
+            }
         }
     };
 
@@ -34,12 +52,6 @@ export function TableActions({ children, search, renderActions = null, renderAft
         inputRef.current?.focus();
     };
 
-    const placeholderText = search?.placeholder
-        ? search.placeholder.toLowerCase().includes("enter")
-            ? search.placeholder
-            : `${search.placeholder} (press Enter)`
-        : "Search (press Enter)...";
-
     return (
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="flex flex-1 items-center gap-2 min-w-0">
@@ -47,15 +59,10 @@ export function TableActions({ children, search, renderActions = null, renderAft
 
                 {search && (
                     <div className="relative w-full sm:w-64 max-w-full">
-                        <button
-                            type="button"
-                            onClick={handleSearch}
-                            className="text-muted-foreground hover:text-foreground absolute inset-y-0 left-0 flex items-center justify-center pl-3 transition-colors cursor-pointer"
-                            title="Search (press Enter)"
-                            aria-label="Search"
-                        >
+                        <div className="text-muted-foreground pointer-events-none absolute inset-y-0 left-0 flex items-center justify-center pl-3 peer-disabled:opacity-50">
                             <SearchIcon className="size-4" />
-                        </button>
+                            <span className="sr-only">Search</span>
+                        </div>
                         <Input
                             ref={inputRef}
                             value={internalSearch}
@@ -64,7 +71,7 @@ export function TableActions({ children, search, renderActions = null, renderAft
                             }}
                             onKeyDown={handleKeyDown}
                             type="search"
-                            placeholder={placeholderText}
+                            placeholder={search.placeholder ?? "Search"}
                             className="peer pl-9 pr-9 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none [&::-webkit-search-results-button]:appearance-none [&::-webkit-search-results-decoration]:appearance-none w-full text-xs sm:text-sm"
                         />
                         {internalSearch && (

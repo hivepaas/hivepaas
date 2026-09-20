@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { cn } from "@/lib/utils";
-import { Boxes, Lock, Rocket, Scale } from "lucide-react";
+import { Boxes, Lock, Rocket, Scale, ShieldAlert } from "lucide-react";
 import { useParams } from "react-router";
 
 import { Badge } from "@/components/ui/badge";
@@ -102,6 +102,15 @@ export function AppTemplateCard({ template, onSelect, onSelectTag, selectedTag, 
                         </p>
                     </div>
                 </div>
+
+                {/* Templates that ask the host for more than a container ordinarily
+                    gets are marked here, so nobody opens one to find out. */}
+                {template.requiresCapabilities && (
+                    <div className="mt-3 flex items-center gap-1.5 rounded-md bg-orange-500/10 px-2 py-1 text-[12px] text-orange-700 dark:text-orange-400 border border-orange-500/20">
+                        <ShieldAlert className="size-3.5 shrink-0" />
+                        <span className="truncate">Needs elevated privileges</span>
+                    </div>
+                )}
 
                 {/* Compatibility Warning if not compatible */}
                 {!template.compatible && (

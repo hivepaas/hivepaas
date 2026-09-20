@@ -204,8 +204,8 @@ func TestRenderRefusesInvalidParameters(t *testing.T) {
 
 func TestRenderAppliesAnImageOverride(t *testing.T) {
 	result, err := render(t, &Request{
-		Params:        map[string]any{"dataVolume": "vol-1"},
-		ImageOverride: "postgres:17.9-alpine3.22",
+		Params:   map[string]any{"dataVolume": "vol-1"},
+		ImageTag: "17.9-alpine3.22",
 	})
 
 	assert.NoError(t, err)
@@ -222,8 +222,8 @@ func TestRenderAppliesAnImageOverride(t *testing.T) {
 
 func TestRenderClassifiesAnOverrideFromAnotherMajorLine(t *testing.T) {
 	result, err := render(t, &Request{
-		Params:        map[string]any{"dataVolume": "vol-1"},
-		ImageOverride: "postgres:18.2-alpine3.22",
+		Params:   map[string]any{"dataVolume": "vol-1"},
+		ImageTag: "18.2-alpine3.22",
 	})
 
 	assert.NoError(t, err)
@@ -231,13 +231,35 @@ func TestRenderClassifiesAnOverrideFromAnotherMajorLine(t *testing.T) {
 		"the template describes 17 here, so 18 is a line it was never tested against")
 }
 
-func TestRenderRefusesAnImageFromAnotherRepository(t *testing.T) {
-	_, err := render(t, &Request{
-		Params:        map[string]any{"dataVolume": "vol-1"},
-		ImageOverride: "mariadb:11.8.9-noble",
+func TestRenderRefusesAnythingThatIsNotATag(t *testing.T) {
+	// Another repository is no longer something a caller can ask for: it would
+	// have to arrive inside the tag, and these are not tags.
+	for _, tag := range []string{
+		"mariadb:11.8.9-noble",
+		"docker.io/library/postgres:17.9-alpine3.22",
+		"17.9-alpine3.22@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+		"-starts-with-a-dash",
+	} {
+		t.Run(tag, func(t *testing.T) {
+			_, err := render(t, &Request{
+				Params:   map[string]any{"dataVolume": "vol-1"},
+				ImageTag: tag,
+			})
+			assert.ErrorIs(t, err, hperrors.ErrAppTemplateImageNotAllowed)
+		})
+	}
+}
+
+func TestRenderComposesTheOverrideOnTheTemplatesRepository(t *testing.T) {
+	// The caller sends a tag; what is recorded and deployed is that tag on the
+	// repository the template pinned.
+	result, err := render(t, &Request{
+		Params:   map[string]any{"dataVolume": "vol-1"},
+		ImageTag: "17.9-alpine3.22",
 	})
 
-	assert.ErrorIs(t, err, hperrors.ErrAppTemplateImageNotAllowed)
+	assert.NoError(t, err)
+	assert.Equal(t, "postgres:17.9-alpine3.22", result.ImageOverride)
 }
 
 func TestRenderWithoutAnOverrideSaysSo(t *testing.T) {

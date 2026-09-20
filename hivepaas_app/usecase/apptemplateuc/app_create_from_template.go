@@ -39,7 +39,7 @@ func (uc *UC) CreateAppFromTemplate(
 		Variant:          req.Variant,
 		Params:           req.Params,
 		DependencyParams: req.DependencyParams,
-		ImageOverride:    req.ImageOverride,
+		ImageTag:         req.ImageTag,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -120,12 +120,11 @@ func TestTransformAppTemplateImageTags(t *testing.T) {
 		CurrentTag: "18.6-alpine3.24",
 		Truncated:  true,
 		Tags: []*AppTemplateImageTagResp{
-			{Tag: "18.7-alpine3.24", Image: "registry-1.docker.io/library/postgres:18.7-alpine3.24",
-				Class: "same-line", Newer: true},
-			{Tag: "19.0-alpine3.24", Image: "registry-1.docker.io/library/postgres:19.0-alpine3.24",
-				Class: "other-major", Newer: true},
+			{Tag: "18.7-alpine3.24", Class: "same-line", Newer: true},
+			{Tag: "19.0-alpine3.24", Class: "other-major", Newer: true},
 		},
-	}, resp, "the dashboard posts Image back as imageOverride, so it never builds a reference itself")
+	}, resp, "the dashboard posts the tag back as imageTag; the repository stays here, "+
+		"shown for reading rather than for assembling a reference")
 }
 
 func TestParseAppTemplateIconFile(t *testing.T) {

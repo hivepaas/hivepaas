@@ -9,6 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/imageref"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
@@ -24,9 +25,10 @@ type Request struct {
 	// AllowDeprecated renders a deprecated version, which creating an app never
 	// does. The linter and phase 2's updates of existing apps do.
 	AllowDeprecated bool
-	// ImageOverride replaces the image this version pins, for this app only. It
-	// must come from the same repository; ClassifyImageOverride decides.
-	ImageOverride string
+	// ImageTag replaces the tag of the image this version pins, for this app only.
+	// A tag rather than a reference: the repository is the template's and is never
+	// the caller's to choose, so it is not asked for and cannot be got wrong.
+	ImageTag string
 	// ResolvedParams, when set, are used instead of resolving Params. A caller that
 	// renders a template's dependencies from its parameters resolves them first,
 	// and this render must use the same generated secrets.
@@ -104,7 +106,11 @@ func Render(req *Request) (*Result, error) {
 	if err = specmodel.CheckBuildable(doc); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	overrideClass, err := applyImageOverride(doc, name, version.Name, image, req.ImageOverride)
+	override, err := overrideImageFor(image, req.ImageTag)
+	if err != nil {
+		return nil, err
+	}
+	overrideClass, err := applyImageOverride(doc, name, version.Name, image, override)
 	if err != nil {
 		return nil, err
 	}
@@ -125,11 +131,28 @@ func Render(req *Request) (*Result, error) {
 		Version:            version,
 		Variant:            variant,
 		Image:              image,
-		ImageOverride:      req.ImageOverride,
+		ImageOverride:      override,
 		ImageOverrideClass: overrideClass,
 		Base:               base,
 		BaseSHA256:         hex.EncodeToString(sum[:]),
 	}, nil
+}
+
+// overrideImageFor is the reference a chosen tag means: that tag on the
+// repository the template pinned. Empty when no tag was chosen.
+//
+// Composing it here rather than taking it from the caller is what makes a
+// different repository unrepresentable instead of merely refused.
+func overrideImageFor(templateImage, tag string) (string, error) {
+	if tag == "" {
+		return "", nil
+	}
+	if !templatemodel.ValidImageTag(tag) {
+		return "", hperrors.Wrap(hperrors.ErrAppTemplateImageNotAllowed).
+			WithParam("Image", tag).WithParam("Repository", imageref.Parse(templateImage).Repository).
+			WithExtraDetail("%s: this is a tag, and a tag is letters, digits, dots, dashes and underscores", tag)
+	}
+	return imageref.Parse(templateImage).Repository + ":" + tag, nil
 }
 
 // applyImageOverride swaps the image in the document the app is built from.

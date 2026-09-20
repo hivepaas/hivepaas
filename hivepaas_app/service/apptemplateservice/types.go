@@ -56,9 +56,10 @@ type RenderReq struct {
 	// DependencyParams are what the person was asked for each dependency, by the
 	// dependency's name.
 	DependencyParams map[string]map[string]any
-	// ImageOverride is an image the user chose instead of the template's, empty to
-	// use the template's own.
-	ImageOverride string
+	// ImageTag is a tag the user chose instead of the one the template's version
+	// pins, empty to use the template's own. It is a tag and not a reference: the
+	// repository comes from the template.
+	ImageTag string
 }
 
 type RenderResp struct {

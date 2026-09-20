@@ -43,10 +43,11 @@ type AppTemplateImageTagsResp struct {
 	Tags      []*AppTemplateImageTagResp `json:"tags"`
 }
 
+// AppTemplateImageTagResp is one tag to offer. Tag is what goes back as
+// imageTag when the app is created: the repository is the template's, so there
+// is no reference for a caller to assemble and none to get wrong.
 type AppTemplateImageTagResp struct {
 	Tag string `json:"tag"`
-	// Image is the full reference to post back as imageOverride.
-	Image string `json:"image"`
 	// Class is one of same-line, other-major or moving, and decides which warning
 	// the dashboard shows before creating the app.
 	Class string `json:"class"`
@@ -63,7 +64,6 @@ func TransformAppTemplateImageTags(tags *apptemplateservice.ImageTagsResp) *AppT
 	for _, tag := range tags.Tags {
 		resp.Tags = append(resp.Tags, &AppTemplateImageTagResp{
 			Tag:   tag.Tag,
-			Image: tags.Repository + ":" + tag.Tag,
 			Class: string(tag.Class),
 			Newer: tag.Newer,
 		})

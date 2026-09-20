@@ -14,8 +14,8 @@ const (
 	appNameMaxLen      = 100
 	choiceNameMaxLen   = 32
 	templateNameMinLen = 1
-	// imageRefMaxLen is a registry host, a repository path, a tag and a digest.
-	imageRefMaxLen = 512
+	// imageTagMaxLen is docker's own limit on a tag.
+	imageTagMaxLen = 128
 )
 
 type CreateAppFromTemplateReq struct {
@@ -27,9 +27,11 @@ type CreateAppFromTemplateReq struct {
 	// Version and Variant are empty for the template's defaults.
 	Version string `json:"version"`
 	Variant string `json:"variant"`
-	// ImageOverride replaces the image the template pins, for this app only. It
-	// must come from the same repository; the service refuses anything else.
-	ImageOverride string `json:"imageOverride"`
+	// ImageTag replaces the tag of the image the template's version pins, for this
+	// app only - one of the tags the image-tags endpoint lists. The repository is
+	// the template's and is not asked for: everything else the template says is
+	// only correct for that software.
+	ImageTag string `json:"imageTag"`
 	// Params are JSON values of each parameter's type; a size is a string such as "1GB".
 	Params map[string]any `json:"params"`
 	// DependencyParams are the values a person gave for each dependency the
@@ -47,7 +49,7 @@ func (req *CreateAppFromTemplateReq) ModifyRequest() error {
 	req.Template = strings.TrimSpace(req.Template)
 	req.Version = strings.TrimSpace(req.Version)
 	req.Variant = strings.TrimSpace(req.Variant)
-	req.ImageOverride = strings.TrimSpace(req.ImageOverride)
+	req.ImageTag = strings.TrimSpace(req.ImageTag)
 	return nil
 }
 
@@ -61,8 +63,9 @@ func (req *CreateAppFromTemplateReq) Validate() hperrors.ValidationErrors {
 		basedto.ValidateStr(&req.Template, true, templateNameMinLen, templateNameMaxLen, "template")...)
 	validators = append(validators, basedto.ValidateStr(&req.Version, false, 1, choiceNameMaxLen, "version")...)
 	validators = append(validators, basedto.ValidateStr(&req.Variant, false, 1, choiceNameMaxLen, "variant")...)
+	validators = append(validators, basedto.ValidateStr(&req.ImageTag, false, 1, imageTagMaxLen, "imageTag")...)
 	validators = append(validators,
-		basedto.ValidateStr(&req.ImageOverride, false, 1, imageRefMaxLen, "imageOverride")...)
+		basedto.ValidateCond(req.ImageTag == "" || templatemodel.ValidImageTag(req.ImageTag), "imageTag")...)
 	validators = append(validators,
 		basedto.ValidateCond(len(req.DependencyParams) <= templatemodel.MaxDependencies, "dependencyParams")...)
 	return hperrors.NewValidationErrors(vld.Validate(validators...))

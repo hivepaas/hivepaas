@@ -172,11 +172,11 @@ func (s *service) Render(
 			WithExtraDetail("%s has no dependencies to give parameters to", req.Name)
 	}
 	result, err := templaterender.Render(&templaterender.Request{
-		Template:      loaded.Template,
-		Version:       req.Version,
-		Variant:       req.Variant,
-		Params:        req.Params,
-		ImageOverride: req.ImageOverride,
+		Template: loaded.Template,
+		Version:  req.Version,
+		Variant:  req.Variant,
+		Params:   req.Params,
+		ImageTag: req.ImageTag,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -226,7 +226,7 @@ func renderWithDependencies(
 		Variant:        req.Variant,
 		ResolvedParams: owner,
 		Deps:           bindings,
-		ImageOverride:  req.ImageOverride,
+		ImageTag:       req.ImageTag,
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

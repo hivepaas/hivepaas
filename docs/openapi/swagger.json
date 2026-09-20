@@ -3196,6 +3196,13 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "description" : "`getChildApps=true` to include apps that belong to another",
+          "in" : "query",
+          "name" : "getChildApps",
+          "schema" : {
+            "type" : "boolean"
+          }
         } ],
         "responses" : {
           "200" : {
@@ -3338,6 +3345,13 @@
           "name" : "sort",
           "schema" : {
             "type" : "string"
+          }
+        }, {
+          "description" : "`getChildApps=true` to include apps that belong to another",
+          "in" : "query",
+          "name" : "getChildApps",
+          "schema" : {
+            "type" : "boolean"
           }
         } ],
         "responses" : {
@@ -13618,6 +13632,13 @@
           "schema" : {
             "type" : "string"
           }
+        }, {
+          "description" : "`getChildApps=true` to include apps that belong to another",
+          "in" : "query",
+          "name" : "getChildApps",
+          "schema" : {
+            "type" : "boolean"
+          }
         } ],
         "responses" : {
           "200" : {
@@ -13709,6 +13730,13 @@
           "name" : "sort",
           "schema" : {
             "type" : "string"
+          }
+        }, {
+          "description" : "`getChildApps=true` to include apps that belong to another",
+          "in" : "query",
+          "name" : "getChildApps",
+          "schema" : {
+            "type" : "boolean"
           }
         }, {
           "description" : "`env=<project env>`",
@@ -41677,7 +41705,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -41695,7 +41723,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -44979,10 +45007,6 @@
             "description" : "Class is one of same-line, other-major or moving, and decides which warning\nthe dashboard shows before creating the app.",
             "type" : "string"
           },
-          "image" : {
-            "description" : "Image is the full reference to post back as imageOverride.",
-            "type" : "string"
-          },
           "newer" : {
             "type" : "boolean"
           },
@@ -44990,7 +45014,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "class", "image", "newer", "tag" ],
+        "required" : [ "class", "newer", "tag" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateImageTagsResp" : {
@@ -45051,6 +45075,10 @@
           "description" : {
             "type" : "string"
           },
+          "engine" : {
+            "description" : "Engine is set on an app parameter: the kind of app it may name, which is\nwhat the list offered for it is filtered by.",
+            "type" : "string"
+          },
           "generated" : {
             "description" : "Generated says a secret left empty is generated.",
             "type" : "boolean"
@@ -45089,7 +45117,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "default", "description", "generated", "max", "maxLength", "min", "minLength", "name", "optional", "options", "pattern", "title", "type" ],
+        "required" : [ "default", "description", "engine", "generated", "max", "maxLength", "min", "minLength", "name", "optional", "options", "pattern", "title", "type" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateResp" : {
@@ -45328,8 +45356,8 @@
             "description" : "DependencyParams are the values a person gave for each dependency the\ntemplate declares, by the dependency's name: in practice its data volume.",
             "type" : "object"
           },
-          "imageOverride" : {
-            "description" : "ImageOverride replaces the image the template pins, for this app only. It\nmust come from the same repository; the service refuses anything else.",
+          "imageTag" : {
+            "description" : "ImageTag replaces the tag of the image the template's version pins, for this\napp only - one of the tags the image-tags endpoint lists. The repository is\nthe template's and is not asked for: everything else the template says is\nonly correct for that software.",
             "type" : "string"
           },
           "name" : {
@@ -45353,7 +45381,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "dependencyParams", "imageOverride", "name", "params", "template", "variant", "version" ],
+        "required" : [ "dependencyParams", "imageTag", "name", "params", "template", "variant", "version" ],
         "type" : "object"
       },
       "apptemplatedto.CreateAppFromTemplateResp" : {
@@ -45550,7 +45578,17 @@
             },
             "type" : "array"
           },
+          "childApps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppResp"
+            },
+            "type" : "array"
+          },
           "createdAt" : {
+            "type" : "string"
+          },
+          "engine" : {
+            "description" : "Engine is what the app says it runs - postgres, mysql, n8n - and is empty\nfor an app that was not created from a template, which declares no kind.",
             "type" : "string"
           },
           "env" : {
@@ -45561,6 +45599,12 @@
           },
           "key" : {
             "type" : "string"
+          },
+          "logicalChildApps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/appdto.AppResp"
+            },
+            "type" : "array"
           },
           "name" : {
             "type" : "string"
@@ -45605,7 +45649,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "accessLinks", "createdAt", "env", "id", "key", "name", "note", "parentApp", "photo", "project", "stats", "status", "tags", "updateVer", "updatedAt" ],
+        "required" : [ "accessLinks", "childApps", "createdAt", "engine", "env", "id", "key", "logicalChildApps", "name", "note", "parentApp", "photo", "project", "stats", "status", "tags", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "appdto.AppStatsResp" : {
@@ -60323,9 +60367,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -11,6 +11,16 @@ import (
 
 const latestTag = "latest"
 
+// imageTagPattern is docker's own grammar for a tag. What it keeps out is the
+// point: no slash, no colon and no at sign, so nothing a caller sends as a tag
+// can name a registry, a repository or a digest.
+var imageTagPattern = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$`)
+
+// ValidImageTag reports whether a string is a tag and only a tag.
+func ValidImageTag(tag string) bool {
+	return imageTagPattern.MatchString(tag)
+}
+
 // ImageOverrideClass says how far an image a user chose is from the one the
 // template pinned. It decides what the dashboard warns about; it does not decide
 // whether the override is allowed, which ClassifyImageOverride answers with an

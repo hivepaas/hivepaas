@@ -15,6 +15,7 @@ const (
 	lintVolumeID = "lint-volume"
 	lintSecret   = "lint-secret-value"
 	lintDomain   = "lint.example.com"
+	lintAppKey   = "lint_app"
 )
 
 // Lint checks what Load could read: each template on its own, against the
@@ -164,6 +165,8 @@ func lintParams(tmpl *templatemodel.Template) map[string]any {
 		switch param.Type {
 		case templatemodel.ParamTypeVolume:
 			params[param.Name] = lintVolumeID
+		case templatemodel.ParamTypeApp:
+			params[param.Name] = lintAppKey
 		case templatemodel.ParamTypeSecret:
 			if param.Generate == nil {
 				params[param.Name] = lintSecret

@@ -86,6 +86,11 @@ const (
 	ParamTypeSelect ParamType = "select"
 	ParamTypeVolume ParamType = "volume"
 	ParamTypeDomain ParamType = "domain"
+	// ParamTypeApp is an app that already exists in the same environment, named
+	// by its key. It is what a template needs to point at something the person
+	// already runs - a replica at the database it follows - as against a
+	// dependency, which is an app the template creates.
+	ParamTypeApp ParamType = "app"
 )
 
 // AllParamTypes is closed on purpose: the dashboard generates a form field per
@@ -94,7 +99,7 @@ const (
 // TODO: app templates phase 3 - more parameter types (ssl-cert, registry-auth,
 // domain). See docs/superpowers/specs/2026-09-17-app-templates-design.md §12.
 var AllParamTypes = []ParamType{ParamTypeString, ParamTypeSecret, ParamTypeInt, ParamTypeSize,
-	ParamTypeBool, ParamTypeSelect, ParamTypeVolume, ParamTypeDomain}
+	ParamTypeBool, ParamTypeSelect, ParamTypeVolume, ParamTypeDomain, ParamTypeApp}
 
 type Parameter struct {
 	Name        string    `yaml:"name"`
@@ -103,6 +108,12 @@ type Parameter struct {
 	Type        ParamType `yaml:"type"`
 	Default     any       `yaml:"default,omitempty"`
 	Optional    bool      `yaml:"optional,omitempty"`
+
+	// Engine narrows an app parameter to apps of one engine - postgres, mysql -
+	// as their kind settings record it. It is what the dashboard filters its list
+	// by, and what refuses an app that says it is something else. An app that
+	// declares no engine at all is accepted: saying nothing is not saying no.
+	Engine string `yaml:"engine,omitempty"`
 
 	Pattern   string          `yaml:"pattern,omitempty"`
 	MinLength *int            `yaml:"minLength,omitempty"`

@@ -48,13 +48,21 @@ func (uc *UC) ListApp(
 				bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
 			),
 			bunex.SelectRelation("Settings",
-				// NOTE: load routing settings to extract active domain names of the app
-				bunex.SelectWhere("setting.type = ?", base.SettingTypeAppRouting),
+				// NOTE: load routing settings to extract active domain names of the app,
+				// and the kind to say what each app runs.
+				bunex.SelectWhereIn("setting.type IN (?)",
+					base.SettingTypeAppRouting, base.SettingTypeAppKind),
 			),
 		)
 	} else {
 		listOpts = append(listOpts,
 			bunex.SelectWhere("app.parent_id IS NULL"),
+			// The kind alone here: what an app runs is what a list is filtered by,
+			// and loading routing settings as well would change what every other
+			// caller of this list receives.
+			bunex.SelectRelation("Settings",
+				bunex.SelectWhere("setting.type = ?", base.SettingTypeAppKind),
+			),
 		)
 	}
 	if len(req.Status) > 0 {

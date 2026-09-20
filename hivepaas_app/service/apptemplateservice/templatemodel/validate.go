@@ -29,7 +29,11 @@ var (
 	paramNamePattern    = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_]{0,63}$`)
 	choiceNamePattern   = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$`)
 	categoryRefPattern  = regexp.MustCompile(`^[a-z0-9-]+/[a-z0-9-]+$`)
-	versionCodePattern  = regexp.MustCompile(`^v[0-9]{6}$`)
+	// engineNamePattern is what an app kind records as its engine: postgres,
+	// mysql, mariadb. It is the same shape as a template name because that is
+	// where most of them come from.
+	engineNamePattern  = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,62}$`)
+	versionCodePattern = regexp.MustCompile(`^v[0-9]{6}$`)
 	// pinnedVersionPattern is what separates 17.6-alpine from 17-alpine: a tag
 	// naming one release carries at least major.minor. It is anchored and read
 	// against the tag's version part alone, because the base image in the suffix
@@ -177,7 +181,7 @@ func validateParameterType(prefix string, param *Parameter, p *problems) {
 				p.add("%s.pattern does not compile: %v", prefix, err)
 			}
 		}
-		refuseAttributes(prefix, param, p, "min", "max", "generate", "options")
+		refuseAttributes(prefix, param, p, "min", "max", "generate", "options", "engine")
 	case ParamTypeSecret:
 		validateLengths(prefix, param, p)
 		if param.Default != nil {
@@ -191,29 +195,40 @@ func validateParameterType(prefix string, param *Parameter, p *problems) {
 				p.add("%s.generate.charset must be %s or %s", prefix, CharsetAlnum, CharsetHex)
 			}
 		}
-		refuseAttributes(prefix, param, p, "pattern", "min", "max", "options")
+		refuseAttributes(prefix, param, p, "pattern", "min", "max", "options", "engine")
 	case ParamTypeInt:
 		validateBounds(prefix, param, p, "integers", ToInt64)
-		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "generate", "options")
+		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "generate", "options", "engine")
 	case ParamTypeSize:
 		validateBounds(prefix, param, p, "sizes", sizeBytes)
-		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "generate", "options")
+		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "generate", "options", "engine")
 	case ParamTypeBool:
-		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "min", "max", "generate", "options")
+		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "min", "max", "generate", "options",
+			"engine")
 	case ParamTypeSelect:
 		validateOptions(prefix, param.Options, p)
-		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "min", "max", "generate")
+		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "min", "max", "generate", "engine")
 	case ParamTypeVolume:
 		if param.Default != nil {
 			p.add("%s: a volume has no default", prefix)
 		}
-		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "min", "max", "generate", "options")
+		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "min", "max", "generate", "options",
+			"engine")
 	case ParamTypeDomain:
 		if param.Default != nil {
 			p.add("%s: a domain has no default", prefix)
 		}
 		if !param.Optional {
 			p.add("%s: a domain is optional, because an app can be created before it has one", prefix)
+		}
+		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "min", "max", "generate", "options",
+			"engine")
+	case ParamTypeApp:
+		if param.Default != nil {
+			p.add("%s: an app parameter has no default; it names an app of this installation", prefix)
+		}
+		if param.Engine != "" && !engineNamePattern.MatchString(param.Engine) {
+			p.add("%s.engine %q must be lowercase letters, digits and dashes", prefix, param.Engine)
 		}
 		refuseAttributes(prefix, param, p, "pattern", "minLength", "maxLength", "min", "max", "generate", "options")
 	default:
@@ -269,6 +284,7 @@ func refuseAttributes(prefix string, param *Parameter, p *problems, names ...str
 		"max":       param.Max != nil,
 		"generate":  param.Generate != nil,
 		"options":   len(param.Options) > 0,
+		"engine":    param.Engine != "",
 	}
 	for _, name := range names {
 		if set[name] {

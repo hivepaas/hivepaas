@@ -111,6 +111,11 @@ func resolveParam(def *templatemodel.Parameter, raw any) (*Value, error) {
 var domainPattern = regexp.MustCompile(
 	`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$`)
 
+// appKeyPattern is the shape projecthelper.CalcAppKey produces: slugified, and
+// with every dash replaced by an underscore. Whether the app exists is not a
+// question rendering can answer - the caller with the database decides that.
+var appKeyPattern = regexp.MustCompile(`^[a-z0-9_][a-z0-9_]{0,99}$`)
+
 func isBlank(v any) bool {
 	if v == nil {
 		return true
@@ -157,6 +162,16 @@ func convertParam(def *templatemodel.Parameter, raw any) (any, error) {
 		text, ok := raw.(string)
 		if !ok || strings.TrimSpace(text) == "" {
 			return nil, paramInvalid(def.Name, "must name a volume")
+		}
+		return text, nil
+	case templatemodel.ParamTypeApp:
+		text, ok := raw.(string)
+		if !ok {
+			return nil, paramInvalid(def.Name, "must name an app")
+		}
+		text = strings.TrimSpace(text)
+		if !appKeyPattern.MatchString(text) {
+			return nil, paramInvalid(def.Name, "must be an app key: lowercase letters, digits and _")
 		}
 		return text, nil
 	case templatemodel.ParamTypeDomain:

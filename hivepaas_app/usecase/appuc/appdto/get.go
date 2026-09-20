@@ -51,6 +51,9 @@ type AppResp struct {
 	Note      string                      `json:"note"`
 	Tags      []string                    `json:"tags" copy:"-"` // manual copy AppTag -> string
 	UpdateVer int                         `json:"updateVer"`
+	// Engine is what the app says it runs - postgres, mysql, n8n - and is empty
+	// for an app that was not created from a template, which declares no kind.
+	Engine string `json:"engine,omitempty" copy:"-"` // manual copy, from the kind setting
 
 	// Stats of app, only returns when req.getStats=true
 	Stats *AppStatsResp `json:"stats"`
@@ -99,6 +102,7 @@ func TransformApp(app *entity.App, input *AppTransformationInput) (resp *AppResp
 	resp.Tags = gofn.MapSlice(app.Tags, func(t *entity.Tag) string { return t.Tag })
 	resp.Stats = TransformAppStats(app, input)
 	resp.AccessLinks = TransformAppAccessLinks(app)
+	resp.Engine = TransformAppEngine(app)
 	if app.IsChildApp() {
 		resp.ParentApp = gofn.Coalesce(TransformAppBase(app.ParentApp), &AppBaseResp{ID: app.ParentID})
 	} else {
@@ -121,6 +125,20 @@ func TransformAppStats(app *entity.App, input *AppTransformationInput) *AppStats
 		DesiredTasks:   int(service.ServiceStatus.DesiredTasks),
 		CompletedTasks: int(service.ServiceStatus.CompletedTasks),
 	}
+}
+
+// TransformAppEngine reads the engine off the app's kind setting, and answers
+// empty when that setting was not loaded or the app has none.
+func TransformAppEngine(app *entity.App) string {
+	setting := app.GetSettingByType(base.SettingTypeAppKind)
+	if setting == nil {
+		return ""
+	}
+	kind, err := setting.AsAppKindSettings()
+	if err != nil {
+		return ""
+	}
+	return kind.Engine
 }
 
 func TransformAppAccessLinks(app *entity.App) (resp []string) {

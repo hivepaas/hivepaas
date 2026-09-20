@@ -97,6 +97,8 @@ func lintStandIn(param *templatemodel.Parameter) any {
 	switch param.Type {
 	case templatemodel.ParamTypeVolume:
 		return lintVolumeID
+	case templatemodel.ParamTypeApp:
+		return lintAppKey
 	case templatemodel.ParamTypeSecret:
 		return lintSecret
 	case templatemodel.ParamTypeDomain:

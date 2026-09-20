@@ -58,6 +58,18 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		"select without option": {func(tm *Template) {
 			tm.Parameters = append(tm.Parameters, &Parameter{Name: "mode", Title: "Mode", Type: ParamTypeSelect})
 		}, "options"},
+		"app default": {func(tm *Template) {
+			tm.Parameters = append(tm.Parameters, &Parameter{Name: "primary", Title: "Primary",
+				Type: ParamTypeApp, Default: "shop_db"})
+		}, "an app parameter has no default"},
+		"app engine shape": {func(tm *Template) {
+			tm.Parameters = append(tm.Parameters, &Parameter{Name: "primary", Title: "Primary",
+				Type: ParamTypeApp, Engine: "Postgres!"})
+		}, "engine \"Postgres!\""},
+		"engine on another type": {func(tm *Template) {
+			tm.Parameters = append(tm.Parameters, &Parameter{Name: "region", Title: "Region",
+				Type: ParamTypeString, Engine: "postgres"})
+		}, "engine does not apply to type string"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -129,4 +141,12 @@ func TestParameterBounds(t *testing.T) {
 	minInt, maxInt = unbounded.IntBounds()
 	assert.Nil(t, minInt)
 	assert.Nil(t, maxInt)
+}
+
+func TestValidateAcceptsAnAppParameter(t *testing.T) {
+	tmpl := mustDecode(t)
+	tmpl.Parameters = append(tmpl.Parameters, &Parameter{
+		Name: "primaryApp", Title: "Primary app key", Type: ParamTypeApp, Engine: "postgres",
+	})
+	assert.NoError(t, tmpl.Validate("demo"))
 }

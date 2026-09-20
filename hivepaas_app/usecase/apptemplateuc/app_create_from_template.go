@@ -51,6 +51,9 @@ func (uc *UC) CreateAppFromTemplate(
 				WithExtraDetail("%s: the template deploys no image", target.rendered.Template.Metadata.Name)
 		}
 	}
+	if err = uc.checkAppRefs(ctx, req, rendered); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	if err = uc.checkDomains(ctx, req, apps); err != nil {
 		return nil, hperrors.Wrap(err)
 	}

@@ -127,3 +127,27 @@ func TestValidateDefaults(t *testing.T) {
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid)
 	assert.Contains(t, paramDetail(t, err), "memoryLimit")
 }
+
+func TestResolveParamsAppKey(t *testing.T) {
+	defs := []*templatemodel.Parameter{
+		{Name: "primaryApp", Title: "Primary", Type: templatemodel.ParamTypeApp, Engine: "postgres"},
+	}
+
+	values, err := ResolveParams(defs, map[string]any{"primaryApp": "  shop_db  "})
+	assert.NoError(t, err)
+	assert.Equal(t, "shop_db", values["primaryApp"].Value)
+
+	for name, given := range map[string]any{
+		"a dash, which a key never has": "shop-db",
+		"upper case":                    "ShopDB",
+		"a dot":                         "shop.db",
+		"not text":                      42,
+		"empty":                         "",
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := ResolveParams(defs, map[string]any{"primaryApp": given})
+			assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid)
+			assert.Contains(t, paramDetail(t, err), "primaryApp")
+		})
+	}
+}

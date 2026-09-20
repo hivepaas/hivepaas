@@ -91,6 +91,9 @@ type AppTemplateParamResp struct {
 	MaxLength *int   `json:"maxLength,omitempty"`
 	Min       any    `json:"min,omitempty"`
 	Max       any    `json:"max,omitempty"`
+	// Engine is set on an app parameter: the kind of app it may name, which is
+	// what the list offered for it is filtered by.
+	Engine string `json:"engine,omitempty"`
 	// Generated says a secret left empty is generated.
 	Generated bool                          `json:"generated"`
 	Options   []*AppTemplateParamOptionResp `json:"options,omitempty"`
@@ -166,6 +169,7 @@ func transformParam(param *templatemodel.Parameter) *AppTemplateParamResp {
 		MaxLength:   param.MaxLength,
 		Min:         param.Min,
 		Max:         param.Max,
+		Engine:      param.Engine,
 		Generated:   param.Generate != nil,
 	}
 	if param.Type == templatemodel.ParamTypeSecret {

@@ -193,12 +193,15 @@ function ParametersTable({ parameters }: { parameters: AppTemplateParam[] }) {
                                                     ? "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30"
                                                     : param.type === "domain"
                                                       ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
-                                                      : "bg-muted/60 text-muted-foreground",
+                                                      : param.type === "app"
+                                                        ? "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border-cyan-500/30"
+                                                        : "bg-muted/60 text-muted-foreground",
                                         )}
                                     >
                                         {param.type === "secret" && <KeyRound className="size-2.5 mr-1 inline" />}
                                         {param.type === "domain" && <Globe className="size-2.5 mr-1 inline" />}
                                         {param.type === "volume" && <HardDrive className="size-2.5 mr-1 inline" />}
+                                        {param.type === "app" && <Boxes className="size-2.5 mr-1 inline" />}
                                         {param.type}
                                     </Badge>
                                 </TableCell>

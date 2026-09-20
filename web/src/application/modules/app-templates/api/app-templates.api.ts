@@ -162,8 +162,8 @@ export interface AppTemplateDetail {
 }
 
 export interface AppTemplateImageTag {
+    /** What goes back as imageTag when the app is created. */
     tag: string;
-    image: string;
     class: string;
     newer: boolean;
 }
@@ -188,7 +188,8 @@ export interface CreateAppFromTemplateReq {
     template: string;
     version?: string;
     variant?: string;
-    imageOverride?: string;
+    /** A tag, not a reference: the repository is the template's. */
+    imageTag?: string;
     params?: Record<string, unknown>;
     dependencyParams?: Record<string, Record<string, unknown>>;
 }

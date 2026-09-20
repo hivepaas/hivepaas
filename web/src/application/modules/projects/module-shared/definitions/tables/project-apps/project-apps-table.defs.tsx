@@ -200,6 +200,7 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
                         projectId={projectId}
                         appId={original.id}
                         appEnv={original.env}
+                        parentApp={original.parentApp}
                     />
                 );
             },

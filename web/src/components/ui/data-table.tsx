@@ -323,7 +323,7 @@ function DataTable<TData, TValue>({
                                     const verticalAlign = meta?.verticalAlign;
                                     const sticky = meta?.sticky;
                                     const colId = header.column.id;
-                                    const isActionCol = colId === "actions" || colId === "view";
+                                    const isActionCol = colId === "actions" || colId === "view" || colId === "menu";
                                     const hasExplicitSize = columnsWithExplicitSize.has(colId);
                                     const size = header.getSize();
 
@@ -376,7 +376,7 @@ function DataTable<TData, TValue>({
                                             ("accessorKey" in col && col.accessorKey
                                                 ? String(col.accessorKey)
                                                 : col.id) ?? "";
-                                        const isActionCol = colId === "actions" || colId === "view";
+                                        const isActionCol = colId === "actions" || colId === "view" || colId === "menu";
                                         const hasExplicitSize = col.size !== undefined;
                                         const size = col.size ?? 0;
                                         const skeletonStyle: React.CSSProperties | undefined = hasExplicitSize
@@ -429,7 +429,7 @@ function DataTable<TData, TValue>({
                                         const verticalAlign = meta?.verticalAlign;
                                         const sticky = meta?.sticky;
                                         const colId = cell.column.id;
-                                        const isActionCol = colId === "actions" || colId === "view";
+                                        const isActionCol = colId === "actions" || colId === "view" || colId === "menu";
                                         const hasExplicitSize = columnsWithExplicitSize.has(colId);
                                         const size = cell.column.getSize();
 

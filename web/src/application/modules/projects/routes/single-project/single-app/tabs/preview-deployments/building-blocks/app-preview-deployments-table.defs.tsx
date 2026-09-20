@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { Eye } from "lucide-react";
 import type { ProjectAppDetails, ProjectEnvEntity } from "~/projects/domain";
 import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
+import { MenuCell } from "~/projects/module-shared/definitions/tables/project-apps";
 import {
     APP_REPLICAS_STATUS_DOT_CLASS,
     getAppReplicasStatusLabel,
@@ -153,6 +154,24 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
             header: "Status",
             meta: centerMeta,
             cell: ({ row: { original } }) => <ProjectAppStatusBadge status={original.status} />,
+        },
+        {
+            id: "menu",
+            header: "",
+            minSize: 56,
+            size: 56,
+            meta: centerMeta,
+            enableSorting: false,
+            cell: ({ row: { original } }) => {
+                return (
+                    <MenuCell
+                        projectId={projectId}
+                        appId={original.id}
+                        appEnv={original.env}
+                        parentApp={original.parentApp}
+                    />
+                );
+            },
         },
     ];
 }

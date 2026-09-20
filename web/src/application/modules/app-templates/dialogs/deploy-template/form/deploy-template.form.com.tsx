@@ -68,7 +68,7 @@ interface FormState {
     env: string;
     version: string;
     variant: string;
-    imageOverride: string;
+    imageTag: string;
     params: Record<string, unknown>;
     dependencyParams: Record<string, Record<string, string>>;
 }
@@ -198,7 +198,7 @@ export function DeployTemplateForm({
             env: defaultEnv,
             version: defaultVersion,
             variant: defaultVariant,
-            imageOverride: "",
+            imageTag: "",
             params: defaultParams,
             dependencyParams: defaultDependencyParams,
         },
@@ -208,7 +208,7 @@ export function DeployTemplateForm({
     const selectedEnv = watch("env");
     const selectedVersion = watch("version");
     const selectedVariant = watch("variant");
-    const imageOverride = watch("imageOverride");
+    const imageTag = watch("imageTag");
 
     // 3. Registry Image Tags State & Fetcher
     const [scannedTags, setScannedTags] = useState<AppTemplateImageTag[]>([]);
@@ -234,7 +234,7 @@ export function DeployTemplateForm({
                     versions[0]?.name ??
                     "";
                 setValue("version", fallbackVer);
-                setValue("imageOverride", "");
+                setValue("imageTag", "");
             }
         }
         prevVariantRef.current = selectedVariant;
@@ -275,7 +275,7 @@ export function DeployTemplateForm({
         return versions.some((v: AppTemplateVersionSummary) => v.name === selectedVersion);
     }, [versions, selectedVersion]);
 
-    const isCustomVersion = !isOfficialTemplateVersion || Boolean(imageOverride);
+    const isCustomVersion = !isOfficialTemplateVersion || Boolean(imageTag);
 
     // Variants available for currently selected version
     const availableVariants = useMemo(() => {
@@ -319,11 +319,9 @@ export function DeployTemplateForm({
             template: template.name,
             version: isOfficialTemplateVersion ? data.version : undefined,
             variant: data.variant ? data.variant : undefined,
-            imageOverride: isOfficialTemplateVersion
-                ? undefined
-                : data.imageOverride
-                  ? data.imageOverride
-                  : data.version,
+            // An official version is named by version; anything else is a tag from the
+            // registry listing, which the version field also holds.
+            imageTag: isOfficialTemplateVersion ? undefined : data.imageTag || data.version,
             params: Object.keys(cleanedParams).length > 0 ? cleanedParams : undefined,
             dependencyParams: Object.keys(cleanedDepParams).length > 0 ? cleanedDepParams : undefined,
         });
@@ -470,7 +468,7 @@ export function DeployTemplateForm({
                                                                     versions[0]?.name ??
                                                                     "";
                                                                 setValue("version", fallbackVer);
-                                                                setValue("imageOverride", "");
+                                                                setValue("imageTag", "");
                                                             }
                                                         }
                                                     }}
@@ -524,13 +522,10 @@ export function DeployTemplateForm({
                                             value={field.value}
                                             onValueChange={val => {
                                                 field.onChange(val);
-                                                // If chosen from scanned tags, record imageOverride
+                                                // A scanned tag is the tag itself; the repository is
+                                                // the template's and is never assembled here.
                                                 const matchedTag = scannedTags.find(t => t.tag === val);
-                                                if (matchedTag) {
-                                                    setValue("imageOverride", matchedTag.image);
-                                                } else {
-                                                    setValue("imageOverride", "");
-                                                }
+                                                setValue("imageTag", matchedTag ? matchedTag.tag : "");
                                             }}
                                             disabled={readOnly || isPending}
                                         >

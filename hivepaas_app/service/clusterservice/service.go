@@ -20,6 +20,10 @@ type Service interface {
 	ServiceUpdate(ctx context.Context, serviceID string, version *swarm.Version, service *swarm.ServiceSpec,
 		options ...docker.ServiceUpdateOption) (*client.ServiceUpdateResult, error)
 	ServiceRemove(ctx context.Context, serviceID string, retryMax int, retryDelay time.Duration) error
+	// VerifyPortsAvailable refuses a port another service already publishes.
+	// ignoreServiceIDs are the services whose own ports do not count - the one
+	// being updated.
+	VerifyPortsAvailable(ctx context.Context, ports []PortRef, ignoreServiceIDs []string) error
 	ServicesRemove(ctx context.Context, serviceIDs []string, retryMax int, retryDelay time.Duration) error
 
 	// Docker nodes

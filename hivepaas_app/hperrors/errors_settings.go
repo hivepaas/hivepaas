@@ -13,6 +13,7 @@ var (
 	ErrSharedEnvVarContainExternalReference = NewErr(ErrValueInvalid, "ERR_SHARED_ENV_VAR_CONTAIN_EXTERNAL_REFERENCE")
 	ErrEnvVarExternalReferenceIsNotAllowed  = NewErr(ErrValueInvalid, "ERR_ENV_VAR_EXTERNAL_REFERENCE_IS_NOT_ALLOWED")
 	ErrDomainInUse                          = NewErr(ErrInUse, "ERR_DOMAIN_IN_USE")
+	ErrPortInUse                            = NewErr(ErrInUse, "ERR_PORT_IN_USE")
 	ErrDomainUnallowed                      = NewErr(ErrSettingViolation, "ERR_DOMAIN_UNALLOWED")
 	ErrSSLTypeUnsupported                   = NewErr(ErrUnsupported, "ERR_SSL_TYPE_UNSUPPORTED")
 	ErrPrivateKeyTypeUnsupported            = NewErr(ErrUnsupported, "ERR_PRIVATE_KEY_TYPE_UNSUPPORTED")

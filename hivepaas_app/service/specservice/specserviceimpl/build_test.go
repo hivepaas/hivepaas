@@ -11,6 +11,7 @@ import (
 
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
@@ -457,4 +458,37 @@ func TestBuildAppLeavesCapabilitiesAloneWhenTheDocumentAsksForNone(t *testing.T)
 	assert.NoError(t, err)
 	assert.Empty(t, req.Spec.TaskTemplate.ContainerSpec.CapabilityAdd)
 	assert.Empty(t, req.Spec.TaskTemplate.ContainerSpec.Ulimits)
+}
+
+// A published port is how an app answers something the reverse proxy does not
+// serve: a VPN, a DNS server, a game.
+func TestBuildAppPublishesThePortsTheDocumentAsksFor(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+	req := buildReq(t, `
+deployment:
+  networks:
+    endpointSpec:
+      ports:
+        - {target: 51820, published: 51820, protocol: udp, publishMode: host}
+`)
+
+	_, err := svc.BuildApp(context.Background(), nil, req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, []swarm.PortConfig{{
+		TargetPort: 51820, PublishedPort: 51820,
+		Protocol: network.UDP, PublishMode: swarm.PortConfigPublishModeHost,
+	}}, req.Spec.EndpointSpec.Ports)
+}
+
+func TestBuildAppPublishesNothingWhenTheDocumentAsksForNoPorts(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+	req := buildReq(t, buildDocYAML)
+
+	_, err := svc.BuildApp(context.Background(), nil, req)
+
+	assert.NoError(t, err)
+	assert.Nil(t, req.Spec.EndpointSpec)
 }

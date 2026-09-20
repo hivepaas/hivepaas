@@ -37,6 +37,11 @@ deployment:
       ulimits: [{name: memlock, soft: -1, hard: -1}]
       enableGPU: true
       oomScoreAdj: -500
+  networks:
+    endpointSpec:
+      mode: vip
+      ports:
+        - {target: 51820, published: 51820, protocol: udp, publishMode: host}
 settings:
   kind: {category: database, engine: postgres}
   envVars: {data: [{k: A, v: b}]}
@@ -231,4 +236,57 @@ func TestCapabilitiesProblemPassesWhatATemplateWouldAsk(t *testing.T) {
 		Sysctls:       map[string]string{"vm.max_map_count": "262144"},
 		Ulimits:       []*Ulimit{{Name: "memlock", Soft: -1, Hard: -1}},
 	}))
+}
+
+// A published port is how an app answers something that is not HTTP. What is
+// refused is a block that says more than which ports: the rest of networking -
+// which networks an app joins, its hosts file, its resolver - names objects of
+// the project that a template cannot know.
+func TestCheckBuildableRefusesNetworkingBeyondPublishedPorts(t *testing.T) {
+	cases := map[string]struct {
+		doc  string
+		path string
+	}{
+		"network attachments": {"deployment:\n  networks:\n    attachments: [{name: shared}]\n",
+			"deployment.networks.attachments"},
+		"a hosts file entry": {"deployment:\n  networks:\n    hostsFileEntries: [{address: 10.0.0.1}]\n",
+			"deployment.networks.hostsFileEntries"},
+		"a resolver": {"deployment:\n  networks:\n    dnsConfig: {nameservers: [1.1.1.1]}\n",
+			"deployment.networks.dnsConfig"},
+		"a port docker picks": {"deployment:\n  networks:\n    endpointSpec:\n" +
+			"      ports: [{target: 51820, published: 0, protocol: udp}]\n",
+			"published: 0 is not a port"},
+		"no target": {"deployment:\n  networks:\n    endpointSpec:\n" +
+			"      ports: [{published: 51820, protocol: udp}]\n",
+			"target: 0 is not a port"},
+		"a protocol docker has not got": {"deployment:\n  networks:\n    endpointSpec:\n" +
+			"      ports: [{target: 1, published: 1, protocol: quic}]\n",
+			"ports[0].protocol"},
+		"a publish mode docker has not got": {"deployment:\n  networks:\n    endpointSpec:\n" +
+			"      ports: [{target: 1, published: 1, publishMode: direct}]\n",
+			"ports[0].publishMode"},
+		"too many": {"deployment:\n  networks:\n    endpointSpec:\n      ports:\n" + func() string {
+			out := ""
+			for i := range MaxPublishedPorts + 1 {
+				out += fmt.Sprintf("        - {target: %d, published: %d}\n", 1000+i, 1000+i)
+			}
+			return out
+		}(),
+			"endpointSpec.ports: at most"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			err := CheckBuildable(decodeDoc(t, tc.doc))
+			assert.ErrorIs(t, err, hperrors.ErrSpecBlockUnsupported)
+			assert.Contains(t, buildableErrorDetail(t, err), tc.path)
+		})
+	}
+}
+
+func TestCheckBuildableAcceptsPublishedPorts(t *testing.T) {
+	assert.NoError(t, CheckBuildable(decodeDoc(t, "deployment:\n  networks:\n    endpointSpec:\n"+
+		"      ports: [{target: 53, published: 53, protocol: udp, publishMode: ingress}]\n")))
+	assert.NoError(t, CheckBuildable(decodeDoc(t,
+		"deployment:\n  networks:\n    endpointSpec:\n      ports: [{target: 22, published: 2222}]\n")),
+		"a port with no protocol is tcp, as docker reads it")
 }

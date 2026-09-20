@@ -19,6 +19,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -30,6 +31,11 @@ func (uc *UC) UpdateAppNetworkSettings(
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		data := &updateAppNetworkSettingsData{}
 		err := uc.loadAppNetworkSettingsForUpdate(ctx, db, req, data)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+
+		err = uc.verifyAppPublishedPorts(ctx, req, data)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -126,6 +132,31 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 	}
 
 	return nil
+}
+
+// verifyAppPublishedPorts refuses a port another service already publishes,
+// before this app's own service is updated with it.
+//
+// Docker would refuse a second service on the same ingress port anyway, but it
+// does so while applying the update, and the message is about swarm rather than
+// about the port that was asked for. This app's own service is not counted: an
+// app keeping the port it already has is not taking it from anybody.
+func (uc *UC) verifyAppPublishedPorts(
+	ctx context.Context,
+	req *appsettingsdto.UpdateAppNetworkSettingsReq,
+	data *updateAppNetworkSettingsData,
+) error {
+	if req.EndpointSpec == nil || len(req.EndpointSpec.Ports) == 0 {
+		return nil
+	}
+	ports := make([]clusterservice.PortRef, 0, len(req.EndpointSpec.Ports))
+	for _, port := range req.EndpointSpec.Ports {
+		if port == nil || port.Published == 0 {
+			continue
+		}
+		ports = append(ports, clusterservice.PortRef{Published: port.Published, Protocol: port.Protocol})
+	}
+	return hperrors.Wrap(uc.clusterService.VerifyPortsAvailable(ctx, ports, []string{data.App.ServiceID}))
 }
 
 func (uc *UC) prepareUpdatingAppNetworkSettings(

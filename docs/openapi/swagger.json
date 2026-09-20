@@ -41705,7 +41705,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -41723,7 +41723,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -45010,6 +45010,13 @@
             },
             "type" : "array"
           },
+          "publishedPorts" : {
+            "description" : "PublishedPorts are the ports this dependency's app claims on the cluster.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplatePortResp"
+            },
+            "type" : "array"
+          },
           "template" : {
             "type" : "string"
           },
@@ -45027,7 +45034,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "capabilities", "name", "parameters", "template", "templateTitle", "title", "variant", "version" ],
+        "required" : [ "capabilities", "name", "parameters", "publishedPorts", "template", "templateTitle", "title", "variant", "version" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateDependencySummaryResp" : {
@@ -45164,6 +45171,30 @@
         "required" : [ "default", "description", "engine", "generated", "max", "maxLength", "min", "minLength", "name", "optional", "options", "pattern", "title", "type" ],
         "type" : "object"
       },
+      "apptemplatedto.AppTemplatePortResp" : {
+        "properties" : {
+          "protocol" : {
+            "description" : "Protocol is tcp, udp or sctp; PublishMode is ingress - the port answers on\nevery node - or host, only on the node running the app.",
+            "type" : "string"
+          },
+          "publishMode" : {
+            "type" : "string"
+          },
+          "published" : {
+            "type" : "integer"
+          },
+          "publishedParam" : {
+            "description" : "PublishedParam names the parameter that chooses the published port, when\none does; Published is then that parameter's default, and what a person\ntypes for it is what will actually be claimed.",
+            "type" : "string"
+          },
+          "target" : {
+            "description" : "Target is the port inside the container, Published the one on the nodes.",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "protocol", "publishMode", "published", "publishedParam", "target" ],
+        "type" : "object"
+      },
       "apptemplatedto.AppTemplateResp" : {
         "properties" : {
           "capabilities" : {
@@ -45210,6 +45241,13 @@
             },
             "type" : "array"
           },
+          "publishedPorts" : {
+            "description" : "PublishedPorts are the addresses this app claims on the cluster itself,\nbeside the web addresses the reverse proxy serves. Two apps cannot share\none, so they are shown before anybody deploys.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplatePortResp"
+            },
+            "type" : "array"
+          },
           "revision" : {
             "type" : "string"
           },
@@ -45241,7 +45279,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "capabilities", "categories", "compatible", "dependencies", "description", "iconUrl", "license", "links", "name", "parameters", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "capabilities", "categories", "compatible", "dependencies", "description", "iconUrl", "license", "links", "name", "parameters", "publishedPorts", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateSummaryResp" : {
@@ -60437,9 +60475,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute" ]
       },
       "uploadFiles_request" : {
         "properties" : {

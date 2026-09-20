@@ -128,6 +128,36 @@ func buildCapabilities(capabilities *specmodel.Capabilities, task *swarm.TaskSpe
 	contSpec.Sysctls = maps.Clone(capabilities.Sysctls)
 }
 
+// buildNetworks publishes the ports the document asks for, the way the app's
+// network settings screen publishes them.
+//
+// This is how an app answers something that is not HTTP: the reverse proxy
+// serves the web addresses, and a VPN or a DNS server needs a port on the nodes
+// themselves. Whether the port is free is decided before anything is built -
+// docker would refuse it while creating the service, too late to say which port
+// somebody asked for.
+func (s *service) buildNetworks(_ context.Context, state *buildState) error {
+	endpointSpec := state.req.Doc.Deployment.Networks.EndpointSpec
+	if endpointSpec == nil {
+		return nil
+	}
+	spec := state.req.Spec
+	if spec.EndpointSpec == nil {
+		spec.EndpointSpec = &swarm.EndpointSpec{}
+	}
+	spec.EndpointSpec.Mode = endpointSpec.Mode
+	spec.EndpointSpec.Ports = make([]swarm.PortConfig, 0, len(endpointSpec.Ports))
+	for _, port := range endpointSpec.Ports {
+		spec.EndpointSpec.Ports = append(spec.EndpointSpec.Ports, swarm.PortConfig{
+			TargetPort:    port.Target,
+			PublishedPort: port.Published,
+			Protocol:      port.Protocol,
+			PublishMode:   port.PublishMode,
+		})
+	}
+	return nil
+}
+
 // buildStorage hands the mounts to volumeservice, which builds them the way the
 // storage settings screen does.
 //

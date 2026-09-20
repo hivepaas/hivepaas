@@ -5,11 +5,13 @@ import (
 	"errors"
 	"time"
 
+	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
@@ -108,4 +110,67 @@ func (s *service) ServicesRemove(
 		err = errors.Join(err, e)
 	}
 	return err
+}
+
+// VerifyPortsAvailable refuses a port that another service already publishes.
+//
+// Docker refuses a second service on the same ingress port itself, but only once
+// the service is being created - by then an app has been provisioned, and what
+// comes back is a message about swarm rather than about the port somebody asked
+// for. Asking first is what lets a template creating three apps stop before it
+// creates any of them, the way a taken domain already does.
+//
+// Host-mode ports are checked as well, even though docker would allow two of
+// them on a cluster with more than one node: the tasks would then fight over the
+// port on whichever node they land on, and a HivePaaS installation is usually
+// one node, where they always would.
+func (s *service) VerifyPortsAvailable(
+	ctx context.Context,
+	ports []clusterservice.PortRef,
+	ignoreServiceIDs []string,
+) error {
+	if len(ports) == 0 {
+		return nil
+	}
+	services, err := s.dockerManager.ServiceList(ctx)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	taken := make(map[clusterservice.PortRef]string, len(services.Items))
+	for i := range services.Items {
+		svc := &services.Items[i]
+		if gofn.Contain(ignoreServiceIDs, svc.ID) || svc.Spec.EndpointSpec == nil {
+			continue
+		}
+		for _, port := range svc.Spec.EndpointSpec.Ports {
+			if port.PublishedPort == 0 {
+				continue
+			}
+			ref := normalizePortRef(clusterservice.PortRef{
+				Published: port.PublishedPort, Protocol: port.Protocol,
+			})
+			if _, found := taken[ref]; !found {
+				taken[ref] = gofn.Coalesce(svc.Spec.Name, svc.ID)
+			}
+		}
+	}
+	for _, port := range ports {
+		if by, found := taken[normalizePortRef(port)]; found {
+			return hperrors.Wrap(hperrors.ErrPortInUse).
+				WithParam("Port", port.Published).
+				WithParam("Protocol", string(normalizePortRef(port).Protocol)).
+				WithParam("PublishedBy", by)
+		}
+	}
+	return nil
+}
+
+// normalizePortRef fills in the protocol docker assumes when a port is asked for
+// without one, so that a tcp port and a port with no protocol are one address
+// rather than two.
+func normalizePortRef(port clusterservice.PortRef) clusterservice.PortRef {
+	if port.Protocol == "" {
+		port.Protocol = network.TCP
+	}
+	return port
 }

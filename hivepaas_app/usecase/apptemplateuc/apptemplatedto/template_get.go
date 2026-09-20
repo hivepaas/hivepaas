@@ -1,7 +1,10 @@
 package apptemplatedto
 
 import (
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/api/types/swarm"
 	vld "github.com/tiendc/go-validator"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -55,6 +58,25 @@ type AppTemplateResp struct {
 	// nothing. It is shown before anybody deploys, and creating one needs Write
 	// on the cluster module.
 	Capabilities *AppTemplateCapabilitiesResp `json:"capabilities"`
+	// PublishedPorts are the addresses this app claims on the cluster itself,
+	// beside the web addresses the reverse proxy serves. Two apps cannot share
+	// one, so they are shown before anybody deploys.
+	PublishedPorts []*AppTemplatePortResp `json:"publishedPorts"`
+}
+
+// AppTemplatePortResp is one port a template publishes on every node.
+type AppTemplatePortResp struct {
+	// Target is the port inside the container, Published the one on the nodes.
+	Target    uint32 `json:"target"`
+	Published uint32 `json:"published"`
+	// PublishedParam names the parameter that chooses the published port, when
+	// one does; Published is then that parameter's default, and what a person
+	// types for it is what will actually be claimed.
+	PublishedParam string `json:"publishedParam,omitempty"`
+	// Protocol is tcp, udp or sctp; PublishMode is ingress - the port answers on
+	// every node - or host, only on the node running the app.
+	Protocol    string `json:"protocol"`
+	PublishMode string `json:"publishMode"`
 }
 
 // AppTemplateCapabilitiesResp is the capabilities block of the template, as the
@@ -91,6 +113,8 @@ type AppTemplateDependencyResp struct {
 	// Capabilities is what this dependency's app is granted. It is gated on the
 	// same permission as the main app's: both are created by the one request.
 	Capabilities *AppTemplateCapabilitiesResp `json:"capabilities"`
+	// PublishedPorts are the ports this dependency's app claims on the cluster.
+	PublishedPorts []*AppTemplatePortResp `json:"publishedPorts"`
 }
 
 type AppTemplateLinksResp struct {
@@ -165,6 +189,7 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 		resp.Parameters = append(resp.Parameters, transformParam(param))
 	}
 	resp.Capabilities = transformCapabilities(tmpl.Template)
+	resp.PublishedPorts = transformPublishedPorts(tmpl.Template)
 	resp.Dependencies = make([]*AppTemplateDependencyResp, 0, len(tmpl.Dependencies))
 	for _, dep := range tmpl.Dependencies {
 		asked := dep.Dependency.AskedParams(dep.Template)
@@ -181,6 +206,7 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 		for _, param := range asked {
 			depResp.Parameters = append(depResp.Parameters, transformParam(param))
 		}
+		depResp.PublishedPorts = transformPublishedPorts(dep.Template)
 		resp.Dependencies = append(resp.Dependencies, depResp)
 	}
 	return resp
@@ -208,6 +234,24 @@ func transformCapabilities(tmpl *templatemodel.Template) *AppTemplateCapabilitie
 		}
 		resp.Ulimits = append(resp.Ulimits,
 			&AppTemplateUlimitResp{Name: ulimit.Name, Soft: ulimit.Soft, Hard: ulimit.Hard})
+	}
+	return resp
+}
+
+// transformPublishedPorts reads the ports out of the template, filling in what
+// docker assumes when the template leaves it out, so that what is shown is what
+// will actually be published.
+func transformPublishedPorts(tmpl *templatemodel.Template) []*AppTemplatePortResp {
+	ports := tmpl.PublishedPorts()
+	resp := make([]*AppTemplatePortResp, 0, len(ports))
+	for _, port := range ports {
+		resp = append(resp, &AppTemplatePortResp{
+			Target:         port.Target,
+			Published:      port.Published,
+			PublishedParam: port.PublishedParam,
+			Protocol:       gofn.Coalesce(port.Protocol, string(network.TCP)),
+			PublishMode:    gofn.Coalesce(port.PublishMode, string(swarm.PortConfigPublishModeIngress)),
+		})
 	}
 	return resp
 }

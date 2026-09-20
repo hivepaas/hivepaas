@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/moby/moby/api/types/mount"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -23,6 +25,7 @@ const (
 	BlockContainerHealthcheck Block = "deployment.container.healthcheck"
 	BlockContainerInit        Block = "deployment.container.init"
 	BlockDeploymentResources  Block = "deployment.resources"
+	BlockDeploymentNetworks   Block = "deployment.networks"
 	BlockSettingsKind         Block = "settings.kind"
 	BlockSettingsEnvVars      Block = "settings.envVars"
 	BlockSettingsSecrets      Block = "settings.secrets"
@@ -41,6 +44,12 @@ const (
 	// MaxSecretValueBytes is what a secret may hold: a password, a key, a
 	// certificate - never a file somebody meant to mount.
 	MaxSecretValueBytes = 64 << 10
+	// MaxPublishedPorts is how many addresses on the cluster one app may claim.
+	// A published port is taken from every other app on the installation, so a
+	// template asks for the few the software answers at.
+	MaxPublishedPorts = 5
+	// maxPortNumber is the largest port there is.
+	maxPortNumber = 65535
 	// MaxCapabilityEntries is how many capabilities, sysctls or ulimits one
 	// document may carry. A template asks for the few its software cannot run
 	// without; a list longer than this is not that.
@@ -55,6 +64,16 @@ const (
 // the name without the CAP_ prefix, which is what the app's resource settings
 // screen takes as well.
 var capabilityNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,31}$`)
+
+// publishedProtocols and publishModes are what docker takes for a published
+// port. An empty protocol is tcp and an empty mode is ingress, which is why both
+// lists leave the empty value out and the check allows it separately.
+var (
+	publishedProtocols = []network.IPProtocol{network.TCP, network.UDP, network.SCTP}
+	publishModes       = []swarm.PortConfigPublishMode{
+		swarm.PortConfigPublishModeIngress, swarm.PortConfigPublishModeHost,
+	}
+)
 
 const (
 	// capabilityAll is the wildcard docker accepts and a document may not use.
@@ -72,8 +91,8 @@ const (
 // bind mounts, config files, secrets, scheduled jobs, routing domains. See
 // docs/superpowers/specs/2026-09-17-app-templates-design.md §12.
 var BuildableBlocks = []Block{BlockDeploymentSource, BlockDeploymentStorage, BlockContainerHealthcheck,
-	BlockContainerInit, BlockDeploymentResources, BlockSettingsKind, BlockSettingsEnvVars,
-	BlockSettingsSecrets, BlockSettingsConfigFiles, BlockSettingsRouting}
+	BlockContainerInit, BlockDeploymentResources, BlockDeploymentNetworks, BlockSettingsKind,
+	BlockSettingsEnvVars, BlockSettingsSecrets, BlockSettingsConfigFiles, BlockSettingsRouting}
 
 // CheckBuildable refuses any part of doc that phase 1 cannot build.
 //
@@ -116,6 +135,9 @@ func PresentBlocks(doc *AppDoc) []Block {
 		if d.Resources != nil {
 			blocks = append(blocks, BlockDeploymentResources)
 		}
+		if d.Networks != nil {
+			blocks = append(blocks, BlockDeploymentNetworks)
+		}
 	}
 	for _, pair := range []struct {
 		typ   base.SettingType
@@ -151,7 +173,7 @@ func checkDeployment(d *Deployment) error {
 	if d == nil {
 		return nil
 	}
-	if err := onlyFields("deployment.", d, "source", "container", "resources", "storage"); err != nil {
+	if err := onlyFields("deployment.", d, "source", "container", "resources", "storage", "networks"); err != nil {
 		return err
 	}
 	if err := checkSource(d.Source); err != nil {
@@ -163,6 +185,9 @@ func checkDeployment(d *Deployment) error {
 		}
 	}
 	if err := checkResources(d.Resources); err != nil {
+		return err
+	}
+	if err := checkNetworks(d.Networks); err != nil {
 		return err
 	}
 	return checkStorage(d.Storage)
@@ -277,6 +302,63 @@ func CapabilitiesProblem(c *Capabilities) string {
 		return prefix + "sysctls: every entry needs a name"
 	}
 	return ""
+}
+
+// checkNetworks accepts the ports an app publishes on the cluster, and nothing
+// else in the block.
+//
+// A published port is how an app answers something that is not HTTP - a VPN, a
+// DNS server, a game - and it is the one part of networking a template can know
+// about. The rest of the block points at objects of the project: which networks
+// the app joins, what its hosts file says, which resolver it uses. A template
+// has no way to name those, and the app's network settings are where they are
+// chosen.
+func checkNetworks(n *Networks) error {
+	if n == nil {
+		return nil
+	}
+	if err := onlyFields("deployment.networks.", n, "endpointSpec"); err != nil {
+		return err
+	}
+	if n.EndpointSpec == nil {
+		return nil
+	}
+	if err := onlyFields("deployment.networks.endpointSpec.", n.EndpointSpec, "mode", "ports"); err != nil {
+		return err
+	}
+	if len(n.EndpointSpec.Ports) > MaxPublishedPorts {
+		return hperrors.Wrap(hperrors.ErrSpecBlockUnsupported).WithExtraDetail(
+			"deployment.networks.endpointSpec.ports: at most %d, and this has %d",
+			MaxPublishedPorts, len(n.EndpointSpec.Ports))
+	}
+	for i, port := range n.EndpointSpec.Ports {
+		path := fmt.Sprintf("deployment.networks.endpointSpec.ports[%d]", i)
+		if port == nil {
+			return unsupported(path)
+		}
+		if err := onlyFields(path+".", port, "target", "published", "protocol", "publishMode"); err != nil {
+			return err
+		}
+		// A published port of zero means docker picks one, which a template must not
+		// do: nothing could be told where to connect, and the app's own description
+		// of itself would be wrong.
+		for _, numbered := range []struct {
+			field string
+			value uint32
+		}{{"target", port.Target}, {"published", port.Published}} {
+			if numbered.value < 1 || numbered.value > maxPortNumber {
+				return hperrors.Wrap(hperrors.ErrSpecBlockUnsupported).WithExtraDetail(
+					"%s.%s: %d is not a port", path, numbered.field, numbered.value)
+			}
+		}
+		if port.Protocol != "" && !slices.Contains(publishedProtocols, port.Protocol) {
+			return unsupported(path + ".protocol")
+		}
+		if port.PublishMode != "" && !slices.Contains(publishModes, port.PublishMode) {
+			return unsupported(path + ".publishMode")
+		}
+	}
+	return nil
 }
 
 func checkStorage(s *Storage) error {

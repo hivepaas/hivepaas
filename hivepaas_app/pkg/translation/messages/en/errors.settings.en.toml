@@ -30,6 +30,7 @@ ERR_SETTINGS_NO_PENDING_CHANGE = "There is no routing change waiting to be confi
 ERR_SETTINGS_CHANGE_SUPERSEDED = "This is no longer the change that is waiting to be confirmed - the settings have moved on since. Reload the page to see where they stand."
 ERR_SETTINGS_CONFIRM_TOO_EARLY = "Too early to confirm. The change is still being picked up by the proxy, so a confirmation now would vouch for the previous configuration. Try again from {{.ConfirmableFrom}}."
 ERR_SETTINGS_CHANGE_NOT_LIVE = "The change is not actually running, so it cannot be confirmed. Swarm most likely rolled the update back. Check the proxy service and apply the change again."
+ERR_PORT_IN_USE = "Port {{.Port}}/{{.Protocol}} is already published by '{{.PublishedBy}}'"
 ERR_SETTING_IN_USE = "'{{.Name}}' is still used by {{.Count}} other object(s) and cannot be deleted. Remove it from those first."
 ERR_DATA_VER_NEWER_THAN_SYSTEM_VER = "The version of data is newer than the system's"
 

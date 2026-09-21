@@ -1383,7 +1383,12 @@ type PushCheckResult struct {
 }
 ```
 
-- [ ] **Step 5: Write the service struct and the validation**
+**Deviation taken while executing:** the `service` struct and the fx wiring moved into Task 6,
+where the first method that reads those fields is written. A struct whose fields nothing reads
+yet fails `golangci-lint`'s `unused` check, and silencing it would only hide the next one.
+Task 4 therefore delivers the interface, the types, the errors and the validation.
+
+- [ ] **Step 5: Write the validation**
 
 `registryserviceimpl/service.go`:
 

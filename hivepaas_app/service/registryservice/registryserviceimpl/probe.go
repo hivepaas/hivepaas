@@ -19,7 +19,7 @@ import (
 func (s *service) ProbeDomain(ctx context.Context, domain string) (*registryservice.DomainProbe, error) {
 	if strings.TrimSpace(domain) == "" {
 		return nil, hperrors.Wrap(hperrors.ErrRegistrySettingsInvalid).
-			WithExtraDetail("a domain is required")
+			WithExtraDetail("A domain is required.")
 	}
 
 	url := fmt.Sprintf("https://%s/v2/", domain)

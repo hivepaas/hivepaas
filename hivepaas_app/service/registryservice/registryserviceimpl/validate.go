@@ -11,7 +11,12 @@ import (
 //
 // current is what is stored today, nil when nothing is. It is only needed for the
 // questions that are about a change rather than about a value.
-func validateSettings(cfg, current *entity.RegistrySettings) error {
+//
+// provisioned says the registry's app exists right now. It is asked rather than
+// read from current.AppID: that id outlives the app when somebody deletes it in
+// the app screen - which is exactly how the spec says a registry is removed - and
+// trusting it made a deleted registry impossible to provision again.
+func validateSettings(cfg, current *entity.RegistrySettings, provisioned bool) error {
 	if cfg == nil {
 		return hperrors.Wrap(hperrors.ErrRegistryNotConfigured)
 	}
@@ -22,41 +27,41 @@ func validateSettings(cfg, current *entity.RegistrySettings) error {
 	}
 
 	if cfg.Domain == "" {
-		return invalid("a domain is required: images are named after it, and docker only " +
-			"speaks to a registry over HTTPS at a name")
+		return invalid("A domain is required: images are named after it, and Docker only " +
+			"speaks to a registry over HTTPS at a name.")
 	}
 	switch cfg.Storage.Type {
 	case base.RegistryStorageTypeVolume:
 		if cfg.Storage.Volume.ID == "" {
-			return invalid("choose the volume the images are kept on")
+			return invalid("Choose the volume the images are kept on.")
 		}
 	case base.RegistryStorageTypeS3:
 		if cfg.Storage.CloudStorage.ID == "" {
-			return invalid("choose the cloud storage the images are kept in")
+			return invalid("Choose the cloud storage the images are kept in.")
 		}
 	default:
-		return invalid("unknown storage type %q", cfg.Storage.Type)
+		return invalid("Unknown storage type %q.", cfg.Storage.Type)
 	}
 	if cfg.Cleanup.Enabled {
 		if cfg.Cleanup.KeepLast < 1 {
-			return invalid("keepLast must keep at least one build of every app")
+			return invalid("Builds to keep must be at least one.")
 		}
 		if cfg.Cleanup.KeepDays < 1 {
-			return invalid("keepDays must be at least one day")
+			return invalid("Days to keep must be at least one.")
 		}
 	}
 	if cfg.MemoryLimit < entity.MinRegistryMemoryLimit {
-		return invalid("the memory limit must be at least 256MB")
+		return invalid("The memory limit must be at least 256mb.")
 	}
 
 	// Once the app exists the storage is what holds its images. Nothing copies
 	// them anywhere, so changing it is refused rather than obeyed.
-	if current != nil && current.AppID != "" {
+	if provisioned && current != nil {
 		if cfg.Storage.Type != current.Storage.Type ||
 			cfg.Storage.InUse().ID != current.Storage.InUse().ID {
 			return hperrors.Wrap(hperrors.ErrRegistryStorageImmutable).WithExtraDetail(
-				"the registry's storage cannot be changed once it holds images: " +
-					"provision a new registry instead")
+				"It holds images, and nothing copies them from one store to the other. " +
+					"To move them, delete the registry app and provision a new registry.")
 		}
 	}
 	return nil

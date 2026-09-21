@@ -68,7 +68,7 @@ func renderZotConfig(cfg *entity.RegistrySettings, in zotConfigInput) ([]byte, e
 	if cfg.Storage.Type == base.RegistryStorageTypeS3 {
 		if in.S3 == nil {
 			return nil, hperrors.Wrap(hperrors.ErrRegistrySettingsInvalid).
-				WithExtraDetail("the registry is set to S3 but no bucket was resolved")
+				WithExtraDetail("The registry is set to S3, but no bucket was found for it.")
 		}
 		storage["storageDriver"] = map[string]any{
 			"name":           "s3",

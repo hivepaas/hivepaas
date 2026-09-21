@@ -3,3 +3,10 @@
 
 ERR_REGISTRY_UNAVAILABLE = "The image registry could not be reached"
 ERR_REGISTRY_RATE_LIMITED = "The image registry is rate limiting this installation. Try again in a few minutes."
+
+# The registry HivePaaS provisions for itself. The detail each one carries says
+# what exactly was wrong; these are the headline above it.
+ERR_REGISTRY_NOT_CONFIGURED = "The registry is not configured"
+ERR_REGISTRY_SETTINGS_INVALID = "The registry settings are not valid"
+ERR_REGISTRY_STORAGE_IMMUTABLE = "The registry's storage cannot be changed"
+ERR_REGISTRY_UNREACHABLE = "The registry cannot be reached"

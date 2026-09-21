@@ -138,7 +138,7 @@ func (uc *UC) loadSettingData(
 	data.NewSettings.CredentialRotatedAt = current.CredentialRotatedAt
 	data.NewSettings.CredentialGraceEnds = current.CredentialGraceEnds
 
-	return hperrors.Wrap(uc.registryService.Validate(data.NewSettings, current))
+	return hperrors.Wrap(uc.registryService.Validate(ctx, db, data.NewSettings, current))
 }
 
 func userIDOf(auth *basedto.Auth) string {

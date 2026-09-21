@@ -2,6 +2,7 @@ package registryserviceimpl
 
 import (
 	"context"
+	"errors"
 
 	"github.com/tiendc/gofn"
 
@@ -81,12 +82,12 @@ func (s *service) resolveStorage(ctx context.Context, db database.IDB, cfg *enti
 
 	setting, err := s.settingRepo.GetByID(ctx, db, entity.NewObjectScopeGlobal(),
 		base.SettingTypeClusterVolume, cfg.Storage.Volume.ID, true)
-	if err != nil {
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 		return planInput{}, hperrors.Wrap(err)
 	}
 	if setting == nil {
 		return planInput{}, hperrors.Wrap(hperrors.ErrRegistrySettingsInvalid).
-			WithExtraDetail("the volume the registry keeps its images on is gone")
+			WithExtraDetail("The volume the registry keeps its images on no longer exists.")
 	}
 	// A volume reaches an app only when it is inheritable: that is the rule
 	// applyAppFilter enforces, and the registry's app is in a project of its own.
@@ -94,8 +95,8 @@ func (s *service) resolveStorage(ctx context.Context, db database.IDB, cfg *enti
 	// which says nothing about what to do.
 	if !setting.Inheritable {
 		return planInput{}, hperrors.Wrap(hperrors.ErrRegistrySettingsInvalid).WithExtraDetail(
-			"the volume %q is not shared with apps: edit it in Cluster > Volumes and make it "+
-				"available to apps, or choose one that already is", setting.Name)
+			"The volume %q is not shared with apps. Edit it in Cluster > Volumes and make it "+
+				"available to apps, or choose one that already is.", setting.Name)
 	}
 	// A mount names the volume by the setting's id; the load above is what turns
 	// a missing or unusable volume into a sentence instead of a failure inside
@@ -106,12 +107,12 @@ func (s *service) resolveStorage(ctx context.Context, db database.IDB, cfg *enti
 func (s *service) resolveCloudStorage(ctx context.Context, db database.IDB, id string) (*zotS3Input, error) {
 	setting, err := s.settingRepo.GetByID(ctx, db, entity.NewObjectScopeGlobal(),
 		base.SettingTypeCloudStorage, id, true)
-	if err != nil {
+	if err != nil && !errors.Is(err, hperrors.ErrNotFound) {
 		return nil, hperrors.Wrap(err)
 	}
 	if setting == nil {
 		return nil, hperrors.Wrap(hperrors.ErrRegistrySettingsInvalid).
-			WithExtraDetail("the cloud storage the registry keeps its images in is gone")
+			WithExtraDetail("The cloud storage the registry keeps its images in no longer exists.")
 	}
 
 	storage, err := setting.AsCloudStorage()
@@ -120,7 +121,7 @@ func (s *service) resolveCloudStorage(ctx context.Context, db database.IDB, id s
 	}
 	if storage.S3 == nil || storage.S3.CloudProviderAWS == nil || storage.S3.Bucket == "" {
 		return nil, hperrors.Wrap(hperrors.ErrRegistrySettingsInvalid).
-			WithExtraDetail("the chosen cloud storage names no S3 bucket")
+			WithExtraDetail("The chosen cloud storage names no S3 bucket.")
 	}
 	secretKey, err := storage.S3.SecretKey.GetPlain()
 	if err != nil {

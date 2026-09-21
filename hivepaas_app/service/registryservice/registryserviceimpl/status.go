@@ -84,7 +84,7 @@ func (s *service) askRegistry(ctx context.Context, db database.IDB, cfg *entity.
 
 	if resp.StatusCode != http.StatusOK {
 		return 0, 0, hperrors.Wrap(hperrors.ErrRegistryUnreachable).
-			WithExtraDetail("the registry answered %d", resp.StatusCode)
+			WithExtraDetail("The registry answered %d.", resp.StatusCode)
 	}
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxSearchResponseBytes))
 	if err != nil {

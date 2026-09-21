@@ -38,5 +38,5 @@ type Service interface {
 	// Validate refuses a configuration before it is written. The usecase calls it
 	// in PrepareUpdate, so a bad save is a validation error rather than a stored
 	// configuration Apply then fails on.
-	Validate(next, current *entity.RegistrySettings) error
+	Validate(ctx context.Context, db database.IDB, next, current *entity.RegistrySettings) error
 }

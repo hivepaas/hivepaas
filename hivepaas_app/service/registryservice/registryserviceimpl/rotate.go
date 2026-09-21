@@ -88,7 +88,7 @@ func (s *service) RotateCredential(
 	}
 	if app == nil {
 		return nil, hperrors.Wrap(hperrors.ErrRegistryNotConfigured).
-			WithExtraDetail("the registry has not been provisioned yet")
+			WithExtraDetail("The registry has not been provisioned yet.")
 	}
 
 	credential, err := s.settingRepo.GetByID(ctx, db, entity.NewObjectScopeGlobal(),

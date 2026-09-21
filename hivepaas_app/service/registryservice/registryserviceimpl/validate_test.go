@@ -23,7 +23,7 @@ func validSettings() *entity.RegistrySettings {
 }
 
 func TestValidateAcceptsAWorkingConfiguration(t *testing.T) {
-	assert.NoError(t, validateSettings(validSettings(), nil))
+	assert.NoError(t, validateSettings(validSettings(), nil, false))
 }
 
 // Nothing below runs when it is off, so nothing below has to be answerable yet:
@@ -34,7 +34,7 @@ func TestValidateIgnoresEverythingWhenDisabled(t *testing.T) {
 	cfg.Domain = ""
 	cfg.Storage.Volume = entity.ObjectID{}
 
-	assert.NoError(t, validateSettings(cfg, nil))
+	assert.NoError(t, validateSettings(cfg, nil, false))
 }
 
 func TestValidateRefusals(t *testing.T) {
@@ -62,7 +62,7 @@ func TestValidateRefusals(t *testing.T) {
 			cfg := validSettings()
 			tt.mutate(cfg)
 
-			assert.Error(t, validateSettings(cfg, nil))
+			assert.Error(t, validateSettings(cfg, nil, false))
 		})
 	}
 }
@@ -71,15 +71,12 @@ func TestValidateRefusals(t *testing.T) {
 // forgot everything it held is worse than a refusal.
 func TestValidateRefusesChangingStorageAfterProvisioning(t *testing.T) {
 	current := validSettings()
-	current.AppID = "app-1"
-
 	next := validSettings()
-	next.AppID = "app-1"
 	next.Storage = entity.RegistryStorage{
 		Type: base.RegistryStorageTypeS3, CloudStorage: entity.ObjectID{ID: "cs-1"},
 	}
 
-	assert.Error(t, validateSettings(next, current))
+	assert.Error(t, validateSettings(next, current, true))
 }
 
 // The same check must not fire before there is anything to lose.
@@ -90,7 +87,21 @@ func TestValidateAllowsChangingStorageBeforeProvisioning(t *testing.T) {
 		Type: base.RegistryStorageTypeS3, CloudStorage: entity.ObjectID{ID: "cs-1"},
 	}
 
-	assert.NoError(t, validateSettings(next, current))
+	assert.NoError(t, validateSettings(next, current, false))
+}
+
+// The app id stored in the setting outlives the app when somebody deletes it in
+// the app screen, which is how a registry is removed. Trusting that id made a
+// deleted registry impossible to provision again, whatever storage was chosen.
+func TestValidateIgnoresAnAppIDLeftByADeletedApp(t *testing.T) {
+	current := validSettings()
+	current.AppID = "deleted-app"
+	current.Storage = entity.RegistryStorage{Type: base.RegistryStorageTypeVolume}
+
+	next := validSettings()
+	next.Storage.Volume = entity.ObjectID{ID: "vol-2"}
+
+	assert.NoError(t, validateSettings(next, current, false))
 }
 
 // Cleanup off means the two numbers are not asked about at all.
@@ -98,5 +109,5 @@ func TestValidateIgnoresTheNumbersWhenCleanupIsOff(t *testing.T) {
 	cfg := validSettings()
 	cfg.Cleanup = entity.RegistryCleanup{Enabled: false}
 
-	assert.NoError(t, validateSettings(cfg, nil))
+	assert.NoError(t, validateSettings(cfg, nil, false))
 }

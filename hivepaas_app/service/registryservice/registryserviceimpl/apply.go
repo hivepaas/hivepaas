@@ -265,7 +265,7 @@ func (s *service) applyConfigFile(
 	setting := settingNamed(app.GetSettingsByType(base.SettingTypeConfigFile), registryConfigFileName)
 	if setting == nil {
 		return hperrors.Wrap(hperrors.ErrRegistryNotConfigured).
-			WithExtraDetail("the registry app has no %s config file", registryConfigFileName)
+			WithExtraDetail("The registry app has no %s config file.", registryConfigFileName)
 	}
 
 	current, err := setting.AsConfigFile()
@@ -295,7 +295,7 @@ func (s *service) applyHtpasswd(
 	setting := settingNamed(app.GetSettingsByType(base.SettingTypeSecret), registrySecretName)
 	if setting == nil {
 		return hperrors.Wrap(hperrors.ErrRegistryNotConfigured).
-			WithExtraDetail("the registry app has no %s secret", registrySecretName)
+			WithExtraDetail("The registry app has no %s secret.", registrySecretName)
 	}
 
 	current, err := setting.AsSecret()
@@ -396,6 +396,6 @@ func (s *service) rootProjectEnv(ctx context.Context, db database.IDB) (
 		return project, project.ProjectEnvs[0], nil
 	}
 	return nil, nil, hperrors.Wrap(hperrors.ErrRegistryNotConfigured).
-		WithExtraDetail("the %s project has no environment to create the registry in",
+		WithExtraDetail("The %s project has no environment to create the registry in.",
 			base.HivepaasProjectKey)
 }

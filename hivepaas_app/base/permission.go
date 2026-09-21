@@ -52,6 +52,7 @@ const (
 	ResourceTypePort              ResourceType = "port"
 	ResourceTypeProject           ResourceType = "project"
 	ResourceTypeProjectEnv        ResourceType = "project-env"
+	ResourceTypeRegistry          ResourceType = "registry"
 	ResourceTypeRegistryAuth      ResourceType = "registry-auth"
 	ResourceTypeRepo              ResourceType = "repo"
 	ResourceTypeRepoWebhook       ResourceType = "repo-webhook"

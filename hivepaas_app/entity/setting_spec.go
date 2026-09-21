@@ -123,6 +123,21 @@ func (loggingSpecPolicy) Strip(data SettingData) {
 	logging.Backend.Query = nil
 }
 
+// registrySpecPolicy drops the ids provisioning wrote. The app and the registry
+// auth are created by Apply on whatever installation the spec lands on, so
+// carrying the ids of another installation's objects describes nothing that
+// exists there.
+type registrySpecPolicy struct{}
+
+func (registrySpecPolicy) Decide(*Setting) SpecDecision { return SpecDecision{Export: true} }
+
+func (registrySpecPolicy) Strip(data SettingData) {
+	if registry, ok := data.(*RegistrySettings); ok {
+		registry.AppID = ""
+		registry.RegistryAuthID = ""
+	}
+}
+
 // Nothing here strips Secret.SwarmRef, ConfigFile.SwarmRef, env-var entries
 // flagged IsSystem, an image digest, or cluster-volume.NodeID. Each is specific
 // to the installation rather than regenerated, and each is what makes a restore
@@ -144,6 +159,7 @@ var (
 
 	_ = registerSpecPolicy(base.SettingTypeAppRouting, appRoutingSpecPolicy{})
 	_ = registerSpecPolicy(base.SettingTypeLogging, loggingSpecPolicy{})
+	_ = registerSpecPolicy(base.SettingTypeRegistry, registrySpecPolicy{})
 
 	// Everything else is exported whole. Keeping this list explicit rather than
 	// defaulting to "export" is what makes a new setting type show up in the

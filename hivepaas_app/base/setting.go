@@ -39,6 +39,7 @@ const (
 	SettingTypeOAuth             SettingType = "oauth"
 	SettingTypePeriodicJob       SettingType = "periodic-job"
 	SettingTypeProject           SettingType = "project"
+	SettingTypeRegistry          SettingType = "registry"
 	SettingTypeRegistryAuth      SettingType = "registry-auth"
 	SettingTypeRepoWebhook       SettingType = "repo-webhook"
 	SettingTypeScript            SettingType = "script"

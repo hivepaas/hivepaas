@@ -34,6 +34,11 @@ const (
 
 	HivepaasVlagentServiceName = "hivepaas-vlagent"
 	HivepaasVlagentKey         = "vlagent"
+
+	// The registry is created by the app when an operator switches it on, not by
+	// the stack file, so it carries no stack prefix either. Its absence means the
+	// registry was never switched on, not that something is broken.
+	HivepaasRegistryKey = "registry"
 )
 
 const (

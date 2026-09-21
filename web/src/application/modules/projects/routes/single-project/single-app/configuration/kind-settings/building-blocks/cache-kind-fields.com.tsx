@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { type AppConfigKindSettingsFormSchemaInput, type AppConfigKindSettingsFormSchemaOutput } from "../schemas";
 
+import { CredentialApplyInfo } from "./credential-apply-info.com";
 import { KindSslCertSelect } from "./kind-ssl-cert-select.com";
 
 interface Props {
@@ -88,6 +89,7 @@ export function CacheKindFields({ readOnly = false }: Props) {
                             disabled={readOnly}
                         />
                         <FieldError errors={[passwordError]} />
+                        <CredentialApplyInfo kind="cache" />
                     </Field>
                 </FieldGroup>
             </InfoBlock>

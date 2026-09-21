@@ -5,9 +5,10 @@ import { Button } from "@components/ui/button";
 import { Field, FieldError, FieldGroup } from "@components/ui/field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { TriangleAlert } from "lucide-react";
 import { FormProvider, useController, useForm } from "react-hook-form";
 import { useUpdateEffect } from "react-use";
-import { ProjectClusterVolumesQueries } from "~/projects/data/queries";
+import { ProjectAppsQueries, ProjectClusterVolumesQueries } from "~/projects/data/queries";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EMountConsistency } from "~/projects/module-shared/enums";
 
@@ -22,6 +23,8 @@ import { emptyStorageMountFormDefaults } from "./storage-mount.form-mappers";
 type Props = {
     projectId: string;
     env?: string;
+    /** The app being configured, left out of the list of apps to borrow from. */
+    appId?: string;
     isPending: boolean;
     isEditMode?: boolean;
     defaultValues?: StorageMountFormInput;
@@ -34,6 +37,7 @@ type Props = {
 export function StorageMountForm({
     projectId,
     env,
+    appId,
     isPending,
     isEditMode = false,
     defaultValues,
@@ -53,6 +57,11 @@ export function StorageMountForm({
         projectID: projectId,
         env,
         search: searchQuery,
+    });
+
+    const { data: { data: envApps } = DEFAULT_PAGINATED_DATA } = ProjectAppsQueries.useFindManyPaginated({
+        projectID: projectId,
+        env,
     });
 
     const methods = useForm<StorageMountFormInput, unknown, StorageMountFormOutput>({
@@ -82,6 +91,8 @@ export function StorageMountForm({
         fieldState: { invalid: targetInvalid, error: targetError },
     } = useController({ name: "target", control });
     const { field: consistencyField } = useController({ name: "consistency", control });
+    const { field: sourceAppIdField } = useController({ name: "sourceAppId", control });
+    const { field: sourceAppWriteField } = useController({ name: "sourceAppWrite", control });
 
     const volumeOptions = useMemo(() => {
         return volumes.map(volume => ({
@@ -89,6 +100,17 @@ export function StorageMountForm({
             label: volume.name,
         }));
     }, [volumes]);
+
+    // An app cannot borrow from itself: that is the ordinary mount, and it is
+    // what leaving this empty means.
+    const sourceAppOptions = useMemo(() => {
+        return envApps.filter(app => app.id !== appId).map(app => ({ value: { id: app.id }, label: app.name }));
+    }, [envApps, appId]);
+
+    const borrowedFrom = useMemo(() => {
+        return envApps.find(app => app.id === sourceAppIdField.value);
+    }, [envApps, sourceAppIdField.value]);
+    const isBorrowed = Boolean(sourceAppIdField.value);
 
     return (
         <FormProvider {...methods}>
@@ -167,18 +189,76 @@ export function StorageMountForm({
 
                         <Field>
                             <InfoBlock
-                                title={<LabelWithInfo label="Read-only" />}
+                                title={
+                                    <LabelWithInfo
+                                        label="Data of"
+                                        content="Leave empty for this app's own directory. Choosing another app mounts that app's data instead - what a file manager or a backup tool is for."
+                                    />
+                                }
                                 titleWidth={180}
                             >
-                                <Checkbox
-                                    id="read-only"
-                                    checked={readOnlyField.value ?? false}
-                                    onCheckedChange={checked => {
-                                        readOnlyField.onChange(checked === true);
+                                <Combobox
+                                    options={sourceAppOptions}
+                                    value={sourceAppIdField.value ?? null}
+                                    onChange={value => {
+                                        sourceAppIdField.onChange(value ?? "");
+                                        if (!value) {
+                                            sourceAppWriteField.onChange(false);
+                                        }
                                     }}
+                                    placeholder="This app"
+                                    searchable
+                                    closeOnSelect
+                                    emptyText="No other apps in this environment"
+                                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
+                                    valueKey="id"
+                                    disabled={readOnly}
                                 />
+                                {isBorrowed && (
+                                    <div className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                                        <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
+                                        <span>
+                                            This app will be able to{" "}
+                                            {sourceAppWriteField.value ? "read and change" : "read"} the files of{" "}
+                                            <span className="font-medium">{borrowedFrom?.name ?? "that app"}</span>.
+                                            Writing into the data directory of a running database can corrupt it.
+                                        </span>
+                                    </div>
+                                )}
                             </InfoBlock>
                         </Field>
+
+                        {isBorrowed ? (
+                            <Field>
+                                <InfoBlock
+                                    title={<LabelWithInfo label="Allow writing" />}
+                                    titleWidth={180}
+                                >
+                                    <Checkbox
+                                        id="source-app-write"
+                                        checked={sourceAppWriteField.value ?? false}
+                                        onCheckedChange={checked => {
+                                            sourceAppWriteField.onChange(checked === true);
+                                        }}
+                                    />
+                                </InfoBlock>
+                            </Field>
+                        ) : (
+                            <Field>
+                                <InfoBlock
+                                    title={<LabelWithInfo label="Read-only" />}
+                                    titleWidth={180}
+                                >
+                                    <Checkbox
+                                        id="read-only"
+                                        checked={readOnlyField.value ?? false}
+                                        onCheckedChange={checked => {
+                                            readOnlyField.onChange(checked === true);
+                                        }}
+                                    />
+                                </InfoBlock>
+                            </Field>
+                        )}
 
                         <Field>
                             <InfoBlock

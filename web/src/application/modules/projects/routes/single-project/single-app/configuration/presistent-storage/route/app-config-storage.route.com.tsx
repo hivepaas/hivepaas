@@ -11,7 +11,7 @@ import { useAppNavigate } from "@application/shared/hooks/router";
 import { PageError } from "@application/shared/pages";
 import { useConditionalModule } from "@application/shared/permissions";
 
-import { StorageTable } from "../building-blocks";
+import { BorrowedByPanel, StorageTable } from "../building-blocks";
 import { StorageMountsProvider, useStorageMounts } from "../context";
 
 type StorageMountWithId = AppStorageMount & { _id: string };
@@ -110,6 +110,8 @@ function AppConfigStorageContent() {
                 onDeleteMount={handleDeleteMount}
                 canWrite={canWrite}
             />
+
+            <BorrowedByPanel borrowers={appData?.data.borrowedBy ?? []} />
         </div>
     );
 }

@@ -48,6 +48,13 @@ const ClusterOptionsSchema = z.object({
     driverConfig: VolumeDriverSchema.nullish(),
 });
 
+const MountSourceAppSchema = z.object({
+    appId: z.string().optional(),
+    write: z.boolean().optional(),
+    name: z.string().optional(),
+    dangling: z.boolean().optional(),
+});
+
 const MountSchema = z.object({
     key: z.string().optional(),
     type: z.nativeEnum(EMountType).optional(),
@@ -59,10 +66,20 @@ const MountSchema = z.object({
     volumeOptions: VolumeOptionsSchema.optional(),
     tmpfsOptions: TmpfsOptionsSchema.optional(),
     clusterOptions: ClusterOptionsSchema.optional(),
+    sourceApp: MountSourceAppSchema.nullish(),
+});
+
+const MountBorrowerSchema = z.object({
+    appId: z.string(),
+    name: z.string(),
+    target: z.string(),
+    subpath: z.string().optional(),
+    write: z.boolean().optional(),
 });
 
 const AppStorageSettingsSchema = z.object({
     mounts: z.array(MountSchema).nullish(),
+    borrowedBy: z.array(MountBorrowerSchema).nullish(),
     updateVer: z.number(),
 });
 
@@ -88,7 +105,9 @@ export class AppStorageSettingsApiValidator {
                         volumeOptions: item.volumeOptions,
                         tmpfsOptions: item.tmpfsOptions,
                         clusterOptions: item.clusterOptions,
+                        sourceApp: item.sourceApp ?? undefined,
                     })) ?? [],
+                borrowedBy: data.borrowedBy ?? [],
                 updateVer: data.updateVer,
             },
             meta,

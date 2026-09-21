@@ -8,6 +8,9 @@ export const StorageMountFormSchema = z.object({
     noCopy: z.boolean().optional(),
     target: z.string().min(1, "Target is required"),
     consistency: z.nativeEnum(EMountConsistency).optional(),
+    /** Empty for the app's own directory, which is the ordinary case. */
+    sourceAppId: z.string().optional(),
+    sourceAppWrite: z.boolean().optional(),
 });
 
 export type StorageMountFormInput = z.input<typeof StorageMountFormSchema>;

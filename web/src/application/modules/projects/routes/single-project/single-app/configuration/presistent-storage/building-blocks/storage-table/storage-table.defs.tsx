@@ -4,7 +4,7 @@ import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { type ColumnDef } from "@tanstack/react-table";
-import { EyeIcon, MoreVertical, Trash2Icon } from "lucide-react";
+import { EyeIcon, MoreVertical, Trash2Icon, TriangleAlert } from "lucide-react";
 import type { AppStorageMount } from "~/projects/domain";
 
 import { PopConfirm } from "@application/shared/components";
@@ -94,7 +94,25 @@ export function createStorageTableColumns(
         {
             accessorKey: "source",
             header: "Source",
-            cell: ({ row }) => <div className="text-sm break-all">{getSourceDisplay(row.original)}</div>,
+            cell: ({ row }) => {
+                const { sourceApp } = row.original;
+                return (
+                    <div className="flex flex-col gap-0.5">
+                        <div className="text-sm break-all">{getSourceDisplay(row.original)}</div>
+                        {sourceApp && (
+                            <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
+                                <TriangleAlert className="size-3 shrink-0" />
+                                <span className="break-all">
+                                    {sourceApp.dangling
+                                        ? `data of a deleted app (${sourceApp.name ?? "unknown"})`
+                                        : `data of ${sourceApp.name ?? "another app"}`}
+                                    {sourceApp.write ? ", writable" : ", read-only"}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                );
+            },
             meta: {
                 align: "left",
             },

@@ -191,7 +191,7 @@ func TestServiceRenderRendersDependenciesFirst(t *testing.T) {
 	assert.Equal(t, localRevision, db.Render.Revision, "one revision for every app of the request")
 
 	envVars := resp.Result.Doc.Settings["envVars"].(map[string]any)["data"].([]any)
-	assert.Equal(t, "${blog_db.HIVEPAAS_PASSWORD}", envVars[0].(map[string]any)["v"])
+	assert.Equal(t, "${blog-db.HIVEPAAS_PASSWORD}", envVars[0].(map[string]any)["v"])
 }
 
 func TestServiceRenderRefusesWhatADependencyDoesNotAsk(t *testing.T) {

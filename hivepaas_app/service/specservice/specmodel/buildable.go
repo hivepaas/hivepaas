@@ -66,8 +66,9 @@ const (
 var capabilityNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,31}$`)
 
 // mountSourceAppKeyPattern is the shape projecthelper.CalcAppKey produces, which
-// is what a `type: app` parameter of a template carries.
-var mountSourceAppKeyPattern = regexp.MustCompile(`^[a-z0-9_]{1,100}$`)
+// is what a `type: app` parameter of a template carries: hyphens now, underscores
+// for apps created before keys became host names.
+var mountSourceAppKeyPattern = regexp.MustCompile(`^[a-z0-9_-]{1,100}$`)
 
 // publishedProtocols and publishModes are what docker takes for a published
 // port. An empty protocol is tcp and an empty mode is ingress, which is why both

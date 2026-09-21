@@ -133,16 +133,21 @@ func TestResolveParamsAppKey(t *testing.T) {
 		{Name: "primaryApp", Title: "Primary", Type: templatemodel.ParamTypeApp, Engine: "postgres"},
 	}
 
-	values, err := ResolveParams(defs, map[string]any{"primaryApp": "  shop_db  "})
+	values, err := ResolveParams(defs, map[string]any{"primaryApp": "  shop-db  "})
+	assert.NoError(t, err)
+	assert.Equal(t, "shop-db", values["primaryApp"].Value)
+
+	// Apps created before keys became host names keep their underscores.
+	values, err = ResolveParams(defs, map[string]any{"primaryApp": "shop_db"})
 	assert.NoError(t, err)
 	assert.Equal(t, "shop_db", values["primaryApp"].Value)
 
 	for name, given := range map[string]any{
-		"a dash, which a key never has": "shop-db",
-		"upper case":                    "ShopDB",
-		"a dot":                         "shop.db",
-		"not text":                      42,
-		"empty":                         "",
+		"a leading dash": "-shop-db",
+		"upper case":     "ShopDB",
+		"a dot":          "shop.db",
+		"not text":       42,
+		"empty":          "",
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := ResolveParams(defs, map[string]any{"primaryApp": given})

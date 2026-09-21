@@ -16,7 +16,11 @@ const (
 )
 
 var (
-	reEnvOrSecretRef = regexp.MustCompile(`\$\{(?:([a-zA-Z0-9_]+)\.)?([a-zA-Z_][a-zA-Z0-9_]*)\}`)
+	// The part before the dot is an app key or `secrets`. App keys are written with
+	// hyphens and used to be written with underscores, and both are accepted: apps
+	// created before the change keep their keys. It is only ever read when followed
+	// by a dot, which keeps a shell-style ${VAR-default} out of it.
+	reEnvOrSecretRef = regexp.MustCompile(`\$\{(?:([a-zA-Z0-9_-]+)\.)?([a-zA-Z_][a-zA-Z0-9_]*)\}`)
 )
 
 type processRefsData struct {

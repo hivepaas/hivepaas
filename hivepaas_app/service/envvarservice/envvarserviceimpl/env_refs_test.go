@@ -261,6 +261,43 @@ func TestProcessRefs_ExternalRefs(t *testing.T) {
 	assert.True(t, errors.Is(err, hperrors.ErrSharedEnvVarContainExternalReference))
 }
 
+func TestProcessRefs_ExternalRefsByHyphenatedKey(t *testing.T) {
+	s := &service{}
+
+	// App keys are host names, so they carry hyphens; keys from before keep their
+	// underscores, and a value can name both.
+	envApp := newEnvVar("DATABASE_URL", "postgres://${shop-db.HOST}:5432 ${old_db.HOST}", false, false)
+	data := &processRefsData{
+		EnvStore: map[string]*envvarservice.EnvVar{"DATABASE_URL": envApp},
+		ExternalRefsLoadFunc: func(refName string) (map[string]*envvarservice.EnvVar, error) {
+			switch refName {
+			case "shop-db":
+				return map[string]*envvarservice.EnvVar{"HOST": newEnvVar("HOST", "shop-db", false, false)}, nil
+			case "old_db":
+				return map[string]*envvarservice.EnvVar{"HOST": newEnvVar("HOST", "old_db", false, false)}, nil
+			}
+			return nil, nil
+		},
+	}
+
+	err := s.processRefs(envApp, data)
+	assert.NoError(t, err)
+	assert.Equal(t, "postgres://shop-db:5432 old_db", envApp.Value)
+}
+
+func TestProcessRefs_ShellDefaultIsNotAReference(t *testing.T) {
+	s := &service{}
+
+	// ${VAR-default} has no dot, so the hyphen allowed in app keys does not make it
+	// read as a reference to an app called VAR.
+	env := newEnvVar("CMD", "echo ${NAME-world}", false, false)
+	data := &processRefsData{EnvStore: map[string]*envvarservice.EnvVar{"CMD": env}}
+
+	err := s.processRefs(env, data)
+	assert.NoError(t, err)
+	assert.Equal(t, "echo ${NAME-world}", env.Value)
+}
+
 func TestProcessRefs_LiteralAndNoRef(t *testing.T) {
 	s := &service{}
 

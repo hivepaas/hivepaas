@@ -111,10 +111,11 @@ func resolveParam(def *templatemodel.Parameter, raw any) (*Value, error) {
 var domainPattern = regexp.MustCompile(
 	`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$`)
 
-// appKeyPattern is the shape projecthelper.CalcAppKey produces: slugified, and
-// with every dash replaced by an underscore. Whether the app exists is not a
-// question rendering can answer - the caller with the database decides that.
-var appKeyPattern = regexp.MustCompile(`^[a-z0-9_][a-z0-9_]{0,99}$`)
+// appKeyPattern is the shape projecthelper.CalcAppKey produces - a slug, with its
+// hyphens - and the shape it produced before, with underscores in their place and
+// up to 100 long, which apps created then still carry. Whether the app exists is
+// not a question rendering can answer - the caller with the database decides that.
+var appKeyPattern = regexp.MustCompile(`^[a-z0-9_][a-z0-9_-]{0,99}$`)
 
 func isBlank(v any) bool {
 	if v == nil {

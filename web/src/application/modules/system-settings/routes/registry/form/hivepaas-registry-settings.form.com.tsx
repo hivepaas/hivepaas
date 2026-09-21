@@ -74,7 +74,12 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
     const keepLast = useWatch({ control, name: "keepLast" });
     const keepDays = useWatch({ control, name: "keepDays" });
 
-    const volumes = ClusterVolumesQueries.useFindManyPaginated(LIST_ALL).data?.data ?? [];
+    // Only volumes that are shared with apps reach the registry: its app lives in
+    // a project of its own, and a volume that is not inheritable is invisible
+    // there. Offering the rest would mean offering a choice the server refuses.
+    const volumes = (ClusterVolumesQueries.useFindManyPaginated(LIST_ALL).data?.data ?? []).filter(
+        volume => volume.inheritable === true,
+    );
     const cloudStorages = CloudStorageQueries.useFindManyPaginated(LIST_ALL).data?.data ?? [];
 
     // Once the app exists its images are on whatever was chosen, and nothing
@@ -200,31 +205,40 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                                 />
                                             }
                                         >
-                                            <Controller
-                                                control={control}
-                                                name="volumeId"
-                                                render={({ field }) => (
-                                                    <Select
-                                                        value={field.value}
-                                                        onValueChange={field.onChange}
-                                                        disabled={readOnly || isProvisioned}
-                                                    >
-                                                        <SelectTrigger className="w-full max-w-[420px]">
-                                                            <SelectValue placeholder="Choose a volume" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {volumes.map(volume => (
-                                                                <SelectItem
-                                                                    key={volume.id}
-                                                                    value={volume.id}
-                                                                >
-                                                                    {volume.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                            <div className="flex w-full max-w-[420px] flex-col gap-1">
+                                                <Controller
+                                                    control={control}
+                                                    name="volumeId"
+                                                    render={({ field }) => (
+                                                        <Select
+                                                            value={field.value}
+                                                            onValueChange={field.onChange}
+                                                            disabled={readOnly || isProvisioned}
+                                                        >
+                                                            <SelectTrigger className="w-full">
+                                                                <SelectValue placeholder="Choose a volume" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {volumes.map(volume => (
+                                                                    <SelectItem
+                                                                        key={volume.id}
+                                                                        value={volume.id}
+                                                                    >
+                                                                        {volume.name}
+                                                                    </SelectItem>
+                                                                ))}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    )}
+                                                />
+                                                {volumes.length === 0 && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        No volume here is shared with apps yet. Create one in Cluster
+                                                        &rsaquo; Volumes, or edit an existing one and make it available
+                                                        to apps.
+                                                    </p>
                                                 )}
-                                            />
+                                            </div>
                                         </InfoBlock>
                                     ) : (
                                         <InfoBlock

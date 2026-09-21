@@ -9,9 +9,10 @@ import { CloudStorageQueries } from "~/settings/data/queries";
 import type { HivePaaSRegistrySettings, HivePaaSRegistryStorageType } from "~/system-settings/domain";
 import { SectionHeader } from "~/system-settings/module-shared";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AppLink, Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
-import { Checkbox, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui";
+import { Checkbox, Input } from "@/components/ui";
 import { InputNumber } from "@/components/ui/input-number";
 
 import {
@@ -31,15 +32,14 @@ const STORAGE_OPTIONS: OptionCard<HivePaaSRegistryStorageType>[] = [
     {
         value: "volume",
         label: "Local volume",
-        description:
-            "Images are kept on one node's disk, and the registry runs on that node. A layer two apps share is stored once.",
+        // Two lines is all a card shows, so each says the one thing that decides it.
+        description: "Kept on one node's disk, and the registry runs there. Shared layers are stored once.",
         icon: HardDrive,
     },
     {
         value: "s3",
         label: "S3 storage",
-        description:
-            "Images are kept in a bucket, so the registry can run on any node. A layer two apps share is stored twice.",
+        description: "Kept in a bucket, so the registry can run on any node. Shared layers are stored twice.",
         icon: Cloud,
     },
 ];
@@ -77,10 +77,11 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
     // Only volumes that are shared with apps reach the registry: its app lives in
     // a project of its own, and a volume that is not inheritable is invisible
     // there. Offering the rest would mean offering a choice the server refuses.
-    const volumes = (ClusterVolumesQueries.useFindManyPaginated(LIST_ALL).data?.data ?? []).filter(
-        volume => volume.inheritable === true,
-    );
-    const cloudStorages = CloudStorageQueries.useFindManyPaginated(LIST_ALL).data?.data ?? [];
+    const volumesQuery = ClusterVolumesQueries.useFindManyPaginated(LIST_ALL);
+    const cloudStoragesQuery = CloudStorageQueries.useFindManyPaginated(LIST_ALL);
+
+    const volumes = (volumesQuery.data?.data ?? []).filter(volume => volume.inheritable === true);
+    const cloudStorages = cloudStoragesQuery.data?.data ?? [];
 
     // Once the app exists its images are on whatever was chosen, and nothing
     // copies them anywhere: the server refuses a change, so the cards say so
@@ -172,28 +173,41 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
 
                                 <SectionHeader>Storage</SectionHeader>
                                 <SectionBody>
-                                    <Controller
-                                        control={control}
-                                        name="storageType"
-                                        render={({ field }) => (
-                                            <OptionCardGroup
-                                                options={STORAGE_OPTIONS.map(option => ({
-                                                    ...option,
-                                                    disabled: isProvisioned,
-                                                }))}
-                                                value={field.value}
-                                                onChange={field.onChange}
-                                                readOnly={readOnly}
-                                                className="grid-cols-1 sm:grid-cols-2 max-w-[640px]"
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Type"
+                                                content="Where the images are kept. It is decided when the registry is provisioned, because nothing copies them from one store to the other."
                                             />
-                                        )}
-                                    />
-                                    {isProvisioned && (
-                                        <p className="text-xs text-muted-foreground">
-                                            The storage cannot be changed once the registry holds images: nothing copies
-                                            them from one to the other. Provision a new registry instead.
-                                        </p>
-                                    )}
+                                        }
+                                    >
+                                        <div className="flex w-full flex-col gap-2">
+                                            <Controller
+                                                control={control}
+                                                name="storageType"
+                                                render={({ field }) => (
+                                                    <OptionCardGroup
+                                                        options={STORAGE_OPTIONS.map(option => ({
+                                                            ...option,
+                                                            disabled: isProvisioned,
+                                                        }))}
+                                                        value={field.value}
+                                                        onChange={field.onChange}
+                                                        readOnly={readOnly}
+                                                        className="grid-cols-1 sm:grid-cols-2 max-w-[640px]"
+                                                    />
+                                                )}
+                                            />
+                                            {isProvisioned && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    The storage cannot be changed once the registry holds images:
+                                                    nothing copies them from one to the other. Provision a new registry
+                                                    instead.
+                                                </p>
+                                            )}
+                                        </div>
+                                    </InfoBlock>
 
                                     {storageType === "volume" ? (
                                         <InfoBlock
@@ -210,32 +224,41 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                                     control={control}
                                                     name="volumeId"
                                                     render={({ field }) => (
-                                                        <Select
-                                                            value={field.value}
-                                                            onValueChange={field.onChange}
+                                                        <Combobox
+                                                            options={volumes.map(volume => ({
+                                                                value: { id: volume.id },
+                                                                label: volume.name,
+                                                            }))}
+                                                            value={field.value || null}
+                                                            onChange={value => {
+                                                                field.onChange(value ?? "");
+                                                            }}
+                                                            placeholder="Choose a volume"
+                                                            emptyText="No volume is shared with apps"
+                                                            className="w-full"
+                                                            valueKey="id"
+                                                            closeOnSelect
+                                                            // A volume created in another tab shows up here
+                                                            // without leaving the form half filled in.
+                                                            loading={volumesQuery.isFetching}
+                                                            onRefresh={() => void volumesQuery.refetch()}
+                                                            isRefreshing={volumesQuery.isRefetching}
                                                             disabled={readOnly || isProvisioned}
-                                                        >
-                                                            <SelectTrigger className="w-full">
-                                                                <SelectValue placeholder="Choose a volume" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {volumes.map(volume => (
-                                                                    <SelectItem
-                                                                        key={volume.id}
-                                                                        value={volume.id}
-                                                                    >
-                                                                        {volume.name}
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
+                                                        />
                                                     )}
                                                 />
-                                                {volumes.length === 0 && (
+                                                {volumes.length === 0 && !volumesQuery.isFetching && (
                                                     <p className="text-xs text-muted-foreground">
-                                                        No volume here is shared with apps yet. Create one in Cluster
-                                                        &rsaquo; Volumes, or edit an existing one and make it available
-                                                        to apps.
+                                                        No volume here is shared with apps yet. Create one in{" "}
+                                                        <AppLink.Basic
+                                                            to={ROUTE.cluster.volumes.$route}
+                                                            className="text-link underline-offset-4 hover:underline"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                        >
+                                                            Cluster &rsaquo; Volumes
+                                                        </AppLink.Basic>
+                                                        , or edit an existing one and make it available to apps.
                                                     </p>
                                                 )}
                                             </div>
@@ -254,25 +277,25 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                                 control={control}
                                                 name="cloudStorageId"
                                                 render={({ field }) => (
-                                                    <Select
-                                                        value={field.value}
-                                                        onValueChange={field.onChange}
+                                                    <Combobox
+                                                        options={cloudStorages.map(storage => ({
+                                                            value: { id: storage.id },
+                                                            label: storage.name,
+                                                        }))}
+                                                        value={field.value || null}
+                                                        onChange={value => {
+                                                            field.onChange(value ?? "");
+                                                        }}
+                                                        placeholder="Choose a cloud storage"
+                                                        emptyText="No cloud storage is configured"
+                                                        className="w-full max-w-[420px]"
+                                                        valueKey="id"
+                                                        closeOnSelect
+                                                        loading={cloudStoragesQuery.isFetching}
+                                                        onRefresh={() => void cloudStoragesQuery.refetch()}
+                                                        isRefreshing={cloudStoragesQuery.isRefetching}
                                                         disabled={readOnly || isProvisioned}
-                                                    >
-                                                        <SelectTrigger className="w-full max-w-[420px]">
-                                                            <SelectValue placeholder="Choose a cloud storage" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {cloudStorages.map(storage => (
-                                                                <SelectItem
-                                                                    key={storage.id}
-                                                                    value={storage.id}
-                                                                >
-                                                                    {storage.name}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
+                                                    />
                                                 )}
                                             />
                                         </InfoBlock>

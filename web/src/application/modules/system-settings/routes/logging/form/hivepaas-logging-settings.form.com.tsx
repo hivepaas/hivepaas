@@ -9,7 +9,8 @@ import { ClusterVolumesQueries } from "~/cluster/data/queries";
 import type { HivePaaSLoggingSettings } from "~/system-settings/domain";
 import { SectionHeader } from "~/system-settings/module-shared";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { AppLink, Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { ROUTE } from "@application/shared/constants";
 
 import {
     Button,
@@ -60,7 +61,8 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
     const backendManaged = useWatch({ control, name: "backendManaged" });
     const volumeId = useWatch({ control, name: "volumeId" });
 
-    const volumes = ClusterVolumesQueries.useFindManyPaginated(LIST_ALL).data?.data ?? [];
+    const volumesQuery = ClusterVolumesQueries.useFindManyPaginated(LIST_ALL);
+    const volumes = volumesQuery.data?.data ?? [];
     // The backend runs wherever its volume is, so a volume that names no node -
     // by id or by label - leaves that open. Not gated on the cluster having
     // more than one node: a warning about losing logs must not be suppressed by
@@ -216,27 +218,43 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                     control={control}
                                                     name="volumeId"
                                                     render={({ field }) => (
-                                                        <Select
-                                                            value={field.value || undefined}
-                                                            onValueChange={field.onChange}
+                                                        <Combobox
+                                                            options={volumes.map(volume => ({
+                                                                value: { id: volume.id },
+                                                                label: volume.name,
+                                                            }))}
+                                                            value={field.value || null}
+                                                            onChange={value => {
+                                                                field.onChange(value ?? "");
+                                                            }}
+                                                            placeholder="Select a volume"
+                                                            emptyText="No volumes available"
+                                                            className="w-full max-w-[420px]"
+                                                            valueKey="id"
+                                                            closeOnSelect
+                                                            // A volume created in another tab shows up here
+                                                            // without leaving the form half filled in.
+                                                            loading={volumesQuery.isFetching}
+                                                            onRefresh={() => void volumesQuery.refetch()}
+                                                            isRefreshing={volumesQuery.isRefetching}
                                                             disabled={readOnly}
-                                                        >
-                                                            <SelectTrigger className="w-full max-w-[420px]">
-                                                                <SelectValue placeholder="Select a volume" />
-                                                            </SelectTrigger>
-                                                            <SelectContent>
-                                                                {volumes.map(volume => (
-                                                                    <SelectItem
-                                                                        key={volume.id}
-                                                                        value={volume.id}
-                                                                    >
-                                                                        {volume.name}
-                                                                    </SelectItem>
-                                                                ))}
-                                                            </SelectContent>
-                                                        </Select>
+                                                        />
                                                     )}
                                                 />
+                                                {volumes.length === 0 && !volumesQuery.isFetching && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        No volume yet. Create one in{" "}
+                                                        <AppLink.Basic
+                                                            to={ROUTE.cluster.volumes.$route}
+                                                            className="text-link underline-offset-4 hover:underline"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                        >
+                                                            Cluster &rsaquo; Volumes
+                                                        </AppLink.Basic>
+                                                        .
+                                                    </p>
+                                                )}
                                                 <FieldMessage name="volumeId" />
                                             </InfoBlock>
                                             <InfoBlock

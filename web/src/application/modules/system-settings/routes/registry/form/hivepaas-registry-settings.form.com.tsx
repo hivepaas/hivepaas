@@ -1,6 +1,8 @@
 import { type PropsWithChildren, useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { dashedBorderBox } from "@lib/styles";
+import { cn } from "@lib/utils";
 import { Cloud, HardDrive } from "lucide-react";
 import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
 import { ClusterVolumesQueries } from "~/cluster/data/queries";
@@ -105,6 +107,14 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                         disabled={readOnly}
                         className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0"
                     >
+                        <div className={cn(dashedBorderBox)}>
+                            <span className="font-semibold text-orange-500">Note:</span> On a cluster with more than one
+                            node, an image built on one node has to be pushed somewhere every other node can pull it
+                            from. This registry is that place, running inside the cluster, with old images cleaned up
+                            for you. On a single node it is not needed: the image is built where it runs, and nothing
+                            has to be pulled.
+                        </div>
+
                         <SectionHeader>General</SectionHeader>
                         <SectionBody>
                             <InfoBlock

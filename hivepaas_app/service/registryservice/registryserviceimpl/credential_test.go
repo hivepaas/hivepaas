@@ -44,7 +44,7 @@ func TestGeneratedPasswordsAreLongAndDifferent(t *testing.T) {
 // zot checks passwords against bcrypt hashes. A line it cannot parse is a
 // registry nobody can log in to, and nothing else would say so.
 func TestHtpasswdLineIsBcryptAndVerifies(t *testing.T) {
-	line, err := htpasswdLine(registryUsername, "s3cret-password")
+	line, err := htpasswdLine("s3cret-password")
 	if err != nil {
 		t.Fatalf("htpasswdLine: %v", err)
 	}

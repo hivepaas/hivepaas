@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"time"
+
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -72,6 +74,14 @@ type RegistrySettings struct {
 	// finds its own work again, and how the dashboard links to it.
 	AppID          string `json:"appId,omitempty"`
 	RegistryAuthID string `json:"registryAuthId,omitempty"`
+
+	// CredentialRotatedAt is when the password last changed, and
+	// CredentialGraceEnds is when the one before it stops working. A swarm
+	// service presents the credential it was deployed with, so an app nobody
+	// redeployed would lose the registry the moment the password changed: the
+	// previous password stays in the account file until the grace ends.
+	CredentialRotatedAt time.Time `json:"credentialRotatedAt,omitzero"`
+	CredentialGraceEnds time.Time `json:"credentialGraceEnds,omitzero"`
 }
 
 type RegistryStorage struct {

@@ -42,12 +42,16 @@ func generatePassword() (string, error) {
 
 // htpasswdLine writes the line zot checks a password against. HivePaaS hashes it
 // itself, so nothing asks an operator to run htpasswd by hand.
-func htpasswdLine(user, password string) (string, error) {
+//
+// The account is registryUsername and nothing else: it is the namespace every
+// image lands in, so a second account in this file would be an account nothing
+// could push as.
+func htpasswdLine(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", hperrors.Wrap(err)
 	}
-	return fmt.Sprintf("%s:%s", user, hash), nil
+	return fmt.Sprintf("%s:%s", registryUsername, hash), nil
 }
 
 // htpasswdContent joins the lines into the file. Empty lines are dropped, which

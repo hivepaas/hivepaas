@@ -1,6 +1,10 @@
 package entity
 
-import "github.com/hivepaas/hivepaas/hivepaas_app/base"
+import (
+	"time"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+)
 
 // SpecDecision is a policy's answer about one setting.
 type SpecDecision struct {
@@ -135,6 +139,10 @@ func (registrySpecPolicy) Strip(data SettingData) {
 	if registry, ok := data.(*RegistrySettings); ok {
 		registry.AppID = ""
 		registry.RegistryAuthID = ""
+		// The grace period belongs to the credential that was rotated here, and
+		// there is no such credential wherever this spec lands.
+		registry.CredentialRotatedAt = time.Time{}
+		registry.CredentialGraceEnds = time.Time{}
 	}
 }
 

@@ -1,0 +1,38 @@
+deployment:
+  source:
+    activeMethod: image
+    imageSource: {image: {{ .Image }}}
+{{- if .VolumeName }}
+  storage:
+    mounts:
+      {{ .RootDir }}: {type: volume, source: {{ .VolumeName }}}
+{{- end }}
+  container:
+    healthcheck:
+      # One static binary, no shell: there is nothing in the image to run a check with.
+      enabled: false
+  resources:
+    limits: {memory: {{ .MemoryLimit }}}
+settings:
+  kind:
+    category: webapp
+    engine: zot
+    version: "{{ .Version }}"
+    webapp: {}
+  secrets:
+    ZOT_HTPASSWD:
+      value: |
+{{ .Htpasswd | indent 8 }}
+      swarmRef:
+        file: {name: {{ .ConfDir }}/htpasswd, mode: 444}
+  configFiles:
+    config.json:
+      content: |
+{{ .ZotConfig | indent 8 }}
+      swarmRef:
+        file: {name: {{ .ConfDir }}/config.json, mode: 444}
+  routing:
+    port: 5000
+    exposePublicly: true
+    domains:
+      - {domain: {{ .Domain }}, enabled: true, forceHttps: true}

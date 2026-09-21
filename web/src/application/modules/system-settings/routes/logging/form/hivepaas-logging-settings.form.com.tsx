@@ -241,20 +241,23 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                         />
                                                     )}
                                                 />
-                                                {volumes.length === 0 && !volumesQuery.isFetching && (
-                                                    <p className="text-xs text-muted-foreground">
-                                                        No volume yet. Create one in{" "}
-                                                        <AppLink.Basic
-                                                            to={ROUTE.cluster.volumes.$route}
-                                                            className="text-link underline-offset-4 hover:underline"
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                        >
-                                                            Cluster &rsaquo; Volumes
-                                                        </AppLink.Basic>
-                                                        .
-                                                    </p>
-                                                )}
+                                                {/* Always shown, not only on an empty list: the volume
+                                                    this needs may simply not exist yet, and the reload
+                                                    button beside the picker brings it in once it does. */}
+                                                <p className="text-xs text-muted-foreground">
+                                                    {volumes.length === 0 && !volumesQuery.isFetching
+                                                        ? "No volume yet. Create one in "
+                                                        : "Volumes are created and managed in "}
+                                                    <AppLink.Basic
+                                                        to={ROUTE.cluster.volumes.$route}
+                                                        className="text-link underline-offset-4 hover:underline"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        Cluster &rsaquo; Volumes
+                                                    </AppLink.Basic>
+                                                    .
+                                                </p>
                                                 <FieldMessage name="volumeId" />
                                             </InfoBlock>
                                             <InfoBlock

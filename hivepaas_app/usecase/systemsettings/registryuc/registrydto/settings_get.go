@@ -37,17 +37,20 @@ type GetRegistrySettingsResp struct {
 type RegistrySettingsResp struct {
 	*settings.BaseSettingResp
 
-	Enabled     bool                   `json:"enabled"`
-	Type        base.RegistryType      `json:"type"`
-	Managed     bool                   `json:"managed"`
-	Domain      string                 `json:"domain"`
-	Storage     StorageResp            `json:"storage"`
-	Cleanup     CleanupResp            `json:"cleanup"`
-	MemoryLimit unit.DataSize          `json:"memoryLimit"`
-	App         *basedto.ObjectIDResp  `json:"app,omitempty"`
-	Credential  *basedto.ObjectIDResp  `json:"credential,omitempty"`
-	Status      *RegistryStatusResp    `json:"registryStatus"`
-	Credentials *CredentialRotationRes `json:"credentialRotation,omitempty"`
+	Enabled     bool                  `json:"enabled"`
+	Type        base.RegistryType     `json:"type"`
+	Managed     bool                  `json:"managed"`
+	Domain      string                `json:"domain"`
+	Storage     StorageResp           `json:"storage"`
+	Cleanup     CleanupResp           `json:"cleanup"`
+	MemoryLimit unit.DataSize         `json:"memoryLimit"`
+	App         *basedto.ObjectIDResp `json:"app,omitempty"`
+	Credential  *basedto.ObjectIDResp `json:"credential,omitempty"`
+	// RegistryStatus is not called Status: BaseSettingResp already has one, and
+	// the copier writes the setting's status into whatever field that name
+	// matches - which turned the whole response into a 500 the first time it ran.
+	RegistryStatus *RegistryStatusResp    `json:"registryStatus"`
+	Credentials    *CredentialRotationRes `json:"credentialRotation,omitempty"`
 }
 
 type StorageResp struct {
@@ -133,14 +136,14 @@ func TransformRegistrySettings(
 		}
 	}
 
-	resp.Status = &RegistryStatusResp{}
+	resp.RegistryStatus = &RegistryStatusResp{}
 	if input.RegistryStatus != nil {
-		resp.Status.Provisioned = input.RegistryStatus.Provisioned
-		resp.Status.AppID = input.RegistryStatus.AppID
-		resp.Status.Reachable = input.RegistryStatus.Reachable
-		resp.Status.Unreachable = input.RegistryStatus.Unreachable
-		resp.Status.Repositories = input.RegistryStatus.Repositories
-		resp.Status.StoredBytes = input.RegistryStatus.StoredBytes
+		resp.RegistryStatus.Provisioned = input.RegistryStatus.Provisioned
+		resp.RegistryStatus.AppID = input.RegistryStatus.AppID
+		resp.RegistryStatus.Reachable = input.RegistryStatus.Reachable
+		resp.RegistryStatus.Unreachable = input.RegistryStatus.Unreachable
+		resp.RegistryStatus.Repositories = input.RegistryStatus.Repositories
+		resp.RegistryStatus.StoredBytes = input.RegistryStatus.StoredBytes
 	}
 	return resp, nil
 }

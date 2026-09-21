@@ -12,6 +12,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterepo"
 )
 
 const testRepoDir = "../../hivepaas_app/service/apptemplateservice/apptemplateserviceimpl/testdata/repo"
@@ -123,4 +125,17 @@ func TestPin(t *testing.T) {
 
 	assert.NoError(t, os.WriteFile(filepath.Join(dir, "index.json"), append(index, '\n'), 0o600))
 	assert.Error(t, runPin([]string{dir}, &out), "a pin names the committed index, not a changed one")
+}
+
+// An installation refuses an index larger than the limit outright, so the
+// warning has to arrive while templates are being added.
+func TestIndexSizeWarning(t *testing.T) {
+	var out bytes.Buffer
+	warnIndexSize(&out, int(templaterepo.MaxIndexSize)/2)
+	assert.Empty(t, out.String(), "half of the limit is not worth saying")
+
+	out.Reset()
+	warnIndexSize(&out, templaterepo.MaxIndexSize*85/100) //nolint:mnd
+	assert.Contains(t, out.String(), "warning: index.json is")
+	assert.Contains(t, out.String(), "85%")
 }

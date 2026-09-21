@@ -127,7 +127,7 @@ func newOfficialFixture(t *testing.T) *officialFixture {
 // newSource is a fresh source - no in-memory index - over the same server and
 // disk cache, the way a restarted process sees them.
 func (fx *officialFixture) newSource() *officialSource {
-	source := newOfficialSource(&fakeReleaseInfo{info: fx.release})
+	source := newOfficialSource(&fakeReleaseInfo{info: fx.release}, &recordingLogger{})
 	source.baseURL = fx.server.server.URL
 	source.cacheDir = func() string { return fx.cacheDir }
 	return source

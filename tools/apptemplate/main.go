@@ -96,6 +96,9 @@ func runLint(args []string, out io.Writer) error {
 	if len(problems) > 0 {
 		return fmt.Errorf("%w: %d", errProblems, len(problems))
 	}
+	if data, buildErr := indexBytes(repo); buildErr == nil {
+		warnIndexSize(out, len(data))
+	}
 	fmt.Fprintf(out, "OK: %d template(s)\n", len(repo.Templates))
 	return nil
 }
@@ -115,6 +118,7 @@ func runIndex(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	warnIndexSize(out, len(data))
 	path := filepath.Join(dir, templaterepo.IndexFile)
 	if *check {
 		current, readErr := os.ReadFile(path)
@@ -141,11 +145,30 @@ func buildIndex(dir string) ([]byte, error) {
 	if problems = append(problems, templaterepo.Lint(repo)...); len(problems) > 0 {
 		return nil, fmt.Errorf("%w: run `apptemplate lint` to see them", errProblems)
 	}
+	return indexBytes(repo)
+}
+
+func indexBytes(repo *templaterepo.Repo) ([]byte, error) {
 	index, err := templaterepo.BuildIndex(repo)
 	if err != nil {
 		return nil, errors.New(templaterepo.ErrorText(err))
 	}
 	return templaterepo.MarshalIndex(index)
+}
+
+// indexSizeWarnAt is the share of the limit at which the index is worth
+// mentioning. An installation refuses an index.json larger than
+// templaterepo.MaxIndexSize outright - there is no partial store - so the moment
+// to hear about it is while adding templates, not after publishing them.
+const indexSizeWarnAt = 0.8
+
+func warnIndexSize(out io.Writer, size int) {
+	limit := templaterepo.MaxIndexSize
+	if float64(size) < indexSizeWarnAt*float64(limit) {
+		return
+	}
+	fmt.Fprintf(out, "warning: index.json is %d KB of the %d KB an installation will read (%.0f%%)\n",
+		size/1024, limit/1024, float64(size)/float64(limit)*100) //nolint:mnd
 }
 
 type paramFlags map[string]any

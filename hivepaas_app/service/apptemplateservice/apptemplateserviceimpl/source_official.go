@@ -9,12 +9,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/config"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterepo"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
@@ -39,6 +41,7 @@ type officialSource struct {
 	hpAppService hpappservice.Service
 	baseURL      string
 	client       *http.Client
+	logger       logging.Logger
 	// cacheDir is where verified files are kept by hash, so a restart or an
 	// unreachable GitHub still serves every revision already fetched.
 	cacheDir   func() string
@@ -47,13 +50,24 @@ type officialSource struct {
 	mu        sync.Mutex
 	indexSHA  string
 	indexMemo *templatemodel.Index
+	// pinMemo holds the templates pin for a few seconds. Reading it opens and
+	// verifies the signed release envelope, and one request asks for it several
+	// times - the index, the revision, and every file that has to be downloaded.
+	pinMemo   *base.TemplatesRef
+	pinReadAt time.Time
 }
 
-func newOfficialSource(hpAppService hpappservice.Service) *officialSource {
+// pinMemoTTL is how long the pin is reused within a request or a burst of them.
+// It is short because it exists to collapse the repeats of one request, not to
+// avoid reading release info - that has a cache of its own, thirty minutes long.
+const pinMemoTTL = 30 * time.Second
+
+func newOfficialSource(hpAppService hpappservice.Service, logger logging.Logger) *officialSource {
 	return &officialSource{
 		hpAppService: hpAppService,
 		baseURL:      rawGitHubBaseURL,
 		client:       &http.Client{Timeout: fetchTimeout},
+		logger:       logger,
 		cacheDir: func() string {
 			return filepath.Join(config.Current().AppPath, "cache", "app-templates", "sha256")
 		},
@@ -68,6 +82,14 @@ func (s *officialSource) ID() string {
 // pin reads the templates pin for the installation's channel from the release
 // info, which is fetched, verified and cached by hpappservice.
 func (s *officialSource) pin(ctx context.Context) (*base.TemplatesRef, error) {
+	s.mu.Lock()
+	if s.pinMemo != nil && time.Since(s.pinReadAt) < pinMemoTTL {
+		pin := s.pinMemo
+		s.mu.Unlock()
+		return pin, nil
+	}
+	s.mu.Unlock()
+
 	info, err := s.hpAppService.GetAppReleaseInfo(ctx)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
@@ -80,6 +102,10 @@ func (s *officialSource) pin(ctx context.Context) (*base.TemplatesRef, error) {
 		return nil, hperrors.Wrap(hperrors.ErrAppTemplatesUnavailable).
 			WithExtraDetail("the release info pins no templates for this channel")
 	}
+
+	s.mu.Lock()
+	s.pinMemo, s.pinReadAt = release.Templates, time.Now()
+	s.mu.Unlock()
 	return release.Templates, nil
 }
 
@@ -117,7 +143,59 @@ func (s *officialSource) Index(ctx context.Context) (*templatemodel.Index, error
 	s.mu.Lock()
 	s.indexMemo, s.indexSHA = index, pin.IndexSHA256
 	s.mu.Unlock()
+
+	// Reaching here means this index is not the one held a moment ago - a new pin,
+	// or the first read of this process - so whatever the previous revision left
+	// in the cache is no longer named by anything.
+	s.pruneCache(index, pin.IndexSHA256)
 	return index, nil
+}
+
+// pruneCache removes the cached files the index does not name.
+//
+// The cache is addressed by content, so this needs no retention and no clock:
+// the index names the sha256 of every template and icon of the revision being
+// served, and a file whose name is not one of those belongs to a revision that
+// has been replaced. It runs when the index changes, which is the only moment
+// the answer can change.
+//
+// Nothing here is allowed to fail a request. A directory that cannot be read or
+// a file that cannot be removed costs disk space until the next pin, and that is
+// the whole consequence.
+func (s *officialSource) pruneCache(index *templatemodel.Index, indexSHA string) {
+	keep := make(map[string]bool, 2*len(index.Templates)+1)
+	keep[indexSHA] = true
+	for _, entry := range index.Templates {
+		keep[entry.File.SHA256] = true
+		keep[entry.Icon.SHA256] = true
+	}
+
+	dir := s.cacheDir()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			s.logger.Warnf("app templates: cannot read the cache directory to prune it: %s", err.Error())
+		}
+		return
+	}
+
+	removed, failed := 0, 0
+	for _, entry := range entries {
+		name := entry.Name()
+		// A .tmp file is a write in progress, and the writer removes its own.
+		if entry.IsDir() || keep[name] || strings.HasSuffix(name, ".tmp") {
+			continue
+		}
+		if err = os.Remove(filepath.Join(dir, name)); err != nil {
+			failed++
+			continue
+		}
+		removed++
+	}
+	if removed > 0 || failed > 0 {
+		s.logger.Infof("app templates: pruned %d cached file(s) of older revisions, %d could not be removed",
+			removed, failed)
+	}
 }
 
 func (s *officialSource) TemplateFile(ctx context.Context, entry *templatemodel.IndexEntry) ([]byte, error) {

@@ -37,9 +37,10 @@ func New(
 	logger logging.Logger,
 ) apptemplateservice.Service {
 	return &service{
-		official:       newOfficialSource(hpAppService),
+		official:       newOfficialSource(hpAppService, logger),
 		registryClient: registryClient,
 		tagCache:       newImageTagsCache(),
+		templateCache:  newTemplateCache(),
 		logger:         logger,
 	}
 }
@@ -48,6 +49,7 @@ type service struct {
 	official       apptemplateservice.Source
 	registryClient tagLister
 	tagCache       *imageTagsCache
+	templateCache  *templateCache
 	logger         logging.Logger
 	warnOnce       sync.Once
 }
@@ -92,7 +94,7 @@ func (s *service) Template(ctx context.Context, name string) (*apptemplateservic
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	entry, tmpl, err := loadTemplate(ctx, src, index, name)
+	entry, tmpl, err := s.loadTemplate(ctx, src, index, name)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +102,7 @@ func (s *service) Template(ctx context.Context, name string) (*apptemplateservic
 	// The same index, so the same revision: a template and what it depends on are
 	// never read from two different pins.
 	for _, dep := range tmpl.Dependencies {
-		depEntry, depTmpl, err := loadTemplate(ctx, src, index, dep.Template)
+		depEntry, depTmpl, err := s.loadTemplate(ctx, src, index, dep.Template)
 		if err != nil {
 			return nil, err
 		}
@@ -110,7 +112,10 @@ func (s *service) Template(ctx context.Context, name string) (*apptemplateservic
 	return resp, nil
 }
 
-func loadTemplate(
+// loadTemplate returns a template of the index, decoded once per file: the
+// cache is keyed by the sha256 the index names, so a template that has changed
+// is a different key rather than a stale answer.
+func (s *service) loadTemplate(
 	ctx context.Context,
 	src apptemplateservice.Source,
 	index *templatemodel.Index,
@@ -120,6 +125,9 @@ func loadTemplate(
 	if entry == nil {
 		return nil, nil, hperrors.Wrap(hperrors.ErrAppTemplateNotFound).WithParam("Name", name)
 	}
+	if tmpl, found := s.templateCache.get(entry.File.SHA256); found {
+		return entry, tmpl, nil
+	}
 	data, err := src.TemplateFile(ctx, entry)
 	if err != nil {
 		return nil, nil, hperrors.Wrap(err)
@@ -128,6 +136,7 @@ func loadTemplate(
 	if err != nil {
 		return nil, nil, hperrors.Wrap(err)
 	}
+	s.templateCache.put(entry.File.SHA256, tmpl)
 	return entry, tmpl, nil
 }
 

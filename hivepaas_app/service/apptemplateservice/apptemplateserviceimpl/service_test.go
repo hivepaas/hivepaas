@@ -19,10 +19,15 @@ import (
 type recordingLogger struct {
 	logging.Logger
 	warnings []string
+	infos    []string
 }
 
 func (l *recordingLogger) Warnf(template string, _ ...any) {
 	l.warnings = append(l.warnings, template)
+}
+
+func (l *recordingLogger) Infof(template string, _ ...any) {
+	l.infos = append(l.infos, template)
 }
 
 // unavailableSource is the official source when GitHub cannot be reached.

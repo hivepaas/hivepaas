@@ -44,5 +44,14 @@ func (c *imageTagsCache) put(key string, result *registry.ListTagsResult) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.entries[key] = &imageTagsCacheEntry{result: result, readAt: time.Now()}
+	// Drop what has expired while here. Without this the map only ever grows: one
+	// entry for every repository anybody has ever opened the tag list of, each
+	// holding thousands of tag strings long after it stopped being read.
+	now := time.Now()
+	for other, entry := range c.entries {
+		if now.Sub(entry.readAt) > imageTagsCacheTTL {
+			delete(c.entries, other)
+		}
+	}
+	c.entries[key] = &imageTagsCacheEntry{result: result, readAt: now}
 }

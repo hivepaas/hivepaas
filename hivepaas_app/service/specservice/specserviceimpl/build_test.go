@@ -17,10 +17,13 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/settinghelper"
+	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
@@ -491,4 +494,79 @@ func TestBuildAppPublishesNothingWhenTheDocumentAsksForNoPorts(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Nil(t, req.Spec.EndpointSpec)
+}
+
+// appsByKeyRepo answers the one lookup a mount naming another app makes.
+type appsByKeyRepo struct {
+	repository.AppRepo
+	apps []*entity.App
+}
+
+func (f *appsByKeyRepo) List(
+	_ context.Context, _ database.IDB, _ string, _ *basedto.Paging, opts ...bunex.SelectQueryOption,
+) ([]*entity.App, *basedto.PagingMeta, error) {
+	// The filter is built as query options, which cannot be read back here, so the
+	// fake answers with whatever it was given and the test holds one app.
+	_ = opts
+	return f.apps, nil, nil
+}
+
+// A template can put a file manager over the database beside it. What the mount
+// carries is the key; what volumeservice needs is the app.
+func TestBuildAppResolvesAMountNamingAnotherApp(t *testing.T) {
+	useDataKey(t)
+	volumes := &fakeBuildVolumeService{}
+	owner := &entity.App{ID: "app-2", Key: "postgres", ProjectID: "p1", ProjectEnvID: "p1:dev"}
+	svc := &service{volumeService: volumes, appRepo: &appsByKeyRepo{apps: []*entity.App{owner}}}
+
+	_, err := svc.BuildApp(context.Background(), nil, buildReq(t,
+		"deployment:\n  storage:\n    mounts:\n"+
+			"      /srv/data: {type: volume, source: vol-1, sourceApp: {app: postgres}}\n"))
+
+	assert.NoError(t, err)
+	assert.Equal(t, owner, volumes.req.New[0].OwnerApp)
+	assert.True(t, volumes.req.New[0].ReadOnly, "write was not asked for")
+	assert.Equal(t, "shop", volumes.req.New[0].OwnerApp.Project.Key,
+		"the owner is in this app's project and environment, which the row alone does not carry")
+}
+
+func TestBuildAppCarriesWriteToAMountNamingAnotherApp(t *testing.T) {
+	useDataKey(t)
+	volumes := &fakeBuildVolumeService{}
+	owner := &entity.App{ID: "app-2", Key: "postgres", ProjectID: "p1", ProjectEnvID: "p1:dev"}
+	svc := &service{volumeService: volumes, appRepo: &appsByKeyRepo{apps: []*entity.App{owner}}}
+
+	_, err := svc.BuildApp(context.Background(), nil, buildReq(t,
+		"deployment:\n  storage:\n    mounts:\n"+
+			"      /srv/data: {type: volume, source: vol-1, sourceApp: {app: postgres, write: true}}\n"))
+
+	assert.NoError(t, err)
+	assert.False(t, volumes.req.New[0].ReadOnly)
+}
+
+// A name with nothing behind it would otherwise build the app's own directory
+// and look as if it had worked.
+func TestBuildAppRefusesAMountNamingAnAppThatIsNotHere(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}, appRepo: &appsByKeyRepo{}}
+
+	_, err := svc.BuildApp(context.Background(), nil, buildReq(t,
+		"deployment:\n  storage:\n    mounts:\n"+
+			"      /srv/data: {type: volume, source: vol-1, sourceApp: {app: nosuchapp}}\n"))
+
+	assert.ErrorIs(t, err, hperrors.ErrAppTemplateInvalid)
+}
+
+// Naming itself is the ordinary mount, and asks nobody anything.
+func TestBuildAppIgnoresAMountNamingItself(t *testing.T) {
+	useDataKey(t)
+	volumes := &fakeBuildVolumeService{}
+	svc := &service{volumeService: volumes, appRepo: &appsByKeyRepo{}}
+
+	_, err := svc.BuildApp(context.Background(), nil, buildReq(t,
+		"deployment:\n  storage:\n    mounts:\n"+
+			"      /srv/data: {type: volume, source: vol-1, sourceApp: {app: db}}\n"))
+
+	assert.NoError(t, err)
+	assert.Nil(t, volumes.req.New[0].OwnerApp)
 }

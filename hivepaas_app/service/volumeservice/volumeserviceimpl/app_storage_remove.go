@@ -25,10 +25,12 @@ import (
 const volumeHelperTarget = "/mnt/vol"
 
 // storageTarget is one directory to delete: the mount that reaches the storage
-// it is in, and the path of the directory inside that mount.
+// it is in, the path of the directory inside that mount, and the volume setting
+// that storage belongs to - which is what says whose directory it is.
 type storageTarget struct {
 	mount   mount.Mount
 	subpath string
+	volume  *entity.Setting
 }
 
 func (s *service) RemoveAppStorage(
@@ -65,16 +67,35 @@ func (s *service) RemoveAppStorage(
 	}
 	local := s.storageIsOnThisNode(ctx, pins)
 
-	for _, mnt := range mounts {
-		target, ok := appStorageTarget(&mnt, volumes)
-		if !ok {
-			continue
-		}
+	for _, target := range ownStorageTargets(app, mounts, volumes) {
 		if err := s.removeStorageTarget(ctx, &target, constraint, local); err != nil {
 			return hperrors.Wrap(err)
 		}
 	}
 	return nil
+}
+
+// ownStorageTargets is what deleting this app may remove: the directories its
+// mounts reach, minus the ones belonging to somebody else.
+//
+// An app may have been given a directory of another app - a file manager over
+// the database beside it. Seeing it is one thing; taking it along when this app
+// is deleted is another. The test is the path rather than any marker on the
+// mount, so it holds for mounts written before such a thing was possible, for a
+// service spec somebody restored by hand, and for one edited outside HivePaaS.
+func ownStorageTargets(app *entity.App, mounts []mount.Mount, volumes []*entity.Setting) []storageTarget {
+	targets := make([]storageTarget, 0, len(mounts))
+	for i := range mounts {
+		target, ok := appStorageTarget(&mounts[i], volumes)
+		if !ok {
+			continue
+		}
+		if !appOwnsSubpath(app, target.volume.Scope, target.subpath) {
+			continue
+		}
+		targets = append(targets, target)
+	}
+	return targets
 }
 
 // storageIsOnThisNode reports whether the data the pins describe is reachable
@@ -115,6 +136,12 @@ func appStorageTarget(mnt *mount.Mount, volumes []*entity.Setting) (storageTarge
 		if subpath == "" {
 			return storageTarget{}, false
 		}
+		// A volume the app's scope does not account for is one nothing here can
+		// say anything about, least of all whose directory this is.
+		volume := volumeByRefID(volumes, mnt.Source)
+		if volume == nil {
+			return storageTarget{}, false
+		}
 		// The helper sees the volume whole: the path to delete is inside it, and
 		// mounting with the subpath would put the helper in the directory it is
 		// meant to remove.
@@ -125,7 +152,7 @@ func appStorageTarget(mnt *mount.Mount, volumes []*entity.Setting) (storageTarge
 			helper.VolumeOptions = new(*helper.VolumeOptions)
 			helper.VolumeOptions.Subpath = ""
 		}
-		return storageTarget{mount: helper, subpath: subpath}, true
+		return storageTarget{mount: helper, subpath: subpath, volume: volume}, true
 
 	case mount.TypeBind:
 		return bindStorageTarget(mnt, volumes)
@@ -148,6 +175,7 @@ func bindStorageTarget(mnt *mount.Mount, volumes []*entity.Setting) (storageTarg
 	source := filepath.Clean(mnt.Source)
 
 	device := ""
+	var setting *entity.Setting
 	for _, vol := range volumes {
 		clusterVol, err := vol.AsClusterVolume()
 		if err != nil || clusterVol == nil {
@@ -163,7 +191,7 @@ func bindStorageTarget(mnt *mount.Mount, volumes []*entity.Setting) (storageTarg
 		// /srv/data for a source below both, and the specific one is the volume
 		// the mount was actually built from.
 		if dir = filepath.Clean(dir); strings.HasPrefix(source, dir+"/") && len(dir) > len(device) {
-			device = dir
+			device, setting = dir, vol
 		}
 	}
 	if device == "" {
@@ -174,7 +202,21 @@ func bindStorageTarget(mnt *mount.Mount, volumes []*entity.Setting) (storageTarg
 	if subpath == "" {
 		return storageTarget{}, false
 	}
-	return storageTarget{mount: bindMountWhole(device), subpath: subpath}, true
+	return storageTarget{mount: bindMountWhole(device), subpath: subpath, volume: setting}, true
+}
+
+// volumeByRefID finds the volume setting a mount names. A volume mount carries
+// the docker volume name, which is the setting's RefID rather than its id.
+func volumeByRefID(volumes []*entity.Setting, refID string) *entity.Setting {
+	if refID == "" {
+		return nil
+	}
+	for _, vol := range volumes {
+		if vol.RefID == refID {
+			return vol
+		}
+	}
+	return nil
 }
 
 // bindMountWhole is how the helper sees a host directory it has to delete

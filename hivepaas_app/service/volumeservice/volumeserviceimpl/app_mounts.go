@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/moby/moby/api/types/mount"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/entityutil"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
 
@@ -174,21 +176,72 @@ func (s *service) useBindMountIfAppropriate(
 	dockerMnt.ImageOptions = nil
 }
 
+// appScopePrefix is the directory inside a volume of this scope that belongs to
+// the app. It is where calcMountSubpath starts from, and what RemoveAppStorage
+// measures a directory against before deleting it: one answer, so the two can
+// never disagree about what an app owns.
+//
+// An empty string means there is no answer - the scope gives the app no
+// directory of its own, or the app was loaded without what naming one needs.
+// Nothing below such a volume is then the app's to claim or to delete, which is
+// the safe way round: deleting an app whose storage cannot be identified leaves
+// a directory behind, and the other way would take somebody else's with it.
+//
+// The environment's key is derived from the id rather than read from the
+// relation, because the app reaching here is not always loaded with one - the
+// deletion path loads the row alone.
+func appScopePrefix(app *entity.App, scope base.ObjectScopeType) string {
+	envKey := ""
+	if app.ProjectEnv != nil {
+		envKey = app.ProjectEnv.Key
+	} else {
+		_, envKey = projecthelper.ParseProjectEnvID(app.ProjectEnvID)
+	}
+
+	switch scope {
+	case base.ObjectScopeGlobal:
+		if app.Project == nil || app.Project.Key == "" || envKey == "" {
+			return ""
+		}
+		return fmt.Sprintf("%v/%v/%v", app.Project.Key, envKey, app.Key)
+	case base.ObjectScopeProject:
+		if envKey == "" {
+			return ""
+		}
+		return fmt.Sprintf("%v/%v", envKey, app.Key)
+	case base.ObjectScopeProjectEnv, base.ObjectScopeApp:
+		return app.Key
+	case base.ObjectScopeUser, base.ObjectScopeHivepaas:
+	}
+	return ""
+}
+
+// appOwnsSubpath reports whether a directory inside a volume is the app's own:
+// its directory, or something below it. A mount built for another app's
+// directory answers false, and that is the whole of what stops deleting one app
+// from deleting another's data.
+func appOwnsSubpath(app *entity.App, scope base.ObjectScopeType, subpath string) bool {
+	prefix := appScopePrefix(app, scope)
+	if prefix == "" || subpath == "" {
+		return false
+	}
+	subpath = strings.TrimPrefix(filepath.Clean(subpath), "/")
+	return subpath == prefix || strings.HasPrefix(subpath, prefix+"/")
+}
+
 func calcMountSubpath(
 	app *entity.App,
 	mnt *volumeservice.AppMountReq,
 	setting *entity.Setting,
 ) string {
-	var subpath string
-	switch setting.Scope {
-	case base.ObjectScopeGlobal:
-		subpath = fmt.Sprintf("%v/%v/%v", app.Project.Key, app.ProjectEnv.Key, app.Key)
-	case base.ObjectScopeProject:
-		subpath = fmt.Sprintf("%v/%v", app.ProjectEnv.Key, app.Key)
-	case base.ObjectScopeProjectEnv, base.ObjectScopeApp:
-		subpath = app.Key
-	case base.ObjectScopeUser, base.ObjectScopeHivepaas:
+	// A mount that names an owner reaches that app's directory instead of the
+	// caller's. Everything after this line is the same for both: the request's
+	// own subpath is still joined below whichever directory it turned out to be.
+	owner := app
+	if mnt.OwnerApp != nil {
+		owner = mnt.OwnerApp
 	}
+	subpath := appScopePrefix(owner, setting.Scope)
 
 	if mnt.Type == mount.TypeVolume && mnt.VolumeOptions != nil {
 		subpath = filepath.Join(subpath, mnt.VolumeOptions.Subpath)

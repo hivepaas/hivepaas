@@ -182,3 +182,110 @@ func TestBuildAppMountsRefusesMountsPinnedToTwoNodes(t *testing.T) {
 	assert.Contains(t, detail, "pgdata")
 	assert.Contains(t, detail, "uploads")
 }
+
+// A mount that names an owner reaches that app's directory, which is the whole
+// of what lets a file manager work on the database beside it.
+func TestBuildAppMountsPutsAForeignMountInTheOwnersDirectory(t *testing.T) {
+	svc, _ := newAppMountsTest(scopedVolume(t, "vol-1", "hp-vol-1", base.ObjectScopeProject,
+		&entity.ClusterVolume{Managed: true, Driver: "local"}))
+	owner := &entity.App{
+		ID:         "app-2",
+		Key:        "postgres",
+		Project:    &entity.Project{Key: "shop"},
+		ProjectEnv: &entity.ProjectEnv{Key: "prod"},
+	}
+
+	built, err := svc.BuildAppMounts(context.Background(), nil, &volumeservice.BuildAppMountsReq{
+		App: mountTestApp(),
+		New: []*volumeservice.AppMountReq{{
+			Type:          mount.TypeVolume,
+			Source:        "vol-1",
+			Target:        "/srv/data",
+			ReadOnly:      true,
+			OwnerApp:      owner,
+			VolumeOptions: &volumeservice.AppMountVolumeOptions{Subpath: "backups"},
+		}},
+	})
+
+	assert.NoError(t, err)
+	assert.Len(t, built.Mounts, 1)
+	assert.Equal(t, "prod/postgres/backups", built.Mounts[0].VolumeOptions.Subpath,
+		"the owner's directory, with the request's own subpath below it")
+	assert.True(t, built.Mounts[0].ReadOnly)
+}
+
+// The same request without an owner is the ordinary case, and must not have
+// moved.
+func TestBuildAppMountsKeepsTheCallersDirectoryWithoutAnOwner(t *testing.T) {
+	svc, _ := newAppMountsTest(scopedVolume(t, "vol-2", "hp-vol-2", base.ObjectScopeProject,
+		&entity.ClusterVolume{Managed: true, Driver: "local"}))
+
+	built, err := svc.BuildAppMounts(context.Background(), nil, &volumeservice.BuildAppMountsReq{
+		App: mountTestApp(),
+		New: []*volumeservice.AppMountReq{{
+			Type:          mount.TypeVolume,
+			Source:        "vol-2",
+			Target:        "/srv/data",
+			VolumeOptions: &volumeservice.AppMountVolumeOptions{Subpath: "backups"},
+		}},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "prod/web/backups", built.Mounts[0].VolumeOptions.Subpath)
+}
+
+// What an app owns is read from the path, so the answer holds for mounts written
+// before an app could be given somebody else's directory.
+func TestAppOwnsSubpath(t *testing.T) {
+	app := mountTestApp() // project shop, env prod, app web
+
+	cases := map[string]struct {
+		scope   base.ObjectScopeType
+		subpath string
+		want    bool
+	}{
+		"its own directory in a project volume":    {base.ObjectScopeProject, "prod/web", true},
+		"something below it":                       {base.ObjectScopeProject, "prod/web/uploads", true},
+		"another app's directory":                  {base.ObjectScopeProject, "prod/postgres", false},
+		"another app whose key starts the same":    {base.ObjectScopeProject, "prod/website", false},
+		"another environment":                      {base.ObjectScopeProject, "dev/web", false},
+		"the volume root":                          {base.ObjectScopeProject, "", false},
+		"its own directory in a global volume":     {base.ObjectScopeGlobal, "shop/prod/web", true},
+		"another project in a global volume":       {base.ObjectScopeGlobal, "blog/prod/web", false},
+		"its own directory in an app volume":       {base.ObjectScopeApp, "web", true},
+		"another app's directory in an app volume": {base.ObjectScopeApp, "postgres", false},
+		"a scope that gives no directory":          {base.ObjectScopeHivepaas, "anything", false},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.want, appOwnsSubpath(app, tc.scope, tc.subpath))
+		})
+	}
+}
+
+// The deletion path loads the app row without its project and environment, and
+// an app whose storage cannot be named is an app whose storage is not deleted -
+// never one that deletes by a half-built path.
+func TestAppScopePrefixWithoutLoadedRelations(t *testing.T) {
+	app := &entity.App{ID: "app-1", Key: "web", ProjectID: "proj-1", ProjectEnvID: "proj-1:prod"}
+
+	assert.Equal(t, "prod/web", appScopePrefix(app, base.ObjectScopeProject),
+		"the environment's key is in the id, so a project volume can still be answered for")
+	assert.Equal(t, "web", appScopePrefix(app, base.ObjectScopeApp))
+	assert.Empty(t, appScopePrefix(app, base.ObjectScopeGlobal),
+		"a global volume needs the project's key, which only the relation carries")
+
+	assert.True(t, appOwnsSubpath(app, base.ObjectScopeProject, "prod/web/uploads"))
+	assert.False(t, appOwnsSubpath(app, base.ObjectScopeProject, "prod/postgres"))
+	assert.False(t, appOwnsSubpath(app, base.ObjectScopeGlobal, "shop/prod/web"),
+		"unanswerable is not owned")
+}
+
+// An app with no environment at all cannot be told apart from another, so
+// nothing in a project volume is its own.
+func TestAppScopePrefixWithoutAnEnvironment(t *testing.T) {
+	app := &entity.App{ID: "app-1", Key: "web"}
+
+	assert.Empty(t, appScopePrefix(app, base.ObjectScopeProject))
+	assert.False(t, appOwnsSubpath(app, base.ObjectScopeProject, "prod/web"))
+}

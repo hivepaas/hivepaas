@@ -67,3 +67,18 @@ func TestCalcVolumeMountSubpathSkipsAVolumeWithoutOne(t *testing.T) {
 
 	assert.False(t, svc.calcVolumeMountSubpath(&destMount, &srcMount, volumeCloneData()))
 }
+
+// A mount that reaches another app's directory is not the source app's data to
+// copy, and the copy has asked nobody for permission to see it. The rename finds
+// no directory of its own to rename, and skipping is what that has to mean.
+func TestCalcVolumeMountSubpathSkipsAnotherAppsDirectory(t *testing.T) {
+	svc := &service{}
+	srcMount := mount.Mount{
+		Type: mount.TypeVolume, Source: "vol-1", Target: "/srv/data",
+		VolumeOptions: &mount.VolumeOptions{Subpath: "postgres/pgdata"},
+	}
+	destMount := srcMount
+
+	assert.False(t, svc.calcVolumeMountSubpath(&destMount, &srcMount, volumeCloneData()))
+	assert.Equal(t, "postgres/pgdata", srcMount.VolumeOptions.Subpath, "the source mount is untouched")
+}

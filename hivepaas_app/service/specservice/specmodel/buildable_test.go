@@ -24,6 +24,8 @@ deployment:
     mounts:
       /var/lib/postgresql/data:
         {type: volume, source: vol-1, readOnly: false, volumeOptions: {subpath: data, noCopy: true}}
+      /srv/other:
+        {type: volume, source: vol-1, sourceApp: {app: postgres, write: true}}
   container:
     healthcheck: {enabled: true, mode: CMD-SHELL, command: pg_isready, interval: 10s, retries: 5}
     init: false
@@ -107,6 +109,12 @@ func TestCheckBuildableRefusesTheRest(t *testing.T) {
 		"volume labels": {"deployment:\n  storage:\n    mounts:\n" +
 			"      /data: {type: volume, source: v, volumeOptions: {labels: {a: b}}}\n",
 			"deployment.storage.mounts./data.volumeOptions.labels"},
+		"a source app that is not an app key": {"deployment:\n  storage:\n    mounts:\n" +
+			"      /data: {type: volume, source: v, sourceApp: {app: 'Not A Key'}}\n",
+			"deployment.storage.mounts./data.sourceApp.app"},
+		"an empty source app": {"deployment:\n  storage:\n    mounts:\n" +
+			"      /data: {type: volume, source: v, sourceApp: {write: true}}\n",
+			"deployment.storage.mounts./data.sourceApp.app"},
 		"networks":     {"deployment:\n  networks:\n    dnsConfig: {nameservers: [1.1.1.1]}\n", "deployment.networks"},
 		"service mode": {"deployment:\n  service:\n    modeSpec: {mode: global}\n", "deployment.service"},
 		"secret swarm id": {"settings:\n  secrets:\n    A: {value: x, swarmRef: {secretId: abc}}\n",

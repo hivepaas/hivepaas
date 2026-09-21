@@ -128,7 +128,7 @@ func TestDependencyParams(t *testing.T) {
 	owner, err := ResolveParams(blog.Parameters, map[string]any{"siteName": "myblog"})
 	assert.NoError(t, err)
 
-	params, err := DependencyParams("blog", blog.FindDependency("db"), pgTemplate(t), owner,
+	params, err := DependencyParams("blog", "myblog", blog.FindDependency("db"), pgTemplate(t), owner,
 		map[string]any{"dataVolume": "vol-2"})
 
 	assert.NoError(t, err)
@@ -140,7 +140,7 @@ func TestDependencyParamsRefusesWhatIsNotAsked(t *testing.T) {
 	owner, err := ResolveParams(blog.Parameters, nil)
 	assert.NoError(t, err)
 
-	_, err = DependencyParams("blog", blog.FindDependency("db"), pgTemplate(t), owner,
+	_, err = DependencyParams("blog", "myblog", blog.FindDependency("db"), pgTemplate(t), owner,
 		map[string]any{"username": "someone-else"})
 
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateParamInvalid, "the template fixes the username")
@@ -152,7 +152,7 @@ func TestDependencyParamsRefusesTheOwnersSecret(t *testing.T) {
 	owner, err := ResolveParams(blog.Parameters, nil)
 	assert.NoError(t, err)
 
-	_, err = DependencyParams("blog", blog.FindDependency("db"), pgTemplate(t), owner, nil)
+	_, err = DependencyParams("blog", "myblog", blog.FindDependency("db"), pgTemplate(t), owner, nil)
 
 	assert.ErrorIs(t, err, hperrors.ErrAppTemplateInvalid, "a secret belongs to one app")
 }
@@ -167,4 +167,32 @@ func TestSharedVarsOf(t *testing.T) {
 	assert.Contains(t, shared, "HIVEPAAS_PASSWORD")
 	assert.Contains(t, shared, "HIVEPAAS_HOST")
 	assert.NotContains(t, shared, "HIVEPAAS_BUCKET")
+}
+
+// A dependency template is written without knowing that an owner exists, so the
+// owner is what tells it which app it was created for.
+func TestDependencyParamsGivesTheOwnersAppKey(t *testing.T) {
+	blog := blogTemplate(t)
+	blog.FindDependency("db").Params["username"] = "${{ app.key }}"
+	owner, err := ResolveParams(blog.Parameters, map[string]any{"siteName": "myblog"})
+	assert.NoError(t, err)
+
+	params, err := DependencyParams("blog", "myblog", blog.FindDependency("db"), pgTemplate(t), owner,
+		map[string]any{"dataVolume": "vol-2"})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "myblog", params["username"], "the app being created from this template")
+}
+
+// Rendering one app on its own has no owner to name, and a placeholder with no
+// answer is a template error rather than an empty string quietly mounted.
+func TestDependencyParamsRefusesTheAppKeyWithoutAnOwner(t *testing.T) {
+	blog := blogTemplate(t)
+	blog.FindDependency("db").Params["username"] = "${{ app.key }}"
+	owner, err := ResolveParams(blog.Parameters, nil)
+	assert.NoError(t, err)
+
+	_, err = DependencyParams("blog", "", blog.FindDependency("db"), pgTemplate(t), owner, nil)
+
+	assert.Error(t, err)
 }

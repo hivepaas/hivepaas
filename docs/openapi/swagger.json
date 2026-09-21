@@ -41705,7 +41705,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -41723,7 +41723,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -43937,6 +43937,9 @@
           "source" : {
             "type" : "string"
           },
+          "sourceApp" : {
+            "$ref" : "#/components/schemas/appsettingsdto.MountSourceApp"
+          },
           "target" : {
             "type" : "string"
           },
@@ -43950,7 +43953,48 @@
             "$ref" : "#/components/schemas/appsettingsdto.VolumeOptions"
           }
         },
-        "required" : [ "bindOptions", "clusterOptions", "consistency", "key", "readOnly", "source", "target", "tmpfsOptions", "type", "volumeOptions" ],
+        "required" : [ "bindOptions", "clusterOptions", "consistency", "key", "readOnly", "source", "sourceApp", "target", "tmpfsOptions", "type", "volumeOptions" ],
+        "type" : "object"
+      },
+      "appsettingsdto.MountBorrower" : {
+        "properties" : {
+          "appId" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "subpath" : {
+            "type" : "string"
+          },
+          "target" : {
+            "description" : "Target is where the directory appears inside that app, and Subpath which\npart of this app's storage it is - empty for the whole of it.",
+            "type" : "string"
+          },
+          "write" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "appId", "name", "subpath", "target", "write" ],
+        "type" : "object"
+      },
+      "appsettingsdto.MountSourceApp" : {
+        "properties" : {
+          "appId" : {
+            "type" : "string"
+          },
+          "dangling" : {
+            "type" : "boolean"
+          },
+          "name" : {
+            "description" : "Name and Dangling are answers, not requests: they are filled in when the\nsettings are read and ignored when they are written. Dangling means the\ndirectory is still there and the app that owned it is not.",
+            "type" : "string"
+          },
+          "write" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "appId", "dangling", "name", "write" ],
         "type" : "object"
       },
       "appsettingsdto.NetworkAttachment" : {
@@ -44287,6 +44331,13 @@
       },
       "appsettingsdto.StorageSettingsResp" : {
         "properties" : {
+          "borrowedBy" : {
+            "description" : "BorrowedBy is the other side of the same arrangement: the apps that have\nbeen given a directory of this app's. It is here because a grant only the\nborrower can see is a grant nobody will ever revoke.",
+            "items" : {
+              "$ref" : "#/components/schemas/appsettingsdto.MountBorrower"
+            },
+            "type" : "array"
+          },
           "mounts" : {
             "items" : {
               "$ref" : "#/components/schemas/appsettingsdto.Mount"
@@ -44297,7 +44348,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "mounts", "updateVer" ],
+        "required" : [ "borrowedBy", "mounts", "updateVer" ],
         "type" : "object"
       },
       "appsettingsdto.TmpfsOptions" : {
@@ -60475,9 +60526,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

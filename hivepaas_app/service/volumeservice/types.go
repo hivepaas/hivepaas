@@ -80,6 +80,16 @@ type AppMountReq struct {
 	Consistency    mount.Consistency
 	VolumeOptions  *AppMountVolumeOptions
 	ClusterOptions *AppMountVolumeOptions
+
+	// OwnerApp is the app whose directory inside the volume this mount reaches,
+	// when that is not the app doing the mounting - a file manager given the
+	// files of the database beside it. Nil is the ordinary case and means the
+	// mounting app's own directory.
+	//
+	// Whoever sets this has already decided the caller may have it: the service
+	// builds the mount it is told to and checks no permission. It needs Project
+	// and ProjectEnv loaded, for the same reason BuildAppMountsReq.App does.
+	OwnerApp *entity.App
 }
 
 type AppMountVolumeOptions struct {
@@ -102,4 +112,19 @@ type BuildAppMountsReq struct {
 type BuildAppMountsResp struct {
 	// Mounts are Kept followed by the built New mounts.
 	Mounts []mount.Mount
+}
+
+// AppMountDesc is what a mount turned out to reach: whose directory it is, and
+// what is left of the path below it.
+type AppMountDesc struct {
+	// AppKey is the app the directory belongs to. It is empty when the path is
+	// not an app's directory at all - a volume mounted whole, a bind HivePaaS did
+	// not make, or a volume the app's scope does not account for.
+	AppKey string
+	// Own says AppKey is the app the mounts were read from, which is the ordinary
+	// case and the only one that existed before an app could be given another's
+	// storage.
+	Own bool
+	// Subpath is what the request had asked for below that app's directory.
+	Subpath string
 }

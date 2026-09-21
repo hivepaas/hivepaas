@@ -7,6 +7,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/envvarservice"
 )
 
@@ -66,6 +67,50 @@ func TestKindEnvVars_Cache(t *testing.T) {
 		base.AppSystemEnvVarRootPassword, base.AppSystemEnvVarSSLMode} {
 		assert.NotContains(t, byKey, key)
 	}
+}
+
+func TestKindEnvVars_CacheTuningIsPublishedToTheAppAlone(t *testing.T) {
+	kind := &entity.AppKindSettings{
+		Category: base.AppCategoryCache,
+		Engine:   "redis",
+		Cache: &entity.AppKindCache{
+			MaxMemory:       256 * unit.MB,
+			EvictionRule:    "allkeys-lru",
+			PersistenceMode: "aof",
+		},
+	}
+
+	envs, err := kindEnvVars(kind)
+	assert.NoError(t, err)
+
+	byKey := envByKey(t, envs)
+	assert.Equal(t, "268435456", byKey[base.AppSystemEnvVarMaxMemory].Value,
+		"the ceiling goes out in bytes, which is what a shell can hand to the server")
+	assert.Equal(t, "allkeys-lru", byKey[base.AppSystemEnvVarEvictionRule].Value)
+	assert.Equal(t, "aof", byKey[base.AppSystemEnvVarPersistenceMode].Value)
+
+	for _, key := range []string{base.AppSystemEnvVarMaxMemory, base.AppSystemEnvVarEvictionRule,
+		base.AppSystemEnvVarPersistenceMode} {
+		assert.False(t, byKey[key].IsShared, "%s is the cache's own tuning, of no use to another app", key)
+	}
+}
+
+func TestKindEnvVars_CacheWithoutTuning(t *testing.T) {
+	kind := &entity.AppKindSettings{
+		Category: base.AppCategoryCache,
+		Engine:   "redis",
+		Cache:    &entity.AppKindCache{},
+	}
+
+	envs, err := kindEnvVars(kind)
+	assert.NoError(t, err)
+
+	// Nothing chosen reads as nothing, and the command decides what the engine's
+	// own default is - here zero, which is how Redis spells "no ceiling".
+	byKey := envByKey(t, envs)
+	assert.Equal(t, "0", byKey[base.AppSystemEnvVarMaxMemory].Value)
+	assert.Equal(t, "", byKey[base.AppSystemEnvVarEvictionRule].Value)
+	assert.Equal(t, "", byKey[base.AppSystemEnvVarPersistenceMode].Value)
 }
 
 func TestKindEnvVars_CacheWithoutPassword(t *testing.T) {

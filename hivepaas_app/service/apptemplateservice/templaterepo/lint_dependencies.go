@@ -73,7 +73,8 @@ func lintBindings(
 		for _, param := range dep.AskedParams(depTmpl) {
 			asked[param.Name] = lintStandIn(param)
 		}
-		input, err := templaterender.DependencyParams(tmpl.Metadata.Name, dep, depTmpl, owner, asked)
+		input, err := templaterender.DependencyParams(tmpl.Metadata.Name, lintKeyPrefix+"owner",
+			dep, depTmpl, owner, asked)
 		if err == nil {
 			var result *templaterender.Result
 			result, err = templaterender.Render(&templaterender.Request{

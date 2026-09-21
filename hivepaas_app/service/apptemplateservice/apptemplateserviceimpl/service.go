@@ -273,8 +273,8 @@ func renderDependency(
 	}
 	keys[appKey] = appName
 
-	input, err := templaterender.DependencyParams(name, dep.Dependency, depTmpl, owner,
-		req.DependencyParams[dep.Dependency.Name])
+	input, err := templaterender.DependencyParams(name, projecthelper.CalcAppKey(req.AppName),
+		dep.Dependency, depTmpl, owner, req.DependencyParams[dep.Dependency.Name])
 	if err != nil {
 		return nil, nil, hperrors.Wrap(err)
 	}

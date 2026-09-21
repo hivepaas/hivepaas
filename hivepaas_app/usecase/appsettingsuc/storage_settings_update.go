@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
@@ -26,7 +27,7 @@ func (uc *UC) UpdateAppStorageSettings(
 ) (*appsettingsdto.UpdateAppStorageSettingsResp, error) {
 	err := transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		data := &updateAppStorageSettingsData{}
-		err := uc.loadAppStorageSettingsForUpdate(ctx, db, req, data)
+		err := uc.loadAppStorageSettingsForUpdate(ctx, db, auth, req, data)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -69,6 +70,7 @@ type updateAppStorageSettingsData struct {
 func (uc *UC) loadAppStorageSettingsForUpdate(
 	ctx context.Context,
 	db database.Tx,
+	auth *basedto.Auth,
 	req *appsettingsdto.UpdateAppStorageSettingsReq,
 	data *updateAppStorageSettingsData,
 ) error {
@@ -108,8 +110,70 @@ func (uc *UC) loadAppStorageSettingsForUpdate(
 			data.KeptMounts = append(data.KeptMounts, *existingMount) // unchanged mount
 			continue
 		}
-		data.NewMounts = append(data.NewMounts, toAppMountReq(reqMnt))
+		mntReq := toAppMountReq(reqMnt)
+		// Only a mount being written is checked. An unchanged one arrives as Kept
+		// above, so saving something else does not ask again for permission that
+		// was given once - and losing that permission later unmounts nothing.
+		if err = uc.resolveMountOwnerApp(ctx, db, auth, app, reqMnt.SourceApp, mntReq); err != nil {
+			return hperrors.Wrap(err)
+		}
+		data.NewMounts = append(data.NewMounts, mntReq)
 	}
+	return nil
+}
+
+// resolveMountOwnerApp turns "this mount reaches the directory of app X" into
+// the app itself, having first established that the caller may have it.
+//
+// The grant is everything in that app's directory, so it is checked against that
+// app rather than against the project: holding write somewhere else in the
+// project is not the same as being allowed at this app's data.
+func (uc *UC) resolveMountOwnerApp(
+	ctx context.Context,
+	db database.IDB,
+	auth *basedto.Auth,
+	app *entity.App,
+	src *appsettingsdto.MountSourceApp,
+	out *volumeservice.AppMountReq,
+) error {
+	if src == nil || src.AppID == "" || src.AppID == app.ID {
+		return nil // its own directory: the ordinary case, and nothing to check
+	}
+
+	owner, err := uc.appService.LoadApp(ctx, db, app.ProjectID, src.AppID, false, false,
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+		bunex.SelectRelation("Project",
+			bunex.SelectExcludeColumns(entity.ProjectDefaultExcludeColumns...),
+		),
+		bunex.SelectRelation("ProjectEnv"),
+	)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if owner.ProjectEnvID != app.ProjectEnvID {
+		return hperrors.NewArgumentInvalid("Mounts").WithExtraDetail(
+			"%s is in another environment: an app may only be given the storage of an app beside it", owner.Name)
+	}
+
+	hasPerm, err := uc.permissionManager.CheckAccess(ctx, db, auth, &permission.AppAccessCheck{
+		BaseAccessCheck: permission.BaseAccessCheck{Action: base.ActionTypeWrite},
+		AppID:           owner.ID,
+		ParentID:        owner.ParentID,
+		ProjectID:       owner.ProjectID,
+		ProjectEnv:      owner.ProjectEnvID,
+	})
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if !hasPerm {
+		return hperrors.Wrap(hperrors.ErrUnauthorized).WithExtraDetail(
+			"mounting the storage of %s requires Write permission on that app", owner.Name)
+	}
+
+	out.OwnerApp = owner
+	// One answer to whether this app may write there, and it is the one stated
+	// beside the app it belongs to.
+	out.ReadOnly = !src.Write
 	return nil
 }
 

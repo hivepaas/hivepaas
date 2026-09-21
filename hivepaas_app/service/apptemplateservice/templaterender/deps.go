@@ -47,6 +47,7 @@ func resolveDep(template, ref string, deps map[string]*DepBinding) (any, error) 
 // it needs.
 func DependencyParams(
 	owner string,
+	ownerAppKey string,
 	dep *templatemodel.Dependency,
 	depTemplate *templatemodel.Template,
 	ownerParams map[string]*Value,
@@ -62,7 +63,7 @@ func DependencyParams(
 		}
 	}
 
-	fixed, err := Substitute(dep.Params, ownerParamResolver(owner, ownerParams))
+	fixed, err := Substitute(dep.Params, ownerParamResolver(owner, ownerAppKey, ownerParams))
 	if err != nil {
 		return nil, err
 	}
@@ -73,11 +74,23 @@ func DependencyParams(
 	return params, nil
 }
 
-// ownerParamResolver answers only params.* of the declaring template, and refuses
-// a secret: a secret belongs to one app, and copying it into another's parameters
-// would store it twice, possibly in the clear.
-func ownerParamResolver(owner string, ownerParams map[string]*Value) Resolver {
+// ownerParamResolver answers params.* of the declaring template and app.key, and
+// refuses a secret: a secret belongs to one app, and copying it into another's
+// parameters would store it twice, possibly in the clear.
+//
+// app.key is the app being created from this template, which its dependencies
+// cannot name any other way - a dependency template is written without knowing
+// that an owner exists. It is what a dependency asked to work on its owner's
+// storage is given, and it is known before either app exists because the key
+// comes from the name.
+func ownerParamResolver(owner, ownerAppKey string, ownerParams map[string]*Value) Resolver {
 	return func(ref string) (any, bool, error) {
+		if ref == ownerAppKeyRef {
+			if ownerAppKey == "" {
+				return nil, false, undefinedPlaceholder(owner, ref)
+			}
+			return ownerAppKey, false, nil
+		}
 		name, isParam := strings.CutPrefix(ref, "params.")
 		value, found := ownerParams[name]
 		if !isParam || !found {
@@ -93,6 +106,10 @@ func ownerParamResolver(owner string, ownerParams map[string]*Value) Resolver {
 		return value.Value, false, nil
 	}
 }
+
+// ownerAppKeyRef is how a dependency's parameters name the app they are created
+// for.
+const ownerAppKeyRef = "app.key"
 
 // KindCategory is the kind a rendered document declares, empty when it declares
 // none.

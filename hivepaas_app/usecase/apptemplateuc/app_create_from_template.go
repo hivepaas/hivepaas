@@ -14,6 +14,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
@@ -55,6 +56,9 @@ func (uc *UC) CreateAppFromTemplate(
 		return nil, hperrors.Wrap(err)
 	}
 	if err = uc.checkCapabilities(ctx, auth, apps); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if err = uc.checkSharedMounts(ctx, auth, req, apps); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	if err = uc.checkPublishedPorts(ctx, apps); err != nil {
@@ -284,6 +288,13 @@ type appToProvision struct {
 	logicalParentID string
 	rendered        *apptemplateservice.RenderResp
 	links           appTemplateLinks
+}
+
+// key is the name this app will answer to on the project's network, and the
+// directory its storage gets inside a volume. It is decided by the name, so it
+// is known before the app exists.
+func (a *appToProvision) key() string {
+	return projecthelper.CalcAppKey(a.name)
 }
 
 // appTemplateLinks are what an app's binding records about the other apps of the

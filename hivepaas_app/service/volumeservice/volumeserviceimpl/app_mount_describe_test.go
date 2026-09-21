@@ -1,0 +1,80 @@
+package volumeserviceimpl
+
+import (
+	"testing"
+
+	"github.com/moby/moby/api/types/mount"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+)
+
+// The screen has to be able to say "the files of postgres" where the service
+// spec says only a path.
+func TestDescribeAppMountNamesTheOwner(t *testing.T) {
+	app := mountTestApp() // project shop, env prod, app web
+	volumes := []*entity.Setting{
+		scopedVolume(t, "vol-1", "hp-vol-1", base.ObjectScopeProject, &entity.ClusterVolume{Managed: true}),
+	}
+
+	cases := map[string]struct {
+		subpath string
+		wantKey string
+		wantOwn bool
+		wantSub string
+	}{
+		"its own directory":             {"prod/web", "web", true, ""},
+		"below its own directory":       {"prod/web/uploads", "web", true, "uploads"},
+		"another app's directory":       {"prod/postgres", "postgres", false, ""},
+		"below another app's directory": {"prod/postgres/pgdata", "postgres", false, "pgdata"},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			mnt := &mount.Mount{
+				Type: mount.TypeVolume, Source: "hp-vol-1", Target: "/data",
+				VolumeOptions: &mount.VolumeOptions{Subpath: tc.subpath},
+			}
+
+			desc := describeAppMount(app, mnt, volumes)
+
+			assert.Equal(t, tc.wantKey, desc.AppKey)
+			assert.Equal(t, tc.wantOwn, desc.Own)
+			assert.Equal(t, tc.wantSub, desc.Subpath)
+		})
+	}
+}
+
+// A managed local volume reaches docker as a bind, and the app that owns the
+// directory has to be readable out of the host path just the same.
+func TestDescribeAppMountReadsABind(t *testing.T) {
+	app := mountTestApp()
+	volumes := []*entity.Setting{clusterVolumeSetting(t, "vol-1", "/srv/data")}
+
+	desc := describeAppMount(app, &mount.Mount{
+		Type: mount.TypeBind, Source: "/srv/data/prod/postgres", Target: "/data",
+	}, volumes)
+
+	assert.Equal(t, "postgres", desc.AppKey)
+	assert.False(t, desc.Own)
+}
+
+// A volume mounted whole, or one this scope knows nothing about, is nobody's
+// directory - and saying so is what keeps the screen from inventing an owner.
+func TestDescribeAppMountLeavesTheUnknownUnnamed(t *testing.T) {
+	app := mountTestApp()
+	volumes := []*entity.Setting{clusterVolumeSetting(t, "vol-1", "/srv/data")}
+
+	cases := map[string]mount.Mount{
+		"the volume root":             {Type: mount.TypeBind, Source: "/srv/data", Target: "/data"},
+		"a bind nothing accounts for": {Type: mount.TypeBind, Source: "/mnt/elsewhere", Target: "/data"},
+		"a volume with no subpath":    {Type: mount.TypeVolume, Source: "hp-vol-1", Target: "/data"},
+	}
+	for name, mnt := range cases {
+		t.Run(name, func(t *testing.T) {
+			desc := describeAppMount(app, &mnt, volumes)
+			assert.Empty(t, desc.AppKey)
+			assert.False(t, desc.Own)
+		})
+	}
+}

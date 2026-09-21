@@ -69,6 +69,14 @@ const (
 	AppSystemEnvVarSecret = "HIVEPAAS_SECRET" //nolint:gosec // G101: env name
 	AppSystemEnvVarBucket = "HIVEPAAS_BUCKET"
 	AppSystemEnvVarRegion = "HIVEPAAS_REGION"
+
+	// How a cache is tuned, for the app's own container to read. These are not
+	// credentials and no other app has any use for them, so unlike the password
+	// they are not shared - they exist so that the cache settings on the App Kind
+	// screen reach the server instead of only being recorded.
+	AppSystemEnvVarMaxMemory       = "HIVEPAAS_MAX_MEMORY"
+	AppSystemEnvVarEvictionRule    = "HIVEPAAS_EVICTION_RULE"
+	AppSystemEnvVarPersistenceMode = "HIVEPAAS_PERSISTENCE_MODE"
 )
 
 // AppCommonSharedEnvVars are shared by every app, whatever its kind.
@@ -114,6 +122,10 @@ var (
 			AppSystemEnvVarSecret:       {},
 			AppSystemEnvVarBucket:       {},
 			AppSystemEnvVarRegion:       {},
+
+			AppSystemEnvVarMaxMemory:       {},
+			AppSystemEnvVarEvictionRule:    {},
+			AppSystemEnvVarPersistenceMode: {},
 		}
 		maps.Copy(theMap, mapProjectUnallowedVar)
 		return theMap

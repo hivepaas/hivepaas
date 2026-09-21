@@ -9,9 +9,16 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -148,4 +155,133 @@ func TestApplyAppServiceSettingsRestoresManagedConstraints(t *testing.T) {
 	assert.True(t, placement.reqs[0].SkipSavingToDocker,
 		"placementservice must mutate this spec, not save a second one")
 	assert.Equal(t, data.App, placement.reqs[0].App)
+}
+
+// ownerLookup answers the two questions resolving an owner asks: which app the
+// mount names, and whether the caller may have its data.
+type ownerLookupAppService struct {
+	appservice.Service
+	apps map[string]*entity.App
+}
+
+func (f *ownerLookupAppService) LoadApp(
+	_ context.Context, _ database.IDB, _, appID string, _, _ bool, _ ...bunex.SelectQueryOption,
+) (*entity.App, error) {
+	app, found := f.apps[appID]
+	if !found {
+		return nil, hperrors.NewNotFound("App")
+	}
+	return app, nil
+}
+
+type answeringPermissionManager struct {
+	permission.Manager
+	allow   bool
+	checked []permission.AccessCheck
+}
+
+func (f *answeringPermissionManager) CheckAccess(
+	_ context.Context, _ database.IDB, _ *basedto.Auth, check permission.AccessCheck,
+) (bool, error) {
+	f.checked = append(f.checked, check)
+	return f.allow, nil
+}
+
+func ownerResolutionTest(allow bool, owner *entity.App) (*UC, *answeringPermissionManager) {
+	perms := &answeringPermissionManager{allow: allow}
+	return &UC{
+		appService:        &ownerLookupAppService{apps: map[string]*entity.App{owner.ID: owner}},
+		permissionManager: perms,
+	}, perms
+}
+
+func mountingApp() *entity.App {
+	return &entity.App{ID: "app-1", Key: "files", ProjectID: "proj-1", ProjectEnvID: "env-1"}
+}
+
+func ownerApp() *entity.App {
+	return &entity.App{
+		ID: "app-2", Key: "postgres", Name: "Postgres", ProjectID: "proj-1", ProjectEnvID: "env-1",
+		ProjectEnv: &entity.ProjectEnv{Key: "prod"},
+	}
+}
+
+// The grant is everything in the owner's directory, so it is checked against the
+// owner rather than against the project.
+func TestResolveMountOwnerAppChecksTheOwner(t *testing.T) {
+	owner := ownerApp()
+	uc, perms := ownerResolutionTest(true, owner)
+	out := &volumeservice.AppMountReq{}
+
+	err := uc.resolveMountOwnerApp(context.Background(), nil, nil, mountingApp(),
+		&appsettingsdto.MountSourceApp{AppID: owner.ID, Write: true}, out)
+
+	assert.NoError(t, err)
+	assert.Equal(t, owner, out.OwnerApp)
+	assert.False(t, out.ReadOnly, "write was asked for")
+	assert.Len(t, perms.checked, 1)
+	appCheck, ok := perms.checked[0].(*permission.AppAccessCheck)
+	assert.True(t, ok)
+	assert.Equal(t, owner.ID, appCheck.AppID)
+	assert.Equal(t, base.ActionTypeWrite, appCheck.Action)
+}
+
+// Seeing another app's files is one decision and changing them is another: a
+// request that says nothing has only asked for the first.
+func TestResolveMountOwnerAppIsReadOnlyUnlessWriteIsAsked(t *testing.T) {
+	owner := ownerApp()
+	uc, _ := ownerResolutionTest(true, owner)
+	out := &volumeservice.AppMountReq{ReadOnly: false}
+
+	err := uc.resolveMountOwnerApp(context.Background(), nil, nil, mountingApp(),
+		&appsettingsdto.MountSourceApp{AppID: owner.ID}, out)
+
+	assert.NoError(t, err)
+	assert.True(t, out.ReadOnly, "the mount's own readOnly does not override the answer given here")
+}
+
+func TestResolveMountOwnerAppRefusesWithoutPermission(t *testing.T) {
+	owner := ownerApp()
+	uc, _ := ownerResolutionTest(false, owner)
+	out := &volumeservice.AppMountReq{}
+
+	err := uc.resolveMountOwnerApp(context.Background(), nil, nil, mountingApp(),
+		&appsettingsdto.MountSourceApp{AppID: owner.ID}, out)
+
+	assert.ErrorIs(t, err, hperrors.ErrUnauthorized)
+	assert.Nil(t, out.OwnerApp)
+}
+
+// An app may only be given the storage of an app beside it: another environment
+// is a different conversation, and the data there is not this one's.
+func TestResolveMountOwnerAppRefusesAnotherEnvironment(t *testing.T) {
+	owner := ownerApp()
+	owner.ProjectEnvID = "env-2"
+	uc, perms := ownerResolutionTest(true, owner)
+	out := &volumeservice.AppMountReq{}
+
+	err := uc.resolveMountOwnerApp(context.Background(), nil, nil, mountingApp(),
+		&appsettingsdto.MountSourceApp{AppID: owner.ID}, out)
+
+	assert.Error(t, err)
+	assert.Empty(t, perms.checked, "refused before anything is asked of the permission manager")
+}
+
+// Its own directory is the ordinary case, and asks nobody anything.
+func TestResolveMountOwnerAppIgnoresItself(t *testing.T) {
+	app := mountingApp()
+	uc, perms := ownerResolutionTest(true, ownerApp())
+	out := &volumeservice.AppMountReq{}
+
+	for name, src := range map[string]*appsettingsdto.MountSourceApp{
+		"no source app": nil,
+		"an empty id":   {AppID: ""},
+		"its own id":    {AppID: app.ID},
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.NoError(t, uc.resolveMountOwnerApp(context.Background(), nil, nil, app, src, out))
+			assert.Nil(t, out.OwnerApp)
+			assert.Empty(t, perms.checked)
+		})
+	}
 }

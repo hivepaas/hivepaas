@@ -109,6 +109,9 @@ type AppKindWebappReq struct {
 }
 
 func (req *AppKindWebappReq) ToEntity() *entity.AppKindWebapp {
+	if req == nil {
+		return nil
+	}
 	return &entity.AppKindWebapp{}
 }
 
@@ -132,6 +135,9 @@ type AppKindDatabaseReq struct {
 }
 
 func (req *AppKindDatabaseReq) ToEntity() *entity.AppKindDatabase {
+	if req == nil {
+		return nil
+	}
 	return &entity.AppKindDatabase{
 		DbName:       req.DbName,
 		Username:     req.Username,
@@ -166,6 +172,9 @@ type AppKindCacheReq struct {
 }
 
 func (req *AppKindCacheReq) ToEntity() *entity.AppKindCache {
+	if req == nil {
+		return nil
+	}
 	return &entity.AppKindCache{
 		Password:        entity.NewEncryptedField(req.Password),
 		MaxMemory:       req.MaxMemory,

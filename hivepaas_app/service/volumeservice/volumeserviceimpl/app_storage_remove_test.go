@@ -87,14 +87,30 @@ func TestStorageTargetMountsTheVolumeWhole(t *testing.T) {
 		VolumeOptions: &mount.VolumeOptions{Subpath: "shop/dev/blog"},
 	}
 
-	target, ok := appStorageTarget(&appMount, nil)
+	volumes := []*entity.Setting{clusterVolumeSetting(t, "vol-1", "/srv/data")}
+
+	target, ok := appStorageTarget(&appMount, volumes)
 
 	assert.True(t, ok)
 	assert.Equal(t, "shop/dev/blog", target.subpath)
+	assert.Equal(t, volumes[0], target.volume, "the target carries the volume whose directory this is")
 	assert.Equal(t, volumeHelperTarget, target.mount.Target)
 	assert.False(t, target.mount.ReadOnly, "the helper has to be able to delete")
 	assert.Empty(t, target.mount.VolumeOptions.Subpath)
 	assert.Equal(t, "shop/dev/blog", appMount.VolumeOptions.Subpath, "the app's own mount is untouched")
+}
+
+// Without the volume there is no scope, and without a scope nothing can say
+// whose directory this is - so it is nobody's to delete.
+func TestStorageTargetRefusesAVolumeTheScopeDoesNotAccountFor(t *testing.T) {
+	appMount := mount.Mount{
+		Type: mount.TypeVolume, Source: "vol-gone", Target: "/var/lib/data",
+		VolumeOptions: &mount.VolumeOptions{Subpath: "shop/dev/blog"},
+	}
+
+	_, ok := appStorageTarget(&appMount, []*entity.Setting{clusterVolumeSetting(t, "vol-1", "/srv/data")})
+
+	assert.False(t, ok)
 }
 
 // A `local` volume made of a host directory reaches docker as a plain bind, so
@@ -196,6 +212,7 @@ func clusterVolumeSetting(t *testing.T, name, device string) *entity.Setting {
 		RefID: name,
 		Name:  name,
 		Type:  base.SettingTypeClusterVolume,
+		Scope: base.ObjectScopeProject,
 		Data:  string(data),
 	}
 }
@@ -206,4 +223,45 @@ func unmanage(t *testing.T, setting *entity.Setting) {
 	assert.NoError(t, err)
 	vol.Managed = false
 	setting.Data = string(gofn.Must(json.Marshal(vol)))
+}
+
+// The decision the deletion turns on, with nothing else in the way: an app that
+// was given the files of the database beside it takes only its own with it.
+func TestOwnStorageTargetsLeavesAnotherAppsDirectoryAlone(t *testing.T) {
+	volumes := []*entity.Setting{clusterVolumeSetting(t, "vol-1", "/srv/data")}
+	app := mountTestApp() // project shop, env prod, app web
+
+	targets := ownStorageTargets(app, []mount.Mount{
+		// Its own, as a bind - which is what a managed local volume becomes.
+		{Type: mount.TypeBind, Source: "/srv/data/prod/web", Target: "/usr/share/nginx/html"},
+		// The database it was put there to look at.
+		{Type: mount.TypeBind, Source: "/srv/data/prod/postgres", Target: "/srv/postgres", ReadOnly: true},
+		// The same thing as a volume mount, for a volume that stays one.
+		{Type: mount.TypeVolume, Source: "vol-1", Target: "/srv/pg2",
+			VolumeOptions: &mount.VolumeOptions{Subpath: "prod/postgres"}},
+		// Its own again, deeper in.
+		{Type: mount.TypeVolume, Source: "vol-1", Target: "/var/cache",
+			VolumeOptions: &mount.VolumeOptions{Subpath: "prod/web/cache"}},
+	}, volumes)
+
+	subpaths := make([]string, 0, len(targets))
+	for _, target := range targets {
+		subpaths = append(subpaths, target.subpath)
+	}
+	assert.Equal(t, []string{"prod/web", "prod/web/cache"}, subpaths)
+}
+
+// Nothing to delete is not an error, and neither is a mount this app may see but
+// does not own.
+func TestOwnStorageTargetsIsEmptyWhenNothingIsTheApps(t *testing.T) {
+	volumes := []*entity.Setting{clusterVolumeSetting(t, "vol-1", "/srv/data")}
+
+	targets := ownStorageTargets(mountTestApp(), []mount.Mount{
+		{Type: mount.TypeBind, Source: "/srv/data/prod/postgres", Target: "/srv/postgres"},
+		{Type: mount.TypeBind, Source: "/srv/data", Target: "/srv/all"},
+		{Type: mount.TypeBind, Source: "/mnt/elsewhere", Target: "/srv/other"},
+		{Type: mount.TypeTmpfs, Target: "/tmp"},
+	}, volumes)
+
+	assert.Empty(t, targets)
 }

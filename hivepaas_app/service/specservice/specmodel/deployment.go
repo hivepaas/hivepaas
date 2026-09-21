@@ -185,6 +185,20 @@ type Mount struct {
 	VolumeOptions  *VolumeOptions    `yaml:"volumeOptions,omitempty"`
 	ClusterOptions *VolumeOptions    `yaml:"clusterOptions,omitempty"`
 	TmpfsOptions   *TmpfsOptions     `yaml:"tmpfsOptions,omitempty"`
+	SourceApp      *MountSourceApp   `yaml:"sourceApp,omitempty"`
+}
+
+// MountSourceApp says the directory this mount reaches belongs to another app -
+// the files of the database a file manager was put there to work on. Absent is
+// the ordinary case: the app's own directory.
+type MountSourceApp struct {
+	// App is the key of an app in the same environment, as a `type: app`
+	// parameter of a template carries it.
+	App string `yaml:"app"`
+	// Write is absent for the ordinary case. Seeing another app's files is one
+	// decision and changing them is another, and a template that says nothing
+	// has only asked for the first.
+	Write bool `yaml:"write,omitempty"`
 }
 
 type BindOptions struct {

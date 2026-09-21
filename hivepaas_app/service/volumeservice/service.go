@@ -24,6 +24,15 @@ type Service interface {
 	// mounts to the service.
 	BuildAppMounts(ctx context.Context, db database.IDB, req *BuildAppMountsReq) (*BuildAppMountsResp, error)
 
+	// DescribeAppMounts says whose directory inside a volume each of an app's
+	// mounts reaches. It is the reverse of BuildAppMounts: what the service spec
+	// carries is a path, and this reads the app out of it again, so the settings
+	// screen can say "the files of postgres" where a path would say nothing.
+	//
+	// The answer is index-aligned with the mounts given.
+	DescribeAppMounts(ctx context.Context, db database.IDB, app *entity.App,
+		mounts []mount.Mount) ([]*AppMountDesc, error)
+
 	MakeSubDirInHost(ctx context.Context, baseDirInHost string, subpath string, requireBaseDirExist bool) error
 
 	// RemoveAppStorage deletes the directories an app kept its data in, inside the

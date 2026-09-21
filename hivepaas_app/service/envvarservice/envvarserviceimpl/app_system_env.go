@@ -188,8 +188,8 @@ func kindEnvVars(kindSettings *entity.AppKindSettings) ([]*envvarservice.EnvVar,
 		if err := kindSettings.Decrypt(); err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		// Only the password. A cache has no user to name - Redis and Valkey
-		// authenticate as the built-in `default` user, and Memcached has no
+		// Only the password is shared. A cache has no user to name - Redis and
+		// Valkey authenticate as the built-in `default` user, and Memcached has no
 		// accounts at all - no database to select, and no root account whose
 		// password would have to be kept out of other apps' reach.
 		//
@@ -197,12 +197,38 @@ func kindEnvVars(kindSettings *entity.AppKindSettings) ([]*envvarservice.EnvVar,
 		// how a cache with authentication turned off looks: an app referring to
 		// ${cache.HIVEPAAS_PASSWORD} then reads an empty value rather than
 		// failing on a variable that does not exist.
+		//
+		// The three that follow are the cache's own tuning. They are published for
+		// the app itself and for nobody else, so that what the App Kind screen says
+		// about memory, eviction and persistence is what the server is started with
+		// - a template's command reads them, and editing them here restarts the app
+		// with the new ones. An empty value is passed through as empty: it means
+		// "whatever the engine's own default is", which the command decides.
+		//
+		// The ceiling goes out as a plain byte count rather than "256mb", because
+		// what reads it is a shell: Redis takes bytes as they are, and an engine
+		// that wants another unit - memcached counts in megabytes - can divide.
+		cache := kindSettings.Cache
 		return []*envvarservice.EnvVar{
-			sharedEnv(base.AppSystemEnvVarPassword, gofn.Must(kindSettings.Cache.Password.GetPlain())),
+			sharedEnv(base.AppSystemEnvVarPassword, gofn.Must(cache.Password.GetPlain())),
+			ownEnv(base.AppSystemEnvVarMaxMemory, strconv.FormatInt(int64(cache.MaxMemory), 10)),
+			ownEnv(base.AppSystemEnvVarEvictionRule, cache.EvictionRule),
+			ownEnv(base.AppSystemEnvVarPersistenceMode, cache.PersistenceMode),
 		}, nil
 
 	default:
 		return nil, nil
+	}
+}
+
+// ownEnv is a variable the app reads itself and no other app may name.
+func ownEnv(key, value string) *envvarservice.EnvVar {
+	return &envvarservice.EnvVar{
+		EnvVar: &entity.EnvVar{
+			Key:      key,
+			Value:    value,
+			IsShared: false,
+		},
 	}
 }
 

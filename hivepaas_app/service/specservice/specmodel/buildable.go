@@ -65,6 +65,10 @@ const (
 // screen takes as well.
 var capabilityNamePattern = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,31}$`)
 
+// mountSourceAppKeyPattern is the shape projecthelper.CalcAppKey produces, which
+// is what a `type: app` parameter of a template carries.
+var mountSourceAppKeyPattern = regexp.MustCompile(`^[a-z0-9_]{1,100}$`)
+
 // publishedProtocols and publishModes are what docker takes for a published
 // port. An empty protocol is tcp and an empty mode is ingress, which is why both
 // lists leave the empty value out and the check allows it separately.
@@ -374,7 +378,10 @@ func checkStorage(s *Storage) error {
 		if m.Type != mount.TypeVolume {
 			return unsupported(path + "type")
 		}
-		if err := onlyFields(path, &m, "type", "source", "readOnly", "volumeOptions"); err != nil {
+		if err := onlyFields(path, &m, "type", "source", "readOnly", "volumeOptions", "sourceApp"); err != nil {
+			return err
+		}
+		if err := checkMountSourceApp(path, m.SourceApp); err != nil {
 			return err
 		}
 		if m.VolumeOptions != nil {
@@ -387,6 +394,26 @@ func checkStorage(s *Storage) error {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+// checkMountSourceApp allows a mount to name the app whose directory it reaches.
+//
+// It is the one thing a template can ask for that reaches outside the app being
+// created, so what it may say is narrow: an app of this environment, by key, and
+// whether it may write there. Whether that app exists and whether the person
+// creating this one may have its data are questions for provisioning, which has
+// the database and the session; nothing here can answer either.
+func checkMountSourceApp(path string, src *MountSourceApp) error {
+	if src == nil {
+		return nil
+	}
+	if err := onlyFields(path+"sourceApp.", src, "app", "write"); err != nil {
+		return err
+	}
+	if !mountSourceAppKeyPattern.MatchString(src.App) {
+		return unsupported(path + "sourceApp.app")
 	}
 	return nil
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/executil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
@@ -179,13 +180,17 @@ func (s *service) buildStorage(ctx context.Context, state *buildState) error {
 			options.Subpath = m.VolumeOptions.Subpath
 			options.NoCopy = m.VolumeOptions.NoCopy
 		}
-		requests = append(requests, &volumeservice.AppMountReq{
+		req := &volumeservice.AppMountReq{
 			Type:          m.Type,
 			Source:        m.Source,
 			Target:        target,
 			ReadOnly:      m.ReadOnly,
 			VolumeOptions: options,
-		})
+		}
+		if err := s.applyMountSourceApp(ctx, state, m.SourceApp, req); err != nil {
+			return hperrors.Wrap(err)
+		}
+		requests = append(requests, req)
 	}
 
 	built, err := s.volumeService.BuildAppMounts(ctx, state.db, &volumeservice.BuildAppMountsReq{
@@ -196,6 +201,47 @@ func (s *service) buildStorage(ctx context.Context, state *buildState) error {
 		return hperrors.Wrap(err)
 	}
 	state.req.Spec.TaskTemplate.ContainerSpec.Mounts = built.Mounts
+	return nil
+}
+
+// applyMountSourceApp points a mount at the directory of another app.
+//
+// The app is named by key, because that is what a template's `type: app`
+// parameter carries and what a person reading the spec can recognize. Whether
+// the caller may have that app's data was settled before provisioning started -
+// this only has to find the app, and refuse a name that is not an app of this
+// environment rather than quietly building the caller's own directory instead.
+func (s *service) applyMountSourceApp(
+	ctx context.Context,
+	state *buildState,
+	src *specmodel.MountSourceApp,
+	out *volumeservice.AppMountReq,
+) error {
+	app := state.req.App
+	if src == nil || src.App == "" || src.App == app.Key {
+		return nil
+	}
+
+	apps, _, err := s.appRepo.List(ctx, state.db, app.ProjectID, nil,
+		bunex.SelectWhere("app.project_env_id = ?", app.ProjectEnvID),
+		bunex.SelectWhere("app.key = ?", src.App),
+		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
+	)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	if len(apps) == 0 {
+		return hperrors.Wrap(hperrors.ErrAppTemplateInvalid).WithExtraDetail(
+			"this environment has no app called %q for %s to mount", src.App, out.Target)
+	}
+
+	owner := apps[0]
+	// The prefix is built from the project and the environment, which the row
+	// alone does not carry; both are this app's own, since the app was found in
+	// its environment.
+	owner.Project, owner.ProjectEnv = app.Project, app.ProjectEnv
+	out.OwnerApp = owner
+	out.ReadOnly = !src.Write
 	return nil
 }
 

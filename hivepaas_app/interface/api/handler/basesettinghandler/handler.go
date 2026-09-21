@@ -36,6 +36,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/sslprovideruc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systemcleanupuc"
@@ -69,6 +70,7 @@ type Handler struct {
 	ImageBuildUC           *imagebuildsettingsuc.UC
 	IMServiceUC            *imserviceuc.UC
 	LoggingUC              *logginguc.UC
+	RegistryUC             *registryuc.UC
 	NotificationUC         *notificationuc.UC
 	OAuthUC                *oauthuc.UC
 	PeriodicJobUC          *periodicjobuc.UC

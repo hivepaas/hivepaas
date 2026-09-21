@@ -172,6 +172,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/system/traefikuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/backuprepocleanupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/logginguc"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/sslrenewaluc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systembackupuc"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/systemcleanupuc"
@@ -301,6 +302,7 @@ var Provides = []any{
 	imagebuildsettingsuc.New,
 	imserviceuc.New,
 	logginguc.New,
+	registryuc.New,
 	networkuc.New,
 	nodeuc.New,
 	notificationuc.New,

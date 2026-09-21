@@ -38985,6 +38985,240 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/system/settings/registry" : {
+      "get" : {
+        "description" : "Gets registry settings",
+        "operationId" : "getSystemRegistrySettings",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_registrydto.GetRegistrySettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Gets registry settings",
+        "tags" : [ "system_settings" ]
+      },
+      "put" : {
+        "description" : "Updates registry settings",
+        "operationId" : "updateSystemRegistrySettings",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/systemsettings_registrydto.UpdateRegistrySettingsReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_registrydto.UpdateRegistrySettingsResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Updates registry settings",
+        "tags" : [ "system_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/settings/registry/probe-domain" : {
+      "post" : {
+        "description" : "Reports whether a proxy answers instead of the registry, which is advisory",
+        "operationId" : "probeSystemRegistryDomain",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/systemsettings_registrydto.ProbeDomainReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_registrydto.ProbeDomainResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Checks what answers at the registry's address",
+        "tags" : [ "system_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/settings/registry/push-check" : {
+      "post" : {
+        "description" : "Reports whether anything in front of the registry limits request bodies",
+        "operationId" : "checkSystemRegistryPush",
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/systemsettings_registrydto.PushCheckReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_registrydto.PushCheckResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Uploads a large blob to the registry and throws it away",
+        "tags" : [ "system_settings" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/system/settings/registry/rotate-credential" : {
+      "post" : {
+        "description" : "The previous password keeps working until the grace period ends",
+        "operationId" : "rotateSystemRegistryCredential",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/systemsettings_registrydto.RotateCredentialResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Issues a new registry password",
+        "tags" : [ "system_settings" ]
+      }
+    },
     "/system/settings/ssl-renewal" : {
       "get" : {
         "description" : "Gets SSL renewal settings",
@@ -41705,25 +41939,15 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
-          "ModeAppend" : "a: append-only",
-          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
-          "ModeDevice" : "D: device file",
-          "ModeDir" : "d: is a directory",
-          "ModeExclusive" : "l: exclusive use",
-          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
-          "ModeNamedPipe" : "p: named pipe (FIFO)",
           "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
-          "ModeSocket" : "S: Unix domain socket",
-          "ModeSticky" : "t: sticky",
-          "ModeSymlink" : "L: symbolic link",
-          "ModeTemporary" : "T: temporary file; Plan 9 only"
+          "ModeSticky" : "t: sticky"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -58486,6 +58710,341 @@
         "required" : [ "cpuLimit", "maxDiskUsagePercent", "memoryLimit", "retention", "volume", "volumeSubpath" ],
         "type" : "object"
       },
+      "systemsettings_registrydto.CleanupReq" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "keepDays" : {
+            "type" : "integer"
+          },
+          "keepLast" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "enabled", "keepDays", "keepLast" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.CleanupResp" : {
+        "properties" : {
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "keepDays" : {
+            "type" : "integer"
+          },
+          "keepLast" : {
+            "type" : "integer"
+          },
+          "mode" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "enabled", "keepDays", "keepLast", "mode" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.CredentialRotationRes" : {
+        "properties" : {
+          "graceEndsAt" : {
+            "type" : "string"
+          },
+          "rotatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "graceEndsAt", "rotatedAt" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.DomainProbeResp" : {
+        "properties" : {
+          "evidence" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "proxied" : {
+            "type" : "boolean"
+          },
+          "reached" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "evidence", "proxied", "reached" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.GetRegistrySettingsResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.RegistrySettingsResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.ObjectIDReq" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.ProbeDomainReq" : {
+        "properties" : {
+          "domain" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "domain" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.ProbeDomainResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.DomainProbeResp"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.PushCheckDataRes" : {
+        "properties" : {
+          "detail" : {
+            "type" : "string"
+          },
+          "elapsedMs" : {
+            "type" : "integer"
+          },
+          "ok" : {
+            "type" : "boolean"
+          },
+          "statusCode" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "detail", "elapsedMs", "ok", "statusCode" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.PushCheckReq" : {
+        "properties" : {
+          "bytes" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "bytes" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.PushCheckResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.PushCheckDataRes"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.RegistrySettingsResp" : {
+        "properties" : {
+          "app" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "cleanup" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.CleanupResp"
+          },
+          "createdAt" : {
+            "type" : "string"
+          },
+          "credential" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "credentialRotation" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.CredentialRotationRes"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "domain" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "expireAt" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "inherited" : {
+            "type" : "boolean"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "managed" : {
+            "type" : "boolean"
+          },
+          "memoryLimit" : {
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "registryStatus" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.RegistryStatusResp"
+          },
+          "size" : {
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "storage" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.StorageResp"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "cleanup", "createdAt", "credential", "credentialRotation", "default", "domain", "enabled", "expireAt", "id", "inheritable", "inherited", "kind", "managed", "memoryLimit", "name", "registryStatus", "size", "status", "storage", "type", "updateVer", "updatedAt" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.RegistryStatusResp" : {
+        "properties" : {
+          "appId" : {
+            "type" : "string"
+          },
+          "provisioned" : {
+            "type" : "boolean"
+          },
+          "reachable" : {
+            "type" : "boolean"
+          },
+          "repositories" : {
+            "type" : "integer"
+          },
+          "storedBytes" : {
+            "type" : "integer"
+          },
+          "unreachable" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appId", "provisioned", "reachable", "repositories", "storedBytes", "unreachable" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.RotateCredentialDataRes" : {
+        "properties" : {
+          "graceEndsAt" : {
+            "description" : "GraceEndsAt is when the previous password stops working, which is the date\nevery app has to be redeployed by.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "graceEndsAt" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.RotateCredentialResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.RotateCredentialDataRes"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.StorageReq" : {
+        "properties" : {
+          "cloudStorage" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.ObjectIDReq"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "volume" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.ObjectIDReq"
+          }
+        },
+        "required" : [ "cloudStorage", "type", "volume" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.StorageResp" : {
+        "properties" : {
+          "cloudStorage" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "volume" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          }
+        },
+        "required" : [ "cloudStorage", "type", "volume" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.UpdateRegistrySettingsReq" : {
+        "properties" : {
+          "cleanup" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.CleanupReq"
+          },
+          "default" : {
+            "type" : "boolean"
+          },
+          "domain" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "inheritable" : {
+            "type" : "boolean"
+          },
+          "memoryLimit" : {
+            "description" : "MemoryLimit is written the way every other size in HivePaaS is - \"512mb\" -\nand decoded into the same type the setting stores.",
+            "type" : "integer"
+          },
+          "storage" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.StorageReq"
+          },
+          "updateVer" : {
+            "type" : "integer"
+          }
+        },
+        "required" : [ "cleanup", "default", "domain", "enabled", "inheritable", "memoryLimit", "storage", "updateVer" ],
+        "type" : "object"
+      },
+      "systemsettings_registrydto.UpdateRegistrySettingsResp" : {
+        "properties" : {
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "meta" ],
+        "type" : "object"
+      },
       "systemsettings_sslrenewaldto.ExecuteSSLRenewalDataResp" : {
         "properties" : {
           "task" : {
@@ -60526,9 +61085,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

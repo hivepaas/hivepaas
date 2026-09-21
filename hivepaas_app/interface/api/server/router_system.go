@@ -83,6 +83,16 @@ func (s *HTTPServer) registerSystemRoutes(apiGroup *gin.RouterGroup) {
 		loggingGroup.PUT("", systemSettingsHandler.UpdateLoggingSettings)
 	}
 
+	// Registry settings
+	{
+		registryGroup := systemSettingGroup.Group("/registry")
+		registryGroup.GET("", systemSettingsHandler.GetRegistrySettings)
+		registryGroup.PUT("", systemSettingsHandler.UpdateRegistrySettings)
+		registryGroup.POST("/probe-domain", systemSettingsHandler.ProbeRegistryDomain)
+		registryGroup.POST("/push-check", systemSettingsHandler.CheckRegistryPush)
+		registryGroup.POST("/rotate-credential", systemSettingsHandler.RotateRegistryCredential)
+	}
+
 	_ = s.registerHivePaaSRoutes(systemGroup)
 	_ = s.registerTraefikRoutes(systemGroup)
 }

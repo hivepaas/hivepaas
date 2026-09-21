@@ -45,7 +45,7 @@ export const AppConfigKindSettingsFormSchema = z.object({
     port: z
         .number({ invalid_type_error: "Port is required" })
         .int()
-        .min(1, "Port must be at least 1")
+        .min(0, "Port must be at least 0")
         .max(65535, "Port must be at most 65535"),
     version: z.string().max(50, "Version must be at most 50 characters"),
     database: AppConfigKindSettingsDatabaseFormSchema.optional(),

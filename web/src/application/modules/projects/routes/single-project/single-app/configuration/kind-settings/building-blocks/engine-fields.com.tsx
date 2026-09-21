@@ -1,10 +1,13 @@
+import { useMemo } from "react";
+
 import { Field, FieldError, FieldGroup, Input } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
-import { useController, useFormContext } from "react-hook-form";
+import { useController, useFormContext, useWatch } from "react-hook-form";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 
-import { InfoBlock, LabelWithInfo } from "@application/shared/components";
+import { EditableCombobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 
+import { APP_KIND_ENGINE_SUGGESTIONS } from "../constants";
 import { type AppConfigKindSettingsFormSchemaInput, type AppConfigKindSettingsFormSchemaOutput } from "../schemas";
 
 interface Props {
@@ -17,6 +20,8 @@ export function EngineFields({ readOnly = false }: Props) {
         unknown,
         AppConfigKindSettingsFormSchemaOutput
     >();
+
+    const category = useWatch({ control, name: "category" });
 
     const {
         field: engine,
@@ -33,6 +38,23 @@ export function EngineFields({ readOnly = false }: Props) {
         fieldState: { invalid: isPortInvalid, error: portError },
     } = useController({ control, name: "port" });
 
+    const engineSuggestions = useMemo(() => {
+        return (APP_KIND_ENGINE_SUGGESTIONS as Record<string, string[]>)[category] ?? [];
+    }, [category]);
+
+    const enginePlaceholder = useMemo(() => {
+        switch (category) {
+            case "database":
+                return "e.g. postgres, mysql, mongodb";
+            case "cache":
+                return "e.g. redis, memcached, valkey";
+            case "storage":
+                return "e.g. minio, seaweedfs, s3-compatible";
+            default:
+                return "e.g. nodejs, python, nextjs, go";
+        }
+    }, [category]);
+
     return (
         <>
             <InfoBlock
@@ -47,14 +69,14 @@ export function EngineFields({ readOnly = false }: Props) {
             >
                 <FieldGroup>
                     <Field>
-                        <Input
-                            {...engine}
+                        <EditableCombobox
+                            options={engineSuggestions}
                             value={engine.value}
                             onChange={engine.onChange}
-                            placeholder="e.g. postgres, redis, node"
+                            placeholder={enginePlaceholder}
                             aria-invalid={isEngineInvalid}
-                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                             disabled={readOnly}
+                            className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                         />
                         <FieldError errors={[engineError]} />
                     </Field>
@@ -91,7 +113,6 @@ export function EngineFields({ readOnly = false }: Props) {
                 title={
                     <LabelWithInfo
                         label="Container Port"
-                        isRequired
                         content="The primary network port exposed by the application container. Changing this will automatically synchronize with the app's routing settings."
                     />
                 }
@@ -103,13 +124,13 @@ export function EngineFields({ readOnly = false }: Props) {
                             ref={port.ref}
                             onBlur={port.onBlur}
                             disabled={readOnly || port.disabled}
-                            value={port.value}
+                            value={port.value ? port.value : undefined}
                             onValueChange={val => {
                                 if (readOnly) return;
                                 port.onChange(val ?? 0);
                             }}
                             useGrouping={false}
-                            placeholder="8080"
+                            placeholder="e.g. 80, 8080, 5432"
                             className="max-w-[140px]"
                             aria-invalid={isPortInvalid}
                         />

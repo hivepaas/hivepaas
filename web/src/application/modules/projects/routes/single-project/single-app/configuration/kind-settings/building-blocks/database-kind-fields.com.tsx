@@ -114,7 +114,7 @@ export function DatabaseKindFields({ readOnly = false }: Props) {
                 title={
                     <LabelWithInfo
                         label="User Password"
-                        content="Password for the user. Leave as masked placeholder (••••••••) to keep existing password unchanged."
+                        content="Password for the user. Leave empty if unconfigured, or keep existing masked value unchanged."
                     />
                 }
             >
@@ -124,7 +124,6 @@ export function DatabaseKindFields({ readOnly = false }: Props) {
                             {...password}
                             value={password.value ?? ""}
                             onChange={password.onChange}
-                            placeholder="••••••••"
                             aria-invalid={isPasswordInvalid}
                             className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                             disabled={readOnly}
@@ -139,7 +138,7 @@ export function DatabaseKindFields({ readOnly = false }: Props) {
                 title={
                     <LabelWithInfo
                         label="Root Password"
-                        content="Administrative / root superuser password (e.g. for PostgreSQL postgres user or MySQL root user)."
+                        content="Administrative / root superuser password (e.g. for PostgreSQL postgres user or MySQL root user). Leave empty if unconfigured, or keep existing masked value unchanged."
                     />
                 }
             >
@@ -149,7 +148,6 @@ export function DatabaseKindFields({ readOnly = false }: Props) {
                             {...rootPassword}
                             value={rootPassword.value ?? ""}
                             onChange={rootPassword.onChange}
-                            placeholder="••••••••"
                             aria-invalid={isRootPasswordInvalid}
                             className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                             disabled={readOnly}

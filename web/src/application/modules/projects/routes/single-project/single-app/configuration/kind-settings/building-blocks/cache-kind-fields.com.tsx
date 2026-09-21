@@ -15,7 +15,7 @@ interface Props {
     readOnly?: boolean;
 }
 
-const MEMORY_PRESETS = ["256mb", "512mb", "1gb", "2gb", "4gb"];
+const MEMORY_PRESETS = ["128mb", "256mb", "512mb", "1gb", "2gb", "4gb", "8gb"];
 
 const EVICTION_RULES = [
     { value: "noeviction", label: "noeviction", description: "Return errors when memory limit is reached" },
@@ -73,7 +73,7 @@ export function CacheKindFields({ readOnly = false }: Props) {
                 title={
                     <LabelWithInfo
                         label="Password / Token"
-                        content="Authentication password for the cache service (e.g. Redis requirepass). Leave as masked placeholder (••••••••) to keep existing password."
+                        content="Authentication password for the cache service (e.g. Redis requirepass). Leave empty if unconfigured, or keep existing masked value unchanged."
                     />
                 }
             >
@@ -83,7 +83,6 @@ export function CacheKindFields({ readOnly = false }: Props) {
                             {...password}
                             value={password.value ?? ""}
                             onChange={password.onChange}
-                            placeholder="••••••••"
                             aria-invalid={isPasswordInvalid}
                             className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                             disabled={readOnly}

@@ -81,7 +81,7 @@ function View({ children }: PropsWithChildren) {
     const sections: TabSection[] = useMemo(
         () => [
             {
-                title: "Deploy & Network",
+                title: "Deploy & Routing",
                 items: [
                     {
                         label: "General",
@@ -114,11 +114,6 @@ function View({ children }: PropsWithChildren) {
                             env,
                             appId,
                         ),
-                    },
-                    {
-                        label: "Networks",
-                        icon: Network,
-                        route: ROUTE.projects.single.apps.single.configuration.networks.$route(projectId, env, appId),
                     },
                 ],
             },
@@ -189,6 +184,11 @@ function View({ children }: PropsWithChildren) {
                         label: "Resources",
                         icon: Cpu,
                         route: ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, env, appId),
+                    },
+                    {
+                        label: "Networks",
+                        icon: Network,
+                        route: ROUTE.projects.single.apps.single.configuration.networks.$route(projectId, env, appId),
                     },
                 ],
             },

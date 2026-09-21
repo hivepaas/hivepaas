@@ -33,7 +33,7 @@ function mapDefaultValues(data?: AppKindSettings): SchemaInput {
         return {
             category: "webapp",
             engine: "",
-            port: 8080,
+            port: 0,
             version: "",
         };
     }
@@ -41,7 +41,7 @@ function mapDefaultValues(data?: AppKindSettings): SchemaInput {
     return {
         category: data.category,
         engine: data.engine,
-        port: data.port || 8080,
+        port: data.port,
         version: data.version,
         database: {
             dbName: data.database?.dbName ?? "",
@@ -89,11 +89,13 @@ export function AppConfigKindSettingsForm({
         resolver: zodResolver(AppConfigKindSettingsFormSchema),
     });
 
+    const { reset } = methods;
+
     useEffect(() => {
         if (defaultValues) {
-            methods.reset(mapDefaultValues(defaultValues));
+            reset(mapDefaultValues(defaultValues));
         }
-    }, [defaultValues, methods]);
+    }, [defaultValues, reset]);
 
     useImperativeHandle(
         ref,

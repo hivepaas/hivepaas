@@ -70,8 +70,22 @@ const AppKindSettingsSchema = z.object({
 });
 
 const FindOneSchema = z.object({
-    data: AppKindSettingsSchema,
-    meta: BaseMetaApiSchema.nullable(),
+    data: AppKindSettingsSchema.nullish().transform(
+        val =>
+            val ?? {
+                category: "webapp" as const,
+                engine: "",
+                port: 0,
+                version: "",
+                webapp: null,
+                database: null,
+                cache: null,
+                storage: null,
+                secretMasked: false,
+                updateVer: 0,
+            },
+    ),
+    meta: BaseMetaApiSchema.nullish(),
 });
 
 export class AppKindSettingsApiValidator {

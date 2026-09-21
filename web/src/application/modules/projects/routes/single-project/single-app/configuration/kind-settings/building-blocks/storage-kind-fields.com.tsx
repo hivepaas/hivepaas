@@ -71,7 +71,7 @@ export function StorageKindFields({ readOnly = false }: Props) {
                 title={
                     <LabelWithInfo
                         label="Secret Access Key"
-                        content="Private secret key for authentication. Leave as masked placeholder (••••••••) to keep existing secret."
+                        content="Private secret key for authentication. Leave empty if unconfigured, or keep existing masked value unchanged."
                     />
                 }
             >
@@ -81,7 +81,6 @@ export function StorageKindFields({ readOnly = false }: Props) {
                             {...secret}
                             value={secret.value ?? ""}
                             onChange={secret.onChange}
-                            placeholder="••••••••"
                             aria-invalid={isSecretInvalid}
                             className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
                             disabled={readOnly}

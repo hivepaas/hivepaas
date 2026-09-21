@@ -1,13 +1,36 @@
-import { Checkbox, Tabs, TabsList, TabsTrigger } from "@components/ui";
+import { Checkbox } from "@components/ui";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
+import { Cable, Globe, Radio } from "lucide-react";
 import { useController, useFormContext } from "react-hook-form";
+import { type OptionCard, OptionCardGroup } from "~/projects/module-shared/components";
 import { ERoutingProtocol } from "~/projects/module-shared/enums";
 
 import { InfoBlock } from "@application/shared/components";
 
 import { ContainerPort, RedirectTo, SslCert } from "../form-components";
 import { type AppConfigHttpSettingsFormSchemaInput, type AppConfigHttpSettingsFormSchemaOutput } from "../schemas";
+
+const PROTOCOL_OPTIONS: OptionCard<ERoutingProtocol>[] = [
+    {
+        value: ERoutingProtocol.HTTP,
+        label: "HTTP",
+        description: "Web traffic with domains, TLS and routing rules",
+        icon: Globe,
+    },
+    {
+        value: ERoutingProtocol.TCP,
+        label: "TCP",
+        description: "A raw TCP stream through the proxy, no HTTP rules",
+        icon: Cable,
+    },
+    {
+        value: ERoutingProtocol.UDP,
+        label: "UDP",
+        description: "Not routed by the proxy; publish a port in Networks",
+        icon: Radio,
+    },
+];
 
 interface DomainGeneralFieldsProps {
     domainIndex: number;
@@ -37,36 +60,13 @@ export function DomainGeneralFields({ domainIndex, readOnly = false }: DomainGen
                 titleWidth={240}
                 title="Protocol"
             >
-                <Tabs
+                <OptionCardGroup
+                    options={PROTOCOL_OPTIONS}
                     value={currentProtocol}
-                    onValueChange={value => {
-                        if (readOnly) {
-                            return;
-                        }
-                        protocol.onChange(value);
-                    }}
-                >
-                    <TabsList>
-                        <TabsTrigger
-                            value={ERoutingProtocol.HTTP}
-                            disabled={readOnly}
-                        >
-                            HTTP
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value={ERoutingProtocol.TCP}
-                            disabled={readOnly}
-                        >
-                            TCP
-                        </TabsTrigger>
-                        <TabsTrigger
-                            value={ERoutingProtocol.UDP}
-                            disabled={readOnly}
-                        >
-                            UDP
-                        </TabsTrigger>
-                    </TabsList>
-                </Tabs>
+                    onChange={protocol.onChange}
+                    readOnly={readOnly}
+                    className="grid-cols-1 sm:grid-cols-3 max-w-[660px]"
+                />
             </InfoBlock>
 
             {isUdp && (

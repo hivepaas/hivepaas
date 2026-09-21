@@ -1,14 +1,45 @@
+import { useMemo } from "react";
+
 import { FieldError } from "@components/ui";
 import { InputNumber } from "@components/ui/input-number";
-import { Tabs, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
+import { Copy, CopyCheck, Grid2x2, Grid2x2Check } from "lucide-react";
 import { useController, useFormContext, useWatch } from "react-hook-form";
+import { type OptionCard, OptionCardGroup } from "~/projects/module-shared/components";
 import { EServiceMode } from "~/projects/module-shared/enums";
 
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 
 import { type AppConfigAvailabilitySchemaInput, type AppConfigAvailabilitySchemaOutput } from "../schemas";
+
+// A check on the icon means the mode runs to completion rather than staying up.
+const MODE_OPTIONS: OptionCard<EServiceMode>[] = [
+    {
+        value: EServiceMode.Replicated,
+        label: "Replicated",
+        description: "A set number of instances, kept running",
+        icon: Copy,
+    },
+    {
+        value: EServiceMode.ReplicatedJob,
+        label: "Replicated Job",
+        description: "Runs a set number of times, then stops",
+        icon: CopyCheck,
+    },
+    {
+        value: EServiceMode.Global,
+        label: "Global",
+        description: "One instance on every node, kept running",
+        icon: Grid2x2,
+    },
+    {
+        value: EServiceMode.GlobalJob,
+        label: "Global Job",
+        description: "Runs once on every node, then stops",
+        icon: Grid2x2Check,
+    },
+];
 
 export function ServiceModeFields({ savedMode, isAppStopped = false }: Props) {
     const { control } = useFormContext<AppConfigAvailabilitySchemaInput, unknown, AppConfigAvailabilitySchemaOutput>();
@@ -32,6 +63,15 @@ export function ServiceModeFields({ savedMode, isAppStopped = false }: Props) {
         fieldState: { error: jobTotalCompletionsError },
     } = useController({ control, name: "jobTotalCompletions" });
 
+    const modeOptions = useMemo(
+        () =>
+            MODE_OPTIONS.map(option => ({
+                ...option,
+                disabled: isAppStopped && savedMode !== option.value,
+            })),
+        [isAppStopped, savedMode],
+    );
+
     return (
         <div className="flex flex-col gap-6 px-2">
             <InfoBlock
@@ -44,40 +84,12 @@ export function ServiceModeFields({ savedMode, isAppStopped = false }: Props) {
                 }
             >
                 <div className="flex flex-col gap-2">
-                    <Tabs
+                    <OptionCardGroup
+                        options={modeOptions}
                         value={modeField.value}
-                        onValueChange={v => {
-                            modeField.onChange(v as EServiceMode);
-                        }}
-                        className="w-fit"
-                    >
-                        <TabsList className="bg-muted/80 p-1 rounded-lg">
-                            <TabsTrigger
-                                value={EServiceMode.Replicated}
-                                disabled={isAppStopped && savedMode !== EServiceMode.Replicated}
-                            >
-                                Replicated
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value={EServiceMode.ReplicatedJob}
-                                disabled={isAppStopped && savedMode !== EServiceMode.ReplicatedJob}
-                            >
-                                Replicated Job
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value={EServiceMode.Global}
-                                disabled={isAppStopped && savedMode !== EServiceMode.Global}
-                            >
-                                Global
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value={EServiceMode.GlobalJob}
-                                disabled={isAppStopped && savedMode !== EServiceMode.GlobalJob}
-                            >
-                                Global Job
-                            </TabsTrigger>
-                        </TabsList>
-                    </Tabs>
+                        onChange={modeField.onChange}
+                        className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 max-w-[800px]"
+                    />
 
                     {isAppStopped && (
                         <p className="text-xs text-muted-foreground">

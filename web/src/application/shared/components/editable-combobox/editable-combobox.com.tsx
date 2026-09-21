@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { Check, RefreshCw, X } from "lucide-react";
+import { Check, ChevronDown, RefreshCw, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
@@ -25,10 +25,11 @@ export interface EditableComboboxProps {
     "inputClassName"?: string;
     "disableFilter"?: boolean;
     "disabled"?: boolean;
+    "popoverClassName"?: string;
 }
 
 export function EditableCombobox({
-    options,
+    options = [],
     value,
     onChange,
     onInputChange,
@@ -42,6 +43,7 @@ export function EditableCombobox({
     isRefreshing = false,
     disableFilter = false,
     disabled = false,
+    popoverClassName,
 }: EditableComboboxProps) {
     const [open, setOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
@@ -49,11 +51,13 @@ export function EditableCombobox({
     const text = value ?? "";
     const showRefresh = Boolean(onRefresh);
 
+    const safeOptions = React.useMemo(() => (Array.isArray(options) ? options : []), [options]);
+
     const filtered = React.useMemo(() => {
-        if (disableFilter || !search) return options;
+        if (disableFilter || !search) return safeOptions;
         const lower = search.toLowerCase();
-        return options.filter(opt => opt.toLowerCase().includes(lower));
-    }, [options, search, disableFilter]);
+        return safeOptions.filter(opt => opt && typeof opt === "string" && opt.toLowerCase().includes(lower));
+    }, [safeOptions, search, disableFilter]);
 
     const updateOpen = (nextOpen: boolean) => {
         if (disabled) {
@@ -123,32 +127,55 @@ export function EditableCombobox({
                                 )}
                                 disabled={disabled}
                             />
-                            {showClear && (
+                            <div className="absolute right-2 flex items-center gap-0.5">
+                                {showClear && (
+                                    <button
+                                        type="button"
+                                        tabIndex={-1}
+                                        aria-label="Clear"
+                                        className="hidden rounded-sm p-0.5 text-muted-foreground hover:text-foreground group-hover/clear:inline-flex"
+                                        onPointerDown={e => {
+                                            e.preventDefault();
+                                        }}
+                                        onClick={() => {
+                                            setSearch("");
+                                            if (onInputChange) {
+                                                onInputChange("");
+                                            } else {
+                                                onChange("");
+                                            }
+                                            inputRef.current?.focus();
+                                        }}
+                                    >
+                                        <X className="size-3.5" />
+                                    </button>
+                                )}
                                 <button
                                     type="button"
                                     tabIndex={-1}
-                                    aria-label="Clear"
-                                    className="absolute right-2 hidden rounded-sm p-0.5 text-muted-foreground hover:text-foreground group-hover/clear:inline-flex"
-                                    onPointerDown={e => {
-                                        e.preventDefault();
-                                    }}
+                                    aria-label="Toggle options"
+                                    className={cn(
+                                        "rounded-sm p-0.5 text-muted-foreground hover:text-foreground",
+                                        showClear && "group-hover/clear:hidden",
+                                    )}
                                     onClick={() => {
-                                        setSearch("");
-                                        if (onInputChange) {
-                                            onInputChange("");
-                                        } else {
-                                            onChange("");
-                                        }
+                                        if (disabled) return;
+                                        updateOpen(!open);
                                         inputRef.current?.focus();
                                     }}
                                 >
-                                    <X className="size-3.5" />
+                                    <ChevronDown
+                                        className={cn(
+                                            "size-3.5 opacity-60 transition-transform duration-200",
+                                            open && "rotate-180",
+                                        )}
+                                    />
                                 </button>
-                            )}
+                            </div>
                         </div>
                     </PopoverAnchor>
                     <PopoverContent
-                        className="w-fit p-0"
+                        className={cn("w-fit min-w-[var(--radix-popover-anchor-width)] p-0", popoverClassName)}
                         align="start"
                         onOpenAutoFocus={e => {
                             e.preventDefault();

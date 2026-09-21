@@ -40,12 +40,27 @@ function FieldLegend({
     );
 }
 
+/**
+ * A group of fields.
+ *
+ * Upstream this is a container query container (`@container/field-group`), and
+ * the responsive orientation below asked it its width. It is a plain div here:
+ * Chrome skips laying out the contents of a size container when the content
+ * changes in the same frame as the surrounding layout, and the field is then in
+ * the DOM with no box at all - no width, no height, invisible - until something
+ * forces a reflow. The App Kind settings form hit exactly that: changing the
+ * category swapped the engine input's placeholder while blocks above and below
+ * it appeared, and the engine field vanished.
+ *
+ * The responsive orientation therefore reads the viewport instead, which is
+ * what every other breakpoint in this app does.
+ */
 function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
             data-slot="field-group"
             className={cn(
-                "group/field-group @container/field-group flex w-full flex-col gap-4 data-[slot=checkbox-group]:gap-3 [&>[data-slot=field-group]]:gap-4",
+                "group/field-group flex w-full flex-col gap-4 data-[slot=checkbox-group]:gap-3 [&>[data-slot=field-group]]:gap-4",
                 className,
             )}
             {...props}
@@ -65,9 +80,9 @@ const fieldVariants = cva("group/field flex w-full gap-2 data-[invalid=true]:tex
                 "has-[>[data-slot=field-content]]:items-start has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
             ],
             responsive: [
-                "flex-col [&>*]:w-full [&>.sr-only]:w-auto @md/field-group:flex-row @md/field-group:items-center @md/field-group:[&>*]:w-auto",
-                "@md/field-group:[&>[data-slot=field-label]]:flex-auto",
-                "@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
+                "flex-col [&>*]:w-full [&>.sr-only]:w-auto md:flex-row md:items-center md:[&>*]:w-auto",
+                "md:[&>[data-slot=field-label]]:flex-auto",
+                "md:has-[>[data-slot=field-content]]:items-start md:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
             ],
         },
     },

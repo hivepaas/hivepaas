@@ -449,6 +449,16 @@ export const ROUTE = {
             },
         },
 
+        registry: {
+            $pattern: "system/registry",
+            $route: "/system/registry/configuration/",
+
+            configuration: {
+                $pattern: "system/registry/configuration",
+                $route: "/system/registry/configuration/",
+            },
+        },
+
         traefik: {
             $pattern: "system/traefik",
             $route: "/system/traefik/general/",

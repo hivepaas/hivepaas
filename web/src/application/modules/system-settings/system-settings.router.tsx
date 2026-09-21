@@ -179,6 +179,44 @@ export const systemSettingsRouter: RouteObject = {
         },
         {
             lazy: async () => {
+                const { RegistryLayout } = await getLazyComponents();
+
+                return {
+                    element: (
+                        <ConditionalModule id={MODULE_IDS.System}>
+                            <ModuleTitle title="Registry">
+                                <RegistryLayout>
+                                    <Outlet />
+                                </RegistryLayout>
+                            </ModuleTitle>
+                        </ConditionalModule>
+                    ),
+                };
+            },
+            path: ROUTE.systemSettings.registry.$pattern,
+            children: [
+                {
+                    index: true,
+                    element: (
+                        <AppNavigate.Basic
+                            to={ROUTE.systemSettings.registry.configuration.$route}
+                            replace
+                            ignorePrevPath
+                        />
+                    ),
+                },
+                {
+                    path: "configuration",
+                    lazy: async () => {
+                        const { SystemSettingsRegistryRoute } = await getLazyComponents();
+
+                        return { Component: SystemSettingsRegistryRoute };
+                    },
+                },
+            ],
+        },
+        {
+            lazy: async () => {
                 const { DataBackupLayout } = await getLazyComponents();
 
                 return {

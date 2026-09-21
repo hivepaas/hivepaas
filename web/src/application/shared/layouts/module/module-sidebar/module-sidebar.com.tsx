@@ -303,6 +303,12 @@ const navMain: SidebarItem[] = [
                         route: ROUTE.systemSettings.logging.configuration.$route,
                         pattern: ROUTE.systemSettings.logging.$pattern,
                     },
+                    {
+                        title: "Registry",
+                        icon: Container,
+                        route: ROUTE.systemSettings.registry.configuration.$route,
+                        pattern: ROUTE.systemSettings.registry.$pattern,
+                    },
                 ],
             },
             {

@@ -1,0 +1,43 @@
+import type {
+    HivePaaSRegistryDomainProbe,
+    HivePaaSRegistryPushCheck,
+    HivePaaSRegistrySettings,
+    HivePaaSRegistryStatus,
+    HivePaaSRegistryStorageType,
+} from "~/system-settings/domain";
+
+import type { ApiRequestBase, ApiResponseBase } from "@infrastructure/api";
+
+export type HivePaaSRegistrySettings_FindOne_Req = ApiRequestBase<Record<string, never>>;
+export type HivePaaSRegistrySettings_FindOne_Res = ApiResponseBase<{
+    settings: HivePaaSRegistrySettings;
+    registryStatus: HivePaaSRegistryStatus;
+}>;
+
+export type HivePaaSRegistrySettings_UpdateOnePayload = {
+    updateVer: number;
+    enabled: boolean;
+    domain: string;
+    storage: {
+        type: HivePaaSRegistryStorageType;
+        volume?: { id: string } | null;
+        cloudStorage?: { id: string } | null;
+    };
+    cleanup: { enabled: boolean; keepLast: number; keepDays: number };
+    memoryLimit: string;
+};
+
+export type HivePaaSRegistrySettings_UpdateOne_Req = ApiRequestBase<{
+    payload: HivePaaSRegistrySettings_UpdateOnePayload;
+}>;
+export type HivePaaSRegistrySettings_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+
+export type HivePaaSRegistrySettings_ProbeDomain_Req = ApiRequestBase<{ domain: string }>;
+export type HivePaaSRegistrySettings_ProbeDomain_Res = ApiResponseBase<HivePaaSRegistryDomainProbe>;
+
+/** Bytes is optional: the server's default is above the limit a proxy on a free plan imposes. */
+export type HivePaaSRegistrySettings_CheckPush_Req = ApiRequestBase<{ bytes?: number }>;
+export type HivePaaSRegistrySettings_CheckPush_Res = ApiResponseBase<HivePaaSRegistryPushCheck>;
+
+export type HivePaaSRegistrySettings_RotateCredential_Req = ApiRequestBase<Record<string, never>>;
+export type HivePaaSRegistrySettings_RotateCredential_Res = ApiResponseBase<{ graceEndsAt: string }>;

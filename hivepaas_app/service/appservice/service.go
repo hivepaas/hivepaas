@@ -48,7 +48,7 @@ type Service interface {
 		oldSpec, newSpec *swarm.ServiceSpec) (string, error)
 
 	RevealSecrets(ctx context.Context, db database.IDB, auth *basedto.Auth, app *entity.App,
-		setting *entity.Setting) error
+		setting *entity.Setting) (revealed bool, err error)
 
 	ExecuteInTx(ctx context.Context, app *entity.App, requireUpdateVerMatch bool, fn func(database.Tx) error) error
 }

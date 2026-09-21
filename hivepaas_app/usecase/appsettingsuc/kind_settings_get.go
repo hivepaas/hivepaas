@@ -38,12 +38,9 @@ func (uc *UC) GetAppKindSettings(
 	}
 
 	kindSetting := settinghelper.FindSettingByType(settings, base.SettingTypeAppKind)
-	if kindSetting == nil {
-		return &appsettingsdto.GetAppKindSettingsResp{}, nil
-	}
-
-	if req.RevealSecrets {
-		err := uc.appService.RevealSecrets(ctx, uc.db, auth, app, kindSetting)
+	secretsRevealed := false
+	if kindSetting != nil && req.RevealSecrets {
+		secretsRevealed, err = uc.appService.RevealSecrets(ctx, uc.db, auth, app, kindSetting)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
@@ -53,7 +50,7 @@ func (uc *UC) GetAppKindSettings(
 		App:            app,
 		KindSetting:    kindSetting,
 		RoutingSetting: settinghelper.FindSettingByType(settings, base.SettingTypeAppRouting),
-		MaskSecrets:    !req.RevealSecrets,
+		MaskSecrets:    !secretsRevealed,
 	}
 
 	resp, err := appsettingsdto.TransformAppKindSettings(input)

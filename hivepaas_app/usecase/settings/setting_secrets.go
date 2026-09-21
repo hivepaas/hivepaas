@@ -34,32 +34,32 @@ func (uc *BaseUC) revealSecrets(
 	scope *entity.ObjectScope,
 	reveal bool,
 	setting *entity.Setting,
-) error {
+) (revealed bool, err error) {
 	if !reveal || setting == nil {
-		return nil
+		return false, nil
 	}
 	// An inherited setting is read through, not owned, by this scope; its secrets
 	// belong to whoever defined it.
 	if setting.ObjectID != setting.CurrentObjectID {
-		return nil
+		return false, nil
 	}
 
 	settingData, err := setting.Parse()
 	if err != nil {
-		return hperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	decrypter, ok := settingData.(secretDecrypter)
 	if !ok {
-		return nil // the type holds no secrets, so there is nothing to reveal
+		return false, nil // the type holds no secrets, so there is nothing to reveal
 	}
 
 	if err = uc.authorizeReveal(ctx, db, auth, scope, setting); err != nil {
-		return hperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	if err = decrypter.Decrypt(); err != nil {
-		return hperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
-	return nil
+	return true, nil
 }
 
 // authorizeReveal is AuthorizeSecretReveal for a stored setting.

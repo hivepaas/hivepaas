@@ -113,14 +113,32 @@ func TransformAppKindSettings(
 ) (resp *AppKindSettingsResp, err error) {
 	resp = &AppKindSettingsResp{
 		SecretMasked: input.MaskSecrets,
+		Category:     base.AppCategoryWebapp,
 	}
 
-	if err = copier.Copy(&resp, input.KindSetting); err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-	kindSettings := input.KindSetting.MustAsAppKindSettings()
-	if err = copier.Copy(&resp, kindSettings); err != nil {
-		return nil, hperrors.Wrap(err)
+	if input.KindSetting != nil {
+		if err = copier.Copy(&resp, input.KindSetting); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		kindSettings := input.KindSetting.MustAsAppKindSettings()
+		if err = copier.Copy(&resp, kindSettings); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+
+		err = TransformAppKindDatabase(kindSettings, input, resp)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+
+		err = TransformAppKindCache(kindSettings, input, resp)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+
+		err = TransformAppKindStorage(kindSettings, input, resp)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
 
 	if input.RoutingSetting != nil {
@@ -128,16 +146,6 @@ func TransformAppKindSettings(
 		if routingSettings.Port > 0 && routingSettings.Port <= portMax {
 			resp.Port = uint(routingSettings.Port)
 		}
-	}
-
-	err = TransformAppKindDatabase(kindSettings, input, resp)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	err = TransformAppKindCache(kindSettings, input, resp)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
 	}
 
 	return resp, nil
@@ -169,8 +177,19 @@ func TransformAppKindDatabase(
 	}
 
 	if input.MaskSecrets {
-		dbResp.Password = basedto.MaskedSecret
-		dbResp.RootPassword = basedto.MaskedSecret
+		if !kindSettings.Database.Password.IsEmpty() {
+			dbResp.Password = basedto.MaskedSecret
+		} else {
+			dbResp.Password = ""
+		}
+		if !kindSettings.Database.RootPassword.IsEmpty() {
+			dbResp.RootPassword = basedto.MaskedSecret
+		} else {
+			dbResp.RootPassword = ""
+		}
+	} else {
+		dbResp.Password = kindSettings.Database.Password.String()
+		dbResp.RootPassword = kindSettings.Database.RootPassword.String()
 	}
 
 	return nil
@@ -202,7 +221,37 @@ func TransformAppKindCache(
 	}
 
 	if input.MaskSecrets {
-		cacheResp.Password = basedto.MaskedSecret
+		if !kindSettings.Cache.Password.IsEmpty() {
+			cacheResp.Password = basedto.MaskedSecret
+		} else {
+			cacheResp.Password = ""
+		}
+	} else {
+		cacheResp.Password = kindSettings.Cache.Password.String()
+	}
+
+	return nil
+}
+
+func TransformAppKindStorage(
+	kindSettings *entity.AppKindSettings,
+	input *AppKindSettingsTransformInput,
+	resp *AppKindSettingsResp,
+) (err error) {
+	if kindSettings.Storage == nil {
+		resp.Storage = nil
+		return nil
+	}
+
+	storageResp := resp.Storage
+	if input.MaskSecrets {
+		if !kindSettings.Storage.Secret.IsEmpty() {
+			storageResp.Secret = basedto.MaskedSecret
+		} else {
+			storageResp.Secret = ""
+		}
+	} else {
+		storageResp.Secret = kindSettings.Storage.Secret.String()
 	}
 
 	return nil

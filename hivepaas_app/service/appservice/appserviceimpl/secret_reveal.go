@@ -33,23 +33,23 @@ func (s *service) RevealSecrets(
 	auth *basedto.Auth,
 	app *entity.App,
 	setting *entity.Setting,
-) error {
+) (revealed bool, err error) {
 	if setting == nil {
-		return nil
+		return false, nil
 	}
 	// An inherited setting is read through, not owned, by this scope; its secrets
 	// belong to whoever defined it.
 	if setting.ObjectID != app.ID {
-		return nil
+		return false, nil
 	}
 
 	settingData, err := setting.Parse()
 	if err != nil {
-		return hperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 	decrypter, ok := settingData.(secretDecrypter)
 	if !ok {
-		return nil // the type holds no secrets, so there is nothing to reveal
+		return false, nil // the type holds no secrets, so there is nothing to reveal
 	}
 
 	err = s.permissionManager.AuthorizeSecretReveal(ctx, db, auth, &permission.RevealSubject{
@@ -61,11 +61,11 @@ func (s *service) RevealSecrets(
 		ResName:  setting.Name,
 	})
 	if err != nil {
-		return hperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
 
 	if err = decrypter.Decrypt(); err != nil {
-		return hperrors.Wrap(err)
+		return false, hperrors.Wrap(err)
 	}
-	return nil
+	return true, nil
 }

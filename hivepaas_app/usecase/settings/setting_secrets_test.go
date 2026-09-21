@@ -85,7 +85,8 @@ func TestRevealSecretsDecryptsWhenAuthorized(t *testing.T) {
 	uc, perms := newRevealUC(nil)
 	setting := newBasicAuthSetting(t)
 
-	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting); err != nil {
+	_, err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
+	if err != nil {
 		t.Fatalf("reveal must succeed: %v", err)
 	}
 
@@ -103,7 +104,7 @@ func TestRevealSecretsNamesTheSettingItIsAbout(t *testing.T) {
 	uc, perms := newRevealUC(nil)
 	setting := newBasicAuthSetting(t)
 
-	_ = uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
+	_, _ = uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
 
 	subject := perms.subjects[0]
 	if subject.Scope != base.ObjectScopeApp || subject.ObjectID != "obj_1" {
@@ -127,7 +128,7 @@ func TestRevealSecretsLeavesTheSecretEncryptedWhenRefused(t *testing.T) {
 	uc, _ := newRevealUC(refusal)
 	setting := newBasicAuthSetting(t)
 
-	err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
+	_, err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
 
 	if !errors.Is(err, refusal) {
 		t.Fatalf("the refusal must come back, got %v", err)
@@ -141,7 +142,8 @@ func TestRevealSecretsNotRequested(t *testing.T) {
 	uc, perms := newRevealUC(nil)
 	setting := newBasicAuthSetting(t)
 
-	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, false, setting); err != nil {
+	_, err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, false, setting)
+	if err != nil {
 		t.Fatal(err)
 	}
 	if !storedPassword(t, setting).IsEncrypted() {
@@ -158,7 +160,8 @@ func TestRevealSecretsInheritedIsNeverRevealed(t *testing.T) {
 	setting := newBasicAuthSetting(t)
 	setting.CurrentObjectID = "obj_2"
 
-	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting); err != nil {
+	_, err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
+	if err != nil {
 		t.Fatal(err)
 	}
 	if !storedPassword(t, setting).IsEncrypted() {
@@ -179,7 +182,8 @@ func TestRevealSecretsOnTypeWithoutSecrets(t *testing.T) {
 	}
 	setting.ObjectID, setting.CurrentObjectID = "obj_1", "obj_1"
 
-	if err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting); err != nil {
+	_, err := uc.revealSecrets(context.Background(), nil, &basedto.Auth{}, revealScope, true, setting)
+	if err != nil {
 		t.Fatalf("a type without secrets must not be refused: %v", err)
 	}
 	if len(perms.subjects) != 0 {

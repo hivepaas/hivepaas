@@ -24,8 +24,9 @@ func (req *GetSettingReq) Validate() (validators []vld.Validator) {
 }
 
 type GetSettingResp struct {
-	Data       *entity.Setting
-	RefObjects *entity.RefObjects
+	Data            *entity.Setting
+	RefObjects      *entity.RefObjects
+	SecretsRevealed bool
 }
 
 type GetSettingData struct {
@@ -63,8 +64,12 @@ func (uc *BaseUC) GetSetting(
 		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 
-	if err = uc.revealSecrets(ctx, db, auth, req.Scope, req.RevealSecrets, setting); err != nil {
-		return nil, hperrors.Wrap(err)
+	secretsRevealed := false
+	if req.RevealSecrets {
+		secretsRevealed, err = uc.revealSecrets(ctx, db, auth, req.Scope, req.RevealSecrets, setting)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
 
 	var refObjects *entity.RefObjects
@@ -76,8 +81,9 @@ func (uc *BaseUC) GetSetting(
 	}
 
 	return &GetSettingResp{
-		Data:       setting,
-		RefObjects: refObjects,
+		Data:            setting,
+		RefObjects:      refObjects,
+		SecretsRevealed: secretsRevealed,
 	}, nil
 }
 

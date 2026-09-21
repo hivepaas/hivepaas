@@ -29,7 +29,7 @@ func (uc *UC) GetLoggingSettings(
 	input := &loggingdto.LoggingSettingsTransformationInput{
 		LoggingSetting: setting,
 		RefObjects:     entity.NewRefObjects(),
-		MaskSecrets:    !req.RevealSecrets,
+		MaskSecrets:    !getResp.SecretsRevealed,
 	}
 
 	if setting != nil {

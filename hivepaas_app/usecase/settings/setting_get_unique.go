@@ -24,8 +24,9 @@ func (req *GetUniqueSettingReq) Validate() (validators []vld.Validator) {
 }
 
 type GetUniqueSettingResp struct {
-	Data       *entity.Setting
-	RefObjects *entity.RefObjects
+	Data            *entity.Setting
+	RefObjects      *entity.RefObjects
+	SecretsRevealed bool
 }
 
 type GetUniqueSettingData struct {
@@ -55,8 +56,12 @@ func (uc *BaseUC) GetUniqueSetting(
 		setting.CurrentObjectID = req.Scope.ScopeObjectID()
 	}
 
-	if err = uc.revealSecrets(ctx, db, auth, req.Scope, req.RevealSecrets, setting); err != nil {
-		return nil, hperrors.Wrap(err)
+	secretsRevealed := false
+	if req.RevealSecrets {
+		secretsRevealed, err = uc.revealSecrets(ctx, db, auth, req.Scope, req.RevealSecrets, setting)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
 
 	refObjects := entity.NewRefObjects()
@@ -66,8 +71,9 @@ func (uc *BaseUC) GetUniqueSetting(
 	}
 
 	return &GetUniqueSettingResp{
-		Data:       setting,
-		RefObjects: refObjects,
+		Data:            setting,
+		RefObjects:      refObjects,
+		SecretsRevealed: secretsRevealed,
 	}, nil
 }
 

@@ -14,7 +14,7 @@ func docInput() appDocInput {
 		Key:         "registry",
 		Domain:      "registry.example.com",
 		MemoryLimit: "512mb",
-		VolumeName:  "registry-data",
+		VolumeID:    "01M32ATCXAVPK6JYV0HNCFCJYM",
 		ZotConfig:   "{\n  \"distSpecVersion\": \"1.1.1\"\n}",
 		Htpasswd:    "hivepaas:$2y$05$abc\n",
 	}
@@ -51,14 +51,14 @@ func TestAppDocMountsTheVolume(t *testing.T) {
 
 	mnt, ok := doc.Deployment.Storage.Mounts[registryRootDir]
 	assert.True(t, ok, "the images have to be on the volume")
-	assert.Equal(t, "registry-data", mnt.Source)
+	assert.Equal(t, "01M32ATCXAVPK6JYV0HNCFCJYM", mnt.Source)
 }
 
 // With S3 there is nothing local worth keeping: zot rebuilds its cache from the
 // bucket, and a mount would pin the app to a node for no reason.
 func TestAppDocWithoutAVolumeHasNoMount(t *testing.T) {
 	in := docInput()
-	in.VolumeName = ""
+	in.VolumeID = ""
 
 	doc, err := renderAppDoc(in)
 	if err != nil {

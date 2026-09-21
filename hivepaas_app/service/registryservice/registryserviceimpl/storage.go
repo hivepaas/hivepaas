@@ -84,13 +84,23 @@ func (s *service) resolveStorage(ctx context.Context, db database.IDB, cfg *enti
 	if err != nil {
 		return planInput{}, hperrors.Wrap(err)
 	}
-	if setting == nil || setting.Name == "" {
+	if setting == nil {
 		return planInput{}, hperrors.Wrap(hperrors.ErrRegistrySettingsInvalid).
 			WithExtraDetail("the volume the registry keeps its images on is gone")
 	}
-	// A mount names a volume by name: the id is what the setting is found by, and
-	// the name is what the swarm service and the bind rewrite both work from.
-	return planInput{VolumeName: setting.Name}, nil
+	// A volume reaches an app only when it is inheritable: that is the rule
+	// applyAppFilter enforces, and the registry's app is in a project of its own.
+	// Without this the failure lands inside BuildAppMounts as "Volume not found",
+	// which says nothing about what to do.
+	if !setting.Inheritable {
+		return planInput{}, hperrors.Wrap(hperrors.ErrRegistrySettingsInvalid).WithExtraDetail(
+			"the volume %q is not shared with apps: edit it in Cluster > Volumes and make it "+
+				"available to apps, or choose one that already is", setting.Name)
+	}
+	// A mount names the volume by the setting's id; the load above is what turns
+	// a missing or unusable volume into a sentence instead of a failure inside
+	// the build.
+	return planInput{VolumeID: setting.ID}, nil
 }
 
 func (s *service) resolveCloudStorage(ctx context.Context, db database.IDB, id string) (*zotS3Input, error) {

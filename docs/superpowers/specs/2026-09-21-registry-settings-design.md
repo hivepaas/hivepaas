@@ -144,6 +144,12 @@ thing that writes the app, so a failed save leaves work the next save retries.
    and is readable in global scope; `KeepLast >= 1`, `KeepDays >= 1`; memory at or above
    256MB.
    With `Enabled: false` nothing below runs, and nothing is torn down (§10).
+
+   The volume also has to be one the registry's app can see. A volume reaches an app only
+   when it is marked inheritable - that is the rule `applyAppFilter` enforces - and the
+   registry's app lives in a project of its own, so a volume that is not shared with apps is
+   refused here, by name, rather than failing later inside the mount build as "Volume not
+   found". The dashboard offers only the volumes that qualify (§13).
 2. **The account.** Username is fixed: `hivepaas`. The password is generated once, 32 bytes
    of base62, and stored in a managed `registry-auth` setting in global scope whose
    `Address` is the domain. Its id goes into `RegistryAuthID`. On later saves the password
@@ -163,7 +169,13 @@ thing that writes the app, so a failed save leaves work the next save retries.
    volume, routing on port 5000 with the domain and `forceHttps`, the memory limit, and the
    healthcheck disabled - the image is one static binary with no shell to run a check with.
    The app id is written back into the setting.
-6. **Later saves.** The config file and the settings are rewritten and the app redeployed.
+6. **The first deployment.** `ProvisionApp` creates the service with a placeholder image and
+   returns the deployment and certificate tasks **unscheduled**: a task row can be picked up
+   only once the transaction it was written in has committed, and `Apply` runs inside the
+   caller's. They travel back in the response, and the usecase schedules them after the
+   commit, the way the template usecase does. Without that the registry sits on the
+   placeholder image for ever.
+7. **Later saves.** The config file and the settings are rewritten and the app redeployed.
    A swarm config object is immutable, so a changed configuration is a new object and a
    service update: the registry restarts, which §10 says what to do about.
 
@@ -332,7 +344,9 @@ button.
 The form is short. The domain, with the DNS-only sentence under it - not after a failure, but
 while the operator is typing. Storage as two cards through the shared `OptionCardGroup`, a
 volume picker or a cloud-storage picker underneath, and the sentence that says what each one
-costs: a volume pins the registry to its node, S3 does not and stores shared layers twice.
+costs. The volume picker lists only volumes that are shared with apps, because only those
+reach the registry's app; when none qualifies it says where to make one instead of offering an
+empty list: a volume pins the registry to its node, S3 does not and stores shared layers twice.
 Memory. Then cleanup: a switch and two numbers, with a line underneath that reads back what
 they mean - "Keeps the last 10 builds of every app, and everything from the past 30 days" -
 because two numbers in a form are not a policy anybody can picture.

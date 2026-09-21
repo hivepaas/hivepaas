@@ -25,8 +25,8 @@ func planSettings() *entity.RegistrySettings {
 
 func TestPlanCarriesTheVolumeAndTheConfiguration(t *testing.T) {
 	got, err := planAppDoc(planSettings(), planInput{
-		VolumeName: "registry-data",
-		Htpasswd:   "hivepaas:$2y$10$hash\n",
+		VolumeID: "01M32ATCXAVPK6JYV0HNCFCJYM",
+		Htpasswd: "hivepaas:$2y$10$hash\n",
 	})
 	if err != nil {
 		t.Fatalf("planAppDoc: %v", err)
@@ -34,7 +34,7 @@ func TestPlanCarriesTheVolumeAndTheConfiguration(t *testing.T) {
 
 	assert.Equal(t, base.HivepaasRegistryKey, got.Key)
 	assert.Equal(t, "registry.example.com", got.Domain)
-	assert.Equal(t, "registry-data", got.VolumeName)
+	assert.Equal(t, "01M32ATCXAVPK6JYV0HNCFCJYM", got.VolumeID)
 	assert.Equal(t, "512mb", got.MemoryLimit)
 	assert.Contains(t, got.ZotConfig, "docker2s2")
 	assert.Contains(t, got.Htpasswd, "$2y$10$hash")
@@ -56,7 +56,7 @@ func TestPlanOnS3HasNoVolume(t *testing.T) {
 		t.Fatalf("planAppDoc: %v", err)
 	}
 
-	assert.Empty(t, got.VolumeName)
+	assert.Empty(t, got.VolumeID)
 	assert.Contains(t, got.ZotConfig, `"name": "s3"`)
 	assert.True(t, strings.Contains(got.ZotConfig, `"dedupe": false`))
 }
@@ -69,20 +69,20 @@ func TestPlanIgnoresAVolumeLeftOverFromBefore(t *testing.T) {
 	cfg.Storage.CloudStorage = entity.ObjectID{ID: "cs-1"}
 
 	got, err := planAppDoc(cfg, planInput{
-		VolumeName: "registry-data",
-		S3:         &zotS3Input{Bucket: "hp-registry"},
+		VolumeID: "01M32ATCXAVPK6JYV0HNCFCJYM",
+		S3:       &zotS3Input{Bucket: "hp-registry"},
 	})
 	if err != nil {
 		t.Fatalf("planAppDoc: %v", err)
 	}
 
-	assert.Empty(t, got.VolumeName)
+	assert.Empty(t, got.VolumeID)
 }
 
 // The document the plan produces has to be one BuildApp will accept, or the
 // failure lands halfway through provisioning instead of here.
 func TestPlanProducesABuildableDocument(t *testing.T) {
-	got, err := planAppDoc(planSettings(), planInput{VolumeName: "registry-data", Htpasswd: "x:y\n"})
+	got, err := planAppDoc(planSettings(), planInput{VolumeID: "01M32ATCXAVPK6JYV0HNCFCJYM", Htpasswd: "x:y\n"})
 	if err != nil {
 		t.Fatalf("planAppDoc: %v", err)
 	}

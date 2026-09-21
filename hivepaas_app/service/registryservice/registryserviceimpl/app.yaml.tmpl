@@ -2,10 +2,10 @@ deployment:
   source:
     activeMethod: image
     imageSource: {image: {{ .Image }}}
-{{- if .VolumeName }}
+{{- if .VolumeID }}
   storage:
     mounts:
-      {{ .RootDir }}: {type: volume, source: {{ .VolumeName }}}
+      {{ .RootDir }}: {type: volume, source: {{ .VolumeID }}}
 {{- end }}
   container:
     healthcheck:

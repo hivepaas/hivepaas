@@ -18,6 +18,13 @@ type SettingApplyReq struct {
 type SettingApplyResp struct {
 	// App is the registry's app, set whenever the registry is enabled.
 	App *entity.App
+
+	// DeploymentTask and CertTasks are created by provisioning and deliberately
+	// left unscheduled: a task row can be picked up only once the transaction it
+	// was written in has committed, and Apply runs inside the caller's. The
+	// caller schedules them after the commit, the way the template usecase does.
+	DeploymentTask *entity.Task
+	CertTasks      []*entity.Task
 }
 
 type Status struct {

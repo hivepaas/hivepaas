@@ -33,6 +33,7 @@ func (uc *UC) UpdateRegistrySettings(
 	req.Type = currentSettingType
 	req.Auth = auth
 	updateData := &updateSettingData{NewSettings: req.ToEntity()}
+	var applied *registryservice.SettingApplyResp
 
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
 		Name: registrySettingName,
@@ -60,15 +61,32 @@ func (uc *UC) UpdateRegistrySettings(
 		) error {
 			// Make the cluster match what was just saved. Apply is idempotent, so
 			// a failure here leaves a stored configuration the next save retries.
-			_, applyErr := uc.registryService.Apply(ctx, db, &registryservice.SettingApplyReq{
+			applyResp, applyErr := uc.registryService.Apply(ctx, db, &registryservice.SettingApplyReq{
 				Setting:       pData.Setting,
 				TriggerUserID: userIDOf(auth),
 			})
+			applied = applyResp
 			return hperrors.Wrap(applyErr)
 		},
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)
+	}
+
+	// A task can be picked up only once its row exists, which is once the
+	// transaction has committed. The first deployment is what replaces the
+	// placeholder image the app was created with; the certificate tasks are what
+	// the domain needs.
+	// Both are empty on every save but the one that provisioned the app.
+	if applied != nil && applied.DeploymentTask != nil {
+		if err = uc.taskQueue.ScheduleTask(ctx, applied.DeploymentTask); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
+	if applied != nil && len(applied.CertTasks) > 0 {
+		if err = uc.taskQueue.ScheduleTask(ctx, applied.CertTasks...); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
 	}
 
 	return &registrydto.UpdateRegistrySettingsResp{}, nil

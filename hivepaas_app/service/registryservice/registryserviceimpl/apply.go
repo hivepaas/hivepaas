@@ -39,9 +39,9 @@ const (
 // name rather than its id, the bucket's credentials rather than its id, and the
 // htpasswd file, which is derived from a password nothing else may see.
 type planInput struct {
-	VolumeName string
-	S3         *zotS3Input
-	Htpasswd   string
+	VolumeID string
+	S3       *zotS3Input
+	Htpasswd string
 }
 
 // planAppDoc turns the setting into the document the app is built from. It is
@@ -53,9 +53,9 @@ func planAppDoc(cfg *entity.RegistrySettings, in planInput) (appDocInput, error)
 		return appDocInput{}, hperrors.Wrap(err)
 	}
 
-	volumeName := in.VolumeName
+	volumeID := in.VolumeID
 	if cfg.Storage.Type == base.RegistryStorageTypeS3 {
-		volumeName = ""
+		volumeID = ""
 	}
 
 	return appDocInput{
@@ -65,7 +65,7 @@ func planAppDoc(cfg *entity.RegistrySettings, in planInput) (appDocInput, error)
 		// DataSize.String already writes "512mb", which is the spelling every
 		// size in a spec document uses.
 		MemoryLimit: cfg.MemoryLimit.String(),
-		VolumeName:  volumeName,
+		VolumeID:    volumeID,
 		ZotConfig:   string(zotConfig),
 		Htpasswd:    in.Htpasswd,
 	}, nil
@@ -135,10 +135,11 @@ func (s *service) Apply(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	resp := &registryservice.SettingApplyResp{}
 	if app == nil {
 		s.logger.Info("provisioning the system registry", "domain", cfg.Domain,
 			"storage", cfg.Storage.Type)
-		app, err = s.provision(ctx, db, plan, req.TriggerUserID)
+		app, err = s.provision(ctx, db, plan, req.TriggerUserID, resp)
 	} else {
 		err = s.reconcile(ctx, db, app, plan)
 	}
@@ -149,7 +150,8 @@ func (s *service) Apply(
 	if err = s.rememberWhatWasCreated(ctx, db, setting, cfg, app.ID, credential.ID); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
-	return &registryservice.SettingApplyResp{App: app}, nil
+	resp.App = app
+	return resp, nil
 }
 
 // rememberWhatWasCreated writes the ids back into the setting. They are how the
@@ -183,6 +185,7 @@ func (s *service) provision(
 	db database.IDB,
 	plan appDocInput,
 	triggerUserID string,
+	out *registryservice.SettingApplyResp,
 ) (*entity.App, error) {
 	doc, err := renderAppDoc(plan)
 	if err != nil {
@@ -220,6 +223,11 @@ func (s *service) provision(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+
+	// The first deployment is what replaces the placeholder image with zot's, and
+	// the certificate tasks are what the domain needs. Both are scheduled by the
+	// caller once this transaction has committed.
+	out.DeploymentTask, out.CertTasks = resp.DeploymentTask, resp.CertTasks
 	return resp.App, nil
 }
 

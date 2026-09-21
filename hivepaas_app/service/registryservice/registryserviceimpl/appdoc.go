@@ -30,10 +30,14 @@ type appDocInput struct {
 	Key         string
 	Domain      string
 	MemoryLimit string
-	// VolumeName is empty for a registry on S3, which mounts nothing.
-	VolumeName string
-	ZotConfig  string
-	Htpasswd   string
+	// VolumeID is the cluster-volume setting a mount names. A mount's source is
+	// the setting's id, not the volume's name: BuildAppMounts looks the id up and
+	// derives everything else - the docker name, the node pin, the bind rewrite -
+	// from the setting it finds. It is empty for a registry on S3, which mounts
+	// nothing.
+	VolumeID  string
+	ZotConfig string
+	Htpasswd  string
 }
 
 // renderAppDoc produces the document BuildApp turns into the app's settings.

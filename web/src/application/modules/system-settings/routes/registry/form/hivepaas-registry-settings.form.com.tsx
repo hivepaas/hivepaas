@@ -109,6 +109,7 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
     const storageType = useWatch({ control, name: "storageType" });
     const cleanupEnabled = useWatch({ control, name: "cleanupEnabled" });
     const keepLast = useWatch({ control, name: "keepLast" });
+    const keepDays = useWatch({ control, name: "keepDays" });
 
     // Only volumes that are shared with apps reach the registry: its app lives in
     // a project of its own, and a volume that is not inheritable is invisible
@@ -414,7 +415,7 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                                 title={
                                                     <LabelWithInfo
                                                         label="Builds to keep"
-                                                        content="This many newest builds are kept for each environment of each app, however old they are, which is what protects an app nobody has deployed for a while."
+                                                        content="This many newest builds are kept for each environment of each app, however old they are, which is what protects an app nobody has deployed for a while. It is a floor, not a limit: nothing is removed while the window below still keeps it."
                                                     />
                                                 }
                                             >
@@ -438,7 +439,7 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                                 title={
                                                     <LabelWithInfo
                                                         label="Days to keep"
-                                                        content="Meant to keep an image a node pulled within this many days, however old the build is. Zot does not enforce it yet, so the count above is what decides today."
+                                                        content="Nothing pushed within this many days is removed, however many builds there are, so a rollback can reach any of them. Raising it costs disk; the count above is what is left once it expires."
                                                     />
                                                 }
                                             >
@@ -461,7 +462,7 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
 
                                     {/* Two numbers in a form are not a policy anybody can picture. */}
                                     <p className="px-1 text-sm text-muted-foreground">
-                                        {describeCleanup(cleanupEnabled, keepLast)}
+                                        {describeCleanup(cleanupEnabled, keepLast, keepDays)}
                                     </p>
                                 </SectionBody>
                             </>

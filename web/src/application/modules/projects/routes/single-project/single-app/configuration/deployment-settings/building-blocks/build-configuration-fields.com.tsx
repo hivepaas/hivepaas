@@ -277,7 +277,7 @@ export function BuildConfigurationFields({ readOnly = false, image }: Props) {
 
             <InfoBlock
                 titleWidth={220}
-                title="Image"
+                title="Image Repository"
             >
                 <div className="flex flex-col gap-1">
                     <span className="font-mono text-sm">{image?.repoName ?? "—"}</span>

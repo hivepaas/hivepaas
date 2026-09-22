@@ -11,9 +11,11 @@ type ImageBuildReq struct {
 	*queue.TaskExecData
 	App *entity.App
 
-	CommitHash     string
-	Dockerfile     entity.DeploymentDockerfile
-	ImageName      string
+	CommitHash string
+	Dockerfile entity.DeploymentDockerfile
+	// ImageTags are the tags this deployment asked for, without the environment
+	// prefix. They are not stored anywhere: a release marker belongs to one build.
+	ImageTags      []string
 	PushToRegistry entity.ObjectID
 
 	ImageBuildSettings *entity.ImageBuildSettings

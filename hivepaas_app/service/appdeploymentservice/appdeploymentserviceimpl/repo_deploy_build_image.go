@@ -38,11 +38,12 @@ func (s *service) repoDeployStepImageBuild(
 		// The build is a step of this deployment rather than a task of its own, so
 		// it is given this task under its own exec data - which keeps whatever it
 		// registers reaching the deployment's transaction.
-		TaskExecData:       data.SubTask(data.Task),
-		App:                data.App,
-		CommitHash:         repoSource.CommitHash,
-		Dockerfile:         repoSource.Dockerfile,
-		ImageName:          repoSource.ImageName,
+		TaskExecData: data.SubTask(data.Task),
+		App:          data.App,
+		CommitHash:   repoSource.CommitHash,
+		Dockerfile:   repoSource.Dockerfile,
+		// Task 4 replaces this with the tags the deployment asked for.
+		ImageTags:          nil,
 		PushToRegistry:     repoSource.PushToRegistry,
 		ImageBuildSettings: data.ImageBuildSettings,
 		BuildID:            data.Task.ID,

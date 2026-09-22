@@ -2,7 +2,6 @@ package entity
 
 import (
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -101,14 +100,6 @@ func (app *App) GetSettingByType(typ base.SettingType) *Setting {
 		}
 	}
 	return nil
-}
-
-func (app *App) GetAutoImageName() string {
-	name := strings.NewReplacer("__", "_", "--", "-").Replace(app.Key)
-	if len(name) > base.ImageNameMaxLen {
-		name = name[:base.ImageNameMaxLen]
-	}
-	return name
 }
 
 func (app *App) TraefikConfigPath() string {

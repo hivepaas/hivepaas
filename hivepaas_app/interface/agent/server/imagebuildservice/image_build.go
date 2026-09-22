@@ -66,7 +66,6 @@ func ImageBuild(
 		ImageBuildReq: imagebuildservice.ImageBuildReq{
 			CommitHash:         req.GetCommitHash(),
 			Dockerfile:         dockerfile,
-			ImageName:          req.GetImageName(),
 			PushToRegistry:     entity.ObjectID{ID: req.GetPushToRegistryId()},
 			ImageBuildSettings: buildSettings,
 			NoCache:            req.GetNoCache(),

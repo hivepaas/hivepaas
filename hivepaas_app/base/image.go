@@ -1,10 +1,8 @@
 package base
 
 const (
-	// ImageNameMaxLen is what GetAutoImageName still cuts an app key to. An
-	// image's name is a function of its app now - entity.App.ImageRepoName - and
-	// both this and that function go in the change that takes its last caller
-	// away.
+	// ImageNameMaxLen bounds the imageName field of the deployment settings,
+	// which the change that takes naming out of those settings removes.
 	ImageNameMaxLen = 200
 
 	// ImageRepoNameMaxLen is the OCI limit for a whole repository name, which

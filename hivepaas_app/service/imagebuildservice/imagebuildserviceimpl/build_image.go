@@ -3,6 +3,7 @@ package imagebuildserviceimpl
 import (
 	"context"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 )
@@ -16,7 +17,15 @@ func (s *service) imageBuild(
 		return hperrors.NewMissing("CheckoutDir")
 	}
 
-	data.ImageTags, err = s.calcBuildImageTags(data.ImageTags, data)
+	var regAuth *entity.RegistryAuth
+	if data.PushToRegistry.ID != "" {
+		regAuthSetting := data.RefObjects.RefSettings[data.PushToRegistry.ID]
+		if regAuthSetting == nil {
+			return hperrors.NewMissing("Registry auth to push image")
+		}
+		regAuth = regAuthSetting.MustAsRegistryAuth()
+	}
+	data.ImageTags, err = buildImageReferences(data.App, data.CommitHash, data.ImageTags, regAuth)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

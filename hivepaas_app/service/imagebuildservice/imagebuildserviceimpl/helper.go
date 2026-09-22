@@ -1,59 +1,50 @@
 package imagebuildserviceimpl
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
-func (s *service) calcBuildImageTags(
-	imageTags []string,
-	data *imageBuildData,
+// buildImageReferences is every name the built image is tagged with, in the order
+// they are applied.
+//
+// The first is what the service spec runs, so it is the commit's and it is the
+// one carrying the registry. The local reference is last and is never pushed:
+// push skips anything without a "/", which is how a build on a node keeps a name
+// it can run from without sending it anywhere.
+func buildImageReferences(
+	app *entity.App,
+	commitHash string,
+	extraTags []string,
+	regAuth *entity.RegistryAuth,
 ) ([]string, error) {
-	// If `pushToRegistry` is set in the settings, need to prepend the registry domain and
-	// username to the tags.
-	// E.g. `app_name:latest` will likely become `docker.io/username/app_name:latest`
-	var regAuth *entity.RegistryAuth
-	if data.PushToRegistry.ID != "" {
-		regAuthSetting := data.RefObjects.RefSettings[data.PushToRegistry.ID]
-		if regAuthSetting == nil {
-			return nil, hperrors.NewMissing("Registry auth to push image")
-		}
-		regAuth = regAuthSetting.MustAsRegistryAuth()
+	repoName, err := app.ImageRepoName()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	commitTag, err := app.ImageTag(commitHash)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	prefix, err := app.ImageTagPrefix()
+	if err != nil {
+		return nil, hperrors.Wrap(err)
 	}
 
-	if len(imageTags) > 0 {
-		if regAuth == nil {
-			return imageTags, nil
-		}
-		for i, imageTag := range imageTags {
-			_, _, found := strings.Cut(imageTag, "/")
-			if found {
-				continue
-			}
-			imageTags[i] = regAuth.Address + "/" + regAuth.Username + "/" + imageTag
-		}
-		return imageTags, nil
+	tags := make([]string, 0, len(extraTags)+1)
+	tags = append(tags, commitTag)
+	for _, extra := range extraTags {
+		tags = append(tags, prefix+"-"+extra)
 	}
 
-	imageName := data.ImageName
-	if imageName == "" || imageName == "auto" {
-		imageName = data.App.GetAutoImageName()
-	}
-
-	commitHashPortion := data.CommitHash[:7]
-	tagCurrent := fmt.Sprintf("%s:%s", imageName, commitHashPortion)
-
-	// If `pushToRegistry` is set in the settings, need to prepend the registry domain and
-	// username to the tags.
-	// E.g. `app_name:latest` will likely become `docker.io/username/app_name:latest`
+	refs := make([]string, 0, len(tags)*2) //nolint:mnd // the registry's and the local one
 	if regAuth != nil {
-		tagCurrentWithReg := regAuth.Address + "/" + regAuth.Username + "/" + tagCurrent
-		imageTags = append(imageTags, tagCurrentWithReg)
+		for _, tag := range tags {
+			refs = append(refs, entity.ImageReference(regAuth.Address, regAuth.Username, repoName, tag))
+		}
 	}
-
-	imageTags = append(imageTags, tagCurrent)
-	return imageTags, nil
+	for _, tag := range tags {
+		refs = append(refs, repoName+":"+tag)
+	}
+	return refs, nil
 }

@@ -27,15 +27,18 @@ type ImageBuildReq struct {
 	AppId              string                 `protobuf:"bytes,2,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
 	CommitHash         string                 `protobuf:"bytes,3,opt,name=commit_hash,json=commitHash,proto3" json:"commit_hash,omitempty"`
 	Dockerfile         *DeploymentDockerfile  `protobuf:"bytes,4,opt,name=dockerfile,proto3" json:"dockerfile,omitempty"`
-	ImageName          string                 `protobuf:"bytes,5,opt,name=image_name,json=imageName,proto3" json:"image_name,omitempty"`
 	PushToRegistryId   string                 `protobuf:"bytes,6,opt,name=push_to_registry_id,json=pushToRegistryId,proto3" json:"push_to_registry_id,omitempty"`
 	ImageBuildSettings *ImageBuildSettings    `protobuf:"bytes,7,opt,name=image_build_settings,json=imageBuildSettings,proto3" json:"image_build_settings,omitempty"`
 	NoCache            bool                   `protobuf:"varint,8,opt,name=no_cache,json=noCache,proto3" json:"no_cache,omitempty"`
 	BuildId            string                 `protobuf:"bytes,9,opt,name=build_id,json=buildId,proto3" json:"build_id,omitempty"`
 	CheckoutDir        string                 `protobuf:"bytes,10,opt,name=checkout_dir,json=checkoutDir,proto3" json:"checkout_dir,omitempty"`
 	TempDir            string                 `protobuf:"bytes,11,opt,name=temp_dir,json=tempDir,proto3" json:"temp_dir,omitempty"`
-	unknownFields      protoimpl.UnknownFields
-	sizeCache          protoimpl.SizeCache
+	// Tags this one deployment asked for, without the environment prefix, which
+	// the build adds. An agent older than the server ignores them and pushes the
+	// commit tag alone.
+	ImageTags     []string `protobuf:"bytes,12,rep,name=image_tags,json=imageTags,proto3" json:"image_tags,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ImageBuildReq) Reset() {
@@ -96,13 +99,6 @@ func (x *ImageBuildReq) GetDockerfile() *DeploymentDockerfile {
 	return nil
 }
 
-func (x *ImageBuildReq) GetImageName() string {
-	if x != nil {
-		return x.ImageName
-	}
-	return ""
-}
-
 func (x *ImageBuildReq) GetPushToRegistryId() string {
 	if x != nil {
 		return x.PushToRegistryId
@@ -143,6 +139,13 @@ func (x *ImageBuildReq) GetTempDir() string {
 		return x.TempDir
 	}
 	return ""
+}
+
+func (x *ImageBuildReq) GetImageTags() []string {
+	if x != nil {
+		return x.ImageTags
+	}
+	return nil
 }
 
 type DeploymentDockerfile struct {
@@ -651,7 +654,7 @@ var File_image_build_proto protoreflect.FileDescriptor
 
 const file_image_build_proto_rawDesc = "" +
 	"\n" +
-	"\x11image_build.proto\x12\x05agent\"\xac\x03\n" +
+	"\x11image_build.proto\x12\x05agent\"\xbe\x03\n" +
 	"\rImageBuildReq\x12\x17\n" +
 	"\atask_id\x18\x01 \x01(\tR\x06taskId\x12\x15\n" +
 	"\x06app_id\x18\x02 \x01(\tR\x05appId\x12\x1f\n" +
@@ -659,16 +662,17 @@ const file_image_build_proto_rawDesc = "" +
 	"commitHash\x12;\n" +
 	"\n" +
 	"dockerfile\x18\x04 \x01(\v2\x1b.agent.DeploymentDockerfileR\n" +
-	"dockerfile\x12\x1d\n" +
-	"\n" +
-	"image_name\x18\x05 \x01(\tR\timageName\x12-\n" +
+	"dockerfile\x12-\n" +
 	"\x13push_to_registry_id\x18\x06 \x01(\tR\x10pushToRegistryId\x12K\n" +
 	"\x14image_build_settings\x18\a \x01(\v2\x19.agent.ImageBuildSettingsR\x12imageBuildSettings\x12\x19\n" +
 	"\bno_cache\x18\b \x01(\bR\anoCache\x12\x19\n" +
 	"\bbuild_id\x18\t \x01(\tR\abuildId\x12!\n" +
 	"\fcheckout_dir\x18\n" +
 	" \x01(\tR\vcheckoutDir\x12\x19\n" +
-	"\btemp_dir\x18\v \x01(\tR\atempDir\"y\n" +
+	"\btemp_dir\x18\v \x01(\tR\atempDir\x12\x1d\n" +
+	"\n" +
+	"image_tags\x18\f \x03(\tR\timageTagsJ\x04\b\x05\x10\x06R\n" +
+	"image_name\"y\n" +
 	"\x14DeploymentDockerfile\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12\x18\n" +

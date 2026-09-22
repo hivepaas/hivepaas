@@ -96,6 +96,7 @@ func (c *grpcImageBuildServiceClient) ImageBuild(
 		AppId:              appID,
 		CommitHash:         req.CommitHash,
 		Dockerfile:         protoDockerfile,
+		ImageTags:          req.ImageTags,
 		PushToRegistryId:   req.PushToRegistry.ID,
 		ImageBuildSettings: protoBuildSettings,
 		NoCache:            req.NoCache,

@@ -13,13 +13,18 @@ message ImageBuildReq {
   string app_id = 2;
   string commit_hash = 3;
   DeploymentDockerfile dockerfile = 4;
-  string image_name = 5;
+  reserved 5;                  // was image_name, now a function of the app
+  reserved "image_name";
   string push_to_registry_id = 6;
   ImageBuildSettings image_build_settings = 7;
   bool no_cache = 8;
   string build_id = 9;
   string checkout_dir = 10;
   string temp_dir = 11;
+  // Tags this one deployment asked for, without the environment prefix, which
+  // the build adds. An agent older than the server ignores them and pushes the
+  // commit tag alone.
+  repeated string image_tags = 12;
 }
 
 message DeploymentDockerfile {

@@ -67,6 +67,9 @@ func (uc *UC) loadAppDeploymentSettingsRefData(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	if service, err = requireAppService(service, app.ID); err != nil {
+		return err
+	}
 	input.ServiceSpec = &service.Spec
 
 	refIDs := &entity.RefObjectIDs{}

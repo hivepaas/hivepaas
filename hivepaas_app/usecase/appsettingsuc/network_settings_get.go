@@ -30,6 +30,9 @@ func (uc *UC) GetAppNetworkSettings(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if service, err = requireAppService(service, app.ID); err != nil {
+		return nil, err
+	}
 
 	// List all networks in project env (app has no network scope)
 	dbNets, dockerNets, err := uc.networkService.ListProjectEnvNetworks(ctx, uc.db, app.ProjectEnv)

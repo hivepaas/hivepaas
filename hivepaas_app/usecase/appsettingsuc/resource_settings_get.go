@@ -30,6 +30,9 @@ func (uc *UC) GetAppResourceSettings(
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if service, err = requireAppService(service, app.ID); err != nil {
+		return nil, err
+	}
 
 	resp, err := appsettingsdto.TransformResourceSettings(service)
 	if err != nil {

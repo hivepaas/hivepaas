@@ -19,7 +19,9 @@ import {
     Sliders,
     Tag,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { useParams } from "react-router";
+import remarkGfm from "remark-gfm";
 
 import { AppLink } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
@@ -60,90 +62,67 @@ function formatParamValue(val: unknown): string {
 }
 
 /**
- * Lightweight helper to parse and render simple markdown text (paragraphs, bullet lists, bold, inline code)
+ * Renders template description markdown (paragraphs, lists, bold, inline code, fenced code
+ * blocks, links) via react-markdown, styled to match the app's existing look.
  */
 function MarkdownRenderer({ content, className }: { content: string; className?: string }) {
-    const blocks = useMemo(() => {
-        if (!content) return [];
-        return content
-            .split(/\n\s*\n/)
-            .map(block => block.trim())
-            .filter(Boolean);
-    }, [content]);
-
-    // Formatter for inline **bold** and `code`
-    const formatInline = (text: string) => {
-        const parts: React.ReactNode[] = [];
-        const regex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
-        let lastIdx = 0;
-        let match: RegExpExecArray | null;
-
-        while ((match = regex.exec(text)) !== null) {
-            if (match.index > lastIdx) {
-                parts.push(text.substring(lastIdx, match.index));
-            }
-            const token = match[0];
-            if (token.startsWith("**") && token.endsWith("**")) {
-                parts.push(
-                    <strong
-                        key={`b-${match.index}`}
-                        className="font-semibold text-foreground"
-                    >
-                        {token.slice(2, -2)}
-                    </strong>,
-                );
-            } else if (token.startsWith("`") && token.endsWith("`")) {
-                parts.push(
-                    <code
-                        key={`c-${match.index}`}
-                        className="rounded bg-muted/80 px-1.5 py-0.5 font-mono text-[13px] text-amber-700 dark:text-amber-300 font-medium"
-                    >
-                        {token.slice(1, -1)}
-                    </code>,
-                );
-            }
-            lastIdx = regex.lastIndex;
-        }
-
-        if (lastIdx < text.length) {
-            parts.push(text.substring(lastIdx));
-        }
-
-        return parts;
-    };
+    if (!content) return null;
 
     return (
         <div className={cn("space-y-2 text-sm leading-relaxed text-foreground/90", className)}>
-            {blocks.map((block, i) => {
-                const lines = block
-                    .split("\n")
-                    .map(l => l.trim())
-                    .filter(Boolean);
-                const isList = lines.every(l => l.startsWith("- ") || l.startsWith("* "));
-
-                if (isList) {
-                    return (
-                        <ul
-                            key={`b-${i}`}
-                            className="list-disc pl-5 space-y-1 my-1.5 text-foreground/85"
+            <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                    p: ({ children }) => <p className="m-0">{children}</p>,
+                    strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                    ul: ({ children }) => (
+                        <ul className="list-disc pl-5 space-y-1 my-1.5 text-foreground/85">{children}</ul>
+                    ),
+                    ol: ({ children }) => (
+                        <ol className="list-decimal pl-5 space-y-1 my-1.5 text-foreground/85">{children}</ol>
+                    ),
+                    li: ({ children }) => <li>{children}</li>,
+                    a: ({ children, href }) => (
+                        <a
+                            href={href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary underline underline-offset-2 hover:text-primary/80"
                         >
-                            {lines.map((item, itemIdx) => {
-                                const cleanItem = item.replace(/^[-*]\s+/, "");
-                                return <li key={`li-${itemIdx}`}>{formatInline(cleanItem)}</li>;
-                            })}
-                        </ul>
-                    );
-                }
-
-                return (
-                    <p
-                        key={`p-${i}`}
-                        className="m-0"
-                    >
-                        {formatInline(block.replace(/\n+/g, " "))}
-                    </p>
-                );
-            })}
+                            {children}
+                        </a>
+                    ),
+                    pre: ({ children }) => (
+                        <pre className="rounded-md bg-muted/60 p-3 my-1.5 overflow-x-auto text-[13px] font-mono leading-normal">
+                            {children}
+                        </pre>
+                    ),
+                    code: ({ className: codeClassName, children, node: _node, ...rest }) => {
+                        // Fenced code blocks carry a `language-xxx` class from remark-gfm; inline
+                        // `code` spans don't, so this is how the two get told apart here.
+                        if ((codeClassName ?? "").includes("language-")) {
+                            return (
+                                <code
+                                    className={cn("whitespace-pre", codeClassName)}
+                                    {...rest}
+                                >
+                                    {children}
+                                </code>
+                            );
+                        }
+                        return (
+                            <code
+                                className="rounded bg-muted/80 px-1.5 py-0.5 font-mono text-[13px] text-amber-700 dark:text-amber-300 font-medium"
+                                {...rest}
+                            >
+                                {children}
+                            </code>
+                        );
+                    },
+                }}
+            >
+                {content}
+            </ReactMarkdown>
         </div>
     );
 }

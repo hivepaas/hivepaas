@@ -22,8 +22,9 @@ import (
 const httpTimeout = 30 * time.Second
 
 type service struct {
-	projectRepo repository.ProjectRepo
-	settingRepo repository.SettingRepo
+	projectRepo    repository.ProjectRepo
+	projectEnvRepo repository.ProjectEnvRepo
+	settingRepo    repository.SettingRepo
 
 	hpAppService         hpappservice.Service
 	provisionService     appprovisionservice.Service
@@ -44,6 +45,7 @@ type service struct {
 //nolint:ireturn // the constructor of a service returns its interface
 func New(
 	projectRepo repository.ProjectRepo,
+	projectEnvRepo repository.ProjectEnvRepo,
 	settingRepo repository.SettingRepo,
 
 	hpAppService hpappservice.Service,
@@ -55,6 +57,7 @@ func New(
 ) registryservice.Service {
 	return &service{
 		projectRepo:          projectRepo,
+		projectEnvRepo:       projectEnvRepo,
 		settingRepo:          settingRepo,
 		hpAppService:         hpAppService,
 		provisionService:     provisionService,

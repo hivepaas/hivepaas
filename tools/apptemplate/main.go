@@ -27,11 +27,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterender"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterepo"
 )
@@ -191,10 +193,24 @@ func (p paramFlags) Set(value string) error {
 	return nil
 }
 
+// previewSharedVars is everything an app of any kind can share. A render from
+// the command line is a preview of one template, with nothing else loaded to say
+// what the app on the other end actually is.
+func previewSharedVars() []string {
+	vars := slices.Clone(base.AppCommonSharedEnvVars)
+	for _, category := range []base.AppCategory{
+		base.AppCategoryDatabase, base.AppCategoryCache, base.AppCategoryStorage, base.AppCategoryWebapp,
+	} {
+		vars = append(vars, base.AppKindSharedEnvVars(category)...)
+	}
+	return vars
+}
+
 func runRender(args []string, out io.Writer) error {
 	flags := flag.NewFlagSet("render", flag.ContinueOnError)
 	version := flags.String("version", "", "version to render; empty for the default")
 	variant := flags.String("variant", "", "variant to render; empty for the default")
+	component := flags.String("component", "", "component to render, for a template that creates several")
 	params := paramFlags{}
 	flags.Var(params, "param", "a parameter as name=value; repeatable")
 	if err := flags.Parse(args); err != nil {
@@ -214,12 +230,35 @@ func runRender(args []string, out io.Writer) error {
 			flags.Arg(1), flags.Arg(0))
 	}
 
+	// Bindings for a preview render: the dependencies and components get the keys
+	// their apps would have, and everything they might share. What a reference is
+	// allowed to name is the linter's to enforce, against the real templates.
+	deps := map[string]*templaterender.DepBinding{}
+	for _, dep := range file.Template.Dependencies {
+		deps[dep.Name] = &templaterender.DepBinding{
+			AppKey:     "app-" + dep.Name,
+			SharedVars: previewSharedVars(),
+		}
+	}
+	comps := map[string]*templaterender.CompBinding{}
+	for _, entry := range file.Template.Components {
+		// Every component rendered on its own, so a reference to a sibling
+		// resolves to the key that sibling's app would have.
+		comps[entry.Name] = &templaterender.CompBinding{
+			AppKey:     "app-" + entry.Name,
+			SharedVars: previewSharedVars(),
+			Rendered:   true,
+		}
+	}
 	result, err := templaterender.Render(&templaterender.Request{
 		Template:        file.Template,
 		Version:         *version,
 		Variant:         *variant,
 		Params:          params,
 		AllowDeprecated: true,
+		Deps:            deps,
+		Component:       *component,
+		Comps:           comps,
 	})
 	if err != nil {
 		return errors.New(templaterepo.ErrorText(err))

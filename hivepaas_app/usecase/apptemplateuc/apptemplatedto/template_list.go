@@ -101,8 +101,11 @@ type AppTemplateSummaryResp struct {
 	License    string   `json:"license"`
 	// Dependencies are the apps creating this template also creates.
 	Dependencies []*AppTemplateDependencySummaryResp `json:"dependencies"`
-	Variants     []*AppTemplateVariantSummaryResp    `json:"variants"`
-	Versions     []*AppTemplateVersionResp           `json:"versions"`
+	// Components are the apps this template is made of, for an application that
+	// is several processes rather than one. Empty for a template with one app.
+	Components []*AppTemplateComponentSummaryResp `json:"components"`
+	Variants   []*AppTemplateVariantSummaryResp   `json:"variants"`
+	Versions   []*AppTemplateVersionResp          `json:"versions"`
 	// RequiresCapabilities says creating this template grants the app kernel
 	// capabilities, sysctls, ulimits or the GPU. The store marks those, and only
 	// someone with Write on the cluster module can create one.
@@ -115,6 +118,15 @@ type AppTemplateSummaryResp struct {
 	// the only thing to do about an incompatible template is update - which is
 	// the same whichever version it asked for.
 	Compatible bool `json:"compatible"`
+}
+
+// AppTemplateComponentSummaryResp is one app of a template that creates several.
+type AppTemplateComponentSummaryResp struct {
+	Name  string `json:"name"`
+	Title string `json:"title"`
+	// Primary marks the component that owns the domain and carries the name the
+	// person gives the app; the others are that name with theirs added.
+	Primary bool `json:"primary"`
 }
 
 type AppTemplateVariantSummaryResp struct {
@@ -152,6 +164,7 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 		Aliases:      entry.Aliases,
 		IconURL:      AppTemplateIconURL(entry),
 		Dependencies: make([]*AppTemplateDependencySummaryResp, 0, len(entry.Dependencies)),
+		Components:   make([]*AppTemplateComponentSummaryResp, 0, len(entry.Components)),
 		Variants:     make([]*AppTemplateVariantSummaryResp, 0, len(entry.Variants)),
 		Versions:     make([]*AppTemplateVersionResp, 0, len(entry.Versions)),
 		Compatible:   templatemodel.IsCompatible(entry.Requires, currentVersionCode),
@@ -174,6 +187,10 @@ func transformSummary(entry *templatemodel.IndexEntry, currentVersionCode string
 	for _, dep := range entry.Dependencies {
 		summary.Dependencies = append(summary.Dependencies,
 			&AppTemplateDependencySummaryResp{Name: dep.Name, Title: dep.Title, Template: dep.Template})
+	}
+	for _, component := range entry.Components {
+		summary.Components = append(summary.Components, &AppTemplateComponentSummaryResp{
+			Name: component.Name, Title: component.Title, Primary: component.Primary})
 	}
 	return summary
 }

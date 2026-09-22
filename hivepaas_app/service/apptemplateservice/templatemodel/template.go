@@ -36,11 +36,16 @@ type Template struct {
 	Dependencies []*Dependency `yaml:"dependencies,omitempty"`
 	Variants     []*Variant    `yaml:"variants,omitempty"`
 	Versions     []*Version    `yaml:"versions"`
+	// Components are the apps this template creates for itself, for an
+	// application that is several processes rather than one. A template has
+	// components or the App block below, never both.
+	Components []*Component `yaml:"components,omitempty"`
 
 	// App is a specmodel.AppDoc with placeholders in it. It stays an untyped tree
 	// until it is rendered: version overrides and placeholders apply to the tree,
-	// and only the result has to decode as an AppDoc.
-	App map[string]any `yaml:"app"`
+	// and only the result has to decode as an AppDoc. It is empty for a template
+	// with components, whose apps each carry one of these.
+	App map[string]any `yaml:"app,omitempty"`
 }
 
 type Metadata struct {
@@ -52,9 +57,15 @@ type Metadata struct {
 	Tags        []string `yaml:"tags,omitempty"`
 	Aliases     []string `yaml:"aliases,omitempty"`
 	Icon        string   `yaml:"icon"`
-	Links       *Links   `yaml:"links,omitempty"`
-	License     string   `yaml:"license,omitempty"`
-	Requires    Requires `yaml:"requires"`
+	// Internal keeps a template out of the store's listing and out of search. It
+	// is for templates that are only meaningful beside another app - a worker for
+	// one particular server - and which the store would otherwise offer to people
+	// who cannot use them. They stay fetchable by name, so a template that names
+	// one as a dependency still works, and so does a direct link.
+	Internal bool     `yaml:"internal,omitempty"`
+	Links    *Links   `yaml:"links,omitempty"`
+	License  string   `yaml:"license,omitempty"`
+	Requires Requires `yaml:"requires"`
 }
 
 type Links struct {
@@ -154,8 +165,12 @@ type Version struct {
 	Deprecated bool              `yaml:"deprecated,omitempty"`
 	Image      string            `yaml:"image,omitempty"`
 	Images     map[string]string `yaml:"images,omitempty"`
-	Vars       map[string]string `yaml:"vars,omitempty"`
-	Override   *Override         `yaml:"override,omitempty"`
+	// Components is the image this version pins for each component, by component
+	// name, for a template that has them. One table per version rather than an
+	// image inside each component, so that a release is one edit.
+	Components map[string]*VersionComponent `yaml:"components,omitempty"`
+	Vars       map[string]string            `yaml:"vars,omitempty"`
+	Override   *Override                    `yaml:"override,omitempty"`
 }
 
 // Override is what a version changes in the template. It is a struct with one

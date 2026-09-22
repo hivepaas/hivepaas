@@ -21,6 +21,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterender"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
@@ -47,7 +48,7 @@ func (uc *UC) CreateAppFromTemplate(
 	}
 	apps := planApps(req, rendered)
 	for _, target := range apps {
-		if doc := target.rendered.Result.Doc; doc.Deployment == nil || doc.Deployment.Source == nil {
+		if doc := target.result.Doc; doc.Deployment == nil || doc.Deployment.Source == nil {
 			return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).
 				WithExtraDetail("%s: the template deploys no image", target.rendered.Template.Metadata.Name)
 		}
@@ -144,7 +145,7 @@ func (uc *UC) checkDomains(
 // renderedDomains reads the addresses an app was rendered with, from the
 // document rather than from a built setting: nothing has been built yet.
 func renderedDomains(target *appToProvision) []string {
-	doc := target.rendered.Result.Doc
+	doc := target.result.Doc
 	if doc == nil {
 		return nil
 	}
@@ -224,14 +225,14 @@ func (uc *UC) configureFromTemplate(
 		spec *swarm.ServiceSpec) ([]*entity.Setting, error) {
 		built, err := uc.specService.BuildApp(ctx, db, &specservice.BuildAppReq{
 			App:     app,
-			Doc:     target.rendered.Result.Doc,
+			Doc:     target.result.Doc,
 			Spec:    spec,
 			TimeNow: timeNow,
 		})
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
-		binding, err := newAppTemplateSetting(app, target.rendered, target.links, timeNow)
+		binding, err := newAppTemplateSetting(app, target.rendered, target.result, target.links, timeNow)
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
@@ -248,7 +249,7 @@ func (uc *UC) recordCreated(
 	created []*appprovisionservice.ProvisionAppResp,
 ) error {
 	for i, one := range created {
-		if err := uc.recordCreateFromTemplate(ctx, db, auth, one.App, apps[i].rendered, apps[i].links); err != nil {
+		if err := uc.recordCreateFromTemplate(ctx, db, auth, one.App, apps[i], apps[i].links); err != nil {
 			return hperrors.Wrap(err)
 		}
 	}
@@ -256,23 +257,30 @@ func (uc *UC) recordCreated(
 }
 
 // transformCreated describes what a request created: the app it asked for is the
-// one without a role, and the others are its dependencies.
+// one without a role - the primary component, for a template that has them - and
+// the others are its components and its dependencies, told apart by whether the
+// template declared them as one.
 func transformCreated(
 	apps []*appToProvision,
 	created []*appprovisionservice.ProvisionAppResp,
 ) *apptemplatedto.CreateAppFromTemplateResp {
 	data := &apptemplatedto.CreateAppFromTemplateDataResp{
 		Dependencies: make([]*apptemplatedto.CreatedDependencyResp, 0, len(created)),
+		Components:   make([]*apptemplatedto.CreatedComponentResp, 0, len(created)),
 	}
 	for i, one := range created {
 		app := &basedto.ObjectIDResp{ID: one.App.ID}
 		deployment := &basedto.ObjectIDResp{ID: one.Deployment.ID}
-		if apps[i].role == "" {
+		switch {
+		case apps[i].role == "":
 			data.App, data.Deployment = app, deployment
-			continue
+		case apps[i].links.component != "":
+			data.Components = append(data.Components,
+				&apptemplatedto.CreatedComponentResp{Name: apps[i].role, App: app, Deployment: deployment})
+		default:
+			data.Dependencies = append(data.Dependencies,
+				&apptemplatedto.CreatedDependencyResp{Name: apps[i].role, App: app, Deployment: deployment})
 		}
-		data.Dependencies = append(data.Dependencies,
-			&apptemplatedto.CreatedDependencyResp{Name: apps[i].role, App: app, Deployment: deployment})
 	}
 	return &apptemplatedto.CreateAppFromTemplateResp{Data: data}
 }
@@ -287,7 +295,11 @@ type appToProvision struct {
 	// the request is about.
 	logicalParentID string
 	rendered        *apptemplateservice.RenderResp
-	links           appTemplateLinks
+	// result is this app's own render. It is rendered.Result for a dependency and
+	// for a template with one app; a template with components renders one of
+	// these per component, and they differ in every way that matters.
+	result *templaterender.Result
+	links  appTemplateLinks
 }
 
 // key is the name this app will answer to on the project's network, and the
@@ -301,7 +313,11 @@ func (a *appToProvision) key() string {
 // same request.
 type appTemplateLinks struct {
 	dependencies    []entity.AppTemplateDependency
+	components      []entity.AppTemplateComponent
 	createdForAppID string
+	// component is the role this app plays in a template that creates several,
+	// empty for an app that is its template's only one.
+	component string
 }
 
 // planApps lists the apps a request creates, dependencies first. Their ids are
@@ -310,14 +326,17 @@ func planApps(
 	req *apptemplatedto.CreateAppFromTemplateReq,
 	rendered *apptemplateservice.RenderResp,
 ) []*appToProvision {
-	main := &appToProvision{id: gofn.Must(ulid.NewStringULID()), name: req.Name, rendered: rendered}
-	apps := make([]*appToProvision, 0, len(rendered.Dependencies)+1)
+	main := &appToProvision{
+		id: gofn.Must(ulid.NewStringULID()), name: req.Name, rendered: rendered, result: rendered.Result,
+	}
+	apps := make([]*appToProvision, 0, len(rendered.Dependencies)+len(rendered.Components)+1)
 	for _, dep := range rendered.Dependencies {
 		depApp := &appToProvision{
 			id:              gofn.Must(ulid.NewStringULID()),
 			name:            dep.AppName,
 			role:            dep.Name,
 			rendered:        dep.Render,
+			result:          dep.Render.Result,
 			logicalParentID: main.id,
 			links:           appTemplateLinks{createdForAppID: main.id},
 		}
@@ -325,6 +344,44 @@ func planApps(
 			Name: dep.Name, AppID: depApp.id, Template: dep.Render.Template.Metadata.Name,
 		})
 		apps = append(apps, depApp)
+	}
+	return append(apps, planComponents(rendered, main)...)
+}
+
+// planComponents lists the component apps of a template that creates several,
+// in the order its needs put them, with the primary one last.
+//
+// The primary app is the one the person named, so it is main itself: the same
+// id, the same name, and the render of the primary component. The rest are
+// created before it and carry its id as their logical parent, which is what
+// makes them nest under it everywhere apps are listed.
+func planComponents(rendered *apptemplateservice.RenderResp, main *appToProvision) []*appToProvision {
+	if len(rendered.Components) == 0 {
+		return []*appToProvision{main}
+	}
+	apps := make([]*appToProvision, 0, len(rendered.Components))
+	for _, component := range rendered.Components {
+		if component.Primary {
+			main.links.component = component.Name
+			main.result = component.Result
+			continue
+		}
+		componentApp := &appToProvision{
+			id:              gofn.Must(ulid.NewStringULID()),
+			name:            component.AppName,
+			role:            component.Name,
+			rendered:        rendered,
+			result:          component.Result,
+			logicalParentID: main.id,
+			links: appTemplateLinks{
+				createdForAppID: main.id,
+				component:       component.Name,
+			},
+		}
+		main.links.components = append(main.links.components, entity.AppTemplateComponent{
+			Name: component.Name, AppID: componentApp.id,
+		})
+		apps = append(apps, componentApp)
 	}
 	return append(apps, main)
 }
@@ -334,10 +391,10 @@ func planApps(
 func newAppTemplateSetting(
 	app *entity.App,
 	rendered *apptemplateservice.RenderResp,
+	result *templaterender.Result,
 	links appTemplateLinks,
 	timeNow time.Time,
 ) (*entity.Setting, error) {
-	result := rendered.Result
 	data := &entity.AppTemplateSettings{
 		Source:   rendered.Source,
 		Template: rendered.Template.Metadata.Name,
@@ -358,6 +415,8 @@ func newAppTemplateSetting(
 	}
 	data.ImageOverride = result.ImageOverride
 	data.Dependencies = links.dependencies
+	data.Components = links.components
+	data.Component = links.component
 	data.CreatedForAppID = links.createdForAppID
 	for name, value := range result.Params {
 		if value.Value == nil {

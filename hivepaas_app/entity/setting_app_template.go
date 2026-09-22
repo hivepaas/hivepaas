@@ -47,8 +47,19 @@ type AppTemplateSettings struct {
 	// Dependencies are the apps created alongside this one because its template
 	// named them, in the order they were created.
 	Dependencies []AppTemplateDependency `json:"dependencies,omitempty"`
+	// Component is the role this app plays in a template that creates several -
+	// "auth", "gw" - empty for an app that is its template's only one. The
+	// primary component carries its own name here as well, because "which part of
+	// the stack is this" has to be answerable on every app of it.
+	Component string `json:"component,omitempty"`
+	// Components are the other apps created for this one because its template
+	// declared them, in the order they were created. Set on the primary app only,
+	// as Dependencies is.
+	Components []AppTemplateComponent `json:"components,omitempty"`
 	// CreatedForAppID is the app this one was created to serve, empty when it was
-	// created on its own. Deleting that app leaves this one where it is.
+	// created on its own. This app is that app's logical child, so deleting that
+	// app deletes this one with it - see appservice.DeleteApp's cascade over
+	// LogicalParentID.
 	CreatedForAppID string `json:"createdForAppId,omitempty"`
 
 	// Params are the values given at creation, secrets encrypted. Parameters are
@@ -69,6 +80,15 @@ type AppTemplateDependency struct {
 	Name     string `json:"name"`
 	AppID    string `json:"appId"`
 	Template string `json:"template"`
+}
+
+// AppTemplateComponent is one of the other apps a template that creates several
+// made for this one. It carries no template name because a component is declared
+// inside the template rather than naming another.
+type AppTemplateComponent struct {
+	// Name is the role the template gave it: auth, worker.
+	Name  string `json:"name"`
+	AppID string `json:"appId"`
 }
 
 // AppTemplateBase is what the template rendered to when it was last applied:

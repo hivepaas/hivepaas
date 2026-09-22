@@ -24,9 +24,19 @@ one template to say "I also need that one", and for provisioning to act on it.
 | How deep may it go? | One level. A template named as a dependency may not have dependencies of its own | A tree is a package manager. One level covers every case we have, and it is the only depth a creation dialog can show honestly |
 | How many? | At most three | One database is the common case, a database and a cache the next. Three is room to spare, not an invitation |
 | May it reuse an app that already exists? | Not in this phase - a dependency is always created | One flow instead of two. The binding records an app id either way, so "attach the Postgres I already run" is an addition later, not a rewrite |
-| What happens to the database when the app is deleted? | Nothing. The dialog says it exists | Deleting an app is aimed at the app. Data that outlives the click is recoverable; data that does not, is not |
+| What happens to the database when the app is deleted? | It is deleted with it | A dependency is a logical child of the app it was created for - `App.LogicalParentID` - and `appservice.DeleteApp` deletes an app's logical children recursively before the app itself. Keeping the data past the app that used it means detaching it first, not deleting around it |
 | Where do the dependency's parameter values come from? | The template sets what it can; the dialog asks for what is left | Every database template has a required `dataVolume` with no default, so a dialog that asked nothing would be lying about what it needs |
 | When is a dependency resolved? | At creation only | Phase 2 updates an app from its template. Moving a running application from MySQL to PostgreSQL is a data migration, not a merge, and nothing here will pretend otherwise |
+
+> **Corrected 2026-09-22.** This row originally said deleting the app leaves the dependency
+> where it is, on the theory that deleting an app is aimed at the app and data that outlives
+> the click should be recoverable. The implementation never did that: `DeleteApp`'s cascade
+> over `logical_parent_id` deletes dependencies along with everything else created for an
+> app, and its own comment says so ("the dependencies a template created alongside it"). The
+> `CreatedForAppID` comment in `entity.AppTemplateSettings` and this repository's `README.md`
+> both said the old, wrong thing as well and are corrected with this. See
+> [2026-09-22-app-template-components-design.md](2026-09-22-app-template-components-design.md)
+> §6, which is where the mismatch was found.
 
 ## 3. The format
 

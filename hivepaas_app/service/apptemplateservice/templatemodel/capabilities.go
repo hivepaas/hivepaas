@@ -40,8 +40,29 @@ func (t *Template) Capabilities() (*specmodel.Capabilities, error) {
 // block cannot be read asks for something, which is what a false would hide, so
 // an unreadable one counts as requiring them; validation refuses it anyway.
 func (t *Template) RequiresCapabilities() bool {
-	capabilities, problem := capabilitiesIn(t.App)
-	return problem != "" || capabilities != nil
+	for _, app := range t.appTrees() {
+		capabilities, problem := capabilitiesIn(app)
+		if problem != "" || capabilities != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// appTrees is every app block the template carries: its own, or one per
+// component. Anything that reads what a template asks of the node has to look at
+// all of them - a capability granted to one component is granted on the node.
+func (t *Template) appTrees() []map[string]any {
+	if !t.HasComponents() {
+		return []map[string]any{t.App}
+	}
+	trees := make([]map[string]any, 0, len(t.Components))
+	for _, component := range t.Components {
+		if component != nil {
+			trees = append(trees, component.App)
+		}
+	}
+	return trees
 }
 
 // capabilitiesIn reads the block out of an app tree, and says what is wrong with
@@ -82,12 +103,18 @@ func capabilitiesIn(app map[string]any) (*specmodel.Capabilities, string) {
 // template rather than a render; a block that changed with the version chosen
 // would turn that warning into a guess.
 func validateCapabilities(t *Template, p *problems) {
-	capabilities, problem := capabilitiesIn(t.App)
-	if problem != "" {
-		p.add("%s", problem)
-	}
-	if problem = specmodel.CapabilitiesProblem(capabilities); problem != "" {
-		p.add("app.%s", problem)
+	for i, app := range t.appTrees() {
+		where := "app"
+		if t.HasComponents() {
+			where = fmt.Sprintf("components[%s].app", t.Components[i].Name)
+		}
+		capabilities, problem := capabilitiesIn(app)
+		if problem != "" {
+			p.add("%s", problem)
+		}
+		if problem = specmodel.CapabilitiesProblem(capabilities); problem != "" {
+			p.add("%s.%s", where, problem)
+		}
 	}
 	for _, version := range t.Versions {
 		if version == nil || version.Override == nil {

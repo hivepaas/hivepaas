@@ -39,6 +39,7 @@ func BuildIndex(repo *Repo) (*templatemodel.Index, error) {
 			Tags:       tmpl.Metadata.Tags,
 			Aliases:    tmpl.Metadata.Aliases,
 			License:    tmpl.Metadata.License,
+			Internal:   tmpl.Metadata.Internal,
 			Requires:   tmpl.Metadata.Requires,
 
 			RequiresCapabilities: requiresCapabilities(repo, tmpl),
@@ -50,6 +51,10 @@ func BuildIndex(repo *Repo) (*templatemodel.Index, error) {
 		for _, dep := range tmpl.Dependencies {
 			entry.Dependencies = append(entry.Dependencies,
 				&templatemodel.IndexDependency{Name: dep.Name, Title: dep.Title, Template: dep.Template})
+		}
+		for _, component := range tmpl.Components {
+			entry.Components = append(entry.Components, &templatemodel.IndexComponent{
+				Name: component.Name, Title: component.Title, Primary: component.Primary})
 		}
 		for _, version := range tmpl.Versions {
 			indexVersion := &templatemodel.IndexVersion{

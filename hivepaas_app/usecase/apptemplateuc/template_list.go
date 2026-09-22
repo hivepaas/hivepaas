@@ -42,6 +42,12 @@ func filterTemplates(
 	search := strings.ToLower(req.Search)
 	out := make([]*templatemodel.IndexEntry, 0, len(entries))
 	for _, entry := range entries {
+		// An internal template is not offered on its own: it exists for another
+		// template to name, and the store showing it would be offering something
+		// nobody can use by itself. It stays fetchable by name.
+		if entry.Internal {
+			continue
+		}
 		if matchesCategories(entry, req.Categories) && matchesTags(entry, req.Tags) &&
 			matchesSearch(entry, search) {
 			out = append(out, entry)

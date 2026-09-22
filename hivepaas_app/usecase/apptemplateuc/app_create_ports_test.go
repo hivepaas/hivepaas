@@ -73,8 +73,9 @@ func portApps(t *testing.T, names ...string) []*appToProvision {
 		result, renderErr := templaterender.Render(&templaterender.Request{Template: tmpl})
 		assert.NoError(t, renderErr)
 		apps = append(apps, &appToProvision{
-			id:   name,
-			name: name,
+			id:     name,
+			name:   name,
+			result: result,
 			rendered: &apptemplateservice.RenderResp{
 				TemplateResp: apptemplateservice.TemplateResp{Template: tmpl},
 				Result:       result,

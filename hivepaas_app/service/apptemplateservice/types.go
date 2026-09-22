@@ -69,6 +69,23 @@ type RenderResp struct {
 	// field shadows TemplateResp.Dependencies, the templates they were rendered
 	// from, which stay reachable through the embedded TemplateResp.
 	Dependencies []*RenderedDependency
+	// Components are the other apps a template that creates several renders to,
+	// in the order their needs put them. Result above is the primary component's
+	// render, so that a caller which knows nothing of components still finds the
+	// app the person asked for where it has always been.
+	Components []*RenderedComponent
+}
+
+// RenderedComponent is one app of a template that creates several. The primary
+// component is here as well as in RenderResp.Result, named, because provisioning
+// walks this list in order and has to know which entry not to create twice.
+type RenderedComponent struct {
+	// Name is the component's role in the template that declares it.
+	Name    string
+	Title   string
+	AppName string
+	Primary bool
+	Result  *templaterender.Result
 }
 
 type RenderedDependency struct {

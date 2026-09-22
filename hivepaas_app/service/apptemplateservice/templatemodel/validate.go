@@ -88,11 +88,9 @@ func (t *Template) Validate(fileName string) error {
 	t.Metadata.validate(fileName, &p)
 	validateParameters(t.Parameters, &p)
 	variants := validateVariants(t.Variants, &p)
-	validateVersions(t.Versions, variants, &p)
+	validateVersions(t, t.Versions, variants, &p)
 	validateDependencies(t, &p)
-	if len(t.App) == 0 {
-		p.add("app is required")
-	}
+	validateComponents(t, &p)
 	validateCapabilities(t, &p)
 
 	name := t.Metadata.Name
@@ -322,7 +320,7 @@ func validateVariants(variants []*Variant, p *problems) map[string]bool {
 	return names
 }
 
-func validateVersions(versions []*Version, variants map[string]bool, p *problems) {
+func validateVersions(t *Template, versions []*Version, variants map[string]bool, p *problems) {
 	if len(versions) == 0 {
 		p.add("versions must not be empty")
 		return
@@ -351,7 +349,7 @@ func validateVersions(versions []*Version, variants map[string]bool, p *problems
 				p.add("%s: the default version cannot be deprecated", prefix)
 			}
 		}
-		validateVersionImages(prefix, version, variants, p)
+		validateVersionImages(t, prefix, version, variants, p)
 		if version.Override != nil && len(version.Override.App) == 0 {
 			p.add("%s.override.app is empty", prefix)
 		}
@@ -361,7 +359,14 @@ func validateVersions(versions []*Version, variants map[string]bool, p *problems
 	}
 }
 
-func validateVersionImages(prefix string, version *Version, variants map[string]bool, p *problems) {
+func validateVersionImages(t *Template, prefix string, version *Version, variants map[string]bool, p *problems) {
+	if t.HasComponents() {
+		validateVersionComponentImages(t, prefix, version, p)
+		return
+	}
+	if len(version.Components) > 0 {
+		p.add("%s: without components, set image and not components", prefix)
+	}
 	if len(variants) == 0 {
 		if version.Image == "" || len(version.Images) > 0 {
 			p.add("%s: without variants, set image and not images", prefix)
@@ -377,6 +382,38 @@ func validateVersionImages(prefix string, version *Version, variants map[string]
 			p.add("%s.images: variant %q is not declared", prefix, variant)
 		}
 		checkPinned(fmt.Sprintf("%s.images[%s]", prefix, variant), version.Images[variant], p)
+	}
+}
+
+// validateVersionComponentImages checks a version's image table against the
+// components the template declares: one pinned image each, and nothing named
+// that is not a component. A component with no image in some version is a stack
+// that half deploys, found on the day somebody picks that version.
+func validateVersionComponentImages(t *Template, prefix string, version *Version, p *problems) {
+	if version.Image != "" || len(version.Images) > 0 {
+		p.add("%s: with components, set components and not image or images", prefix)
+	}
+	if version.Override != nil {
+		// An override patches one app tree, and a template with components has
+		// several. Which one it meant would have to be guessed.
+		p.add("%s: a version of a template with components cannot override app", prefix)
+	}
+	for _, name := range slices.Sorted(maps.Keys(version.Components)) {
+		if t.FindComponent(name) == nil {
+			p.add("%s.components: %q is not a declared component", prefix, name)
+		}
+	}
+	for _, component := range t.Components {
+		if component == nil {
+			continue
+		}
+		field := fmt.Sprintf("%s.components[%s].image", prefix, component.Name)
+		image := version.ComponentImage(component.Name)
+		if image == "" {
+			p.add("%s is required", field)
+			continue
+		}
+		checkPinned(field, image, p)
 	}
 }
 

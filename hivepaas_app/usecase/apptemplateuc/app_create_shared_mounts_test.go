@@ -72,8 +72,9 @@ func sharedMountApps(t *testing.T, targetApp string) []*appToProvision {
 	})
 	assert.NoError(t, err)
 	return []*appToProvision{{
-		id:   "app-1",
-		name: "files",
+		id:     "app-1",
+		name:   "files",
+		result: result,
 		rendered: &apptemplateservice.RenderResp{
 			TemplateResp: apptemplateservice.TemplateResp{Template: tmpl},
 			Result:       result,
@@ -141,7 +142,7 @@ func TestCheckSharedMountsExemptsAnAppOfTheSameRequest(t *testing.T) {
 
 	apps := sharedMountApps(t, "postgres")
 	apps = append(apps, &appToProvision{id: "app-2", name: "postgres", role: "db",
-		rendered: apps[0].rendered})
+		rendered: apps[0].rendered, result: apps[0].result})
 
 	assert.NoError(t, uc.checkSharedMounts(context.Background(), testAuth(), sharedMountReq(), apps))
 	assert.Empty(t, permissions.checked)

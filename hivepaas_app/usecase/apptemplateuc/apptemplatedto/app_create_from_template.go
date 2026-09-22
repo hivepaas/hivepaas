@@ -83,6 +83,17 @@ type CreateAppFromTemplateDataResp struct {
 	Deployment *basedto.ObjectIDResp `json:"deployment"`
 	// Dependencies are the apps created alongside, each with its first deployment.
 	Dependencies []*CreatedDependencyResp `json:"dependencies"`
+	// Components are the other apps of an application that is several processes,
+	// each with its first deployment. The app above is the primary component, so
+	// it is not repeated here.
+	Components []*CreatedComponentResp `json:"components"`
+}
+
+type CreatedComponentResp struct {
+	// Name is the component's role in the template: auth, worker.
+	Name       string                `json:"name"`
+	App        *basedto.ObjectIDResp `json:"app"`
+	Deployment *basedto.ObjectIDResp `json:"deployment"`
 }
 
 type CreatedDependencyResp struct {

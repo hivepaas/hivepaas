@@ -1,0 +1,49 @@
+apiVersion: hivepaas.com/v1
+kind: AppTemplate
+metadata:
+  name: demostack
+  title: Demo Stack
+  tagline: A demo app that is several processes
+  description: Demo stack.
+  categories: [databases/sql]
+  tags: [sql]
+  icon: icons/demoweb.svg
+  requires: {versionCode: v000001}
+parameters:
+  - {name: jwtSecret, title: JWT secret, type: secret, generate: {length: 32}}
+dependencies:
+  - {name: db, title: Database, template: demo}
+versions:
+  - name: "1"
+    release: "1.0"
+    default: true
+    components:
+      gw: {image: "demogw:1.0.0"}
+      auth: {image: "demoauth:1.0.0"}
+components:
+  - name: gw
+    title: Gateway
+    primary: true
+    needs: [auth]
+    app:
+      deployment:
+        source: {activeMethod: image, imageSource: {image: "${{ image }}"}}
+      settings:
+        kind: {category: webapp, engine: demostack, webapp: {}}
+        envVars:
+          data:
+            - {k: JWT_SECRET, v: "${{ params.jwtSecret }}"}
+            - {k: AUTH_KEY, v: "${{ comp.auth.key }}"}
+            - {k: AUTH_HOST, v: "${{ comp.auth.ref.HIVEPAAS_HOST }}"}
+        routing: {port: 8000, exposePublicly: true}
+  - name: auth
+    title: Auth
+    app:
+      deployment:
+        source: {activeMethod: image, imageSource: {image: "${{ image }}"}}
+      settings:
+        kind: {category: webapp, engine: demostack, webapp: {}}
+        envVars:
+          data:
+            - {k: JWT_SECRET, v: "${{ params.jwtSecret }}"}
+            - {k: DB_PASSWORD, v: "${{ deps.db.ref.HIVEPAAS_PASSWORD }}"}

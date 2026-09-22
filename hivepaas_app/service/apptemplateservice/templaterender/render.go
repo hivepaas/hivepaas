@@ -35,6 +35,14 @@ type Request struct {
 	ResolvedParams map[string]*Value
 	// Deps binds every dependency the template declares to its app.
 	Deps map[string]*DepBinding
+	// Component names which component of the template to render, for a template
+	// that declares several. It is empty, and must be, for a template with one
+	// app.
+	Component string
+	// Comps binds the components the template declares to their apps. Every
+	// component is in it from the start, because their keys are known before any
+	// of them is rendered; SharedVars fill in as each one renders.
+	Comps map[string]*CompBinding
 }
 
 type Result struct {
@@ -69,6 +77,10 @@ func Render(req *Request) (*Result, error) {
 	if err := tmpl.Validate(""); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	component, err := selectComponent(tmpl, req)
+	if err != nil {
+		return nil, err
+	}
 	version, variant, image, err := selectVersion(tmpl, req)
 	if err != nil {
 		return nil, err
@@ -86,7 +98,11 @@ func Render(req *Request) (*Result, error) {
 		}
 	}
 
-	tree := deepCopy(tmpl.App)
+	appTree := tmpl.App
+	if component != nil {
+		appTree = component.App
+	}
+	tree := deepCopy(appTree)
 	if version.Override != nil {
 		// TODO: app templates phase 3 - apply the variant's override after the
 		// version's. See docs/superpowers/specs/2026-09-17-app-templates-design.md §12.
@@ -95,7 +111,7 @@ func Render(req *Request) (*Result, error) {
 	vars := templateVars(version, variant, image)
 	name := tmpl.Metadata.Name
 
-	applied, err := Substitute(tree, resolver(name, vars, params, req.Deps, false))
+	applied, err := Substitute(tree, resolver(name, vars, params, req, false))
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +131,7 @@ func Render(req *Request) (*Result, error) {
 		return nil, err
 	}
 
-	baseTree, err := Substitute(tree, resolver(name, vars, params, req.Deps, true))
+	baseTree, err := Substitute(tree, resolver(name, vars, params, req, true))
 	if err != nil {
 		return nil, err
 	}
@@ -186,6 +202,30 @@ func applyImageOverride(
 	return class, nil
 }
 
+// selectComponent is the component a request renders, nil for a template with
+// one app. A template with components renders one of them at a time: each is its
+// own app, with its own image, its own document and its own base.
+func selectComponent(tmpl *templatemodel.Template, req *Request) (*templatemodel.Component, error) {
+	name := tmpl.Metadata.Name
+	if !tmpl.HasComponents() {
+		if req.Component != "" {
+			return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).
+				WithExtraDetail("%s: has no components, and %q was asked for", name, req.Component)
+		}
+		return nil, nil
+	}
+	if req.Component == "" {
+		return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).
+			WithExtraDetail("%s: creates several apps, and no component was named", name)
+	}
+	component := tmpl.FindComponent(req.Component)
+	if component == nil {
+		return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).
+			WithExtraDetail("%s: has no component %q", name, req.Component)
+	}
+	return component, nil
+}
+
 func selectVersion(tmpl *templatemodel.Template, req *Request) (
 	*templatemodel.Version, *templatemodel.Variant, string, error) {
 	name := tmpl.Metadata.Name
@@ -200,6 +240,18 @@ func selectVersion(tmpl *templatemodel.Template, req *Request) (
 	if version.Deprecated && !req.AllowDeprecated {
 		return nil, nil, "", hperrors.Wrap(hperrors.ErrAppTemplateVersionDeprecated).
 			WithParam("Template", name).WithParam("Version", version.Name)
+	}
+
+	if tmpl.HasComponents() {
+		if req.Variant != "" {
+			return nil, nil, "", variantUnavailable(name, version.Name, req.Variant)
+		}
+		image := version.ComponentImage(req.Component)
+		if image == "" {
+			return nil, nil, "", hperrors.Wrap(hperrors.ErrAppTemplateInvalid).WithExtraDetail(
+				"%s: version %q pins no image for component %q", name, version.Name, req.Component)
+		}
+		return version, nil, image, nil
 	}
 
 	if len(tmpl.Variants) == 0 {
@@ -249,18 +301,22 @@ func templateVars(version *templatemodel.Version, variant *templatemodel.Variant
 }
 
 // resolver answers placeholders from the version, the variant, the resolved
-// parameters and the dependencies' bindings. keepSecrets leaves secret
-// placeholders as they are - the base render.
+// parameters and the bindings of the dependencies and sibling components.
+// keepSecrets leaves secret placeholders as they are - the base render.
 func resolver(
 	template string,
 	vars map[string]any,
 	params map[string]*Value,
-	deps map[string]*DepBinding,
+	req *Request,
 	keepSecrets bool,
 ) Resolver {
 	return func(ref string) (any, bool, error) {
 		if strings.HasPrefix(ref, "deps.") {
-			value, err := resolveDep(template, ref, deps)
+			value, err := resolveDep(template, ref, req.Deps)
+			return value, false, err
+		}
+		if strings.HasPrefix(ref, "comp.") {
+			value, err := resolveComp(template, ref, req.Comps)
 			return value, false, err
 		}
 		if paramName, isParam := strings.CutPrefix(ref, "params."); isParam {

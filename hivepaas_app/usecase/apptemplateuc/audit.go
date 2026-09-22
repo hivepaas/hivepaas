@@ -9,7 +9,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/auditdetail"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/auditservice"
 )
 
@@ -21,10 +20,11 @@ func (uc *UC) recordCreateFromTemplate(
 	db database.IDB,
 	auth *basedto.Auth,
 	app *entity.App,
-	rendered *apptemplateservice.RenderResp,
+	target *appToProvision,
 	links appTemplateLinks,
 ) error {
-	result := rendered.Result
+	rendered := target.rendered
+	result := target.result
 	detail := auditdetail.New().
 		Set("projectId", app.ProjectID).
 		Set("envId", app.ProjectEnvID).
@@ -39,6 +39,16 @@ func (uc *UC) recordCreateFromTemplate(
 	}
 	if result.ImageOverride != "" {
 		detail.Set("imageOverride", result.ImageOverride)
+	}
+	if links.component != "" {
+		detail.Set("component", links.component)
+	}
+	if len(links.components) > 0 {
+		components := make([]map[string]string, 0, len(links.components))
+		for _, component := range links.components {
+			components = append(components, map[string]string{"name": component.Name, "appId": component.AppID})
+		}
+		detail.Set("components", components)
 	}
 	if len(links.dependencies) > 0 {
 		deps := make([]map[string]string, 0, len(links.dependencies))

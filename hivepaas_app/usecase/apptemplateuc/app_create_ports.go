@@ -52,7 +52,7 @@ func (uc *UC) checkPublishedPorts(ctx context.Context, apps []*appToProvision) e
 // publishedPortsOf reads the ports an app was rendered with, from the document:
 // nothing has been built yet.
 func publishedPortsOf(target *appToProvision) []specmodel.PortConfig {
-	doc := target.rendered.Result.Doc
+	doc := target.result.Doc
 	if doc == nil || doc.Deployment == nil || doc.Deployment.Networks == nil ||
 		doc.Deployment.Networks.EndpointSpec == nil {
 		return nil

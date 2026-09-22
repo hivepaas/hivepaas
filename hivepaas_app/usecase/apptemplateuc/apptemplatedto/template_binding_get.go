@@ -53,9 +53,21 @@ type AppTemplateBindingResp struct {
 	AppliedAt     time.Time `json:"appliedAt"`
 	// Dependencies are the apps created alongside this one.
 	Dependencies []*AppTemplateBindingDependencyResp `json:"dependencies"`
+	// Component is which part of the application this app is, for a template that
+	// creates several - "auth", "gw" - empty for an app that is its template's
+	// only one.
+	Component string `json:"component"`
+	// Components are the other apps of the same application, set on the primary
+	// one only.
+	Components []*AppTemplateBindingComponentResp `json:"components"`
 	// CreatedForAppID is the app this one was created to serve, empty when it was
 	// created on its own.
 	CreatedForAppID string `json:"createdForAppId"`
+}
+
+type AppTemplateBindingComponentResp struct {
+	Name  string `json:"name"`
+	AppID string `json:"appId"`
 }
 
 type AppTemplateBindingDependencyResp struct {
@@ -76,11 +88,17 @@ func TransformAppTemplateBinding(settings *entity.AppTemplateSettings) *AppTempl
 		Revision:        settings.Base.Revision,
 		AppliedAt:       settings.Base.AppliedAt,
 		CreatedForAppID: settings.CreatedForAppID,
+		Component:       settings.Component,
 		Dependencies:    make([]*AppTemplateBindingDependencyResp, 0, len(settings.Dependencies)),
+		Components:      make([]*AppTemplateBindingComponentResp, 0, len(settings.Components)),
 	}
 	for _, dep := range settings.Dependencies {
 		resp.Dependencies = append(resp.Dependencies,
 			&AppTemplateBindingDependencyResp{Name: dep.Name, AppID: dep.AppID, Template: dep.Template})
+	}
+	for _, component := range settings.Components {
+		resp.Components = append(resp.Components,
+			&AppTemplateBindingComponentResp{Name: component.Name, AppID: component.AppID})
 	}
 	return resp
 }

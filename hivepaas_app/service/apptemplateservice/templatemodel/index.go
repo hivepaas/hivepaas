@@ -36,12 +36,19 @@ type IndexEntry struct {
 	// the store lists it: what a template costs to run is part of choosing it, and
 	// reading every template file to find out would defeat the index.
 	License string `json:"license,omitempty"`
+	// Internal keeps the template out of the store's listing and search. The
+	// entry is still here, because a template that names it as a dependency is
+	// fetched through the index like any other.
+	Internal bool `json:"internal,omitempty"`
 	// Dependencies let the store say what else a template creates without reading
 	// its file.
 	Dependencies []*IndexDependency `json:"dependencies,omitempty"`
-	Variants     []*IndexVariant    `json:"variants,omitempty"`
-	Versions     []*IndexVersion    `json:"versions"`
-	Requires     Requires           `json:"requires"`
+	// Components are the apps a template creates for itself, for the same reason:
+	// the store says "this creates thirteen apps" without reading the file.
+	Components []*IndexComponent `json:"components,omitempty"`
+	Variants   []*IndexVariant   `json:"variants,omitempty"`
+	Versions   []*IndexVersion   `json:"versions"`
+	Requires   Requires          `json:"requires"`
 	// RequiresCapabilities says the template asks for kernel capabilities,
 	// sysctls, ulimits or the GPU, which only someone who may change an app's
 	// capabilities can grant. It is in the index so that the store can say so
@@ -59,6 +66,12 @@ type IndexDependency struct {
 	Name     string `json:"name"`
 	Title    string `json:"title"`
 	Template string `json:"template"`
+}
+
+type IndexComponent struct {
+	Name    string `json:"name"`
+	Title   string `json:"title"`
+	Primary bool   `json:"primary,omitempty"`
 }
 
 type IndexVersion struct {

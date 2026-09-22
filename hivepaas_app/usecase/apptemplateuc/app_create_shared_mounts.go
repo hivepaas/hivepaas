@@ -119,7 +119,7 @@ func (uc *UC) checkSharedMountOwner(
 // sharedMountsOf names, for a person to read, what one app's document reaches of
 // another app's storage.
 func sharedMountsOf(target *appToProvision) []sharedMount {
-	doc := target.rendered.Result.Doc
+	doc := target.result.Doc
 	if doc == nil || doc.Deployment == nil || doc.Deployment.Storage == nil {
 		return nil
 	}

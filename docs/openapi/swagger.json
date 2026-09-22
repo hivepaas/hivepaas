@@ -41927,7 +41927,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -41945,7 +41945,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -45123,6 +45123,18 @@
         "required" : [ "driverConfig", "labels", "noCopy", "subpath" ],
         "type" : "object"
       },
+      "apptemplatedto.AppTemplateBindingComponentResp" : {
+        "properties" : {
+          "appId" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "appId", "name" ],
+        "type" : "object"
+      },
       "apptemplatedto.AppTemplateBindingDependencyResp" : {
         "properties" : {
           "appId" : {
@@ -45142,6 +45154,17 @@
         "properties" : {
           "appliedAt" : {
             "type" : "string"
+          },
+          "component" : {
+            "description" : "Component is which part of the application this app is, for a template that\ncreates several - \"auth\", \"gw\" - empty for an app that is its template's\nonly one.",
+            "type" : "string"
+          },
+          "components" : {
+            "description" : "Components are the other apps of the same application, set on the primary\none only.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateBindingComponentResp"
+            },
+            "type" : "array"
           },
           "createdForAppId" : {
             "description" : "CreatedForAppID is the app this one was created to serve, empty when it was\ncreated on its own.",
@@ -45180,7 +45203,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "appliedAt", "createdForAppId", "dependencies", "imageOverride", "release", "revision", "source", "template", "title", "variant", "version" ],
+        "required" : [ "appliedAt", "component", "components", "createdForAppId", "dependencies", "imageOverride", "release", "revision", "source", "template", "title", "variant", "version" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateCapabilitiesResp" : {
@@ -45264,6 +45287,22 @@
           }
         },
         "required" : [ "children", "count", "id", "title" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateComponentSummaryResp" : {
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "primary" : {
+            "description" : "Primary marks the component that owns the domain and carries the name the\nperson gives the app; the others are that name with theirs added.",
+            "type" : "boolean"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "primary", "title" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateDependencyResp" : {
@@ -45575,6 +45614,13 @@
             "description" : "Compatible is false for a template needing a newer HivePaaS: the store\nlists it, locked, rather than hiding it.\n\nWhat it needs is not part of the answer. The version it names is a code\nthis installation cannot turn into anything a person would recognize, and\nthe only thing to do about an incompatible template is update - which is\nthe same whichever version it asked for.",
             "type" : "boolean"
           },
+          "components" : {
+            "description" : "Components are the apps this template is made of, for an application that\nis several processes rather than one. Empty for a template with one app.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateComponentSummaryResp"
+            },
+            "type" : "array"
+          },
           "dependencies" : {
             "description" : "Dependencies are the apps creating this template also creates.",
             "items" : {
@@ -45620,7 +45666,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "aliases", "categories", "compatible", "dependencies", "iconUrl", "license", "name", "requiresCapabilities", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "aliases", "categories", "compatible", "components", "dependencies", "iconUrl", "license", "name", "requiresCapabilities", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateTagResp" : {
@@ -45709,6 +45755,13 @@
           "app" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDResp"
           },
+          "components" : {
+            "description" : "Components are the other apps of an application that is several processes,\neach with its first deployment. The app above is the primary component, so\nit is not repeated here.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.CreatedComponentResp"
+            },
+            "type" : "array"
+          },
           "dependencies" : {
             "description" : "Dependencies are the apps created alongside, each with its first deployment.",
             "items" : {
@@ -45724,7 +45777,7 @@
             "type" : "object"
           }
         },
-        "required" : [ "app", "dependencies", "deployment" ],
+        "required" : [ "app", "components", "dependencies", "deployment" ],
         "type" : "object"
       },
       "apptemplatedto.CreateAppFromTemplateReq" : {
@@ -45777,6 +45830,22 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "apptemplatedto.CreatedComponentResp" : {
+        "properties" : {
+          "app" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "deployment" : {
+            "$ref" : "#/components/schemas/basedto.ObjectIDResp"
+          },
+          "name" : {
+            "description" : "Name is the component's role in the template: auth, worker.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "app", "deployment", "name" ],
         "type" : "object"
       },
       "apptemplatedto.CreatedDependencyResp" : {
@@ -61089,9 +61158,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

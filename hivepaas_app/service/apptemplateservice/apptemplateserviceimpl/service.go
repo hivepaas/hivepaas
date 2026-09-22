@@ -173,8 +173,8 @@ func (s *service) Render(
 	if !templatemodel.IsCompatible(loaded.Template.Metadata.Requires, base.CurrentVersion) {
 		return nil, hperrors.Wrap(hperrors.ErrAppTemplateIncompatible).WithParam("Name", req.Name)
 	}
-	if len(loaded.Dependencies) > 0 {
-		return renderWithDependencies(loaded, req)
+	if len(loaded.Dependencies) > 0 || loaded.Template.HasComponents() {
+		return renderApps(loaded, req)
 	}
 	if len(req.DependencyParams) > 0 {
 		return nil, hperrors.Wrap(hperrors.ErrAppTemplateParamInvalid).
@@ -193,10 +193,11 @@ func (s *service) Render(
 	return &apptemplateservice.RenderResp{TemplateResp: *loaded, Result: result}, nil
 }
 
-// renderWithDependencies renders every app of the request before any of them
-// exists: the dependencies first, because the template refers to what they share
-// and their parameters can refer to the template's.
-func renderWithDependencies(
+// renderApps renders every app of the request before any of them exists: the
+// dependencies first, because what needs them refers to what they share and
+// their parameters can refer to the template's, then either the template's one
+// app or each of its components.
+func renderApps(
 	loaded *apptemplateservice.TemplateResp,
 	req *apptemplateservice.RenderReq,
 ) (*apptemplateservice.RenderResp, error) {
@@ -204,7 +205,7 @@ func renderWithDependencies(
 	name := tmpl.Metadata.Name
 	if req.AppName == "" {
 		return nil, hperrors.Wrap(hperrors.ErrAppTemplateInvalid).
-			WithExtraDetail("%s: its dependencies are named after the app, and no app name was given", name)
+			WithExtraDetail("%s: the other apps it creates are named after the app, and no app name was given", name)
 	}
 	for _, depName := range slices.Sorted(maps.Keys(req.DependencyParams)) {
 		if tmpl.FindDependency(depName) == nil {
@@ -227,6 +228,10 @@ func renderWithDependencies(
 		}
 		bindings[dep.Dependency.Name] = binding
 		resp.Dependencies = append(resp.Dependencies, rendered)
+	}
+
+	if tmpl.HasComponents() {
+		return renderComponents(loaded, req, owner, bindings, keys, resp)
 	}
 
 	result, err := templaterender.Render(&templaterender.Request{

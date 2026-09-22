@@ -63,7 +63,7 @@ func (uc *UC) checkCapabilities(
 // grantedCapabilities names, for a person to read, what one app's document asks
 // the host for. It is empty for an app whose document carries no capabilities.
 func grantedCapabilities(target *appToProvision) []string {
-	doc := target.rendered.Result.Doc
+	doc := target.result.Doc
 	if doc == nil || doc.Deployment == nil || doc.Deployment.Resources == nil {
 		return nil
 	}

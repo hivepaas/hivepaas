@@ -101,6 +101,10 @@ func categoryRefs(categories []*templatemodel.Category) map[string]bool {
 	return refs
 }
 
+// renderRequestFunc builds the render request for one version and variant, with
+// the parameters and dependency bindings the linter uses.
+type renderRequestFunc func(version, variant string) *templaterender.Request
+
 func lintRenders(repo *Repo, file *TemplateFile) []Problem {
 	tmpl := file.Template
 	request := func(version, variant string) *templaterender.Request {
@@ -125,6 +129,10 @@ func lintRenders(repo *Repo, file *TemplateFile) []Problem {
 			}
 		}
 	}
+	if tmpl.HasComponents() {
+		return lintRenderComponents(file, request)
+	}
+
 	variants := []string{""}
 	if len(tmpl.Variants) > 0 {
 		variants = variants[:0]
@@ -147,6 +155,43 @@ func lintRenders(repo *Repo, file *TemplateFile) []Problem {
 				}
 				problems = append(problems, Problem{Path: file.Path, Message: label + ": " + ErrorText(err)})
 			}
+		}
+	}
+	return problems
+}
+
+// lintRenderComponents renders every component of every version, in the order
+// the template's needs put them. Rendering them in that order is what makes the
+// linter catch a component reading another that is rendered after it, which at
+// creation would be an error nobody sees until they install the thing.
+func lintRenderComponents(file *TemplateFile, request renderRequestFunc) []Problem {
+	tmpl := file.Template
+	ordered, err := tmpl.ComponentOrder()
+	if err != nil {
+		return []Problem{{Path: file.Path, Message: ErrorText(err)}}
+	}
+
+	var problems []Problem
+	for _, version := range tmpl.Versions {
+		comps := make(map[string]*templaterender.CompBinding, len(ordered))
+		for _, component := range tmpl.Components {
+			comps[component.Name] = &templaterender.CompBinding{
+				AppKey: lintAppKey + "-" + component.Name,
+			}
+		}
+		for _, component := range ordered {
+			req := request(version.Name, "")
+			req.Component = component.Name
+			req.Comps = comps
+			result, renderErr := templaterender.Render(req)
+			if renderErr != nil {
+				problems = append(problems, Problem{Path: file.Path,
+					Message: "version " + version.Name + ", component " + component.Name + ": " + ErrorText(renderErr)})
+				continue
+			}
+			binding := comps[component.Name]
+			binding.SharedVars = templaterender.SharedVarsOf(result.Doc)
+			binding.Rendered = true
 		}
 	}
 	return problems

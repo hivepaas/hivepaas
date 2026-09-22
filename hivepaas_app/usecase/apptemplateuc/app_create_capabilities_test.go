@@ -64,8 +64,9 @@ func capabilityApps(t *testing.T) []*appToProvision {
 	result, err := templaterender.Render(&templaterender.Request{Template: tmpl})
 	assert.NoError(t, err)
 	return []*appToProvision{{
-		id:   "app-1",
-		name: "search",
+		id:     "app-1",
+		name:   "search",
+		result: result,
 		rendered: &apptemplateservice.RenderResp{
 			TemplateResp: apptemplateservice.TemplateResp{Template: tmpl},
 			Result:       result,
@@ -121,8 +122,9 @@ func TestCheckCapabilitiesCoversTheDependenciesOfARequest(t *testing.T) {
 	permissions := &fakePermissionManager{granted: false}
 	uc := &UC{permissionManager: permissions}
 	apps := capabilityApps(t)
-	main := &appToProvision{id: "app-2", name: "main-app", rendered: apps[0].rendered}
+	main := &appToProvision{id: "app-2", name: "main-app"}
 	main.rendered = plainRender(t)
+	main.result = main.rendered.Result
 	apps[0].role, apps[0].logicalParentID = "search", main.id
 
 	err := uc.checkCapabilities(context.Background(), testAuth(), append(apps, main))

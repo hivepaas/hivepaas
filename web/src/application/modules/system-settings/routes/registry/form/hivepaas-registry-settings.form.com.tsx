@@ -109,7 +109,6 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
     const storageType = useWatch({ control, name: "storageType" });
     const cleanupEnabled = useWatch({ control, name: "cleanupEnabled" });
     const keepLast = useWatch({ control, name: "keepLast" });
-    const keepDays = useWatch({ control, name: "keepDays" });
 
     // Only volumes that are shared with apps reach the registry: its app lives in
     // a project of its own, and a volume that is not inheritable is invisible
@@ -415,7 +414,7 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                                 title={
                                                     <LabelWithInfo
                                                         label="Builds to keep"
-                                                        content="The newest builds of every app are kept however old they are, which is what protects an app nobody has deployed for a while."
+                                                        content="This many newest builds are kept for each environment of each app, however old they are, which is what protects an app nobody has deployed for a while."
                                                     />
                                                 }
                                             >
@@ -439,7 +438,7 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                                 title={
                                                     <LabelWithInfo
                                                         label="Days to keep"
-                                                        content="Everything pushed, or pulled by a node, within this many days is kept as well."
+                                                        content="Meant to keep an image a node pulled within this many days, however old the build is. Zot does not enforce it yet, so the count above is what decides today."
                                                     />
                                                 }
                                             >
@@ -462,7 +461,7 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
 
                                     {/* Two numbers in a form are not a policy anybody can picture. */}
                                     <p className="px-1 text-sm text-muted-foreground">
-                                        {describeCleanup(cleanupEnabled, keepLast, keepDays)}
+                                        {describeCleanup(cleanupEnabled, keepLast)}
                                     </p>
                                 </SectionBody>
                             </>

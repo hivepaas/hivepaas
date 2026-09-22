@@ -56,16 +56,14 @@ export function toRegistryPayload(
 }
 
 /** The sentence under the two numbers: a policy nobody can picture from two integers. */
-export function describeCleanup(enabled: boolean, keepLast: number, keepDays: number): string {
+export function describeCleanup(enabled: boolean, keepLast: number): string {
     if (!enabled) {
         return "Nothing is removed. The registry grows until the disk or the bucket does.";
     }
 
     const builds = keepLast === 1 ? "build" : "builds";
-    const days = keepDays === 1 ? "day" : "days";
     return (
-        `Keeps the last ${keepLast} ${builds} of every app in every environment, ` +
-        `and everything from the past ${keepDays} ${days}. ` +
+        `Keeps the last ${keepLast} ${builds} of every app in every environment. ` +
         "Anything else is removed, and its space comes back within a couple of hours."
     );
 }

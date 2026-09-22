@@ -68,6 +68,13 @@ type RegistrySettings struct {
 	Storage RegistryStorage `json:"storage"`
 	Cleanup RegistryCleanup `json:"cleanup"`
 
+	// DashboardEnabled serves zot's own web interface at the registry's domain.
+	// It is off by default, and off is not only a smaller attack surface: zot
+	// answers the interface's pages to anybody, signed in or not, and the one
+	// account that can then sign in is the credential HivePaaS pushes with -
+	// which may delete every image it can read.
+	DashboardEnabled bool `json:"dashboardEnabled,omitempty"`
+
 	MemoryLimit unit.DataSize `json:"memoryLimit,omitempty"`
 
 	// AppID and RegistryAuthID are what provisioning created. They are how Apply

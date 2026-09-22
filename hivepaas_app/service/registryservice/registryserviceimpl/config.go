@@ -124,9 +124,11 @@ func renderZotConfig(cfg *entity.RegistrySettings, in zotConfigInput) ([]byte, e
 		"log": map[string]any{"level": "info"},
 		"extensions": map[string]any{
 			// search answers with each repository's size and last update, which
-			// is what the dashboard's status section reads.
+			// is what the dashboard's status section reads. It stays on whether
+			// or not the interface does: measured, the interface off leaves
+			// search answering and only its own pages returning 404.
 			"search": map[string]any{"enable": true},
-			"ui":     map[string]any{"enable": true},
+			"ui":     map[string]any{"enable": cfg.DashboardEnabled},
 		},
 	}
 

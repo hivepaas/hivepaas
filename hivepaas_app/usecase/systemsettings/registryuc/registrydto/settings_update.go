@@ -38,6 +38,8 @@ type UpdateSettingsBaseReq struct {
 	Domain  string     `json:"domain"`
 	Storage StorageReq `json:"storage"`
 	Cleanup CleanupReq `json:"cleanup"`
+	// DashboardEnabled serves zot's own web interface at the registry's domain.
+	DashboardEnabled bool `json:"dashboardEnabled"`
 	// MemoryLimit is written the way every other size in HivePaaS is - "512mb" -
 	// and decoded into the same type the setting stores.
 	MemoryLimit unit.DataSize `json:"memoryLimit"`
@@ -93,7 +95,8 @@ func (req *UpdateSettingsBaseReq) ToEntity() *entity.RegistrySettings {
 			KeepLast: req.Cleanup.KeepLast,
 			KeepDays: req.Cleanup.KeepDays,
 		},
-		MemoryLimit: req.MemoryLimit,
+		DashboardEnabled: req.DashboardEnabled,
+		MemoryLimit:      req.MemoryLimit,
 	}
 }
 

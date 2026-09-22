@@ -210,6 +210,37 @@ func TestRetentionPrefixesAreCapped(t *testing.T) {
 	assert.Subset(t, prefixes, retentionBaseTagPrefixes)
 }
 
+// Zot answers the interface's pages to anybody, signed in or not, and the account
+// that can sign in is the one HivePaaS pushes with. Off is the default.
+func TestConfigKeepsTheInterfaceOffUnlessAsked(t *testing.T) {
+	raw, err := renderZotConfig(volumeSettings(), zotConfigInput{})
+	if err != nil {
+		t.Fatalf("renderZotConfig: %v", err)
+	}
+
+	extensions, _ := decodeConfig(t, raw)["extensions"].(map[string]any)
+	ui, _ := extensions["ui"].(map[string]any)
+	assert.Equal(t, false, ui["enable"])
+
+	// Search answers the dashboard's status section and stays on either way.
+	search, _ := extensions["search"].(map[string]any)
+	assert.Equal(t, true, search["enable"])
+}
+
+func TestConfigServesTheInterfaceWhenAsked(t *testing.T) {
+	cfg := volumeSettings()
+	cfg.DashboardEnabled = true
+
+	raw, err := renderZotConfig(cfg, zotConfigInput{})
+	if err != nil {
+		t.Fatalf("renderZotConfig: %v", err)
+	}
+
+	extensions, _ := decodeConfig(t, raw)["extensions"].(map[string]any)
+	ui, _ := extensions["ui"].(map[string]any)
+	assert.Equal(t, true, ui["enable"])
+}
+
 // Cleanup off means zot prunes nothing at all. The garbage collector stays on, so
 // that a manifest somebody deletes by hand still frees its bytes.
 func TestConfigWithoutCleanupHasNoRetention(t *testing.T) {

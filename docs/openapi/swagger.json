@@ -41927,7 +41927,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -58940,6 +58940,10 @@
           "credentialRotation" : {
             "$ref" : "#/components/schemas/systemsettings_registrydto.CredentialRotationRes"
           },
+          "dashboardEnabled" : {
+            "description" : "DashboardEnabled says whether zot's own web interface answers at the\nregistry's domain.",
+            "type" : "boolean"
+          },
           "default" : {
             "type" : "boolean"
           },
@@ -58999,7 +59003,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "app", "cleanup", "createdAt", "credential", "credentialRotation", "default", "domain", "enabled", "expireAt", "id", "inheritable", "inherited", "kind", "managed", "memoryLimit", "name", "registryStatus", "size", "status", "storage", "type", "updateVer", "updatedAt" ],
+        "required" : [ "app", "cleanup", "createdAt", "credential", "credentialRotation", "dashboardEnabled", "default", "domain", "enabled", "expireAt", "id", "inheritable", "inherited", "kind", "managed", "memoryLimit", "name", "registryStatus", "size", "status", "storage", "type", "updateVer", "updatedAt" ],
         "type" : "object"
       },
       "systemsettings_registrydto.RegistryStatusResp" : {
@@ -59083,6 +59087,10 @@
           "cleanup" : {
             "$ref" : "#/components/schemas/systemsettings_registrydto.CleanupReq"
           },
+          "dashboardEnabled" : {
+            "description" : "DashboardEnabled serves zot's own web interface at the registry's domain.",
+            "type" : "boolean"
+          },
           "default" : {
             "type" : "boolean"
           },
@@ -59106,7 +59114,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "cleanup", "default", "domain", "enabled", "inheritable", "memoryLimit", "storage", "updateVer" ],
+        "required" : [ "cleanup", "dashboardEnabled", "default", "domain", "enabled", "inheritable", "memoryLimit", "storage", "updateVer" ],
         "type" : "object"
       },
       "systemsettings_registrydto.UpdateRegistrySettingsResp" : {
@@ -61158,9 +61166,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

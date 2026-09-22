@@ -31,9 +31,16 @@ export function toRegistryFormInput(settings?: HivePaaSRegistrySettings): HivePa
     };
 }
 
+/** What a save has to confirm before it may take the registry down. */
+export type RegistryRemoval = {
+    removeApp: boolean;
+    removeStorage: boolean;
+};
+
 export function toRegistryPayload(
     values: HivePaaSRegistrySettingsFormOutput,
     updateVer: number,
+    removal?: RegistryRemoval,
 ): HivePaaSRegistrySettings_UpdateOnePayload {
     // Only the store in use is sent. The other id is whatever the form happened
     // to hold before the operator switched, and it names nothing the registry
@@ -56,6 +63,8 @@ export function toRegistryPayload(
             keepDays: values.keepDays,
         },
         memoryLimit: values.memoryLimit || DEFAULT_MEMORY_LIMIT,
+        removeApp: removal?.removeApp,
+        removeStorage: removal?.removeStorage,
     };
 }
 

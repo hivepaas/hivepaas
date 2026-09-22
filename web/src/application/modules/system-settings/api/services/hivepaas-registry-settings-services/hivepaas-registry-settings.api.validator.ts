@@ -63,7 +63,13 @@ const FindOneSchema = z.object({
     meta: BaseMetaApiSchema.nullish(),
 });
 
-const MetaOnlySchema = z.object({
+const UpdateSchema = z.object({
+    data: z
+        .object({
+            removedApp: z.boolean().catch(false),
+            credentialKept: z.boolean().catch(false),
+        })
+        .nullish(),
     meta: BaseMetaApiSchema.nullish(),
 });
 
@@ -101,8 +107,13 @@ export class HivePaaSRegistrySettingsApiValidator {
     };
 
     updateOne = (response: AxiosResponse): HivePaaSRegistrySettings_UpdateOne_Res => {
-        parseApiResponse({ response, schema: MetaOnlySchema });
-        return { data: { type: "success" } };
+        const { data } = parseApiResponse({ response, schema: UpdateSchema });
+        return {
+            data: {
+                removedApp: data?.removedApp ?? false,
+                credentialKept: data?.credentialKept ?? false,
+            },
+        };
     };
 
     probeDomain = (response: AxiosResponse): HivePaaSRegistrySettings_ProbeDomain_Res => {

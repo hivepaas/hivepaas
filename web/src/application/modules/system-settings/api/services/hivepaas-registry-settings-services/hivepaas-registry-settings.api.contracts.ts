@@ -26,12 +26,24 @@ export type HivePaaSRegistrySettings_UpdateOnePayload = {
     cleanup: { enabled: boolean; keepLast: number; keepDays: number };
     dashboardEnabled: boolean;
     memoryLimit: string;
+    /**
+     * Switching the registry off takes its app down, and the app has no screen of
+     * its own to be removed from, so the confirmation is sent with the save.
+     */
+    removeApp?: boolean;
+    /** Delete the images with the app: the registry's directory in the volume. */
+    removeStorage?: boolean;
 };
 
 export type HivePaaSRegistrySettings_UpdateOne_Req = ApiRequestBase<{
     payload: HivePaaSRegistrySettings_UpdateOnePayload;
 }>;
-export type HivePaaSRegistrySettings_UpdateOne_Res = ApiResponseBase<{ type: "success" }>;
+export type HivePaaSRegistrySettings_UpdateOne_Res = ApiResponseBase<{
+    /** The registry's app was taken down by this save. */
+    removedApp: boolean;
+    /** The registry account was left in place because an app still names it. */
+    credentialKept: boolean;
+}>;
 
 export type HivePaaSRegistrySettings_ProbeDomain_Req = ApiRequestBase<{ domain: string }>;
 export type HivePaaSRegistrySettings_ProbeDomain_Res = ApiResponseBase<HivePaaSRegistryDomainProbe>;

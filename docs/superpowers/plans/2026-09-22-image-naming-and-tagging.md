@@ -1249,6 +1249,13 @@ EOF
 
 **Files:** none. What this produces is a green run or a bug to fix in the task that owns it.
 
+**What ran, and what could not:** the settings side is verified against a running server - an
+app's deployment settings answer with the computed name, a deploy carrying `["v1.4.0"]` put the
+tags in the task's arguments, and the app's own setting gained neither them nor `noCache`. The
+build side is not: the deployment task was executed by the other backend on this machine, the
+one running main, so the image came out named the old way. Running the steps below needs the
+instance that executes tasks to be built from this branch.
+
 - [ ] **Step 1: Two projects, one app key**
 
 Create `api` in two projects, build both with the system registry selected. Expect two

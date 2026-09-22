@@ -53,8 +53,15 @@ func (app *App) ImageTagPrefix() (string, error) {
 			WithMsgLog("app %v has no environment loaded, so its image has no tag", app.ID)
 	}
 
-	env, _ := cutImageSegment(app.ProjectEnv.Key, envSegmentMaxLen)
-	return normalizeImagePart(env), nil
+	return ImageTagPrefixOf(app.ProjectEnv.Key), nil
+}
+
+// ImageTagPrefixOf is the tag prefix an environment key produces. It is exported
+// because the registry's retention rules are written against these prefixes: a
+// rule built any other way would stop matching the tags it is meant to keep.
+func ImageTagPrefixOf(envKey string) string {
+	env, _ := cutImageSegment(envKey, envSegmentMaxLen)
+	return normalizeImagePart(env)
 }
 
 // ImageTag is what one build is tagged with.

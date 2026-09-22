@@ -42,13 +42,16 @@ type planInput struct {
 	VolumeID string
 	S3       *zotS3Input
 	Htpasswd string
+	// EnvKeys is every environment key in the installation, which retention needs
+	// to count each environment's builds separately.
+	EnvKeys []string
 }
 
 // planAppDoc turns the setting into the document the app is built from. It is
 // separate from Apply, and pure, because this is where every decision is: what
 // gets mounted, what the configuration says, how big the app is allowed to be.
 func planAppDoc(cfg *entity.RegistrySettings, in planInput) (appDocInput, error) {
-	zotConfig, err := renderZotConfig(cfg, zotConfigInput{S3: in.S3})
+	zotConfig, err := renderZotConfig(cfg, zotConfigInput{S3: in.S3, EnvKeys: in.EnvKeys})
 	if err != nil {
 		return appDocInput{}, hperrors.Wrap(err)
 	}
@@ -109,6 +112,13 @@ func (s *service) Apply(
 
 	in, err := s.resolveStorage(ctx, db, cfg)
 	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	// Read on every save rather than kept anywhere: an environment created since
+	// the last save gets its own retention rule from here, and one created after
+	// this save falls to the catch-all rule until the next.
+	if in.EnvKeys, err = s.projectEnvRepo.ListDistinctKeys(ctx, db); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 

@@ -2,6 +2,8 @@ package registryserviceimpl
 
 import (
 	"encoding/json"
+	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -114,13 +116,98 @@ func TestConfigCleanupRules(t *testing.T) {
 	assert.Equal(t, true, first["deleteUntagged"])
 
 	rules, _ := first["keepTags"].([]any)
-	assert.Len(t, rules, 3)
-	byCount, _ := rules[0].(map[string]any)
+	assert.Len(t, rules, len(retentionBaseTagPrefixes)+retentionCatchAllRules)
+
+	// The last three are the ones over every tag, whatever it starts with. The
+	// windows carry the same number of days: one for what was pushed, one for
+	// what a node pulled.
+	tail := rules[len(rules)-retentionCatchAllRules:]
+	byCount, _ := tail[0].(map[string]any)
+	assert.Equal(t, []any{".*"}, byCount["patterns"])
 	assert.Equal(t, float64(5), byCount["mostRecentlyPushedCount"])
-	byPush, _ := rules[1].(map[string]any)
+	byPush, _ := tail[1].(map[string]any)
 	assert.Equal(t, "168h", byPush["pushedWithin"])
-	byPull, _ := rules[2].(map[string]any)
+	byPull, _ := tail[2].(map[string]any)
 	assert.Equal(t, "168h", byPull["pulledWithin"])
+}
+
+// With the environment in the tag, an app's environments share a repository. A
+// single count would let the environment that deploys most evict the one that
+// deploys least, so each prefix is counted on its own.
+func TestConfigCountsEachEnvironmentSeparately(t *testing.T) {
+	cfg := volumeSettings()
+	cfg.Cleanup.KeepLast = 10
+
+	raw, err := renderZotConfig(cfg, zotConfigInput{EnvKeys: []string{"dev", "prod", "canary"}})
+	if err != nil {
+		t.Fatalf("renderZotConfig: %v", err)
+	}
+
+	storage, _ := decodeConfig(t, raw)["storage"].(map[string]any)
+	retention, _ := storage["retention"].(map[string]any)
+	policies, _ := retention["policies"].([]any)
+	first, _ := policies[0].(map[string]any)
+	rules, _ := first["keepTags"].([]any)
+
+	counted := map[string]float64{}
+	for _, rule := range rules {
+		entry, _ := rule.(map[string]any)
+		patterns, _ := entry["patterns"].([]any)
+		count, ok := entry["mostRecentlyPushedCount"].(float64)
+		if !ok || len(patterns) != 1 {
+			continue
+		}
+		pattern, _ := patterns[0].(string)
+		counted[pattern] = count
+	}
+
+	assert.Equal(t, float64(10), counted["^dev"])
+	assert.Equal(t, float64(10), counted["^prod"])
+	// Not one of the names written into the list, so it came from the database.
+	assert.Equal(t, float64(10), counted["^canary"])
+}
+
+// A rule that does not match the tags it is meant to keep deletes them silently,
+// so both are built by the same function.
+func TestRetentionPrefixesMatchTheTagsTheyKeep(t *testing.T) {
+	for _, envKey := range []string{"dev", "prod", "canary", "Staging--EU", "default"} {
+		app := &entity.App{ProjectEnv: &entity.ProjectEnv{Key: envKey}}
+		tag, err := app.ImageTag("9f3c1de0a1b2")
+		if err != nil {
+			t.Fatalf("ImageTag(%q): %v", envKey, err)
+		}
+
+		matched := false
+		for _, prefix := range retentionTagPrefixes([]string{envKey}) {
+			if regexp.MustCompile("^" + regexp.QuoteMeta(prefix)).MatchString(tag) {
+				matched = true
+				break
+			}
+		}
+		assert.True(t, matched, "no retention rule matches the tag %q", tag)
+	}
+}
+
+// "production" is already kept by the rule for "prod": a second rule would keep
+// the same tags, and the list is short so that it stays readable.
+func TestRetentionPrefixesSkipCoveredEnvironments(t *testing.T) {
+	prefixes := retentionTagPrefixes([]string{"production", "dev", "staging", "sandbox"})
+
+	assert.NotContains(t, prefixes, "production")
+	assert.NotContains(t, prefixes, "staging")
+	assert.Contains(t, prefixes, "sandbox")
+	assert.Equal(t, len(retentionBaseTagPrefixes)+1, len(prefixes))
+}
+
+func TestRetentionPrefixesAreCapped(t *testing.T) {
+	envKeys := make([]string, 0, 64)
+	for i := range 64 {
+		envKeys = append(envKeys, fmt.Sprintf("zone%02d", i))
+	}
+
+	prefixes := retentionTagPrefixes(envKeys)
+	assert.Len(t, prefixes, maxRetentionTagPrefixes)
+	assert.Subset(t, prefixes, retentionBaseTagPrefixes)
 }
 
 // Cleanup off means zot prunes nothing at all. The garbage collector stays on, so

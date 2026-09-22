@@ -25,6 +25,10 @@ type ProjectEnvRepo interface {
 		opts ...bunex.SelectQueryOption) ([]*entity.ProjectEnv, *basedto.PagingMeta, error)
 	ListByIDs(ctx context.Context, db database.IDB, ids []string,
 		opts ...bunex.SelectQueryOption) ([]*entity.ProjectEnv, error)
+	// ListDistinctKeys is every environment key in use, once each. The registry's
+	// retention rules are written from it, and it is a projection rather than a
+	// List because an installation has far more environments than distinct keys.
+	ListDistinctKeys(ctx context.Context, db database.IDB) ([]string, error)
 
 	Upsert(ctx context.Context, db database.IDB, projectEnv *entity.ProjectEnv,
 		conflictCols, updateCols []string, opts ...bunex.InsertQueryOption) error
@@ -145,6 +149,19 @@ func (repo *projectEnvRepo) ListByIDs(ctx context.Context, db database.IDB, ids 
 		return nil, hperrors.Wrap(err)
 	}
 	return projectEnvs, nil
+}
+
+func (repo *projectEnvRepo) ListDistinctKeys(ctx context.Context, db database.IDB) ([]string, error) {
+	var keys []string
+	err := db.NewSelect().Model((*entity.ProjectEnv)(nil)).
+		ColumnExpr("DISTINCT project_env.key").
+		Where("project_env.key != ?", "").
+		OrderExpr("1").
+		Scan(ctx, &keys)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return keys, nil
 }
 
 func (repo *projectEnvRepo) Upsert(ctx context.Context, db database.IDB, projectEnv *entity.ProjectEnv,

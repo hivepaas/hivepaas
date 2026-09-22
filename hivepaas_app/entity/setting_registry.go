@@ -110,9 +110,11 @@ type RegistryCleanup struct {
 	// that never prunes is the problem this feature exists to solve.
 	Enabled bool                     `json:"enabled"`
 	Mode    base.RegistryCleanupMode `json:"mode,omitempty"`
-	// KeepLast keeps this many of the newest tags of every repository.
+	// KeepLast keeps this many of the newest tags of every environment, in every
+	// repository.
 	KeepLast int `json:"keepLast,omitempty"`
-	// KeepDays keeps every tag pushed, or pulled, within this many days.
+	// KeepDays keeps every tag pushed, or pulled, within this many days. It is the
+	// window a rollback can reach back into, and KeepLast is what survives it.
 	KeepDays int `json:"keepDays,omitempty"`
 }
 

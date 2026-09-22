@@ -655,7 +655,7 @@ export function AppTemplatesDetailsView({
                                             </div>
 
                                             {dep.parameters && dep.parameters.length > 0 ? (
-                                                <div className="space-y-2">
+                                                <div className="flex flex-col gap-2.5">
                                                     <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                                                         Service Parameters
                                                     </span>
@@ -683,7 +683,7 @@ export function AppTemplatesDetailsView({
                         </div>
                         <CardContent className="px-4 sm:px-5 py-3.5 space-y-3.5">
                             {/* Versions List */}
-                            <div className="space-y-2">
+                            <div className="flex flex-col gap-2.5">
                                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                     Available Versions
                                 </span>
@@ -734,7 +734,7 @@ export function AppTemplatesDetailsView({
 
                             {/* Variants List (if available in detail) */}
                             {variants.length > 0 && (
-                                <div className="space-y-2 pt-2 border-t border-border/40">
+                                <div className="flex flex-col gap-2.5 pt-3 border-t border-border/40">
                                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                         Variants
                                     </span>

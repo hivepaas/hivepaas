@@ -100,9 +100,7 @@ func (s *service) Apply(
 		return nil, hperrors.Wrap(err)
 	}
 	if !cfg.Enabled {
-		// Switching it off removes nothing: the images are on a volume or in a
-		// bucket, and deleting them is done in the app's own screen.
-		return &registryservice.SettingApplyResp{}, nil
+		return s.teardown(ctx, db, setting, cfg, req)
 	}
 
 	credential, password, err := s.ensureCredential(ctx, db, cfg)
@@ -162,6 +160,59 @@ func (s *service) Apply(
 	}
 	resp.App = app
 	return resp, nil
+}
+
+// teardown is what switching the registry off does.
+//
+// It used to do nothing at all, on the grounds that the images are on a volume or
+// in a bucket and the app is removed from its own screen. That screen cannot be
+// reached: the project the registry lives in is left out of every listing, so an
+// operator who switched the registry off was left with an app nothing could
+// remove. Taking it down is therefore part of this save - but only when the
+// caller says so, because a save is not allowed to tear something down unasked.
+func (s *service) teardown(
+	ctx context.Context,
+	db database.IDB,
+	setting *entity.Setting,
+	cfg *entity.RegistrySettings,
+	req *registryservice.SettingApplyReq,
+) (*registryservice.SettingApplyResp, error) {
+	app, err := s.loadApp(ctx, db)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if app == nil {
+		// Nothing to take down. The ids may still name an app somebody removed
+		// another way, and an id that resolves to nothing is worse than none.
+		if err = s.rememberWhatWasCreated(ctx, db, setting, cfg, "", ""); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		return &registryservice.SettingApplyResp{}, nil
+	}
+
+	if !req.RemoveApp {
+		return nil, hperrors.Wrap(hperrors.ErrRegistryAppStillRunning).WithExtraDetail(
+			"Switching the registry off removes the app that serves it. Confirm the removal, " +
+				"and say whether the images should go with it.")
+	}
+
+	credentialID := cfg.RegistryAuthID
+	s.logger.Info("removing the system registry",
+		"app", app.ID, "removeStorage", req.RemoveStorage)
+	if err = s.appService.DeleteApp(ctx, db, app, req.RemoveStorage); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	if err = s.rememberWhatWasCreated(ctx, db, setting, cfg, "", ""); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	// The credential is deleted by the caller, after the commit: it goes through
+	// the settings usecase, which is what refuses to delete one an app still
+	// names and what records the deletion.
+	return &registryservice.SettingApplyResp{
+		RemovedApp:          true,
+		RemovedCredentialID: credentialID,
+	}, nil
 }
 
 // rememberWhatWasCreated writes the ids back into the setting. They are how the

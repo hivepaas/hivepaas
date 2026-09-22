@@ -43,6 +43,14 @@ type UpdateSettingsBaseReq struct {
 	// MemoryLimit is written the way every other size in HivePaaS is - "512mb" -
 	// and decoded into the same type the setting stores.
 	MemoryLimit unit.DataSize `json:"memoryLimit"`
+
+	// RemoveApp and RemoveStorage are asked of this request, not stored by it.
+	// Switching the registry off takes its app down, and the app has no screen of
+	// its own to be removed from, so the confirmation arrives here.
+	RemoveApp bool `json:"removeApp,omitempty"`
+	// RemoveStorage deletes the images with the app: the registry's own directory
+	// inside the volume, not the volume. A registry on S3 ignores it.
+	RemoveStorage bool `json:"removeStorage,omitempty"`
 }
 
 type StorageReq struct {
@@ -135,5 +143,16 @@ func (req *UpdateRegistrySettingsReq) Validate() hperrors.ValidationErrors {
 }
 
 type UpdateRegistrySettingsResp struct {
-	Meta *basedto.Meta `json:"meta"`
+	Meta *basedto.Meta      `json:"meta"`
+	Data *UpdateRegistryRes `json:"data"`
+}
+
+// UpdateRegistryRes is what the save did beyond storing the configuration, which
+// the screen has no other way of learning.
+type UpdateRegistryRes struct {
+	// RemovedApp says the registry's app was taken down by this save.
+	RemovedApp bool `json:"removedApp"`
+	// CredentialKept says the registry account was left in place because an app
+	// still names it. It is there so the screen can say where to find it.
+	CredentialKept bool `json:"credentialKept"`
 }

@@ -13,6 +13,16 @@ type SettingApplyReq struct {
 	// template usecase records it. Empty when nothing asked - a reconcile that
 	// runs on start-up, for instance.
 	TriggerUserID string
+
+	// RemoveApp takes the registry's app and its service down. It is only read
+	// when the configuration being applied is switched off, and switching off
+	// without it is refused: the app has no screen of its own to be removed from,
+	// so this save is the only place it can happen, and it has to be asked for.
+	RemoveApp bool
+	// RemoveStorage deletes the images along with the app. It is the app's own
+	// directory inside the volume that goes, not the volume; a registry on S3
+	// ignores it, because nothing here reaches into a bucket.
+	RemoveStorage bool
 }
 
 type SettingApplyResp struct {
@@ -25,6 +35,12 @@ type SettingApplyResp struct {
 	// caller schedules them after the commit, the way the template usecase does.
 	DeploymentTask *entity.Task
 	CertTasks      []*entity.Task
+
+	// RemovedApp says the app was taken down by this call, and RemovedCredentialID
+	// is the credential it was pushed with, which the caller deletes after the
+	// transaction commits if nothing else still names it.
+	RemovedApp          bool
+	RemovedCredentialID string
 }
 
 type Status struct {

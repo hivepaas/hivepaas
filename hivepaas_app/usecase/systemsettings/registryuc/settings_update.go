@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/registryauthuc/registryauthdto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/systemsettings/registryuc/registrydto"
 )
 
@@ -64,6 +65,8 @@ func (uc *UC) UpdateRegistrySettings(
 			applyResp, applyErr := uc.registryService.Apply(ctx, db, &registryservice.SettingApplyReq{
 				Setting:       pData.Setting,
 				TriggerUserID: userIDOf(auth),
+				RemoveApp:     req.RemoveApp,
+				RemoveStorage: req.RemoveStorage,
 			})
 			applied = applyResp
 			return hperrors.Wrap(applyErr)
@@ -89,7 +92,45 @@ func (uc *UC) UpdateRegistrySettings(
 		}
 	}
 
-	return &registrydto.UpdateRegistrySettingsResp{}, nil
+	result := &registrydto.UpdateRegistryRes{}
+	if applied != nil && applied.RemovedApp {
+		result.RemovedApp = true
+		// After the commit, and through the settings usecase: it is what refuses
+		// to delete a credential an app still names, and what records the
+		// deletion. A refusal is the answer here rather than an error - the
+		// registry is gone either way, and the account is still somebody's.
+		kept, err := uc.removeCredential(ctx, auth, applied.RemovedCredentialID)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		result.CredentialKept = kept
+	}
+
+	return &registrydto.UpdateRegistrySettingsResp{Data: result}, nil
+}
+
+// removeCredential deletes the account the registry was pushed with and says
+// whether it had to be left alone.
+func (uc *UC) removeCredential(ctx context.Context, auth *basedto.Auth, credentialID string) (bool, error) {
+	if credentialID == "" {
+		return false, nil
+	}
+
+	req := registryauthdto.NewDeleteRegistryAuthReq()
+	req.ID = credentialID
+	req.Scope = entity.NewObjectScopeGlobal()
+	_, err := uc.registryAuthUC.DeleteRegistryAuth(ctx, auth, req)
+	switch {
+	case err == nil:
+		return false, nil
+	case errors.Is(err, hperrors.ErrSettingInUse):
+		return true, nil
+	case errors.Is(err, hperrors.ErrNotFound):
+		// Already gone, which is the state this was asking for.
+		return false, nil
+	default:
+		return false, hperrors.Wrap(err)
+	}
 }
 
 type updateSettingData struct {

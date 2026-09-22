@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryservice"
@@ -26,6 +27,7 @@ type service struct {
 	projectEnvRepo repository.ProjectEnvRepo
 	settingRepo    repository.SettingRepo
 
+	appService           appservice.Service
 	hpAppService         hpappservice.Service
 	provisionService     appprovisionservice.Service
 	specService          specservice.Service
@@ -48,6 +50,7 @@ func New(
 	projectEnvRepo repository.ProjectEnvRepo,
 	settingRepo repository.SettingRepo,
 
+	appService appservice.Service,
 	hpAppService hpappservice.Service,
 	provisionService appprovisionservice.Service,
 	specService specservice.Service,
@@ -59,6 +62,7 @@ func New(
 		projectRepo:          projectRepo,
 		projectEnvRepo:       projectEnvRepo,
 		settingRepo:          settingRepo,
+		appService:           appService,
 		hpAppService:         hpAppService,
 		provisionService:     provisionService,
 		specService:          specService,

@@ -41927,7 +41927,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -41945,7 +41945,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -59082,6 +59082,20 @@
         "required" : [ "cloudStorage", "type", "volume" ],
         "type" : "object"
       },
+      "systemsettings_registrydto.UpdateRegistryRes" : {
+        "properties" : {
+          "credentialKept" : {
+            "description" : "CredentialKept says the registry account was left in place because an app\nstill names it. It is there so the screen can say where to find it.",
+            "type" : "boolean"
+          },
+          "removedApp" : {
+            "description" : "RemovedApp says the registry's app was taken down by this save.",
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "credentialKept", "removedApp" ],
+        "type" : "object"
+      },
       "systemsettings_registrydto.UpdateRegistrySettingsReq" : {
         "properties" : {
           "cleanup" : {
@@ -59107,6 +59121,14 @@
             "description" : "MemoryLimit is written the way every other size in HivePaaS is - \"512mb\" -\nand decoded into the same type the setting stores.",
             "type" : "integer"
           },
+          "removeApp" : {
+            "description" : "RemoveApp and RemoveStorage are asked of this request, not stored by it.\nSwitching the registry off takes its app down, and the app has no screen of\nits own to be removed from, so the confirmation arrives here.",
+            "type" : "boolean"
+          },
+          "removeStorage" : {
+            "description" : "RemoveStorage deletes the images with the app: the registry's own directory\ninside the volume, not the volume. A registry on S3 ignores it.",
+            "type" : "boolean"
+          },
           "storage" : {
             "$ref" : "#/components/schemas/systemsettings_registrydto.StorageReq"
           },
@@ -59114,16 +59136,19 @@
             "type" : "integer"
           }
         },
-        "required" : [ "cleanup", "dashboardEnabled", "default", "domain", "enabled", "inheritable", "memoryLimit", "storage", "updateVer" ],
+        "required" : [ "cleanup", "dashboardEnabled", "default", "domain", "enabled", "inheritable", "memoryLimit", "removeApp", "removeStorage", "storage", "updateVer" ],
         "type" : "object"
       },
       "systemsettings_registrydto.UpdateRegistrySettingsResp" : {
         "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/systemsettings_registrydto.UpdateRegistryRes"
+          },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
           }
         },
-        "required" : [ "meta" ],
+        "required" : [ "data", "meta" ],
         "type" : "object"
       },
       "systemsettings_sslrenewaldto.ExecuteSSLRenewalDataResp" : {
@@ -61166,9 +61191,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

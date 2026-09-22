@@ -5,6 +5,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings/registryauthuc"
 )
 
 type UC struct {
@@ -13,6 +14,7 @@ type UC struct {
 	settingRepo repository.SettingRepo
 
 	registryService registryservice.Service
+	registryAuthUC  *registryauthuc.UC
 	taskQueue       queue.TaskQueue
 }
 
@@ -22,6 +24,7 @@ func New(
 	settingRepo repository.SettingRepo,
 
 	registryService registryservice.Service,
+	registryAuthUC *registryauthuc.UC,
 	taskQueue queue.TaskQueue,
 ) *UC {
 	return &UC{
@@ -30,6 +33,7 @@ func New(
 		settingRepo: settingRepo,
 
 		registryService: registryService,
+		registryAuthUC:  registryAuthUC,
 		taskQueue:       taskQueue,
 	}
 }

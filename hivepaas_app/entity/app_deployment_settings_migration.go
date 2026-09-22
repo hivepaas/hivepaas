@@ -12,7 +12,11 @@ func (s *AppDeploymentSettings) Migrate(setting *Setting) (hasChange bool, err e
 		return false, hperrors.Wrap(hperrors.ErrDataVerNewerThanSystemVer)
 	}
 
-	// TODO: add migration if we make any change
+	// Version 2 removed repoSource.imageName, repoSource.imageTags and noCache.
+	// The name is a function of the app now, the tags were configuration no build
+	// ever read, and noCache belongs to one deployment rather than to the app.
+	// All three are gone from the struct, so parsing has already dropped them -
+	// writing the data back is what takes them out of the row.
 
 	setting.Version = CurrentAppDeploymentSettingsVersion
 	setting.UpdateVer++

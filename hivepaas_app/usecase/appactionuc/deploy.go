@@ -17,6 +17,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/gittool"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appactionuc/appactiondto"
 )
@@ -187,12 +188,13 @@ func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 
 	// Create a deployment and a task for it
-	deployment, deploymentTask, err := uc.appDeploymentService.CreateDeploymentAndTask(app, data.NewDeploymentSettings)
+	deployment, deploymentTask, err := uc.appDeploymentService.CreateDeploymentAndTask(
+		app, data.NewDeploymentSettings,
+		appdeploymentservice.DeploymentArgs{NoCache: req.NoCache, ImageTags: req.ImageTags},
+	)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	// Set NoCache for the current deployment only if configured
-	deployment.Settings.NoCache = req.NoCache
 	// Set trigger for the deployment
 	deployment.Trigger = &entity.AppDeploymentTrigger{
 		Source:   base.DeploymentTriggerSourceAPI,

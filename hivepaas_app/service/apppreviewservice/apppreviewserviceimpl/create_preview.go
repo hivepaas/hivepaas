@@ -18,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/githelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appcloneservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apppreviewservice"
 )
 
@@ -266,7 +267,7 @@ func (s *service) createDeploymentAndTask(
 ) (err error) {
 	previewApp := data.PreviewApp
 	deployment, deploymentTask, err := s.appDeploymentService.CreateDeploymentAndTask(
-		previewApp, data.DeploymentSettings)
+		previewApp, data.DeploymentSettings, appdeploymentservice.DeploymentArgs{})
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

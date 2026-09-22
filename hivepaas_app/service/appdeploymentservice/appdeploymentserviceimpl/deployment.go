@@ -27,8 +27,11 @@ const (
 
 type appDeploymentData struct {
 	*appdeploymentservice.AppDeploymentReq
-	App                *entity.App
-	Deployment         *entity.Deployment
+	App        *entity.App
+	Deployment *entity.Deployment
+	// DeployArgs is what this one deployment asked for: its own tags, and whether
+	// it may use the build cache.
+	DeployArgs         *entity.TaskAppDeployArgs
 	DeploymentCanceled bool
 	Step               string
 	NotifMsgData       *notificationservice.TemplateDataAppDeployment
@@ -94,6 +97,7 @@ func (s *service) loadDeploymentData(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
+	data.DeployArgs = args
 
 	deployment, err := s.deploymentRepo.GetByID(ctx, db, "", args.Deployment.ID,
 		bunex.SelectWhereIn("deployment.status IN (?)",

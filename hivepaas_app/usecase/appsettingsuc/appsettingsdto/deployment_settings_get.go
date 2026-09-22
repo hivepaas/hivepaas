@@ -48,7 +48,19 @@ type DeploymentSettingsResp struct {
 
 	Notification *basedto.BaseEventNotificationResp `json:"notification,omitempty"`
 
+	// Image is what a build of this app will be called. The dashboard shows it
+	// and composes the full reference from the registry the form has selected, so
+	// that the naming rules live in one place - the app.
+	Image *DeploymentImageNamingResp `json:"image"`
+
 	UpdateVer int `json:"updateVer"`
+}
+
+// DeploymentImageNamingResp is the repository a build goes to and the prefix
+// every tag of this environment carries.
+type DeploymentImageNamingResp struct {
+	RepoName  string `json:"repoName"`
+	TagPrefix string `json:"tagPrefix"`
 }
 
 type DeploymentImageSourceResp struct {
@@ -65,8 +77,6 @@ type DeploymentRepoSourceResp struct {
 	RepoOptions    *DeploymentRepoOptionsResp `json:"repoOptions"`
 	Credentials    *settings.BaseSettingResp  `json:"credentials"`
 	Dockerfile     *DeploymentDockerfileResp  `json:"dockerfile"`
-	ImageName      string                     `json:"imageName"`
-	ImageTags      []string                   `json:"imageTags"`
 	PushToRegistry *settings.BaseSettingResp  `json:"pushToRegistry"`
 }
 
@@ -110,6 +120,16 @@ func TransformDeploymentSettings(
 		appDeploymentSettings = input.DeploymentSettings.MustAsAppDeploymentSettings()
 		if err = copier.Copy(&resp, appDeploymentSettings); err != nil {
 			return nil, hperrors.Wrap(err)
+		}
+	}
+
+	// An app whose project or environment was not loaded has no name to show,
+	// which is a screen without the line rather than a failed request.
+	if input.App != nil {
+		repoName, nameErr := input.App.ImageRepoName()
+		tagPrefix, prefixErr := input.App.ImageTagPrefix()
+		if nameErr == nil && prefixErr == nil {
+			resp.Image = &DeploymentImageNamingResp{RepoName: repoName, TagPrefix: tagPrefix}
 		}
 	}
 

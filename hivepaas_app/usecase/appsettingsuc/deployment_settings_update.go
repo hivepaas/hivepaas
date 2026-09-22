@@ -18,6 +18,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -170,7 +171,8 @@ func (uc *UC) prepareUpdatingAppDeploymentSettings(
 	persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, setting)
 
 	// Create a deployment and a task for it
-	deployment, deploymentTask, err := uc.appDeploymentService.CreateDeploymentAndTask(app, data.NewDeploymentSettings)
+	deployment, deploymentTask, err := uc.appDeploymentService.CreateDeploymentAndTask(
+		app, data.NewDeploymentSettings, appdeploymentservice.DeploymentArgs{})
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

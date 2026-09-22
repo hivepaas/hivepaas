@@ -41737,9 +41737,6 @@
           "imageSource" : {
             "$ref" : "#/components/schemas/entity.DeploymentImageSource"
           },
-          "noCache" : {
-            "type" : "boolean"
-          },
           "notification" : {
             "$ref" : "#/components/schemas/entity.BaseEventNotification"
           },
@@ -41756,7 +41753,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "command", "imageSource", "noCache", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "workingDir" ],
+        "required" : [ "activeMethod", "command", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "workingDir" ],
         "type" : "object"
       },
       "entity.BaseEventNotification" : {
@@ -41834,15 +41831,6 @@
           "dockerfile" : {
             "$ref" : "#/components/schemas/entity.DeploymentDockerfile"
           },
-          "imageName" : {
-            "type" : "string"
-          },
-          "imageTags" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
           "pushToRegistry" : {
             "type" : "string"
           },
@@ -41863,7 +41851,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "commitHash", "credentials", "dockerfile", "imageName", "imageTags", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "commitHash", "credentials", "dockerfile", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "entity.EmailHTTPFieldMapping" : {
@@ -41939,15 +41927,25 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 8388608, 4194304, 1048576, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
+          "ModeAppend" : "a: append-only",
+          "ModeCharDevice" : "c: Unix character device, when ModeDevice is set",
+          "ModeDevice" : "D: device file",
+          "ModeDir" : "d: is a directory",
+          "ModeExclusive" : "l: exclusive use",
+          "ModeIrregular" : "?: non-regular file; nothing else is known about this file",
+          "ModeNamedPipe" : "p: named pipe (FIFO)",
           "ModePerm" : "Unix permission bits, 0o777",
           "ModeSetgid" : "g: setgid",
           "ModeSetuid" : "u: setuid",
-          "ModeSticky" : "t: sticky"
+          "ModeSocket" : "S: Unix domain socket",
+          "ModeSticky" : "t: sticky",
+          "ModeSymlink" : "L: symbolic link",
+          "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeSetuid", "ModeSetgid", "ModeSticky", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -42042,6 +42040,13 @@
           "imageSource" : {
             "$ref" : "#/components/schemas/appactiondto.DeploymentImageSourceReq"
           },
+          "imageTags" : {
+            "description" : "ImageTags are extra tags for this deployment only, without the environment\nprefix, which the build adds. Nothing stores them.",
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
           "noCache" : {
             "type" : "boolean"
           },
@@ -42049,7 +42054,7 @@
             "$ref" : "#/components/schemas/appactiondto.DeploymentRepoSourceReq"
           }
         },
-        "required" : [ "activeMethod", "changeId", "imageSource", "noCache", "repoSource" ],
+        "required" : [ "activeMethod", "changeId", "imageSource", "imageTags", "noCache", "repoSource" ],
         "type" : "object"
       },
       "appactiondto.DeployAppResp" : {
@@ -42078,17 +42083,11 @@
           "commitHash" : {
             "type" : "string"
           },
-          "imageTags" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
           "repoRef" : {
             "type" : "string"
           }
         },
-        "required" : [ "commitHash", "imageTags", "repoRef" ],
+        "required" : [ "commitHash", "repoRef" ],
         "type" : "object"
       },
       "appactiondto.RestartAppReq" : {
@@ -43039,6 +43038,18 @@
         "required" : [ "content", "path", "scanPath", "source" ],
         "type" : "object"
       },
+      "appsettingsdto.DeploymentImageNamingResp" : {
+        "properties" : {
+          "repoName" : {
+            "type" : "string"
+          },
+          "tagPrefix" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "repoName", "tagPrefix" ],
+        "type" : "object"
+      },
       "appsettingsdto.DeploymentImageSourceReq" : {
         "properties" : {
           "enabled" : {
@@ -43104,15 +43115,6 @@
           "enabled" : {
             "type" : "boolean"
           },
-          "imageName" : {
-            "type" : "string"
-          },
-          "imageTags" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
-          },
           "pushToRegistry" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
           },
@@ -43130,7 +43132,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "commitHash", "credentials", "dockerfile", "enabled", "imageName", "imageTags", "pushToRegistry", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "commitHash", "credentials", "dockerfile", "enabled", "pushToRegistry", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "appsettingsdto.DeploymentRepoSourceResp" : {
@@ -43143,15 +43145,6 @@
           },
           "dockerfile" : {
             "$ref" : "#/components/schemas/appsettingsdto.DeploymentDockerfileResp"
-          },
-          "imageName" : {
-            "type" : "string"
-          },
-          "imageTags" : {
-            "items" : {
-              "type" : "string"
-            },
-            "type" : "array"
           },
           "pushToRegistry" : {
             "$ref" : "#/components/schemas/settings.BaseSettingResp"
@@ -43173,7 +43166,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "commitHash", "credentials", "dockerfile", "imageName", "imageTags", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
+        "required" : [ "commitHash", "credentials", "dockerfile", "pushToRegistry", "repoId", "repoOptions", "repoRef", "repoType", "repoURL" ],
         "type" : "object"
       },
       "appsettingsdto.DeploymentSettingsResp" : {
@@ -43183,6 +43176,13 @@
           },
           "command" : {
             "type" : "string"
+          },
+          "image" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/appsettingsdto.DeploymentImageNamingResp"
+            } ],
+            "description" : "Image is what a build of this app will be called. The dashboard shows it\nand composes the full reference from the registry the form has selected, so\nthat the naming rules live in one place - the app.",
+            "type" : "object"
           },
           "imageSource" : {
             "$ref" : "#/components/schemas/appsettingsdto.DeploymentImageSourceResp"
@@ -43206,7 +43206,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "activeMethod", "command", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
+        "required" : [ "activeMethod", "command", "image", "imageSource", "notification", "postDeploymentCommand", "preDeploymentCommand", "repoSource", "updateVer", "workingDir" ],
         "type" : "object"
       },
       "appsettingsdto.DockerfileTemplateResp" : {
@@ -58905,7 +58905,11 @@
             "type" : "string"
           },
           "registryStatus" : {
-            "$ref" : "#/components/schemas/systemsettings_registrydto.RegistryStatusResp"
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/systemsettings_registrydto.RegistryStatusResp"
+            } ],
+            "description" : "RegistryStatus is not called Status: BaseSettingResp already has one, and\nthe copier writes the setting's status into whatever field that name\nmatches - which turned the whole response into a 500 the first time it ran.",
+            "type" : "object"
           },
           "size" : {
             "type" : "integer"
@@ -61085,9 +61089,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

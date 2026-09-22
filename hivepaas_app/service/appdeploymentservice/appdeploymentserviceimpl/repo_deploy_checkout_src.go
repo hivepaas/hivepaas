@@ -24,7 +24,7 @@ func (s *service) repoDeployStepSourceCheckout(
 		TempDir:     data.TempDir,
 		CheckoutDir: data.CheckoutDir,
 	}
-	if deployment.Settings.NoCache || (data.ImageBuildSettings != nil && data.ImageBuildSettings.NoCache) {
+	if data.DeployArgs.NoCache || (data.ImageBuildSettings != nil && data.ImageBuildSettings.NoCache) {
 		checkoutReq.NoCache = true
 	}
 

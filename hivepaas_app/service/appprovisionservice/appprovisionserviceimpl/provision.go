@@ -19,6 +19,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/projecthelper"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
@@ -147,7 +148,8 @@ func (s *service) createFirstDeployment(
 		return hperrors.Wrap(err)
 	}
 
-	deployment, task, err := s.appDeploymentService.CreateDeploymentAndTask(app, deploymentSettings)
+	deployment, task, err := s.appDeploymentService.CreateDeploymentAndTask(app, deploymentSettings,
+		appdeploymentservice.DeploymentArgs{})
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

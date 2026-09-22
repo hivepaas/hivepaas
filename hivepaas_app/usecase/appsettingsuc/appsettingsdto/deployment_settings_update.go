@@ -98,8 +98,6 @@ type DeploymentRepoSourceReq struct {
 	RepoOptions    DeploymentRepoOptionsReq `json:"repoOptions"`
 	Credentials    basedto.ObjectIDReq      `json:"credentials"`
 	Dockerfile     DeploymentDockerfileReq  `json:"dockerfile"`
-	ImageName      string                   `json:"imageName"`
-	ImageTags      []string                 `json:"imageTags"`
 	PushToRegistry basedto.ObjectIDReq      `json:"pushToRegistry"`
 }
 
@@ -127,8 +125,6 @@ func (req *DeploymentRepoSourceReq) ToEntity() (*entity.DeploymentRepoSource, er
 		RepoOptions:    req.RepoOptions.ToEntity(),
 		Credentials:    entity.RepoCredentials{ID: req.Credentials.ID},
 		Dockerfile:     req.Dockerfile.ToEntity(),
-		ImageName:      req.ImageName,
-		ImageTags:      req.ImageTags,
 		PushToRegistry: entity.ObjectID{ID: req.PushToRegistry.ID},
 	}, nil
 }
@@ -146,7 +142,6 @@ func (req *DeploymentRepoSourceReq) validate(field string) (res []vld.Validator)
 	res = append(res, basedto.ValidateGitCommitHash(&req.CommitHash, false, field+"commitHash")...)
 	res = append(res, basedto.ValidateObjectIDReq(&req.Credentials, false, field+"credentials")...)
 	res = append(res, req.Dockerfile.validate(field+"dockerfile")...)
-	res = append(res, basedto.ValidateStr(&req.ImageName, false, 1, base.ImageNameMaxLen, field+"imageName")...)
 	res = append(res, basedto.ValidateObjectIDReq(&req.PushToRegistry, false, field+"pushToRegistry")...)
 	return res
 }

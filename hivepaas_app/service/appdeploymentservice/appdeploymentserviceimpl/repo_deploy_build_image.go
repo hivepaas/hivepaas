@@ -38,18 +38,17 @@ func (s *service) repoDeployStepImageBuild(
 		// The build is a step of this deployment rather than a task of its own, so
 		// it is given this task under its own exec data - which keeps whatever it
 		// registers reaching the deployment's transaction.
-		TaskExecData: data.SubTask(data.Task),
-		App:          data.App,
-		CommitHash:   repoSource.CommitHash,
-		Dockerfile:   repoSource.Dockerfile,
-		// Task 4 replaces this with the tags the deployment asked for.
-		ImageTags:          nil,
+		TaskExecData:       data.SubTask(data.Task),
+		App:                data.App,
+		CommitHash:         repoSource.CommitHash,
+		Dockerfile:         repoSource.Dockerfile,
+		ImageTags:          data.DeployArgs.ImageTags,
 		PushToRegistry:     repoSource.PushToRegistry,
 		ImageBuildSettings: data.ImageBuildSettings,
 		BuildID:            data.Task.ID,
 		CheckoutDir:        data.CheckoutDir,
 	}
-	if deployment.Settings.NoCache || (data.ImageBuildSettings != nil && data.ImageBuildSettings.NoCache) {
+	if data.DeployArgs.NoCache || (data.ImageBuildSettings != nil && data.ImageBuildSettings.NoCache) {
 		buildReq.NoCache = true
 	}
 

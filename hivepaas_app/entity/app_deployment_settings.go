@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	CurrentAppDeploymentSettingsVersion = 1
+	CurrentAppDeploymentSettingsVersion = 2
 )
 
 var _ = registerSettingParser(base.SettingTypeAppDeployment, &appDeploymentSettingsParser{})
@@ -24,7 +24,6 @@ type AppDeploymentSettings struct {
 	ImageSource  *DeploymentImageSource `json:"imageSource"`
 	RepoSource   *DeploymentRepoSource  `json:"repoSource"`
 	ActiveMethod base.DeploymentMethod  `json:"activeMethod"`
-	NoCache      bool                   `json:"noCache,omitempty"`
 
 	Command               string `json:"command,omitempty"`
 	WorkingDir            string `json:"workingDir,omitempty"`
@@ -48,8 +47,6 @@ type DeploymentRepoSource struct {
 	RepoOptions    DeploymentRepoOptions `json:"repoOptions"`
 	Credentials    RepoCredentials       `json:"credentials,omitzero"` // id of github app/git token/ssh key setting
 	Dockerfile     DeploymentDockerfile  `json:"dockerfile"`
-	ImageName      string                `json:"imageName,omitempty"`
-	ImageTags      []string              `json:"imageTags,omitempty"`
 	PushToRegistry ObjectID              `json:"pushToRegistry,omitzero"`
 }
 

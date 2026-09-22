@@ -223,7 +223,7 @@ type fakeDeploymentService struct {
 }
 
 func (f *fakeDeploymentService) CreateDeploymentAndTask(
-	app *entity.App, settings *entity.AppDeploymentSettings,
+	app *entity.App, settings *entity.AppDeploymentSettings, _ appdeploymentservice.DeploymentArgs,
 ) (*entity.Deployment, *entity.Task, error) {
 	return &entity.Deployment{ID: "dep-1", AppID: app.ID, Settings: settings},
 		&entity.Task{ID: "task-1"}, nil

@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appdeploymentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 )
 
@@ -74,7 +75,8 @@ func (uc *UC) createAppDeploymentByChangeID(
 		persistingData.UpsertingSettings = append(persistingData.UpsertingSettings, deploymentSetting)
 	}
 
-	deployment, task, err := uc.appDeploymentService.CreateDeploymentAndTask(app, deploymentSettings)
+	deployment, task, err := uc.appDeploymentService.CreateDeploymentAndTask(app, deploymentSettings,
+		appdeploymentservice.DeploymentArgs{})
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

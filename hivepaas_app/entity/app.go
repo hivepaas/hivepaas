@@ -44,6 +44,8 @@ type App struct {
 	ProjectEnv       *ProjectEnv `bun:"rel:has-one,join:project_env_id=id" json:"-"`
 	ParentApp        *App        `bun:"rel:has-one,join:parent_id=id" json:"-"`
 	LogicalParentApp *App        `bun:"rel:has-one,join:logical_parent_id=id" json:"-"`
+	ChildApps        []*App      `bun:"rel:has-many,join:id=parent_id" json:"-"`
+	LogicalChildApps []*App      `bun:"rel:has-many,join:id=logical_parent_id" json:"-"`
 	Settings         []*Setting  `bun:"rel:has-many,join:id=object_id" json:"-"`
 	Tags             []*Tag      `bun:"rel:has-many,join:id=object_id" json:"-"`
 	SrcResLinks      []*ResLink  `bun:"rel:has-many,join:id=dst_id" json:"-"`

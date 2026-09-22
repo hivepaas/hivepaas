@@ -3,6 +3,8 @@ package appuc
 import (
 	"context"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -80,11 +82,19 @@ func (uc *UC) ListAppBase(
 		return nil, hperrors.Wrap(err)
 	}
 
-	// NOTE: make sure we init the project env and project for the parent app
+	// NOTE: make sure we init the project env and project for the parent app and the child apps
 	for _, app := range apps {
 		if app.ParentApp != nil {
 			app.ParentApp.Project = app.Project
 			app.ParentApp.ProjectEnv = app.ProjectEnv
+		}
+		for _, childApp := range gofn.Concat(app.ChildApps, app.LogicalChildApps) {
+			if childApp.Project == nil {
+				childApp.Project = app.Project
+			}
+			if childApp.ProjectEnv == nil {
+				childApp.ProjectEnv = app.ProjectEnv
+			}
 		}
 	}
 

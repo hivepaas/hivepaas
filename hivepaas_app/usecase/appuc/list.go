@@ -5,6 +5,7 @@ import (
 
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/moby/moby/client"
+	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
@@ -15,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/services/docker"
 )
 
+//nolint:gocognit,funlen
 func (uc *UC) ListApp(
 	ctx context.Context,
 	auth *basedto.Auth,
@@ -67,6 +69,14 @@ func (uc *UC) ListApp(
 				bunex.SelectWhere("setting.type = ?", base.SettingTypeAppKind),
 			),
 		)
+		if req.GetChildApps {
+			listOpts = append(listOpts,
+				bunex.SelectRelation("ChildApps",
+					bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...)),
+				bunex.SelectRelation("LogicalChildApps",
+					bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...)),
+			)
+		}
 	}
 	if len(req.Status) > 0 {
 		listOpts = append(listOpts,
@@ -107,11 +117,19 @@ func (uc *UC) ListApp(
 		return nil, hperrors.Wrap(err)
 	}
 
-	// NOTE: make sure we init the project env and project for the parent app
+	// NOTE: make sure we init the project env and project for the parent app and the child apps
 	for _, app := range apps {
 		if app.ParentApp != nil {
 			app.ParentApp.Project = app.Project
 			app.ParentApp.ProjectEnv = app.ProjectEnv
+		}
+		for _, childApp := range gofn.Concat(app.ChildApps, app.LogicalChildApps) {
+			if childApp.Project == nil {
+				childApp.Project = app.Project
+			}
+			if childApp.ProjectEnv == nil {
+				childApp.ProjectEnv = app.ProjectEnv
+			}
 		}
 	}
 
@@ -130,16 +148,29 @@ func (uc *UC) ListApp(
 		return nil, hperrors.Wrap(err)
 	}
 
-	if req.GetChildApps {
-		if err = uc.attachChildApps(ctx, uc.db, req.ProjectID, apps, resp); err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-	}
-
 	return &appdto.ListAppResp{
 		Meta: &basedto.ListMeta{Page: paging},
 		Data: resp,
 	}, nil
+}
+
+// An app can belong to another in two ways, and a listing shows neither of them
+// beside the app they belong to:
+//
+//   - a child app names its parent in app.parent_id, which is what a preview
+//     deployment is: a copy of the app it was made from;
+//   - a logical child app names it in app.logical_parent_id, which says it was
+//     created to serve that app. A template's dependencies are these, and so are
+//     the databases a preview clones for itself.
+//
+// Both are left out unless they are asked for, because a person looking at the
+// apps of an environment is looking for the ones they made, not the six a
+// template created underneath them.
+func excludeChildApps() []bunex.SelectQueryOption {
+	return []bunex.SelectQueryOption{
+		bunex.SelectWhere("app.parent_id IS NULL"),
+		bunex.SelectWhere("app.logical_parent_id IS NULL"),
+	}
 }
 
 func (uc *UC) loadAppSwarmServices(
@@ -147,11 +178,17 @@ func (uc *UC) loadAppSwarmServices(
 	projectKey string,
 	apps []*entity.App,
 ) (map[string]*swarm.Service, error) {
+	allApps := make([]*entity.App, 0, len(apps)*2) //nolint:mnd
+	for _, app := range apps {
+		allApps = append(allApps, app)
+		allApps = append(allApps, app.ChildApps...)
+		allApps = append(allApps, app.LogicalChildApps...)
+	}
 	// Load all services of the project
 	listResp, err := uc.dockerManager.ServiceListByStack(ctx, projectKey, func(opts *client.ServiceListOptions) {
 		opts.Status = true
-		if len(apps) == 1 && apps[0].ServiceID != "" {
-			docker.FilterAdd(&opts.Filters, "id", apps[0].ServiceID)
+		if len(allApps) == 1 && allApps[0].ServiceID != "" {
+			docker.FilterAdd(&opts.Filters, "id", allApps[0].ServiceID)
 		}
 	})
 	if err != nil {
@@ -170,8 +207,8 @@ func (uc *UC) loadAppSwarmServices(
 		}
 	}
 
-	resp := make(map[string]*swarm.Service, len(apps))
-	for _, app := range apps {
+	resp := make(map[string]*swarm.Service, len(allApps))
+	for _, app := range allApps {
 		resp[app.ID] = serviceMap[app.ServiceID]
 	}
 

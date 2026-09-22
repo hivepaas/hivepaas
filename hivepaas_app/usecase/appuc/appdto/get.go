@@ -55,8 +55,8 @@ type AppResp struct {
 	// for an app that was not created from a template, which declares no kind.
 	Engine string `json:"engine,omitempty" copy:"-"` // manual copy, from the kind setting
 
-	ChildApps        []*AppResp `json:"childApps,omitempty"`
-	LogicalChildApps []*AppResp `json:"logicalChildApps,omitempty"`
+	ChildApps        []*AppResp `json:"childApps,omitempty" copy:"-"`
+	LogicalChildApps []*AppResp `json:"logicalChildApps,omitempty" copy:"-"`
 
 	// Stats of app, only returns when req.getStats=true
 	Stats *AppStatsResp `json:"stats"`
@@ -110,6 +110,20 @@ func TransformApp(app *entity.App, input *AppTransformationInput) (resp *AppResp
 		resp.ParentApp = gofn.Coalesce(TransformAppBase(app.ParentApp), &AppBaseResp{ID: app.ParentID})
 	} else {
 		resp.ParentApp = nil
+	}
+	for _, childApp := range app.ChildApps {
+		childAppResp, err := TransformApp(childApp, input)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		resp.ChildApps = append(resp.ChildApps, childAppResp)
+	}
+	for _, childApp := range app.LogicalChildApps {
+		childAppResp, err := TransformApp(childApp, input)
+		if err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+		resp.LogicalChildApps = append(resp.LogicalChildApps, childAppResp)
 	}
 	return resp, nil
 }

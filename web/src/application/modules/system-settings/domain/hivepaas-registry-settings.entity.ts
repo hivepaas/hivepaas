@@ -46,6 +46,8 @@ export interface HivePaaSRegistrySettings extends SettingsBaseEntity {
     domain: string;
     storage: HivePaaSRegistryStorage;
     cleanup: HivePaaSRegistryCleanup;
+    /** Whether zot's own web interface answers at the registry's domain. */
+    dashboardEnabled: boolean;
     /** A size carrying its unit, such as "512mb". */
     memoryLimit: string;
     /** The provisioned app, absent until the registry has been provisioned. */

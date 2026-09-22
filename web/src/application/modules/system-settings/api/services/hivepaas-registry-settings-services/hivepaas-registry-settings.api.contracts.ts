@@ -24,6 +24,7 @@ export type HivePaaSRegistrySettings_UpdateOnePayload = {
         cloudStorage?: { id: string } | null;
     };
     cleanup: { enabled: boolean; keepLast: number; keepDays: number };
+    dashboardEnabled: boolean;
     memoryLimit: string;
 };
 

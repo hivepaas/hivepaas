@@ -12,6 +12,7 @@ export const HivePaaSRegistrySettingsFormSchema = z
         // ends.
         volumeId: z.string(),
         cloudStorageId: z.string(),
+        dashboardEnabled: z.boolean(),
         cleanupEnabled: z.boolean(),
         keepLast: z.number().int().min(1).max(1000),
         keepDays: z.number().int().min(1).max(3650),

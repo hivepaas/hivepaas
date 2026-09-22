@@ -21,6 +21,9 @@ export function toRegistryFormInput(settings?: HivePaaSRegistrySettings): HivePa
         storageType: settings?.storage.type ?? "volume",
         volumeId: settings?.storage.volume?.id ?? "",
         cloudStorageId: settings?.storage.cloudStorage?.id ?? "",
+        // Off unless it was asked for: zot answers the interface's pages to anybody,
+        // and the account that can sign in is the one HivePaaS pushes with.
+        dashboardEnabled: settings?.dashboardEnabled ?? false,
         cleanupEnabled: settings?.cleanup.enabled ?? true,
         keepLast: settings?.cleanup.keepLast ?? DEFAULT_KEEP_LAST,
         keepDays: settings?.cleanup.keepDays ?? DEFAULT_KEEP_DAYS,
@@ -46,6 +49,7 @@ export function toRegistryPayload(
             volume: onVolume && values.volumeId ? { id: values.volumeId } : null,
             cloudStorage: !onVolume && values.cloudStorageId ? { id: values.cloudStorageId } : null,
         },
+        dashboardEnabled: values.dashboardEnabled,
         cleanup: {
             enabled: values.cleanupEnabled,
             keepLast: values.keepLast,

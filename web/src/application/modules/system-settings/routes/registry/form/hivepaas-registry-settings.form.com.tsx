@@ -108,6 +108,8 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
     const enabled = useWatch({ control, name: "enabled" });
     const storageType = useWatch({ control, name: "storageType" });
     const cleanupEnabled = useWatch({ control, name: "cleanupEnabled" });
+    const dashboardEnabled = useWatch({ control, name: "dashboardEnabled" });
+    const domain = useWatch({ control, name: "domain" });
     const keepLast = useWatch({ control, name: "keepLast" });
     const keepDays = useWatch({ control, name: "keepDays" });
 
@@ -230,6 +232,51 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                                     The registry is running. Change its address in the app&apos;s
                                                     routing settings, where the domain is verified and its certificate
                                                     is obtained.
+                                                </p>
+                                            )}
+                                        </div>
+                                    </InfoBlock>
+
+                                    <InfoBlock
+                                        titleWidth={220}
+                                        title={
+                                            <LabelWithInfo
+                                                label="Web interface"
+                                                content="Zot ships a page for browsing what the registry holds. It is served at the registry's domain, so it needs no address of its own."
+                                            />
+                                        }
+                                    >
+                                        <div className="flex w-full max-w-[520px] flex-col gap-1">
+                                            <Controller
+                                                control={control}
+                                                name="dashboardEnabled"
+                                                render={({ field }) => (
+                                                    <Checkbox
+                                                        checked={field.value}
+                                                        disabled={readOnly}
+                                                        onCheckedChange={checked => {
+                                                            field.onChange(checked === true);
+                                                        }}
+                                                    />
+                                                )}
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                Signing in uses the registry account HivePaaS pushes with, which may
+                                                delete every image it can read. Anyone who can reach the domain can load
+                                                the page, so leave this off unless you want it browsable.
+                                            </p>
+                                            {dashboardEnabled && domain && (
+                                                <p className="text-xs text-muted-foreground">
+                                                    It answers at{" "}
+                                                    <a
+                                                        href={`https://${domain}/`}
+                                                        className="text-link underline-offset-4 hover:underline"
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        https://{domain}/
+                                                    </a>{" "}
+                                                    once the registry has restarted with this setting.
                                                 </p>
                                             )}
                                         </div>

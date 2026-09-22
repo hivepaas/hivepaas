@@ -36,8 +36,8 @@ const (
 	maxRetentionTagPrefixes = 32
 
 	// retentionCatchAllRules is how many rules apply to every tag whatever it
-	// starts with: one count, and one window.
-	retentionCatchAllRules = 2
+	// starts with: one count, and the two windows.
+	retentionCatchAllRules = 3
 )
 
 // retentionBaseTagPrefixes are the environment names an installation is likely to
@@ -146,11 +146,16 @@ func renderZotConfig(cfg *entity.RegistrySettings, in zotConfigInput) ([]byte, e
 // repository, and a single count would let the environment that deploys most
 // evict the one that deploys least.
 //
-// The only window is pulledWithin, which keeps what a node has actually run: an
-// image a long-running service fetched when it was last rescheduled may be older
-// than every count would save. There is deliberately no pushedWithin - a window
-// on the push keeps every build of an active app for its whole length, which
-// leaves the counts doing nothing at all.
+// Because it is a union, the counts are a floor and not a ceiling: nothing is
+// removed while a window still keeps it, and the counts take over once it
+// expires. KeepDays is therefore how long every build stays, and KeepLast is what
+// is left of an app past that - including an app nobody has deployed since.
+//
+// pulledWithin is what a node still running an old image would be kept by.
+// Measured on zot v2.1.21 it keeps nothing: a tag pulled twenty-five seconds
+// before the pass, with a ten-minute window, was removed all the same. It is
+// rendered because it is what the setting means and costs nothing; pushedWithin
+// is the window that actually holds.
 func retentionPolicy(cleanup entity.RegistryCleanup, tagPrefixes []string) map[string]any {
 	window := fmt.Sprintf("%dh", cleanup.KeepDays*hoursPerDay)
 
@@ -166,6 +171,7 @@ func retentionPolicy(cleanup entity.RegistryCleanup, tagPrefixes []string) map[s
 		// environment created since the last save falls back on, and what keeps
 		// the bare commit tags written before environments moved into the tag.
 		keepTagsRule("mostRecentlyPushedCount", cleanup.KeepLast),
+		keepTagsRule("pushedWithin", window),
 		keepTagsRule("pulledWithin", window),
 	)
 

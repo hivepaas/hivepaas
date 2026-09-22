@@ -113,10 +113,8 @@ type RegistryCleanup struct {
 	// KeepLast keeps this many of the newest tags of every environment, in every
 	// repository.
 	KeepLast int `json:"keepLast,omitempty"`
-	// KeepDays keeps every tag a node pulled within this many days, which is what
-	// protects an image still running but built long ago. It says nothing about
-	// when a tag was pushed: a window on the push would keep every build of an
-	// active app for its whole length, and KeepLast would never apply.
+	// KeepDays keeps every tag pushed, or pulled, within this many days. It is the
+	// window a rollback can reach back into, and KeepLast is what survives it.
 	KeepDays int `json:"keepDays,omitempty"`
 }
 

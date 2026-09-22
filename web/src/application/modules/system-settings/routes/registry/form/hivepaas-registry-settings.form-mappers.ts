@@ -64,7 +64,8 @@ export function describeCleanup(enabled: boolean, keepLast: number, keepDays: nu
     const builds = keepLast === 1 ? "build" : "builds";
     const days = keepDays === 1 ? "day" : "days";
     return (
-        `Keeps the last ${keepLast} ${builds} of every app, and everything from the past ${keepDays} ${days}. ` +
+        `Keeps the last ${keepLast} ${builds} of every app in every environment, ` +
+        `and everything from the past ${keepDays} ${days}. ` +
         "Anything else is removed, and its space comes back within a couple of hours."
     );
 }

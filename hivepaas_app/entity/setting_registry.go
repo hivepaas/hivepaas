@@ -110,9 +110,13 @@ type RegistryCleanup struct {
 	// that never prunes is the problem this feature exists to solve.
 	Enabled bool                     `json:"enabled"`
 	Mode    base.RegistryCleanupMode `json:"mode,omitempty"`
-	// KeepLast keeps this many of the newest tags of every repository.
+	// KeepLast keeps this many of the newest tags of every environment, in every
+	// repository.
 	KeepLast int `json:"keepLast,omitempty"`
-	// KeepDays keeps every tag pushed, or pulled, within this many days.
+	// KeepDays keeps every tag a node pulled within this many days, which is what
+	// protects an image still running but built long ago. It says nothing about
+	// when a tag was pushed: a window on the push would keep every build of an
+	// active app for its whole length, and KeepLast would never apply.
 	KeepDays int `json:"keepDays,omitempty"`
 }
 

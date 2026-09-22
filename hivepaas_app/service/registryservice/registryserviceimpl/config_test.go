@@ -116,17 +116,35 @@ func TestConfigCleanupRules(t *testing.T) {
 	assert.Equal(t, true, first["deleteUntagged"])
 
 	rules, _ := first["keepTags"].([]any)
-	assert.Len(t, rules, len(retentionBaseTagPrefixes)+3)
+	assert.Len(t, rules, len(retentionBaseTagPrefixes)+retentionCatchAllRules)
 
-	// The last three are the ones over every tag, whatever it starts with.
-	tail := rules[len(rules)-3:]
+	// The last two are the ones over every tag, whatever it starts with.
+	tail := rules[len(rules)-retentionCatchAllRules:]
 	byCount, _ := tail[0].(map[string]any)
 	assert.Equal(t, []any{".*"}, byCount["patterns"])
 	assert.Equal(t, float64(5), byCount["mostRecentlyPushedCount"])
-	byPush, _ := tail[1].(map[string]any)
-	assert.Equal(t, "168h", byPush["pushedWithin"])
-	byPull, _ := tail[2].(map[string]any)
+	byPull, _ := tail[1].(map[string]any)
 	assert.Equal(t, "168h", byPull["pulledWithin"])
+}
+
+// A window on the push would keep every build of an app that deploys often for
+// its whole length, and the counts would never remove anything.
+func TestConfigDoesNotKeepByPushTime(t *testing.T) {
+	raw, err := renderZotConfig(volumeSettings(), zotConfigInput{})
+	if err != nil {
+		t.Fatalf("renderZotConfig: %v", err)
+	}
+
+	storage, _ := decodeConfig(t, raw)["storage"].(map[string]any)
+	retention, _ := storage["retention"].(map[string]any)
+	policies, _ := retention["policies"].([]any)
+	first, _ := policies[0].(map[string]any)
+	rules, _ := first["keepTags"].([]any)
+
+	for _, rule := range rules {
+		entry, _ := rule.(map[string]any)
+		assert.NotContains(t, entry, "pushedWithin")
+	}
 }
 
 // With the environment in the tag, an app's environments share a repository. A

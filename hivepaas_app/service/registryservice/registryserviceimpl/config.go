@@ -36,8 +36,8 @@ const (
 	maxRetentionTagPrefixes = 32
 
 	// retentionCatchAllRules is how many rules apply to every tag whatever it
-	// starts with: one count, and the two windows.
-	retentionCatchAllRules = 3
+	// starts with: one count, and one window.
+	retentionCatchAllRules = 2
 )
 
 // retentionBaseTagPrefixes are the environment names an installation is likely to
@@ -144,9 +144,13 @@ func renderZotConfig(cfg *entity.RegistrySettings, in zotConfigInput) ([]byte, e
 // per repository, which is what makes one rule per environment prefix worth
 // writing - with the environment in the tag, an app's environments share a
 // repository, and a single count would let the environment that deploys most
-// evict the one that deploys least. pulledWithin is there for the image a
-// long-running service fetched when it was last rescheduled, which may be older
-// than anything pushedWithin would save.
+// evict the one that deploys least.
+//
+// The only window is pulledWithin, which keeps what a node has actually run: an
+// image a long-running service fetched when it was last rescheduled may be older
+// than every count would save. There is deliberately no pushedWithin - a window
+// on the push keeps every build of an active app for its whole length, which
+// leaves the counts doing nothing at all.
 func retentionPolicy(cleanup entity.RegistryCleanup, tagPrefixes []string) map[string]any {
 	window := fmt.Sprintf("%dh", cleanup.KeepDays*hoursPerDay)
 
@@ -162,7 +166,6 @@ func retentionPolicy(cleanup entity.RegistryCleanup, tagPrefixes []string) map[s
 		// environment created since the last save falls back on, and what keeps
 		// the bare commit tags written before environments moved into the tag.
 		keepTagsRule("mostRecentlyPushedCount", cleanup.KeepLast),
-		keepTagsRule("pushedWithin", window),
 		keepTagsRule("pulledWithin", window),
 	)
 

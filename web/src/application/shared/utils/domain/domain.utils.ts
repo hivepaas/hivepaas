@@ -57,3 +57,28 @@ export function isValidDomain(domain: string, options: IsValidDomainOptions = {}
 
     return RFC_DOMAIN_REGEX.test(ascii);
 }
+
+/**
+ * Computes default domain based on current window domain.
+ * - Current domain `abc.xyz.tuv` -> `<prefix>.xyz.tuv`
+ * - Current domain `tuv` -> `<prefix>.tuv`
+ */
+export function getDefaultDomain(prefix: string = "app"): string {
+    if (typeof window === "undefined" || !window.location.hostname) {
+        return "";
+    }
+    let hostname = window.location.hostname.trim().toLowerCase();
+    if (hostname.includes(":")) {
+        hostname = hostname.split(":")[0] ?? "";
+    }
+    if (!hostname) {
+        return "";
+    }
+
+    const tName = prefix.trim().toLowerCase() || "app";
+    const segments = hostname.split(".");
+    if (segments.length > 1) {
+        return `${tName}.${segments.slice(1).join(".")}`;
+    }
+    return `${tName}.${hostname}`;
+}

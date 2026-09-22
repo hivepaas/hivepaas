@@ -14,17 +14,6 @@ import {
 } from "./app-deployment-settings.api.contracts";
 import { type AppDeploymentSettingsApiValidator } from "./app-deployment-settings.api.validator";
 
-function splitImageTags(imageTags: string | undefined): string[] {
-    if (!imageTags) {
-        return [];
-    }
-
-    return imageTags
-        .split(",")
-        .map(tag => tag.trim())
-        .filter(Boolean);
-}
-
 export class AppDeploymentSettingsApi extends BaseApi {
     constructor(private readonly validator: AppDeploymentSettingsApiValidator) {
         super();
@@ -79,8 +68,6 @@ export class AppDeploymentSettingsApi extends BaseApi {
                                   ? { scanPath: payload.repoSource.dockerfile.scanPath }
                                   : {}),
                           },
-                          imageName: payload.repoSource.imageName,
-                          imageTags: splitImageTags(payload.repoSource.imageTags),
                           pushToRegistry: payload.repoSource.pushToRegistry,
                       },
                   }

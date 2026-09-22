@@ -1,9 +1,9 @@
-import { type PropsWithChildren, useEffect } from "react";
+import { type PropsWithChildren, useEffect, useRef } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
-import { Cloud, HardDrive } from "lucide-react";
+import { Cloud, Globe, HardDrive } from "lucide-react";
 import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
 import { ClusterVolumesQueries } from "~/cluster/data/queries";
 import { type OptionCard, OptionCardGroup } from "~/projects/module-shared/components/option-card-group";
@@ -13,8 +13,9 @@ import { SectionHeader } from "~/system-settings/module-shared";
 
 import { AppLink, Combobox, InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { ROUTE } from "@application/shared/constants";
+import { getDefaultDomain } from "@application/shared/utils/domain";
 
-import { Checkbox, Input } from "@/components/ui";
+import { Button, Checkbox, Input } from "@/components/ui";
 import { InputNumber } from "@/components/ui/input-number";
 
 import {
@@ -63,7 +64,41 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
         resolver: zodResolver(HivePaaSRegistrySettingsFormSchema),
         mode: "onSubmit",
     });
-    const { control, register, reset } = methods;
+    const { control, register, reset, setValue } = methods;
+
+    const domainInputRef = useRef<HTMLInputElement>(null);
+    const domainRegister = register("domain");
+
+    const handleSuggestDomain = () => {
+        const suggested = getDefaultDomain("registry");
+        if (suggested) {
+            setValue("domain", suggested, {
+                shouldValidate: true,
+                shouldDirty: true,
+            });
+            const selectFirstSegment = () => {
+                const input = domainInputRef.current;
+                if (!input) return;
+                input.focus();
+                const dotIndex = suggested.indexOf(".");
+                if (dotIndex > 0) {
+                    input.setSelectionRange(0, dotIndex);
+                } else {
+                    input.select();
+                }
+            };
+            if (domainInputRef.current) {
+                domainInputRef.current.value = suggested;
+                selectFirstSegment();
+            }
+            requestAnimationFrame(() => {
+                selectFirstSegment();
+            });
+            setTimeout(() => {
+                selectFirstSegment();
+            }, 0);
+        }
+    };
 
     // After a save the query refetches; show what the server now holds.
     useEffect(() => {
@@ -159,11 +194,31 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                         }
                                     >
                                         <div className="flex w-full max-w-[520px] flex-col gap-1">
-                                            <Input
-                                                {...register("domain")}
-                                                placeholder="registry.example.com"
-                                                disabled={readOnly || isProvisioned}
-                                            />
+                                            <div className="flex items-center gap-2 w-full">
+                                                <div className="flex-1 min-w-0">
+                                                    <Input
+                                                        {...domainRegister}
+                                                        ref={e => {
+                                                            domainRegister.ref(e);
+                                                            domainInputRef.current = e;
+                                                        }}
+                                                        placeholder="registry.example.com"
+                                                        disabled={readOnly || isProvisioned}
+                                                    />
+                                                </div>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    title="Suggest domain based on current hostname"
+                                                    disabled={readOnly || isProvisioned}
+                                                    onClick={handleSuggestDomain}
+                                                    className="h-9 px-3 text-xs font-medium border-border/80 hover:bg-muted/80 text-muted-foreground hover:text-foreground shrink-0"
+                                                >
+                                                    <Globe className="size-3.5 mr-1 text-emerald-500" />
+                                                    Suggest Domain
+                                                </Button>
+                                            </div>
                                             <p className="text-xs text-muted-foreground">
                                                 Set this record to <span className="font-medium">DNS-only</span>.
                                                 Through a proxy such as Cloudflare every layer leaves the cluster and

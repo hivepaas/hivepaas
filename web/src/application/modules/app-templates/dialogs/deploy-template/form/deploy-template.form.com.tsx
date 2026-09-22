@@ -28,6 +28,7 @@ import {
     generateDataSizePresets,
     parseDataSizeToBytes,
 } from "@application/shared/utils/data-size";
+import { getDefaultDomain } from "@application/shared/utils/domain";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,31 +91,6 @@ function generateRandomPassword(length: number = 24): string {
     const array = new Uint8Array(length);
     window.crypto.getRandomValues(array);
     return Array.from(array, byte => chars[byte % chars.length]).join("");
-}
-
-/**
- * Computes default domain for template parameters based on current window domain.
- * - Current domain `abc.xyz.tuv` -> `<template-name>.xyz.tuv`
- * - Current domain `tuv` -> `<template-name>.tuv`
- */
-function getDefaultDomain(templateName: string): string {
-    if (typeof window === "undefined" || !window.location.hostname) {
-        return "";
-    }
-    let hostname = window.location.hostname.trim().toLowerCase();
-    if (hostname.includes(":")) {
-        hostname = hostname.split(":")[0] ?? "";
-    }
-    if (!hostname) {
-        return "";
-    }
-
-    const tName = templateName.trim().toLowerCase() || "app";
-    const segments = hostname.split(".");
-    if (segments.length > 1) {
-        return `${tName}.${segments.slice(1).join(".")}`;
-    }
-    return `${tName}.${hostname}`;
 }
 
 export function DeployTemplateForm({
@@ -1038,6 +1014,7 @@ function ParameterRow({
     readOnly,
 }: ParameterRowProps) {
     const isRequired = !param.optional;
+    const domainInputRef = useRef<HTMLInputElement>(null);
 
     const sizePresets = useMemo(() => {
         if (param.type !== "size") return [];
@@ -1315,6 +1292,7 @@ function ParameterRow({
                                 <div className="flex items-center gap-2 w-full">
                                     <div className="flex-1 min-w-0">
                                         <Input
+                                            ref={domainInputRef}
                                             value={typeof field.value === "string" ? field.value : ""}
                                             onChange={field.onChange}
                                             placeholder="e.g. app.example.com"
@@ -1335,6 +1313,27 @@ function ParameterRow({
                                                     shouldValidate: true,
                                                     shouldDirty: true,
                                                 });
+                                                const selectFirstSegment = () => {
+                                                    const input = domainInputRef.current;
+                                                    if (!input) return;
+                                                    input.focus();
+                                                    const dotIndex = suggested.indexOf(".");
+                                                    if (dotIndex > 0) {
+                                                        input.setSelectionRange(0, dotIndex);
+                                                    } else {
+                                                        input.select();
+                                                    }
+                                                };
+                                                if (domainInputRef.current) {
+                                                    domainInputRef.current.value = suggested;
+                                                    selectFirstSegment();
+                                                }
+                                                requestAnimationFrame(() => {
+                                                    selectFirstSegment();
+                                                });
+                                                setTimeout(() => {
+                                                    selectFirstSegment();
+                                                }, 0);
                                             }
                                         }}
                                         className="h-9 px-3 text-xs font-medium border-border/80 hover:bg-muted/80 text-muted-foreground hover:text-foreground shrink-0"

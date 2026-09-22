@@ -46,9 +46,10 @@ export function DockerRegistryAuth({ readOnly = false }: Props) {
 
     const comboboxOptions = useMemo(() => {
         return registryAuths.map(auth => {
+            const badge = auth.address.trim() || "none";
             return {
                 value: { id: auth.id, name: auth.name },
-                label: `${auth.kind} ${auth.name}`,
+                label: `${badge} ${auth.name}`,
             };
         });
     }, [registryAuths]);

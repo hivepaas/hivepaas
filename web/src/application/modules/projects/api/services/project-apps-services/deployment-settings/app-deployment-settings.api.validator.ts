@@ -17,15 +17,11 @@ const OptionalStringSchema = z
 
 const SettingsRefSchema = SettingsBaseEntitySchema.nullish().transform(value => value ?? null);
 
-const ImageTagsSchema = z.union([z.string(), z.array(z.string()), z.null(), z.undefined()]).transform(value => {
-    if (Array.isArray(value)) {
-        return value.join(", ");
-    }
-
-    return value ?? "";
-});
-
 const BaseDeploymentSettingsSchema = z.object({
+    image: z
+        .object({ repoName: z.string(), tagPrefix: z.string() })
+        .nullish()
+        .transform(value => value ?? null),
     command: OptionalStringSchema.optional(),
     workingDir: OptionalStringSchema.optional(),
     preDeploymentCommand: OptionalStringSchema.optional(),
@@ -94,8 +90,6 @@ const RepoSourceSchema = z.preprocess(
             .transform(val => val ?? { gitSubmodulesEnabled: true, gitLfsEnabled: true }),
         credentials: SettingsRefSchema,
         dockerfile: DockerfileSchema,
-        imageName: OptionalStringSchema,
-        imageTags: ImageTagsSchema,
         pushToRegistry: SettingsRefSchema,
     }),
 );

@@ -73,8 +73,6 @@ function mapDefaultValues(data: AppDeploymentSettings): SchemaInput {
                     content: data.repoSource.dockerfile.content,
                     scanPath: data.repoSource.dockerfile.scanPath,
                 },
-                imageName: data.repoSource.imageName,
-                imageTags: data.repoSource.imageTags,
                 pushToRegistry: data.repoSource.pushToRegistry
                     ? { id: data.repoSource.pushToRegistry.id, name: data.repoSource.pushToRegistry.name }
                     : undefined,
@@ -186,7 +184,10 @@ export function AppConfigDeploymentSettingsForm({ ref, defaultValues, onSubmit, 
                         {activeMethod === EAppDeploymentMethod.Repo && (
                             <ContentBlock label="Build Configuration">
                                 <div className="flex flex-col gap-6">
-                                    <BuildConfigurationFields readOnly={readOnly} />
+                                    <BuildConfigurationFields
+                                        readOnly={readOnly}
+                                        image={defaultValues?.image ?? null}
+                                    />
                                 </div>
                             </ContentBlock>
                         )}

@@ -1,4 +1,11 @@
-import { Dialog, DialogBody, DialogFixedContent, DialogFooter, DialogHeader, DialogTitle } from "@components/ui/dialog";
+import {
+    Dialog,
+    DialogActionFooter,
+    DialogBody,
+    DialogFixedContent,
+    DialogHeader,
+    DialogTitle,
+} from "@components/ui/dialog";
 
 import { Button, Separator } from "@/components/ui";
 
@@ -39,7 +46,7 @@ export function RotateRegistryCredentialDialog({ open, onOpenChange, onConfirm, 
                         </p>
                     </div>
                 </DialogBody>
-                <DialogFooter>
+                <DialogActionFooter>
                     <Button
                         variant="outline"
                         onClick={() => {
@@ -56,7 +63,7 @@ export function RotateRegistryCredentialDialog({ open, onOpenChange, onConfirm, 
                     >
                         Rotate password
                     </Button>
-                </DialogFooter>
+                </DialogActionFooter>
             </DialogFixedContent>
         </Dialog>
     );

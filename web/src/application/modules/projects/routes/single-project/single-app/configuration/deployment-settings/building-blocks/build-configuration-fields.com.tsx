@@ -11,11 +11,12 @@ import { toast } from "sonner";
 import invariant from "tiny-invariant";
 import { useAppDeploymentSettingsApi } from "~/projects/api/hooks/project-apps";
 import { QK } from "~/projects/data/constants";
+import { ProjectRegistryAuthQueries } from "~/projects/data/queries";
 import { PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS } from "~/projects/module-shared/constants";
 import { EDockerfileSource } from "~/projects/module-shared/enums";
 
 import { AppLink, Combobox, InfoBlock } from "@application/shared/components";
-import { ROUTE } from "@application/shared/constants";
+import { DEFAULT_PAGINATED_DATA, ROUTE } from "@application/shared/constants";
 
 import { DOCKERFILE_TEMPLATE_OPTIONS } from "../constants/dockerfile-template-options.constants";
 import { PushToRegistrySelect } from "../form-components";
@@ -25,8 +26,9 @@ import {
 } from "../schemas";
 
 import { DockerfileContentEditor } from "./dockerfile-content-editor.com";
+import { RegistryRepoNote } from "./registry-repo-note.com";
 
-export function BuildConfigurationFields({ readOnly = false }: Props) {
+export function BuildConfigurationFields({ readOnly = false, image }: Props) {
     const { id: projectId, env, appId } = useParams<{ id: string; env: string; appId: string }>();
     invariant(projectId, "projectId must be defined");
     invariant(env, "env must be defined");
@@ -69,10 +71,16 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
         fieldState: { invalid: isDockerfileScanPathInvalid, error: dockerfileScanPathError },
     } = useController({ control, name: "repoSource.dockerfile.scanPath" });
 
-    const {
-        field: imageName,
-        fieldState: { invalid: isImageNameInvalid, error: imageNameError },
-    } = useController({ control, name: "repoSource.imageName" });
+    // The reference follows what the form has selected, not what was saved: the
+    // note is there to be read before saving, not after a build has failed.
+    const pushToRegistry = useWatch({ control, name: "repoSource.pushToRegistry" });
+    const { data: { data: registryAuths } = DEFAULT_PAGINATED_DATA } = ProjectRegistryAuthQueries.useFindManyPaginated({
+        projectID: projectId,
+        env,
+    });
+    const selectedRegistry = registryAuths.find(auth => auth.id === pushToRegistry?.id);
+    const reference =
+        selectedRegistry && image ? `${selectedRegistry.address}/${selectedRegistry.username}/${image.repoName}` : "";
 
     const templateComboboxOptions = useMemo(() => {
         const normalizedSearch = templateSearch.trim().toLowerCase();
@@ -269,23 +277,49 @@ export function BuildConfigurationFields({ readOnly = false }: Props) {
 
             <InfoBlock
                 titleWidth={220}
-                title="Image Repository Name"
+                title="Image"
             >
-                <Input
-                    {...imageName}
-                    value={imageName.value ?? ""}
-                    onChange={imageName.onChange}
-                    placeholder="auto"
-                    aria-invalid={isImageNameInvalid}
-                    className={PROJECT_FORM_CONTROL_MAX_WIDTH_CLASS}
-                    disabled={readOnly}
-                />
-                <FieldError errors={[imageNameError]} />
+                <div className="flex flex-col gap-1">
+                    <span className="font-mono text-sm">{image?.repoName ?? "—"}</span>
+                    {reference && (
+                        <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs text-muted-foreground">{reference}</span>
+                            <button
+                                type="button"
+                                className="text-blue-500 cursor-pointer hover:underline select-none"
+                                onClick={() => {
+                                    void navigator.clipboard
+                                        .writeText(reference)
+                                        .then(() => {
+                                            toast.success("Image reference copied to clipboard");
+                                        })
+                                        .catch(() => {
+                                            toast.error("Failed to copy the image reference");
+                                        });
+                                }}
+                            >
+                                Copy
+                            </button>
+                        </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                        One repository for this app, named after its project and its key. Tagged{" "}
+                        <span className="font-mono">{image?.tagPrefix ?? "<env>"}-&lt;commit&gt;</span> for this
+                        environment.
+                    </p>
+                </div>
             </InfoBlock>
+
+            <RegistryRepoNote
+                reference={reference}
+                address={selectedRegistry?.address ?? ""}
+            />
         </>
     );
 }
 
 type Props = {
     readOnly?: boolean;
+    /** What a build is called, as the server computes it. Null before it is loaded. */
+    image?: { repoName: string; tagPrefix: string } | null;
 };

@@ -46,8 +46,6 @@ const RepoMethodSchema = BaseDeploymentSettingsSchema.extend({
         }),
         credentials: OptionalSettingsRefSchema,
         dockerfile: DockerfileSchema,
-        imageName: z.string().optional(),
-        imageTags: z.string().optional(),
         pushToRegistry: OptionalSettingsRefSchema,
     }),
 });

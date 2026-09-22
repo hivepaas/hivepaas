@@ -75,8 +75,6 @@ function mapFormValuesToPayload(values: AppConfigDeploymentSettingsFormSchemaOut
                     content: values.repoSource.dockerfile.content ?? "",
                     scanPath: values.repoSource.dockerfile.scanPath ?? "",
                 },
-                imageName: values.repoSource.imageName ?? "",
-                imageTags: values.repoSource.imageTags ?? "",
                 pushToRegistry: { id: values.repoSource.pushToRegistry?.id ?? "" },
             },
         };

@@ -60,8 +60,6 @@ type AppDeploymentSettings_UpdateRepoPayload = AppDeploymentSettings_UpdateBaseP
             content?: string;
             scanPath?: string;
         };
-        imageName: string;
-        imageTags?: string;
         pushToRegistry: {
             id: string;
         };

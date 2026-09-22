@@ -24,8 +24,6 @@ export type RepoMethod = BaseDeploymentSettings & {
         repoOptions: DeploymentRepoOptions;
         credentials: SettingsBaseEntity | null;
         dockerfile: DeploymentDockerfile;
-        imageName: string;
-        imageTags: string;
         pushToRegistry: SettingsBaseEntity | null;
     };
 };
@@ -44,6 +42,13 @@ export type ImageMethod = BaseDeploymentSettings & {
 };
 
 export type BaseDeploymentSettings = {
+    /**
+     * What a build of this app is called: the repository it goes to, and the
+     * prefix every tag of this environment carries. The rules live on the server,
+     * so the form shows this rather than asking for a name.
+     */
+    image?: { repoName: string; tagPrefix: string } | null;
+
     command?: string;
     workingDir?: string;
     preDeploymentCommand?: string;

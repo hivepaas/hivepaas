@@ -51,9 +51,10 @@ export function PushToRegistrySelect({ readOnly = false }: Props) {
 
     const comboboxOptions = useMemo(() => {
         const registryOptions = registryAuths.map(auth => {
+            const badge = auth.address.trim() || "none";
             return {
                 value: { id: auth.id, name: auth.name },
-                label: `${auth.kind} ${auth.name}`,
+                label: `${badge} ${auth.name}`,
             };
         });
 

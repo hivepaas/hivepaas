@@ -60,14 +60,15 @@ func describeAppMount(
 	if appOwnsSubpath(app, scope, target.subpath) {
 		desc.AppKey, desc.Own = app.Key, true
 		desc.Subpath = trimDirPrefix(target.subpath, appScopePrefix(app, scope))
+		desc.VolumeID = target.volume.ID
 		return desc
 	}
 
 	key, rest, ok := appKeyInSubpath(scope, target.subpath)
-	if !ok {
+	if !ok || !inAppsEnvironment(app, scope, target.subpath) {
 		return desc
 	}
-	desc.AppKey, desc.Subpath = key, rest
+	desc.AppKey, desc.Subpath, desc.VolumeID = key, rest, target.volume.ID
 	return desc
 }
 
@@ -92,6 +93,25 @@ func appKeyInSubpath(scope base.ObjectScopeType, subpath string) (key, rest stri
 		return "", "", false
 	}
 	return parts[depth-1], strings.Join(parts[depth:], "/"), true
+}
+
+// inAppsEnvironment reports whether a directory inside a volume of this scope
+// lies in the app's own environment - below <project>/<env> in a global volume,
+// below <env> in a project's. An app is found again by its key only there: the
+// same key in another environment is another app, and naming it would hand one
+// app's files to a stranger. An environment's volume and an app's hold that
+// environment alone.
+func inAppsEnvironment(app *entity.App, scope base.ObjectScopeType, subpath string) bool {
+	prefix := appScopePrefix(app, scope)
+	if prefix == "" {
+		return false
+	}
+	envDir := filepath.Dir(prefix)
+	if envDir == "." {
+		return true
+	}
+	subpath = strings.TrimPrefix(filepath.Clean(subpath), "/")
+	return strings.HasPrefix(subpath, envDir+"/")
 }
 
 func trimDirPrefix(path, prefix string) string {

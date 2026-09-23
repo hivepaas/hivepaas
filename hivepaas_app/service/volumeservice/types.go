@@ -127,6 +127,10 @@ type AppMountDesc struct {
 	Own bool
 	// Subpath is what the request had asked for below that app's directory.
 	Subpath string
+	// VolumeID is the cluster-volume setting whose directory the mount reaches.
+	// It is set whenever AppKey is: a mount that is no app's directory names no
+	// volume here either.
+	VolumeID string
 }
 
 // InspectAppStorageReq asks about the directories a set of apps would be given.

@@ -48,6 +48,11 @@ func filterUserLabels(labels map[string]string) map[string]string {
 		}
 		kept[key] = value
 	}
+	// None kept is no labels at all, which is what a document read back from
+	// YAML holds too: an empty map is not written.
+	if len(kept) == 0 {
+		return nil
+	}
 	return kept
 }
 

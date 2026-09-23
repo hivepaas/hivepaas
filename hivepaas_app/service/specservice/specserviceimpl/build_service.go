@@ -1,11 +1,18 @@
 package specserviceimpl
 
 import (
+	"context"
+
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
+
+func (s *service) buildService(_ context.Context, state *buildState) error {
+	applyService(state.req.Doc.Deployment.Service, state.req.Spec)
+	return nil
+}
 
 // applyService writes the service block the way the service settings screen
 // does. The mode changes only when the block gives one; the placement is the

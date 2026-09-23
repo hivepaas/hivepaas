@@ -1,6 +1,7 @@
 package specserviceimpl
 
 import (
+	"context"
 	"maps"
 	"slices"
 	"time"
@@ -11,6 +12,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
+
+func (s *service) buildContainer(_ context.Context, state *buildState) error {
+	return applyContainer(state.req.Doc.Deployment.Container, state.req.Spec)
+}
 
 // applyContainer writes the container block the way the container settings
 // screen does, replacing what the spec held. Three things stay HivePaaS's: the

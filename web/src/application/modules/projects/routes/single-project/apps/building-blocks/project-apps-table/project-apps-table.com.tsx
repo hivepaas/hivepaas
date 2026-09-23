@@ -31,6 +31,8 @@ function getScopeTooltip(selectedEnv: string): string {
     return `Env Apps belong to env "${selectedEnv}" only. Switch environments in the top right to change scope.`;
 }
 
+const PROJECT_APPS_REFETCH_INTERVAL_MS = 5_000;
+
 export function ProjectAppsTable({ projectId }: Props) {
     const navigate = useNavigate();
     const { pagination, setPagination, sorting, setSorting, search, setSearch } = useTableState();
@@ -48,8 +50,12 @@ export function ProjectAppsTable({ projectId }: Props) {
         setPagination(prev => ({ ...prev, page: 1 }));
     }, [env, setPagination]);
 
-    const { data: { data: rawApps, meta } = DEFAULT_PAGINATED_DATA, isFetching } =
-        ProjectAppsQueries.useFindManyPaginated({
+    const {
+        data: { data: rawApps, meta } = DEFAULT_PAGINATED_DATA,
+        isLoading,
+        isPlaceholderData,
+    } = ProjectAppsQueries.useFindManyPaginated(
+        {
             projectID: projectId,
             pagination,
             sorting,
@@ -57,7 +63,11 @@ export function ProjectAppsTable({ projectId }: Props) {
             env,
             getStats: true,
             getChildApps: true,
-        });
+        },
+        {
+            refetchInterval: PROJECT_APPS_REFETCH_INTERVAL_MS,
+        },
+    );
 
     const apps = useMemo(() => {
         if (rawApps.length === 0) return [];
@@ -167,6 +177,7 @@ export function ProjectAppsTable({ projectId }: Props) {
                 renderActions={renderActions}
             />
             <DataTable
+                key={`${projectId}-${selectedEnv}`}
                 columns={columns}
                 data={apps}
                 pageSize={pagination.size}
@@ -175,8 +186,10 @@ export function ProjectAppsTable({ projectId }: Props) {
                 totalCount={meta.page.total}
                 manualSorting
                 enableSorting
-                isLoading={isFetching}
+                isLoading={isLoading || isPlaceholderData}
                 getSubRows={row => row.subApps}
+                getRowId={(row, _, parent) => (parent ? `${parent.id}.${row.id}` : row.id)}
+                initialExpanded
                 onPaginationChange={value => {
                     setPagination(value);
                 }}

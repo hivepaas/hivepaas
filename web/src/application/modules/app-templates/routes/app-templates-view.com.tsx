@@ -172,7 +172,7 @@ export function AppTemplatesView() {
             </div>
 
             {/* Main Layout: Left Sidebar + Right Content Area */}
-            <div className="flex flex-col md:flex-row gap-6 items-start">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
                 {/* Left Side Menu - Always kept visible */}
                 <AppTemplatesSidebar
                     categories={catalog?.categories ?? []}

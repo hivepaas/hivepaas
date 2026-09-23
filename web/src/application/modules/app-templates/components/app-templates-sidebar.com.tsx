@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -21,6 +21,15 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectSeparator,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 import type { AppTemplateCategory } from "../api";
 
@@ -105,196 +114,309 @@ export function AppTemplatesSidebar({
               ? calculatedCategoriesCount
               : undefined;
 
+    const activeSelectValue = useMemo<string>(() => {
+        if (!selectedCategory) return "__all__";
+        for (const cat of categories) {
+            if (cat.id === selectedCategory) return cat.id;
+            if (cat.children) {
+                for (const child of cat.children) {
+                    const fullSubId: string = `${cat.id}/${child.id}`;
+                    if (selectedCategory === fullSubId || selectedCategory === child.id) {
+                        return fullSubId;
+                    }
+                }
+            }
+        }
+        return selectedCategory;
+    }, [selectedCategory, categories]);
+
     return (
-        <aside
-            className={cn(
-                "w-full md:w-[240px] shrink-0 flex flex-col gap-1 rounded-xl border border-border/60 bg-card p-3 shadow-xs",
-                "md:sticky md:top-[56px] md:max-h-[calc(100vh-70px)] md:overflow-y-auto z-10",
-                className,
-            )}
-        >
-            <div className="px-2.5 py-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
-                    Categories
-                </span>
-            </div>
-
-            {/* All Templates button */}
-            <button
-                type="button"
-                onClick={() => {
-                    onSelectCategory(undefined);
-                    setExpandedCategoryId(undefined);
-                }}
-                className={cn(
-                    "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors text-left",
-                    isAllSelected
-                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold"
-                        : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-                )}
-            >
-                <LayoutGrid
-                    className={cn(
-                        "size-4 shrink-0",
-                        isAllSelected ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground",
-                    )}
-                />
-                <span className="truncate">All Templates</span>
-                {effectiveTotalCount !== undefined && effectiveTotalCount > 0 && (
-                    <Badge
-                        variant="outline"
-                        className={cn(
-                            "px-1.5 py-0 text-[11px] font-semibold tabular-nums shrink-0 h-4.5 rounded-md border",
-                            isAllSelected
-                                ? "bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40"
-                                : "bg-muted/70 text-muted-foreground border-border/60",
-                        )}
-                    >
-                        {effectiveTotalCount}
-                    </Badge>
-                )}
-            </button>
-
-            <div className="my-1 border-t border-border/40" />
-
-            {/* Category tree */}
-            <div className="flex flex-col gap-0.5">
-                {categories.map(category => {
-                    const hasChildren = Boolean(category.children && category.children.length > 0);
-                    const isSelected = selectedCategory === category.id;
-                    const Icon = getCategoryIcon(category.id);
-
-                    // Check if any child is selected
-                    const isChildSelected = Boolean(
-                        category.children?.some(
-                            c => selectedCategory === `${category.id}/${c.id}` || selectedCategory === c.id,
-                        ),
-                    );
-                    const isExpanded = expandedCategoryId === category.id;
-
-                    return (
-                        <div
-                            key={category.id}
-                            className="flex flex-col"
+        <>
+            {/* Mobile Dropdown Navigation (< md) */}
+            <div className="md:hidden w-full bg-background/95 backdrop-blur-md rounded-xl p-2 shadow-xs border border-amber-500/25 flex flex-col gap-1.5">
+                <Select
+                    value={activeSelectValue}
+                    onValueChange={val => {
+                        if (val === "__all__") {
+                            onSelectCategory(undefined);
+                            setExpandedCategoryId(undefined);
+                        } else {
+                            onSelectCategory(val);
+                            const parentId = val.split("/")[0];
+                            setExpandedCategoryId(parentId);
+                        }
+                    }}
+                >
+                    <SelectTrigger className="w-full bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20 border-amber-500/40 dark:border-amber-400/40 text-foreground font-semibold shadow-xs h-10 px-3.5 rounded-lg focus:ring-amber-400/40">
+                        <SelectValue placeholder="All Templates" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[60vh]">
+                        <SelectItem
+                            value="__all__"
+                            className="cursor-pointer font-medium"
                         >
-                            <div
-                                className={cn(
-                                    "group flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
-                                    isSelected
-                                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold"
-                                        : isChildSelected
-                                          ? "text-amber-600 dark:text-amber-400 bg-amber-500/5 font-medium"
-                                          : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-                                )}
-                            >
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        handleCategoryClick(category.id, hasChildren);
-                                    }}
-                                    className="flex flex-1 items-center gap-2 min-w-0 text-left"
-                                >
-                                    <Icon
-                                        className={cn(
-                                            "size-4 shrink-0",
-                                            isSelected || isChildSelected
-                                                ? "text-amber-600 dark:text-amber-400"
-                                                : "text-muted-foreground group-hover:text-foreground",
-                                        )}
-                                    />
-                                    <span className="truncate">{category.title}</span>
-                                    <Badge
-                                        variant="outline"
-                                        className={cn(
-                                            "px-1.5 py-0 text-[11px] font-semibold tabular-nums shrink-0 h-4.5 rounded-md border",
-                                            isSelected
-                                                ? "bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40"
-                                                : isChildSelected
-                                                  ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
-                                                  : "bg-muted/70 text-muted-foreground border-border/60",
-                                            category.count === 0 && "opacity-50",
-                                        )}
-                                    >
-                                        {category.count}
-                                    </Badge>
-                                </button>
-
-                                {hasChildren && (
-                                    <button
-                                        type="button"
-                                        onClick={e => {
-                                            handleToggleExpand(e, category.id);
-                                        }}
-                                        className="p-1 ml-1 text-muted-foreground hover:text-foreground rounded-md shrink-0 transition-colors"
-                                        aria-label={isExpanded ? "Collapse category" : "Expand category"}
-                                    >
-                                        {isExpanded ? (
-                                            <ChevronDown className="size-3.5" />
-                                        ) : (
-                                            <ChevronRight className="size-3.5" />
-                                        )}
-                                    </button>
+                            <div className="flex items-center gap-2">
+                                <LayoutGrid className="size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                                <span>All Templates</span>
+                                {effectiveTotalCount !== undefined && effectiveTotalCount > 0 && (
+                                    <span className="text-[11px] text-muted-foreground tabular-nums ml-1">
+                                        ({effectiveTotalCount})
+                                    </span>
                                 )}
                             </div>
-
-                            {/* Subcategories */}
-                            {hasChildren && isExpanded && (
-                                <div className="ml-5 mt-0.5 flex flex-col gap-0.5 border-l border-border/50 pl-2">
-                                    {category.children?.map(child => {
-                                        const fullSubId = `${category.id}/${child.id}`;
-                                        const isSubSelected =
-                                            selectedCategory === fullSubId || selectedCategory === child.id;
-                                        return (
-                                            <button
-                                                key={child.id}
-                                                type="button"
-                                                onClick={() => {
-                                                    onSelectCategory(fullSubId);
-                                                }}
-                                                className={cn(
-                                                    "flex w-full items-center gap-2 rounded-md px-2 py-1 text-xs font-medium transition-colors text-left",
-                                                    isSubSelected
-                                                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold"
-                                                        : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
-                                                )}
-                                            >
-                                                <span className="truncate">{child.title}</span>
-                                                <Badge
-                                                    variant="outline"
-                                                    className={cn(
-                                                        "px-1.5 py-0 text-[10px] font-semibold tabular-nums shrink-0 h-4 rounded-md border",
-                                                        isSubSelected
-                                                            ? "bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40"
-                                                            : "bg-muted/70 text-muted-foreground border-border/60",
-                                                        child.count === 0 && "opacity-50",
-                                                    )}
+                        </SelectItem>
+                        <SelectSeparator />
+                        {categories.map((category, index) => {
+                            const Icon = getCategoryIcon(category.id);
+                            const hasChildren = Boolean(category.children && category.children.length > 0);
+                            return (
+                                <SelectGroup key={category.id}>
+                                    <SelectItem
+                                        value={category.id}
+                                        className="cursor-pointer font-medium"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Icon className="size-4 shrink-0 text-muted-foreground" />
+                                            <span>{category.title}</span>
+                                            <span className="text-[11px] text-muted-foreground tabular-nums ml-1">
+                                                ({category.count})
+                                            </span>
+                                        </div>
+                                    </SelectItem>
+                                    {hasChildren &&
+                                        category.children?.map(child => {
+                                            const fullSubId = `${category.id}/${child.id}`;
+                                            return (
+                                                <SelectItem
+                                                    key={fullSubId}
+                                                    value={fullSubId}
+                                                    className="cursor-pointer pl-6 text-xs"
                                                 >
-                                                    {child.count}
-                                                </Badge>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
+                                                    <div className="flex items-center gap-2">
+                                                        <Icon className="size-3.5 shrink-0 text-muted-foreground/60" />
+                                                        <span>
+                                                            {category.title} / {child.title}
+                                                        </span>
+                                                        <span className="text-[10px] text-muted-foreground tabular-nums ml-1">
+                                                            ({child.count})
+                                                        </span>
+                                                    </div>
+                                                </SelectItem>
+                                            );
+                                        })}
+                                    {index < categories.length - 1 && <SelectSeparator />}
+                                </SelectGroup>
+                            );
+                        })}
+                    </SelectContent>
+                </Select>
+
+                <div className="flex items-center justify-between pt-1 px-1">
+                    <a
+                        href="https://github.com/hivepaas/app-templates/issues"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-xs font-medium text-link hover:underline"
+                        title="Report issue on GitHub (opens in new tab)"
+                    >
+                        <GitHubIcon className="size-3.5 shrink-0" />
+                        <span>Report issue on GitHub</span>
+                        <ExternalLink className="size-3 shrink-0 opacity-70" />
+                    </a>
+                </div>
             </div>
 
-            <div className="my-1 border-t border-border/40" />
-
-            <a
-                href="https://github.com/hivepaas/app-templates/issues"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-link hover:bg-muted/70 hover:underline transition-colors group"
-                title="Report issue on GitHub (opens in new tab)"
+            {/* Desktop Vertical Sidebar Navigation (>= md) */}
+            <aside
+                className={cn(
+                    "hidden md:flex md:w-[240px] shrink-0 flex-col gap-1 rounded-xl border border-border/60 bg-card p-3 shadow-xs",
+                    "md:sticky md:top-[56px] md:max-h-[calc(100vh-70px)] md:overflow-y-auto z-10",
+                    className,
+                )}
             >
-                <GitHubIcon className="size-3.5 shrink-0" />
-                <span className="truncate">Report issue on GitHub</span>
-                <ExternalLink className="size-3 shrink-0 ml-auto opacity-70 group-hover:opacity-100" />
-            </a>
-        </aside>
+                <div className="px-2.5 py-2">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80">
+                        Categories
+                    </span>
+                </div>
+
+                {/* All Templates button */}
+                <button
+                    type="button"
+                    onClick={() => {
+                        onSelectCategory(undefined);
+                        setExpandedCategoryId(undefined);
+                    }}
+                    className={cn(
+                        "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors text-left",
+                        isAllSelected
+                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold"
+                            : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                    )}
+                >
+                    <LayoutGrid
+                        className={cn(
+                            "size-4 shrink-0",
+                            isAllSelected ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground",
+                        )}
+                    />
+                    <span className="truncate">All Templates</span>
+                    {effectiveTotalCount !== undefined && effectiveTotalCount > 0 && (
+                        <Badge
+                            variant="outline"
+                            className={cn(
+                                "px-1.5 py-0 text-[11px] font-semibold tabular-nums shrink-0 h-4.5 rounded-md border",
+                                isAllSelected
+                                    ? "bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40"
+                                    : "bg-muted/70 text-muted-foreground border-border/60",
+                            )}
+                        >
+                            {effectiveTotalCount}
+                        </Badge>
+                    )}
+                </button>
+
+                <div className="my-1 border-t border-border/40" />
+
+                {/* Category tree */}
+                <div className="flex flex-col gap-0.5">
+                    {categories.map(category => {
+                        const hasChildren = Boolean(category.children && category.children.length > 0);
+                        const isSelected = selectedCategory === category.id;
+                        const Icon = getCategoryIcon(category.id);
+
+                        // Check if any child is selected
+                        const isChildSelected = Boolean(
+                            category.children?.some(
+                                c => selectedCategory === `${category.id}/${c.id}` || selectedCategory === c.id,
+                            ),
+                        );
+                        const isExpanded = expandedCategoryId === category.id;
+
+                        return (
+                            <div
+                                key={category.id}
+                                className="flex flex-col"
+                            >
+                                <div
+                                    className={cn(
+                                        "group flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors",
+                                        isSelected
+                                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold"
+                                            : isChildSelected
+                                              ? "text-amber-600 dark:text-amber-400 bg-amber-500/5 font-medium"
+                                              : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                                    )}
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            handleCategoryClick(category.id, hasChildren);
+                                        }}
+                                        className="flex flex-1 items-center gap-2 min-w-0 text-left"
+                                    >
+                                        <Icon
+                                            className={cn(
+                                                "size-4 shrink-0",
+                                                isSelected || isChildSelected
+                                                    ? "text-amber-600 dark:text-amber-400"
+                                                    : "text-muted-foreground group-hover:text-foreground",
+                                            )}
+                                        />
+                                        <span className="truncate">{category.title}</span>
+                                        <Badge
+                                            variant="outline"
+                                            className={cn(
+                                                "px-1.5 py-0 text-[11px] font-semibold tabular-nums shrink-0 h-4.5 rounded-md border",
+                                                isSelected
+                                                    ? "bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40"
+                                                    : isChildSelected
+                                                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
+                                                      : "bg-muted/70 text-muted-foreground border-border/60",
+                                                category.count === 0 && "opacity-50",
+                                            )}
+                                        >
+                                            {category.count}
+                                        </Badge>
+                                    </button>
+
+                                    {hasChildren && (
+                                        <button
+                                            type="button"
+                                            onClick={e => {
+                                                handleToggleExpand(e, category.id);
+                                            }}
+                                            className="p-1 ml-1 text-muted-foreground hover:text-foreground rounded-md shrink-0 transition-colors"
+                                            aria-label={isExpanded ? "Collapse category" : "Expand category"}
+                                        >
+                                            {isExpanded ? (
+                                                <ChevronDown className="size-3.5" />
+                                            ) : (
+                                                <ChevronRight className="size-3.5" />
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Subcategories */}
+                                {hasChildren && isExpanded && (
+                                    <div className="ml-5 mt-0.5 flex flex-col gap-0.5 border-l border-border/50 pl-2">
+                                        {category.children?.map(child => {
+                                            const fullSubId = `${category.id}/${child.id}`;
+                                            const isSubSelected =
+                                                selectedCategory === fullSubId || selectedCategory === child.id;
+                                            return (
+                                                <button
+                                                    key={child.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        onSelectCategory(fullSubId);
+                                                    }}
+                                                    className={cn(
+                                                        "flex w-full items-center gap-2 rounded-md px-2 py-1 text-xs font-medium transition-colors text-left",
+                                                        isSubSelected
+                                                            ? "bg-amber-500/15 text-amber-700 dark:text-amber-400 font-semibold"
+                                                            : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                                                    )}
+                                                >
+                                                    <span className="truncate">{child.title}</span>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={cn(
+                                                            "px-1.5 py-0 text-[10px] font-semibold tabular-nums shrink-0 h-4 rounded-md border",
+                                                            isSubSelected
+                                                                ? "bg-amber-500/20 text-amber-800 dark:text-amber-300 border-amber-500/40"
+                                                                : "bg-muted/70 text-muted-foreground border-border/60",
+                                                            child.count === 0 && "opacity-50",
+                                                        )}
+                                                    >
+                                                        {child.count}
+                                                    </Badge>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <div className="my-1 border-t border-border/40" />
+
+                <a
+                    href="https://github.com/hivepaas/app-templates/issues"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-link hover:bg-muted/70 hover:underline transition-colors group"
+                    title="Report issue on GitHub (opens in new tab)"
+                >
+                    <GitHubIcon className="size-3.5 shrink-0" />
+                    <span className="truncate">Report issue on GitHub</span>
+                    <ExternalLink className="size-3 shrink-0 ml-auto opacity-70 group-hover:opacity-100" />
+                </a>
+            </aside>
+        </>
     );
 }
 

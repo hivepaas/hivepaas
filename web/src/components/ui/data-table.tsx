@@ -5,6 +5,7 @@ import type { PaginationState } from "@infrastructure/data";
 import {
     type ColumnDef,
     type ColumnFiltersState,
+    type ExpandedState,
     type Header,
     type Row,
     type SortingState,
@@ -136,6 +137,9 @@ export interface DataTableProps<TData, TValue> {
     onTableChange?: (table: TanstackTable<TData>) => void;
     initialSorting?: SortingState;
     initialPagination?: PaginationState;
+    initialExpanded?: ExpandedState;
+    autoResetExpanded?: boolean;
+    getRowId?: (row: TData, index: number, parent?: Row<TData>) => string;
     className?: string;
     headerClassName?: string;
     bodyClassName?: string;
@@ -165,6 +169,9 @@ function DataTable<TData, TValue>({
     onTableChange,
     initialSorting = [],
     initialPagination,
+    initialExpanded,
+    autoResetExpanded = false,
+    getRowId,
     className,
     headerClassName,
     bodyClassName,
@@ -225,6 +232,8 @@ function DataTable<TData, TValue>({
         columns,
         getCoreRowModel: getCoreRowModel(),
         getSubRows,
+        getRowId,
+        autoResetExpanded,
         getExpandedRowModel: getSubRows ? getExpandedRowModel() : undefined,
         getPaginationRowModel: enablePagination && !manualPagination ? getPaginationRowModel() : undefined,
         getSortedRowModel: enableSorting && !manualSorting ? getSortedRowModel() : undefined,
@@ -246,6 +255,7 @@ function DataTable<TData, TValue>({
         initialState: {
             pagination: initialTanstackPagination,
             sorting: initialSorting,
+            expanded: initialExpanded,
         },
     });
 

@@ -100,10 +100,13 @@ func oracleCases() []oracleCase {
 			omitted: []string{"updateVer"},
 		},
 		{
-			name:    "storage",
-			spec:    specmodel.Storage{},
-			update:  appsettingsdto.UpdateAppStorageSettingsReq{},
-			omitted: []string{"updateVer"},
+			name:   "storage",
+			spec:   specmodel.Storage{},
+			update: appsettingsdto.UpdateAppStorageSettingsReq{},
+			// resetStorage is a command flag, not configuration: it clears what
+			// the mounts being added land on. There is nothing for a spec to
+			// carry, and a spec that carried it would delete data on import.
+			omitted: []string{"updateVer", "resetStorage"},
 		},
 		{
 			name:    "networks",

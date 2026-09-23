@@ -30,14 +30,15 @@ func (uc *UC) UpdateAppStatus(
 		}
 
 		before := appData.App.Status
-		err = uc.appService.SetAppStatus(ctx, db, appData.App, req.Status, true)
+		err = uc.appService.SetAppStatus(ctx, db, appData.App, req.Status, req.Cascade)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
 
 		return uc.recordAppWrite(ctx, db, auth, appData.App,
 			base.AuditLogTypeAppUpdate, base.AuditLogSourceAPIUpdate, "status", auditdetail.New().
-				Compare("status", before, req.Status))
+				Compare("status", before, req.Status).
+				Set("cascade", req.Cascade))
 	})
 	if err != nil {
 		return nil, hperrors.Wrap(err)

@@ -31,6 +31,9 @@ type Service interface {
 	EnsureAppActive(ctx context.Context, db database.Tx, app *entity.App,
 		checkUpdateVer bool, lockApp bool) error
 
+	LoadChildApps(ctx context.Context, db database.IDB, app *entity.App,
+		loadChildApps, loadLogicalChildApps bool) error
+
 	FindAppsMatchingRepository(ctx context.Context, db database.IDB, repoID, repoRef string,
 		extraAppOpts ...bunex.SelectQueryOption) ([]*entity.App, error)
 
@@ -38,8 +41,8 @@ type Service interface {
 	// DeleteApp removes an app, its service and everything recorded about it.
 	// removeStorage also deletes the directories it kept its data in, inside the
 	// volumes it mounted; without it those are left where they are.
-	DeleteApp(ctx context.Context, db database.IDB, app *entity.App, removeStorage bool) error
-	SetAppStatus(ctx context.Context, db database.IDB, app *entity.App, status base.AppStatus, recursive bool) error
+	DeleteApp(ctx context.Context, db database.IDB, app *entity.App, removeStorage, cascade bool) error
+	SetAppStatus(ctx context.Context, db database.IDB, app *entity.App, status base.AppStatus, cascade bool) error
 	SetAppRunning(ctx context.Context, app *entity.App, running bool) error
 	// RecreateServiceWithSpec deletes and recreates the app swarm service, which is the only way to
 	// change its mode variant. It causes downtime and returns the new service ID for the caller to

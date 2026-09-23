@@ -26,20 +26,23 @@ func (s *service) SetAppStatus(
 	db database.IDB,
 	app *entity.App,
 	status base.AppStatus,
-	recursive bool,
+	cascade bool,
 ) error {
-	// Update status of all child apps
-	if !app.IsChildApp() && recursive {
-		childApps, _, err := s.appRepo.List(ctx, db, "", nil,
-			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-			bunex.SelectWhere("app.parent_id = ?", app.ID),
-		)
-		if err != nil {
-			return hperrors.Wrap(err)
+	err := s.LoadChildApps(ctx, db, app, true, cascade)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	// All direct child apps (preview apps) must be updated
+	for _, childApp := range app.ChildApps {
+		if err := s.SetAppStatus(ctx, db, childApp, status, cascade); err != nil {
+			return hperrors.Wrap(err).WithMsgLog("failed to update status of child app %s", childApp.ID)
 		}
-		for _, childApp := range childApps {
-			if err := s.SetAppStatus(ctx, db, childApp, status, recursive); err != nil {
-				return hperrors.Wrap(err)
+	}
+	// If cascading, update all logical child apps (dependent apps)
+	if cascade {
+		for _, childApp := range app.LogicalChildApps {
+			if err := s.SetAppStatus(ctx, db, childApp, status, cascade); err != nil {
+				return hperrors.Wrap(err).WithMsgLog("failed to update status of logical child app %s", childApp.ID)
 			}
 		}
 	}
@@ -62,7 +65,7 @@ func (s *service) SetAppStatus(
 		}
 	}
 
-	err := s.appRepo.Update(ctx, db, app, bunex.UpdateColumns("status", "updated_at", "update_ver"))
+	err = s.appRepo.Update(ctx, db, app, bunex.UpdateColumns("status", "updated_at", "update_ver"))
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

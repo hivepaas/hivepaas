@@ -138,8 +138,8 @@ func (s *service) BuildEnvVarsForAllAppsInProjectEnv(
 		if len(onlyApps) > 0 && !gofn.Contain(onlyApps, app.ID) {
 			continue
 		}
-		// If the app is a child of another app, ignore it, only process direct apps
-		if app.IsChildApp() {
+		// If the app is a preview of another app, ignore it, only process direct apps
+		if app.IsPreviewApp() {
 			continue
 		}
 		app.Project = req.ProjectEnv.Project
@@ -195,7 +195,7 @@ func (s *service) BuildEnvVarsForAllAppsInApp(
 		Secrets: appData.Secrets,
 	})
 
-	if !app.IsChildApp() {
+	if !app.IsPreviewApp() {
 		return result, nil
 	}
 

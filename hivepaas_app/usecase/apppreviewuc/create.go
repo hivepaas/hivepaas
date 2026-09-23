@@ -101,9 +101,9 @@ func (uc *UC) loadAppForCreatePreview(
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	// The app must not be a child app
-	if app.IsChildApp() {
-		return hperrors.Wrap(hperrors.ErrActionNotAllowed).WithMsgLog("child app cannot have a preview")
+	// The app must not be a preview app
+	if app.IsPreviewApp() {
+		return hperrors.Wrap(hperrors.ErrActionNotAllowed).WithMsgLog("preview app cannot have a preview")
 	}
 	data.App = app
 

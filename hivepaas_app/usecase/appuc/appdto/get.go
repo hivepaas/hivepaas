@@ -106,7 +106,7 @@ func TransformApp(app *entity.App, input *AppTransformationInput) (resp *AppResp
 	resp.Stats = TransformAppStats(app, input)
 	resp.AccessLinks = TransformAppAccessLinks(app)
 	resp.Engine = TransformAppEngine(app)
-	if app.IsChildApp() {
+	if app.ParentID != "" {
 		resp.ParentApp = gofn.Coalesce(TransformAppBase(app.ParentApp), &AppBaseResp{ID: app.ParentID})
 	} else {
 		resp.ParentApp = nil

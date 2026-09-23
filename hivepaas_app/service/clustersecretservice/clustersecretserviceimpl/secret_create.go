@@ -135,8 +135,8 @@ func (s *service) addSwarmSecretsToService(
 		return hperrors.Wrap(err)
 	}
 
-	// If this app is parent of some other apps
-	if !app.IsChildApp() {
+	// If this app is parent of some preview apps
+	if !app.IsPreviewApp() {
 		childApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)

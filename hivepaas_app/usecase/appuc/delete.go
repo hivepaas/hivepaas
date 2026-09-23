@@ -44,7 +44,7 @@ func (uc *UC) DeleteApp(
 		}
 
 		// Remove app and its data from the infra
-		err = uc.appService.DeleteApp(ctx, db, app, req.RemoveStorage)
+		err = uc.appService.DeleteApp(ctx, db, app, req.RemoveStorage, true)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}

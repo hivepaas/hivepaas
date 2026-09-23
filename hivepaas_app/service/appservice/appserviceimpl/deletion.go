@@ -17,35 +17,29 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 )
 
-func (s *service) DeleteApp(ctx context.Context, db database.IDB, app *entity.App, removeStorage bool) error {
-	// Delete all child apps and their resources
-	if !app.IsChildApp() {
-		childApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
-			bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-			bunex.SelectWhere("app.parent_id = ?", app.ID),
-		)
-		if err != nil {
-			return hperrors.Wrap(err)
-		}
-		for _, childApp := range childApps {
-			if err := s.DeleteApp(ctx, db, childApp, removeStorage); err != nil {
-				return hperrors.Wrap(err).WithMsgLog("failed to delete child app %s", childApp.ID)
-			}
-		}
-	}
-
-	// The apps created to serve this one go with it: a preview app's cloned
-	// databases, and the dependencies a template created alongside it.
-	logicalChildApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
-		bunex.SelectExcludeColumns(entity.AppDefaultExcludeColumns...),
-		bunex.SelectWhere("app.logical_parent_id = ?", app.ID),
-	)
+func (s *service) DeleteApp(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	removeStorage bool,
+	cascade bool,
+) error {
+	err := s.LoadChildApps(ctx, db, app, true, cascade)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
-	for _, childApp := range logicalChildApps {
-		if err := s.DeleteApp(ctx, db, childApp, removeStorage); err != nil {
-			return hperrors.Wrap(err).WithMsgLog("failed to delete logical child app %s", childApp.ID)
+	// All direct child apps (preview apps) and their resources must be deleted
+	for _, childApp := range app.ChildApps {
+		if err := s.DeleteApp(ctx, db, childApp, removeStorage, cascade); err != nil {
+			return hperrors.Wrap(err).WithMsgLog("failed to delete child app %s", childApp.ID)
+		}
+	}
+	// If cascading, delete all logical child apps (dependent apps)
+	if cascade {
+		for _, childApp := range app.LogicalChildApps {
+			if err := s.DeleteApp(ctx, db, childApp, removeStorage, cascade); err != nil {
+				return hperrors.Wrap(err).WithMsgLog("failed to delete logical child app %s", childApp.ID)
+			}
 		}
 	}
 

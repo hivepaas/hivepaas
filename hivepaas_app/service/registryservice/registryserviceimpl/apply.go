@@ -199,7 +199,7 @@ func (s *service) teardown(
 	credentialID := cfg.RegistryAuthID
 	s.logger.Info("removing the system registry",
 		"app", app.ID, "removeStorage", req.RemoveStorage)
-	if err = s.appService.DeleteApp(ctx, db, app, req.RemoveStorage); err != nil {
+	if err = s.appService.DeleteApp(ctx, db, app, req.RemoveStorage, true); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	if err = s.rememberWhatWasCreated(ctx, db, setting, cfg, "", ""); err != nil {

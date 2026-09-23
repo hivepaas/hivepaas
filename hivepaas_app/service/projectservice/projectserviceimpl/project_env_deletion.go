@@ -13,12 +13,16 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/safego"
 )
 
-func (s *service) DeleteProjectEnv(ctx context.Context, db database.IDB, projectEnv *entity.ProjectEnv,
-	removeStorage bool) error {
+func (s *service) DeleteProjectEnv(
+	ctx context.Context,
+	db database.IDB,
+	projectEnv *entity.ProjectEnv,
+	removeStorage bool,
+) error {
 	// Remove all apps
 	var wg sync.WaitGroup
 	for _, app := range projectEnv.Apps {
-		if app.IsChildApp() {
+		if app.IsPreviewApp() {
 			continue
 		}
 		app.ProjectEnv = projectEnv
@@ -26,7 +30,7 @@ func (s *service) DeleteProjectEnv(ctx context.Context, db database.IDB, project
 		wg.Go(func() {
 			defer safego.Recover("projectservice.deleteApp")
 			_ = s.appService.ExecuteInTx(ctx, app, true, func(db database.Tx) error {
-				if err := s.appService.DeleteApp(ctx, db, app, removeStorage); err != nil {
+				if err := s.appService.DeleteApp(ctx, db, app, removeStorage, true); err != nil {
 					return hperrors.Wrap(err)
 				}
 				return nil

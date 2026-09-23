@@ -19,7 +19,7 @@ func (uc *UC) createAppPreview(
 	webhookID string,
 	previewSettings *entity.AppFeaturePreviewSettings, // if nil, will be loaded from DB
 ) (err error) {
-	if app.IsChildApp() { // The app is already a preview app, skips it
+	if app.IsPreviewApp() { // The app is already a preview app, skips it
 		return nil
 	}
 
@@ -97,7 +97,7 @@ func (uc *UC) deleteAppPreview(
 	app *entity.App,
 	expectedRef string,
 ) error {
-	if !app.IsChildApp() { // must be a preview app to be deleted
+	if !app.IsPreviewApp() { // must be a preview app to be deleted
 		return nil
 	}
 	deploymentSetting := app.GetSettingByType(base.SettingTypeAppDeployment)
@@ -116,7 +116,7 @@ func (uc *UC) deleteAppPreview(
 	err = transaction.Execute(ctx, uc.db, func(db database.Tx) error {
 		// A preview app goes when its pull request does, and so does what it wrote:
 		// nothing else will ever look at it.
-		if err = uc.appService.DeleteApp(ctx, db, app, true); err != nil {
+		if err = uc.appService.DeleteApp(ctx, db, app, true, true); err != nil {
 			return hperrors.Wrap(err)
 		}
 		return nil

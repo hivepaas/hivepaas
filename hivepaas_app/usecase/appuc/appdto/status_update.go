@@ -14,6 +14,9 @@ type UpdateAppStatusReq struct {
 	AppID        string         `json:"-"`
 	UpdateVer    int            `json:"updateVer"`
 	Status       base.AppStatus `json:"status"`
+	// Cascade also applies the status to the apps created to serve this one:
+	// a template's dependencies and components.
+	Cascade bool `json:"cascade"`
 }
 
 func NewUpdateAppStatusReq() *UpdateAppStatusReq {

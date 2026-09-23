@@ -93,8 +93,8 @@ func (s *service) RemoveSecretForApp(
 		return hperrors.Wrap(err)
 	}
 
-	// If this app is parent of some other apps, also remove the secrets from the child apps
-	if !app.IsChildApp() {
+	// If this app is parent of some preview apps, also remove the secrets from the child apps
+	if !app.IsPreviewApp() {
 		childApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)
@@ -189,8 +189,8 @@ func (s *service) deleteOrphanSwarmSecret(
 		return hperrors.Wrap(err)
 	}
 
-	// If this app is parent of some other apps, also remove the secret from the child apps
-	if !app.IsChildApp() {
+	// If this app is parent of some preview apps, also remove the secret from the child apps
+	if !app.IsPreviewApp() {
 		childApps, _, err := s.appRepo.List(ctx, db, app.ProjectID, nil,
 			bunex.SelectWhere("app.parent_id = ?", app.ID),
 		)

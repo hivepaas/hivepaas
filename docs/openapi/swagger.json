@@ -42083,7 +42083,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -42101,7 +42101,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -46199,7 +46199,7 @@
       "apptemplatedto.PreflightAppFromTemplateResp" : {
         "properties" : {
           "data" : {
-            "$ref" : "#/components/schemas/apptemplatedto.PreflightAppRe"
+            "$ref" : "#/components/schemas/apptemplatedto.PreflightAppResult"
           },
           "meta" : {
             "$ref" : "#/components/schemas/basedto.Meta"
@@ -46208,26 +46208,26 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
-      "apptemplatedto.PreflightAppRe" : {
+      "apptemplatedto.PreflightAppResult" : {
         "properties" : {
           "issues" : {
             "description" : "Issues are the refusals the creation would raise: a domain already served,\na published port already held, permission the caller does not have. They\nare reported together rather than one at a time, because a dialog that\nsays \"and also\" three times is three round trips through the same form.",
             "items" : {
-              "$ref" : "#/components/schemas/apptemplatedto.PreflightIssueRes"
+              "$ref" : "#/components/schemas/apptemplatedto.PreflightIssueResult"
             },
             "type" : "array"
           },
           "storage" : {
             "description" : "Storage is every app of this request whose directory already holds\nsomething. Empty is the ordinary case and means there is nothing to say.",
             "items" : {
-              "$ref" : "#/components/schemas/apptemplatedto.PreflightStorageRes"
+              "$ref" : "#/components/schemas/apptemplatedto.PreflightStorageResult"
             },
             "type" : "array"
           },
           "storageUnchecked" : {
             "description" : "StorageUnchecked is what could not be looked at - storage on a node that\ncould not be reached. It is reported because an empty Storage that means\n\"nothing was seen\" reads exactly like one that means \"there is nothing\nthere\", and the second is the one that lets a deploy walk into old data.",
             "items" : {
-              "$ref" : "#/components/schemas/apptemplatedto.PreflightStorageRes"
+              "$ref" : "#/components/schemas/apptemplatedto.PreflightStorageResult"
             },
             "type" : "array"
           }
@@ -46235,7 +46235,7 @@
         "required" : [ "issues", "storage", "storageUnchecked" ],
         "type" : "object"
       },
-      "apptemplatedto.PreflightIssueRes" : {
+      "apptemplatedto.PreflightIssueResult" : {
         "properties" : {
           "code" : {
             "description" : "Code is the error the creation would fail with, for a screen that wants to\nact on a particular one.",
@@ -46249,7 +46249,7 @@
         "required" : [ "code", "detail" ],
         "type" : "object"
       },
-      "apptemplatedto.PreflightStorageRes" : {
+      "apptemplatedto.PreflightStorageResult" : {
         "properties" : {
           "app" : {
             "description" : "App is the name the app will be created with, and AppKey what it will\nanswer to - which is also what its directory is called.",
@@ -46725,6 +46725,10 @@
       },
       "appdto.UpdateAppStatusReq" : {
         "properties" : {
+          "cascade" : {
+            "description" : "Cascade also applies the status to the apps created to serve this one:\na template's dependencies and components.",
+            "type" : "boolean"
+          },
           "status" : {
             "type" : "string"
           },
@@ -46732,7 +46736,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "status", "updateVer" ],
+        "required" : [ "cascade", "status", "updateVer" ],
         "type" : "object"
       },
       "appdto.UpdateAppStatusResp" : {
@@ -61537,9 +61541,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -61,8 +61,12 @@ func (app *App) GetName() string {
 	return app.Name
 }
 
-func (app *App) IsChildApp() bool {
+func (app *App) IsPreviewApp() bool {
 	return app.ParentID != ""
+}
+
+func (app *App) IsChildApp() bool {
+	return app.ParentID != "" || app.LogicalParentID != ""
 }
 
 // IsLogicalChildApp reports whether the app was created to serve another.

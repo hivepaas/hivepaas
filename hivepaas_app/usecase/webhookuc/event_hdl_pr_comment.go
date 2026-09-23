@@ -127,7 +127,7 @@ func (uc *UC) handlePRCommentDeploy(
 	repoRef string,
 	data *handleRepoWebhookData,
 ) {
-	if !app.IsChildApp() {
+	if !app.IsPreviewApp() {
 		previewSettings, err := uc.loadAppPreviewSettings(ctx, db, app)
 		if err != nil || previewSettings == nil || !previewSettings.Enabled {
 			_ = uc.sendPRComment(ctx, db, prCommentEvent, data, app, buildPreviewDisabledComment(app.Name))

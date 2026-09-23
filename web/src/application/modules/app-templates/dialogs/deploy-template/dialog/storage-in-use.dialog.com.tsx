@@ -78,7 +78,7 @@ export function StorageInUseDialog({ open, findings, isPending, onOpenChange, on
                             <AlertTriangle className="mt-0.5 size-4 shrink-0" />
                             <span>
                                 {databases.length === 1
-                                    ? `${databases[0].app} is a database and will not start: `
+                                    ? `${databases[0]?.app} is a database and will not start: `
                                     : "The databases above will not start: "}
                                 the password is generated fresh for this app, while the data on disk keeps the one it
                                 was created with.

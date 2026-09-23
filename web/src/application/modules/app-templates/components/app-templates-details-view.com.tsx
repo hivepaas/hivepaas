@@ -19,7 +19,7 @@ import {
     Sliders,
     Tag,
 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type ExtraProps } from "react-markdown";
 import { useParams } from "react-router";
 import remarkGfm from "remark-gfm";
 
@@ -61,6 +61,37 @@ function formatParamValue(val: unknown): string {
     return "";
 }
 
+// A fenced block renders as <pre><code>, inline code as a bare <code>. Only the second may
+// carry the inline badge style: its horizontal padding would indent a block's first line.
+const InsidePreContext = React.createContext(false);
+
+function MarkdownPre({ children }: { children?: React.ReactNode }) {
+    return (
+        <InsidePreContext.Provider value>
+            <pre className="rounded-md bg-muted/60 p-3 my-1.5 overflow-x-auto text-[13px] font-mono leading-normal">
+                {children}
+            </pre>
+        </InsidePreContext.Provider>
+    );
+}
+
+function MarkdownCode({ className, children, node: _node, ...rest }: React.ComponentProps<"code"> & ExtraProps) {
+    const insidePre = React.useContext(InsidePreContext);
+    return (
+        <code
+            className={cn(
+                insidePre
+                    ? "whitespace-pre"
+                    : "rounded bg-muted/80 px-1.5 py-0.5 font-mono text-[13px] text-amber-700 dark:text-amber-300 font-medium",
+                className,
+            )}
+            {...rest}
+        >
+            {children}
+        </code>
+    );
+}
+
 /**
  * Renders template description markdown (paragraphs, lists, bold, inline code, fenced code
  * blocks, links) via react-markdown, styled to match the app's existing look.
@@ -92,33 +123,8 @@ function MarkdownRenderer({ content, className }: { content: string; className?:
                             {children}
                         </a>
                     ),
-                    pre: ({ children }) => (
-                        <pre className="rounded-md bg-muted/60 p-3 my-1.5 overflow-x-auto text-[13px] font-mono leading-normal">
-                            {children}
-                        </pre>
-                    ),
-                    code: ({ className: codeClassName, children, node: _node, ...rest }) => {
-                        // Fenced code blocks carry a `language-xxx` class from remark-gfm; inline
-                        // `code` spans don't, so this is how the two get told apart here.
-                        if ((codeClassName ?? "").includes("language-")) {
-                            return (
-                                <code
-                                    className={cn("whitespace-pre", codeClassName)}
-                                    {...rest}
-                                >
-                                    {children}
-                                </code>
-                            );
-                        }
-                        return (
-                            <code
-                                className="rounded bg-muted/80 px-1.5 py-0.5 font-mono text-[13px] text-amber-700 dark:text-amber-300 font-medium"
-                                {...rest}
-                            >
-                                {children}
-                            </code>
-                        );
-                    },
+                    pre: MarkdownPre,
+                    code: MarkdownCode,
                 }}
             >
                 {content}

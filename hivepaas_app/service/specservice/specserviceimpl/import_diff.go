@@ -52,7 +52,11 @@ func (p *planner) settingsChanges(
 			if newerSetting(typ, bundle[block]) {
 				node.Issues = append(node.Issues, versionNewer(node.Path, prefix+block))
 			}
-			if currentBody, found := current[block]; !found || !sameBody(bundle[block], currentBody) {
+			currentBody, found := current[block]
+			if !found {
+				p.addMissing(node, prefix+block)
+			}
+			if !found || !sameBody(bundle[block], currentBody) {
 				changes = append(changes, prefix+block)
 			}
 			continue
@@ -72,12 +76,50 @@ func (p *planner) settingsChanges(
 			if newerSetting(typ, entries[key]) {
 				node.Issues = append(node.Issues, versionNewer(node.Path, prefix+block+"/"+key))
 			}
-			if currentBody, found := currentEntries[key]; !found || !sameBody(entries[key], currentBody) {
+			currentBody, found := currentEntry(currentEntries, key, entries[key])
+			if !found {
+				p.addMissing(node, prefix+block+"/"+key)
+			}
+			if !found || !sameBody(entries[key], currentBody) {
 				changes = append(changes, prefix+block+"/"+key)
 			}
 		}
 	}
 	return changes
+}
+
+// currentEntry is the target's entry for a collection entry of the bundle: the
+// one under the same key, or else the one exported from the same setting - a
+// rename since the export, which §4 matches by id.
+func currentEntry(entries map[string]any, key string, body any) (any, bool) {
+	if current, found := entries[key]; found {
+		return current, true
+	}
+	id := entryID(body)
+	if id == "" {
+		return nil, false
+	}
+	for _, current := range entries {
+		if entryID(current) == id {
+			return current, true
+		}
+	}
+	return nil, false
+}
+
+func entryID(body any) string {
+	fields, _ := body.(map[string]any)
+	id, _ := fields[specmodel.CollectionEntryIDKey].(string)
+	return id
+}
+
+// addMissing records a setting the target does not have at all, which keep
+// still creates.
+func (p *planner) addMissing(node *specmodel.PlanNode, setting string) {
+	if p.missing == nil {
+		p.missing = map[string][]string{}
+	}
+	p.missing[node.Path] = append(p.missing[node.Path], setting)
 }
 
 // newerSetting reports whether a setting's row names a version of its data this
@@ -239,14 +281,21 @@ func (p *planner) skipBelow(path string, issue specmodel.Issue) {
 }
 
 // applyExisting leaves what the installation has alone when the operator chose
-// to: only what is missing is created, and nothing restarts.
+// to: only what is missing is created, and nothing restarts. A setting is an
+// object of its own, so a scope that exists still gains the settings it lacks;
+// an app's settings are part of the app, and stay as the app does.
 func (p *planner) applyExisting(node *specmodel.PlanNode) {
 	if p.req.Options.Existing != specmodel.ExistingKeep {
 		return
 	}
-	if node.Action == specmodel.ActionUpdate || node.Action == specmodel.ActionUnchanged {
-		node.Action, node.Restart, node.Deploy = specmodel.ActionKeep, false, false
+	if node.Action != specmodel.ActionUpdate && node.Action != specmodel.ActionUnchanged {
+		return
 	}
+	if missing := p.missing[node.Path]; node.Kind != specmodel.NodeKindApp && len(missing) > 0 {
+		node.Action, node.Changes = specmodel.ActionUpdate, missing
+		return
+	}
+	node.Action, node.Restart, node.Deploy = specmodel.ActionKeep, false, false
 }
 
 // summarize counts what the selected nodes will do.

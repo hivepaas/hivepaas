@@ -197,28 +197,51 @@ func (s *service) buildImportedSettings(_ context.Context, state *buildState) er
 // key, the name when the row names none.
 func (state *buildState) addImportedSetting(typ base.SettingType, key string, body any) error {
 	block := specmodel.Block("settings." + string(typ))
+	setting, parsed, err := decodeImportedSetting(block, typ, key, body)
+	if err != nil {
+		return err
+	}
+	setting.ID = gofn.Must(ulid.NewStringULID())
+	setting.Scope = base.ObjectScopeApp
+	setting.ObjectID = state.req.App.ID
+	setting.UpdateVer = 1
+	setting.CreatedAt = state.req.TimeNow
+	setting.UpdatedAt = state.req.TimeNow
+	// Written again through the entity, so a secret that traveled in the clear is
+	// encrypted at rest like any other.
+	if err = setting.SetData(parsed); err != nil {
+		return hperrors.Wrap(err)
+	}
+	state.settings = append(state.settings, setting)
+	return nil
+}
+
+// decodeImportedSetting reads one setting body of an exported document: the row
+// from what export wrote beside the data, and the data brought to the version
+// this installation reads and parsed as its type. The row has no id, scope or
+// object: the caller decides where it goes.
+func decodeImportedSetting(
+	block specmodel.Block, typ base.SettingType, key string, body any,
+) (*entity.Setting, entity.SettingData, error) {
 	fields, ok := body.(map[string]any)
 	if !ok {
-		return invalidBlock(block, "%s is not a mapping", key)
+		return nil, nil, invalidBlock(block, "%s is not a mapping", key)
 	}
 	fields = maps.Clone(fields)
 	meta := specmodel.SettingMeta{}
 	if raw, found := fields[specmodel.SettingMetaKey]; found {
 		if err := decodeBlock(block, raw, &meta); err != nil {
-			return err
+			return nil, nil, err
 		}
 	}
 	delete(fields, specmodel.SettingMetaKey)
 	delete(fields, specmodel.CollectionEntryIDKey)
 	data, err := json.Marshal(fields)
 	if err != nil {
-		return invalidBlock(block, "%s", err.Error())
+		return nil, nil, invalidBlock(block, "%s", err.Error())
 	}
 
 	setting := &entity.Setting{
-		ID:          gofn.Must(ulid.NewStringULID()),
-		Scope:       base.ObjectScopeApp,
-		ObjectID:    state.req.App.ID,
 		RefID:       meta.RefID,
 		Type:        typ,
 		Kind:        meta.Kind,
@@ -228,23 +251,14 @@ func (state *buildState) addImportedSetting(typ base.SettingType, key string, bo
 		Inheritable: meta.Inheritable,
 		Default:     meta.Default,
 		Version:     meta.Version,
-		UpdateVer:   1,
-		CreatedAt:   state.req.TimeNow,
-		UpdatedAt:   state.req.TimeNow,
 		ExpireAt:    meta.ExpireAt,
 	}
 	if _, err = setting.Migrate(); err != nil {
-		return hperrors.Wrap(err)
+		return nil, nil, hperrors.Wrap(err)
 	}
-	// Written again through the entity, so a secret that traveled in the clear is
-	// encrypted at rest like any other.
 	parsed, err := setting.Parse()
 	if err != nil {
-		return invalidBlock(block, "%s: %s", key, err.Error())
+		return nil, nil, invalidBlock(block, "%s: %s", key, err.Error())
 	}
-	if err = setting.SetData(parsed); err != nil {
-		return hperrors.Wrap(err)
-	}
-	state.settings = append(state.settings, setting)
-	return nil
+	return setting, parsed, nil
 }

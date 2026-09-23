@@ -826,9 +826,11 @@ Five plans, each shippable without the next:
    callers shape what is shared. Validate, first part:
    `docs/superpowers/plans/2026-09-24-spec-import-validate.md` - reading a
    bundle, matching, the diff, restart and deploy, the structural issues, the
-   plan hash, and the validate endpoint at the three scopes. References and
-   closure, availability issues, owner and credential notes, and apply follow in
-   their own plans.
+   plan hash, and the validate endpoint at the three scopes. Validate, second
+   part: `docs/superpowers/plans/2026-09-24-spec-import-references.md` -
+   references and closure, `keep` creating the settings a scope lacks, and the
+   records a selected object needs. Availability issues, owner and credential
+   notes, and apply follow in their own plans.
 5. **Dashboard**: the import screens.
 
 ---

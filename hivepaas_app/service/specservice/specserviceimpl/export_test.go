@@ -297,6 +297,37 @@ func exportFixture(t *testing.T) specservice.Service {
 		}
 		return out, nil
 	}
+	// Found as the repository's scope filters would: global settings everywhere,
+	// a project's or an env's where that scope sees them.
+	impl.findRef = func(
+		_ context.Context, _ database.IDB, scope *entity.ObjectScope, ref *specmodel.ExternalRef,
+	) (*entity.Setting, error) {
+		visible := func(setting *entity.Setting) bool {
+			switch setting.Scope {
+			case base.ObjectScopeGlobal:
+				return true
+			case base.ObjectScopeProject:
+				return setting.ObjectID == scope.ProjectID
+			case base.ObjectScopeProjectEnv:
+				return setting.ObjectID == scope.ProjectEnvID
+			case base.ObjectScopeHivepaas, base.ObjectScopeUser, base.ObjectScopeApp:
+			}
+			return false
+		}
+		for _, match := range []func(*entity.Setting) bool{
+			func(setting *entity.Setting) bool { return ref.ID != "" && setting.ID == ref.ID },
+			func(setting *entity.Setting) bool {
+				return ref.Name != "" && setting.Name == ref.Name && (ref.Kind == "" || setting.Kind == ref.Kind)
+			},
+		} {
+			for _, setting := range all {
+				if string(setting.Type) == ref.Type && visible(setting) && match(setting) {
+					return setting, nil
+				}
+			}
+		}
+		return nil, nil
+	}
 	return svc
 }
 

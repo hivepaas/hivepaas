@@ -2,6 +2,8 @@ package specserviceimpl
 
 import (
 	"context"
+	"maps"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,15 +27,26 @@ func planFixture(t *testing.T) (*service, *specmodel.ImportBundle) {
 	return svc, bundle
 }
 
+// plan plans a bundle at global scope. Each selector includes a path, or
+// excludes it when it begins with "-".
 func plan(
 	t *testing.T, svc *service, bundle *specmodel.ImportBundle, options specmodel.ImportOptions,
+	selectors ...string,
 ) *specmodel.ImportPlan {
 	t.Helper()
 	if options.Existing == "" {
 		options.Existing = specmodel.ExistingUpdate
 	}
+	selection := specmodel.Selection{}
+	for _, selector := range selectors {
+		if excluded, ok := strings.CutPrefix(selector, "-"); ok {
+			selection.Exclude = append(selection.Exclude, excluded)
+		} else {
+			selection.Include = append(selection.Include, selector)
+		}
+	}
 	out, err := svc.planImport(context.Background(), nil, &specservice.ValidateImportReq{
-		Scope: entity.NewObjectScopeGlobal(), Options: options,
+		Scope: entity.NewObjectScopeGlobal(), Options: options, Selection: selection,
 	}, bundle)
 	assert.NoError(t, err)
 	return out
@@ -53,6 +66,11 @@ func node(t *testing.T, p *specmodel.ImportPlan, path string) *specmodel.PlanNod
 func backendRouting(bundle *specmodel.ImportBundle) map[string]any {
 	routing, _ := bundle.Envs["project_a"]["dev"].Apps["backend"].Settings["routing"].(map[string]any)
 	return routing
+}
+
+func globalCerts(bundle *specmodel.ImportBundle) map[string]any {
+	certs, _ := bundle.Global.Settings["sslCerts"].(map[string]any)
+	return certs
 }
 
 // A bundle imported into the installation that exported it changes nothing:
@@ -178,4 +196,38 @@ func TestPlanAtAProjectRouteTakesThatProjectOnly(t *testing.T) {
 		assert.NotEqual(t, "global", n.Path)
 	}
 	assert.Equal(t, specmodel.ActionUnchanged, node(t, out, backendPath).Action)
+}
+
+// Keep still creates what the target does not have at all: a certificate is an
+// object of its own, and adding it changes nothing that exists.
+func TestPlanKeepCreatesTheSettingsAScopeLacks(t *testing.T) {
+	svc, bundle := planFixture(t)
+	certs := globalCerts(bundle)
+	fresh := maps.Clone(certs["localhost"].(map[string]any))
+	fresh[specmodel.CollectionEntryIDKey] = "cert_new"
+	certs["fresh"] = fresh
+	certs["localhost"].(map[string]any)["domain"] = "changed.example.com"
+
+	global := node(t, plan(t, svc, bundle, specmodel.ImportOptions{Existing: specmodel.ExistingKeep}), "global")
+
+	assert.Equal(t, specmodel.ActionUpdate, global.Action)
+	assert.Equal(t, []string{"sslCerts/fresh"}, global.Changes)
+}
+
+// A setting renamed since the export is the setting the target has, matched by
+// its id: changed, and not missing.
+func TestPlanMatchesARenamedSettingByID(t *testing.T) {
+	svc, bundle := planFixture(t)
+	certs := globalCerts(bundle)
+	renamed := certs["localhost"].(map[string]any)
+	renamed[specmodel.SettingMetaKey].(map[string]any)["name"] = "renamed"
+	certs["renamed"] = renamed
+	delete(certs, "localhost")
+
+	updated := node(t, plan(t, svc, bundle, specmodel.ImportOptions{}), "global")
+	kept := node(t, plan(t, svc, bundle, specmodel.ImportOptions{Existing: specmodel.ExistingKeep}), "global")
+
+	assert.Equal(t, specmodel.ActionUpdate, updated.Action)
+	assert.Equal(t, []string{"sslCerts/renamed"}, updated.Changes)
+	assert.Equal(t, specmodel.ActionKeep, kept.Action)
 }

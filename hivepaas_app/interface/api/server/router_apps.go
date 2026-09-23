@@ -26,6 +26,7 @@ func (s *HTTPServer) registerAppRoutes(projectGroup, projectEnvGroup *gin.Router
 		// Creation & Update
 		appGroup.POST("", appHandler.CreateApp)
 		appGroup.POST("/from-template", s.handlerRegistry.appTemplateHandler.CreateAppFromTemplate)
+		appGroup.POST("/from-template/preflight", s.handlerRegistry.appTemplateHandler.PreflightAppFromTemplate)
 		appGroup.PUT("/:appID", appHandler.UpdateApp)
 		appGroup.PUT("/:appID/status", appHandler.UpdateAppStatus)
 		appGroup.DELETE("/:appID", appHandler.DeleteApp)

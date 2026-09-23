@@ -13861,6 +13861,85 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/projects/{projectID}/{projectEnv}/apps/from-template/preflight" : {
+      "post" : {
+        "description" : "Renders the request and reports which of its apps would be given a directory that already holds data.",
+        "operationId" : "preflightAppFromTemplate",
+        "parameters" : [ {
+          "description" : "project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "*/*" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/apptemplatedto.PreflightAppFromTemplateReq"
+              }
+            }
+          },
+          "description" : "request data",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/apptemplatedto.PreflightAppFromTemplateResp"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/hperrors.ErrorInfo"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Reports what creating an app from a template would run into",
+        "tags" : [ "app_templates" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/apps/{appID}" : {
       "delete" : {
         "description" : "Deletes an app",
@@ -41927,7 +42006,7 @@
         "type" : "object"
       },
       "pkg_fileutil.FileMode" : {
-        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
+        "enum" : [ 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511, 2147483648, 1073741824, 536870912, 268435456, 134217728, 67108864, 33554432, 16777216, 8388608, 4194304, 2097152, 1048576, 524288, 2401763328, 511 ],
         "type" : "integer",
         "x-enum-comments" : {
           "ModeAppend" : "a: append-only",
@@ -41945,7 +42024,7 @@
           "ModeSymlink" : "L: symbolic link",
           "ModeTemporary" : "T: temporary file; Plan 9 only"
         },
-        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
+        "x-enum-varnames" : [ "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm", "ModeDir", "ModeAppend", "ModeExclusive", "ModeTemporary", "ModeSymlink", "ModeDevice", "ModeNamedPipe", "ModeSocket", "ModeSetuid", "ModeSetgid", "ModeCharDevice", "ModeSticky", "ModeIrregular", "ModeType", "ModePerm" ]
       },
       "pkg_tasklog.LogFrame" : {
         "properties" : {
@@ -45806,6 +45885,10 @@
             "description" : "Params are JSON values of each parameter's type; a size is a string such as \"1GB\".",
             "type" : "object"
           },
+          "resetStorage" : {
+            "description" : "ResetStorage deletes what a previous install of these apps left in their\ndirectories before the new ones are created. It is what the preflight\nendpoint's findings are answered with, and it is off unless asked for.",
+            "type" : "boolean"
+          },
           "template" : {
             "type" : "string"
           },
@@ -45817,7 +45900,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "dependencyParams", "imageTag", "name", "params", "template", "variant", "version" ],
+        "required" : [ "dependencyParams", "imageTag", "name", "params", "resetStorage", "template", "variant", "version" ],
         "type" : "object"
       },
       "apptemplatedto.CreateAppFromTemplateResp" : {
@@ -45925,6 +46008,99 @@
           }
         },
         "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "apptemplatedto.PreflightAppFromTemplateReq" : {
+        "properties" : {
+          "dependencyParams" : {
+            "additionalProperties" : {
+              "additionalProperties" : {
+                "type" : "object"
+              },
+              "type" : "object"
+            },
+            "description" : "DependencyParams are the values a person gave for each dependency the\ntemplate declares, by the dependency's name: in practice its data volume.",
+            "type" : "object"
+          },
+          "imageTag" : {
+            "description" : "ImageTag replaces the tag of the image the template's version pins, for this\napp only - one of the tags the image-tags endpoint lists. The repository is\nthe template's and is not asked for: everything else the template says is\nonly correct for that software.",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "params" : {
+            "additionalProperties" : {
+              "type" : "object"
+            },
+            "description" : "Params are JSON values of each parameter's type; a size is a string such as \"1GB\".",
+            "type" : "object"
+          },
+          "resetStorage" : {
+            "description" : "ResetStorage deletes what a previous install of these apps left in their\ndirectories before the new ones are created. It is what the preflight\nendpoint's findings are answered with, and it is off unless asked for.",
+            "type" : "boolean"
+          },
+          "template" : {
+            "type" : "string"
+          },
+          "variant" : {
+            "type" : "string"
+          },
+          "version" : {
+            "description" : "Version and Variant are empty for the template's defaults.",
+            "type" : "string"
+          }
+        },
+        "required" : [ "dependencyParams", "imageTag", "name", "params", "resetStorage", "template", "variant", "version" ],
+        "type" : "object"
+      },
+      "apptemplatedto.PreflightAppFromTemplateResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/apptemplatedto.PreflightAppRe"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
+      "apptemplatedto.PreflightAppRe" : {
+        "properties" : {
+          "storage" : {
+            "description" : "Storage is every app of this request whose directory already holds\nsomething. Empty is the ordinary case and means there is nothing to say.",
+            "items" : {
+              "$ref" : "#/components/schemas/apptemplatedto.PreflightStorageRes"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "storage" ],
+        "type" : "object"
+      },
+      "apptemplatedto.PreflightStorageRes" : {
+        "properties" : {
+          "app" : {
+            "description" : "App is the name the app will be created with, and AppKey what it will\nanswer to - which is also what its directory is called.",
+            "type" : "string"
+          },
+          "appKey" : {
+            "type" : "string"
+          },
+          "isDatabase" : {
+            "description" : "IsDatabase is the one distinction the warning makes: a database started on\nsomebody else's data keeps the password that data was created with, and the\none being generated now will not open it.",
+            "type" : "boolean"
+          },
+          "path" : {
+            "description" : "Path is the directory inside the volume, so an operator can go and look.",
+            "type" : "string"
+          },
+          "volume" : {
+            "$ref" : "#/components/schemas/apptemplatedto_PreflightStorageRes_volume"
+          }
+        },
+        "required" : [ "app", "appKey", "isDatabase", "path", "volume" ],
         "type" : "object"
       },
       "appdto.AppBaseResp" : {
@@ -61191,9 +61367,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {
@@ -61259,6 +61435,18 @@
           }
         },
         "required" : [ "file", "path" ],
+        "type" : "object"
+      },
+      "apptemplatedto_PreflightStorageRes_volume" : {
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "id", "name" ],
         "type" : "object"
       }
     },

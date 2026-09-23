@@ -54,6 +54,11 @@ type Service interface {
 	InspectAppStorage(ctx context.Context, db database.IDB, req *InspectAppStorageReq) (
 		*InspectAppStorageResp, error)
 
+	// RemoveAppStoragePaths deletes the directories InspectAppStorage reported
+	// on. It takes the same queries, because the apps it is asked about are the
+	// ones that do not exist yet.
+	RemoveAppStoragePaths(ctx context.Context, db database.IDB, req *InspectAppStorageReq) error
+
 	RemoveVolume(ctx context.Context, volumeID string, force bool, retryMax int, retryDelay time.Duration) error
 
 	// RemoveVolumeInCluster removes a volume on the node its data is on.

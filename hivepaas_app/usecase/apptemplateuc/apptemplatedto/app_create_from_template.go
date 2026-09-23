@@ -37,6 +37,10 @@ type CreateAppFromTemplateReq struct {
 	// DependencyParams are the values a person gave for each dependency the
 	// template declares, by the dependency's name: in practice its data volume.
 	DependencyParams map[string]map[string]any `json:"dependencyParams"`
+	// ResetStorage deletes what a previous install of these apps left in their
+	// directories before the new ones are created. It is what the preflight
+	// endpoint's findings are answered with, and it is off unless asked for.
+	ResetStorage bool `json:"resetStorage,omitempty"`
 }
 
 func NewCreateAppFromTemplateReq() *CreateAppFromTemplateReq {

@@ -68,6 +68,18 @@ func (uc *UC) CreateAppFromTemplate(
 	if err = uc.checkDomains(ctx, req, apps); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	// Whatever a previous install of these apps left on the volumes goes first,
+	// and only when the request says so. The preflight endpoint is where anybody
+	// is told there is something to clear; this is where it is cleared.
+	if req.ResetStorage {
+		plan, planErr := uc.planStorage(ctx, uc.db, req, apps)
+		if planErr != nil {
+			return nil, hperrors.Wrap(planErr)
+		}
+		if err = uc.volumeService.RemoveAppStoragePaths(ctx, uc.db, plan.Request); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
 
 	var provisioned *appprovisionservice.ProvisionAppsResp
 	committed := false

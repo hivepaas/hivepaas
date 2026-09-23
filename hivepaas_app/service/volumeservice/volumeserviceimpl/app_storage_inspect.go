@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
 
@@ -96,6 +97,81 @@ func (s *service) inspectOne(
 	state.Checked, state.Exists = true, true
 	state.Empty = len(entries) == 0
 	return state
+}
+
+// RemoveAppStoragePaths deletes the directories InspectAppStorage reported on.
+//
+// It takes the same queries rather than an app, because the apps it is asked
+// about do not exist: this is what clears what a previous install left behind,
+// in the moment between someone confirming it and the new apps being created.
+func (s *service) RemoveAppStoragePaths(
+	ctx context.Context,
+	db database.IDB,
+	req *volumeservice.InspectAppStorageReq,
+) error {
+	if req == nil || len(req.Queries) == 0 {
+		return nil
+	}
+
+	volumes, _, err := s.settingRepo.List(ctx, db, req.Scope, nil,
+		bunex.SelectWhere("setting.type = ?", base.SettingTypeClusterVolume),
+	)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	byID := make(map[string]*entity.Setting, len(volumes))
+	for _, vol := range volumes {
+		byID[vol.ID] = vol
+	}
+
+	for _, query := range req.Queries {
+		setting := byID[query.VolumeID]
+		if setting == nil || query.App == nil {
+			continue
+		}
+		path := appStoragePath(query.App, setting.Scope, query.Subpath)
+		if path == "" {
+			continue
+		}
+		target, ok := wholeVolumeTarget(setting, path)
+		if !ok {
+			continue
+		}
+
+		pins, err := placementservice.VolumePinsForMounts([]mount.Mount{target.mount}, volumes)
+		if err != nil {
+			return hperrors.Wrap(err)
+		}
+		constraint, conflict := placementservice.VolumePinConstraint(pins)
+		if conflict != nil {
+			return hperrors.Wrap(hperrors.ErrActionFailed).WithMsgLog(
+				"cannot remove storage at %s: %s", path, conflict.Error())
+		}
+		if err = s.removeStorageTarget(ctx, &target, constraint, s.storageIsOnThisNode(ctx, pins)); err != nil {
+			return hperrors.Wrap(err)
+		}
+	}
+	return nil
+}
+
+// wholeVolumeTarget is the volume mounted whole, with the directory to delete
+// named inside it - the shape removeStorageTarget works on.
+func wholeVolumeTarget(setting *entity.Setting, path string) (storageTarget, bool) {
+	vol, err := setting.AsClusterVolume()
+	if err != nil || vol == nil {
+		return storageTarget{}, false
+	}
+	if directory, _, ok := bindMountTarget(vol, ""); ok {
+		return storageTarget{mount: bindMountWhole(directory), subpath: path, volume: setting}, true
+	}
+	if setting.RefID == "" {
+		return storageTarget{}, false
+	}
+	return storageTarget{
+		mount:   mount.Mount{Type: mount.TypeVolume, Source: setting.RefID, Target: volumeHelperTarget},
+		subpath: path,
+		volume:  setting,
+	}, true
 }
 
 // storageRootOnThisNode is where a volume's contents can be read from this

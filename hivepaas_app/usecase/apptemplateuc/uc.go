@@ -11,6 +11,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 )
 
@@ -19,6 +20,7 @@ type UC struct {
 	taskQueue queue.TaskQueue
 
 	appRepo     repository.AppRepo
+	projectRepo repository.ProjectRepo
 	settingRepo repository.SettingRepo
 
 	permissionManager permission.Manager
@@ -30,6 +32,7 @@ type UC struct {
 	clusterService      clusterservice.Service
 	domainService       domainservice.Service
 	specService         specservice.Service
+	volumeService       volumeservice.Service
 }
 
 func New(
@@ -37,6 +40,7 @@ func New(
 	taskQueue queue.TaskQueue,
 
 	appRepo repository.AppRepo,
+	projectRepo repository.ProjectRepo,
 	settingRepo repository.SettingRepo,
 
 	permissionManager permission.Manager,
@@ -48,12 +52,14 @@ func New(
 	clusterService clusterservice.Service,
 	domainService domainservice.Service,
 	specService specservice.Service,
+	volumeService volumeservice.Service,
 ) *UC {
 	return &UC{
 		db:        db,
 		taskQueue: taskQueue,
 
 		appRepo:     appRepo,
+		projectRepo: projectRepo,
 		settingRepo: settingRepo,
 
 		permissionManager: permissionManager,
@@ -65,5 +71,6 @@ func New(
 		clusterService:      clusterService,
 		domainService:       domainService,
 		specService:         specService,
+		volumeService:       volumeService,
 	}
 }

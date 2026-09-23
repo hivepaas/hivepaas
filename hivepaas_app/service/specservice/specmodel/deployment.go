@@ -168,17 +168,31 @@ type Ulimit struct {
 // mounts[0], a reorder, and a restore is data attached to the wrong volume,
 // with no error and no warning.
 //
-// Two mounts at one target is meaningless, which makes the target a key - but
-// nothing upstream validates it, so mapSwarmService checks and refuses.
+// Two mounts at one target is meaningless, which makes the target a key across
+// both maps - but nothing upstream validates it, so export checks and refuses.
 type Storage struct {
+	// Mounts are the mounts HivePaaS manages. Each reaches a volume's directory
+	// for an app of this environment - the app's own, or another's named by
+	// SourceApp - and is what a template writes and the storage screen edits.
 	Mounts map[string]Mount `yaml:"mounts,omitempty"`
+	// DockerMounts are every other mount, as Docker holds it: a tmpfs, a bind to
+	// a host path no volume accounts for, a volume mounted whole. Their sources
+	// are what this installation calls them, so import passes them on as they
+	// are.
+	DockerMounts map[string]Mount `yaml:"dockerMounts,omitempty"`
 }
 
 // Mount carries no Target: it is the map key. It carries no Key either, since
 // that was a sha256 of the other three fields.
 type Mount struct {
-	Type           mount.Type        `yaml:"type"`
-	Source         string            `yaml:"source,omitempty"`
+	Type mount.Type `yaml:"type"`
+	// Source names the volume of a mount in Mounts - a template gives the id of a
+	// cluster-volume setting, export gives the volume's scope path. In
+	// DockerMounts it is what Docker holds: a volume's name, a host path.
+	Source string `yaml:"source,omitempty"`
+	// External stands in for Source when the volume of a mount in Mounts lies
+	// outside the export, such as a volume sync discovered.
+	External       *ExternalRef      `yaml:"external,omitempty"`
 	ReadOnly       bool              `yaml:"readOnly,omitempty"`
 	Consistency    mount.Consistency `yaml:"consistency,omitempty"`
 	BindOptions    *BindOptions      `yaml:"bindOptions,omitempty"`

@@ -80,6 +80,10 @@ func contains(list []string, want string) bool {
 // readability choice inside a block that already names the subject.
 var specAliases = map[string]string{
 	"attachments": "networkAttachments", // inside a networks: block
+	// Inside a storage: block. The screen edits every mount in one list; a spec
+	// keeps the ones HivePaaS manages apart from the rest, so that only those
+	// travel in the form import can build again anywhere.
+	"dockerMounts": "mounts",
 }
 
 type oracleCase struct {

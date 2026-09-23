@@ -115,6 +115,11 @@ func TestCheckBuildableRefusesTheRest(t *testing.T) {
 		"an empty source app": {"deployment:\n  storage:\n    mounts:\n" +
 			"      /data: {type: volume, source: v, sourceApp: {write: true}}\n",
 			"deployment.storage.mounts./data.sourceApp.app"},
+		"docker mounts": {"deployment:\n  storage:\n    dockerMounts:\n      /tmp: {type: tmpfs}\n",
+			"deployment.storage.dockerMounts"},
+		"a volume named outside the document": {"deployment:\n  storage:\n    mounts:\n" +
+			"      /data: {type: volume, external: {type: cluster-volume, name: v}}\n",
+			"deployment.storage.mounts./data.external"},
 		"networks":     {"deployment:\n  networks:\n    dnsConfig: {nameservers: [1.1.1.1]}\n", "deployment.networks"},
 		"service mode": {"deployment:\n  service:\n    modeSpec: {mode: global}\n", "deployment.service"},
 		"secret swarm id": {"settings:\n  secrets:\n    A: {value: x, swarmRef: {secretId: abc}}\n",

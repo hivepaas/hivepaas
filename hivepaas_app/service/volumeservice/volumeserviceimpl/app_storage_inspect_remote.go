@@ -95,15 +95,25 @@ func (s *service) inspectVolumeOnItsNode(
 	}
 }
 
-// hostPathCandidates are the prefixes a host path is reachable at from inside a
-// container that mounts the root. The second is what Docker Desktop serves a
-// shared directory at, and it is tried only after the plain one.
-var hostPathCandidates = []string{"", "/host_mnt"}
+// hostPathCandidates are the prefixes an agent reaches a host path at.
+//
+// An agent in a container mounts the host root at HostPathPrefix, and a runtime
+// that rewrites bind sources serves the same root one level further in. An
+// agent running on the host itself - a development installation - sees the path
+// as it is, with no prefix at all. Offering all three matters: an agent that
+// answers about a filesystem it is looking at the wrong way reports every
+// directory as empty, which reads as "nothing there" and is worse than not
+// having asked.
+var hostPathCandidates = []string{
+	volumeservice.HostPathPrefix,
+	path.Join(volumeservice.HostPathPrefix, "/host_mnt"),
+	"",
+}
 
 func hostCandidatesFor(hostPath string) []string {
 	candidates := make([]string, 0, len(hostPathCandidates))
 	for _, prefix := range hostPathCandidates {
-		candidates = append(candidates, path.Join(volumeservice.HostPathPrefix, prefix, hostPath))
+		candidates = append(candidates, path.Join(prefix, hostPath))
 	}
 	return candidates
 }

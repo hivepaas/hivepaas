@@ -35,9 +35,11 @@ func (f *fakeNodeExec) ExecCommand(
 	return &nodeexecservice.CommandExecResp{}, nil
 }
 
-func pinnedVolume(t *testing.T, device, nodeID string) *entity.Setting {
+// pinnedVolume is a managed volume on one node, at the directory every test
+// here names.
+func pinnedVolume(t *testing.T, nodeID string) *entity.Setting {
 	t.Helper()
-	setting := clusterVolumeSetting(t, "vol-1", device)
+	setting := clusterVolumeSetting(t, "vol-1", "/srv/data")
 	vol, err := setting.AsClusterVolume()
 	assert.NoError(t, err)
 	vol.NodeID = nodeID
@@ -48,7 +50,7 @@ func pinnedVolume(t *testing.T, device, nodeID string) *entity.Setting {
 }
 
 func TestStorageOnAnotherNodeIsReadThroughItsAgent(t *testing.T) {
-	setting := pinnedVolume(t, "/srv/data", "node-b")
+	setting := pinnedVolume(t, "node-b")
 	states := []*volumeservice.AppStorageState{
 		{AppKey: "web", Path: "prod/web"},
 		{AppKey: "db", Path: "prod/db"},
@@ -62,6 +64,7 @@ func TestStorageOnAnotherNodeIsReadThroughItsAgent(t *testing.T) {
 	assert.Equal(t, "node-b", exec.req.NodeID)
 	assert.Contains(t, exec.req.Command, "/host/srv/data/prod/web")
 	assert.Contains(t, exec.req.Command, "/host/srv/data/prod/db")
+	assert.Contains(t, exec.req.Command, "/srv/data/prod/db")
 
 	// Both were asked about, so both have an answer; only one holds anything.
 	assert.True(t, states[0].Checked)
@@ -72,7 +75,7 @@ func TestStorageOnAnotherNodeIsReadThroughItsAgent(t *testing.T) {
 // The runtime that rewrites a bind source serves the same root at its own
 // prefix, so both spellings are offered and either answer counts.
 func TestStorageOnAnotherNodeAcceptsEitherHostSpelling(t *testing.T) {
-	setting := pinnedVolume(t, "/srv/data", "node-b")
+	setting := pinnedVolume(t, "node-b")
 	states := []*volumeservice.AppStorageState{{AppKey: "db", Path: "prod/db"}}
 	exec := &fakeNodeExec{nonEmpty: []string{"/host/host_mnt/srv/data/prod/db"}}
 
@@ -95,7 +98,7 @@ func TestStorageWithNoNodeToAskStaysUnchecked(t *testing.T) {
 }
 
 func TestStorageOnANodeThatCannotBeAskedStaysUnchecked(t *testing.T) {
-	setting := pinnedVolume(t, "/srv/data", "node-b")
+	setting := pinnedVolume(t, "node-b")
 	states := []*volumeservice.AppStorageState{{AppKey: "db", Path: "prod/db"}}
 	exec := &fakeNodeExec{err: hperrors.ErrUnavailable}
 
@@ -104,8 +107,25 @@ func TestStorageOnANodeThatCannotBeAskedStaysUnchecked(t *testing.T) {
 	assert.False(t, states[0].Checked)
 }
 
-func TestHostCandidatesCoverBothSpellings(t *testing.T) {
+func TestHostCandidatesCoverEveryWayAnAgentSeesTheHost(t *testing.T) {
 	assert.Equal(t,
-		[]string{"/host/srv/data/prod/db", "/host/host_mnt/srv/data/prod/db"},
+		[]string{
+			"/host/srv/data/prod/db",
+			"/host/host_mnt/srv/data/prod/db",
+			// An agent running on the host itself, which is how a development
+			// installation runs one.
+			"/srv/data/prod/db",
+		},
 		hostCandidatesFor("/srv/data/prod/db"))
+}
+
+// An agent on the host answers about the path as it is.
+func TestStorageOnANodeWhoseAgentRunsOnTheHost(t *testing.T) {
+	setting := pinnedVolume(t, "node-b")
+	states := []*volumeservice.AppStorageState{{AppKey: "db", Path: "prod/db"}}
+	exec := &fakeNodeExec{nonEmpty: []string{"/srv/data/prod/db"}}
+
+	(&service{nodeExecService: exec}).inspectVolumeOnItsNode(t.Context(), setting, states)
+
+	assert.True(t, states[0].HasData())
 }

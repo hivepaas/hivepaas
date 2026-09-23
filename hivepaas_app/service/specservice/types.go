@@ -45,6 +45,10 @@ type BuildAppReq struct {
 	// Spec is the app's initial service spec. The build writes into it.
 	Spec    *swarm.ServiceSpec
 	TimeNow time.Time
+	// Import says the document is an export rather than a template: it is checked
+	// with CheckImportable, every block export writes is built, and each block
+	// replaces what Spec holds.
+	Import bool
 }
 
 type BuildAppResp struct {

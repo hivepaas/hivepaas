@@ -3,10 +3,15 @@ package specserviceimpl
 import (
 	"context"
 	"maps"
+	"net/netip"
+	"os"
 	"slices"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -18,6 +23,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/docker"
+	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
 func (s *service) buildSource(_ context.Context, state *buildState) error {
@@ -26,29 +32,32 @@ func (s *service) buildSource(_ context.Context, state *buildState) error {
 	if err := decodeBlock(block, state.req.Doc.Deployment.Source, source); err != nil {
 		return err
 	}
-	if source.ActiveMethod != base.DeploymentMethodImage || source.ImageSource == nil ||
-		source.ImageSource.Image == "" {
+	if !state.req.Import && (source.ActiveMethod != base.DeploymentMethodImage || source.ImageSource == nil ||
+		source.ImageSource.Image == "") {
 		return invalidBlock(block, "an image to deploy is required")
 	}
 	return state.addSetting(base.SettingTypeAppDeployment, entity.CurrentAppDeploymentSettingsVersion, true, source)
 }
 
-// buildHealthcheck writes a healthcheck in the form docker runs it. CMD is an
+func (s *service) buildHealthcheck(_ context.Context, state *buildState) error {
+	return applyHealthcheck(state.req.Doc.Deployment.Container.Healthcheck,
+		state.req.Spec.TaskTemplate.ContainerSpec)
+}
+
+// applyHealthcheck writes a healthcheck in the form docker runs it. CMD is an
 // argv, so its command is split; CMD-SHELL is one string handed to the shell,
 // so its command is not. A mode left empty means CMD-SHELL, which is what a
-// template author writing a shell command expects.
+// template author writing a shell command expects. NONE turns the image's own
+// healthcheck off, where no healthcheck at all leaves the image's.
 //
 // The container settings screen splits a CMD-SHELL command too, and docker then
 // hands the shell only its first word: `sh -c pg_isready -U app` runs pg_isready
 // with no arguments. That is a bug to fix there, not a behavior to copy here.
-func (s *service) buildHealthcheck(_ context.Context, state *buildState) error {
-	check := state.req.Doc.Deployment.Container.Healthcheck
-	containerSpec := state.req.Spec.TaskTemplate.ContainerSpec
-	if !check.Enabled {
+func applyHealthcheck(check *specmodel.Healthcheck, containerSpec *swarm.ContainerSpec) error {
+	if check == nil || (!check.Enabled && check.Mode != docker.HealthcheckModeNone) {
 		containerSpec.Healthcheck = nil
 		return nil
 	}
-
 	var test []string
 	switch check.Mode {
 	case docker.HealthcheckModeCmd:
@@ -65,7 +74,6 @@ func (s *service) buildHealthcheck(_ context.Context, state *buildState) error {
 		return invalidBlock(specmodel.BlockContainerHealthcheck, "mode %q is not one of CMD, CMD-SHELL, NONE",
 			check.Mode)
 	}
-
 	containerSpec.Healthcheck = &container.HealthConfig{
 		Test:          test,
 		Interval:      time.Duration(check.Interval),
@@ -79,26 +87,89 @@ func (s *service) buildHealthcheck(_ context.Context, state *buildState) error {
 
 // buildResources truncates as the resource settings screen does.
 func (s *service) buildResources(_ context.Context, state *buildState) error {
-	resources := state.req.Doc.Deployment.Resources
-	task := &state.req.Spec.TaskTemplate
+	applyResources(state.req.Doc.Deployment.Resources, &state.req.Spec.TaskTemplate)
+	return nil
+}
+
+// applyResources writes the resources block onto a task the way the resource
+// settings screen writes it, and replaces what the task held: a part the block
+// leaves out is cleared.
+func applyResources(r *specmodel.Resources, task *swarm.TaskSpec) {
+	if r == nil {
+		r = &specmodel.Resources{}
+	}
 	if task.Resources == nil {
 		task.Resources = &swarm.ResourceRequirements{}
 	}
-	if reservations := resources.Reservations; reservations != nil {
-		task.Resources.Reservations = &swarm.Resources{
-			NanoCPUs:    docker.TruncateCPUsAsNano(reservations.CPUs, docker.MinCPUFraction),
-			MemoryBytes: reservations.Memory.Truncate(unit.MB).Bytes(),
+	task.Resources.Reservations = buildReservations(r.Reservations)
+	task.Resources.Limits = buildLimits(r.Limits)
+	applyMemory(r.Memory, task)
+	buildCapabilities(r.Capabilities, task)
+}
+
+// buildReservations reads a generic resource the way the resource settings
+// screen does: a whole number is a count of something discrete, anything else
+// names one.
+func buildReservations(r *specmodel.ResourceReservations) *swarm.Resources {
+	if r == nil {
+		return nil
+	}
+	out := &swarm.Resources{
+		NanoCPUs:    docker.TruncateCPUsAsNano(r.CPUs, docker.MinCPUFraction),
+		MemoryBytes: r.Memory.Truncate(unit.MB).Bytes(),
+	}
+	for _, generic := range r.GenericResources {
+		if generic == nil {
+			continue
+		}
+		res := swarm.GenericResource{}
+		if count, err := strconv.ParseInt(generic.Value, 10, 64); err == nil {
+			res.DiscreteResourceSpec = &swarm.DiscreteGenericResource{Kind: generic.Kind, Value: count}
+		} else {
+			res.NamedResourceSpec = &swarm.NamedGenericResource{Kind: generic.Kind, Value: generic.Value}
+		}
+		out.GenericResources = append(out.GenericResources, res)
+	}
+	return out
+}
+
+func buildLimits(l *specmodel.ResourceLimits) *swarm.Limit {
+	if l == nil {
+		return nil
+	}
+	return &swarm.Limit{
+		NanoCPUs:    docker.TruncateCPUsAsNano(l.CPUs, docker.MinCPUFraction),
+		MemoryBytes: l.Memory.Truncate(unit.MB).Bytes(),
+		Pids:        l.Pids,
+	}
+}
+
+// applyMemory writes swap, swappiness and the size of /dev/shm, which is a tmpfs
+// mount Docker is handed rather than a resource: without a size the mount goes.
+func applyMemory(m *specmodel.Memory, task *swarm.TaskSpec) {
+	task.Resources.SwapBytes, task.Resources.MemorySwappiness = nil, nil
+	var shm *unit.DataSize
+	if m != nil {
+		if m.Swap != nil {
+			task.Resources.SwapBytes = new(m.Swap.Truncate(unit.MB).Bytes())
+		}
+		if m.Swappiness != nil {
+			task.Resources.MemorySwappiness = new(*m.Swappiness)
+		}
+		shm = m.ShmSize
+	}
+	if shm != nil && *shm > 0 {
+		dockerhelper.SetShmSize(task, shm.Truncate(unit.MB).Bytes())
+		return
+	}
+	if cs := task.ContainerSpec; cs != nil {
+		if current := dockerhelper.GetShmMount(task); current != nil {
+			target := current.Target
+			cs.Mounts = slices.DeleteFunc(cs.Mounts, func(m mount.Mount) bool {
+				return m.Type == mount.TypeTmpfs && m.Target == target
+			})
 		}
 	}
-	if limits := resources.Limits; limits != nil {
-		task.Resources.Limits = &swarm.Limit{
-			NanoCPUs:    docker.TruncateCPUsAsNano(limits.CPUs, docker.MinCPUFraction),
-			MemoryBytes: limits.Memory.Truncate(unit.MB).Bytes(),
-			Pids:        limits.Pids,
-		}
-	}
-	buildCapabilities(resources.Capabilities, &state.req.Spec.TaskTemplate)
-	return nil
 }
 
 // buildCapabilities writes the privileged part of the resources block onto the
@@ -112,7 +183,7 @@ func (s *service) buildResources(_ context.Context, state *buildState) error {
 // "[gpu]", which is why it is not a name the capability grammar would accept.
 func buildCapabilities(capabilities *specmodel.Capabilities, task *swarm.TaskSpec) {
 	if capabilities == nil {
-		return
+		capabilities = &specmodel.Capabilities{}
 	}
 	contSpec := task.ContainerSpec
 	contSpec.Ulimits = make([]*container.Ulimit, 0, len(capabilities.Ulimits))
@@ -138,54 +209,100 @@ func buildCapabilities(capabilities *specmodel.Capabilities, task *swarm.TaskSpe
 // docker would refuse it while creating the service, too late to say which port
 // somebody asked for.
 func (s *service) buildNetworks(_ context.Context, state *buildState) error {
-	endpointSpec := state.req.Doc.Deployment.Networks.EndpointSpec
-	if endpointSpec == nil {
-		return nil
+	return applyNetworks(state.req.Doc.Deployment.Networks, state.req.Spec)
+}
+
+// applyNetworks writes the networks block the way the network settings screen
+// does, replacing what the spec held - except the attachments, which change only
+// when the block names some: the network an app is created on is HivePaaS's to
+// give, and a template never names it.
+func applyNetworks(n *specmodel.Networks, spec *swarm.ServiceSpec) error {
+	if n == nil {
+		n = &specmodel.Networks{}
 	}
-	spec := state.req.Spec
-	if spec.EndpointSpec == nil {
-		spec.EndpointSpec = &swarm.EndpointSpec{}
+	task := &spec.TaskTemplate
+	if len(n.Attachments) > 0 {
+		task.Networks = make([]swarm.NetworkAttachmentConfig, 0, len(n.Attachments))
+		for _, attachment := range n.Attachments {
+			if attachment == nil {
+				continue
+			}
+			task.Networks = append(task.Networks, swarm.NetworkAttachmentConfig{
+				Target: attachment.Name, Aliases: slices.Clone(attachment.Aliases),
+			})
+		}
 	}
-	spec.EndpointSpec.Mode = endpointSpec.Mode
-	spec.EndpointSpec.Ports = make([]swarm.PortConfig, 0, len(endpointSpec.Ports))
-	for _, port := range endpointSpec.Ports {
-		spec.EndpointSpec.Ports = append(spec.EndpointSpec.Ports, swarm.PortConfig{
-			TargetPort:    port.Target,
-			PublishedPort: port.Published,
-			Protocol:      port.Protocol,
-			PublishMode:   port.PublishMode,
-		})
+
+	cs := task.ContainerSpec
+	cs.Hosts = nil
+	for _, entry := range n.HostsFileEntries {
+		if entry == nil {
+			continue
+		}
+		cs.Hosts = append(cs.Hosts, strings.Join(append([]string{entry.Address}, entry.Hostnames...), " "))
+	}
+
+	cs.DNSConfig = nil
+	if dns := n.DNSConfig; dns != nil {
+		cs.DNSConfig = &swarm.DNSConfig{Search: slices.Clone(dns.Search), Options: slices.Clone(dns.Options)}
+		for _, address := range dns.Nameservers {
+			parsed, err := netip.ParseAddr(address)
+			if err != nil {
+				return invalidBlock(specmodel.BlockDeploymentNetworks, "dnsConfig: %q is not an address", address)
+			}
+			cs.DNSConfig.Nameservers = append(cs.DNSConfig.Nameservers, parsed)
+		}
+	}
+
+	spec.EndpointSpec = nil
+	if endpointSpec := n.EndpointSpec; endpointSpec != nil {
+		spec.EndpointSpec = &swarm.EndpointSpec{Mode: endpointSpec.Mode}
+		for _, port := range endpointSpec.Ports {
+			if port == nil {
+				continue
+			}
+			spec.EndpointSpec.Ports = append(spec.EndpointSpec.Ports, swarm.PortConfig{
+				TargetPort: port.Target, PublishedPort: port.Published,
+				Protocol: port.Protocol, PublishMode: port.PublishMode,
+			})
+		}
 	}
 	return nil
 }
 
 // buildStorage hands the mounts to volumeservice, which builds them the way the
-// storage settings screen does.
-//
-// A mount's source here is a cluster-volume setting id. An export writes docker's
-// source there instead - the volume name, or a host path once a bind volume was
-// rewritten - which is why storage is left out of the export round-trip test.
-// TODO: app templates phase 2 - map one onto the other before merging mounts.
-// See docs/superpowers/specs/2026-09-17-app-templates-design.md §12.
+// storage screen does. A managed mount's source is a cluster-volume setting id:
+// a template names one, and import has resolved an exported volume to one before
+// building. A Docker mount is kept as it is.
 func (s *service) buildStorage(ctx context.Context, state *buildState) error {
-	mounts := state.req.Doc.Deployment.Storage.Mounts
-	requests := make([]*volumeservice.AppMountReq, 0, len(mounts))
-	for _, target := range slices.Sorted(maps.Keys(mounts)) {
-		m := mounts[target]
-		// Options are always set: volumeservice applies the app's own subpath only
-		// to a volume mount that carries them, and a mount without would share the
-		// volume's root with every other app on it.
-		options := &volumeservice.AppMountVolumeOptions{}
-		if m.VolumeOptions != nil {
-			options.Subpath = m.VolumeOptions.Subpath
-			options.NoCopy = m.VolumeOptions.NoCopy
-		}
+	storage := state.req.Doc.Deployment.Storage
+	if storage == nil {
+		storage = &specmodel.Storage{}
+	}
+	requests := make([]*volumeservice.AppMountReq, 0, len(storage.Mounts))
+	for _, target := range slices.Sorted(maps.Keys(storage.Mounts)) {
+		m := storage.Mounts[target]
 		req := &volumeservice.AppMountReq{
-			Type:          m.Type,
-			Source:        m.Source,
-			Target:        target,
-			ReadOnly:      m.ReadOnly,
-			VolumeOptions: options,
+			Type:        m.Type,
+			Source:      m.Source,
+			Target:      target,
+			ReadOnly:    m.ReadOnly,
+			Consistency: m.Consistency,
+		}
+		// Options are always set: volumeservice applies the app's own subpath only
+		// to a mount that carries them, and a mount without would share the
+		// volume's root with every other app on it.
+		opts, given := &volumeservice.AppMountVolumeOptions{}, m.VolumeOptions
+		if m.Type == mount.TypeCluster {
+			given = m.ClusterOptions
+		}
+		if given != nil {
+			opts.Subpath, opts.NoCopy = given.Subpath, given.NoCopy
+		}
+		if m.Type == mount.TypeCluster {
+			req.ClusterOptions = opts
+		} else {
+			req.VolumeOptions = opts
 		}
 		if err := s.applyMountSourceApp(ctx, state, m.SourceApp, req); err != nil {
 			return hperrors.Wrap(err)
@@ -193,15 +310,45 @@ func (s *service) buildStorage(ctx context.Context, state *buildState) error {
 		requests = append(requests, req)
 	}
 
+	kept := make([]mount.Mount, 0, len(storage.DockerMounts))
+	for _, target := range slices.Sorted(maps.Keys(storage.DockerMounts)) {
+		kept = append(kept, toDockerMount(target, storage.DockerMounts[target]))
+	}
+
 	built, err := s.volumeService.BuildAppMounts(ctx, state.db, &volumeservice.BuildAppMountsReq{
-		App: state.req.App,
-		New: requests,
+		App: state.req.App, Kept: kept, New: requests,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	state.req.Spec.TaskTemplate.ContainerSpec.Mounts = built.Mounts
 	return nil
+}
+
+// toDockerMount is mapMount read backwards.
+func toDockerMount(target string, m specmodel.Mount) mount.Mount {
+	out := mount.Mount{
+		Type: m.Type, Source: m.Source, Target: target, ReadOnly: m.ReadOnly, Consistency: m.Consistency,
+	}
+	if o := m.BindOptions; o != nil {
+		out.BindOptions = &mount.BindOptions{
+			Propagation: o.Propagation, NonRecursive: o.NonRecursive, CreateMountpoint: o.CreateMountpoint,
+			ReadOnlyNonRecursive: o.ReadOnlyNonRecursive, ReadOnlyForceRecursive: o.ReadOnlyForceRecursive,
+		}
+	}
+	if o := m.VolumeOptions; o != nil {
+		out.VolumeOptions = &mount.VolumeOptions{Subpath: o.Subpath, NoCopy: o.NoCopy, Labels: o.Labels}
+		if d := o.DriverConfig; d != nil {
+			out.VolumeOptions.DriverConfig = &mount.Driver{Name: d.Name, Options: d.Options}
+		}
+	}
+	if m.ClusterOptions != nil {
+		out.ClusterOptions = &mount.ClusterOptions{}
+	}
+	if o := m.TmpfsOptions; o != nil {
+		out.TmpfsOptions = &mount.TmpfsOptions{SizeBytes: o.Size.Bytes(), Mode: os.FileMode(o.Mode), Options: o.Options}
+	}
+	return out
 }
 
 // applyMountSourceApp points a mount at the directory of another app.

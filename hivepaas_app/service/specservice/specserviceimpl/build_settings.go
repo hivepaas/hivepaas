@@ -118,7 +118,7 @@ func (s *service) buildSecrets(_ context.Context, state *buildState) error {
 	entries, _ := state.req.Doc.Settings[specmodel.CollectionBlockName(base.SettingTypeSecret)].(map[string]any)
 	for _, name := range slices.Sorted(maps.Keys(entries)) {
 		secret := &entity.Secret{}
-		if err := decodeBlock(block, entries[name], secret); err != nil {
+		if err := decodeBlock(block, entryBody(state, entries[name]), secret); err != nil {
 			return err
 		}
 		if secret.Key == "" {
@@ -143,7 +143,7 @@ func (s *service) buildConfigFiles(_ context.Context, state *buildState) error {
 	entries, _ := state.req.Doc.Settings[specmodel.CollectionBlockName(base.SettingTypeConfigFile)].(map[string]any)
 	for _, name := range slices.Sorted(maps.Keys(entries)) {
 		configFile := &entity.ConfigFile{}
-		if err := decodeBlock(block, entries[name], configFile); err != nil {
+		if err := decodeBlock(block, entryBody(state, entries[name]), configFile); err != nil {
 			return err
 		}
 		if configFile.Name == "" {
@@ -158,4 +158,17 @@ func (s *service) buildConfigFiles(_ context.Context, state *buildState) error {
 		}
 	}
 	return nil
+}
+
+// entryBody is one entry of a collection block as the entity decodes it: an
+// export's entry carries the id it was exported under, which is not a field of
+// the setting.
+func entryBody(state *buildState, entry any) any {
+	body, ok := entry.(map[string]any)
+	if !ok || !state.req.Import {
+		return entry
+	}
+	body = maps.Clone(body)
+	delete(body, specmodel.CollectionEntryIDKey)
+	return body
 }

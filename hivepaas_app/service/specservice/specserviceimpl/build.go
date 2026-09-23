@@ -45,6 +45,8 @@ func (s *service) builders() map[specmodel.Block]blockBuilder {
 		specmodel.BlockSettingsSecrets:      s.buildSecrets,
 		specmodel.BlockSettingsConfigFiles:  s.buildConfigFiles,
 		specmodel.BlockSettingsRouting:      s.buildRouting,
+		specmodel.BlockContainer:            s.buildContainer,
+		specmodel.BlockDeploymentService:    s.buildService,
 	}
 }
 
@@ -53,13 +55,17 @@ func (s *service) BuildApp(
 	db database.IDB,
 	req *specservice.BuildAppReq,
 ) (*specservice.BuildAppResp, error) {
-	if err := specmodel.CheckBuildable(req.Doc); err != nil {
+	check, blocks := specmodel.CheckBuildable, specmodel.PresentBlocks
+	if req.Import {
+		check, blocks = specmodel.CheckImportable, specmodel.ImportBlocks
+	}
+	if err := check(req.Doc); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
 	builders := s.builders()
 	state := &buildState{db: db, req: req}
-	for _, block := range specmodel.PresentBlocks(req.Doc) {
+	for _, block := range blocks(req.Doc) {
 		build, found := builders[block]
 		if !found {
 			return nil, hperrors.Wrap(hperrors.ErrSpecBlockUnsupported).WithExtraDetail("%s", block)

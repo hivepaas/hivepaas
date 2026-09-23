@@ -631,6 +631,12 @@ published ports. Import needs everything export writes.
   `deployment` - an app never deployed at the source - leaves the service alone.
 - **`container.image` is never written to a service.** It records what was
   running at export; the image changes only through a deployment.
+- **Import is a mode of `BuildApp`.** `BuildAppReq.Import` swaps `CheckBuildable`
+  for `CheckImportable` and `PresentBlocks` for `ImportBlocks`;
+  `deployment.container` and `deployment.service` are built only in it. What the
+  settings screens keep for HivePaaS is kept here too: the labels
+  `ApplyUserLabels` protects, the placement constraints HivePaaS derived, the
+  network an app was created on, and HivePaaS's log driver when none is named.
 
 **Storage travels in the form the builder reads.** A mount into a volume's
 directory for an app of its environment is exported the way a template and the
@@ -804,10 +810,11 @@ Five plans, each shippable without the next:
    (`docs/superpowers/plans/2026-09-24-spec-export-references-and-storage.md`).
    A reference that leaves the export becomes an external one (correction 7),
    and storage travels in the builder's form (§9).
-3. **Builder coverage.** The builder registry grows to cover what export writes,
-   with `CheckImportable`, builders that replace rather than append, and the
-   round-trip and coverage tests. Storage already travels in the builder's form
-   (§9); the builder learns `dockerMounts`, `external` and `clusterOptions`.
+3. **Builder coverage.** Deployment blocks:
+   `docs/superpowers/plans/2026-09-24-spec-import-builders.md` - import mode,
+   `CheckImportable`, builders that replace rather than append, and a round trip
+   through export's mapping. The app-scope setting types beyond kind, env vars,
+   secrets, config files, routing and source follow in a plan of their own.
 4. **Import**: `ValidateImport` and `ApplyImport`, the usecases, handlers and
    routes, the errors and the audit type. Project creation moves to
    `projectservice`, and the template checks' reading of a document to

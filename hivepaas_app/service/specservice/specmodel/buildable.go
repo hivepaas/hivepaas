@@ -89,6 +89,50 @@ const (
 	capabilityPrefix = "CAP_"
 )
 
+// Blocks only import builds. A template cannot ask for them - CheckBuildable
+// refuses every field they carry - so PresentBlocks never names them.
+const (
+	BlockContainer         Block = "deployment.container"
+	BlockDeploymentService Block = "deployment.service"
+)
+
+var ImportOnlyBlocks = []Block{BlockContainer, BlockDeploymentService}
+
+// buildOrder is the order blocks are built in. Storage replaces the mounts
+// before resources sets the size of /dev/shm, which is one of them.
+var buildOrder = []Block{
+	BlockDeploymentSource, BlockDeploymentStorage, BlockContainerHealthcheck, BlockContainerInit,
+	BlockContainer, BlockDeploymentResources, BlockDeploymentNetworks, BlockDeploymentService,
+	BlockSettingsKind, BlockSettingsEnvVars, BlockSettingsSecrets, BlockSettingsConfigFiles,
+	BlockSettingsRouting,
+}
+
+// ImportBlocks lists the blocks an exported document is built with, in build
+// order. Every deployment block is built when the document has a deployment at
+// all: export writes a block only when it holds something, so a block missing
+// from a deployment is one the app has none of, and building it clears whatever
+// the service holds. The container block covers its healthcheck and init. The
+// source is a setting rather than part of the service, and is built only when
+// present, as settings are - import never deletes a setting.
+func ImportBlocks(doc *AppDoc) []Block {
+	var blocks []Block
+	if doc == nil {
+		return blocks
+	}
+	if d := doc.Deployment; d != nil {
+		if d.Source != nil {
+			blocks = append(blocks, BlockDeploymentSource)
+		}
+		blocks = append(blocks, BlockDeploymentStorage, BlockContainer, BlockDeploymentResources,
+			BlockDeploymentNetworks, BlockDeploymentService)
+	}
+	blocks = append(blocks, presentSettingsBlocks(doc)...)
+	slices.SortFunc(blocks, func(a, b Block) int {
+		return slices.Index(buildOrder, a) - slices.Index(buildOrder, b)
+	})
+	return blocks
+}
+
 // BuildableBlocks is every block specservice.BuildApp builds, in the order it
 // builds them. specserviceimpl's builder registry is tested against this list.
 //
@@ -144,6 +188,17 @@ func PresentBlocks(doc *AppDoc) []Block {
 			blocks = append(blocks, BlockDeploymentNetworks)
 		}
 	}
+	blocks = append(blocks, presentSettingsBlocks(doc)...)
+	slices.SortFunc(blocks, func(a, b Block) int {
+		return slices.Index(BuildableBlocks, a) - slices.Index(BuildableBlocks, b)
+	})
+	return blocks
+}
+
+// presentSettingsBlocks lists the settings blocks doc carries. A collection
+// block with no entries builds nothing, so it is not present.
+func presentSettingsBlocks(doc *AppDoc) []Block {
+	var blocks []Block
 	for _, pair := range []struct {
 		typ   base.SettingType
 		block Block
@@ -156,7 +211,6 @@ func PresentBlocks(doc *AppDoc) []Block {
 			blocks = append(blocks, pair.block)
 		}
 	}
-	// A collection block with no entries builds nothing, so it is not present.
 	for _, pair := range []struct {
 		typ   base.SettingType
 		block Block
@@ -168,9 +222,6 @@ func PresentBlocks(doc *AppDoc) []Block {
 			blocks = append(blocks, pair.block)
 		}
 	}
-	slices.SortFunc(blocks, func(a, b Block) int {
-		return slices.Index(BuildableBlocks, a) - slices.Index(BuildableBlocks, b)
-	})
 	return blocks
 }
 

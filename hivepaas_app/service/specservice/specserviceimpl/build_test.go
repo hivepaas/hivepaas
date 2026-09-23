@@ -233,7 +233,8 @@ func TestBuildAppAgreesWithExport(t *testing.T) {
 
 func TestBuilderRegistryCoversEveryBuildableBlock(t *testing.T) {
 	registered := slices.Sorted(maps.Keys((&service{}).builders()))
-	assert.Equal(t, slices.Sorted(slices.Values(specmodel.BuildableBlocks)), registered)
+	all := append(slices.Clone(specmodel.BuildableBlocks), specmodel.ImportOnlyBlocks...)
+	assert.Equal(t, slices.Sorted(slices.Values(all)), registered)
 }
 
 func TestBuildAppRefuses(t *testing.T) {

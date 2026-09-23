@@ -178,6 +178,9 @@ func (s *service) currentState(
 // globalFilenameStem is the global node's path, as global.yaml is its file.
 const globalFilenameStem = "global"
 
+// projectsSegment begins the path of every project, and of everything in one.
+const projectsSegment = "projects"
+
 type planner struct {
 	s       *service
 	db      database.IDB

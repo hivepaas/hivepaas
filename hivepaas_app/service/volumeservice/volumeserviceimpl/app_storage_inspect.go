@@ -44,66 +44,66 @@ func (s *service) InspectAppStorage(
 		byID[vol.ID] = vol
 	}
 
-	// One volume is opened once however many apps sit on it: a template of eight
-	// apps on the project's volume is one directory read, not eight.
-	roots := map[string]string{}
+	// Grouped by volume, because one volume is opened once however many apps sit
+	// on it: a template of eight apps on the project's volume is one directory
+	// read, or one command on the node that holds it - not eight of either.
 	states := make([]*volumeservice.AppStorageState, 0, len(req.Queries))
+	perVolume := map[string][]*volumeservice.AppStorageState{}
+	order := make([]string, 0, len(byID))
 	for _, query := range req.Queries {
-		states = append(states, s.inspectOne(ctx, query, byID, roots))
+		state := &volumeservice.AppStorageState{AppKey: query.AppKey, VolumeID: query.VolumeID}
+		states = append(states, state)
+
+		setting := byID[query.VolumeID]
+		if setting == nil || query.App == nil {
+			continue
+		}
+		state.VolumeName = setting.Name
+		if state.Path = appStoragePath(query.App, setting.Scope, query.Subpath); state.Path == "" {
+			continue
+		}
+		if _, seen := perVolume[setting.ID]; !seen {
+			order = append(order, setting.ID)
+		}
+		perVolume[setting.ID] = append(perVolume[setting.ID], state)
+	}
+
+	for _, volumeID := range order {
+		s.inspectVolume(ctx, byID[volumeID], perVolume[volumeID])
 	}
 	return &volumeservice.InspectAppStorageResp{States: states}, nil
 }
 
-func (s *service) inspectOne(
+// inspectVolume fills in one volume's states: by reading the directories here
+// when they can be reached, and by asking the node that holds them when they
+// cannot.
+//
+// Neither being possible leaves every state unchecked, which is the honest
+// answer - nothing was seen, which is not the same as nothing being there.
+func (s *service) inspectVolume(
 	ctx context.Context,
-	query *volumeservice.AppStorageQuery,
-	byID map[string]*entity.Setting,
-	roots map[string]string,
-) *volumeservice.AppStorageState {
-	state := &volumeservice.AppStorageState{AppKey: query.AppKey, VolumeID: query.VolumeID}
-
-	setting := byID[query.VolumeID]
-	if setting == nil || query.App == nil {
-		return state
-	}
-	state.VolumeName = setting.Name
-
-	path := appStoragePath(query.App, setting.Scope, query.Subpath)
-	if path == "" {
-		return state
-	}
-	state.Path = path
-
-	root, found := roots[setting.ID]
-	if !found {
-		root = s.storageRootOnThisNode(ctx, setting)
-		roots[setting.ID] = root
-	}
+	setting *entity.Setting,
+	states []*volumeservice.AppStorageState,
+) {
+	root := s.storageRootOnThisNode(ctx, setting)
 	if root == "" {
-		// The data is on a volume this node cannot open - pinned elsewhere, or a
-		// driver with nothing on a filesystem here. Saying nothing is the honest
-		// answer; a guess would be a warning nobody could act on.
-		return state
+		s.inspectVolumeOnItsNode(ctx, setting, states)
+		return
 	}
-
-	entries, err := os.ReadDir(filepath.Join(root, path))
-	if err != nil {
-		// A directory that is not there is the ordinary case: this app has never
-		// run. Anything else is a directory that exists and cannot be read, which
-		// is not something to warn about either.
-		state.Checked = true
-		return state
+	for _, state := range states {
+		entries, err := os.ReadDir(filepath.Join(root, state.Path))
+		if err != nil {
+			// A directory that is not there is the ordinary case: this app has
+			// never run. Anything else is a directory that exists and cannot be
+			// read, which is not something to warn about either.
+			state.Checked = true
+			continue
+		}
+		state.Checked, state.Exists = true, true
+		state.Empty = len(entries) == 0
 	}
-	state.Checked, state.Exists = true, true
-	state.Empty = len(entries) == 0
-	return state
 }
 
-// RemoveAppStoragePaths deletes the directories InspectAppStorage reported on.
-//
-// It takes the same queries rather than an app, because the apps it is asked
-// about do not exist: this is what clears what a previous install left behind,
-// in the moment between someone confirming it and the new apps being created.
 func (s *service) RemoveAppStoragePaths(
 	ctx context.Context,
 	db database.IDB,

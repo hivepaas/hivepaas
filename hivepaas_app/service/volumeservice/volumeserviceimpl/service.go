@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/nodeexecservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/docker"
 )
@@ -17,15 +18,17 @@ func New(
 	dockerManager docker.Manager,
 	hpAppService hpappservice.Service,
 	agentService agentservice.Service,
+	nodeExecService nodeexecservice.Service,
 
 	settingRepo repository.SettingRepo,
 
 	logger logging.Logger,
 ) volumeservice.Service {
 	svc := &service{
-		dockerManager: dockerManager,
-		hpAppService:  hpAppService,
-		agentService:  agentService,
+		dockerManager:   dockerManager,
+		hpAppService:    hpAppService,
+		agentService:    agentService,
+		nodeExecService: nodeExecService,
 
 		settingRepo: settingRepo,
 		logger:      logger,
@@ -39,6 +42,9 @@ type service struct {
 	dockerManager docker.Manager
 	hpAppService  hpappservice.Service
 	agentService  agentservice.Service
+	// nodeExecService reaches the node a volume's data is on, for storage this
+	// node cannot open itself.
+	nodeExecService nodeexecservice.Service
 
 	settingRepo repository.SettingRepo
 

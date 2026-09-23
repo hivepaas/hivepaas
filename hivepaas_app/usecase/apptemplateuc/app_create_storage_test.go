@@ -7,8 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templatemodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/apptemplateservice/templaterender"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/apptemplateuc/apptemplatedto"
 )
 
 func plannedApp(name string, doc *specmodel.AppDoc) *appToProvision {
@@ -91,4 +94,56 @@ func TestAppIsDatabaseReadsTheRenderedKind(t *testing.T) {
 	assert.True(t, appIsDatabase(database))
 	assert.False(t, appIsDatabase(webapp))
 	assert.False(t, appIsDatabase(plannedApp("Api", &specmodel.AppDoc{})))
+}
+
+// A template that creates several apps is asked about all of them.
+//
+// A component is an app like any other - it just has no template of its own -
+// and a dependency is created by the same request. Either being left out would
+// mean the one app of a Supabase or a Grafana that actually holds a database
+// goes unchecked, which is the only one that matters.
+func TestEveryAppOfARequestIsAskedAbout(t *testing.T) {
+	volumeMount := map[string]specmodel.Mount{
+		"/data": {Type: mount.TypeVolume, Source: "vol-1"},
+	}
+	rendered := &apptemplateservice.RenderResp{
+		Result: &templaterender.Result{Doc: docWithMounts(volumeMount, nil)},
+		Dependencies: []*apptemplateservice.RenderedDependency{{
+			Name:    "db",
+			AppName: "Shop db",
+			Render: &apptemplateservice.RenderResp{
+				TemplateResp: apptemplateservice.TemplateResp{
+					Template: &templatemodel.Template{
+						Metadata: templatemodel.Metadata{Name: "postgres"},
+					},
+				},
+				Result: &templaterender.Result{Doc: docWithMounts(volumeMount, nil)},
+			},
+		}},
+		Components: []*apptemplateservice.RenderedComponent{
+			{
+				Name:    "worker",
+				AppName: "Shop worker",
+				Result:  &templaterender.Result{Doc: docWithMounts(volumeMount, nil)},
+			},
+			{
+				Name:    "web",
+				AppName: "Shop",
+				Primary: true,
+				Result:  &templaterender.Result{Doc: docWithMounts(volumeMount, nil)},
+			},
+		},
+	}
+
+	var asked []string
+	for _, app := range planApps(&apptemplatedto.CreateAppFromTemplateReq{Name: "Shop"}, rendered) {
+		key := app.key()
+		for range appStorageQueries(app, key, &entity.Project{Key: "shop"}, "prod") {
+			asked = append(asked, key)
+		}
+	}
+
+	// The dependency, the component that is not primary, and the app the person
+	// named - which carries the primary component's render.
+	assert.ElementsMatch(t, []string{"shop-db", "shop-worker", "shop"}, asked)
 }

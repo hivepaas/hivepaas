@@ -32,30 +32,30 @@ func (req *PreflightAppFromTemplateReq) Validate() hperrors.ValidationErrors {
 }
 
 type PreflightAppFromTemplateResp struct {
-	Meta *basedto.Meta   `json:"meta"`
-	Data *PreflightAppRe `json:"data"`
+	Meta *basedto.Meta       `json:"meta"`
+	Data *PreflightAppResult `json:"data"`
 }
 
-// PreflightAppRe is what the create dialog needs to know before it creates
+// PreflightAppResult is what the create dialog needs to know before it creates
 // anything.
-type PreflightAppRe struct {
+type PreflightAppResult struct {
 	// Storage is every app of this request whose directory already holds
 	// something. Empty is the ordinary case and means there is nothing to say.
-	Storage []*PreflightStorageRes `json:"storage"`
+	Storage []*PreflightStorageResult `json:"storage"`
 	// StorageUnchecked is what could not be looked at - storage on a node that
 	// could not be reached. It is reported because an empty Storage that means
 	// "nothing was seen" reads exactly like one that means "there is nothing
 	// there", and the second is the one that lets a deploy walk into old data.
-	StorageUnchecked []*PreflightStorageRes `json:"storageUnchecked"`
+	StorageUnchecked []*PreflightStorageResult `json:"storageUnchecked"`
 
 	// Issues are the refusals the creation would raise: a domain already served,
 	// a published port already held, permission the caller does not have. They
 	// are reported together rather than one at a time, because a dialog that
 	// says "and also" three times is three round trips through the same form.
-	Issues []*PreflightIssueRes `json:"issues"`
+	Issues []*PreflightIssueResult `json:"issues"`
 }
 
-type PreflightIssueRes struct {
+type PreflightIssueResult struct {
 	// Code is the error the creation would fail with, for a screen that wants to
 	// act on a particular one.
 	Code string `json:"code"`
@@ -63,7 +63,7 @@ type PreflightIssueRes struct {
 	Detail string `json:"detail"`
 }
 
-type PreflightStorageRes struct {
+type PreflightStorageResult struct {
 	// App is the name the app will be created with, and AppKey what it will
 	// answer to - which is also what its directory is called.
 	App    string `json:"app"`

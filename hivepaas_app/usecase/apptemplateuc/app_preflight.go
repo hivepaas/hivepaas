@@ -48,7 +48,7 @@ func (uc *UC) PreflightAppFromTemplate(
 		return nil, hperrors.Wrap(err)
 	}
 
-	return &apptemplatedto.PreflightAppFromTemplateResp{Data: &apptemplatedto.PreflightAppRe{
+	return &apptemplatedto.PreflightAppFromTemplateResp{Data: &apptemplatedto.PreflightAppResult{
 		Storage:          storageResults(plan.Findings),
 		StorageUnchecked: storageResults(plan.Unchecked),
 		Issues:           issues,
@@ -68,7 +68,7 @@ func (uc *UC) collectIssues(
 	req *apptemplatedto.PreflightAppFromTemplateReq,
 	rendered *apptemplateservice.RenderResp,
 	apps []*appToProvision,
-) ([]*apptemplatedto.PreflightIssueRes, error) {
+) ([]*apptemplatedto.PreflightIssueResult, error) {
 	create := &req.CreateAppFromTemplateReq
 	checks := []func() error{
 		func() error { return uc.checkAppRefs(ctx, create, rendered) },
@@ -78,7 +78,7 @@ func (uc *UC) collectIssues(
 		func() error { return uc.checkDomains(ctx, create, apps) },
 	}
 
-	issues := make([]*apptemplatedto.PreflightIssueRes, 0, len(checks))
+	issues := make([]*apptemplatedto.PreflightIssueResult, 0, len(checks))
 	for _, check := range checks {
 		err := check()
 		if err == nil {
@@ -93,15 +93,15 @@ func (uc *UC) collectIssues(
 			return nil, hperrors.Wrap(err)
 		}
 		info := hpErr.Build(req.Lang)
-		issues = append(issues, &apptemplatedto.PreflightIssueRes{Code: info.Code, Detail: info.Detail})
+		issues = append(issues, &apptemplatedto.PreflightIssueResult{Code: info.Code, Detail: info.Detail})
 	}
 	return issues, nil
 }
 
-func storageResults(findings []*storageFinding) []*apptemplatedto.PreflightStorageRes {
-	results := make([]*apptemplatedto.PreflightStorageRes, 0, len(findings))
+func storageResults(findings []*storageFinding) []*apptemplatedto.PreflightStorageResult {
+	results := make([]*apptemplatedto.PreflightStorageResult, 0, len(findings))
 	for _, finding := range findings {
-		item := &apptemplatedto.PreflightStorageRes{
+		item := &apptemplatedto.PreflightStorageResult{
 			App:        finding.AppName,
 			AppKey:     finding.AppKey,
 			IsDatabase: finding.IsDatabase,

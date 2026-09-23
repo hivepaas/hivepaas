@@ -64,7 +64,7 @@ func (uc *UC) UpdateRegistrySettings(
 			// a failure here leaves a stored configuration the next save retries.
 			applyResp, applyErr := uc.registryService.Apply(ctx, db, &registryservice.SettingApplyReq{
 				Setting:       pData.Setting,
-				TriggerUserID: userIDOf(auth),
+				TriggerUserID: auth.UserID(),
 				RemoveApp:     req.RemoveApp,
 				RemoveStorage: req.RemoveStorage,
 			})
@@ -180,11 +180,4 @@ func (uc *UC) loadSettingData(
 	data.NewSettings.CredentialGraceEnds = current.CredentialGraceEnds
 
 	return hperrors.Wrap(uc.registryService.Validate(ctx, db, data.NewSettings, current))
-}
-
-func userIDOf(auth *basedto.Auth) string {
-	if auth == nil || auth.User == nil {
-		return ""
-	}
-	return auth.User.ID
 }

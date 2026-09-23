@@ -266,6 +266,7 @@ func (s *service) writeDocs(
 			ID:        projUnit.project.ID,
 			Name:      projUnit.project.Name,
 			Note:      projUnit.project.Note,
+			Owner:     projectOwner(projUnit.project),
 			Envs:      envNames,
 			Settings:  assembled,
 		}
@@ -469,14 +470,14 @@ func (s *service) projectsInScope(
 ) ([]*entity.Project, error) {
 	switch scope.ScopeType {
 	case base.ObjectScopeGlobal:
-		projects, _, err := s.projectRepo.List(ctx, db, nil)
+		projects, _, err := s.projectRepo.List(ctx, db, nil, withProjectOwner())
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
 		return selectProjects(projects), nil
 
 	case base.ObjectScopeProject, base.ObjectScopeProjectEnv, base.ObjectScopeApp:
-		project, err := s.projectRepo.GetByID(ctx, db, scope.ProjectID)
+		project, err := s.projectRepo.GetByID(ctx, db, scope.ProjectID, withProjectOwner())
 		if err != nil {
 			return nil, hperrors.Wrap(err)
 		}
@@ -495,6 +496,28 @@ func (s *service) projectsInScope(
 	default:
 		return nil, nil
 	}
+}
+
+// withProjectOwner loads the user who owns each project, for the email a bundle
+// carries. It excludes the columns every other reader of a user excludes.
+func withProjectOwner() bunex.SelectQueryOption {
+	return bunex.SelectRelation("Owner",
+		bunex.SelectExcludeColumns(entity.UserDefaultExcludeColumns...),
+	)
+}
+
+// projectOwner is a project's owner as a bundle carries it: the id always, and
+// the email when the user row came back with the project. A project whose
+// owner's row is gone carries the id alone.
+func projectOwner(project *entity.Project) *specmodel.ProjectOwner {
+	if project.OwnerID == "" {
+		return nil
+	}
+	owner := &specmodel.ProjectOwner{ID: project.OwnerID}
+	if project.Owner != nil {
+		owner.Email = project.Owner.Email
+	}
+	return owner
 }
 
 // assembleScope decrypts what the mode calls for and turns the settings into

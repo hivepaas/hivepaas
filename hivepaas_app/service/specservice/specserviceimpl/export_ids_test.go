@@ -167,3 +167,39 @@ func TestExportWritesTheIDsOfProjectsAndApps(t *testing.T) {
 		assert.Equal(t, "app_2", env.Apps["frontend"].ID, "an app never deployed carries its id as well")
 	}
 }
+
+// Users do not travel in a bundle, so a project's owner is written as what
+// finds them again: the id on the installation that exported it, the email
+// anywhere else. The email is not a secret, and omit mode writes it too.
+func TestExportWritesTheOwnerOfAProject(t *testing.T) {
+	path, _ := runExport(t, specmodel.SecretsModeOmit, "")
+
+	project := &specmodel.ProjectDoc{}
+	readDoc(t, path, "projects/project_a/project.yaml", project)
+	assert.Equal(t, &specmodel.ProjectOwner{ID: "u1", Email: "owner@example.com"}, project.Owner)
+}
+
+func TestProjectOwner(t *testing.T) {
+	cases := map[string]struct {
+		project *entity.Project
+		want    *specmodel.ProjectOwner
+	}{
+		"no owner": {project: &entity.Project{}, want: nil},
+		"owner loaded": {
+			project: &entity.Project{OwnerID: "u1", Owner: &entity.User{ID: "u1", Email: "owner@example.com"}},
+			want:    &specmodel.ProjectOwner{ID: "u1", Email: "owner@example.com"},
+		},
+		// The relation comes back empty when the user row is gone. The id is
+		// written anyway: it records whose the project was, and an import that
+		// finds no such user falls through to the operator importing.
+		"owner row missing": {
+			project: &entity.Project{OwnerID: "u1"},
+			want:    &specmodel.ProjectOwner{ID: "u1"},
+		},
+	}
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.want, projectOwner(tc.project))
+		})
+	}
+}

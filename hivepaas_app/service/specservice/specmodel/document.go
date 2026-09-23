@@ -37,11 +37,22 @@ type ProjectDoc struct {
 	ID   string `yaml:"id,omitempty"`
 	Name string `yaml:"name"`
 	Note string `yaml:"note,omitempty"`
+	// Owner is the user who owns the project, as import can find them again.
+	Owner *ProjectOwner `yaml:"owner,omitempty"`
 	// Envs names the env files belonging to this project, so a reader of one
 	// project file knows what else there is without listing the archive.
 	Envs []string `yaml:"envs,omitempty"`
 
 	Settings map[string]any `yaml:"settings,omitempty"`
+}
+
+// ProjectOwner names the user who owns a project. Users do not travel in a
+// bundle, so import finds the owner again: by id on the installation that
+// exported it - which still works after the owner changed their email - and by
+// email anywhere else.
+type ProjectOwner struct {
+	ID    string `yaml:"id,omitempty"`
+	Email string `yaml:"email,omitempty"`
 }
 
 // EnvDoc is projects/<key>/envs/<env>.yaml: the env's own settings and every

@@ -145,7 +145,10 @@ func exportFixture(t *testing.T) specservice.Service {
 
 	settingRepo := &fakeSettingRepo{}
 
-	proj := &entity.Project{ID: "p1", Key: "project_a", Name: "Project A"}
+	proj := &entity.Project{
+		ID: "p1", Key: "project_a", Name: "Project A",
+		OwnerID: "u1", Owner: &entity.User{ID: "u1", Email: "owner@example.com"},
+	}
 	hive := &entity.Project{ID: "p2", Key: base.HivepaasProjectKey, Name: "HivePaaS"}
 	env := &entity.ProjectEnv{ID: "p1:dev", ProjectID: "p1", Key: "dev", Name: "development"}
 

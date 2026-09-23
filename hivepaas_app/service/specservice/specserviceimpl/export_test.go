@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -49,6 +50,17 @@ func (f *fakeProjectRepo) List(
 	_ context.Context, _ database.IDB, _ *basedto.Paging, _ ...bunex.SelectQueryOption,
 ) ([]*entity.Project, *basedto.PagingMeta, error) {
 	return f.projects, nil, nil
+}
+
+func (f *fakeProjectRepo) GetByID(
+	_ context.Context, _ database.IDB, id string, _ ...bunex.SelectQueryOption,
+) (*entity.Project, error) {
+	for _, project := range f.projects {
+		if project.ID == id {
+			return project, nil
+		}
+	}
+	return nil, notFoundError{}
 }
 
 type fakeProjectEnvRepo struct {
@@ -125,8 +137,13 @@ func exportFixture(t *testing.T) specservice.Service {
 		ObjectID: "app_1", Status: base.SettingStatusActive,
 	}
 	assert.NoError(t, routing.SetData(&entity.AppRoutingSettings{
-		Port:    8080,
-		Domains: []*entity.AppDomain{{Domain: "api.example.com", SSLCert: entity.ObjectID{ID: "cert_1"}}},
+		Port: 8080,
+		// Enabled, because a disabled domain's certificate is not a reference
+		// GetRefObjectIDs reports - it holds no reservation - and export learns
+		// what an exported setting reaches outside the export from that.
+		Domains: []*entity.AppDomain{
+			{Domain: "api.example.com", Enabled: true, SSLCert: entity.ObjectID{ID: "cert_1"}},
+		},
 	}))
 
 	secret := &entity.Setting{
@@ -195,6 +212,15 @@ func exportFixture(t *testing.T) specservice.Service {
 		}
 		return out, nil
 	}
+	impl.loadByIDs = func(_ context.Context, _ database.IDB, ids []string) ([]*entity.Setting, error) {
+		var out []*entity.Setting
+		for _, setting := range all {
+			if slices.Contains(ids, setting.ID) {
+				out = append(out, setting)
+			}
+		}
+		return out, nil
+	}
 	return svc
 }
 
@@ -209,11 +235,18 @@ func containsScope(scopes []base.ObjectScopeType, want base.ObjectScopeType) boo
 
 func runExport(t *testing.T, mode specmodel.SecretsMode, passphrase string) (string, *specmodel.Report) {
 	t.Helper()
+	return runExportAt(t, entity.NewObjectScopeGlobal(), mode, passphrase)
+}
+
+func runExportAt(
+	t *testing.T, scope *entity.ObjectScope, mode specmodel.SecretsMode, passphrase string,
+) (string, *specmodel.Report) {
+	t.Helper()
 	svc := exportFixture(t)
 	dir := t.TempDir()
 
 	resp, err := svc.Export(context.Background(), nil, &specservice.ExportReq{
-		Scope:       entity.NewObjectScopeGlobal(),
+		Scope:       scope,
 		SecretsMode: mode,
 		Passphrase:  passphrase,
 		WorkDir:     dir,

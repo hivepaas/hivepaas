@@ -52,6 +52,13 @@ func (s *service) buildBundle(
 		indexSettings(index, unit.settings, unit.path)
 	}
 
+	// Pass one and a half: a reference to a setting the export does not hold - a
+	// project exported alone whose app uses a global certificate - is written as
+	// an external reference, which says what finds its target again elsewhere.
+	if err = s.indexExternalRefs(ctx, db, tree, index); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
 	// Pass two: write the documents.
 	if err = s.writeDocs(ctx, req, tree, netNames, index, bundle); err != nil {
 		return nil, hperrors.Wrap(err)
@@ -461,6 +468,65 @@ func (s *service) loadOwnedFromRepo(
 		return nil, hperrors.Wrap(err)
 	}
 	return settings, nil
+}
+
+func (s *service) loadByIDsFromRepo(
+	ctx context.Context,
+	db database.IDB,
+	ids []string,
+) ([]*entity.Setting, error) {
+	settings, _, err := s.settingRepo.List(ctx, db, nil, nil,
+		bunex.SelectWhereIn("setting.id IN (?)", ids...),
+	)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return settings, nil
+}
+
+// indexExternalRefs registers every setting an exported setting references but
+// the export does not hold. replaceExternalRefs then writes each reference to it
+// as an external one. A reference to a setting that no longer exists is left as
+// the id it is, for import to report - and so is one GetRefObjectIDs does not
+// report, such as the certificate of a disabled domain, which holds no
+// reservation and so is not counted as a reference.
+func (s *service) indexExternalRefs(
+	ctx context.Context,
+	db database.IDB,
+	tree *exportTree,
+	index *refIndex,
+) error {
+	var ids []string
+	seen := map[string]bool{}
+	for _, unit := range tree.units {
+		for _, setting := range unit.settings {
+			refs, err := setting.GetRefObjectIDs()
+			if err != nil {
+				return hperrors.Wrap(err)
+			}
+			if refs == nil {
+				continue
+			}
+			for _, id := range refs.RefSettingIDs {
+				if id == "" || seen[id] || index.paths[id] != "" {
+					continue
+				}
+				seen[id] = true
+				ids = append(ids, id)
+			}
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	settings, err := s.loadByIDs(ctx, db, ids)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	for _, setting := range settings {
+		index.addExternal(setting)
+	}
+	return nil
 }
 
 func (s *service) projectsInScope(

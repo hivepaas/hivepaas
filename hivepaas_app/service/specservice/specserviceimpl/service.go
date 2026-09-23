@@ -37,6 +37,7 @@ func New(
 		volumeService:  volumeService,
 	}
 	svc.loadOwned = svc.loadOwnedFromRepo
+	svc.loadByIDs = svc.loadByIDsFromRepo
 	return svc
 }
 
@@ -56,6 +57,11 @@ type settingLoader func(
 	objectID string,
 ) ([]*entity.Setting, error)
 
+// settingsByIDLoader loads settings by id, whatever their scope. Export asks it
+// for the settings a reference reaches outside what is exported. It is a seam
+// for the reason settingLoader is: a test double cannot read bunex options.
+type settingsByIDLoader func(ctx context.Context, db database.IDB, ids []string) ([]*entity.Setting, error)
+
 type service struct {
 	appRepo        repository.AppRepo
 	projectEnvRepo repository.ProjectEnvRepo
@@ -66,4 +72,5 @@ type service struct {
 	volumeService  volumeservice.Service
 
 	loadOwned settingLoader
+	loadByIDs settingsByIDLoader
 }

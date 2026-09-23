@@ -16,6 +16,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
@@ -57,12 +58,28 @@ func (f *fakeProjectRepo) List(
 func (f *fakeProjectRepo) GetByID(
 	_ context.Context, _ database.IDB, id string, _ ...bunex.SelectQueryOption,
 ) (*entity.Project, error) {
+	return f.find(func(p *entity.Project) bool { return p.ID == id })
+}
+
+func (f *fakeProjectRepo) GetByKey(
+	_ context.Context, _ database.IDB, key string, _ ...bunex.SelectQueryOption,
+) (*entity.Project, error) {
+	return f.find(func(p *entity.Project) bool { return p.Key == key })
+}
+
+func (f *fakeProjectRepo) GetByName(
+	_ context.Context, _ database.IDB, name string, _ ...bunex.SelectQueryOption,
+) (*entity.Project, error) {
+	return f.find(func(p *entity.Project) bool { return p.Name == name })
+}
+
+func (f *fakeProjectRepo) find(match func(*entity.Project) bool) (*entity.Project, error) {
 	for _, project := range f.projects {
-		if project.ID == id {
+		if match(project) {
 			return project, nil
 		}
 	}
-	return nil, notFoundError{}
+	return nil, hperrors.Wrap(hperrors.ErrProjectNotFound)
 }
 
 type fakeProjectEnvRepo struct {
@@ -83,6 +100,17 @@ func (f *fakeProjectEnvRepo) List(
 	return out, nil, nil
 }
 
+func (f *fakeProjectEnvRepo) GetByKey(
+	_ context.Context, _ database.IDB, projectID, key string, _ ...bunex.SelectQueryOption,
+) (*entity.ProjectEnv, error) {
+	for _, env := range f.envs {
+		if env.ProjectID == projectID && env.Key == key {
+			return env, nil
+		}
+	}
+	return nil, hperrors.Wrap(hperrors.ErrProjectEnvNotFound)
+}
+
 type fakeAppRepo struct {
 	repository.AppRepo
 	apps []*entity.App
@@ -99,6 +127,17 @@ func (f *fakeAppRepo) List(
 		}
 	}
 	return out, nil, nil
+}
+
+func (f *fakeAppRepo) GetByID(
+	_ context.Context, _ database.IDB, projectID, id string, _ ...bunex.SelectQueryOption,
+) (*entity.App, error) {
+	for _, app := range f.apps {
+		if app.ID == id && (projectID == "" || app.ProjectID == projectID) {
+			return app, nil
+		}
+	}
+	return nil, hperrors.Wrap(hperrors.ErrAppNotFound)
 }
 
 type fakeClusterService struct {

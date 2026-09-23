@@ -7,6 +7,7 @@
 package specservice
 
 import (
+	"context"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -54,4 +55,27 @@ type BuildAppReq struct {
 type BuildAppResp struct {
 	// Settings replace the app's default settings of the same type.
 	Settings []*entity.Setting
+}
+
+// ValidateImportReq asks what importing a bundle at a scope would do.
+type ValidateImportReq struct {
+	// Scope is the route's: global, a project, or a project env. It bounds what
+	// the import may write.
+	Scope *entity.ObjectScope
+	// Bundle is the archive as export produced it, age-encrypted or not.
+	Bundle     []byte
+	Passphrase string
+	Selection  specmodel.Selection
+	Options    specmodel.ImportOptions
+	// AuthorizeSecrets is asked, once the bundle is read, whether this caller may
+	// have secrets revealed. It is asked only for a bundle that carries them,
+	// since planning it compares this installation's secrets with the bundle's,
+	// and before anything is compared. Nil allows it.
+	AuthorizeSecrets func(ctx context.Context, mode specmodel.SecretsMode) error
+}
+
+type ValidateImportResp struct {
+	Plan *specmodel.ImportPlan
+	// SecretsMode is the bundle's, which decides the permission reading it needs.
+	SecretsMode specmodel.SecretsMode
 }

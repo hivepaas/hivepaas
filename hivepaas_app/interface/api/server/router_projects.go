@@ -28,6 +28,7 @@ func (s *HTTPServer) registerProjectRoutes(apiGroup *gin.RouterGroup) {
 	{ // Spec
 		specGroup := projectGroup.Group("/:projectID/spec")
 		specGroup.POST("/export", specHandler.ExportProjectSpec)
+		specGroup.POST("/import/validate", specHandler.ValidateProjectImport)
 	}
 
 	{ // Tags

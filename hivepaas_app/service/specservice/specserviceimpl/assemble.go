@@ -216,6 +216,9 @@ func replaceStrings(node any, replacements map[string]string) {
 	}
 }
 
+// externalRefKey is the key an external reference is written under.
+const externalRefKey = "external"
+
 // replaceExternalRefs swaps any identifier the index could not resolve for the
 // block that says what it was, so import can look it up or report it.
 func replaceExternalRefs(node any, index *refIndex) {
@@ -224,7 +227,7 @@ func replaceExternalRefs(node any, index *refIndex) {
 		for key, value := range typed {
 			if text, ok := value.(string); ok {
 				if ref := index.external[text]; ref != nil {
-					typed[key] = map[string]any{"external": ref}
+					typed[key] = map[string]any{externalRefKey: ref}
 					continue
 				}
 			}
@@ -234,7 +237,7 @@ func replaceExternalRefs(node any, index *refIndex) {
 		for i, value := range typed {
 			if text, ok := value.(string); ok {
 				if ref := index.external[text]; ref != nil {
-					typed[i] = map[string]any{"external": ref}
+					typed[i] = map[string]any{externalRefKey: ref}
 					continue
 				}
 			}

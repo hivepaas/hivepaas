@@ -823,7 +823,12 @@ Five plans, each shippable without the next:
    routes, the errors and the audit type. Project creation moves to
    `projectservice`, and the template checks' reading of a document to
    `specmodel`, in this plan - where import becomes their second caller, so both
-   callers shape what is shared.
+   callers shape what is shared. Validate, first part:
+   `docs/superpowers/plans/2026-09-24-spec-import-validate.md` - reading a
+   bundle, matching, the diff, restart and deploy, the structural issues, the
+   plan hash, and the validate endpoint at the three scopes. References and
+   closure, availability issues, owner and credential notes, and apply follow in
+   their own plans.
 5. **Dashboard**: the import screens.
 
 ---

@@ -127,28 +127,34 @@ func (h *Handler) ExportAppSpec(ctx *gin.Context) {
 // The global export keeps the system-module check because it genuinely crosses
 // every project, which is the same reason the audit log listing uses it.
 func accessCheckForScope(req *specdto.ExportSpecReq) (permission.AccessCheck, error) {
-	read := permission.BaseAccessCheck{Action: base.ActionTypeRead}
+	return scopeAccessCheck(req.Scope, base.ActionTypeRead)
+}
 
-	switch req.Scope.ScopeType {
+// scopeAccessCheck is the check for acting on a scope - reading it for export,
+// writing it for import.
+func scopeAccessCheck(scope *entity.ObjectScope, action base.ActionType) (permission.AccessCheck, error) {
+	read := permission.BaseAccessCheck{Action: action}
+
+	switch scope.ScopeType {
 	case base.ObjectScopeProject:
 		return &permission.ProjectAccessCheck{
 			BaseAccessCheck: read,
-			ProjectID:       req.Scope.ProjectID,
+			ProjectID:       scope.ProjectID,
 		}, nil
 
 	case base.ObjectScopeProjectEnv:
 		return &permission.ProjectAccessCheck{
 			BaseAccessCheck: read,
-			ProjectID:       req.Scope.ProjectID,
-			ProjectEnv:      &req.Scope.ProjectEnvID,
+			ProjectID:       scope.ProjectID,
+			ProjectEnv:      &scope.ProjectEnvID,
 		}, nil
 
 	case base.ObjectScopeApp:
 		return &permission.AppAccessCheck{
 			BaseAccessCheck: read,
-			ProjectID:       req.Scope.ProjectID,
-			ProjectEnv:      req.Scope.ProjectEnvID,
-			AppID:           req.Scope.AppID,
+			ProjectID:       scope.ProjectID,
+			ProjectEnv:      scope.ProjectEnvID,
+			AppID:           scope.AppID,
 		}, nil
 
 	case base.ObjectScopeGlobal:

@@ -9,3 +9,11 @@ var (
 	ErrSpecBlockUnsupported        = NewErr(ErrUnsupported, "ERR_SPEC_BLOCK_UNSUPPORTED")
 	ErrSpecBlockInvalid            = NewErr(ErrArgumentInvalid, "ERR_SPEC_BLOCK_INVALID")
 )
+
+// Errors for configuration spec import
+var (
+	ErrSpecPassphraseInvalid      = NewErr(ErrArgumentInvalid, "ERR_SPEC_PASSPHRASE_INVALID")
+	ErrSpecBundleInvalid          = NewErr(ErrArgumentInvalid, "ERR_SPEC_BUNDLE_INVALID")
+	ErrSpecAPIVersionUnsupported  = NewErr(ErrUnsupported, "ERR_SPEC_API_VERSION_UNSUPPORTED")
+	ErrSpecImportScopeNotInBundle = NewErr(ErrArgumentInvalid, "ERR_SPEC_IMPORT_SCOPE_NOT_IN_BUNDLE")
+)

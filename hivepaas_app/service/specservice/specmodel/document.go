@@ -143,3 +143,16 @@ type Bundle struct {
 	// Report carries everything export skipped or could not resolve.
 	Report *Report
 }
+
+// ImportBundle is a bundle read back: its manifest and every document in it,
+// keyed the way the paths in a selection name them.
+type ImportBundle struct {
+	Manifest *Manifest
+	Global   *GlobalDoc
+	// Projects is keyed by project key.
+	Projects map[string]*ProjectDoc
+	// Envs is keyed by project key, then env key.
+	Envs map[string]map[string]*EnvDoc
+	// Digest is the SHA-256 of the bundle as it arrived, in hex.
+	Digest string
+}

@@ -3,7 +3,11 @@
 
 ERR_SPEC_MOUNT_TARGET_DUPLICATED = "Two volume mounts use the same target path '{{.Target}}'"
 ERR_SPEC_SETTING_TYPE_UNCLASSIFIED = "Setting type '{{.Type}}' has no spec block name, so it cannot be exported"
-ERR_SPEC_PASSPHRASE_REQUIRED = "A passphrase is required to export with encrypted secrets"
+ERR_SPEC_PASSPHRASE_REQUIRED = "A passphrase is required for a bundle with encrypted secrets"
 ERR_SPEC_SECRETS_MODE_INVALID = "Unknown secrets mode '{{.Mode}}'. Use omit, encrypted or plaintext."
 ERR_SPEC_BLOCK_UNSUPPORTED = "Part of this configuration cannot be built into an app yet"
 ERR_SPEC_BLOCK_INVALID = "Part of this configuration is invalid"
+ERR_SPEC_PASSPHRASE_INVALID = "The passphrase does not open this bundle"
+ERR_SPEC_BUNDLE_INVALID = "This is not a configuration bundle HivePaaS can read"
+ERR_SPEC_API_VERSION_UNSUPPORTED = "This bundle was written in a format this version of HivePaaS does not read"
+ERR_SPEC_IMPORT_SCOPE_NOT_IN_BUNDLE = "This bundle does not hold the project or environment being imported into"

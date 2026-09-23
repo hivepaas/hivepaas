@@ -10683,6 +10683,45 @@
         "tags" : [ "spec" ]
       }
     },
+    "/projects/{projectID}/spec/import/validate" : {
+      "post" : {
+        "parameters" : [ {
+          "description" : "Project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ValidateImportReq"
+              }
+            }
+          },
+          "description" : "bundle, passphrase, selection, options",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/specdto.ValidateImportResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Plan importing a configuration bundle into one project",
+        "tags" : [ "spec" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/ssh-keys" : {
       "get" : {
         "description" : "Lists ssh-key settings",
@@ -28033,6 +28072,53 @@
         "tags" : [ "spec" ]
       }
     },
+    "/projects/{projectID}/{projectEnv}/spec/import/validate" : {
+      "post" : {
+        "parameters" : [ {
+          "description" : "Project ID",
+          "in" : "path",
+          "name" : "projectID",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "description" : "Project env",
+          "in" : "path",
+          "name" : "projectEnv",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ValidateImportReq"
+              }
+            }
+          },
+          "description" : "bundle, passphrase, selection, options",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/specdto.ValidateImportResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Plan importing a configuration bundle into one project env",
+        "tags" : [ "spec" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/projects/{projectID}/{projectEnv}/ssh-keys" : {
       "get" : {
         "description" : "Lists ssh-key settings",
@@ -37242,6 +37328,36 @@
         "x-codegen-request-body-name" : "body"
       }
     },
+    "/spec/import/validate" : {
+      "post" : {
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/specdto.ValidateImportReq"
+              }
+            }
+          },
+          "description" : "bundle, passphrase, selection, options",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/specdto.ValidateImportResp"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Plan importing a configuration bundle into the whole installation",
+        "tags" : [ "spec" ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
     "/support/feedbacks" : {
       "post" : {
         "description" : "Creates a feedback",
@@ -42171,10 +42287,198 @@
         "required" : [ "appImage", "appVersion", "blockMajorUpgrade", "canUpdate", "dbImage", "redisImage", "releaseDate", "templates", "traefikImage", "victoriaLogsImage", "vlagentImage" ],
         "type" : "object"
       },
+      "service_specservice_specmodel.BundleInfo" : {
+        "properties" : {
+          "apiVersion" : {
+            "type" : "string"
+          },
+          "exportedAt" : {
+            "type" : "string"
+          },
+          "scope" : {
+            "type" : "string"
+          },
+          "secretsMode" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.SecretsMode"
+          },
+          "sourceAppVersion" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "apiVersion", "exportedAt", "scope", "secretsMode", "sourceAppVersion" ],
+        "type" : "object"
+      },
+      "service_specservice_specmodel.Existing" : {
+        "enum" : [ "update", "keep" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "ExistingUpdate", "ExistingKeep" ]
+      },
+      "service_specservice_specmodel.ImportOptions" : {
+        "properties" : {
+          "deployChangedSource" : {
+            "type" : "boolean"
+          },
+          "deployCreated" : {
+            "type" : "boolean"
+          },
+          "existing" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.Existing"
+          }
+        },
+        "required" : [ "deployChangedSource", "deployCreated", "existing" ],
+        "type" : "object"
+      },
+      "service_specservice_specmodel.ImportPlan" : {
+        "properties" : {
+          "bundle" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.BundleInfo"
+          },
+          "nodes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/service_specservice_specmodel.PlanNode"
+            },
+            "type" : "array"
+          },
+          "planHash" : {
+            "type" : "string"
+          },
+          "summary" : {
+            "additionalProperties" : {
+              "type" : "integer"
+            },
+            "type" : "object"
+          }
+        },
+        "required" : [ "bundle", "nodes", "planHash", "summary" ],
+        "type" : "object"
+      },
+      "service_specservice_specmodel.Issue" : {
+        "properties" : {
+          "action" : {
+            "type" : "string"
+          },
+          "availableIn" : {
+            "description" : "AvailableIn names the bundle file holding what the issue could not reach,\nwhich is what separates \"go and create this\" from \"select one more file\".",
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "detail" : {
+            "additionalProperties" : {
+              "type" : "object"
+            },
+            "type" : "object"
+          },
+          "hint" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "severity" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.Severity"
+          }
+        },
+        "required" : [ "action", "availableIn", "code", "detail", "hint", "path", "severity" ],
+        "type" : "object"
+      },
+      "service_specservice_specmodel.MatchedBy" : {
+        "enum" : [ "id", "key" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "MatchedByID", "MatchedByKey" ]
+      },
+      "service_specservice_specmodel.NodeAction" : {
+        "enum" : [ "create", "update", "unchanged", "keep", "skip" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "ActionCreate", "ActionUpdate", "ActionUnchanged", "ActionKeep", "ActionSkip" ]
+      },
+      "service_specservice_specmodel.NodeKind" : {
+        "enum" : [ "global", "project", "env", "settings", "app" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "NodeKindGlobal", "NodeKindProject", "NodeKindEnv", "NodeKindSettings", "NodeKindApp" ]
+      },
+      "service_specservice_specmodel.PlanNode" : {
+        "properties" : {
+          "action" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.NodeAction"
+          },
+          "changes" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "deploy" : {
+            "type" : "boolean"
+          },
+          "issues" : {
+            "items" : {
+              "$ref" : "#/components/schemas/service_specservice_specmodel.Issue"
+            },
+            "type" : "array"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.NodeKind"
+          },
+          "matchedBy" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.MatchedBy"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "notes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/service_specservice_specmodel.Issue"
+            },
+            "type" : "array"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "restart" : {
+            "type" : "boolean"
+          },
+          "selected" : {
+            "type" : "boolean"
+          },
+          "selectedBy" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "action", "changes", "deploy", "issues", "key", "kind", "matchedBy", "name", "notes", "path", "restart", "selected", "selectedBy" ],
+        "type" : "object"
+      },
       "service_specservice_specmodel.SecretsMode" : {
         "enum" : [ "omit", "encrypted", "plaintext" ],
         "type" : "string",
         "x-enum-varnames" : [ "SecretsModeOmit", "SecretsModeEncrypted", "SecretsModePlaintext" ]
+      },
+      "service_specservice_specmodel.Selection" : {
+        "properties" : {
+          "exclude" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "include" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "exclude", "include" ],
+        "type" : "object"
+      },
+      "service_specservice_specmodel.Severity" : {
+        "enum" : [ "warning", "fixable", "skipped", "blocked" ],
+        "type" : "string",
+        "x-enum-varnames" : [ "SeverityWarning", "SeverityFixable", "SeveritySkipped", "SeverityBlocked" ]
       },
       "appactiondto.DeployAppDataResp" : {
         "properties" : {
@@ -57355,6 +57659,41 @@
         "required" : [ "passphrase", "secretsMode" ],
         "type" : "object"
       },
+      "specdto.ValidateImportReq" : {
+        "properties" : {
+          "bundle" : {
+            "description" : "Bundle is the archive export produced, as it was downloaded. JSON carries\nit as base64.",
+            "items" : {
+              "type" : "integer"
+            },
+            "type" : "array"
+          },
+          "options" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.ImportOptions"
+          },
+          "passphrase" : {
+            "description" : "Passphrase opens an encrypted bundle. It is never stored or logged.",
+            "type" : "string"
+          },
+          "selection" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.Selection"
+          }
+        },
+        "required" : [ "bundle", "options", "passphrase", "selection" ],
+        "type" : "object"
+      },
+      "specdto.ValidateImportResp" : {
+        "properties" : {
+          "data" : {
+            "$ref" : "#/components/schemas/service_specservice_specmodel.ImportPlan"
+          },
+          "meta" : {
+            "$ref" : "#/components/schemas/basedto.Meta"
+          }
+        },
+        "required" : [ "data", "meta" ],
+        "type" : "object"
+      },
       "supportdto.CreateFeedbackReq" : {
         "properties" : {
           "company" : {
@@ -61541,9 +61880,9 @@
         "x-enum-varnames" : [ "TaskStateNew", "TaskStateAllocated", "TaskStatePending", "TaskStateAssigned", "TaskStateAccepted", "TaskStatePreparing", "TaskStateReady", "TaskStateStarting", "TaskStateRunning", "TaskStateComplete", "TaskStateShutdown", "TaskStateFailed", "TaskStateRejected", "TaskStateRemove", "TaskStateOrphaned" ]
       },
       "timeutil.Duration" : {
-        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000 ],
+        "enum" : [ -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, -9223372036854775808, 9223372036854775807, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000, 1, 1000, 1000000, 1000000000, 60000000000, 3600000000000 ],
         "type" : "integer",
-        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute" ]
+        "x-enum-varnames" : [ "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "minDuration", "maxDuration", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour", "Nanosecond", "Microsecond", "Millisecond", "Second", "Minute", "Hour" ]
       },
       "uploadFiles_request" : {
         "properties" : {

@@ -1,0 +1,48 @@
+package specuc
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/base"
+	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/permission"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/specuc/specdto"
+)
+
+// ValidateImport answers what importing a bundle at a scope would do, writing
+// nothing.
+//
+// A bundle that carries secrets passes the gate an export producing one
+// passes. Planning it compares this installation's secrets with the bundle's,
+// and "same" or "different" is enough to test a guess - so the gate is asked as
+// soon as the bundle says what it carries, before anything is compared.
+func (uc *UC) ValidateImport(
+	ctx context.Context,
+	auth *basedto.Auth,
+	req *specdto.ValidateImportReq,
+) (*specdto.ValidateImportResp, error) {
+	resp, err := uc.specService.ValidateImport(ctx, uc.db, &specservice.ValidateImportReq{
+		Scope:      req.Scope,
+		Bundle:     req.Bundle,
+		Passphrase: req.Passphrase,
+		Selection:  req.Selection,
+		Options:    req.Options,
+		AuthorizeSecrets: func(ctx context.Context, mode specmodel.SecretsMode) error {
+			return uc.permissionManager.AuthorizeSecretReveal(ctx, uc.db, auth, &permission.RevealSubject{
+				Scope:    req.Scope.ScopeType,
+				ObjectID: req.Scope.ScopeObjectID(),
+				Source:   base.AuditLogSourceAPIAction,
+				ResType:  base.ResourceTypeSetting,
+				ResName:  fmt.Sprintf("configuration spec import (%s)", mode),
+			})
+		},
+	})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	return &specdto.ValidateImportResp{Data: resp.Plan}, nil
+}

@@ -19,6 +19,7 @@ func (s *HTTPServer) registerProjectEnvRoutes(projectGroup *gin.RouterGroup) {
 
 	// Configuration spec export
 	projectEnvGroup.POST("/spec/export", s.handlerRegistry.specHandler.ExportProjectEnvSpec)
+	projectEnvGroup.POST("/spec/import/validate", s.handlerRegistry.specHandler.ValidateProjectEnvImport)
 
 	{ // Access-token group
 		accessTokenGroup := projectEnvGroup.Group("/access-tokens")

@@ -7,6 +7,7 @@
 package specservice
 
 import (
+	"context"
 	"time"
 
 	"github.com/moby/moby/api/types/swarm"
@@ -66,6 +67,11 @@ type ValidateImportReq struct {
 	Passphrase string
 	Selection  specmodel.Selection
 	Options    specmodel.ImportOptions
+	// AuthorizeSecrets is asked, once the bundle is read, whether this caller may
+	// have secrets revealed. It is asked only for a bundle that carries them,
+	// since planning it compares this installation's secrets with the bundle's,
+	// and before anything is compared. Nil allows it.
+	AuthorizeSecrets func(ctx context.Context, mode specmodel.SecretsMode) error
 }
 
 type ValidateImportResp struct {

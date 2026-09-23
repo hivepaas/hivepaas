@@ -26,6 +26,11 @@ func (s *service) ValidateImport(
 	if err != nil {
 		return nil, err
 	}
+	if mode := bundle.Manifest.SecretsMode; mode.RevealsSecrets() && req.AuthorizeSecrets != nil {
+		if err = req.AuthorizeSecrets(ctx, mode); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
 	plan, err := s.planImport(ctx, db, req, bundle)
 	if err != nil {
 		return nil, err

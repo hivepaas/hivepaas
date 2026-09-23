@@ -93,6 +93,7 @@ export function ConfirmAppDangerActionDialog() {
             payload: {
                 updateVer: target.updateVer,
                 status: action === AppDangerAction.ReEnable ? EProjectAppStatus.Active : EProjectAppStatus.Disabled,
+                cascade: values.cascade,
             },
         });
     }

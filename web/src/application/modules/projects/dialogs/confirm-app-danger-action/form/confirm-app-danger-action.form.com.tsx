@@ -23,17 +23,27 @@ const actionCopy: Record<
         buttonLabel: string;
         buttonVariant: "default" | "destructive";
         warning?: string;
+        cascadeLabel?: string;
+        cascadeHint?: string;
     }
 > = {
     [AppDangerAction.Disable]: {
         bodyAction: "disabling",
         buttonLabel: "Disable this App",
         buttonVariant: "destructive",
+        cascadeLabel: "Also disable the apps created with it",
+        cascadeHint:
+            "The dependencies and components a template created alongside this app, such as its database, " +
+            "are disabled too unless you untick this.",
     },
     [AppDangerAction.ReEnable]: {
         bodyAction: "re-enabling",
         buttonLabel: "Re-enable this App",
         buttonVariant: "default",
+        cascadeLabel: "Also re-enable the apps created with it",
+        cascadeHint:
+            "The dependencies and components a template created alongside this app, such as its database, " +
+            "are re-enabled too unless you untick this.",
     },
     [AppDangerAction.Delete]: {
         bodyAction: "deleting",
@@ -55,6 +65,7 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
         defaultValues: {
             appName: "",
             removeStorage: false,
+            cascade: true,
         },
         resolver: zodResolver(createConfirmAppDangerActionFormSchema(appName)),
         mode: "onSubmit",
@@ -64,12 +75,14 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
         reset({
             appName: "",
             removeStorage: false,
+            cascade: true,
         });
     }, [action, appName, reset]);
 
     const enteredAppName = watch("appName");
     const isConfirmed = enteredAppName === appName;
     const removeStorage = watch("removeStorage");
+    const cascade = watch("cascade");
     const copy = actionCopy[action];
 
     function onInvalid(_errors: FieldErrors<ConfirmAppDangerActionFormInput>) {
@@ -120,6 +133,29 @@ export function ConfirmAppDangerActionForm({ action, appName, isPending = false,
                             <span className="block text-xs text-muted-foreground leading-normal">
                                 The volumes this app kept its data in, and what is on them, are kept unless you tick
                                 this.
+                            </span>
+                        </span>
+                    </label>
+                )}
+
+                {copy.cascadeLabel && (
+                    <label
+                        className="flex items-start gap-2.5 text-sm leading-6 text-foreground"
+                        htmlFor="app-status-cascade"
+                    >
+                        <Checkbox
+                            id="app-status-cascade"
+                            className="mt-1"
+                            checked={cascade}
+                            disabled={readOnly || isPending}
+                            onCheckedChange={checked => {
+                                setValue("cascade", checked === true);
+                            }}
+                        />
+                        <span>
+                            <span className="block">{copy.cascadeLabel}</span>
+                            <span className="block text-xs text-muted-foreground leading-normal">
+                                {copy.cascadeHint}
                             </span>
                         </span>
                     </label>

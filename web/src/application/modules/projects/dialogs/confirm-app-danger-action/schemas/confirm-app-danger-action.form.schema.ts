@@ -4,6 +4,8 @@ const ConfirmAppDangerActionFormBaseSchema = z.object({
     appName: z.string(),
     /** Delete what the apps stored as well. Off unless somebody ticks it. */
     removeStorage: z.boolean(),
+    /** Apply the status change to the apps created to serve this one (dependencies, components) as well. On by default. */
+    cascade: z.boolean(),
 });
 
 export type ConfirmAppDangerActionFormInput = z.input<typeof ConfirmAppDangerActionFormBaseSchema>;

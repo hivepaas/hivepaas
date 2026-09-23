@@ -101,6 +101,8 @@ export type ProjectApps_UpdateStatus_Req = ApiRequestBase<{
     payload: {
         updateVer: number;
         status: EProjectAppStatus;
+        /** Also apply the status to the apps created to serve this one (dependencies, components). */
+        cascade: boolean;
     };
 }>;
 

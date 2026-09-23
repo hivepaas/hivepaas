@@ -77,6 +77,7 @@ func assembleSettings(
 				if err != nil {
 					return nil, hperrors.Wrap(err)
 				}
+				body[specmodel.CollectionEntryIDKey] = setting.ID
 				entries[keys[setting.ID]] = body
 			}
 			out[specmodel.CollectionBlockName(typ)] = entries

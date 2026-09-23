@@ -625,6 +625,17 @@ published ports. Import needs everything export writes.
 - **`container.image` is never written to a service.** It records what was
   running at export; the image changes only through a deployment.
 
+**Storage is the one block export writes in a form the builder cannot read.**
+Export writes what Docker holds: a volume's Docker name or a host path, and the
+full path inside the volume. The builder takes what a template and the storage
+screen take: a `cluster-volume` setting, a path below the app's own directory,
+and the owning app when the directory is another app's. The builder-coverage
+plan settles which side changes. The recommendation is export: it would write
+the builder's form, using the reverse mapping `DescribeAppMounts` already does
+for the storage screen. A mount's volume then becomes an ordinary reference that
+import remaps like any other, and storage joins the round-trip test it is left
+out of today.
+
 Why not move the `apply*` functions of `appsettingsuc` into a service, as the
 export spec proposed:
 
@@ -639,9 +650,9 @@ export spec proposed:
 **Project creation moves to `projectservice`.** The defaults a new project gets -
 its env rows, tags, webhook, default notification and default volume - are built
 by `preparePersistingProject*` in `projectuc`, and one usecase may not call
-another. They move to `projectservice`, where `projectuc.CreateProject` calls
-them, unchanged in behaviour, and import calls them too. So does the env-row
-construction of project update.
+another. In the import plan they move to `projectservice`, where
+`projectuc.CreateProject` calls them, unchanged in behaviour, and import calls
+them too. So does the env-row construction of project update.
 
 **Settings are written through import policies**, a registry keyed by setting
 type, beside the builders in `specserviceimpl`:
@@ -656,14 +667,18 @@ type, beside the builders in `specserviceimpl`:
 This is the export registry's safety rule turned around: no setting type is
 imported because somebody forgot it could not be.
 
-**The template checks are split.** Template creation checks a request in
-`apptemplateuc` - five checks and the storage preflight - each calling services
-underneath. Their halves that read a document move to `specservice`, beside
-`BuildApp`: domain and port availability, storage already holding data, and
-extracting the capabilities and shared mounts a document asks for. The permission halves stay in each usecase, which is where
-permissions are decided. The fifth check, `checkAppRefs`, resolves template
-parameters, which import does not have; its references are resolved by §4 and
-§5. Template creation keeps refusing; import turns each finding into an issue.
+**The template checks are shared once import needs them.** Template creation
+checks a request in `apptemplateuc` - five checks and the storage preflight - and
+each reads what a document asks for, then asks a service. The reading moves to
+`specmodel` in the import plan, where import becomes its second caller: the
+ports a document publishes, the domains it answers at, the capabilities it
+grants. The service calls stay with each caller, because the two use them
+differently: template creation refuses on the first finding, while import reports
+every one and must leave out the app it is updating. Storage and shared mounts
+wait for the builder-coverage plan, which decides how export represents a mount
+(§9). The permission halves stay in each usecase, which is where permissions are
+decided. The fifth check, `checkAppRefs`, resolves template parameters, which
+import does not have; its references are resolved by §4 and §5.
 
 ## 11. Dashboard
 
@@ -705,7 +720,7 @@ picking it again, which is the price of the server keeping nothing.
 | `specuc` | the import usecases, with their permissions and audit |
 | `spechandler`, routers | six routes, and the body limit |
 | `projectservice`, `projectuc` | project defaults and env rows moved down |
-| `apptemplateuc` | calls the checks in `specservice` |
+| `apptemplateuc` | reads documents through `specmodel`; keeps its own service calls |
 | `hperrors/errors_spec.go` | the new errors |
 | `base/audit.go` | `AuditLogTypeSpecImport` |
 | `hivepaas-dashboard` | the import screens, global and per project |
@@ -772,16 +787,22 @@ picking it again, which is the price of the server keeping nothing.
 
 ## 14. Order of work
 
-Three plans, each shippable without the next:
+Four plans, each shippable without the next:
 
-1. **Foundations**, with no change anybody can see. Export writes ids and the
-   project owner. The document halves of the template checks move to
-   `specservice`, and project defaults and env rows move to `projectservice`.
-   The builder registry grows to cover export, with `CheckImportable`, builders
-   that replace rather than append, and the round-trip and coverage tests.
-2. **Import**: `ValidateImport` and `ApplyImport`, the usecases, handlers and
-   routes, the errors and the audit type.
-3. **Dashboard**: the import screens.
+1. **Export ids and owner**
+   (`docs/superpowers/plans/2026-09-23-spec-export-ids-and-owner.md`). Export
+   writes the ids and the project owner §4 needs. Nothing reads them yet, but
+   every bundle exported from then on can be matched exactly.
+2. **Builder coverage.** The builder registry grows to cover what export writes,
+   with `CheckImportable`, builders that replace rather than append, and the
+   round-trip and coverage tests. It starts by settling how export represents a
+   mount (§9).
+3. **Import**: `ValidateImport` and `ApplyImport`, the usecases, handlers and
+   routes, the errors and the audit type. Project creation moves to
+   `projectservice`, and the template checks' reading of a document to
+   `specmodel`, in this plan - where import becomes their second caller, so both
+   callers shape what is shared.
+4. **Dashboard**: the import screens.
 
 ---
 

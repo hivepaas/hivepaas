@@ -31,13 +31,28 @@ type ProjectDoc struct {
 	DocHeader `yaml:",inline"`
 
 	Project string `yaml:"project"`
-	Name    string `yaml:"name"`
-	Note    string `yaml:"note,omitempty"`
+	// ID is the project's id on the installation that exported it. An import
+	// into that installation matches on it; anywhere else it matches nothing,
+	// and the key is used instead.
+	ID   string `yaml:"id,omitempty"`
+	Name string `yaml:"name"`
+	Note string `yaml:"note,omitempty"`
+	// Owner is the user who owns the project, as import can find them again.
+	Owner *ProjectOwner `yaml:"owner,omitempty"`
 	// Envs names the env files belonging to this project, so a reader of one
 	// project file knows what else there is without listing the archive.
 	Envs []string `yaml:"envs,omitempty"`
 
 	Settings map[string]any `yaml:"settings,omitempty"`
+}
+
+// ProjectOwner names the user who owns a project. Users do not travel in a
+// bundle, so import finds the owner again: by id on the installation that
+// exported it - which still works after the owner changed their email - and by
+// email anywhere else.
+type ProjectOwner struct {
+	ID    string `yaml:"id,omitempty"`
+	Email string `yaml:"email,omitempty"`
 }
 
 // EnvDoc is projects/<key>/envs/<env>.yaml: the env's own settings and every
@@ -66,7 +81,9 @@ type EnvDoc struct {
 // been deployed - a real state rather than an edge case: two of five user apps
 // in a development installation have an empty ServiceID.
 type AppDoc struct {
-	App    string `yaml:"app"`
+	App string `yaml:"app"`
+	// ID is the app's id on the installation that exported it; see ProjectDoc.ID.
+	ID     string `yaml:"id,omitempty"`
 	Name   string `yaml:"name"`
 	Status string `yaml:"status,omitempty"`
 	Note   string `yaml:"note,omitempty"`
@@ -89,6 +106,14 @@ type ExternalRef struct {
 	// installation match exactly instead of by name.
 	ID string `yaml:"id,omitempty"`
 }
+
+// CollectionEntryIDKey is where export writes the id of the setting a collection
+// entry was exported from: at the top level of the entry, beside the setting's
+// own data. An import into the installation that exported it matches on it, so
+// a setting renamed since is still recognized. No exported collection type may
+// have a top-level field of that name - TestNoExportedCollectionTypeHasATopLevelID
+// holds that.
+const CollectionEntryIDKey = "id"
 
 // Bundle is what the exporter hands the bundle writer.
 type Bundle struct {

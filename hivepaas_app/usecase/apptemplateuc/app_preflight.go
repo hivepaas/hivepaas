@@ -2,6 +2,7 @@ package apptemplateuc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -18,7 +19,7 @@ import (
 // decision about all of them.
 func (uc *UC) PreflightAppFromTemplate(
 	ctx context.Context,
-	_ *basedto.Auth,
+	auth *basedto.Auth,
 	req *apptemplatedto.PreflightAppFromTemplateReq,
 ) (*apptemplatedto.PreflightAppFromTemplateResp, error) {
 	rendered, err := uc.appTemplateService.Render(ctx, &apptemplateservice.RenderReq{
@@ -35,7 +36,14 @@ func (uc *UC) PreflightAppFromTemplate(
 	}
 
 	create := &req.CreateAppFromTemplateReq
-	plan, err := uc.planStorage(ctx, uc.db, create, planApps(create, rendered))
+	apps := planApps(create, rendered)
+
+	plan, err := uc.planStorage(ctx, uc.db, create, apps)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	issues, err := uc.collectIssues(ctx, auth, req, rendered, apps)
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -43,7 +51,51 @@ func (uc *UC) PreflightAppFromTemplate(
 	return &apptemplatedto.PreflightAppFromTemplateResp{Data: &apptemplatedto.PreflightAppRe{
 		Storage:          storageResults(plan.Findings),
 		StorageUnchecked: storageResults(plan.Unchecked),
+		Issues:           issues,
 	}}, nil
+}
+
+// collectIssues runs the refusals the creation runs and reports them instead of
+// raising them.
+//
+// All of them run, not the first that fails: the creation stops at the first
+// because it has nothing to do with the rest, but a dialog that says "and also"
+// three times is three round trips through the same form. They share no state,
+// so running them all is only running them all.
+func (uc *UC) collectIssues(
+	ctx context.Context,
+	auth *basedto.Auth,
+	req *apptemplatedto.PreflightAppFromTemplateReq,
+	rendered *apptemplateservice.RenderResp,
+	apps []*appToProvision,
+) ([]*apptemplatedto.PreflightIssueRes, error) {
+	create := &req.CreateAppFromTemplateReq
+	checks := []func() error{
+		func() error { return uc.checkAppRefs(ctx, create, rendered) },
+		func() error { return uc.checkCapabilities(ctx, auth, apps) },
+		func() error { return uc.checkSharedMounts(ctx, auth, create, apps) },
+		func() error { return uc.checkPublishedPorts(ctx, apps) },
+		func() error { return uc.checkDomains(ctx, create, apps) },
+	}
+
+	issues := make([]*apptemplatedto.PreflightIssueRes, 0, len(checks))
+	for _, check := range checks {
+		err := check()
+		if err == nil {
+			continue
+		}
+		var hpErr hperrors.HPError
+		if !errors.As(err, &hpErr) {
+			// Not a refusal but a failure - a database that could not be read.
+			// Reporting it as the caller's problem would be a lie, so the whole
+			// check fails and the screen goes on to create, which raises it
+			// properly.
+			return nil, hperrors.Wrap(err)
+		}
+		info := hpErr.Build(req.Lang)
+		issues = append(issues, &apptemplatedto.PreflightIssueRes{Code: info.Code, Detail: info.Detail})
+	}
+	return issues, nil
 }
 
 func storageResults(findings []*storageFinding) []*apptemplatedto.PreflightStorageRes {

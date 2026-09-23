@@ -36,6 +36,9 @@ func (h *Handler) PreflightAppFromTemplate(ctx *gin.Context) {
 	req := apptemplatedto.NewPreflightAppFromTemplateReq()
 	req.ProjectID = projectID
 	req.ProjectEnvID = projectEnvID
+	// The issues are the refusals the creation would raise, so they are worded
+	// the way that refusal would have been.
+	req.Lang = h.ParseRequestLang(ctx)
 	if err = h.ParseAndValidateJSONBody(ctx, req); err != nil {
 		h.RenderError(ctx, err)
 		return

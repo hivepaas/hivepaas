@@ -3,6 +3,7 @@ package apptemplatedto
 import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/translation"
 )
 
 // PreflightAppFromTemplateReq is the create request, asked about rather than
@@ -10,6 +11,10 @@ import (
 // than the one that follows checks nothing.
 type PreflightAppFromTemplateReq struct {
 	CreateAppFromTemplateReq
+
+	// Lang is what the issues are worded in. They are the same refusals the
+	// creation would raise, so they are translated the same way.
+	Lang translation.Lang `json:"-"`
 }
 
 func NewPreflightAppFromTemplateReq() *PreflightAppFromTemplateReq {
@@ -42,6 +47,20 @@ type PreflightAppRe struct {
 	// "nothing was seen" reads exactly like one that means "there is nothing
 	// there", and the second is the one that lets a deploy walk into old data.
 	StorageUnchecked []*PreflightStorageRes `json:"storageUnchecked"`
+
+	// Issues are the refusals the creation would raise: a domain already served,
+	// a published port already held, permission the caller does not have. They
+	// are reported together rather than one at a time, because a dialog that
+	// says "and also" three times is three round trips through the same form.
+	Issues []*PreflightIssueRes `json:"issues"`
+}
+
+type PreflightIssueRes struct {
+	// Code is the error the creation would fail with, for a screen that wants to
+	// act on a particular one.
+	Code string `json:"code"`
+	// Detail is the sentence that refusal carries, in the caller's language.
+	Detail string `json:"detail"`
 }
 
 type PreflightStorageRes struct {

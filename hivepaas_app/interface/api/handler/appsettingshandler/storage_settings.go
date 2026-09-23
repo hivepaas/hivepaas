@@ -86,3 +86,42 @@ func (h *Handler) UpdateAppStorageSettings(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, resp)
 }
+
+// PreflightAppStorageSettings Reports which mounts being added already hold data
+// @Summary Reports which mounts being added already hold data
+// @Description Reports which of the mounts about to be saved reach a directory that already holds data.
+// @Tags    app_settings
+// @Produce json
+// @Id      preflightAppStorageSettings
+// @Param   projectID path string true "project ID"
+// @Param   projectEnv path string true "project env"
+// @Param   appID path string true "app ID"
+// @Param   body body appsettingsdto.PreflightAppStorageSettingsReq true "request data"
+// @Success 200 {object} appsettingsdto.PreflightAppStorageSettingsResp
+// @Failure 400 {object} hperrors.ErrorInfo
+// @Failure 500 {object} hperrors.ErrorInfo
+// @Router  /projects/{projectID}/{projectEnv}/apps/{appID}/storage-settings/preflight [post]
+func (h *Handler) PreflightAppStorageSettings(ctx *gin.Context) {
+	auth, projectID, projectEnvID, appID, err := h.GetAuth(ctx, base.ActionTypeWrite)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	req := appsettingsdto.NewPreflightAppStorageSettingsReq()
+	req.ProjectID = projectID
+	req.ProjectEnvID = projectEnvID
+	req.AppID = appID
+	if err := h.ParseAndValidateJSONBody(ctx, req); err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	resp, err := h.appSettingsUC.PreflightAppStorageSettings(h.RequestCtx(ctx), auth, req)
+	if err != nil {
+		h.RenderError(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, resp)
+}

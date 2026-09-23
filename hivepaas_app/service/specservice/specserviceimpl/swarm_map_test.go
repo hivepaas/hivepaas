@@ -26,6 +26,14 @@ func testService() *swarm.Service {
 					Mounts: []mount.Mount{
 						{Type: mount.TypeVolume, Source: "vol_1", Target: "/var/lib/postgresql/data"},
 						{Type: mount.TypeBind, Source: "/srv/conf", Target: "/etc/app/config"},
+						{
+							Type: mount.TypeVolume, Source: "hp-shared", Target: "/shared",
+							VolumeOptions: &mount.VolumeOptions{Subpath: "project_a/dev/backend/cache"},
+						},
+						{
+							Type: mount.TypeTmpfs, Target: "/dev/shm",
+							TmpfsOptions: &mount.TmpfsOptions{SizeBytes: 64 << 20},
+						},
 					},
 				},
 				Networks: []swarm.NetworkAttachmentConfig{
@@ -41,8 +49,7 @@ func testService() *swarm.Service {
 }
 
 func TestMapSwarmServiceStripsTheImageDigest(t *testing.T) {
-	out, err := mapSwarmService(testService(), nil)
-	assert.NoError(t, err)
+	out := mapSwarmService(testService(), nil)
 	assert.Equal(t, "ghcr.io/acme/api:1.4.2", out.Container.Image,
 		"a digest pins an image that may not exist in the target registry")
 }
@@ -50,38 +57,14 @@ func TestMapSwarmServiceStripsTheImageDigest(t *testing.T) {
 func TestMapSwarmServiceKeepsAnImageWithNoDigest(t *testing.T) {
 	svc := testService()
 	svc.Spec.TaskTemplate.ContainerSpec.Image = "crccheck/hello-world:latest"
-	out, err := mapSwarmService(svc, nil)
-	assert.NoError(t, err)
+	out := mapSwarmService(svc, nil)
 	assert.Equal(t, "crccheck/hello-world:latest", out.Container.Image)
 }
 
-func TestMapSwarmServiceKeysMountsByTarget(t *testing.T) {
-	out, err := mapSwarmService(testService(), nil)
-	assert.NoError(t, err)
-
-	assert.Len(t, out.Storage.Mounts, 2)
-	assert.Equal(t, "vol_1", out.Storage.Mounts["/var/lib/postgresql/data"].Source)
-	assert.Equal(t, "/srv/conf", out.Storage.Mounts["/etc/app/config"].Source)
-	assert.Equal(t, mount.TypeBind, out.Storage.Mounts["/etc/app/config"].Type)
-}
-
-// Nothing upstream validates that two mounts do not share a target, so this is
-// the only thing holding the invariant a future snapshot pins data to.
-func TestMapSwarmServiceRefusesDuplicateMountTargets(t *testing.T) {
-	svc := testService()
-	svc.Spec.TaskTemplate.ContainerSpec.Mounts = []mount.Mount{
-		{Type: mount.TypeVolume, Source: "vol_1", Target: "/data"},
-		{Type: mount.TypeVolume, Source: "vol_2", Target: "/data"},
-	}
-	_, err := mapSwarmService(svc, nil)
-	assert.Error(t, err)
-}
-
 func TestMapSwarmServiceResolvesNetworkNames(t *testing.T) {
-	out, err := mapSwarmService(testService(), map[string]string{
+	out := mapSwarmService(testService(), map[string]string{
 		"8vo4p3pwm1aksdu2ilryn8mpf": "p1_dev_net",
 	})
-	assert.NoError(t, err)
 	assert.Len(t, out.Networks.Attachments, 1)
 	assert.Equal(t, "p1_dev_net", out.Networks.Attachments[0].Name)
 	assert.Equal(t, []string{"api"}, out.Networks.Attachments[0].Aliases)
@@ -91,35 +74,30 @@ func TestMapSwarmServiceResolvesNetworkNames(t *testing.T) {
 // the id rather than dropped, so import can report it rather than lose the
 // attachment silently.
 func TestMapSwarmServiceKeepsUnresolvedNetworkIDs(t *testing.T) {
-	out, err := mapSwarmService(testService(), nil)
-	assert.NoError(t, err)
+	out := mapSwarmService(testService(), nil)
 	assert.Equal(t, "8vo4p3pwm1aksdu2ilryn8mpf", out.Networks.Attachments[0].Name)
 }
 
 func TestMapSwarmServiceDropsDerivedPlacement(t *testing.T) {
-	out, err := mapSwarmService(testService(), nil)
-	assert.NoError(t, err)
+	out := mapSwarmService(testService(), nil)
 	assert.Equal(t, []string{"node.labels.zone == eu"}, out.Service.Placement.Constraints,
 		"node.role == manager was added by HivePaaS and is regenerated")
 }
 
 func TestMapSwarmServiceKeepsOnlyUserLabels(t *testing.T) {
-	out, err := mapSwarmService(testService(), nil)
-	assert.NoError(t, err)
+	out := mapSwarmService(testService(), nil)
 	assert.Equal(t, map[string]string{"team": "platform"}, out.Container.ServiceLabels)
 }
 
 func TestMapSwarmServiceHandlesAServiceWithNoContainerSpec(t *testing.T) {
 	svc := testService()
 	svc.Spec.TaskTemplate.ContainerSpec = nil
-	out, err := mapSwarmService(svc, nil)
-	assert.NoError(t, err)
+	out := mapSwarmService(svc, nil)
 	assert.Nil(t, out.Container)
 	assert.Nil(t, out.Storage)
 }
 
 func TestMapSwarmServiceIsNilForNoService(t *testing.T) {
-	out, err := mapSwarmService(nil, nil)
-	assert.NoError(t, err)
+	out := mapSwarmService(nil, nil)
 	assert.Nil(t, out)
 }

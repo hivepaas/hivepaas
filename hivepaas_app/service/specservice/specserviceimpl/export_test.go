@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
 
 // The fakes embed the real interfaces, so a method the exporter starts calling
@@ -113,6 +115,25 @@ func (f *fakeClusterService) ServiceInspect(
 	return nil, notFoundError{}
 }
 
+// fakeExportVolumeService answers DescribeAppMounts from a table keyed by mount
+// target, which is all export asks of volumeservice.
+type fakeExportVolumeService struct {
+	volumeservice.Service
+	descs map[string]*volumeservice.AppMountDesc
+}
+
+func (f *fakeExportVolumeService) DescribeAppMounts(
+	_ context.Context, _ database.IDB, _ *entity.App, mounts []mount.Mount,
+) ([]*volumeservice.AppMountDesc, error) {
+	out := make([]*volumeservice.AppMountDesc, len(mounts))
+	for i := range mounts {
+		if out[i] = f.descs[mounts[i].Target]; out[i] == nil {
+			out[i] = &volumeservice.AppMountDesc{}
+		}
+	}
+	return out, nil
+}
+
 type notFoundError struct{}
 
 func (notFoundError) Error() string { return "service not found" }
@@ -160,6 +181,19 @@ func exportFixture(t *testing.T) specservice.Service {
 	}
 	assert.NoError(t, apiKey.SetData(&entity.APIKey{KeyID: "abc"}))
 
+	// The project's own volume, which the export holds, and a volume sync
+	// discovered at global scope, which it never does.
+	projectVolume := &entity.Setting{
+		ID: "vol_setting_1", Type: base.SettingTypeClusterVolume, Scope: base.ObjectScopeProject,
+		ObjectID: "p1", Name: "default", Status: base.SettingStatusActive,
+	}
+	assert.NoError(t, projectVolume.SetData(&entity.ClusterVolume{Managed: true}))
+	sharedVolume := &entity.Setting{
+		ID: "gvol_1", Type: base.SettingTypeClusterVolume, Scope: base.ObjectScopeGlobal,
+		Name: "shared", Status: base.SettingStatusActive,
+	}
+	assert.NoError(t, sharedVolume.SetData(&entity.ClusterVolume{}))
+
 	settingRepo := &fakeSettingRepo{}
 
 	proj := &entity.Project{
@@ -182,7 +216,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		ProjectEnvID: "p1:dev", ParentID: "app_1",
 	}
 
-	all := []*entity.Setting{cert, apiKey, routing, secret}
+	all := []*entity.Setting{cert, apiKey, routing, secret, projectVolume, sharedVolume}
 
 	svc := New(
 		&fakeAppRepo{apps: []*entity.App{deployed, undeployed, preview}},
@@ -190,7 +224,10 @@ func exportFixture(t *testing.T) specservice.Service {
 		&fakeProjectRepo{projects: []*entity.Project{proj, hive}},
 		settingRepo,
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
-		nil,
+		&fakeExportVolumeService{descs: map[string]*volumeservice.AppMountDesc{
+			"/var/lib/postgresql/data": {AppKey: "backend", Own: true, Subpath: "data", VolumeID: "vol_setting_1"},
+			"/shared":                  {AppKey: "backend", Own: true, Subpath: "cache", VolumeID: "gvol_1"},
+		}},
 	)
 
 	// The seam does what the repository's SQL would: return the settings this

@@ -9,7 +9,6 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
-	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
@@ -18,16 +17,18 @@ import (
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
-// mapSwarmService turns a live Swarm service into the declarative part of it.
+// mapSwarmService turns a live Swarm service into the declarative part of it,
+// storage aside: which volume a mount reaches is a question for the database,
+// and mapAppStorage answers it.
 //
 // netNames maps Docker network id to name; an id with no entry is kept as-is,
 // so an unresolved attachment is reported by import rather than lost here.
 func mapSwarmService(
 	svc *swarm.Service,
 	netNames map[string]string,
-) (*specmodel.Deployment, error) {
+) *specmodel.Deployment {
 	if svc == nil {
-		return nil, nil
+		return nil
 	}
 	spec := &svc.Spec
 	task := &spec.TaskTemplate
@@ -37,17 +38,10 @@ func mapSwarmService(
 		Networks:  mapNetworks(task, spec.EndpointSpec, netNames),
 		Service:   mapService(spec, task),
 	}
-
 	if cs := task.ContainerSpec; cs != nil {
 		out.Container = mapContainer(cs, task, spec.Labels)
-
-		storage, err := mapStorage(cs)
-		if err != nil {
-			return nil, hperrors.Wrap(err)
-		}
-		out.Storage = storage
 	}
-	return out, nil
+	return out
 }
 
 // stripImageDigest removes the @sha256:… suffix docker stack deploy resolves an
@@ -237,22 +231,6 @@ func mapCapabilities(cs *swarm.ContainerSpec) *specmodel.Capabilities {
 		return nil
 	}
 	return out
-}
-
-func mapStorage(cs *swarm.ContainerSpec) (*specmodel.Storage, error) {
-	if len(cs.Mounts) == 0 {
-		return nil, nil
-	}
-	mounts := make(map[string]specmodel.Mount, len(cs.Mounts))
-	for i := range cs.Mounts {
-		m := &cs.Mounts[i]
-		if _, exists := mounts[m.Target]; exists {
-			return nil, hperrors.Wrap(hperrors.ErrSpecMountTargetDuplicated).
-				WithParam("Target", m.Target)
-		}
-		mounts[m.Target] = mapMount(m)
-	}
-	return &specmodel.Storage{Mounts: mounts}, nil
 }
 
 func mapMount(m *mount.Mount) specmodel.Mount {

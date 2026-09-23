@@ -4,6 +4,8 @@ import (
 	"context"
 	"sort"
 
+	"github.com/moby/moby/api/types/swarm"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -60,7 +62,7 @@ func (s *service) buildBundle(
 	}
 
 	// Pass two: write the documents.
-	if err = s.writeDocs(ctx, req, tree, netNames, index, bundle); err != nil {
+	if err = s.writeDocs(ctx, db, req, tree, netNames, index, bundle); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 
@@ -234,6 +236,7 @@ func (s *service) gatherEnv(
 
 func (s *service) writeDocs(
 	ctx context.Context,
+	db database.IDB,
 	req *specservice.ExportReq,
 	tree *exportTree,
 	netNames map[string]string,
@@ -257,7 +260,7 @@ func (s *service) writeDocs(
 	for _, projUnit := range tree.projects {
 		envNames := make([]string, 0, len(projUnit.envs))
 		for _, envUnit := range projUnit.envs {
-			if err := s.writeEnvDoc(ctx, req, projUnit, envUnit, netNames, index, bundle); err != nil {
+			if err := s.writeEnvDoc(ctx, db, req, projUnit, envUnit, netNames, index, bundle); err != nil {
 				return hperrors.Wrap(err)
 			}
 			envNames = append(envNames, envUnit.env.Key+".yaml")
@@ -286,6 +289,7 @@ func (s *service) writeDocs(
 
 func (s *service) writeEnvDoc(
 	ctx context.Context,
+	db database.IDB,
 	req *specservice.ExportReq,
 	projUnit *projectUnit,
 	env *envUnit,
@@ -295,7 +299,10 @@ func (s *service) writeEnvDoc(
 ) error {
 	appDocs := map[string]*specmodel.AppDoc{}
 	for _, app := range env.apps {
-		doc, err := s.buildAppDoc(ctx, req, app, netNames, index, bundle.Report)
+		// Where an app's directory is inside a volume depends on its project and
+		// environment, which the app row alone does not carry.
+		app.app.Project, app.app.ProjectEnv = projUnit.project, env.env
+		doc, err := s.buildAppDoc(ctx, db, req, app, netNames, index, bundle.Report)
 		if err != nil {
 			return hperrors.Wrap(err)
 		}
@@ -322,6 +329,7 @@ func (s *service) writeEnvDoc(
 
 func (s *service) buildAppDoc(
 	ctx context.Context,
+	db database.IDB,
 	req *specservice.ExportReq,
 	app *appUnit,
 	netNames map[string]string,
@@ -353,7 +361,7 @@ func (s *service) buildAppDoc(
 		delete(assembled, sourceBlock)
 	}
 
-	if err = s.addSwarmBlocks(ctx, app.app, app.unit.path, netNames, deployment, report); err != nil {
+	if err = s.addSwarmBlocks(ctx, db, app.app, app.unit.path, netNames, index, deployment, report); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	if deployment.Source != nil || deployment.Container != nil {
@@ -371,9 +379,11 @@ func (s *service) buildAppDoc(
 // why, rather than the export failing.
 func (s *service) addSwarmBlocks(
 	ctx context.Context,
+	db database.IDB,
 	app *entity.App,
 	scopePath string,
 	netNames map[string]string,
+	index *refIndex,
 	deployment *specmodel.Deployment,
 	report *specmodel.Report,
 ) error {
@@ -403,19 +413,65 @@ func (s *service) addSwarmBlocks(
 		return nil //nolint:nilerr // reported rather than raised; see above
 	}
 
-	mapped, err := mapSwarmService(svc, netNames)
-	if err != nil {
-		return hperrors.Wrap(err)
-	}
+	mapped := mapSwarmService(svc, netNames)
 	if mapped == nil {
 		return nil
 	}
+	storage, err := s.mapStorageOf(ctx, db, app, svc, index)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
 	deployment.Container = mapped.Container
 	deployment.Resources = mapped.Resources
-	deployment.Storage = mapped.Storage
+	deployment.Storage = storage
 	deployment.Networks = mapped.Networks
 	deployment.Service = mapped.Service
 	return nil
+}
+
+// mapStorageOf reads an app's mounts back into what built them. volumeservice
+// says which volume and whose directory each one reaches - the same answer the
+// storage screen shows - and each volume is named the way the bundle can: by
+// its path when the export holds it, by an external reference when it does not.
+func (s *service) mapStorageOf(
+	ctx context.Context,
+	db database.IDB,
+	app *entity.App,
+	svc *swarm.Service,
+	index *refIndex,
+) (*specmodel.Storage, error) {
+	task := &svc.Spec.TaskTemplate
+	if task.ContainerSpec == nil || len(task.ContainerSpec.Mounts) == 0 {
+		return nil, nil
+	}
+	descs, err := s.volumeService.DescribeAppMounts(ctx, db, app, task.ContainerSpec.Mounts)
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+
+	type volumeName struct {
+		path     string
+		external *specmodel.ExternalRef
+	}
+	names := map[string]volumeName{}
+	for _, desc := range descs {
+		if desc == nil || desc.VolumeID == "" {
+			continue
+		}
+		if _, done := names[desc.VolumeID]; done {
+			continue
+		}
+		name := volumeName{path: index.paths[desc.VolumeID]}
+		if name.path == "" {
+			if name.external, err = s.externalRef(ctx, db, index, desc.VolumeID); err != nil {
+				return nil, hperrors.Wrap(err)
+			}
+		}
+		names[desc.VolumeID] = name
+	}
+	return mapAppStorage(task, descs, func(volumeID string) (string, *specmodel.ExternalRef) {
+		return names[volumeID].path, names[volumeID].external
+	})
 }
 
 // loadNetworkNames maps Docker network id to name.
@@ -527,6 +583,29 @@ func (s *service) indexExternalRefs(
 		index.addExternal(setting)
 	}
 	return nil
+}
+
+// externalRef is the external reference for one setting the export does not
+// hold, loaded the first time it is asked for. It is nil when no such setting
+// exists. Volumes need it one at a time: which ones are mounted is learned only
+// from the services, after the settings' external references were registered.
+func (s *service) externalRef(
+	ctx context.Context,
+	db database.IDB,
+	index *refIndex,
+	id string,
+) (*specmodel.ExternalRef, error) {
+	if ref := index.external[id]; ref != nil {
+		return ref, nil
+	}
+	settings, err := s.loadByIDs(ctx, db, []string{id})
+	if err != nil {
+		return nil, hperrors.Wrap(err)
+	}
+	for _, setting := range settings {
+		index.addExternal(setting)
+	}
+	return index.external[id], nil
 }
 
 func (s *service) projectsInScope(

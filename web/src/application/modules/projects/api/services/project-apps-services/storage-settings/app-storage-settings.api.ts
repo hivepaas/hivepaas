@@ -6,6 +6,8 @@ import { BaseApi, parseApiError } from "@infrastructure/api";
 import {
     type AppStorageSettings_FindOne_Req,
     type AppStorageSettings_FindOne_Res,
+    type AppStorageSettings_Preflight_Req,
+    type AppStorageSettings_Preflight_Res,
     type AppStorageSettings_UpdateOne_Req,
     type AppStorageSettings_UpdateOne_Res,
 } from "./app-storage-settings.api.contracts";
@@ -50,6 +52,29 @@ export class AppStorageSettingsApi extends BaseApi {
                 }),
             ).pipe(
                 map(() => Ok({ data: { type: "success" } } as const)),
+                catchError(error => of(Err(parseApiError(error)))),
+            ),
+        );
+    }
+
+    /**
+     * Which of the mounts about to be saved reach a directory that already holds
+     * something. It writes nothing.
+     */
+    async preflight(
+        req: AppStorageSettings_Preflight_Req,
+        signal?: AbortSignal,
+    ): Promise<Result<AppStorageSettings_Preflight_Res, Error>> {
+        const { projectID, env, appID, payload } = req.data;
+
+        return lastValueFrom(
+            from(
+                this.client.v1.post(`/projects/${projectID}/${env}/apps/${appID}/storage-settings/preflight`, payload, {
+                    signal,
+                }),
+            ).pipe(
+                map(this.validator.preflight),
+                map(res => Ok(res)),
                 catchError(error => of(Err(parseApiError(error)))),
             ),
         );

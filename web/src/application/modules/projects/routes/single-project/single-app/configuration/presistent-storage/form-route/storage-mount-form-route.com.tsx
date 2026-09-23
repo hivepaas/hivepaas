@@ -1,6 +1,9 @@
+import { useState } from "react";
+
 import { dashedBorderBox } from "@lib/styles";
 import { cn } from "@lib/utils";
 import { toast } from "sonner";
+import type { AppStorageFinding } from "~/projects/api/services";
 import { AppStorageSettingsCommands, AppStorageSettingsQueries } from "~/projects/data";
 import { APP_CONFIGURATION_QUERY_OPTIONS } from "~/projects/data/constants";
 import { StorageMountForm } from "~/projects/dialogs/storage-mount/form";
@@ -12,6 +15,8 @@ import { AppLoader, RouteFormHeader } from "@application/shared/components";
 import { MODULE_IDS, ROUTE } from "@application/shared/constants";
 import { useAppNavigate } from "@application/shared/hooks/router";
 import { useConditionalModule } from "@application/shared/permissions";
+
+import { StorageInUseDialog } from "../building-blocks";
 
 type StorageMountWithId = AppStorageMount & { _id: string };
 
@@ -37,6 +42,10 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
     );
 
     const { mutateAsync: update, isPending } = AppStorageSettingsCommands.useUpdateOne();
+    const { mutateAsync: preflight, isPending: isChecking } = AppStorageSettingsCommands.usePreflight();
+
+    // Held while the operator answers for what is already in that directory.
+    const [inUse, setInUse] = useState<{ mounts: AppStorageMount[]; findings: AppStorageFinding[] } | null>(null);
 
     const mountsWithIds = buildMountsWithIds(appData?.data.mounts ?? []);
     const mount = isEditMode ? mountsWithIds.find(item => item._id === mountId) : undefined;
@@ -50,51 +59,54 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
         );
     }
 
+    async function save(mounts: AppStorageMount[], resetStorage: boolean) {
+        try {
+            await update({
+                projectID: projectId,
+                env,
+                appID: appId,
+                payload: {
+                    mounts,
+                    updateVer: appData?.data.updateVer ?? 0,
+                    resetStorage: resetStorage || undefined,
+                },
+            });
+            setInUse(null);
+            toast.success(isEditMode ? "Storage mount updated" : "Storage mount added");
+            navigateToList();
+        } catch {
+            // Error notification is handled by useAppStorageSettingsApi via notifyError
+        }
+    }
+
     async function handleSubmit(values: StorageMountFormOutput) {
         if (!canWrite) {
             return;
         }
 
         const existingMounts = appData?.data.mounts ?? [];
-        const updateVer = appData?.data.updateVer ?? 0;
-
-        try {
-            if (isEditMode) {
-                if (!mountId) {
-                    return;
-                }
-
-                const remainingMounts = mountsWithIds
-                    .filter(item => item._id !== mountId)
-                    .map(({ _id, ...item }) => item);
-
-                await update({
-                    projectID: projectId,
-                    env,
-                    appID: appId,
-                    payload: {
-                        mounts: [...remainingMounts, formValuesToMount(values)],
-                        updateVer,
-                    },
-                });
-                toast.success("Storage mount updated");
-            } else {
-                await update({
-                    projectID: projectId,
-                    env,
-                    appID: appId,
-                    payload: {
-                        mounts: [...existingMounts, formValuesToMount(values)],
-                        updateVer,
-                    },
-                });
-                toast.success("Storage mount added");
-            }
-
-            navigateToList();
-        } catch {
-            // Error notification is handled by useAppStorageSettingsApi via notifyError
+        const keptMounts = isEditMode
+            ? mountsWithIds.filter(item => item._id !== mountId).map(({ _id, ...item }) => item)
+            : existingMounts;
+        if (isEditMode && !mountId) {
+            return;
         }
+        const mounts = [...keptMounts, formValuesToMount(values)];
+
+        // What is already in the directory this mount would reach. The check is
+        // advisory: one that cannot answer must not stop a save that would have
+        // worked.
+        try {
+            const findings = await preflight({ projectID: projectId, env, appID: appId, payload: { mounts } });
+            if (findings.data.length > 0) {
+                setInUse({ mounts, findings: findings.data });
+                return;
+            }
+        } catch {
+            // Fall through to saving, which reports its own failures.
+        }
+
+        await save(mounts, false);
     }
 
     if (isLoading) {
@@ -113,7 +125,7 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
                 projectId={projectId}
                 env={env}
                 appId={appId}
-                isPending={isPending}
+                isPending={isPending || isChecking}
                 isEditMode={isEditMode}
                 defaultValues={mount ? mountToFormInput(mount) : undefined}
                 onSubmit={values => void handleSubmit(values)}
@@ -126,6 +138,22 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
                     Otherwise, your apps may not function properly.
                 </div>
             </StorageMountForm>
+
+            <StorageInUseDialog
+                open={inUse !== null}
+                findings={inUse?.findings ?? []}
+                isPending={isPending}
+                onOpenChange={nextOpen => {
+                    if (!nextOpen) {
+                        setInUse(null);
+                    }
+                }}
+                onConfirm={resetStorage => {
+                    if (inUse) {
+                        void save(inUse.mounts, resetStorage);
+                    }
+                }}
+            />
         </div>
     );
 }

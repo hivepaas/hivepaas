@@ -1,7 +1,12 @@
 import { type UseMutationOptions, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useAppStorageSettingsApi } from "../../../api/hooks/project-apps";
-import { type AppStorageSettings_UpdateOne_Req, type AppStorageSettings_UpdateOne_Res } from "../../../api/services";
+import {
+    type AppStorageSettings_Preflight_Req,
+    type AppStorageSettings_Preflight_Res,
+    type AppStorageSettings_UpdateOne_Req,
+    type AppStorageSettings_UpdateOne_Res,
+} from "../../../api/services";
 
 import { invalidateSingleAppConfigurationQueries } from "./app-configuration-cache.helpers";
 
@@ -26,6 +31,21 @@ function useUpdateOne({ onSuccess, ...options }: UpdateOneOptions = {}) {
     });
 }
 
+type PreflightReq = AppStorageSettings_Preflight_Req["data"];
+type PreflightRes = AppStorageSettings_Preflight_Res;
+type PreflightOptions = Omit<UseMutationOptions<PreflightRes, Error, PreflightReq>, "mutationFn">;
+
+/** Asks what saving would land on. It writes nothing, so it invalidates nothing. */
+function usePreflight(options: PreflightOptions = {}) {
+    const { mutations } = useAppStorageSettingsApi();
+
+    return useMutation({
+        mutationFn: mutations.preflight,
+        ...options,
+    });
+}
+
 export const AppStorageSettingsCommands = Object.freeze({
+    usePreflight,
     useUpdateOne,
 });

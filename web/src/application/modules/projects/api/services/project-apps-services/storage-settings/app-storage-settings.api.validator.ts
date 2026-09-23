@@ -4,7 +4,10 @@ import { EMountConsistency, EMountPropagation, EMountType } from "~/projects/mod
 
 import { BaseMetaApiSchema, parseApiResponse } from "@infrastructure/api";
 
-import { type AppStorageSettings_FindOne_Res } from "./app-storage-settings.api.contracts";
+import {
+    type AppStorageSettings_FindOne_Res,
+    type AppStorageSettings_Preflight_Res,
+} from "./app-storage-settings.api.contracts";
 
 const VolumeDriverSchema = z.object({
     name: z.string().optional(),
@@ -83,12 +86,32 @@ const AppStorageSettingsSchema = z.object({
     updateVer: z.number(),
 });
 
+const PreflightSchema = z.object({
+    data: z.object({
+        storage: z
+            .array(
+                z.object({
+                    target: z.string().catch(""),
+                    volume: z.object({ id: z.string().catch(""), name: z.string().catch("") }),
+                    path: z.string().catch(""),
+                }),
+            )
+            .nullish(),
+    }),
+    meta: BaseMetaApiSchema.nullish(),
+});
+
 const FindOneSchema = z.object({
     data: AppStorageSettingsSchema,
     meta: BaseMetaApiSchema.nullable(),
 });
 
 export class AppStorageSettingsApiValidator {
+    preflight = (response: AxiosResponse): AppStorageSettings_Preflight_Res => {
+        const { data, meta } = parseApiResponse({ response, schema: PreflightSchema });
+        return { data: data.storage ?? [], meta };
+    };
+
     findOne = (response: AxiosResponse): AppStorageSettings_FindOne_Res => {
         const { data, meta } = parseApiResponse({ response, schema: FindOneSchema });
         return {

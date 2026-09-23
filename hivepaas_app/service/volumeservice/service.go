@@ -48,6 +48,12 @@ type Service interface {
 	// runs.
 	RemoveAppStorage(ctx context.Context, db database.IDB, app *entity.App, mounts []mount.Mount) error
 
+	// InspectAppStorage reports whether the directories apps would be given
+	// already hold something. It reads only, and answers about an app's own
+	// directory inside a volume rather than about the volume.
+	InspectAppStorage(ctx context.Context, db database.IDB, req *InspectAppStorageReq) (
+		*InspectAppStorageResp, error)
+
 	RemoveVolume(ctx context.Context, volumeID string, force bool, retryMax int, retryDelay time.Duration) error
 
 	// RemoveVolumeInCluster removes a volume on the node its data is on.

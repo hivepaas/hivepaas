@@ -128,3 +128,52 @@ type AppMountDesc struct {
 	// Subpath is what the request had asked for below that app's directory.
 	Subpath string
 }
+
+// InspectAppStorageReq asks about the directories a set of apps would be given.
+//
+// The apps need not exist: a template is answered for before anything is
+// created, which is the whole point of asking.
+type InspectAppStorageReq struct {
+	// Scope is what the volumes are looked up in - the env the apps belong to.
+	Scope   *entity.ObjectScope
+	Queries []*AppStorageQuery
+}
+
+type AppStorageQuery struct {
+	// AppKey is what the answer is reported under.
+	AppKey string
+	// App carries the keys the directory's name is built from: the app's own, its
+	// env's, and its project's. It need not be saved.
+	App *entity.App
+	// VolumeID is the cluster-volume setting the mount names.
+	VolumeID string
+	// Subpath is what the mount asked for below the app's own directory, if
+	// anything.
+	Subpath string
+}
+
+type InspectAppStorageResp struct {
+	States []*AppStorageState
+}
+
+// AppStorageState is one app's directory in one volume.
+//
+// Checked says whether this node could look at all. It is false for storage
+// pinned to another node, and a caller must not read Exists or Empty as an
+// answer when it is: nothing was seen, which is not the same as nothing there.
+type AppStorageState struct {
+	AppKey     string
+	VolumeID   string
+	VolumeName string
+	// Path is the directory inside the volume, as the app would be given it.
+	Path    string
+	Checked bool
+	Exists  bool
+	Empty   bool
+}
+
+// HasData reports the one thing callers act on: this directory is there and
+// something is in it.
+func (s *AppStorageState) HasData() bool {
+	return s != nil && s.Checked && s.Exists && !s.Empty
+}

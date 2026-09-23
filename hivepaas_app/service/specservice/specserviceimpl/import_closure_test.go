@@ -152,3 +152,30 @@ func TestPlanAtAnEnvRouteResolvesTheProjectsSettingsOnTheTarget(t *testing.T) {
 	assert.ElementsMatch(t, []string{"deployment.storage", "settings.routing"}, backend.Changes)
 	assert.Empty(t, backend.Issues)
 }
+
+// An app selected in a project the target lacks brings its project's and env's
+// records, and not their settings.
+func TestPlanCreatesTheRecordsASelectedAppNeeds(t *testing.T) {
+	svc, bundle := planFixture(t)
+	other, err := readBundle(exportedBytes(t, specmodel.SecretsModeOmit, ""), "")
+	assert.NoError(t, err)
+	project := other.Projects["project_a"]
+	project.ID, project.Name = "", "Project New"
+	for _, app := range other.Envs["project_a"]["dev"].Apps {
+		app.ID = ""
+	}
+	bundle.Projects["project_new"] = project
+	bundle.Envs["project_new"] = other.Envs["project_a"]
+
+	p := plan(t, svc, bundle, specmodel.ImportOptions{}, "projects/project_new/envs/dev/apps/frontend")
+
+	for _, path := range []string{"projects/project_new", "projects/project_new/envs/dev"} {
+		record := node(t, p, path)
+		assert.True(t, record.Selected, path)
+		assert.Equal(t, selectedByDependency, record.SelectedBy, path)
+		assert.Equal(t, specmodel.ActionCreate, record.Action, path)
+	}
+	assert.False(t, node(t, p, "projects/project_new/settings").Selected)
+	assert.False(t, node(t, p, "projects/project_new/envs/dev/settings").Selected)
+	assert.False(t, node(t, p, "projects/project_new/envs/dev/apps/backend").Selected)
+}

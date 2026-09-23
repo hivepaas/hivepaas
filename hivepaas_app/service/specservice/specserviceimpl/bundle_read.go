@@ -161,7 +161,8 @@ func parseBundleFiles(files map[string][]byte) (*specmodel.ImportBundle, error) 
 				return nil, err
 			}
 			bundle.Projects[parts[1]] = doc
-		case len(parts) == 4 && parts[0] == projectsSegment && parts[2] == "envs" && strings.HasSuffix(parts[3], ".yaml"):
+		case len(parts) == 4 && parts[0] == projectsSegment && parts[2] == envsSegment &&
+			strings.HasSuffix(parts[3], ".yaml"):
 			doc := &specmodel.EnvDoc{}
 			if err := parseDoc(name, content, doc); err != nil {
 				return nil, err

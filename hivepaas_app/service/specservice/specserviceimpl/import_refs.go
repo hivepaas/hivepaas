@@ -206,7 +206,7 @@ func parseRefPath(path string) (refTarget, bool) {
 		t.project, rest = segments[1], segments[2:]
 		scope := projectsSegment + "/" + t.project
 		t.node = scope + "/settings"
-		if len(rest) >= 3 && rest[0] == "envs" {
+		if len(rest) >= 3 && rest[0] == envsSegment {
 			t.env, rest = rest[1], rest[2:]
 			scope += "/envs/" + t.env
 			t.node = scope + "/settings"

@@ -186,8 +186,12 @@ func (s *service) currentState(
 // globalFilenameStem is the global node's path, as global.yaml is its file.
 const globalFilenameStem = "global"
 
-// projectsSegment begins the path of every project, and of everything in one.
-const projectsSegment = "projects"
+// projectsSegment begins the path of every project, and of everything in one;
+// envsSegment follows a project's key in the path of its envs.
+const (
+	projectsSegment = "projects"
+	envsSegment     = "envs"
+)
 
 type planner struct {
 	s      *service
@@ -255,7 +259,40 @@ func (p *planner) plan(ctx context.Context) error {
 	for _, node := range p.nodes {
 		p.applyExisting(node)
 	}
-	return p.resolveRefs(ctx)
+	if err := p.resolveRefs(ctx); err != nil {
+		return err
+	}
+	p.selectAncestors()
+	return nil
+}
+
+// selectAncestors creates the records of the projects and envs a selected node
+// needs and the target lacks: the record, not its settings (§1).
+func (p *planner) selectAncestors() {
+	for _, node := range p.nodes {
+		if !node.Selected || node.Action == specmodel.ActionSkip {
+			continue
+		}
+		for _, path := range ancestorRecords(node.Path) {
+			ancestor := p.byPath[path]
+			if ancestor != nil && !ancestor.Selected && ancestor.Action == specmodel.ActionCreate {
+				ancestor.Selected, ancestor.SelectedBy = true, selectedByDependency
+			}
+		}
+	}
+}
+
+// ancestorRecords are the paths of the project and env nodes above a node.
+func ancestorRecords(path string) []string {
+	segments := strings.Split(path, "/")
+	var out []string
+	if len(segments) > 2 && segments[0] == projectsSegment {
+		out = append(out, strings.Join(segments[:2], "/"))
+	}
+	if len(segments) > 4 && segments[2] == envsSegment {
+		out = append(out, strings.Join(segments[:4], "/"))
+	}
+	return out
 }
 
 func (p *planner) planProject(ctx context.Context, key string) error {

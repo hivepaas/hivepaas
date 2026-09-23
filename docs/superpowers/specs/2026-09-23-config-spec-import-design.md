@@ -64,8 +64,9 @@ writing source ids.
   "make what the bundle describes true", not "return to the state at export
   time".
 - **The `hivepaas` project**, which export never writes.
-- **Users, roles, ACLs, volume data and history**, which export does not carry. A
-  project created by import is owned by the operator importing it.
+- **Users, roles, ACLs, volume data and history**, which export does not carry.
+  A project's owner is the exception: it travels as a reference to a user, and is
+  resolved on import (§4).
 - **Background import.** Apply runs in the request; §8 says why.
 - **Import at app scope.** An app is imported at its env, by selecting it.
 
@@ -304,6 +305,7 @@ becomes an issue. Closure (§5) never reaches outside the route.
 - The two gates template creation applies: granting capabilities needs Write on
   the cluster module, and a mount reaching another app's storage needs Write on
   that app (§6).
+- The gate project update applies to changing an existing project's owner (§4).
 
 ### Errors
 
@@ -340,6 +342,26 @@ source does match by id, and correctly: they are the same objects.
 collection block gains a top-level `id`. Env ids are derived, so `EnvDoc` needs
 none. No exported setting type has a top-level `id` in its data today -
 `BackupSnapshot` does, and export skips it - and a test keeps it that way.
+`ProjectDoc` also gains `owner: { id, email }`. The email is not a secret, so it is
+written in every secrets mode, including `omit`.
+
+**The project owner** is a user, and users do not travel, so it is resolved:
+
+1. the user with the owner's `id`;
+2. otherwise the user with the owner's `email` - emails are unique among users
+   who are not deleted (`idx_uq_users_email`), and `GetByEmail` compares them
+   lowercased;
+3. otherwise the operator importing, with note `OWNER_NOT_FOUND`.
+
+A candidate counts only if it is an active user, as project update requires of a
+new owner; a disabled or pending one falls through to the next step. On the
+installation that produced the bundle the id finds the owner even if their email
+changed since; elsewhere the email finds the same person under another id.
+
+A new project gets the resolved owner. An existing one is given it only if the
+operator may change the owner by hand - an admin, the current owner, or Write on
+the Project module, the gate project update applies. Otherwise the owner stays,
+and the project takes `OWNER_NOT_PERMITTED`.
 
 **Rules**
 
@@ -449,6 +471,7 @@ says what import did, and needs no acceptance.
 | `REF_NOT_SELECTED` | fixable | a reference to a bundle object that is not selected and that the target lacks | reference cleared | `pending` |
 | `REF_NOT_FOUND` | fixable | a reference to something neither in the bundle nor on the target | reference cleared | `pending` |
 | `SECRET_OMITTED` | fixable | §7 | secret left empty | `pending` |
+| `OWNER_NOT_PERMITTED` | fixable | an existing project's resolved owner differs, and the operator may not change owners (§4) | owner kept | `active` |
 | `NODE_NOT_FOUND` | fixable | a `cluster-volume` pinned to a node the target lacks | pin dropped | `active` |
 | `DOMAIN_IN_USE` | fixable | a domain another app has reserved | domain dropped | `active` |
 | `PORT_IN_USE` | fixable | a published port another service holds | port dropped | `active` |
@@ -463,6 +486,8 @@ Notes:
 
 - `CREDENTIAL_KEPT` - an app's kind credential stays the target's (§7).
 - `SECRET_GENERATED` - a created object's omitted secret was generated (§7).
+- `OWNER_NOT_FOUND` - no active user has the owner's id or email, so the
+  operator importing owns the project (§4).
 
 ### Values tied to an installation
 
@@ -531,9 +556,10 @@ Then it runs three phases.
    already do.
 2. Global settings.
 3. Projects. A new one is created through `projectservice` exactly as the
-   dashboard creates one, defaults included, and the bundle's project settings
-   are then matched against those defaults by key and update them - the default
-   notification, the webhook. An existing one gets its name and note.
+   dashboard creates one, defaults included, owned by the owner resolved in §4,
+   and the bundle's project settings are then matched against those defaults by
+   key and update them - the default notification, the webhook. An existing one
+   gets its name and note, and its owner under the gate in §4.
 4. Envs: their rows, built as project update builds them, then their settings.
 5. Apps. New ones go through `appprovisionservice.ProvisionApps`, which creates
    their Swarm services inside the transaction and, with `deployCreated`, their
@@ -673,8 +699,8 @@ picking it again, which is the price of the server keeping nothing.
 
 | where | change |
 |---|---|
-| `specmodel` | ids on `ProjectDoc`, `AppDoc` and collection entries; `SeverityWarning`; the issue codes; the selection, options, plan and node types |
-| `specserviceimpl` | writing ids; the target export for validate; matching, diff, closure, issues and `planHash`; the three apply phases; the extended builder registry and `CheckImportable`; import policies; the document halves of the template checks |
+| `specmodel` | ids on `ProjectDoc`, `AppDoc` and collection entries; `owner` on `ProjectDoc`; `SeverityWarning`; the issue codes; the selection, options, plan and node types |
+| `specserviceimpl` | writing ids and the project owner; the target export for validate; owner resolution; matching, diff, closure, issues and `planHash`; the three apply phases; the extended builder registry and `CheckImportable`; import policies; the document halves of the template checks |
 | `specservice` | `ValidateImport` and `ApplyImport` |
 | `specuc` | the import usecases, with their permissions and audit |
 | `spechandler`, routers | six routes, and the body limit |
@@ -701,6 +727,11 @@ picking it again, which is the price of the server keeping nothing.
 - **Matching.** A setting renamed since the export is updated, not duplicated. A
   bundle without ids is matched by key. A project whose key was edited in the
   bundle is `KEY_MISMATCH`, and the original is untouched.
+- **Project owner.** Found by id even after their email changed; found by email,
+  in another case, when the id is unknown; neither gives the operator importing,
+  with `OWNER_NOT_FOUND`. A disabled user found by id falls through. An existing
+  project whose owner would change, imported by somebody who may not change
+  owners, keeps its owner with `OWNER_NOT_PERMITTED`.
 - **App-kind credentials survive a round trip.** Export an encrypted bundle and
   import it again: the credential is byte-identical. Delete the app, create it
   again with the same key, and import: `CREDENTIAL_KEPT`, and the new app's
@@ -743,11 +774,11 @@ picking it again, which is the price of the server keeping nothing.
 
 Three plans, each shippable without the next:
 
-1. **Foundations**, with no change anybody can see. Export writes ids. The
-   document halves of the template checks move to `specservice`, and project
-   defaults and env rows move to `projectservice`. The builder registry grows to
-   cover export, with `CheckImportable`, builders that replace rather than
-   append, and the round-trip and coverage tests.
+1. **Foundations**, with no change anybody can see. Export writes ids and the
+   project owner. The document halves of the template checks move to
+   `specservice`, and project defaults and env rows move to `projectservice`.
+   The builder registry grows to cover export, with `CheckImportable`, builders
+   that replace rather than append, and the round-trip and coverage tests.
 2. **Import**: `ValidateImport` and `ApplyImport`, the usecases, handlers and
    routes, the errors and the audit type.
 3. **Dashboard**: the import screens.

@@ -2,14 +2,17 @@ package specserviceimpl
 
 import (
 	"testing"
+	"time"
 
 	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+	"github.com/hivepaas/hivepaas/services/docker"
 )
 
 func blankTask() *swarm.TaskSpec {
@@ -112,4 +115,71 @@ func TestDockerMountRoundTrip(t *testing.T) {
 			assert.Equal(t, m, toDockerMount(m.Target, mapMount(&m)))
 		})
 	}
+}
+
+func TestContainerRoundTrip(t *testing.T) {
+	grace, delay := timeutil.Duration(20*time.Second), timeutil.Duration(5*time.Second)
+	attempts := uint64(3)
+	want := &specmodel.Container{
+		ServiceLabels:   map[string]string{"team": "platform"},
+		ContainerLabels: map[string]string{"tier": "db"},
+		Image:           "placeholder",
+		Hostname:        "db", User: "999", Groups: []string{"audio"}, StopSignal: "SIGINT",
+		TTY: true, Init: new(true), OpenStdin: true, ReadOnly: true, StopGracePeriod: &grace,
+		Privileges: &specmodel.Privileges{
+			NoNewPrivileges: true,
+			SELinuxContext:  &specmodel.SELinuxContext{Type: "container_t"},
+			Seccomp:         &specmodel.SeccompOpts{Mode: swarm.SeccompModeUnconfined},
+			AppArmor:        &specmodel.AppArmorOpts{Mode: swarm.AppArmorModeDisabled},
+		},
+		Healthcheck: &specmodel.Healthcheck{Enabled: true, Mode: docker.HealthcheckModeCmdShell,
+			Command: "pg_isready", Interval: timeutil.Duration(10 * time.Second), Retries: 5},
+		RestartPolicy: &specmodel.RestartPolicy{Condition: swarm.RestartPolicyConditionOnFailure,
+			Delay: &delay, MaxAttempts: &attempts},
+		LogDriver: &specmodel.LogDriver{Name: "json-file", Options: map[string]string{"max-size": "10m"}},
+	}
+	spec := blankSpec()
+	spec.TaskTemplate.ContainerSpec.Image = "placeholder"
+
+	assert.NoError(t, applyContainer(want, spec))
+
+	assert.Equal(t, want, mapContainer(spec.TaskTemplate.ContainerSpec, &spec.TaskTemplate, spec.Labels))
+}
+
+// The image changes only through a deployment, and labels HivePaaS put on the
+// service stay whatever the document says.
+func TestContainerKeepsTheImageAndHivePaaSLabels(t *testing.T) {
+	spec := blankSpec()
+	spec.Labels = map[string]string{"hivepaas.app.info": "x", "team": "old"}
+	spec.TaskTemplate.ContainerSpec.Image = "registry/app:running"
+
+	assert.NoError(t, applyContainer(&specmodel.Container{Image: "registry/app:exported",
+		ServiceLabels: map[string]string{"team": "new"}}, spec))
+
+	assert.Equal(t, "registry/app:running", spec.TaskTemplate.ContainerSpec.Image)
+	assert.Equal(t, map[string]string{"hivepaas.app.info": "x", "team": "new"}, spec.Labels)
+}
+
+// Left out, the block clears the container back to what HivePaaS creates an app
+// with: HivePaaS's log driver, no healthcheck of its own.
+func TestContainerLeftOutIsCleared(t *testing.T) {
+	spec := blankSpec()
+	assert.NoError(t, applyContainer(&specmodel.Container{Hostname: "x", User: "1",
+		Healthcheck: &specmodel.Healthcheck{Enabled: true, Command: "true"}}, spec))
+
+	assert.NoError(t, applyContainer(nil, spec))
+
+	cs := spec.TaskTemplate.ContainerSpec
+	assert.Empty(t, cs.Hostname)
+	assert.Empty(t, cs.User)
+	assert.Nil(t, cs.Healthcheck)
+	assert.NotNil(t, spec.TaskTemplate.LogDriver)
+}
+
+// NONE turns the image's own healthcheck off, which is not the same as leaving
+// the image's healthcheck on.
+func TestHealthcheckNoneStaysOff(t *testing.T) {
+	cs := &swarm.ContainerSpec{}
+	assert.NoError(t, applyHealthcheck(&specmodel.Healthcheck{Mode: docker.HealthcheckModeNone}, cs))
+	assert.Equal(t, []string{"NONE"}, cs.Healthcheck.Test)
 }

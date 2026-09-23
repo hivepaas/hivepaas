@@ -39,22 +39,25 @@ func (s *service) buildSource(_ context.Context, state *buildState) error {
 	return state.addSetting(base.SettingTypeAppDeployment, entity.CurrentAppDeploymentSettingsVersion, true, source)
 }
 
-// buildHealthcheck writes a healthcheck in the form docker runs it. CMD is an
+func (s *service) buildHealthcheck(_ context.Context, state *buildState) error {
+	return applyHealthcheck(state.req.Doc.Deployment.Container.Healthcheck,
+		state.req.Spec.TaskTemplate.ContainerSpec)
+}
+
+// applyHealthcheck writes a healthcheck in the form docker runs it. CMD is an
 // argv, so its command is split; CMD-SHELL is one string handed to the shell,
 // so its command is not. A mode left empty means CMD-SHELL, which is what a
-// template author writing a shell command expects.
+// template author writing a shell command expects. NONE turns the image's own
+// healthcheck off, where no healthcheck at all leaves the image's.
 //
 // The container settings screen splits a CMD-SHELL command too, and docker then
 // hands the shell only its first word: `sh -c pg_isready -U app` runs pg_isready
 // with no arguments. That is a bug to fix there, not a behavior to copy here.
-func (s *service) buildHealthcheck(_ context.Context, state *buildState) error {
-	check := state.req.Doc.Deployment.Container.Healthcheck
-	containerSpec := state.req.Spec.TaskTemplate.ContainerSpec
-	if !check.Enabled {
+func applyHealthcheck(check *specmodel.Healthcheck, containerSpec *swarm.ContainerSpec) error {
+	if check == nil || (!check.Enabled && check.Mode != docker.HealthcheckModeNone) {
 		containerSpec.Healthcheck = nil
 		return nil
 	}
-
 	var test []string
 	switch check.Mode {
 	case docker.HealthcheckModeCmd:
@@ -71,7 +74,6 @@ func (s *service) buildHealthcheck(_ context.Context, state *buildState) error {
 		return invalidBlock(specmodel.BlockContainerHealthcheck, "mode %q is not one of CMD, CMD-SHELL, NONE",
 			check.Mode)
 	}
-
 	containerSpec.Healthcheck = &container.HealthConfig{
 		Test:          test,
 		Interval:      time.Duration(check.Interval),

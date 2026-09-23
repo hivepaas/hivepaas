@@ -3,8 +3,10 @@ package specserviceimpl
 import (
 	"context"
 	"maps"
+	"net/netip"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/moby/moby/api/types/container"
@@ -204,23 +206,63 @@ func buildCapabilities(capabilities *specmodel.Capabilities, task *swarm.TaskSpe
 // docker would refuse it while creating the service, too late to say which port
 // somebody asked for.
 func (s *service) buildNetworks(_ context.Context, state *buildState) error {
-	endpointSpec := state.req.Doc.Deployment.Networks.EndpointSpec
-	if endpointSpec == nil {
-		return nil
+	return applyNetworks(state.req.Doc.Deployment.Networks, state.req.Spec)
+}
+
+// applyNetworks writes the networks block the way the network settings screen
+// does, replacing what the spec held - except the attachments, which change only
+// when the block names some: the network an app is created on is HivePaaS's to
+// give, and a template never names it.
+func applyNetworks(n *specmodel.Networks, spec *swarm.ServiceSpec) error {
+	if n == nil {
+		n = &specmodel.Networks{}
 	}
-	spec := state.req.Spec
-	if spec.EndpointSpec == nil {
-		spec.EndpointSpec = &swarm.EndpointSpec{}
+	task := &spec.TaskTemplate
+	if len(n.Attachments) > 0 {
+		task.Networks = make([]swarm.NetworkAttachmentConfig, 0, len(n.Attachments))
+		for _, attachment := range n.Attachments {
+			if attachment == nil {
+				continue
+			}
+			task.Networks = append(task.Networks, swarm.NetworkAttachmentConfig{
+				Target: attachment.Name, Aliases: slices.Clone(attachment.Aliases),
+			})
+		}
 	}
-	spec.EndpointSpec.Mode = endpointSpec.Mode
-	spec.EndpointSpec.Ports = make([]swarm.PortConfig, 0, len(endpointSpec.Ports))
-	for _, port := range endpointSpec.Ports {
-		spec.EndpointSpec.Ports = append(spec.EndpointSpec.Ports, swarm.PortConfig{
-			TargetPort:    port.Target,
-			PublishedPort: port.Published,
-			Protocol:      port.Protocol,
-			PublishMode:   port.PublishMode,
-		})
+
+	cs := task.ContainerSpec
+	cs.Hosts = nil
+	for _, entry := range n.HostsFileEntries {
+		if entry == nil {
+			continue
+		}
+		cs.Hosts = append(cs.Hosts, strings.Join(append([]string{entry.Address}, entry.Hostnames...), " "))
+	}
+
+	cs.DNSConfig = nil
+	if dns := n.DNSConfig; dns != nil {
+		cs.DNSConfig = &swarm.DNSConfig{Search: slices.Clone(dns.Search), Options: slices.Clone(dns.Options)}
+		for _, address := range dns.Nameservers {
+			parsed, err := netip.ParseAddr(address)
+			if err != nil {
+				return invalidBlock(specmodel.BlockDeploymentNetworks, "dnsConfig: %q is not an address", address)
+			}
+			cs.DNSConfig.Nameservers = append(cs.DNSConfig.Nameservers, parsed)
+		}
+	}
+
+	spec.EndpointSpec = nil
+	if endpointSpec := n.EndpointSpec; endpointSpec != nil {
+		spec.EndpointSpec = &swarm.EndpointSpec{Mode: endpointSpec.Mode}
+		for _, port := range endpointSpec.Ports {
+			if port == nil {
+				continue
+			}
+			spec.EndpointSpec.Ports = append(spec.EndpointSpec.Ports, swarm.PortConfig{
+				TargetPort: port.Target, PublishedPort: port.Published,
+				Protocol: port.Protocol, PublishMode: port.PublishMode,
+			})
+		}
 	}
 	return nil
 }

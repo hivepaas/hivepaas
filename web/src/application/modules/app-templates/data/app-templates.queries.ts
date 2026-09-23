@@ -22,7 +22,7 @@ import {
     type ListAppTemplatesFilter,
     type ListAppTemplatesResponse,
     type ListEnvAppsParams,
-    type PreflightStorageFinding,
+    type PreflightResult,
     appTemplatesApi,
 } from "../api";
 
@@ -120,8 +120,8 @@ export function useGetAppTemplateImageTags(
  * and its findings are what the deploy dialog warns about before it creates.
  */
 export function usePreflightAppFromTemplate(
-    options?: Omit<UseMutationOptions<PreflightStorageFinding[], Error, CreateAppFromTemplateReq>, "mutationFn">,
-): UseMutationResult<PreflightStorageFinding[], Error, CreateAppFromTemplateReq> {
+    options?: Omit<UseMutationOptions<PreflightResult, Error, CreateAppFromTemplateReq>, "mutationFn">,
+): UseMutationResult<PreflightResult, Error, CreateAppFromTemplateReq> {
     return useMutation({
         mutationFn: (req: CreateAppFromTemplateReq) => appTemplatesApi.preflightAppFromTemplate(req),
         ...options,

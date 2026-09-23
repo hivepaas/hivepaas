@@ -97,9 +97,16 @@ export function StorageMountFormRoute({ mode, projectId, env, appId, mountId }: 
         // advisory: one that cannot answer must not stop a save that would have
         // worked.
         try {
-            const findings = await preflight({ projectID: projectId, env, appID: appId, payload: { mounts } });
-            if (findings.data.length > 0) {
-                setInUse({ mounts, findings: findings.data });
+            const result = await preflight({ projectID: projectId, env, appID: appId, payload: { mounts } });
+            // Storage nothing could be seen of is said out loud rather than read
+            // as "there is nothing there".
+            if (result.data.unchecked.length > 0) {
+                toast.warning("Could not check what is already in that storage.", {
+                    description: "If this app ran here before, its data is still in place.",
+                });
+            }
+            if (result.data.storage.length > 0) {
+                setInUse({ mounts, findings: result.data.storage });
                 return;
             }
         } catch {

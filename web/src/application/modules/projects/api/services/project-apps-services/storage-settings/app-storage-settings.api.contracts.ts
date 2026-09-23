@@ -35,4 +35,11 @@ export type AppStorageSettings_Preflight_Req = ApiRequestBase<{
     appID: string;
     payload: { mounts: AppStorageSettings["mounts"] };
 }>;
-export type AppStorageSettings_Preflight_Res = ApiResponseBase<AppStorageFinding[]>;
+export type AppStorageSettings_Preflight_Res = ApiResponseBase<{
+    storage: AppStorageFinding[];
+    /**
+     * Storage nothing could be seen of, usually a node that could not be
+     * reached. Not the same as there being nothing there.
+     */
+    unchecked: AppStorageFinding[];
+}>;

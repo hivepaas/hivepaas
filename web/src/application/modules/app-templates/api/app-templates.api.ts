@@ -258,7 +258,18 @@ export interface PreflightStorageFinding {
 
 export interface PreflightAppFromTemplateResp {
     meta?: unknown;
-    data: { storage: PreflightStorageFinding[] };
+    data: { storage: PreflightStorageFinding[]; storageUnchecked?: PreflightStorageFinding[] };
+}
+
+/** What the preflight saw, and what it could not see. */
+export interface PreflightResult {
+    storage: PreflightStorageFinding[];
+    /**
+     * Storage nothing could be seen of, usually a node that could not be
+     * reached. Not the same as there being nothing there, which is why it is
+     * reported rather than dropped.
+     */
+    unchecked: PreflightStorageFinding[];
 }
 
 export interface CreateAppFromTemplateResp {
@@ -391,10 +402,7 @@ export class AppTemplatesApi extends BaseApi {
      * What creating this request would run into, without creating anything: which
      * of its apps would be given a directory that already holds data.
      */
-    async preflightAppFromTemplate(
-        req: CreateAppFromTemplateReq,
-        signal?: AbortSignal,
-    ): Promise<PreflightStorageFinding[]> {
+    async preflightAppFromTemplate(req: CreateAppFromTemplateReq, signal?: AbortSignal): Promise<PreflightResult> {
         try {
             const { projectID, projectEnv, ...body } = req;
             const res = await this.client.v1.post<PreflightAppFromTemplateResp>(
@@ -402,7 +410,10 @@ export class AppTemplatesApi extends BaseApi {
                 body,
                 { signal },
             );
-            return res.data.data.storage;
+            return {
+                storage: res.data.data.storage,
+                unchecked: res.data.data.storageUnchecked ?? [],
+            };
         } catch (error) {
             throw parseApiError(error);
         }

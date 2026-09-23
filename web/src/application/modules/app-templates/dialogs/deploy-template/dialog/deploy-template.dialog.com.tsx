@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
     type CreateAppFromTemplateReq,
     type CreateAppFromTemplateResp,
+    type PreflightResult,
     type PreflightStorageFinding,
 } from "../../../api";
 import { useCreateAppFromTemplate, useGetAppTemplate, usePreflightAppFromTemplate } from "../../../data";
@@ -80,12 +81,20 @@ export function DeployTemplateDialog() {
     } | null>(null);
 
     const { mutate: preflight, isPending: isChecking } = usePreflightAppFromTemplate({
-        onSuccess: (findings: PreflightStorageFinding[], values: CreateAppFromTemplateReq) => {
-            if (findings.length === 0) {
+        onSuccess: (result: PreflightResult, values: CreateAppFromTemplateReq) => {
+            // Storage nothing could be seen of is said out loud rather than read
+            // as "there is nothing there": that reading is what lets a deploy
+            // land on a database whose password nobody has any more.
+            if (result.unchecked.length > 0) {
+                toast.warning(`Could not check the storage of ${result.unchecked.map(item => item.app).join(", ")}.`, {
+                    description: "If these apps ran here before, their data is still in place.",
+                });
+            }
+            if (result.storage.length === 0) {
                 createAppFromTemplate(values);
                 return;
             }
-            setInUse({ values, findings });
+            setInUse({ values, findings: result.storage });
         },
         // The check is advisory. One that cannot answer must not stop a creation
         // that would have worked: the creation reports its own failures.

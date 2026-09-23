@@ -86,17 +86,16 @@ const AppStorageSettingsSchema = z.object({
     updateVer: z.number(),
 });
 
+const StorageFindingSchema = z.object({
+    target: z.string().catch(""),
+    volume: z.object({ id: z.string().catch(""), name: z.string().catch("") }),
+    path: z.string().catch(""),
+});
+
 const PreflightSchema = z.object({
     data: z.object({
-        storage: z
-            .array(
-                z.object({
-                    target: z.string().catch(""),
-                    volume: z.object({ id: z.string().catch(""), name: z.string().catch("") }),
-                    path: z.string().catch(""),
-                }),
-            )
-            .nullish(),
+        storage: z.array(StorageFindingSchema).nullish(),
+        storageUnchecked: z.array(StorageFindingSchema).nullish(),
     }),
     meta: BaseMetaApiSchema.nullish(),
 });
@@ -109,7 +108,7 @@ const FindOneSchema = z.object({
 export class AppStorageSettingsApiValidator {
     preflight = (response: AxiosResponse): AppStorageSettings_Preflight_Res => {
         const { data, meta } = parseApiResponse({ response, schema: PreflightSchema });
-        return { data: data.storage ?? [], meta };
+        return { data: { storage: data.storage ?? [], unchecked: data.storageUnchecked ?? [] }, meta };
     };
 
     findOne = (response: AxiosResponse): AppStorageSettings_FindOne_Res => {

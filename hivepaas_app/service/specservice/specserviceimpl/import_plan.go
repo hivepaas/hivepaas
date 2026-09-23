@@ -46,6 +46,9 @@ func (s *service) planImport(
 	req *specservice.ValidateImportReq,
 	bundle *specmodel.ImportBundle,
 ) (*specmodel.ImportPlan, error) {
+	// What the route may not write can still be what a reference names, so the
+	// bundle as uploaded is kept beside the part that is planned.
+	full := *bundle
 	if err := s.restrictToScope(ctx, db, req.Scope, bundle); err != nil {
 		return nil, err
 	}
@@ -59,8 +62,13 @@ func (s *service) planImport(
 	}
 
 	p := &planner{
-		s: s, db: db, req: req, bundle: bundle, current: current,
-		envOnly: req.Scope.ScopeType == base.ObjectScopeProjectEnv,
+		s: s, db: db, req: req, bundle: bundle, full: &full, current: current,
+		envOnly:     req.Scope.ScopeType == base.ObjectScopeProjectEnv,
+		byPath:      map[string]*specmodel.PlanNode{},
+		settingsOf:  map[string]map[string]any{},
+		apps:        map[string]appPlace{},
+		lookupScope: map[string]*entity.ObjectScope{},
+		pulled:      map[string][]string{},
 	}
 	if err = p.plan(ctx); err != nil {
 		return nil, err
@@ -182,30 +190,57 @@ const globalFilenameStem = "global"
 const projectsSegment = "projects"
 
 type planner struct {
-	s       *service
-	db      database.IDB
-	req     *specservice.ValidateImportReq
-	bundle  *specmodel.ImportBundle
+	s      *service
+	db     database.IDB
+	req    *specservice.ValidateImportReq
+	bundle *specmodel.ImportBundle
+	// full is the bundle before it was restricted to the route's scope.
+	full    *specmodel.ImportBundle
 	current *specmodel.ImportBundle
 	nodes   []*specmodel.PlanNode
+	byPath  map[string]*specmodel.PlanNode
+	// settingsOf is the bundle's settings each node holds, by its path.
+	settingsOf map[string]map[string]any
+	// apps is where each app node's document sits in the bundle.
+	apps map[string]appPlace
+	// lookupScope is the scope on this installation a node sees settings from:
+	// its own when it exists here, else its nearest ancestor's that does.
+	lookupScope map[string]*entity.ObjectScope
+	// pulled names, by node path, the settings closure pulled into a node.
+	pulled map[string][]string
 	// envOnly is an env route's plan: its project is matched, never planned.
 	envOnly bool
 	// missing names, by node path, the settings the target does not have at all.
 	missing map[string][]string
 }
 
+// appPlace is where an app's document sits in the bundle.
+type appPlace struct {
+	project, env string
+	doc          *specmodel.AppDoc
+}
+
+// Who selected a node.
+const (
+	selectedByUser       = "user"
+	selectedByDependency = "dependency"
+)
+
 func (p *planner) add(node *specmodel.PlanNode) *specmodel.PlanNode {
 	node.Selected = p.req.Selection.Selects(node.Path)
 	if node.Selected {
-		node.SelectedBy = "user"
+		node.SelectedBy = selectedByUser
 	}
 	p.nodes = append(p.nodes, node)
+	p.byPath[node.Path] = node
 	return node
 }
 
 func (p *planner) plan(ctx context.Context) error {
 	if p.bundle.Global != nil {
 		node := p.add(&specmodel.PlanNode{Path: globalFilenameStem, Kind: specmodel.NodeKindGlobal})
+		p.settingsOf[node.Path] = p.bundle.Global.Settings
+		p.lookupScope[node.Path] = entity.NewObjectScopeGlobal()
 		var current map[string]any
 		if p.current.Global != nil {
 			current = p.current.Global.Settings
@@ -220,7 +255,7 @@ func (p *planner) plan(ctx context.Context) error {
 	for _, node := range p.nodes {
 		p.applyExisting(node)
 	}
-	return nil
+	return p.resolveRefs(ctx)
 }
 
 func (p *planner) planProject(ctx context.Context, key string) error {
@@ -231,6 +266,10 @@ func (p *planner) planProject(ctx context.Context, key string) error {
 	if err != nil {
 		return err
 	}
+	scope := entity.NewObjectScopeGlobal()
+	if target != nil {
+		scope = entity.NewObjectScopeProject(target.ID)
+	}
 	if p.envOnly {
 		for _, envKey := range slices.Sorted(maps.Keys(p.bundle.Envs[key])) {
 			if err = p.planEnv(ctx, key, envKey, target); err != nil {
@@ -240,6 +279,8 @@ func (p *planner) planProject(ctx context.Context, key string) error {
 		return nil
 	}
 	node := p.add(&specmodel.PlanNode{Path: path, Kind: specmodel.NodeKindProject, Key: key, Name: doc.Name})
+	p.lookupScope[path], p.lookupScope[path+"/settings"] = scope, scope
+	p.settingsOf[path+"/settings"] = doc.Settings
 	var skip *specmodel.Issue
 	switch {
 	case target != nil && target.Key != key:
@@ -332,6 +373,16 @@ func (p *planner) planEnv(ctx context.Context, projectKey, envKey string, projec
 		}
 		env = found
 	}
+	scope := entity.NewObjectScopeGlobal()
+	switch {
+	case env != nil:
+		scope = entity.NewObjectScopeProjectEnv(project.ID, envKey)
+	case project != nil:
+		scope = entity.NewObjectScopeProject(project.ID)
+	}
+	p.lookupScope[path], p.lookupScope[path+"/settings"] = scope, scope
+	p.settingsOf[path+"/settings"] = doc.Settings
+
 	var current *specmodel.EnvDoc
 	if env == nil {
 		node.Action = specmodel.ActionCreate
@@ -349,6 +400,10 @@ func (p *planner) planEnv(ctx context.Context, projectKey, envKey string, projec
 	p.settingsNode(settingsNode, "", doc.Settings, currentSettings, env != nil)
 
 	for _, appKey := range slices.Sorted(maps.Keys(doc.Apps)) {
+		appPath := path + "/apps/" + appKey
+		p.apps[appPath] = appPlace{project: projectKey, env: envKey, doc: doc.Apps[appKey]}
+		p.settingsOf[appPath] = doc.Apps[appKey].Settings
+		p.lookupScope[appPath] = scope
 		if err := p.planApp(ctx, path, appKey, doc.Apps[appKey], project, env, current); err != nil {
 			return err
 		}

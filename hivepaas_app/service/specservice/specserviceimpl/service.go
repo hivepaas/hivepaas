@@ -9,6 +9,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
 
@@ -38,6 +39,7 @@ func New(
 	}
 	svc.loadOwned = svc.loadOwnedFromRepo
 	svc.loadByIDs = svc.loadByIDsFromRepo
+	svc.findRef = svc.findRefInRepo
 	return svc
 }
 
@@ -62,6 +64,16 @@ type settingLoader func(
 // for the reason settingLoader is: a test double cannot read bunex options.
 type settingsByIDLoader func(ctx context.Context, db database.IDB, ids []string) ([]*entity.Setting, error)
 
+// refFinder finds the setting an external reference names, as a scope sees
+// settings: by id, then by type, name and kind. It answers nil when nothing
+// matches. It is a seam for the reason settingLoader is.
+type refFinder func(
+	ctx context.Context,
+	db database.IDB,
+	scope *entity.ObjectScope,
+	ref *specmodel.ExternalRef,
+) (*entity.Setting, error)
+
 type service struct {
 	appRepo        repository.AppRepo
 	projectEnvRepo repository.ProjectEnvRepo
@@ -73,4 +85,5 @@ type service struct {
 
 	loadOwned settingLoader
 	loadByIDs settingsByIDLoader
+	findRef   refFinder
 }

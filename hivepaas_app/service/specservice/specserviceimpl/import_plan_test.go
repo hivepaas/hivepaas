@@ -3,6 +3,7 @@ package specserviceimpl
 import (
 	"context"
 	"maps"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,15 +27,26 @@ func planFixture(t *testing.T) (*service, *specmodel.ImportBundle) {
 	return svc, bundle
 }
 
+// plan plans a bundle at global scope. Each selector includes a path, or
+// excludes it when it begins with "-".
 func plan(
 	t *testing.T, svc *service, bundle *specmodel.ImportBundle, options specmodel.ImportOptions,
+	selectors ...string,
 ) *specmodel.ImportPlan {
 	t.Helper()
 	if options.Existing == "" {
 		options.Existing = specmodel.ExistingUpdate
 	}
+	selection := specmodel.Selection{}
+	for _, selector := range selectors {
+		if excluded, ok := strings.CutPrefix(selector, "-"); ok {
+			selection.Exclude = append(selection.Exclude, excluded)
+		} else {
+			selection.Include = append(selection.Include, selector)
+		}
+	}
 	out, err := svc.planImport(context.Background(), nil, &specservice.ValidateImportReq{
-		Scope: entity.NewObjectScopeGlobal(), Options: options,
+		Scope: entity.NewObjectScopeGlobal(), Options: options, Selection: selection,
 	}, bundle)
 	assert.NoError(t, err)
 	return out

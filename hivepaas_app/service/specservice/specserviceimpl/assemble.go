@@ -93,13 +93,16 @@ func assembleSettings(
 	return out, nil
 }
 
+// settingMetaName is the key the row's name is written under.
+const settingMetaName = "name"
+
 // settingMeta is a setting's row as a bundle carries it. It is a map rather than
 // the struct so that it sits in the body like the data beside it, and so that
 // only what is set is written.
 func settingMeta(setting *entity.Setting) map[string]any {
 	meta := map[string]any{"status": string(setting.Status), "version": setting.Version}
 	for key, value := range map[string]string{
-		"name": setting.Name, "kind": setting.Kind, "refId": setting.RefID,
+		settingMetaName: setting.Name, "kind": setting.Kind, "refId": setting.RefID,
 	} {
 		if value != "" {
 			meta[key] = value

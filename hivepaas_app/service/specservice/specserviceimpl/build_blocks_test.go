@@ -3,6 +3,7 @@ package specserviceimpl
 import (
 	"testing"
 
+	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/network"
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
@@ -93,4 +94,22 @@ func TestNetworksRefuseANameserverThatIsNotAnAddress(t *testing.T) {
 	dns := &specmodel.DNSConfig{Nameservers: []string{"dns.example"}}
 	err := applyNetworks(&specmodel.Networks{DNSConfig: dns}, blankSpec())
 	assert.Error(t, err)
+}
+
+// A Docker mount travels as Docker holds it, so building one is mapMount read
+// backwards.
+func TestDockerMountRoundTrip(t *testing.T) {
+	for name, m := range map[string]mount.Mount{
+		"a bind": {Type: mount.TypeBind, Source: "/etc/localtime", Target: "/etc/localtime", ReadOnly: true,
+			BindOptions: &mount.BindOptions{Propagation: mount.PropagationRSlave, CreateMountpoint: true}},
+		"a tmpfs": {Type: mount.TypeTmpfs, Target: "/cache",
+			TmpfsOptions: &mount.TmpfsOptions{SizeBytes: 64 << 20, Mode: 0o1777}},
+		"a volume mounted whole": {Type: mount.TypeVolume, Source: "shared", Target: "/shared",
+			VolumeOptions: &mount.VolumeOptions{NoCopy: true, Labels: map[string]string{"a": "b"},
+				DriverConfig: &mount.Driver{Name: "local", Options: map[string]string{"type": "nfs"}}}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, m, toDockerMount(m.Target, mapMount(&m)))
+		})
+	}
 }

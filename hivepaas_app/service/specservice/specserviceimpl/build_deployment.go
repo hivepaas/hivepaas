@@ -4,6 +4,7 @@ import (
 	"context"
 	"maps"
 	"net/netip"
+	"os"
 	"slices"
 	"strconv"
 	"strings"
@@ -268,32 +269,38 @@ func applyNetworks(n *specmodel.Networks, spec *swarm.ServiceSpec) error {
 }
 
 // buildStorage hands the mounts to volumeservice, which builds them the way the
-// storage settings screen does.
-//
-// A mount's source here is a cluster-volume setting id. An export writes docker's
-// source there instead - the volume name, or a host path once a bind volume was
-// rewritten - which is why storage is left out of the export round-trip test.
-// TODO: app templates phase 2 - map one onto the other before merging mounts.
-// See docs/superpowers/specs/2026-09-17-app-templates-design.md §12.
+// storage screen does. A managed mount's source is a cluster-volume setting id:
+// a template names one, and import has resolved an exported volume to one before
+// building. A Docker mount is kept as it is.
 func (s *service) buildStorage(ctx context.Context, state *buildState) error {
-	mounts := state.req.Doc.Deployment.Storage.Mounts
-	requests := make([]*volumeservice.AppMountReq, 0, len(mounts))
-	for _, target := range slices.Sorted(maps.Keys(mounts)) {
-		m := mounts[target]
-		// Options are always set: volumeservice applies the app's own subpath only
-		// to a volume mount that carries them, and a mount without would share the
-		// volume's root with every other app on it.
-		options := &volumeservice.AppMountVolumeOptions{}
-		if m.VolumeOptions != nil {
-			options.Subpath = m.VolumeOptions.Subpath
-			options.NoCopy = m.VolumeOptions.NoCopy
-		}
+	storage := state.req.Doc.Deployment.Storage
+	if storage == nil {
+		storage = &specmodel.Storage{}
+	}
+	requests := make([]*volumeservice.AppMountReq, 0, len(storage.Mounts))
+	for _, target := range slices.Sorted(maps.Keys(storage.Mounts)) {
+		m := storage.Mounts[target]
 		req := &volumeservice.AppMountReq{
-			Type:          m.Type,
-			Source:        m.Source,
-			Target:        target,
-			ReadOnly:      m.ReadOnly,
-			VolumeOptions: options,
+			Type:        m.Type,
+			Source:      m.Source,
+			Target:      target,
+			ReadOnly:    m.ReadOnly,
+			Consistency: m.Consistency,
+		}
+		// Options are always set: volumeservice applies the app's own subpath only
+		// to a mount that carries them, and a mount without would share the
+		// volume's root with every other app on it.
+		opts, given := &volumeservice.AppMountVolumeOptions{}, m.VolumeOptions
+		if m.Type == mount.TypeCluster {
+			given = m.ClusterOptions
+		}
+		if given != nil {
+			opts.Subpath, opts.NoCopy = given.Subpath, given.NoCopy
+		}
+		if m.Type == mount.TypeCluster {
+			req.ClusterOptions = opts
+		} else {
+			req.VolumeOptions = opts
 		}
 		if err := s.applyMountSourceApp(ctx, state, m.SourceApp, req); err != nil {
 			return hperrors.Wrap(err)
@@ -301,15 +308,45 @@ func (s *service) buildStorage(ctx context.Context, state *buildState) error {
 		requests = append(requests, req)
 	}
 
+	kept := make([]mount.Mount, 0, len(storage.DockerMounts))
+	for _, target := range slices.Sorted(maps.Keys(storage.DockerMounts)) {
+		kept = append(kept, toDockerMount(target, storage.DockerMounts[target]))
+	}
+
 	built, err := s.volumeService.BuildAppMounts(ctx, state.db, &volumeservice.BuildAppMountsReq{
-		App: state.req.App,
-		New: requests,
+		App: state.req.App, Kept: kept, New: requests,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)
 	}
 	state.req.Spec.TaskTemplate.ContainerSpec.Mounts = built.Mounts
 	return nil
+}
+
+// toDockerMount is mapMount read backwards.
+func toDockerMount(target string, m specmodel.Mount) mount.Mount {
+	out := mount.Mount{
+		Type: m.Type, Source: m.Source, Target: target, ReadOnly: m.ReadOnly, Consistency: m.Consistency,
+	}
+	if o := m.BindOptions; o != nil {
+		out.BindOptions = &mount.BindOptions{
+			Propagation: o.Propagation, NonRecursive: o.NonRecursive, CreateMountpoint: o.CreateMountpoint,
+			ReadOnlyNonRecursive: o.ReadOnlyNonRecursive, ReadOnlyForceRecursive: o.ReadOnlyForceRecursive,
+		}
+	}
+	if o := m.VolumeOptions; o != nil {
+		out.VolumeOptions = &mount.VolumeOptions{Subpath: o.Subpath, NoCopy: o.NoCopy, Labels: o.Labels}
+		if d := o.DriverConfig; d != nil {
+			out.VolumeOptions.DriverConfig = &mount.Driver{Name: d.Name, Options: d.Options}
+		}
+	}
+	if m.ClusterOptions != nil {
+		out.ClusterOptions = &mount.ClusterOptions{}
+	}
+	if o := m.TmpfsOptions; o != nil {
+		out.TmpfsOptions = &mount.TmpfsOptions{SizeBytes: o.Size.Bytes(), Mode: os.FileMode(o.Mode), Options: o.Options}
+	}
+	return out
 }
 
 // applyMountSourceApp points a mount at the directory of another app.

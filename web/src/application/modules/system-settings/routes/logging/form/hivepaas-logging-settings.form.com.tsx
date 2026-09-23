@@ -360,7 +360,7 @@ export function HivePaaSLoggingSettingsForm({ settings, readOnly, onSubmit, chil
                                                 title={
                                                     <LabelWithInfo
                                                         label="Memory limit"
-                                                        content="Memory the backend may use, written with its unit: 1gb, 512mb. VictoriaLogs sizes its caches from what it is allowed, so this is not only a ceiling - with no limit it sizes itself against the whole node. Set it too low and the container is killed mid-query rather than slowed down."
+                                                        content="Memory the backend may use, written with its unit: 1gb, 512mb. VictoriaLogs sizes its caches from what it is allowed, so this is not only a ceiling. Left empty, the backend gets 1gb. Set it too low and the container is killed mid-query rather than slowed down."
                                                     />
                                                 }
                                             >

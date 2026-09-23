@@ -417,7 +417,7 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                     >
                                         <Input
                                             {...register("memoryLimit")}
-                                            placeholder="512mb"
+                                            placeholder="1gb"
                                             className="w-full max-w-[200px]"
                                         />
                                     </InfoBlock>

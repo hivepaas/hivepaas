@@ -53,6 +53,7 @@ export function ProjectAppsTable({ projectId }: Props) {
     const {
         data: { data: rawApps, meta } = DEFAULT_PAGINATED_DATA,
         isLoading,
+        isFetching,
         isPlaceholderData,
     } = ProjectAppsQueries.useFindManyPaginated(
         {
@@ -91,7 +92,10 @@ export function ProjectAppsTable({ projectId }: Props) {
 
     const project = projectData?.data;
     const projectEnvs = project?.envs ?? EMPTY_PROJECT_ENVS;
-    const columns = useMemo(() => ProjectAppsTableDefs.columns(projectId, projectEnvs), [projectId, projectEnvs]);
+    const columns = useMemo(
+        () => ProjectAppsTableDefs.columns(projectId, projectEnvs, { isFetching }),
+        [projectId, projectEnvs, isFetching],
+    );
     const isProjectActive = project?.status === EProjectStatus.Active;
     const isAddButtonDisabled = !isProjectActive || !canWrite;
 

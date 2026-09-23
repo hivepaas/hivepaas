@@ -3,7 +3,7 @@ import { Avatar } from "@components/ui/avatar";
 import { Badge } from "@components/ui/badge";
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Loader2 } from "lucide-react";
 import type { ProjectAppDetails, ProjectEnvEntity } from "~/projects/domain";
 import { ProjectAppStatusBadge, ProjectEnvBadge } from "~/projects/module-shared/components";
 import {
@@ -19,7 +19,16 @@ const centerMeta = {
     titleAlign: "center",
 } as const;
 
-function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity[]): ColumnDef<ProjectAppDetails>[] {
+export interface ProjectAppsTableColumnsOptions {
+    isFetching?: boolean;
+}
+
+function createColumns(
+    projectId: string,
+    projectEnvs: readonly ProjectEnvEntity[],
+    options: ProjectAppsTableColumnsOptions = {},
+): ColumnDef<ProjectAppDetails>[] {
+    const { isFetching = false } = options;
     return [
         {
             id: "actions",
@@ -136,14 +145,23 @@ function createColumns(projectId: string, projectEnvs: readonly ProjectEnvEntity
 
                 return (
                     <div
-                        className="flex items-center justify-center gap-2"
+                        className="flex items-center justify-center gap-1.5"
                         title={replicasLabel}
                     >
+                        {isFetching && (
+                            <Loader2
+                                className="size-3.5 animate-spin text-muted-foreground shrink-0"
+                                aria-label="Loading replicas"
+                            />
+                        )}
                         <span>
                             {runningTasks}/{desiredTasks}
                         </span>
                         <span
-                            className={cn("size-2 rounded-full", APP_REPLICAS_STATUS_DOT_CLASS[replicasStatus])}
+                            className={cn(
+                                "size-2 rounded-full shrink-0",
+                                APP_REPLICAS_STATUS_DOT_CLASS[replicasStatus],
+                            )}
                             role="img"
                             aria-label={replicasLabel}
                         />

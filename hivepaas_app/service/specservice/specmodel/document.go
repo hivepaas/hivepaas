@@ -31,8 +31,12 @@ type ProjectDoc struct {
 	DocHeader `yaml:",inline"`
 
 	Project string `yaml:"project"`
-	Name    string `yaml:"name"`
-	Note    string `yaml:"note,omitempty"`
+	// ID is the project's id on the installation that exported it. An import
+	// into that installation matches on it; anywhere else it matches nothing,
+	// and the key is used instead.
+	ID   string `yaml:"id,omitempty"`
+	Name string `yaml:"name"`
+	Note string `yaml:"note,omitempty"`
 	// Envs names the env files belonging to this project, so a reader of one
 	// project file knows what else there is without listing the archive.
 	Envs []string `yaml:"envs,omitempty"`
@@ -66,7 +70,9 @@ type EnvDoc struct {
 // been deployed - a real state rather than an edge case: two of five user apps
 // in a development installation have an empty ServiceID.
 type AppDoc struct {
-	App    string `yaml:"app"`
+	App string `yaml:"app"`
+	// ID is the app's id on the installation that exported it; see ProjectDoc.ID.
+	ID     string `yaml:"id,omitempty"`
 	Name   string `yaml:"name"`
 	Status string `yaml:"status,omitempty"`
 	Note   string `yaml:"note,omitempty"`

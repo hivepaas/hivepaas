@@ -150,3 +150,20 @@ func TestJSONKeysFindsAnIDWhereverJSONWouldWriteOne(t *testing.T) {
 	assert.Contains(t, jsonKeys(reflect.TypeOf(&untagged{ID: "a"})), "ID")
 	assert.Empty(t, jsonKeys(reflect.TypeOf(hidden{ID: "a"})))
 }
+
+// Projects and apps carry their ids too. An env does not need one: its id is
+// derived from its project's id and its own name.
+func TestExportWritesTheIDsOfProjectsAndApps(t *testing.T) {
+	path, _ := runExport(t, specmodel.SecretsModeOmit, "")
+
+	project := &specmodel.ProjectDoc{}
+	readDoc(t, path, "projects/project_a/project.yaml", project)
+	assert.Equal(t, "p1", project.ID)
+
+	env := &specmodel.EnvDoc{}
+	readDoc(t, path, "projects/project_a/envs/dev.yaml", env)
+	if assert.Contains(t, env.Apps, "backend") && assert.Contains(t, env.Apps, "frontend") {
+		assert.Equal(t, "app_1", env.Apps["backend"].ID)
+		assert.Equal(t, "app_2", env.Apps["frontend"].ID, "an app never deployed carries its id as well")
+	}
+}

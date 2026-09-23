@@ -263,6 +263,7 @@ func (s *service) writeDocs(
 		doc := &specmodel.ProjectDoc{
 			DocHeader: specmodel.NewDocHeader(specScopeName(base.ObjectScopeProject)),
 			Project:   projUnit.project.Key,
+			ID:        projUnit.project.ID,
 			Name:      projUnit.project.Name,
 			Note:      projUnit.project.Note,
 			Envs:      envNames,
@@ -326,6 +327,7 @@ func (s *service) buildAppDoc(
 
 	doc := &specmodel.AppDoc{
 		App:      app.app.Key,
+		ID:       app.app.ID,
 		Name:     app.app.Name,
 		Status:   string(app.app.Status),
 		Note:     app.app.Note,

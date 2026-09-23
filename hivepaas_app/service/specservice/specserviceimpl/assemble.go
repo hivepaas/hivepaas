@@ -2,6 +2,7 @@ package specserviceimpl
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -67,6 +68,7 @@ func assembleSettings(
 			if err != nil {
 				return nil, hperrors.Wrap(err)
 			}
+			body[specmodel.SettingMetaKey] = settingMeta(group[0])
 			out[specmodel.SingletonBlockName(typ)] = body
 
 		case specmodel.CollectionBlockName(typ) != "":
@@ -78,6 +80,7 @@ func assembleSettings(
 					return nil, hperrors.Wrap(err)
 				}
 				body[specmodel.CollectionEntryIDKey] = setting.ID
+				body[specmodel.SettingMetaKey] = settingMeta(setting)
 				entries[keys[setting.ID]] = body
 			}
 			out[specmodel.CollectionBlockName(typ)] = entries
@@ -88,6 +91,33 @@ func assembleSettings(
 		}
 	}
 	return out, nil
+}
+
+// settingMeta is a setting's row as a bundle carries it. It is a map rather than
+// the struct so that it sits in the body like the data beside it, and so that
+// only what is set is written.
+func settingMeta(setting *entity.Setting) map[string]any {
+	meta := map[string]any{"status": string(setting.Status), "version": setting.Version}
+	for key, value := range map[string]string{
+		"name": setting.Name, "kind": setting.Kind, "refId": setting.RefID,
+	} {
+		if value != "" {
+			meta[key] = value
+		}
+	}
+	if setting.Inheritable {
+		meta["inheritable"] = true
+	}
+	if setting.Default {
+		meta["default"] = true
+	}
+	if !setting.ExpireAt.IsZero() {
+		meta["expireAt"] = setting.ExpireAt.UTC().Format(time.RFC3339)
+	}
+	if setting.Version == 0 {
+		delete(meta, "version")
+	}
+	return meta
 }
 
 // renderSetting turns one setting into the body a spec writes for it.

@@ -94,9 +94,12 @@ const (
 const (
 	BlockContainer         Block = "deployment.container"
 	BlockDeploymentService Block = "deployment.service"
+	// BlockSettings is every settings block of an exported document, built from
+	// the rows export wrote beside the data.
+	BlockSettings Block = "settings"
 )
 
-var ImportOnlyBlocks = []Block{BlockContainer, BlockDeploymentService}
+var ImportOnlyBlocks = []Block{BlockContainer, BlockDeploymentService, BlockSettings}
 
 // buildOrder is the order blocks are built in. Storage replaces the mounts
 // before resources sets the size of /dev/shm, which is one of them.
@@ -104,7 +107,7 @@ var buildOrder = []Block{
 	BlockDeploymentSource, BlockDeploymentStorage, BlockContainerHealthcheck, BlockContainerInit,
 	BlockContainer, BlockDeploymentResources, BlockDeploymentNetworks, BlockDeploymentService,
 	BlockSettingsKind, BlockSettingsEnvVars, BlockSettingsSecrets, BlockSettingsConfigFiles,
-	BlockSettingsRouting,
+	BlockSettingsRouting, BlockSettings,
 }
 
 // ImportBlocks lists the blocks an exported document is built with, in build
@@ -113,7 +116,8 @@ var buildOrder = []Block{
 // from a deployment is one the app has none of, and building it clears whatever
 // the service holds. The container block covers its healthcheck and init. The
 // source is a setting rather than part of the service, and is built only when
-// present, as settings are - import never deletes a setting.
+// present; the settings are one block, built from their rows - import never
+// deletes a setting.
 func ImportBlocks(doc *AppDoc) []Block {
 	var blocks []Block
 	if doc == nil {
@@ -126,7 +130,9 @@ func ImportBlocks(doc *AppDoc) []Block {
 		blocks = append(blocks, BlockDeploymentStorage, BlockContainer, BlockDeploymentResources,
 			BlockDeploymentNetworks, BlockDeploymentService)
 	}
-	blocks = append(blocks, presentSettingsBlocks(doc)...)
+	if len(doc.Settings) > 0 {
+		blocks = append(blocks, BlockSettings)
+	}
 	slices.SortFunc(blocks, func(a, b Block) int {
 		return slices.Index(buildOrder, a) - slices.Index(buildOrder, b)
 	})

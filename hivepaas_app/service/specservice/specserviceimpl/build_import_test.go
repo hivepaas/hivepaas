@@ -11,6 +11,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 )
 
 const importDocYAML = `
@@ -93,4 +94,55 @@ func TestBuildAppImportsAnAppNeverDeployed(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "busybox:latest", req.Spec.TaskTemplate.ContainerSpec.Image)
+}
+
+// A setting export wrote comes back as the row it was, whatever its type: the
+// name and kind a collection is keyed by, its flags, and its data at the
+// version this installation reads.
+func TestBuildAppImportsEverySettingFromItsRow(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+	req := buildReq(t, `
+settings:
+  features: {setting: {status: disabled, version: 1}}
+  schedJobs:
+    nightly@backup:
+      setting: {name: nightly, kind: backup, status: active, version: 1}
+      id: 01JOLDID
+  secrets:
+    db-password: {setting: {name: db-password, version: 1}, key: DB_PASSWORD, value: hunter2}
+`)
+	req.Import = true
+
+	resp, err := svc.BuildApp(context.Background(), nil, req)
+
+	assert.NoError(t, err)
+	rows := map[base.SettingType]*entity.Setting{}
+	for _, row := range resp.Settings {
+		rows[row.Type] = row
+	}
+	if job := rows[base.SettingTypeSchedJob]; assert.NotNil(t, job) {
+		assert.Equal(t, "nightly", job.Name)
+		assert.Equal(t, "backup", job.Kind)
+		assert.NotEqual(t, "01JOLDID", job.ID, "a new row, which import matches to an existing one itself")
+	}
+	if features := rows[base.SettingTypeAppFeatures]; assert.NotNil(t, features) {
+		assert.Equal(t, base.SettingStatusDisabled, features.Status)
+	}
+	if secret := rows[base.SettingTypeSecret]; assert.NotNil(t, secret) {
+		assert.Equal(t, "db-password", secret.Name, "a secret's name need not be its key")
+		assert.NotContains(t, secret.Data, "hunter2", "the value is encrypted at rest")
+	}
+}
+
+// A setting from a newer HivePaaS cannot be read backwards.
+func TestBuildAppRefusesASettingFromANewerVersion(t *testing.T) {
+	useDataKey(t)
+	svc := &service{volumeService: &fakeBuildVolumeService{}}
+	req := buildReq(t, "settings:\n  features: {setting: {version: 999}}\n")
+	req.Import = true
+
+	_, err := svc.BuildApp(context.Background(), nil, req)
+
+	assert.ErrorIs(t, err, hperrors.ErrDataVerNewerThanSystemVer)
 }

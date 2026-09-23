@@ -78,7 +78,10 @@ writing source ids.
    and its matching - id first, key as the fallback - depends on it. The code
    does not write them: `ProjectDoc`, `EnvDoc` and `AppDoc` have no id field, and
    `renderSetting` renders only a setting's data. The only source id in a bundle
-   is on `ExternalRef`. Section 4 adds them.
+   is on `ExternalRef`. Section 4 adds them. Nor did it write a setting's row:
+   the export spec says `is_default` travels, and a collection's name and kind
+   lived only in its entry key. Every setting body now carries its row under
+   `setting` - name, kind, status, inheritable, default, version, expiry, ref id.
 2. **The credential a restore must keep belongs to the app kind.** Export spec §5
    protects `env-var` entries flagged `IsSystem`, because a database volume was
    initialised with `HIVEPAAS_ROOT_PASSWORD`. That variable is not stored
@@ -813,8 +816,9 @@ Five plans, each shippable without the next:
 3. **Builder coverage.** Deployment blocks:
    `docs/superpowers/plans/2026-09-24-spec-import-builders.md` - import mode,
    `CheckImportable`, builders that replace rather than append, and a round trip
-   through export's mapping. The app-scope setting types beyond kind, env vars,
-   secrets, config files, routing and source follow in a plan of their own.
+   through export's mapping. In import mode every setting, the source included,
+   is built from the row export wrote beside its data:
+   `docs/superpowers/plans/2026-09-24-spec-setting-rows.md`.
 4. **Import**: `ValidateImport` and `ApplyImport`, the usecases, handlers and
    routes, the errors and the audit type. Project creation moves to
    `projectservice`, and the template checks' reading of a document to

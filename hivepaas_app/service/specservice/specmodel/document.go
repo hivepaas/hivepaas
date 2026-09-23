@@ -1,5 +1,7 @@
 package specmodel
 
+import "time"
+
 // DocHeader is repeated at the top of every payload file, so that a file
 // extracted from a bundle and handed to somebody on its own still says what it
 // is.
@@ -114,6 +116,24 @@ type ExternalRef struct {
 // have a top-level field of that name - TestNoExportedCollectionTypeHasATopLevelID
 // holds that.
 const CollectionEntryIDKey = "id"
+
+// SettingMetaKey is where export writes a setting's row, beside its data: the
+// name and kind a collection is keyed by, and the flags the data does not carry.
+// No exported setting type may have a top-level field of that name -
+// TestNoExportedSettingTypeHasATopLevelSettingField holds that.
+const SettingMetaKey = "setting"
+
+// SettingMeta is the row of a setting, as a bundle carries it.
+type SettingMeta struct {
+	Name        string    `yaml:"name,omitempty"        json:"name,omitempty"`
+	Kind        string    `yaml:"kind,omitempty"        json:"kind,omitempty"`
+	Status      string    `yaml:"status,omitempty"      json:"status,omitempty"`
+	Inheritable bool      `yaml:"inheritable,omitempty" json:"inheritable,omitempty"`
+	Default     bool      `yaml:"default,omitempty"     json:"default,omitempty"`
+	Version     int       `yaml:"version,omitempty"     json:"version,omitempty"`
+	ExpireAt    time.Time `yaml:"expireAt,omitzero"     json:"expireAt,omitzero"`
+	RefID       string    `yaml:"refId,omitempty"       json:"refId,omitempty"`
+}
 
 // Bundle is what the exporter hands the bundle writer.
 type Bundle struct {

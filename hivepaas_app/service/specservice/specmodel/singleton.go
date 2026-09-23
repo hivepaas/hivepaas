@@ -85,3 +85,23 @@ func SingletonBlockName(typ base.SettingType) string { return singletonBlockName
 // CollectionBlockName is the YAML key a collection type's keyed map occupies.
 // Empty if the type is not a collection.
 func CollectionBlockName(typ base.SettingType) string { return collectionBlockNames[typ] }
+
+// SingletonTypeOf is the singleton type a block name belongs to.
+func SingletonTypeOf(block string) (base.SettingType, bool) {
+	for typ, name := range singletonBlockNames {
+		if name == block {
+			return typ, true
+		}
+	}
+	return "", false
+}
+
+// CollectionTypeOf is the collection type a block name belongs to.
+func CollectionTypeOf(block string) (base.SettingType, bool) {
+	for typ, name := range collectionBlockNames {
+		if name == block {
+			return typ, true
+		}
+	}
+	return "", false
+}

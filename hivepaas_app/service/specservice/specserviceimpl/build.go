@@ -47,6 +47,7 @@ func (s *service) builders() map[specmodel.Block]blockBuilder {
 		specmodel.BlockSettingsRouting:      s.buildRouting,
 		specmodel.BlockContainer:            s.buildContainer,
 		specmodel.BlockDeploymentService:    s.buildService,
+		specmodel.BlockSettings:             s.buildImportedSettings,
 	}
 }
 

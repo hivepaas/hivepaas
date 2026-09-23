@@ -21,7 +21,7 @@ const PROTOCOL_OPTIONS: OptionCard<ERoutingProtocol>[] = [
     {
         value: ERoutingProtocol.TCP,
         label: "TCP",
-        description: "A raw TCP stream through the proxy, no HTTP rules",
+        description: "Raw TCP stream for databases, caches, and custom protocols",
         icon: Cable,
     },
     {

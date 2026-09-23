@@ -10,10 +10,16 @@ import { ProjectClusterVolumesQueries, ProjectsQueries } from "~/projects/data/q
 import { Dialog, DialogFixedContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { type CreateAppFromTemplateReq, type CreateAppFromTemplateResp } from "../../../api";
-import { useCreateAppFromTemplate, useGetAppTemplate } from "../../../data";
+import {
+    type CreateAppFromTemplateReq,
+    type CreateAppFromTemplateResp,
+    type PreflightStorageFinding,
+} from "../../../api";
+import { useCreateAppFromTemplate, useGetAppTemplate, usePreflightAppFromTemplate } from "../../../data";
 import { DeployTemplateForm } from "../form";
 import { useDeployTemplateDialogState } from "../hooks";
+
+import { StorageInUseDialog } from "./storage-in-use.dialog.com";
 
 export function DeployTemplateDialog() {
     const { state, props: dialogOptions, ...actions } = useDeployTemplateDialogState();
@@ -49,6 +55,7 @@ export function DeployTemplateDialog() {
     const { mutate: createAppFromTemplate, isPending } = useCreateAppFromTemplate({
         onSuccess: (res: CreateAppFromTemplateResp, variables: CreateAppFromTemplateReq) => {
             toast.success(`Application "${variables.name}" deployed successfully!`);
+            setInUse(null);
             actions.close();
             if (projectId && variables.projectEnv && res.data.app.id) {
                 // Navigate to newly created app
@@ -66,9 +73,30 @@ export function DeployTemplateDialog() {
         },
     });
 
+    // Held while the operator answers for what a previous install left behind.
+    const [inUse, setInUse] = useState<{
+        values: CreateAppFromTemplateReq;
+        findings: PreflightStorageFinding[];
+    } | null>(null);
+
+    const { mutate: preflight, isPending: isChecking } = usePreflightAppFromTemplate({
+        onSuccess: (findings: PreflightStorageFinding[], values: CreateAppFromTemplateReq) => {
+            if (findings.length === 0) {
+                createAppFromTemplate(values);
+                return;
+            }
+            setInUse({ values, findings });
+        },
+        // The check is advisory. One that cannot answer must not stop a creation
+        // that would have worked: the creation reports its own failures.
+        onError: (_err: Error, values: CreateAppFromTemplateReq) => {
+            createAppFromTemplate(values);
+        },
+    });
+
     const handleSubmit = (values: CreateAppFromTemplateReq) => {
-        if (!projectId || !canWrite || isPending) return;
-        createAppFromTemplate(values);
+        if (!projectId || !canWrite || isPending || isChecking) return;
+        preflight(values);
     };
 
     const handleClose = () => {
@@ -131,13 +159,29 @@ export function DeployTemplateDialog() {
                         initialEnv={dialogOptions.initialEnv}
                         initialVersion={dialogOptions.initialVersion}
                         initialVariant={dialogOptions.initialVariant}
-                        isPending={isPending}
+                        isPending={isPending || isChecking}
                         readOnly={!canWrite}
                         onSubmit={handleSubmit}
                         onCancel={handleClose}
                     />
                 )}
             </DialogFixedContent>
+
+            <StorageInUseDialog
+                open={inUse !== null}
+                findings={inUse?.findings ?? []}
+                isPending={isPending}
+                onOpenChange={nextOpen => {
+                    if (!nextOpen) {
+                        setInUse(null);
+                    }
+                }}
+                onConfirm={resetStorage => {
+                    if (inUse) {
+                        createAppFromTemplate({ ...inUse.values, resetStorage });
+                    }
+                }}
+            />
         </Dialog>
     );
 }

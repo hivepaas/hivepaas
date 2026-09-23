@@ -22,6 +22,7 @@ import {
     type ListAppTemplatesFilter,
     type ListAppTemplatesResponse,
     type ListEnvAppsParams,
+    type PreflightStorageFinding,
     appTemplatesApi,
 } from "../api";
 
@@ -111,6 +112,19 @@ export function useGetAppTemplateImageTags(
         queryFn: ({ signal }) => appTemplatesApi.getImageTags(params, signal),
         enabled: options?.enabled ?? Boolean(params.templateName),
         staleTime: 60 * 1000,
+    });
+}
+
+/**
+ * Mutation hook asking what creating a request would run into. It writes nothing,
+ * and its findings are what the deploy dialog warns about before it creates.
+ */
+export function usePreflightAppFromTemplate(
+    options?: Omit<UseMutationOptions<PreflightStorageFinding[], Error, CreateAppFromTemplateReq>, "mutationFn">,
+): UseMutationResult<PreflightStorageFinding[], Error, CreateAppFromTemplateReq> {
+    return useMutation({
+        mutationFn: (req: CreateAppFromTemplateReq) => appTemplatesApi.preflightAppFromTemplate(req),
+        ...options,
     });
 }
 

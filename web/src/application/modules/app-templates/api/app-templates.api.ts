@@ -235,6 +235,30 @@ export interface CreateAppFromTemplateReq {
     imageTag?: string;
     params?: Record<string, unknown>;
     dependencyParams?: Record<string, Record<string, unknown>>;
+    /**
+     * Deletes what a previous install of these apps left in their directories
+     * before the new ones are created. It is how the preflight findings are
+     * answered, and it is off unless asked for.
+     */
+    resetStorage?: boolean;
+}
+
+/** One app of a request whose directory in a volume already holds something. */
+export interface PreflightStorageFinding {
+    app: string;
+    appKey: string;
+    /**
+     * A database started on somebody else's data keeps the password that data was
+     * created with, and the one being generated now will not open it.
+     */
+    isDatabase: boolean;
+    volume: { id: string; name: string };
+    path: string;
+}
+
+export interface PreflightAppFromTemplateResp {
+    meta?: unknown;
+    data: { storage: PreflightStorageFinding[] };
 }
 
 export interface CreateAppFromTemplateResp {
@@ -357,6 +381,28 @@ export class AppTemplatesApi extends BaseApi {
                 { signal },
             );
             return res.data;
+        } catch (error) {
+            throw parseApiError(error);
+        }
+    }
+
+    /**
+     * POST /projects/{projectID}/{projectEnv}/apps/from-template/preflight
+     * What creating this request would run into, without creating anything: which
+     * of its apps would be given a directory that already holds data.
+     */
+    async preflightAppFromTemplate(
+        req: CreateAppFromTemplateReq,
+        signal?: AbortSignal,
+    ): Promise<PreflightStorageFinding[]> {
+        try {
+            const { projectID, projectEnv, ...body } = req;
+            const res = await this.client.v1.post<PreflightAppFromTemplateResp>(
+                `/projects/${encodeURIComponent(projectID)}/${encodeURIComponent(projectEnv)}/apps/from-template/preflight`,
+                body,
+                { signal },
+            );
+            return res.data.data.storage;
         } catch (error) {
             throw parseApiError(error);
         }

@@ -4,9 +4,11 @@ import (
 	"context"
 	"maps"
 	"slices"
+	"strconv"
 	"time"
 
 	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/mount"
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
@@ -18,6 +20,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/docker"
+	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
 )
 
 func (s *service) buildSource(_ context.Context, state *buildState) error {
@@ -79,26 +82,89 @@ func (s *service) buildHealthcheck(_ context.Context, state *buildState) error {
 
 // buildResources truncates as the resource settings screen does.
 func (s *service) buildResources(_ context.Context, state *buildState) error {
-	resources := state.req.Doc.Deployment.Resources
-	task := &state.req.Spec.TaskTemplate
+	applyResources(state.req.Doc.Deployment.Resources, &state.req.Spec.TaskTemplate)
+	return nil
+}
+
+// applyResources writes the resources block onto a task the way the resource
+// settings screen writes it, and replaces what the task held: a part the block
+// leaves out is cleared.
+func applyResources(r *specmodel.Resources, task *swarm.TaskSpec) {
+	if r == nil {
+		r = &specmodel.Resources{}
+	}
 	if task.Resources == nil {
 		task.Resources = &swarm.ResourceRequirements{}
 	}
-	if reservations := resources.Reservations; reservations != nil {
-		task.Resources.Reservations = &swarm.Resources{
-			NanoCPUs:    docker.TruncateCPUsAsNano(reservations.CPUs, docker.MinCPUFraction),
-			MemoryBytes: reservations.Memory.Truncate(unit.MB).Bytes(),
+	task.Resources.Reservations = buildReservations(r.Reservations)
+	task.Resources.Limits = buildLimits(r.Limits)
+	applyMemory(r.Memory, task)
+	buildCapabilities(r.Capabilities, task)
+}
+
+// buildReservations reads a generic resource the way the resource settings
+// screen does: a whole number is a count of something discrete, anything else
+// names one.
+func buildReservations(r *specmodel.ResourceReservations) *swarm.Resources {
+	if r == nil {
+		return nil
+	}
+	out := &swarm.Resources{
+		NanoCPUs:    docker.TruncateCPUsAsNano(r.CPUs, docker.MinCPUFraction),
+		MemoryBytes: r.Memory.Truncate(unit.MB).Bytes(),
+	}
+	for _, generic := range r.GenericResources {
+		if generic == nil {
+			continue
+		}
+		res := swarm.GenericResource{}
+		if count, err := strconv.ParseInt(generic.Value, 10, 64); err == nil {
+			res.DiscreteResourceSpec = &swarm.DiscreteGenericResource{Kind: generic.Kind, Value: count}
+		} else {
+			res.NamedResourceSpec = &swarm.NamedGenericResource{Kind: generic.Kind, Value: generic.Value}
+		}
+		out.GenericResources = append(out.GenericResources, res)
+	}
+	return out
+}
+
+func buildLimits(l *specmodel.ResourceLimits) *swarm.Limit {
+	if l == nil {
+		return nil
+	}
+	return &swarm.Limit{
+		NanoCPUs:    docker.TruncateCPUsAsNano(l.CPUs, docker.MinCPUFraction),
+		MemoryBytes: l.Memory.Truncate(unit.MB).Bytes(),
+		Pids:        l.Pids,
+	}
+}
+
+// applyMemory writes swap, swappiness and the size of /dev/shm, which is a tmpfs
+// mount Docker is handed rather than a resource: without a size the mount goes.
+func applyMemory(m *specmodel.Memory, task *swarm.TaskSpec) {
+	task.Resources.SwapBytes, task.Resources.MemorySwappiness = nil, nil
+	var shm *unit.DataSize
+	if m != nil {
+		if m.Swap != nil {
+			task.Resources.SwapBytes = new(m.Swap.Truncate(unit.MB).Bytes())
+		}
+		if m.Swappiness != nil {
+			task.Resources.MemorySwappiness = new(*m.Swappiness)
+		}
+		shm = m.ShmSize
+	}
+	if shm != nil && *shm > 0 {
+		dockerhelper.SetShmSize(task, shm.Truncate(unit.MB).Bytes())
+		return
+	}
+	if cs := task.ContainerSpec; cs != nil {
+		if current := dockerhelper.GetShmMount(task); current != nil {
+			target := current.Target
+			cs.Mounts = slices.DeleteFunc(cs.Mounts, func(m mount.Mount) bool {
+				return m.Type == mount.TypeTmpfs && m.Target == target
+			})
 		}
 	}
-	if limits := resources.Limits; limits != nil {
-		task.Resources.Limits = &swarm.Limit{
-			NanoCPUs:    docker.TruncateCPUsAsNano(limits.CPUs, docker.MinCPUFraction),
-			MemoryBytes: limits.Memory.Truncate(unit.MB).Bytes(),
-			Pids:        limits.Pids,
-		}
-	}
-	buildCapabilities(resources.Capabilities, &state.req.Spec.TaskTemplate)
-	return nil
 }
 
 // buildCapabilities writes the privileged part of the resources block onto the
@@ -112,7 +178,7 @@ func (s *service) buildResources(_ context.Context, state *buildState) error {
 // "[gpu]", which is why it is not a name the capability grammar would accept.
 func buildCapabilities(capabilities *specmodel.Capabilities, task *swarm.TaskSpec) {
 	if capabilities == nil {
-		return
+		capabilities = &specmodel.Capabilities{}
 	}
 	contSpec := task.ContainerSpec
 	contSpec.Ulimits = make([]*container.Ulimit, 0, len(capabilities.Ulimits))

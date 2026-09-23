@@ -90,6 +90,14 @@ type ExternalRef struct {
 	ID string `yaml:"id,omitempty"`
 }
 
+// CollectionEntryIDKey is where export writes the id of the setting a collection
+// entry was exported from: at the top level of the entry, beside the setting's
+// own data. An import into the installation that exported it matches on it, so
+// a setting renamed since is still recognized. No exported collection type may
+// have a top-level field of that name - TestNoExportedCollectionTypeHasATopLevelID
+// holds that.
+const CollectionEntryIDKey = "id"
+
 // Bundle is what the exporter hands the bundle writer.
 type Bundle struct {
 	Manifest *Manifest

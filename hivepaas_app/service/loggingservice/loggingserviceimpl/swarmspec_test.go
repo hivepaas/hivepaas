@@ -111,3 +111,30 @@ func TestToSwarmServiceSpecRequiresAnImage(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
+// A protected service without a memory limit would have the kernel kill every
+// user app to feed it, so the priority goes only where there is a limit.
+func TestToSwarmServiceSpecProtectsOnlyWithAMemoryLimit(t *testing.T) {
+	rt := &logging.RuntimeSpec{Image: "img"}
+
+	limited, err := toSwarmServiceSpec(rt, swarmSpecOpts{
+		Name:        ServiceNameBackend,
+		Resources:   logging.Resources{MemoryLimit: 256 << 20},
+		OomScoreAdj: -300,
+	})
+	if err != nil {
+		t.Fatalf("toSwarmServiceSpec: %v", err)
+	}
+	assert.Equal(t, int64(-300), limited.TaskTemplate.ContainerSpec.OomScoreAdj)
+	assert.Equal(t, int64(256<<20), limited.TaskTemplate.Resources.Limits.MemoryBytes)
+
+	unlimited, err := toSwarmServiceSpec(rt, swarmSpecOpts{
+		Name:        ServiceNameBackend,
+		Resources:   logging.Resources{CPULimit: 1},
+		OomScoreAdj: -300,
+	})
+	if err != nil {
+		t.Fatalf("toSwarmServiceSpec: %v", err)
+	}
+	assert.Zero(t, unlimited.TaskTemplate.ContainerSpec.OomScoreAdj)
+}

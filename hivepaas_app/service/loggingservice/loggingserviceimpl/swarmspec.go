@@ -38,6 +38,9 @@ type swarmSpecOpts struct {
 	// Resources caps what the task may take. Zero in a field is no cap.
 	Resources logging.Resources
 	Networks  []string
+	// OomScoreAdj is the kernel OOM priority. It is applied only together with a
+	// memory limit - see base.OomScoreAdjSystemAddon.
+	OomScoreAdj int64
 }
 
 // toSwarmServiceSpec turns a description of a container into a swarm service.
@@ -95,6 +98,9 @@ func toSwarmServiceSpec(rt *logging.RuntimeSpec, opts swarmSpecOpts) (*swarm.Ser
 		}
 		limits.MemoryBytes = opts.Resources.MemoryLimit
 		spec.TaskTemplate.Resources = &swarm.ResourceRequirements{Limits: limits}
+	}
+	if opts.Resources.MemoryLimit > 0 {
+		container.OomScoreAdj = opts.OomScoreAdj
 	}
 
 	for _, n := range opts.Networks {

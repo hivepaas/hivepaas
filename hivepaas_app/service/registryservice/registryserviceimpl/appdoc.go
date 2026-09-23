@@ -30,6 +30,9 @@ type appDocInput struct {
 	Key         string
 	Domain      string
 	MemoryLimit string
+	// OomScoreAdj keeps the registry alive over user apps when memory runs out.
+	// The registry always has a memory limit, which is what makes that safe.
+	OomScoreAdj int64
 	// VolumeID is the cluster-volume setting a mount names. A mount's source is
 	// the setting's id, not the volume's name: BuildAppMounts looks the id up and
 	// derives everything else - the docker name, the node pin, the bind rewrite -

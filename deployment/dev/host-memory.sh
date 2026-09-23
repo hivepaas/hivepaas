@@ -20,7 +20,12 @@ SWAP_FILE=${SWAP_FILE:-/swapfile}
 # Process names earlyoom never kills. postgres and redis-server are the HivePaaS
 # database and cache, but the names also cover the databases of user apps -
 # earlyoom sees process names, not which service a process belongs to.
-EARLYOOM_AVOID='^(hivepaas|hivepaas-agent|traefik|postgres|redis-server|dockerd|containerd|containerd-shim|sshd|systemd|systemd-.*)$'
+#
+# The second line is what an admin adds later - the log collector (vlagent-prod),
+# the log backend (victoria-logs-prod) and the registry (zot-linux-<arch>). The
+# kernel cuts a process name at 15 characters, hence the trailing wildcards.
+EARLYOOM_AVOID='^(hivepaas|hivepaas-agent|traefik|postgres|redis-server|dockerd|containerd|containerd-shim|sshd|systemd|systemd-.*'
+EARLYOOM_AVOID+='|vlagent.*|victoria-logs.*|zot-linux-.*)$'
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "host-memory.sh: must run as root" >&2

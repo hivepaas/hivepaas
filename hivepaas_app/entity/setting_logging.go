@@ -118,10 +118,11 @@ type LoggingVictoriaLogs struct {
 
 	// MemoryLimit is written the way every other size in HivePaaS is - "1gb",
 	// "512mb" - so the unit travels with the value and cannot be mistaken for
-	// another. Zero is no cap.
+	// another. Zero takes logging.DefaultBackendMemoryLimit: the backend always
+	// runs capped, which is what lets it be protected from the OOM killer.
 	//
 	// It is more than a ceiling: VictoriaLogs sizes its caches from the memory
-	// it is allowed, so with no limit it sizes itself against the whole node.
+	// it is allowed.
 	MemoryLimit unit.DataSize `json:"memoryLimit,omitempty"`
 }
 

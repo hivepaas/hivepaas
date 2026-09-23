@@ -17,6 +17,9 @@ const (
 	SourceKindHivePaaS      = loggingmodel.SourceKindHivePaaS
 	SourceKindTraefikAccess = loggingmodel.SourceKindTraefikAccess
 	SourceKindNode          = loggingmodel.SourceKindNode
+
+	DefaultCollectorMemoryLimit = loggingmodel.DefaultCollectorMemoryLimit
+	DefaultBackendMemoryLimit   = loggingmodel.DefaultBackendMemoryLimit
 )
 
 // Re-exported errors

@@ -18,7 +18,7 @@ const (
 	DefaultRegistryKeepLast = 10
 	DefaultRegistryKeepDays = 30
 
-	DefaultRegistryMemoryLimit = 512 * unit.MB
+	DefaultRegistryMemoryLimit = 1 * unit.GB
 	MinRegistryMemoryLimit     = 256 * unit.MB
 )
 

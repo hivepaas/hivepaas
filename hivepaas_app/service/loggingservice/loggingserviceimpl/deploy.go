@@ -117,7 +117,9 @@ func (s *service) deployCollector(ctx context.Context, cfg *entity.LoggingSettin
 		Global: true,
 		// Only the logging network. The API's private network holds the
 		// database, and this runs on every node.
-		Networks: []string{logNet},
+		Networks:    []string{logNet},
+		Resources:   logging.Resources{MemoryLimit: logging.DefaultCollectorMemoryLimit.Bytes()},
+		OomScoreAdj: base.OomScoreAdjSystemAddon,
 	})
 	if err != nil {
 		return hperrors.Wrap(err)
@@ -187,10 +189,11 @@ func (s *service) deployBackend(
 	}
 
 	svcSpec, err := toSwarmServiceSpec(rt, swarmSpecOpts{
-		Name:       ServiceNameBackend,
-		Constraint: constraint,
-		Resources:  rt.Resources,
-		Networks:   []string{logNet, base.NetworkHivepaasLocal},
+		Name:        ServiceNameBackend,
+		Constraint:  constraint,
+		Resources:   rt.Resources,
+		Networks:    []string{logNet, base.NetworkHivepaasLocal},
+		OomScoreAdj: base.OomScoreAdjSystemAddon,
 	})
 	if err != nil {
 		return "", hperrors.Wrap(err)
@@ -236,7 +239,11 @@ func (s *service) backendPlacement(ctx context.Context, db database.IDB, volumeI
 }
 
 func toLoggingResources(vl *entity.LoggingVictoriaLogs) logging.Resources {
-	return logging.Resources{CPULimit: vl.CPULimit, MemoryLimit: vl.MemoryLimit.Bytes()}
+	memoryLimit := vl.MemoryLimit
+	if memoryLimit == 0 {
+		memoryLimit = logging.DefaultBackendMemoryLimit
+	}
+	return logging.Resources{CPULimit: vl.CPULimit, MemoryLimit: memoryLimit.Bytes()}
 }
 
 // TearDown removes what Apply created, in the reverse order, and leaves the

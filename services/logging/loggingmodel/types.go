@@ -8,7 +8,11 @@
 // how it stores things without touching this package.
 package loggingmodel
 
-import "time"
+import (
+	"time"
+
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+)
 
 // BackendType names a log store HivePaaS knows how to talk to.
 type BackendType string
@@ -97,6 +101,19 @@ type Resources struct {
 	CPULimit    float64
 	MemoryLimit int64
 }
+
+// The memory limits the logging stack runs under unless configured otherwise.
+// Both services always get one: it is what lets them be protected from the OOM
+// killer without being able to take a node's memory from the apps beside them.
+const (
+	// DefaultCollectorMemoryLimit caps the collector, which has no setting of
+	// its own.
+	DefaultCollectorMemoryLimit = 512 * unit.MB
+	// DefaultBackendMemoryLimit is what the backend gets when its own setting
+	// is left empty. VictoriaLogs sizes its caches from its limit, so this is
+	// also what it sizes itself against.
+	DefaultBackendMemoryLimit = 1 * unit.GB
+)
 
 // RuntimeSpec describes a container to run, in terms no orchestrator owns.
 //

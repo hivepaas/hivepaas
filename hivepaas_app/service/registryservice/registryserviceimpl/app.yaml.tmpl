@@ -13,6 +13,7 @@ deployment:
       enabled: false
   resources:
     limits: {memory: {{ .MemoryLimit }}}
+    capabilities: {oomScoreAdj: {{ .OomScoreAdj }}}
 settings:
   kind:
     category: webapp

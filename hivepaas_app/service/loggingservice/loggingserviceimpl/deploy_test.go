@@ -442,3 +442,14 @@ func TestDeployRemovesTheBackendWhenItStopsBeingManaged(t *testing.T) {
 	assert.Equal(t, ServiceNameCollector, last.Name, "the collector is repointed before the backend goes")
 	assert.Contains(t, last.TaskTemplate.ContainerSpec.Args, "-remoteWrite.url=https://logs.example/insert")
 }
+
+// An empty limit is not "no cap": the backend always runs capped, so that it
+// can be protected from the OOM killer.
+func TestBackendResourcesDefaultTheMemoryLimit(t *testing.T) {
+	unset := toLoggingResources(&entity.LoggingVictoriaLogs{CPULimit: 1})
+	assert.Equal(t, int64(unit.GB), unset.MemoryLimit)
+	assert.InDelta(t, 1.0, unset.CPULimit, 0)
+
+	set := toLoggingResources(&entity.LoggingVictoriaLogs{MemoryLimit: 2 * unit.GB})
+	assert.Equal(t, int64(2*unit.GB), set.MemoryLimit)
+}

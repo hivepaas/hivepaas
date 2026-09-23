@@ -14,6 +14,7 @@ func docInput() appDocInput {
 		Key:         "registry",
 		Domain:      "registry.example.com",
 		MemoryLimit: "512mb",
+		OomScoreAdj: -300,
 		VolumeID:    "01M32ATCXAVPK6JYV0HNCFCJYM",
 		ZotConfig:   "{\n  \"distSpecVersion\": \"1.1.1\"\n}",
 		Htpasswd:    "hivepaas:$2y$05$abc\n",
@@ -41,6 +42,22 @@ func TestAppDocIsBuildable(t *testing.T) {
 	source, _ := doc.Deployment.Source["imageSource"].(map[string]any)
 	assert.Equal(t, registryImage, source["image"])
 	assert.Equal(t, "image", doc.Deployment.Source["activeMethod"])
+}
+
+// The registry outranks user apps when memory runs out, which is safe only
+// because it cannot grow past its memory limit.
+func TestAppDocProtectsTheRegistryFromTheOOMKiller(t *testing.T) {
+	doc, err := renderAppDoc(docInput())
+	if err != nil {
+		t.Fatalf("renderAppDoc: %v", err)
+	}
+
+	res := doc.Deployment.Resources
+	if res == nil || res.Limits == nil || res.Capabilities == nil {
+		t.Fatalf("want limits and capabilities, got %+v", res)
+	}
+	assert.Equal(t, "512mb", res.Limits.Memory.String())
+	assert.Equal(t, int64(-300), res.Capabilities.OomScoreAdj)
 }
 
 func TestAppDocMountsTheVolume(t *testing.T) {

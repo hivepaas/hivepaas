@@ -68,6 +68,7 @@ func planAppDoc(cfg *entity.RegistrySettings, in planInput) (appDocInput, error)
 		// DataSize.String already writes "512mb", which is the spelling every
 		// size in a spec document uses.
 		MemoryLimit: cfg.MemoryLimit.String(),
+		OomScoreAdj: base.OomScoreAdjSystemAddon,
 		VolumeID:    volumeID,
 		ZotConfig:   string(zotConfig),
 		Htpasswd:    in.Htpasswd,

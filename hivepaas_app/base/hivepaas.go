@@ -59,3 +59,12 @@ const (
 	// Only the logging stack joins it.
 	NetworkLogging = "hivepaas_logging_net"
 )
+
+// OomScoreAdjSystemAddon is the kernel OOM priority of the services an admin adds
+// to HivePaaS - the log collector, the log backend, the registry. When memory
+// runs out a user app (0) is killed first, and these go before the core stack
+// (-500, set by the installer) because running apps do not depend on them.
+//
+// Only a service with a memory limit gets it: a protected service without one
+// that leaks would have the kernel kill every user app to feed it.
+const OomScoreAdjSystemAddon = -300

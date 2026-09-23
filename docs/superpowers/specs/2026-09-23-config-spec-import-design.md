@@ -106,6 +106,13 @@ writing source ids.
    object is complete but different - a volume that lost its node pin, a routing
    setting that lost one of its domains - because `pending` stops an app that
    would have run. Section 6 gives the status per issue.
+7. **A reference that left the export was written as a raw id.** The external
+   form was designed but never wired: nothing registered the settings a
+   reference reached outside the export. Export now loads them first and writes
+   each such reference as `{external: {type, name, kind, id}}`. A reference to an
+   app, a project, an env or a user is still the source id; import resolves it
+   through the ids the bundle carries (§4), and on another installation one the
+   bundle does not carry is `REF_NOT_FOUND`.
 
 ---
 
@@ -625,16 +632,16 @@ published ports. Import needs everything export writes.
 - **`container.image` is never written to a service.** It records what was
   running at export; the image changes only through a deployment.
 
-**Storage is the one block export writes in a form the builder cannot read.**
-Export writes what Docker holds: a volume's Docker name or a host path, and the
-full path inside the volume. The builder takes what a template and the storage
-screen take: a `cluster-volume` setting, a path below the app's own directory,
-and the owning app when the directory is another app's. The builder-coverage
-plan settles which side changes. The recommendation is export: it would write
-the builder's form, using the reverse mapping `DescribeAppMounts` already does
-for the storage screen. A mount's volume then becomes an ordinary reference that
-import remaps like any other, and storage joins the round-trip test it is left
-out of today.
+**Storage travels in the form the builder reads.** A mount into a volume's
+directory for an app of its environment is exported the way a template and the
+storage screen write it: the volume by its scope path - or, when the export does
+not hold it, by `external` - the path below the app's directory, and `sourceApp`
+when the directory is another app's. Every other mount travels in
+`storage.dockerMounts` exactly as Docker holds it, and the shared-memory mount in
+`resources.memory.shmSize` alone. Two things a managed mount can carry do not
+travel: a per-mount driver override and labels, because export cannot tell them
+from the volume's own, which a mount inherits when it names none. Building the
+volume's mount again inherits them again.
 
 Why not move the `apply*` functions of `appsettingsuc` into a service, as the
 export spec proposed:
@@ -787,22 +794,26 @@ picking it again, which is the price of the server keeping nothing.
 
 ## 14. Order of work
 
-Four plans, each shippable without the next:
+Five plans, each shippable without the next:
 
 1. **Export ids and owner**
    (`docs/superpowers/plans/2026-09-23-spec-export-ids-and-owner.md`). Export
    writes the ids and the project owner §4 needs. Nothing reads them yet, but
    every bundle exported from then on can be matched exactly.
-2. **Builder coverage.** The builder registry grows to cover what export writes,
+2. **Export references and storage**
+   (`docs/superpowers/plans/2026-09-24-spec-export-references-and-storage.md`).
+   A reference that leaves the export becomes an external one (correction 7),
+   and storage travels in the builder's form (§9).
+3. **Builder coverage.** The builder registry grows to cover what export writes,
    with `CheckImportable`, builders that replace rather than append, and the
-   round-trip and coverage tests. It starts by settling how export represents a
-   mount (§9).
-3. **Import**: `ValidateImport` and `ApplyImport`, the usecases, handlers and
+   round-trip and coverage tests. Storage already travels in the builder's form
+   (§9); the builder learns `dockerMounts`, `external` and `clusterOptions`.
+4. **Import**: `ValidateImport` and `ApplyImport`, the usecases, handlers and
    routes, the errors and the audit type. Project creation moves to
    `projectservice`, and the template checks' reading of a document to
    `specmodel`, in this plan - where import becomes their second caller, so both
    callers shape what is shared.
-4. **Dashboard**: the import screens.
+5. **Dashboard**: the import screens.
 
 ---
 

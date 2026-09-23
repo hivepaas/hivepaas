@@ -22,4 +22,8 @@ type Service interface {
 	//
 	// TODO: spec import - import builds each app of a bundle through this.
 	BuildApp(ctx context.Context, db database.IDB, req *BuildAppReq) (*BuildAppResp, error)
+
+	// ValidateImport reads an uploaded bundle and plans what importing it at a
+	// scope would do. It writes nothing.
+	ValidateImport(ctx context.Context, db database.IDB, req *ValidateImportReq) (*ValidateImportResp, error)
 }

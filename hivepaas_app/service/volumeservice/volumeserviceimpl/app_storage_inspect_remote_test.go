@@ -35,11 +35,12 @@ func (f *fakeNodeExec) ExecCommand(
 	return &nodeexecservice.CommandExecResp{}, nil
 }
 
-// pinnedVolume is a managed volume on one node, at the directory every test
-// here names.
-func pinnedVolume(t *testing.T, nodeID string) *entity.Setting {
+// pinnedVolume is a managed volume at the directory every test here names, on
+// the node they all ask.
+func pinnedVolume(t *testing.T) *entity.Setting {
 	t.Helper()
 	setting := clusterVolumeSetting(t, "vol-1", "/srv/data")
+	const nodeID = "node-b"
 	vol, err := setting.AsClusterVolume()
 	assert.NoError(t, err)
 	vol.NodeID = nodeID
@@ -50,7 +51,7 @@ func pinnedVolume(t *testing.T, nodeID string) *entity.Setting {
 }
 
 func TestStorageOnAnotherNodeIsReadThroughItsAgent(t *testing.T) {
-	setting := pinnedVolume(t, "node-b")
+	setting := pinnedVolume(t)
 	states := []*volumeservice.AppStorageState{
 		{AppKey: "web", Path: "prod/web"},
 		{AppKey: "db", Path: "prod/db"},
@@ -75,7 +76,7 @@ func TestStorageOnAnotherNodeIsReadThroughItsAgent(t *testing.T) {
 // The runtime that rewrites a bind source serves the same root at its own
 // prefix, so both spellings are offered and either answer counts.
 func TestStorageOnAnotherNodeAcceptsEitherHostSpelling(t *testing.T) {
-	setting := pinnedVolume(t, "node-b")
+	setting := pinnedVolume(t)
 	states := []*volumeservice.AppStorageState{{AppKey: "db", Path: "prod/db"}}
 	exec := &fakeNodeExec{nonEmpty: []string{"/host/host_mnt/srv/data/prod/db"}}
 
@@ -98,7 +99,7 @@ func TestStorageWithNoNodeToAskStaysUnchecked(t *testing.T) {
 }
 
 func TestStorageOnANodeThatCannotBeAskedStaysUnchecked(t *testing.T) {
-	setting := pinnedVolume(t, "node-b")
+	setting := pinnedVolume(t)
 	states := []*volumeservice.AppStorageState{{AppKey: "db", Path: "prod/db"}}
 	exec := &fakeNodeExec{err: hperrors.ErrUnavailable}
 
@@ -121,7 +122,7 @@ func TestHostCandidatesCoverEveryWayAnAgentSeesTheHost(t *testing.T) {
 
 // An agent on the host answers about the path as it is.
 func TestStorageOnANodeWhoseAgentRunsOnTheHost(t *testing.T) {
-	setting := pinnedVolume(t, "node-b")
+	setting := pinnedVolume(t)
 	states := []*volumeservice.AppStorageState{{AppKey: "db", Path: "prod/db"}}
 	exec := &fakeNodeExec{nonEmpty: []string{"/srv/data/prod/db"}}
 

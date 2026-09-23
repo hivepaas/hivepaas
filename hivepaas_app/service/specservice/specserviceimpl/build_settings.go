@@ -2,12 +2,17 @@ package specserviceimpl
 
 import (
 	"context"
+	"encoding/json"
 	"maps"
 	"slices"
 	"strings"
 
+	"github.com/tiendc/gofn"
+
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
+	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 )
 
@@ -118,7 +123,7 @@ func (s *service) buildSecrets(_ context.Context, state *buildState) error {
 	entries, _ := state.req.Doc.Settings[specmodel.CollectionBlockName(base.SettingTypeSecret)].(map[string]any)
 	for _, name := range slices.Sorted(maps.Keys(entries)) {
 		secret := &entity.Secret{}
-		if err := decodeBlock(block, entryBody(state, entries[name]), secret); err != nil {
+		if err := decodeBlock(block, entries[name], secret); err != nil {
 			return err
 		}
 		if secret.Key == "" {
@@ -143,7 +148,7 @@ func (s *service) buildConfigFiles(_ context.Context, state *buildState) error {
 	entries, _ := state.req.Doc.Settings[specmodel.CollectionBlockName(base.SettingTypeConfigFile)].(map[string]any)
 	for _, name := range slices.Sorted(maps.Keys(entries)) {
 		configFile := &entity.ConfigFile{}
-		if err := decodeBlock(block, entryBody(state, entries[name]), configFile); err != nil {
+		if err := decodeBlock(block, entries[name], configFile); err != nil {
 			return err
 		}
 		if configFile.Name == "" {
@@ -160,15 +165,86 @@ func (s *service) buildConfigFiles(_ context.Context, state *buildState) error {
 	return nil
 }
 
-// entryBody is one entry of a collection block as the entity decodes it: an
-// export's entry carries the id it was exported under, which is not a field of
-// the setting.
-func entryBody(state *buildState, entry any) any {
-	body, ok := entry.(map[string]any)
-	if !ok || !state.req.Import {
-		return entry
+// buildImportedSettings builds every settings block of an exported document. The
+// template builders are not used: they check what a template may ask for, and
+// an export is what an installation already held.
+func (s *service) buildImportedSettings(_ context.Context, state *buildState) error {
+	for _, name := range slices.Sorted(maps.Keys(state.req.Doc.Settings)) {
+		body := state.req.Doc.Settings[name]
+		if typ, ok := specmodel.SingletonTypeOf(name); ok {
+			if err := state.addImportedSetting(typ, "", body); err != nil {
+				return err
+			}
+			continue
+		}
+		typ, ok := specmodel.CollectionTypeOf(name)
+		if !ok {
+			return hperrors.Wrap(hperrors.ErrSpecBlockUnsupported).WithExtraDetail("settings.%s", name)
+		}
+		entries, _ := body.(map[string]any)
+		for _, key := range slices.Sorted(maps.Keys(entries)) {
+			if err := state.addImportedSetting(typ, key, entries[key]); err != nil {
+				return err
+			}
+		}
 	}
-	body = maps.Clone(body)
-	delete(body, specmodel.CollectionEntryIDKey)
-	return body
+	return nil
+}
+
+// addImportedSetting builds one setting of an exported document: the row from
+// what export wrote beside the data, and the data brought to the version this
+// installation reads - refused when it is newer. key is a collection entry's
+// key, the name when the row names none.
+func (state *buildState) addImportedSetting(typ base.SettingType, key string, body any) error {
+	block := specmodel.Block("settings." + string(typ))
+	fields, ok := body.(map[string]any)
+	if !ok {
+		return invalidBlock(block, "%s is not a mapping", key)
+	}
+	fields = maps.Clone(fields)
+	meta := specmodel.SettingMeta{}
+	if raw, found := fields[specmodel.SettingMetaKey]; found {
+		if err := decodeBlock(block, raw, &meta); err != nil {
+			return err
+		}
+	}
+	delete(fields, specmodel.SettingMetaKey)
+	delete(fields, specmodel.CollectionEntryIDKey)
+	data, err := json.Marshal(fields)
+	if err != nil {
+		return invalidBlock(block, "%s", err.Error())
+	}
+
+	setting := &entity.Setting{
+		ID:          gofn.Must(ulid.NewStringULID()),
+		Scope:       base.ObjectScopeApp,
+		ObjectID:    state.req.App.ID,
+		RefID:       meta.RefID,
+		Type:        typ,
+		Kind:        meta.Kind,
+		Status:      gofn.Coalesce(base.SettingStatus(meta.Status), base.SettingStatusActive),
+		Name:        gofn.Coalesce(meta.Name, key),
+		Data:        string(data),
+		Inheritable: meta.Inheritable,
+		Default:     meta.Default,
+		Version:     meta.Version,
+		UpdateVer:   1,
+		CreatedAt:   state.req.TimeNow,
+		UpdatedAt:   state.req.TimeNow,
+		ExpireAt:    meta.ExpireAt,
+	}
+	if _, err = setting.Migrate(); err != nil {
+		return hperrors.Wrap(err)
+	}
+	// Written again through the entity, so a secret that traveled in the clear is
+	// encrypted at rest like any other.
+	parsed, err := setting.Parse()
+	if err != nil {
+		return invalidBlock(block, "%s: %s", key, err.Error())
+	}
+	if err = setting.SetData(parsed); err != nil {
+		return hperrors.Wrap(err)
+	}
+	state.settings = append(state.settings, setting)
+	return nil
 }

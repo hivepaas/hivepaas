@@ -27,13 +27,16 @@ import (
 )
 
 func (s *service) buildSource(_ context.Context, state *buildState) error {
+	if state.req.Import {
+		return state.addImportedSetting(base.SettingTypeAppDeployment, "", state.req.Doc.Deployment.Source)
+	}
 	block := specmodel.BlockDeploymentSource
 	source := &entity.AppDeploymentSettings{}
 	if err := decodeBlock(block, state.req.Doc.Deployment.Source, source); err != nil {
 		return err
 	}
-	if !state.req.Import && (source.ActiveMethod != base.DeploymentMethodImage || source.ImageSource == nil ||
-		source.ImageSource.Image == "") {
+	if source.ActiveMethod != base.DeploymentMethodImage || source.ImageSource == nil ||
+		source.ImageSource.Image == "" {
 		return invalidBlock(block, "an image to deploy is required")
 	}
 	return state.addSetting(base.SettingTypeAppDeployment, entity.CurrentAppDeploymentSettingsVersion, true, source)

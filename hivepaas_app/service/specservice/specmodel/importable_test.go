@@ -44,12 +44,14 @@ func TestCheckImportableRefuses(t *testing.T) {
 }
 
 // Every deployment block is built for an export with a deployment - a block it
-// left out is one the app has none of - and the source only when it is there.
+// left out is one the app has none of - the source only when it is there, and
+// the settings as one block.
 func TestImportBlocks(t *testing.T) {
 	assert.Equal(t, []Block{
 		BlockDeploymentStorage, BlockContainer, BlockDeploymentResources, BlockDeploymentNetworks,
-		BlockDeploymentService, BlockSettingsKind,
+		BlockDeploymentService, BlockSettings,
 	}, ImportBlocks(decodeDoc(t, "deployment:\n  container: {}\nsettings:\n  kind: {category: webapp}\n")))
-	assert.Equal(t, []Block{BlockSettingsRouting},
+	assert.Equal(t, []Block{BlockSettings},
 		ImportBlocks(decodeDoc(t, "settings:\n  routing: {port: 80}\n")), "an app never deployed")
+	assert.Empty(t, ImportBlocks(&AppDoc{}))
 }

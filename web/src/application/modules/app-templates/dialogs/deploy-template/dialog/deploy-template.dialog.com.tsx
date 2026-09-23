@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
     type CreateAppFromTemplateReq,
     type CreateAppFromTemplateResp,
+    type PreflightIssue,
     type PreflightResult,
     type PreflightStorageFinding,
 } from "../../../api";
@@ -78,6 +79,7 @@ export function DeployTemplateDialog() {
     const [inUse, setInUse] = useState<{
         values: CreateAppFromTemplateReq;
         findings: PreflightStorageFinding[];
+        issues: PreflightIssue[];
     } | null>(null);
 
     const { mutate: preflight, isPending: isChecking } = usePreflightAppFromTemplate({
@@ -90,11 +92,11 @@ export function DeployTemplateDialog() {
                     description: "If these apps ran here before, their data is still in place.",
                 });
             }
-            if (result.storage.length === 0) {
+            if (result.storage.length === 0 && result.issues.length === 0) {
                 createAppFromTemplate(values);
                 return;
             }
-            setInUse({ values, findings: result.storage });
+            setInUse({ values, findings: result.storage, issues: result.issues });
         },
         // The check is advisory. One that cannot answer must not stop a creation
         // that would have worked: the creation reports its own failures.
@@ -179,6 +181,7 @@ export function DeployTemplateDialog() {
             <StorageInUseDialog
                 open={inUse !== null}
                 findings={inUse?.findings ?? []}
+                issues={inUse?.issues ?? []}
                 isPending={isPending}
                 onOpenChange={nextOpen => {
                     if (!nextOpen) {

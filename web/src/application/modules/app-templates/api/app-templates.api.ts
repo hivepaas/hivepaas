@@ -256,14 +256,30 @@ export interface PreflightStorageFinding {
     path: string;
 }
 
+/** A refusal the creation would raise, reported instead of raised. */
+export interface PreflightIssue {
+    code: string;
+    detail: string;
+}
+
 export interface PreflightAppFromTemplateResp {
     meta?: unknown;
-    data: { storage: PreflightStorageFinding[]; storageUnchecked?: PreflightStorageFinding[] };
+    data: {
+        storage: PreflightStorageFinding[];
+        storageUnchecked?: PreflightStorageFinding[];
+        issues?: PreflightIssue[];
+    };
 }
 
 /** What the preflight saw, and what it could not see. */
 export interface PreflightResult {
     storage: PreflightStorageFinding[];
+    /**
+     * What the creation would refuse: a domain already served, a port already
+     * held, permission the caller does not have. Reported together, because a
+     * dialog that says "and also" three times is three trips through the form.
+     */
+    issues: PreflightIssue[];
     /**
      * Storage nothing could be seen of, usually a node that could not be
      * reached. Not the same as there being nothing there, which is why it is
@@ -413,6 +429,7 @@ export class AppTemplatesApi extends BaseApi {
             return {
                 storage: res.data.data.storage,
                 unchecked: res.data.data.storageUnchecked ?? [],
+                issues: res.data.data.issues ?? [],
             };
         } catch (error) {
             throw parseApiError(error);

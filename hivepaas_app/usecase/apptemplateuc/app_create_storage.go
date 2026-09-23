@@ -36,6 +36,11 @@ type storageFinding struct {
 type storagePlan struct {
 	Request  *volumeservice.InspectAppStorageReq
 	Findings []*storageFinding
+	// Unchecked is what nothing could be seen of: storage on a node that could
+	// not be reached, or a volume with nothing on a filesystem to look at. It is
+	// reported rather than dropped, because an empty answer that means "nothing
+	// was seen" reads exactly like one that means "there is nothing there".
+	Unchecked []*storageFinding
 }
 
 // planStorage asks, for every app this request would create, whether the
@@ -79,21 +84,23 @@ func (uc *UC) planStorage(
 
 	plan := &storagePlan{Request: inspectReq}
 	for _, state := range resp.States {
-		if !state.HasData() {
-			continue
-		}
 		app := byKey[state.AppKey]
-		if app == nil {
+		if app == nil || (state.Checked && !state.HasData()) {
 			continue
 		}
-		plan.Findings = append(plan.Findings, &storageFinding{
+		finding := &storageFinding{
 			AppName:    app.name,
 			AppKey:     state.AppKey,
 			IsDatabase: appIsDatabase(app),
 			VolumeID:   state.VolumeID,
 			VolumeName: state.VolumeName,
 			Path:       state.Path,
-		})
+		}
+		if state.Checked {
+			plan.Findings = append(plan.Findings, finding)
+			continue
+		}
+		plan.Unchecked = append(plan.Unchecked, finding)
 	}
 	return plan, nil
 }

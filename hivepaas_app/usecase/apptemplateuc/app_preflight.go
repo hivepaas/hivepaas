@@ -40,8 +40,15 @@ func (uc *UC) PreflightAppFromTemplate(
 		return nil, hperrors.Wrap(err)
 	}
 
-	data := &apptemplatedto.PreflightAppRe{Storage: make([]*apptemplatedto.PreflightStorageRes, 0, len(plan.Findings))}
-	for _, finding := range plan.Findings {
+	return &apptemplatedto.PreflightAppFromTemplateResp{Data: &apptemplatedto.PreflightAppRe{
+		Storage:          storageResults(plan.Findings),
+		StorageUnchecked: storageResults(plan.Unchecked),
+	}}, nil
+}
+
+func storageResults(findings []*storageFinding) []*apptemplatedto.PreflightStorageRes {
+	results := make([]*apptemplatedto.PreflightStorageRes, 0, len(findings))
+	for _, finding := range findings {
 		item := &apptemplatedto.PreflightStorageRes{
 			App:        finding.AppName,
 			AppKey:     finding.AppKey,
@@ -49,7 +56,7 @@ func (uc *UC) PreflightAppFromTemplate(
 			Path:       finding.Path,
 		}
 		item.Volume.ID, item.Volume.Name = finding.VolumeID, finding.VolumeName
-		data.Storage = append(data.Storage, item)
+		results = append(results, item)
 	}
-	return &apptemplatedto.PreflightAppFromTemplateResp{Data: data}, nil
+	return results
 }

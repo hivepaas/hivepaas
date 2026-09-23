@@ -64,7 +64,10 @@ func (uc *UC) PreflightAppStorageSettings(
 		})
 	}
 
-	data := &appsettingsdto.PreflightAppStorageResult{Storage: []*appsettingsdto.PreflightStorageRes{}}
+	data := &appsettingsdto.PreflightAppStorageResult{
+		Storage:          []*appsettingsdto.PreflightStorageRes{},
+		StorageUnchecked: []*appsettingsdto.PreflightStorageRes{},
+	}
 	if len(inspectReq.Queries) == 0 {
 		return &appsettingsdto.PreflightAppStorageSettingsResp{Data: data}, nil
 	}
@@ -74,12 +77,16 @@ func (uc *UC) PreflightAppStorageSettings(
 		return nil, hperrors.Wrap(err)
 	}
 	for _, state := range resp.States {
-		if !state.HasData() {
+		if state.Checked && !state.HasData() {
 			continue
 		}
 		item := &appsettingsdto.PreflightStorageRes{Target: targets[state.AppKey], Path: state.Path}
 		item.Volume.ID, item.Volume.Name = state.VolumeID, state.VolumeName
-		data.Storage = append(data.Storage, item)
+		if state.Checked {
+			data.Storage = append(data.Storage, item)
+			continue
+		}
+		data.StorageUnchecked = append(data.StorageUnchecked, item)
 	}
 	return &appsettingsdto.PreflightAppStorageSettingsResp{Data: data}, nil
 }

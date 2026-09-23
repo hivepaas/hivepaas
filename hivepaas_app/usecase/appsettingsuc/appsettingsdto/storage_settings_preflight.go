@@ -42,6 +42,11 @@ type PreflightAppStorageResult struct {
 	// Storage is every mount being added whose directory already holds
 	// something. Empty is the ordinary case.
 	Storage []*PreflightStorageRes `json:"storage"`
+	// StorageUnchecked is what could not be looked at - storage on a node that
+	// could not be reached. An empty Storage that means "nothing was seen" reads
+	// exactly like one that means "there is nothing there", and the second is
+	// the one that lets a save walk into old data.
+	StorageUnchecked []*PreflightStorageRes `json:"storageUnchecked"`
 }
 
 type PreflightStorageRes struct {

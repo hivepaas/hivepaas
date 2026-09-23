@@ -37,6 +37,11 @@ type PreflightAppRe struct {
 	// Storage is every app of this request whose directory already holds
 	// something. Empty is the ordinary case and means there is nothing to say.
 	Storage []*PreflightStorageRes `json:"storage"`
+	// StorageUnchecked is what could not be looked at - storage on a node that
+	// could not be reached. It is reported because an empty Storage that means
+	// "nothing was seen" reads exactly like one that means "there is nothing
+	// there", and the second is the one that lets a deploy walk into old data.
+	StorageUnchecked []*PreflightStorageRes `json:"storageUnchecked"`
 }
 
 type PreflightStorageRes struct {

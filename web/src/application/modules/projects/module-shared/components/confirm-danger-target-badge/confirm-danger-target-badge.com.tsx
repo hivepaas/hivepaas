@@ -40,7 +40,7 @@ export function ConfirmDangerTargetBadge({ text, className }: Props) {
     return (
         <span
             className={cn(
-                "inline-flex max-w-full items-center gap-1.5 rounded-[4px] border border-input bg-muted/50 px-2 py-0 align-middle font-semibold text-primary break-all",
+                "inline-flex max-w-full items-center gap-1.5 rounded-full border border-input/50 bg-muted/50 px-2 py-0 align-middle font-semibold text-primary break-all",
                 className,
             )}
         >

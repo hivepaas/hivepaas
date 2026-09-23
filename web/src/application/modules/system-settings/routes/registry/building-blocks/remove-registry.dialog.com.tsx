@@ -9,6 +9,7 @@ import {
     DialogTitle,
 } from "@components/ui/dialog";
 import { AlertTriangle } from "lucide-react";
+import { ConfirmDangerTargetBadge } from "~/projects/module-shared/components";
 
 import { Button, Checkbox, Input, Separator } from "@/components/ui";
 
@@ -90,18 +91,13 @@ export function RemoveRegistryDialog({ open, domain, onS3, isPending, onOpenChan
                             />
                             <span>
                                 <span className="block">Also delete the images</span>
-                                <span className="block text-xs leading-normal text-muted-foreground">
-                                    Only the registry&apos;s own directory inside the volume is removed. The volume
-                                    itself, and anything else stored on it, stays.
-                                </span>
                             </span>
                         </label>
                     )}
 
                     <div className="flex flex-col gap-2">
                         <p className="text-sm font-medium leading-6">
-                            Type <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{domain}</span> to
-                            confirm.
+                            Type <ConfirmDangerTargetBadge text={domain} /> to confirm.
                         </p>
                         <Input
                             value={typed}

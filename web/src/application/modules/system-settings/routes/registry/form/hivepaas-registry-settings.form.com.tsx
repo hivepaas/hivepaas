@@ -227,13 +227,6 @@ export function HivePaaSRegistrySettingsForm({ settings, readOnly = false, onSub
                                                 comes back, and meets an upload limit on the way — 100 MB per request on
                                                 the free plan, which a single layer passes without trying.
                                             </p>
-                                            {isProvisioned && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    The registry is running. Change its address in the app&apos;s
-                                                    routing settings, where the domain is verified and its certificate
-                                                    is obtained.
-                                                </p>
-                                            )}
                                         </div>
                                     </InfoBlock>
 

@@ -32,6 +32,15 @@ func (uc *UC) UpdateAppStorageSettings(
 			return hperrors.Wrap(err)
 		}
 
+		// What a previous app of the same key left in those directories goes
+		// first, and only for the mounts being added: the ones the app already
+		// has reach its own data.
+		if req.ResetStorage {
+			if err = uc.resetNewMountStorage(ctx, db, data); err != nil {
+				return hperrors.Wrap(err)
+			}
+		}
+
 		// Building the mounts also refuses a set that pins the service to more
 		// than one node, which has to happen before the mounts reach the service.
 		built, err := uc.volumeService.BuildAppMounts(ctx, db, &volumeservice.BuildAppMountsReq{
@@ -248,4 +257,38 @@ func (uc *UC) applyAppStorageSettings(
 		return hperrors.Wrap(err)
 	}
 	return nil
+}
+
+// resetNewMountStorage clears the directories the mounts being added reach.
+//
+// A mount that names another app is left alone: it reaches somebody else's
+// directory on purpose, and clearing it would delete the data this app was given
+// to work on.
+func (uc *UC) resetNewMountStorage(ctx context.Context, db database.Tx, data *updateAppStorageSettingsData) error {
+	inspectReq := &volumeservice.InspectAppStorageReq{Scope: data.App.GetObjectScope()}
+	for _, mnt := range data.NewMounts {
+		if mnt.OwnerApp != nil || mnt.Source == "" {
+			continue
+		}
+		if mnt.Type != mount.TypeVolume && mnt.Type != mount.TypeCluster {
+			continue
+		}
+		subpath := ""
+		switch {
+		case mnt.VolumeOptions != nil:
+			subpath = mnt.VolumeOptions.Subpath
+		case mnt.ClusterOptions != nil:
+			subpath = mnt.ClusterOptions.Subpath
+		}
+		inspectReq.Queries = append(inspectReq.Queries, &volumeservice.AppStorageQuery{
+			AppKey:   data.App.Key,
+			App:      data.App,
+			VolumeID: mnt.Source,
+			Subpath:  subpath,
+		})
+	}
+	if len(inspectReq.Queries) == 0 {
+		return nil
+	}
+	return hperrors.Wrap(uc.volumeService.RemoveAppStoragePaths(ctx, db, inspectReq))
 }

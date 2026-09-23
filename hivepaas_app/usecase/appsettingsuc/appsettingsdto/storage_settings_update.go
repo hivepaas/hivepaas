@@ -14,6 +14,10 @@ type UpdateAppStorageSettingsReq struct {
 
 	Mounts    []*Mount `json:"mounts"`
 	UpdateVer int      `json:"updateVer"`
+	// ResetStorage deletes what is already in the directories the mounts being
+	// added reach, before they are mounted. It is what the preflight findings are
+	// answered with, and it is off unless asked for.
+	ResetStorage bool `json:"resetStorage,omitempty"`
 }
 
 func NewUpdateAppStorageSettingsReq() *UpdateAppStorageSettingsReq {

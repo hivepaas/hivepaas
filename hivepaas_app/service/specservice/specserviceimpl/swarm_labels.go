@@ -10,6 +10,7 @@ package specserviceimpl
 import (
 	"strings"
 
+	"github.com/moby/moby/api/types/swarm"
 	"github.com/tiendc/gofn"
 
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
@@ -70,12 +71,7 @@ func filterUserConstraints(constraints []string, managed string) []string {
 		return nil
 	}
 
-	managedSet := make([]string, 0, 4) //nolint:mnd
-	for _, item := range strings.Split(managed, ",") {
-		if trimmed := strings.TrimSpace(item); trimmed != "" {
-			managedSet = append(managedSet, normalizeConstraint(trimmed))
-		}
-	}
+	managedSet := managedConstraintSet(managed)
 
 	kept := make([]string, 0, len(constraints))
 	for _, constraint := range constraints {
@@ -98,4 +94,32 @@ func normalizeConstraint(constraint string) string {
 		return strings.TrimSpace(constraint)
 	}
 	return k + op + v
+}
+
+// managedConstraintSet is the placement constraints HivePaaS derived, as the
+// label listing them says, each normalized.
+func managedConstraintSet(managed string) []string {
+	set := make([]string, 0, 4) //nolint:mnd
+	for _, item := range strings.Split(managed, ",") {
+		if trimmed := strings.TrimSpace(item); trimmed != "" {
+			set = append(set, normalizeConstraint(trimmed))
+		}
+	}
+	return set
+}
+
+// derivedConstraints is the constraints of a placement HivePaaS derived: the ones
+// export leaves out, and building the block keeps.
+func derivedConstraints(placement *swarm.Placement, managed string) []string {
+	if placement == nil {
+		return nil
+	}
+	set := managedConstraintSet(managed)
+	var out []string
+	for _, constraint := range placement.Constraints {
+		if gofn.Contain(set, normalizeConstraint(constraint)) {
+			out = append(out, constraint)
+		}
+	}
+	return out
 }

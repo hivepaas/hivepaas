@@ -183,3 +183,43 @@ func TestHealthcheckNoneStaysOff(t *testing.T) {
 	assert.NoError(t, applyHealthcheck(&specmodel.Healthcheck{Mode: docker.HealthcheckModeNone}, cs))
 	assert.Equal(t, []string{"NONE"}, cs.Healthcheck.Test)
 }
+
+func TestServiceRoundTrip(t *testing.T) {
+	replicas := uint64(3)
+	want := &specmodel.Service{
+		ModeSpec: &specmodel.ServiceModeSpec{Mode: docker.ServiceModeReplicated, ServiceReplicas: &replicas},
+		Placement: &specmodel.Placement{
+			Constraints: []string{"node.labels.zone==eu"},
+			Preferences: []*specmodel.PlacementPreference{{Name: "spread", Value: "node.labels.rack"}},
+		},
+	}
+	spec := blankSpec()
+
+	applyService(want, spec)
+
+	assert.Equal(t, want, mapService(spec, &spec.TaskTemplate))
+}
+
+// A constraint HivePaaS derived - the pin to the node a volume lives on - is
+// regenerated at the next deployment, but until then it is what keeps the task
+// beside its data, so building the block keeps it.
+func TestServiceKeepsTheConstraintsHivePaaSDerived(t *testing.T) {
+	spec := blankSpec()
+	spec.Labels = map[string]string{labelAppPlacementConstraints: "node.id==abc"}
+	spec.TaskTemplate.Placement = &swarm.Placement{Constraints: []string{"node.id == abc", "node.labels.zone==us"}}
+
+	applyService(&specmodel.Service{Placement: &specmodel.Placement{Constraints: []string{"node.labels.zone==eu"}}}, spec)
+
+	assert.Equal(t, []string{"node.id == abc", "node.labels.zone==eu"}, spec.TaskTemplate.Placement.Constraints)
+}
+
+// Without a mode the service keeps its own: swarm refuses to change the kind of
+// service in place, and nothing here says what it should become.
+func TestServiceWithoutAModeKeepsItsOwn(t *testing.T) {
+	spec := blankSpec()
+	spec.Mode = swarm.ServiceMode{Global: &swarm.GlobalService{}}
+
+	applyService(nil, spec)
+
+	assert.NotNil(t, spec.Mode.Global)
+}

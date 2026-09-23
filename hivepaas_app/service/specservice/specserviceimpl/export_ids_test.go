@@ -203,3 +203,43 @@ func TestProjectOwner(t *testing.T) {
 		})
 	}
 }
+
+// A setting is more than its data: the row says what it is called, what kind it
+// is, whether it is on, whether the scopes below see it, whether it is the
+// default of its kind, and which version of its data it holds.
+func TestExportWritesTheRowOfEverySetting(t *testing.T) {
+	path, _ := runExport(t, specmodel.SecretsModeOmit, "")
+
+	global := &specmodel.GlobalDoc{}
+	readDoc(t, path, "global.yaml", global)
+	cert := entry(t, global.Settings, "sslCerts", "localhost")
+	assert.Equal(t, map[string]any{"name": "localhost", "kind": "self-signed", "status": "active", "version": 1},
+		cert[specmodel.SettingMetaKey])
+
+	env := &specmodel.EnvDoc{}
+	readDoc(t, path, "projects/project_a/envs/dev.yaml", env)
+	routing, ok := env.Apps["backend"].Settings["routing"].(map[string]any)
+	if assert.True(t, ok) {
+		assert.Equal(t, map[string]any{"status": "active", "version": 1}, routing[specmodel.SettingMetaKey],
+			"a singleton has no name, and the row still says the rest")
+	}
+}
+
+func TestNoExportedSettingTypeHasATopLevelSettingField(t *testing.T) {
+	for _, typ := range entity.AllParsedSettingTypes() {
+		decision := entity.SpecExportDecision(&entity.Setting{
+			Type: typ, Scope: base.ObjectScopeProject, ObjectID: "prj_1",
+		})
+		if !decision.Export {
+			continue
+		}
+		data, err := (&entity.Setting{Type: typ}).Parse()
+		if !assert.NoError(t, err, "%v", typ) {
+			continue
+		}
+		for _, key := range jsonKeys(reflect.TypeOf(data)) {
+			assert.False(t, strings.EqualFold(key, specmodel.SettingMetaKey),
+				"%v has a top-level %q, which the row export writes would overwrite", typ, key)
+		}
+	}
+}

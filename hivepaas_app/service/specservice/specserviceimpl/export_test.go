@@ -147,7 +147,7 @@ func exportFixture(t *testing.T) specservice.Service {
 
 	cert := &entity.Setting{
 		ID: "cert_1", Type: base.SettingTypeSSLCert, Scope: base.ObjectScopeGlobal,
-		Name: "localhost", Kind: "self-signed", Status: base.SettingStatusActive,
+		Name: "localhost", Kind: "self-signed", Status: base.SettingStatusActive, Version: 1,
 	}
 	assert.NoError(t, cert.SetData(&entity.SSLCert{Domain: "localhost"}))
 
@@ -155,7 +155,7 @@ func exportFixture(t *testing.T) specservice.Service {
 	// complete before any document is written.
 	routing := &entity.Setting{
 		ID: "routing_1", Type: base.SettingTypeAppRouting, Scope: base.ObjectScopeApp,
-		ObjectID: "app_1", Status: base.SettingStatusActive,
+		ObjectID: "app_1", Status: base.SettingStatusActive, Version: 1,
 	}
 	assert.NoError(t, routing.SetData(&entity.AppRoutingSettings{
 		Port: 8080,

@@ -104,7 +104,7 @@ services:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
         window: 120s
       update_config:
@@ -124,9 +124,13 @@ services:
       - local_net
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U hivepaas" ]
+      # Loose on purpose. A failed check makes swarm start a replacement before the
+      # old container has exited, so two postgres run on one data directory for a
+      # few seconds - on an overloaded host that was the outage, not the check.
       interval: 10s
-      timeout: 3s
-      retries: 3
+      timeout: 10s
+      retries: 6
+      start_period: 60s
     environment:
       POSTGRES_DB: hivepaas
       POSTGRES_USER: hivepaas
@@ -144,8 +148,10 @@ services:
         constraints:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
+      # any, not on-failure: postgres exits 0 when it shuts itself down (e.g. after
+      # losing its postmaster.pid lock), and on-failure never restarts an exit 0.
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
         window: 120s
     logging:
@@ -171,7 +177,7 @@ services:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
         window: 120s
     logging:
@@ -311,7 +317,7 @@ services:
         monitor: 240s
         max_failure_ratio: 0.5
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
         window: 120s
     logging:
@@ -373,7 +379,7 @@ services:
           - node.role == manager
           - node.labels.hivepaas.role == control-plane
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
         window: 120s
       # applyServiceSettingsToWorkerService sets FailureAction and
@@ -447,7 +453,7 @@ services:
         - "hivepaas.app.info={\"name\":\"agent\",\"key\":\"agent\"}"
         - "traefik.enable=false"
       restart_policy:
-        condition: on-failure
+        condition: any
         delay: 5s
         window: 120s
     logging:

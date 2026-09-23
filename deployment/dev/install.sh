@@ -9,6 +9,12 @@ echo "---------------------------------------------------------------"
 # Delete all unused data that take the disk space
 # docker system prune -a -f
 
+# Swap and earlyoom, so running out of memory kills one user app instead of
+# stalling the host. Needs root; the install goes on without it.
+echo "Prepare host memory settings..."
+curl -sL "https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/dev/host-memory.sh" -o host-memory.sh
+sudo bash host-memory.sh || echo "WARNING: host-memory.sh failed, continuing without swap/earlyoom" >&2
+
 # Reset whole cluster
 docker swarm leave --force || true
 docker swarm init
@@ -81,6 +87,14 @@ curl -sL "https://raw.githubusercontent.com/hivepaas/hivepaas/main/deployment/de
 echo "Deploy hivepaas stack..."
 docker pull hivepaas/hivepaas-dev:latest # pull latest image
 docker stack deploy -c hivepaas.yaml hivepaas
+
+# Kernel OOM priority for the system services, so a user app is the one killed
+# when memory runs out. Not in the stack file: `docker stack deploy` drops
+# oom_score_adj, and a later deploy that changes a service resets it to 0 - run
+# this loop again after one.
+for svc in traefik db redis app worker updater agent; do
+  docker service update --detach --quiet --oom-score-adj -500 "hivepaas_$svc" >/dev/null
+done
 
 sleep 10
 docker run --net hivepaas_local_net \

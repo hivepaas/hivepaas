@@ -89,6 +89,14 @@ echo "Deploy hivepaas stack..."
 cp deployment/local/hivepaas.yaml $HIVEPAAS_ROOT/hivepaas.yaml
 (cd $HIVEPAAS_ROOT && docker stack deploy -c hivepaas.yaml hivepaas)
 
+# Kernel OOM priority for the system services, so a user app is the one killed
+# when memory runs out. Not in the stack file: `docker stack deploy` drops
+# oom_score_adj, and a later deploy that changes a service resets it to 0 - run
+# this loop again after one.
+for svc in traefik db redis app worker updater agent; do
+  docker service update --detach --quiet --oom-score-adj -500 "hivepaas_$svc" >/dev/null
+done
+
 # Assert what the comment above explains, because the failure it describes is
 # silent: a stack that comes up, serves nothing it was given, and looks fine.
 #

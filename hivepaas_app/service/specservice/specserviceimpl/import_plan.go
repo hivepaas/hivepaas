@@ -187,6 +187,8 @@ type planner struct {
 	nodes   []*specmodel.PlanNode
 	// envOnly is an env route's plan: its project is matched, never planned.
 	envOnly bool
+	// missing names, by node path, the settings the target does not have at all.
+	missing map[string][]string
 }
 
 func (p *planner) add(node *specmodel.PlanNode) *specmodel.PlanNode {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/moby/moby/api/types/mount"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/agentservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
@@ -18,6 +19,8 @@ func New(
 	agentService agentservice.Service,
 
 	settingRepo repository.SettingRepo,
+
+	logger logging.Logger,
 ) volumeservice.Service {
 	svc := &service{
 		dockerManager: dockerManager,
@@ -25,6 +28,7 @@ func New(
 		agentService:  agentService,
 
 		settingRepo: settingRepo,
+		logger:      logger,
 	}
 	svc.makeSubDirInHost = svc.MakeSubDirInHost
 	svc.ensureVolumePermissions = svc.EnsureVolumePermissions
@@ -37,6 +41,8 @@ type service struct {
 	agentService  agentservice.Service
 
 	settingRepo repository.SettingRepo
+
+	logger logging.Logger
 
 	// makeSubDirInHost and ensureVolumePermissions reach the host through a
 	// throwaway container. They are fields so a test of mount building can stand

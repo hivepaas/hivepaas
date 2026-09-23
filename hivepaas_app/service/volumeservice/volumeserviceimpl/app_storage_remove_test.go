@@ -265,3 +265,44 @@ func TestOwnStorageTargetsIsEmptyWhenNothingIsTheApps(t *testing.T) {
 
 	assert.Empty(t, targets)
 }
+
+// Docker Desktop rewrites a bind source into the path its file-sharing layer
+// serves it at, so the spec carries /host_mnt/srv/data where HivePaaS wrote
+// /srv/data. Compared literally the mount matches no volume, and the storage the
+// operator asked to delete is silently left behind - which is what happened.
+func TestStorageTargetFindsTheAppDirectoryBehindADesktopPrefix(t *testing.T) {
+	app := mountTestApp() // project shop, env prod, app web
+	volumes := []*entity.Setting{clusterVolumeSetting(t, "vol-1", "/srv/data")}
+
+	targets := ownStorageTargets(app, []mount.Mount{{
+		Type:   mount.TypeBind,
+		Source: "/host_mnt/srv/data/prod/web",
+		Target: "/data",
+	}}, volumes)
+
+	assert.Len(t, targets, 1)
+	assert.Equal(t, "prod/web", targets[0].subpath)
+	assert.Equal(t, "/srv/data", targets[0].mount.Source)
+}
+
+// Stripping the prefix may only ever produce a path that matches a volume this
+// installation configured; a bind that matches nothing still matches nothing.
+func TestDesktopPrefixIsNotStrippedIntoSomethingElse(t *testing.T) {
+	app := mountTestApp()
+	volumes := []*entity.Setting{clusterVolumeSetting(t, "vol-1", "/srv/data")}
+
+	targets := ownStorageTargets(app, []mount.Mount{{
+		Type:   mount.TypeBind,
+		Source: "/host_mnt/elsewhere/prod/web",
+		Target: "/data",
+	}}, volumes)
+
+	assert.Empty(t, targets)
+}
+
+func TestBindSourceCandidatesKeepsThePathItWasGiven(t *testing.T) {
+	assert.Equal(t, []string{"/srv/data/prod/web"}, bindSourceCandidates("/srv/data/prod/web"))
+	assert.Equal(t, []string{"/host_mnt/srv/data", "/srv/data"}, bindSourceCandidates("/host_mnt/srv/data"))
+	// A directory that merely starts with the same letters is not a prefix.
+	assert.Equal(t, []string{"/host_mnts/srv"}, bindSourceCandidates("/host_mnts/srv"))
+}

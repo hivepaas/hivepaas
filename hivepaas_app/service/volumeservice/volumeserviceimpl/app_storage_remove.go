@@ -67,12 +67,35 @@ func (s *service) RemoveAppStorage(
 	}
 	local := s.storageIsOnThisNode(ctx, pins)
 
-	for _, target := range ownStorageTargets(app, mounts, volumes) {
+	targets := ownStorageTargets(app, mounts, volumes)
+	if len(targets) == 0 {
+		// Nothing matched, and the caller asked for data to be deleted: saying so
+		// is the difference between a storage removal that had nothing to do and
+		// one that quietly did nothing. The second is what a mount whose source
+		// docker reports differently than HivePaaS wrote it looks like.
+		if s.logger != nil {
+			s.logger.Warn("no storage of app was removed: none of its mounts matched a volume it owns",
+				"app", app.ID, "mounts", len(mounts), "volumes", len(volumes),
+				"sources", mountSources(mounts))
+		}
+		return nil
+	}
+	for _, target := range targets {
 		if err := s.removeStorageTarget(ctx, &target, constraint, local); err != nil {
 			return hperrors.Wrap(err)
 		}
 	}
 	return nil
+}
+
+// mountSources is what the warning above prints: enough to compare against the
+// volumes by hand, and nothing a path could hide in.
+func mountSources(mounts []mount.Mount) []string {
+	sources := make([]string, 0, len(mounts))
+	for i := range mounts {
+		sources = append(sources, string(mounts[i].Type)+":"+mounts[i].Source)
+	}
+	return sources
 }
 
 // ownStorageTargets is what deleting this app may remove: the directories its
@@ -172,8 +195,37 @@ func appStorageTarget(mnt *mount.Mount, volumes []*entity.Setting) (storageTarge
 // directory itself is the volume, and a bind pointing straight at it, or at a
 // path no volume accounts for, is not the app's to delete.
 func bindStorageTarget(mnt *mount.Mount, volumes []*entity.Setting) (storageTarget, bool) {
-	source := filepath.Clean(mnt.Source)
+	for _, source := range bindSourceCandidates(mnt.Source) {
+		if target, ok := bindStorageTargetOf(source, volumes); ok {
+			return target, true
+		}
+	}
+	return storageTarget{}, false
+}
 
+// bindSourceCandidates is the source as docker reports it, and then the same
+// path with a runtime's own prefix taken off.
+//
+// Docker Desktop rewrites a bind source into the path its file-sharing layer
+// serves it at - /Users/x becomes /host_mnt/Users/x - so the spec no longer
+// carries the path HivePaaS wrote. A candidate is only ever accepted when it
+// matches a volume this installation configured, so stripping a prefix cannot
+// make a path match something it should not; on Linux, where nothing rewrites
+// anything, the first candidate is the only one that is ever used.
+func bindSourceCandidates(source string) []string {
+	cleaned := filepath.Clean(source)
+	candidates := []string{cleaned}
+	for _, prefix := range bindSourcePrefixes {
+		if rest, found := strings.CutPrefix(cleaned, prefix); found && strings.HasPrefix(rest, "/") {
+			candidates = append(candidates, rest)
+		}
+	}
+	return candidates
+}
+
+var bindSourcePrefixes = []string{"/host_mnt", "/host-mnt"}
+
+func bindStorageTargetOf(source string, volumes []*entity.Setting) (storageTarget, bool) {
 	device := ""
 	var setting *entity.Setting
 	for _, vol := range volumes {

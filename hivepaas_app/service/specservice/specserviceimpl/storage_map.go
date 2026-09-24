@@ -5,6 +5,7 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
@@ -43,6 +44,11 @@ func mapAppStorage(
 	for i := range mounts {
 		m := &mounts[i]
 		if shm != nil && m.Type == shm.Type && m.Target == shm.Target {
+			continue
+		}
+		// The socket is this installation's, named after this app's id; import
+		// gives an app with the setting its own.
+		if dockerapiservice.IsSocketMount(m) {
 			continue
 		}
 		if seen[m.Target] {

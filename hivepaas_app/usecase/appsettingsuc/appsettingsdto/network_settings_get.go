@@ -10,6 +10,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/basedto"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 )
 
 type GetAppNetworkSettingsReq struct {
@@ -118,6 +119,10 @@ func TransformNetworkAttachments(
 		}
 		if net := input.DockerNetworks[itemResp.ID]; net != nil {
 			itemResp.Name = net.Name
+		}
+		// The app's own network comes with its Docker API access, not from here.
+		if dockerapiservice.IsAppNetworkName(itemResp.Name) {
+			continue
 		}
 		resp = append(resp, itemResp)
 	}

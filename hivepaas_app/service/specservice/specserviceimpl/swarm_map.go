@@ -12,6 +12,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/fileutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
 	"github.com/hivepaas/hivepaas/services/docker"
 	"github.com/hivepaas/hivepaas/services/docker/dockerhelper"
@@ -288,6 +289,10 @@ func mapNetworks(
 		name := attachment.Target
 		if resolved := netNames[attachment.Target]; resolved != "" {
 			name = resolved
+		}
+		// The app's own network is this installation's, like its socket.
+		if dockerapiservice.IsAppNetworkName(name) {
+			continue
 		}
 		out.Attachments = append(out.Attachments, &specmodel.NetworkAttachment{
 			Name: name, Aliases: attachment.Aliases,

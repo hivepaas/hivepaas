@@ -20,6 +20,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/slugify"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/transaction"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/appsettingsuc/appsettingsdto"
 )
 
@@ -131,6 +132,13 @@ func (uc *UC) loadAppNetworkSettingsForUpdate(
 		})
 	}
 
+	// The app's own network is not listed on the screen, so what it saves never
+	// names it; the attachment the service has is kept.
+	appNetworkID, err := uc.dockerAPIService.AppNetworkID(ctx, app.ID)
+	if err != nil {
+		return hperrors.Wrap(err)
+	}
+	data.FinalNetworks = dockerapiservice.KeepAppNetwork(data.FinalNetworks, currNetworks, appNetworkID)
 	return nil
 }
 

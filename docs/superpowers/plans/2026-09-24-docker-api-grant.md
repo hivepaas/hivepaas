@@ -1507,12 +1507,15 @@ import (
 	"github.com/moby/moby/api/types/swarm"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dockerapiservice"
 )
 
 func TestTheStorageScreenDoesNotShowTheSocket(t *testing.T) {
 	data := mount.Mount{Type: mount.TypeVolume, Source: "hp-vol-data", Target: "/data"}
 	mounts, err := TransformStorageMounts(&StorageSettingsTransformInput{
+		App: &entity.App{Key: "web", Project: &entity.Project{Key: "shop"},
+			ProjectEnv: &entity.ProjectEnv{Key: "prod"}},
 		Service: &swarm.Service{Spec: swarm.ServiceSpec{TaskTemplate: swarm.TaskSpec{
 			ContainerSpec: &swarm.ContainerSpec{Mounts: []mount.Mount{data, dockerapiservice.SocketMount("app1")}},
 		}}},
@@ -1615,7 +1618,7 @@ In `UpdateAppStorageSettings` (`storage_settings_update.go`), the final mounts k
 
 In `network_settings_update.go`:
 - `appsettingsuc.UC` gains a `dockerAPIService dockerapiservice.Service` field and a `New` parameter;
-- at the end of `loadAppNetworkSettingsForUpdate`, before `return nil`, the final networks keep the app's own:
+- at the end of `loadAppNetworkSettingsForUpdate`, before `return nil`, the final networks keep the app's own (run `golangci-lint fmt` on files whose imports were added by hand, so that gci places them):
 
 ```go
 	// The app's own network is not listed on the screen, so what it saves never

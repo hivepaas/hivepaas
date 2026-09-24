@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package agent;
+
+option go_package = "github.com/hivepaas/hivepaas/hivepaas_app/interface/agent/proto;agentproto";
+
+// DockerAPIService is the agent's side of serving apps the Docker API through
+// a proxy: every node's agent serves every app that has access.
+service DockerAPIService {
+  // SyncDockerAPI reads which apps have access and serves exactly those, now
+  // rather than at the next tick.
+  rpc SyncDockerAPI(DockerAPISyncReq) returns (DockerAPISyncResp);
+  // RemoveDockerAPIApp stops serving an app and removes what its children left
+  // on the node.
+  rpc RemoveDockerAPIApp(DockerAPIRemoveAppReq) returns (DockerAPIRemoveAppResp);
+}
+
+message DockerAPISyncReq {}
+
+message DockerAPISyncResp {
+  int32 apps = 1;
+}
+
+message DockerAPIRemoveAppReq {
+  string app_id = 1;
+}
+
+message DockerAPIRemoveAppResp {
+  int32 containers = 1;
+  int32 networks = 2;
+  int32 volumes = 3;
+}

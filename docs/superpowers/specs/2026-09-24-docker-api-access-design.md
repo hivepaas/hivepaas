@@ -103,7 +103,9 @@ Export writes the block like any other setting. Import reads it back (§9).
 ## 3. Endpoints
 
 The API version prefix (`/v1.xx`) is stripped before matching, and kept on the
-forwarded request except where §4 says otherwise.
+forwarded request except where §4 says otherwise. A path that is not in plain
+form - an escaped character, `..`, a doubled slash - is refused, since the proxy
+and the daemon could read it differently.
 
 | endpoint | group | rule |
 |---|---|---|
@@ -156,9 +158,11 @@ In order, for `POST /containers/create`:
 2. **Image.** `Image` must match `images`.
 3. **Storage.** Every bind and mount is one of these, and nothing else:
    - **Under a shared directory.** It becomes a volume mount of the directory the
-     app itself mounts there. The proxy reads the app's service spec, takes the
+     app itself mounts there. The proxy reads the mounts of the app's own task
+     container on this node (a worker node cannot read services), takes the
      mount whose target covers the path, and joins its volume subpath with the
-     rest of the path. Autobase binds `/var/lib/autobase/ansible` into its
+     rest of the path. A container carrying the owner label is never taken for
+     the app's task, whatever its other labels say. Autobase binds `/var/lib/autobase/ansible` into its
      automation container, and the container gets the same directory of the
      app's volume, which is how the console reads the log the playbook writes.
    - **The app's socket**, `/var/run/hivepaas/docker.sock`, with `nestedSocket`.
@@ -179,9 +183,13 @@ In order, for `POST /containers/create`:
      entry of `networks`.
    - `EndpointsConfig` keys follow the same rules.
 5. **Resources.** `Memory` and `NanoCpus` (or `CpuQuota`/`CpuPeriod`) default to
-   the limits and may not exceed them. `PidsLimit` defaults to 1024.
+   the limits and may not exceed them. `CpuPeriod` must be one docker accepts
+   (1000-1000000). `PidsLimit` defaults to 1024 and may not exceed 4096.
+   Unlimited swap (`MemorySwap: -1`) is refused.
 6. **Ownership.** The label `hivepaas.docker-api.app=<app id>` is set, replacing
-   whatever the client put there.
+   whatever the client put there, and every label starting `com.docker.` or
+   `hivepaas.` is dropped. Those mark swarm tasks and what HivePaaS owns. The same
+   holds for the labels of a volume or network the app creates.
 7. **Count.** The app's children, counted by that label, must be fewer than
    `limits.containers`.
 8. **Version.** The rewritten request goes out at the proxy's own API version.
@@ -235,8 +243,9 @@ access takes them away on the next deployment:
 - `DOCKER_HOST`, unless the app sets it;
 - the app's network `hp-dapi-<app id>`.
 
-That network is an attachable overlay, created on first need and labelled with
-the app. It is an overlay rather than a bridge so that the app's task, a swarm
+That network is an attachable overlay, created on first need and labelled
+`hivepaas.docker-api.network=<app id>`. It does not carry the owner label, so
+the app can use it but not remove it. It is an overlay rather than a bridge so that the app's task, a swarm
 service, can join it.
 
 ## 8. Lifecycle

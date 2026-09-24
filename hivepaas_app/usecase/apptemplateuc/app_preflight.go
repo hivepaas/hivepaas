@@ -73,6 +73,7 @@ func (uc *UC) collectIssues(
 	checks := []func() error{
 		func() error { return uc.checkAppRefs(ctx, create, rendered) },
 		func() error { return uc.checkCapabilities(ctx, auth, apps) },
+		func() error { return uc.checkDockerAPI(ctx, auth, apps) },
 		func() error { return uc.checkSharedMounts(ctx, auth, create, apps) },
 		func() error { return uc.checkPublishedPorts(ctx, apps) },
 		func() error { return uc.checkDomains(ctx, create, apps) },

@@ -46211,6 +46211,13 @@
             "description" : "Capabilities is what this dependency's app is granted. It is gated on the\nsame permission as the main app's: both are created by the one request.",
             "type" : "object"
           },
+          "dockerApi" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateDockerAPIResp"
+            } ],
+            "description" : "DockerAPI is the Docker API this dependency's app is given, gated like its\ncapabilities.",
+            "type" : "object"
+          },
           "name" : {
             "type" : "string"
           },
@@ -46245,7 +46252,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "capabilities", "name", "parameters", "publishedPorts", "template", "templateTitle", "title", "variant", "version" ],
+        "required" : [ "capabilities", "dockerApi", "name", "parameters", "publishedPorts", "template", "templateTitle", "title", "variant", "version" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateDependencySummaryResp" : {
@@ -46261,6 +46268,46 @@
           }
         },
         "required" : [ "name", "template", "title" ],
+        "type" : "object"
+      },
+      "apptemplatedto.AppTemplateDockerAPIResp" : {
+        "properties" : {
+          "allow" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "containers" : {
+            "description" : "Containers, Memory and CPUs are the limits of the app's children, zero\nwhere the template leaves the default.",
+            "type" : "integer"
+          },
+          "cpus" : {
+            "type" : "number"
+          },
+          "images" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "memory" : {
+            "type" : "string"
+          },
+          "networks" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "sharedDirs" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "allow", "containers", "cpus", "images", "memory", "networks", "sharedDirs" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateImageTagResp" : {
@@ -46434,6 +46481,13 @@
           "description" : {
             "type" : "string"
           },
+          "dockerApi" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/apptemplatedto.AppTemplateDockerAPIResp"
+            } ],
+            "description" : "DockerAPI is the Docker API creating this template gives the app, and is\nnull for the templates that give none. Creating one needs Write on the\nCluster module, like capabilities.",
+            "type" : "object"
+          },
           "iconUrl" : {
             "type" : "string"
           },
@@ -46490,7 +46544,7 @@
             "type" : "array"
           }
         },
-        "required" : [ "capabilities", "categories", "compatible", "dependencies", "description", "iconUrl", "license", "links", "name", "parameters", "publishedPorts", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
+        "required" : [ "capabilities", "categories", "compatible", "dependencies", "description", "dockerApi", "iconUrl", "license", "links", "name", "parameters", "publishedPorts", "revision", "source", "tagline", "tags", "title", "variants", "versions" ],
         "type" : "object"
       },
       "apptemplatedto.AppTemplateSummaryResp" : {

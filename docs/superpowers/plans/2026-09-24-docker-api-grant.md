@@ -1067,7 +1067,7 @@ func TestDockerAPIMayNotDependOnWhatAPersonFillsIn(t *testing.T) {
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	assert.ErrorContains(t, tmpl.Validate("autobase.yaml"), "app.settings.dockerApi: a placeholder here")
+	assert.Contains(t, errorDetail(t, tmpl.Validate("autobase.yaml")), "app.settings.dockerApi: a placeholder here")
 }
 
 func TestAVersionMayNotChangeTheDockerAPI(t *testing.T) {
@@ -1078,7 +1078,7 @@ func TestAVersionMayNotChangeTheDockerAPI(t *testing.T) {
 	if !assert.NoError(t, err) {
 		t.FailNow()
 	}
-	assert.ErrorContains(t, tmpl.Validate("autobase.yaml"), "the Docker API is declared once, in app")
+	assert.Contains(t, errorDetail(t, tmpl.Validate("autobase.yaml")), "the Docker API is declared once, in app")
 }
 ```
 
@@ -1119,7 +1119,7 @@ func TestCheckDockerAPINeedsWriteOnTheClusterModule(t *testing.T) {
 
 	err := uc.checkDockerAPI(context.Background(), &basedto.Auth{}, dockerAPIApps(t, true))
 	assert.ErrorIs(t, err, hperrors.ErrUnauthorized)
-	assert.ErrorContains(t, err, "autobase")
+	assert.Contains(t, errDetail(t, err), "autobase")
 	if assert.Len(t, permissions.checked, 1) {
 		check, ok := permissions.checked[0].(*permission.ModuleAccessCheck)
 		if assert.True(t, ok) {

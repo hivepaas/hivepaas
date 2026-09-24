@@ -58,6 +58,10 @@ type AppTemplateResp struct {
 	// nothing. It is shown before anybody deploys, and creating one needs Write
 	// on the cluster module.
 	Capabilities *AppTemplateCapabilitiesResp `json:"capabilities"`
+	// DockerAPI is the Docker API creating this template gives the app, and is
+	// null for the templates that give none. Creating one needs Write on the
+	// Cluster module, like capabilities.
+	DockerAPI *AppTemplateDockerAPIResp `json:"dockerApi"`
 	// PublishedPorts are the addresses this app claims on the cluster itself,
 	// beside the web addresses the reverse proxy serves. Two apps cannot share
 	// one, so they are shown before anybody deploys.
@@ -93,6 +97,20 @@ type AppTemplateCapabilitiesResp struct {
 	OomScoreAdj    int64                    `json:"oomScoreAdj,omitempty"`
 }
 
+// AppTemplateDockerAPIResp is the dockerApi block of the template, as the
+// template wrote it: a version cannot override it.
+type AppTemplateDockerAPIResp struct {
+	Images     []string `json:"images"`
+	SharedDirs []string `json:"sharedDirs,omitempty"`
+	Networks   []string `json:"networks,omitempty"`
+	Allow      []string `json:"allow,omitempty"`
+	// Containers, Memory and CPUs are the limits of the app's children, zero
+	// where the template leaves the default.
+	Containers int     `json:"containers,omitempty"`
+	Memory     string  `json:"memory,omitempty"`
+	CPUs       float64 `json:"cpus,omitempty"`
+}
+
 type AppTemplateUlimitResp struct {
 	Name string `json:"name"`
 	Soft int64  `json:"soft"`
@@ -113,6 +131,9 @@ type AppTemplateDependencyResp struct {
 	// Capabilities is what this dependency's app is granted. It is gated on the
 	// same permission as the main app's: both are created by the one request.
 	Capabilities *AppTemplateCapabilitiesResp `json:"capabilities"`
+	// DockerAPI is the Docker API this dependency's app is given, gated like its
+	// capabilities.
+	DockerAPI *AppTemplateDockerAPIResp `json:"dockerApi"`
 	// PublishedPorts are the ports this dependency's app claims on the cluster.
 	PublishedPorts []*AppTemplatePortResp `json:"publishedPorts"`
 }
@@ -189,6 +210,7 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 		resp.Parameters = append(resp.Parameters, transformParam(param))
 	}
 	resp.Capabilities = transformCapabilities(tmpl.Template)
+	resp.DockerAPI = transformDockerAPI(tmpl.Template)
 	resp.PublishedPorts = transformPublishedPorts(tmpl.Template)
 	resp.Dependencies = make([]*AppTemplateDependencyResp, 0, len(tmpl.Dependencies))
 	for _, dep := range tmpl.Dependencies {
@@ -202,6 +224,7 @@ func TransformAppTemplate(tmpl *apptemplateservice.TemplateResp, currentVersionC
 			Variant:       dep.Dependency.Variant,
 			Parameters:    make([]*AppTemplateParamResp, 0, len(asked)),
 			Capabilities:  transformCapabilities(dep.Template),
+			DockerAPI:     transformDockerAPI(dep.Template),
 		}
 		for _, param := range asked {
 			depResp.Parameters = append(depResp.Parameters, transformParam(param))
@@ -234,6 +257,23 @@ func transformCapabilities(tmpl *templatemodel.Template) *AppTemplateCapabilitie
 		}
 		resp.Ulimits = append(resp.Ulimits,
 			&AppTemplateUlimitResp{Name: ulimit.Name, Soft: ulimit.Soft, Hard: ulimit.Hard})
+	}
+	return resp
+}
+
+// transformDockerAPI reads the block out of the template, and leaves out one
+// that cannot be read, for the reason transformCapabilities does.
+func transformDockerAPI(tmpl *templatemodel.Template) *AppTemplateDockerAPIResp {
+	access, err := tmpl.DockerAPI()
+	if err != nil || access == nil {
+		return nil
+	}
+	resp := &AppTemplateDockerAPIResp{
+		Images: access.Images, SharedDirs: access.SharedDirs, Networks: access.Networks, Allow: access.Allow,
+		Containers: access.Limits.Containers, CPUs: access.Limits.CPUs,
+	}
+	if access.Limits.Memory > 0 {
+		resp.Memory = access.Limits.Memory.String()
 	}
 	return resp
 }

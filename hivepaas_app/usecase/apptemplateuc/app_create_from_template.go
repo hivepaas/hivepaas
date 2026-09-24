@@ -58,6 +58,9 @@ func (uc *UC) CreateAppFromTemplate(
 	if err = uc.checkCapabilities(ctx, auth, apps); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
+	if err = uc.checkDockerAPI(ctx, auth, apps); err != nil {
+		return nil, hperrors.Wrap(err)
+	}
 	if err = uc.checkSharedMounts(ctx, auth, req, apps); err != nil {
 		return nil, hperrors.Wrap(err)
 	}

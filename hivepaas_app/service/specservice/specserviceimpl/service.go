@@ -9,8 +9,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
 
@@ -27,8 +29,11 @@ func New(
 	settingRepo repository.SettingRepo,
 	userRepo repository.UserRepo,
 
+	projectService projectservice.Service,
+
 	clusterService clusterservice.Service,
 	domainService domainservice.Service,
+	sslService sslservice.Service,
 	volumeService volumeservice.Service,
 ) specservice.Service {
 	svc := &service{
@@ -38,8 +43,11 @@ func New(
 		settingRepo:    settingRepo,
 		userRepo:       userRepo,
 
+		projectService: projectService,
+
 		clusterService: clusterService,
 		domainService:  domainService,
+		sslService:     sslService,
 		volumeService:  volumeService,
 	}
 	svc.loadOwned = svc.loadOwnedFromRepo
@@ -91,8 +99,11 @@ type service struct {
 	settingRepo    repository.SettingRepo
 	userRepo       repository.UserRepo
 
+	projectService projectservice.Service
+
 	clusterService clusterservice.Service
 	domainService  domainservice.Service
+	sslService     sslservice.Service
 	volumeService  volumeservice.Service
 
 	loadOwned  settingLoader

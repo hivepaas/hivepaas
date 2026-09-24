@@ -167,6 +167,76 @@ func countEmptySecretsIn(value reflect.Value) int {
 	}
 }
 
+// KeepSecrets gives dst every secret it holds nothing in from src, the setting
+// dst is about to replace. A setting written from a bundle that omitted its
+// secrets would otherwise erase each one it replaces. The two must be the same
+// type; a secret with no counterpart in src - an entry of a list or map src
+// does not have - stays empty.
+func KeepSecrets(dst, src SettingData) {
+	if dst == nil || src == nil {
+		return
+	}
+	keepSecretsIn(reflect.ValueOf(dst), reflect.ValueOf(src))
+}
+
+func keepSecretsIn(dst, src reflect.Value) {
+	if dst.Kind() != src.Kind() {
+		return
+	}
+	switch dst.Kind() { //nolint:exhaustive // reflect.Kind: only containers and EncryptedField matter to this walk
+	case reflect.Pointer, reflect.Interface:
+		if dst.IsNil() || src.IsNil() {
+			return
+		}
+		keepSecretsIn(dst.Elem(), src.Elem())
+
+	case reflect.Struct:
+		keepSecretsInStruct(dst, src)
+
+	case reflect.Slice, reflect.Array:
+		for i := range min(dst.Len(), src.Len()) {
+			keepSecretsIn(dst.Index(i), src.Index(i))
+		}
+
+	case reflect.Map:
+		keepSecretsInMap(dst, src)
+	}
+}
+
+func keepSecretsInStruct(dst, src reflect.Value) {
+	if dst.Type() != src.Type() {
+		return
+	}
+	if dst.Type() == encryptedFieldType {
+		kept, _ := src.Interface().(EncryptedField)
+		if field, _ := dst.Addr().Interface().(*EncryptedField); field.IsEmpty() && !kept.IsEmpty() && dst.CanSet() {
+			dst.Set(src)
+		}
+		return
+	}
+	for i := range dst.NumField() {
+		if dst.Type().Field(i).IsExported() {
+			keepSecretsIn(dst.Field(i), src.Field(i))
+		}
+	}
+}
+
+func keepSecretsInMap(dst, src reflect.Value) {
+	if dst.IsNil() || src.IsNil() || !typeHoldsEncryptedField(dst.Type().Elem()) {
+		return
+	}
+	for _, key := range dst.MapKeys() {
+		kept := src.MapIndex(key)
+		if !kept.IsValid() {
+			continue
+		}
+		entry := reflect.New(dst.Type().Elem()).Elem()
+		entry.Set(dst.MapIndex(key))
+		keepSecretsIn(entry, kept)
+		dst.SetMapIndex(key, entry)
+	}
+}
+
 // SecretPlaintexts maps each of a setting's stored ciphertexts to its plaintext.
 //
 // It exists because a secret cannot be marshaled in the clear, by design.

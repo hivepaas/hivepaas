@@ -26,4 +26,9 @@ type Service interface {
 	// ValidateImport reads an uploaded bundle and plans what importing it at a
 	// scope would do. It writes nothing.
 	ValidateImport(ctx context.Context, db database.IDB, req *ValidateImportReq) (*ValidateImportResp, error)
+
+	// ApplyImport plans the request again on the caller's transaction and writes
+	// what the plan says. It refuses a plan other than the one the operator saw,
+	// one with a blocked issue, and one with issues nobody accepted.
+	ApplyImport(ctx context.Context, db database.IDB, req *ApplyImportReq) (*ApplyImportResp, error)
 }

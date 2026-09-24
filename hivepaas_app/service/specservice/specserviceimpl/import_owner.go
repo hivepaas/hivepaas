@@ -43,6 +43,7 @@ func (p *planner) planOwner(
 		})
 		return nil, nil
 	}
+	p.owners[node.Path] = owner.ID
 	if target == nil || owner.ID == target.OwnerID || p.req.Options.Existing == specmodel.ExistingKeep {
 		return nil, nil
 	}

@@ -217,14 +217,14 @@ func (p *planner) resolveRef(ctx context.Context, node *specmodel.PlanNode, ref 
 func (p *planner) resolvePath(ctx context.Context, node *specmodel.PlanNode, ref bundleRef) (*refWork, error) {
 	t, _ := parseRefPath(ref.value)
 	holder := p.byPath[t.node]
-	if holder != nil && holder.SelectedBy == selectedByUser && holder.Action != specmodel.ActionSkip {
+	_, _, inRoute := settingBody(settingsAt(p.bundle, t), t.block, t.key)
+	if inRoute && holder != nil && holder.SelectedBy == selectedByUser && holder.Action != specmodel.ActionSkip {
 		return nil, nil
 	}
 	body, _, inFull := settingBody(settingsAt(p.full, t), t.block, t.key)
 	if p.targetHas(t, body) {
 		return nil, nil
 	}
-	_, _, inRoute := settingBody(settingsAt(p.bundle, t), t.block, t.key)
 	if inRoute && holder != nil && t.app == "" && holder.Action != specmodel.ActionSkip && !p.excluded(holder.Path) {
 		return p.pull(holder, t, body)
 	}

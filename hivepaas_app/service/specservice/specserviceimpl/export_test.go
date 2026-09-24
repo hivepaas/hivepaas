@@ -22,8 +22,10 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clusterservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/domainservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/projectservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice/specmodel"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/sslservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/volumeservice"
 )
 
@@ -355,8 +357,10 @@ func exportFixture(t *testing.T) specservice.Service {
 			{ID: "u2", Email: "gone@example.com", Status: base.UserStatusDisabled},
 			{ID: "u3", Email: "other@example.com", Status: base.UserStatusActive},
 		}},
+		&fakeProjectService{},
 		&fakeClusterService{services: map[string]*swarm.Service{"svc_1": testService()}},
 		&fakeDomainService{},
+		&fakeSSLService{},
 		&fakeExportVolumeService{descs: map[string]*volumeservice.AppMountDesc{
 			"/var/lib/postgresql/data": {AppKey: "backend", Own: true, Subpath: "data", VolumeID: "vol_setting_1"},
 			"/shared":                  {AppKey: "backend", Own: true, Subpath: "cache", VolumeID: "gvol_1"},
@@ -631,4 +635,44 @@ func TestExportWritesTheReportIntoTheBundle(t *testing.T) {
 	assert.Contains(t, content, "issues:")
 	assert.Contains(t, content, specmodel.CodePreviewAppSkipped)
 	assert.Contains(t, content, specmodel.CodeServiceUnavailable)
+}
+
+// fakeSSLService records the certificates whose files were written.
+type fakeSSLService struct {
+	sslservice.Service
+	written []string
+}
+
+func (f *fakeSSLService) WriteCertFiles(_ bool, settings ...*entity.Setting) error {
+	for _, setting := range settings {
+		f.written = append(f.written, setting.ID)
+	}
+	return nil
+}
+
+// fakeProjectService records what apply persists, and creates a project with a
+// default webhook and notification, as the real one does.
+type fakeProjectService struct {
+	projectservice.Service
+	persisted *projectservice.PersistingProjectData
+}
+
+func (f *fakeProjectService) PrepareNewProject(
+	_ context.Context, req *projectservice.NewProjectReq, out *projectservice.PersistingProjectData,
+) error {
+	out.UpsertingProjects = append(out.UpsertingProjects, req.Project)
+	webhook := &entity.Setting{
+		ID: "webhook_" + req.Project.ID, Type: base.SettingTypeRepoWebhook, Scope: base.ObjectScopeProject,
+		ObjectID: req.Project.ID, Name: "default", Status: base.SettingStatusActive, Default: true,
+	}
+	webhook.MustSetData(&entity.RepoWebhook{Secret: entity.NewEncryptedField("generated")})
+	out.UpsertingSettings = append(out.UpsertingSettings, webhook)
+	return nil
+}
+
+func (f *fakeProjectService) PersistProjectData(
+	_ context.Context, _ database.IDB, data *projectservice.PersistingProjectData,
+) error {
+	f.persisted = data
+	return nil
 }

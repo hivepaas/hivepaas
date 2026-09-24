@@ -38,6 +38,13 @@ type writer struct {
 	projectIDs map[string]string
 	// written are the settings written, for what their types do after commit.
 	written []*entity.Setting
+	// appIDs is what each app node is here - the id chosen for an app created,
+	// the matched one otherwise - by its path, and by the id it had in the bundle.
+	appIDs         map[string]string
+	appIDsByBundle map[string]string
+	// appSettings are the settings of each app created, which are provisioned
+	// with it rather than persisted with the scopes.
+	appSettings map[string][]*entity.Setting
 }
 
 func newWriter(p *planner, operatorID string) *writer {
@@ -45,6 +52,8 @@ func newWriter(p *planner, operatorID string) *writer {
 		p: p, operatorID: operatorID, now: timeutil.NowUTC(),
 		ids: map[string]string{}, rows: map[string]*scopeRows{},
 		projectIDs: map[string]string{},
+		appIDs:     map[string]string{}, appIDsByBundle: map[string]string{},
+		appSettings: map[string][]*entity.Setting{},
 	}
 }
 
@@ -52,7 +61,8 @@ func (w *writer) write(ctx context.Context) error {
 	if err := w.writeRecords(ctx); err != nil {
 		return err
 	}
-	nodes := w.settingsNodes()
+	nodes := w.writtenNodes()
+	w.chooseAppIDs(nodes)
 	for _, node := range nodes {
 		if err := w.chooseIDs(ctx, node); err != nil {
 			return err
@@ -185,13 +195,13 @@ func (p *planner) envPlace(path string) appPlace {
 	return appPlace{project: segments[1], env: segments[3]}
 }
 
-// settingsNodes are the nodes whose settings the writer writes: the global one,
-// a project's and an env's. An app's are built with the app.
-func (w *writer) settingsNodes() []*specmodel.PlanNode {
+// writtenNodes are the nodes whose settings the writer writes: the global one,
+// a project's, an env's, an app's.
+func (w *writer) writtenNodes() []*specmodel.PlanNode {
 	var out []*specmodel.PlanNode
 	for _, node := range w.p.nodes {
-		if node.Selected && writes(node) &&
-			(node.Kind == specmodel.NodeKindGlobal || node.Kind == specmodel.NodeKindSettings) {
+		if node.Selected && writes(node) && node.Kind != specmodel.NodeKindProject &&
+			node.Kind != specmodel.NodeKindEnv {
 			out = append(out, node)
 		}
 	}
@@ -201,6 +211,9 @@ func (w *writer) settingsNodes() []*specmodel.PlanNode {
 // writtenNames are the settings a node writes: everything it holds when it is
 // created - but a type import skips - and what changed otherwise.
 func (w *writer) writtenNames(node *specmodel.PlanNode) []string {
+	if place, isApp := w.p.apps[node.Path]; isApp {
+		return appWrittenNames(node, place.doc)
+	}
 	if node.Action != specmodel.ActionCreate {
 		return node.Changes
 	}
@@ -223,8 +236,11 @@ func settingPath(node *specmodel.PlanNode, name string) string {
 
 // scopeOf is the scope a settings node writes into, and the id of its object.
 func (w *writer) scopeOf(node *specmodel.PlanNode) (base.ObjectScopeType, string) {
-	if node.Kind == specmodel.NodeKindGlobal {
+	switch node.Kind { //nolint:exhaustive // projects and envs hold no settings of their own
+	case specmodel.NodeKindGlobal:
 		return base.ObjectScopeGlobal, ""
+	case specmodel.NodeKindApp:
+		return base.ObjectScopeApp, w.appIDs[node.Path]
 	}
 	if strings.Contains(node.Path, "/envs/") {
 		place := w.p.envPlace(strings.TrimSuffix(node.Path, "/settings"))
@@ -296,10 +312,8 @@ func (w *writer) chooseIDs(ctx context.Context, node *specmodel.PlanNode) error 
 	rows := newScopeRows(owned)
 	w.rows[node.Path] = rows
 
-	settings := w.p.settingsOf[node.Path]
 	for _, name := range w.writtenNames(node) {
-		block, key, _ := strings.Cut(name, "/")
-		body, typ, found := settingBody(settings, block, key)
+		body, typ, key, found := w.settingOf(node, name)
 		if !found {
 			continue
 		}
@@ -323,10 +337,8 @@ func (w *writer) scopeCreated(node *specmodel.PlanNode) bool {
 // persisted: over the default it replaces, for a project being created.
 func (w *writer) writeSettings(ctx context.Context, node *specmodel.PlanNode) error {
 	scope, objectID := w.scopeOf(node)
-	settings := w.p.settingsOf[node.Path]
 	for _, name := range w.writtenNames(node) {
-		block, key, _ := strings.Cut(name, "/")
-		body, typ, found := settingBody(settings, block, key)
+		body, typ, key, found := w.settingOf(node, name)
 		if !found {
 			continue
 		}
@@ -338,6 +350,12 @@ func (w *writer) writeSettings(ctx context.Context, node *specmodel.PlanNode) er
 		if row := w.rows[node.Path].match(typ, key, body); row != nil {
 			setting.Scope, setting.ObjectID = row.Scope, row.ObjectID
 			setting.CreatedAt, setting.UpdateVer = row.CreatedAt, row.UpdateVer+1
+		}
+		if node.Kind == specmodel.NodeKindApp && node.Action == specmodel.ActionCreate {
+			// Provisioned with the app, which does not exist yet.
+			w.written = append(w.written, setting)
+			w.appSettings[node.Path] = append(w.appSettings[node.Path], setting)
+			continue
 		}
 		w.persist(setting)
 	}
@@ -379,23 +397,23 @@ func (w *writer) buildSetting(
 	}
 
 	row := w.rows[node.Path].match(typ, key, body)
-	if row != nil && w.p.bundle.Manifest.SecretsMode == specmodel.SecretsModeOmit {
-		kept, parseErr := row.Parse()
-		if parseErr != nil {
-			return nil, hperrors.Wrap(parseErr)
-		}
-		entity.KeepSecrets(data, kept)
+	if err = w.keepAndGenerate(node, data, row); err != nil {
+		return nil, err
 	}
+	holder := w.holderOf(node, name)
 	for _, issue := range node.Issues {
-		if issue.Detail[refInSetting] != name {
-			continue
-		}
-		switch issue.Code {
-		case specmodel.CodeNodeNotFound:
+		switch {
+		case issue.Code == specmodel.CodeDomainInUse:
+			if routing, ok := data.(*entity.AppRoutingSettings); ok {
+				dropDomain(routing, issue.Detail["domain"])
+			}
+		case issue.Detail[refInSetting] != holder:
+		case issue.Code == specmodel.CodeNodeNotFound:
 			if volume, ok := data.(*entity.ClusterVolume); ok {
 				volume.NodeID = ""
 			}
-		case specmodel.CodeRefNotSelected, specmodel.CodeRefNotFound, specmodel.CodeSecretOmitted:
+		case issue.Code == specmodel.CodeRefNotSelected, issue.Code == specmodel.CodeRefNotFound,
+			issue.Code == specmodel.CodeSecretOmitted:
 			setting.Status = base.SettingStatusPending
 		}
 	}
@@ -421,6 +439,15 @@ func (w *writer) refMapping(
 	scope := w.p.lookupScope[node.Path]
 	if scope == nil {
 		scope = entity.NewObjectScopeGlobal()
+	}
+	for _, ref := range refs.RefAppIDs {
+		id, err := w.appRefID(ctx, ref)
+		if err != nil {
+			return nil, err
+		}
+		if ref != "" {
+			mapping[ref] = id
+		}
 	}
 	for _, ref := range refs.RefSettingIDs {
 		if ref == "" {

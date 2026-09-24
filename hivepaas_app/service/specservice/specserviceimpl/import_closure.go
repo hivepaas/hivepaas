@@ -88,8 +88,8 @@ func (p *planner) nodeRefs(node *specmodel.PlanNode) ([]bundleRef, error) {
 		if writesBlock(node, "deployment.storage") {
 			refs = append(refs, mountRefs(deployment.Storage)...)
 		}
-		if deployment.Source != nil && writesBlock(node, "deployment.source") {
-			sourceRefs, err := settingRefs(base.SettingTypeAppDeployment, node.Path, "deployment.source",
+		if deployment.Source != nil && writesBlock(node, changeDeploymentSource) {
+			sourceRefs, err := settingRefs(base.SettingTypeAppDeployment, node.Path, changeDeploymentSource,
 				deployment.Source)
 			if err != nil {
 				return nil, err

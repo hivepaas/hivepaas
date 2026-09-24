@@ -208,7 +208,7 @@ func deploymentChanges(bundle *specmodel.Deployment, current *specmodel.AppDoc) 
 		name       string
 		want, have any
 	}{
-		{"deployment.source", bundle.Source, have.Source},
+		{changeDeploymentSource, bundle.Source, have.Source},
 		{"deployment.container", containerSansImage(bundle.Container), containerSansImage(have.Container)},
 		{"deployment.resources", bundle.Resources, have.Resources},
 		{"deployment.storage", storageSansIDs(bundle.Storage), storageSansIDs(have.Storage)},

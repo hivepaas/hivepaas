@@ -382,7 +382,7 @@ func exportFixture(t *testing.T) specservice.Service {
 			if setting.ObjectID != objectID {
 				continue
 			}
-			out = append(out, setting)
+			out = append(out, fresh(t, setting))
 		}
 		return out, nil
 	}
@@ -390,7 +390,7 @@ func exportFixture(t *testing.T) specservice.Service {
 		var out []*entity.Setting
 		for _, setting := range all {
 			if slices.Contains(ids, setting.ID) {
-				out = append(out, setting)
+				out = append(out, fresh(t, setting))
 			}
 		}
 		return out, nil
@@ -430,6 +430,16 @@ func exportFixture(t *testing.T) specservice.Service {
 		return nodeID == "node_1", nil
 	}
 	return svc
+}
+
+// fresh is a setting as a query returns it: a row of its own, so that what one
+// reader does to its parsed data does not reach the next reader - export clears
+// the secrets of what it renders.
+func fresh(t *testing.T, setting *entity.Setting) *entity.Setting {
+	t.Helper()
+	cp, err := setting.Clone(false)
+	assert.NoError(t, err)
+	return cp
 }
 
 func containsScope(scopes []base.ObjectScopeType, want base.ObjectScopeType) bool {

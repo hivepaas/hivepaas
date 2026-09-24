@@ -84,3 +84,36 @@ func TestCountEmptySecrets(t *testing.T) {
 		ByName: map[string]*Secret{"a": {}, "b": {}},
 	})))
 }
+
+func plainOf(t *testing.T, field EncryptedField) string {
+	t.Helper()
+	plain, err := field.GetPlain()
+	assert.NoError(t, err)
+	return plain
+}
+
+// A setting written without its secrets keeps the ones it replaces, and a
+// secret it carries itself wins.
+func TestKeepSecrets(t *testing.T) {
+	dst := &AppKindSettings{Database: &AppKindDatabase{RootPassword: NewEncryptedField("new-root")}}
+	src := &AppKindSettings{Database: &AppKindDatabase{
+		Password: NewEncryptedField("old"), RootPassword: NewEncryptedField("old-root"),
+	}}
+
+	KeepSecrets(dst, src)
+
+	assert.Equal(t, "old", plainOf(t, dst.Database.Password))
+	assert.Equal(t, "new-root", plainOf(t, dst.Database.RootPassword))
+
+	type holder struct {
+		List   []Secret
+		ByName map[string]*Secret
+	}
+	listed := &holder{List: []Secret{{}}, ByName: map[string]*Secret{"a": {}, "b": {}}}
+	keepSecretsIn(reflect.ValueOf(listed), reflect.ValueOf(&holder{
+		List: []Secret{{Value: NewEncryptedField("x")}}, ByName: map[string]*Secret{"a": {Value: NewEncryptedField("y")}},
+	}))
+	assert.Equal(t, "x", plainOf(t, listed.List[0].Value))
+	assert.Equal(t, "y", plainOf(t, listed.ByName["a"].Value))
+	assert.True(t, listed.ByName["b"].Value.IsEmpty(), "nothing to keep it from")
+}

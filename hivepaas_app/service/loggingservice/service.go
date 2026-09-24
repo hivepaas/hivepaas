@@ -9,11 +9,17 @@ import (
 )
 
 type Service interface {
-	// Apply makes the cluster match the stored configuration, deploying or removing as needed.
+	// Apply makes the cluster match the stored configuration: it provisions the
+	// backend and the collector as apps on the first save, reconciles them on the
+	// rest, and removes one HivePaaS no longer runs - only when the request
+	// confirms it. It is idempotent, so a failed save leaves work the next save
+	// retries.
 	Apply(ctx context.Context, db database.IDB, req *SettingApplyReq) (*SettingApplyResp, error)
 
-	// TearDown removes the collector and the backend, keeping the data volume.
-	TearDown(ctx context.Context) error
+	// Validate refuses a configuration before it is written. The usecase calls it
+	// while loading, so a bad save is a validation error rather than a stored
+	// configuration Apply then fails on.
+	Validate(ctx context.Context, db database.IDB, next, current *entity.LoggingSettings) error
 
 	Status(ctx context.Context, db database.IDB, logging *entity.Setting) (*Status, error)
 

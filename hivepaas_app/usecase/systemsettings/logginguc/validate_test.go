@@ -104,13 +104,3 @@ func TestValidateRejectsDuplicateForwardNames(t *testing.T) {
 
 	assert.Error(t, validateSettings(cfg))
 }
-
-func TestValidateRejectsADataSubpathOutsideTheVolume(t *testing.T) {
-	cfg := validEnabled()
-	cfg.Backend.VictoriaLogs.VolumeSubpath = "../somewhere-else"
-
-	assert.ErrorIs(t, validateSettings(cfg), logging.ErrDataSubpathInvalid)
-
-	cfg.Backend.VictoriaLogs.VolumeSubpath = "hivepaas/logs"
-	assert.NoError(t, validateSettings(cfg))
-}

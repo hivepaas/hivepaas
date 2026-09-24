@@ -282,7 +282,7 @@ func (uc *UC) recreateAppServiceWithNewMode(
 
 	// The stored mode belongs to the mode being replaced, so starting the app later must not
 	// restore it.
-	delete(newSpec.Labels, appservice.LabelAppPrevServiceMode)
+	appservice.ForgetStoppedState(&newSpec)
 
 	previousServiceID := data.App.ServiceID
 

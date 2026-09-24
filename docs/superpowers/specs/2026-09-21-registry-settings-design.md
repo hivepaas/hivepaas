@@ -137,6 +137,9 @@ The endpoints follow logging exactly - `GET /system/settings/registry` and
 
 ## 5. Provisioning
 
+> Since 2026-09-24 the parts of this that any system app needs - where it lives, how it is
+> created, how it is removed - are `systemappservice`, which the logging stack uses too.
+
 `Apply` is called after every save and does nothing that is already done. It is the only
 thing that writes the app, so a failed save leaves work the next save retries.
 

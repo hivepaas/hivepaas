@@ -4,8 +4,6 @@ package victorialogs
 import (
 	"fmt"
 	"math"
-	"path"
-	"strings"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
@@ -47,17 +45,10 @@ type Config struct {
 	// leaving it empty is what a caller with no release information does.
 	Image string
 
-	DataVolumeName string
-	Retention      time.Duration
-
-	// DataSubpath is the directory inside the volume to store data in, so that
-	// one volume can hold more than logs. Empty writes at the volume's root.
-	//
-	// The volume is still mounted whole: this moves -storageDataPath, it does
-	// not hide the volume's other contents from the container. Isolating them
-	// would need a mount subpath, which swarm supports but which refuses to
-	// start the task when the directory does not exist yet.
-	DataSubpath string
+	// DataVolume is the volume the store keeps its data on, as the caller refers
+	// to it: see loggingmodel.Mount.Volume.
+	DataVolume string
+	Retention  time.Duration
 
 	// MaxDiskUsagePercent caps the share of the filesystem the logs may take
 	// before the oldest days are dropped. Zero leaves it unset.
@@ -85,19 +76,14 @@ func New(cfg *Config) *Client {
 
 // RuntimeSpec describes the VictoriaLogs container.
 func (c *Client) RuntimeSpec() (*loggingmodel.RuntimeSpec, error) {
-	if c.cfg.DataVolumeName == "" {
+	if c.cfg.DataVolume == "" {
 		// Without a volume the logs live in the container's writable layer and
 		// vanish on the next restart, silently.
 		return nil, hperrors.Wrap(loggingmodel.ErrDataVolumeRequired)
 	}
 
-	storagePath, err := storageDataPath(c.cfg.DataSubpath)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
 	args := []string{
-		fmt.Sprintf("-storageDataPath=%s", storagePath),
+		fmt.Sprintf("-storageDataPath=%s", DataPath),
 		fmt.Sprintf("-retentionPeriod=%dd", retentionDays(c.cfg.Retention)),
 		fmt.Sprintf("-httpListenAddr=:%d", DefaultHTTPPort),
 	}
@@ -115,8 +101,8 @@ func (c *Client) RuntimeSpec() (*loggingmodel.RuntimeSpec, error) {
 		Args:      args,
 		Resources: c.cfg.Resources,
 		Mounts: []loggingmodel.Mount{{
-			VolumeName: c.cfg.DataVolumeName,
-			Target:     DataPath,
+			Volume: c.cfg.DataVolume,
+			Target: DataPath,
 		}},
 		// No published port. VictoriaLogs has no authentication and no tenancy,
 		// so it is reachable only on the overlay network the API shares with it.
@@ -133,36 +119,4 @@ func retentionDays(d time.Duration) int {
 		return minRetentionDays
 	}
 	return days
-}
-
-// storageDataPath is where inside the mounted volume the store keeps its data.
-func storageDataPath(subpath string) (string, error) {
-	if err := ValidateDataSubpath(subpath); err != nil {
-		return "", err
-	}
-	if subpath == "" {
-		return DataPath, nil
-	}
-	return path.Join(DataPath, subpath), nil
-}
-
-// ValidateDataSubpath refuses anything that would write outside the volume.
-//
-// The value reaches a command line, and the store creates what it names, so an
-// absolute path or a climb out of the volume would put log data somewhere
-// nobody asked for - inside the container, where the next restart loses it.
-func ValidateDataSubpath(subpath string) error {
-	if subpath == "" {
-		return nil
-	}
-	if strings.HasPrefix(subpath, "/") {
-		return hperrors.Wrap(loggingmodel.ErrDataSubpathInvalid).
-			WithExtraDetail("it is a path inside the volume, so it cannot start with /")
-	}
-	cleaned := path.Clean(subpath)
-	if cleaned == "." || cleaned == ".." || strings.HasPrefix(cleaned, "../") {
-		return hperrors.Wrap(loggingmodel.ErrDataSubpathInvalid).
-			WithExtraDetail("it cannot climb out of the volume")
-	}
-	return nil
 }

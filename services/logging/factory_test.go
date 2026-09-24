@@ -24,7 +24,7 @@ func TestNewBackendRejectsAnUnknownType(t *testing.T) {
 
 func TestNewDeployerReturnsSomethingThatCanDescribeItself(t *testing.T) {
 	d, err := NewDeployer(BackendTypeVictoriaLogs, &BackendConfig{
-		VictoriaLogs: &victorialogs.Config{DataVolumeName: "v"},
+		VictoriaLogs: &victorialogs.Config{DataVolume: "v"},
 	})
 	if err != nil {
 		t.Fatalf("NewDeployer: %v", err)

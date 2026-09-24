@@ -15,14 +15,22 @@ import (
 )
 
 const (
-	// ServiceNameBackend and ServiceNameCollector are the swarm service names.
-	// They are also how the collector recognizes the stack's own containers in
-	// order to skip them.
-	//
-	// Defined in base because the system updater names the same two services and
-	// must not import this package to do it.
-	ServiceNameBackend   = base.HivepaasVictoriaLogsServiceName
-	ServiceNameCollector = base.HivepaasVlagentServiceName
+	// loggingEnv is the hivepaas project environment the stack runs in. An
+	// environment is a network: it is what the collector and the backend reach
+	// each other on, and nothing else is on it - not the registry, which faces
+	// the internet, and not the stack's own services.
+	loggingEnv = "logging"
+
+	// backendAppKey and collectorAppKey are the apps' keys, which is how they are
+	// found. Defined in base because the system updater moves the same two apps
+	// to a new release and must not import this package to do it.
+	backendAppKey   = base.HivepaasVictoriaLogsKey
+	collectorAppKey = base.HivepaasVlagentKey
+
+	// backendAlias is the backend's name on both networks it is reached on: its
+	// environment's, where the collector writes, and the stack's internal one,
+	// where the API queries it.
+	backendAlias = backendAppKey
 
 	// dockerContainersGlob matches every container's json-file log on a node.
 	//
@@ -37,9 +45,10 @@ const (
 // releaseImages returns the images this release runs the logging stack on.
 //
 // They come from the release rather than from the stored settings because the
-// system updater is what moves them, and because Apply rebuilds the whole swarm
-// spec: an image the updater had written straight into the spec would be put
-// back to whatever this returns the next time anyone saved a logging setting.
+// system updater is what moves them. A save writes them into the apps'
+// deployment settings too, so an image that drifted - edited on an app's screen,
+// or left behind by an update that did not reach the apps - comes back to the
+// release's the next time anyone saves.
 //
 // The release the updater applies and the release compiled into the binary it
 // installs are the same one, so the two agree - as long as release.json and
@@ -87,13 +96,13 @@ func toEndpoint(ep *entity.LoggingEndpoint) (*logging.Endpoint, error) {
 // backendBaseURL is where a HivePaaS-run backend answers, from any service on a
 // network it is attached to.
 func backendBaseURL() string {
-	return fmt.Sprintf("http://%s:%d", ServiceNameBackend, victorialogs.DefaultHTTPPort)
+	return fmt.Sprintf("http://%s:%d", backendAlias, victorialogs.DefaultHTTPPort)
 }
 
 // buildCollectSpec turns the stored configuration into a collection job.
 func (s *service) buildCollectSpec(
 	cfg *entity.LoggingSettings,
-	ingestURL string,
+	ingest *logging.Endpoint,
 ) (*logging.CollectSpec, error) {
 	var sources []*logging.Source
 	if cfg.Sources.Apps || cfg.Sources.HivePaaS {
@@ -133,7 +142,7 @@ func (s *service) buildCollectSpec(
 	}
 
 	return &logging.CollectSpec{
-		Ingest:   logging.Endpoint{URL: ingestURL},
+		Ingest:   *ingest,
 		Forwards: forwards,
 		Sources:  sources,
 	}, nil

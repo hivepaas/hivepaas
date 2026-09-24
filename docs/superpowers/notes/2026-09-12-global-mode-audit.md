@@ -35,3 +35,18 @@ The reasoning rests on nothing enumerating swarm services without a filter. A
 future `ServiceList` call with no label filter, followed by a read of
 `Spec.Mode.Replicated.Replicas`, would panic on the collector. Searching for
 `ServiceList(` is enough to check.
+
+## Revised 2026-09-24: the collector is an app
+
+The collector is now an app in the hidden `hivepaas` project, so the premise above - that the
+logging services are neither apps nor labelled - no longer holds, and the paths that reach a
+service through an app record do meet it:
+
+| Path | What it does with a global service |
+|---|---|
+| `appserviceimpl/update_status.go` | Disabling an app, or stopping it, scaled it to zero by switching it to `Replicated{0}` - which swarm refuses for a global service (`service mode change is not allowed`, measured). A global service is stopped instead by the constraint `node.id==hivepaas-app-stopped`, which no node satisfies - a node id never contains a hyphen - and started again by removing it (`appservice.StopGlobalService`/`StartGlobalService`). Placement keeps it across a recompute, because it keeps every constraint it does not manage. |
+| `appsettingsuc/service_settings_update.go` | Changing an app's mode recreates its service; the stopped state of the one being replaced is dropped with it (`appservice.ForgetStoppedState`). |
+| `containerexecserviceimpl/exec.go` | A terminal opens in any running task, the same answer a replicated app with several replicas gets. |
+
+The `ServiceList(` search above still holds for services reached without an app.
+

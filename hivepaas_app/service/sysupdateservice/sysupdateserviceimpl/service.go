@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/dbservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/notificationservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysupdateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/traefikservice"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -14,6 +15,7 @@ type service struct {
 	hpAppService        hpappservice.Service
 	notificationService notificationservice.Service
 	traefikService      traefikservice.Service
+	systemAppService    systemappservice.Service
 
 	dockerManager docker.Manager
 }
@@ -23,6 +25,7 @@ func New(
 	hpAppService hpappservice.Service,
 	notificationService notificationservice.Service,
 	traefikService traefikservice.Service,
+	systemAppService systemappservice.Service,
 
 	dockerManager docker.Manager,
 ) sysupdateservice.Service {
@@ -31,6 +34,7 @@ func New(
 		hpAppService:        hpAppService,
 		notificationService: notificationService,
 		traefikService:      traefikService,
+		systemAppService:    systemAppService,
 
 		dockerManager: dockerManager,
 	}

@@ -1,6 +1,7 @@
 package registryservice
 
 import (
+	"context"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -35,6 +36,11 @@ type SettingApplyResp struct {
 	// caller schedules them after the commit, the way the template usecase does.
 	DeploymentTask *entity.Task
 	CertTasks      []*entity.Task
+
+	// Cleanup removes from docker what provisioning created there, for the caller
+	// to run when its transaction does not commit. It is set when this call
+	// provisioned the app, even if provisioning failed.
+	Cleanup func(ctx context.Context) error
 
 	// RemovedApp says the app was taken down by this call, and RemovedCredentialID
 	// is the credential it was pushed with, which the caller deletes after the

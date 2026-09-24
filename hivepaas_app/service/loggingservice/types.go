@@ -1,6 +1,7 @@
 package loggingservice
 
 import (
+	"context"
 	"time"
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
@@ -10,18 +11,68 @@ import (
 
 type SettingApplyReq struct {
 	Setting *entity.Setting // if nil, it will be loaded from DB
+
+	// BackendResources is what the managed backend runs under. It is not stored
+	// with the settings: the backend's service is where it lives, the same place
+	// the app's own resource screen reads and writes. Nil leaves a running
+	// backend as it is, and gives a new one the defaults.
+	BackendResources *logging.Resources
+
+	TriggerUserID string
+
+	// RemoveApp and RemoveStorage are asked of this request, not stored by it.
+	// Switching logging off - or handing the backend or the collector to a system
+	// HivePaaS does not run - takes an app down, and the confirmation arrives here.
+	RemoveApp bool
+	// RemoveStorage deletes the stored logs with the backend: its own directory
+	// inside the volume, not the volume.
+	RemoveStorage bool
 }
 
 type SettingApplyResp struct {
+	// Tasks are the deployments this call queued. They are left unscheduled: a
+	// task row can be picked up only once the transaction it was written in has
+	// committed, and Apply runs inside the caller's.
+	Tasks []*entity.Task
+
+	// Cleanup removes from docker what provisioning created there, for the caller
+	// to run when its transaction does not commit. It is set when this call
+	// provisioned an app, even if provisioning failed.
+	Cleanup func(ctx context.Context) error
+
+	// RemovedApps says this call took at least one app down.
+	RemovedApps bool
 }
 
 // Status is what the logging stack is currently doing.
 type Status struct {
-	Enabled            bool
-	CollectorServiceID string
-	CollectorReady     bool
-	BackendServiceID   string
-	BackendReady       bool
+	Enabled bool
+
+	// Backend and Collector are the apps HivePaaS runs, nil when it runs none.
+	Backend   *AppStatus
+	Collector *AppStatus
+
+	// BackendResources is what the backend's service runs under, or what a new
+	// backend would get when there is none.
+	BackendResources logging.Resources
+}
+
+// AppStatus is one app of the stack, as the settings screen shows it.
+type AppStatus struct {
+	AppID     string
+	ProjectID string
+	// ProjectEnv is the key of the app's environment, which its screen's address
+	// carries.
+	ProjectEnv string
+	// RunningTasks and DesiredTasks count containers: one for the backend, one
+	// per node for the collector.
+	RunningTasks uint64
+	DesiredTasks uint64
+}
+
+// Ready says the app runs every container it should.
+func (s *AppStatus) Ready() bool {
+	return s != nil && s.DesiredTasks > 0 && s.RunningTasks >= s.DesiredTasks
 }
 
 // ExcludedReason is why an app is not collected.

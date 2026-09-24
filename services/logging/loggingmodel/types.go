@@ -81,13 +81,16 @@ type CollectSpec struct {
 	Sources  []*Source
 }
 
-// Mount is a host path a container needs.
+// Mount is something a container needs mounted: a volume, or a host path.
 type Mount struct {
+	// Source is a host path, bind-mounted.
 	Source   string
 	Target   string
 	ReadOnly bool
-	// VolumeName is set instead of Source when the mount is a named volume.
-	VolumeName string
+	// Volume is set instead of Source when the mount is a volume. It is the
+	// volume as the caller refers to it - HivePaaS gives the id of a volume
+	// setting - and the caller turns it into what the orchestrator mounts.
+	Volume string
 }
 
 // Port is a container port to expose.
@@ -127,6 +130,22 @@ type RuntimeSpec struct {
 	Mounts    []Mount
 	Ports     []Port
 	Resources Resources
+
+	// Secrets are values the container reads from files, so that they never
+	// appear in its arguments, which anyone who can read the service can read.
+	Secrets []*Secret
+
+	// PerNode says one container runs on every node rather than one somewhere:
+	// a collector reads the files of the node it is on.
+	PerNode bool
+}
+
+// Secret is a value written to a file in the container.
+type Secret struct {
+	// Key names the secret, unique within one RuntimeSpec.
+	Key   string
+	Path  string
+	Value string
 }
 
 // MaxQueryLimit caps how many lines one query returns.

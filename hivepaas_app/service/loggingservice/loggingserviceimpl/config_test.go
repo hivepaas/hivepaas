@@ -55,7 +55,7 @@ func TestBuildCollectSpecCollectsContainerLogsAsOneSource(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			spec, err := s.buildCollectSpec(&entity.LoggingSettings{Sources: tc.sources},
-				"http://vlogs:9428/internal/insert")
+				&logging.Endpoint{URL: "http://vlogs:9428/internal/insert"})
 			if err != nil {
 				t.Fatalf("buildCollectSpec: %v", err)
 			}
@@ -78,7 +78,7 @@ func TestBuildCollectSpecCollectsNothingForSourcesItCannotRead(t *testing.T) {
 
 	_, err := s.buildCollectSpec(
 		&entity.LoggingSettings{Sources: entity.LoggingSources{TraefikAccess: true, Nodes: true}},
-		"http://vlogs:9428/internal/insert")
+		&logging.Endpoint{URL: "http://vlogs:9428/internal/insert"})
 
 	assert.ErrorIs(t, err, logging.ErrNoSources)
 }
@@ -94,7 +94,7 @@ func TestBuildCollectSpecCarriesForwards(t *testing.T) {
 		}},
 	}
 
-	spec, err := s.buildCollectSpec(cfg, "http://vlogs:9428/internal/insert")
+	spec, err := s.buildCollectSpec(cfg, &logging.Endpoint{URL: "http://vlogs:9428/internal/insert"})
 	if err != nil {
 		t.Fatalf("buildCollectSpec: %v", err)
 	}
@@ -110,7 +110,7 @@ func TestBuildCollectSpecCarriesForwards(t *testing.T) {
 func TestBuildCollectSpecRefusesWithNoSources(t *testing.T) {
 	s := &service{}
 
-	_, err := s.buildCollectSpec(&entity.LoggingSettings{}, "http://vlogs:9428/internal/insert")
+	_, err := s.buildCollectSpec(&entity.LoggingSettings{}, &logging.Endpoint{URL: "http://vlogs:9428/internal/insert"})
 
 	assert.Error(t, err)
 }
@@ -121,7 +121,7 @@ func TestAppSourceGlobPointsAtDockerLogs(t *testing.T) {
 	s := &service{}
 
 	spec, err := s.buildCollectSpec(&entity.LoggingSettings{Sources: entity.LoggingSources{Apps: true}},
-		"http://vlogs:9428/internal/insert")
+		&logging.Endpoint{URL: "http://vlogs:9428/internal/insert"})
 	if err != nil {
 		t.Fatalf("buildCollectSpec: %v", err)
 	}

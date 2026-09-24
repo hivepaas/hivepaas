@@ -9,6 +9,7 @@ import (
 
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/placementservice"
 )
 
@@ -54,6 +55,21 @@ func TestApplyKeepsOperatorConstraints(t *testing.T) {
 
 	assert.Contains(t, data.Service.Spec.TaskTemplate.Placement.Constraints, "node.labels.tier==gold")
 	assert.Contains(t, data.Service.Spec.TaskTemplate.Placement.Constraints, "node.id==node-1")
+}
+
+// A stopped global app is held on no node by a constraint placement does not
+// manage. Recomputing placement - a deploy, a storage change - must not start it.
+func TestApplyKeepsTheStoppedConstraint(t *testing.T) {
+	data := applyData(
+		[]placementservice.VolumePin{{VolumeName: "pgdata", NodeID: "node-1"}},
+		[]string{appservice.ConstraintAppStopped},
+	)
+
+	(&service{}).applyPlacementSettings(data)
+
+	assert.Contains(t, data.Service.Spec.TaskTemplate.Placement.Constraints, appservice.ConstraintAppStopped)
+	assert.NotContains(t,
+		data.Service.Spec.Labels["hivepaas.app.placementConstraints"], appservice.ConstraintAppStopped)
 }
 
 func TestApplyAddsNothingForUnpinnedVolumes(t *testing.T) {

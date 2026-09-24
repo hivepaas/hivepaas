@@ -13,7 +13,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
+	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/tasklog"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysupdateservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/services/docker"
@@ -37,6 +39,10 @@ type fakeDocker struct {
 	// context at the moment of the call.
 	replicaUpdates []replicaUpdate
 	ctxErr         error
+
+	// onUpdate, when set, is told about every image an update writes - a test
+	// that reads the service again afterwards uses it to make the update land.
+	onUpdate func(serviceID, image string)
 }
 
 type replicaUpdate struct {
@@ -84,6 +90,9 @@ func (f *fakeDocker) record(serviceID string, spec *swarm.ServiceSpec) error {
 	}
 	if spec.TaskTemplate.ContainerSpec != nil {
 		f.updated[serviceID] = spec.TaskTemplate.ContainerSpec.Image
+		if f.onUpdate != nil {
+			f.onUpdate(serviceID, spec.TaskTemplate.ContainerSpec.Image)
+		}
 	}
 	f.specs[serviceID] = spec
 	return nil
@@ -129,35 +138,87 @@ func loggingUpdateData(t *testing.T, target *base.ReleaseInfo) *sysUpdateData {
 	}
 }
 
-func TestLoggingUpdateMovesBothServicesToANewerImage(t *testing.T) {
-	f := &fakeDocker{deployed: map[string]string{
-		base.HivepaasVictoriaLogsServiceName: "victoriametrics/victoria-logs:v1.52.0",
-		base.HivepaasVlagentServiceName:      "victoriametrics/vlagent:v1.52.0",
-	}}
-	s := &service{dockerManager: f}
+// fakeSystemApps answers for the logging stack's apps and records the images
+// written into their deployment settings.
+type fakeSystemApps struct {
+	systemappservice.Service
+	apps     map[string]*entity.App
+	recorded map[string]string // app key -> image recorded
+}
 
-	err := s.updateLoggingService(context.Background(), loggingUpdateData(t, &base.ReleaseInfo{
+func (f *fakeSystemApps) LoadApp(_ context.Context, _ database.IDB, key string) (*entity.App, error) {
+	return f.apps[key], nil
+}
+
+func (f *fakeSystemApps) RecordImage(_ context.Context, _ database.IDB, app *entity.App, image string) error {
+	if f.recorded == nil {
+		f.recorded = map[string]string{}
+	}
+	f.recorded[app.Key] = image
+	return nil
+}
+
+// loggingStack deploys the logging apps named in running, each on the image
+// given, the way provisioning leaves them: an app with a service of its own.
+func loggingStack(running map[string]string) (*fakeDocker, *fakeSystemApps) {
+	f := &fakeDocker{deployed: map[string]string{}}
+	apps := &fakeSystemApps{apps: map[string]*entity.App{}}
+	for key, image := range running {
+		serviceID := "svc-" + key
+		apps.apps[key] = &entity.App{ID: "app-" + key, Key: key, ServiceID: serviceID}
+		f.deployed[serviceID] = image
+	}
+	return f, apps
+}
+
+func TestLoggingUpdateMovesBothAppsToANewerImage(t *testing.T) {
+	f, apps := loggingStack(map[string]string{
+		base.HivepaasVictoriaLogsKey: "victoriametrics/victoria-logs:v1.52.0",
+		base.HivepaasVlagentKey:      "victoriametrics/vlagent:v1.52.0",
+	})
+	s := &service{dockerManager: f, systemAppService: apps}
+
+	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.53.0",
 		VlagentImage:      "victoriametrics/vlagent:v1.53.0",
 	}))
 
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]string{
-		base.HivepaasVictoriaLogsServiceName: "victoriametrics/victoria-logs:v1.53.0",
-		base.HivepaasVlagentServiceName:      "victoriametrics/vlagent:v1.53.0",
+		"svc-victoria-logs": "victoriametrics/victoria-logs:v1.53.0",
+		"svc-vlagent":       "victoriametrics/vlagent:v1.53.0",
 	}, f.updated)
+}
+
+// The service moves with a monitored rollback, and the app's deployment settings
+// then say so: otherwise the app's next deployment would put the old image back.
+func TestLoggingUpdateRecordsTheImageInTheAppsSettings(t *testing.T) {
+	f, apps := loggingStack(map[string]string{
+		base.HivepaasVictoriaLogsKey: "victoriametrics/victoria-logs:v1.52.0",
+	})
+	f.onUpdate = func(serviceID, image string) { f.deployed[serviceID] = image }
+	s := &service{dockerManager: f, systemAppService: apps}
+
+	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
+		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.53.0",
+	}))
+
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]string{
+		base.HivepaasVictoriaLogsKey: "victoriametrics/victoria-logs:v1.53.0",
+	}, apps.recorded)
 }
 
 // Re-running the same release must not restart the logging stack. This is the
 // whole point of the version check.
 func TestLoggingUpdateLeavesTheSameVersionAlone(t *testing.T) {
-	f := &fakeDocker{deployed: map[string]string{
-		base.HivepaasVictoriaLogsServiceName: "victoriametrics/victoria-logs:v1.52.0",
-		base.HivepaasVlagentServiceName:      "victoriametrics/vlagent:v1.52.0",
-	}}
-	s := &service{dockerManager: f}
+	f, apps := loggingStack(map[string]string{
+		base.HivepaasVictoriaLogsKey: "victoriametrics/victoria-logs:v1.52.0",
+		base.HivepaasVlagentKey:      "victoriametrics/vlagent:v1.52.0",
+	})
+	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
 		VlagentImage:      "victoriametrics/vlagent:v1.52.0",
 	}))
@@ -167,98 +228,102 @@ func TestLoggingUpdateLeavesTheSameVersionAlone(t *testing.T) {
 }
 
 // A digest is what a running service actually reports, and it moves whenever a
-// tag is re-pushed. Same tag is still the same version.
+// tag is re-pushed. Same tag is still the same version - and what the settings
+// record is the release's name for it, not the digest.
 func TestLoggingUpdateIgnoresADigestUnderTheSameTag(t *testing.T) {
-	f := &fakeDocker{deployed: map[string]string{
-		base.HivepaasVictoriaLogsServiceName: "victoriametrics/victoria-logs:v1.52.0@sha256:aaaa",
-	}}
-	s := &service{dockerManager: f}
+	f, apps := loggingStack(map[string]string{
+		base.HivepaasVictoriaLogsKey: "victoriametrics/victoria-logs:v1.52.0@sha256:aaaa",
+	})
+	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.52.0",
 	}))
 
 	assert.NoError(t, err)
 	assert.Empty(t, f.updated)
+	assert.Equal(t, "victoriametrics/victoria-logs:v1.52.0", apps.recorded[base.HivepaasVictoriaLogsKey])
 }
 
+// Nothing moves backwards, and the settings keep saying what runs.
 func TestLoggingUpdateRefusesToGoBackwards(t *testing.T) {
-	f := &fakeDocker{deployed: map[string]string{
-		base.HivepaasVictoriaLogsServiceName: "victoriametrics/victoria-logs:v1.52.0",
-	}}
-	s := &service{dockerManager: f}
+	f, apps := loggingStack(map[string]string{
+		base.HivepaasVictoriaLogsKey: "victoriametrics/victoria-logs:v1.52.0",
+	})
+	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.51.0",
 	}))
 
 	assert.NoError(t, err)
 	assert.Empty(t, f.updated)
+	assert.Empty(t, apps.recorded)
 }
 
-// Logging is optional. Neither service existing is the ordinary state of an
-// install that never switched it on, and it must not fail the whole update.
+// Logging is optional. Neither app existing is the ordinary state of an install
+// that never switched it on, and it must not fail the whole update.
 func TestLoggingUpdateSkipsWhatIsNotDeployed(t *testing.T) {
-	f := &fakeDocker{deployed: map[string]string{}}
-	s := &service{dockerManager: f}
+	f, apps := loggingStack(nil)
+	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.53.0",
 		VlagentImage:      "victoriametrics/vlagent:v1.53.0",
 	}))
 
 	assert.NoError(t, err)
 	assert.Empty(t, f.updated)
+	assert.Empty(t, apps.recorded)
 }
 
-// The collector is deployed but the backend is somebody else's: only the one
-// that is there moves.
-func TestLoggingUpdateMovesOnlyTheServiceThatExists(t *testing.T) {
-	f := &fakeDocker{deployed: map[string]string{
-		base.HivepaasVlagentServiceName: "victoriametrics/vlagent:v1.52.0",
-	}}
-	s := &service{dockerManager: f}
+// The collector runs but the backend is somebody else's: only the app that is
+// there moves.
+func TestLoggingUpdateMovesOnlyTheAppThatExists(t *testing.T) {
+	f, apps := loggingStack(map[string]string{
+		base.HivepaasVlagentKey: "victoriametrics/vlagent:v1.52.0",
+	})
+	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.53.0",
 		VlagentImage:      "victoriametrics/vlagent:v1.53.0",
 	}))
 
 	assert.NoError(t, err)
-	assert.Equal(t, map[string]string{
-		base.HivepaasVlagentServiceName: "victoriametrics/vlagent:v1.53.0",
-	}, f.updated)
+	assert.Equal(t, map[string]string{"svc-vlagent": "victoriametrics/vlagent:v1.53.0"}, f.updated)
 }
 
-// A release that names no logging images does not touch the services at all -
-// including not inspecting them.
+// A release that names no logging images does not touch the apps at all -
+// including not looking them up.
 func TestLoggingUpdateDoesNothingWithoutTargetImages(t *testing.T) {
-	f := &fakeDocker{deployed: map[string]string{
-		base.HivepaasVictoriaLogsServiceName: "victoriametrics/victoria-logs:v1.52.0",
-	}}
-	s := &service{dockerManager: f}
+	f, apps := loggingStack(map[string]string{
+		base.HivepaasVictoriaLogsKey: "victoriametrics/victoria-logs:v1.52.0",
+	})
+	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), loggingUpdateData(t, &base.ReleaseInfo{}))
+	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{}))
 
 	assert.NoError(t, err)
 	assert.Empty(t, f.updated)
+	assert.Empty(t, apps.recorded)
 }
 
 // Swarm's default on a failed update is to stop and leave the service down.
 // Every service the updater moves has to be told to undo it instead, and the
 // shared step is what guarantees that rather than each caller remembering.
 func TestLoggingUpdateArmsSwarmRollback(t *testing.T) {
-	f := &fakeDocker{deployed: map[string]string{
-		base.HivepaasVictoriaLogsServiceName: "victoriametrics/victoria-logs:v1.52.0",
-	}}
-	s := &service{dockerManager: f}
+	f, apps := loggingStack(map[string]string{
+		base.HivepaasVictoriaLogsKey: "victoriametrics/victoria-logs:v1.52.0",
+	})
+	s := &service{dockerManager: f, systemAppService: apps}
 
-	err := s.updateLoggingService(context.Background(), loggingUpdateData(t, &base.ReleaseInfo{
+	err := s.updateLoggingService(context.Background(), nil, loggingUpdateData(t, &base.ReleaseInfo{
 		VictoriaLogsImage: "victoriametrics/victoria-logs:v1.53.0",
 	}))
 
 	assert.NoError(t, err)
-	spec := f.specs[base.HivepaasVictoriaLogsServiceName]
+	spec := f.specs["svc-victoria-logs"]
 	if assert.NotNil(t, spec) && assert.NotNil(t, spec.UpdateConfig) {
 		assert.Equal(t, swarm.UpdateFailureActionRollback, spec.UpdateConfig.FailureAction)
 		assert.InDelta(t, updateMaxFailureRatio, spec.UpdateConfig.MaxFailureRatio, 0.0001)

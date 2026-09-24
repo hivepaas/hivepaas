@@ -488,6 +488,9 @@ is.
 
 ## 10. Deployment
 
+> **Superseded 2026-09-24** by [The stack as system apps](#the-stack-as-system-apps). The
+> order below still holds; how each part is created, changed and removed does not.
+
 ```
 On:   volume (if the backend is managed) -> VictoriaLogs, pinned -> Ping -> vlagent, global
 Off:  vlagent -> VictoriaLogs -> the volume is KEPT
@@ -577,6 +580,81 @@ rather than assumed. Where the sections above say otherwise, this wins.
 - **Responses never reveal credentials.** They are always masked; revealing one
   would go through the audited reveal path other settings use, which is not
   offered here yet.
+
+## The stack as system apps
+
+Revised 2026-09-24. The backend and the collector used to be swarm services the logging
+service created directly. They are now **two apps in the hidden `hivepaas` project**,
+provisioned the way the registry is
+([2026-09-21-registry-settings-design.md](2026-09-21-registry-settings-design.md) §5), so
+that everything an app has - its screen, logs, terminal, resources, deployments,
+placement from its volume - is theirs too. Where this section and the ones above disagree,
+this one wins.
+
+**Where they live.** Environment `logging` of the `hivepaas` project, created the first time.
+An environment is a network, and this one's name is `hivepaas_logging_net`: the collector and
+the backend reach each other on it and nothing else is on it - not the registry, which faces
+the internet. App keys are `victoria-logs` and `vlagent` (`base.HivepaasVictoriaLogsKey`,
+`base.HivepaasVlagentKey`); the apps are found by key, and their ids are written back into
+the setting (`BackendAppID`, `CollectorAppID`) only for the dashboard to link to.
+
+**How they are built.** `services/logging` still describes each container as a
+`RuntimeSpec`; `loggingserviceimpl` now turns that into an app document instead of a swarm
+spec, and `systemappservice` (shared with the registry) provisions it through
+`appprovisionservice` and `specservice.BuildApp` - the path a template's app takes. What a
+document may not say, because templates are written by somebody else, `Customize` writes
+onto the service: `Mode.Global` and the read-only bind of `/var/lib/docker/containers` for the
+collector, the extra attachment to `hivepaas_local_net` (alias `victoria-logs`) the API queries
+the backend over, and the `local` log driver both use to stay out of their own collection.
+
+| | Backend | Collector |
+|---|---|---|
+| Arguments | the app's deployment command | the app's deployment command |
+| Credentials | - | secret files, named by `-remoteWrite.bearerTokenFile` / `-remoteWrite.basicAuth.passwordFile` |
+| Storage | the chosen volume, through the app's mounts | - |
+| Limits | 1gb unless the settings say otherwise | 512mb |
+| OOM priority | -300 with its limit (`base.OomScoreAdjSystemAddon`) | the same |
+| Health check | off - the image has no shell | off - the same |
+
+Three consequences worth knowing:
+
+- **The arguments are the deployment command.** Every deployment sets a container's
+  arguments from that string (`dockerhelper.ContainerCommandApply`), so arguments written
+  straight into the service would be wiped by the next one. Each is quoted
+  (`executil.ArgQuote`), and `CmdSplit` returns them exactly - JSON and headers included.
+- **The volume goes through the app's mounts.** The setting names the volume by its setting's
+  id, and the mount build turns that into the volume docker knows, inside the app's own
+  directory, pinned to its node. Handing docker the id, as the direct services did, made it
+  create an empty volume by that name and keep the logs there. `VolumeSubpath` is gone: the
+  app's directory is what it was for.
+- **Credentials leave the command line.** A token or a password in an argument is readable
+  by anyone who can read the service, or the app's deployment settings. They are app
+  secrets now, mounted under `/run/secrets`, which vlagent re-reads every second. An
+  external store's ingest credentials, which used to be dropped, reach the collector the
+  same way.
+
+**Changing them.** A save rewrites the command and, when it changed, queues the deployment
+that applies it - scheduled after the transaction commits, like the first ones. The images
+are the release's, put back by a save if they drifted. The backend's CPU and memory are not
+stored in the setting: the settings screen reads them off the backend's service and writes
+them there, the same place the app's resource screen does. The volume cannot change while
+the backend exists (`ErrLoggingVolumeImmutable`), for the reason the registry's storage
+cannot: nothing copies the logs.
+
+**Removing them** is what the registry does. Switching logging off, or handing the backend to
+a store somebody else runs, takes an app down, so the save has to carry `removeApp` - the
+dashboard asks - or it is refused with `ErrLoggingAppStillRunning`. `removeStorage` deletes
+the backend's directory on the volume with it. The collector goes first.
+
+**Upgrading them.** The system updater moves each app's service to the release's image the way
+it moves every service, with the version check and swarm's rollback, and then records the
+image in the app's deployment settings so that the next deployment does not put the old one
+back (`systemappservice.RecordImage`).
+
+**Global mode is an app's now.** The audit in
+[2026-09-12-global-mode-audit.md](../notes/2026-09-12-global-mode-audit.md) concluded that no
+guard was needed because the collector was not an app. It is, so disabling it had to stop
+without changing its mode - see that note.
 
 ## Testing
 

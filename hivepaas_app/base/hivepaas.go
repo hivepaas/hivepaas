@@ -25,15 +25,12 @@ const (
 	HivepaasAgentServiceName = "hivepaas_agent"
 	HivepaasAgentKey         = "agent"
 
-	// The logging stack is created by the app when logging is switched on, not
-	// by the stack file like everything above, which is why these two are spelled
-	// with hyphens and carry no stack prefix. Either being absent means logging
-	// is off, not that something is broken.
-	HivepaasVictoriaLogsServiceName = "hivepaas-victoria-logs"
-	HivepaasVictoriaLogsKey         = "victoria-logs"
-
-	HivepaasVlagentServiceName = "hivepaas-vlagent"
-	HivepaasVlagentKey         = "vlagent"
+	// The logging stack is two apps the app provisions in its hidden project when
+	// logging is switched on, not services of the stack file like everything
+	// above. These are their app keys. Either being absent means HivePaaS does not
+	// run that part, not that something is broken.
+	HivepaasVictoriaLogsKey = "victoria-logs"
+	HivepaasVlagentKey      = "vlagent"
 
 	// The registry is created by the app when an operator switches it on, not by
 	// the stack file, so it carries no stack prefix either. Its absence means the
@@ -55,9 +52,6 @@ const (
 	NetworkGlobalRouting = "hivepaas_net"
 	NetworkDockerProxy   = "hivepaas_docker_proxy_net"
 	NetworkHivepaasLocal = "hivepaas_local_net"
-	// NetworkLogging is the overlay the collector and the backend talk over.
-	// Only the logging stack joins it.
-	NetworkLogging = "hivepaas_logging_net"
 )
 
 // OomScoreAdjSystemAddon is the kernel OOM priority of the services an admin adds

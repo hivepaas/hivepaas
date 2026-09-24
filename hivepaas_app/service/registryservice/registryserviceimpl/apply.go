@@ -4,19 +4,13 @@ import (
 	"context"
 	"errors"
 
-	"github.com/moby/moby/api/types/swarm"
-	"github.com/tiendc/gofn"
-
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/bunex"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/ulid"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
 const (
@@ -29,10 +23,6 @@ const (
 	// This is the name of a setting, not a credential: what it holds is the
 	// account file, written at provisioning time.
 	registrySecretName = "ZOT_HTPASSWD" //nolint:gosec
-
-	// registryDefaultEnv is the environment a system app lands in: the key
-	// project_sync gives an app whose service names none.
-	registryDefaultEnv = "default"
 )
 
 // planInput is what the plan needs that the setting only points at: the volume's
@@ -152,12 +142,14 @@ func (s *service) Apply(
 	} else {
 		err = s.reconcile(ctx, db, app, plan)
 	}
+	// From here on the response goes back with the error too: it carries the
+	// cleanup of whatever provisioning already created in docker.
 	if err != nil {
-		return nil, hperrors.Wrap(err)
+		return resp, hperrors.Wrap(err)
 	}
 
 	if err = s.rememberWhatWasCreated(ctx, db, setting, cfg, app.ID, credential.ID); err != nil {
-		return nil, hperrors.Wrap(err)
+		return resp, hperrors.Wrap(err)
 	}
 	resp.App = app
 	return resp, nil
@@ -200,7 +192,7 @@ func (s *service) teardown(
 	credentialID := cfg.RegistryAuthID
 	s.logger.Info("removing the system registry",
 		"app", app.ID, "removeStorage", req.RemoveStorage)
-	if err = s.appService.DeleteApp(ctx, db, app, req.RemoveStorage, true); err != nil {
+	if err = s.systemAppService.Remove(ctx, db, app, req.RemoveStorage); err != nil {
 		return nil, hperrors.Wrap(err)
 	}
 	if err = s.rememberWhatWasCreated(ctx, db, setting, cfg, "", ""); err != nil {
@@ -254,34 +246,17 @@ func (s *service) provision(
 		return nil, hperrors.Wrap(err)
 	}
 
-	project, projectEnv, err := s.rootProjectEnv(ctx, db)
-	if err != nil {
-		return nil, hperrors.Wrap(err)
-	}
-
-	timeNow := timeutil.NowUTC()
-	resp, err := s.provisionService.ProvisionApp(ctx, db, &appprovisionservice.ProvisionAppReq{
-		ProjectID:    project.ID,
-		ProjectEnvID: projectEnv.ID,
-		AppID:        gofn.Must(ulid.NewStringULID()),
-		Name:         plan.Name,
-		Status:       base.AppStatusActive,
-		Note:         "The registry HivePaaS runs for itself. It is configured in system settings.",
-		Configure: func(ctx context.Context, db database.IDB, app *entity.App,
-			spec *swarm.ServiceSpec) ([]*entity.Setting, error) {
-			built, buildErr := s.specService.BuildApp(ctx, db, &specservice.BuildAppReq{
-				App: app, Doc: doc, Spec: spec, TimeNow: timeNow,
-			})
-			if buildErr != nil {
-				return nil, hperrors.Wrap(buildErr)
-			}
-			return built.Settings, nil
-		},
-		Deployment: &appprovisionservice.FirstDeployment{
-			Source:   base.DeploymentTriggerSourceAPI,
-			SourceID: triggerUserID,
-		},
+	resp, err := s.systemAppService.Provision(ctx, db, &systemappservice.ProvisionReq{
+		Env:           systemappservice.DefaultEnv,
+		Key:           plan.Key,
+		Name:          plan.Name,
+		Note:          "The registry HivePaaS runs for itself. It is configured in system settings.",
+		Doc:           doc,
+		TriggerUserID: triggerUserID,
 	})
+	if resp != nil {
+		out.Cleanup = resp.Cleanup
+	}
 	if err != nil {
 		return nil, hperrors.Wrap(err)
 	}
@@ -420,44 +395,7 @@ func (s *service) loadSetting(ctx context.Context, db database.IDB) (*entity.Set
 }
 
 // loadApp returns the registry's app, or nil when it was never provisioned.
-//
-// It looks the app up by key rather than by the stored id, so that an id left
-// over from an app somebody deleted does not stop the registry from being created
-// again.
 func (s *service) loadApp(ctx context.Context, db database.IDB) (*entity.App, error) {
-	app, err := s.hpAppService.LoadAppByKey(ctx, db, base.HivepaasRegistryKey,
-		bunex.SelectRelation("Settings"),
-		bunex.SelectRelation("Project"),
-		bunex.SelectRelation("ProjectEnv"),
-	)
-	if err != nil {
-		if errors.Is(err, hperrors.ErrNotFound) {
-			return nil, nil
-		}
-		return nil, hperrors.Wrap(err)
-	}
-	return app, nil
-}
-
-// rootProjectEnv is where a system app lives: the hidden hivepaas project, and
-// the environment a service that names none lands in.
-func (s *service) rootProjectEnv(ctx context.Context, db database.IDB) (
-	*entity.Project, *entity.ProjectEnv, error) {
-	project, err := s.projectRepo.GetByKey(ctx, db, base.HivepaasProjectKey,
-		bunex.SelectRelation("ProjectEnvs"),
-	)
-	if err != nil {
-		return nil, nil, hperrors.Wrap(err)
-	}
-	if projectEnv := project.GetEnv(registryDefaultEnv); projectEnv != nil {
-		return project, projectEnv, nil
-	}
-	// An installation whose system apps were synced under another environment
-	// name still has to be able to provision this one.
-	if len(project.ProjectEnvs) > 0 {
-		return project, project.ProjectEnvs[0], nil
-	}
-	return nil, nil, hperrors.Wrap(hperrors.ErrRegistryNotConfigured).
-		WithExtraDetail("The %s project has no environment to create the registry in.",
-			base.HivepaasProjectKey)
+	app, err := s.systemAppService.LoadApp(ctx, db, base.HivepaasRegistryKey)
+	return app, hperrors.Wrap(err)
 }

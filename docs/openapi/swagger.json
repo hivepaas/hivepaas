@@ -59442,6 +59442,28 @@
         "required" : [ "data", "meta" ],
         "type" : "object"
       },
+      "systemsettings_loggingdto.LoggingAppStatusResp" : {
+        "properties" : {
+          "appId" : {
+            "type" : "string"
+          },
+          "desiredTasks" : {
+            "type" : "integer"
+          },
+          "projectEnv" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "type" : "string"
+          },
+          "runningTasks" : {
+            "description" : "RunningTasks and DesiredTasks count containers: one for the backend, one\nper node for the collector.",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "appId", "desiredTasks", "projectEnv", "projectId", "runningTasks" ],
+        "type" : "object"
+      },
       "systemsettings_loggingdto.LoggingSettingsResp" : {
         "properties" : {
           "backend" : {
@@ -59514,14 +59536,24 @@
       },
       "systemsettings_loggingdto.LoggingStatusResp" : {
         "properties" : {
+          "backend" : {
+            "allOf" : [ {
+              "$ref" : "#/components/schemas/systemsettings_loggingdto.LoggingAppStatusResp"
+            } ],
+            "description" : "Backend and Collector are the apps HivePaaS runs, absent when it runs none.\nThey are ordinary apps in the hidden hivepaas project, and link to their\nown screens.",
+            "type" : "object"
+          },
           "backendReady" : {
             "type" : "boolean"
+          },
+          "collector" : {
+            "$ref" : "#/components/schemas/systemsettings_loggingdto.LoggingAppStatusResp"
           },
           "collectorReady" : {
             "type" : "boolean"
           }
         },
-        "required" : [ "backendReady", "collectorReady" ],
+        "required" : [ "backend", "backendReady", "collector", "collectorReady" ],
         "type" : "object"
       },
       "systemsettings_loggingdto.SourcesReq" : {
@@ -59583,6 +59615,14 @@
           "inheritable" : {
             "type" : "boolean"
           },
+          "removeApp" : {
+            "description" : "RemoveApp and RemoveStorage are asked of this request, not stored by it.\nSwitching logging off - or handing the backend or the collector to a\nsystem HivePaaS does not run - takes an app down, and the apps have no\nscreen of their own to be removed from, so the confirmation arrives here.",
+            "type" : "boolean"
+          },
+          "removeStorage" : {
+            "description" : "RemoveStorage deletes the stored logs with the backend: its own directory\ninside the volume, not the volume.",
+            "type" : "boolean"
+          },
           "sources" : {
             "$ref" : "#/components/schemas/systemsettings_loggingdto.SourcesReq"
           },
@@ -59590,7 +59630,7 @@
             "type" : "integer"
           }
         },
-        "required" : [ "backend", "collector", "default", "enabled", "forwards", "inheritable", "sources", "updateVer" ],
+        "required" : [ "backend", "collector", "default", "enabled", "forwards", "inheritable", "removeApp", "removeStorage", "sources", "updateVer" ],
         "type" : "object"
       },
       "systemsettings_loggingdto.UpdateLoggingSettingsResp" : {
@@ -59605,7 +59645,7 @@
       "systemsettings_loggingdto.VictoriaLogsReq" : {
         "properties" : {
           "cpuLimit" : {
-            "description" : "CPULimit is in cores. MemoryLimit carries its own unit - \"1gb\", \"512mb\" -\nand also accepts a bare number of bytes. Zero in either means no cap.",
+            "description" : "CPULimit is in cores, zero for no cap. MemoryLimit carries its own unit -\n\"1gb\", \"512mb\" - and also accepts a bare number of bytes; zero is the\ndefault limit. Neither is stored with the settings: see BackendResources.",
             "type" : "number"
           },
           "maxDiskUsagePercent" : {
@@ -59619,17 +59659,15 @@
           },
           "volume" : {
             "$ref" : "#/components/schemas/basedto.ObjectIDReq"
-          },
-          "volumeSubpath" : {
-            "type" : "string"
           }
         },
-        "required" : [ "cpuLimit", "maxDiskUsagePercent", "memoryLimit", "retention", "volume", "volumeSubpath" ],
+        "required" : [ "cpuLimit", "maxDiskUsagePercent", "memoryLimit", "retention", "volume" ],
         "type" : "object"
       },
       "systemsettings_loggingdto.VictoriaLogsResp" : {
         "properties" : {
           "cpuLimit" : {
+            "description" : "CPULimit and MemoryLimit are read off the backend's service, where they\nlive - the app's own resource screen reads the same place. With no\nbackend running they are what a new one would get.",
             "type" : "number"
           },
           "maxDiskUsagePercent" : {
@@ -59644,12 +59682,9 @@
           },
           "volume" : {
             "$ref" : "#/components/schemas/settings.BaseSettingResp"
-          },
-          "volumeSubpath" : {
-            "type" : "string"
           }
         },
-        "required" : [ "cpuLimit", "maxDiskUsagePercent", "memoryLimit", "retention", "volume", "volumeSubpath" ],
+        "required" : [ "cpuLimit", "maxDiskUsagePercent", "memoryLimit", "retention", "volume" ],
         "type" : "object"
       },
       "systemsettings_registrydto.CleanupReq" : {

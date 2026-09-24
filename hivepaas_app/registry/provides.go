@@ -95,6 +95,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/startupservice/startupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysbackupservice/sysbackupserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/syscleanupservice/syscleanupserviceimpl"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice/systemappserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemeventbusservice/systemeventbusserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/sysupdateservice/sysupdateserviceimpl"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/taskservice/taskserviceimpl"
@@ -368,6 +369,7 @@ var Provides = []any{
 	imagebuildserviceimpl.New,
 	loggingserviceimpl.New,
 	registryserviceimpl.New,
+	systemappserviceimpl.New,
 	networkserviceimpl.New,
 	nodeexecserviceimpl.New,
 	notificationserviceimpl.New,

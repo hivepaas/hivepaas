@@ -4,6 +4,7 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/loggingservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/settingservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/tasks/queue"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
 )
 
@@ -14,6 +15,7 @@ type UC struct {
 
 	loggingService loggingservice.Service
 	settingService settingservice.Service
+	taskQueue      queue.TaskQueue
 }
 
 func New(
@@ -23,6 +25,7 @@ func New(
 
 	loggingService loggingservice.Service,
 	settingService settingservice.Service,
+	taskQueue queue.TaskQueue,
 ) *UC {
 	return &UC{
 		BaseUC: baseUC,
@@ -31,5 +34,6 @@ func New(
 
 		loggingService: loggingService,
 		settingService: settingService,
+		taskQueue:      taskQueue,
 	}
 }

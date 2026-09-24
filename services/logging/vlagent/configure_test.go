@@ -75,12 +75,41 @@ func TestConfigureKeepsPerDestinationArraysAligned(t *testing.T) {
 
 	urls := argsFor(spec.Args, "-remoteWrite.url")
 	formats := argsFor(spec.Args, "-remoteWrite.format")
-	tokens := argsFor(spec.Args, "-remoteWrite.bearerToken")
+	tokenFiles := argsFor(spec.Args, "-remoteWrite.bearerTokenFile")
 
 	assert.Equal(t, []string{"http://vlogs:9428/internal/insert", "http://a/ingest", "http://b/ingest"}, urls)
 	assert.Equal(t, []string{FormatNative, FormatJSONLine, FormatJSONLine}, formats)
-	// Three slots for three destinations; only the third carries a token.
-	assert.Equal(t, []string{"", "", "SECRET"}, tokens)
+	// Three slots for three destinations; only the third names a token file.
+	assert.Equal(t, []string{"", "", SecretsDir + "/remote-write-2-bearer-token"}, tokenFiles)
+	assert.Equal(t, []*loggingmodel.Secret{{
+		Key: "REMOTE_WRITE_2_BEARER_TOKEN", Path: SecretsDir + "/remote-write-2-bearer-token", Value: "SECRET",
+	}}, spec.Secrets)
+}
+
+// A credential on the command line is readable by anyone who can read the
+// service, so none may appear there - only the file it is written to.
+func TestConfigureKeepsCredentialsOffTheCommandLine(t *testing.T) {
+	in := baseSpec()
+	in.Forwards = []*loggingmodel.ForwardTarget{{
+		Name: "company", Format: FormatJSONLine, Endpoint: loggingmodel.Endpoint{
+			URL: "http://b/ingest", Username: "shipper", Password: "PASSWORD", BearerToken: "TOKEN",
+		},
+	}}
+
+	spec, err := New(&Config{}).Configure(in)
+	if err != nil {
+		t.Fatalf("Configure: %v", err)
+	}
+
+	for _, arg := range spec.Args {
+		assert.NotContains(t, arg, "PASSWORD")
+		assert.NotContains(t, arg, "TOKEN")
+	}
+	assert.Equal(t, []string{"", "shipper"}, argsFor(spec.Args, "-remoteWrite.basicAuth.username"))
+	assert.Equal(t, []string{"", SecretsDir + "/remote-write-1-password"},
+		argsFor(spec.Args, "-remoteWrite.basicAuth.passwordFile"))
+	assert.Len(t, spec.Secrets, 2)
+	assert.True(t, spec.PerNode, "the collector reads the node it runs on")
 }
 
 func TestConfigureExcludesTheLoggingStackItself(t *testing.T) {

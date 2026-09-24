@@ -30,7 +30,6 @@ var (
 	ErrNoSources              = loggingmodel.ErrNoSources
 	ErrForwardFormatInvalid   = loggingmodel.ErrForwardFormatInvalid
 	ErrDataVolumeRequired     = loggingmodel.ErrDataVolumeRequired
-	ErrDataSubpathInvalid     = loggingmodel.ErrDataSubpathInvalid
 	ErrQueryInvalid           = loggingmodel.ErrQueryInvalid
 	ErrBackendUnreachable     = loggingmodel.ErrBackendUnreachable
 	ErrQueryScopeRequired     = loggingmodel.ErrQueryScopeRequired
@@ -51,6 +50,7 @@ type (
 	ForwardTarget = loggingmodel.ForwardTarget
 	CollectSpec   = loggingmodel.CollectSpec
 	RuntimeSpec   = loggingmodel.RuntimeSpec
+	Secret        = loggingmodel.Secret
 	Mount         = loggingmodel.Mount
 	Port          = loggingmodel.Port
 	Resources     = loggingmodel.Resources

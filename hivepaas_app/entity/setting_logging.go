@@ -6,7 +6,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/base"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
-	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 )
 
 const (
@@ -43,6 +42,12 @@ type LoggingSettings struct {
 	Sources   LoggingSources   `json:"sources"`
 	Collector LoggingCollector `json:"collector"`
 	Backend   LoggingBackend   `json:"backend"`
+
+	// BackendAppID and CollectorAppID are the apps provisioning created, written
+	// back after it ran so that the dashboard can link to them. They are the
+	// server's, never the client's; the apps themselves are found by key.
+	BackendAppID   string `json:"backendAppId,omitempty"`
+	CollectorAppID string `json:"collectorAppId,omitempty"`
 
 	// Forwards are write-only copies of the stream. Keeping logs for the
 	// dashboard and sending a copy to a company's own system is not an
@@ -96,13 +101,6 @@ type LoggingVictoriaLogs struct {
 	// and a local volume on the new node is empty.
 	Volume ObjectID `json:"volume,omitempty"`
 
-	// VolumeSubpath is the directory inside the volume the store keeps its data
-	// in, so one volume can serve more than logging. Empty means the volume's
-	// root, which is where the store wrote before this existed - changing it on
-	// a running backend points the store at a new, empty directory, and the
-	// logs collected so far stay where they were.
-	VolumeSubpath string `json:"volumeSubpath,omitempty"`
-
 	// Retention reaches VictoriaLogs as a command-line flag, so changing it
 	// restarts the service.
 	Retention timeutil.Duration `json:"retention"`
@@ -110,20 +108,6 @@ type LoggingVictoriaLogs struct {
 	// MaxDiskUsagePercent drops the oldest days once the filesystem is this
 	// full. Zero leaves it unset.
 	MaxDiskUsagePercent int `json:"maxDiskUsagePercent,omitempty"`
-
-	// CPULimit is in cores, the way app resource settings express it. Zero is
-	// no cap, which is what running without this setting meant: a heavy query
-	// could take whatever the node had, from the apps running beside it.
-	CPULimit float64 `json:"cpuLimit,omitempty"`
-
-	// MemoryLimit is written the way every other size in HivePaaS is - "1gb",
-	// "512mb" - so the unit travels with the value and cannot be mistaken for
-	// another. Zero takes logging.DefaultBackendMemoryLimit: the backend always
-	// runs capped, which is what lets it be protected from the OOM killer.
-	//
-	// It is more than a ceiling: VictoriaLogs sizes its caches from the memory
-	// it is allowed.
-	MemoryLimit unit.DataSize `json:"memoryLimit,omitempty"`
 }
 
 type LoggingEndpoint struct {

@@ -36,6 +36,7 @@ func (uc *UC) UpdateLoggingSettings(
 		NewSettings: req.ToEntity(),
 	}
 	persistingData := &persistingSettingData{}
+	var applied *loggingservice.SettingApplyResp
 
 	_, err := uc.UpdateUniqueSetting(ctx, &req.UpdateUniqueSettingReq, &settings.UpdateUniqueSettingData{
 		Name: loggingSettingName,
@@ -64,19 +65,34 @@ func (uc *UC) UpdateLoggingSettings(
 		) error {
 			// Make the cluster match what was just saved. Apply is idempotent, so a
 			// failure here leaves a stored configuration that the next save retries.
-			_, err := uc.loggingService.Apply(ctx, db, &loggingservice.SettingApplyReq{
-				Setting: pData.Setting,
+			applyResp, applyErr := uc.loggingService.Apply(ctx, db, &loggingservice.SettingApplyReq{
+				Setting:          pData.Setting,
+				BackendResources: req.BackendResources(),
+				TriggerUserID:    auth.UserID(),
+				RemoveApp:        req.RemoveApp,
+				RemoveStorage:    req.RemoveStorage,
 			})
-			if err != nil {
-				return hperrors.Wrap(err)
-			}
-			return nil
+			applied = applyResp
+			return hperrors.Wrap(applyErr)
 		},
 	})
 	if err != nil {
+		// The records went with the transaction; what provisioning made in docker
+		// did not, and nothing else would take it down.
+		if applied != nil && applied.Cleanup != nil {
+			err = errors.Join(err, applied.Cleanup(context.WithoutCancel(ctx)))
+		}
 		return nil, hperrors.Wrap(err)
 	}
 
+	// A task can be picked up only once its row exists, which is once the
+	// transaction has committed. The deployments are what replace a new app's
+	// placeholder image, and what apply a changed configuration to one running.
+	if applied != nil && len(applied.Tasks) > 0 {
+		if err = uc.taskQueue.ScheduleTask(ctx, applied.Tasks...); err != nil {
+			return nil, hperrors.Wrap(err)
+		}
+	}
 	return &loggingdto.UpdateLoggingSettingsResp{}, nil
 }
 
@@ -121,12 +137,15 @@ func (uc *UC) loadSettingData(
 		return hperrors.Wrap(err)
 	}
 	req.KeepMaskedSecrets(data.NewSettings, currSettings)
+	// What provisioning wrote is the server's, not the client's: a request that
+	// left them out would otherwise drop the links to the apps.
+	data.NewSettings.BackendAppID = currSettings.BackendAppID
+	data.NewSettings.CollectorAppID = currSettings.CollectorAppID
 
 	if err := validateSettings(data.NewSettings); err != nil {
 		return hperrors.Wrap(err)
 	}
-
-	return nil
+	return hperrors.Wrap(uc.loggingService.Validate(ctx, db, data.NewSettings, currSettings))
 }
 
 func (uc *UC) preparePersistingData(

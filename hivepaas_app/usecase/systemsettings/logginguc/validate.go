@@ -4,7 +4,6 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/entity"
 	"github.com/hivepaas/hivepaas/hivepaas_app/hperrors"
 	"github.com/hivepaas/hivepaas/services/logging"
-	"github.com/hivepaas/hivepaas/services/logging/victorialogs"
 )
 
 // validateSettings refuses a configuration that would deploy something broken.
@@ -28,9 +27,6 @@ func validateSettings(cfg *entity.LoggingSettings) error {
 		}
 		if vl.Volume.ID == "" {
 			return hperrors.Wrap(hperrors.ErrLoggingVolumeMissing)
-		}
-		if err := victorialogs.ValidateDataSubpath(vl.VolumeSubpath); err != nil {
-			return hperrors.Wrap(err)
 		}
 	} else if cfg.Backend.Ingest == nil || cfg.Backend.Ingest.URL == "" {
 		return hperrors.Wrap(logging.ErrIngestEndpointRequired)

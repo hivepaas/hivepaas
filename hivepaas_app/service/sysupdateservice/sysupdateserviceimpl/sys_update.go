@@ -201,7 +201,7 @@ func (s *service) updateSystem(
 	// 4. Update the logging stack, if it is deployed at all. Before the app and
 	// the worker only because those two are what bring the system back up, and
 	// nothing here is a dependency of either.
-	err = s.updateLoggingService(ctx, data)
+	err = s.updateLoggingService(ctx, db, data)
 	if err != nil {
 		return hperrors.Wrap(err)
 	}

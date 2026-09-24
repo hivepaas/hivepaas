@@ -11,12 +11,12 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/timeutil"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/unit"
 	"github.com/hivepaas/hivepaas/hivepaas_app/usecase/settings"
+	"github.com/hivepaas/hivepaas/services/logging"
 )
 
 const (
 	nameMaxLen = 100
 	urlMaxLen  = 255
-	pathMaxLen = 255
 
 	// maxBackendCPULimit and maxBackendMemoryLimit are sanity bounds, not a
 	// judgement about the right size: they exist so a typo cannot ask swarm for
@@ -28,6 +28,32 @@ const (
 type UpdateLoggingSettingsReq struct {
 	settings.UpdateUniqueSettingReq
 	*UpdateSettingsBaseReq
+
+	// RemoveApp and RemoveStorage are asked of this request, not stored by it.
+	// Switching logging off - or handing the backend or the collector to a
+	// system HivePaaS does not run - takes an app down, and the apps have no
+	// screen of their own to be removed from, so the confirmation arrives here.
+	RemoveApp bool `json:"removeApp,omitempty"`
+	// RemoveStorage deletes the stored logs with the backend: its own directory
+	// inside the volume, not the volume.
+	RemoveStorage bool `json:"removeStorage,omitempty"`
+}
+
+// BackendResources is what the managed backend is to run under. It is not part
+// of the stored settings: it goes to the backend's service, where the app's own
+// resource screen reads and writes it too. An empty memory limit is the
+// default one - the backend always runs capped, which is what lets it be
+// protected from the OOM killer.
+func (req *UpdateLoggingSettingsReq) BackendResources() *logging.Resources {
+	if req.UpdateSettingsBaseReq == nil || !req.Backend.Managed || req.Backend.VictoriaLogs == nil {
+		return nil
+	}
+	vl := req.Backend.VictoriaLogs
+	memoryLimit := vl.MemoryLimit
+	if memoryLimit == 0 {
+		memoryLimit = logging.DefaultBackendMemoryLimit
+	}
+	return &logging.Resources{CPULimit: vl.CPULimit, MemoryLimit: memoryLimit.Bytes()}
 }
 
 type UpdateSettingsBaseReq struct {
@@ -171,11 +197,11 @@ func (req *BackendReq) validate(field string) (res []vld.Validator) {
 
 type VictoriaLogsReq struct {
 	Volume              basedto.ObjectIDReq `json:"volume"`
-	VolumeSubpath       string              `json:"volumeSubpath,omitempty"`
 	Retention           timeutil.Duration   `json:"retention"`
 	MaxDiskUsagePercent int                 `json:"maxDiskUsagePercent,omitempty"`
-	// CPULimit is in cores. MemoryLimit carries its own unit - "1gb", "512mb" -
-	// and also accepts a bare number of bytes. Zero in either means no cap.
+	// CPULimit is in cores, zero for no cap. MemoryLimit carries its own unit -
+	// "1gb", "512mb" - and also accepts a bare number of bytes; zero is the
+	// default limit. Neither is stored with the settings: see BackendResources.
 	CPULimit    float64       `json:"cpuLimit,omitempty"`
 	MemoryLimit unit.DataSize `json:"memoryLimit,omitempty" swaggertype:"string"`
 }
@@ -186,11 +212,8 @@ func (req *VictoriaLogsReq) ToEntity() *entity.LoggingVictoriaLogs {
 	}
 	return &entity.LoggingVictoriaLogs{
 		Volume:              *req.Volume.ToEntity(),
-		VolumeSubpath:       req.VolumeSubpath,
 		Retention:           req.Retention,
 		MaxDiskUsagePercent: req.MaxDiskUsagePercent,
-		CPULimit:            req.CPULimit,
-		MemoryLimit:         req.MemoryLimit,
 	}
 }
 
@@ -202,8 +225,6 @@ func (req *VictoriaLogsReq) validate(field string) (res []vld.Validator) {
 		field += "."
 	}
 	res = append(res, basedto.ValidateObjectIDReq(&req.Volume, true, field+"volume")...)
-	res = append(res, basedto.ValidateStr(&req.VolumeSubpath, false, 1, pathMaxLen,
-		field+"volumeSubpath")...)
 	res = append(res, basedto.ValidateNumber(&req.MaxDiskUsagePercent, false, 0, 100, //nolint:mnd
 		field+"maxDiskUsagePercent")...)
 	res = append(res, basedto.ValidateNumber(&req.CPULimit, false, 0, maxBackendCPULimit, field+"cpuLimit")...)

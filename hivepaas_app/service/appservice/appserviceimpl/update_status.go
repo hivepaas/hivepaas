@@ -82,7 +82,7 @@ func (s *service) SetAppRunning(ctx context.Context, app *entity.App, running bo
 	}
 	service := &inspect.Service
 
-	if service.Spec.Mode.Replicated == nil {
+	if service.Spec.Mode.Replicated == nil && service.Spec.Mode.Global == nil {
 		return hperrors.Wrap(hperrors.ErrServiceModeReplicatedRequired)
 	}
 
@@ -100,6 +100,11 @@ func (s *service) stopApp(ctx context.Context, app *entity.App, service *swarm.S
 
 	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID, service,
 		func(_ int, service *swarm.Service) (bool, error) {
+			// Swarm refuses to change a service's mode, so the replicated path below
+			// would fail for a global service.
+			if service.Spec.Mode.Global != nil {
+				return appservice.StopGlobalService(&service.Spec), nil
+			}
 			if service.Spec.Mode.Replicated != nil &&
 				(service.Spec.Mode.Replicated.Replicas == nil || *service.Spec.Mode.Replicated.Replicas == 0) {
 				return false, nil
@@ -135,6 +140,9 @@ func (s *service) startApp(ctx context.Context, app *entity.App, service *swarm.
 
 	err := s.dockerManager.ServiceUpdateFunc(ctx, app.ServiceID, service,
 		func(_ int, service *swarm.Service) (bool, error) {
+			if service.Spec.Mode.Global != nil {
+				return appservice.StartGlobalService(&service.Spec), nil
+			}
 			// App is not stopped before can't be started
 			if service.Spec.Mode.Replicated == nil ||
 				(service.Spec.Mode.Replicated.Replicas != nil && *service.Spec.Mode.Replicated.Replicas > 0) {

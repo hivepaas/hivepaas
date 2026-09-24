@@ -73,6 +73,11 @@ func (uc *UC) UpdateRegistrySettings(
 		},
 	})
 	if err != nil {
+		// The records went with the transaction; what provisioning made in docker
+		// did not, and nothing else would take it down.
+		if applied != nil && applied.Cleanup != nil {
+			err = errors.Join(err, applied.Cleanup(context.WithoutCancel(ctx)))
+		}
 		return nil, hperrors.Wrap(err)
 	}
 

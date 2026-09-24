@@ -10,12 +10,9 @@ import (
 	"github.com/hivepaas/hivepaas/hivepaas_app/infra/database"
 	"github.com/hivepaas/hivepaas/hivepaas_app/pkg/logging"
 	"github.com/hivepaas/hivepaas/hivepaas_app/repository"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appprovisionservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/appservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/clustersecretservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/hpappservice"
 	"github.com/hivepaas/hivepaas/hivepaas_app/service/registryservice"
-	"github.com/hivepaas/hivepaas/hivepaas_app/service/specservice"
+	"github.com/hivepaas/hivepaas/hivepaas_app/service/systemappservice"
 )
 
 // httpTimeout is what asking the registry a question is allowed to take. The
@@ -23,14 +20,10 @@ import (
 const httpTimeout = 30 * time.Second
 
 type service struct {
-	projectRepo    repository.ProjectRepo
 	projectEnvRepo repository.ProjectEnvRepo
 	settingRepo    repository.SettingRepo
 
-	appService           appservice.Service
-	hpAppService         hpappservice.Service
-	provisionService     appprovisionservice.Service
-	specService          specservice.Service
+	systemAppService     systemappservice.Service
 	clusterSecretService clustersecretservice.Service
 
 	logger logging.Logger
@@ -46,26 +39,18 @@ type service struct {
 //
 //nolint:ireturn // the constructor of a service returns its interface
 func New(
-	projectRepo repository.ProjectRepo,
 	projectEnvRepo repository.ProjectEnvRepo,
 	settingRepo repository.SettingRepo,
 
-	appService appservice.Service,
-	hpAppService hpappservice.Service,
-	provisionService appprovisionservice.Service,
-	specService specservice.Service,
+	systemAppService systemappservice.Service,
 	clusterSecretService clustersecretservice.Service,
 
 	logger logging.Logger,
 ) registryservice.Service {
 	return &service{
-		projectRepo:          projectRepo,
 		projectEnvRepo:       projectEnvRepo,
 		settingRepo:          settingRepo,
-		appService:           appService,
-		hpAppService:         hpAppService,
-		provisionService:     provisionService,
-		specService:          specService,
+		systemAppService:     systemAppService,
 		clusterSecretService: clusterSecretService,
 		logger:               logger,
 		httpClient:           &http.Client{Timeout: httpTimeout},

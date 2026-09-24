@@ -89,10 +89,12 @@ func (resp *EndpointResp) CopyBearerToken(field entity.EncryptedField) error {
 
 type VictoriaLogsResp struct {
 	Volume              *settings.BaseSettingResp `json:"volume"`
-	VolumeSubpath       string                    `json:"volumeSubpath,omitempty"`
 	Retention           timeutil.Duration         `json:"retention"`
 	MaxDiskUsagePercent int                       `json:"maxDiskUsagePercent,omitempty"`
-	CPULimit            float64                   `json:"cpuLimit,omitempty"`
+	// CPULimit and MemoryLimit are read off the backend's service, where they
+	// live - the app's own resource screen reads the same place. With no
+	// backend running they are what a new one would get.
+	CPULimit float64 `json:"cpuLimit,omitempty"`
 	// A size with its unit, such as "1gb". swaggertype says so because swag
 	// sees the int64 underneath rather than what MarshalJSON writes.
 	MemoryLimit unit.DataSize `json:"memoryLimit,omitempty" swaggertype:"string"`
@@ -107,6 +109,34 @@ type ForwardResp struct {
 type LoggingStatusResp struct {
 	CollectorReady bool `json:"collectorReady"`
 	BackendReady   bool `json:"backendReady"`
+	// Backend and Collector are the apps HivePaaS runs, absent when it runs none.
+	// They are ordinary apps in the hidden hivepaas project, and link to their
+	// own screens.
+	Backend   *LoggingAppStatusResp `json:"backend,omitempty"`
+	Collector *LoggingAppStatusResp `json:"collector,omitempty"`
+}
+
+type LoggingAppStatusResp struct {
+	AppID      string `json:"appId"`
+	ProjectID  string `json:"projectId"`
+	ProjectEnv string `json:"projectEnv"`
+	// RunningTasks and DesiredTasks count containers: one for the backend, one
+	// per node for the collector.
+	RunningTasks uint64 `json:"runningTasks"`
+	DesiredTasks uint64 `json:"desiredTasks"`
+}
+
+func transformLoggingAppStatus(status *loggingservice.AppStatus) *LoggingAppStatusResp {
+	if status == nil {
+		return nil
+	}
+	return &LoggingAppStatusResp{
+		AppID:        status.AppID,
+		ProjectID:    status.ProjectID,
+		ProjectEnv:   status.ProjectEnv,
+		RunningTasks: status.RunningTasks,
+		DesiredTasks: status.DesiredTasks,
+	}
 }
 
 type LoggingSettingsTransformationInput struct {
@@ -141,9 +171,15 @@ func TransformLoggingSettings(
 	TransformLoggingForwards(input, loggingSettings, resp)
 
 	resp.LoggingStatus = &LoggingStatusResp{}
-	if input.LoggingStatus != nil {
-		resp.LoggingStatus.CollectorReady = input.LoggingStatus.CollectorReady
-		resp.LoggingStatus.BackendReady = input.LoggingStatus.BackendReady
+	if status := input.LoggingStatus; status != nil {
+		resp.LoggingStatus.CollectorReady = status.Collector.Ready()
+		resp.LoggingStatus.BackendReady = status.Backend.Ready()
+		resp.LoggingStatus.Backend = transformLoggingAppStatus(status.Backend)
+		resp.LoggingStatus.Collector = transformLoggingAppStatus(status.Collector)
+		if vlogs := resp.Backend.VictoriaLogs; vlogs != nil {
+			vlogs.CPULimit = status.BackendResources.CPULimit
+			vlogs.MemoryLimit = unit.DataSize(status.BackendResources.MemoryLimit)
+		}
 	}
 
 	return resp, nil

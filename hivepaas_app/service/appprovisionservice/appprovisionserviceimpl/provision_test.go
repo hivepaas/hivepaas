@@ -349,6 +349,20 @@ func TestProvisionAppCreatesAnEmptyApp(t *testing.T) {
 	assert.Empty(t, fakes.cluster.removed)
 }
 
+// A key given is kept rather than derived from the name: an imported app keeps
+// the key it had, whatever its name says now.
+func TestProvisionAppKeepsAGivenKey(t *testing.T) {
+	svc, _ := newProvisionTest(t)
+
+	resp, err := svc.ProvisionApp(context.Background(), nil, &appprovisionservice.ProvisionAppReq{
+		ProjectID: "p1", ProjectEnvID: "p1:prod", Key: "api", Name: "Web API", Status: base.AppStatusActive,
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "api", resp.App.Key)
+	assert.Equal(t, "Web API", resp.App.Name)
+}
+
 func TestProvisionAppAppliesTheConfiguration(t *testing.T) {
 	svc, fakes := newProvisionTest(t)
 	routing := &entity.Setting{ID: "set-routing", Type: base.SettingTypeAppRouting}

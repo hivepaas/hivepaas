@@ -1,3 +1,5 @@
+import { type ReactNode } from "react";
+
 import { AlertTriangle, ExternalLink } from "lucide-react";
 
 import { AppLink } from "@application/shared/components";
@@ -20,6 +22,7 @@ export function ConfirmRevealSecretsDialog({
     isPending = false,
     title = "Reveal Secrets",
     actionLabel = "Reveal the secrets",
+    note,
 }: Props) {
     return (
         <Dialog
@@ -58,6 +61,7 @@ export function ConfirmRevealSecretsDialog({
                             </p>
                         </div>
                     </div>
+                    {note && <div className="text-sm leading-normal text-muted-foreground">{note}</div>}
                 </DialogBody>
 
                 <DialogActionFooter>
@@ -95,4 +99,6 @@ interface Props {
     isPending?: boolean;
     title?: string;
     actionLabel?: string;
+    /** What the reveal is of, beside the warning every reveal carries. */
+    note?: ReactNode;
 }

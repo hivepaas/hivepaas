@@ -1,11 +1,15 @@
+import { type ReactNode } from "react";
+
 import { InfoBlock, LabelWithInfo } from "@application/shared/components";
 import { KeyValueList } from "@application/shared/form";
 
 import { type AppConfigContainerSettingsFormSchemaInput } from "../schemas";
 
-export function LabelsFields() {
+/** The service's and container's labels. toolbar sits at the top of the section: the reveal of system labels. */
+export function LabelsFields({ toolbar }: { toolbar?: ReactNode }) {
     return (
         <div className="flex flex-col gap-6">
+            {toolbar && <div className="flex items-center gap-2">{toolbar}</div>}
             <InfoBlock
                 titleWidth={220}
                 title={

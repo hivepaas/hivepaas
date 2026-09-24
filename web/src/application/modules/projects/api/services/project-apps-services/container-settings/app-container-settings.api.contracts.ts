@@ -2,7 +2,13 @@ import { type AppContainerSettings } from "~/projects/domain";
 
 import { type ApiRequestBase, type ApiResponseBase } from "@infrastructure/api";
 
-export type AppContainerSettings_FindOne_Req = ApiRequestBase<{ projectID: string; env: string; appID: string }>;
+export type AppContainerSettings_FindOne_Req = ApiRequestBase<{
+    projectID: string;
+    env: string;
+    appID: string;
+    /** Also return the labels HivePaaS and Docker manage. It takes what revealing secrets takes. */
+    revealSystemLabels?: boolean;
+}>;
 export type AppContainerSettings_FindOne_Res = ApiResponseBase<AppContainerSettings>;
 
 export type AppContainerSettings_UpdateOne_Req = ApiRequestBase<{

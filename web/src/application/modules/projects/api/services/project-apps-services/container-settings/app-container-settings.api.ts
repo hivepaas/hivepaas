@@ -22,13 +22,16 @@ export class AppContainerSettingsApi extends BaseApi {
         req: AppContainerSettings_FindOne_Req,
         signal?: AbortSignal,
     ): Promise<Result<AppContainerSettings_FindOne_Res, Error>> {
-        const { projectID, env, appID } = req.data;
+        const { projectID, env, appID, revealSystemLabels } = req.data;
         const query = this.queryBuilder.getInstance();
 
         return lastValueFrom(
             from(
                 this.client.v1.get(`/projects/${projectID}/${env}/apps/${appID}/container-settings`, {
-                    params: query.build(),
+                    params: {
+                        ...query.build(),
+                        ...(revealSystemLabels ? { revealSystemLabels } : {}),
+                    },
                     signal,
                 }),
             ).pipe(

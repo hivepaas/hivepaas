@@ -44,6 +44,9 @@ export function invalidateSingleAppConfigurationQueries(queryClient: QueryClient
         queryKey: [QK["projects.apps.resource-settings.$.find-one"], scope],
     });
     void queryClient.invalidateQueries({
+        queryKey: [QK["projects.apps.docker-api-settings.$.find-one"], scope],
+    });
+    void queryClient.invalidateQueries({
         queryKey: [QK["projects.apps.storage-settings.$.find-one"], scope],
     });
     void queryClient.invalidateQueries({

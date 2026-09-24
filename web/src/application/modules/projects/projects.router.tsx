@@ -1870,6 +1870,14 @@ export const projectsRouter: RouteObject = {
                             },
                         },
                         {
+                            path: ROUTE.projects.single.apps.single.configuration.dockerApi.$pattern,
+                            lazy: async () => {
+                                const { AppConfigDockerApiRoute } = await getLazyComponents();
+
+                                return { Component: AppConfigDockerApiRoute };
+                            },
+                        },
+                        {
                             path: ROUTE.projects.single.apps.single.configuration.dangerZone.$pattern,
                             lazy: async () => {
                                 const { AppConfigDangerZoneRoute } = await getLazyComponents();

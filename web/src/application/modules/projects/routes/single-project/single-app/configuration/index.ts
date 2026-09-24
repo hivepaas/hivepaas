@@ -16,4 +16,5 @@ export * from "./availability-and-scaling";
 export * from "./presistent-storage";
 export * from "./networks";
 export * from "./resources";
+export * from "./docker-api";
 export * from "./danger-zone";

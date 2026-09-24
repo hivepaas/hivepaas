@@ -85,6 +85,10 @@ export const QK = {
      */
     "projects.apps.resource-settings.$.find-one": "projects.apps.resource-settings.$.find-one",
     /*
+     * Project App Docker API Settings
+     */
+    "projects.apps.docker-api-settings.$.find-one": "projects.apps.docker-api-settings.$.find-one",
+    /*
      * Project App Storage Settings
      */
     "projects.apps.storage-settings.$.find-one": "projects.apps.storage-settings.$.find-one",

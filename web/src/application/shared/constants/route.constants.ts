@@ -766,6 +766,12 @@ export const ROUTE = {
                                 `/projects/${id}/${env}/apps/${appId}/resources/`,
                         },
 
+                        dockerApi: {
+                            $pattern: "projects/:id/:env/apps/:appId/docker-api",
+                            $route: (id: string, env: string, appId: string) =>
+                                `/projects/${id}/${env}/apps/${appId}/docker-api/`,
+                        },
+
                         featureSettings: {
                             $pattern: "projects/:id/:env/apps/:appId/feature-settings",
                             $route: (id: string, env: string, appId: string) =>

@@ -108,5 +108,6 @@ export {
     StorageMountEditRoute,
     AppConfigNetworksRoute,
     AppConfigResourcesRoute,
+    AppConfigDockerApiRoute,
     AppConfigDangerZoneRoute,
 } from "./single-project";

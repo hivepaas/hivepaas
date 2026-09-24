@@ -111,6 +111,7 @@ function View({ projectId, env, appId }: Props) {
         ROUTE.projects.single.apps.single.configuration.presistentStorage.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.networks.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.resources.$route(projectId, env, appId),
+        ROUTE.projects.single.apps.single.configuration.dockerApi.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.periodicJobs.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.scheduledJobs.$route(projectId, env, appId),
         ROUTE.projects.single.apps.single.configuration.appClone.$route(projectId, env, appId),

@@ -97,6 +97,10 @@ import {
     ProjectsApiValidator,
 } from "~/projects/api/services";
 import {
+    AppDockerApiSettingsApi,
+    AppDockerApiSettingsApiValidator,
+} from "~/projects/api/services/project-apps-services/docker-api-settings";
+import {
     AppKindSettingsApi,
     AppKindSettingsApiValidator,
 } from "~/projects/api/services/project-apps-services/kind-settings";
@@ -155,6 +159,7 @@ function createApi() {
     const appScheduledJobsApi = new AppScheduledJobsApi(appScheduledJobsApiValidator);
     const appNetworkSettingsApiValidator = new AppNetworkSettingsApiValidator();
     const appResourceSettingsApiValidator = new AppResourceSettingsApiValidator();
+    const appDockerApiSettingsApiValidator = new AppDockerApiSettingsApiValidator();
     const appStorageSettingsApiValidator = new AppStorageSettingsApiValidator();
     const appRoutingSettingsApiValidator = new AppRoutingSettingsApiValidator();
     const appKindSettingsApiValidator = new AppKindSettingsApiValidator();
@@ -246,6 +251,9 @@ function createApi() {
                 },
                 resourceSettings: {
                     $: new AppResourceSettingsApi(appResourceSettingsApiValidator),
+                },
+                dockerApiSettings: {
+                    $: new AppDockerApiSettingsApi(appDockerApiSettingsApiValidator),
                 },
                 storageSettings: {
                     $: new AppStorageSettingsApi(appStorageSettingsApiValidator),

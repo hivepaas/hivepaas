@@ -77,3 +77,8 @@ type Policy struct {
 func (p *Policy) allows(group Group) bool {
 	return group == "" || slices.Contains(p.Allow, group)
 }
+
+// joinable reports whether a child may join the network of that name.
+func (p *Policy) joinable(name string) bool {
+	return name == p.Network || slices.Contains(p.Networks, name)
+}

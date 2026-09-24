@@ -1,0 +1,1 @@
+{"Name":"jobnet","Driver":"bridge","Scope":"","IPAM":{"Driver":"default","Options":{},"Config":[]},"Internal":false,"Attachable":false,"Ingress":false,"ConfigOnly":false,"ConfigFrom":null,"Options":{},"Labels":{}}

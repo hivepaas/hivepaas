@@ -42,4 +42,13 @@ var routes = []route{
 	on("POST", `/containers/`+idPart+`/exec`, GroupExec, (*Proxy).execCreate),
 	on("POST", `/exec/`+idPart+`/(?:start|resize)`, GroupExec, (*Proxy).onExec),
 	on("GET", `/exec/`+idPart+`/json`, GroupExec, (*Proxy).onExec),
+
+	on("GET", `/volumes`, GroupVolumes, (*Proxy).listVolumes),
+	on("POST", `/volumes/create`, GroupVolumes, (*Proxy).volumeCreate),
+	on("GET,DELETE", `/volumes/`+idPart, GroupVolumes, (*Proxy).onVolume),
+	on("GET", `/networks`, GroupNetworks, (*Proxy).listNetworks),
+	on("POST", `/networks/create`, GroupNetworks, (*Proxy).networkCreate),
+	on("GET", `/networks/`+idPart, GroupNetworks, (*Proxy).networkRead),
+	on("DELETE", `/networks/`+idPart, GroupNetworks, (*Proxy).networkDelete),
+	on("POST", `/networks/`+idPart+`/(?:connect|disconnect)`, GroupNetworks, (*Proxy).networkConnect),
 }

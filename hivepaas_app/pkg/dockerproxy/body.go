@@ -60,3 +60,9 @@ func text(v any) string {
 	s, _ := v.(string)
 	return s
 }
+
+// list is v as a JSON array, or nil when it is not one.
+func list(v any) []any {
+	l, _ := v.([]any)
+	return l
+}

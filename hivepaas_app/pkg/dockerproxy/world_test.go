@@ -8,6 +8,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -158,4 +160,16 @@ func (w *world) forwarded(t testing.TB, method, suffix string) (string, map[stri
 	}
 	t.Fatalf("no %s ...%s reached the daemon", method, suffix)
 	return "", nil
+}
+
+// fixture decodes a request body recorded from a real client.
+func fixture(t testing.TB, name string) map[string]any {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("testdata", name))
+	stop(t, assert.NoError(t, err))
+	body := map[string]any{}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.UseNumber()
+	stop(t, assert.NoError(t, decoder.Decode(&body)))
+	return body
 }

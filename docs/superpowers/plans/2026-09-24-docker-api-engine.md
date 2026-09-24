@@ -1762,12 +1762,16 @@ func TestNetworksAreTheAppsOwn(t *testing.T) {
 	assert.Equal(t, map[string]any{OwnerLabel: "app1"}, body["Labels"])
 
 	refused := map[string]map[string]any{
-		"network driver overlay is not allowed":  {"Name": "n", "Driver": "overlay"},
-		"network scope swarm is not allowed":     {"Name": "n", "Scope": "swarm"},
-		"Network.Options is not allowed":         {"Name": "n", "Options": map[string]any{"com.docker.network.bridge.name": "docker0"}},
-		"Network.Ingress is not allowed":         {"Name": "n", "Ingress": true},
-		"IPAM driver custom is not allowed":      {"Name": "n", "IPAM": map[string]any{"Driver": "custom"}},
-		"Network.IPAM.Config is not allowed":     {"Name": "n", "IPAM": map[string]any{"Config": []any{map[string]any{"Subnet": "10.0.0.0/8"}}}},
+		"network driver overlay is not allowed": {"Name": "n", "Driver": "overlay"},
+		"network scope swarm is not allowed":    {"Name": "n", "Scope": "swarm"},
+		"Network.Options is not allowed": {
+			"Name": "n", "Options": map[string]any{"com.docker.network.bridge.name": "docker0"},
+		},
+		"Network.Ingress is not allowed":    {"Name": "n", "Ingress": true},
+		"IPAM driver custom is not allowed": {"Name": "n", "IPAM": map[string]any{"Driver": "custom"}},
+		"Network.IPAM.Config is not allowed": {
+			"Name": "n", "IPAM": map[string]any{"Config": []any{map[string]any{"Subnet": "10.0.0.0/8"}}},
+		},
 	}
 	for message, request := range refused {
 		status, raw = w.do(t, http.MethodPost, "/v1.51/networks/create", request)
@@ -1883,14 +1887,16 @@ const (
 	kindVolumes  = "volumes"
 	kindNetworks = "networks"
 
+	fieldDriver = "Driver"
+
 	// serviceIDLabel is how Docker marks the containers of a swarm service's tasks.
 	serviceIDLabel = "com.docker.swarm.service.id"
 )
 
 var (
-	volumeCreateFields  = []string{"Name", "Driver", fieldLabels}
+	volumeCreateFields  = []string{"Name", fieldDriver, fieldLabels}
 	volumeDrivers       = []string{"", "local"}
-	networkCreateFields = []string{"Name", "CheckDuplicate", "Driver", "Scope", "Internal", "Attachable",
+	networkCreateFields = []string{"Name", "CheckDuplicate", fieldDriver, "Scope", "Internal", "Attachable",
 		"EnableIPv4", "EnableIPv6", fieldLabels, "IPAM"}
 	networkDrivers       = []string{"", "bridge"}
 	networkScopes        = []string{"", "local"}
@@ -1952,7 +1958,7 @@ func (p *Proxy) volumeCreate(c *call) {
 	if err == nil {
 		err = checkFields("Volume", body, volumeCreateFields, nil)
 	}
-	if driver := text(body["Driver"]); err == nil && !slices.Contains(volumeDrivers, driver) {
+	if driver := text(body[fieldDriver]); err == nil && !slices.Contains(volumeDrivers, driver) {
 		err = refusef("volume driver %s is not allowed", driver)
 	}
 	if err != nil {
@@ -2009,17 +2015,17 @@ func checkNetworkCreate(body map[string]any) error {
 	if err := checkFields("Network", body, networkCreateFields, nil); err != nil {
 		return err
 	}
-	if driver := text(body["Driver"]); !slices.Contains(networkDrivers, driver) {
+	if driver := text(body[fieldDriver]); !slices.Contains(networkDrivers, driver) {
 		return refusef("network driver %s is not allowed", driver)
 	}
 	if scope := text(body["Scope"]); !slices.Contains(networkScopes, scope) {
 		return refusef("network scope %s is not allowed", scope)
 	}
 	ipam := object(body["IPAM"])
-	if driver := text(ipam["Driver"]); !slices.Contains(ipamDrivers, driver) {
+	if driver := text(ipam[fieldDriver]); !slices.Contains(ipamDrivers, driver) {
 		return refusef("IPAM driver %s is not allowed", driver)
 	}
-	return checkFields("Network.IPAM", ipam, []string{"Driver"}, nil)
+	return checkFields("Network.IPAM", ipam, []string{fieldDriver}, nil)
 }
 
 func (p *Proxy) networkRead(c *call) {
